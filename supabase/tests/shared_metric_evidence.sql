@@ -342,4 +342,59 @@ SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('req
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.require_true((SELECT count(*)=0 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000081'),'native report withheld after active workspace switch');
 RESET ROLE;
+-- Original PUBLIC submit over the REAL issuer, private capture and native writer.
+-- This entire file rolls back: pg_net wakes are queued only, never committed or sent.
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000011' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+INSERT INTO public.paige_chat_threads(id,caller_user_id,tenant_id,lens,title) VALUES
+ ('a3450000-0000-4000-8000-000000000091','a3450000-0000-4000-8000-000000000001','a3450000-0000-4000-8000-000000000011','coach','Original public report fixture');
+INSERT INTO settings_results(key,bundle) SELECT 'public-report-request',jsonb_build_object('version',1,
+ 'doc_type','business_review','title','Original source-backed review','brief','Review original permitted historical evidence.',
+ 'report_period',jsonb_build_object('key','month','start',bundle->'range'->'start','end',bundle->'range'->'end'),
+ 'evidence_refs',jsonb_build_array(bundle->>'evidence_ref')) FROM settings_results WHERE key='native-report-bundle';
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),
+ set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+INSERT INTO settings_results(key,bundle) SELECT 'public-report-submitted',to_jsonb(r) FROM settings_results s
+ CROSS JOIN LATERAL public.submit_paige_document_work('a3450000-0000-4000-8000-000000000092',
+ 'a3450000-0000-4000-8000-000000000091',s.bundle) r WHERE s.key='public-report-request';
+SELECT pg_temp.require_true((SELECT bundle->>'work_status'='claimed' AND bundle->>'resumed_existing'='false'
+ FROM settings_results WHERE key='public-report-submitted'),'original authenticated report admission');
+SELECT pg_temp.require_invalid($q$SELECT * FROM public.submit_paige_document_work('a3450000-0000-4000-8000-000000000093',
+ 'a3450000-0000-4000-8000-000000000091',(SELECT bundle||'{"report_evidence":{}}' FROM settings_results WHERE key='public-report-request'))$q$,
+ 'public report refuses a caller-authored capture');
+RESET ROLE;
+INSERT INTO settings_results(key,bundle) SELECT 'public-report-stored',w.request_payload FROM public.paige_durable_work w
+ JOIN settings_results s ON s.key='public-report-submitted' AND w.id=(s.bundle->>'work_id')::uuid;
+SELECT pg_temp.require_true((SELECT c.bundle->'report_evidence'->'measurements'->0->>'source_revision_ref'=e.bundle->>'source_revision_ref'
+ AND NOT (c.bundle ? 'evidence_refs') AND c.bundle->'report_evidence'->'measurements'->0->'values'=e.bundle->'values'
+ AND c.bundle::text NOT LIKE '%account_epoch%' FROM settings_results c CROSS JOIN settings_results e
+ WHERE c.key='public-report-stored' AND e.key='native-report-bundle'),'public submit captures original issuer values and lineage only');
+SELECT set_config('request.jwt.claim.role','service_role',true),set_config('request.jwt.claims','{"role":"service_role"}',true),set_config('request.jwt.claim.sub','',true);
+SET LOCAL ROLE service_role;
+-- Use the original service-only claim DTO, never a fixture business-table grant.
+SELECT pg_temp.require_true(r.work_status='claimed' AND d.work_status='succeeded' AND d.receipt_recorded AND d.content_id=r.work_id,
+ 'public report original claim and atomic artifact/turn/Rail') FROM settings_results s
+ CROSS JOIN LATERAL public.start_paige_document_work_execution((s.bundle->>'work_id')::uuid) r
+ CROSS JOIN LATERAL public.complete_paige_document_work(r.work_id,r.server_idempotency_key,'business_review','Original source-backed review',
+ jsonb_build_array(jsonb_build_object('type','stat','label',r.request_payload->'report_evidence'->'measurements'->0->>'label',
+ 'value',coalesce(r.request_payload->'report_evidence'->'measurements'->0->'values'->>'count','Unavailable'))),NULL,NULL,0,0) d
+ WHERE s.key='public-report-submitted';
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT w.request_payload=c.bundle
+ AND (SELECT count(*) FROM public.marketing_content m WHERE m.work_id=w.id AND m.meta->>'document_purpose'='metric_business_review'
+  AND m.meta::text NOT LIKE '%aneb_v1_%')=1
+ AND (SELECT count(*) FROM public.paige_chat_turns t WHERE t.work_id=w.id)=1
+ AND (SELECT count(*) FROM public.paige_workspace_events e WHERE e.source_kind='capability_run' AND e.source_id=w.id
+  AND e.actor_id=w.initiating_user_id AND e.outcome='capability_succeeded')=1
+ FROM settings_results s JOIN public.paige_durable_work w ON w.id=(s.bundle->>'work_id')::uuid
+ CROSS JOIN settings_results c WHERE s.key='public-report-submitted' AND c.key='public-report-stored'),
+ 'real issued evidence reaches one original private artifact/turn/attributable Rail without rewriting capture');
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000002',true),
+ set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_denied($q$SELECT * FROM public.submit_paige_document_work('a3450000-0000-4000-8000-000000000093',
+ 'a3450000-0000-4000-8000-000000000091',(SELECT bundle FROM settings_results WHERE key='public-report-request'))$q$,
+ 'another original actor cannot submit into the owner thread');
+RESET ROLE;
 ROLLBACK;

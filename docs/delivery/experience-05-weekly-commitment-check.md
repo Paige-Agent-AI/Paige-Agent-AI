@@ -13,6 +13,13 @@ remain separate until evidenced on the original PR.
 [Exact source/Orchestration/capability boundary](../evidence/ui-delivery/exp05-weekly-original-receipt.md).
 No trigger, provider, ZION instructions or catalogue status is activated.
 
+Local full native program is FAIL at the unchanged accumulated-history timing
+margin: median1038.140ms against the existing below1000ms assertion. The original
+engine/redrain case did pass; do not convert that into a full native PASS. Getter
+SQL/migrations/performance test and threshold are unchanged from main2748432.
+Retain the failure; required exact-head native proof and latency disposition
+remain a release gate, with no timeout/threshold or fixture waiver.
+
 ## October23 — unavailable specialist evidence, development
 
 Original specialist inspection must distinguish a failed read from no activity.

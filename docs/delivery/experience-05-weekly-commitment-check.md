@@ -1,5 +1,15 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — unavailable specialist evidence, development
+
+Original specialist inspection must distinguish a failed read from no activity.
+Three causal failures corrected; 112 focused original-source/authority/identity/
+receipt/Chat cases PASS using closed ports. Existing scoped history, registry and
+error envelope remain; no dispatch, provider/model, role or activation changes.
+[Proof boundary](../evidence/ui-delivery/exp05-specialist-activity-unavailable.md).
+Release, ordinary authenticated status/reload/cohorts/Live, complete ZION and all
+ten outcomes/E5-CV1–9 remain owed; eleven recipes stay Listed / Unverified.
+
 ## October23 — original specialist activity scope, development
 
 Extend the existing tenant-bound specialist status repair: original inspection

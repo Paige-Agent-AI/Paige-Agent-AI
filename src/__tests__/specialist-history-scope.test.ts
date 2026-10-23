@@ -20,7 +20,7 @@ const rows = [
   { invoked_by: actor, tenant_id: null, status: "failed", error: "UNATTRIBUTED" },
   { invoked_by: otherActor, tenant_id: a, status: "failed", error: "OTHER_ACTOR" },
 ].map((r, i) => ({ ...r, subagent_slug: "zion", created_at: `2026-10-23T12:00:0${i}Z` }));
-function fixture(history = rows) {
+function fixture(history = rows, failure?: "returned" | "thrown" | "missing") {
   const read = vi.fn((table: string) => {
     let filtered: Record<string, unknown>[] = table === "paige_subagents"
       ? [{ slug: "zion", name: "ZION", domain: "operations", enabled: true, tenant_id: null, config: {} }]
@@ -34,7 +34,14 @@ function fixture(history = rows) {
       or: (filter: string) => { const tenant = /^tenant_id\.is\.null,tenant_id\.eq\.(.+)$/.exec(filter)?.[1];
         if (!tenant) throw Error("Unexpected registry filter"); filtered = filtered.filter(r => r.tenant_id === null || r.tenant_id === tenant); return chain; },
       order: (key: string, options?: { ascending?: boolean }) => { filtered.sort((x, y) => String(x[key]).localeCompare(String(y[key])) * (options?.ascending === false ? -1 : 1)); return chain; },
-      then: (resolve: (value: unknown) => void) => resolve({ data: filtered, error: null }),
+      then: (resolve: (value: unknown) => void, reject?: (reason: unknown) => void) => {
+        if (table === "paige_subagent_invocations") {
+          if (failure === "thrown") return reject?.(new Error("PRIVATE_QUERY_DETAIL"));
+          if (failure === "returned") return resolve({ data: null, error: { message: "PRIVATE_QUERY_DETAIL" } });
+          if (failure === "missing") return resolve({ data: null, error: null });
+        }
+        return resolve({ data: filtered, error: null });
+      },
     };
     return chain;
   });
@@ -64,5 +71,9 @@ describe("original specialist activity belongs to the verified workspace and req
   it("a genuinely empty selected workspace does not borrow the requester's other runs", async () => {
     const result = await fixture(rows.filter(r => r.tenant_id !== a)).inspect(a);
     expect(result[0].health).toEqual({ invocations: 0, success_rate: null, dispatched: 0, last_error: null });
+  });
+  it.each(["returned", "thrown", "missing"] as const)("%s activity read cannot become an empty or healthy summary", async failure => {
+    const f = fixture(rows, failure);
+    await expect(f.inspect(a)).rejects.toThrow("Specialist activity is temporarily unavailable. Try reading it again.");
   });
 });

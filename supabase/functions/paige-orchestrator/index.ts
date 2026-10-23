@@ -243,10 +243,15 @@ async function rosterHealthMap(slugs: string[], callerId: string | null, tenantI
     .in("subagent_slug", slugs)
     .eq("invoked_by", callerId);
   query = tenantId ? query.eq("tenant_id", tenantId) : query.is("tenant_id", null);
-  const { data, error } = await query.order("created_at", { ascending: false });
-  if (error) {
-    console.error("[orchestrator] inspect health query failed:", error.message);
-    return map; // honest degrade to empty health, never a fabricated aggregate
+  let data: unknown[];
+  try {
+    const result = await query.order("created_at", { ascending: false });
+    if (result.error || !Array.isArray(result.data)) throw new Error("activity_read_unavailable");
+    data = result.data;
+  } catch {
+    // An unavailable source is never evidence of zero work or a healthy agent.
+    // Keep database/transport details out of the existing customer error envelope.
+    throw new Error("Specialist activity is temporarily unavailable. Try reading it again.");
   }
 
   const agg: Record<string, { total: number; succeeded: number; failed: number; dispatched: number; lastError: string | null; sawFailed: boolean }> = {};

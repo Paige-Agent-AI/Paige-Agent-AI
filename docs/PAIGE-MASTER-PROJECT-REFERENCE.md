@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-23 — EXP05 original weekly schedule correction source released.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2641](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2641): review and correct the original weekly schedule through its existing owner-only configure writer | Reviewed `dfdc03c70d5c61aaef27c7bd9c12101975c99ca5`, final5622743391 AUTHOR-REVIEW / LOWER ASSURANCE; valid canonical-zone finding corrected/resolved. All10 required checks and both Vercel statuses SUCCESS; normal Preview SKIP. Main `83008187360b12b8d76de0192f6bda3aba213bc1`, tree `f3207417f17892e319711c3417ec649ac6fe73e1` equals inspected current-main union. Production `dpl_DSpxCEF4sN2SMTDgbYJ8t15fP5LZ` READY; both public hosts exact `83008187360b12b8d76de0192f6bda3aba213bc1-mvkatml6`, customerUpdate:null. Observed HTML/bootstrap/app imports resolve actual shared `LiveTranscriptPanel-DYpDFP83.js`,437825bytes/SHA256 `96d0bf8f429e0c068cd925883ef02b5d962555be22c666f465a18457810861e9`, all five owning markers; initial wrong-chunk assumption corrected.267 consumer regressions/105 updated original native proof cases PASS, plus source-pinned synthetic responsive/focus evidence. [Exact production receipt6355343376](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2641#issuecomment-6355343376). | Human correction reviews saved/proposed day/time/zone, preserves supported original zones, writes one current revision and requires exact unapproved/held readback; no uncertain replay or recurring activation. Edge39884866112/120190558128 deployed Chat with strict source/config PASS, observed512ACTIVE/JWTtrue, then **FAILED** the valid earlier-edge-live coverage gate; shared E02 current-main recovery remains owed, never waived. Own SQL/provider/role/trigger activation N/A. Authenticated schedule persistence/audit/reload, actual recurrence/notice, automations, real ZION, recovery, separate Live/equivalent eligible existing/new SOLO cohorts, full ten outcomes/E5-CV1–9 and founder acceptance remain UNVERIFIED/incomplete. All eleven recipes remain Listed / Unverified. Internal production source increment, no customer release identity/announcement; reviewed forward-fix/revert preserves records and no-repeat recovery. |
+
 **2026-10-22 — EXP05 prepared-question focus and original-window return repaired.**
 
 | Increment | Exact released identity and proof | Completion boundary |

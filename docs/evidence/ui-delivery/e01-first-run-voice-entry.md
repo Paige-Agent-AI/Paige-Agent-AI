@@ -53,13 +53,13 @@ keep typing", "Not activated yet", "Onboarding & business discovery") with the
 withdrawn typing claim and "Meet PAIGE" absent; a later snapshot
 (`SoloEntry-DosxqvBq.js`, 2026-10-23) retains them.
 
-Count clarification (the 73/74 discrepancy): the AUTOMATED_EVIDENCE count 73/73
-was correct for the reviewed head (PaigeLiveConversation 40 + onboarding 15 +
-parity 15 + integration 3). A 74th test was added in the same PR's busy-disable
-work AFTER the reviewer's count; the reviewer's delta verdict ran 73/73 at
-`cdc009e53`, and the branch's final state at `4e7cf3746` carries 74 tests in
-those files. Both numbers are accurate for their respective heads; neither was
-fabricated.
+Count clarification (the 73/74 discrepancy), corrected after independent review
+of this docs PR: the reviewer's delta verdict ran 73/73 at `afe216509` — the
+pre-busy-disable head (PaigeLiveConversation 40 + onboarding 14 + parity 16 +
+integration 3). The busy-disable regression was then ADDED by `cdc009e53`
+itself, so `cdc009e53` and the branch's final head `4e7cf3746` both carry 74
+(40 + 15 + 16 + 3). An earlier draft of this paragraph attributed 73 to
+`cdc009e53` with a wrong per-file split — inaccurate, and corrected here.
 
 Rendered-evidence limitation, stated plainly: no production screenshot of the
 corrected first-run stage exists. Browser-capture tooling was unavailable in

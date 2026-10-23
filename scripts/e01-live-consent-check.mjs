@@ -45,6 +45,6 @@ if(result.status!==0){console.error(result.stderr);process.exit(1)}
 const passes=(result.stdout+'\n'+result.stderr).split('\n').filter(l=>l.includes('LIVE_CONSENT_PROOF')&&!l.includes(' FAIL '));
 const fails=(result.stdout+'\n'+result.stderr).split('\n').filter(l=>l.includes('LIVE_CONSENT_PROOF')&&l.includes(' FAIL '));
 if(fails.length){console.error(fails.join('\n'));process.exit(1)}
-if(passes.length<9)throw Error(`expected 9 passing LIVE_CONSENT_PROOF lines, saw ${passes.length}`);
+if(passes.length<10)throw Error(`expected 9 passing LIVE_CONSENT_PROOF lines, saw ${passes.length}`);
 console.log(passes.join('\n'));
 console.log('PASS e01 live consent gate: unacknowledged refused, acknowledged admitted, revoked/expired refused, kill switch and tier still refuse, service-role only, status RPC tells this account its own truth, execute grants authenticated-only');

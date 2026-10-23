@@ -46,8 +46,6 @@ begin
   perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
   perform set_config('test.tenant','11111111-1111-4111-8111-111111111111',false);
   select public.paige_live_terms_status() into s;
-  perform set_config('request.jwt.claim.sub','',false);
-  perform set_config('test.tenant','',false);
   if a is not true or c is not true or s->>'state' is distinct from 'acknowledged' then
     raise notice 'LIVE_CONSENT_PROOF FAIL case2 acknowledged-admitted got authorized=% companion=% status=%', a, c, s;
   else
@@ -64,8 +62,6 @@ begin
   perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
   perform set_config('test.tenant','11111111-1111-4111-8111-111111111111',false);
   select public.paige_live_terms_status() into s;
-  perform set_config('request.jwt.claim.sub','',false);
-  perform set_config('test.tenant','',false);
   if a is not false or s->>'state' is distinct from 'revoked' then
     raise notice 'LIVE_CONSENT_PROOF FAIL case3 revoked-refused got authorized=% status=%', a, s;
   else
@@ -82,8 +78,6 @@ begin
   perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
   perform set_config('test.tenant','11111111-1111-4111-8111-111111111111',false);
   select public.paige_live_terms_status() into s;
-  perform set_config('request.jwt.claim.sub','',false);
-  perform set_config('test.tenant','',false);
   if a is not false or s->>'state' is distinct from 'expired' then
     raise notice 'LIVE_CONSENT_PROOF FAIL case4 expired-refused got authorized=% status=%', a, s;
   else
@@ -91,16 +85,18 @@ begin
   end if;
 end $case4$;
 
--- CASE 5 — partial acceptance (one flag false) is NOT an acknowledgement.
+-- CASE 5 — partial acceptance (one flag false) is NOT an acknowledgement,
+-- and the status read reports the honest not_acknowledged, never expired.
 do $case5$
-declare a boolean;
+declare a boolean; s jsonb;
 begin
   update public.paige_live_pilot_subjects set expires_at=now()+interval '365 days', accepted_procedural_single_speaker=false where tenant_id='11111111-1111-4111-8111-111111111111';
   select public.paige_live_pilot_authorized_internal('22222222-2222-4222-8222-222222222222','11111111-1111-4111-8111-111111111111') into a;
-  if a is not false then
-    raise notice 'LIVE_CONSENT_PROOF FAIL case5 partial-acceptance-refused got authorized=%', a;
+  select public.paige_live_terms_status() into s;
+  if a is not false or s->>'state' is distinct from 'not_acknowledged' then
+    raise notice 'LIVE_CONSENT_PROOF FAIL case5 partial-acceptance-refused got authorized=% status=%', a, s;
   else
-    raise notice 'LIVE_CONSENT_PROOF case5-pass partial-acceptance-refused';
+    raise notice 'LIVE_CONSENT_PROOF case5-pass partial-acceptance-refused status-not_acknowledged';
   end if;
 end $case5$;
 
@@ -151,17 +147,25 @@ end $case8$;
 do $case9$
 declare s jsonb;
 begin
+  perform set_config('request.jwt.claim.sub','',false);
+  perform set_config('test.tenant','',false);
   select public.paige_live_terms_status() into s;
   if s->>'state' is distinct from 'unauthenticated' then
     raise notice 'LIVE_CONSENT_PROOF FAIL case9a unauthenticated-status got %', s;
   else
     raise notice 'LIVE_CONSENT_PROOF case9a-pass status-unauthenticated-without-context';
   end if;
+  -- The POSITIVE grants matter as much as the negatives (review P1: a companion
+  -- revoked from every role is dead code, and a negative-only assertion cannot
+  -- catch it). Scoped to THIS migration's functions: the admission predicate's
+  -- own grants belong to 20270412000000, which this fixture does not replay.
   if has_function_privilege('authenticated','public.paige_live_terms_status()','EXECUTE')
     and not has_function_privilege('anon','public.paige_live_terms_status()','EXECUTE')
     and not has_function_privilege('service_role','public.paige_live_terms_status()','EXECUTE')
-    and not has_function_privilege('authenticated','public.paige_live_acknowledgement_current_internal(uuid,uuid)','EXECUTE') then
-    raise notice 'LIVE_CONSENT_PROOF case9b-pass grants-status-authenticated-only-companion-service-only';
+    and not has_function_privilege('authenticated','public.paige_live_acknowledgement_current_internal(uuid,uuid)','EXECUTE')
+    and has_function_privilege('service_role','public.paige_live_acknowledgement_current_internal(uuid,uuid)','EXECUTE')
+    and not has_function_privilege('public','public.paige_live_acknowledgement_current_internal(uuid,uuid)','EXECUTE') then
+    raise notice 'LIVE_CONSENT_PROOF case9b-pass grants-status-authenticated-only-companion-service-only-public-revoked';
   else
     raise notice 'LIVE_CONSENT_PROOF FAIL case9b grants';
   end if;

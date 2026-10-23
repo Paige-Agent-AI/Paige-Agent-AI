@@ -256,7 +256,10 @@ function CapabilitiesView() {
         ? { tone: "partial" as const, pill: "Consent expired", access: "Renew in chat to listen" }
         : live.state === "loading"
           ? { tone: "neutral" as const, pill: "Checking this account", access: "Checking…" }
-          : live.state === "unknown"
+          : live.state === "unknown" || live.state === "unauthenticated"
+            // "unauthenticated" is practically unreachable behind this view's auth, but
+            // if it ever surfaces the honest answer is Unverified — never a guessed
+            // consent state (review #2657 P3-2).
             ? { tone: "neutral" as const, pill: "Unverified", access: "Could not check" }
             : { tone: "partial" as const, pill: "Consent required", access: "Not activated yet" };
   return (

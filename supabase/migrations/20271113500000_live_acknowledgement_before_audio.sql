@@ -62,22 +62,31 @@ $function$;
 -- Distinguishes "eligible but not yet acknowledged" (the person can act: the
 -- disclosure and self-service acceptance are theirs) from "not eligible" (no
 -- acceptance can change it), so the Live surface can say which one is true.
+-- Same service-role-only surface and in-body caller guard as the admission
+-- predicate: it takes arbitrary uuid arguments, so its ONLY access control is
+-- the grant plus the guard — both, never one without the other.
 create or replace function public.paige_live_acknowledgement_current_internal(_actor_user_id uuid, _tenant_id uuid)
 returns boolean
-language sql
+language plpgsql
 stable security definer
 set search_path to public
 as $function$
-  SELECT EXISTS (
+BEGIN
+  IF auth.role() IS DISTINCT FROM 'service_role' THEN
+    RAISE EXCEPTION 'PAIGE_LIVE_PILOT_FORBIDDEN' USING ERRCODE = '42501';
+  END IF;
+  RETURN EXISTS (
     SELECT 1 FROM public.paige_live_pilot_subjects s
      WHERE s.user_id = _actor_user_id AND s.tenant_id = _tenant_id
        AND s.revoked_at IS NULL AND s.expires_at > now()
        AND s.accepted_default_provider_retention
        AND s.accepted_procedural_single_speaker
   );
+END
 $function$;
 
-revoke all on function public.paige_live_acknowledgement_current_internal(uuid,uuid) from public,anon,authenticated,service_role;
+revoke all on function public.paige_live_acknowledgement_current_internal(uuid,uuid) from public,anon,authenticated;
+grant execute on function public.paige_live_acknowledgement_current_internal(uuid,uuid) to service_role;
 
 -- The account's CURRENT Live acknowledgement state, from the canonical row.
 -- Returns only the state and its dates — never the acceptance audit detail.
@@ -103,8 +112,13 @@ begin
   if s.revoked_at is not null then
     return jsonb_build_object('state', 'revoked', 'revokedAt', s.revoked_at);
   end if;
-  if s.expires_at <= now()
-     or not (s.accepted_default_provider_retention and s.accepted_procedural_single_speaker) then
+  -- A row whose acceptance flags are not both true is NOT an acknowledgement,
+  -- whatever its dates — report the honest not_acknowledged, never a conflated
+  -- "expired" (no current writer produces this shape; read truthfully anyway).
+  if not (s.accepted_default_provider_retention and s.accepted_procedural_single_speaker) then
+    return jsonb_build_object('state', 'not_acknowledged');
+  end if;
+  if s.expires_at <= now() then
     return jsonb_build_object('state', 'expired');
   end if;
   return jsonb_build_object('state', 'acknowledged', 'acknowledgedAt', s.admitted_at, 'expiresAt', s.expires_at);

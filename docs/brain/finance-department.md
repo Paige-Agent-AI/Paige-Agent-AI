@@ -354,3 +354,38 @@ unfiltered source request, basis/period and immutable evidence before consuming
 these exact helpers. Missing/filtered/partial facts stay unknown; cash-basis
 statement income is not bank cash. See the existing statement delivery contract
 and E02 nineteen-outcome matrix; do not build a duplicate calculation engine.
+
+## October23 — original Finance metric review context source released
+
+Original #2684 reviewed `f9ab42ca6e1078d4273e2e377ba9234ec3b5e1fa`, with
+AUTHOR-REVIEW / LOWER ASSURANCE5634041255+5634377259. All 10 applicable exact-head
+checks and two statuses passed; source-only Preview was skipped. Actual main
+`d780fd85e3cfd0c73256847c79f2692a5a399d1a` matches the inspected clean union.
+Normal production deployment `dpl_2M5hrABiskEKvmj5DeHnUiVaRVnu` was READY with
+exact commit metadata. The observed public build contained the change at
+`a9bd855c-mvlgdzr6`, with no customer announcement. Ancestry, unchanged Finance
+source and six served markers were verified. The exact intermediate d780 public
+build was not sampled. Own SQL/Edge: N/A. Master4.0 and
+[source receipt6374834566](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6374834566)
+retain the full parents, trees, deployment and served-source identities.
+
+Additive ordinary QA confirms VERA/editable no-autosend handoff includes the exact
+original custom range/key/bounds/reference, then a truthful refusal without a
+replacement or wider identity. Request/reply persist after reload. Original stored
+assistant turn is FINAL with no linked work, about 30.3 seconds after its user turn;
+the native observation bound was 46 seconds, not a latency guarantee. This confirms
+safe refusal and continuity; it does not confirm successful reading of the original
+evidence. Metadata shows later same-series issuance revoked it about 60 seconds
+after issuance, before expiry. The existing Sales hook refresh/resolver contract is
+coordinated in ANT81/758eaeae+f8424858 and ANT51/d14c0d6b; no authority/revocation
+weakening or replacement of a refused Chat reference.
+[QA6375398254](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6375398254).
+
+Functional: original source released; reliable original-reference handoff incomplete.
+Visual: unchanged layout supported by 12 original synthetic frames, not customer
+acceptance. Overview/Banking refinements #2694/#2696 remain drafts requiring native proof.
+Experiential: bounded refusal/reload verified; populated sources, roles/tenant/
+cohorts/Live/full Finance remain owed. Founder NOT_ACCEPTED; all 19/nine and
+historical 9PASS/0FAIL plus 12PASS/0FAIL/4BLOCKED remain unchanged. The original monthly
+CPU-failed request stays unknown/unretried; this was an independent Finance read.
+No algorithm/catalogue/provider/permission/INT346 or consequential activation.

@@ -1,10 +1,11 @@
 import React, {act} from "react";
 import {createRoot, type Root} from "react-dom/client";
-import {MemoryRouter, Routes, Route} from "react-router-dom";
+import {MemoryRouter, Routes, Route, useLocation} from "react-router-dom";
 import {HelmetProvider} from "react-helmet-async";
 import {beforeEach, afterEach, it, expect, vi} from "vitest";
 import JoinWorkspace from "./JoinWorkspace";
 import {ConsumerInvitation} from "./ConsumerInvitation";
+import {clientPortalEntry} from "@/lib/client-portal-entry";
 const f=vi.hoisted(()=>({
   user:null as null|{id:string;email:string;email_confirmed_at?:string},
   rpc:vi.fn(),signUp:vi.fn(),signIn:vi.fn(),resend:vi.fn(),signOut:vi.fn(),
@@ -26,14 +27,15 @@ const tenant="e0921000-0000-0000-0000-000000000001";
 const subject="e0911000-0000-0000-0000-000000000001";
 const client="e0931000-0000-0000-0000-000000000001";
 const profile=()=>({id:client,tenant_id:tenant,linked_user_id:f.user?.id,first_name:"Test",last_name:"Customer",entity_name:null,street_address:null,city:null,state:null,zip_code:null,onboarding_stage:"invited",is_signup_contact:false,paige_shared_context_consent:false,paige_shared_context_consent_updated_at:null,updated_at:null,email:"recipient@tests.invalid",phone:null,contact_methods:[]});
+function PortalDestination(){const location=useLocation();return <p data-portal-entry={location.search}>Portal destination</p>;}
 let root:Root,host:HTMLDivElement;
-const render=async()=>act(async()=>root.render(<HelmetProvider><MemoryRouter initialEntries={["/join/synthetic-recipient-token"]}><Routes><Route path="/join/:token" element={<JoinWorkspace/>}/><Route path="/app" element={<p>Portal destination</p>}/><Route path="/onboard/welcome" element={<p>Unrequested Welcome detour</p>}/></Routes></MemoryRouter></HelmetProvider>));
+const render=async()=>act(async()=>root.render(<HelmetProvider><MemoryRouter initialEntries={["/join/synthetic-recipient-token"]}><Routes><Route path="/join/:token" element={<JoinWorkspace/>}/><Route path="/app" element={<PortalDestination/>}/><Route path="/onboard/welcome" element={<p>Unrequested Welcome detour</p>}/></Routes></MemoryRouter></HelmetProvider>));
 const button=(label:string)=>Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find(b=>b.textContent?.trim()===label||b.getAttribute("aria-label")===label)!;
 const click=async(label:string)=>act(async()=>{const b=button(label);expect(b,`Missing button ${label}`).toBeTruthy();b.click();});
 const input=async(id:string,value:string)=>act(async()=>{const el=host.querySelector<HTMLInputElement>(id)!;
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(el,value);el.dispatchEvent(new Event("input",{bubbles:true}));});
 beforeEach(()=>{
-  vi.clearAllMocks();f.user=null;f.listeners=[];f.accepted=false;localStorage.clear();
+  vi.clearAllMocks();f.user=null;f.listeners=[];f.accepted=false;localStorage.clear();sessionStorage.clear();
   vi.stubGlobal("ResizeObserver",class {observe(){}unobserve(){}disconnect(){}});
   f.rpc.mockImplementation(async(name:string)=>{
     if(name==="peek_tenant_invite")return{data:[{tenant_id:tenant,tenant_name:"Test Service",tenant_slug:"test-service",brand:{primary_color:"#26483e"},kind:"consumer",default_role:"member",expires_at:"2099-01-01",is_valid:true,invited_email:"recipient@tests.invalid"}],error:null};
@@ -305,4 +307,21 @@ it.each([
   expect(host.textContent).not.toBe("Portal destination");
   expect(button("Sign out")).toBeTruthy();
   expect(f.rpc.mock.calls.some(([name])=>name==="client_portal_self_profile"||name==="accept_tenant_invite")).toBe(false);
+});
+
+it.each(["fresh","recorded","unknown"] as const)("%s acceptance opens the inviting business despite a stale other-business hint",async(mode)=>{
+ f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};
+ const other="e0921000-0000-0000-0000-000000000002";sessionStorage.setItem(`client-portal-business:${subject}`,other);
+ const original=f.rpc.getMockImplementation()!;if(mode==="recorded")f.accepted=true;
+ if(mode==="unknown")f.rpc.mockImplementation(async(name:string,...args:unknown[])=>{if(name==="accept_tenant_invite"){f.accepted=true;throw Error("lost response");}return original(name,...args);});
+ await render();if(mode!=="recorded")await click("Open your portal");if(mode==="unknown")await click("Check acceptance");
+ expect(host.textContent).toBe("Portal destination");const search=host.querySelector("[data-portal-entry]")?.getAttribute("data-portal-entry");
+ expect(search).toBe(`?business=${tenant}`);expect(clientPortalEntry(subject,search!)).toMatchObject({businessId:tenant,intentional:true,invalid:false});
+ expect(f.rpc).toHaveBeenCalledWith("client_portal_self_profile",{p_tenant_id:tenant});expect(sessionStorage.getItem(`client-portal-business:${subject}`)).toBe(other);
+ expect(f.rpc.mock.calls.filter(([name])=>name==="accept_tenant_invite")).toHaveLength(mode==="recorded"?0:1);
+});
+it("a recorded receipt cannot navigate to a different client in the same business",async()=>{
+ f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};f.accepted=true;const original=f.rpc.getMockImplementation()!;
+ f.rpc.mockImplementation(async(name:string,...args:unknown[])=>name==="client_portal_self_profile"?{data:{...profile(),id:"e0931000-0000-0000-0000-000000000002"},error:null}:original(name,...args));
+ await render();expect(host.querySelector("[data-portal-entry]")).toBeNull();expect(button("Try again")).toBeTruthy();expect(f.rpc.mock.calls.some(([name])=>name==="accept_tenant_invite")).toBe(false);
 });

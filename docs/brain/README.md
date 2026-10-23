@@ -1,3 +1,31 @@
+## EXP04 recipient signing repair — October23 source released
+
+Original2670 reviewed1758c3d73e498f814effca8a5e4c5935900b4959, LOWER5632547825,
+all11 exact-head checks/full normal Preview/two statuses SUCCESS, merged
+024ac8f677be0fd9bdb650283aa9119e6ce7be95. Actual1b304+1758 union tree372e27f3
+verified. Normal Edge40007394701/120598675278 source/config verification SUCCESS;
+document82/send16/sign34. Separately observed sign35 retains all21 canonical
+source files/JWT; version/archive advance cause remains UNVERIFIED. Exact web
+dpl_P9VKBwNnSRKrGsHPTNj6UJvgxxBB READY; actual public containing52091 on both
+domains19:02UTC and served app64347/signing bundle19:10UTC verified without
+claiming an exact024 alias sample. Master4.0 and
+[release6372818143](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2670#issuecomment-6372818143)
+retain exact hashes and evidence boundaries. Original native53 is now consumed;
+one atomic signature/consent/events receipt and inspect-only recovery replace
+the legacy direct write fallback. No real signer/send/payment/provider act or
+ordinary-role/cohort/CentralQA/founder acceptance. Prepared-map/send/input,
+effective terms, delivery and all12 remain incomplete; no Live promotion.
+
+C18 continues original2190 accepted-source inspection, schema1/2 and exact
+native audit identity, with canonical owner actor/package/Rail and unchanged
+closed package DTO.75 local cases pass, including account-epoch/owner-access
+retirement. Current composed native406 PASS retains all323 original cases and
+adds83 accepted-evidence cases,27 owner reads, replay2 and real overlapping
+authority retirement. The original disposable cluster is empty/stopped.
+Earlier rendered frames remain pinned to their prior source; a fresh browser
+timeout/blank capture is INVALID. Latest-guard rendering/type/hosted/release/acceptance remain owed.
+Reserved570004 has not been applied. This read does not activate terms.
+
 ## EXP02 Finance specialist attribution — October23 development
 
 Owner Oct23 standard is canonical in the existing

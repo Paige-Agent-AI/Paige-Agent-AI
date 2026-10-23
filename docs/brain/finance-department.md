@@ -1,5 +1,36 @@
 # Finance department — current source and full operating target
 
+## October23 — Overview visual refinement, development only
+
+Owner requires Overview entry and clearer visual presentation across all seven
+Finance subpages. First bounded consumer slice canonicalizes bare Finance to its
+same-account Overview with query/fragment and replacement history, places original
+Sales figures and receipt-source comparison before compact missing bank/accounting
+coverage, and preserves all original tabs, inspection and VERA controls.
+[Candidate and exact proof boundary](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Two actual route failures preceded correction;53 original consumer cases/four
+suites pass. Native candidate render/keyboard and release proof remain owed;
+automatic browser-origin review still rejects access despite owner authorization.
+Banking, Debt and remaining financial-readiness presentation follow in small slices.
+No provider, writer, permission, metric definition or capability status changed.
+
+Released Finance context repair2684 is independently source-verified at main
+`d780fd85e3cfd0c73256847c79f2692a5a399d1a`; original
+[release6374834566](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6374834566).
+Additive ordinary QA verifies exact original custom bounds/reference handoff,
+read-only refusal without substitution and persisted reply after reload, within a
+46-second observation bound. It does not prove positive reference availability.
+Original reference metadata shows a later same-series issuance revoked it60seconds
+after issuance, before expiry; the original Sales hook refresh contract is being
+coordinated with EXP04 in ANT81/758eaeae. Keep original revocation/authority intact.
+[QA6375398254](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6375398254).
+The protected CPU-failed monthly request remains unknown and unretried; this
+Finance negative is a separate independent read, not report recovery.
+
+Functional: bounded source candidate plus dated released negative. Visual:
+candidate unverified. Experiential: actual refusal/reload, positive cross-surface
+reference lifetime incomplete. Founder Acceptance: NOT_ACCEPTED; all19/nine remain.
+
 ## October21 17:35 UTC — Banking receiver released, bounded customer proof
 
 Original #2414 merged `950d1dac0f355050eb46e6ce5f39850eefc59620`, exact reviewed

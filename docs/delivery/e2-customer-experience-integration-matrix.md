@@ -1,5 +1,28 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October23 — Finance visual direction and additive released negative
+
+Owner requires Overview landing and more useful visual presentation across all
+seven Finance subpages. First bounded local consumer slice: same-account bare
+Finance→Overview replacement preserving query/fragment, supported figures and
+source comparison first, compact unavailable bank/accounting coverage.
+Original inspection, VERA, seven routes, authority and sources remain intact.
+Two actual route failures then53 original cases/four suites PASS; candidate native
+render/keyboard, review/CI/release and ordinary customer proof remain owed.
+[Candidate evidence](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Banking, Debt and remaining financial-readiness presentation remain in sequence.
+
+Released2684 source/merge/deployment/readback remains in6374834566. Additive
+ordinary QA6375398254 proves exact original bounds/reference handoff, truthful
+refusal without substitution and saved reply after reload; not positive original
+reference availability. Later issuance revoked the original before expiry at60s,
+so the existing Sales hook refresh contract remains an EXP04-coordinated consumer
+gap, never a reason to weaken reference authority. Protected monthly CPU-failed
+request stays unretried/unknown with original EXP05 recovery coordination.
+All original19 and CAP009–017 remain required per ANT138/f4c4c060; no renamed
+outcome, new registry, algorithm or catalogue-readiness promotion. Functional,
+Visual, Experiential and Founder Acceptance remain distinct and incomplete.
+
 ## EXP02 original Finance Metric context repair — October23 local
 
 Original Finance→VERA exact-reference handoff REPAIR is local: copy original

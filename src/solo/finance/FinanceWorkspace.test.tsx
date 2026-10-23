@@ -27,6 +27,13 @@ const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezon
   } } } } } });
 
 describe("Finance canonical destination", () => {
+ it.each(["/solo/123/finance?from=menu#position", "/solo/456/finance/?from=menu#position"])("canonicalizes bare Finance entry %s to its Overview without a history detour", async path => {
+  function LocationProbe() { const location = useLocation(), action = useNavigationType(); return <output aria-label="Current Finance address">{location.pathname}{location.search}{location.hash} {action}</output>; }
+  await act(async () => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<><FinanceWorkspace epoch="A"/><LocationProbe/></>}/></Routes></MemoryRouter>));
+  expect(host.querySelector("output")?.textContent).toBe(`/solo/${path.split("/")[2]}/finance/overview?from=menu#position REPLACE`);
+  expect(host.querySelector('[aria-selected="true"]')?.textContent).toBe("Overview");
+  expect(host.querySelectorAll('[role="tab"]')).toHaveLength(7);
+ });
  it.each(["week", "month", "quarter", "year"] as const)("hands the original evidence with its exact custom %s bounds to VERA", async range => {
   const evidence = `aneb_v1_${"d".repeat(64)}`;
   const start = "2026-09-03T00:00:00.000Z", end = "2026-10-03T00:00:00.000Z";

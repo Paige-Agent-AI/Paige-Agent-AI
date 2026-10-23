@@ -1,3 +1,14 @@
+## EXP02 Finance Overview refinement — October23, development only
+
+Owner requests Overview landing and clearer visuals across all seven Finance
+subpages. First bounded original-consumer refinement and current source/QA limits
+are in the existing [Finance brain](finance-department.md#october23--overview-visual-refinement-development-only)
+and [evidence](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Corrected released context handoff/refusal/reload is verified separately;
+positive reference lifetime remains incomplete because subsequent original
+issuance revokes the prior reference. Original authority, domain ownership and
+all19/nine remain unchanged. No candidate release or founder acceptance claimed.
+
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist outcome/receipt recovery, requester-and-workspace activity

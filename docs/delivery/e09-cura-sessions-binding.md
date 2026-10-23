@@ -1,0 +1,37 @@
+# CURA original Sessions bound to private Native questions
+
+## Coherent customer outcome
+Prepare source-backed CURA explanations of the customer's own upcoming and past Sessions, using the original booking reader. This Native prerequisite alone does not activate an AI answer, scheduling action, or new interface. A following typed consumer must use this same accepted intent, source snapshots and original publication/recovery path.
+
+## Pre-edit capability routing
+EXP09 next bounded source lease — original Sessions bound to private CURA questions; dependency #2638.
+1. Outcome: CURA can later explain genuine customer appointments and permitted change windows from original Sessions, without staff notes or invented booking completion.
+2. EXP09 Portal over Calendar's internal_bookings/calendars. Reuse owned source #2638/ab481ca, current main effc2bc; preserve EXP04 draft #2637/350004, EXP02/05/10, original owner Chat and Native controls.
+3. Existing actual Auth/CRM/private-thread Native admission, Knowledge and Progress source/current-publication fences; shared Harness/Gateway remain at recorded bounded state. No client request receives owner permission.
+4. Existing original client_portal_sessions reader. A new customer Sessions action/tool is UNAVAILABLE and not registered; this is source context, not a new Spine executor. Original booking capability/booking-manage policy remains scheduling authority.
+5. Existing Supabase/Auth/internal Calendar source; original Model Fabric used only by later consumer. No provider activation, new sender/runtime or external connection inferred.
+6. Pure read / MUTATION_VERB NONE; reuse existing _client_progress_scope_current trusted-actor contract, original frame and relationship resolver, exact source/role/actor checks. No new approval/autonomy lane. Original booking changes preserve existing approval/notice/provider/idempotency controls.
+7. No Layer C job/ActionAdapter for ordinary source read. Add provenance to ORIGINAL Native accepted intent/user/terminal only; no parallel durable ledger/history/queue.
+8. Original Sessions projection -> minimal non-PII source facts -> exact native fingerprint bound to same accepted intent -> fresh scope/source checks before genuine terminal/publication/new model history. Legacy questions not upgraded; no false empty fallback or automatic retry. Original UI history retained.
+9. Existing clients.portal PARTIAL. This Native prerequisite alone changes no UI/model flow; following typed consumer needs rendered desktop/narrow/recovery evidence. Seven capabilities stay Limited; full signed-in journey and founder evaluation remain owed.
+10. Preserve original148 Knowledge/Progress fixture assertions and original113 Sessions; add native role/scope/legacy/replay/source-change/terminal/publication/history/revocation negatives, exact-head CI/Preview/review, migration/source/ABI/ACL readback. No managed Preview/prod fixture identities or fabricated claims. Customer/model/device proof remains UNVERIFIED.
+Files owned: new unshipped Sessions-source binding migration (fresh unique slot after340009, before draft350004), additive e09_customer_knowledge_retrieval.sql tests, one delivery record. No Core/UI/booking writer/Identity constraint changes. Compose before release; don't overwrite active sources.
+
+## Original contracts and bounded facts
+Dependency #2638/ab481ca05c6ff3fe0f1c9453fd20973d5877d3f2 factors the original Sessions reader without altering public Auth, ABI, defaults, owner, grants or actual projection semantics. Reuse its postgres-only6f85ebd03fa5d577543b2c9d4d0d39c3 source. Reuse original trusted-actor helpercef5bd23, Progress begin5dc86fa2, context177c947e and publication625fba2a; guarded original body/owner and unique-body replacement preserves actual headers/ACLs. Original begin8, Progress/Knowledge guards and scheduling writers remain unchanged.
+
+The minimized projection calls the original source twice (upcoming/past, original20-row page and tie semantics). It selects only record identity, customer-safe title capped200 characters, start/end/timezone/status/kind and original change permissions/deadline/reason. No staff raw title/notes/intake, guest/host identity, location or join URL is passed. Each window is capped50 items with honest has_more for original pagination or omitted ties; it is never a complete-history claim. Volatile server observation is not a source fact. New source fingerprints bind exactly these bounded facts to the original private native accepted user/intent and matching terminal.
+
+## Execution, privacy and recovery
+New message entry delegates to original begin_progress -> original begin8, preserving existing Knowledge and Progress provenance. Original actual Auth/frame/relationship/private-thread and current trusted actor checks apply. New source locks/rechecks owned bookings and calendars; no booking writer. Legacy Knowledge-only or Progress-only accepted questions are not upgraded. Consequential changes continue through original booking-manage restrictions, slot/provider/notice/idempotency and actual result receipts.
+
+A nonempty terminal must carry its exact original Sessions snapshot and current source. New model history excludes stale appointment prose and reports limitation while original private customer UI history remains intact. Original publication rechecks Knowledge, Progress and Sessions together. Empty WITHHELD/INTERRUPTED/REFUSED cleanup remains possible without stale source or duplicate request. No new Layer C executor, Harness, approval system, knowledge store, history, scheduler, sender, ledger or provider activation; ordinary source explanation is Layer C/ActionAdapter N/A.
+
+## Verification and release boundary
+Original148 Knowledge/Progress assertions are retained byte-for-byte except plan208;60 additive assertions cover private ACL and actual Auth/service/anon refusal, wrong-client/business/owner/intent, minimized facts and genuine empty windows, original policy parity, unchanged booking rows, same-receipt replay, source/policy changes, terminal provenance, publication, stale model-history omission with UI retention, legacy, malformed/extra authority, pause/revoke/ban and original public/Progress/actor source preservation. All fixture identities and mutations stay in original full-schema CI rollback-only, never managed Preview/production. Actual208 native execution, full normal Preview and exact-head required CI are pending; static construction/lint is not a native PASS. Existing original113 Sessions regression suite remains unchanged. New migration20271113340109 follows340009 and precedes independent E04 draft350004; generated through installed CLI2.109.1 then ordered non-destructively before first remote application. No production history edited.
+
+Functional: Native source-binding implemented; native execution/deployment and typed consumer/model behavior UNVERIFIED.
+Visual: no UI/model-flow change in this prerequisite; no new render claimed.
+Experiential: original private conversation and authoritative Sessions preserved by contract; actual customer/model/device/return/isolation/full seven pillars proof still owed.
+Founder Acceptance: NOT_REQUESTED; one complete integrated evaluation later.
+Seven capabilities remain Limited; ALG01/12 bounded PARTIAL, ALG02/04/13 production UNVERIFIED. Internal-only development increment, no customer version/announcement. Source-compatible forward-fix; no external email/payment/signature/booking/upload/publication/privilege effect.

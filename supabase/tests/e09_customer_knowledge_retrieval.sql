@@ -28,7 +28,7 @@
 --  10. A turn begun through the original 7-argument begin (a v1 binding) replays through the unchanged
 --      v1 context.
 BEGIN;
-SELECT plan(148);
+SELECT plan(208);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
@@ -504,6 +504,139 @@ CREATE TEMP TABLE progress_interrupted AS SELECT pg_temp.thread('a2') th,gen_ran
 SELECT is((SELECT pg_temp.progress_begin(th,intent)->>'status' FROM progress_interrupted),'accepted','second private question is bound through same original native begin');
 UPDATE public.plan_items SET client_shared_at=NULL,client_shared_by=NULL WHERE id='e0b20800-0000-4000-8000-000000000002';
 SELECT ok((SELECT NOT (pg_temp.progress_settle(th,intent,'',NULL,'WITHHELD') ? 'sqlstate') FROM progress_interrupted),'withdrawn source permits original empty native cleanup, not duplicate send');
+
+
+-- EXP09 Sessions: same private Native intent, original Sessions projection, rollback-only.
+INSERT INTO public.calendars(id,tenant_id,created_by,slug,title,duration_min,min_notice_min,enabled)
+VALUES ('e0b20900-0000-4000-8000-000000000001',pg_temp.t('a'),pg_temp.u('a1'),'test-k2-sessions-a','Strategy session',60,60,true),
+ ('e0b20900-0000-4000-8000-000000000002',pg_temp.t('b'),pg_temp.u('b1'),'test-k2-sessions-b','FOREIGN SESSION',60,60,true);
+INSERT INTO public.internal_bookings(id,tenant_id,host_user_id,contact_id,calendar_id,title,notes,guest_email,
+ intake_answers,start_at,end_at,timezone,status,booking_kind,location_type,meeting_url,source) VALUES
+ ('e0b20910-0000-4000-8000-000000000001',pg_temp.t('a'),pg_temp.u('a1'),pg_temp.c('a2'),'e0b20900-0000-4000-8000-000000000001',
+  'PRIVATE STAFF TITLE','PRIVATE STAFF NOTE','private@tests.invalid','{"secret":"PRIVATE INTAKE"}',now()+interval '3 hours',now()+interval '4 hours','America/Chicago','scheduled','single','zoom','https://private.example.invalid/join','internal'),
+ ('e0b20910-0000-4000-8000-000000000002',pg_temp.t('a'),pg_temp.u('a1'),pg_temp.c('a2'),'e0b20900-0000-4000-8000-000000000001',
+  'PRIVATE PAST TITLE',NULL,NULL,NULL,now()-interval '3 days',now()-interval '3 days'+interval '1 hour','UTC','done','single',NULL,NULL,'internal'),
+ ('e0b20910-0000-4000-8000-000000000003',pg_temp.t('a'),pg_temp.u('a1'),pg_temp.c('a3'),'e0b20900-0000-4000-8000-000000000001',
+  'PRIVATE PEER TITLE',NULL,NULL,NULL,now()+interval '8 hours',now()+interval '9 hours','UTC','scheduled','single',NULL,NULL,'internal'),
+ ('e0b20910-0000-4000-8000-000000000004',pg_temp.t('b'),pg_temp.u('b1'),pg_temp.c('b2'),'e0b20900-0000-4000-8000-000000000002',
+  'FOREIGN PRIVATE TITLE',NULL,NULL,NULL,now()+interval '6 hours',now()+interval '7 hours','UTC','scheduled','single',NULL,NULL,'internal'),
+ ('e0b20910-0000-4000-8000-000000000005',pg_temp.t('b'),pg_temp.u('b1'),pg_temp.c('a2'),'e0b20900-0000-4000-8000-000000000002',
+  'FOREIGN MISBOUND TITLE',NULL,NULL,NULL,now()+interval '10 hours',now()+interval '11 hours','UTC','scheduled','single',NULL,NULL,'internal');
+CREATE FUNCTION pg_temp.sessions_ctx(_who text,_thread uuid,_intent uuid) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(pg_temp.u(_who),format('SELECT public.client_portal_assistant_sessions_context(%L,%L)',_thread,_intent)) $$;
+CREATE FUNCTION pg_temp.sessions_begin(_thread uuid,_intent uuid) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_assistant_begin_sessions(%L,%L,NULL,%L,false,false,false,NULL)',
+  _thread,_intent,'When are my sessions?')) $$;
+CREATE FUNCTION pg_temp.sessions_settle(_thread uuid,_intent uuid,_content text,_sessions jsonb,_state text DEFAULT 'FINAL')
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE bundle jsonb; original jsonb;
+BEGIN
+ SELECT bundle_ref INTO original FROM public.paige_chat_turns
+  WHERE thread_id=_thread AND role='user' AND interactive_intent_id=_intent;
+ bundle:=jsonb_build_object('interactive',jsonb_build_object('request_intent_id',_intent),
+  'turn_state',jsonb_build_object('v',1,'state',_state));
+ IF NOT (_content='' AND _state IN('WITHHELD','INTERRUPTED','REFUSED')) THEN
+  IF original ? 'customer_knowledge' THEN bundle:=bundle||jsonb_build_object('customer_knowledge',original->'customer_knowledge'); END IF;
+  IF original ? 'customer_progress' THEN bundle:=bundle||jsonb_build_object('customer_progress',original->'customer_progress'); END IF;
+ END IF;
+ IF _sessions IS NOT NULL THEN bundle:=bundle||jsonb_build_object('customer_sessions',_sessions); END IF;
+ RETURN pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_settle(%L,%L,%L,%L,%L,NULL,NULL,%L::jsonb,NULL))',
+  _thread,pg_temp.u('a2'),pg_temp.t('a'),_intent,_content,bundle::text),'service_role');
+END $$;
+CREATE TEMP TABLE sessions_turn AS SELECT pg_temp.thread('a2') th,gen_random_uuid() intent;
+ALTER TABLE sessions_turn ADD COLUMN pre jsonb;
+UPDATE sessions_turn SET pre=pg_temp.sessions_ctx('a2',th,intent);
+CREATE TEMP TABLE sessions_booking_before AS SELECT jsonb_agg(to_jsonb(b) ORDER BY b.id) rows FROM public.internal_bookings b;
+
+SELECT ok(NOT has_function_privilege('anon',f,'EXECUTE') AND NOT has_function_privilege('authenticated',f,'EXECUTE')
+ AND NOT has_function_privilege('service_role',f,'EXECUTE'),'Sessions helper remains postgres-only: '||f)
+FROM unnest(ARRAY['public._client_sessions_projection(uuid,uuid)','public._client_sessions_snapshot_valid(jsonb)',
+ 'public._client_sessions_snapshot_current(uuid,uuid,uuid,jsonb)','public._client_sessions_snapshot_lock(uuid,uuid,uuid,jsonb)',
+ 'public._client_sessions_terminal_guard()','public._client_sessions_publication_current(uuid,uuid)']) f;
+SELECT ok(has_function_privilege('authenticated',f,'EXECUTE') AND NOT has_function_privilege('anon',f,'EXECUTE')
+ AND NOT has_function_privilege('service_role',f,'EXECUTE'),'Sessions original caller entry Auth-only: '||f)
+FROM unnest(ARRAY['public.client_portal_assistant_sessions_context(uuid,uuid)',
+ 'public.client_portal_assistant_begin_sessions(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector)']) f;
+SELECT is(pg_temp.as_user(pg_temp.u('a2'),'SELECT public._client_sessions_projection(NULL,NULL)')->>'sqlstate','42501','actual customer role cannot bypass original private scope');
+SELECT is(pg_temp.as_user(pg_temp.u('a2'),'SELECT public._client_sessions_projection(NULL,NULL)','service_role')->>'sqlstate','42501','actual service role cannot bypass original private scope');
+SELECT is((SELECT pre->>'mode' FROM sessions_turn),'fresh','fresh original customer sees own session context');
+SELECT is((SELECT array_agg(k ORDER BY k) FROM sessions_turn,jsonb_object_keys(pre) k),ARRAY['frame','intent_id','mode','sessions','snapshot','thread_id'],'Sessions context has closed six-key DTO');
+SELECT is((SELECT pre#>>'{sessions,upcoming,items,0,title}' FROM sessions_turn),'Strategy session','original calendar customer-safe title reused');
+SELECT is((SELECT jsonb_array_length(pre#>'{sessions,upcoming,items}') FROM sessions_turn),1,'only own same-business upcoming session');
+SELECT is((SELECT jsonb_array_length(pre#>'{sessions,past,items}') FROM sessions_turn),1,'original past window preserved');
+SELECT is((SELECT pre#>'{sessions,upcoming,items,0,change}' FROM sessions_turn),
+ public._client_portal_sessions_projection(pg_temp.t('a'),pg_temp.c('a2'),'upcoming',NULL,20)#>'{sessions,0,change}','original permitted change windows reused exactly');
+SELECT ok((SELECT pre::text NOT LIKE '%PRIVATE%' AND pre::text NOT LIKE '%FOREIGN%' AND pre::text NOT LIKE '%private@%' AND pre::text NOT LIKE '%private.example%' FROM sessions_turn),'no staff notes/intake/raw title/peer/foreign/join URL reaches minimized context');
+SELECT is((SELECT array_agg(k ORDER BY k) FROM sessions_turn,jsonb_object_keys(pre#>'{sessions,upcoming,items,0}') k),
+ ARRAY['change','end_at','id','kind','start_at','status','timezone','title'],'minimal session fields are explicit and closed');
+SELECT ok((SELECT public._client_sessions_snapshot_valid(pre->'snapshot') FROM sessions_turn),'minimized original facts carry valid native fingerprint');
+SELECT is((SELECT pg_temp.sessions_ctx('a1',th,intent)->>'sqlstate' FROM sessions_turn),'42501','owner cannot enter private customer context');
+SELECT is((SELECT pg_temp.sessions_ctx('a3',th,intent)->>'sqlstate' FROM sessions_turn),'42501','same-business peer denied');
+SELECT is((SELECT pg_temp.sessions_ctx('b2',th,intent)->>'sqlstate' FROM sessions_turn),'42501','foreign-business customer denied');
+SELECT is((SELECT pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_assistant_sessions_context(%L,%L)',th,intent),'anon')->>'sqlstate' FROM sessions_turn),'42501','actual anon denied');
+SELECT is((SELECT pg_temp.sessions_ctx('a2',th,NULL)->>'sqlstate' FROM sessions_turn),'42501','missing intent denied');
+SELECT is((SELECT pg_temp.sessions_begin(th,intent)->>'status' FROM sessions_turn),'accepted','one original Native begin binds Sessions and existing Progress/Knowledge');
+SELECT is((SELECT bundle_ref->'customer_sessions' FROM public.paige_chat_turns t,sessions_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='user'),(SELECT pre->'snapshot' FROM sessions_turn),'same original user turn stores exact session source');
+SELECT ok((SELECT bundle_ref ? 'customer_progress' AND bundle_ref ? 'customer_knowledge' FROM public.paige_chat_turns t,sessions_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='user'),'original Progress and Knowledge provenance retained');
+SELECT is((SELECT pg_temp.sessions_ctx('a2',th,intent)->>'mode' FROM sessions_turn),'bound','same accepted intent replays bound source');
+SELECT is((SELECT pg_temp.sessions_ctx('a2',th,intent)-'mode' FROM sessions_turn),(SELECT pre-'mode' FROM sessions_turn),'replay never replaces accepted facts');
+SELECT is((SELECT pg_temp.sessions_begin(th,intent)->>'turn_id' FROM sessions_turn),(SELECT t.id::text FROM public.paige_chat_turns t,sessions_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='user'),'replay returns original accepted user identity');
+SELECT is((SELECT count(*) FROM public.paige_chat_turns t,sessions_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='user'),1::bigint,'no second accepted user receipt');
+SELECT is((SELECT pg_temp.sessions_settle(th,intent,'Unbound session answer',NULL)->>'error' FROM sessions_turn),'CUSTOMER_SESSIONS_BINDING_INVALID','terminal without original session provenance refused');
+SELECT is((SELECT pg_temp.sessions_settle(th,intent,'Forged session answer',jsonb_set(pre->'snapshot','{source_fingerprint}',to_jsonb(repeat('0',64))))->>'error' FROM sessions_turn),'CUSTOMER_SESSIONS_BINDING_INVALID','terminal fingerprint substitution refused');
+
+SELECT is((SELECT jsonb_agg(to_jsonb(b) ORDER BY b.id) FROM public.internal_bookings b),(SELECT rows FROM sessions_booking_before),'source reads, native admission and replay never write booking rows');
+CREATE TEMP TABLE sessions_empty AS SELECT pg_temp.thread('a3') th,gen_random_uuid() intent;
+UPDATE public.internal_bookings SET status='blocked' WHERE id='e0b20910-0000-4000-8000-000000000003';
+SELECT is((SELECT pg_temp.sessions_ctx('a3',th,intent)#>'{sessions,upcoming,items}' FROM sessions_empty),'[]'::jsonb,'genuinely empty authorized upcoming window is explicit');
+SELECT is((SELECT pg_temp.sessions_ctx('a3',th,intent)#>'{sessions,past,items}' FROM sessions_empty),'[]'::jsonb,'empty past is not another customer or business fallback');
+UPDATE public.internal_bookings SET status='scheduled' WHERE id='e0b20910-0000-4000-8000-000000000003';
+
+UPDATE public.calendars SET min_notice_min=180 WHERE id='e0b20900-0000-4000-8000-000000000001';
+SELECT is((SELECT pg_temp.sessions_ctx('a2',th,intent)->>'error' FROM sessions_turn),'CUSTOMER_SESSIONS_SOURCE_WITHDRAWN','changed scheduling policy invalidates accepted facts');
+SELECT is((SELECT pg_temp.sessions_settle(th,intent,'Stale policy answer',pre->'snapshot')->>'error' FROM sessions_turn),'CUSTOMER_SESSIONS_SOURCE_WITHDRAWN','trusted settlement rechecks original calendar policy');
+UPDATE public.calendars SET min_notice_min=60 WHERE id='e0b20900-0000-4000-8000-000000000001';
+UPDATE public.internal_bookings SET start_at=start_at+interval '1 hour',end_at=end_at+interval '1 hour' WHERE id='e0b20910-0000-4000-8000-000000000001';
+SELECT is((SELECT pg_temp.sessions_ctx('a2',th,intent)->>'error' FROM sessions_turn),'CUSTOMER_SESSIONS_SOURCE_WITHDRAWN','rescheduled source cannot be silently replaced');
+UPDATE public.internal_bookings SET start_at=start_at-interval '1 hour',end_at=end_at-interval '1 hour' WHERE id='e0b20910-0000-4000-8000-000000000001';
+SELECT ok((SELECT NOT (pg_temp.sessions_settle(th,intent,'Your upcoming strategy session has the business change window shown in Sessions.',pre->'snapshot') ? 'sqlstate') FROM sessions_turn),'same Native terminal accepts exact current session facts');
+SELECT ok((SELECT (pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM sessions_turn),'original publication admits current exact session result');
+SELECT ok((SELECT jsonb_path_exists(pg_temp.ctx('a2',th,gen_random_uuid(),NULL),'$.history[*] ? (@.content == "Your upcoming strategy session has the business change window shown in Sessions.")') FROM sessions_turn),'current session answer can inform later private model context');
+UPDATE public.internal_bookings SET status='cancelled' WHERE id='e0b20910-0000-4000-8000-000000000001';
+SELECT ok((SELECT NOT (pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM sessions_turn),'cancelled original session closes stale publication');
+SELECT ok((SELECT NOT jsonb_path_exists(pg_temp.ctx('a2',th,gen_random_uuid(),NULL),'$.history[*] ? (@.content == "Your upcoming strategy session has the business change window shown in Sessions.")') AND (pg_temp.ctx('a2',th,gen_random_uuid(),NULL)->>'history_limited')::boolean FROM sessions_turn),'stale appointment prose omitted from next model history and marked limited');
+SELECT is((SELECT count(*) FROM public.paige_chat_turns t,sessions_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='assistant'),1::bigint,'original private customer UI history retained');
+UPDATE public.internal_bookings SET status='scheduled' WHERE id='e0b20910-0000-4000-8000-000000000001';
+SELECT is((SELECT pg_temp.sessions_ctx('a3',th,intent)->>'mode' FROM k2_v1),'legacy','legacy Knowledge-only accepted question remains legacy');
+SELECT is((SELECT pg_temp.sessions_ctx('a2',th,intent)->>'mode' FROM progress_turn),'legacy','existing Progress-only accepted question not silently upgraded');
+SELECT ok(NOT public._client_sessions_snapshot_valid('[]') AND NOT public._client_sessions_snapshot_valid('{"version":1}'),'malformed snapshot refused');
+SELECT ok((SELECT NOT public._client_sessions_snapshot_valid((pre->'snapshot')||'{"owner_override":true}') FROM sessions_turn),'extra authority field refused');
+SELECT ok((SELECT NOT public._client_sessions_snapshot_current(pg_temp.u('a3'),pg_temp.t('a'),pg_temp.c('a2'),pre->'snapshot') FROM sessions_turn),'trusted caller cannot substitute another customer');
+SELECT ok((SELECT NOT public._client_sessions_snapshot_current(pg_temp.u('a2'),pg_temp.t('b'),pg_temp.c('a2'),pre->'snapshot') FROM sessions_turn),'trusted caller cannot substitute another business');
+CREATE TEMP TABLE sessions_interrupted AS SELECT pg_temp.thread('a2') th,gen_random_uuid() intent;
+SELECT is((SELECT pg_temp.sessions_begin(th,intent)->>'status' FROM sessions_interrupted),'accepted','new bound question uses original Native system');
+UPDATE public.calendars SET enabled=false WHERE id='e0b20900-0000-4000-8000-000000000001';
+SELECT ok((SELECT NOT (pg_temp.sessions_settle(th,intent,'',NULL,'WITHHELD') ? 'sqlstate') FROM sessions_interrupted),'withdrawn source permits only empty original cleanup, no retry');
+UPDATE public.calendars SET enabled=true WHERE id='e0b20900-0000-4000-8000-000000000001';
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='paused' WHERE id=pg_temp.c('a2');
+SELECT is((SELECT pg_temp.sessions_ctx('a2',th,intent)->>'sqlstate' FROM sessions_turn),'42501','paused customer denied after accepted question');
+SELECT is((SELECT pg_temp.sessions_begin(th,gen_random_uuid())->>'sqlstate' FROM sessions_turn),'42501','paused customer cannot submit new question');
+UPDATE public.clients SET portal_access_state='open' WHERE id=pg_temp.c('a2');
+SELECT set_config('paige.portal_access_write','',true);
+UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id=pg_temp.u('a2');
+SELECT ok((SELECT NOT public._client_sessions_snapshot_lock(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),pre->'snapshot') FROM sessions_turn),'trusted settlement refuses banned original identity');
+UPDATE auth.users SET banned_until=NULL WHERE id=pg_temp.u('a2');
+SELECT set_config('paige.portal_access_write','1',true);
+SELECT set_config('paige.link_ok','1',true);
+UPDATE public.clients SET portal_access_state='ended',linked_user_id=NULL,portal_access_former_user_id=pg_temp.u('a2') WHERE id=pg_temp.c('a2');
+SELECT is((SELECT pg_temp.sessions_ctx('a2',th,intent)->>'sqlstate' FROM sessions_turn),'42501','revoked/unlinked relationship refused');
+UPDATE public.clients SET portal_access_state='open',linked_user_id=pg_temp.u('a2'),portal_access_former_user_id=NULL WHERE id=pg_temp.c('a2');
+SELECT set_config('paige.link_ok','',true);
+SELECT set_config('paige.portal_access_write','',true);
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_assistant_begin_progress(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector)'::regprocedure),'5dc86fa2c0afe766939cc39ada1078a9','original Progress begin byte-preserved');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_progress_scope_current(uuid,uuid,uuid)'::regprocedure),'cef5bd234d501bce4268cb572b013a78','original trusted actor authority byte-preserved');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_sessions(uuid,text,timestamptz,integer)'::regprocedure),'a49e96af6eb2fa582b375a500abcc433','original public Sessions reader byte-preserved');
 
 SELECT * FROM finish();
 ROLLBACK;

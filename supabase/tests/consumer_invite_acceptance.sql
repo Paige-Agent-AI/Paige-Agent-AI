@@ -18,7 +18,7 @@ CREATE FUNCTION pg_temp.e09_snapshot() RETURNS jsonb LANGUAGE sql AS $$
  'audit',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.audit_logs x));
 $$;
 
-CREATE FUNCTION pg_temp.e09_call(_token text,_actor uuid,_allow boolean,_label text,_expected_error text DEFAULT NULL)
+CREATE FUNCTION pg_temp.e09_call(_token text,_actor uuid,_allow boolean,_label text,_expected_error text DEFAULT NULL,_expected_tenant uuid DEFAULT 'e0901000-0000-0000-0000-000000000001')
 RETURNS SETOF text LANGUAGE plpgsql AS $$
 DECLARE _before jsonb:=pg_temp.e09_snapshot(); _denied boolean:=false; _result uuid; _role text; _failure text;
 BEGIN
@@ -37,7 +37,7 @@ BEGIN
  IF _expected_error IS NOT NULL THEN
   RETURN NEXT is(_failure,_expected_error,_label||': intended guard caused refusal');
  END IF;
- IF _allow THEN RETURN NEXT is(_result,'e0901000-0000-0000-0000-000000000001'::uuid,_label||': invited tenant only');
+ IF _allow THEN RETURN NEXT is(_result,_expected_tenant,_label||': invited tenant only');
  ELSE RETURN NEXT is(pg_temp.e09_snapshot(),_before,_label||': zero durable acceptance effects'); END IF;
 END;
 $$;
@@ -117,6 +117,115 @@ SELECT * FROM pg_temp.e09_case('foreign exact contact','{"foreign":true,"staff":
 SELECT * FROM pg_temp.e09_case('occupied exact contact','{"occupied":true,"staff":true,"expected_error":"42501:portal invitation client relationship is no longer available"}');
 SELECT * FROM pg_temp.e09_case('archived exact contact','{"archived":true,"staff":true,"expected_error":"42501:portal invitation client relationship is no longer available"}');
 SELECT * FROM pg_temp.e09_case('unbound token','{"unbound":true,"staff":true,"expected_error":"42501:portal invitation requires an explicit client relationship"}');
+
+-- Exact original invitation integrity, including every non-consumer branch.
+SELECT is((SELECT md5(replace(prosrc,$inv_new$    -- Keep one canonical relationship per login in each business.
+    -- Other businesses retain their own original relationship authorization.
+    IF EXISTS (SELECT 1 FROM public.clients c
+      WHERE c.linked_user_id = _uid AND c.tenant_id = _tok.tenant_id
+        AND c.id <> _client_id) THEN$inv_new$,$inv_old$    -- Preserve the current single-tenant restriction until the coordinated
+    -- relationship/switch slice removes the global unique constraint safely.
+    IF EXISTS (SELECT 1 FROM public.clients c
+      WHERE c.linked_user_id = _uid AND c.id <> _client_id) THEN$inv_old$)) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'10316cc79166fbcc24825cbbacf34e89','invitation exact inverse preserves all original recipient/token/CRM/audit and staff/agency branches');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'543bb36574e23f05c20838b7ee56413f','the reviewed per-business invitation source is installed');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='v' AND proconfig=ARRAY['search_path=public'] AND pg_get_function_identity_arguments(oid)='_token text' AND pg_get_function_result(oid)='uuid' FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure) AND has_function_privilege('authenticated','public.accept_tenant_invite(text)','EXECUTE') AND has_function_privilege('service_role','public.accept_tenant_invite(text)','EXECUTE') AND NOT has_function_privilege('anon','public.accept_tenant_invite(text)','EXECUTE'),'original invitation ABI owner authority path and entry grants remain unchanged');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._clients_portal_access_guard()'::regprocedure),'c1dceae767c0b94a7e465f678a72d648','original revoke and re-invitation lifecycle guard is unchanged');
+
+-- Native63: the same ordinary recipient joins two ORIGINAL business relationships.
+CREATE TEMP TABLE e09_multi_fixture ON COMMIT DROP AS SELECT gen_random_uuid() actor_id,gen_random_uuid() owner_id,gen_random_uuid() other_id,gen_random_uuid() contact_a,gen_random_uuid() contact_b,gen_random_uuid() duplicate_a,gen_random_uuid() invite_a,gen_random_uuid() invite_b,gen_random_uuid() duplicate_invite,gen_random_uuid() wrong_invite,gen_random_uuid() expired_invite,gen_random_uuid() revoked_invite,gen_random_uuid() foreign_invite;
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data)
+ SELECT actor_id,'authenticated','authenticated','multi-client-'||actor_id||'@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'::jsonb FROM e09_multi_fixture
+ UNION ALL SELECT owner_id,'authenticated','authenticated','multi-owner-'||owner_id||'@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'::jsonb FROM e09_multi_fixture
+ UNION ALL SELECT other_id,'authenticated','authenticated','multi-other-'||other_id||'@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'::jsonb FROM e09_multi_fixture;
+INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status)
+ SELECT contact_a,'e0901000-0000-0000-0000-000000000001'::uuid,owner_id,'Multi','Client A','active' FROM e09_multi_fixture
+ UNION ALL SELECT contact_b,'e0901000-0000-0000-0000-000000000002'::uuid,owner_id,'Multi','Client B','active' FROM e09_multi_fixture
+ UNION ALL SELECT duplicate_a,'e0901000-0000-0000-0000-000000000001'::uuid,owner_id,'Duplicate','Client A','active' FROM e09_multi_fixture;
+SELECT public._attach_client_address(c.tenant_id,c.id,'email','multi-client-'||f.actor_id||'@tests.invalid') FROM e09_multi_fixture f JOIN public.clients c ON c.id IN(f.contact_a,f.contact_b,f.duplicate_a);
+INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,expires_at,max_uses,uses,contact_id,email)
+ SELECT i.invite_id,i.business_id,'test-multi-'||i.invite_id,'consumer','member'::public.tenant_role,f.owner_id,now()+interval '1 day',NULL,0,i.contact_id,'multi-client-'||f.actor_id||'@tests.invalid'
+ FROM e09_multi_fixture f CROSS JOIN LATERAL(VALUES(f.invite_a,'e0901000-0000-0000-0000-000000000001'::uuid,f.contact_a),(f.invite_b,'e0901000-0000-0000-0000-000000000002'::uuid,f.contact_b),(f.duplicate_invite,'e0901000-0000-0000-0000-000000000001'::uuid,f.duplicate_a),(f.wrong_invite,'e0901000-0000-0000-0000-000000000002'::uuid,f.contact_b),(f.expired_invite,'e0901000-0000-0000-0000-000000000002'::uuid,f.contact_b),(f.revoked_invite,'e0901000-0000-0000-0000-000000000002'::uuid,f.contact_b),(f.foreign_invite,'e0901000-0000-0000-0000-000000000001'::uuid,f.contact_b)) i(invite_id,business_id,contact_id);
+UPDATE public.tenant_invite_tokens SET expires_at=now()-interval '1 second' WHERE id=(SELECT expired_invite FROM e09_multi_fixture);
+UPDATE public.tenant_invite_tokens SET revoked_at=now() WHERE id=(SELECT revoked_invite FROM e09_multi_fixture);
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT invite_a FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),true,'first legitimate business invitation');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT wrong_invite FROM e09_multi_fixture),(SELECT other_id FROM e09_multi_fixture),false,'another customer cannot redeem the second business invitation','42501:portal invitation belongs to a different verified recipient');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT foreign_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'a token cannot bind the second contact to the first business','42501:portal invitation client relationship is no longer available');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT expired_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'second-business expired invitation');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT revoked_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'second-business revoked invitation');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT duplicate_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'a duplicate contact inside the SAME business remains refused','42501:portal identity requires relationship access reconciliation');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT invite_b FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),true,'second legitimate business invitation',NULL,'e0901000-0000-0000-0000-000000000002');
+SELECT is((SELECT count(*) FROM public.clients WHERE linked_user_id=(SELECT actor_id FROM e09_multi_fixture)),2::bigint,'two genuine invitations produce two separate canonical relationships');
+SELECT is((SELECT count(*) FROM public.clients WHERE id IN(SELECT contact_a FROM e09_multi_fixture UNION ALL SELECT contact_b FROM e09_multi_fixture) AND linked_user_id=(SELECT actor_id FROM e09_multi_fixture)),2::bigint,'the original exact contacts are reused without a duplicate CRM');
+SELECT is((SELECT linked_user_id FROM public.clients WHERE id=(SELECT duplicate_a FROM e09_multi_fixture)),NULL::uuid,'refused same-business duplicate remains unlinked');
+SELECT is((SELECT count(*) FROM public.user_roles WHERE user_id=(SELECT actor_id FROM e09_multi_fixture) AND role='client'),1::bigint,'the original client role is idempotent across two businesses');
+SELECT is((SELECT count(*) FROM public.tenant_members WHERE user_id=(SELECT actor_id FROM e09_multi_fixture)),0::bigint,'two customer invitations never create a business staff seat');
+SELECT is((SELECT active_tenant_id FROM public.profiles WHERE user_id=(SELECT actor_id FROM e09_multi_fixture)),NULL::uuid,'customer invitations never change owner or staff workspace');
+SELECT is((SELECT count(*) FROM public.audit_logs WHERE user_id=(SELECT actor_id FROM e09_multi_fixture) AND action='consumer_invite_accepted' AND entity_id IN(SELECT invite_a FROM e09_multi_fixture UNION ALL SELECT invite_b FROM e09_multi_fixture)),2::bigint,'each accepted business retains its own original durable receipt');
+SELECT ok(EXISTS(SELECT 1 FROM public.audit_logs a,e09_multi_fixture f WHERE a.entity_id=f.invite_b AND a.user_id=f.actor_id AND a.action='consumer_invite_accepted' AND a.data->>'tenant_id'='e0901000-0000-0000-0000-000000000002' AND a.data->>'client_id'=f.contact_b::text),'second acceptance receipt binds original actor business and contact');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT invite_b FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'returning second-business token cannot grant twice','42501:portal invitation has already been accepted');
+SELECT throws_ok($duplicate$UPDATE public.clients SET linked_user_id=(SELECT actor_id FROM e09_multi_fixture) WHERE id=(SELECT duplicate_a FROM e09_multi_fixture)$duplicate$,'23505',NULL,'the database itself refuses a duplicate login within one business');
+-- End Native63 core acceptance controls.
+
+
+-- The original selected-business readers and owner lifecycle writers after real native acceptance.
+CREATE FUNCTION pg_temp.e09_multi_read(actor uuid,business uuid,statement text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE result jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',actor,'role','authenticated')::text,true);
+ PERFORM set_config('request.headers',CASE WHEN business IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('x-client-portal-business',business) END::text,true);
+ SET LOCAL ROLE authenticated;
+ BEGIN EXECUTE statement INTO result;EXCEPTION WHEN OTHERS THEN result:=jsonb_build_object('sqlstate',SQLSTATE,'error',SQLERRM);END;
+ RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);PERFORM set_config('request.headers','{}',true);RETURN result;
+END $$;
+SELECT is(jsonb_array_length(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),NULL,'SELECT public.client_portal_relationship_choices()')->'relationships'),2,'two genuinely accepted business relationships appear in original choices');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_a::text FROM e09_multi_fixture),'returning A reads only its original accepted customer');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000002','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_b::text FROM e09_multi_fixture),'switching to B reads only its original accepted customer');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),NULL,'SELECT public.client_portal_frame()')->>'sqlstate','42501','returning without a selected business refuses ambiguity');
+SELECT ok(pg_temp.e09_multi_read((SELECT other_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000002','SELECT public.client_portal_frame()') IS NULL,'another actual customer cannot borrow either joined business');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000002',format('SELECT public.client_portal_invite_status(%L)','test-multi-'||(SELECT invite_b FROM e09_multi_fixture)))->>'client_id',(SELECT contact_b::text FROM e09_multi_fixture),'lost acceptance response reconciles the exact original second-business receipt');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT to_jsonb(count(*)) FROM public.clients'),to_jsonb(0::bigint),'two customer links still grant no raw CRM read');
+CREATE TEMP TABLE e09_multi_read_before AS SELECT pg_temp.e09_snapshot() state;
+SELECT pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000002','SELECT public.client_portal_frame()');
+SELECT pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_frame()');
+SELECT is(pg_temp.e09_snapshot(),(SELECT state FROM e09_multi_read_before),'return reads do not create an enrollment send or acceptance receipt');
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at)
+ SELECT b.id,f.owner_id,'owner'::public.tenant_role,'active',true,now() FROM e09_multi_fixture f CROSS JOIN(VALUES('e0901000-0000-0000-0000-000000000001'::uuid),('e0901000-0000-0000-0000-000000000002'::uuid))b(id);
+UPDATE public.profiles SET active_tenant_id='e0901000-0000-0000-0000-000000000001' WHERE user_id=(SELECT owner_id FROM e09_multi_fixture);
+CREATE FUNCTION pg_temp.e09_multi_access(action text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE f record;v jsonb;
+BEGIN
+ SELECT * INTO f FROM e09_multi_fixture;
+ v:=pg_temp.e09_multi_read(f.owner_id,'e0901000-0000-0000-0000-000000000001',format('SELECT public.read_client_portal_access(%L,%L)','e0901000-0000-0000-0000-000000000001',f.contact_a));
+ RETURN pg_temp.e09_multi_read(f.owner_id,'e0901000-0000-0000-0000-000000000001',format('SELECT public.set_client_portal_access(%L,%L,%L,%L,%L,%L,%L)',f.owner_id,'e0901000-0000-0000-0000-000000000001',f.contact_a,action,'engagement_paused',NULL,v->>'since'));
+END $$;
+SELECT pg_temp.e09_multi_access('pause');
+SELECT is((SELECT portal_access_state FROM public.clients WHERE id=(SELECT contact_a FROM e09_multi_fixture)),'paused','original owner writer pauses only A after both invitations');
+SELECT ok(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_frame()') IS NULL,'paused A cannot borrow an open B frame');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_access_state()')->>'state','paused','returning A shows its own original paused notice');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000002','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_b::text FROM e09_multi_fixture),'pausing A leaves joined B available');
+SELECT pg_temp.e09_multi_access('restore');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_a::text FROM e09_multi_fixture),'original restore reopens the same A contact');
+SELECT pg_temp.e09_multi_access('end');
+SELECT ok((SELECT portal_access_state='ended' AND linked_user_id IS NULL AND portal_access_former_user_id=(SELECT actor_id FROM e09_multi_fixture) FROM public.clients WHERE id=(SELECT contact_a FROM e09_multi_fixture)),'original owner revocation ends only A and retains its former recipient');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_access_state()')->>'state','ended','returning revoked A sees only its own original notice');
+SELECT ok(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_frame()') IS NULL,'ended A cannot expose B or retained A records');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000002','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_b::text FROM e09_multi_fixture),'revoking A leaves original B relationship and history available');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT invite_a FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'revoked original A token cannot restore customer access');
+ALTER TABLE e09_multi_fixture ADD COLUMN return_invite uuid DEFAULT gen_random_uuid();
+INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,expires_at,max_uses,uses,contact_id,email)
+ SELECT return_invite,'e0901000-0000-0000-0000-000000000001','test-multi-'||return_invite,'consumer','member',owner_id,now()+interval '1 day',1,0,contact_a,'multi-client-'||actor_id||'@tests.invalid' FROM e09_multi_fixture;
+CREATE FUNCTION pg_temp.e09_multi_audit_fail() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN IF NEW.entity_id=(SELECT return_invite FROM e09_multi_fixture) THEN RAISE EXCEPTION 'synthetic invitation receipt unavailable';END IF;RETURN NEW;END$$;
+CREATE TRIGGER e09_multi_audit_fail BEFORE INSERT ON public.audit_logs FOR EACH ROW EXECUTE FUNCTION pg_temp.e09_multi_audit_fail();
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT return_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'interrupted original acceptance receipt keeps ended link and unused token','P0001:synthetic invitation receipt unavailable');
+DROP TRIGGER e09_multi_audit_fail ON public.audit_logs;
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT return_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),true,'a new legitimate invitation restores original ended A while B remains linked');
+SELECT ok((SELECT portal_access_state='open' AND linked_user_id=(SELECT actor_id FROM e09_multi_fixture) AND portal_access_former_user_id IS NULL FROM public.clients WHERE id=(SELECT contact_a FROM e09_multi_fixture)),'original unchanged link-set guard clears A ended notice on genuine reacceptance');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_a::text FROM e09_multi_fixture),'returning re-invited A enters the original customer face');
+SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000002','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_b::text FROM e09_multi_fixture),'re-inviting A does not change B');
+SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='consumer_invite_accepted' AND entity_id=(SELECT return_invite FROM e09_multi_fixture)),1::bigint,'recovered acceptance has one real original receipt');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT return_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'returning restored invitation cannot be replayed','42501:portal invitation has already been accepted');
+-- End Native63 original reader/lifecycle integration controls.
+
 -- E09 additive owner invitation-history reader: actual full schema and caller roles.
 -- No sender/provider action; all neutral fixtures and proof mutations roll back.
 CREATE FUNCTION pg_temp.e09_history_call(_actor uuid,_expected_actor uuid,_tenant uuid,_role text DEFAULT 'authenticated')

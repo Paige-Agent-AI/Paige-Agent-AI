@@ -126,13 +126,11 @@ SELECT is(length(pg_temp.as_user('e0915a00-0000-4000-8000-000000000009',$q$SELEC
 SELECT is(pg_temp.as_user('e0915a00-0000-4000-8000-000000000001',$q$SELECT public.get_client_portal_config()$q$),'{}'::jsonb,'staff with no relationship get {}');
 -- Two relationships are not reachable under the canonical unique link index; lift it for this one
 -- case only (as customer_portal_progress.sql does) and restore it straight after.
-DROP INDEX public.clients_linked_user_id_unique;
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0935a00-0000-4000-8000-000000000004','e0925a00-0000-4000-8000-00000000000a','e0915a00-0000-4000-8000-000000000008','e0915a00-0000-4000-8000-000000000001','Two','Businesses','active'),
  ('e0935a00-0000-4000-8000-000000000005','e0925a00-0000-4000-8000-00000000000b','e0915a00-0000-4000-8000-000000000008','e0915a00-0000-4000-8000-000000000006','Two','Businesses','active');
 SELECT is(pg_temp.as_user('e0915a00-0000-4000-8000-000000000008',$q$SELECT public.get_client_portal_config()$q$)->>'sqlstate','42501','two relationships refuse rather than pick one');
 DELETE FROM public.clients WHERE id IN('e0935a00-0000-4000-8000-000000000004','e0935a00-0000-4000-8000-000000000005');
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
 SELECT is(pg_temp.as_user(NULL,$q$SELECT public.get_client_portal_config()$q$,'anon')->>'sqlstate','42501','anonymous read refused');
 
 -- ── 3. The frame keeps its exact root keys and carries the catalog ──────────────────────────

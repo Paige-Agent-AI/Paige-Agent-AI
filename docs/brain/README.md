@@ -1770,7 +1770,7 @@ eca1796a and ANT1613217e341 record the dependency-ordered continuation plan.
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 
-**D3A authority prerequisite, development:** proposed350002 factors the exact
+**D3A authority prerequisite, development:** proposed360002 (after verified production350004) factors the exact
 original Metric actor predicate into private INVOKER
 `_analytics_metric_actor_authorized(uuid,uuid)`. The existing JWT/current-workspace
 wrapper keeps its ABI, DEFINER, owner and ACL. This is one predicate, not a second

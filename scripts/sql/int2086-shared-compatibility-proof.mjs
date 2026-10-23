@@ -15,7 +15,7 @@ source = source.replace("const read=p=>readFileSync(new URL('../../'+p,import.me
 const sql = readFileSync(`${root}/supabase/migrations/20270601000006_int340_shared_metric_evidence.sql`, 'utf8');
 const forward = readFileSync(`${root}/supabase/migrations/20271101110001_int2086_overdue_metric_compatibility.sql`, 'utf8');
 const reportCapture = readFileSync(`${root}/supabase/migrations/20271113330002_exp02_document_metric_capture.sql`, 'utf8');
-const actorAuthority = readFileSync(`${root}/supabase/migrations/20271113350002_exp02_metric_actor_authority.sql`, 'utf8');
+const actorAuthority = readFileSync(`${root}/supabase/migrations/20271113360002_exp02_metric_actor_authority.sql`, 'utf8');
 const extra = `
 run(\`CREATE TABLE analytics_evidence_reference(token_digest text PRIMARY KEY,issued_to uuid NOT NULL,tenant_id uuid NOT NULL,metric_id text NOT NULL CONSTRAINT analytics_evidence_reference_metric_id_check CHECK(metric_id<>'') ,range_key text NOT NULL CONSTRAINT analytics_evidence_reference_range_key_check CHECK(range_key<>'') ,range_start timestamptz,range_end timestamptz,source_revision_ref text,issued_at timestamptz,expires_at timestamptz,revoked_at timestamptz);
 ALTER TABLE analytics_evidence_reference ENABLE ROW LEVEL SECURITY;

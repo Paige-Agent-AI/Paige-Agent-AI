@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: no new interface or material user interaction; the
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: preserve the actual customer's exact canonical business relationship through existing Auth/profile/access readers
 VISUAL_DIRECTION: PASS: original approved tenant-branded portal and public entry preserved without CSS, layout or motion changes
 AUTOMATED_EVIDENCE: PASS: previous immutable head 4ec1aa9845caf7c11658184d89b7d9faf6379351 executed 61 native cases; those results are historical support only and fresh renamed-head CI is required
-STATIC_EVIDENCE: PASS: byte-identical SQL rename, original assertions unchanged, 1417-version collision check, definer/ACL lint and diff check completed; required hosted checks remain pending
+STATIC_EVIDENCE: PASS: byte-identical SQL rename, original assertions unchanged, 1417-version collision check, definer/ACL lint and diff check completed
 RENDERED_EVIDENCE: UNVERIFIED: no mounted consumer or rendering edit in this prerequisite; browser evidence belongs to the separate Gateway consumer
 BEHAVIORAL_EVIDENCE: UNVERIFIED: native isolated caller-role evidence is not an authenticated browser visit
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary external-client session used; actual saved-link, multiple-business, revoked access and complete journey proof remains owed
@@ -25,7 +25,7 @@ MUST_PRESERVE: original Auth, CRM, profile, S7 access, global unique linkage, ra
 ACCEPTANCE_CRITERIA: actual native callers can select only their authorized original relationship or own permitted notice; invalid, foreign, ambiguous and revoked scope refuses; all original tests and permissions remain effective
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: actual caller and relationship authorization tested in isolated native suites; shared Spine, Harness, Trust, Rail, Chat/Live, sender, documents, Knowledge, billing, signing and booking remain unchanged
-INTERNAL_BUILD_IDENTITY: source-base=855fff5b85323bd4112df2d7d33edaf5ca766f19; final exact head in PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLIED(20271113550009); edge=NOT_APPLICABLE; evidence=original native suites and relationships packet
+INTERNAL_BUILD_IDENTITY: source-base=855fff5b85323bd4112df2d7d33edaf5ca766f19; final exact head in PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113550009 exact-head replay and production readback); edge=NOT_APPLICABLE; evidence=original native suites and relationships packet
 RELEASE_CHANNEL: development: source candidate requiring exact-head review, all applicable checks, normal deployment and readback
 RELEASE_CLASSIFICATION: internal-only: bounded backend prerequisite, no completed customer release
 CUSTOMER_RELEASE_IDENTITY: none: full Experience and owner acceptance remain unverified

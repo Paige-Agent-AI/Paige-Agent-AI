@@ -1,3 +1,21 @@
+## EXP05 ZION Model Fabric consumer — local source preparation, October23
+
+Original ZION classification-band drafts and plan job now consume shared Model Fabric with current original
+actor/workspace/registry rechecks per provider leg. No runtime prompt/config or
+activation change. Protected/unknown/unported jobs keep their original route and
+sensitive-budget contract; their Fabric adoption remains unfinished. The original
+trusted actorless service draft (including ActionBus) keeps its
+identity and explicit receipt exclusion; request JSON cannot select service
+authority. All218/eight consumer-authority-recovery and171 existing shared policy
+checks pass with synthetic transports, plus97 original ancestry controls.
+[Source and proof boundary](../evidence/ui-delivery/exp05-zion-model-fabric.md).
+This is local prerequisite work, not deployed ZION or authenticated acceptance.
+Full kernel/delegation replay/cancellation, instructions, weekly execution,
+automations, ten outcomes/E5-CV1–9 and founder evaluation remain incomplete.
+Eleven Operations catalogue recipes remain Listed / Unverified; no new router,
+work store, scheduler, approval system or competing agent runtime.
+
+
 ## EXP05 original MCP ZION context — source preparation, October23
 
 Original delegate_to_subagent now forwards the existing server-resolved workspace

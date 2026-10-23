@@ -25,4 +25,5 @@
 @media(prefers-reduced-motion:reduce){.finance-evidence{animation:none!important;transition:none!important}}
 
 /* Owner-approved compact Finance: controls stay above the working content. */
+.finance-workspace .finance-toolbar>button.finance-primary,.finance-workspace .dc-header button.dc-primary{min-height:44px}
 .finance-toolbar{flex-wrap:wrap;padding:10px 24px}.finance-content{padding-top:8px}.finance-editorial-summary{margin-top:0}.finance-bearing{margin-top:0}.finance-toolbar>button:last-child{margin-left:auto}@media(max-width:600px){.finance-toolbar{padding:10px 16px}.finance-toolbar label{order:3;width:100%;flex-direction:row;align-items:center;flex-wrap:wrap}.finance-content{padding-top:8px}}

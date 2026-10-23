@@ -55,3 +55,23 @@ ALG-01: bounded original identity/status preservation and no-repeat feedback. AL
 Functional: locally verified source; release owed. Visual: actual local desktop/narrow light/dark captures, existing design preserved. Experiential: original reload and scope negatives verified with recorded ports; ordinary authenticated proof owed. Founder Acceptance: pending the complete integrated Experience.
 
 Grounding / Collision Check: ANT-11/21/52/147/161 and original#2401 recovery requirement; bounded pre-edit ANT161/b8b726fc. Parent2692 preserves current E02 document/unknown518 producer, E04 domain execution, E09 CURA and E01 Live ownership. No new agent, uploader, service, registry, scheduler, ledger, privilege or held activation. Existing authoritative capability statuses remain unchanged.
+
+## Current-main composition and CI correction
+
+Parent2692 is source-released at main400118998d08ef130f25886d6235dccc009c559c;
+normal Chat519/orchestrator122 all392 files and both public web aliases match.
+Original production receipt6376512781 retains exact identities. Composed child
+972de980f preserves E09 login/Finance documentation and both brain-index entries.
+
+Prior child541c verify120685612062 failed three existing customer Progress cleanup
+cases: its extracted actual fallback had not bound the new recoveryInputRefused
+closure variable. This is a real test-harness failure, not a production defect or
+a waived gate. The harness now extracts that variable's actual source declaration
+and supplies the original refusal constant. All original empty-content, source-free,
+exactly-once settlement/release assertions remain, with an added no-refusal-marker
+assertion for failed CURA reads. Actual authorized local run3/3 PASS; prior sandbox
+zero-case JSON is INVALID and is not behavioral proof. Existing local dependency
+runtime differs from committed lock; fresh exact-lock hosted CI remains required.
+Product source, bindings, permissions, consent and all rendered bytes are unchanged
+by this correction. New independent review, exact-head CI and normal release of
+the child remain owed; authenticated refusal/reload remains UNVERIFIED.

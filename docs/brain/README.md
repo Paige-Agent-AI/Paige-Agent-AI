@@ -48,12 +48,16 @@ The current [Harness source correction](../delivery/harness-completion-map.md)
 identifies the existing Layer C engine. Reuse canonical ActionBus, durable work,
 Planning, Trust, adapters and Rails; create no replacement engine or ledger.
 
-Original-result reentry is now a source candidate in the existing reader:
+Original-result reentry2692 is now source-released in the existing reader:
 bounded own-identity discovery followed by exact response/receipt inspection,
 never a repeat dispatch. Six original suites192PASS and77 original hostile/binding
 cases PASS; stale outcome/contact races were causally reproduced and corrected.
-Review, hosted exact-head CI, deployment and ordinary authenticated proof remain
-separate gates. [Bounded contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
+Reviewed b880/all11 checks plus two statuses passed; main400118998 and normal
+Chat519/orchestrator122 packages match all392 returned files. Both public aliases
+serve the exact merged build. [Production receipt6376512781](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2692#issuecomment-6376512781)
+and the sole Master row retain exact source/configuration identities. Ordinary
+authenticated reentry and native held-thread specialist inspection remain owed.
+[Bounded contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
 No ZION instructions, provider effect, workflow activation or catalogue Live
 promotion occurs. All full ten-outcome/E5-CV1–9 obligations above remain open.
 

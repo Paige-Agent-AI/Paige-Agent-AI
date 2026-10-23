@@ -8,7 +8,7 @@ import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
 import { ResearchView } from "./paige-research";
 
 const harness = vi.hoisted(() => ({
-  rpc: vi.fn(async () => ({ data: { state: "not_acknowledged" }, error: null })),
+  rpc: vi.fn(async () => ({ data: { state: "not_acknowledged" } as { state: string; acknowledgedAt?: string; revokedAt?: string; expiresAt?: string }, error: null as unknown })),
   tenantId: "test-tenant-a",
   actorId: "test-actor-a",
   skillsEntitled: true,

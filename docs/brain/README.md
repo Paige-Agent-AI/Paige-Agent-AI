@@ -2747,3 +2747,21 @@ Current composition: recovery2663 mergedfd123cc (original993 parent), actual mai
 and original77/77 source mutation controls PASS. Worker/native-cache startup errors
 remain separate history. Chat407baseline/407current, no increase; owned lint0.
 New exact-head review/hosted CI/normal Edge source readback remain mandatory.
+
+
+## EXP02 original Finance Metric context repair — October23 local
+
+Actual released2672 ordinary SOLO QA verifies VERA label/44px keyboard prefill,
+read-only reply/reload and own-draft continuity; exact-reference inspection exposed
+missing original range context (QA6373093970, ANT1389989375b/ANT161300ed4ab).
+Bounded Finance consumer repair copies original returned bounds and selected range
+identity into the existing read_business_metric request, no date recalculation or
+reference replacement; incomplete context omits the unbound reference.
+80/five focused cases, scoped lint0/type10→6 and normal production build2m58s PASS.
+12 current-source native synthetic frames support unchanged geometry/keyboard/reflow
+and original denied state, not corrected customer behavior.
+[Evidence](../evidence/ui-delivery/e2-finance-metric-review-context.md).
+Functional local / Visual synthetic / Experiential corrected same-reference read
+and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, registry,
+authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
+All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.

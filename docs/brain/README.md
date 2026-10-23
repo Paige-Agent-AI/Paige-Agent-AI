@@ -9,6 +9,19 @@ positive reference lifetime remains incomplete because subsequent original
 issuance revokes the prior reference. Original authority, domain ownership and
 all19/nine remain unchanged. No candidate release or founder acceptance claimed.
 
+## EXP02 Finance metric context — October23 source released, proof bounded
+
+Original2684/main d780fd85e3cfd0c73256847c79f2692a5a399d1a exact review/CI,
+normal web and containing public source readback are in Master4.0 and the existing
+[Finance brain](finance-department.md#october23--original-finance-metric-review-context-source-released).
+Additive ordinary VERA exact-reference handoff/refusal/reload QA6375398254 preserves
+unknown-versus-zero and source authority. Positive reference availability remains
+incomplete: original60-second later issuance revoked it before expiry; existing
+Sales owner coordination retains canonical resolver/revocation.
+Overview/Banking visual refinements2694/2696 are drafts, not released or accepted.
+All19/nine, original monthly CPU/recovery/claim hold and one complete founder
+evaluation remain open. No provider/permission/algorithm/catalogue activation.
+
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist outcome/receipt recovery, requester-and-workspace activity

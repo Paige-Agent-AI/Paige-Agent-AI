@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-23 — EXP04 restores the existing exact-head check invocation.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2683](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2683): exact-ref dispatch for six original standalone checks | Reviewed `5984db9f93fadf6e4befefce823f94f09a9c3ff9`, AUTHOR-REVIEW / LOWER ASSURANCE5634002789; all11 applicable exact-head contexts, both verify120637581554/120637486263 and two web statuses SUCCESS. All eight original workflows dispatched without changed jobs, thresholds, baselines or permissions. Final6374617688. Main `a9bd855c14e824e6cb2c905876d45418c452ae57`, actual d780fd85+5984 parents/tree `e68e5630dfce3e46672ee42a3bc908d8d1af57ae` exactly matches inspected union. All seven default-branch files match reviewed source. Normal production `dpl_G71UsMyQXpXqgzcVgj7XozWarxJn` READY/exacta9; both public domains actually serve a9bd855-mvlgdzr6/customerUpdate:null at21:02:12UTC. [Receipt6374662174](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2683#issuecomment-6374662174). | SOURCE RELEASE VERIFIED for CI invocation only. Genuine schema-free Preview SKIPPED; own migration, Edge, provider and business action N/A. Existing75 evidence-guard tests and AST/real exact-ref checks passed. No customer capability, authenticated acceptance, Algorithm/Capabilities Live or full O1–O12 completion is implied. |
+
 **2026-10-23 — EXP04 original recipient consumes the atomic signing writer.**
 
 | Increment | Exact released identity and proof | Completion boundary |

@@ -1,5 +1,13 @@
 ## EXP04 recipient signing repair — October23 source released
 
+Bounded CI repair2683 is SOURCE RELEASE VERIFIED: reviewed5984, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5634002789, all11 applicable exact-head gates/
+both verify runs/two statuses SUCCESS. Maina9bd855c14e824e6cb2c905876d45418c452ae57,
+actual union treee68e5630, all seven original workflow/OPS files exact. Normal
+webdpl_G71UsMyQXpXqgzcVgj7XozWarxJn READY/exact merge; both public domains
+serve a9bd855-mvlgdzr6/null21:02UTC. Master4.0/receipt6374662174 retain details.
+Original jobs/permissions/baselines remain; no customer/algorithm Live promotion.
+
 Original2670 reviewed1758c3d73e498f814effca8a5e4c5935900b4959, LOWER5632547825,
 all11 exact-head checks/full normal Preview/two statuses SUCCESS, merged
 024ac8f677be0fd9bdb650283aa9119e6ce7be95. Actual1b304+1758 union tree372e27f3

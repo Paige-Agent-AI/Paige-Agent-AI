@@ -115,7 +115,7 @@ locally.
 
 - **ALG-01 (reconciliation):** PARTIAL — connection state + tools cache + (unused) receipts
   machinery exist; provider event reconciliation unproven with zero receipts.
-- **ALG-12 (exception detection):** PARTIAL as of PR4 (20271113410001) — list_integration_surface now derives
+- **ALG-12 (exception detection):** PARTIAL as of PR4 (20271113510000) — list_integration_surface now derives
   probe staleness (connected-claiming row with a probe older than 7 days renders degraded + stale=true,
   the same recency rule the channel half always applied) and carries the gateway half's closed-vocabulary
   last_error_code (schema-enforced bounded-token shape since this PR) into the projection, so chat's

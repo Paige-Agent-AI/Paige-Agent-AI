@@ -212,7 +212,7 @@ end;
 $function$;
 
 COMMENT ON FUNCTION public.list_integration_surface() IS
- 'EXP10 PR4 (20271113330000): projection now carries per-MCP-row stale (probe older than 7 days on a row claiming connected, the same recency rule the channel half has always applied — such a row derives health degraded WITH stale=true so the reason stays distinguishable) and, on the gateway half only, last_error_code from the physical row (the gateway''s CLOSED refusal vocabulary — never provider prose). The legacy and n8n-API halves add stale only: their readers exclude unbounded error text by design and no error field is invented for them. Additive: the chat integrations_list tool passes rows through so failure questions answer from real evidence; the settings-integrations client whitelists fields and drops the additions.';
+ 'EXP10 PR4 (20271113510000): projection now carries per-MCP-row stale (probe older than 7 days on a row claiming connected, the same recency rule the channel half has always applied — such a row derives health degraded WITH stale=true so the reason stays distinguishable) and, on the gateway half only, last_error_code from the physical row (the gateway''s CLOSED refusal vocabulary — never provider prose). The legacy and n8n-API halves add stale only: their readers exclude unbounded error text by design and no error field is invented for them. Additive: the chat integrations_list tool passes rows through so failure questions answer from real evidence; the settings-integrations client whitelists fields and drops the additions.';
 
 -- ── Review P2 hardening: the "closed vocabulary" claim becomes schema-enforced ──
 -- The table's own comment always said last_error_code is "closed code; provider error text is

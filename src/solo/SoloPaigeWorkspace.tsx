@@ -6,6 +6,7 @@ import { SoloPlanningSuggestion } from "./SoloPlanningSuggestion";
 import { planningWorkRelevant } from "./planning-suggestion-context";
 import { PaigeComposerAutonomyChip } from "@/components/dashboard/paige/PaigeComposerAutonomyChip";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { isSoloSetupComplete } from "@/components/auth/RequireSetupComplete";
 import { ResearchView } from "@/solo/paige-research";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
@@ -302,7 +303,7 @@ export function SoloPaigeWorkspace({
   onboarding?: boolean;
   visible?: boolean;
 } = {}) {
-  const { activeTenantId, activeUserId, isPlatformStaff } = useTenantContext();
+  const { activeTenantId, activeUserId, activeTenant, isPlatformStaff } = useTenantContext();
   // §60 — does this account type carry Live Conversation? Answered in the one home
   // (src/lib/tier/tierFeatures.ts), never by an inline account_type compare. While the tenant is
   // still resolving the classification defaults to the permissive solo tier, so stay optimistic
@@ -312,7 +313,14 @@ export function SoloPaigeWorkspace({
   const liveConversationAvailable = tierLoading || hasTierFeature("live_conversation");
   const location = useLocation();
   const navigate = useNavigate();
-  const firstRun = !isPlatformStaff && (onboarding || new URLSearchParams(location.search).get("onboarding") === "1");
+  // Completion retirement: the canonical setup journey's completion marker
+  // (features.solo_setup_complete, written by the first successful Setup save)
+  // ends first-run presentation EVEN IF the URL still carries ?onboarding=1 —
+  // a completed owner must never re-encounter interview chrome through a
+  // stale link (§2F). The tenant context refreshes after a save, so this
+  // retires in-session, not just on the next reload.
+  const setupComplete = isSoloSetupComplete(activeTenant?.features);
+  const firstRun = !isPlatformStaff && !setupComplete && (onboarding || new URLSearchParams(location.search).get("onboarding") === "1");
   // The client a Solo surface pointed PAIGE at, read for THIS account only. The store
   // refuses a scope stamped with another account, so an account switch cannot surface
   // the previous account's client even for one frame.
@@ -392,6 +400,42 @@ export function SoloPaigeWorkspace({
     })();
     return () => { current = false; clearTimeout(deadline); };
   }, [activeTenantId, requestedInterview, resumeScope, resumeAttempt, clientScope, planScope, presenceScope]);
+  // Reliable resume: an owner re-entering an UNFINISHED onboarding lands back
+  // in their own unfinished interview conversation, not a blank one. One
+  // lookup per tenant on first-run entry (only while no thread is active and
+  // no deep link was given); a hit adopts the SAME verified deep-link path —
+  // the checkpoint/authority verification above then runs unchanged. A failed
+  // or empty lookup never blocks the fresh interview.
+  const resumeLookupRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!firstRun || requestedInterview || clientScope || planScope || presenceScope) return;
+    if (observedThread.current) return;
+    const scope = activeTenantId ?? "resolving";
+    if (resumeLookupRef.current === scope) return;
+    resumeLookupRef.current = scope;
+    void (async () => {
+      try {
+        const rpc = supabase.rpc as unknown as (name: string, args?: object) => Promise<{ data: unknown; error: unknown }>;
+        const lookup = await rpc("latest_solo_business_interview_thread");
+        if (resumeLookupRef.current !== scope) return;
+        const row = lookup.data as { threadId?: string } | null;
+        if (lookup.error || !row?.threadId) return;
+        const search = new URLSearchParams(location.search);
+        search.set("interviewThread", row.threadId);
+        navigate(`${location.pathname}?${search}`, { replace: true });
+      } catch { /* a failed lookup never blocks the fresh interview */ }
+    })();
+  }, [firstRun, requestedInterview, activeTenantId, clientScope, planScope, presenceScope, location.pathname, location.search, navigate]);
+  // Completion retirement of the URL itself: once setup is complete, a stale
+  // ?onboarding=1 (bookmarked or hand-typed) is stripped so the address stops
+  // claiming a first-run state the workspace has outgrown.
+  useEffect(() => {
+    if (!setupComplete) return;
+    const search = new URLSearchParams(location.search);
+    if (search.get("onboarding") !== "1") return;
+    search.delete("onboarding");
+    navigate(`${location.pathname}${search.size ? `?${search}` : ""}`, { replace: true });
+  }, [setupComplete, location.pathname, location.search, navigate]);
   const leaveReturnVerification = () => {
     const search = new URLSearchParams(location.search);
     search.delete("interviewThread");

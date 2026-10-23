@@ -97,9 +97,25 @@ serve(async (req: Request) => {
       _actor_user_id: user.id, _tenant_id: tenantId,
     });
     if (authorizationError || authorizedPilot !== true) {
+      // Owner directive 2026-10-23: admission requires the person's own current
+      // acknowledgement, so a refusal now has two honest faces. If the
+      // acknowledgement is missing, the acceptance control on the Live surface
+      // is theirs to use (and paige_live_accept_terms refuses truthfully if
+      // eligibility itself is what's missing). If the acknowledgement IS
+      // current, the refusal is eligibility/kill-switch — no acceptance
+      // changes it, and the copy says so.
+      let acknowledged: boolean | null = null;
+      try {
+        const companion = await admin.rpc("paige_live_acknowledgement_current_internal", {
+          _actor_user_id: user.id, _tenant_id: tenantId,
+        });
+        acknowledged = companion.data ?? null;
+      } catch { /* the refusal stands; only its explanation narrows */ }
       return json({
         ok: false, session_id: null, availability: "UNAVAILABLE", code: "live_audio_not_enabled",
-        explanation: "Live audio isn't available for this account yet. You can keep working with Paige in chat.",
+        explanation: acknowledged === false
+          ? "Live audio needs your one-time acknowledgement first: Paige explains what the speech provider keeps, you accept it yourself, and then she starts listening. Or keep working in chat."
+          : "Live audio isn't available for this account yet. You can keep working with Paige in chat.",
       });
     }
     // This is a first-party ticket, not a provider token. Existing sessions

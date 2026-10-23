@@ -1,5 +1,28 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## C19 exact signed-term effectuation — October23 continuation
+
+REUSE/EXTEND original2191 selectively after C18/2681. Existing old branch and all
+its integration assertions remain intact. Current pure source guard reuses the
+canonical commercial-engagement parser, including explicit service start/end and
+catalog/negotiated price basis. Genuine old-source baseline had15 positives and
+three intended failures; repaired18 plus19 accepted-source cases PASS37 locally.
+No command router, approval surface, native writer or Chat action is activated by
+this unmounted module. Native580004 is reserved/unapplied and not yet created.
+
+Next flow: original accepted agreement → existing Collections consequence review
+→ canonical governed status writer → original terms/immutable operation/Rail →
+current record and later reload. Retain exact document/signing/invoice/terms
+versions, raw PostgreSQL timestamp precision and current actor/tenant authority.
+Do not infer missing legacy service terms, charge, send, create debt, onboard or
+claim accepted service delivery. Current Collections explicitly treats schedules
+as previews without invoice/accrual/charge; owed totals use the canonical issued
+invoice flag/balance, excluding drafts/voids. Native integration must preserve
+that distinction and prove duplicate/replay/current-source behavior before use.
+Protected shared Chat/risk/audit source and original closed package DTO are not
+copied wholesale from the old stack. Full native/endpoint/UI/review/CI/release,
+ordinary-role/cohort/CentralQA and whole-Experience acceptance remain owed.
+
 ## C18 original accepted agreement inspection — October23 flow brief
 
 Goal: inspect the exact retained commercial record and distinguish today's terms.

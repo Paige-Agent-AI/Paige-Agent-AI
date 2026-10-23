@@ -1,5 +1,35 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## C18 original accepted agreement inspection — October23 flow brief
+
+Goal: inspect the exact retained commercial record and distinguish today's terms.
+Human and feel: authorized business owner; confident about evidence and its limits.
+Entry and exit: existing Sales invoice commercial inspection; close back to it.
+System: original SOLO tokens, billing paper, accessible native disclosure; no new shell.
+Signature: accepted principal and source versions beside their original dated obligations.
+Feedback: immediate named loading, focused result, explicit retry; no motion or haptics.
+Rejecting: a new ledger, inferred historical terms, optimistic signature/payment success.
+Variants: schema1 history has no inferred service dates; schema2 retains exact engagement.
+
+| State | Trigger / guard | Result | Recovery / exit |
+| --- | --- | --- | --- |
+| Existing commercial inspection | Explicit accepted-record read, actual completed linked agreement | Inline loading; no signing or terms effect | Cancel reading / close |
+| Loading | Original owner RPC, closed parser, immutable source/audit | Accepted principal, dates, versions and retained wording | Close or freshly read again |
+| Loading | Missing original audit/capsule | Unverified; today's terms cannot supply history | Read again or return to original agreement |
+| Loading | Denied, retired scope, offline or malformed response | No private text; accessible unavailable state | Retry or close |
+| Recorded | Today's terms differ from the retained version/economics | Keep accepted history distinct; explain difference | Review original records before any separate act |
+| Any | Tenant / invoice / agreement / version change, close or late response | Hide prior text immediately; ignore retired result | Explicit read in the new scope |
+| Recorded | Open retained wording | Native keyboard disclosure inside incumbent scroll owner | Collapse; focus remains on the disclosure |
+
+Prototype: one local deterministic HTML file, synthetic records and manual response
+controls only; all backend/provider/signing/payment/acceptance behavior UNVERIFIED.
+No modal for long exploratory reading, new scroll owner, provider call or automatic
+effect. Original #2190 owner-read source and design are REUSED/EXTENDED; its old
+package expansion/effectuation UI are not adopted by this increment. Existing
+package DTO remains byte-compatible. Owner's October21 discretion authorizes this
+routine implementation within the approved outcome; final whole Experience
+founder evaluation remains separate. Native zoom/AT/authenticated proof are owed.
+
 ## C17 original recipient transaction and recovery — October23 implementation
 
 Pre-edit ANT161/c39a72c2 and ANT163/b42756a1; existing sole lead/all12 outcomes.

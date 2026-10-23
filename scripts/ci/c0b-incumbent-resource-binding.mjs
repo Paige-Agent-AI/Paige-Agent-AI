@@ -888,7 +888,7 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/client-portal-assistant-context.ts": "807be6a423b0b8e3925da34a19a473e93873973f54a60d50fb49d66c724bfc96",
  "supabase/functions/_shared/client-portal-progress-context.ts": "cbccd38b41cbd80d279cd3ce8227f73a3896a1a85fcd7ead5da897bfb2d4d596",
  // EXP09 Sessions exact customer-only review: all prior121 source pins and29 dispatch bodies/controls/helpers/imports preserved.
- "supabase/functions/_shared/client-portal-sessions-context.ts": "5c7d3ecd42294a072b11ebaf7b88a1c6beb6615efe677eb6030b5c69736f3fbc",
+ "supabase/functions/_shared/client-portal-sessions-context.ts": "73ff54b458db614ab464f3d12f052eb33b39e3b78d7a7daccb4a359e05229ad0",
  "supabase/functions/_shared/client-portal-chat-scope.ts": "f9f0cc67e17097d3e3f3c817793550acd6d35ecf436965c04851c90254555433",
  // Cura identity review at36fd1031470aaaa1e0c0b364ecd57468b473bd2f:
  // only the customer name resolver/import and role wording change. Native

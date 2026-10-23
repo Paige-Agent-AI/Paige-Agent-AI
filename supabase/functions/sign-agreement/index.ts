@@ -2,9 +2,9 @@
 //
 // WHAT THIS IS, AND WHAT IT IS NOT. The signer's surface is the owner-approved React route
 // `/sign/:token`, built and browser-verified by the UI lane and FROZEN under §28. This function
-// serves NO markup. It does the work that genuinely needs elevated credentials and cannot happen in
-// the page or in a database function: producing the signed PDF, sealing it, writing the audit trail,
-// and sending notifications.
+// serves NO markup. The original native transaction commits signature, consent and audit together.
+// This endpoint verifies retained bytes/appearance before that call and retains the original
+// server-side PDF seal/readback and notification path after an authorized signing act.
 //
 // The page's other calls are RPCs — `peek_agreement_signing` and `decline_agreement_signing` — so
 // this endpoint exists for exactly the one act that needs pdf-lib and the service role.
@@ -127,6 +127,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const token = String(body.token ?? "").trim();
   // Shape before hashing: anything that is not 64 hex is garbage, refused for the cost of a regex.
   if (!TOKEN_SHAPE.test(token)) return refuse();
+  if(body.check_only!==undefined&&typeof body.check_only!=="boolean"){
+    return json({ok:false,code:"SIGNING_REQUEST_INVALID",error:"Invalid signing request. Reload this agreement before continuing."},400);
+  }
 
   const typedName = typeof body.typed_name === "string" ? body.typed_name.trim() : "";
   const consentRead = body.consent_read === true;

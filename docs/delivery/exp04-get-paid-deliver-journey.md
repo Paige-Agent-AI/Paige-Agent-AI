@@ -34,7 +34,7 @@ provider call. Existing owner-directed full build/release authority covers this
 bounded flow, with no new per-PR founder design gate. Full rendered and ordinary
 authenticated verification remain separate from synthetic component/API checks.
 
-Current local C17 proof:162 canonical Deno tests/88steps,31 actual component
+Current local C17 proof:162 canonical Deno tests/89steps,31 actual component
 cases, owning ESLint0/0, typed actual Edge entry and unchanged SOLO parity/mutation
 controls PASS. Actual full compiler exits2 with six existing signatures within
 unchanged canonical baseline10; no global-clean or baseline-change claim. Five

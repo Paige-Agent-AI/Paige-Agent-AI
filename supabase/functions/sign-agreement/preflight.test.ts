@@ -144,6 +144,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
     for(const variant of [
       {name:'an overlength accepted name is refused rather than truncated',patch:{typed_name:'A'.repeat(201)}},
       {name:'a non-string name is not converted into somebody else\'s mark',patch:{typed_name:['Synthetic Signer']}},
+      {name:'a non-boolean check flag cannot become a new signing act',patch:{check_only:'true'}},
       {name:'corrupt compressed PNG is refused before irreversible recording',patch:{signature_image_base64:btoa(String.fromCharCode(...corrupt))}},
     ])await t.step(variant.name,async()=>{
       agreement=base;storage=new Response(new Uint8Array(bytes).buffer);terminalWrites=0;

@@ -22,8 +22,11 @@ closed package DTO.75 local cases pass, including account-epoch/owner-access
 retirement. Current composed native406 PASS retains all323 original cases and
 adds83 accepted-evidence cases,27 owner reads, replay2 and real overlapping
 authority retirement. The original disposable cluster is empty/stopped.
-Earlier rendered frames remain pinned to their prior source; a fresh browser
-timeout/blank capture is INVALID. Latest-guard rendering/type/hosted/release/acceptance remain owed.
+Earlier rendered frames remain pinned to their prior source; a development-server
+timeout/blank capture stays INVALID. Separate compiled current-source proof now
+has14 native JPEGs/21 critical inputs/three compiled assets, actual five required
+widths in light/dark, account/access clearing, cancel focus and late-result guard.
+No full authenticated shell/role/cohort/zoom/AT proof is implied. Type/hosted/release/acceptance remain owed.
 Reserved570004 has not been applied. This read does not activate terms.
 
 ## EXP02 Finance specialist attribution — October23 development

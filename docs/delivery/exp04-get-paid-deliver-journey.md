@@ -14,8 +14,10 @@ Variants: schema1 history has no inferred service dates; schema2 retains exact e
 Current source validation: original native406 PASS (323 incumbent +83 accepted
 evidence, including27 original owner reads, replay2 and real concurrent authority
 retirement).75 local parser/component/billing cases and scoped lint PASS. Earlier
-rendered source remains pinned separately; latest browser timeout/blank capture
-is INVALID and fresh guard-source rendering is owed. Hosted full-schema/CI,
+rendered source remains pinned separately; development-server timeout/blank capture
+stays INVALID. Separate compiled current rendering has14 JPEGs/21 critical inputs,
+five actual widths/light-dark and browser account/access/cancel/late-result proof.
+Full authenticated shell/roles/cohorts/zoom/AT remain unverified. Hosted full-schema/CI,
 release/readback, authenticated roles/cohorts/CentralQA and full12 remain owed.
 
 | State | Trigger / guard | Result | Recovery / exit |

@@ -7,5 +7,6 @@ export default defineConfig({
  resolve:{alias:[
   {find:'@/integrations/supabase/client',replacement:fileURLToPath(new URL('./sdk.ts',import.meta.url))},
   {find:'@',replacement:fileURLToPath(new URL('../../../src',import.meta.url))},
- ]},server:{host:'127.0.0.1',port:54385,strictPort:true},
+ ]},build:{rollupOptions:{input:fileURLToPath(new URL('./index.html',import.meta.url))}},
+ server:{host:'127.0.0.1',port:54385,strictPort:true},
 });

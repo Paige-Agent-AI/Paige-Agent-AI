@@ -16,7 +16,7 @@ export function AgreementSignatureRequestMount(){
       if(mode==='unknown')return {ok:false,state:'unconfirmed',message:'The request may have completed. Inspect the original agreement before sending again.'};
       if(mode==='refused')return {ok:false,state:'refused',message:'Agreement access changed before dispatch. This page did not request a send.'};
       return {ok:true,sent:[email],notDelivered:mode==='partial'?['earlier.recipient@example.test']:[],
-        failed:mode==='partial'?[{email:'secondary.recipient.with.a.long.address@example.test',reason:'The provider accepted this request but its signing link could not be activated.'}]:[],
+        failed:mode==='partial'?[{email:'secondary.recipient.with.a.long.address@example.test',reason:'the email went out but its link could not be activated — resend it'}]:[],
         ...(mode==='partial'?{warning:'The agreement status could not be updated. Inspect its original record.'}:{})};
     },
     issueLink:async()=>({ok:false,message:'No signing link is created in this read-only local proof.'}),

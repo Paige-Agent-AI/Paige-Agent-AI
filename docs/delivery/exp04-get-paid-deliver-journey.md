@@ -51,7 +51,7 @@ Hook RED7FAIL/1PASS and actual panel RED6FAIL/1PASS retained. Original broad
 Sales1034PASS/3FAIL exposed two obsolete false-effect assertions and the unchanged
 vocabulary guard; stronger acceptance/empty-success assertions replaced those
 claims, with an actual empty-success causal RED before correction. Current original
-Sales scope1037 cases/68 files PASS/exit0; no timeouts or tests weakened. First and
+Sales scope1038 cases/68 files PASS/exit0; no timeouts or tests weakened. First and
 final type gates10 baseline/current6/no new diagnostics PASS; ESLint0 errors/one
 unchanged original dependency warning. Gold/UTF8/diff PASS. Pinned Impeccable4.1.0
 has zero blockers/40 incumbent advisories, no ignore/rule/dependency changes.
@@ -67,6 +67,17 @@ direction change. Long emails, partial/warning, unknown/refused/pending, native
 result/Tab/Escape/trigger-return and clear provider-versus-delivery evidence are
 covered. Local synthetic transports never establish hosted authorization, sending,
 signing, durable provider reconciliation, whole12/CentralQA/founder acceptance.
+
+Separate final source review caught the original producer's failed.reason wording
+inferring delivery from acceptance. The actual-source panel negative failed1/8
+before correction. The same panel now interprets its three fixed legacy reason
+sentences as acceptance-unverified, accepted-with-link-failure or reported
+suppression; unfamiliar reasons show an inspection explanation. Original raw
+failure evidence stays in the hook response and original records, never becomes
+a new provider engine. Current full1038/68 PASS and fresh original native20
+frames/eight paths/23 pins/zero errors confirm this correction using the exact
+original producer link-failure sentence in the controlled fixture. Source/API/
+permissions/native hold and all full12/customer acceptance boundaries remain.
 
 C11 preceding release is now verified:2646/mainc98f7af0537b005a4e895fff92c906bf51023628,
 normal agreement-document@71/23-file source readback and exact READY web/public

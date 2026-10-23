@@ -1160,6 +1160,14 @@ export function SignatureSender({ signings, signing, clientName, agreedLabel, te
   const firstName = (clientName || "").trim().split(/\s+/)[0] || "your client";
   const state = signing.displayState || signing.signatureState || "draft";
   const reissue = state === "sent" || state === "viewed" || state === "expired";
+  // These are the original sender's three fixed failure sentences. Its legacy
+  // delivery wording is not delivery evidence. Raw details remain in its result.
+  const sendIssueExplanation = (reason) => {
+    if (reason === "the email could not be delivered") return "The sender did not confirm provider acceptance. Delivery has not been verified.";
+    if (reason === "the email went out but its link could not be activated — resend it") return "The provider accepted the request, but its signing link could not be activated. Inspect the original record before requesting a replacement.";
+    if (reason === "this address is on the suppression list (a previous email bounced or was reported), so nothing was sent") return "The sender reported this address as suppressed. Inspect its original message history before another request.";
+    return "The sender reported an issue. Inspect the original agreement and message history before another request.";
+  };
   // The public route this build actually registers. Derived from the running origin rather than a
   // configured base, so a preview deployment hands out a preview link instead of a dead one.
   const url = link ? `${window.location.origin}/sign/${link.token}` : "";
@@ -1271,7 +1279,7 @@ export function SignatureSender({ signings, signing, clientName, agreedLabel, te
               </span></p>
             )}
             {sent.failed?.map((failure, index) => (
-              <p key={`${failure.email}-${index}`} className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span><b>{failure.email}</b>: {failure.reason}</span></p>
+              <p key={`${failure.email}-${index}`} className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span><b>{failure.email}</b>: {sendIssueExplanation(failure.reason)}</span></p>
             ))}
             {sent.warning && <p className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span>{sent.warning}</span></p>}
           </>) : !link ? (<>

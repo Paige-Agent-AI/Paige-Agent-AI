@@ -2,7 +2,7 @@
   "proofClass": "actual Sales shell/components/editor/SDK; synthetic identity/network only",
   "staticTransport": "native Vite compiled fixture",
   "normalizedLFSourceSHA256": {
-    "src/solo/sales-ops.tsx": "11968430746f2263676025ce6def127478fdae44722719e40601e1abecead36d",
+    "src/solo/sales-ops.tsx": "307a752d269a476290a1af6856e02f004adc11435c958196905c01c8b4d5bdf3",
     "src/solo/SalesWorkspace.tsx": "039ee4af441fc83161d304d486bc8bd5c92d3aa14594b1945edb9369b87d4d42",
     "src/solo/sales-dialog.tsx": "8a36536ab86879b0199b19426909e9940aa866c595c96678c7ca4e798f5c768e",
     "src/hooks/useBeforeUnloadGuard.ts": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
@@ -23,7 +23,7 @@
     "scripts/live-drive/agreement-authoring-drive.mjs": "a3714d1006aa527fd44e2b5f0824f4a7c1d2ce39fea44d859b4ad548aa784110",
     "src/solo/useSoloAgreementSignings.ts": "aa3c4c144b1d420400e5983e90872dcf2191bdb8bc85557748b910a53b126ae5",
     "src/solo/sales-ops.css": "aa8b4ca864c6f20b3512fcf62609547d1567fbbf79ae3b7378023d9302a4e6f3",
-    "scripts/live-drive/harness/sales-mount/agreement-signature-request-mount.tsx": "23524a0f20ef64a7735a3ea55af86215f550737e9f929fc2cfbd63dce9d6af35",
+    "scripts/live-drive/harness/sales-mount/agreement-signature-request-mount.tsx": "e39f6a0c233df771541c19a049f185f7b3536a2642acfd68aa4694bd3542e6b8",
     "scripts/live-drive/agreement-signature-request-paths.mjs": "18ebf764a85d3181b83ad1786972f61c0bafd3051622ae3e7c6f04ac3c467096"
   },
   "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",

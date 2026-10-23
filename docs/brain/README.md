@@ -1,5 +1,14 @@
 ## EXP04 recipient signing repair — October23 source released
 
+Existing Dependabot2688 is SOURCE RELEASE VERIFIED: non-author APPROVE5634889972,
+latest11 exact-head contexts/two statuses SUCCESS, merge689c589ba34344d6775320306b49f02e3167d16b/
+actual union treec9741cab. Productiondpl_7iXp4bLKzxyVhLBDTagBXe7PkWuo READY/exact689;
+both aliases exact689-mvlihye1/null22:03:39UTC. Actual production Bun resolves patched
+zod4.6.7; npm lock4.6.6, no lock-parity or all-Edge assertion. Earlier bot nativeFAIL
+remains; original exact-ref native/full baseline genuinely SUCCESS. Master4.0/
+receipt6375657717 preserve release and five separate moderate audit findings.
+Downstream agreement drafts still require their fresh composed-head gates.
+
 Bounded CI repair2683 is SOURCE RELEASE VERIFIED: reviewed5984, separate
 AUTHOR-REVIEW / LOWER ASSURANCE5634002789, all11 applicable exact-head gates/
 both verify runs/two statuses SUCCESS. Maina9bd855c14e824e6cb2c905876d45418c452ae57,
@@ -37,22 +46,30 @@ widths in light/dark, account/access clearing, cancel focus and late-result guar
 No full authenticated shell/role/cohort/zoom/AT proof is implied. Type/hosted/release/acceptance remain owed.
 Reserved570004 has not been applied. This read does not activate terms.
 
-## EXP05 ZION Model Fabric consumer — local source preparation, October23
+## EXP05 governed-work prerequisites — source releases verified, October23
 
-Original ZION classification-band drafts and plan job now consume shared Model Fabric with current original
-actor/workspace/registry rechecks per provider leg. No runtime prompt/config or
-activation change. Protected/unknown/unported jobs keep their original route and
-sensitive-budget contract; their Fabric adoption remains unfinished. The original
-trusted actorless service draft (including ActionBus) keeps its
-identity and explicit receipt exclusion; request JSON cannot select service
-authority. All218/eight consumer-authority-recovery and171 existing shared policy
-checks pass with synthetic transports, plus97 original ancestry controls.
-[Source and proof boundary](../evidence/ui-delivery/exp05-zion-model-fabric.md).
-This is local prerequisite work, not deployed ZION or authenticated acceptance.
-Full kernel/delegation replay/cancellation, instructions, weekly execution,
-automations, ten outcomes/E5-CV1–9 and founder evaluation remain incomplete.
-Eleven Operations catalogue recipes remain Listed / Unverified; no new router,
-work store, scheduler, approval system or competing agent runtime.
+Original specialist outcome/receipt recovery, requester-and-workspace activity
+inspection, contact-free MCP workspace binding and eligible ZION Fabric routing
+now have reviewed, merged and production-source/configuration readbacks.
+Exact identities and original receipts are in the sole
+[Master §4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log);
+earlier preparation snapshots below remain historical.
+ZION classification-band drafts and plan use existing Fabric with current
+actor/workspace/registration checks per admitted provider leg. Protected, unknown
+and unported jobs retain original routing and sensitive budgets. Actorless exact-service
+internal drafts keep their original identity and explicit receipt exclusion.
+[Source and causal proof](../evidence/ui-delivery/exp05-zion-model-fabric.md)
+separates 218 owning cases, fresh77 mutation controls and earlier shared-policy evidence.
+No prompt/config was published, no real model/business action was invoked by
+release verification, and no trigger or customer capability was activated.
+Full kernel/delegation replay/cancellation, runtime instructions, weekly execution,
+automation lifecycle, authenticated cohort/Live recovery, ten outcomes/E5-CV1–9
+and founder evaluation remain incomplete. Current ownership follows the
+existing ANT-11 original-ID receiving acknowledgments; catalogue statuses are
+not promoted by source, CI or deployment.
+The current [Harness source correction](../delivery/harness-completion-map.md)
+identifies the existing Layer C engine. Reuse canonical ActionBus, durable work,
+Planning, Trust, adapters and Rails; create no replacement engine or ledger.
 
 
 ## EXP05 original MCP ZION context — source preparation, October23

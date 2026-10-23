@@ -493,7 +493,9 @@ BEGIN
  PERFORM set_config('request.headers','{}',true);
  RETURN answer;
 END $$;
-UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002',onboarding_stage=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002',onboarding_stage=NULL,portal_access_state='open',status='active' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','',true);
 UPDATE public.clients SET onboarding_stage=NULL WHERE id='e0970300-0000-4000-8000-000000000001';
 DELETE FROM public.user_roles WHERE user_id='e0970100-0000-4000-8000-000000000002' AND role='client';
 SELECT is(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h')->>'sqlstate','42501','protected recovery refuses ambiguity instead of choosing LIMIT1');

@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-23 — EXP04 original signing retained-presentation repair released.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2656](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2656): verify original retained presentation and current credential before signing | Reviewed `5821b225eaad9a14dead88e0d1d35d9bc56a4e17`, separate AUTHOR-REVIEW / LOWER ASSURANCE5629061115; all11 applicable exact-head checks/two statuses/full normal Preview SUCCESS, zero inline findings. Main `6df73be568ab3d4283c3ac2b58e442d4475e95a4`, actual da509+5821 parents and inspected/actual tree `d297e32636b4b133344e7429c0f228e8d81fe81a`. Normal Edge39968476789/job120464514351 SUCCESS; canonical source/config artifact verifies sign-agreement@32/21files, original verify_jwt:false, manifest ec2ea3ae40201d45b5b2f31ce1578f13a35b64270409db6550caf03fa89209b7. Own SQL N/A. Exact web `dpl_3RBB3UotBzrdXnYjQb2chNuSe7y3` READY; both public6df-mvl22ijz/null observed, then normal EXP09/2638 containing `07c895ba9e5f6c2335633656c2b3ef9ba0a92285`, READY `dpl_NfSPQkBxVJdBRSNVLw14gZ1QpAr9`. Ancestry/zero original signing-source differences and actual14:24 public07c-mvl247kr/null/SoloJSd255c5e5/CSS9c83f7e9 verified. Initial stale-exact-build assertion remains failure. Post-merge main Finance39968476796 cancelled, not counted PASS; exact PR finance gate passed. [Release6367170814](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2656#issuecomment-6367170814). | SOURCE RELEASE VERIFIED, internal production repair.211 agreement cases/199steps, exact CI group158/67,28 original recipient/source tests and entry types PASS; current local native browser navigation FAILED/UNVERIFIED, no visual or authenticated receipt claimed. Original signing engine/immutable documents/prepared native holds/permissions/Portal/Chat/provider boundaries remain. Native atomic signature/audit/recovery, exact-map approved send/input/consent/pre-sign appearance/seal/effective terms and all O1–O12/roles/cohorts/CentralQA/one whole founder evaluation remain owed. No actual signature/send/payment/provider action, legal sufficiency, capability/algorithm Live or customer-release identity/announcement. Recovery is reviewed forward repair without uncertain-effect replay. |
+
 **2026-10-23 — EXP04 original prepared-field PDF renderer prerequisite released.**
 
 | Increment | Exact released identity and proof | Completion boundary |

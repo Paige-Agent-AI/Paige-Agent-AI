@@ -447,11 +447,13 @@ async function logInvocation(row: Record<string, unknown>) {
     .select("id")
     .single();
   if (error) console.error("[orchestrator] log insert failed:", error.message);
-  return data?.id as string | undefined;
+  return !error && typeof data?.id === "string" && UUID_RE.test(data.id) ? data.id : undefined;
 }
 
 async function updateInvocation(id: string, patch: Record<string, unknown>) {
-  await supabase.from("paige_subagent_invocations").update(patch).eq("id", id);
+  const { data, error } = await supabase.from("paige_subagent_invocations")
+    .update(patch).eq("id", id).select("id,status").single();
+  return !error && data?.id === id && data.status === patch.status;
 }
 
 /**
@@ -461,8 +463,8 @@ async function updateInvocation(id: string, patch: Record<string, unknown>) {
  * (job_attempt_id = subagent-invocation:<id>). Envelope-only detail: no input/output
  * content rides the receipt (the invocation row already stores those under its own
  * access rules). Honest outcomes: langgraph DISPATCH is capability_outcome_unknown —
- * a dispatch is not a completion. Actor: the tenant's active owner (the business the
- * specialist served); null tenant → the helper declines visibly.
+ * a dispatch is not a completion. Actor: the original trusted requester. A missing
+ * tenant/actor declines recording; a failed receipt never proves completion.
  */
 async function recordInvocationReceipt(opts: {
   invocationId: string | undefined;
@@ -473,12 +475,12 @@ async function recordInvocationReceipt(opts: {
   success: boolean;
   dispatched: boolean;
   latencyMs: number;
-}): Promise<void> {
-  if (!opts.invocationId || !opts.tenantId || !opts.actorId) return;
+}): Promise<boolean> {
+  if (!opts.invocationId || !opts.tenantId || !opts.actorId) return false;
   try {
     // Keep the original verified requester and invocation. Never borrow another
     // owner's identity or mint a new receipt identity after an uncertain write.
-    await recordCapabilityRun(supabase, {
+    return await recordCapabilityRun(supabase, {
       tenantId: opts.tenantId,
       actorId: opts.actorId,
       runId: opts.invocationId,
@@ -497,6 +499,7 @@ async function recordInvocationReceipt(opts: {
     });
   } catch (e) {
     console.error("[orchestrator] invocation receipt failed:", (e as Error)?.message);
+    return false;
   }
 }
 
@@ -701,32 +704,38 @@ Deno.serve(async (req) => {
       status: "pending",
       tenant_id: tenantId, // §9 attribution: the resolved request tenant, never caller-supplied
     });
+    // No runtime/provider may start without its original durable work identity.
+    // A failed insert is not a completed or retryable specialist assignment.
+    if (!invocationId) return ok({ ok: false, not_applied: true,
+      error: "Specialist work could not start because its original work record was not confirmed." }, 503);
+    const unconfirmed = () => ok({ ok: false, outcome_unknown: true, invocation_id: invocationId,
+      error: "The specialist result could not be verified. Inspect the original work before repeating it." }, 202);
 
-    let result: { status: number; body: unknown };
-    // §34-L5 / §13 SCOPE NOTE: per-agent model routing (config.job_kind → pickRoute) is wired for SOFT
-    // agents ONLY today — a `local` target hardcodes its model inside its own edge function (unreachable
-    // per-agent from here) and `langgraph` has no live agent. Extending per-agent routing to those runtimes
-    // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
-    if (agent.runtime === "local") {
-      result = await invokeLocal(agent.edge_function, boundInput, ctx);
-    } else if (agent.runtime === "soft") {
-      result = await invokeSoft(
-        { slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
-        boundInput,
-        ctx,
-        tenantId,
-      );
-    } else {
-      if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);
-      result = await dispatchLangGraph(agent.langgraph_graph, boundInput, ctx);
-    }
+    try {
+      let result: { status: number; body: unknown };
+      // §34-L5 / §13 SCOPE NOTE: per-agent model routing (config.job_kind → pickRoute) is wired for SOFT
+      // agents ONLY today — a `local` target hardcodes its model inside its own edge function (unreachable
+      // per-agent from here) and `langgraph` has no live agent. Extending per-agent routing to those runtimes
+      // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
+      if (agent.runtime === "local") {
+        result = await invokeLocal(agent.edge_function, boundInput, ctx);
+      } else if (agent.runtime === "soft") {
+        result = await invokeSoft(
+          { slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
+          boundInput,
+          ctx,
+          tenantId,
+        );
+      } else {
+        if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);
+        result = await dispatchLangGraph(agent.langgraph_graph, boundInput, ctx);
+      }
 
-    const latency = Date.now() - startedAt;
-    const success = result.status >= 200 && result.status < 300;
-    const isDispatch = agent.runtime === "langgraph" && success;
+      const latency = Date.now() - startedAt;
+      const success = result.status >= 200 && result.status < 300;
+      const isDispatch = agent.runtime === "langgraph" && success;
 
-    if (invocationId) {
-      await updateInvocation(invocationId, {
+      const outcomeRecorded = await updateInvocation(invocationId, {
         status: success ? (isDispatch ? "dispatched" : "succeeded") : "failed",
         latency_ms: latency,
         output: result.body,
@@ -740,32 +749,45 @@ Deno.serve(async (req) => {
             ? (result.body as Record<string, unknown>).run_id as string | undefined ?? null
             : null,
       });
-    }
+      if (!outcomeRecorded) return unconfirmed();
 
-    await recordInvocationReceipt({
-      invocationId,
-      slug: agent.slug,
-      runtime: agent.runtime,
-      tenantId,
-      actorId: ctx.user_id ?? null,
-      success,
-      dispatched: isDispatch,
-      latencyMs: latency,
-    });
-
-    return ok(
-      {
-        ok: success,
-        subagent: agent.slug,
+      const receiptRecorded = await recordInvocationReceipt({
+        invocationId,
+        slug: agent.slug,
         runtime: agent.runtime,
-        latency_ms: latency,
-        // §13/§14: surface the invocation id so a caller (e.g. the action-bus drainer) can attach it to
-        // the artifact it produced — proving "her TEAM did this", auditable, not Paige acting alone.
-        invocation_id: invocationId,
-        result: result.body,
-      },
-      success ? 200 : result.status,
-    );
+        tenantId,
+        actorId: ctx.user_id ?? null,
+        success,
+        dispatched: isDispatch,
+        latencyMs: latency,
+      });
+      // The original ActionBus draft worker has no human actor and owns its own
+      // work/receipt transition. Preserve that path without inventing an actor.
+      // A JWT caller cannot select this exclusion: ctx.user_id is server-verified.
+      if (tenantId && ctx.user_id && !receiptRecorded) return ok({ ok: false, outcome_unknown: true,
+        invocation_id: invocationId, outcome_recorded: true, receipt_unverified: true,
+        error: "The original specialist outcome is saved, but its receipt could not be confirmed. Inspect the original work before repeating it." }, 202);
+
+      return ok(
+        {
+          ok: success,
+          subagent: agent.slug,
+          runtime: agent.runtime,
+          latency_ms: latency,
+          // §13/§14: surface the invocation id so a caller (e.g. the action-bus drainer) can attach it to
+          // the artifact it produced — proving "her TEAM did this", auditable, not Paige acting alone.
+          invocation_id: invocationId,
+          receipt_recorded: receiptRecorded,
+          result: result.body,
+        },
+        success ? 200 : result.status,
+      );
+    } catch (error) {
+      // A transport/storage exception after registration can hide committed work.
+      // Keep its original identity and inspect-only result; never re-dispatch here.
+      console.error("[orchestrator] invocation outcome unconfirmed:", (error as Error)?.message);
+      return unconfirmed();
+    }
   } catch (e) {
     console.error("[orchestrator] error", e);
     return fail((e as Error).message ?? "Internal error", 500);

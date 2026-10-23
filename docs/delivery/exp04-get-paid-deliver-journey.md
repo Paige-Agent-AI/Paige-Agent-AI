@@ -61,8 +61,10 @@ native preparation holds are exercised by the unchanged105 cases.
 Normal existing Linux integrity runner gains only --signature-record on its final
 same-cluster proof; original assertions/deny flags remain. CLI-created empty local
 20261023134452 was renamed while never applied to reserved20271113480004, after
-E02/450002 and E09/460009/470009; actual production frontier read44. New native
-functions were absent in production; original held bodies/ACLs were read intact.
+E02/450002 and E09/460009/470009. Initial actual frontier44 is historical; the
+subsequent production read verifies45/46/47 applied, and source now composes their
+accepted mainbdd1a553386b6f1a84aac6a315114dc8f4df4983. Own48 remains UNAPPLIED.
+New native functions were absent in production; original held bodies/ACLs were read intact.
 Migration/source/permission/UTF8/diff checks PASS. No hosted migration or original
 recipient action is performed by this local proof. Required review/exact-head CI,
 frontier composition, normal production deployment/readback remain owed.
@@ -73,8 +75,10 @@ original consent/sign events/receipt -> original seal/readback and authorized
 recipient/owner/EXP09 projection. Native recipient signature is not PAIGE acting
 as signer or LayerC automation. Original agreement.send/high/external_effect/
 confirm/Kit/Trust/Rail remains unchanged; exact-map approved send and prepared
-input/consent/appearance/seal/effective terms still required. No new ActionAdapter,
-provider, grant, account, scheduler, registry or money movement. ALG01/12 supporting
+input/consent/appearance/seal/effective terms still required. Explicit EXECUTE on
+the private callable goes only to the existing service_role, using its existing
+table rights. No new ordinary-role/table privilege or definer elevation,
+ActionAdapter, provider, account, scheduler, registry or money movement. ALG01/12 supporting
 only; ALG02/13 and catalogue unpromoted. All twelve/one founder evaluation remain
 INCOMPLETE. Shipped log N/A for this native candidate until actual merge/release.
 

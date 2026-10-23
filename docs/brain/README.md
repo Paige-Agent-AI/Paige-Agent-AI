@@ -2691,3 +2691,10 @@ UNVERIFIED. CAP014/015 stay Unverified; other seven analytics/access/algorithm
 states unchanged. Original9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved.
 Functional source tested / Visual unchanged original renderer / Experiential
 released ordinary workflow owed / Founder NOT_ACCEPTED.
+
+Current composition: recovery2663 mergedfd123cc (original993 parent), actual main
+64347d7 retained with no peer source change. Combined283 cases had one unchanged
+5second C1 timeout; original isolated C1 suite53/53 PASS without changing timeout,
+and original77/77 source mutation controls PASS. Worker/native-cache startup errors
+remain separate history. Chat407baseline/407current, no increase; owned lint0.
+New exact-head review/hosted CI/normal Edge source readback remain mandatory.

@@ -1421,3 +1421,10 @@ uncertain recovery/Live/cohort remains owed. Founder NOT_ACCEPTED. CAP014/015
 Unverified and other seven analytics/access/ALG03/06/11/12Partial/13Unverified
 unchanged. No provider/model/spend/consequential activation. All19/nine and
 historical9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED remain intact.
+
+Recovery2663 now releasedfd123cc/original993; consumer cleanly composes actualmain
+64347d7. Own final diff is the original nine report/test/guard/evidence files.
+Combined283-case run retained one5second C1 timeout; original isolated53/53 suite
+and77/77 source controls PASS without assertion/timeout changes. Chat407/407lint,
+owned0. New exact-head review/CI/normal Edge and ordinary report QA remain owed;
+old3e green is historical. No algorithm/catalogue/permission/provider promotion.

@@ -91,8 +91,18 @@ unchanged. Renewed witness is in the same source-binding.json; original3e witnes
 remains in Git history. No extractor or authority waiver, whole-handler replacement,
 new engine, actor/provider permission or activation.
 
-Final combined-source regressions, separate lower-assurance review, exact-head CI
-and actual normal Edge readback must be completed; no initial green is borrowed.
+Recovery2663 is now merged fd123cc492f4d4d3a1e68bc637e5b46f4dad3f81, exact original
+993 parent. This consumer cleanly composes actual released main
+64347d7fad7645012fd095b9efc3916d037949de, including Finance/E04/E09 and their evidence;
+own final diff is nine original report/test/guard/evidence files, no department takeover.
+Chat blob c82273249f6ec7507e634e318b3124d3542c2ffb and parent orchestrator remain exact.
+Combined eight-suite run:282PASS/1FAIL, one unchanged5000ms C1 case timed out locally;
+the unchanged original C1 suite independently passes53/53 in13.71seconds, without
+timeout or assertion changes. Earlier worker-start/native-cache failures retained.
+All77 original hostile/positive Node controls PASS on the composed source. Fresh
+lint versus64347d7 again shows owned test/validator0 and Chat407/407, no increase.
+Separate final lower-assurance review, new exact-head CI and normal actual Edge
+readback remain mandatory; historical3e green is not borrowed.
 Known O16 visibility gap is tracked in ANT52/2529d636 and ANT161/de30e384: ordinary
 Stop truthfully warns display-only while live, but that notice is absent after
 reload. Original question/new read response persist; backend cessation is not

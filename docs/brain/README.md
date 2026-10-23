@@ -5,6 +5,19 @@
 
 PR2680 reviewedb0300921744d37f0a12f574f2a2c664b22b19516 mergedcb1d891d7b20e09d3d09263d3d9e4a6b690a8241/tree9c920fad; normal productionDQZE/publiccb1 and actual served Gateway/entry/landing source verified. Original receipt6374536491 and sole [Master4.0 log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) retain review/ten passing checks+PreviewSKIP/two statuses/145 focused and actual Native61+243/full grant proof. Original Auth/role priorities/native gate/unsaved work/domain sources remain; no workspace/identity writer/provider effect. Bounded raw render/keyboard proof is not customer acceptance; invalid foreign frame excluded. Global multiple-membership, complete owner/client/new-account/revoked/returning/all7/device/AT journey and one founder evaluation remain unfinished. Source candidates stay in the original [relationship packet](../delivery/e09-customer-relationships.md), not another ledger or Live promotion.
 
+## EXP02 Finance metric context — October23 source released, proof bounded
+
+Original2684/main d780fd85e3cfd0c73256847c79f2692a5a399d1a exact review/CI,
+normal web and containing public source readback are in Master4.0 and the existing
+[Finance brain](finance-department.md#october23--original-finance-metric-review-context-source-released).
+Additive ordinary VERA exact-reference handoff/refusal/reload QA6375398254 preserves
+unknown-versus-zero and source authority. Positive reference availability remains
+incomplete: original60-second later issuance revoked it before expiry; existing
+Sales owner coordination retains canonical resolver/revocation.
+Overview/Banking visual refinements2694/2696 are drafts, not released or accepted.
+All19/nine, original monthly CPU/recovery/claim hold and one complete founder
+evaluation remain open. No provider/permission/algorithm/catalogue activation.
+
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist outcome/receipt recovery, requester-and-workspace activity
@@ -29,6 +42,15 @@ not promoted by source, CI or deployment.
 The current [Harness source correction](../delivery/harness-completion-map.md)
 identifies the existing Layer C engine. Reuse canonical ActionBus, durable work,
 Planning, Trust, adapters and Rails; create no replacement engine or ledger.
+
+Original-result reentry is now a source candidate in the existing reader:
+bounded own-identity discovery followed by exact response/receipt inspection,
+never a repeat dispatch. Six original suites192PASS and77 original hostile/binding
+cases PASS; stale outcome/contact races were causally reproduced and corrected.
+Review, hosted exact-head CI, deployment and ordinary authenticated proof remain
+separate gates. [Bounded contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
+No ZION instructions, provider effect, workflow activation or catalogue Live
+promotion occurs. All full ten-outcome/E5-CV1–9 obligations above remain open.
 
 
 ## EXP05 original MCP ZION context — source preparation, October23

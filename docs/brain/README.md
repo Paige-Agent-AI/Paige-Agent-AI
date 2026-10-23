@@ -1758,8 +1758,11 @@ Original composed PostgreSQL16.14 proof234 checks PASS (195 original +39 new),
 including exact original-wrapper equivalence/metadata and real role/Auth/scope
 negatives. Omitting the new helper fails42883. Early catalog-type, temporary-oracle
 session and psql SET-output fixture errors are retained, excluded from PASS.
-Full-schema rollback proof is extended; hosted CI/Preview, review and actual
-production body/ACL readback remain owed.
+First hosted full-schema run correctly refused the new fixture's retired coach
+seat under the original title-role constraint. The fixture now proves that exact
+refusal, then tests legitimate member/admin seats; no constraint or authority is
+relaxed. Full-schema rerun, hosted CI/Preview, review and actual production
+body/ACL readback remain owed.
 Existing Spine document_generate/document_authoring, native durable worker,
 immutable original artifact/turn/Rail remain the future path; claim AND completion
 must check the stored initiating actor without JWT impersonation. Functional local

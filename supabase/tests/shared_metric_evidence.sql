@@ -70,13 +70,23 @@ DO $metric_actor$ DECLARE
  workspace uuid := 'a3450000-0000-4000-8000-000000000011';
  other_workspace uuid := 'a3450000-0000-4000-8000-000000000012';
  seat_role text;
+ denied_constraint text;
 BEGIN
  PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace),'original admin with current profile');
  PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,other_workspace),'even a real seat in another active workspace is insufficient');
  PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(NULL,workspace)
   AND NOT public._analytics_metric_actor_authorized(actor,NULL),'missing stored work context');
  PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized('a3450000-0000-4000-8000-000000000003',workspace),'platform role alone is not Metric authority');
- FOREACH seat_role IN ARRAY ARRAY['coach','member','admin'] LOOP
+ -- Current provisioning forbids retired title roles. Prove that real constraint
+ -- instead of weakening it to manufacture a coach seat for this fixture.
+ BEGIN
+  UPDATE public.tenant_members SET role='coach' WHERE user_id=actor AND tenant_id=workspace;
+  RAISE EXCEPTION 'FAIL: retired title role fixture must be refused';
+ EXCEPTION WHEN check_violation THEN
+  GET STACKED DIAGNOSTICS denied_constraint = CONSTRAINT_NAME;
+  PERFORM pg_temp.require_true(denied_constraint='tenant_members_role_not_retired_title_role','original retired-role guard remains enforced');
+ END;
+ FOREACH seat_role IN ARRAY ARRAY['member','admin'] LOOP
   UPDATE public.tenant_members SET role=seat_role::public.tenant_role WHERE user_id=actor AND tenant_id=workspace;
   PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace) IS NOT DISTINCT FROM (seat_role='admin'),'original exact Metric seat role');
  END LOOP;

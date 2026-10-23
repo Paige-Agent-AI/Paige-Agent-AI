@@ -15,14 +15,25 @@ Live acceptance. CAP014/015 remain Unverified; original Chat consumer follows.
 
 Owner Oct23 specialist standard is established once in the existing roster
 doctrine; Finance→VERA labels/addressed original prompts and44px review target are
-a separate development slice, not a new runtime/readiness claim.65/four focused
+a separately released presentation slice, not a new runtime/readiness claim.65/four focused
 tests and19 untouched native synthetic frames, scoped lint/type ratchet/build
 support its source. [Finance identity evidence](../evidence/ui-delivery/e2-finance-vera-attribution.md).
 Four existing canonical Docs policy pointers and original Register/ownership
 notes read back; existing owner handoffs ANT50/81/11/163/164 are requested, adoption
 unverified until their receipts. Other departments retain their source.
 
-Functional: report server released, Finance candidate. Visual: Finance synthetic
+Finance2672 source release: reviewed a86ee429edfe097a7f045823fcbc752e66b71992,
+LOWER5632683022/all10 applicable checks/two statuses SUCCESS, source-only Preview SKIP.
+Actual main52091d6d9b30705e7a45017b149839d325f8a817/tree592b2690c119e6dac4758288feeb6d75d6eb4b18
+matches inspected union. Normal READY dpl_8ouHoWpHRXUeZKEga5GaPg5DyVj3/exact public
+52091d6d-mvlc66az/null; served Finance/roster/CSS verified, own SQL/Edge N/A.
+[Release6372746988](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2672#issuecomment-6372746988).
+Initial private split-chunk marker failure retained and resolved through its actual
+immutable roster import, without product edits. New CTA ordinary proof UNVERIFIED:
+Edge control times out before page access, including fresh-tab/inventory attempts.
+Earlier addressed reads do not substitute. No readiness/algorithm promotion.
+
+Functional: report server and Finance attribution source released. Visual: Finance synthetic
 verified. Experiential: original Finance handoff/report/artifact/read/reload and
 real role/cohort/Live still owed. Founder Acceptance NOT_ACCEPTED; original19
 outcomes/nine analytics are unchanged. ALG03/06/11/12 Partial, ALG13 Unverified;

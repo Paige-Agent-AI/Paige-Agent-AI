@@ -1,4 +1,4 @@
-## EXP02 Finance specialist attribution — October23 development
+## EXP02 Finance specialist attribution — October23 source released
 
 Owner Oct23 standard is canonical in the existing
 [roster doctrine](../doctrine/paige-c-suite-roster.md#specialist-identity-and-department-attribution).
@@ -7,7 +7,7 @@ and actual-contributor bylines retain their meaning. Original Finance and Debt
 review labels/addressed prompts, current records/constraints, authorization and
 editable Chat handoff are preserved. No runtime, provider, permission or capability
 activation.65 focused cases/four suites, scoped lint/type ratchet/build and19
-original native synthetic frames support the candidate; released ordinary review
+original native synthetic frames support the released source; ordinary review
 QA remains due. [Evidence](../evidence/ui-delivery/e2-finance-vera-attribution.md).
 
 Existing North Star, Strategy, Bootstrap and official roadmap policy pointers
@@ -16,7 +16,7 @@ specialist/capability ownership notes synchronized. Original owner handoffs:
 ANT50MENTOR35c0c368, ANT81MERIT684ce232, ANT11ZIONa9120873,
 ANT163CURA0b59e72d and ANT164NEXUSef4ea8eb; incorporation remains pending actual owner receipts.
 No peer-source takeover, new agent or Agency/subaccount implementation.
-Functional candidate / Visual synthetic verified / Experiential released handoff
+Functional source deployed / Visual synthetic verified / Experiential released handoff
 owed / Founder NOT_ACCEPTED. Algorithms/readiness and all19 outcomes unchanged.
 
 Additive ordinary read evidence: second fresh weekly review observed settled
@@ -25,10 +25,21 @@ Finance read through PAIGE observed within76seconds, same2419character answer
 after reload. Empty composer restored, no action-approval control requested.
 Original current sources/unknown cash/accounting and receipt classes remained
 distinct. Raw evidence stays private. These bounded read cases do not prove the
-unreleased VERA CTA, independent specialist delegation, execution, SLO or full19.
-Finance2672/33453 earned all10 applicable checks/two statuses including189database;
-incoming855fff only requires shared Master-row composition, preserving all peer
-rows and unchanged16source/19frame pins. New exact-head gates remain mandatory.
+VERA CTA, independent specialist delegation, execution, SLO or full19.
+Finance2672 reviewed a86ee429edfe097a7f045823fcbc752e66b71992, LOWER5632683022,
+all10 applicable checks/two statuses SUCCESS; source-only Preview SKIPPED normally.
+Main52091d6d9b30705e7a45017b149839d325f8a817/tree592b2690c119e6dac4758288feeb6d75d6eb4b18
+equals the inspected024ac8f67+a86 union. Normal production
+dpl_8ouHoWpHRXUeZKEga5GaPg5DyVj3 READY/public52091d6d-mvlc66az/null, actual
+served Finance/roster/CSS independently verified; own SQL/Edge N/A.
+[Production receipt6372746988](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2672#issuecomment-6372746988).
+The initial private marker looked in the wrong split chunk; the observed immutable
+roster import confirms the original remit. Failure retained, no product repair.
+New CTA ordinary authenticated proof is UNVERIFIED: existing/fresh Edge control
+times out before page access. Earlier read cases stay separate. Current containing
+64347d7 preserves Finance source. Existing owner incorporation still pending;
+no capability/algorithm/provider promotion, customer announcement or founder acceptance.
+This mechanical closeout records the preceding delivery in the sole Master4.0 log.
 
 ## EXP02 original review capture admission — October23 source released
 

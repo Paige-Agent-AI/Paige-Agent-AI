@@ -8,6 +8,7 @@ import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
 import { ResearchView } from "./paige-research";
 
 const harness = vi.hoisted(() => ({
+  rpc: vi.fn(async () => ({ data: { state: "not_acknowledged" }, error: null })),
   tenantId: "test-tenant-a",
   actorId: "test-actor-a",
   skillsEntitled: true,
@@ -28,7 +29,7 @@ const harness = vi.hoisted(() => ({
 
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUserId: harness.actorId, activeTenantId: harness.tenantId, activeTenant: { account_number: "42" } }) }));
 vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => harness.skillsEntitled, tierKey: "solo", loading: false }) }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: harness.from, rpc: vi.fn(), functions: { invoke: vi.fn() } } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: harness.from, rpc: harness.rpc, functions: { invoke: vi.fn() } } }));
 vi.mock("@/components/dashboard/PaigeAIChat", () => ({ PaigeAIChat: () => <div>Existing Chat</div> }));
 vi.mock("@/components/dashboard/paige/PaigeComposerAutonomyChip", () => ({ PaigeComposerAutonomyChip: () => null }));
 vi.mock("./weekly/WeeklyResponsibilityEntry", () => ({ WeeklyResponsibilityEntry: () => null }));
@@ -59,6 +60,7 @@ const rowFor = (name: string) => Array.from(host.querySelectorAll<HTMLElement>("
 
 beforeEach(() => {
   vi.clearAllMocks();
+  harness.rpc.mockReset(); harness.rpc.mockResolvedValue({ data: { state: "not_acknowledged" }, error: null });
   harness.from.mockReset();
   Object.assign(harness, { tenantId: "test-tenant-a", actorId: "test-actor-a", skillsEntitled: true, skills: [], loading: false, error: null, rows: [], detail: null, listError: null, detailError: null });
   host = document.createElement("div");
@@ -164,6 +166,25 @@ describe("SOLO catalogue truthfulness", () => {
     expect(rowFor("Live Conversation").textContent).toContain("Two-way voice");
     expect(rowFor("Onboarding & business discovery").textContent).toContain("Available");
     expect(rowFor("Onboarding & business discovery").textContent).toContain("needs Live Conversation turned on");
+    // The row derives THIS account's truth from the canonical status read (#2611 P2-3):
+    // default not_acknowledged keeps the consent copy; acknowledged flips to turned-on
+    // truth WITHOUT claiming audio verified; revoked/expired/errors stay honest.
+    expect(rowFor("Live Conversation").textContent).toContain("Consent required");
+    expect(rowFor("Live Conversation").textContent).toContain("Not activated yet");
+    const remount = async () => { await act(async () => { root.unmount(); }); host.remove(); host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host); await act(async () => { root.render(<MemoryRouter><SoloPaigeWorkspace dockedTab="capabilities" /></MemoryRouter>); }); };
+    harness.rpc.mockResolvedValue({ data: { state: "acknowledged", acknowledgedAt: "2026-10-23T00:00:00Z", expiresAt: "2027-10-23T00:00:00Z" }, error: null });
+    await remount();
+    expect(rowFor("Live Conversation").textContent).toContain("Turned on for this account");
+    expect(rowFor("Live Conversation").textContent).not.toContain("audio verified");
+    harness.rpc.mockResolvedValue({ data: { state: "revoked", revokedAt: "2026-10-22T00:00:00Z" }, error: null });
+    await remount();
+    expect(rowFor("Live Conversation").textContent).toContain("Revoked");
+    harness.rpc.mockResolvedValue({ data: null, error: { code: "X" } });
+    await remount();
+    expect(rowFor("Live Conversation").textContent).toContain("Unverified");
+    harness.rpc.mockResolvedValue({ data: { state: "expired" }, error: null });
+    await remount();
+    expect(rowFor("Live Conversation").textContent).toContain("Consent expired");
   });
 });
 

@@ -43,6 +43,12 @@ RELEASE_RECOVERY: position=reviewed forward repair or bounded source revert pres
 
 ## Scope and review
 
+Owning draft PR2661, initial final source d7fead6e2d8ed899919d2c8fe8ba7d4d2245b0f6,
+separate AUTHOR-REVIEW / LOWER ASSURANCE5629723997. Normal source-only Preview skips
+schema branching. Initial bot event did not create required Actions runs, so no
+missing check is green; this PR-bound evidence update preserves exact source and
+render inputs and requires fresh final-head review/CI before safe release.
+
 REUSE original StudioDocType/parser/loadDocument/DocumentPreview, actual Radix Dialog,
 shared theme tokens and canonical shell. EXTEND original Business review label and
 parser allowlist only. REPAIR existing mobile min-width/44px controls, thumbnail

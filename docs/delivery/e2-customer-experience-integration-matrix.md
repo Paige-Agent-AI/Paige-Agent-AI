@@ -791,6 +791,37 @@ canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries 
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 
+**S2B native authority, development:** proposed440002 adds the SAME private Metric
+predicate to original document claim and completion, including before historical
+report-labelled success readback. No public type admitted: original nine types and
+legacy writers/turn/Rail remain. Original title-role transformer is applied in the
+same native fixture; historical April source alone is not current authority.
+Current production claim81a2a0ab7dbf4384e6da22e5f11f9dd6/complete4c58e791d20db13b5dc8fe8fd6ce0c36
+are exact guarded forward inputs. Unknown changed source fails; exact replay alone
+is accepted. CREATE OR REPLACE retains original private service ABI/owner/ACL/path.
+A claim becomes blocked before dispatch; completion refusal occurs before original
+persistence/success and leaves no unauthorized artifact/turn/receipt. This is not
+an executable report producer or a customer acceptance claim.
+
+Original isolated native document lifecycle PASS plus10 future-report scenarios:
+public report submission still refused, current-profile switch, banned/deleted
+identity, member-with-owner-flag cannot substitute for exact Metric seat, eligible
+claim and subsequent authority loss, report-labelled historical replay. No native
+Auth/Metric helper is replaced by an allow-all stub. Four actual causal faults
+fail the original proof: disabled claim guard, disabled completion guard, unknown
+original source and broadened function permission. Review tightened the private
+security metadata invariant before exact replay; no applied source was affected.
+Existing ci.yml invokes the SAME original native runner in one
+additive fail-closed step; no new QA engine, timeout/baseline/skip or dependencies.
+Original legacy replay/duplicate dispatch/atomic receipt rollback/conflict/authority/
+lease/unknown recovery assertions remain. Scoped syntax/migration/ACL/whitespace
+checks PASS. Hosted exact-head/full-schema/Preview/review/release remain owed.
+Functional local prerequisite; Visual N/A; Experiential/Founder Acceptance
+UNVERIFIED. Worker producer/public admission/immutable artifact/read/turn/Rail and
+ordinary roles/cohorts/Chat/Live/all19/nine remain required. CAP/ALG states unchanged;
+no model/provider/role/action or Chat activation. Master4.0 N/A until actual merge.
+ANT138349babde/ANT1613da7266c+837f1a8f record pre-edit source/CI routing; sole lead.
+
 **D3A source/native release verified:** PR2643 reviewed097eaf205f57866203adbf196aa0dbddcc567f03,
 LOWER5622701932; all13 final checks and two web statuses SUCCESS, no unresolved
 threads. Main52dfacc418578c9dea9e3e7f3b33363288d17c66/tree73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6

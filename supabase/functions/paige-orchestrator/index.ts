@@ -229,24 +229,29 @@ interface AgentHealth {
   last_error: string | null;
 }
 
-// Aggregate per-slug health from paige_subagent_invocations. The invocations table carries NO
-// tenant_id column, so we scope by the REQUESTING USER (invoked_by = callerId): a user belongs to
-// exactly one tenant, so this is strictly WITHIN-tenant and can never leak another tenant's activity
-// volume for a shared platform-default agent (§9). No caller id (or no slugs) → honest empty health.
-async function rosterHealthMap(slugs: string[], callerId: string | null): Promise<Record<string, AgentHealth>> {
+// Aggregate original rows for BOTH the verified requester and selected workspace.
+// One person may use multiple businesses. Shared platform-default agent identity
+// must never merge their tenant histories; null scope includes only unattributed rows.
+async function rosterHealthMap(slugs: string[], callerId: string | null, tenantId: string | null): Promise<Record<string, AgentHealth>> {
   const map: Record<string, AgentHealth> = {};
   for (const s of slugs) map[s] = { invocations: 0, success_rate: null, dispatched: 0, last_error: null };
   if (!callerId || slugs.length === 0) return map;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("paige_subagent_invocations")
     .select("subagent_slug,status,error,created_at")
     .in("subagent_slug", slugs)
-    .eq("invoked_by", callerId)
-    .order("created_at", { ascending: false });
-  if (error) {
-    console.error("[orchestrator] inspect health query failed:", error.message);
-    return map; // honest degrade to empty health, never a fabricated aggregate
+    .eq("invoked_by", callerId);
+  query = tenantId ? query.eq("tenant_id", tenantId) : query.is("tenant_id", null);
+  let data: unknown[];
+  try {
+    const result = await query.order("created_at", { ascending: false });
+    if (result.error || !Array.isArray(result.data)) throw new Error("activity_read_unavailable");
+    data = result.data;
+  } catch {
+    // An unavailable source is never evidence of zero work or a healthy agent.
+    // Keep database/transport details out of the existing customer error envelope.
+    throw new Error("Specialist activity is temporarily unavailable. Try reading it again.");
   }
 
   const agg: Record<string, { total: number; succeeded: number; failed: number; dispatched: number; lastError: string | null; sawFailed: boolean }> = {};
@@ -301,7 +306,7 @@ async function inspectRoster(
   // the SAME gate search/invoke apply, so inspect can't become a side channel that discloses them.
   const raw = data ?? [];
   const visible = fundingEnabled ? raw : raw.filter((r) => !looksLikeFinanceAgent(r));
-  const healthMap = await rosterHealthMap(visible.map((r) => r.slug as string), callerId);
+  const healthMap = await rosterHealthMap(visible.map((r) => r.slug as string), callerId, tenantId);
 
   return visible.map((r) => {
     const cfg = (r.config ?? {}) as Record<string, unknown>;

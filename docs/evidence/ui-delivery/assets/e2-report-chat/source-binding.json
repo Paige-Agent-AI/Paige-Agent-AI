@@ -1,0 +1,278 @@
+{
+  "sourceBase": "993420e79807cf61bc1eeca1d2afde9cc6f4a9b8",
+  "candidateChatBlob": "c82273249f6ec7507e634e318b3124d3542c2ffb",
+  "extractorSha256": "e655de9c95229de002de7057f541dbbc3ffd794e90c9b43e96a79a2f4254190a",
+  "dependencyCount": 122,
+  "baselineFindings": [],
+  "bindings": [
+    {
+      "tool": "comms_setup_calling",
+      "before": "eefd3f5d84c3b2a9a83aaa8d686290df5a87e9d5e70505016c7a0b6b592c1f47",
+      "after": "df5fd33cfbaa870cd3e2b89940d3f640f73d44bfacf5536005006711b40a8136",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "before": "55419996b62a738794612b83220ee741464f413929a7d2ba8f45147c87874ad2",
+      "after": "961801efb5673412134f9f9ab9517e642f4c31edba7c14ae6f765d7419227e40",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "calendar_link_send",
+      "before": "53e375e8c483caee4b09a624879ca5bf0339bb68060f89b357757c0adb9e1869",
+      "after": "5c165b508ef343fe197bc2b6b0a3be08d4584813addbd804c191bc15f3f4c1d1",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "before": "b20ab472a83966d6666b19df8c73e072a722515c726ecf721939831bf94268e0",
+      "after": "dfa860cdbacc570fec3a81ae082d71550884e9852bd5ca745297fabba1ad43f2",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "update_business_profile",
+      "before": "6ace6de058401972ff78aa0aac49f020bdc005f524ac41546d53c4be11b587d0",
+      "after": "e67831cda1b7c77441e232a04e13b0b6329ba507c8ae77d1cc79b4646e50de74",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "capability_status",
+      "before": "995bdff96db5b2d8880451202158be2f8af3840666e1ea5246f0ce8a2dd4df1b",
+      "after": "494eff3521993914cf05e1c8dcc70df7197925ae223acc4bb726e964f6d72e4e",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "improvement_propose",
+      "before": "2d22651189678504d088994c923e329162cd9eb24359fe89e36f13651aaae662",
+      "after": "bbbefb6e6a79b438c5896f90e9b354614d1148ba3f73f43452a07e806982430e",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "improvement_decide",
+      "before": "3bacba5842a04acf031d8c68317b2446f30bf4ef25a93397984cd8f4daa61119",
+      "after": "07c8548863256c51f53e2701917883295326400ea76321244568a20d68349cad",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "list_subagents",
+      "before": "dcd584d315046da95cc14e765184fdb9497ece52026205fea5d20ae6db5822c8",
+      "after": "da8819afe665b6161cd7690e29db84566439c87c14bf75617bebef470565d875",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "before": "dcd584d315046da95cc14e765184fdb9497ece52026205fea5d20ae6db5822c8",
+      "after": "da8819afe665b6161cd7690e29db84566439c87c14bf75617bebef470565d875",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "forge_subagent",
+      "before": "6ff52a520fe9570564448fa4a5e96828fd8b2809a4e5f31b992a7067e69474bd",
+      "after": "cd6124416969db9cb57bc938ff7820f58e261d508b6ff33e2c3fb2032e3e2847",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "author_event_kind",
+      "before": "2937d39a91ca669c27f5f93d2040a8eb551b6936cf48057388ebf4d6b172eeb7",
+      "after": "9703d25ae34473e7738a907d7a36053f15c4eb89435921c889fcf0bcdc9bfee6",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "crm_add_note",
+      "before": "7b893df72429744eb00fc9087faf5be265293d6f40de7c1e716ee1d95e9e8422",
+      "after": "62a7eced8f278b3b699e1f96ca02da7b95792db240c5009d9e7cc811abf83043",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "crm_file_document",
+      "before": "c9207a8d70d4c793bb2197357ee5a78e0868893da2d691d5ea0b18e4ef76ac3b",
+      "after": "a7d9523e4d3048477de93334fc0a821fdcbd9684caa5f8cd2eeb5fc0b81594d7",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "update_client_data",
+      "before": "38e82f37abe2db8e69288f2fc75daebef48c533cde4db230f3a8bb73c2d03eaa",
+      "after": "d0b9a234012b11882f3883a8adb9e3e04b2d4bc6db0c4fdfdb096fb0de04ebd2",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "pipeline_configure",
+      "before": "c5a6c58e3e0c2cf8ab8a0160e9b85d74f756f02c741cdfaf7cfd28166e8c564b",
+      "after": "73ab66199049ef047ecb4f0c9b0f8f097e69d1fb41dcce1611efbb6cfeda1eae",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "deep_research",
+      "before": "92df053cccbf105db62f2b4ec16b5c918d8add6809b27be83d3572788d98c296",
+      "after": "8ce9241489db17f946526983ebf15aac0bb750c43e8f6971942f147426943247",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "web_search",
+      "before": "4a24d053fa2a69983fdcbabcad57314c234d79796c363b9cad00b006f26868bb",
+      "after": "45d60d35d729d6706011d8d7d1608cc14fd8589b2144fff75d540e0edb0d95a5",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "web_fetch",
+      "before": "df4c8bbb7c347696609b97d0eecc126bba48edae493e8261d5edf0804a7e2275",
+      "after": "967350e4588e1c2363a1355cc449dd3f6c7eb26c73fb14471381841d5aae2911",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "before": "eb61ae46a8b9285e6aa5046253ceb101fbfe8a70d1eb0856cc4eefbe04b279c1",
+      "after": "afa012daf011403348dd1f169cc478a7c568c050a67911ebeda3a174733a5156",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "automation_draft",
+      "before": "df3fd5c6653f02ca222ae46a6d8be0a31dcd4f08f1962b03711b657d349998ce",
+      "after": "909aabaf490b4c7f517d5acbc0d76d50a590b81340a4d518deecc1a743e90995",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "comms_connection_summary",
+      "before": "57e6d1e50155297710f925d253df9b3cc2dc349d50ddc786841731873bc9b5e2",
+      "after": "13fae80df1b08665fc0ea83029125f5369aa61e61848991cd6d952899ae5a2aa",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "comms_registration_status",
+      "before": "66d6cafb2745008982d07d287f07e3cec8ca2a0c025ab7f98bcd870c60b1e86c",
+      "after": "db358299e782915ad7ddfab2fcb7a9ba096347b3dfb2dc2f7b0a10237d69e92b",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "comms_list_numbers",
+      "before": "c8c8d6c210096fdd4df597890113af88828613f1789db846d05b4e5414c24e45",
+      "after": "8a24fc4e0fe31e421b26e6a8a613ac2c7a3a2bf84deb06c9bb079b110ad3ae9e",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "comms_search_numbers",
+      "before": "0189f12a11d0316a460f112bc05d409ed6534250aeaa0ac498ef4dda8bb6f012",
+      "after": "5a330c2d20d7d82c47947a236b2705f32378f51e6408a527096b95b322bad931",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "comms_buy_number",
+      "before": "46bbb136073af9cab6afd10ec8934b3ff3b9d941bb6717d02d5edfe02a102cae",
+      "after": "58d7b3edeab1d902436b6560d22a9ae1cfde04ba7daa89cc5eb39d4bb46f268f",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "comms_draft_registration",
+      "before": "07a38872cb08ee6c4740a475f3ca45a57c80360b72209412729ee61a7404b375",
+      "after": "88dc79261689208fd42b8b616b1609fbfa92411c9fb81a30c4a01793dde28c12",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "comms_name_number",
+      "before": "1dbe759b5f930ab5526f76cbfb7d10d87397a95c069c30331cd971399ad2e41a",
+      "after": "c146f75f840747ed34906c4e2f932f93d519c581ac6adb2c5a810d7cb1e5e532",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "before": "4c4652add6a3b891bf98e5c3336362ab7ec82c2781224aa864cd2a6b9ec16c85",
+      "after": "018624864416772c94b1c481a03a186c017eda9359f9aaa5879680c109f6c67a",
+      "changes": [
+        "identity[15]"
+      ],
+      "importsUnchanged": true
+    }
+  ],
+  "method": "Read-only private instrumentation returns original canonical AST parts without changing extractor logic, metadata or dependency pins.",
+  "reviewRelationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+  "scope": "Literal29 scalars only; incoming extractor/metadata/122 dependency hashes and original hostile tests unchanged.",
+  "priorReviewedSource": {
+    "head": "3e8460b33253a286ba347972c2bac333461bfba2",
+    "base": "ee77807f9c65f4846d3b3ba5ca2aa12ce1f6e2e1",
+    "chatBlob": "18956a426d4e75bdd91e7467a24d87b40a1ce308"
+  }
+}

@@ -5,15 +5,112 @@ import {sha256Hex} from './token.ts';
 import type {PreparationStorage} from './preparation-artifact.ts';
 import {PDFDocument} from 'npm:pdf-lib@1.17.1';
 
-import {fixture,tenant,agreement,request,next,prepare,field,save,actor} from "./test-fixtures/owner-preparation.ts";
+import {fixture,commercialFixture,tenant,agreement,request,next,prepare,field,save,actor} from "./test-fixtures/owner-preparation.ts";
+import * as ownerPreparation from './owner-preparation.ts';
 
 const refuses=(code:OwnerPreparationUnavailable['code'])=>(e:unknown)=>e instanceof OwnerPreparationUnavailable&&e.code===code;
+type CommercialReads={
+  listOwnerCommercialPreparationSources:(tenant:string,agreement:string,cursor:string|null,caller:OwnerPreparationCaller,service:OwnerPreparationService)=>Promise<{items:{invoice_id:string;invoice_number:string;total_minor:number;currency:string}[];has_more:boolean;next_cursor:string|null}>;
+  reviewOwnerCommercialPreparation:(tenant:string,agreement:string,invoice:string,caller:OwnerPreparationCaller,service:OwnerPreparationService)=>Promise<{state:'ready'|'needs_input';fields?:string[];input?:Record<string,unknown>;payload_digest?:string;presented_body_markdown?:string}>;
+};
+const commercialReads=()=>{
+  const domain=ownerPreparation as unknown as CommercialReads;
+  assert.equal(typeof domain.listOwnerCommercialPreparationSources,'function','Original owner door must reuse canonical invoice pagination');
+  assert.equal(typeof domain.reviewOwnerCommercialPreparation,'function','Original owner door must review canonical commercial source');
+  return domain;
+};
+
+Deno.test('commercial source choices reuse original invoice RPC and create no commercial or document effect',async()=>{
+  const domain=commercialReads(),f=await commercialFixture();
+  const rows=await domain.listOwnerCommercialPreparationSources(tenant,agreement,null,f.caller,f.service);
+  assert.deepEqual(rows,{items:[{invoice_id:f.commercial.invoiceId,invoice_number:'DRAFT-TEST',total_minor:350000,currency:'usd'}],has_more:false,next_cursor:null});
+  assert.equal(f.calls.upload,0);assert.equal(f.calls.write,0);assert.equal(f.objects.size,0);assert.equal(f.rows.size,0);
+  f.commercial.invoice.billing_draft.client_id='dddddddd-0000-4000-8000-000000000002';
+  assert.deepEqual((await domain.listOwnerCommercialPreparationSources(tenant,agreement,null,f.caller,f.service)).items,[]);
+});
+Deno.test('commercial review returns exact original canonical economics/wording, with no PDF upload or write',async()=>{
+  const domain=commercialReads(),f=await commercialFixture();
+  const before=structuredClone([f.original,f.commercial.terms,f.commercial.invoice]);
+  const reviewed=await domain.reviewOwnerCommercialPreparation(tenant,agreement,f.commercial.invoiceId,f.caller,f.service);
+  assert.equal(reviewed.state,'ready');assert.match(reviewed.payload_digest??'',/^[a-f0-9]{64}$/);
+  assert.equal(reviewed.input?.body_markdown,f.original.body_markdown);assert.equal(reviewed.input?.principal_minor,350000);
+  assert.match(reviewed.presented_body_markdown??'',/3,500\.00/);assert.match(reviewed.presented_body_markdown??'',/500\.00/);
+  assert.deepEqual([f.original,f.commercial.terms,f.commercial.invoice],before);assert.equal(f.calls.write,0);assert.equal(f.calls.upload,0);
+});
+Deno.test('commercial review refuses foreign source and retired actor; incomplete facts remain needs input',async()=>{
+  const domain=commercialReads(),f=await commercialFixture();
+  f.commercial.invoice.contact_id='dddddddd-0000-4000-8000-000000000002';
+  await assert.rejects(()=>domain.reviewOwnerCommercialPreparation(tenant,agreement,f.commercial.invoiceId,f.caller,f.service),refuses('SOURCE_CHANGED'));
+  f.commercial.invoice.contact_id=prepare().expected_source.client_id;
+  Object.assign(f.commercial.terms,{starts_on:null});
+  const missing=await domain.reviewOwnerCommercialPreparation(tenant,agreement,f.commercial.invoiceId,f.caller,f.service);
+  assert.equal(missing.state,'needs_input');assert(missing.fields?.includes('commercial_service_start'));
+  f.commercial.terms.starts_on='2026-10-22';f.commercial.onRead=()=>{f.state.actor='cccccccc-0000-4000-8000-000000000002';};
+  await assert.rejects(()=>domain.reviewOwnerCommercialPreparation(tenant,agreement,f.commercial.invoiceId,f.caller,f.service),refuses('ACCESS_UNVERIFIED'));
+  assert.equal(f.calls.write,0);assert.equal(f.calls.upload,0);
+});
+Deno.test('commercial preparation command binds exact selected invoice and reviewed digest; legacy command remains',()=>{
+  const command={...prepare(),action:'prepare_commercial_document',invoice_id:'77777777-0000-4000-8000-000000000001',commercial_payload_digest:'a'.repeat(64)};
+  const parsed=parseOwnerPreparationCommand(command);assert.equal(parsed.action,'prepare_commercial_document');
+  for(const patch of [{actor_user_id:actor},{commercial_payload_digest:'bad'},{invoice_id:'bad'},{manifest:{}}])assert.throws(()=>parseOwnerPreparationCommand({...command,...patch}),refuses('INVALID_REQUEST'));
+  assert.equal(parseOwnerPreparationCommand(prepare()).action,'prepare_document');
+});
+Deno.test('commercial exact review→real PDF→fields uses original immutable source and one request/event',async()=>{
+  const domain=commercialReads(),f=await commercialFixture();
+  const review=await domain.reviewOwnerCommercialPreparation(tenant,agreement,f.commercial.invoiceId,f.caller,f.service);
+  const command={...prepare(),action:'prepare_commercial_document',invoice_id:f.commercial.invoiceId,commercial_payload_digest:review.payload_digest};
+  const before=structuredClone([f.original,f.commercial.terms,f.commercial.invoice]);
+  const first=await executeOwnerPreparation(command,f.caller,f.service);
+  assert.equal(first.receipt.id,request);assert.equal(f.calls.write,1);assert.equal(f.calls.upload,1);
+  const stored=f.rows.get(request)!,manifest=JSON.parse(String(stored.manifest_canonical));
+  assert.equal(manifest.schema_version,2);assert.equal(manifest.commercial.payload_digest,review.payload_digest);
+  assert.equal(manifest.commercial.presented_body_markdown,review.presented_body_markdown);
+  const pdf=await readOwnerPreparationPdf(tenant,agreement,request,f.caller,f.service);assert((await PDFDocument.load(pdf.bytes)).getPageCount()>0);
+  assert.equal(pdf.sha256,manifest.document.sha256);assert.deepEqual([f.original,f.commercial.terms,f.commercial.invoice],before);
+  const second=await executeOwnerPreparation(save(),f.caller,f.service);
+  assert.equal(f.calls.upload,1);assert.equal(f.calls.write,2);
+  assert.equal(second.receipt.document_sha256,first.receipt.document_sha256);
+  assert.equal(JSON.parse(String(f.rows.get(next)!.manifest_canonical)).commercial.payload_digest,review.payload_digest);
+  const replay=await executeOwnerPreparation(command,f.caller,f.service);
+  assert.equal(replay.receipt.state,'recovered');assert.equal(replay.receipt.event_id,first.receipt.event_id);assert.equal(f.calls.write,2);
+});
+Deno.test('commercial preparation refuses changed reviewed economics before upload; lost result retains original receipt',async()=>{
+  const domain=commercialReads(),f=await commercialFixture();
+  const review=await domain.reviewOwnerCommercialPreparation(tenant,agreement,f.commercial.invoiceId,f.caller,f.service);
+  const command={...prepare(),action:'prepare_commercial_document',invoice_id:f.commercial.invoiceId,commercial_payload_digest:review.payload_digest};
+  f.commercial.invoice.billing_draft_version=2;
+  await assert.rejects(()=>executeOwnerPreparation(command,f.caller,f.service),refuses('SOURCE_CHANGED'));
+  assert.equal(f.calls.upload,0);assert.equal(f.calls.write,0);
+  f.commercial.invoice.billing_draft_version=1;f.state.writeLost=true;
+  await assert.rejects(()=>executeOwnerPreparation(command,f.caller,f.service),refuses('UNCONFIRMED'));
+  assert.equal(f.calls.upload,1);assert.equal(f.calls.write,1);f.state.writeLost=false;
+  f.commercial.terms.collection_terms_version=2;
+  const replay=await executeOwnerPreparation(command,f.caller,f.service);
+  assert.equal(replay.receipt.state,'recovered');assert.equal(f.calls.write,1);
+  assert.equal(replay.view.state==='retained'&&replay.view.can_edit,false);
+});
 Deno.test('final native source read cannot publish earlier source-current editing status',async()=>{
   const f=await fixture();await executeOwnerPreparation(prepare(),f.caller,f.service);let reads=0;
   f.state.onCurrentRead=()=>{if(++reads===2)f.original.version=2;};
   const view=await readOwnerPreparation(tenant,agreement,request,f.caller,f.service);
   assert.equal(view.state,'retained');assert.equal(view.state==='retained'&&view.can_edit,false);
   assert.equal(view.state==='retained'&&view.preparation.source_matches,false);
+});
+Deno.test('commercial readback never calls completed historical terms changed without a current comparison',async()=>{
+  const f=await commercialFixture(),review=await ownerPreparation.reviewOwnerCommercialPreparation(tenant,agreement,f.commercial.invoiceId,f.caller,f.service);
+  if(review.state!=='ready')throw Error('Canonical commercial review expected');
+  await executeOwnerPreparation({...prepare(),action:'prepare_commercial_document',invoice_id:f.commercial.invoiceId,commercial_payload_digest:review.payload_digest},f.caller,f.service);
+  f.original.status='completed';const view=await readOwnerPreparation(tenant,agreement,request,f.caller,f.service);
+  assert.equal(view.state,'retained');assert.equal(view.state==='retained'&&view.can_edit,false);
+  assert.equal(view.state==='retained'&&view.commercial_readback?.state,'unavailable');
+});
+Deno.test('commercial review asynchronous reads cannot republish an earlier selected document as editable',async()=>{
+  const f=await commercialFixture(),review=await ownerPreparation.reviewOwnerCommercialPreparation(tenant,agreement,f.commercial.invoiceId,f.caller,f.service);
+  if(review.state!=='ready')throw Error('Canonical commercial review expected');
+  await executeOwnerPreparation({...prepare(),action:'prepare_commercial_document',invoice_id:f.commercial.invoiceId,commercial_payload_digest:review.payload_digest},f.caller,f.service);
+  let changed=false;f.commercial.onRead=table=>{if(table==='tenant_client_agreements')f.state.onCurrentRead=()=>{if(changed)return;changed=true;const original=f.rows.get(request)!;original.is_selected=false;f.rows.set(next,{...original,id:next,is_selected:true,event_id:'44444444-0000-4000-8000-000000000002',revision_no:2});};};
+  const view=await readOwnerPreparation(tenant,agreement,request,f.caller,f.service);assert.equal(changed,true);
+  assert.equal(view.state==='retained'&&view.preparation.is_selected,false);assert.equal(view.state==='retained'&&view.can_edit,false);
 });
 Deno.test('final native selection read cannot publish an obsolete selected version as editable',async()=>{
   const f=await fixture();await executeOwnerPreparation(prepare(),f.caller,f.service);let reads=0;

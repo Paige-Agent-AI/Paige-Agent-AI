@@ -1731,6 +1731,41 @@ proof and evidence bytes are preserved while current main0c1 is composed for
 fresh normal gates. Final review/CI/source readback/actual roles/full12/
 founder acceptance stay separate. [Evidence](../evidence/ui-delivery/e04-commercial-field-constructor.md).
 
+Later production closeout: constructor2640 merged e1c7dee08ff6ed961ac15b9dc7b71ebd43fd6908,
+reviewed1c29b61f0613a05a517f5affe8f1367018469d59, final lower review5622877147.
+All10 applicable checks/two statuses SUCCESS; normal no-SQL Preview SKIP. Actual
+merge tree db8d842a4c0f13f1e1dbc3bf77fe65ca342d7daa equals inspected main union.
+Webdpl_EE13d7PP8b1tEhTLfgSrEMLD3sC5 READY/exact/canonical aliases. Initial Edge
+39884026649 FAILED prior-source certification, retained as failure. Original
+serialized recovery39884488108/job120189357681 SUCCESS: certified c7fa→accepted
+main52dfacc418578c9dea9e3e7f3b33363288d17c66, only agreement-document selected,
+actual ACTIVE67/verify_jwtfalse/22 exact source files/config, edge-live52df.
+Canonical artifact12471982491 manifest899dbaffc1b657339d4e33934f8f619b82337de7c73b18c76f1642cde274f93c
+establishes bounded served source, not business execution. Actual350004/retainerab4/
+validator610/Save1bd and original ABI/ACL unchanged. Public build52df-mvkajd0b/null
+contains this source ancestry; no exact e1 public-response claim. Current consumer
+2646 remains DRAFT/NOT_DEPLOYED. Earlier development gates above are historical;
+whole commercial/customer/role/cohort/provider/full12/founder proof remains owed.
+
+### EXP04 original commercial owner document workspace — development
+
+Original invoice page/source reader/formatter feed explicit commercial review in
+the SAME owner agreement-document SDK/controller. Reviewed digest → original
+rendered PDF/private artifact/native350004 → assigned fields/event/receipt/history
+and reload. Original schema1/one parent leave guard/actor epochs/recovery remain.
+Read-only historical economics cannot imply currentness; final native selection
+is re-proven after async review. Receipt must match exact reviewed invoice/digest;
+field-only comparison derives original validator digest, not approval identity.
+Conclusive source refusal permits explicit fresh review; uncertain result keeps
+the same frozen request. No signing, send, charge, Portal grant or new engine.
+Local45 strict cases/29 steps,63 SDK/controller,1005 Sales/65 files/exit0 plus
+isolated103 PASS; worker teardown warning retained. Final compiled source20
+frames/eight paths/44 exact pins/zero errors,30 neutral images; Auth/HTTP/RPC are
+synthetic. Final root type10/current6, actual Edge entry types and lint0/0 PASS;
+exact review/CI/ordered release/actual owner/staff/client/cohort/provider/all12/founder acceptance
+remain owed. No capability/algorithm/Chat/Live/INT346 activation. EXP09 contracts
+unchanged. [Evidence](../evidence/ui-delivery/e04-commercial-document-owner-workspace.md).
+
 ### EXP04 original upload intent — development
 
 REPAIR original business upload adapter after actual-hook3 positive/2 genuine RED controls: loaded/current business must match before Storage, and lost/context-retired results never claim rollback or no effect. Original private bucket/RLS/path/cache/no-overwrite/result contract retained. Final9 hook plus102 existing Sales cases (111) and type10/current6/lint0 PASS; initial original audit-history timeout repeated green without changing5s limit/assertions. Actual Sales/modal/hook/SDK20 rendered cases/5 paths/19 exact pins/0page errors, neutral local transports only. Native PAIGE backdrop is respected and actual open/folded states are explicit. Stable same-request upload recovery, native-supported import/wording/preview/fields and owner/staff/client/provider/all12/founder acceptance remain incomplete. No actual upload, signing, send, payment, role, bucket, provider, model or Chat activation. [Bounded evidence](../evidence/ui-delivery/e04-agreement-upload-intent.md).

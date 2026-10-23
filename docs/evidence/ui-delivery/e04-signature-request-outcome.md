@@ -38,7 +38,7 @@ ORCHESTRATION_CONTRACT: (1) original owner signature request; (2) existing Sales
 ALGORITHM_SUPPORT: ALG01 only supporting interaction deduplication/validated response, not durable event reconciliation; ALG12 truthful partial/unknown exception signals. Official maturity unchanged. ALG02 onboarding/ALG13 recommendations not advanced by this repair.
 CAPABILITIES_STATUS: original Agreements PARTIAL; no registry/catalogue Live promotion, new action or exact-field conversational execution. INT346 unchanged.
 EXP09_CONTRACT: EXP04 owns originating Sales/signing records; EXP09 retains authenticated relationship-scoped Portal UI/download/signing/history. No Portal source, permission or publication changed.
-INTERNAL_BUILD_IDENTITY: source=bdc2d85d19753ff0c74749f1c18507d3060f042a; branch=codex/e04-signature-request-outcome-truth; exact_final_head=PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-signature-request-outcome.md
+INTERNAL_BUILD_IDENTITY: source=bbac2dd7555b23e59c23389f1159d1dd7e4a109b; branch=codex/e04-signature-request-outcome-truth; exact_final_head=PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-signature-request-outcome.md
 RELEASE_CHANNEL: development: prior commercial2 consumer2646 is source-released separately; this bounded repair requires its own exact-head gates/release/readback.
 RELEASE_CLASSIFICATION: internal-only: truthful original signing feedback within the incomplete full Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no complete founder-evaluated release or announcement.

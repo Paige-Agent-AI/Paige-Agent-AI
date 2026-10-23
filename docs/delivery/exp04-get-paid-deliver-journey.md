@@ -2511,9 +2511,11 @@ preserved INVALID, corrected with an actual copied ArrayBuffer, no cast/no-check
 First genuine RED: an eligible original token was404 instead of reaching the
 intentionally refused synthetic write409. Supplying ONLY original token_hash then
 exposed separate genuine RED: missing PDF still reached that write409 instead of
-refusal503. Same historical preflight selectively reused. Final original205 cases/
-182 steps PASS under denied net/write/env/run/ffi/sys; exact existing required CI
-Agreements step152 cases/50steps PASS without adding read authority. Actual
+refusal503. Same historical preflight selectively reused. Initial205 cases/
+182 steps and exact CI group152/50 PASS are historical. After actual2655/main
+composition, all original211 cases/199steps PASS under denied net/write/env/run/ffi/sys;
+exact existing required CI Agreements step158 cases/67steps PASS without adding
+read authority. Original recipient component/source contracts28 cases PASS. Actual
 sign-agreement entry types, UTF8/diff PASS. One existing CI step gains only the
 explicit preflight.test.ts path; no flag, baseline, condition or shared gate change.
 
@@ -2547,8 +2549,10 @@ ALG01/12 supporting correctness only; catalogue/ALG02/13/full O1-O12/CentralQA/
 founder acceptance unpromoted. Review/exact-head CI/normal deploy/readback and actual
 owner/recipient/staff/client/cohort proof remain owed. All prior immutable records
 and original native selected-preparation token/effect holds stay intact.
-Visible-Flow-Impact: no — no mounted UI source/container/navigation changes; original
-recipient error handling receives an additional honest pre-signing refusal.
+Visible-Flow-Impact: yes — original recipient error handling receives an additional
+honest pre-signing refusal, even though no mounted UI source/container/navigation
+is edited. The evidence declaration covers that backend-to-visible impact; it
+does not represent the unchanged recipient UI as a new design or authenticated QA.
 
 ### C13 checked prepared signing input — pre-edit contract
 

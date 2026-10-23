@@ -373,7 +373,7 @@ describe("approval recovery render harness", () => {
     const dir = process.env.APPROVAL_RECOVERY_RENDER_DIR || "work/recovery-render";
     mkdirSync(dir, { recursive: true });
     for (const theme of ["light", "dark"] as const) for (const [width, height] of [[1536,770],[1366,768],[1024,768],[900,1000],[390,768]]) {
-      for (const open of [false, true]) for (const reload of ["available", "unavailable", "interrupted"] as const) {
+      for (const open of [false, true]) for (const reload of ["available", "unavailable", "interrupted", "refused"] as const) {
         const scene = SCENES.find(s => s.reload === reload)!;
         const html = await capture(scene, { width, height, open, theme });
         writeFileSync(`${dir}/shell-${theme}-${width}x${height}-${open ? "open" : "closed"}-${reload}.html`,

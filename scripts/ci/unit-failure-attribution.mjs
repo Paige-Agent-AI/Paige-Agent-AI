@@ -66,6 +66,17 @@ try {
 try {
   if (!output) throw new Error('output');
   await writeFile(output, `${JSON.stringify(evidence, null, 2)}\n`);
+  // Keep the short diagnostic step useful when the original test log is truncated.
+  // The full artifact and original test exit code remain authoritative.
+  const failures = evidence.failures.slice(0, 20).map(({ test_file, category, owner }) => ({
+    test_file: test_file.startsWith('src/') && test_file.length <= 240
+      && /^[A-Za-z0-9_./-]+$/.test(test_file) && !test_file.split('/').includes('..') ? test_file : null,
+    category, owner,
+  }));
+  process.stdout.write(`UNIT_FAILURE_ATTRIBUTION ${JSON.stringify({
+    status: evidence.status, totals: evidence.totals, failures,
+    omitted_failures: evidence.failures.length - failures.length,
+  })}\n`);
 } catch {
   process.stderr.write('Unit failure attribution evidence could not be written.\n');
   process.exitCode = 1;

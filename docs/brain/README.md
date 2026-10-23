@@ -41,8 +41,9 @@ timeouts; no old/synthetic/source evidence closes that required proof or release
 [Evidence](../evidence/ui-delivery/e2-systems-dialog-return.md).
 Functional local / Visual candidate UNVERIFIED / Experiential original defect and
 source controls only / Founder NOT_ACCEPTED. No shell, runner, approval writer,
-provider, registry, LayerC, Rail or permission change; original Systems Check stays
-PARTIAL. All19/nine remain mandatory.
+provider, registry, LayerC, Rail or permission change. Native recorded-check UI is
+partial; canonical Systems Check Mind-context stays UNAVAILABLE (SCR-2/SCR-3).
+All19/nine remain mandatory.
 
 Preceding Finance2684 is source-releasedd780fd85e3cfd0c73256847c79f2692a5a399d1a,
 LOWER5634377259/all10 applicable checks/two statuses. Normal2M5h READY/exactmeta;

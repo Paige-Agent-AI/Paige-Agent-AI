@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: UNVERIFIED: original-trigger and consumed Escape/pending guard c
 ZOOM_REFLOW: UNVERIFIED: final required desktop/narrow layouts and200percent browser zoom have not been driven for this candidate; no geometry change is a source fact, not rendered proof.
 REDUCED_MOTION: UNVERIFIED: no animation/CSS change; actual preference and resulting candidate shell behavior remain to be observed.
 STATE_COVERAGE: PASS: original success/refusal, busy decision/no repeat activation, Cancel/Escape and account retirement are tested; no draft preparation, diagnostic scan, action cancellation, execution result or backend success is simulated as customer proof.
-TRUTHFUL_STATE_LABELS: PASS: original PARTIAL Ask First/context-not-attached/no-work warning retained; original command-center.systems-check binding remains PARTIAL. CAP009–017/actor availability unchanged; no algorithm or action readiness promotion.
+TRUTHFUL_STATE_LABELS: PASS: native PARTIAL Ask First/context-not-attached/no-work warning retained. The canonical command-center.systems-check Mind-context binding remains UNAVAILABLE pending SCR-2 workspace subject and SCR-3 enumerated counts; the separately mounted recorded-check UI is partial, not Mind eligibility. CAP009–017/actor availability unchanged; no algorithm or action readiness promotion.
 SOLO_UI: YES: shared original SOLO Systems Check workspace for every eligible existing/future account, no account-specific implementation or provisioning change.
 UNVERIFIED: candidate native desktop/narrow/keyboard/focus/scroll/composer, zoom/assistive technology, final composed static checks, exact-head review/CI, deployment/readback and ordinary role/tenant/cohort/eligibleLive proof remain owed. Full19/nine and one complete founder evaluation remain open.
 
@@ -31,7 +31,7 @@ RELEASE_CHANNEL: development: original-component source repair; normal reviewed 
 RELEASE_CLASSIFICATION: internal-only: bounded interaction/scope repair, no customer capability launch.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement.
 RELEASE_NOTE_REQUIRED: no: sanitized engineering receipts only.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: original Systems Check/readiness; corrected ordinary UI behavior PROOF OWED. Do not represent a source test, pending fixture or browser connection as customer acceptance.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: original native recorded-check UI only; canonical Systems Check Mind-context UNAVAILABLE (SCR-2/SCR-3). Corrected ordinary UI behavior PROOF OWED. Do not represent a source test, pending fixture or browser connection as customer acceptance.
 RELEASE_RECOVERY: position=forward-fix the original workspace; reference=ANT138/dbf6f914 and ANT161/cbf53f89. UI retirement does not cancel, replay, reconcile or establish cessation of an original domain operation.
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.

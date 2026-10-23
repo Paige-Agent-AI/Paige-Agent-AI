@@ -1,5 +1,12 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+October23 release-order continuation: actual production600000/main2748432
+requires never-applied C18 SQL570004→630004, then C19 native580004→640004.
+These follow existing peer610009/620009 reservations without a global hold.
+Original SQL bytes, grants, original UI inputs/images and controls are preserved;
+proof references and one explicit captured-source filename continuation change.
+No recorded production migration, customer record or acceptance is rewritten.
+
 October23 current-main composition: original C18 source preserves incoming
 cb1d891d7 E05/EXP02/EXP09 work and the entire incoming shared Brain text. All21
 critical compiled-evidence inputs retain their original raw hashes and identical

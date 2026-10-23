@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(208);
+SELECT plan(210);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -433,7 +433,12 @@ SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES ('e0970300-0000-4000-8000-000000000011','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','Owner','Selflinked A','active'),('e0970300-0000-4000-8000-000000000012','e0970200-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','Owner','Selflinked B','active');
 INSERT INTO public.paige_context_loads(tenant_id,contact_id,caller_user_id,scope,consent_state) VALUES ('e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000011','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','denied');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}')->>'count','1','original INVOKER activity sees selected A only');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','original INVOKER RLS refuses B while actual staff workspace remains A');
+CREATE TEMP TABLE e09_legacy_staff_context ON COMMIT DROP AS SELECT active_tenant_id FROM public.profiles WHERE user_id='e0970100-0000-4000-8000-000000000001';
+UPDATE public.profiles SET active_tenant_id='e0970200-0000-4000-8000-000000000002' WHERE user_id='e0970100-0000-4000-8000-000000000001';
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT to_jsonb(public.current_user_tenant_id())'),to_jsonb('e0970200-0000-4000-8000-000000000002'::text),'synthetic fixture models genuine owner-member workspace B');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'count','2','original INVOKER activity sees selected B and granted consent only');
+UPDATE public.profiles SET active_tenant_id=(SELECT active_tenant_id FROM e09_legacy_staff_context) WHERE user_id='e0970100-0000-4000-8000-000000000001';
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()') ->>'sqlstate','42501','INVOKER staff self-link still refuses ambiguous business');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000003"}')->>'error','NO_LINKED_CONTACT','foreign hint cannot use an own activity record');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"invalid"}')->>'sqlstate','42501','malformed activity selection refuses');

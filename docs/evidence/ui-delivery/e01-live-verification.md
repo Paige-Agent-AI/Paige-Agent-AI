@@ -36,7 +36,7 @@ UNVERIFIED: every AUTHENTICATED-class step in the matrix below — the founder's
 | Per-account capability truth (acknowledged/revoked/expired/unknown/not_acknowledged) | source+synthetic | #2657 parity suite + paige_live_terms_status SQL | none |
 | Real bidirectional audio, speech latency p50/p95, audible interruption recovery | AUTHENTICATED | none claimed | **PROOF OWED — FINAL EVALUATION WINDOW** (founder's voice + consent; engineering will not manufacture) |
 
-INTERNAL_BUILD_IDENTITY: to-be-pinned-at-commit; deployment=undeployed verification branch (docs+frames only; no runtime change); environment=local; migrations=NOT_APPLICABLE;edge=NOT_APPLICABLE; evidence=docs/evidence/experience-01-foundation/live-verification-2026-10-24/native-integrity.json
+INTERNAL_BUILD_IDENTITY: e38ad9c49f8f0d0715927f80b66cf3cb5b8f4b8b; deployment=undeployed verification branch (docs+frames only; no runtime change); environment=local; migrations=NOT_APPLICABLE;edge=NOT_APPLICABLE; evidence=docs/evidence/experience-01-foundation/live-verification-2026-10-24/native-integrity.json
 RELEASE_CHANNEL: development: local harness captures and existing deployed surfaces; no new deployment from this PR.
 RELEASE_CLASSIFICATION: internal-only: verification evidence ahead of the single EXP01 founder evaluation.
 CUSTOMER_RELEASE_IDENTITY: none: evidence-only PR.

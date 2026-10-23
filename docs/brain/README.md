@@ -2686,7 +2686,36 @@ ALG01/12 supporting checks only; ALG02/13/catalogue unchanged. Next original PDF
 prepared-field renderer/source integration remains bounded, not a second engine.
 
 
-## EXP02 original source-backed report Chat consumer — October23 development
+## EXP02 original source-backed report Chat consumer — October23 source released
+
+Source2675 reviewed1f893139364fbdcb0607ddac6798952d5fd6c3dd/tree0187aa25,
+LOWER5633346286; all11 exact-head applicable checks/genuine Preview/full native/
+Edge ratchet and both statuses SUCCESS. Actual main10eb1647fdd0b527c2dd2cc919c7a169cdac11bc
+exactly matches inspected64347+1f/tree0187aa25. Normal Edge40015241840/120625516345
+SUCCESS, source artifact12528421385. Independent actual Chat518/all267 files/
+verify_jwt:true and original worker56/all36 files/verify_jwt:false match the reviewed
+tree; original internal-caller safeguards retained. Own SQL N/A. Web9GL READY/exact
+10eb metadata; actual public HTTP200 containing56219-mvle4w9k/null, ancestry and
+unchanged original sources verified. Exact10eb public version not sampled.
+[Production source6373627396](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2675#issuecomment-6373627396).
+
+Actual ordinary monthly report QA did not settle successfully: matching Chat518
+CPU exhaustion2026-10-23T20:17:31Z before confirmed work. Original saved user turn,
+no assistant terminal, zero original document work/completion at readback; existing
+executor claim retained. No retry, claim/drain/recovery reset or safe-cessation
+inference. Existing protected recovery owner coordinated through ANT11de6fb038.
+[Actual QA6373990753](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2675#issuecomment-6373990753).
+This is a real remaining reliability finding, not a source/CI/deployment failure.
+
+Actual released nine-entry catalogue read6374099460 retains Coming Soon for
+CAP009/010/011/013, Limited012/016/017 and Unverified014/015; actor access Unverified.
+Functional source deployed / Visual unchanged supporting renderer / Experiential
+report interrupted, ordinary artifact/Rail/read/reload/refusal/recovery/roles/cohorts/
+Live/full19 proof owed / Founder NOT_ACCEPTED. Algorithms and original9PASS/0FAIL
+plus12PASS/0FAIL/4BLOCKED unchanged. No new provider/model/permission/INT346 or
+consequential activation, runtime, registry or customer release identity.
+
+### Historical candidate preparation — superseded by the source release above
 
 The original document_generate tool adds closed business_review briefs with an
 explicit month/quarter period and1–12 issued canonical Metric references. Same

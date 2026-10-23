@@ -12,8 +12,8 @@ service-only Collections router delegates the exact effectuation action; its
 typed endpoint/approval card and customer UI are not connected by this slice.
 No Chat/Live action or production execution is activated.
 
-Current original native proof PASS562:406 preserved preparation/signature/
-accepted-source controls plus156 effectuation controls, replay2, five added
+Current repaired native proof PASS564:406 preserved preparation/signature/
+accepted-source controls plus158 effectuation controls, replay2, five added
 concurrent sessions and three observed lock waits. Actual authority withdrawal
 while waiting produces SQLSTATE42501 with zero terms/operation/Rail effect.
 Original manual writer errors/CAS/closed response keys, unchanged package DTO,
@@ -22,9 +22,17 @@ Before/replay body and search-path drift refuse before replacement. The final
 original Linux Deno invocation adds the same cases, removing no existing gate.
 
 Earlier current-guard run correctly rejected an outdated Rail fixture; it now
-loads the canonical final E02 read-label wrapper. Source uses pg_catalog/public,
-while actual deployed metadata reports empty; only those two inspected paths
-are accepted, and the difference's cause is UNVERIFIED. A later authority case
+loads the canonical final E02 read-label wrapper. Its original source uses
+pg_catalog/public, while actual deployed metadata reports empty; only those two
+inspected original configurations are accepted, and the cause is UNVERIFIED.
+Genuine full-schema CI then failed the unchanged E02 assertion15: the new E04
+wrapper had changed its pinned path to empty. A native reproduction preserves
+the original predicate, confirms the pre-E04 positive and fails after E04/replay.
+The bounded repair pins the new wrapper to canonical pg_catalog/public and
+requires that exact replay metadata. All original562 controls plus the two
+E02 predicate checks pass; the original20-assertion suite is unchanged and
+still requires fresh full-schema CI. This native564 proof is synthetic, not
+production repair or customer acceptance. A later authority case
 reached refusal but lacked session SQLSTATE diagnostics; it remains FAIL, then
 the added session alone enabled verbose diagnostics and the original proof
 passed unchanged. The disposable cluster was verified empty and stopped.

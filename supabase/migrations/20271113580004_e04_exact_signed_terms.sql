@@ -20,7 +20,7 @@ BEGIN
   ('public.read_sales_collection_command_result(uuid,uuid,uuid,jsonb)','ee2ea0a76172337bef45b0c32e756dba','ed9ee0effd12873fd7853c887bc7de8c',true,ARRAY['search_path=pg_catalog, public']),
   ('public.preview_sales_collection_command(uuid,uuid,jsonb)','aa21188fc3625a4ad754c627861113ac','9ccde31a3199fefc4aac2afbd9547fc0',true,ARRAY['search_path=pg_catalog, public']),
   ('public.execute_sales_collection_command(uuid,uuid,uuid,jsonb,jsonb)','05d4524afc460105777185feaaed1843','4a25621d37c0b292aa3b38d5b7f055f2',true,ARRAY['search_path=pg_catalog, public']),
-  ('public._workspace_event_display(text,text,text)','8798140accd05c06fa406796efd7dbdd','e551ecbcca75dda0764353647757feed',false,ARRAY['search_path=""'])
+  ('public._workspace_event_display(text,text,text)','8798140accd05c06fa406796efd7dbdd','e551ecbcca75dda0764353647757feed',false,ARRAY['search_path=pg_catalog, public'])
  ) AS definitions(identity,original_hash,replay_hash,is_definer,settings) LOOP
   SELECT md5(prosrc) body_hash,prosecdef,proconfig INTO installed
    FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(expected.identity);
@@ -28,7 +28,7 @@ BEGIN
    OR installed.prosecdef IS DISTINCT FROM expected.is_definer
    OR (installed.proconfig IS DISTINCT FROM expected.settings AND NOT (
     expected.identity='public._workspace_event_display(text,text,text)' AND installed.body_hash=expected.original_hash
-    AND installed.proconfig=ARRAY['search_path=pg_catalog, public'])) THEN
+    AND installed.proconfig=ARRAY['search_path=""'])) THEN
    RAISE EXCEPTION 'Canonical commercial dependency changed: %; reconcile before applying',expected.identity USING ERRCODE='23514';
   END IF;
  END LOOP;
@@ -337,7 +337,7 @@ DO $$ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public._workspace_event_display_before_e04_effectuation(text,text,text) FROM PUBLIC,anon,authenticated,service_role;
 CREATE OR REPLACE FUNCTION public._workspace_event_display(_source_kind text,_outcome text,_capability text) RETURNS jsonb
- LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path='' AS $$
+ LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,public AS $$
 DECLARE result jsonb;
 BEGIN
  result:=public._workspace_event_display_before_e04_effectuation(_source_kind,_outcome,_capability);

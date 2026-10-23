@@ -41,6 +41,13 @@ export async function proveEffectiveCommercialTerms({sql,concurrent,refuseAfterL
  // Its source pins pg_catalog/public; deployed metadata pins empty. Both exact
  // known configurations are retained, and their difference is not attributed.
  sql(read('supabase/migrations/20271113040000_e2_read_receipt_labels.sql'));
+ // Execute the unchanged E02 pgTAP assertion15 predicate on the real native
+ // functions before and after composition. This is its contract, not an E04
+ // replacement expectation; the original20-assertion suite stays unchanged.
+ const e02ReceiptMetadata=`SELECT bool_and(provolatile='i' AND NOT prosecdef AND proconfig=ARRAY['search_path=pg_catalog, public'])
+  FROM pg_proc WHERE oid IN ('public._workspace_event_display(text,text,text)'::regprocedure,
+   'public._workspace_event_display_before_e02_reads(text,text,text)'::regprocedure);`;
+ assert.equal(sql(e02ReceiptMetadata),'t','Original E02 receipt metadata contract before E04 composition');checks++;
  const command={action:'collection.effectuate_terms',agreement_id:termsId,expected_version:prepared.payload.source.terms_version,
   expected_updated_at:prepared.payload.source.terms_updated_at,signing_id:agreementId,signing_version:prepared.payload.source.agreement_version,
   invoice_id:invoiceId,invoice_draft_version:prepared.payload.source.invoice_draft_version,payload_digest:prepared.payload_digest,sealed_sha256:'b'.repeat(64)};
@@ -69,6 +76,7 @@ export async function proveEffectiveCommercialTerms({sql,concurrent,refuseAfterL
  };
  for(const identity of incumbents){refuseDrift(identity);refuseDrift(identity,true);}
  sql(read(migration));sql(read(migration));
+ assert.equal(sql(e02ReceiptMetadata),'t','Preserve the original E02 immutable/invoker/pinned-path contract after E04 and replay');checks++;
  for(const identity of [...incumbents,'_set_client_agreement_status(uuid,uuid,uuid,text,timestamptz)',
   '_sales_effective_provenance_guard()','_validate_sales_effectuation(jsonb)','_preview_sales_effectuation(uuid,uuid,jsonb)',
   '_execute_sales_effectuation(uuid,uuid,uuid,jsonb,jsonb)','_workspace_event_display_before_e04_effectuation(text,text,text)']){

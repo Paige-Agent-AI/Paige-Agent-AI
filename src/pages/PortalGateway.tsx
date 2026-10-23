@@ -30,7 +30,8 @@ import { readableTextOn } from "@/lib/brand/contrast";
 import { resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
 import { cachePortalSlug } from "@/lib/auth/signOut";
 import { tenantHostPortalEntryUrl, tenantSlugFromHostname, trustedAppOrigin } from "@/lib/hostRouting";
-import { fetchWithheldCustomerAccess } from "@/lib/client-portal-access";
+import {fetchClientPortalSavedEntry, type ClientPortalSavedEntry} from "@/lib/client-portal-return";
+import {clientPortalBusinessHref} from "@/lib/client-portal-entry";
 import "./ConsumerInvitation.css";
 
 interface PortalBrand {
@@ -72,29 +73,31 @@ export default function PortalGateway() {
   const attempt = useRef({sequence: 0});
 
   const customerTarget = useCallback(async (subject: string) => {
-    const target = await boundedGateway(resolveLandingRoute(subject, { customerPortal: true }));
+    const controller = new AbortController();
+    let entry: ClientPortalSavedEntry | null = null;
+    let entryFailure: unknown = null;
+    try {
+      entry = await boundedGateway(fetchClientPortalSavedEntry(subject, tenantSlug, {signal: controller.signal}));
+    } catch (error) {
+      entryFailure = error;
+    } finally {
+      controller.abort();
+    }
+    // Preserve original role/account priorities even if the customer-only read is unavailable.
+    const target = await boundedGateway(resolveLandingRoute(subject, {customerPortal: true,
+      ...(entry ? {customerBusinessId: entry.businessId} : {})}));
     if (target === "/pricing" || target === "/onboarding") {
       throw new Error("No active customer access was found. Ask your provider for a current invitation.");
     }
-    // E09 Slice 7: a business paused or ended this person's access. /app shows that business's own
-    // page and grants nothing, so the brand check below (which needs an OPEN relationship) is not the
-    // question to ask. An unknown answer falls through to it, unchanged.
-    const withheld = target === "/app" ? await boundedGateway(fetchWithheldCustomerAccess()).catch(() => null) : null;
-    if (!withheld && (target === "/app" || target.startsWith("/onboard/"))) {
-      // The public slug is presentation, never membership. The native reader
-      // resolves only the actual caller's current active customer relationship.
-      const { data, error } = await boundedGateway(supabase.rpc("get_client_portal_brand"));
-      const ownBrand = Array.isArray(data) ? data[0] : data;
-      // Match the public reader's lower(trim(_slug)) lookup. Its public DTO
-      // deliberately omits tenant IDs; membership still comes from this reader.
-      if (error || typeof ownBrand?.tenant_slug !== "string"
-        || ownBrand.tenant_slug.trim().toLowerCase() !== tenantSlug.trim().toLowerCase()) {
-        throw new Error("This login does not have access to this business’s portal. Use the portal link from your provider.");
-      }
+    const customerDestination = target === "/app" || target.startsWith("/onboard/");
+    if (customerDestination) {
+      if (entryFailure) throw entryFailure;
+      if (!entry) throw new Error("This login does not have access to this business’s portal. Use the portal link from your provider.");
     }
-    const { data, error } = await boundedGateway(supabase.auth.getUser());
+    const {data, error} = await boundedGateway(supabase.auth.getUser());
     if (error || data.user?.id !== subject) throw new Error("Your session changed. Sign in again to continue.");
-    return target;
+    // This URL narrows the original native gate; metadata never grants a customer session.
+    return target === "/app" && entry ? clientPortalBusinessHref(entry.businessId) : target;
   }, [tenantSlug]);
 
   // If a customer is already signed in, don't show a login wall — route them in.
@@ -283,7 +286,7 @@ export default function PortalGateway() {
                     type="button"
                     onClick={() => setShowPw((s) => !s)}
                     aria-label={showPw ? "Hide password" : "Show password"}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 min-w-[44px] flex items-center justify-center text-muted-foreground/60 hover:text-muted-foreground"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground"
                   >
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>

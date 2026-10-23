@@ -1,7 +1,7 @@
 -- Real original native resolver/brand and authenticated roles; synthetic fixture,
 -- no permanent identities, provider effect or production auth impersonation.
 BEGIN;
-SELECT plan(28);
+SELECT plan(61);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0960100-0000-4000-8000-000000000001','authenticated','authenticated','choices-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -42,6 +42,50 @@ CREATE FUNCTION pg_temp.choices(statement text DEFAULT 'SELECT public.client_por
 RETURNS jsonb LANGUAGE sql AS $$
  SELECT pg_temp.as_user('e0960100-0000-4000-8000-000000000002',statement) $$;
 
+
+-- Original returning-business projection, local synthetic transaction only.
+CREATE FUNCTION pg_temp.portal_return(p_slug text,actor uuid DEFAULT 'e0960100-0000-4000-8000-000000000002',headers text DEFAULT '{}')
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE answer jsonb;
+BEGIN
+ PERFORM set_config('request.headers',headers,true);
+ answer:=pg_temp.as_user(actor,format('SELECT public.client_portal_entry_for_slug(%L)',p_slug));
+ PERFORM set_config('request.headers','{}',true);
+ RETURN answer;
+EXCEPTION WHEN OTHERS THEN
+ PERFORM set_config('request.headers','{}',true);
+ RAISE;
+END $$;
+SELECT is((SELECT md5(replace(replace(prosrc,'v_business := p_business;','v_business := public._client_portal_request_business();'),'public.client_portal_relationship_id(v_business);','public.client_portal_relationship_id(NULL);')) FROM pg_proc WHERE oid='public._client_portal_access_projection(uuid)'::regprocedure),'3be0d887895d6ebefa34fbd6b29f431a','private projection inverse reproduces every original S7 source branch');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='s' AND proconfig=ARRAY['search_path=""'] FROM pg_proc WHERE oid='public._client_portal_access_projection(uuid)'::regprocedure) AND NOT has_function_privilege('authenticated','public._client_portal_access_projection(uuid)','EXECUTE') AND NOT has_function_privilege('anon','public._client_portal_access_projection(uuid)','EXECUTE') AND NOT has_function_privilege('service_role','public._client_portal_access_projection(uuid)','EXECUTE'),'factored original projection stays private with an empty search path');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='s' AND pronargs=0 AND proconfig=ARRAY['search_path=""'] AND pg_get_function_result(oid)='jsonb' FROM pg_proc WHERE oid='public.client_portal_access_state()'::regprocedure) AND has_function_privilege('authenticated','public.client_portal_access_state()','EXECUTE') AND has_function_privilege('service_role','public.client_portal_access_state()','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_access_state()','EXECUTE'),'original public access-state ABI/security/permissions preserved');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_self_profile(uuid)'::regprocedure),'090fd2f8ef6f29ddf8091be7cbd6db7d','original authoritative profile is unchanged');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_relationship_id(uuid)'::regprocedure),'ff84ba24689e5043d7d15ed3d9150268','original relationship authority is unchanged');
+SELECT ok(has_function_privilege('authenticated','public.client_portal_entry_for_slug(text)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_entry_for_slug(text)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_entry_for_slug(text)','EXECUTE'),'new minimal entry projection is authenticated-only');
+SELECT is(pg_temp.portal_return('test-tenant-choices-a')->>'tenant_id','e0960200-0000-4000-8000-000000000001','saved A portal resolves actual own A despite two legitimate relationships');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b')->>'tenant_id','e0960200-0000-4000-8000-000000000002','saved B portal resolves actual own B, never LIMIT1 A');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b')->>'actor_id','e0960100-0000-4000-8000-000000000002','entry identifies actual Auth subject, not an input actor field');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b')->>'state','open','open state comes from original exact-business native profile');
+SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(pg_temp.portal_return('test-tenant-choices-b')) k),ARRAY['actor_id','contract_version','state','tenant_id','tenant_slug'],'closed entry metadata excludes CRM/private AI/Knowledge/financial/contact fields');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b')->>'contract_version','1','closed entry version');
+SELECT is(pg_temp.portal_return(' TEST-TENANT-CHOICES-B ')->>'tenant_slug','test-tenant-choices-b','normalization matches original public brand lower/trim semantics');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b'),pg_temp.portal_return('test-tenant-choices-b'),'ordinary returning read is stable, not a new work or visit receipt');
+SELECT ok(pg_temp.portal_return('test-tenant-choices-c') IS NULL,'public foreign business slug supplies no membership or notice');
+SELECT ok(pg_temp.portal_return('test-tenant-choices-b','e0960100-0000-4000-8000-000000000003') IS NULL,'another actual customer cannot reuse an entry business');
+SELECT ok(pg_temp.portal_return('test-tenant-choices-b','e0960100-0000-4000-8000-000000000001') IS NULL,'business owner role supplies no customer relationship');
+SELECT ok(pg_temp.portal_return('test-tenant-choices-b','e0960100-0000-4000-8000-000000000004') IS NULL,'unlinked actual Auth subject cannot enter by slug');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b',NULL)->>'sqlstate','42501','no actual subject is refused');
+SELECT ok(pg_temp.portal_return('unknown-test-business') IS NULL,'unknown slug returns no business pointer');
+SELECT ok(pg_temp.portal_return(NULL) IS NULL AND pg_temp.portal_return('  ') IS NULL,'null or blank slug does not select a business');
+SELECT ok(pg_temp.portal_return('test-tenant-choices-b','e0960100-0000-4000-8000-000000000002','{"x-client-portal-business":"e0960200-0000-4000-8000-000000000001"}') IS NULL,'conflicting current business hint never yields another business entry');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b','e0960100-0000-4000-8000-000000000002','{"x-client-portal-business":"e0960200-0000-4000-8000-000000000002"}')->>'tenant_id','e0960200-0000-4000-8000-000000000002','matching narrow business hint preserves actual B');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b','e0960100-0000-4000-8000-000000000002','{"x-client-portal-business":"invalid"}')->>'sqlstate','42501','invalid hint cannot fall through to public slug lookup');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b','e0960100-0000-4000-8000-000000000002','[]')->>'sqlstate','42501','invalid header envelope refuses');
+SELECT is(pg_temp.choices('SELECT public._client_portal_access_projection(''e0960200-0000-4000-8000-000000000002'')')->>'sqlstate','42501','customer cannot call the internal projection directly');
+UPDATE public.tenants SET status='suspended' WHERE id='e0960200-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.portal_return('test-tenant-choices-b') IS NULL,'inactive business supplies no active client entry');
+UPDATE public.tenants SET status='active' WHERE id='e0960200-0000-4000-8000-000000000002';
+
 SELECT is(pg_temp.choices()->>'contract_version','1','closed contract version');
 SELECT is(pg_temp.choices()->>'actor_id','e0960100-0000-4000-8000-000000000002','actor is actual Auth subject');
 SELECT is(jsonb_array_length(pg_temp.choices()->'relationships'),2,'both own active business relationships resolve');
@@ -72,17 +116,26 @@ SELECT set_config('paige.portal_access_write','1',true);
 UPDATE public.clients SET portal_access_state='paused' WHERE id='e0960300-0000-4000-8000-000000000002';
 SELECT set_config('paige.portal_access_write','',true);
 SELECT is(jsonb_array_length(pg_temp.choices()->'relationships'),1,'paused relationship disappears on a fresh native read');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b')->>'state','paused','saved B link preserves original own paused notice while A remains active');
+SELECT is(pg_temp.portal_return('test-tenant-choices-a')->>'state','open','paused B never overrides legitimate A portal');
+
 SELECT set_config('paige.portal_access_write','1',true);
 UPDATE public.clients SET portal_access_state='open' WHERE id='e0960300-0000-4000-8000-000000000002';
 SELECT set_config('paige.portal_access_write','',true);
 UPDATE public.clients SET status='archived' WHERE id='e0960300-0000-4000-8000-000000000002';
 SELECT is(jsonb_array_length(pg_temp.choices()->'relationships'),1,'archived original relationship never appears');
+SELECT ok(pg_temp.portal_return('test-tenant-choices-b') IS NULL,'archived contact cannot enter by a public business link');
+
 UPDATE public.clients SET status='active' WHERE id='e0960300-0000-4000-8000-000000000002';
 SELECT is(jsonb_array_length(pg_temp.choices()->'relationships'),2,'restored legitimate original relation returns without another identity');
 SELECT set_config('paige.link_ok','1',true);
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0960300-0000-4000-8000-000000000002';
 SELECT set_config('paige.link_ok','',true);
 SELECT is(jsonb_array_length(pg_temp.choices()->'relationships'),1,'ended/unlinked original relationship is absent without changing another business');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b')->>'state','ended','saved B link preserves original own ended notice while A remains active');
+SELECT is(pg_temp.portal_return('test-tenant-choices-b')->>'tenant_id','e0960200-0000-4000-8000-000000000002','ended notice remains explicitly bound to requested B');
+SELECT ok(pg_temp.portal_return('test-tenant-choices-b','e0960100-0000-4000-8000-000000000003') IS NULL,'ended notice never belongs to another current subject');
+
 SELECT ok(has_function_privilege('authenticated','public.client_portal_relationship_choices(integer,uuid)','EXECUTE')
  AND NOT has_function_privilege('anon','public.client_portal_relationship_choices(integer,uuid)','EXECUTE')
  AND NOT has_function_privilege('service_role','public.client_portal_relationship_choices(integer,uuid)','EXECUTE'),'authenticated-only execution; no anonymous/service grant');

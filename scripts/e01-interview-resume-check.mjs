@@ -40,7 +40,7 @@ create table public.paige_chat_turns(id uuid default gen_random_uuid() primary k
 const roles=['anon','authenticated','service_role'].map(r=>`do $$begin if not exists(select 1 from pg_roles where rolname='${r}')then create role ${r} nologin;end if;end$$;`).join('');
 const sql=`begin;${roles}${fixtureSchema}${shims}
 ${stripTx(read('supabase/migrations/20271107100000_solo_business_interview_checkpoint.sql'))}
-${stripTx(read('supabase/migrations/20271113400000_latest_solo_business_interview_thread.sql'))}
+${stripTx(read('supabase/migrations/20271113420000_latest_solo_business_interview_thread.sql'))}
 ${read('supabase/tests/e01_interview_resume.sql')}
 rollback;`;
 const result=spawnSync(process.env.PSQL_BIN??'psql',['-X','-v','ON_ERROR_STOP=1',url],{input:sql,encoding:'utf8',timeout:60000,windowsHide:true});

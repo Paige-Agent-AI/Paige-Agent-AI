@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: the RPC returns a navigation hint only and its comm
 SOLO_UI: YES: one Solo shell for every tenant; the lookup is the caller's own threads in their canonical workspace.
 UNVERIFIED: post-deploy rendered screenshot; authenticated returning-owner resume pass on the QA account; founder-drive completion retirement observed live.
 
-INTERNAL_BUILD_IDENTITY: 061ee344b5a82ab13403a2fc913820bc6f53b298; deployment=PROOF_OWED(undeployed fix branch; post-merge deploy-migrations + bundle readback owed); environment=local; migrations=PROOF_OWED(20271113400000_latest_solo_business_interview_thread);edge=NOT_APPLICABLE; evidence=scripts/e01-interview-resume-check.mjs
+INTERNAL_BUILD_IDENTITY: 061ee344b5a82ab13403a2fc913820bc6f53b298; deployment=PROOF_OWED(undeployed fix branch; post-merge deploy-migrations + bundle readback owed); environment=local; migrations=PROOF_OWED(20271113420000_latest_solo_business_interview_thread);edge=NOT_APPLICABLE; evidence=scripts/e01-interview-resume-check.mjs
 RELEASE_CHANNEL: development: local/development build environment; production release follows the standing small-PR merge/deploy/readback gate.
 RELEASE_CLASSIFICATION: internal-only: onboarding resume/retirement correction ahead of the single EXP01 founder evaluation.
 CUSTOMER_RELEASE_IDENTITY: none: fix branch only; founder evaluation precedes any release identity.

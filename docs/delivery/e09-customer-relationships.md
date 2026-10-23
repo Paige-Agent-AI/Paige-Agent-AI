@@ -1,3 +1,7 @@
+## Native59 full-schema fixture correction — 2026-10-23
+
+Hosted120686303176 ran283 assertions with no failed assertion, then the original active-workspace guard correctly refused the fixture attempted foreign profile pointer. Replace that impossible setup with an explicit42501 throws_ok assertion using the actual original guard, retain the following no-business-authority check and all original265 controls, and increase total293→294. Actual original private identity/wrappers/workspace guard now run the same29 local expressions: baseline22PASS7FAIL, repaired29PASS, incorrect none-floor26PASS3FAIL. No production function/migration/permission change, no disabling trigger or manufactured staff membership. Prior28-case and failed-head evidence below remains historical; fresh exact-head hosted native/CI required.
+
 ## Current shared-identity ordering — 2026-10-23
 
 Native59 follows parent2691/c9d8fb17d3329e659ccd8005de8fbc44ea42631c and actual main2748432e1, which legitimately applied600000 to production. This never-production-applied identity migration moves590009→620009 after parent610009. Its SQL/function/test bytes remain unchanged; old reserved versions and previous Preview statements below are historical. Fresh required exact-head CI, ordinary empty Preview and production readback remain owed. The global unique guard is still present: no second-business admission yet.

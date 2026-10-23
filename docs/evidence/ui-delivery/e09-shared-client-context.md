@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: prerequisite corrects legacy implicit identity classif
 FLOW_PROTOTYPE: NOT_REQUIRED: no new interface interaction/mounted consumer; original customer gate/chooser remains authoritative
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: shared identity truth retains limited customer standing without guessing a business relationship
 VISUAL_DIRECTION: PASS: original tenant-branded CURA Operate interface/controls/styling unchanged
-AUTOMATED_EVIDENCE: PASS: local actual private function/two original wrappers/database roles21PASS7FAIL baseline then28PASS; wrong none-tier fault fails3 causal checks;4 migration refusal/state-preservation controls PASS; required hosted293 still owed
+AUTOMATED_EVIDENCE: PASS: prior28 local controls retained historically. Corrected29-case local proof includes actual original active-workspace guard:22PASS7FAIL baseline,29PASS repaired, wrong none-floor mutation26PASS3FAIL. Full hosted native294 remains required after the original fixture correctly refused a forbidden profile pointer; no production guard or privilege was weakened. Four existing migration refusal/state-preservation controls remain unchanged.
 STATIC_EVIDENCE: PASS: whole-source inverse, guarded original ABI/owner/STABLE/DEFINER/path/privateACL/unchanged wrappers and indexes; lint0warnings/1419 unique versions/private-definer controls
 RENDERED_EVIDENCE: UNVERIFIED: no rendering/control edit; prior chooser frames do not prove this native increment
 BEHAVIORAL_EVIDENCE: UNVERIFIED: reduced-dependency native proof is not an ordinary customer browser journey

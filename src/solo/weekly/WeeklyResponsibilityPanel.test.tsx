@@ -80,6 +80,7 @@ it("an unchanged inspection preserves the edited proposal and uses only the fres
   await render({ status: "ready", snapshot: data }, control); await click("Change schedule"); await changeDay(); await click("Review change");
   await render({ status: "loading" }, control);
   const fresh = structuredClone(data); await render({ status: "ready", snapshot: fresh }, control);
+  expect(container.querySelector<HTMLDetailsElement>(".e5-weekly-controls")?.open).toBe(true);
   expect(container.textContent).toContain("Friday"); await click("Save unapproved schedule");
   expect(control.mock.calls[0][0]).toBe(fresh.checks[0]); expect(control.mock.calls[0][2]?.weekday).toBe(5);
 });

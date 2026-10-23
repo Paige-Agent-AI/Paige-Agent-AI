@@ -1,5 +1,68 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## C20 owner review and durable effective-term re-entry — pre-edit route
+
+1. Outcome: the owner reviews the exact accepted economics, approves one bounded
+   status act and returns to its real historical receipt/current record later.
+2. Owner: EXP04 Sales/Agreements. Reuse original2191 selectively; preserve E05
+   shared runtime and E09 Portal. No source-lease overlap found in active PRs.
+3. Existing Kit/Trust, the authenticated Sales command endpoint, native C19
+   Collections transaction and Rail are real. This synchronous owner act does
+   not need another LayerC executor, job or approval system.
+4. Existing sales_collections.read stays canonical. Proposed
+   sales_collections.effectuate_terms is UNAVAILABLE/unregistered at this brief;
+   new native C19 alone does not make it Live. Chat/Live remain unconnected.
+5. Provider: none for this state act. Original internal records/retained-document
+   boundary reused; no sender, processor, connection or new provider authority.
+6. High-risk explicit owner/admin review through the existing one Kit approval
+   gate and exact risk key sales_effectuate_commercial_terms. Native governance,
+   Trust and autonomy recheck after waits; no signature-as-charge authority.
+7. Reuse original pending confirmation, immutable Collections operation and Rail.
+   No new scheduler, queue, browser execution store or local legal-text cache.
+8. Validate exact consequence and actual closed historical receipt. Reuse C19's
+   original accepted-pair lookup BEFORE preview to recover a prior act after a
+   later pause. A recovered receipt is history, never current-status inference.
+9. Existing sales.department binding stays PARTIAL. Add to original accepted-
+   agreement/invoice inspection and existing CollectionCommandReview; keep scope,
+   account epoch, verified owner eligibility, one leave guard and current context.
+10. Prototype the complete review/refusal/unknown/recovery/cancel/scope-retirement
+    flow before mounting customer UI; apply existing SOLO tokens, Impeccable hierarchy,
+    responsive/focus/accessibility review. Required final source/CI/native/Edge/
+    web/ordinary roles/cohorts/CentralQA and whole founder acceptance stay owed.
+
+Bounded source: existing Collections contract/declaration/endpoint, one explicit
+action-risk key (no generic admission/Chat change), existing review component,
+original accepted-source inspection, small source/interaction tests and evidence.
+No new native writer or owner evidence reader is needed for re-entry: C19's
+original immutable-operation lookup already returns the original accepted pair.
+Parent2681/2689 must release/read back before this consumer. All O1–O12 remain.
+
+Current bounded API guard work proceeds separately from the unmounted UI. Actual
+prototype keyboard observations cover15 states and actual320/1536 DOM reflow;
+physical capture recovered in a fresh tab and exposed standalone-prototype
+clipping, now corrected outside production styles. Current responsive images
+and native focus containment remain under verification; the earlier old-tab
+focus-wrap probe failed and is retained. No premium/finished customer UI or
+full accessibility acceptance is claimed.
+The original real-handler/real-SDK intercepted-transport test pattern proves7
+positive controls and12 causal baseline failures before the endpoint repair.
+All19 actual-handler steps now PASS with network/env/read/write/run/FFI/sys
+denied. Current46 declaration/parser/actual legacy-Chat boundary assertions
+pass in four serialized thread suites, unchanged assertions/timeouts; an
+earlier fork worker failed before loading the original five-case suite and
+remains a failed run. Owning ESLint exits0. A separate genuine Spine outcome
+regression (three positives/one failure) corrected only the new entry to the
+actual commercial_terms_effectuated result; every incumbent kind is preserved.
+Exact C19 consequence/receipt guards now protect the existing endpoint's new
+action; malformed history/acknowledgement and workspace changes retain original
+work identity without success. Only the new named test path is added to the
+incumbent Deno Agreements gate. No original test/flag/assertion/permission,
+dependency/production lock, generic admission or approval engine is changed.
+The workflow is byte-identical to its parent after removing just that one
+named test path. Actual identity/native transactions/physical files remain
+separate proof. This C20 is a backend prerequisite; the owner review/control
+mount follows, with the existing one approval component and source contracts.
+
 ## C19 exact signed-term effectuation — October23 continuation
 
 REUSE/EXTEND original2191 selectively after C18/2681. Existing old branch and all

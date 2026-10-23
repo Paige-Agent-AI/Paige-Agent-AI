@@ -820,6 +820,39 @@ Webdpl_5eY5SJ5RpHjGNZmprRjNpwhEZZmk READY/exactmain; public build172786-mvk5v4a3
 customerUpdate:null. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2630#issuecomment-6353478230).
 Source/native prerequisite only; no runtime report consumer or customer acceptance.
 
+## EXP02 historical report block consumer — October22 development, unmounted
+
+D2 serializes the original native capture into existing document blocks using the
+canonical Metric parser, currency formatter and block normalizer. Explicit source
+period/as-of/coverage, null-versus-zero, separate currencies, exact large minor units,
+source categories, quarter-to-date bounds, business calendar, original workflow
+observations and all series points are retained. No bearer token/private workspace
+identity is returned. Closed detached provenance retains the original source lineage;
+no current-value, prediction, executed action or verified improvement is inferred.
+
+Two genuine async value/context mutation failures preceded correction: bounded
+original evidence, capture time and work scope are copied before the digest yields.
+Final75 cases/three original suites and23 new-module cases pass, including source
+retirement/immutable facts and the ES2020 regex compatibility correction. Strict module/test compiler and scoped ESLint/whitespace
+pass. Initial whole-app compilation found three new replaceAll/lib diagnostics; those
+methods were replaced, baseline untouched. Final whole-app exact-head CI remains owed;
+no cancelled/incomplete local ratchet is called PASS. Relevant private install retains
+UI dependencies but is not claimed as an exact complete current-lock install.
+
+No public caller, report type, UI, writer, worker/provider or Chat binding is mounted.
+Structure validation at capture time is not authorization or a fresh current read.
+Next original writer must capture once per stable intent, reject caller-supplied proof,
+and revalidate report-specific current Metric owner/admin authority at claim/completion,
+not merely generic document roles. Original artifact/turn/Rail/renderer/readback and
+ordinary permission/isolation/cohort/Live/visual/founder proof remain required.
+Functional unused local consumer; Visual N/A/unmounted; Experiential and Founder
+Acceptance UNVERIFIED. CAP014/015 remain Unverified; all19/nine/algorithms/Orchestration
+and original domain authority unchanged. Section4.0 N/A until actual merge.
+Current-main effc2bc37 composition retains the exact two source/test files from
+reviewed c7b3532. The same75 cases/three suites pass in39.83s. The first f0be
+UI routing check used the old4259 stack base and included unrelated released UI;
+main retarget and corrected original report notes require fresh exact-head CI.
+
 ## EXP02 October22 — verified Business Review reliability source release
 
 PR2608 reviewed c6b93ce0821c707ca2294130da1b11690972ea05, separate

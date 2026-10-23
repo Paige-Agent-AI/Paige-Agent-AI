@@ -9,7 +9,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO actor distinguishes origina
 VISUAL_DIRECTION: PASS: original company/source heading, account figure strip and supporting provenance; clear grouping instead of repeated paragraphs or decorative charts. No aggregate or comparison across unrelated companies/currencies.
 AUTOMATED_EVIDENCE: PASS:53 cases/four original presenter/Finance/invoice/shared metric suites pass, retaining exact large decimal strings, actual zero versus missing credit/currency, source-wording escaping, original source/refusal/retry/scope retirement and all seven VERA routes. Two intermediate copy-contract failures/51 passes were retained and fixed by restoring the original no-zero phrase; no assertion was weakened. Existing route test now verifies selected Banking tab, source region and original reader instead of an obsolete heading literal. No new effect or data behavior.
 STATIC_EVIDENCE: PASS: scoped lint0; normal production build3m26s with incumbent comments/chunk advisories, actual final fallback-copy marker present in built Solo chunk and obsolete phrase absent. Impeccable9 incumbent CSS advisory signatures/no new or blocking finding/no TSX finding. React component review finds no changed type signature, fetch, hook, effect, provider or dependency. Parent raw type proof remains dated six incumbent errors/unchanged ten baseline/zero additions, not a fresh child typecheck; final exact-head hosted type/dependency/security gates remain mandatory. Local node_modules is the existing pre-composition locked tree; final hosted install proves the merged dependency version.
-RENDERED_EVIDENCE: UNVERIFIED: native browser-origin automatic approval rejection remains; existing Oct21 Banking and earlier Debt captures were inspected only as historical incumbent reference, with current VERA/font source taking precedence.
+RENDERED_EVIDENCE: UNVERIFIED: exact owner origin permission is granted; subsequent Edge page control stalls/resets prevent final Banking captures. Existing Oct21 Banking and earlier Debt frames remain historical reference only, with current VERA/font source taking precedence. Parent Overview frames are explicitly before its focus repair, not Banking or authenticated proof.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: candidate native details, source/record navigation, refresh/retry, focus and Chat continuity require actual inspection.
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate not deployed; no connected provider or populated customer balance is inferred from fixtures or earlier source acceptance.
 KEYBOARD_FOCUS: UNVERIFIED: original native details and controls unchanged in source, but actual candidate keyboard/focus/return remain to prove.
@@ -34,14 +34,25 @@ RELEASE_NOTE_REQUIRED: no: sanitized engineering receipts only.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: candidate presentation and ordinary customer/provider proof. Original source facts are not company totals, profit, forecasts or action receipts.
 RELEASE_RECOVERY: position=bounded original-presenter forward fix/revert; reference=ANT161/b13c820e and preceding2694.
 
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: automatic browser-origin access hold.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: automatic browser-origin access hold.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: automatic browser-origin access hold.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: automatic browser-origin access hold.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: automatic browser-origin access hold.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: automatic browser-origin access hold.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: automatic browser-origin access hold.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: automatic browser-origin access hold.
+Current source composition7876328f94372e28c4da2a7ff7d7ba4244fb51db/tree
+d9f5ae812b299554cf8c475abefc79de40a74864 consumes reviewed parent47d7912b
+and its original focus/foreign-workspace guard.54/four original source suites now
+pass on the actual composed Banking source, no skips. Own six-file98add/8del diff
+remains intact; original presenter/Banking component leaves match121f2901 exactly.
+Current-main E01/E09/Finance records are preserved. Parent's slow raw TypeScript
+check was stopped only after exact process ownership proof because composition
+changed during its run; INCOMPLETE, not a type PASS or baseline waiver. Current
+hosted exact-head install/type/build/full gates and both native release holds
+remain mandatory. No provider, permission, algorithm or catalogue promotion.
+
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: page-control timeout/reset after exact origin permission; native capture owed.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: page-control timeout/reset after exact origin permission; native capture owed.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: page-control timeout/reset after exact origin permission; native capture owed.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: page-control timeout/reset after exact origin permission; native capture owed.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: page-control timeout/reset after exact origin permission; native capture owed.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: page-control timeout/reset after exact origin permission; native capture owed.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: page-control timeout/reset after exact origin permission; native capture owed.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: page-control timeout/reset after exact origin permission; native capture owed.
 
 ## Original capability and execution contracts
 

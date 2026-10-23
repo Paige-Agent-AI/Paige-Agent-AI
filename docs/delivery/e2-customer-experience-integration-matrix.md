@@ -1395,3 +1395,36 @@ still refuses reports, so no catalogue promotion follows from this server founda
 Next release order: required native/real-issuer exact-head CI → safe migration/source
 readback → narrow original Chat consumer, coordinated through ANT161 → actual ordinary
 SOLO report/receipt/read/reload/permission and recovery proof. All19/nine remain owed.
+
+
+## October23 — original source-backed review Chat consumer candidate
+
+Reuse released native520002/original worker51/reader2661 through the original
+document_generate tool. Closed monthly/quarterly period plus original issued
+references, same owned saved conversation/caller-JWT/stable intent; no caller
+facts/capture/tenant/revision steering. Canonical server owns source/authority/
+period resolution and capture once; original artifact/turn/Rail establish success.
+Original nine legacy document types, Studio refusal, source-authority policies,
+non-signable Sales text and existing shared reconciliation hold are preserved.
+
+Actual original-handler2FAIL/14PASS and unknown-hold4FAIL/27SKIP retained;
+corrected229/eight suites then final104/two cases PASS. Owned lint0; Chat
+407baseline/407current, no increase. Actual whole-handler strict-binding refusal
+is separately retained: baseline29 bindings/122 dependencies reproduce; independent
+AST decomposition isolates only identity15. No extractor/metadata/dependency/
+hostile-control waiver. [Consumer evidence](../evidence/ui-delivery/e2-source-backed-review-chat.md).
+
+Functional source candidate; required final review/exact-head CI/normal Edge
+deployment/configuration/source readback pending. Visual original renderer only;
+Experiential actual ordinary report/artifact/receipt/read/reload/role/tenant/
+uncertain recovery/Live/cohort remains owed. Founder NOT_ACCEPTED. CAP014/015
+Unverified and other seven analytics/access/ALG03/06/11/12Partial/13Unverified
+unchanged. No provider/model/spend/consequential activation. All19/nine and
+historical9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED remain intact.
+
+Recovery2663 now releasedfd123cc/original993; consumer cleanly composes actualmain
+64347d7. Own final diff is the original nine report/test/guard/evidence files.
+Combined283-case run retained one5second C1 timeout; original isolated53/53 suite
+and77/77 source controls PASS without assertion/timeout changes. Chat407/407lint,
+owned0. New exact-head review/CI/normal Edge and ordinary report QA remain owed;
+old3e green is historical. No algorithm/catalogue/permission/provider promotion.

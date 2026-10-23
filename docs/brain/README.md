@@ -130,6 +130,23 @@ roles/cohorts/provider/CentralQA/one whole founder evaluation remain incomplete.
 No competing engine/store, Portal UI, provider/security activation, legal claim
 or Capabilities/Algorithm Live promotion.
 
+## EXP04 original native signature — October23 verified source release
+
+2662 reviewed1a53da9b2f87f7d40db9afd70bd01b5a3a9222d4/LOWER5631905272
+mergeda13394776cbc1471556def66e5208ea66e483035 with inspected/actual tree
+bb42aee0b07c00d4aaa28ac85b649125bd053958. All13 exact-head gates/full normal
+Preview/two statuses PASS; normal39998561769/deploy120568593233 applied530004
+after520002. Actual original signature/consent/event transaction and immutable
+issued/recorded identity guard match source,13-argument ABI, INVOKER/empty path,
+postgres ownership/service-only writer/no ordinary execute and enabled trigger.
+Native323/all255 Portal assertions retained. Exact web3GWD READY and both public
+a133-mvl9p1rd/null observed17:59UTC. Own Edge N/A; native consumer2670 still pending.
+[Native release6371363163](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2662#issuecomment-6371363163), Master4.0.
+Earlier failed Preview/grant reproduction remain evidence. Same original records,
+no historical audit fabrication, engine/store/provider/role/activation or customer
+acceptance claim. Full12/prepared-map/effective terms/Communications/retrieval,
+ordinary roles/cohorts/CentralQA/provider and one founder evaluation remain owed.
+
 ## EXP04 original retained signing preflight — October23 source release
 
 2656 is SOURCE RELEASE VERIFIED: reviewed5821b225eaad9a14dead88e0d1d35d9bc56a4e17,

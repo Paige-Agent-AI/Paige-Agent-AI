@@ -1,5 +1,67 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## C17 original recipient transaction and recovery — October23 implementation
+
+Pre-edit ANT161/c39a72c2 and ANT163/b42756a1; existing sole lead/all12 outcomes.
+REUSE original1352 token/guard/retained bytes/consent/renderer/seal/notification
+and C16 original native transaction. REPAIR separate writes and unconfirmed
+receipt/recovery; EXTEND the incumbent recipient result surface. No new signing,
+PDF, sender, authorization, approval, event or execution engine. No Portal UI.
+
+Goal: submit an intended signature once and verify the same original record.
+Human and feel: the actual recipient; calm, definite about evidence and limits.
+Entry and exit: original /sign/:token; check the record or contact the sender.
+System: incumbent public signing page, approved ags tokens/type/controls, no restyle.
+Signature: one check-only action after uncertainty, never another signature.
+Feedback: immediate named busy state and result-heading focus; no added motion/haptics.
+Rejecting: duplicate submit after unknown outcome; raw SDK errors or invented delivery.
+Variants: same current credential on desktop/narrow view; retired credentials refuse.
+
+| From | Trigger and guard | Result/container | Recovery |
+| --- | --- | --- | --- |
+| Existing ready form | Verified original document, intended name and true consent | Existing busy form; one original native transaction | Correct a definite validation refusal inline |
+| Busy form | Actual native receipt, original IDs/time/events | Existing recorded/completed page; completion requires retained-copy readback | Contact sender; same-record read remains available |
+| Busy form | Missing/invalid/transport acknowledgement | Unconfirmed page; no success or further signing control | Check recorded status or ask sender |
+| Unconfirmed | Explicit check; no mark/consent/action evidence | Busy check button; native read-only replay | Recorded/completed, unavailable link, or unconfirmed again |
+| Recorded | Real original historical signature, incomplete audit | Recorded page with visible history limitation | Sender review; no invented events or automatic seal |
+| Any recovery | Expired/revoked/replaced token | Original coarse unavailable-link surface | Ask sender for authorized access |
+
+Same source/controls are reused for all eligible recipients. Loading/empty/read
+failure/document gate/decline states remain incumbent. No tenant allowlist or new
+provider configuration. Real Chat/Live exact prepared signing remains UNAVAILABLE.
+Draft prototype is deterministic/local only; no real signature/contract/send or
+provider call. Existing owner-directed full build/release authority covers this
+bounded flow, with no new per-PR founder design gate. Full rendered and ordinary
+authenticated verification remain separate from synthetic component/API checks.
+
+Current local C17 proof:162 canonical Deno tests/89steps,31 actual component
+cases, owning ESLint0/0, typed actual Edge entry and unchanged SOLO parity/mutation
+controls PASS. Actual full compiler exits2 with six existing signatures within
+unchanged canonical baseline10; no global-clean or baseline-change claim. Five
+source pins/ten actual light/dark receipt frames plus unknown/completed/audit/
+retired-link branches prove only the rendered local component with synthetic
+ports. Native200-percent browser zoom, actual AT/PDF viewer and hosted roles/
+provider/cohort/CentralQA/full12/founder acceptance remain UNVERIFIED.
+
+Separate review found that check-only must not enter completion. Reuse/export the
+ORIGINAL completed-copy verifier for a fresh scoped read; no seal/upload/token
+rotation/notice on an explicit check or reload recovery. Three causal mutator
+controls fail before this repair. A genuine in-flight approved signing attempt
+retains its existing completion path after native reconciliation. Three further
+REDs prove unavailable signer/agreement/order reads must remain unconfirmed.
+Initial PNG corruption fixture was INVALID; actual malformed-deflate refusal and
+a genuine PNG positive are now proven. Header/sample/static bounds precede the
+same existing decoder; no new renderer. Original immutable evidence, source,
+prepared token/effect/approval and financial gates remain in force.
+
+Actual frontier500009 requires the same unpublished C16 native transaction to
+move from480004 to reserved530004 with SQL100% unchanged; source/CI and normal
+production readback still gate C17. Original communications readiness and secure
+completed-copy/retrieval recovery remain required follow-on work, along with
+exact-map approval/send/consent and immutable effective economics. No source,
+UI or receipt subset closes the whole O2 or the remaining O1–O12 destination.
+[Bounded C17 evidence](../evidence/ui-delivery/e04-native-signature-consumer.md).
+
 ## C16 original native signature record — October23 bounded prerequisite
 
 Original sole EXP04 lead, all O1–O12 remain mandatory. Pre-edit contracts are

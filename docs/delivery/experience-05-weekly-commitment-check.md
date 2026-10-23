@@ -1,5 +1,41 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — original specialist uncertainty consumer correction, development
+
+Final review4360946061 reproduced five cases where the original Chat specialist
+consumer returned an uncertain result but allowed the next mutator. The same
+existing `requestExecutionState.needsReview` now holds later writes and drives
+original final uncertainty feedback. Lost/malformed responses and async dispatch
+remain inspect-only; original read/pre-dispatch refusals do not invent effects.
+No new approval, execution gate or replay exists. Exact final review/CI and actual
+Chat/orchestrator deployment/readback remain required. Prior source tests and
+reviews alone did not close this finding. Full ten-outcome acceptance remains owed.
+
+## October23 — original specialist durable outcome, development
+
+REPAIR the existing orchestrator, not a new ZION runtime. Failed or malformed
+original invocation registration now prevents dispatch. The existing saved outcome
+must acknowledge the same invocation/status, and actor-bound completion requires the
+original canonical receipt result. Post-start errors retain the original identity
+and unknown state without a repeated provider/runtime call. Existing runtime
+failure and asynchronous-dispatch distinctions remain. This does not supply a
+request idempotency key or make new HTTP delegation replay-safe.
+
+Eight causal failures reproduced false completion with49 incumbent cases passing;
+the first corrected handler/identity/recorder campaign passes91. Final extended
+controls and exact-head release proof are separate gates. Source guard correctly
+holds only the changed orchestrator producer until reviewed renewal; all other
+source pins and verifier logic remain. [Evidence and orchestration contract](../evidence/ui-delivery/exp05-specialist-durable-outcome.md).
+No production invocation, provider, permission, prompt, model, schedule or trigger
+was changed. All eleven recipes remain Listed / Unverified; complete ZION,
+automations, recovery, ten outcomes/E5-CV1–9/cohorts/Live/founder proof remain owed.
+
+Real-caller review also reproduced an unintended candidate regression in the
+original actorless ActionBus drafting caller. Preserve its original explicit
+receipt exclusion and separate work transition without inventing an actor. The
+ordinary JWT path still always carries its verified actor and receipt requirement.
+This correction is not a new service authority or proof of replay-safe delegation.
+
 ## October23 — atomic exact weekly authorization correction, development
 
 Valid review5629673041 holds the original authorization candidate despite green

@@ -36,7 +36,7 @@ interface Db {
  * Storage failure cannot roll back a completed agreement; it withholds this
  * request's completion confirmation until its retained evidence can be read.
  */
-async function verifiedCompletedCopy(db: Db, record: {
+export async function verifiedCompletedCopy(db: Db, record: {
   status?: unknown; sealed_storage_key?: unknown; sealed_sha256?: unknown;
 }): Promise<SealOutcome> {
   if (record.status !== "completed") return { ok: false, reason: "not_ready", detail: "completion is not recorded" };

@@ -1,5 +1,15 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — original specialist activity scope, development
+
+Extend the existing tenant-bound specialist status repair: original inspection
+must use both verified requester and selected workspace. Four closed-source
+fixture failures reproduced incorrect activity attribution; corrected109 owning
+cases PASS. No new health store, runtime, grant or execution. Ordinary authenticated
+proof, exact work retrieval, complete metrics/recovery and full ten outcomes remain
+owed. Small dependent source release follows parent2663; no catalogue Live or
+customer acceptance promotion. [Bounded evidence](../evidence/ui-delivery/exp05-specialist-history-scope.md).
+
 ## October23 — original specialist uncertainty consumer correction, development
 
 Final review4360946061 reproduced five cases where the original Chat specialist

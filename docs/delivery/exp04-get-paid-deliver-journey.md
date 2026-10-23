@@ -7,7 +7,9 @@ its integration assertions remain intact. Current pure source guard reuses the
 canonical commercial-engagement parser, including explicit service start/end and
 catalog/negotiated price basis. Genuine old-source baseline had15 positives and
 three intended failures; repaired18 plus19 accepted-source cases PASS37 locally.
-Native580004 is now implemented locally, reserved and UNAPPLIED. The original
+Native640004 supersedes never-production-applied580004 after current600000;
+the repaired SQL bytes/ABI/ACL and original564 controls are unchanged. It remains
+reserved and UNAPPLIED in production. The original
 service-only Collections router delegates the exact effectuation action; its
 typed endpoint/approval card and customer UI are not connected by this slice.
 No Chat/Live action or production execution is activated.

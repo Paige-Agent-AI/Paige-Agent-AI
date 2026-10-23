@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: the entry promises only what the Live surface enfor
 SOLO_UI: YES: one Solo shell for every tenant; the affordance keys off the shared tier feature and first-run stage, never an account branch.
 UNVERIFIED: post-deploy rendered screenshot; authenticated voice-entry pass (terms → live audio) on the QA account; real-voice latency/interruption measurements — all owed to the founder-evaluation drive per the standing single-window rule.
 
-INTERNAL_BUILD_IDENTITY: cdc009e5386109679bd5fb66409907ec1ce60d77; deployment=PROOF_OWED(undeployed fix branch; post-deploy bundle readback owed); environment=local; migrations=NOT_APPLICABLE;edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e01-first-run-voice-entry.md
+INTERNAL_BUILD_IDENTITY: exact-head=4e7cf3746f5f3b5f3003792ca57774a47d98357b; squash-merge=b9effc47d47e52fa7b8ca61e1a7e51697c9be8a9; deployment=dpl_8iR9Hmgo6EkE12tcjUKDrEAi2D9y; environment=production; migrations=NOT_APPLICABLE;edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e01-first-run-voice-entry.md
 RELEASE_CHANNEL: development: local/development build environment; production release follows the standing small-PR merge/deploy/readback gate.
 RELEASE_CLASSIFICATION: internal-only: first-run entry correction ahead of the single EXP01 founder evaluation; not a release-note-visible feature announcement.
 CUSTOMER_RELEASE_IDENTITY: none: fix branch only; founder evaluation precedes any release identity.
@@ -35,3 +35,34 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: rendered frame owed post-deploy.
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: rendered frame owed post-deploy.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: rendered frame owed post-deploy.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: rendered frame owed post-deploy.
+
+## Release identity addendum (2026-10-23 identity repair)
+
+The original INTERNAL_BUILD_IDENTITY cited the pre-rebase branch hash
+`cdc009e5386…` — after the dompurify rebase and squash merge that hash is no
+longer reachable, which made the record's identity stale (coordinator finding).
+The corrected identity above cites the exact PR head (`4e7cf3746`, all ten
+required checks green), the squash merge (`b9effc47d`), and the verified
+production deployment (`dpl_8iR9Hmgo6EkE12tcjUKDrEAi2D9y` — coordinator-
+verified 2026-10-22, alongside #2616's `dpl_FL3fqy7v8fNUgr6EoXZcYw2NbvdB`).
+
+Production bundle readback (2026-10-22, EXP01 lead): the served import chain
+resolved to `SoloEntry-D3K7QEgW.js` carrying all five required markers
+("Talk with Paige live", "paige-live-open-request", "Minimize Live any time to
+keep typing", "Not activated yet", "Onboarding & business discovery") with the
+withdrawn typing claim and "Meet PAIGE" absent; a later snapshot
+(`SoloEntry-DosxqvBq.js`, 2026-10-23) retains them.
+
+Count clarification (the 73/74 discrepancy): the AUTOMATED_EVIDENCE count 73/73
+was correct for the reviewed head (PaigeLiveConversation 40 + onboarding 15 +
+parity 15 + integration 3). A 74th test was added in the same PR's busy-disable
+work AFTER the reviewer's count; the reviewer's delta verdict ran 73/73 at
+`cdc009e53`, and the branch's final state at `4e7cf3746` carries 74 tests in
+those files. Both numbers are accurate for their respective heads; neither was
+fabricated.
+
+Rendered-evidence limitation, stated plainly: no production screenshot of the
+corrected first-run stage exists. Browser-capture tooling was unavailable in
+the engineering session, and the founder's single evaluation window has not
+yet occurred. RENDERED_EVIDENCE and AUTHENTICATED_RUNTIME above remain
+UNVERIFIED and are owed to that window.

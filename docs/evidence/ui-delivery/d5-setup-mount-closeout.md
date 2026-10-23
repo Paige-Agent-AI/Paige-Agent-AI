@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: the suite pins that a failed load says "Setup could
 SOLO_UI: NO: test-only change; no customer-facing surface altered (the verified surface is the existing Solo Setup workspace).
 UNVERIFIED: authenticated interactive Setup journey (edit → authorized save → refresh persistence → safe recovery) on the QA account is owed to the single founder-evaluation drive; the historical throw on the 2026-10-20 build is explained by its pre-#2438-era bundle and cannot be re-forensically pinned without that bundle (moot: current bundle verified healthy at every reachable layer).
 
-INTERNAL_BUILD_IDENTITY: ead11688c762ef8ac4b82f4213298faaa88ed4de; deployment=6f07299a6c2f4878c42f61fe377067f253de8f0a/SoloEntry-CGk2xi75.js; environment=production; migrations=NOT_APPLICABLE;edge=NOT_APPLICABLE; evidence=https://app.paigeagent.ai/assets/SoloEntry-CGk2xi75.js
+INTERNAL_BUILD_IDENTITY: test-commit-was=ead11688c762ef8ac4b82f4213298faaa88ed4de(now unreachable after squash); squash-merge=daa6858bbb7d065436781a9b264766569c67629f; deployment=6f07299a6c2f4878c42f61fe377067f253de8f0a/SoloEntry-CGk2xi75.js; environment=production; migrations=NOT_APPLICABLE;edge=NOT_APPLICABLE; evidence=https://app.paigeagent.ai/assets/SoloEntry-CGk2xi75.js
 RELEASE_CHANNEL: production: no channel change; the record documents verification of the already-deployed production bundle plus the new regression suite on main.
 RELEASE_CLASSIFICATION: internal-only: test-only regression closeout of an EXP01 defect; no customer-facing change.
 CUSTOMER_RELEASE_IDENTITY: none: test-only closeout.
@@ -35,3 +35,13 @@ SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: no layout change.
 SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: no layout change.
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no layout change.
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no layout change.
+
+## Release identity addendum (2026-10-23 identity repair)
+
+The build identity cited the branch's test commit `ead11688c…`, unreachable
+after squash merge `daa6858bb`. The product-state citations (main `6f07299a6`,
+served `SoloEntry-CGk2xi75.js`) were true when written and remain accurate
+historical facts of the verification, not branch identities. Later snapshots:
+`SoloEntry-D3K7QEgW.js` (2026-10-22) and `SoloEntry-DosxqvBq.js` (2026-10-23,
+current) carry the same verified surfaces. INTERACTIVE authenticated Setup
+journey legs remain PROOF OWED to the founder window.

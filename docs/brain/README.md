@@ -1,19 +1,27 @@
-## EXP05 ZION Model Fabric consumer — local source preparation, October23
+## EXP05 governed-work prerequisites — source releases verified, October23
 
-Original ZION classification-band drafts and plan job now consume shared Model Fabric with current original
-actor/workspace/registry rechecks per provider leg. No runtime prompt/config or
-activation change. Protected/unknown/unported jobs keep their original route and
-sensitive-budget contract; their Fabric adoption remains unfinished. The original
-trusted actorless service draft (including ActionBus) keeps its
-identity and explicit receipt exclusion; request JSON cannot select service
-authority. All218/eight consumer-authority-recovery and171 existing shared policy
-checks pass with synthetic transports, plus97 original ancestry controls.
-[Source and proof boundary](../evidence/ui-delivery/exp05-zion-model-fabric.md).
-This is local prerequisite work, not deployed ZION or authenticated acceptance.
-Full kernel/delegation replay/cancellation, instructions, weekly execution,
-automations, ten outcomes/E5-CV1–9 and founder evaluation remain incomplete.
-Eleven Operations catalogue recipes remain Listed / Unverified; no new router,
-work store, scheduler, approval system or competing agent runtime.
+Original specialist outcome/receipt recovery, requester-and-workspace activity
+inspection, contact-free MCP workspace binding and eligible ZION Fabric routing
+now have reviewed, merged and production-source/configuration readbacks.
+Exact identities and original receipts are in the sole
+[Master §4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log);
+earlier preparation snapshots below remain historical.
+ZION classification-band drafts and plan use existing Fabric with current
+actor/workspace/registration checks per admitted provider leg. Protected, unknown
+and unported jobs retain original routing and sensitive budgets. Actorless exact-service
+internal drafts keep their original identity and explicit receipt exclusion.
+[Source and causal proof](../evidence/ui-delivery/exp05-zion-model-fabric.md)
+separates 218 owning cases, fresh77 mutation controls and earlier shared-policy evidence.
+No prompt/config was published, no real model/business action was invoked by
+release verification, and no trigger or customer capability was activated.
+Full kernel/delegation replay/cancellation, runtime instructions, weekly execution,
+automation lifecycle, authenticated cohort/Live recovery, ten outcomes/E5-CV1–9
+and founder evaluation remain incomplete. Current ownership follows the
+existing ANT-11 original-ID receiving acknowledgments; catalogue statuses are
+not promoted by source, CI or deployment.
+The current [Harness source correction](../delivery/harness-completion-map.md)
+identifies the existing Layer C engine. Reuse canonical ActionBus, durable work,
+Planning, Trust, adapters and Rails; create no replacement engine or ledger.
 
 
 ## EXP05 original MCP ZION context — source preparation, October23
@@ -2747,3 +2755,21 @@ Current composition: recovery2663 mergedfd123cc (original993 parent), actual mai
 and original77/77 source mutation controls PASS. Worker/native-cache startup errors
 remain separate history. Chat407baseline/407current, no increase; owned lint0.
 New exact-head review/hosted CI/normal Edge source readback remain mandatory.
+
+
+## EXP02 original Finance Metric context repair — October23 local
+
+Actual released2672 ordinary SOLO QA verifies VERA label/44px keyboard prefill,
+read-only reply/reload and own-draft continuity; exact-reference inspection exposed
+missing original range context (QA6373093970, ANT1389989375b/ANT161300ed4ab).
+Bounded Finance consumer repair copies original returned bounds and selected range
+identity into the existing read_business_metric request, no date recalculation or
+reference replacement; incomplete context omits the unbound reference.
+80/five focused cases, scoped lint0/type10→6 and normal production build2m58s PASS.
+12 current-source native synthetic frames support unchanged geometry/keyboard/reflow
+and original denied state, not corrected customer behavior.
+[Evidence](../evidence/ui-delivery/e2-finance-metric-review-context.md).
+Functional local / Visual synthetic / Experiential corrected same-reference read
+and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, registry,
+authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
+All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.

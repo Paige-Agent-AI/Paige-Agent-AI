@@ -1,0 +1,177 @@
+{
+  "kind": "SYNTHETIC ORIGINAL-SOURCE NATIVE EVIDENCE; NOT AUTHENTICATED ACCEPTANCE",
+  "sourceBase": "56219f44adedce1393c652e772f31f62fd8e6e84",
+  "captured": "2026-10-23",
+  "browser": "native Edge",
+  "limits": "Existing isolated fixture has no backend or paige:open listener; open rail is geometry only. Frames unchanged, no cropping/compositing. Source-context outcome requires released authenticated QA.",
+  "sources": [
+    {
+      "path": "src/solo/finance/FinanceWorkspace.tsx",
+      "sha256": "db5ef736ef9fe5f723bb0fda5c7313c05dbd8e6ef84be0425fa18d3c71ef9b89",
+      "bytes": 20743
+    },
+    {
+      "path": "src/solo/finance/FinanceWorkspace.test.tsx",
+      "sha256": "f9ae41267cc219b9e2b9a3f9115a06356f823017818b6cfd25c5661963571d30",
+      "bytes": 15365
+    },
+    {
+      "path": "src/solo/finance/finance.css",
+      "sha256": "8a5dafc06e744572ffe1714e306dc0a833408d09e1ae161aa2ff1de0d8bf603f",
+      "bytes": 9949
+    },
+    {
+      "path": "src/solo/sales/performance/useSalesPerformanceMetrics.ts",
+      "sha256": "ce8ad9af8d3c668cff9ee44536c32bfc0c52ff68acaaf8dae9d509506c181370",
+      "bytes": 6048
+    },
+    {
+      "path": "src/solo/sales/performance/types.ts",
+      "sha256": "1aab10d927beafa50f0243d2da62d29cdbd176995a5c704d7e32fc4955b02adb",
+      "bytes": 2202
+    },
+    {
+      "path": "src/lib/analytics/metric-contract.ts",
+      "sha256": "a19f485f9d1c3ed2b685e45ec2b5c7bcb1226b08c021217bc0a3937e656619ba",
+      "bytes": 87
+    },
+    {
+      "path": "src/lib/paige/vpDepartments.ts",
+      "sha256": "eb0448253ba319d0301e6bc26e7cbcc6a88fad330da5fda50aebae1dff26cb68",
+      "bytes": 6705
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+      "bytes": 30524
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+      "bytes": 14814
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/main.tsx",
+      "sha256": "d85f4bc9c206d0b843ac32b6f847192fa65397a5a8a008b69729544306d6b55e",
+      "bytes": 2428
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/stubs.tsx",
+      "sha256": "eada5fdec9eac8f163e959b2deff589e2547cfedd8d3da46f9ac24debc63332c",
+      "bytes": 1831
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/vite.config.ts",
+      "sha256": "501b0ec5791494f47885eef6cba9fd3dbc5a537fb87926cfd0db8f6d5751999d",
+      "bytes": 1290
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/index.html",
+      "sha256": "d7275281517a70794ad3b61311587eea312a5c1f8c2ef9d67b143ac311c7fe0f",
+      "bytes": 275
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+      "bytes": 46752
+    }
+  ],
+  "frames": [
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/1024-closed.jpg",
+      "bytes": 68785,
+      "sha256": "0feae047743f019b6015c1b38c67748349e1822b577fdc3f439740d478177cc9",
+      "format": "jpeg",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/1024-open.jpg",
+      "bytes": 31654,
+      "sha256": "6976ddb351690c11cff65d2d12b5d63596650c432accc99f73ecaa0e47a0fc9b",
+      "format": "jpeg",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/1366-closed.jpg",
+      "bytes": 74527,
+      "sha256": "9184f73cf7c4d99a74e79d01c60e1c852bf78ddfaf015afb96aab7588153f0b6",
+      "format": "jpeg",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/1366-open.jpg",
+      "bytes": 81077,
+      "sha256": "2b9f4600d45df5ae2f2fb1be006b27e36b062efa6658462fb1fa7e06f53eca16",
+      "format": "jpeg",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/1536-closed.jpg",
+      "bytes": 76257,
+      "sha256": "ad95fe70f4b0b673ba912c6664dddaa86a8dd8c3f45e4e4bda53910150a534e7",
+      "format": "jpeg",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/1536-open.jpg",
+      "bytes": 80234,
+      "sha256": "c2f89e1b8a84759da3aef85efe0278178c227b473b032bbf5249c678d397cf19",
+      "format": "jpeg",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/320-closed.jpg",
+      "bytes": 35208,
+      "sha256": "8d2d7b7b3d5dd1070727bf652737cb3d669657951f0c546acf643c8bf6599d10",
+      "format": "jpeg",
+      "width": 320,
+      "height": 900
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/320-keyboard.jpg",
+      "bytes": 35607,
+      "sha256": "cc26ec2fb3b9bfdcd22857149174decc6ef52a76861f3ef9c99d61a82e92e038",
+      "format": "jpeg",
+      "width": 320,
+      "height": 900
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/320-open.jpg",
+      "bytes": 19012,
+      "sha256": "b11fa8111dcbabfcd3b43d1c547fe7fb04bdc5956d41aef3258046e31b905fe0",
+      "format": "jpeg",
+      "width": 320,
+      "height": 900
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/390-dark-denied.jpg",
+      "bytes": 27730,
+      "sha256": "052d5130010e4c4581ed53e801fa06e91e67a566f03e000a0d27a8c37b5ea6bf",
+      "format": "jpeg",
+      "width": 390,
+      "height": 843
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/900-closed.jpg",
+      "bytes": 77265,
+      "sha256": "3eb062abb43c46ee63b8ebeb0923a374a3071d28dd3bd0108c24cf9f5aad44cc",
+      "format": "jpeg",
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-source-context/900-open.jpg",
+      "bytes": 35068,
+      "sha256": "961c7f33978e64c042df9826dbf39cd899dd7b2d2602f3faebed0a436ebdfd66",
+      "format": "jpeg",
+      "width": 900,
+      "height": 1000
+    }
+  ]
+}

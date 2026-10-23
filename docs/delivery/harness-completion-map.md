@@ -20,6 +20,32 @@ directive's §7 (as of the 2026-09-12 survey), this Map was produced and the pro
 > involvement is support/review only. The §10 "immediate next action" plan below is therefore
 > **superseded** and retained only as the pre-completion record.
 
+## Current Layer C source correction — 2026-10-23, EXP05
+
+The September survey's **missing act-execution engine** statement in §§1–2 and
+its dated Layer C summary below are historical. At inspected main
+`56219f44adedce1393c652e772f31f62fd8e6e84`, the original
+[native event dispatcher](../../supabase/functions/paige-native-event-dispatch/index.ts)
+verifies the subject's tenant, loads the original live process records and calls
+`runEventActs` in the existing
+[Layer C engine](../../supabase/functions/_shared/paige-orchestration/engine.ts).
+That engine evaluates conditions and authority, calls the original
+[governed execution decision](../../supabase/functions/_shared/paige-spine/governedExecution.ts),
+uses existing [ActionAdapters](../../supabase/functions/_shared/paige-orchestration/adapters.ts),
+and records per-act outcomes in `paige_act_executions`. Native dispatch and
+confirmation, original claim/recovery contracts and capability/Rail recording
+already have implementations. **Reuse and extend these contracts; do not build a
+replacement act engine, scheduler, approval queue, adapter client or ledger.**
+
+This corrects source existence only. It does not establish every adapter's
+provider readiness, a live process grant, global recurring activation,
+authenticated execution or complete A–G/Experience acceptance. Each capability
+still owes its actual authorization, original domain result, receipt, isolation
+and interrupted/unknown-outcome proof. EXP05's weekly trigger remains OFF at its
+last verified checkpoint; complete ZION/automation and ten-outcome/E5-CV1–9
+acceptance remain open. Keep the September survey and superseded construction
+plan as dated history, not a reason to recreate the current architecture.
+
 ## 0. What this document is — and what it is NOT
 
 This is a **navigation and sequencing synthesis** over the platform's existing canonical records. It

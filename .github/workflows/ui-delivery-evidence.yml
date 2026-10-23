@@ -4,12 +4,14 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Same exact-ref recovery as ci.yml when GitHub withholds bot-push events.
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ui-delivery-evidence-${{ github.event.pull_request.number }}
+  group: ui-delivery-evidence-${{ github.event_name == 'workflow_dispatch' && github.ref || github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -28,8 +30,16 @@ jobs:
         with:
           node-version: 20
 
+      - name: Resolve manually dispatched comparison
+        if: github.event_name == 'workflow_dispatch'
+        id: manual-base
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch origin main
+          echo "base=$(git merge-base HEAD origin/main)" >> "$GITHUB_OUTPUT"
+
       - name: Validate evidence routing and attestation
         env:
-          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          BASE_SHA: ${{ github.event_name == 'workflow_dispatch' && steps.manual-base.outputs.base || github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: node scripts/ci/ui-delivery-evidence.mjs --base "$BASE_SHA" --head "$HEAD_SHA"

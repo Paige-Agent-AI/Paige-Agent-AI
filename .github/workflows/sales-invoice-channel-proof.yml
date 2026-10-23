@@ -1,5 +1,6 @@
 name: Sales invoice channel SQL proof
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'supabase/migrations/**'

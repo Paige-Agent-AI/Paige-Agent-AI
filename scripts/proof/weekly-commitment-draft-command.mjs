@@ -234,7 +234,7 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   }};
   let configured;
   for(const timezone of ['CET','GMT','EST']){
-    const nativeId=json(`SELECT draft_weekly_commitment_check(${literal(randomUUID())},'Synthetic schedule correction',1,'09:00',${literal(timezone)});`,ctx).automation_id;
+    const nativeId=json(`SELECT draft_weekly_commitment_check(${literal(randomUUID())},${literal('Synthetic schedule correction '+timezone)},1,'09:00',${literal(timezone)});`,ctx).automation_id;
     const before=await readWeeklyOwner(scope,caller,()=>scope);assert.equal(before.status,'ready');
     const original=before.snapshot.checks.find(c=>c.automation_id===nativeId);assert(original);
     const callsBefore=configureCalls,proposed={...original.schedule,weekday:5,local_time:'14:30'};

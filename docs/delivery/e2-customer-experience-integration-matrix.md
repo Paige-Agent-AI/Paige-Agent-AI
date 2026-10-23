@@ -1485,3 +1485,19 @@ Combined283-case run retained one5second C1 timeout; original isolated53/53 suit
 and77/77 source controls PASS without assertion/timeout changes. Chat407/407lint,
 owned0. New exact-head review/CI/normal Edge and ordinary report QA remain owed;
 old3e green is historical. No algorithm/catalogue/permission/provider promotion.
+
+## October23 — original Finance metric review context source released
+
+Original #2684/main `d780fd85e3cfd0c73256847c79f2692a5a399d1a` has verified review,
+required CI, normal deployment and containing public source readback. The sole
+Master4.0 row and [Finance brain](../brain/finance-department.md#october23--original-finance-metric-review-context-source-released)
+hold the exact identities and additive ordinary QA6375398254.
+The original reference/bounds handoff, safe refusal without substitution and saved
+reply after reload are verified. Successful reference reading remains incomplete:
+later same-series issuance revoked it before expiry. Original Sales-owner
+coordination preserves canonical revocation; no new reader or identity workaround.
+Overview/Banking refinements #2694/#2696 are drafts. Functional source release,
+synthetic Visual support, bounded Experiential proof and NOT_ACCEPTED founder
+status remain distinct. All 19/nine, populated sources, roles/tenant/cohorts/Live
+and the protected CPU-failed original report/recovery remain open. No readiness,
+provider, permission, algorithm, catalogue or consequential activation.

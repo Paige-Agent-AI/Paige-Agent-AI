@@ -20,7 +20,8 @@
 // signature genuinely IS recorded and claiming otherwise would be its own lie.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
-import { sha256Hex } from "../_shared/agreements/token.ts";
+import { sha256Hex, tokenState } from "../_shared/agreements/token.ts";
+import { verifyRetainedAgreementPdf } from "../_shared/agreements/retained-document.ts";
 import { checkSignatureImage, decideSigningAccess, MAX_BODY_BYTES, TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
 import { assertDocumentIsRenderable, UnrenderableDocumentError, wouldLoseCharacters } from "../_shared/agreements/document.ts";
 import { consentEvidenceText, ESIGN_CONSENT_DISCLOSURE } from "../_shared/agreements/disclosure.ts";
@@ -98,14 +99,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const { data: signer } = await db.from("paige_agreement_signers")
-    .select("id,agreement_id,tenant_id,status,signing_order,full_name,email,token_expires_at,token_revoked_at")
+    .select("id,agreement_id,tenant_id,status,signing_order,full_name,email,token_hash,token_expires_at,token_revoked_at")
     .eq("token_hash", tokenHash).maybeSingle();
   if (!signer) return refuse();
 
   const now = new Date();
 
   const { data: agreement } = await db.from("paige_agreements")
-    .select("id,tenant_id,title,body_source,body_markdown,status,expires_at")
+    .select("id,tenant_id,title,body_source,body_markdown,status,expires_at,content_storage_key,content_sha256")
     .eq("id", signer.agreement_id).maybeSingle();
 
   // Out of turn is a refusal for the same reason as everything else: this person cannot sign yet, and
@@ -126,7 +127,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     now,
   });
   if (!decision.allow || !decision.canSign) return refuse();
-  if (!agreement) return refuse();
+  if (!agreement || agreement.tenant_id !== signer.tenant_id) return refuse();
 
   // ── Now the parts that are the SIGNER's mistake to make, and are told plainly ──────────────────
   if (!consentRead || !consentEsign) {
@@ -169,6 +170,34 @@ Deno.serve(async (req: Request): Promise<Response> => {
     throw e;
   }
 
+  // The seal verifies these same original bytes again after signing. Refuse a
+  // known missing/changed presentation BEFORE the irreversible signature write.
+  // Reuse the retained file or legacy text digest; never render a replacement or
+  // infer signed economics from mutable commercial records here.
+  let presentationVerified = false;
+  try {
+    if (agreement.content_storage_key) {
+      const presented = await db.storage.from("paige-agreements").download(agreement.content_storage_key);
+      if (!presented.error && presented.data) {
+        presentationVerified = await verifyRetainedAgreementPdf(
+          new Uint8Array(await presented.data.arrayBuffer()), agreement.content_sha256,
+        );
+      }
+    } else if (agreement.body_source !== "tenant_upload" && typeof agreement.body_markdown === "string") {
+      presentationVerified = typeof agreement.content_sha256 === "string" &&
+        /^[a-f0-9]{64}$/.test(agreement.content_sha256) &&
+        await sha256Hex(agreement.body_markdown) === agreement.content_sha256;
+    }
+  } catch {
+    // A Storage/verification failure cannot grant permission to sign.
+  }
+  if (!presentationVerified) {
+    return json({
+      ok: false,
+      error: "This agreement cannot be signed right now because its retained document could not be verified. Please reload or contact the sender.",
+    }, 503);
+  }
+
   const tenantContact = await tenantContactForDisclosure(db as never, String(signer.tenant_id));
   if (!tenantContact) {
     // The send path refuses without one, so reaching here means the workspace lost it afterwards.
@@ -187,7 +216,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const consentText = consentEvidenceText(
     ESIGN_CONSENT_DISCLOSURE, String(tenantRow?.name ?? "the sender"), tenantContact,
   );
-  const nowIso = now.toISOString();
+  const nowIso = new Date().toISOString();
 
   // Conditional on the signer still being unsigned, which is what makes a double-submit idempotent at
   // the ROW rather than in this function's memory. The database's own triggers independently refuse
@@ -203,7 +232,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     esign_consent_sha256: await sha256Hex(consentText),
     signing_ip: ip === "unknown" ? null : ip,
     signing_user_agent: (req.headers.get("user-agent") ?? "").slice(0, 500),
-  }).eq("id", signer.id).in("status", ["pending", "viewed"]).is("token_revoked_at", null).select("id");
+  }).eq("id", signer.id).eq("tenant_id", signer.tenant_id).eq("agreement_id", signer.agreement_id)
+    .eq("token_hash", tokenHash).gt("token_expires_at", nowIso)
+    .in("status", ["pending", "viewed"]).is("token_revoked_at", null).select("id");
 
   if (signError) {
     console.error("[sign-agreement] signature write refused", {
@@ -218,8 +249,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // legally bound themselves that nothing happened. Re-read before refusing: if they are signed,
     // say so idempotently; only a genuinely ineligible row gets the refusal.
     const { data: already } = await db.from("paige_agreement_signers")
-      .select("status").eq("id", signer.id).maybeSingle();
-    if (already?.status !== "signed") return refuse();
+      .select("status,token_hash,token_expires_at,token_revoked_at").eq("id", signer.id)
+      .eq("tenant_id", signer.tenant_id).eq("agreement_id", signer.agreement_id).maybeSingle();
+    if (already?.status !== "signed" || already.token_hash !== tokenHash
+      || tokenState(already, new Date()).usable !== true) return refuse();
     const { data: nowAgreement } = await db.from("paige_agreements")
       .select("status").eq("id", signer.agreement_id).maybeSingle();
     return json({

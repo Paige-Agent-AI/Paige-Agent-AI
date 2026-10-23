@@ -3,6 +3,10 @@ import { PDFDocument, PDFName, PDFNumber, degrees } from 'npm:pdf-lib@1.17.1';
 import { inspectAgreementPreparationPdf } from './document-preparation.ts';
 import { prepareAgreementFields, readAgreementPdfDocument } from './field-preparation.ts';
 import { hashDocument, inspectUploadedPdf, renderPresentedPdf, sealAgreementPdf } from './document.ts';
+import * as fieldPreparation from './field-preparation.ts';
+import {assembleFixedRepaymentSchedule} from '../sales-collections/model.ts';
+import {canonicalPresentationJson,commercialPresentationText,prepareCommercialPresentation} from './commercial-presentation.ts';
+import {sha256Hex} from './token.ts';
 
 const uid = (n: number) => `aaaaaaaa-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const source = () => ({ tenant_id: uid(1), agreement_id: uid(2), client_id: uid(3), version: 4,
@@ -16,6 +20,73 @@ const field = (n = 5, index = 0) => ({ id: uid(10 + index), signer_id: uid(n), k
 const fields = () => [field(), field(6, 1)];
 const invalid = /AGREEMENT_FIELD_PREPARATION_INVALID/;
 const unavailable = /AGREEMENT_PREPARATION_PDF_UNAVAILABLE/;
+
+const commercialInput = () => {
+  const original=source(),schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,
+    deposit_date:'2026-10-22',installment_cents:30000,first_installment_date:'2026-11-22',cadence:'monthly'});
+  assert(schedule.state==='ready');
+  const treatment={state:'not_applicable',charges:[],source:'Synthetic owner decision',policy:'No applicable charge recorded'};
+  return {schema_version:2,engagement:{starts_on:'2026-10-22',ends_on:null,price_basis:'negotiated'},
+    source:{tenant_id:original.tenant_id,client_id:original.client_id,agreement_id:original.agreement_id,
+      agreement_version:original.version,agreement_updated_at:original.updated_at,offer_id:uid(30),body_source:'paige_draft',
+      status:'draft',content_sha256:null,terms_id:uid(31),terms_version:1,terms_updated_at:original.updated_at,
+      invoice_id:uid(32),invoice_version:1,invoice_draft_version:1,invoice_updated_at:original.updated_at},
+    title:'Service agreement',body_markdown:'Business-supplied example wording.',principal_minor:350000,currency:'usd',
+    collection_terms:schedule.terms,conditions:{schema_version:1,tax:treatment,fees:treatment},lines:[{unit_minor:350000,quantity:1}]};
+};
+type CommercialConstructor=(s:unknown,d:unknown,f:unknown,c:unknown)=>Promise<{
+  manifest:{schema_version:number;source:Record<string,unknown>;document:Record<string,unknown>;signers:unknown[];fields:unknown[];
+    commercial:{payload:Record<string,unknown>;payload_digest:string;presented_body_markdown:string;presented_body_sha256:string}};
+  preparation_sha256:string;ready_for_review:boolean;issues:unknown[];
+}>;
+const commercialConstructor=()=>{
+  const prepare=(fieldPreparation as unknown as Record<string,unknown>).prepareCommercialAgreementFields;
+  assert(typeof prepare==='function','Original field-preparation module must compose the canonical commercial manifest');
+  return prepare as CommercialConstructor;
+};
+
+Deno.test('commercial field preparation composes actual original PDF/fields/formatter without changing source',async()=>{
+  const prepare=commercialConstructor(),s=source(),input=commercialInput();
+  const presentation=await prepareCommercialPresentation(input),body=commercialPresentationText(input.body_markdown,presentation);
+  const bytes=await renderPresentedPdf({title:input.title,bodyMarkdown:body}),before=bytes.slice();
+  const pdf=await inspectAgreementPreparationPdf(bytes,await hashDocument(bytes));
+  const ordinary=await prepareAgreementFields(s,pdf,fields()),original=structuredClone([s,input]);
+  const result=await prepare(s,pdf,fields(),input);
+  assertEquals(result.manifest,{...ordinary.manifest,schema_version:2,commercial:{payload:presentation.payload,
+    payload_digest:presentation.payload_digest,presented_body_markdown:body,presented_body_sha256:await sha256Hex(body)}});
+  assertEquals(result.preparation_sha256,await sha256Hex(canonicalPresentationJson(result.manifest)));
+  assertNotEquals(result.preparation_sha256,ordinary.preparation_sha256);assert(result.ready_for_review);
+  assertEquals([s,input],original);assertEquals(bytes,before);
+  assert(Object.isFrozen(result)&&Object.isFrozen(result.manifest)&&Object.isFrozen(result.manifest.commercial));
+  assert(Object.isFrozen(result.manifest.commercial.payload));
+});
+
+Deno.test('commercial construction refuses foreign client/source, stale microseconds, legacy or incomplete economics',async t=>{
+  const prepare=commercialConstructor();
+  for(const [key,value] of [['tenant_id',uid(91)],['client_id',uid(92)],['agreement_id',uid(93)],['agreement_version',5],
+    ['agreement_updated_at','2026-10-22T08:00:00.123457Z']] as const){
+    await t.step(key,async()=>{const input=commercialInput();Object.assign(input.source,{[key]:value});await assertRejects(()=>prepare(source(),document(),fields(),input));});
+  }
+  for(const change of [(v:Record<string,unknown>)=>{v.schema_version=1;delete v.engagement;},
+    (v:Record<string,unknown>)=>{v.principal_minor=NaN;},(v:Record<string,unknown>)=>{delete v.conditions;},
+    (v:Record<string,unknown>)=>{v.extra=true;}]){
+    const input=commercialInput();change(input);await assertRejects(()=>prepare(source(),document(),fields(),input));
+  }
+});
+
+Deno.test('commercial composition retains original missing-field and overlap issues',async()=>{
+  const prepare=commercialConstructor(),missing=await prepare(source(),document(),[],commercialInput());
+  assert(!missing.ready_for_review);assertEquals(missing.issues,(await prepareAgreementFields(source(),document(),[])).issues);
+  const overlap=[field(),{...field(6,1),x:20,y:100}],result=await prepare(source(),document(),overlap,commercialInput());
+  assert(!result.ready_for_review);assertEquals(result.issues,(await prepareAgreementFields(source(),document(),overlap)).issues);
+});
+
+Deno.test('commercial constructor captures every input before its asynchronous digests',async()=>{
+  const prepare=commercialConstructor(),s=source(),d=document(),f=fields(),input=commercialInput();
+  const expected=await prepare(s,d,f,input),pending=prepare(s,d,f,input);
+  s.signers[0].full_name='Changed after call';d.sha256='b'.repeat(64);f[0].x=300;input.principal_minor=1;input.source.agreement_updated_at='2026-10-22T08:00:00.123457Z';
+  assertEquals(await pending,expected);
+});
 
 Deno.test('actual native rendered PDF remains unchanged and can still be sealed', async () => {
   const bytes = await renderPresentedPdf({ title: 'Preparation source', bodyMarkdown: 'Business-supplied example wording.' });

@@ -1,6 +1,7 @@
 import { UUID, object } from '../sales-collections/primitives.ts';
 import { canonicalPresentationJson } from './preparation-json.ts';
 import { sha256Hex } from './token.ts';
+import {prepareCommercialPresentation,commercialPresentationText,type CommercialPresentationPayload} from './commercial-presentation.ts';
 
 /** Internal native preparation data, not authority, approval or signing evidence.
  * The eventual domain boundary must resolve source and document from the original
@@ -27,6 +28,13 @@ export type AgreementFieldPreparation = {
     fields: AgreementField[];
   };
   preparation_sha256: string; ready_for_review: boolean; issues: AgreementFieldIssue[];
+};
+export type CommercialAgreementFieldPreparation = Omit<AgreementFieldPreparation,'manifest'> & {
+  manifest: Omit<AgreementFieldPreparation['manifest'],'schema_version'> & {
+    schema_version:2;
+    commercial:{payload:Extract<CommercialPresentationPayload,{schema_version:2}>;payload_digest:string;
+      presented_body_markdown:string;presented_body_sha256:string};
+  };
 };
 const fail = (): never => { throw new TypeError('AGREEMENT_FIELD_PREPARATION_INVALID'); };
 const closed = (v: unknown, keys: string[]): Record<string, unknown> => {
@@ -123,4 +131,31 @@ export async function prepareAgreementFields(sourceValue: unknown, documentValue
   for (const issue of issues) { if (issue.code === 'overlapping_fields') Object.freeze(issue.field_ids); Object.freeze(issue); }
   Object.freeze(issues);
   return Object.freeze({ manifest, preparation_sha256: await sha256Hex(canonicalPresentationJson(manifest)), ready_for_review: issues.length === 0, issues });
+}
+
+/** Pure composition only. The trusted caller must resolve original commercial
+ * records under current authority and pass the PDF actually rendered from these
+ * canonical presented words. Geometry/checksums alone cannot attest PDF content.
+ * Native retention repeats source/CAS/economics checks before any record write. */
+export async function prepareCommercialAgreementFields(
+  sourceValue:unknown,documentValue:unknown,fieldsValue:unknown,commercialValue:unknown,
+):Promise<CommercialAgreementFieldPreparation>{
+  // Both original constructors await digests. Own one snapshot before either
+  // starts so a later caller edit cannot combine different source revisions.
+  try{[sourceValue,documentValue,fieldsValue,commercialValue]=structuredClone([sourceValue,documentValue,fieldsValue,commercialValue]);}
+  catch{return fail();}
+  const fields=await prepareAgreementFields(sourceValue,documentValue,fieldsValue);
+  const presentation=await prepareCommercialPresentation(commercialValue),payload=presentation.payload;
+  if(payload.schema_version!==2||!object(commercialValue))return fail();
+  const source=fields.manifest.source,commercialSource=payload.source;
+  if(commercialSource.tenant_id!==source.tenant_id||commercialSource.client_id!==source.client_id
+    ||commercialSource.agreement_id!==source.agreement_id||commercialSource.agreement_version!==source.version
+    ||commercialSource.agreement_updated_at!==source.updated_at)return fail();
+  const words=commercialPresentationText(commercialValue.body_markdown as string,presentation);
+  if(words.length>300000)return fail();
+  const commercial=Object.freeze({payload,payload_digest:presentation.payload_digest,
+    presented_body_markdown:words,presented_body_sha256:await sha256Hex(words)});
+  const manifest=Object.freeze({...fields.manifest,schema_version:2 as const,commercial});
+  return Object.freeze({manifest,preparation_sha256:await sha256Hex(canonicalPresentationJson(manifest)),
+    ready_for_review:fields.ready_for_review,issues:fields.issues});
 }

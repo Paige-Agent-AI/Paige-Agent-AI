@@ -1678,6 +1678,28 @@ remain failures. This source remains LOCAL/NOT_DEPLOYED pending final gates and
 actual consumer. All12, EXP09 source boundaries, algorithms, Chat/Live holds and
 whole customer/founder acceptance remain unchanged. [Evidence](../evidence/ui-delivery/e04-commercial-document-preparation.md).
 
+### EXP04 canonical commercial field constructor — source continuation
+
+Additive export in ORIGINAL field-preparation.ts composes the SAME formatter and
+field validator into immutable commercial2; original schema1 action unchanged.
+Capture before awaits; require exact same source including microseconds; preserve
+missing-field/overlap issues. Four causal missing-export failures→29 source tests/
+115 steps, API35/29, mounted workspace+SDK50 and actual Edge entry types PASS.
+Original native247 controls now consume actual constructor output, not a manual
+manifest; corrected fixture-shadowing failure retained. No SQL, authority, public
+commercial hold, provider, Portal or capability activation. Hash composition is
+not source authorization or PDF-content attestation; trusted record/renderer/
+Storage/native CAS/API/UI remain owed. Native2637 is now separately released
+0c1be949652959948af7c72520c4ac43898f49b5: all13 exact-head gates/two statuses,
+normal native39879828230/deploy120174381011/persistence/db-live exact0c1 and
+actual350004/retainerab4f8d36f18ecef8650edb85c1d6b89b/ABI/private ACL verified.
+Validator61056f39 and Save1bd28e75 remain; private table/RLS/grants unchanged.
+READYdpl_EDopJWKpZesc8W2z9w2nJNMYmPoj/public0c1-mvk8yw32 verified. No new
+product consumer. Original2640/ad6 Preview CANCELLED, not PASS; exact source,
+proof and evidence bytes are preserved while current main0c1 is composed for
+fresh normal gates. Final review/CI/source readback/actual roles/full12/
+founder acceptance stay separate. [Evidence](../evidence/ui-delivery/e04-commercial-field-constructor.md).
+
 ### EXP04 original upload intent — development
 
 REPAIR original business upload adapter after actual-hook3 positive/2 genuine RED controls: loaded/current business must match before Storage, and lost/context-retired results never claim rollback or no effect. Original private bucket/RLS/path/cache/no-overwrite/result contract retained. Final9 hook plus102 existing Sales cases (111) and type10/current6/lint0 PASS; initial original audit-history timeout repeated green without changing5s limit/assertions. Actual Sales/modal/hook/SDK20 rendered cases/5 paths/19 exact pins/0page errors, neutral local transports only. Native PAIGE backdrop is respected and actual open/folded states are explicit. Stable same-request upload recovery, native-supported import/wording/preview/fields and owner/staff/client/provider/all12/founder acceptance remain incomplete. No actual upload, signing, send, payment, role, bucket, provider, model or Chat activation. [Bounded evidence](../evidence/ui-delivery/e04-agreement-upload-intent.md).

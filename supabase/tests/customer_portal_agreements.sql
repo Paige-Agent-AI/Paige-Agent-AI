@@ -79,11 +79,11 @@ RETURNS void LANGUAGE sql AS $$
    CASE WHEN _expires IS NULL THEN NULL ELSE now() + _expires END,
    '0a090000-0000-4000-8000-000000000001')
 $$;
-CREATE FUNCTION pg_temp.sgn(_n int, _agreement int, _role text, _order int, _status text, _tenant uuid)
+CREATE FUNCTION pg_temp.sgn(_n int, _agreement int, _role text, _order int, _status text, _tenant uuid, _email text DEFAULT NULL)
 RETURNS void LANGUAGE sql AS $$
  INSERT INTO public.paige_agreement_signers(id,agreement_id,tenant_id,full_name,email,signer_role,signing_order,status,
    esign_consent_at,esign_consent_slug,esign_consent_version,esign_consent_sha256,typed_name,signed_at)
- VALUES (pg_temp.sg(_n), pg_temp.ag(_agreement), _tenant, 'Synthetic signer ' || _n, 'signer-' || _n || '@tests.invalid',
+ VALUES (pg_temp.sg(_n), pg_temp.ag(_agreement), _tenant, 'Synthetic signer ' || _n, coalesce(_email, 'signer-' || _n || '@tests.invalid'),
    _role, _order, _status,
    CASE WHEN _status = 'signed' THEN now() - interval '2 hours' END, CASE WHEN _status = 'signed' THEN 'esign-consent' END,
    CASE WHEN _status = 'signed' THEN 1 END, CASE WHEN _status = 'signed' THEN repeat('e',64) END,
@@ -117,14 +117,14 @@ SELECT pg_temp.mk(22,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-
 
 SELECT pg_temp.sgn(2,2,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(3,3,'counterparty',1,'viewed','a0900000-0000-4000-8000-000000000001');
-SELECT pg_temp.sgn(4,4,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(4,4,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-a@tests.invalid');
 SELECT pg_temp.sgn(5,5,'counterparty',1,'declined','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(6,6,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(7,7,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(8,8,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(30,9,'tenant_signatory',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(9,9,'counterparty',2,'pending','a0900000-0000-4000-8000-000000000001');
-SELECT pg_temp.sgn(10,10,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(10,10,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-a@tests.invalid');
 SELECT pg_temp.sgn(31,10,'witness',2,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(11,11,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(32,11,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
@@ -135,12 +135,13 @@ SELECT pg_temp.sgn(15,15,'counterparty',1,'pending','a0900000-0000-4000-8000-000
 SELECT pg_temp.sgn(16,16,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(17,17,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000002');
 SELECT pg_temp.sgn(18,18,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000004');
-SELECT pg_temp.sgn(19,19,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(19,19,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-b@tests.invalid');
 SELECT pg_temp.sgn(20,20,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(21,21,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(22,22,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
--- WHO THE SIGNER IS. Every signer above is 'signer-N@tests.invalid', which is no login's address, so
--- the portal refuses them all by default. These are made the customer's own, each a different way:
+-- WHO THE SIGNER IS. Unsigned fixtures default to 'signer-N@tests.invalid', which is no login's
+-- address. Signed fixtures carry their final recipient at insertion: recorded identity is immutable.
+-- The customer's own recipient is established in these ways:
 --   2  the login's confirmed email, in another case and with stray spaces (the match key folds both)
 --   3  the client record's PRIMARY email (added below), not the login's
 --   4, 5, 6, 7, 8, 10, 13, 14, 21, 22  the login's email exactly; 11 one of two co-signers is;
@@ -152,8 +153,7 @@ UPDATE public.paige_agreement_signers SET email = '  AGR-Customer-A@Tests.Invali
 UPDATE public.paige_agreement_signers SET email = 'customer-a-primary@tests.invalid' WHERE id = pg_temp.sg(3);
 UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id IN (pg_temp.sg(13), pg_temp.sg(14), pg_temp.sg(21), pg_temp.sg(22));
 UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid'
- WHERE id IN (pg_temp.sg(4), pg_temp.sg(5), pg_temp.sg(6), pg_temp.sg(7), pg_temp.sg(8), pg_temp.sg(10), pg_temp.sg(11));
-UPDATE public.paige_agreement_signers SET email = 'agr-customer-b@tests.invalid' WHERE id = pg_temp.sg(19);
+ WHERE id IN (pg_temp.sg(5), pg_temp.sg(6), pg_temp.sg(7), pg_temp.sg(8), pg_temp.sg(11));
 UPDATE public.paige_agreement_signers SET email = 'agr-customer-sub@tests.invalid' WHERE id = pg_temp.sg(18);
 -- Added only now that every agreement exists, so seed_agreement_counterparty seeds no extra signer.
 INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_primary,position) VALUES
@@ -447,12 +447,12 @@ SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',33)->>'error','CL
 SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',34)->>'error','CLIENT_AGREEMENT_UNAVAILABLE','VISIBILITY: a sealed copy signed only at another address is not downloaded');
 SELECT ok(pg_temp.row_a(33) IS NULL AND pg_temp.row_a(34) IS NULL,'and neither is listed');
 SELECT is(pg_temp.list_a()->'summary'->>'signed','1','nor counted as signed');
--- The control: the same sealed copy, its signer now at the customer's own address, IS theirs.
-UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(51);
+-- The control: this sealed copy also has the customer's own signed counterparty. Insert the
+-- distinct synthetic evidence; never rewrite the other person's recorded identity. These local
+-- records remain until the suite's final ROLLBACK instead of deleting completed evidence.
+SELECT pg_temp.sgn(97,34,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-a@tests.invalid');
 SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',34)->>'agreement_id',pg_temp.ag(34)::text,'signed at their own address: downloadable');
 SELECT is(pg_temp.row_a(34)->>'state'||'|'||(pg_temp.row_a(34)->>'can_download'),'signed|true','and listed as signed');
-DELETE FROM public.paige_agreement_signers WHERE agreement_id IN (pg_temp.ag(33), pg_temp.ag(34));
-DELETE FROM public.paige_agreements WHERE id IN (pg_temp.ag(33), pg_temp.ag(34));
 SELECT is(pg_temp.as_user(NULL,format('SELECT public.client_portal_agreement_document_scope(%L)',pg_temp.ag(4)),'anon')->>'sqlstate','42501','anonymous: refused');
 SELECT throws_ok($q$UPDATE public.paige_agreements SET sealed_storage_key = NULL WHERE id = 'a6090000-0000-4000-8000-000000000004'$q$,'23514',NULL,'a completed agreement without its sealed key cannot exist, so the scope''s key check is defensive');
 
@@ -488,9 +488,8 @@ SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action = 'agreement
 -- 'awaiting_others'.
 SELECT pg_temp.mk(24,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','partially_signed',interval '25 days');
 DELETE FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(24);
-SELECT pg_temp.sgn(24,24,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(24,24,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-a@tests.invalid');
 SELECT pg_temp.sgn(34,24,'tenant_signatory',2,'pending','a0900000-0000-4000-8000-000000000001');
-UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(24);
 SELECT is(pg_temp.row_a(24)->>'state'||'|'||(pg_temp.row_a(24)->>'can_sign'),'awaiting_countersign|false','they signed and only the business''s signatory is left: waiting for the business');
 SELECT is(pg_temp.row_a(10)->>'state','awaiting_others','a witness still to sign: waiting for others, not the business');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',24),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_countersign"}'::jsonb,'and it is not signable');
@@ -499,24 +498,26 @@ SELECT is(pg_temp.row_a(24)->>'counterparty'||'|'||coalesce(pg_temp.row_a(24)->>
 -- witness remain, so it is NOT only the business: waiting for others.
 SELECT pg_temp.mk(25,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','partially_signed',interval '25 days');
 DELETE FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(25);
-SELECT pg_temp.sgn(36,25,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(36,25,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-a@tests.invalid');
 SELECT pg_temp.sgn(37,25,'tenant_signatory',2,'pending','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(38,25,'witness',2,'pending','a0900000-0000-4000-8000-000000000001');
-UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(36);
 SELECT is(pg_temp.row_a(25)->>'state'||'|'||(pg_temp.row_a(25)->>'counterparty'),'awaiting_others|you','a business signatory and a witness both still to sign: waiting for others, not only the business');
 -- P2: a signer at ANOTHER address signed and the business is left: waiting for the business, and the
 -- signature is not credited to this customer.
-UPDATE public.paige_agreement_signers SET email = 'stranger-24@tests.invalid' WHERE id = pg_temp.sg(24);
-SELECT ok(pg_temp.row_a(24) IS NULL,'VISIBILITY: someone at another address signed it: not this customer''s to see');
-SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',24),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'nor to open');
+-- A separate original record exercises this negative; the customer's signature above stays intact.
+SELECT pg_temp.mk(35,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','partially_signed',interval '25 days');
+DELETE FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(35);
+SELECT pg_temp.sgn(95,35,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','stranger-35@tests.invalid');
+SELECT pg_temp.sgn(96,35,'tenant_signatory',2,'pending','a0900000-0000-4000-8000-000000000001');
+SELECT ok(pg_temp.row_a(35) IS NULL,'VISIBILITY: someone at another address signed it: not this customer''s to see');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',35),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'nor to open');
 -- P3: co-signed, both counterparties signed, only the business left: not 'awaiting_signature', and
 -- no "use the emailed link" to a customer who may already have signed.
 SELECT pg_temp.mk(26,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','partially_signed',interval '25 days');
 DELETE FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(26);
-SELECT pg_temp.sgn(39,26,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(39,26,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-a@tests.invalid');
 SELECT pg_temp.sgn(40,26,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(41,26,'tenant_signatory',2,'pending','a0900000-0000-4000-8000-000000000001');
-UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(39);
 SELECT is(pg_temp.row_a(26)->>'state'||'|'||(pg_temp.row_a(26)->>'counterparty')||'|'||coalesce(pg_temp.row_a(26)->>'sign_note','null'),'awaiting_countersign|you|null','co-signers both signed (one at their address), the business left: "You''ve signed", waiting for the business, no sign note');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',26),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_countersign"}'::jsonb,'and the writer says it is not signable, not "use the emailed link"');
 -- The business signs first and the one signer IS the customer: their turn comes next.
@@ -546,9 +547,8 @@ SELECT is(pg_temp.row_a(31)->>'state','awaiting_earlier_signer','the business an
 -- is asked of this customer: waiting for others, "You've signed", never "use the link".
 SELECT pg_temp.mk(32,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','partially_signed',interval '25 days');
 DELETE FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(32);
-SELECT pg_temp.sgn(48,32,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(48,32,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-a@tests.invalid');
 SELECT pg_temp.sgn(49,32,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
-UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(48);
 UPDATE public.paige_agreement_signers SET token_hash = encode(digest(repeat('c5',32),'sha256'),'hex'), token_expires_at = now() + interval '25 days' WHERE id = pg_temp.sg(49);
 INSERT INTO public.paige_agreement_events(agreement_id,tenant_id,signer_id,event_type,actor_kind,actor_user_id)
 VALUES (pg_temp.ag(32),'a0900000-0000-4000-8000-000000000001',pg_temp.sg(49),'sent','owner','0a090000-0000-4000-8000-000000000001');
@@ -618,11 +618,9 @@ SELECT pg_temp.mk(70,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-
 SELECT pg_temp.sgn(70,70,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 UPDATE public.paige_agreement_signers SET email='agr-customer-two@tests.invalid' WHERE id=pg_temp.sg(70);
 SELECT pg_temp.mk(71,'a0900000-0000-4000-8000-000000000002','c0900000-0000-4000-8000-000000000006','completed',interval '7 days');
-SELECT pg_temp.sgn(71,71,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000002');
-UPDATE public.paige_agreement_signers SET email='agr-customer-two@tests.invalid' WHERE id=pg_temp.sg(71);
+SELECT pg_temp.sgn(71,71,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000002','agr-customer-two@tests.invalid');
 SELECT pg_temp.mk(72,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000005','completed',interval '7 days');
-SELECT pg_temp.sgn(72,72,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
-UPDATE public.paige_agreement_signers SET email='agr-customer-two@tests.invalid' WHERE id=pg_temp.sg(72);
+SELECT pg_temp.sgn(72,72,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-two@tests.invalid');
 SELECT pg_temp.mk(73,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000005','sent',interval '7 days');
 SELECT pg_temp.sgn(73,73,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
 UPDATE public.paige_agreement_signers SET email='another-signer@tests.invalid' WHERE id=pg_temp.sg(73);
@@ -630,8 +628,7 @@ SELECT pg_temp.mk(74,'a0900000-0000-4000-8000-000000000002','c0900000-0000-4000-
 SELECT pg_temp.sgn(74,74,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000002');
 UPDATE public.paige_agreement_signers SET email='agr-customer-two@tests.invalid' WHERE id=pg_temp.sg(74);
 SELECT pg_temp.mk(75,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000008','completed',interval '7 days');
-SELECT pg_temp.sgn(75,75,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
-UPDATE public.paige_agreement_signers SET email='agr-customer-two@tests.invalid' WHERE id=pg_temp.sg(75);
+SELECT pg_temp.sgn(75,75,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001','agr-customer-two@tests.invalid');
 CREATE TEMP TABLE exact_agreements_before AS SELECT (SELECT jsonb_agg(to_jsonb(a) ORDER BY a.id) FROM public.paige_agreements a) AS agreements,(SELECT jsonb_agg(to_jsonb(s) ORDER BY s.id) FROM public.paige_agreement_signers s) AS signers,(SELECT count(*) FROM public.paige_agreement_events) AS events,(SELECT count(*) FROM public.paige_audit_log WHERE action='agreement.portal_link_issued') AS audits;
 SELECT is(pg_temp.agreement_intent('SELECT public.client_portal_agreements_scoped(''a0900000-0000-4000-8000-000000000001'',''c0900000-0000-4000-8000-000000000005'')','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006'),pg_temp.agreement_intent('SELECT public.client_portal_agreements(''a0900000-0000-4000-8000-000000000001'')','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006'),'selected business 1 keeps the complete original list projection');
 SELECT is(pg_temp.agreement_intent('SELECT public.client_portal_agreements_scoped(''a0900000-0000-4000-8000-000000000002'',''c0900000-0000-4000-8000-000000000006'')','a0900000-0000-4000-8000-000000000002','0a090000-0000-4000-8000-000000000006'),pg_temp.agreement_intent('SELECT public.client_portal_agreements(''a0900000-0000-4000-8000-000000000002'')','a0900000-0000-4000-8000-000000000002','0a090000-0000-4000-8000-000000000006'),'selected business 2 keeps the complete original list projection');

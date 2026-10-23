@@ -75,3 +75,13 @@ runtime differs from committed lock; fresh exact-lock hosted CI remains required
 Product source, bindings, permissions, consent and all rendered bytes are unchanged
 by this correction. New independent review, exact-head CI and normal release of
 the child remain owed; authenticated refusal/reload remains UNVERIFIED.
+
+The next exactf588 verify120702795314 completed its full Test step successfully,
+but correctly failed the unchanged type ratchet: the first original reload test
+inferred recoveryReadOnlyRefusal as boolean instead of its closed true literal.
+Original step93 diagnostic identifies turn-view.test.ts/TS2345. The fixture now
+retains the true literal with as const, as the neighboring negative fixture already
+does. No product source, assertion, type baseline, approval or permission changes.
+Original turn-view52 plus customer cleanup3 cases55/55 PASS after this correction.
+Final hosted exact-lock type/build/regression checks and review remain required;
+the failedf588 run is retained as FAIL, never inherited as a passing gate.

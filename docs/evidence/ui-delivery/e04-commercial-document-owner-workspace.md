@@ -85,10 +85,10 @@ ORCHESTRATION_CONTRACT: (1) owner requests private preparation; (2) original Sal
 ALGORITHM_SUPPORT: ALG01 consumes native identity/digest/replay; ALG12 source/byte/refusal/unknown recovery signals are supporting implementation. ALG02 onboarding and ALG13 next-best-action remain unverified. Official register maturity unchanged; no fabricated score or activation.
 CAPABILITIES_STATUS: Agreements PARTIAL; no new registry/catalogue Live claim. Conversational exact-field execution remains UNAVAILABLE pending original exact approval/signing integration.
 EXP09_CONTRACT: EXP04 owns original commercial/signing records; EXP09 retains its Portal/relationship authorization, signed documents/actions/history. Private unsigned preparation is not automatically shared, signed, sent or client-published.
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-commercial-document-owner-api; exact_final_head=PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=agreement-document candidate not deployed; evidence=docs/evidence/ui-delivery/e04-commercial-document-owner-workspace.md
+INTERNAL_BUILD_IDENTITY: source=f03024e53ab088a6c5f578035392f1d715707c20; branch=codex/e04-commercial-document-owner-api; exact_final_head=PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(agreement-document ordered source deployment and served import readback); evidence=docs/evidence/ui-delivery/e04-commercial-document-owner-workspace.md
 RELEASE_CHANNEL: development: native2637 released prerequisite, reviewed constructor2640 and current consumer require ordered release.
 RELEASE_CLASSIFICATION: internal-only: commercial document preparation increment; full Experience remains incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: no founder-approved named complete customer release or announcement.
 RELEASE_NOTE_REQUIRED: no: source increment, not a named customer release.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source; commercial hosted operation/role/cohort/provider/full12/founder acceptance PROOF OWED.
-RELEASE_RECOVERY: position=retain native versions/request/event/private artifact; forward-fix changed source and rereview; unknown outcomes keep the same request, never silently replay external work; reference=original journey/C11 contract.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source implementation only; hosted commercial operation, roles, cohorts, providers, full12 and founder acceptance remain PROOF OWED.
+RELEASE_RECOVERY: position=forward-fix changed source with original retained versions and same unknown request identity, without replaying external work; reference=docs/delivery/exp04-get-paid-deliver-journey.md C11 contract and original native preparation APIs.

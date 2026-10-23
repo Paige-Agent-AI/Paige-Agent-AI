@@ -145,8 +145,10 @@ export type SigningEventsResult =
   | { readonly ok: false; readonly message: string };
 
 export type SigningSendResult =
-  | { readonly ok: true; readonly sent: readonly string[]; readonly notDelivered: readonly string[] }
-  | { readonly ok: false; readonly message: string };
+  | { readonly ok: true; readonly sent: readonly string[]; readonly notDelivered: readonly string[];
+      /** Existing wire `sent` means provider accepted + link stored, not delivery. */
+      readonly failed?:readonly {readonly email:string;readonly reason:string}[];readonly warning?:string }
+  | { readonly ok: false; readonly message: string; readonly state?:'refused'|'unconfirmed' };
 
 export type SigningLinkResult = {
   readonly ok: boolean;
@@ -313,7 +315,12 @@ async function refusalMessage(error: unknown): Promise<string | null> {
 }
 
 export function useSoloAgreementSignings(): SigningsState {
-  const { activeTenantId, accountContextLoading } = useTenantContext();
+  const { activeTenantId, activeUserId, accountContextLoading } = useTenantContext();
+  const sendActor=useRef({userId:activeUserId});
+  if(sendActor.current.userId!==activeUserId)sendActor.current={userId:activeUserId};
+  // Per-instance interaction fence only. The original server/provider still
+  // owns effects; this is not durable whole-operation idempotency.
+  const sending=useRef(new Set<string>());
   // An identity epoch also invalidates a completion after A -> B -> A.
   const identity = useRef({ tenantId: activeTenantId, resolving: accountContextLoading });
   if (identity.current.tenantId !== activeTenantId || identity.current.resolving !== accountContextLoading) {
@@ -559,45 +566,49 @@ export function useSoloAgreementSignings(): SigningsState {
     resend = false,
   ): Promise<SigningSendResult> => {
     const expected = loadedTenantId ?? activeTenantId;
-    if (!expected) return { ok: false, message: "This workspace could not be resolved, so nothing was sent." };
-    const openedIdentity = identity.current;
+    if (!expected||expected!==activeTenantId||accountContextLoading||!activeUserId)
+      return {ok:false,state:'refused',message:'Reopen the agreement in its original business. This page did not request a send.'};
+    const openedIdentity=identity.current,openedActor=activeUserId,openedActorEpoch=sendActor.current;
+    const current=()=>identity.current===openedIdentity&&sendActor.current===openedActorEpoch;
+    const key=expected+':'+openedActor+':'+signingId;
+    if(sending.current.has(key))return {ok:false,state:'refused',message:'The earlier request is still being checked. No additional request was made from this page.'};
+    const inFlight=sending.current;inFlight.add(key);
+    const uncertain=():SigningSendResult=>({ok:false,state:'unconfirmed',message:'The signing request could not be verified. It may have completed; inspect this agreement in its original business before sending again.'});
     try {
+      // Original SDK Auth, captured before dispatch. A later sign-in may refuse
+      // this proposal but must never silently supply a different actor's token.
+      const auth=await supabase.auth.getSession();
+      if(!current()||auth.error||!auth.data.session||auth.data.session.user.id!==openedActor
+        ||auth.data.session.user.is_anonymous||!auth.data.session.access_token)
+        return {ok:false,state:'refused',message:'Agreement access changed before dispatch. Reopen the original agreement; this page did not request a send.'};
       const { data, error } = await supabase.functions.invoke("agreement-send", {
         body: { agreementId: signingId, resend },
+        headers:{Authorization:`Bearer ${auth.data.session.access_token}`},
       });
-      if (identity.current !== openedIdentity) {
-        return { ok: false, message: "Your workspace changed, so nothing was sent." };
+      if(!current())return uncertain();
+      const payload=(data??{}) as {ok?:unknown;sent?:unknown;notDelivered?:unknown;failed?:unknown;warning?:unknown};
+      if(error||payload.ok!==true)return uncertain();
+      const list=(value:unknown):string[]|null=>{
+        if(!Array.isArray(value)||value.length>100)return null;
+        const names=value.map(x=>toText(x)??toText((x as {email?:unknown}|null)?.email));
+        return names.every((x):x is string=>Boolean(x))?names:null;
+      };
+      const accepted=list(payload.sent),notDelivered=list(payload.notDelivered);
+      if(!accepted?.length||!notDelivered||payload.failed!==undefined&&(!Array.isArray(payload.failed)||payload.failed.length>100))return uncertain();
+      const failed:{email:string;reason:string}[]=[];
+      for(const row of (payload.failed??[]) as unknown[]){
+        if(!row||typeof row!=='object')return uncertain();
+        const email=toText((row as {email?:unknown}).email),reason=toText((row as {reason?:unknown}).reason);
+        if(!email||!reason)return uncertain();failed.push({email,reason});
       }
-      const payload = (data ?? {}) as { ok?: boolean; error?: unknown; sent?: unknown; notDelivered?: unknown };
-      // §13: a 200 is not a delivery. The endpoint reports who it actually reached, and an answer
-      // that is not an explicit ok is a failure however green the transport was.
-      if (error || payload.ok !== true) {
-        console.error("[signings] send failed", error ?? payload.error);
-        // THE SERVER'S OWN SENTENCE, WHICH NEVER USED TO ARRIVE. supabase-js throws
-        // FunctionsHttpError on any non-2xx BEFORE it parses the body, so `data` is null and
-        // `payload.error` is undefined — every refusal the function writes ("that PDF is
-        // password-protected", "add a contact email", "this agreement is already sent") was
-        // replaced by the generic fallback below. The operator was told to "check the record"
-        // when the function had already told them exactly what to do.
-        const said = toText(payload.error) ?? await refusalMessage(error);
-        return { ok: false, message: said || "That could not be sent. Nothing was delivered; check the record before trying again." };
-      }
-      // The function reports the people it emailed as OBJECTS — `{ email }` and `{ email, reason }`
-      // (agreement-send/index.ts:281-282, :367). Reading them as strings filtered every one of
-      // them out, so a completely successful send arrived here as an empty list and the panel
-      // announced "Nothing went out. No message reached anybody" over a delivered agreement.
-      const list = (value: unknown): string[] =>
-        Array.isArray(value)
-          ? value
-              .map((x) => toText(x) ?? toText((x as { email?: unknown } | null)?.email))
-              .filter((x): x is string => Boolean(x))
-          : [];
+      const warning=payload.warning===undefined?undefined:toText(payload.warning);
+      if(payload.warning!==undefined&&!warning)return uncertain();
       setRefreshKey((key) => key + 1);
-      return { ok: true, sent: list(payload.sent), notDelivered: list(payload.notDelivered) };
+      return {ok:true,sent:accepted,notDelivered,failed,...(warning?{warning}:{})};
     } catch {
-      return { ok: false, message: "That could not be sent. Nothing was delivered; check the record before trying again." };
-    }
-  }, [activeTenantId]);
+      return uncertain();
+    }finally{inFlight.delete(key);}
+  }, [activeTenantId,activeUserId,accountContextLoading]);
 
   const issueLink = useCallback(async (
     signingId: string,

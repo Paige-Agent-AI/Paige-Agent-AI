@@ -29,10 +29,71 @@ function fixture() {
     retire: () => { scope = null; }, control: (...args: unknown[]) => {
       const fn = (weekly as Record<string, unknown>).controlWeeklyOwner;
       expect(typeof fn).toBe("function");
-      return (fn as (...a: unknown[]) => Promise<{ status: string }>)(original, ...args, caller, () => scope);
+      return (fn as (...a: unknown[]) => Promise<{ status: string }>)(original, args[0], args[1], caller, () => scope, args[2]);
     } };
 }
+const changedSchedule = () => ({ weekday: 5, local_time: "14:30", timezone: "Europe/London" });
+function configurationFixture() {
+  const f = fixture(), original = f.caller.rpc.getMockImplementation()!;
+  f.caller.rpc.mockImplementation(async (name, args) => {
+    if (name !== "configure_weekly_commitment_check") return original(name, args);
+    f.effects.push(args); f.saved.revision = 3; f.saved.schedule_status = "requested";
+    f.saved.schedule = { weekday: Number(args?._weekday), local_time: String(args?._local_time), timezone: String(args?._timezone) };
+    return f.response.data || f.response.error ? f.response
+      : { data: { ok: true, automation_id: id, state: "draft", revision: 3, requires_authorization: true }, error: null };
+  });
+  return f;
+}
 describe("native human-owner future controls", () => {
+  it.each(["CET", "GMT", "EST", "America/Coyhaique"])("preserves the saved PostgreSQL zone %s when only day/time changes", async timezone => {
+    const f = configurationFixture(); f.saved.schedule.timezone = timezone;
+    const reviewed = structuredClone(f.saved);
+    const proposed = { ...reviewed.schedule, weekday: 5, local_time: "14:30" };
+    expect((await f.control(reviewed, "configure", proposed)).status).toBe("saved");
+    expect(f.effects).toEqual([{ _automation_id: id, _expected_revision: 2, _weekday: 5, _local_time: "14:30", _timezone: timezone }]);
+  });
+  it("changes the original schedule only as a disarmed next revision", async () => {
+    const f = configurationFixture();
+    expect(await f.control(check(), "configure", changedSchedule())).toMatchObject({ status: "saved" });
+    expect(f.effects).toEqual([{ _automation_id: id, _expected_revision: 2, _weekday: 5, _local_time: "14:30", _timezone: "Europe/London" }]);
+    expect(f.caller.rpc.mock.calls.filter(([name]) => name === "get_weekly_commitment_checks")).toHaveLength(2);
+  });
+  it.each([{ weekday: 0 }, { local_time: "25:00" }, { timezone: "invalid" }])("refuses invalid configuration %j without a write", async invalid => {
+    const f = configurationFixture();
+    expect((await f.control(check(), "configure", { ...changedSchedule(), ...invalid })).status).toBe("refused"); expect(f.effects).toEqual([]);
+  });
+  it("will not reconfigure the same schedule or configure a cancelled responsibility", async () => {
+    const f = configurationFixture();
+    expect((await f.control(check(), "configure", check().schedule)).status).toBe("unsupported"); expect(f.effects).toEqual([]);
+    f.saved.schedule_status = "cancelled";
+    expect((await f.control({ ...check(), schedule_status: "cancelled" }, "configure", changedSchedule())).status).toBe("stale"); expect(f.effects).toEqual([]);
+  });
+  it.each(["revision", "state", "requires_authorization"])("does not accept a changed native %s acknowledgement", async field => {
+    const f = configurationFixture(); f.response.data = { ok: true, automation_id: id, state: "draft", revision: 3, requires_authorization: true,
+      [field]: field === "revision" ? 2 : field === "state" ? "live" : false };
+    expect((await f.control(check(), "configure", changedSchedule())).status).toBe("unknown"); expect(f.effects).toHaveLength(1);
+  });
+  it.each(["schedule", "revision", "state", "next_run"])("rejects contradictory %s readback without replay", async field => {
+    const f = configurationFixture(), original = f.caller.rpc.getMockImplementation()!;
+    f.caller.rpc.mockImplementation(async (name, args) => {
+      const result = await original(name, args);
+      if (name === "configure_weekly_commitment_check") {
+        if (field === "schedule") f.saved.schedule.local_time = "15:00";
+        if (field === "revision") f.saved.revision = 4;
+        if (field === "state") f.saved.schedule_status = "scheduled";
+        if (field === "next_run") f.saved.next_run_at = "2026-10-23T13:30:00Z";
+      }
+      return result;
+    });
+    expect((await f.control(check(), "configure", changedSchedule())).status).toBe("unknown"); expect(f.effects).toHaveLength(1);
+  });
+  it("unknown configuration outcome and lost identity cannot publish success or retry", async () => {
+    const f = configurationFixture(); f.response.error = { message: "lost response" };
+    expect((await f.control(check(), "configure", changedSchedule())).status).toBe("unknown"); expect(f.effects).toHaveLength(1);
+    const g = configurationFixture(), original = g.caller.rpc.getMockImplementation()!;
+    g.caller.rpc.mockImplementation(async (name, args) => { const result = await original(name, args); if (name === "configure_weekly_commitment_check") g.retire(); return result; });
+    expect((await g.control(check(), "configure", changedSchedule())).status).toBe("refused"); expect(g.effects).toHaveLength(1);
+  });
   it.each(["pause", "cancel"])("%s uses the original exact-revision native writer and authoritative readback", async action => {
     const f = fixture(); expect(await f.control(check(), action)).toMatchObject({ status: "saved" });
     expect(f.effects).toEqual([{ _automation_id: id, _action: action, _expected_revision: 2 }]);

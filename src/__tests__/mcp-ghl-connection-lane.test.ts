@@ -134,8 +134,11 @@ describe("the catalogue names GHL's real MCP endpoint", () => {
   it("the drawer enforces the preset's required headers before save", () => {
     expect(catalogue).toContain("const missing = preset.requiredHeaders.filter((h) => !have.has(h.toLowerCase()));");
     expect(catalogue).toContain("requires the ${missing.join(\", \")}");
-    // A preset with required headers preselects the Token + headers mode.
-    expect(catalogue).toContain('auth: item.pk && item.req?.length ? "headers" : undefined');
+    // A preset with required headers preselects the Token + headers mode (renewed pin: the
+    // EXP10 auth-forwarding kept the req-derived headers branch first — the generic entry
+    // stays unprefilled by its own contract, and a curated row's proven mode flows through).
+    expect(catalogue).toContain('item.pk && item.req?.length ? "headers"');
+    expect(catalogue).toContain("item.manual ? undefined");
     expect(catalogue).toContain(": preset.auth ?? null;");
   });
 });

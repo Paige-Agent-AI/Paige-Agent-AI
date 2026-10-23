@@ -948,6 +948,12 @@ jobs:
           node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d" --personal-sender
           node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d" --origin-admission
 
+      - name: Original document lifecycle and future-report Metric authority in isolated PostgreSQL
+        run: |
+          PGBIN="$(pg_config --bindir)"
+          [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries are required."; exit 2; }
+          PG_PROOF_BIN="$PGBIN" node scripts/proof/paige-durable-document-work.mjs
+
       - name: C0b — incumbent adapter authority bindings
         run: |
           node --test scripts/ci/c0b-*.test.mjs
@@ -1061,6 +1067,7 @@ jobs:
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/c4e-research-preparation-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int304-durable-observation-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int304-continuation-read-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/e01-interview-resume-check.mjs
           python3 scripts/knowledge-service/check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/delete-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/catalogue-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres

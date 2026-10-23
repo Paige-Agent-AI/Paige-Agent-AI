@@ -15,7 +15,7 @@ async function run(input) {
     const output = join(dir, 'output.json');
     if (input !== undefined) await writeFile(source, typeof input === 'string' ? input : JSON.stringify(input));
     const result = spawnSync(process.execPath, [fileURLToPath(script), source, output], { encoding: 'utf8', env: { ...process.env, CI_EXECUTED_SHA: 'b'.repeat(40), CI_CANDIDATE_SHA: 'c'.repeat(40), GITHUB_SHA: 'a'.repeat(40), GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '2' } });
-    return { code: result.status, evidence: JSON.parse(await readFile(output, 'utf8')) };
+    return { code: result.status, evidence: JSON.parse(await readFile(output, 'utf8')), stdout: result.stdout };
   } finally {
     const target = resolve(dir);
     assert.equal(dirname(target), resolve(tmpdir()));
@@ -36,6 +36,36 @@ test('network escape is attributed without raw failure payload', async () => {
   assert.equal(evidence.failures[0].owner, 'Release/CI');
   assert.equal(evidence.failures[0].test_name, 'example 0');
   assert.ok(!JSON.stringify(evidence).includes('password'));
+});
+
+test('short CI output exposes original failure files and counts without raw names or messages', async () => {
+  const input = report(['UNIT_NETWORK_FORBIDDEN https://secret.example?token=password']);
+  input.testResults[0].name = join(process.cwd(), 'src/example.test.ts');
+  input.testResults[0].assertionResults[0].fullName = 'private-case-name';
+  const { stdout, evidence, code } = await run(input);
+  assert.equal(code, 0); assert.equal(evidence.status, 'FAIL');
+  const summary = JSON.parse(stdout.trim().replace(/^UNIT_FAILURE_ATTRIBUTION /, ''));
+  assert.equal(summary.status, 'FAIL'); assert.equal(summary.totals.failed, 1);
+  assert.equal(summary.failures[0].test_file, 'src/example.test.ts');
+  assert.equal(summary.failures[0].category, 'UNIT_NETWORK_ESCAPE');
+  assert.ok(!/password|private-case-name|failureMessages|test_name/.test(stdout));
+});
+
+test('short CI output redacts non-repository paths and explicitly counts omitted failures', async () => {
+  const input = report(Array(23).fill('assertion failed'));
+  input.testResults[0].name = '/private/credential-directory/example.test.ts';
+  const { stdout, evidence } = await run(input);
+  const summary = JSON.parse(stdout.trim().replace(/^UNIT_FAILURE_ATTRIBUTION /, ''));
+  assert.equal(summary.failures.length, 20); assert.equal(summary.omitted_failures, 3);
+  assert.equal(summary.totals.failed, 23); assert.equal(evidence.failures.length, 23);
+  assert.equal(summary.failures[0].test_file, null); assert.ok(!stdout.includes('credential-directory'));
+});
+
+test('short diagnostic output never turns unavailable evidence into a pass', async () => {
+  const { stdout, code } = await run(undefined);
+  const summary = JSON.parse(stdout.trim().replace(/^UNIT_FAILURE_ATTRIBUTION /, ''));
+  assert.notEqual(code, 0); assert.equal(summary.status, 'EVIDENCE_UNAVAILABLE');
+  assert.equal(summary.totals, null); assert.deepEqual(summary.failures, []);
 });
 test('assertion failure stays unclassified', async () => {
   const { evidence } = await run(report(['expected true to equal false']));

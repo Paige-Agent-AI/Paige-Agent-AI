@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { routeLinkTarget } from "@/lib/links/workspaceLinks";
+import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
 import {
   AlertTriangle, ArrowUpRight, Bot, ChevronRight, RefreshCw, X,
 } from "lucide-react";
@@ -286,6 +287,14 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const systems = useSystemsCheck("tenant");
   const resolvedAccount = resolveTenantAccountContext(accountContext);
   const account = useParams().account ?? "";
+  const location = useLocation();
+  const sourceQuery = new URLSearchParams(location.search);
+  const sourceValues = sourceQuery.getAll("finding");
+  const sourceRequested = sourceValues.length > 0;
+  const sourceId = sourceValues.length === 1
+    ? readRecordLinks([{ destination: "systems_check", record_id: sourceValues[0] }])[0]?.record_id : null;
+  sourceQuery.delete("finding");
+  const remainingSearch = sourceQuery.toString();
   const businessReview = routeLinkTarget({ destination: "executive", record_id: null }, "solo", account);
   const [openArea, setOpenArea] = useState<string | null>(null);
   const [selected, setSelected] = useState<SystemsCheckFinding | null>(null);
@@ -295,6 +304,8 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const [decisionBusy, setDecisionBusy] = useState(false);
   const [decisionMessage, setDecisionMessage] = useState("");
   const returnFocus = useRef<HTMLElement | null>(null);
+  const refreshTrigger = useRef<HTMLButtonElement | null>(null);
+  const sourceWasRequested = useRef(false);
   const restoreFindingFocus = useRef(false);
   const proposalReturnFocus = useRef<HTMLElement | null>(null);
   const decisionReturnFocus = useRef<HTMLElement | null>(null);
@@ -313,6 +324,15 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const confirmedFindings = currentFindings.filter((finding) => evidenceFilter(finding) === "confirmed");
   const completedAt = systems.run?.completed_at ? new Date(systems.run.completed_at) : null;
   const hasCompletedRun = !!completedAt && !Number.isNaN(completedAt.getTime());
+  // The URL selects only evidence already returned by the original scoped snapshot.
+  // It grants no broader finding lookup, historical access or action authority.
+  const linkedFinding = !systems.loading && !systems.isError && hasCompletedRun && sourceId
+    ? currentFindings.find(finding => finding.id.toLowerCase() === sourceId) : null;
+  const linkedMessage = !sourceId ? "This source reference is not valid. Clear the selection to continue."
+    : systems.loading ? "Reading the linked finding…"
+      : systems.isError ? "The linked finding could not be read. Refresh current data to retry."
+        : !hasCompletedRun ? "No completed check is available for this source."
+          : "The linked finding is not in the last completed check. It may be older or unavailable in this workspace.";
   /**
    * WHY the picture is incomplete, computed BEFORE the flag that announces it — because the flag
    * used to be the only thing computed, and the sentence beside it was written for just one of the
@@ -367,6 +387,21 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
   const isStale = hasCompletedRun && Date.now() - completedAt.getTime() > 24 * 60 * 60 * 1000;
   const selectedEvidence = projectEvidence(selected?.evidence ?? null);
+
+  useLayoutEffect(() => {
+    const wasRequested = sourceWasRequested.current;
+    sourceWasRequested.current = sourceRequested;
+    if (!sourceRequested && !wasRequested) return;
+    // Back, a new source, a new run or a failed/pending reread must retire old inspection.
+    const hadInspectionFocus = Boolean(drawerRef.current?.contains(document.activeElement)
+      || proposalRef.current?.contains(document.activeElement));
+    setSelected(null);
+    setExpanded(false);
+    setProposal(false);
+    proposalReturnFocus.current = null;
+    restoreFindingFocus.current = hadInspectionFocus;
+    returnFocus.current = hadInspectionFocus ? refreshTrigger.current : null;
+  }, [location.key, sourceRequested, systems.loading, systems.isError, systems.run?.id]);
 
   useEffect(() => {
     setSelected(null);
@@ -678,6 +713,24 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
         {command.isError && <div className="sc-source-warning" role="status"><AlertTriangle size={16} /> Some business operating sources could not be read. No empty state is being treated as healthy; refresh current data to retry.</div>}
 
         <div className="sc-console">
+          {sourceRequested && (
+            <section className="sc-linked-source" aria-labelledby="sc-linked-title">
+              <div className="sc-block-head">
+                <h2 id="sc-linked-title">Linked recorded finding</h2>
+                <Link className="sc-button sc-button--quiet" aria-label="Clear source selection"
+                  to={{ pathname: location.pathname, search: remainingSearch ? `?${remainingSearch}` : "", hash: location.hash }}
+                  onClick={() => refreshTrigger.current?.focus()}>Clear selection</Link>
+              </div>
+              <div aria-live="polite">
+                {linkedFinding ? <>
+                  <div className="sc-item-t"><h3>{findingTitle(linkedFinding)}</h3><FindingPill finding={linkedFinding} /></div>
+                  {linkedFinding.paige_interpretation && <p>{linkedFinding.paige_interpretation}</p>}
+                  <p className="sc-linked-date">From the last completed check · <time dateTime={systems.run!.completed_at!}>{completedAt!.toLocaleString()}</time></p>
+                  <button type="button" className="sc-button sc-button--paige" onClick={event => openFinding(linkedFinding, event.currentTarget)}>Inspect linked evidence</button>
+                </> : <p>{linkedMessage}</p>}
+              </div>
+            </section>
+          )}
           <div className="sc-strip">
             <div className="sc-strip-l">
               {/* The operating brief — the plain-English lead (§3). Derived from the real area
@@ -728,6 +781,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
             </div>
             <div className="sc-strip-a">
               <button
+                ref={refreshTrigger}
                 type="button"
                 className="sc-button sc-button--quiet"
                 onClick={refresh}
@@ -979,10 +1033,10 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
       {selected && (
         <div ref={drawerRef} className={`sc-drawer ${expanded ? "is-expanded" : ""}`} role="dialog" aria-modal={proposal ? undefined : true} aria-hidden={proposal || undefined} aria-label={expanded ? "Expanded finding details" : "Finding details"}>
-          <div className="sc-drawer-head"><div><span className="sc-kicker">{label(selected.domain)} · {label(selected.severity_at_finding)}</span><h2>{selected.check_name || label(selected.check_id)}</h2></div><div><button data-initial-focus type="button" className="sc-icon-button" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "Return to drawer" : "Expand"}><ArrowUpRight size={18} /> <span>{expanded ? "Return" : "Expand"}</span></button><button type="button" className="sc-icon-button" onClick={closeFinding} aria-label="Close finding details"><X size={19} /></button></div></div>
+          <div className="sc-drawer-head"><div><span className="sc-kicker">{label(selected.domain)} · {label(selected.severity_at_finding)}</span><h2>{findingTitle(selected)}</h2></div><div><button data-initial-focus type="button" className="sc-icon-button" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "Return to drawer" : "Expand"}><ArrowUpRight size={18} /> <span>{expanded ? "Return" : "Expand"}</span></button><button type="button" className="sc-icon-button" onClick={closeFinding} aria-label="Close finding details"><X size={19} /></button></div></div>
           <div className="sc-drawer-body">
             <div className="sc-evidence-meta"><Proof tone={isResolved(selected) ? "resolved" : selected.status === "pass" ? "live" : "attention"}>{isResolved(selected) ? "Resolved" : label(selected.status)}</Proof><span>Recorded {new Date(selected.created_at).toLocaleString()}</span></div>
-            <section><h3>Signal</h3><p>{selected.check_name || label(selected.check_id)} · {evidenceStateLabel(evidenceFilter(selected))}</p></section>
+            <section><h3>Signal</h3><p>{findingTitle(selected)} · {evidenceStateLabel(evidenceFilter(selected))}</p></section>
             <section><h3>Evidence and provenance</h3><p>Persisted finding {selected.id} from Systems Check run {selected.run_id}.</p>{selectedEvidence.rows.length ? <dl>{selectedEvidence.rows.map(([key, value]) => <React.Fragment key={key}><dt>{label(key)}</dt><dd>{value}</dd></React.Fragment>)}</dl> : <p>No presentation-safe evidence fields are available.</p>}{selectedEvidence.hasSuppressed && <p>Additional evidence is retained but not displayed here.</p>}</section>
             <section><h3>Impact</h3><p>{selected.paige_interpretation || "No PAIGE interpretation is attached to this persisted finding."}</p></section>
             {isResolved(selected)

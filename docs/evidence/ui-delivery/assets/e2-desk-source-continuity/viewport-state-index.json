@@ -1,0 +1,390 @@
+{
+  "kind": "Native original-component synthetic evidence; no customer or production proof",
+  "captureBasis": "2626/13d7d7141f61efc3aa58584245d658a4a387c420 plus exact source pins below",
+  "capture": "Page.captureScreenshot; untouched JPEG80/exact CSS clip/scale1",
+  "sourcePins": [
+    {
+      "path": "src/solo/PreparedWorkReview.tsx",
+      "sha256": "7907d9f5efef57000f27cfda8e17a764661e4482cce14fc45d93e5c760276222"
+    },
+    {
+      "path": "src/solo/prepared-work-review.css",
+      "sha256": "9b0e3f9a45a867cdac653406c919a295440f67d5dd68d50245d1871b42868468"
+    },
+    {
+      "path": "src/solo/SoloPlanningSuggestion.tsx",
+      "sha256": "5dd7df9f09abb54c38cf439e8cc153333d6de22970dd45fd02cfe0db18c3b7a5"
+    },
+    {
+      "path": "src/solo/solo-planning-suggestion.css",
+      "sha256": "ed02b3eb71206e1bf21c977eaa4463873b093839fc9721eb4a600848597d5ee0"
+    },
+    {
+      "path": "src/solo/data/useSoloPendingActions.ts",
+      "sha256": "906e947cc03f8a6a21dec9ea88bd7dc196fd5f65c80fc53fd37271a3e732ed44"
+    },
+    {
+      "path": "src/solo/SoloSystemsCheckWorkspace.tsx",
+      "sha256": "5586b2689982284acf15daabaa6102d636516c2198dcf7812190a2566e935467"
+    },
+    {
+      "path": "src/solo/solo-systems-check-workspace.css",
+      "sha256": "78a7d8ad1a891cc5c3978700e7a3ff05f9bf94161d1bc887e85f1d8e9a392773"
+    },
+    {
+      "path": "src/solo/systems-check-areas.ts",
+      "sha256": "ec8986c7113db65fe866b700c95f386c31f0e8b1c387b6c1b0c314188ab2225b"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "5299b1ef17b7b5b816f23ed1830291d9be04689fde8b827b0f709703cfb9ed62"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3"
+    },
+    {
+      "path": "src/components/chat/ContextualSuggestion.tsx",
+      "sha256": "36511578d369ce324b1bc4f4fabd299511d2b99e5663d8a79bb5c752c1a3b952"
+    },
+    {
+      "path": "src/components/chat/contextual-suggestion.css",
+      "sha256": "a3768c2ccea13465c7bd794e51316737deb57bae6fb0c02adc7a96eebf9c5fc1"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "90c5fe9045cd3a1ce15e78f8f953bc41903e0ffaa1ad744f61f14561d19105d5"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "2cb7bfefe50b65c47efd63f6a35741f1b42697bd1edfe590288a7cbcb1a1e643"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "00ffe94484ba9dbdf39daa7efbb0a2e85665473dca3ae19968cdd71b4bd85e47"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/systems-check-fixtures.ts",
+      "sha256": "02790c30b70b606266baeb275b813683f55d1caa6370230af6581abc3352b07d"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05"
+    }
+  ],
+  "frames": [
+    {
+      "file": "1536-open.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "raster": [
+        1536,
+        770
+      ],
+      "bytes": 74523,
+      "sha256": "ccacb38b26cd2d8f86c36a43b2a4ab60a17226c21b8f3ad50627cb51ccd47de3"
+    },
+    {
+      "file": "1536-closed.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "raster": [
+        1536,
+        770
+      ],
+      "bytes": 72698,
+      "sha256": "3f7e8dc241b1f408f6f7c9da8caa4e0282e306e2f3f2b41ccf96b71d00ae63a9"
+    },
+    {
+      "file": "1366-open.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "bytes": 73842,
+      "sha256": "65c6cca269aeac683a3f2b35a6ea1a7450d7546c85367c5b9c13e61c0ca65a3b"
+    },
+    {
+      "file": "1366-closed.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "bytes": 72756,
+      "sha256": "4e667c64de918f4c33aeb40457f939eef6b6b3b721a5cc8ee4c048875648dc1a"
+    },
+    {
+      "file": "1024-open.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "bytes": 65278,
+      "sha256": "9dda33921b734c3149309cb8d00ac3c427ef57a611b6ddb62bfc0ac4bc77f2ee"
+    },
+    {
+      "file": "1024-closed.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "bytes": 65602,
+      "sha256": "7a77a55adf7081b88c8b6840235baf2e6ddb9ac09cd1b4faae9f097a2e431278"
+    },
+    {
+      "file": "900-open.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 70373,
+      "sha256": "609981e5eee7928f42eb2a9a5ff0ec0eabe00bb9e99a31c1171110adeff42349"
+    },
+    {
+      "file": "900-closed.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 72927,
+      "sha256": "179bed06ba0b1fcdb990a9e43465218e9a499b601e2ce52f2992f2ca2c949b7d"
+    },
+    {
+      "file": "320-keyboard-source.jpg",
+      "viewport": [
+        320,
+        780
+      ],
+      "raster": [
+        320,
+        780
+      ],
+      "bytes": 36133,
+      "sha256": "6fa44531ac517273f3c3433f3d4f7843a94a0795d4e67d4b82043084f47aefdb"
+    },
+    {
+      "file": "900-original-source-drawer.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 106919,
+      "sha256": "3efb5209508087f11522c0d3cad1e3218656ac6d83b12c246ba657663c30ffec"
+    },
+    {
+      "file": "320-source-return.jpg",
+      "viewport": [
+        320,
+        780
+      ],
+      "raster": [
+        320,
+        780
+      ],
+      "bytes": 36133,
+      "sha256": "6fa44531ac517273f3c3433f3d4f7843a94a0795d4e67d4b82043084f47aefdb"
+    },
+    {
+      "file": "320-return-rereading.jpg",
+      "viewport": [
+        320,
+        780
+      ],
+      "raster": [
+        320,
+        780
+      ],
+      "bytes": 23898,
+      "sha256": "c36c1bc49c1319653a5669f11b46953ec0a02ce150a410afa42cdbbfa9d00575"
+    },
+    {
+      "file": "320-restored-after-reread.jpg",
+      "viewport": [
+        320,
+        780
+      ],
+      "raster": [
+        320,
+        780
+      ],
+      "bytes": 36133,
+      "sha256": "6fa44531ac517273f3c3433f3d4f7843a94a0795d4e67d4b82043084f47aefdb"
+    },
+    {
+      "file": "900-missing-source.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 69078,
+      "sha256": "28b4542d7bcded98e895a632d22f0ccf2761a436c83eeb4176e09022345cea00"
+    },
+    {
+      "file": "900-missing-date.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 72413,
+      "sha256": "076d2f947cccd2c475288d357cedae216013cb0332fe4ec1d42456414444a1d0"
+    },
+    {
+      "file": "900-empty.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 46020,
+      "sha256": "377f67185ba4b459fa6b9a9c8c6dc53c383e3d6b08839c871610be9d805c3baf"
+    },
+    {
+      "file": "900-loading.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 34385,
+      "sha256": "2176b4ff4fa269ec48169e9f42de179289d564fa9ec6e917ee550a993d84610f"
+    },
+    {
+      "file": "900-error.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 39009,
+      "sha256": "20740b2d77556e6eb65c03b5f6cb60e28bc1d5dda37b39b5aae904670618cab9"
+    },
+    {
+      "file": "900-original-draft.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 87662,
+      "sha256": "c068f15041bf4df6f66be11a23786a46b3424f6ad65be45ad059feecb1b3d1ff"
+    },
+    {
+      "file": "900-missing-details.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 65541,
+      "sha256": "2d43d0c85d1bd6074fa5abd2fc2074b8deb2e1097435076f44bc761f44a594b1"
+    },
+    {
+      "file": "900-obsidian-reduced.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 65063,
+      "sha256": "baa83e65c3169e1392967890efb6d5aca137a18f013c050ef08a30744774a3d2"
+    },
+    {
+      "file": "900-obsidian-source.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 72608,
+      "sha256": "afb356379dce876cac6c5c7efff8c1e6229a8b5c0758b5a49b3be8840d871251"
+    }
+  ],
+  "limitations": [
+    "Synthetic data/actor/composer; backend refuses I/O",
+    "Whole Business Game Plan not mounted by this bounded component harness",
+    "Native zoom and assistive technology not proven",
+    "Ordinary authorized account/cohort/role/Live proof and founder acceptance owed",
+    "Relevant React/router/UI dependency lane retained; private installed Mammoth1.12.2 differs from checkout lock1.13.0 and is not imported by the bounded Desk consumer"
+  ]
+}

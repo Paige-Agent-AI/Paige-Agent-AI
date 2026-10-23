@@ -6,8 +6,8 @@ import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
 import { SoloOnboardingStage } from "./SoloOnboardingStage";
 import { cleanSoloSetupBrief } from "./settings-setup-contract";
 const id = "11111111-1111-4111-8111-111111111111";
-const fixture = vi.hoisted(() => ({ tenant: "test-tenant-a", staff: false, tierAllows: true, rpc: vi.fn(), context: {} as Record<string, unknown>, renders: [] as (string|null|undefined)[], chips: [] as {label:string;prompt:string;autoSend?:boolean}[] }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: fixture.tenant, isPlatformStaff: fixture.staff, activeTenant: { account_number: "10001" } }) }));
+const fixture = vi.hoisted(() => ({ tenant: "test-tenant-a", staff: false, tierAllows: true, features: undefined as Record<string, unknown> | undefined, rpc: vi.fn(), context: {} as Record<string, unknown>, renders: [] as (string|null|undefined)[], chips: [] as {label:string;prompt:string;autoSend?:boolean}[] }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: fixture.tenant, isPlatformStaff: fixture.staff, activeTenant: { account_number: "10001", features: fixture.features } }) }));
 vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => fixture.tierAllows, loading: false }) }));
 vi.mock("./data/useSoloBusinessContext", () => ({ useSoloBusinessContext: () => fixture.context }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: fixture.rpc } }));
@@ -16,7 +16,7 @@ vi.mock("@/components/dashboard/PaigeAIChat", () => ({ PaigeAIChat: ({ conversat
 let host: HTMLDivElement, root: Root;
 const Probe = () => { const route = useLocation(); const navigate = useNavigate(); return <><output data-route>{route.pathname+route.search}</output><button type="button" data-leave-onboarding onClick={() => navigate("/solo/10001/paige/chat")}>Leave onboarding</button></>; };
 const render = async (search="?onboarding=1") => act(async () => { root.render(<MemoryRouter initialEntries={["/solo/10001/paige/chat"+search]}><SoloPaigeWorkspace full /><Probe /></MemoryRouter>); });
-beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; fixture.tenant="test-tenant-a"; fixture.staff=false; fixture.tierAllows=true; fixture.rpc.mockReset(); fixture.renders=[]; fixture.context={ loading:false, saving:false, error:null, resolvedTenantId:fixture.tenant, accessScope:"owner_full", contextRevision:1, brief:cleanSoloSetupBrief({ publicName:"Example services", industry:"Consulting", provenance:{ publicName:{source:"owner_confirmed",confidence:"confirmed"}, industry:{source:"connection_sourced",confidence:"observed"} } }), refresh:vi.fn(), pendingProposal:null }; fixture.rpc.mockImplementation(async (name: string) => ({data: name==="get_solo_business_context" ? {tenantId:fixture.tenant,accessScope:"owner_full"} : null,error:null})); host=document.createElement("div"); document.body.append(host); root=createRoot(host); });
+beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; fixture.tenant="test-tenant-a"; fixture.staff=false; fixture.tierAllows=true; fixture.features=undefined; fixture.rpc.mockReset(); fixture.renders=[]; fixture.context={ loading:false, saving:false, error:null, resolvedTenantId:fixture.tenant, accessScope:"owner_full", contextRevision:1, brief:cleanSoloSetupBrief({ publicName:"Example services", industry:"Consulting", provenance:{ publicName:{source:"owner_confirmed",confidence:"confirmed"}, industry:{source:"connection_sourced",confidence:"observed"} } }), refresh:vi.fn(), pendingProposal:null }; fixture.rpc.mockImplementation(async (name: string) => ({data: name==="get_solo_business_context" ? {tenantId:fixture.tenant,accessScope:"owner_full"} : null,error:null})); host=document.createElement("div"); document.body.append(host); root=createRoot(host); });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); });
 it("offers editable next-step prompts only from current confirmed priority and retires them on unknown state or tenant switch",async()=>{
   fixture.context.brief=cleanSoloSetupBrief({currentPriority:"Improve delivery",provenance:{currentPriority:{source:"owner_confirmed",confidence:"confirmed"}}});
@@ -80,6 +80,32 @@ it("hides the voice entry when the tier does not carry Live Conversation",async(
   await render("?onboarding=1");
   expect(host.querySelector(".sos-voice")).toBeNull();
   expect(host.querySelector(".sos-progress--link")).not.toBeNull();
+});
+it("re-enters an unfinished onboarding into the caller's own interview thread",async()=>{
+  fixture.rpc.mockImplementation(async(name:string)=>({data:
+    name==="latest_solo_business_interview_thread" ? {threadId:id,phase:"active",checkpointUpdatedAt:"2026-10-22T00:00:00Z"}
+    : name==="get_solo_business_interview_checkpoint" ? {tenantId:fixture.tenant,threadId:id,phase:"active",nextField:"industry",sourceTurnId:"44444444-4444-4444-8444-444444444444",sourceTurnSeq:1,checkpointUpdatedAt:"2026-10-22T00:00:00Z",contextRevisionAtCheckpoint:null}
+    : name==="get_solo_business_context" ? {tenantId:fixture.tenant,accessScope:"owner_full"} : null,error:null}));
+  await render("?onboarding=1");
+  await act(async()=>{ await Promise.resolve(); });
+  // The lookup adopted the SAME verified deep-link path: the URL now carries the thread.
+  expect(host.querySelector("[data-route]")?.textContent).toBe("/solo/10001/paige/chat?onboarding=1&interviewThread="+id);
+  await act(async()=>{ await Promise.resolve(); await Promise.resolve(); });
+  // Verification passed through the existing machinery and the chat adopted the thread.
+  expect(fixture.renders).toContain(id);
+  expect(host.textContent).not.toContain("could not be verified");
+});
+it("a completed setup retires first-run presentation even through a stale ?onboarding=1 link",async()=>{
+  fixture.features={solo_setup_complete:true};
+  fixture.rpc.mockImplementation(async(name:string)=>({data:name==="latest_solo_business_interview_thread"?null:name==="get_solo_business_context"?{tenantId:fixture.tenant,accessScope:"owner_full"}:null,error:null}));
+  await render("?onboarding=1");
+  await act(async()=>{ await Promise.resolve(); });
+  expect(host.querySelector(".sos")).toBeNull();
+  expect(host.querySelector(".sos-voice")).toBeNull();
+  expect(host.textContent).not.toContain("Your business interview");
+  expect(host.querySelector("[data-context]")?.getAttribute("data-context")).not.toBe("solo_business_interview");
+  // The URL stops claiming a first-run state the workspace has outgrown.
+  expect(host.querySelector("[data-route]")?.textContent).toBe("/solo/10001/paige/chat");
 });
 it("does not auto-open customer onboarding for Platform Operator entry",async()=>{fixture.staff=true;await render();expect(host.querySelector("[data-context]")).toBeNull();expect(host.textContent).not.toContain("Meet PAIGE.");});
 it("holds transcript selection until caller-owned interview and canonical tenant resolve",async()=>{let finish!: (value: unknown)=>void;fixture.rpc.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));await render("?interviewThread="+id);expect(host.querySelector("[data-chat]")).toBeNull();expect(host.textContent).toContain("Opening the owned interview");await act(async()=>{finish({data:null,error:null});});expect(fixture.rpc.mock.calls.slice(0,2).map(([name])=>name)).toEqual(["get_solo_business_interview_checkpoint","get_solo_business_context"]);expect(host.querySelector("[data-thread]")?.getAttribute("data-thread")).toBe(id);});

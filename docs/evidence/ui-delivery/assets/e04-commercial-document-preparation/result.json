@@ -1,0 +1,794 @@
+{
+  "proofClass": "actual mounted Sales/router/controller/SDK/private PDF byte verification/browser field renderer; synthetic Auth/API/RPC transport, NO HOSTED PERSISTENCE/ACCEPTANCE",
+  "staticTransport": "native Vite compiled fixture",
+  "normalizedLFSourceSHA256": {
+    "src/solo/sales-ops.tsx": "f03bed3956b16eafde82e83b451ce66c10718b938ba53fad129fc9f9b6e428f8",
+    "src/solo/SalesWorkspace.tsx": "039ee4af441fc83161d304d486bc8bd5c92d3aa14594b1945edb9369b87d4d42",
+    "src/solo/sales-dialog.tsx": "8a36536ab86879b0199b19426909e9940aa866c595c96678c7ca4e798f5c768e",
+    "src/hooks/useBeforeUnloadGuard.ts": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
+    "src/solo/sales/AgreementPreparationWorkspace.tsx": "17fbe238fb4a2a2024ca8f33c23f1dd0e23000f5276417c848aa83512bde87e2",
+    "src/solo/sales/AgreementBodyEditor.tsx": "72cae97121056ac63b932880891f2add5e64dea458f3a2c437cdc493aa364252",
+    "src/solo/sales/agreementPreparationApi.ts": "640770f300c5d8c3a77b84456b68c847f39b03c3a098b2e7920bd81732975bfc",
+    "src/solo/sales/agreementVocabulary.ts": "b37288058de91d37dcaa49f1657363e6ef663d65441fb6d5fd8ae88cdd03f69c",
+    "src/solo/sales/agreement-body-editor.css": "1d0f9cda84d9bc9e37e792e2d0228b011f78359c4fd4c9f734e389dbacf09767",
+    "src/solo/sales/agreement-preparation.css": "2cef8ef627b07b309703b67ed32378751229b001015e0390b53866efdb7c44c4",
+    "package.json": "a82458ee86a06fa08c93a653fbc17c0c02212a9a202b979d064bf9c89971c500",
+    "package-lock.json": "6d0d47ef0baa80fb136ba44286aa37bdada2b101614301cd9a5e43cce15c6fec",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.tsx": "df2012ab1357ac3bf1cce2763947f5b5ef492d09fbf1b4eff26396162614f737",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-ports.ts": "d4beb58b1e5ad142fee41f9488d7979386acb18b310c4a8d94fece8376925af4",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "e7a059ff4bc064250d5f99e5e4459782d1c45fe7d4ee7521e9775fa971fa77f8",
+    "scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts": "ae93d7029cd44a8fa590ea294394926d6535e5e4b4d0e02dee625877b356a7dd",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
+    "src/solo/sales/sales-department.css": "e7794e2bbee16632aedbe3fb5508b1415573f468f62c82036f9b03aabf29cf07",
+    "scripts/live-drive/agreement-authoring-drive.mjs": "2b601d5095bb8f74d44153bf5bc83c2798e406aac2e443e2c667122cc7ab60a2",
+    "src/solo/sales/AgreementDocumentPreparation.tsx": "72b68513b39be2958d591ec26e5eaddba1cc9f360232ae3ac9dba0bf85915bdf",
+    "src/solo/sales/agreementDocumentApi.ts": "a5b9f5da0788445d31cd585435c6219beefbd8387b7c96c6e62e211aa68582bb",
+    "src/solo/sales/AgreementDocumentFields.tsx": "1b12b8f4aca462d5056479fb2a59c475d0894219c7d410b5fe3c7f55732b1ca8",
+    "src/solo/sales/AgreementPdfPage.tsx": "c4a7189cb71c82add8373add0af36da81a22676a925cb73b2111c9527fa79207",
+    "src/solo/sales/agreementDocumentModel.ts": "e20769ea15ab97013b48bc6197b624d57d80bfa1b03b89ddf9b12399da3c5766",
+    "src/solo/sales/agreementPdfRenderer.ts": "fe3465a5190e6b578c5ff97feb4b337facb214ebad9e5126b4a1cbb0a1671e4a",
+    "src/solo/sales/agreement-document-fields.css": "c7042109217a8547c79f6550d11ec6cfd03401282085349f0756902643eb0663",
+    "src/solo/sales/fixtures/agreement-document-source.json": "e9a9a8abe99f3b916334be651e95a7e3a8d10fb941624c3d1042e32779aadb25",
+    "scripts/live-drive/agreement-document-preparation-ports.mjs": "88643a47288e6c5399868e8d96c8d8e153fc04bd2e61ffa8fa96b1bd76520901",
+    "scripts/live-drive/agreement-document-preparation-paths.mjs": "645809ff0f8850aeb95f8ce1bde473a0a6e976f26df03e46285dc7c537a50229",
+    "supabase/functions/_shared/agreements/field-preparation.ts": "1c3d17a414a7bc085162a4a72ad8493c87fc0827878a11a60514fbc4bc420f41",
+    "supabase/functions/_shared/agreements/preparation-json.ts": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8",
+    "supabase/functions/_shared/agreements/token.ts": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2",
+    "supabase/functions/_shared/agreements/retained-document.ts": "cee0296f159becaf704d8853b32dc205033dd8f34d6a0dd878e7a1a60e920db0",
+    "supabase/functions/_shared/sales-collections/primitives.ts": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91",
+    "scripts/live-drive/agreement-commercial-preparation-paths.mjs": "adcf5d7cddc239fd67aceb52dfe6e16919bc49c84346ec2b2f54c262f389b624",
+    "scripts/live-drive/agreement-commercial-preparation-fixture.ts": "bd2a65f47ae6414094cc82065db7b7299eebcd9068edd578bd072c853769d4fc",
+    "supabase/functions/_shared/agreements/commercial-presentation.ts": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419",
+    "supabase/functions/_shared/agreements/commercial-engagement.ts": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+    "supabase/functions/_shared/sales-collections/model.ts": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+    "supabase/functions/_shared/sales-collections/contract.ts": "aad73fa38bb9c960f4362e5cd741c85dbae2e4cdcc46ec7f635869d51df8e2d3",
+    "supabase/functions/_shared/sales-commercial/conditions.ts": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2",
+    "supabase/functions/_shared/agreements/document.ts": "0efe2129bc3d5a2411d67595184ecdfc46b5e926e54aa1cb91a867651df439e6",
+    "supabase/functions/_shared/agreements/document-preparation.ts": "a41a20ac77c9268cbee478c3c0677af449bf7dc0be7d5835727c085680a43ac5",
+    "supabase/functions/_shared/doc-render.ts": "06f72d693cd333b18bfab176112f66bd3862f58ac3a29a298f2cdb02fc2b6fe2"
+  },
+  "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+  "documentFixtureSHA": "0fa05d7c4249e9cdedca973d461708590a2ffa4bebd2f37735707850e517ac7c",
+  "frames": [
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 630.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 630.140625,
+          "right": 258.265625,
+          "bottom": 674.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -3.234375,
+          "width": 1390,
+          "height": 617.375,
+          "top": -3.234375,
+          "right": 1499,
+          "bottom": 614.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "actualPaige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 630.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 630.140625,
+          "right": 258.265625,
+          "bottom": 674.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -3.234375,
+          "width": 867.765625,
+          "height": 617.375,
+          "top": -3.234375,
+          "right": 976.765625,
+          "bottom": 614.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 628.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 628.140625,
+          "right": 258.265625,
+          "bottom": 672.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -5.234375,
+          "width": 1220,
+          "height": 617.375,
+          "top": -5.234375,
+          "right": 1329,
+          "bottom": 612.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "actualPaige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 628.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 628.140625,
+          "right": 258.265625,
+          "bottom": 672.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -5.234375,
+          "width": 755.5625,
+          "height": 617.375,
+          "top": -5.234375,
+          "right": 864.5625,
+          "bottom": 612.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 628.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 628.140625,
+          "right": 258.265625,
+          "bottom": 672.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -5.234375,
+          "width": 878,
+          "height": 617.375,
+          "top": -5.234375,
+          "right": 987,
+          "bottom": 612.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "actualPaige": "folded-before-document",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 628.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 628.140625,
+          "right": 258.265625,
+          "bottom": 672.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -5.234375,
+          "width": 878,
+          "height": 617.375,
+          "top": -5.234375,
+          "right": 987,
+          "bottom": 612.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 860.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 860.140625,
+          "right": 258.265625,
+          "bottom": 904.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": 226.765625,
+          "width": 754,
+          "height": 617.375,
+          "top": 226.765625,
+          "right": 863,
+          "bottom": 844.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "actualPaige": "folded-before-document",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 860.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 860.140625,
+          "right": 258.265625,
+          "bottom": 904.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": 226.765625,
+          "width": 754,
+          "height": 617.375,
+          "top": 226.765625,
+          "right": 863,
+          "bottom": 844.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "pageScroll": 0,
+        "action": {
+          "x": 97,
+          "y": 633.84375,
+          "width": 149.265625,
+          "height": 44,
+          "top": 633.84375,
+          "right": 246.265625,
+          "bottom": 677.84375,
+          "left": 97
+        },
+        "paper": {
+          "x": 97,
+          "y": -423.34375,
+          "width": 268,
+          "height": 1041.1875,
+          "top": -423.34375,
+          "right": 365,
+          "bottom": 617.84375,
+          "left": 97
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "height": 740,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "pageScroll": 0,
+        "action": {
+          "x": 97,
+          "y": 530.6875,
+          "width": 149.265625,
+          "height": 44,
+          "top": 530.6875,
+          "right": 246.265625,
+          "bottom": 574.6875,
+          "left": 97
+        },
+        "paper": {
+          "x": 97,
+          "y": -1003.703125,
+          "width": 198,
+          "height": 1518.390625,
+          "top": -1003.703125,
+          "right": 295,
+          "bottom": 514.6875,
+          "left": 97
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(32, 30, 35)",
+        "surface": "rgb(245, 242, 236)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 630.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 630.140625,
+          "right": 258.265625,
+          "bottom": 674.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -3.234375,
+          "width": 1390,
+          "height": 617.375,
+          "top": -3.234375,
+          "right": 1499,
+          "bottom": 614.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "actualPaige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 630.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 630.140625,
+          "right": 258.265625,
+          "bottom": 674.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -3.234375,
+          "width": 867.765625,
+          "height": 617.375,
+          "top": -3.234375,
+          "right": 976.765625,
+          "bottom": 614.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 628.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 628.140625,
+          "right": 258.265625,
+          "bottom": 672.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -5.234375,
+          "width": 1220,
+          "height": 617.375,
+          "top": -5.234375,
+          "right": 1329,
+          "bottom": 612.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "actualPaige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 628.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 628.140625,
+          "right": 258.265625,
+          "bottom": 672.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -5.234375,
+          "width": 755.5625,
+          "height": 617.375,
+          "top": -5.234375,
+          "right": 864.5625,
+          "bottom": 612.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 628.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 628.140625,
+          "right": 258.265625,
+          "bottom": 672.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -5.234375,
+          "width": 878,
+          "height": 617.375,
+          "top": -5.234375,
+          "right": 987,
+          "bottom": 612.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "actualPaige": "folded-before-document",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 628.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 628.140625,
+          "right": 258.265625,
+          "bottom": 672.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": -5.234375,
+          "width": 878,
+          "height": 617.375,
+          "top": -5.234375,
+          "right": 987,
+          "bottom": 612.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 860.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 860.140625,
+          "right": 258.265625,
+          "bottom": 904.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": 226.765625,
+          "width": 754,
+          "height": 617.375,
+          "top": 226.765625,
+          "right": 863,
+          "bottom": 844.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "actualPaige": "folded-before-document",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "action": {
+          "x": 109,
+          "y": 860.140625,
+          "width": 149.265625,
+          "height": 44,
+          "top": 860.140625,
+          "right": 258.265625,
+          "bottom": 904.140625,
+          "left": 109
+        },
+        "paper": {
+          "x": 109,
+          "y": 226.765625,
+          "width": 754,
+          "height": 617.375,
+          "top": 226.765625,
+          "right": 863,
+          "bottom": 844.140625,
+          "left": 109
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "pageScroll": 0,
+        "action": {
+          "x": 97,
+          "y": 633.84375,
+          "width": 149.265625,
+          "height": 44,
+          "top": 633.84375,
+          "right": 246.265625,
+          "bottom": 677.84375,
+          "left": 97
+        },
+        "paper": {
+          "x": 97,
+          "y": -423.34375,
+          "width": 268,
+          "height": 1041.1875,
+          "top": -423.34375,
+          "right": 365,
+          "bottom": 617.84375,
+          "left": 97
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "height": 740,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "pageScroll": 0,
+        "action": {
+          "x": 97,
+          "y": 530.6875,
+          "width": 149.265625,
+          "height": 44,
+          "top": 530.6875,
+          "right": 246.265625,
+          "bottom": 574.6875,
+          "left": 97
+        },
+        "paper": {
+          "x": 97,
+          "y": -1003.703125,
+          "width": 198,
+          "height": 1518.390625,
+          "top": -1003.703125,
+          "right": 295,
+          "bottom": 514.6875,
+          "left": 97
+        },
+        "type": "Gambetta, Newsreader, \"Iowan Old Style\", Baskerville, serif",
+        "ink": "rgb(246, 242, 234)",
+        "surface": "rgb(25, 22, 30)"
+      }
+    }
+  ],
+  "behavior": [
+    "twenty actual Sales/theme/viewport/panel review states; explicit original invoice choice and canonical words; no write",
+    "native selection/review keyboard focus and clear review cancellation; reachable44px action at320; original scroll owner",
+    "conclusive source refusal is separate from uncertain outcome; explicit fresh original review never retries stale intent",
+    "failed/empty/paged original invoice reads and source-fact correction without writes",
+    "actual canonical PDF2 retains reviewed digest; same PDF field-save/current reload shows Fields saved; earlier native version stays read-only",
+    "lost acknowledgement freezes the same command; identical retry recovers one original commercial version/event",
+    "changed original economic revision retains prior document read-only and offers current original review",
+    "original workspace boundary retires commercial review/PDF without another request"
+  ],
+  "errors": [],
+  "blocked": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com"
+  ],
+  "canonicalRecords": 1,
+  "authenticated": "UNVERIFIED",
+  "providers": "NOT_EXERCISED"
+}

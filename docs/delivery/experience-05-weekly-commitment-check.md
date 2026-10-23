@@ -1,5 +1,64 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October22 — ZION original invocation receipt correction, development
+
+REPAIR the existing `paige-orchestrator` receipt producer. Original invocation
+rows already use the trusted `ctx.user_id`, but the receipt helper selected the
+first active owner/admin instead. Five fail-first cases reproduced wrong-owner
+attribution, invented actorless attribution and missing original receipt identity;
+the original identity matrix stayed green. The helper now accepts only the same
+verified requester, skips actorless/platform-only tenant receipts, and passes the
+original invocation UUID to the existing canonical recorder. It never borrows an
+owner or creates another execution/receipt store. Historical records are unchanged.
+
+The original trusted JWT/service-member/resource/funding/local-agent checks,
+model policy, agent registry, downstream authorization and success/failed/unknown
+outcomes remain. An asynchronous dispatch remains unknown until completion is
+observed. Repeated recording of one invocation uses the same existing SQL unique
+identity; this does not establish exactly-once request dispatch or authorize a
+repeated specialist/business action. Actual receipt persistence still requires
+the original native writer and production proof.
+
+Source verification:43 tests across the original INT308 identity and canonical
+receipt suites PASS, including actual helper → original canonical recorder →
+closed RPC port, actor-substitution mutation, preserved outcome/correlation and
+stable receipt ID. These are synthetic boundary tests, not authenticated agent
+execution or SQL receipt persistence. Original Rail presentation was inspected:
+its PAIGE/agent labels and visible flow are unchanged; only internal receipt
+attribution/identity is corrected. No UI component, admission, schedule, provider,
+prompt, authority or activation changes. All eleven Operations recipes remain
+Listed / Unverified; Layer D/full ZION, weekly execution, automations, recovery,
+separate Live/cohorts and all ten outcomes/E5-CV1–9 remain owed.
+
+Grounding:ANT11/21/52/147/161 and historical ANT6; main
+`1d2b2456e6d7006e9e299592c65abfb2bb71a927`, active E01/E02/E04/CURA/EXP10 paths
+checked, narrow lease ANT161/85fe0639. E04#2637 and E02#2632 preserved; weekly2641
+is a separate release. Existing ZION platform-default/version2/enabled soft
+identity was read from production, not invoked. This source is development,
+not merged/deployed/authenticated verified or founder accepted. Normal exact-head
+review/CI/Edge source+configuration readback and same canonical release log remain
+required. No founder intermediate test requested.
+
+Production preflight: original orchestrator117/JWTtrue/import_mapfalse remained
+stable and all26 package files match immutable main1d2b2456 byte-for-byte. The
+existing ZION soft/version2 identity has no runtime instructions or config keys;
+its original soft executor refuses a missing prompt. In addition, the original
+soft text path uses `routedChatCompletion`/`internal_first_draft`, whose static
+policy is Featherless when configured with Anthropic fallback, rather than the
+owner-required OpenAI-primary Chat path. No model call or secret value was read.
+Full ZION integration must reuse the canonical Model Fabric policy and budget
+contract before provider proof. This receipt patch preserves that original source
+and does not claim the routing requirement or real delegated execution complete.
+
+Current-main composition at `52dfacc41` preserves the adjacent E02/E04/EXP10
+releases. The original ancestry guard first refused exactly the changed
+orchestrator producer; its previous canonical digest was reproduced. After the
+separate receipt-source review, only that producer's fingerprint was renewed;
+all peer bindings and verifier rules remain unchanged. The original95 ancestry
+and negative tests PASS. CURA#2635 changes distinct Chat/Progress fingerprints,
+not this producer. Its published source must compose without overwriting either
+set of reviewed bindings; no CURA acknowledgment or scope transfer is inferred.
+
 ### October22 bounded continuation — native future-only stop controls
 
 Pre-edit routing: EXP05 outcomes04/06/08/10 consume the original owner-human
@@ -503,5 +562,13 @@ are not this owner-private status read and are not promoted by its source. Futur
 owner controls and the complete workflow builder remain required separate slices.
 Current shared main/source leases were checked before editing; no migration or
 competing data, approval, scheduler, memory or execution system is introduced.
+
+### October 22 — original weekly schedule correction, development
+
+REUSE the native owner-only `configure_weekly_commitment_check` and original caller/projection; EXTEND the existing `weekly-owner-read`, owner hook and weekly sheet. An owner reviews the old and proposed day/civil time/IANA zone, then deliberately saves that exact current revision. The native writer disarms a changed definition and requires new original authorization. The consumer accepts success only after the original acknowledgement and a fresh matching process/revision/schedule in requested/held state with no executable next run. It does not authorize, resume, publish an occurrence, replay an uncertain run, create a new approval or claim a completed check/Rail.
+
+The original future-control review now retains its unsaved proposal across an unchanged inspection and uses only the fresh native record. Changed name/version/schedule/status or refused/unavailable scope retires it. Native browser review additionally found Escape closing the disclosure and dropping focus; corrected source preserves the disclosure and its visible original Change schedule opener. [Bounded source, rendered and recovery evidence](../evidence/ui-delivery/exp05-weekly-schedule.md) preserves the earlier failure, corrected source pins,149 focused/projection cases and36 actual native PostgreSQL cases,16 required theme/panel frames and explicit synthetic Auth/RPC boundary. This is development, not deployment/authenticated persistence/recurrence or E5-CV7 completion. Direct installed compilation found six existing baseline signatures and no new errors; required hosted exact-head release checks remain separate. All ten outcomes/E5-CV1–9, actual weekly execution/attention, Workflow Builder, real ZION, recovery, separate Live, equivalent eligible existing/new SOLO cohorts and founder acceptance remain owed. All eleven assigned catalogue recipes remain Listed / Unverified; no source repair promotes them.
+
+Review correction: saved PostgreSQL CET/GMT/EST zones and newer server time zones now retain their original validity through the shared pure projection helper; the original actual-Node consumer import is repaired. Six zone regressions and the hosted import failure were reproduced before correction, not waived. Actual native configure/audit/readback/stale/lost-ack proof passes36 cases without activation; existing uniqueness remains enforced after correcting duplicate synthetic fixture names. Source883 native recapture includes349 pinned product inputs/177 explicit ports/zero transforms and current CET review/save. Ordinary authenticated schedule persistence, live recurrence and founder acceptance remain UNVERIFIED.
 
 October19 continuation: real handler→installed public SDK→receiver review atd434 reproduced a second P2. HTTP401/403 produces FunctionsHttpError/data:null, while the receiver previously reported unavailable after successfully rechecking the current workspace. Preserve the sealed REVISE receipt SHA256279611bac3ab4ff507b1e7fc29acaa093d724bf0c13fbf6d773b8c9927d57a07. A narrow correction recognizes only that canonical SDK error class with an original native Response401/403, after unchanged post-response authority/deadline checks, and returns refused. HTTP400/404/409/500, relay/network failure, name-only errors and non-Response contexts remain unavailable. No error body is consumed, copied or treated as authorization; there is no retry, writer or permission change. Actual handler/SDK causal regressions fail401/403 before correction and pass afterward; the complete126 protected tests across3owning suites pass with the existing network-denial guard unchanged. Existing native43-case evidence predates this correction and is not relabeled a new run. Final correction review, exact-head CI, deployment and authentic customer behavior remain separate obligations.

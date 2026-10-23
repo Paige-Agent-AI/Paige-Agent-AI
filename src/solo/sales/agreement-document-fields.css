@@ -12,6 +12,22 @@
 .e04-native-preparation :is(button,select,summary) { min-height:44px; }
 .e04-native-preparation-history :is(button,select),.e04-native-preparation .e04-preparation-message button,.e04-native-preparation-recovery button { padding:10px 14px; border:1px solid var(--pg-line-strong); border-radius:var(--r-s); color:var(--pg-ink); background:var(--pg-surface); font:500 13px/1.5 var(--pg-font-ui); }
 .e04-native-preparation-history select { max-width:100%; width:100%; }
+.e04-commercial-document-review { min-width:0; padding-block:20px; border-top:1px solid var(--pg-line); }
+.e04-commercial-document-review h4 { margin:0 0 8px; font:600 16px/1.4 var(--pg-font-ui); }
+.e04-commercial-document-review p,.e04-commercial-document-review li { font:400 14px/1.6 var(--pg-font-ui); max-width:75ch; }
+.e04-commercial-document-review :is(button,select) { min-height:44px; padding:10px 14px; border:1px solid var(--pg-line-strong); border-radius:var(--r-s); color:var(--pg-ink); background:var(--pg-surface); font:500 13px/1.5 var(--pg-font-ui); }
+.e04-commercial-document-review :is(button,select):focus-visible { outline:2px solid var(--pg-violet); outline-offset:3px; }
+.e04-commercial-document-review button:disabled { opacity:.55; cursor:not-allowed; }
+.e04-commercial-document-review button:not(:disabled):hover { border-color:var(--pg-ink-2); }
+.e04-commercial-document-review .e04-preparation-primary { background:var(--pg-ink); border-color:var(--pg-ink); color:var(--pg-canvas); }
+.e04-commercial-document-choice { display:flex; align-items:end; flex-wrap:wrap; gap:12px; margin-block:16px; }
+.e04-commercial-document-choice label { display:grid; flex:1; gap:8px; min-width:min(100%,240px); font:500 13px/1.5 var(--pg-font-ui); }
+.e04-commercial-document-choice select { width:100%; min-width:0; }
+.e04-commercial-document-pages,.e04-commercial-document-actions { display:flex; flex-wrap:wrap; gap:12px; margin-block:16px; }
+.e04-commercial-document-empty { margin-block:20px; }
+.e04-commercial-document-words { margin-block:16px; overflow-wrap:anywhere; }
+.e04-commercial-document-words :is(pre,table) { max-width:100%; overflow:auto; }
+@media(max-width:600px) { .e04-commercial-document-choice { align-items:stretch; } .e04-commercial-document-choice label { flex-basis:100%; } }
 .e04-native-preparation :is(button,select,summary):focus-visible { outline:2px solid var(--pg-violet); outline-offset:3px; }
 .e04-native-preparation-receipt { margin-top:24px; padding-top:16px; border-top:1px solid var(--pg-line); }
 .e04-native-preparation-receipt summary { display:list-item; align-content:center; font:500 13px/1.5 var(--pg-font-ui); cursor:pointer; }

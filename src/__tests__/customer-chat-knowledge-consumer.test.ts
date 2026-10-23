@@ -3,6 +3,7 @@ import ts from "typescript";
 import {z} from "zod";
 import {describe,expect,it,vi} from "vitest";
 import {readCustomerAssistantContext,customerProgramMessages,customerTerminalSource,embedCustomerQuery} from "../../supabase/functions/_shared/client-portal-assistant-context";
+import {readCustomerProgressContext,customerProgressMessages,customerProgressTerminalSource} from "../../supabase/functions/_shared/client-portal-progress-context";
 import {buildClientPortalPersonaMessages} from "../../supabase/functions/_shared/client-portal-persona";
 
 // Execute the actual narrow handler closures. Do not copy their implementations
@@ -24,10 +25,12 @@ function fixture(){return{frame:{actor_id:actor,profile:{id:client,tenant_id:ten
  snapshot:{version:2,retrieval_refs:[ref],source_refs:[ref]},sources:[{...share,passages:[0],document_id:client,document_revision:1,generation_id:client,title:"Approved guide",content:"Approved program guidance",content_truncated:false,customer_kind:"information",valid_until:null}],
  history:[{role:"user",content:"Private earlier question",source_refs:[historyRef]}],history_limited:false,ranking:"relevance",sources_limited:false,authorized_count:1,query_embedding_eligible:true}}
 type ContextFixture=ReturnType<typeof fixture>;
+function progressFixture(frame:ReturnType<typeof fixture>["frame"]){return{frame,thread_id:thread,intent_id:intent,mode:"fresh",snapshot:{version:1,kind:"customer_progress",tenant_id:tenant,contact_id:client,source_fingerprint:"a".repeat(64)},progress:{tenant_id:tenant,summary:{shared:0,done:0,open:0,overdue:0},items:[],has_more:false}}}
 async function guard(){
  let current:ContextFixture=fixture(),error:{code:string;message:string}|null=null,authorized=true;const calls:string[]=[];
- const supabaseClient={rpc:vi.fn(async(name:string)=>{calls.push(name);return name==="paige_chat_customer_thread_authorized"?{data:authorized,error:null}:{data:current,error}})};
+ const supabaseClient={rpc:vi.fn(async(name:string)=>{calls.push(name);return name==="paige_chat_customer_thread_authorized"?{data:authorized,error:null}:name==="client_portal_assistant_progress_context"?{data:progressFixture(current.frame),error}:{data:current,error}})};
  const captured=await readCustomerAssistantContext(supabaseClient,actor,thread,intent);expect(captured.status).toBe("available");
+ const capturedProgress=await readCustomerProgressContext(supabaseClient,actor,thread,intent,captured.data!.persona);expect(capturedProgress.status).toBe("available");
  let guardDeclaration=declaration("revalidateTenantKnowledgeScope").getText(ast);
  if(process.env.E09_CUSTOMER_CONTEXT_CONTROL==="persona_only"){
   const binding="JSON.stringify(source.data) === JSON.stringify(customerAssistant)";
@@ -35,16 +38,16 @@ async function guard(){
   guardDeclaration=guardDeclaration.replace(binding,"JSON.stringify(source.data?.persona) === JSON.stringify(customerAssistant?.persona)");
  }
  const create=new Function("env",compile(`let tenantKnowledgeScopeRevoked=false;const customerPortal=true;
-  const {supabaseClient,customerCaller,user,payloadThreadId,validatedData,customerAssistant,readCustomerAssistantContext}=env;
+  const {supabaseClient,customerCaller,user,payloadThreadId,validatedData,customerAssistant,customerPersona,customerProgressContext,readCustomerAssistantContext,readCustomerProgressContext}=env;
   const ${guardDeclaration};
   return {check:revalidateTenantKnowledgeScope,retired:()=>tenantKnowledgeScopeRevoked};`));
- const actual=create({supabaseClient,customerCaller:supabaseClient,user:{id:actor},payloadThreadId:thread,validatedData:{requestIntentId:intent},customerAssistant:captured.data,readCustomerAssistantContext});
+ const actual=create({supabaseClient,customerCaller:supabaseClient,user:{id:actor},payloadThreadId:thread,validatedData:{requestIntentId:intent},customerAssistant:captured.data,customerPersona:captured.data!.persona,customerProgressContext:capturedProgress.data,readCustomerAssistantContext,readCustomerProgressContext});
  return{...actual,calls,change:(fn:(r:ContextFixture)=>void)=>fn(current),fail:()=>{error={code:"42501",message:"PRIVATE DIAGNOSTIC"};},restore:()=>{current=fixture();error=null;authorized=true},deny:()=>{authorized=false;}};
 }
 describe("actual customer provider/output lifetime source fence",()=>{
  it("compares one native role/program/private-history snapshot and the actual private thread",async()=>{
   const g=await guard();await expect(g.check()).resolves.toBe(true);expect(g.retired()).toBe(false);
-  expect(g.calls).toEqual(["client_portal_assistant_context_v2","client_portal_assistant_context_v2","paige_chat_customer_thread_authorized"]);
+  expect(g.calls).toEqual(["client_portal_assistant_context_v2","client_portal_assistant_progress_context","client_portal_assistant_context_v2","paige_chat_customer_thread_authorized","client_portal_assistant_progress_context"]);
  });
  for(const [label,change]of Object.entries({
   "business role":(r:ContextFixture)=>r.frame.config.assistant.tone="Changed",
@@ -70,7 +73,7 @@ describe("actual customer handler integration",()=>{
   const ownerRpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null})),customerRpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null}));
   const make=new Function("supabaseClient","customerCaller","customerPortal","validatedData","interactiveInput","userText","customerQuery",compile(`const ${declaration("beginTurn").getText(ast)};return beginTurn;`));
   const begin=make({rpc:ownerRpc},{rpc:customerRpc},true,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",null);
-  await begin(false);expect(ownerRpc).not.toHaveBeenCalled();expect(customerRpc).toHaveBeenCalledTimes(1);expect(customerRpc.mock.calls[0][0]).toBe("client_portal_assistant_begin");
+  await begin(false);expect(ownerRpc).not.toHaveBeenCalled();expect(customerRpc).toHaveBeenCalledTimes(1);expect(customerRpc.mock.calls[0][0]).toBe("client_portal_assistant_begin_progress");
  });
  it("uses the customer-only native admission adapter while preserving workspace begin arguments",async()=>{
   const rpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null}));
@@ -78,7 +81,7 @@ describe("actual customer handler integration",()=>{
   const vector=Array.from({length:1024},()=>0.5);
   for(const customerPortal of [false,true]){
    const begin=make({rpc},{rpc},customerPortal,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",customerPortal?{embedding:vector,degraded:false}:null);
-   await begin(false);expect(rpc.mock.lastCall?.[0]).toBe(customerPortal?"client_portal_assistant_begin":"paige_chat_interactive_begin_v2");
+   await begin(false);expect(rpc.mock.lastCall?.[0]).toBe(customerPortal?"client_portal_assistant_begin_progress":"paige_chat_interactive_begin_v2");
    expect(rpc.mock.lastCall?.[1]).toMatchObject({p_thread:thread,p_intent:intent,p_content:"Question",p_stop:false,p_effectful:false});
    // The workspace begin is unchanged; the customer begin binds the same vector the read used.
    if(customerPortal)expect(rpc.mock.lastCall?.[1]).toMatchObject({p_query_embedding:vector});
@@ -96,9 +99,9 @@ describe("actual customer handler integration",()=>{
   const block=node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&n.expression.getText(ast)==="customerPortal && customerPersona && customerAssistant");
   // The statement's client-seat else-branch awaits the persona read, so it compiles as an async body.
   const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor as FunctionConstructor;
-  const run=new AsyncFunction("customerPortal","customerPersona","customerAssistant","aiMessages","messages","toolDefs","buildClientPortalPersonaMessages","customerProgramMessages","customerQuery",compile(block.getText(ast)));
+  const run=new AsyncFunction("customerPortal","customerPersona","customerAssistant","aiMessages","messages","toolDefs","buildClientPortalPersonaMessages","customerProgramMessages","customerQuery","customerProgressMessages",compile("const customerProgressContext=null;"+block.getText(ast)));
   const aiMessages:unknown[]=[{role:"system",content:"OWNER PRIVATE"}],tools:unknown[]=[{function:{name:"owner_only_write"}}];
-  await run(true,context.persona,context,aiMessages,[...context.history,{role:"user",content:"Current question"}],tools,buildClientPortalPersonaMessages,customerProgramMessages,{embedding:null,degraded:false});
+  await run(true,context.persona,context,aiMessages,[...context.history,{role:"user",content:"Current question"}],tools,buildClientPortalPersonaMessages,customerProgramMessages,{embedding:null,degraded:false},customerProgressMessages);
   expect(tools).toEqual([]);expect(JSON.stringify(aiMessages)).not.toContain("OWNER PRIVATE");
   expect(JSON.stringify(aiMessages)).toContain("representing the business");expect(JSON.stringify(aiMessages)).toContain("Approved program guidance");
   expect(JSON.stringify(aiMessages)).not.toContain("may not have the most relevant material");
@@ -107,14 +110,14 @@ describe("actual customer handler integration",()=>{
   // A retried intent replays its bound snapshot: a relevance-bound replay whose own embed failed
   // must not claim recency, and a recency-bound replay whose embed worked must still say so.
   const replayRelevance:unknown[]=[];
-  await run(true,context.persona,context,replayRelevance,[{role:"user",content:"Current question"}],[],buildClientPortalPersonaMessages,customerProgramMessages,{embedding:null,degraded:true});
+  await run(true,context.persona,context,replayRelevance,[{role:"user",content:"Current question"}],[],buildClientPortalPersonaMessages,customerProgramMessages,{embedding:null,degraded:true},customerProgressMessages);
   expect(context.ranking).toBe("relevance");expect(JSON.stringify(replayRelevance)).not.toContain("may not have the most relevant material");
   const recent=fixture(),plain={kind:"knowledge_share",...share};
   Object.assign(recent,{snapshot:{version:2,retrieval_refs:[plain],source_refs:[plain]},ranking:"recency"});recent.sources[0].passages=null as unknown as number[];
   const recency=(await readCustomerAssistantContext({rpc:async()=>({data:recent,error:null})},actor,thread,intent)).data!;
   expect(recency.ranking).toBe("recency");
   const replayRecency:unknown[]=[];
-  await run(true,recency.persona,recency,replayRecency,[{role:"user",content:"Current question"}],[],buildClientPortalPersonaMessages,customerProgramMessages,{embedding:Array.from({length:1024},()=>0.5),degraded:false});
+  await run(true,recency.persona,recency,replayRecency,[{role:"user",content:"Current question"}],[],buildClientPortalPersonaMessages,customerProgramMessages,{embedding:Array.from({length:1024},()=>0.5),degraded:false},customerProgressMessages);
   expect(JSON.stringify(replayRecency)).toContain("may not have the most relevant material");
  });
  it("replaces raw/browser history with the native source-filtered history before downstream work",async()=>{
@@ -129,8 +132,8 @@ describe("actual customer handler integration",()=>{
  });
  it("passes exact native source metadata to settlement and strips withdrawn metadata during empty cleanup",async()=>{
   const captured:Array<[string,Record<string,unknown>]>=[];const supabase={rpc:async(name:string,args:Record<string,unknown>)=>{captured.push([name,args]);return{data:client,error:null}}};
-  const create=new Function("supabase","supabaseClient","user","interactiveReceiptScope","customerSourceSnapshot","customerTerminalSource","z",compile(`const ${declaration("appendAssistant").getText(ast)};return appendAssistant;`));
-  const snapshot=fixture().snapshot;const append=create(supabase,{rpc:vi.fn()},{id:actor},{thread,tenant,intent},snapshot,customerTerminalSource,z);
+  const create=new Function("supabase","supabaseClient","user","interactiveReceiptScope","customerSourceSnapshot","customerTerminalSource","z","customerProgressSnapshot","customerProgressTerminalSource",compile(`const ${declaration("appendAssistant").getText(ast)};return appendAssistant;`));
+  const snapshot=fixture().snapshot;const append=create(supabase,{rpc:vi.fn()},{id:actor},{thread,tenant,intent},snapshot,customerTerminalSource,z,null,customerProgressTerminalSource);
   const args={p_thread_id:thread,p_role:"assistant",p_content:"Authorized answer",p_bundle_ref:{turn_state:{state:"FINAL"}}};
   await append(args);expect(captured[0][0]).toBe("paige_chat_interactive_settle");expect((captured[0][1].p_bundle_ref as Record<string,unknown>).customer_knowledge).toEqual(snapshot);
   await append({...args,p_content:"Must be withheld",p_bundle_ref:{customer_knowledge:snapshot,turn_state:{state:"WITHHELD"}}});

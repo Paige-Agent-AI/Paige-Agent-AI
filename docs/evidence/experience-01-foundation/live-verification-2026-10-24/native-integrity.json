@@ -1,0 +1,144 @@
+{
+ "capturedAt": "2026-10-24",
+ "process": "temporary vite harness (tmp-capture/, uncommitted) mounting the actual PaigeLiveConversation with synthetic client/relayTransport stubs; Playwright Chromium reduced-motion; direct browser PNG captures (no crop/resize); dimensions verified by independent IHDR decode",
+ "syntheticOnly": "no auth, no network, no provider, no microphone, no writes; the stub reproduces the acknowledgement-refusal, permission-denied and ready-relay result shapes the real edge functions emit",
+ "sources": {
+  "supabase/migrations/20271113600000_live_acknowledgement_before_audio.sql": {
+   "gitBlobSha1": "1c79e4bf23f45b31aa93386c094edf05290c51c1"
+  },
+  "supabase/functions/paige-live-session/index.ts": {
+   "gitBlobSha1": "a37b96ec2ed17d22296906dc37765eb9a97bf573"
+  },
+  "src/components/paige/live/PaigeLiveConversation.tsx": {
+   "gitBlobSha1": "da50c4d97357b956ef1c314725aea3ffa7ac1b83"
+  },
+  "src/solo/usePaigeLiveStatus.ts": {
+   "gitBlobSha1": "dd89099d6c842a5fce97a4b96f6cc52fbc3fa16c"
+  },
+  "src/solo/SoloPaigeWorkspace.tsx": {
+   "gitBlobSha1": "4d1e446edfa95a2e4f06cbb86da93e36c38293a5"
+  }
+ },
+ "frames": {
+  "live-1536x770-dark-closed.png": {
+   "ihdr": "1536x770",
+   "theme": "dark",
+   "state": "closed",
+   "liveNodes": 1
+  },
+  "live-1536x770-dark-terms.png": {
+   "ihdr": "1536x770",
+   "theme": "dark",
+   "state": "terms",
+   "liveNodes": 1
+  },
+  "live-1536x770-dark-listening.png": {
+   "ihdr": "1536x770",
+   "theme": "dark",
+   "state": "listening",
+   "liveNodes": 1
+  },
+  "live-1536x770-dark-denied.png": {
+   "ihdr": "1536x770",
+   "theme": "dark",
+   "state": "denied",
+   "liveNodes": 1
+  },
+  "live-1536x770-light-closed.png": {
+   "ihdr": "1536x770",
+   "theme": "light",
+   "state": "closed",
+   "liveNodes": 1
+  },
+  "live-1536x770-light-terms.png": {
+   "ihdr": "1536x770",
+   "theme": "light",
+   "state": "terms",
+   "liveNodes": 1
+  },
+  "live-1536x770-light-listening.png": {
+   "ihdr": "1536x770",
+   "theme": "light",
+   "state": "listening",
+   "liveNodes": 1
+  },
+  "live-1536x770-light-denied.png": {
+   "ihdr": "1536x770",
+   "theme": "light",
+   "state": "denied",
+   "liveNodes": 1
+  },
+  "live-1366x768-dark-closed.png": {
+   "ihdr": "1366x768",
+   "theme": "dark",
+   "state": "closed",
+   "liveNodes": 1
+  },
+  "live-1366x768-light-closed.png": {
+   "ihdr": "1366x768",
+   "theme": "light",
+   "state": "closed",
+   "liveNodes": 1
+  },
+  "live-1024x768-dark-closed.png": {
+   "ihdr": "1024x768",
+   "theme": "dark",
+   "state": "closed",
+   "liveNodes": 1
+  },
+  "live-1024x768-light-closed.png": {
+   "ihdr": "1024x768",
+   "theme": "light",
+   "state": "closed",
+   "liveNodes": 1
+  },
+  "live-900x1000-dark-closed.png": {
+   "ihdr": "900x1000",
+   "theme": "dark",
+   "state": "closed",
+   "liveNodes": 1
+  },
+  "live-900x1000-dark-terms.png": {
+   "ihdr": "900x1000",
+   "theme": "dark",
+   "state": "terms",
+   "liveNodes": 1
+  },
+  "live-900x1000-dark-listening.png": {
+   "ihdr": "900x1000",
+   "theme": "dark",
+   "state": "listening",
+   "liveNodes": 1
+  },
+  "live-900x1000-dark-denied.png": {
+   "ihdr": "900x1000",
+   "theme": "dark",
+   "state": "denied",
+   "liveNodes": 1
+  },
+  "live-900x1000-light-closed.png": {
+   "ihdr": "900x1000",
+   "theme": "light",
+   "state": "closed",
+   "liveNodes": 1
+  },
+  "live-900x1000-light-terms.png": {
+   "ihdr": "900x1000",
+   "theme": "light",
+   "state": "terms",
+   "liveNodes": 1
+  },
+  "live-900x1000-light-listening.png": {
+   "ihdr": "900x1000",
+   "theme": "light",
+   "state": "listening",
+   "liveNodes": 1
+  },
+  "live-900x1000-light-denied.png": {
+   "ihdr": "900x1000",
+   "theme": "light",
+   "state": "denied",
+   "liveNodes": 1
+  }
+ }
+}

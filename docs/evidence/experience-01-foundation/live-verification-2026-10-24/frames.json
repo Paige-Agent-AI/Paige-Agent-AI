@@ -1,0 +1,146 @@
+{
+  "capturedAt": "2026-10-24",
+  "syntheticOnly": true,
+  "frames": {
+    "live-1536x770-dark-closed.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "closed",
+      "observedViewport": "1536x770",
+      "liveNodes": 1
+    },
+    "live-1536x770-dark-terms.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "terms",
+      "observedViewport": "1536x770",
+      "liveNodes": 1
+    },
+    "live-1536x770-dark-listening.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "listening",
+      "observedViewport": "1536x770",
+      "liveNodes": 1
+    },
+    "live-1536x770-dark-denied.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "denied",
+      "observedViewport": "1536x770",
+      "liveNodes": 1
+    },
+    "live-1536x770-light-closed.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "closed",
+      "observedViewport": "1536x770",
+      "liveNodes": 1
+    },
+    "live-1536x770-light-terms.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "terms",
+      "observedViewport": "1536x770",
+      "liveNodes": 1
+    },
+    "live-1536x770-light-listening.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "listening",
+      "observedViewport": "1536x770",
+      "liveNodes": 1
+    },
+    "live-1536x770-light-denied.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "denied",
+      "observedViewport": "1536x770",
+      "liveNodes": 1
+    },
+    "live-1366x768-dark-closed.png": {
+      "viewport": "1366x768",
+      "theme": "dark",
+      "state": "closed",
+      "observedViewport": "1366x768",
+      "liveNodes": 1
+    },
+    "live-1366x768-light-closed.png": {
+      "viewport": "1366x768",
+      "theme": "light",
+      "state": "closed",
+      "observedViewport": "1366x768",
+      "liveNodes": 1
+    },
+    "live-1024x768-dark-closed.png": {
+      "viewport": "1024x768",
+      "theme": "dark",
+      "state": "closed",
+      "observedViewport": "1024x768",
+      "liveNodes": 1
+    },
+    "live-1024x768-light-closed.png": {
+      "viewport": "1024x768",
+      "theme": "light",
+      "state": "closed",
+      "observedViewport": "1024x768",
+      "liveNodes": 1
+    },
+    "live-900x1000-dark-closed.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "closed",
+      "observedViewport": "900x1000",
+      "liveNodes": 1
+    },
+    "live-900x1000-dark-terms.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "terms",
+      "observedViewport": "900x1000",
+      "liveNodes": 1
+    },
+    "live-900x1000-dark-listening.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "listening",
+      "observedViewport": "900x1000",
+      "liveNodes": 1
+    },
+    "live-900x1000-dark-denied.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "denied",
+      "observedViewport": "900x1000",
+      "liveNodes": 1
+    },
+    "live-900x1000-light-closed.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "closed",
+      "observedViewport": "900x1000",
+      "liveNodes": 1
+    },
+    "live-900x1000-light-terms.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "terms",
+      "observedViewport": "900x1000",
+      "liveNodes": 1
+    },
+    "live-900x1000-light-listening.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "listening",
+      "observedViewport": "900x1000",
+      "liveNodes": 1
+    },
+    "live-900x1000-light-denied.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "denied",
+      "observedViewport": "900x1000",
+      "liveNodes": 1
+    }
+  }
+}

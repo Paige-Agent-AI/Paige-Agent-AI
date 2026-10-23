@@ -1136,7 +1136,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
  * §38: issuing this charges nobody and authorises no payment. The figure travels with the document
  * because it is what was agreed; it is a sentence, not an instrument.
  */
-function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId, onClose, onVoided }) {
+export function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId, onClose, onVoided }) {
   const panelRef = useModalDialog();
   const firstRef = React.useRef(null);
   const [days, setDays] = React.useState(14);
@@ -1145,10 +1145,15 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
   const [link, setLink] = React.useState(null);
   const [copied, setCopied] = React.useState(false);
   const [sent, setSent] = React.useState(null);
+  const [unconfirmed, setUnconfirmed] = React.useState(false);
   const [showLink, setShowLink] = React.useState(false);
+  const resultRef = React.useRef(null);
+  // Interaction fence only. Durable duplicate prevention belongs to the original sender.
+  const working = React.useRef(false);
   const alive = React.useRef(true);
   React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   React.useEffect(() => { firstRef.current?.focus(); }, []);
+  React.useEffect(() => { if (sent || unconfirmed) resultRef.current?.focus(); }, [sent, unconfirmed]);
 
   // The approved act names the person. A single-word first name where there is one, the whole
   // label where there is not, and never an empty string in the middle of a button.
@@ -1161,39 +1166,52 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
 
   /** The approved act. A real email to the counterparty, not a link for the owner to paste. */
   const send = async () => {
+    if (working.current || unconfirmed || sent || link) return;
+    working.current = true;
     setBusy(true);
     setNotice("");
     const outcome = await signings.sendForSignature(signing.id, tenantId, reissue)
-      .catch(() => ({ ok: false, message: "That could not be confirmed, so nothing is being reported as sent." }));
+      .catch(() => ({ ok: false, state: "unconfirmed", message: "The request may have completed. Inspect this agreement before sending again." }));
+    working.current = false;
     if (!alive.current) return;
     setBusy(false);
-    if (!outcome.ok) { setNotice(outcome.message); return; }
+    if (!outcome.ok || !Array.isArray(outcome.sent) || !outcome.sent.length) {
+      setUnconfirmed(outcome.state !== "refused");
+      setNotice(outcome.message || "The signing request could not be verified. Inspect the original agreement before sending again.");
+      return;
+    }
     setSent(outcome);
   };
 
   const issue = async () => {
+    if (working.current || unconfirmed || sent || link) return;
+    working.current = true;
     setBusy(true);
     setNotice("");
     const outcome = await signings.issueLink(signing.id, days, tenantId)
       .catch(() => ({ ok: false, message: "That could not be confirmed, so no link is being shown." }));
+    working.current = false;
     if (!alive.current) return;
     setBusy(false);
     // §13 — a link exists because the server handed one back, never because a promise resolved.
     if (!outcome.ok || !outcome.token) {
-      setNotice(outcome.message || "No link was issued, so nothing has been sent.");
+      setNotice(outcome.message || "The link could not be verified. Inspect the original agreement before making another link.");
       return;
     }
     setLink({ token: outcome.token, expiresAt: outcome.expiresAt ?? null });
   };
 
   const stop = async () => {
+    if (working.current || unconfirmed || sent || link) return;
+    working.current = true;
     setBusy(true);
     setNotice("");
     const outcome = await signings.voidSigning(signing.id, tenantId)
       .catch(() => ({ ok: false, message: "That could not be confirmed. Check the record before trying again." }));
+    working.current = false;
     if (!alive.current) return;
     setBusy(false);
-    if (!outcome.ok) { setNotice(outcome.message || "The link was not stopped. Nothing was changed."); return; }
+    if (!outcome.ok) { setNotice(outcome.message || "The stop could not be verified. Inspect the original agreement before trying again."); return; }
     onVoided?.();
     onClose();
   };
@@ -1213,13 +1231,15 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
   return (
     <SalesDialogPortal>
       <button className="so-editor-scrim" tabIndex={-1} aria-label="Close" onClick={onClose} />
-      <aside ref={panelRef} className="so-editor" role="dialog" aria-modal="true" aria-labelledby="so-send-title">
+      <aside ref={panelRef} className="so-editor so-signature-request" role="dialog" aria-modal="true" aria-labelledby="so-send-title" onKeyDown={event => {
+        if (event.key === "Escape" && !event.defaultPrevented) { event.preventDefault(); event.stopPropagation(); onClose(); }
+      }}>
         <header className="so-editor-head">
           <div style={{ flex: 1 }}>
             <h2 id="so-send-title">Send for signature</h2>
-            <p>{sent ? "This has been sent." : "Nothing has been sent yet."}</p>
+            <p>{busy ? "Checking the request. Leaving does not cancel it." : sent ? "Provider response received." : unconfirmed ? "Inspect the original agreement before another request." : "Review who receives the document before continuing."}</p>
           </div>
-          <button className="btn btn-s btn-q" onClick={onClose} disabled={busy}>{sent ? "Done" : "Back"}</button>
+          <button className="btn btn-s btn-q" onClick={onClose}>{sent || unconfirmed ? "Done" : "Back"}</button>
         </header>
 
         <div className="so-editor-body" inert={busy ? "" : undefined}>
@@ -1235,21 +1255,25 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
             <div className="so-rrow"><span>Link expires</span><span>{SEND_TTL_DAYS} days after it is sent</span></div>
           </div>
 
-          {sent ? (<>
-            {/* §13 — a 200 is not a delivery, so this reports who was actually reached and, just
-              * as plainly, who was not. A suppressed address is a real outcome, not a rounding. */}
+          {unconfirmed ? (<>
+            <h3 ref={resultRef} tabIndex={-1}>Signing request not verified</h3>
+            <p className="so-banner so-banner-warn"><Ic.shield size={15} /><span>
+              The request may have completed. Return to this agreement and inspect its status and history before sending, replacing or stopping a link.
+            </span></p>
+          </>) : sent ? (<>
+            <h3 ref={resultRef} tabIndex={-1}>Accepted for sending</h3>
             <p className="so-banner"><Ic.shield size={15} /><span>
-              {sent.sent.length
-                ? <><b>Sent.</b> {clientName || "Your client"} has a private link to this exact document{sent.sent.length > 1 ? `, as do ${sent.sent.length - 1} other signer(s)` : ""}. You will see it move to Opened and then Completed on Commercial Terms.</>
-                : <><b>Nothing went out.</b> No message reached anybody, so this document is unchanged.</>}
+              The provider accepted the request for {sent.sent.join(", ")}. Delivery, document opening and completed signatures require their own recorded evidence.
             </span></p>
             {sent.notDelivered.length > 0 && (
               <p className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span>
-                <b>{sent.notDelivered.length} address did not receive it.</b> That address is
-                suppressed or was refused by the mail provider, so no link reached it. Fixing the
-                address and sending again is what puts that right.
+                <b>Existing links were skipped:</b> {sent.notDelivered.join(", ")}. Inspect their original signing status before requesting replacements.
               </span></p>
             )}
+            {sent.failed?.map((failure, index) => (
+              <p key={`${failure.email}-${index}`} className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span><b>{failure.email}</b>: {failure.reason}</span></p>
+            ))}
+            {sent.warning && <p className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span>{sent.warning}</span></p>}
           </>) : !link ? (<>
             {/* The gold statement the approved screen carries, in the approved words: what the
               * counterparty gets, what is sealed, and that no money moves (§38). */}
@@ -1261,8 +1285,7 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
             </span></p>
             {reissue && (
               <p className="so-absent">
-                Sending again replaces the link already out there — the old one stops working the
-                moment the new message goes out, and the deadline starts over.
+                A successful replacement retires the earlier signing link. Check the result before relying on the new link or its deadline.
               </p>
             )}
             {/* §58 — the copy-a-link route is a SHIPPED capability and survives the approved
@@ -1308,30 +1331,29 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
               {link.expiresAt ? ` It stops working on ${when(link.expiresAt)}.` : ""}
             </span></p>
             <p className="so-absent">
-              You will see it move to Opened and then Completed on Commercial Terms as they read and
-              sign it. Nothing is charged at any point.
+              Link creation does not send a message or collect a payment. Inspect the original agreement for recorded signing progress.
             </p>
           </>)}
         </div>
 
         <footer className="so-editor-foot">
           <span role={notice ? "alert" : "status"} className="so-editor-note" data-tone={notice ? "bad" : "plain"}>
-            {notice || (sent
-              ? "The record now shows this document as sent."
+            {notice || (busy ? "Checking the original request…" : unconfirmed ? "Return to the original agreement to verify the outcome." : sent
+              ? "Inspect the agreement and its history for the recorded result."
               : link
-                ? "The record now shows this document as sent."
-                : "Nothing leaves the building until you send it.")}
+                ? "A signing link was created. Message delivery is separate."
+                : "Reviewing this panel does not request a new send.")}
           </span>
           <span style={{ flex: 1 }} />
-          {reissue && !link && !sent && (
+          {reissue && !link && !sent && !unconfirmed && (
             <button className="btn btn-s" onClick={stop} disabled={busy}>Stop the current link</button>
           )}
-          <button className="btn btn-s" onClick={onClose} disabled={busy}>{link || sent ? "Done" : "Not yet"}</button>
+          <button className="btn btn-s" onClick={onClose}>{unconfirmed ? "Return to agreement" : link || sent ? "Done" : "Not yet"}</button>
           {/* GOLD, and only here. This is one of exactly two acts on this whole flow that COMMIT —
             * sending it, and signing it — which is the entire gold budget the approved pack spends
             * (§11). Naming the person is the approved wording and is also the honest one: it says
             * who is about to receive a legal document. */}
-          {!link && !sent && (
+          {!link && !sent && !unconfirmed && (
             <button className="btn btn-s btn-g" onClick={send} disabled={busy}>
               {busy ? "Sending…" : `Send it to ${firstName}`}
             </button>

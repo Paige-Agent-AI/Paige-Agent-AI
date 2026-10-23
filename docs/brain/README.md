@@ -2035,3 +2035,28 @@ Finite input refusal is not source provenance or model-output correctness. No ow
 migration, permission/provider/consequential activation or catalogue/algorithm
 promotion. CAP014/015 Unverified and all19/nine remain required. This supersedes
 older candidate release wording at this bounded source-release level only.
+## EXP04 commercial document workspace — verified source release October22/23
+
+Original lead released2646, reviewed9462204c766ed58878e0006aeaad7b3476f83534
+through sequential AUTHOR-REVIEW / LOWER ASSURANCE5622933955 and all11 applicable
+exact-head checks/two statuses/full Preview SUCCESS. Actual mainc98f7af0537b005a4e895fff92c906bf51023628
+has verified4e339+946 parents and inspected union f096cf986cad61c1a172983c7de495f665d32125.
+Normal Edge39887876722/job120200222726 verifies ONLY agreement-document@71,
+23 exact served files/config; canonical artifact12473397672/manifest2b4ded828bba7ff756ddf1b1ee9447395130f12d63685806a47b066b9efd0b28.
+Exact webdpl_7oUcsCdWJ4SReizHyxxePGkkcCrJ READY; both public hosts actual
+c98f7af0537b005a4e895fff92c906bf51023628-mvkbz2p9/null. Served original
+AgreementDocumentPreparation-3M4Zu5km.js retains all four reviewed commercial
+review/prepare markers. Source/config evidence never proves customer execution.
+
+This mounts original invoice/source review → exact unsigned PDF/assigned fields →
+original receipt/history/reload; no duplicate commercial engine/store. Original
+native350004/constructor2640, signing/token holds and permissions remain intact.
+45 Deno/29steps,63 SDK/controller,1005 Sales/65 plus103 isolated; original
+warning/failures retained.20 synthetic native frames/eight paths/44 exact pins.
+New commercial2 ordinary owner/staff/client/cohort/provider acceptance is
+UNVERIFIED: ordinary browser connection currently unavailable, no privileged
+workaround. Earlier schema1 read/reload proof stays protected ANT52 and bounded.
+Full O1–O12/exact approval/effective terms/payment/delivery/CentralQA/founder-once
+remain required. No source or acceptance reassignment, provider/Chat activation,
+customer release identity or announcement. Exact row is in Master§4.0; original
+[journey](../delivery/exp04-get-paid-deliver-journey.md) remains controlling.

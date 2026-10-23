@@ -110,3 +110,18 @@ is retained as failed setup, not customer behavior. No native Chrome, authentica
 or cohort acceptance follows from this bounded confirmation. Fresh final-head review,
 required hosted CI, merge/deployment/source readback and original public report
 admission remain gates; all19/nine and catalogue/algorithm evidence states unchanged.
+
+## Released worker composition
+
+After worker2653 released at06f0ff637ab4a79a57c647f7cf7da839b9f0dc86, the original
+reader3754 had all10 applicable hosted checks/two statuses SUCCESS and normal
+source-only PreviewSKIP. Current-main composition required two documentation-only
+conflict resolutions; both complete original Brain/matrix sections were retained.
+No reader, harness, formatter, font, style or declared render input changed.
+Fresh combined137 cases/eight suites PASS in103.69seconds. Initial sandbox SWC
+native-cache startup failure occurred before assertions and is retained; the
+unchanged authorized retry passed without loader, assertion or baseline changes.
+All17 input pins/19 prior original frame hashes still match. Earlier types/build/
+render evidence keeps its stated scope; new final-head review/hosted CI and actual
+reader release/source readback remain mandatory. Worker production package/source
+verification and the separate real weekly/Desk cases do not accept this reader.

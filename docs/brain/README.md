@@ -1,3 +1,15 @@
+## EXP05 original refusal/reload — source verified, release owed, October23
+
+The bounded original#2401 successor preserves a known pre-processing refusal on
+the same native assistant record and hydrates its held status without replay.
+Original late/unknown outcomes stay uncertain, scope changes remove old feedback,
+and no file is represented as parsed or published. Owning source/rendered tests
+pass; review, exact-head CI, production and ordinary authenticated proof remain owed.
+[Original Experience packet](../delivery/experience-05-weekly-commitment-check.md)
+retains all outstanding Operations/ZION/weekly/automation acceptance. EXP13's full
+Knowledge upload experience and attachment restoration remain separate, incomplete
+obligations. No new tracker, engine, registry, privilege or activation.
+
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist outcome/receipt recovery, requester-and-workspace activity

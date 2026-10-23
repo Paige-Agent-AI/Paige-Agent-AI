@@ -107,10 +107,15 @@ type Scene = {
   /** What the approval turn returns; undefined leaves the card live, a pending promise leaves it running. */
   answer?: unknown;
   decline?: boolean;
-  reload?: "available" | "unavailable" | "interrupted";
+  reload?: "available" | "unavailable" | "interrupted" | "refused";
 };
 
 const SCENES: Scene[] = [
+  {
+    label: "Reload — known input refusal", reload: "refused", ask: "", proposal: [],
+    offer: "An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. You can still ask questions about existing records.",
+    note: "Original zero-work server refusal survives reload. No document parsing, Knowledge publication, retry or business execution is represented.",
+  },
   ...(["available", "unavailable", "interrupted"] as const).map(reload => ({
     label: `Reload — ${reload}`,
     note: reload === "available" ? "Synthetic canonical WAIT_APPROVAL and a fresh server-issued native projection. No action runs on reload."
@@ -257,6 +262,12 @@ async function capture(scene: Scene, shell?: { width: number; height: number; op
     ];
     reloadHarness.recovery = scene.reload === "available" ? {v: 1, status: "available", thread_id: threadId, turn_id: turnId, intent_id: intentId,
       tenant_id: "account-a", expires_at: new Date(Date.now() + 300000).toISOString(), confirmations: [card]} : null;
+    if (scene.reload === "refused") reloadHarness.turns = [
+      {id: "fixture-user", role: "user", content: "Review the protected document.", bundle_ref: null},
+      {id: turnId, role: "assistant", content: scene.offer, interactive_intent_id: intentId, interactive_terminal_state: "INTERRUPTED",
+        bundle_ref: {interactive_refusal: {v: 1, code: "INTERACTIVE_RECOVERY_READ_ONLY"},
+          turn_state: {v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0}}},
+    ];
   }
   let turn = 0;
   vi.stubGlobal("fetch", vi.fn(async () => {
@@ -285,6 +296,10 @@ async function capture(scene: Scene, shell?: { width: number; height: number; op
       const approve = Array.from(transcript.querySelectorAll("button")).some(button => /^Approve/.test(button.textContent ?? ""));
       expect(approve).toBe(scene.reload === "available");
       expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+      if (scene.reload === "refused") {
+        expect(transcript.textContent).toContain("New actions and attachments on hold");
+        expect(transcript.querySelector("[data-paige-turn-footer]")).toBeNull();
+      }
       if (shell) {
         const mounted = host.querySelector("[data-tenant-shell]");
         expect(mounted?.getAttribute("data-paige")).toBe(shell.open ? "open" : "closed");

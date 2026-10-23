@@ -832,8 +832,16 @@ These are bounded engineering releases for the shared SOLO implementation, not
 complete weekly execution, ZION activation, authenticated customer acceptance
 or a customer release announcement. Each original receipt preserves the exact
 CI/review/merge/deployment chronology, including corrected failures and actual
-concurrent merge parents. These rows record only the five preceding releases;
-the documentation correction's later verified release is recorded separately below.
+concurrent merge parents. These rows record only the bounded releases listed below;
+later source work retains its separate release and acceptance gates.
+
+Separate EXP05 development: the original known-refusal/reload correction preserves
+the exact pre-processing refusal on its original assistant record and existing held
+status. Local source, original-handler, hydration, mutation and rendered evidence
+are in the [existing Experience packet](delivery/experience-05-weekly-commitment-check.md).
+Required review/CI, production and ordinary authenticated proof remain owed; no
+Knowledge publication, attachment restoration, ZION/weekly activation or Experience
+acceptance is claimed. Parent specialist reentry2692 has its own release gates.
 
 | Increment | Exact released identity and original evidence | Completion boundary |
 | --- | --- | --- |

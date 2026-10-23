@@ -1,5 +1,16 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — original known-refusal reload, development
+
+REPAIR the original Chat fallback/history: persist the exact pre-processing refusal
+on its original assistant record, then show the existing held status after reload.
+Prior unknown business outcomes remain uncertain; no retry or claim reset occurs.
+Actual handler75, pure turn52, Chat/status53 and binding79 cases pass; local
+desktop/narrow light/dark renders inspected. [Exact boundary and remaining proof](../evidence/ui-delivery/exp05-refusal-original-reload.md).
+Required review, exact-head CI, release and authenticated recovery remain owed.
+This does not implement EXP13 uploads or restore attachments, publish Knowledge,
+activate ZION/weekly execution or close ten-outcome/E5-CV1–9 acceptance.
+
 ## October23 — original specialist result reentry, development
 
 REPAIR the existing agents.list/list_subagents reader: bounded own-assignment

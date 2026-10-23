@@ -25,7 +25,7 @@ MUST_PRESERVE: all original platform/agency/staff routing, actual Auth subject, 
 ACCEPTANCE_CRITERIA: ambiguous customers retain client/no account; actual Auth-bound customer gate supplies selected business; unique/staff cases/source/permissions remain compatible
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: original native Identity/Trust client fallback scoped/tested; Chat/Live/MCP/Spine/Gateway/Harness/LayerC/Rails/ModelFabric/Knowledge and all domain-writer source unchanged
-INTERNAL_BUILD_IDENTITY: source-parent=2691/ebbec38db945cd36c4b5b9e0cdfb98c21e79b0f2; exact head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113590009); edge=NOT_APPLICABLE; evidence=assets/e09-shared-client-context/native-source-proof.json
+INTERNAL_BUILD_IDENTITY: source-parent=2691/0530e9412d7e5e24af188c258abeb64dc5d0a875; exact head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113590009); edge=NOT_APPLICABLE; evidence=assets/e09-shared-client-context/native-source-proof.json
 RELEASE_CHANNEL: development: final exact-head review/full CI and normal native deployment/readback required
 RELEASE_CLASSIFICATION: internal-only: original source compatibility prerequisite, no customer announcement or complete Experience
 CUSTOMER_RELEASE_IDENTITY: none: actual full journey/founder acceptance unverified

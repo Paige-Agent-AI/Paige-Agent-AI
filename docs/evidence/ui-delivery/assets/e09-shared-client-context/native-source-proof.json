@@ -1,7 +1,7 @@
 {
   "date": "2026-10-23",
   "classification": "Original private identity reader prerequisite, NOT_DEPLOYED",
-  "parent": "2691/ebbec38db945cd36c4b5b9e0cdfb98c21e79b0f2",
+  "parent": "2691/0530e9412d7e5e24af188c258abeb64dc5d0a875",
   "lease": "ANT161/92068e5d-68f3-4e1f-84e4-29cc4a65e219",
   "migration": "20271113590009",
   "migration_sha256": "6e3aed54bd8644fe7dc6284b227a700ffa3aa6bf4d277ec443e1fdfdb2b5752f",
@@ -148,5 +148,12 @@
     "Catalogue formatter omitted SQL statement terminator, corrected before causal baseline with unchanged body",
     "Local Auth shim quoting corrected before execution; proof-record draft parser failure wrote no artifact",
     "No managed fixture, Auth credential, role/identity writer, provider action or global membership activation"
-  ]
+  ],
+  "prior_parent_native": {
+    "head": "ebbec38db945cd36c4b5b9e0cdfb98c21e79b0f2",
+    "job": 120668703141,
+    "assertions": 265,
+    "conclusion": "PASS",
+    "boundary": "prior parent source support; new composed head still requires its own CI"
+  }
 }

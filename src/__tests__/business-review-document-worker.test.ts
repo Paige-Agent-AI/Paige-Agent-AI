@@ -59,6 +59,7 @@ describe('original document handler consumes native captured business reviews', 
     expect((await run()).body).toMatchObject({ ok: true, status: 'succeeded', content_id: workId, receipt_recorded: true, verified_readback: true });
     const args = state.rpc.mock.calls.find(([name]) => name === 'complete_paige_document_work')![1];
     expect(args).toMatchObject({ _work_id: workId, _server_idempotency_key: 'original-server-key', _doc_type: 'business_review', _provider: null, _model: null, _tokens_used: 0 });
+    expect(args._blocks[0]).toEqual({ type: 'cover', title: stored.title });
     expect(JSON.stringify(args._blocks)).toContain('USD 200.00');
     expect(JSON.stringify(args._blocks)).toContain('bank settlement');
     expect(JSON.stringify(args._blocks)).not.toMatch(/aneb_v1_|a3400000|forged/);

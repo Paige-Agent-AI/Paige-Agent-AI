@@ -69,7 +69,8 @@ async function runMetricReview(admin: SupabaseClient, work: StartedWork): Promis
     completionAttempted = true;
     const { data, error } = await admin.rpc("complete_paige_document_work", {
       _work_id: work.work_id, _server_idempotency_key: work.server_idempotency_key,
-      _doc_type: "business_review", _title: payload.title.trim(), _blocks: blocks,
+      _doc_type: "business_review", _title: payload.title.trim(),
+      _blocks: [{ type: "cover", title: payload.title.trim() }, ...blocks],
       _provider: null, _model: null, _tokens_used: 0, _latency_ms: Date.now() - startedAt,
     });
     if (error) throw error;

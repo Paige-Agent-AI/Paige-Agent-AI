@@ -1954,6 +1954,12 @@ Full19/nine, original worker/renderer/public admission/retrieval, ordinary
 roles/isolation/cohorts/Chat/Live and actual governed-result acceptance remain open.
 ANT1389daa4628/ANT16156cd6b3a record ten-answer routing; sole lead.
 
+S2D print-context follow-up: two actual-handler failures showed the original
+title existed only outside printable blocks. Add the existing title-only cover
+block before D2 facts, within its reserved block budget; no decorative label or
+new renderer. Fresh159/seven suites PASS. Native rendered report proof remains
+owed with the original reader consumer; no visual/customer acceptance inferred.
+
 **S2D original report worker, development:** consumes only the original service-
 claimed immutable business_review work before the legacy model branch. D2's
 existing Metric capture formatter supplies all facts/blocks; no model/provider,

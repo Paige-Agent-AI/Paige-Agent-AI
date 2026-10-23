@@ -1,0 +1,152 @@
+{
+  "date": "2026-10-23",
+  "classification": "Original private identity reader prerequisite, NOT_DEPLOYED",
+  "parent": "2691/ebbec38db945cd36c4b5b9e0cdfb98c21e79b0f2",
+  "lease": "ANT161/92068e5d-68f3-4e1f-84e4-29cc4a65e219",
+  "migration": "20271113590009",
+  "migration_sha256": "6e3aed54bd8644fe7dc6284b227a700ffa3aa6bf4d277ec443e1fdfdb2b5752f",
+  "original_body_md5": "574bad191b12f518da0a720fbb210369",
+  "candidate_body_md5": "ac743fec2458ecf43c25db8fc0c80ad6",
+  "unchanged_callers": {
+    "get_my_access": "4fdea684b3d4dfdf08753fe18820c4ed",
+    "resolve_actor_tier": "a577a7bfb44322bebb0e407cfd440c1e"
+  },
+  "baseline": {
+    "mode": "baseline",
+    "environment": "isolated local PostgreSQL16 reduced dependencies; actual original private identity function, both original wrapper bodies, same28 canonical expressions and original caller-role helpers. Auth/agency/platform/origin helpers are doubles; full-schema and real customer proof owed",
+    "cases": [
+      "PASS shared identity exact inverse preserves every original staff/agency/platform branch",
+      "PASS shared identity original stable private service ABI and permissions retained",
+      "PASS original caller-bound identity wrapper unchanged",
+      "PASS original tier fallback wrapper unchanged",
+      "PASS original unique client identity returns its sole business",
+      "PASS original authenticated wrapper reads its actual single relationship",
+      "PASS ordinary customer cannot supply a delegated service actor",
+      "FAIL two genuine client links never select the oldest business",
+      "PASS ambiguous client standing retains the least-privileged client floor",
+      "FAIL unscoped identity read truthfully requires explicit customer context",
+      "PASS multiple client memberships never grant management",
+      "PASS multiple client memberships never acquire agency authority",
+      "PASS original actor role facts unchanged",
+      "PASS identity response keeps the original closed six keys",
+      "FAIL caller-bound identity wrapper refuses an ambiguous business",
+      "FAIL request header cannot steer the legacy service identity reader",
+      "FAIL foreign header never supplies authority to ambiguous identity",
+      "PASS original test origin has a higher business tier",
+      "PASS ambiguous client does not fall back to a higher origin tier",
+      "FAIL a profile pointer without staff membership grants no business context",
+      "PASS existing current staff workspace and authority unchanged",
+      "PASS another actual customer sees only their own original identity",
+      "PASS missing delegated subject keeps original null-actor result",
+      "PASS unknown actual subject remains unplaced",
+      "PASS missing authenticated subject never borrows a known customer",
+      "FAIL paused membership does not cause an ambiguous legacy identity to guess another business",
+      "PASS remaining unique original business is resolved after unlink",
+      "PASS returning authenticated wrapper retains compatible single-business identity"
+    ],
+    "passed": 21,
+    "failed": 7
+  },
+  "repaired": {
+    "mode": "repaired",
+    "environment": "isolated local PostgreSQL16 reduced dependencies; actual original private identity function, both original wrapper bodies, same28 canonical expressions and original caller-role helpers. Auth/agency/platform/origin helpers are doubles; full-schema and real customer proof owed",
+    "cases": [
+      "PASS shared identity exact inverse preserves every original staff/agency/platform branch",
+      "PASS shared identity original stable private service ABI and permissions retained",
+      "PASS original caller-bound identity wrapper unchanged",
+      "PASS original tier fallback wrapper unchanged",
+      "PASS original unique client identity returns its sole business",
+      "PASS original authenticated wrapper reads its actual single relationship",
+      "PASS ordinary customer cannot supply a delegated service actor",
+      "PASS two genuine client links never select the oldest business",
+      "PASS ambiguous client standing retains the least-privileged client floor",
+      "PASS unscoped identity read truthfully requires explicit customer context",
+      "PASS multiple client memberships never grant management",
+      "PASS multiple client memberships never acquire agency authority",
+      "PASS original actor role facts unchanged",
+      "PASS identity response keeps the original closed six keys",
+      "PASS caller-bound identity wrapper refuses an ambiguous business",
+      "PASS request header cannot steer the legacy service identity reader",
+      "PASS foreign header never supplies authority to ambiguous identity",
+      "PASS original test origin has a higher business tier",
+      "PASS ambiguous client does not fall back to a higher origin tier",
+      "PASS a profile pointer without staff membership grants no business context",
+      "PASS existing current staff workspace and authority unchanged",
+      "PASS another actual customer sees only their own original identity",
+      "PASS missing delegated subject keeps original null-actor result",
+      "PASS unknown actual subject remains unplaced",
+      "PASS missing authenticated subject never borrows a known customer",
+      "PASS paused membership does not cause an ambiguous legacy identity to guess another business",
+      "PASS remaining unique original business is resolved after unlink",
+      "PASS returning authenticated wrapper retains compatible single-business identity"
+    ],
+    "passed": 28,
+    "failed": 0
+  },
+  "fault": {
+    "mode": "fault-client-floor",
+    "environment": "isolated local PostgreSQL16 reduced dependencies; actual original private identity function, both original wrapper bodies, same28 canonical expressions and original caller-role helpers. Auth/agency/platform/origin helpers are doubles; full-schema and real customer proof owed",
+    "cases": [
+      "FAIL shared identity exact inverse preserves every original staff/agency/platform branch",
+      "PASS shared identity original stable private service ABI and permissions retained",
+      "PASS original caller-bound identity wrapper unchanged",
+      "PASS original tier fallback wrapper unchanged",
+      "PASS original unique client identity returns its sole business",
+      "PASS original authenticated wrapper reads its actual single relationship",
+      "PASS ordinary customer cannot supply a delegated service actor",
+      "PASS two genuine client links never select the oldest business",
+      "FAIL ambiguous client standing retains the least-privileged client floor",
+      "PASS unscoped identity read truthfully requires explicit customer context",
+      "PASS multiple client memberships never grant management",
+      "PASS multiple client memberships never acquire agency authority",
+      "PASS original actor role facts unchanged",
+      "PASS identity response keeps the original closed six keys",
+      "PASS caller-bound identity wrapper refuses an ambiguous business",
+      "PASS request header cannot steer the legacy service identity reader",
+      "PASS foreign header never supplies authority to ambiguous identity",
+      "PASS original test origin has a higher business tier",
+      "FAIL ambiguous client does not fall back to a higher origin tier",
+      "PASS a profile pointer without staff membership grants no business context",
+      "PASS existing current staff workspace and authority unchanged",
+      "PASS another actual customer sees only their own original identity",
+      "PASS missing delegated subject keeps original null-actor result",
+      "PASS unknown actual subject remains unplaced",
+      "PASS missing authenticated subject never borrows a known customer",
+      "PASS paused membership does not cause an ambiguous legacy identity to guess another business",
+      "PASS remaining unique original business is resolved after unlink",
+      "PASS returning authenticated wrapper retains compatible single-business identity"
+    ],
+    "passed": 25,
+    "failed": 3
+  },
+  "guards": [
+    {
+      "name": "unknown original identity source",
+      "refused": true,
+      "preserved": true
+    },
+    {
+      "name": "broader identity execution ACL",
+      "refused": true,
+      "preserved": true
+    },
+    {
+      "name": "changed caller binding",
+      "refused": true,
+      "preserved": true
+    },
+    {
+      "name": "missing original identity guard",
+      "refused": true,
+      "preserved": true
+    }
+  ],
+  "original_265_preserved": true,
+  "required_full_schema_293": "UNVERIFIED until exact-head hosted native proof",
+  "limits": [
+    "Local function/wrappers/database roles are actual; dependency Auth/platform/agency/origin helpers and tables are reduced doubles",
+    "Catalogue formatter omitted SQL statement terminator, corrected before causal baseline with unchanged body",
+    "Local Auth shim quoting corrected before execution; proof-record draft parser failure wrote no artifact",
+    "No managed fixture, Auth credential, role/identity writer, provider action or global membership activation"
+  ]
+}

@@ -1,5 +1,34 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October22 — original finding inspection consumer candidate
+
+Full-CI diagnostic39876480194 on f9ac actually reports20113 total/20098 passed/
+12 failed/3 pending, all failures in original soloCommandCenterRailPanel.test.tsx.
+Local reproduction confirms useLocation outside Router,12 FAIL/1 PASS. The original
+fixture now supplies actual MemoryRouter to every existing render, retaining the
+real Rail hook/RPC, every assertion, scope-switch FrameRecorder and timeout/guard.
+All13 original cases PASS; runtime/rendered source unchanged. Final successor
+review/full exact-head CI remain required; original9700/f9ac failures retained.
+
+O14/Decision Desk source path now has a mounted consumer of the existing
+systems_check/finding semantic reference: current completed scoped snapshot →
+inline original title/status/as-of → explicit existing drawer → focus return.
+Invalid/ambiguous, missing/historical, loading/error and unfinished source states
+remain explicit; no broader/historical lookup, scan or click authorization is
+added. Source selection clears independently of other query/hash context.
+Thirteen causal failures plus a separate Ask First interruption review regression,
+then157 cases/five suites pass;20 final-source native synthetic
+frames/17 source pins and actual build pass. Final static/exact-head CI,
+plus reviewed route-helper binding restoration120sources/29adapters and original
+Spine self-test/77 hostile controls, remain distinct proof legs. Only that one
+route-helper digest changes; extractor/metadata/dispatch/other119 accepted pins
+and all17 native render inputs remain unchanged. Final exact-head CI,
+deployment/source readback and ordinary account/cohort proof remain
+owed. Desk/Chat CTA/return is a separate required consumer. Original ALG03/13,
+Layer C, approvals and Rail authority unchanged; catalogue status unpromoted.
+All19/nine and single complete founder acceptance remain incomplete.
+[Evidence](../evidence/ui-delivery/e2-linked-finding-inspection.md).
+
 ## October22 — prepared source-reference foundation
 
 O14/Decision Desk now has a local canonical source-reference prerequisite: original
@@ -825,6 +854,16 @@ Source/native prerequisite only; no runtime report consumer or customer acceptan
 
 ## EXP02 historical report block consumer — October22 development, unmounted
 
+**Verified source release2632:** reviewed943fd25f/finalLOWER5622432967, all11
+required checks/two web statuses SUCCESS, merged1d2b2456e6d7006e9e299592c65abfb2bb71a927.
+Actual tree144bb9b767c987ad0992ddd749548616399656af equals inspected current-main
+union. Productiondpl_45F3hz84VBVr1FA8DBXmMKuEQUSs READY/canonical aliases;
+public HTTP200 build1d2b2456e6d7006e9e299592c65abfb2bb71a927-mvk92u58/null.
+Own SQL/Edge N/A; pure module remains unused/unmounted, not a working report.
+[Receipt6354689388](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2632#issuecomment-6354689388)
+and Master4.0 close actual identity. Original artifact/worker/current Metric
+authority/retrieval/ordinary/cohort/Live/all19/nine/founder proof remain owed.
+
 D2 serializes the original native capture into existing document blocks using the
 canonical Metric parser, currency formatter and block normalizer. Explicit source
 period/as-of/coverage, null-versus-zero, separate currencies, exact large minor units,
@@ -876,6 +915,29 @@ recovery claim. Original read-only Spine/Metric contract, CAP017 Limited/Access
 Unverified, applicable algorithms, Trust/LayerC/Rail and all19/nine obligations
 remain unchanged. No own schema, provider, role or consequential activation.
 This supersedes earlier candidate release statements without rewriting history.
+## EXP02 prepared source-reference release — October22 verified source
+
+PR2618 reviewed1b40e8d260fe25ab1baa4bf1f0f33ece87348d23, all11 exact-head
+checks/two web statuses SUCCESS, final AUTHOR-REVIEW / LOWER ASSURANCE5620803317
+and zero threads, merged32ad767ced6f3c31bb67687c467e2e7aef8243ee. Actual parents
+27c7+1b40 and clean-union tree2141cb36ead83b8451161976340818bdca3143f0 verified.
+Normal Edge39859025961/120104604584 strict source/config PASS for Chat510 and
+BusinessReview72; ACTIVE/verify_jwt=true, edge-live exact32ad. Production
+webdpl_DVsg4erKHJY6artJEDqgzU9biZ8R READY/public32ad-mvk2e2lw/customerUpdate:null.
+Served SoloEntry-CLHkEtYq.js2465420bytes/SHA256
+6db947b960d78204da8c0f0730441a919a641e4f945e38baec5b111ecbd8e9af contains
+original scalar finding selection and known remediator/source field.
+[Source release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2618#issuecomment-6351975445).
+
+Functional metadata/source release verified; no full action payload or inferred
+source, and no new writer/permission/provider/action/catalogue or algorithm
+activation. Original70-case/type0new/source-binding restoration proof remains
+supporting; actual ordinary source query/role/cohort/Chat/Live/reload acceptance
+remains UNVERIFIED. Mounted finding2626 and Desk2627 are separate gated consumers.
+Postmerge main ci39859025600 CANCELLED is not called PASS; reviewed-head gates
+passed. All19/nine and one complete founder evaluation remain owed. This supersedes
+prior development release wording only at the stated source-release boundary.
+
 
 ## October22 — canonical document input prerequisite in development
 
@@ -889,3 +951,34 @@ immutable permitted evidence, governed submission/status/unknown recovery and
 original artifact retrieval remain separate implementation duties. Review/CI,
 original2607 security dependency, normal Edge/readback and ordinary customer proof
 remain owed. All19 definitions/nine outcomes are unchanged. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).
+
+## EXP02 finite document-fact source release — October22 verified
+
+PR2615 reviewed5f7ff7f62b1c1e2bc19bfb928dd7f109795ea466, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5621232278, all11 exact-head checks/two web
+statuses SUCCESS and zero threads, mergedc7fa122ae37aebdde2db61c8fd19f3e64c8b7da5.
+Actual clean4dac+5f7 union treebcf0bb17b15601941e2dbe92e57b6c6d9b49e3a9 verified.
+Productiondpl_3e1jcLLdUwKeLZpXj9d4XapEahAJ READY/publicc7fa-mvk3ffby/null;
+normal Edge39862725330/120117198282 strict source/config PASS for original Chat511
+and internal document-worker50, original caller protections retained, edge-livec7fa.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2615#issuecomment-6352427257).
+
+Functional source released; Visual unchanged; Experiential original report/artifact,
+ordinary authoring/reload/role/cohort/Live proof owed; Founder Acceptance NOT_ACCEPTED.
+Finite input refusal is not source provenance or model-output correctness. No own
+migration, permission/provider/consequential activation or catalogue/algorithm
+promotion. CAP014/015 Unverified and all19/nine remain required. This supersedes
+older candidate release wording at this bounded source-release level only.
+
+
+## October22 — CI transport and source verification boundary
+
+Original2626/9700 Test failure remains open. The existing diagnostic script now
+prints bounded sanitized file classifications; original diagnostic/network
+controls29/29 PASS with normal Windows permissions. Missing Actions checks are
+a release hold: API/native reopening produced only Preview checks. Original
+ci.yml exact-ref dispatch39875759512 was actually queued on5d007fff; it is not
+current-head CI or customer acceptance after a later source update. All original
+required final-head checks remain mandatory; no workflow, security guard,
+assertion, timeout, baseline or source-domain authority is weakened. All19/nine,
+ordinary SOLO/cohort/Live evidence and one full founder evaluation remain owed.

@@ -1,0 +1,25 @@
+Browser tab: 3, Title: "Native EXP05 weekly schedule correction", URL: "http://127.0.0.1:5221/solo/1701/operations/overview".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 14-34
++				46 text Read  Thu, Oct 22, 6:00 PM UTC
++				47 heading Weekly commitment check, Value: 3
++					48 text Weekly commitment check
++				49 text Awaiting approval
++				50 container
++					51 text Every  Friday  at  09:00
++					52 text UTC
++				53 definition list
++					54 container Next execution
++						55 text Next execution
++					56 text No executable next run is available
++					57 container Scope
++						58 text Scope
++					59 text Your open, in-progress and blocked Planning work assigned to you or created by you.
++					60 container Permission
++						61 text Permission
++					62 text Exact recurring configuration awaits authorization.
++				63 text Execution is held. The requested time is not a promise of a run. No booking reserves this slot.
++				64 text No receipt-backed completed check has been verified.
++				65 button (collapsed) Future executions, Secondary Actions: Expand
++					66 text Future executions
+The focused UI element is 13 button Refresh weekly responsibility

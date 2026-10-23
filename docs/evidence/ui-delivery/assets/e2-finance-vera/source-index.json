@@ -1,0 +1,380 @@
+{
+  "kind": "SYNTHETIC ORIGINAL-SOURCE NATIVE EVIDENCE; NOT AUTHENTICATED ACCEPTANCE",
+  "sourceBase": "4e9327328b873c6868f12e153d89b705a31ee683",
+  "sources": [
+    {
+      "path": "src/lib/paige/vpDepartments.ts",
+      "sha256": "eb0448253ba319d0301e6bc26e7cbcc6a88fad330da5fda50aebae1dff26cb68",
+      "bytes": 6705
+    },
+    {
+      "path": "src/components/ui/page/PaigeAttribution.tsx",
+      "sha256": "a882da474e5a37cecdb0d18cd51174f8e9b91a225a45ab5b1f9de709ae50ee53",
+      "bytes": 7956
+    },
+    {
+      "path": "src/solo/finance/FinanceWorkspace.tsx",
+      "sha256": "cf22de9be8d88a39bce95f9f81f671c8cd8e1f05075849b49bc589e14cf4c979",
+      "bytes": 19776
+    },
+    {
+      "path": "src/solo/finance/debt-credit/DebtCreditWorkspace.tsx",
+      "sha256": "5e0558834a746d5201470d6f1ac0730460d0e0aeffa3236dee8de190be63206d",
+      "bytes": 19351
+    },
+    {
+      "path": "src/solo/finance/finance.css",
+      "sha256": "8a5dafc06e744572ffe1714e306dc0a833408d09e1ae161aa2ff1de0d8bf603f",
+      "bytes": 9949
+    },
+    {
+      "path": "src/solo/finance/debt-credit/debt-credit.css",
+      "sha256": "5ae5d7a1635c8ece1c11f575739169b0e27bccdce4982d8fad7b85e1e1f67700",
+      "bytes": 7232
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+      "bytes": 30524
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+      "bytes": 16720
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "bytes": 98512
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/main.tsx",
+      "sha256": "d85f4bc9c206d0b843ac32b6f847192fa65397a5a8a008b69729544306d6b55e",
+      "bytes": 2428
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/stubs.tsx",
+      "sha256": "eada5fdec9eac8f163e959b2deff589e2547cfedd8d3da46f9ac24debc63332c",
+      "bytes": 1831
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/vite.config.ts",
+      "sha256": "501b0ec5791494f47885eef6cba9fd3dbc5a537fb87926cfd0db8f6d5751999d",
+      "bytes": 1290
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "65f0a15233e39a103e16a793dee7d8a8cfd18fd899b4d822d8dc3f9dfc397b86",
+      "bytes": 9400
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/slice-fixtures.ts",
+      "sha256": "8841c283f1cd99ac0de6ac84221d624b69fa92dbee5e6c47a0b9a39a602fe740",
+      "bytes": 3844
+    },
+    {
+      "path": "src/test/fixtures/business-review.ts",
+      "sha256": "cf6046734a45ccff3d66d41e83b9e6ff304097e9105fb5a2a75a4278a7ae31fa",
+      "bytes": 2966
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+      "bytes": 46752
+    }
+  ],
+  "frames": [
+    {
+      "file": "before-1536-closed.jpg",
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "stage": "before-44px-repair",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/before-1536-closed.jpg",
+      "sha256": "e19ee4a9fd1f6efc4825cc06de98dbddae66ee2f913ad27e546b5bc47a9cd4cf",
+      "bytes": 78868,
+      "raster": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "file": "before-1536-open.jpg",
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "stage": "before-44px-repair",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/before-1536-open.jpg",
+      "sha256": "54597e833eeb2421ecdb9222f16165403287f99a4dc85fabed8e7d4ef1b81695",
+      "bytes": 83116,
+      "raster": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "file": "1536-closed.jpg",
+      "css": [
+        1536,
+        770
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/1536-closed.jpg",
+      "sha256": "6f71d427a509f487b2c04308587ce9df18f28f67ab367d26dcd0ebaa8254de97",
+      "bytes": 76313,
+      "raster": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "file": "1536-open.jpg",
+      "css": [
+        1536,
+        770
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/1536-open.jpg",
+      "sha256": "1582e78fcbbecc217d7aa6ef65b488f747ba673fc75459905818d4c9f06e759e",
+      "bytes": 80254,
+      "raster": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "file": "1366-closed.jpg",
+      "css": [
+        1366,
+        768
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/1366-closed.jpg",
+      "sha256": "fe6caee2d5d1fa230c57c012fa86514ee75285bf6869e9df9c36493d6869ff13",
+      "bytes": 74537,
+      "raster": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "file": "1366-open.jpg",
+      "css": [
+        1366,
+        768
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/1366-open.jpg",
+      "sha256": "a51e58d9dc526d5f5ea69f82c06f3caa5c49891836bf610c9bfa514eeabfe53d",
+      "bytes": 81140,
+      "raster": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "file": "1024-closed.jpg",
+      "css": [
+        1024,
+        768
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/1024-closed.jpg",
+      "sha256": "1ae0dd274ad3677ef651dd7f716a5c2d43b4f44dd5ec3779283c1ac12041cafa",
+      "bytes": 68778,
+      "raster": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "file": "1024-open.jpg",
+      "css": [
+        1024,
+        768
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/1024-open.jpg",
+      "sha256": "6976ddb351690c11cff65d2d12b5d63596650c432accc99f73ecaa0e47a0fc9b",
+      "bytes": 31654,
+      "raster": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "file": "900-closed.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/900-closed.jpg",
+      "sha256": "1aa1b294c87f2e791cb65ec7aa5f68b68e44b59f54e700f9996a7a6f00e77c14",
+      "bytes": 77332,
+      "raster": {
+        "width": 900,
+        "height": 1000
+      }
+    },
+    {
+      "file": "900-open.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/900-open.jpg",
+      "sha256": "b77aa923b036dbb9ab43c9478e0802a7924dee87b218b1bb6de8e71c42431c3f",
+      "bytes": 35055,
+      "raster": {
+        "width": 900,
+        "height": 1000
+      }
+    },
+    {
+      "file": "390-closed.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/390-closed.jpg",
+      "sha256": "387ccd65adc90acc2906253ff34b00aaada10ebd4b155fb52d8b14b878d7dec9",
+      "bytes": 35208,
+      "raster": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "390-keyboard-focus.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/390-keyboard-focus.jpg",
+      "sha256": "d043ffbd460fa651a052e0c3104f883f3a85e9fa5517394ed1d370e0df3e2cc4",
+      "bytes": 35565,
+      "raster": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "390-open.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/390-open.jpg",
+      "sha256": "65b6cb2c5d2cfe3bf84c48a99a3d81327245ff84f1e46a127110411202af45d8",
+      "bytes": 16884,
+      "raster": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "320-closed.jpg",
+      "css": [
+        320,
+        800
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/320-closed.jpg",
+      "sha256": "5ea0d9076ad193fae476069a2ab84efb5cefcb6f89b39ad7907ed1ca11c9b60d",
+      "bytes": 31515,
+      "raster": {
+        "width": 320,
+        "height": 800
+      }
+    },
+    {
+      "file": "390-debt-unavailable.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "final-44px",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/390-debt-unavailable.jpg",
+      "sha256": "b11a0839f59c59d0468d1ba2651375da7b017abed5076f28fe50cc17bf0ff698",
+      "bytes": 38162,
+      "raster": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "390-banking-loading.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "synthetic-loading",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/390-banking-loading.jpg",
+      "sha256": "9ff3d60471d94b37ecb9597c21131ea585ffd6c18b2af52ae714482787f8fb0e",
+      "bytes": 35463,
+      "raster": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "390-banking-error.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "synthetic-error",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/390-banking-error.jpg",
+      "sha256": "5d9557c4ccb86a81052e30ba08bbe5cd6313dc6cded3b4df6b1a1351fbf71a98",
+      "bytes": 38403,
+      "raster": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "390-banking-member.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "synthetic-member",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/390-banking-member.jpg",
+      "sha256": "236e82fe3ddf0697b721f160ac1cf4dc7a9c9570f1c0afd2c53e58a8040f14ee",
+      "bytes": 24164,
+      "raster": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "390-second-workspace-dark.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "synthetic-workspace-b",
+      "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/390-second-workspace-dark.jpg",
+      "sha256": "1290278844e82107bfa4bd901209512f9a4ef4d1a1d9e17cee60fdb277cec061",
+      "bytes": 45691,
+      "raster": {
+        "width": 390,
+        "height": 843
+      }
+    }
+  ],
+  "observation": {
+    "path": "docs/evidence/ui-delivery/assets/e2-finance-vera/native-observation.json",
+    "sha256": "745a371cbd66b14295839a4815e30f6cb05f51a3b347d474015cfc6a380f1c62",
+    "bytes": 4428
+  },
+  "pixelPolicy": "Untouched native JPEG bytes; no resize, crop, compositing or raster substitution. CSS and native raster dimensions are separately disclosed.",
+  "limits": "Original harness has no paige:open listener. Original component tests cover event payload; Direct PAIGE covers shell geometry only. Actual conversation handoff awaits released ordinary SOLO QA."
+}

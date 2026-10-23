@@ -25,6 +25,8 @@ const metricActor = readFileSync(join(root, "supabase/migrations/20271113360002_
 const reportAuthority = readFileSync(join(root, "supabase/migrations/20271113440002_exp02_native_report_authority.sql"), "utf8");
 const reportPrivacy = readFileSync(join(root, "supabase/migrations/20271113430002_exp02_metric_report_artifact_scope.sql"), "utf8");
 const reportArtifact = readFileSync(join(root, "supabase/migrations/20271113450002_exp02_native_report_artifact.sql"), "utf8");
+const reportCaptureMigration = readFileSync(join(root, "supabase/migrations/20271113330002_exp02_document_metric_capture.sql"), "utf8");
+const reportAdmission = readFileSync(join(root, "supabase/migrations/20271113520002_exp02_report_capture_admission.sql"), "utf8");
 
 let port;
 let started = false;
@@ -449,7 +451,7 @@ try {
   assert.match(historicalReportRequest.stderr, /42501:[\s\S]*DURABLE_DOCUMENT_METRIC_AUTHORITY_CHANGED/);
   await psql(changes[0][1]); reportCases++;
   assert.equal((await psql(nativeMetadata)).stdout, originalMetadata);
-  console.log(`PASS: ${reportCases} future-report authority scenarios; public type remains refused, current Metric eligibility gates original claim/completion/historical report-labelled replay, no unauthorized artifact/turn/receipt. Original private ABI/ACL and legacy proof retained; isolated only.`);
+  console.log(`PASS: ${reportCases} original pre-admission authority scenarios; at this stage public report type is refused, current Metric eligibility gates original claim/completion/historical report-labelled replay, no unauthorized artifact/turn/receipt. Original private ABI/ACL and legacy proof retained; isolated only.`);
 
   // Native producer/correlation proof only. These are explicit isolated source
   // canaries, not issuer/math/worker/customer evidence. The full-schema proof
@@ -498,6 +500,114 @@ try {
     assert.equal((await psql(`SELECT count(*) FROM public.marketing_content WHERE work_id='${invalid.id}';`)).stdout,'0');
   }
   console.log('PASS: original native report artifact/closed provenance/type/readback/turn/Rail, replay, immutable facts, current-scope read and refusal scenarios; isolated only, no public admission or worker/customer proof.');
+
+  // Original PUBLIC submit/capture-once stage. Resolver IO below is an explicit
+  // isolated port; the full-schema suite separately uses the real Metric issuer.
+  await psql(`CREATE TABLE public.proof_evidence_references(token text PRIMARY KEY,bundle jsonb,reads integer NOT NULL DEFAULT 0);
+    CREATE FUNCTION public.resolve_analytics_evidence_reference(_token text) RETURNS jsonb LANGUAGE plpgsql AS $$
+    DECLARE b jsonb; BEGIN
+      UPDATE public.proof_evidence_references SET reads=reads+1 WHERE token=_token RETURNING bundle INTO b;
+      IF b IS NULL OR (b->>'reference_expires_at')::timestamptz<=clock_timestamp() THEN
+        RAISE EXCEPTION 'DOCUMENT_METRIC_EVIDENCE_UNAVAILABLE' USING ERRCODE='42501';
+      END IF;
+      PERFORM pg_sleep(0.1); RETURN b;
+    END $$;`);
+  await psql(reportCaptureMigration);
+  const submitMetadata = "SELECT jsonb_build_array(p.oid,p.proowner,p.proacl::text,p.prosecdef,p.proconfig)::text FROM pg_proc p WHERE p.oid='public.submit_paige_document_work(uuid,uuid,jsonb)'::regprocedure;";
+  const originalSubmitMetadata = (await psql(submitMetadata)).stdout;
+  await psql(reportAdmission); await psql(reportAdmission);
+  assert.equal((await psql(submitMetadata)).stdout,originalSubmitMetadata);
+  const admissionToken = `aneb_v1_${'b'.repeat(64)}`, secondToken = `aneb_v1_${'c'.repeat(64)}`;
+  const evidence = {...reportCapture.measurements[0],account_epoch:tenantId,evidence_ref:admissionToken,
+    reference_expires_at:new Date(Date.now()+300_000).toISOString()};
+  await psql(`INSERT INTO public.proof_evidence_references(token,bundle) VALUES
+    ('${admissionToken}','${JSON.stringify(evidence).replaceAll("'","''")}'::jsonb),
+    ('${secondToken}','${JSON.stringify({...evidence,evidence_ref:secondToken,account_epoch:foreignTenantId}).replaceAll("'","''")}'::jsonb);`);
+  const request = {version:1,doc_type:'business_review',title:'Original source-bound review',
+    brief:'Read authorized historical evidence.',report_period:reportPeriod,evidence_refs:[admissionToken]};
+  const reportSubmit = (intent,payload=request,failed=false) => psql(submitSql(intent,JSON.stringify(payload).replaceAll("'","''")),failed);
+  const counts = async () => (await psql("SELECT (SELECT count(*) FROM public.paige_durable_work)::text||'|'||(SELECT count(*) FROM net.proof_wakeups)::text;")).stdout;
+  const beforeRefusals = await counts();
+  const admissionChanges=[...changes,
+    [`UPDATE public.tenant_members SET status='inactive' WHERE user_id='${userId}' AND tenant_id='${tenantId}';`,
+      `UPDATE public.tenant_members SET status='active' WHERE user_id='${userId}' AND tenant_id='${tenantId}';`],
+    [`UPDATE public.tenants SET status='inactive' WHERE id='${tenantId}';`,
+      `UPDATE public.tenants SET status='active' WHERE id='${tenantId}';`]];
+  for (const change of [{version:'1'},{report_evidence:reportCapture},{required_facts:{amount:999}},
+    {target_content_id:workId,expected_revision:1},{actor_id:userId},{evidence_refs:[]},
+    {evidence_refs:[admissionToken,admissionToken]},{report_period:{...reportPeriod,key:'week'}},
+    {report_period:{...reportPeriod,start:'2026-02-31T00:00:00Z'}},
+    {report_period:{...reportPeriod,end:reportPeriod.start}}]) {
+    assert.match((await reportSubmit(randomUUID(),{...request,...change},true)).stderr,
+      /DURABLE_DOCUMENT_(REPORT_(BRIEF|PERIOD)_INVALID|BRIEF_INVALID)/);
+  }
+  for (const [retire,restore] of admissionChanges) {
+    await psql(retire);
+    assert.match((await reportSubmit(randomUUID(),request,true)).stderr,/42501/);
+    await psql(restore);
+  }
+  assert.match((await reportSubmit(randomUUID(),{...request,evidence_refs:[secondToken]},true)).stderr,/DOCUMENT_METRIC_EVIDENCE_UNAVAILABLE/);
+  assert.match((await reportSubmit(randomUUID(),{...request,report_period:{...reportPeriod,key:'quarter'}},true)).stderr,/DURABLE_DOCUMENT_REPORT_PERIOD_MISMATCH/);
+  assert.equal(await counts(),beforeRefusals,'Refused captures leave no work or wake-up');
+  const concurrentIntent = randomUUID();
+  const parallel = await Promise.all([reportSubmit(concurrentIntent),reportSubmit(concurrentIntent)]);
+  const rows = parallel.map(r=>firstLineContaining(r.stdout,'|claimed|').split('|'));
+  assert.equal(rows[0][0],rows[1][0]); assert.deepEqual(rows.map(r=>r[2]).sort(),['false','true']);
+  const admittedId=rows[0][0];
+  const captured = (await psql(`SELECT request_payload::text FROM public.paige_durable_work WHERE id='${admittedId}';`)).stdout;
+  const capturedObject=JSON.parse(captured);
+  assert.equal(capturedObject.report_evidence.measurements[0].values.count,17);
+  assert.equal(capturedObject.report_evidence.measurements[0].evidence_ref,admissionToken);
+  assert.doesNotMatch(captured,/"account_epoch"|"evidence_refs"/);
+  assert.equal((await psql(`SELECT reads FROM public.proof_evidence_references WHERE token='${admissionToken}';`)).stdout,'1');
+  for (const [retire,restore] of admissionChanges) {
+    await psql(retire);
+    assert.match((await reportSubmit(concurrentIntent,request,true)).stderr,/42501/,'Stored work does not retain Metric authority');
+    await psql(restore);
+  }
+  // Retire authority while the original work lock is actually contended, not
+  // merely before starting a request. The same replay must revalidate afterward.
+  const blocker = psql(`BEGIN; SELECT id FROM public.paige_durable_work WHERE id='${admittedId}' FOR UPDATE;
+    SELECT pg_sleep(4) /* EXP02_REPORT_REPLAY_LOCK */; COMMIT;`);
+  const observed = async condition => {
+    for(let i=0;i<40;i++) {
+      if((await psql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE pid<>pg_backend_pid() AND ${condition});`)).stdout==='t') return;
+      await new Promise(resolve=>setTimeout(resolve,25));
+    }
+    throw new Error('Original report replay contention was not observed');
+  };
+  await observed("query LIKE '%EXP02_REPORT_REPLAY_LOCK%' AND wait_event='PgSleep'");
+  const contendedReplay=reportSubmit(concurrentIntent,request,true);
+  await observed("query LIKE '%submit_paige_document_work%' AND wait_event_type='Lock'");
+  await psql(changes[1][0]); await blocker;
+  const retiredReplay=await contendedReplay;
+  await psql(changes[1][1]);
+  assert.match(retiredReplay.stderr,/42501:[\s\S]*DURABLE_DOCUMENT_METRIC_AUTHORITY_CHANGED/,'A lock wait cannot preserve retired report authority');
+  for(const change of [{brief:'Changed intent'},{evidence_refs:[secondToken]}])
+    assert.match((await reportSubmit(concurrentIntent,{...request,...change},true)).stderr,/DURABLE_WORK_INTENT_REPLAY_MISMATCH/);
+  await psql(`UPDATE public.proof_evidence_references SET bundle=jsonb_set(bundle,'{reference_expires_at}',to_jsonb((now()-interval '1 second')::text)) WHERE token='${admissionToken}';`);
+  assert.equal(firstLineContaining((await reportSubmit(concurrentIntent)).stdout,admittedId),`${admittedId}|claimed|true`);
+  assert.equal((await psql(`SELECT request_payload::text FROM public.paige_durable_work WHERE id='${admittedId}';`)).stdout,captured);
+  const admittedKey=(await psql(`SET ROLE service_role; SELECT server_idempotency_key FROM public.start_paige_document_work_execution('${admittedId}');`)).stdout;
+  await psql(`SET ROLE service_role; SELECT * FROM public.complete_paige_document_work('${admittedId}','${admittedKey}',
+    'business_review','Original source-bound review','${reportBlocks}'::jsonb,NULL,NULL,0,0);`);
+  const wakesBeforeTerminal=(await psql('SELECT count(*) FROM net.proof_wakeups;')).stdout;
+  assert.equal(firstLineContaining((await reportSubmit(concurrentIntent)).stdout,admittedId),`${admittedId}|succeeded|true`);
+  assert.equal((await psql('SELECT count(*) FROM net.proof_wakeups;')).stdout,wakesBeforeTerminal);
+  assert.equal((await psql(`SELECT reads FROM public.proof_evidence_references WHERE token='${admissionToken}';`)).stdout,'1');
+  assert.equal((await psql(`SELECT (SELECT count(*) FROM public.marketing_content WHERE work_id='${admittedId}')::text||'|'||
+    (SELECT count(*) FROM public.paige_chat_turns WHERE work_id='${admittedId}')::text||'|'||
+    (SELECT count(*) FROM public.proof_capability_runs WHERE run_id='${admittedId}')::text;`)).stdout,'1|1|1');
+  assert.equal((await psql(`SELECT NOT has_function_privilege('authenticated','public._paige_document_capture_metric_evidence(jsonb)','EXECUTE')
+    AND NOT has_function_privilege('service_role','public.submit_paige_document_work(uuid,uuid,jsonb)','EXECUTE');`)).stdout,'t');
+  const safeStatus=(await psql(`SET request.jwt.claim.sub='${userId}'; SET request.jwt.claim.tenant_id='${tenantId}';
+    SET ROLE authenticated; SELECT to_jsonb(r)::text FROM public.get_paige_durable_work('${admittedId}') r;`)).stdout;
+  assert.match(safeStatus,new RegExp(admittedId)); assert.doesNotMatch(safeStatus,/aneb_v1_|report_evidence|request_payload/);
+  const finalDefinition=(await psql("SELECT pg_get_functiondef('public.submit_paige_document_work(uuid,uuid,jsonb)'::regprocedure);")).stdout;
+  await psql(finalDefinition.replace('  _scope text;','  _scope text; -- isolated unknown-source canary'));
+  assert.match((await psql(reportAdmission,true)).stderr,/DOCUMENT_REPORT_ADMISSION_SOURCE_CHANGED/);
+  await psql(finalDefinition); assert.equal((await psql(submitMetadata)).stdout,originalSubmitMetadata);
+  console.log('PASS: original public report submit, closed request, current actor, source/period refusals, atomic rollback, competing intent, one capture, expired-reference active/terminal replay and same artifact/turn/Rail; resolver port isolated, no actual issuer/worker/customer claim.');
 
   const receiptIntent = randomUUID();
   const receiptSubmit = await psql(submitSql(receiptIntent));

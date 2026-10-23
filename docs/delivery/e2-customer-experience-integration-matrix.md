@@ -1,5 +1,51 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October23 — original report admission released; specialist identity correction
+
+Original capture-once admission2667 is source-released at
+ee77807f9c65f4846d3b3ba5ca2aa12ce1f6e2e1 after LOWER5631364387/5632071752,
+all13 exact-head checks/genuine Preview/full database proof/two statuses SUCCESS.
+Actual treeecd290a16eb9a0c481dfb336b2a5ca3664cefc86 equals reviewed current-main
+composition. Normal migration39995599642/120558409951 SUCCESS, actual520002,
+submit5640127bb3838b8aee4f5bc38eec1fd5 and unchanged private capture151a73a04e1e0d97ce2f641a5ee34c26
+with original ABI/owner/config/ACL match. Web6XMb READY/publicee778-mvl8xfsn/null;
+own Edge N/A. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2667#issuecomment-6370897287).
+Released server foundation is not mounted Chat, authenticated report authoring or
+Live acceptance. CAP014/015 remain Unverified; original Chat consumer follows.
+
+Owner Oct23 specialist standard is established once in the existing roster
+doctrine; Finance→VERA labels/addressed original prompts and44px review target are
+a separate development slice, not a new runtime/readiness claim.65/four focused
+tests and19 untouched native synthetic frames, scoped lint/type ratchet/build
+support its source. [Finance identity evidence](../evidence/ui-delivery/e2-finance-vera-attribution.md).
+Four existing canonical Docs policy pointers and original Register/ownership
+notes read back; existing owner handoffs ANT50/81/11/163/164 are requested, adoption
+unverified until their receipts. Other departments retain their source.
+
+Functional: report server released, Finance candidate. Visual: Finance synthetic
+verified. Experiential: original Finance handoff/report/artifact/read/reload and
+real role/cohort/Live still owed. Founder Acceptance NOT_ACCEPTED; original19
+outcomes/nine analytics are unchanged. ALG03/06/11/12 Partial, ALG13 Unverified;
+no identity-only promotion. Original9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved.
+
+### October23 additive read and canonical algorithm boundaries
+
+Second fresh ordinary weekly read settled when observed within58seconds and
+retained its exact2863character normalized answer after reload. An addressed
+VERA-through-PAIGE Finance read settled when observed within76seconds and retained
+its exact2419character normalized answer after reload. Both restored empty composer;
+no action approval was requested. Private evidence only; public containing855fff
+was sampled after reload. New Finance CTA/delegated specialist/receipts/roles/Live,
+SLO and full Experience acceptance remain unverified; historical counts unchanged.
+
+| Canonical algorithm | Actual EXP02 input/use | Source owner and maturity | Customer evidence and remaining acceptance |
+| --- | --- | --- | --- |
+| ALG03 COO business-health prioritization | Existing snapshot source priorities/freshness and Systems Check findings; no new score | ANT139/Metric Fabric; Partial sources | Read-only source-ranked explanation observed; canonical algorithm version/end-to-end ranked responsibility outcomes still require proof. Intended evaluation: grounded useful priorities, not an invented business-health score. |
+| ALG06 Cash-flow forecasting | Current verified Finance/commercial evidence and missing-coverage limits; no forecast inferred from receivables or manual receipts | Finance/Operator and originating EXP11; Partial sources | Honest unavailable cash/profit/forecast observed. Source-verified cash and backtested forecast remain required before a forecast claim. |
+| ALG11 Model quality and cost evaluation | Existing Model Fabric routing/trace foundations; this slice adds no evaluation or cost calculation | Model Fabric/PAIGE Intelligence; AI2 foundation, AI3 partial | Actual response/reload is observed, not measured model quality/cost savings. Canonical measured latency/expense/outcome-quality acceptance remains due. |
+| ALG12 Anomaly and incident detection | Original recorded operational findings/status, not fabricated anomalies or an autonomous incident engine | Operations/observability; Partial | Actual source exceptions explained; detected-and-reconciled event and corrective result remain owed. |
+| ALG13 Useful next-best-action recommendations | Source-backed explanatory priorities and existing capability/authority limits, no action from a suggestion | ANT54/Operating Fabric; Unverified | Suggested priorities observed; usefulness, authorized durable outcome and later business measurement still require proof. Completion never proves causal improvement. |
+
 ## October23 — worker source release; additive ordinary review proof
 
 Original worker2653 is released at06f0ff637ab4a79a57c647f7cf7da839b9f0dc86,
@@ -1299,3 +1345,53 @@ current-head CI or customer acceptance after a later source update. All original
 required final-head checks remain mandatory; no workflow, security guard,
 assertion, timeout, baseline or source-domain authority is weakened. All19/nine,
 ordinary SOLO/cohort/Live evidence and one full founder evaluation remain owed.
+
+## October23 — original reader release and public report capture-once slice
+
+Reader2661 is source released at440b97b79fb73eaa786def0f58467aa9147ef9cd, exact clean
+union92897fe6, reviewed9fa/LOWER5630725979+5631154981/all10 applicable checks and two
+statusesSUCCESS/normal PreviewSKIP. Productiondpl_AWSyRnnGsJr2ivaik3HQRBn96pAL READY,
+public440b-mvl68530/null and five served reader markers verified; own SQL/EdgeN/A.
+Receipt6369573538 and Master§4.0 retain exact evidence. Original authorized SOLO
+update reload preserves workspace/weekly answer; this does not verify a typed report
+Card absent from that conversation.17+2 actual renders remain synthetic, not customer
+acceptance. Historical9/0 and12/0/4 unchanged.
+
+The next single-outcome foundation extends O01/O04/O16/O18 and CAP014/015 through
+the ORIGINAL document submit/capture/worker/writer. It does not complete those
+outcomes by itself. Scope: one guarded never-applied migration20271113520002,
+original native proof, existing real-issuer SQL proof and canonical closeout records.
+Forward-number reconciliation preserves actual frontier500009 and EXP05reserved
+510005. No new originating-domain writer or registry.
+
+Orchestration contract: (1) explicit owner request for a historical monthly/quarterly
+review; (2) original Chat document entry, consumer still future/unmounted;
+(3) original Metric issuer/resolver with actual tenant/actor and exact period;
+(4) existing research_knowledge.document_generate/long_form, PARTIAL;
+(5) original Auth-only submit, private capture and durable document worker, not a
+second LayerC adapter; (6) original ordinary document-draft authority, no send/share/
+payment or reusable approval; (7) original marketing_content writer;
+(8) same work UUID/idempotency key/artifact revision/turn/original Rail;
+(9) original safe status, claim/recovery and uncertain outcome, no blind replay;
+(10) original persisted result/receipt required, admission is not completion.
+Reads/interpretation need no forced event-to-action run. No capability activation
+or Model Fabric/provider/spend change; VERA remains an analytical specialist.
+
+Closed request accepts numeric1, explicit checked period and1–12 issued references;
+caller facts/capture/actor/tenant/revision steering refuse. Capture once under the
+original work lock, recheck current authority after waiting, preserve source values
+and compare the same intent without recapturing expired references. Native actual
+positive/negative/concurrent/PostgreSQL proof is separate from the extended real
+issuer full-schema proof, required exact-head CI and future production/customer QA.
+The contended-authority failing-first case was corrected before publication;
+original recapture/removed-authority controls fail and original regressions remain.
+
+Functional candidate only; Visual current UI unchanged/original reader evidence;
+Experiential real typed request/artifact/reload/roles/isolation/Live/cohorts and
+Founder Acceptance UNVERIFIED. ALG03/06/11/12 remain Partial and ALG13 Unverified,
+no predictive claim. CAP009/010/011/013 ComingSoon,012/016/017 Limited,014/015
+Unverified and actor Access Unverified remain unchanged. Original public TS validator
+still refuses reports, so no catalogue promotion follows from this server foundation.
+Next release order: required native/real-issuer exact-head CI → safe migration/source
+readback → narrow original Chat consumer, coordinated through ANT161 → actual ordinary
+SOLO report/receipt/read/reload/permission and recovery proof. All19/nine remain owed.

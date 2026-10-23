@@ -545,8 +545,8 @@ BEGIN
 END $$;
 CREATE TEMP TABLE sessions_turn AS SELECT pg_temp.thread('a2') th,gen_random_uuid() intent;
 ALTER TABLE sessions_turn ADD COLUMN pre jsonb;
-UPDATE sessions_turn SET pre=pg_temp.sessions_ctx('a2',th,intent);
 CREATE TEMP TABLE sessions_booking_before AS SELECT jsonb_agg(to_jsonb(b) ORDER BY b.id) rows FROM public.internal_bookings b;
+UPDATE sessions_turn SET pre=pg_temp.sessions_ctx('a2',th,intent);
 
 SELECT ok(NOT has_function_privilege('anon',f,'EXECUTE') AND NOT has_function_privilege('authenticated',f,'EXECUTE')
  AND NOT has_function_privilege('service_role',f,'EXECUTE'),'Sessions helper remains postgres-only: '||f)

@@ -1,0 +1,201 @@
+{
+  "result": "PASS",
+  "scope": "Actual existing React component and original CSS in local IAB; deterministic intercepted Auth/API state; no actual signature, provider, hosted roles, customer or founder acceptance",
+  "sourceSHA256": {
+    "src/pages/sign/AgreementSigning.tsx": "07e25d02017539361b2329c66800aa03100d95e93f6f0d2046a6b465e3c3b2b9",
+    "src/pages/sign/agreement-signing.css": "42720dd7a23b315d5144fe2cc7fd22524a5cc5dd3860ecdb4de030fc39ae9dbd",
+    "scripts/proof/e04-signing-ui/fixtures/sdk.ts": "765c339608c93c92ce80fcd8e7eb22421c6acff27c7334d8ef321bf5e4313fa1",
+    "scripts/proof/e04-signing-ui/fixtures/source.tsx": "e3babd77e985f981ad9d64fd0479ad42f295b420d1374afda57d8d87ad9908e6",
+    "scripts/proof/e04-signing-ui/vite.config.mjs": "4ddeb80e598ca319bdab2393351b4096195cf2e7a7e6686022b945e79f5ea8bd"
+  },
+  "receiptFrames": {
+    "viewports": [
+      {
+        "width": 1536,
+        "height": 770
+      },
+      {
+        "width": 1366,
+        "height": 768
+      },
+      {
+        "width": 1024,
+        "height": 768
+      },
+      {
+        "width": 900,
+        "height": 1000
+      },
+      {
+        "width": 320,
+        "height": 720
+      }
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "count": 10
+  },
+  "lightMeasurements": [
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "canvas": "#F6F5F1",
+      "contentWidth": 1521,
+      "heading": "Your signature is recorded",
+      "overflow": 0
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "canvas": "#F6F5F1",
+      "contentWidth": 1351,
+      "heading": "Your signature is recorded",
+      "overflow": 0
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "canvas": "#F6F5F1",
+      "contentWidth": 1009,
+      "heading": "Your signature is recorded",
+      "overflow": 0
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "canvas": "#F6F5F1",
+      "contentWidth": 885,
+      "heading": "Your signature is recorded",
+      "overflow": 0
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "canvas": "#F6F5F1",
+      "contentWidth": 305,
+      "heading": "Your signature is recorded",
+      "overflow": 0
+    }
+  ],
+  "darkMeasurements": [
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "contentWidth": 1521,
+      "overflow": 0,
+      "heading": "Your signature is recorded",
+      "canvas": "#0C0A1B"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "contentWidth": 1009,
+      "overflow": 0,
+      "heading": "Your signature is recorded",
+      "canvas": "#0C0A1B"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "contentWidth": 885,
+      "overflow": 0,
+      "heading": "Your signature is recorded",
+      "canvas": "#0C0A1B"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "contentWidth": 305,
+      "overflow": 0,
+      "heading": "Your signature is recorded",
+      "canvas": "#0C0A1B"
+    }
+  ],
+  "paths": [
+    {
+      "mode": "text-recover-completed",
+      "heading": "Signed and completed",
+      "focus": "H2",
+      "overflow": 0,
+      "snapshot": "- heading \"Signed and completed\" [active] [level=2]\n- paragraph: Synthetic service agreement\n- paragraph: Recorded 10/23/2026, 8:00:00 AM\n- paragraph: Your signature, the exact document you reviewed and the completed retained copy are recorded together. Ask the business for access to your copy if you have not received it."
+    },
+    {
+      "mode": "text-recover-audit",
+      "heading": "Your signature is recorded",
+      "focus": "H2",
+      "overflow": 0,
+      "snapshot": "- heading \"Your signature is recorded\" [active] [level=2]\n- paragraph: Synthetic service agreement\n- paragraph: Recorded 10/23/2026, 8:00:00 AM\n- paragraph: The agreement has not been confirmed complete. Ask the business for its current status and completed retained copy.\n- alert: The consent and signing history could not be fully verified. Ask the sender to review this agreement."
+    },
+    {
+      "mode": "text-recover-refused",
+      "heading": "This signing link is no longer available",
+      "focus": "H2",
+      "overflow": 0,
+      "snapshot": "- heading \"This signing link is no longer available\" [active] [level=2]\n- paragraph: It may have expired, already been signed, or been withdrawn by the business that sent it. If you still need to sign, ask them to send you a new link."
+    }
+  ],
+  "unknown": {
+    "desktop": "1536-final-unconfirmed.png",
+    "narrow": "320-unconfirmed.png",
+    "keyboard": "Enter performs only explicit status check; result heading receives focus"
+  },
+  "initialProbe": {
+    "result": "INVALID",
+    "reason": "Combined responsive probe stalled and failed its state assertion, with no frames produced; cause unverified. Later bounded frozen-source checks are the evidence above."
+  },
+  "unverified": [
+    "Native browser 200 percent zoom",
+    "Actual assistive technology",
+    "Current native PDF viewer in this text-only rendered fixture",
+    "Actual owner/staff/linked-client/cohort/CentralQA/provider/full12 and founder acceptance"
+  ],
+  "additionalDarkMeasurement": {
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "contentWidth": 1366,
+    "overflow": 0,
+    "canvas": "#0C0A1B",
+    "evidence": "Actual CUA dark1366 observation and1366-dark-recorded.png; scrollbar behavior is browser-specific"
+  },
+  "imageSHA256": {
+    "1536-final-unconfirmed.png": "a8280def4168d113d6c27352722f4398d7e3433d0e57dc7ce3652d3cf2518078",
+    "320-unconfirmed.png": "cf4684c38ed7f5d95d31c03f554a463224f37f7a7efc180b3f3e10584b0fbcff",
+    "1536-light-recorded.png": "48eaa0b78b6002df59a9872b72401ebff32503b2ebd2ebcc86aec2b16bf1ed4b",
+    "1536-dark-recorded.png": "751304b643a9ce5f9738e863f0310a40d12d34b031cd6c34181ca8e843f68e33",
+    "1366-light-recorded.png": "bae52c852ac83dffbb24d67a5fb27e37ff3609a977bf1cde2be53a89e9fdc79f",
+    "1366-dark-recorded.png": "8013f704846685521c379e75ae1f3533492bd2013c190636d852b0c2eac919a8",
+    "1024-light-recorded.png": "a090b3c887e86907d8f50682ca48a0cf7b237ad0625ac61c38f0813d6a46ceaf",
+    "1024-dark-recorded.png": "6cce7ce2d0395ca53694ef08959dceb4f3749fe82ece1ce2610cc0c9e030e2c1",
+    "900-light-recorded.png": "b170e7211a365b324be01fe7e9e59eaf48b1b4026d2ba9dc9b1a0b3c48cf8c31",
+    "900-dark-recorded.png": "35160c22101c3131942484b32d2fa3af46309b85c3584495562ee00d6ede4af2",
+    "320-light-recorded.png": "efd5c8341111f7e6686bb4c42e56c5ceed9106f4c47f44b85e262d78d98ed711",
+    "320-dark-recorded.png": "dbf06cbbd8033c6bcd25a38cea1638dfa146e325eb70a6a5eaf1bedd708201cf",
+    "320-text-recover-completed.png": "40af882fc01354c837fd0cb058c8cfb3817d34a627c7deb4f9f926f3c2424885",
+    "320-text-recover-audit.png": "519e963f2cf3f21295c5fea3c057abf4d6ee2af55f1775e52599a4519b0ff55e",
+    "320-text-recover-refused.png": "f582509062a08da58d625629e531166360df97711223b2a78fc5490e4cbae37a",
+    "prototype-1536.png": "1155fce55537178bed7f3f3f93f26323ecfc4ee6cad6e754e45d166de12717d0",
+    "prototype-320.png": "462e556fadc24a93de70cc89f788c1dffd8800465a07e6c2256ce13889224b7b"
+  }
+}

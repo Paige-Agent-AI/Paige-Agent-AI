@@ -32,7 +32,7 @@
  * `Record<VP, DeptSlug[]>` (every roster member is accounted for) — so adding a
  * department OR changing the VP roster is a TypeScript error here, never silent drift.
  */
-import type { VP } from "@/components/ui/page";
+import { VP_ROSTER, type VP } from "@/components/ui/page/PaigeAttribution";
 
 /** The canonical department slugs from `paige_departments` (§16 seed migrations):
  *  10 canonical desks + the still-active `owner_ops` general desk. */
@@ -98,6 +98,13 @@ const KNOWN_DEPT = new Set<string>(Object.keys(DEPT_VP));
 export function resolveVpForDept(slug: string | null | undefined): VP {
   if (slug && KNOWN_DEPT.has(slug)) return DEPT_VP[slug as DeptSlug];
   return "PAIGE";
+}
+
+/** Presentation only: existing ownership and names, never readiness, authorship
+ * or execution authority. Unknown/global context retains PAIGE. */
+export function resolveDepartmentSpecialist(slug: string | null | undefined): Readonly<{ id: VP; name: string; remit: string }> {
+  const id = resolveVpForDept(slug);
+  return { id, ...VP_ROSTER[id] };
 }
 
 /**

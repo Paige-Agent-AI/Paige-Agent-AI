@@ -1,0 +1,51 @@
+# Live acknowledgement gate + per-account truthful status (EXP01 consent repair, #2611 P1/P2 dispositions)
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: owner directive 2026-10-23 — the person receives the provider disclosure and PERSONALLY acknowledges it before microphone or provider audio, with self-service eligibility preserved. One EXISTS predicate added to the single admission home (paige_live_pilot_authorized_internal): the person's own current self-service acknowledgement (the exact row paige_live_accept_terms writes — the subject's own acceptance actor, no platform owner behind it) is required before any relay ticket, across all three callers (paige-live-session issuance, paige-ai-chat relay challenge, paige-live-relay renewal — so a revocation also stops an already-connected relay). NO part of the removed 2027-09-24 enablement ceremony returns: no operator allowlist, no pilot envelope, no inspection receipts. The client flow is the EXISTING surface: an eligible-but-unacknowledged start now refuses with code live_audio_not_enabled, the disclosure panel and "I understand — turn on Live" control render (the §70 control that exists for exactly this), acceptance is the person's own RPC, retry then issues the ticket — microphone capture happens only after an ok ticket (pre-existing, test-pinned). The session refusal copy now distinguishes the two honest faces (needs-your-acknowledgement vs not-available-for-this-account) via the service-only companion paige_live_acknowledgement_current_internal.
+PAIGE_UI_DESIGN: PASS: no new surfaces; the existing disclosure panel, acceptance control and terms copy are the UI; the capabilities row's states reuse the existing TruthPill language.
+MATERIAL_FLOW_CHANGE: YES: first Live audio for any account now requires the person's explicit acknowledgement first — the disclosure-and-accept flow that existed but was never gating.
+FLOW_PROTOTYPE: PASS: owner approval on record — the 2026-10-23 continuation directive ordered exactly this repair ("Resolve this through the original Live contracts. Preserve self-service eligibility while ensuring the person receives the disclosure and personally acknowledges it before microphone/provider audio. Do not recreate an operator allowlist, second runtime, or separate consent system."), recorded on ANT-50 and in the #2611 review thread dispositions.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a first-time Solo owner pressing Talk with Paige live first reads what the speech provider keeps and the single-speaker rule, accepts it themselves, and only then does the browser ask for the microphone; a blocked voice entry (busy composer, dictation, authority pending) now answers with an announcement instead of silently doing nothing (#2611 P2-2).
+VISUAL_DIRECTION: PASS: existing design language; the capabilities Live row derives its access cell from the account's canonical state (#2611 P2-3) with the same pill/copy vocabulary.
+AUTOMATED_EVIDENCE: PASS: scripts/e01-live-consent-check.mjs 10/10 SQL proofs against the REAL no-ceremony predicate migration + the REAL new migration on a local PostgreSQL (unacknowledged refused + status not_acknowledged; acknowledged admitted + self-service preserved + status acknowledged; revoked/expired refused with truthful status; partial acceptance refused; tier and kill switch still refuse WITH acknowledgement; non-service interrogation 42501; status unauthenticated without context; grants — status authenticated-only, companion service-only WITH the positive service-role grant asserted after review caught the original negative-only blind spot) — wired into CI; vitest 72/72 across PaigeLiveConversation (blocked request now announces), SoloParityTruthfulness (Live row derives acknowledged/revoked/expired/unknown states from the canonical read; never claims "audio verified"), SoloPaigeWorkspace.onboarding; eslint clean.
+STATIC_EVIDENCE: PASS: exactly one admission home changed (plus the service-only companion and the self-read status RPC); all three edge-function callers verified to share the "may this person's live audio proceed" semantics; the relay's renewal re-check already documented "revocation stops an already-connected relay"; no new consent store, runtime, or allowlist.
+RENDERED_EVIDENCE: UNVERIFIED: production screenshots of the disclosure→acceptance→first-audio sequence are owed to the founder-evaluation drive (browser capture unavailable this session; personal consent may not be exercised by engineering).
+BEHAVIORAL_EVIDENCE: PASS: SQL matrix proves the gate in both directions and all degradation states; client suites prove the blocked-request announcement and the derived capability states; the accept→retry path is the pre-existing §70 control.
+AUTHENTICATED_RUNTIME: UNVERIFIED: a real person's disclosure→acknowledgement→microphone→bidirectional audio pass is owed to the single founder-evaluation window (engineering may not accept personal terms or manufacture audio proof on the owner's behalf).
+KEYBOARD_FOCUS: PASS: no focus changes; the disclosure and acceptance control are the existing focusable elements.
+ZOOM_REFLOW: PASS: no layout changes.
+REDUCED_MOTION: PASS: no motion changes.
+STATE_COVERAGE: PASS: unacknowledged/acknowledged/revoked/expired/partial/kill-switch/tier-failure/unauthenticated admission states and the four derived capability states (loading, acknowledged, revoked, expired, unknown, not_acknowledged); blocked-entry announcement covers composer-busy, dictation, authority-pending.
+TRUTHFUL_STATE_LABELS: PASS: refusal copy distinguishes actionable (acknowledge) from unactionable (not available); the capabilities row says "Turned on for this account" after acceptance and never claims audio verified; unknown read failures render "Unverified", never a guessed state.
+SOLO_UI: YES: one Solo shell for every tenant; the gate reads the caller's own canonical row.
+UNVERIFIED: production migration readback (post-merge); rendered disclosure/acceptance frames; the founder's own consent→audio pass — PROOF OWED to the single final evaluation window.
+
+INTERNAL_BUILD_IDENTITY: code-commit=c09557c53c9de47bbcb274b4beb2f5b27d7b5908; deployment=PROOF_OWED(undeployed fix branch; post-merge deploy-migrations + deploy-edge readbacks owed); environment=local; migrations=PROOF_OWED(20271113600000_live_acknowledgement_before_audio);edge=PROOF_OWED(paige-live-session); evidence=scripts/e01-live-consent-check.mjs
+RELEASE_CHANNEL: development: local/development build environment; production release follows the standing small-PR merge/deploy/readback gate.
+RELEASE_CLASSIFICATION: internal-only: consent-gate repair ahead of the single EXP01 founder evaluation; the Live surface itself is unchanged.
+CUSTOMER_RELEASE_IDENTITY: none: fix branch only; founder evaluation precedes any release identity.
+RELEASE_NOTE_REQUIRED: no: internal-only safety repair ahead of the single EXP01 evaluation.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: SQL and component behavior proven by the check script and suites; PROOF OWED: post-deploy migration+edge readbacks, rendered evidence, and the founder's own consent→audio pass.
+RELEASE_RECOVERY: position=forward-fix; reference=this record and scripts/e01-live-consent-check.mjs
+SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: no layout change; the disclosure panel is the existing surface.
+SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: no layout change.
+SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: no layout change.
+SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: no layout change.
+SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: no layout change.
+SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: no layout change.
+SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no layout change.
+SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no layout change.
+
+## Review round 1 disposition addendum (2026-10-23)
+
+Independent review REQUEST_CHANGES with one P1, all fixed: the companion RPC
+was revoked from every role including service_role (dead code — the refusal-copy
+distinction would never render); now revoked from public/anon/authenticated,
+granted to service_role, with the in-body service-role guard mirroring the
+admission predicate, and case9b asserts the POSITIVE service-role grant (the
+negative-only blind spot that let the P1 through is closed). P3s fixed: proof
+threshold 10; partial acceptance reports not_acknowledged (never a conflated
+expired); unauthenticated status maps to Unverified, never a guessed consent
+state. P3 nits dispositioned: the rpc cast follows the sibling idiom in this
+file (SoloPaigeWorkspace uses the same cast); generated-client typing is a
+separate lane-wide cleanup.

@@ -139,5 +139,13 @@
     ],
     "passed": 22,
     "failed": 0
+  },
+  "ordering_reconciliation": {
+    "observed_main": "2748432e1ab0c7c29a01b5c9516a8b68803e7844",
+    "observed_production_frontier": "20271113600000",
+    "never_production_applied_old_version": "20271113560009",
+    "current_version": "20271113610009",
+    "sql_bytes_unchanged": true,
+    "fresh_exact_head_ci_and_preview": "REQUIRED"
   }
 }

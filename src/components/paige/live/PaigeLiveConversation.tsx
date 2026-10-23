@@ -436,13 +436,20 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
   // The first-run onboarding stage asks for the voice entry by window event — the same
   // decoupled request pattern as `paige:open` in the Solo shell. This component keeps sole
   // ownership of opening and of consent: a request is honored only through begin(), which
-  // runs the same authorization check and terms surface as the trigger, and is ignored
-  // whenever the surface could not legally start.
+  // runs the same authorization check and terms surface as the trigger. A request while
+  // blocked is ANSWERED, never silently dropped (review #2611 P2-2): the composer's
+  // blocked states (response loading, dictation active, authority pending) are not
+  // visible from the onboarding stage, so the person hears why nothing opened.
   const beginRef = useRef(begin);
   beginRef.current = begin;
   useEffect(() => {
     const requestOpen = () => {
-      if (disabled || open || !PAIGE_LIVE_CONVERSATION_ENABLED) return;
+      if (!PAIGE_LIVE_CONVERSATION_ENABLED) return;
+      if (open) return;
+      if (disabled) {
+        setAnnouncement("Live can’t start right now — Paige is busy or the microphone is in use. Try again in a moment.");
+        return;
+      }
       void beginRef.current();
     };
     window.addEventListener("paige-live-open-request", requestOpen);

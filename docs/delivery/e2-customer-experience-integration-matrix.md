@@ -894,3 +894,16 @@ Finite input refusal is not source provenance or model-output correctness. No ow
 migration, permission/provider/consequential activation or catalogue/algorithm
 promotion. CAP014/015 Unverified and all19/nine remain required. This supersedes
 older candidate release wording at this bounded source-release level only.
+
+
+## October22 — CI transport and source verification boundary
+
+Original2626/9700 Test failure remains open. The existing diagnostic script now
+prints bounded sanitized file classifications; original diagnostic/network
+controls29/29 PASS with normal Windows permissions. Missing Actions checks are
+a release hold: API/native reopening produced only Preview checks. Original
+ci.yml exact-ref dispatch39875759512 was actually queued on5d007fff; it is not
+current-head CI or customer acceptance after a later source update. All original
+required final-head checks remain mandatory; no workflow, security guard,
+assertion, timeout, baseline or source-domain authority is weakened. All19/nine,
+ordinary SOLO/cohort/Live evidence and one full founder evaluation remain owed.

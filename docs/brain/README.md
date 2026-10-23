@@ -1654,6 +1654,30 @@ Original2564 source is merged1882d0142323d116ce95f61ce7b86f85d3ab2446 after all1
 
 Next private native source validation is LOCAL/NOT_DEPLOYED: reuse original230004 checks before freeze, owner-only invoker/no API grant; original freezer ABI/service grant/replay/CAS/write/event remain. Causal absent-helper42883 then66 native controls/two migration replays/two sessions/observed wait PASS on isolated PostgreSQL16.14, fixtures removed/own cluster stopped. Original production body4116200a24628e9149187e55eea2fb02 matches source; proposed helper absent. No prep consumer, hold removal, obligation/signature/provider or activation. Ordered frontier (including active330002), final review/CI/full Preview/native readback remain gates. Exact economics/PDF/assigned-map approval BEFORE C7, operation/Rail/effective terms/PRE1/2 and actual roles/provider/all12/founder acceptance remain owed. [Bounded native evidence](../evidence/ui-delivery/e04-commercial-source-validation.md).
 
+### EXP04 commercial document source — later October22 checkpoint
+
+The preceding pre-release340004 note is historical. Original validation2633 is
+now mergedab2228036789be2bf81fb48896d919a867b79e8a after all13 exact-head
+checks/full normal Preview/two statuses and final5622338107 AUTHOR-REVIEW /
+LOWER ASSURANCE. Normal native39874959218/deploy120158340110 and persistence
+guard SUCCESS. Actual production340004/helper61056f39c2e8c9a5fa7aab3641820a1b/
+freezerdb14fdd6e75b2dc4cb3eb290388cc801/ABI/private ACL match reviewed source;
+webdpl_9xhHQd1PDCqX1Nr7NqFXzk3Z4ENT READY/exact. No consumer/activation.
+
+Next native350004 EXTENDS the SAME twelve-argument private retainer and original
+immutable manifest with closed commercial2, without new table/column/store.
+Same source/version/party/PDF/map and canonical economics validator precede the
+original selection/event/write. Original v1, actor locks, CAS, historical replay
+and token/effect holds remain. Read stays agreement_and_parties/not_checked;
+actual API must revalidate current financial source and render canonical PDF.
+Old-source causal manifest2 refusal and corrected247 native controls PASS in
+Node and actual Deno denial envelope, including all76 original document controls,
+29 commercial controls, original other suites, replay2 and real terms lock/wait.
+Unknown original writer/validator guards refuse; initial fixture/SQL failures
+remain failures. This source remains LOCAL/NOT_DEPLOYED pending final gates and
+actual consumer. All12, EXP09 source boundaries, algorithms, Chat/Live holds and
+whole customer/founder acceptance remain unchanged. [Evidence](../evidence/ui-delivery/e04-commercial-document-preparation.md).
+
 ### EXP04 original upload intent — development
 
 REPAIR original business upload adapter after actual-hook3 positive/2 genuine RED controls: loaded/current business must match before Storage, and lost/context-retired results never claim rollback or no effect. Original private bucket/RLS/path/cache/no-overwrite/result contract retained. Final9 hook plus102 existing Sales cases (111) and type10/current6/lint0 PASS; initial original audit-history timeout repeated green without changing5s limit/assertions. Actual Sales/modal/hook/SDK20 rendered cases/5 paths/19 exact pins/0page errors, neutral local transports only. Native PAIGE backdrop is respected and actual open/folded states are explicit. Stable same-request upload recovery, native-supported import/wording/preview/fields and owner/staff/client/provider/all12/founder acceptance remain incomplete. No actual upload, signing, send, payment, role, bucket, provider, model or Chat activation. [Bounded evidence](../evidence/ui-delivery/e04-agreement-upload-intent.md).

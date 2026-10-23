@@ -11,6 +11,7 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {readableTextOn} from "@/lib/brand/contrast";
 import {readClientPortalSelfProfile} from "@/lib/client-portal-self-profile";
 import {customerAccessCopy} from "@/lib/client-portal-access";
+import {clientPortalBusinessHref} from "@/lib/client-portal-entry";
 import type {User} from "@supabase/supabase-js";
 import "./ConsumerInvitation.css";
 
@@ -82,7 +83,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
     if(!await checkedActor(n,subject)||!current(n))return;
     // Onboarding answers and unsigned agreements retain their real state. They
     // are work inside the portal, never a synthetic completion prerequisite.
-    navigate("/app",{replace:true});
+    navigate(clientPortalBusinessHref(saved.tenant_id),{replace:true});
   },[checkedActor,current,navigate]);
   const status=useCallback(async()=>{
     const result=await bounded(supabase.rpc("client_portal_invite_status" as never,{p_token:token} as never));

@@ -25,11 +25,13 @@ MUST_PRESERVE: original service/JWT authentication, contact/funding/local-target
 ACCEPTANCE_CRITERIA: original ZION model call requests only a cognitive class/job, rechecks current original authority/registry on every Fabric leg, retains existing internal worker compatibility and original durable outcome semantics.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: exact service key and trusted actor/workspace context; current workspace-role resolver; original registry identity/version/config; shared Fabric provider/budget/trace policy; original work and capability receipt.
-INTERNAL_BUILD_IDENTITY: base=current maina13394776 plus reviewed recovery/activity dependencies; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-orchestrator); evidence=docs/evidence/ui-delivery/exp05-zion-model-fabric.md
+INTERNAL_BUILD_IDENTITY: base=a13394776cbc1471556def66e5208ea66e483035 plus reviewed recovery/activity dependencies; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-orchestrator); evidence=docs/evidence/ui-delivery/exp05-zion-model-fabric.md
 RELEASE_CHANNEL: development: explicit closed synthetic transports; no live provider, business record or production activation.
 RELEASE_CLASSIFICATION: internal-only: Model Fabric consumer prerequisite, not a completed ZION capability or customer launch.
 CUSTOMER_RELEASE_IDENTITY: NONE: no earned customer version or announcement.
-ROLLBACK_RECOVERY: position=reviewed forward correction preserving original invocation history and no unknown-outcome replay; reference=existing EXP05 delivery packet and Model Fabric contract.
+RELEASE_NOTE_REQUIRED: NO: internal prerequisite only; no earned customer release identity, announcement or completed ZION capability.
+RELEASE_TRUTH_BOUNDARY: SOURCE_IMPLEMENTED locally; NOT_DEPLOYED, AUTHENTICATED_UNVERIFIED and OWNER_ACCEPTANCE_PENDING. A safe code increment does not prove activated specialist execution or full EXP05 readiness.
+RELEASE_RECOVERY: position=reviewed forward correction preserving original invocation history and no unknown-outcome replay; reference=existing EXP05 delivery packet and canonical Model Fabric contract.
 
 ## Orchestration Contract and Algorithm Support
 

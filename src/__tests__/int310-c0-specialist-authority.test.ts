@@ -18,6 +18,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import ts from "typescript";
+import * as nodeUtil from "node:util";
 import { draftClaimedAction } from "../../supabase/functions/paige-action-worker/draft.ts";
 
 const root = join(__dirname, "..", "..");
@@ -82,6 +83,12 @@ function fakeSupabase(h: Harness, cronValid: boolean) {
   };
 }
 
+// Cache only compilation TEXT, never modules, authority, fixtures or results. Every
+// original/mutated source has its own key; each load still constructs fresh modules
+// and injected ports. Bound repeated compilation of the shared Fabric/registry
+// graph without caching any runtime or authorization decision.
+const compiledSource = new Map<string, string>();
+
 /** Load an edge function's REAL source (transpiled) with Deno + npm/URL imports stubbed and every
  *  relative import loaded for real, unless named in `stubs`. `mutate` rewrites one file's source. */
 function loadEdge(
@@ -108,12 +115,15 @@ function loadEdge(
       src = opts.mutate[rel](src);
       if (src === before) throw new Error(`mutation for ${rel} matched nothing`);
     }
-    const out = ts.transpileModule(src, {
+    const compileKey = `${abs}\0${src}`;
+    const out = compiledSource.get(compileKey) ?? ts.transpileModule(src, {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
+    compiledSource.set(compileKey, out);
     const mod = { exports: {} as Record<string, unknown> };
     cache.set(abs, mod.exports);
     const req = (spec: string): unknown => {
+      if (spec === "node:util") return nodeUtil;
       if (spec.endsWith("/cors")) return { corsHeaders: {} };
       if (spec.startsWith("npm:@supabase/supabase-js") || spec.includes("esm.sh/@supabase/supabase-js")) return supa;
       if (spec.startsWith(".")) {

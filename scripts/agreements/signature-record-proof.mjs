@@ -6,7 +6,7 @@ import {randomUUID,createHash} from 'node:crypto';
 export async function proveSignatureRecord({sql,read,context,tenant,fresh,quote,startSession,observe}){
   let checks=0;const check=(value,message)=>{assert(value,message);checks++;};
   const q=value=>value===null?'NULL':quote(value),json=input=>JSON.parse(sql(input));
-  const migration=read('supabase/migrations/20271113480004_e04_atomic_original_signature.sql');sql(migration);sql(migration);
+  const migration=read('supabase/migrations/20271113530004_e04_atomic_original_signature.sql');sql(migration);sql(migration);
   const source=(later=false)=>{
     const a=fresh(),token=createHash('sha256').update(randomUUID()).digest('hex');
     if(later)sql(context+`SELECT add_agreement_signer('${tenant}','${a.id}','Later original signer','later@example.invalid','counterparty',2);`);

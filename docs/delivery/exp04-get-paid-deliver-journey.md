@@ -74,7 +74,19 @@ same-cluster proof; original assertions/deny flags remain. CLI-created empty loc
 20261023134452 was renamed while never applied to reserved20271113480004, after
 E02/450002 and E09/460009/470009. Initial actual frontier44 is historical; the
 subsequent production read verifies45/46/47 applied, and source now composes their
-accepted mainbdd1a553386b6f1a84aac6a315114dc8f4df4983. Own48 remains UNAPPLIED.
+accepted mainbdd1a553386b6f1a84aac6a315114dc8f4df4983. At that point48 was UNAPPLIED.
+Later concurrent main440b97b79/EXP09 release advanced actual production to500009
+while this candidate was in CI. Metadata confirms both new functions remain
+ABSENT. Reconcile the SAME unpublished migration forward to reserved530004,
+preserving SQL100% byte-for-byte; update only the proof reference/current source.
+Earlier480004 Preview/CI evidence remains history, not production application.
+Existing reservations510005/510009/520002 are preserved; actual current-main/
+production order is the rollout prerequisite, with no new global release hold.
+The same original native323 checks pass again under530004; the migration's SQL
+blob is100% unchanged from reviewed25fd6b9c5. The existing disposable cluster
+was verified empty and stopped. Relocate only this candidate's own new2656 Brain
+closeout beside its existing E04 release section to avoid the shared prepend
+collision; its complete original text and every other owner's section are retained.
 New native functions were absent in production; original held bodies/ACLs were read intact.
 Migration/source/permission/UTF8/diff checks PASS. No hosted migration or original
 recipient action is performed by this local proof. Required review/exact-head CI,

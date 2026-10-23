@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: repair the existing work-record and receipt acknowledg
 FLOW_PROTOTYPE: NOT_REQUIRED: original refusal, completed, failed and unknown states remain; no new customer flow or control is designed.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible SOLO owner receives truthful original specialist status; work cannot start without its durable invocation identity.
 VISUAL_DIRECTION: NOT_APPLICABLE: original Operations and PAIGE presentation remains unchanged; Impeccable clarity review covers accurate status and recovery instructions.
-AUTOMATED_EVIDENCE: PASS: eight causal failures with49 incumbent cases passing; corrected initial91 cases across original whole-handler, trusted-identity and canonical-recorder suites. Extended wrong-ID/lost-update/confirmed-failure cases and exact-head hosted checks remain required before release.
+AUTOMATED_EVIDENCE: PASS: eight causal failures with49 incumbent cases passing; corrected94 cases across original whole-handler, trusted-identity and canonical-recorder suites, including wrong-ID/lost-update/confirmed-failure controls. Receipt-specific feedback correction and exact-head hosted checks remain required before release.
 STATIC_EVIDENCE: PASS: actual handler/source and existing canonical recorder inspected; no SQL/RLS, role, approval, registry, provider, model or trigger change. Only the reviewed orchestrator source pin may be renewed after separate source review.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered markup, styling, layout, motion or controls change. Source/transport verification is not a new customer screenshot or rendered acceptance claim.
 BEHAVIORAL_EVIDENCE: PASS: real Deno handler transpiled with synthetic Auth/database/model ports, original capability recorder used. Insert failure/invalid identity prevent model dispatch; update error/missing/mismatched acknowledgment and failed receipt retain original identity and withdraw completion without re-dispatch.
@@ -53,6 +53,12 @@ still create a new assignment. The source must not be used to claim replay-safe
 delegation or enable a known incomplete specialist path. Platform-only calls keep
 their original receipt exclusion and explicitly report `receipt_recorded:false`;
 tenant work cannot report verified completion without its canonical receipt.
+
+Separate source review found the generic uncertainty wording hid a known saved
+outcome when only the receipt acknowledgment failed. The corrected response
+explicitly retains `outcome_recorded:true` and `receipt_unverified:true`, while
+withholding verified completion and prohibiting blind repetition. It never claims
+the receipt is absent: a lost acknowledgment can hide a committed receipt.
 
 Grounding: ANT-11/51/52/147/161/163, current main and open Experience PRs. Narrow
 lease ANT161/c3fa2973; E09/CURA Chat Sessions, E02 native report/reader, E04 signing

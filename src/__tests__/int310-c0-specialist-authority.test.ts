@@ -308,7 +308,7 @@ describe("EXP05 original specialist durable outcome", () => {
   });
   it.each(["error", "throw"] as const)("a %s at the canonical receipt does not become verified completion", async receipt => {
     const h = durableSpecialist({ receipt }); const r = await h.run();
-    expect(await r.json()).toMatchObject({ ok: false, outcome_unknown: true, invocation_id: h.id });
+    expect(await r.json()).toMatchObject({ ok: false, outcome_unknown: true, invocation_id: h.id, outcome_recorded: true, receipt_unverified: true });
     expect(h.model).toHaveBeenCalledOnce(); expect(h.rpc).toHaveBeenCalledOnce();
   });
   it("verified completion retains the original actor, invocation and canonical receipt", async () => {

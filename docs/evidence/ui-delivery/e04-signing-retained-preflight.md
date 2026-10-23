@@ -1,0 +1,38 @@
+# Original signing retained-presentation repair
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: original C15 contract in docs/delivery/exp04-get-paid-deliver-journey.md and original ANT161/e6b3d9e3, ANT163/8b4b2f9f source leases; existing recipient action repaired, no new signing engine.
+PAIGE_UI_DESIGN: PASS: project router, upstream/accessibility/quality/review references and five modules read; original recipient screen, tokens, controls and error surface unchanged. Render limitations below are not visual acceptance.
+MATERIAL_FLOW_CHANGE: NO: restores original token eligibility and original document-integrity precondition for the existing signing action; no new user goal, container, field, choice, navigation or recipient interface.
+FLOW_PROTOTYPE: NOT_REQUIRED: original approved recipient ceremony and existing error handling are retained; this is backend correctness repair, not a new interaction design.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a legitimately authorized recipient can submit the original signature only after its retained presentation verifies; missing or altered evidence refuses before the irreversible write.
+VISUAL_DIRECTION: PASS: preserve original AgreementSigning.tsx/agreement-signing.css and exact document-first recipient ceremony. No new visual language or design-system changes.
+AUTOMATED_EVIDENCE: PASS: after2655 composition, actual211 agreement tests/199steps and exact existing required CI group158/67 PASS under original denied effects. Original recipient component/source28 cases PASS. Initial fixture type failure INVALID, causal eligible-token and missing-file REDs, and conditional-write RED retained separately.
+STATIC_EVIDENCE: PASS: actual sign-agreement Deno entry check, immutable scope/predicate/source inspection and diff checks; no schema/grant/native holds/provider/role/Portal/Chat source changes. Hosted final-head gates still required.
+RENDERED_EVIDENCE: UNVERIFIED: current read-only original-recipient renderer attempt could not navigate loopback in the restricted browser; later native attempts timed out at navigation despite bounded HTTP200 from the same local server. No screenshot or visual PASS claimed. Local diagnostic transcripts outputs/e04-retained-preflight-ui.log, outputs/e04-retained-preflight-ui-native.log and outputs/e04-retained-preflight-ui-native-ready.log retain actual failures. No product assertion or timeout was relaxed.
+BEHAVIORAL_EVIDENCE: PASS: real handler/real supabase-js with intercepted neutral transports and real original-renderer PDF bytes; positive reaches deliberately refused synthetic write, refusals issue no terminal write, same-credential zero-row recovery distinguished from revoked/replaced/expired. Original28 component tests preserve explicit results and refusals. These are automated transport/DOM contracts, not browser or production acceptance.
+AUTHENTICATED_RUNTIME: UNVERIFIED: no actual recipient signature, customer send or financial effect is authorized by this proof. Existing protected ordinary-owner unsigned receipt is a different bounded claim. Actual owner/recipient/staff/linked-client/cohort/CentralQA remain owed.
+KEYBOARD_FOCUS: UNVERIFIED: no UI code changed; existing recipient result focus assertions pass but current native keyboard run could not navigate its local surface.
+ZOOM_REFLOW: UNVERIFIED: original styles unchanged; no new current native zoom/reflow proof claimed.
+REDUCED_MOTION: NOT_APPLICABLE: no motion or UI source changes in this backend repair; current native motion inspection is not claimed.
+STATE_COVERAGE: PASS: actual endpoint verified PDF and legacy text, missing/changed/non-PDF/malformed digest/Storage failure, foreign/revoked/expired/missing-expiry/declined/order/void/deadline and same/replaced/revoked/expired replay controls.28 original recipient tests verify retained review, consent, unknown/refused/completed states and token retirement.
+TRUTHFUL_STATE_LABELS: PASS:503 is not a signature receipt; positive preflight stops before a real signature. No provider delivery, legal sufficiency, completed agreement or customer acceptance claim. Prepared-document native holds remain.
+SOLO_UI: NO: original public token-authorized recipient route/sign/:token; no Solo shell/PAIGE rail or Portal UI change.
+UNVERIFIED: current native rendered/keyboard/zoom/assistive technology, hosted recipient ceremony, native concurrent signature/audit atomicity, prepared-map approved send/input/consent/pre-sign appearance/seal/effective terms, actual provider/roles/cohorts/CentralQA/full12/whole founder acceptance. Original generic non-2xx SDK error remains a user-facing explanation follow-on, not a newly completed premium signing flow.
+
+OWNER_INTENT: finish the original signing repair as part of all twelve commercial-to-delivery outcomes; preserve actual retained document and credential identity before a recipient acts.
+MUST_NOT_HAPPEN: signing a missing/altered retained presentation, foreign private-file read, retired credential adopting another signature, inferred legal or payment authority, claimed browser/customer acceptance from tests.
+MUST_PRESERVE: original1352 records, consent, immutable documents, original token/signing guard, ordering/revocation, selected-preparation native holds, exact retained bytes and original sender/Portal/financial paths.
+ACCEPTANCE_CRITERIA: legitimate existing token and intact document can reach the same original native writer; failed retained integrity refuses before that write; same credential is checked at update/recovery; ordinary recipient end-to-end acceptance stays open until separately authorized and driven.
+MOTION_PURPOSE: NONE: original UI/motion untouched.
+PROTECTED_SEAMS: affected token/tenant/agreement privacy, original conditional write/recovery and retained readback tested through real client transport. Audit/event atomicity remains an explicit follow-on. Unaffected Solo entitlement/signup/paywall/billing/provisioning; Kit/Trust/Spine/LayerC approval; Chat/transcript/popout/Live; Secure Browser/Vault; provider connections/sends; durable scheduler; shared responsive shell/accessibility source. No secrets or real identities enter fixtures/evidence. Renderer test inability is disclosed, not replaced by claims.
+
+INTERNAL_BUILD_IDENTITY: source=b9ae3a4ddd77124954c526e1df6be27d664a2a50; signing source1173ea6c4a4df5c6f30478dfd69f9803d2b18317 composed with released main00ab9ee1783698eee31dae8f4305805828ac6ddb; final reviewed identity in PR/review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal sign-agreement deployment/source readback); evidence=original C15 contract/tests and this record.
+RELEASE_CHANNEL: development: final-head CI/Preview, production source/readback and actual recipient acceptance remain separate.
+RELEASE_CLASSIFICATION: internal-only: original correctness repair within incomplete EXP04.
+CUSTOMER_RELEASE_IDENTITY: none: one whole integrated founder evaluation remains owed.
+RELEASE_NOTE_REQUIRED: NO: internal repair; no announcement.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source/automated original handler and unchanged recipient component contracts; current native rendered and actual customer/provider/signature/all12 acceptance remain PROOF OWED.
+RELEASE_RECOVERY: position=reviewed forward repair preserving original immutable signatures/documents and native holds; reference=original signing/seal/reconciliation contracts, never replay uncertain real effects.
+
+Visible-Flow-Impact: yes — original existing error surface receives the additional integrity refusal. No UI file is edited. Exact final source review/CI/normal release remain mandatory. Separate review must explicitly retain all rendered/runtime limitations.

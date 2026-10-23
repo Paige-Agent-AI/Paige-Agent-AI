@@ -1,0 +1,90 @@
+{
+  "proof": "INDEPENDENT_NATIVE_PDFIUM_RENDER_SYNTHETIC_DATA",
+  "observations": [
+    {
+      "page": 1,
+      "image_sha256": "d77e2c2b4499cdd850dcd54fc4e17c3d28dff50e042ffaaf1f8ea355d24cce42",
+      "size": [
+        625,
+        875
+      ],
+      "outside_reviewed_fields": 0,
+      "ink_per_field": [
+        528,
+        92,
+        707,
+        413,
+        104
+      ],
+      "actual_text_preserved": true
+    },
+    {
+      "page": 2,
+      "image_sha256": "e934e6006675c975b19f2d0766c6e23683acf89377327b4b111608b4e7ffd1ee",
+      "size": [
+        875,
+        625
+      ],
+      "outside_reviewed_fields": 0,
+      "ink_per_field": [
+        528,
+        92,
+        707,
+        413,
+        143
+      ],
+      "actual_text_preserved": true
+    },
+    {
+      "page": 3,
+      "image_sha256": "d77e2c2b4499cdd850dcd54fc4e17c3d28dff50e042ffaaf1f8ea355d24cce42",
+      "size": [
+        625,
+        875
+      ],
+      "outside_reviewed_fields": 0,
+      "ink_per_field": [
+        528,
+        92,
+        707,
+        413,
+        104
+      ],
+      "actual_text_preserved": true
+    },
+    {
+      "page": 4,
+      "image_sha256": "e934e6006675c975b19f2d0766c6e23683acf89377327b4b111608b4e7ffd1ee",
+      "size": [
+        875,
+        625
+      ],
+      "outside_reviewed_fields": 0,
+      "ink_per_field": [
+        528,
+        92,
+        707,
+        413,
+        143
+      ],
+      "actual_text_preserved": true
+    },
+    {
+      "page": 5,
+      "image_sha256": "956cff83dc7210d31221ce92f2f8dac6522255d1f1a2ca4d7f5a4205d3b87f85",
+      "size": [
+        765,
+        990
+      ]
+    },
+    {
+      "page": 6,
+      "image_sha256": "16ffe26b912036e48c61eb313354683a7b5b5631404073b5a4467bcdccc51fcc",
+      "size": [
+        765,
+        990
+      ]
+    }
+  ],
+  "scope": "six actual rendered pages; all four rotated crops contain ink only inside the reviewed fields; no authority, signing or customer acceptance"
+}

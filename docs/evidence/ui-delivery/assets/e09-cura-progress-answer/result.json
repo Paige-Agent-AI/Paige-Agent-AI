@@ -1,0 +1,62 @@
+{
+  "component": "actual PaigeChat",
+  "syntheticData": true,
+  "authenticated": false,
+  "modelCalled": false,
+  "screens": [
+    {
+      "state": "reply",
+      "path": "e09-cura-progress-reply-1536.png",
+      "width": 1536,
+      "height": 770
+    },
+    {
+      "state": "reply",
+      "path": "e09-cura-progress-reply-1366.png",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "state": "reply",
+      "path": "e09-cura-progress-reply-1024.png",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "state": "reply",
+      "path": "e09-cura-progress-reply-900.png",
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "state": "reply",
+      "path": "e09-cura-progress-reply-390.png",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "state": "changed-source-held",
+      "path": "e09-cura-progress-held-390.png",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "state": "changed-source-held",
+      "path": "e09-cura-progress-held-dark-320.png",
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "reducedMotion": true
+    },
+    {
+      "state": "checked-original-accepted-question-no-fabricated-answer",
+      "path": "e09-cura-progress-checked-dark-320.png",
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "keyboardFocus": "Message Cura",
+      "reducedMotion": true
+    }
+  ],
+  "toolLimitation": "One unbounded DOM inspection stalled; abandoned. All later CDP operations bounded to8seconds. No DOM metric/real Safari/full shell/AT proof claimed."
+}

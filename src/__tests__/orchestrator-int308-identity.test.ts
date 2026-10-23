@@ -190,7 +190,9 @@ describe("INT-308 §6 — the negative matrix (JWT callers cannot forge identity
   it("H: soft-agent invocations receive the SAME verified context for current authority", () => {
     const soft = extractFn(source, "invokeSoft");
     expect(soft).toMatch(/context: OrchestratorRequest\["context"\]/);
-    expect(soft).toContain("zionProviderAuthority(agent, context, tenantId, currentScope)");
+    expect(soft).toContain("zionProviderAuthority(agent, context, tenantId, currentScope, actorlessService)");
+    expect(source).toContain("isService && !ctx.user_id");
+    expect(source).not.toContain("payload.actorlessService");
     expect(source).not.toContain("user_id: payload.context?.user_id ?? callerId");
   });
 

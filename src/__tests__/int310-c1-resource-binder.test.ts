@@ -18,6 +18,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import ts from "typescript";
+import * as nodeUtil from "node:util";
 
 const root = join(__dirname, "..", "..");
 const fnDir = join(root, "supabase/functions");
@@ -266,6 +267,7 @@ function loadEdge(
     const req = (spec: string): unknown => {
       if (spec.endsWith("/cors")) return { corsHeaders: {} };
       if (spec.startsWith("npm:@supabase/supabase-js") || spec.includes("esm.sh/@supabase/supabase-js")) return supa;
+      if (spec === "node:util") return nodeUtil;
       if (spec.startsWith(".")) { const t = resolve(dirname(abs), spec); const k = t.slice(fnDir.length + 1).replace(/\\/g, "/"); return (k in stubs) ? stubs[k] : load(t); }
       throw new Error(`unmapped ${spec} in ${rel}`);
     };

@@ -1,3 +1,13 @@
+## EXP05 original MCP ZION context — source preparation, October23
+
+Original delegate_to_subagent now forwards the existing server-resolved workspace
+for ZION even without a contact; missing/unavailable scope refuses before transport.
+Four causal failures/three incumbent passes become seven passing original-handler
+cases; original MCP governed-door/destructive guards and self-tests retained.
+[Evidence and boundary](../evidence/ui-delivery/exp05-mcp-zion-workspace.md).
+Source preparation only: no instructions/provider/activation or authenticated
+ZION result, historical acceptance or full ten-outcome/E5/founder closure.
+
 ## EXP02 Finance specialist attribution — October23 development
 
 Owner Oct23 standard is canonical in the existing
@@ -2661,3 +2671,44 @@ Experiential original signed-in prepared signing/approval/consent/native write/s
 effective terms and all12/CentralQA/cohorts/provider remain owed; Founder NOT_ACCEPTED.
 ALG01/12 supporting checks only; ALG02/13/catalogue unchanged. Next original PDF
 prepared-field renderer/source integration remains bounded, not a second engine.
+
+
+## EXP02 original source-backed report Chat consumer — October23 development
+
+The original document_generate tool adds closed business_review briefs with an
+explicit month/quarter period and1–12 issued canonical Metric references. Same
+caller-JWT submit, owned thread/stable intent and existing owner/admin/Studio
+gates; the server520002/worker51/reader foundations are already released. No
+model-supplied numbers/capture/tenant/revision steering or new registry/runtime.
+Original nine document types/non-signable Sales language and shared holds remain.
+
+Original branch2FAIL/14PASS and unknown-hold4FAIL/27SKIP were repaired before
+publication.229/eight suites and final formatted104/two PASS. The actual extracted
+handler uses explicit RPC/receipt ports, not a model/server/authenticated session.
+Connection/unknown status/missing work identity/rejected transport set original
+requestExecutionState.needsReview; confirmed SQL refusal is not accepted work.
+No blind retry or completion from admission. Owned test/validator lint0;
+whole Chat407baseline/407current, no increase (inherited errors not called clean).
+
+Original strict source binding refuses the changed enclosing Chat handler.
+Independent read-only AST decomposition reproduced all29 baseline bindings/122
+dependencies and isolated only identity15; dispatch/control/other identity/helper/
+import/extractor/metadata/dependency pins remain unchanged. Literal renewal and
+original hostile tests are part of the same bounded source review, not a waiver.
+[Flow/limits](../evidence/ui-delivery/e2-source-backed-review-chat.md).
+
+Mandatory exact-head CI/Edge type ratchet and normal actual Chat package/config
+readback remain due. Original source-bound renderer images are supporting
+synthetic proof; actual ordinary report/artifact/turn/Rail/reload/permission/
+interruption/unknown recovery/Live/cohorts and complete19/founder acceptance remain
+UNVERIFIED. CAP014/015 stay Unverified; other seven analytics/access/algorithm
+states unchanged. Original9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved.
+Functional source tested / Visual unchanged original renderer / Experiential
+released ordinary workflow owed / Founder NOT_ACCEPTED.
+
+Current composition: recovery2663 mergedfd123cc (original993 parent), actual main
+64347d7 retained with no peer source change. Combined283 cases had one unchanged
+5second C1 timeout; original isolated C1 suite53/53 PASS without changing timeout,
+and original77/77 source mutation controls PASS. Worker/native-cache startup errors
+remain separate history. Chat407baseline/407current, no increase; owned lint0.
+New exact-head review/hosted CI/normal Edge source readback remain mandatory.

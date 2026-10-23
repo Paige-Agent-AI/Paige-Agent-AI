@@ -1,3 +1,51 @@
+## EXP02 Finance specialist attribution — October23 development
+
+Owner Oct23 standard is canonical in the existing
+[roster doctrine](../doctrine/paige-c-suite-roster.md#specialist-identity-and-department-attribution).
+Finance→VERA uses the original typed department edges and VP_ROSTER; global PAIGE
+and actual-contributor bylines retain their meaning. Original Finance and Debt
+review labels/addressed prompts, current records/constraints, authorization and
+editable Chat handoff are preserved. No runtime, provider, permission or capability
+activation.65 focused cases/four suites, scoped lint/type ratchet/build and19
+original native synthetic frames support the candidate; released ordinary review
+QA remains due. [Evidence](../evidence/ui-delivery/e2-finance-vera-attribution.md).
+
+Existing North Star, Strategy, Bootstrap and official roadmap policy pointers
+were saved/read back; existing Delivery Register Standards Evidence row15 and
+specialist/capability ownership notes synchronized. Original owner handoffs:
+ANT50MENTOR35c0c368, ANT81MERIT684ce232, ANT11ZIONa9120873,
+ANT163CURA0b59e72d and ANT164NEXUSef4ea8eb; incorporation remains pending actual owner receipts.
+No peer-source takeover, new agent or Agency/subaccount implementation.
+Functional candidate / Visual synthetic verified / Experiential released handoff
+owed / Founder NOT_ACCEPTED. Algorithms/readiness and all19 outcomes unchanged.
+
+Additive ordinary read evidence: second fresh weekly review observed settled
+within58seconds, same normalized2863character answer after reload; addressed
+Finance read through PAIGE observed within76seconds, same2419character answer
+after reload. Empty composer restored, no action-approval control requested.
+Original current sources/unknown cash/accounting and receipt classes remained
+distinct. Raw evidence stays private. These bounded read cases do not prove the
+unreleased VERA CTA, independent specialist delegation, execution, SLO or full19.
+Finance2672/33453 earned all10 applicable checks/two statuses including189database;
+incoming855fff only requires shared Master-row composition, preserving all peer
+rows and unchanged16source/19frame pins. New exact-head gates remain mandatory.
+
+## EXP02 original review capture admission — October23 source released
+
+PR2667 reviewed eb3ea416e30bd79a695033c9137b807b0f4e59fe/tree2cf55fdb72b3bb6dca6cd62cc01df825e1b9f602,
+AUTHOR-REVIEW / LOWER ASSURANCE5631364387+5632071752, all13 exact-head checks/full
+genuine Preview/database proof and two statuses SUCCESS. Main
+ee77807f9c65f4846d3b3ba5ca2aa12ce1f6e2e1/treeecd290a16eb9a0c481dfb336b2a5ca3664cefc86
+matches the inspected98009df+eb3e composition. Normal migration39995599642/
+deploy120558409951 SUCCESS; actual520002 and original submit5640127bb3838b8aee4f5bc38eec1fd5,
+private capture151a73a04e1e0d97ce2f641a5ee34c26/ABI/owner/config/ACL verified.
+Own Edge N/A. Productiondpl_6XMbYF5nkUiQrkXyrQQ4ARwrHJA4 READY/canonical aliases,
+public HTTP200 exactee77807f9c65f4846d3b3ba5ca2aa12ce1f6e2e1-mvl8xfsn/null.
+[Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2667#issuecomment-6370897287).
+Original Chat report consumer remains separate; no monthly/quarterly customer,
+ordinary role/cohort/Live or full19 acceptance. CAP014/015 Unverified. Historical
+9PASS/0FAIL and12PASS/0FAIL/4BLOCKED remain intact. No new runtime/store/activation.
+
 ## EXP02 report producer released — October23; original worker composed
 
 PR2652 reviewed4007a42f9da69d17c5ff01296ea04494750f7578/tree1f4295b5c07aeadcf3cd49c826d4f08fb76233f8,
@@ -129,6 +177,23 @@ effective terms are required before prepared signing; all O1–O12, actual ordin
 roles/cohorts/provider/CentralQA/one whole founder evaluation remain incomplete.
 No competing engine/store, Portal UI, provider/security activation, legal claim
 or Capabilities/Algorithm Live promotion.
+
+## EXP04 original native signature — October23 verified source release
+
+2662 reviewed1a53da9b2f87f7d40db9afd70bd01b5a3a9222d4/LOWER5631905272
+mergeda13394776cbc1471556def66e5208ea66e483035 with inspected/actual tree
+bb42aee0b07c00d4aaa28ac85b649125bd053958. All13 exact-head gates/full normal
+Preview/two statuses PASS; normal39998561769/deploy120568593233 applied530004
+after520002. Actual original signature/consent/event transaction and immutable
+issued/recorded identity guard match source,13-argument ABI, INVOKER/empty path,
+postgres ownership/service-only writer/no ordinary execute and enabled trigger.
+Native323/all255 Portal assertions retained. Exact web3GWD READY and both public
+a133-mvl9p1rd/null observed17:59UTC. Own Edge N/A; native consumer2670 still pending.
+[Native release6371363163](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2662#issuecomment-6371363163), Master4.0.
+Earlier failed Preview/grant reproduction remain evidence. Same original records,
+no historical audit fabrication, engine/store/provider/role/activation or customer
+acceptance claim. Full12/prepared-map/effective terms/Communications/retrieval,
+ordinary roles/cohorts/CentralQA/provider and one founder evaluation remain owed.
 
 ## EXP04 original retained signing preflight — October23 source release
 

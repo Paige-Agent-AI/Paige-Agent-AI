@@ -60,11 +60,34 @@ SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001'
 INSERT INTO seam_result SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011');
 SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='UNAVAILABLE' AND bundle->'values'='null'::jsonb AND bundle#>>'{range,key}'='week' FROM seam_result),'flat unavailable contract');
 SELECT pg_temp.require_true((SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref')=bundle FROM seam_result),'same asof reference readback');
+-- EXP02 private document consumer: the temporary bridge models the existing
+-- SECURITY DEFINER native writer. It is rolled back, never an application grant.
+RESET ROLE;
+CREATE FUNCTION pg_temp.capture_document_metrics(refs jsonb) RETURNS jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path='' AS $$
+ SELECT public._paige_document_capture_metric_evidence(refs)
+$$;
+SELECT pg_temp.require_true(NOT EXISTS (
+ SELECT 1 FROM (VALUES ('anon'),('authenticated'),('service_role')) roles(name)
+ WHERE has_function_privilege(name,'public._paige_document_capture_metric_evidence(jsonb)','EXECUTE')
+),'report capture has no application-role execute grant');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_denied($q$SELECT public._paige_document_capture_metric_evidence(jsonb_build_array(bundle->>'evidence_ref')) FROM seam_result$q$,'private report capture is not a public RPC');
+SELECT pg_temp.require_true((SELECT
+ (capture->'measurements'->0)=(bundle-'account_epoch'-'account_epoch_ref')
+ AND capture->>'version'='1'
+ AND (capture->>'captured_at')::timestamptz >= (bundle->>'as_of')::timestamptz
+ FROM seam_result CROSS JOIN LATERAL (SELECT pg_temp.capture_document_metrics(jsonb_build_array(bundle->>'evidence_ref')) capture) proof),
+ 'report preserves exact unavailable/null, range, asof, definition, coverage and original provenance');
+SELECT pg_temp.require_invalid($q$SELECT pg_temp.capture_document_metrics('[]')$q$,'empty report references');
+SELECT pg_temp.require_invalid($q$SELECT pg_temp.capture_document_metrics(jsonb_build_array(bundle->>'evidence_ref',bundle->>'evidence_ref')) FROM seam_result$q$,'duplicate report references');
+SELECT pg_temp.require_invalid($q$SELECT pg_temp.capture_document_metrics(jsonb_build_array(jsonb_build_object('evidence_ref',bundle->>'evidence_ref','values',9000))) FROM seam_result$q$,'caller values cannot become report evidence');
 SELECT pg_temp.require_invalid($q$SELECT public.issue_analytics_evidence_bundle('business.fabricated','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011')$q$,'unknown metric');
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000012')$q$,'epoch mismatch');
 SELECT pg_temp.require_denied($q$SELECT public._resolve_legacy_analytics_evidence_reference('aneb_v1_'||repeat('a',64))$q$,'private legacy seam');
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000002',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000002","role":"authenticated"}',true);
 SELECT pg_temp.require_denied($q$SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref') FROM seam_result$q$,'cross actor reference');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.capture_document_metrics(jsonb_build_array(bundle->>'evidence_ref')) FROM seam_result$q$,'cross actor report capture');
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011')$q$,'ordinary member denied');
 SELECT pg_temp.require_denied(format('SELECT public.issue_analytics_evidence_bundle(%L,%L,%L::jsonb,%L,now()-interval %L,now(),%L::uuid)',
  metric,'1.0.0','{}','week','7 days','a3450000-0000-4000-8000-000000000011'),'ordinary member cannot issue diagnostics')
@@ -76,6 +99,7 @@ SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001'
 UPDATE public.analytics_evidence_reference SET expires_at=clock_timestamp()-interval '1 second',issued_at=clock_timestamp()-interval '1 hour' WHERE token_digest=encode(extensions.digest(convert_to((SELECT bundle->>'evidence_ref' FROM seam_result),'UTF8'),'sha256'),'hex');
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.require_denied($q$SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref') FROM seam_result$q$,'expired reference');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.capture_document_metrics(jsonb_build_array(bundle->>'evidence_ref')) FROM seam_result$q$,'expired report capture');
 RESET ROLE;
 -- Stateful proofs use the same actual actor seated in two real fixture tenants.
 SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);

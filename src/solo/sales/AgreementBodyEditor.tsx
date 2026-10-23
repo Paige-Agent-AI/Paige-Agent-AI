@@ -25,8 +25,34 @@ function ScopedBodyEditor({ value, onChange, readOnly = false }: Props) {
   const [editorEpoch, setEditorEpoch] = React.useState(0);
   const authorInput = React.useRef(false);
   const alive = React.useRef(true);
+  const editorFieldset = React.useRef<HTMLFieldSetElement>(null);
   const description = React.useId();
   React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  React.useEffect(() => {
+    let frame: number | undefined;
+    const restoreNativeMenuFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.isComposing) return;
+      const fieldset = editorFieldset.current;
+      const menu = event.target instanceof Element ? event.target.closest('[role="listbox"]') : null;
+      if (!fieldset?.isConnected || fieldset.disabled || !menu?.id) return;
+      const trigger = Array.from(fieldset.querySelectorAll<HTMLButtonElement>('[role="combobox"][aria-expanded="true"]'))
+        .find(control => control.getAttribute('aria-controls') === menu.id);
+      if (!trigger) return;
+      // The native menu is outside the editor event boundary and prevents close
+      // autofocus. Observe only its own aria-controls pair; dismissal and the
+      // original Sales leave guard remain authoritative.
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = undefined;
+        if (!alive.current || editorFieldset.current !== fieldset || !fieldset.isConnected || fieldset.disabled
+          || !trigger.isConnected || trigger.disabled || trigger.getAttribute('aria-expanded') !== 'false'
+          || document.visibilityState === 'hidden') return;
+        if (document.activeElement === document.body || menu.contains(document.activeElement)) trigger.focus({ preventScroll: true });
+      });
+    };
+    document.addEventListener('keydown', restoreNativeMenuFocus, true);
+    return () => { document.removeEventListener('keydown', restoreNativeMenuFocus, true); if (frame !== undefined) cancelAnimationFrame(frame); };
+  }, []);
   const chooseView = (next: 'document' | 'source') => {
     authorInput.current = false;
     if (next === 'document') { setImportFailed(false); setEditorEpoch(epoch => epoch + 1); }
@@ -40,7 +66,7 @@ function ScopedBodyEditor({ value, onChange, readOnly = false }: Props) {
     {importFailed && <p role="alert" className="e04-editor-alert">Some document formatting could not be opened. Your wording is intact; you can continue editing the text below.</p>}
     {view === 'source' || importFailed
       ? <label className="e04-source-label">Agreement text source<textarea value={value} readOnly={readOnly} spellCheck aria-describedby={description} onChange={event => onChange(event.target.value)} /></label>
-      : <fieldset disabled={readOnly} className="e04-editor-fieldset" aria-label="Agreement document editor" onBeforeInputCapture={() => { authorInput.current = true; }}
+      : <fieldset ref={editorFieldset} disabled={readOnly} className="e04-editor-fieldset" aria-label="Agreement document editor" onBeforeInputCapture={() => { authorInput.current = true; }}
           onInputCapture={() => { authorInput.current = true; }}
           onPasteCapture={() => { authorInput.current = true; }}
           onCutCapture={() => { authorInput.current = true; }}

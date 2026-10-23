@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP05 prepared-question focus and original-window return repaired.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2629](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2629): reuse the original PAIGE opener for Playbooks preparation in the docked and owned pop-out composer | Reviewed `3443af2c34bf94b806e6d6c58efce6d8a5d49c4e`; final5621632414 AUTHOR-REVIEW / LOWER ASSURANCE, valid P2 4354056300 reproduced/fixed/resolved. All10 applicable exact-head checks/two statuses SUCCESS; no-schema Preview SKIP. Main `fc52b998237c0eee2dd80fc9b1589f4c0259ba1f`; actual/inspected tree `b4e6850c613e4945ea4d769e44cee8a6070e2c8a`, preserving E04#2564 and preceding main. Exact production `dpl_HHKJbs5i3tNXfHQmrfErJyi1syb4` READY/canonical aliases; both public hosts build `fc52b998237c0eee2dd80fc9b1589f4c0259ba1f-mvk5dc0k`, customerUpdate:null. Observed bootstrap/main imports lead to served SoloEntry-BPM0fv8f.js, 2,470,117bytes/SHA256 `36f2cc09ca4a124191a77980fce247c15ca280f2c909e46c787535e66c635a73`, all five owning markers.111 local cases/six suites, scoped lint0/0 and UI/SOLO guards PASS; sixteen source-pinned synthetic rendered frames remain distinct from ordinary-owner proof. [Production/source/authenticated receipt6353372704](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2629#issuecomment-6353372704). | One genuine ordinary SOLO owner confirms keyboard preparation and settled editor focus in both original docked and pop-out surfaces; closing that child returns the same unsent question, one original workspace and launcher focus. Only QA text cleared; clean reload has visible Chat, empty composer, disabled Send and no overflow at1536x735 CSS viewport. Actual eleven Operations catalogue entries remain Listed / Unverified. No Send/New chat/domain/provider action or business execution receipt claimed; own migrations/Edge/roles/INT346 activation N/A. Original Spine/Harness/Trust/Layer C/Rail preserved; focus is presentation, not executed work. Full ten outcomes/E5-CV1–9, workflow/weekly authorization-execution-history-notices, real ZION delegation, populated records, separate Live/equivalent eligible existing/new cohorts, native200%/AT and founder acceptance remain incomplete. Internal production repair, no customer release identity/announcement. Recovery is a reviewed presentation forward-fix/revert without original-action replay. |
+
 **2026-10-22 — EXP05 original internal-process inspection in Operations released.**
 
 | Increment | Exact released identity and proof | Completion boundary |
@@ -5222,10 +5228,13 @@ deploy120038195038, SUCCESS: remote up to date, persistence guard passed and
 `db-live` now `7a874fa2cb6193c8ae795f227a8b3f8a3dbb6cd8`.
 Pending-installation repair2610 is superseded unmerged; do not rewrite the now
 recorded migration. Its original causal proof/reviews remain historical.
-Workspace2604 composes released security2607/main7a874, preserving both manifest
-install pins. Only the benign sanitizer regression is reused; no native repair,
-new writer, permission, provider or execution activation. Mounted/editor release,
-ordinary owner/staff/linked-client acceptance and all twelve outcomes remain owed.
+Earlier workspace checkpoint2604 composed security2607/main7a874; the actual
+release below supersedes its then-pending mounted/editor source state. Original
+install pins and native engine are preserved; no native repair was reapplied.
+
+| Increment | Exact released identity and proof | Completion boundary |
+|---|---|---|
+| EXP04 private exact-PDF and assigned-field workspace [#2604](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2604) | Reviewed6b8d5db6a8bb47c0f37e12f79a0bea0533a3b301; reviews5620971691/5621265256 AUTHOR-REVIEW / LOWER ASSURANCE. All10 applicable exact-head checks/two statuses SUCCESS, normal no-schema Preview SKIP. Main4dac29197cdfe834b8b5bccb6f7266f28c9468e0, exact uniontree9a8f8f59419c587754c1032d2521ccd591c5ee3d. Productiondpl_E1YR69zBJb2bjJwyCCRKiwCv3rFV READY/canonical aliases; public build4dac-mvk2n058/customerUpdate:null and served source modules verified. Native2599/300004/Edge37 prerequisite separately verified, no own SQL/Edge delta. | Protected ANT52 bounded actual ordinary-owner real unsigned PDF, one required signer field, saved preparation2, full reload, identical event/checksum, earlier1 read-only, selected2 return and unchanged original wording/contentv1. No signing/link/send/payment/new identity. Actual editor menu-focus finding OPEN with bounded source repair in progress; author-run proof is not Central QA, staff/client/cohort/device/full12 or founder acceptance. No named customer release/announcement. |
 
 **2026-10-22 — EXP04 preparation owner API, native deployment held (earlier checkpoint; superseded by later parity above).**
 

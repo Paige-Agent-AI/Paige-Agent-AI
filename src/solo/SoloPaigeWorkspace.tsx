@@ -12,6 +12,7 @@ import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { useSoloKnowledge } from "./data/useSoloKnowledge";
 import { useSoloSkills } from "./data/useSoloSkills";
+import { usePaigeLiveStatus } from "./usePaigeLiveStatus";
 import { presentCatalogueCoverage } from "./catalogue-coverage";
 import { clearPaigeSurfaceScope, getPaigeBusinessPlanScope, getPaigeClientScope, subscribePaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePaigePublicPresenceScope } from "./paigePublicPresenceScope";
@@ -242,6 +243,25 @@ function SoloHistoryRail({ api }: { api: ChatRailApi }) {
 function CapabilitiesView() {
   const capability = useSoloSkills();
   const rows = useMemo(() => capability.skills, [capability.skills]);
+  // The Live row's access state is THIS account's canonical acknowledgement truth
+  // (review #2611 P2-3: a permanent hard-coded label is not an account-state
+  // implementation). "Acknowledged" means the person turned Live on for this
+  // account — it is never a claim that audio was verified.
+  const live = usePaigeLiveStatus();
+  const liveRow = live.state === "acknowledged"
+    ? { tone: "live" as const, pill: "Available", access: "Turned on for this account" }
+    : live.state === "revoked"
+      ? { tone: "unavailable" as const, pill: "Revoked", access: "Off for this account" }
+      : live.state === "expired"
+        ? { tone: "partial" as const, pill: "Consent expired", access: "Renew in chat to listen" }
+        : live.state === "loading"
+          ? { tone: "neutral" as const, pill: "Checking this account", access: "Checking…" }
+          : live.state === "unknown" || live.state === "unauthenticated"
+            // "unauthenticated" is practically unreachable behind this view's auth, but
+            // if it ever surfaces the honest answer is Unverified — never a guessed
+            // consent state (review #2657 P3-2).
+            ? { tone: "neutral" as const, pill: "Unverified", access: "Could not check" }
+            : { tone: "partial" as const, pill: "Consent required", access: "Not activated yet" };
   return (
     <div className="spw-management-view">
       <PanelHeader
@@ -281,7 +301,7 @@ function CapabilitiesView() {
               state is consent-required, never Active, until a person has actually turned it on.
               The label is this account's current fact, derived per-account when Live state is
               verified end-to-end (EXP01 PR5). */}
-          <div className="spw-cap-row"><div><strong>Live Conversation</strong><small>Two-way voice with Paige inside your chat — she listens and speaks in the same conversation. Off for your account until you turn it on from the chat composer: your browser asks for microphone permission, and Paige explains what the speech provider keeps before anything starts.</small></div><TruthPill tone="partial">Consent required</TruthPill><span>Not activated yet</span></div>
+          <div className="spw-cap-row"><div><strong>Live Conversation</strong><small>Two-way voice with Paige inside your chat — she listens and speaks in the same conversation. {liveRow.access === "Turned on for this account" ? "You turned this on; it stays yours to pause or end at any time." : "Off for your account until you turn it on from the chat composer: your browser asks for microphone permission, and Paige explains what the speech provider keeps before anything starts."}</small></div><TruthPill tone={liveRow.tone}>{liveRow.pill}</TruthPill><span>{liveRow.access}</span></div>
           <div className="spw-cap-row"><div><strong>Onboarding & business discovery</strong><small>Paige interviews your business in chat, tracks every confirmed detail into Setup, and you review, skip or correct each one. Speak or type — speaking needs Live Conversation turned on.</small></div><TruthPill tone="live">Available</TruthPill><span>Active</span></div>
           <div className="spw-cap-row"><div><strong>Code or sandbox execution</strong><small>Contextual previews may be shown, but no execution substrate is available.</small></div><TruthPill tone="unavailable">Unavailable</TruthPill><span>Off</span></div>
         </section>

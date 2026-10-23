@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: the RPC returns a navigation hint only and its comm
 SOLO_UI: YES: one Solo shell for every tenant; the lookup is the caller's own threads in their canonical workspace.
 UNVERIFIED: post-deploy rendered screenshot; authenticated returning-owner resume pass on the QA account; founder-drive completion retirement observed live.
 
-INTERNAL_BUILD_IDENTITY: 061ee344b5a82ab13403a2fc913820bc6f53b298; deployment=PROOF_OWED(undeployed fix branch; post-merge deploy-migrations + bundle readback owed); environment=local; migrations=PROOF_OWED(20271113400000_latest_solo_business_interview_thread);edge=NOT_APPLICABLE; evidence=scripts/e01-interview-resume-check.mjs
+INTERNAL_BUILD_IDENTITY: exact-head=2e75fb061a6f3da50f38c475c2e0865b3d5b999f; squash-merge=4e339bc9e47c0040f50f6ddefeb3cb955675340b; deployment=prod-migration-recorded-20271113400000; environment=production; migrations=APPLIED(20271113400000_latest_solo_business_interview_thread);edge=NOT_APPLICABLE; evidence=scripts/e01-interview-resume-check.mjs
 RELEASE_CHANNEL: development: local/development build environment; production release follows the standing small-PR merge/deploy/readback gate.
 RELEASE_CLASSIFICATION: internal-only: onboarding resume/retirement correction ahead of the single EXP01 founder evaluation.
 CUSTOMER_RELEASE_IDENTITY: none: fix branch only; founder evaluation precedes any release identity.
@@ -35,3 +35,29 @@ SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: no layout change.
 SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: no layout change.
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no layout change.
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no layout change.
+
+## Release identity addendum (2026-10-23 identity repair)
+
+The original INTERNAL_BUILD_IDENTITY cited the branch's first commit hash
+(`061ee344b…`), which became unreachable after squash merge — stale identity
+(coordinator finding). Corrected above: exact reviewed head `2e75fb061a6f3da50f38c475c2e0865b3d5b999f` (all
+checks green; an earlier draft of THIS addendum fabricated the SHA tail — caught by
+independent review of this docs PR), squash merge `4e339bc9e`.
+
+Production readback (completed 2026-10-23, recorded on ANT-50): the migration
+`20271113400000_latest_solo_business_interview_thread` is RECORDED in
+production `supabase_migrations.schema_migrations`; the RPC is live with the
+exact reviewed body (candidate window + thread-shape predicates) and grants
+exactly authenticated-EXECUTE-only — both verified on the read-only seam. The
+deploy-migrations refusal race and its resolution (reconciliation applied the
+original version out-of-band; renumber PR #2649 closed unmerged to avoid a
+duplicate) are dispositioned on #2649 and issue #1548. The served bundle
+`SoloEntry-DosxqvBq.js` carries `latest_solo_business_interview_thread`,
+the interviewThread deep-link usage, and PR3's voice-entry markers. The gate
+is green on current main (deploy-migrations run 39888217187 SUCCESS).
+
+Rendered-evidence limitation, stated plainly: no production screenshot of the
+returning-owner resume or the retired stale link exists; browser-capture
+tooling was unavailable and the founder's evaluation window has not occurred.
+RENDERED_EVIDENCE and AUTHENTICATED_RUNTIME above remain UNVERIFIED and are
+owed to that window.

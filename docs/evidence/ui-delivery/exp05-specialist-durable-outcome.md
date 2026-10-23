@@ -1,5 +1,24 @@
 # EXP05 original specialist work identity and outcome truth
 
+## Current release hold and CI reconciliation — October 23
+
+Hosted exact056 verification remains FAILED, not waived. Its checked failure
+artifact12518064683 identifies five original C1 fixture cases; local Windows
+also exposed four silently skipped portable stub/mutation cases. The original
+fixture now acknowledges the same invocation ID/status required by the repaired
+producer and normalizes source keys. All contact/tenant selectors, allowlist,
+expected refusals and source mutations remain. Corrected53 C1 cases and157
+cases across five original authority/identity/receipt/Chat suites PASS locally.
+
+The final native grant proof separately failed because its count assumed exactly
+one older unrecorded file. It correctly planned two when the deliberate probe
+joined existing production drift. Dependency2676 asserts the exact original probe
+in the original planner list; all actual GRANT/REVOKE survival and reconcile-only
+negative assertions remain unchanged. It requires genuine hosted native proof.
+Neither source correction nor local helper tests relabel the failed hosted run.
+No production source, authority or fingerprint changed in this fixture correction.
+New exact-head review/CI and dependency2676 merge precede the recovery release.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: docs/delivery/experience-05-weekly-commitment-check.md; original governed delegate request -> trusted actor/tenant/resource -> original invocation -> existing runtime -> original saved outcome -> canonical capability receipt -> truthful response. Original uncertainty permits inspection without replay.
 PAIGE_UI_DESIGN: PASS: installed project skill and original Operations/PAIGE status contracts applied to this backend feedback repair; no component, geometry, navigation or token changes.

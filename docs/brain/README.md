@@ -273,6 +273,10 @@ Typed CURA Progress consumer#2635/head43ba0a181877810630191dc8d8769278ff63b6fa m
 
 Original Sessions source#2638/head3697d08619f53d5135ea60031c22d9a791c74883 merged07c895ba9e5f6c2335633656c2b3ef9ba0a92285/treebd748dc16d27dea992552b1acccc281bf9d742f7; all13 checks/full Preview/two statuses/113 Native assertions PASS, LOWER5629555770. Normal migrations39968670771 actual460009 and public/private/location body/ABI/ACL readback verified. Native source binding#2644/head421b04ee9ac6d38416deaea5278411e02f1e5e19 mergedbdd1a553386b6f1a84aac6a315114dc8f4df4983/tree3962290aa1101585a665d3a4d21bcf55d89d6888; all13 checks/full Preview/two statuses/208 Native assertions PASS, LOWER5629664134/correction5629682159. Normal migrations39969692632 actual470009, all14 composed/dependency/native bodies/ABI/owner/search path/ACL and enabled terminal trigger verified. Original global linkage guard retained. Exact READY websdpl_NfSPQkBxVJdBRSNVLw14gZ1QpAr9/dpl_HZ6vLG2JuSU5QWorbibGuhyerBXC; exact public manifests not separately sampled. Receipts6367200261/6367298357. No booking/provider/customer action, model or complete Experience proof; typed consumer2659 is still a separate release.
 
+October23 continuation: typed Sessions consumer#2659/head78cf1d05385a4c31888944997046bf95233d0c7e merged48532bb37885e37c4ae39eef5e8c54a114b4ba9f/tree6f14f51d776e91a2a89d483b4048b204c97c4dfc, exact reviewed union. All11 required checks/full Preview/two statuses SUCCESS; final LOWER5630431897/5631059005.180 focused cases are two actual173+7 runs; hosted Deno/type/build/C0b PASS after recorded type-only repair. Normal Edge39984261988/job120519232329 SUCCESS/source-config PASS/edge-live advanced; actual515 ACTIVE/JWTtrue/all267 served files match source, Coreb000dd61. Original native Sessions46/47/publication source/ABI/ACL retained. Exact READY webdpl_F6izksU5X22BA9UoxPkcYv9r86PX; exact public485 not independently sampled, containingdd79820f-mvl61nzf/customerUpdate:null verified. Receipt6369355348. Original business role, private accepted question/history and current source/policy checks; nine raw original-component frames, no actual customer/model/scheduling outcome or founder proof.
+
+Original legacy reader isolation#2664/head1f805967a49aeefbbb048e8a9d2fa413772a1476 mergeddd79820f8b80c79538fb741e1e54a5b71191a328/treedbf2c5406545cf1d74be1f7616a3532add038e03. All13 checks/full Preview/two statuses and210 Native assertions PASS; final LOWER5630589272/5631073709. Normal migration39984430668/job120519999005 applied500009; exact three bodies/original resolver/ABI/defaults/owner/security/search paths/ACL independently read back unchanged except the one selected-relationship predicate per original lookup. Activity stays INVOKER under original CRM RLS/consent. Both original global and within-business unique indexes remain valid; activation NOT_ACTIVATED. Exact READY webdpl_Br5E1ijUC1BD85LDk6L3uHB53ZGs/publicdd79820f-mvl61nzf verified, receipt6369356478. Earlier failed ACL replay and207/208 fixture run retained and corrected without grants/guard weakening. Actual customer/returning/full Experience proof remains owed. Sole Master4.0 rows record these source releases; this mechanical closeout adds no product, policy, algorithm or capability maturity and is not logged recursively.
+
 These are bounded production/source increments, not client/model/full Experience acceptance. Native binding2617 is now separately deployed/source-verified; typed Progress consumer2635 is separately deployed/source-verified; seven capabilities Limited, algorithms unchanged, global identity constraint and provider/INT346 gates retained. No founder test requested before the one complete integrated evaluation. Sole Master§4.0 rows record exact releases; this mechanical closeout adds no product or capability promotion.
 
 ## EXP09 CURA business request scope — October22 verified release
@@ -2498,6 +2502,48 @@ new request/provider/roles/cohorts/CentralQA/full12 UNVERIFIED; Founder NOT_ACCE
 No customer release name/announcement, algorithm or catalogue promotion. C13
 assigned inputs and subsequent native exact approval/signing/seal/effective terms
 remain required. Master§4.0 and the original journey retain canonical boundaries.
+
+## EXP02 original reader released; source-bound report admission candidate — October23
+
+Reader2661 reviewed9fa94386c7578d9668aff887034ecbc9cbf6f9ac, separate LOWER5630725979/
+5631154981, all10 applicable checks/two statuses SUCCESS and normal source-only
+PreviewSKIP. Actual main440b97b79fb73eaa786def0f58467aa9147ef9cd/tree92897fe6 is the
+inspected dd798+9fa union. Normal productiondpl_AWSyRnnGsJr2ivaik3HQRBn96pAL READY,
+public440b97b79fb73eaa786def0f58467aa9147ef9cd-mvl68530/null; all5 original reader
+markers verified in observed served assets. Master§4.0 and release6369573538 retain
+the exact boundary. Same authorized SOLO workspace/weekly answer survives the
+original update reload; no typed report Card was present, so its customer acceptance
+remains UNVERIFIED. Original17+2 render frames stay synthetic; no catalogue promotion.
+
+Next small REUSE/EXTEND slice changes only the original submit RPC, its original
+native proof and real-issuer full-schema proof. Never-applied migration520002 replaces
+reserved490002 after actual production frontier500009 and EXP05reservation510005;
+no deployed history/permissions or other owner's source changes. The original
+submit61b3/private capture151a remain the guarded prerequisites. Five exact fragments
+extend original Auth-only submit with explicit month/quarter period and1–12 canonical
+references. Current actor/thread/Metric authority is required, including after the
+original lock wait. Capture once under that lock; compare same intent/reference order
+without rereading expired evidence. Original claim, worker, producer, turn and Rail
+remain the sole execution/result path. No model/provider, new metric calculation,
+store, scheduler, approval engine, public impersonation or consequential activation.
+
+Original positive-admission probe RED at TYPE_INVALID; actual contended authority
+probe exposed a missing post-wait check and was repaired before release. PostgreSQL16
+native proof covers competing requests/one capture, six authority retirement cases,
+source/period/caller-fact refusal, immutable expired-reference replay, original atomic
+artifact/turn/Rail and safe status DTO; recapture/removed-authority controls fail.
+Resolver IO in that proof is explicitly isolated. The extended existing full-schema
+proof uses the real issuer/capture/claim/writer inside its original rollback; hosted
+execution is still required. Initial sandbox setup/static replacement-probe failures
+are not product proof. No test/loader/baseline/required guard is waived.
+
+Functional: candidate, not merged/deployed/accepted. Visual: no current UI change;
+original reader release is separate. Experiential: original Chat typed admission
+still refuses reports; next bounded original consumer and authenticated retrieval/
+reload/permissions/Live/cohorts remain owed. Founder NOT_ACCEPTED. ALG03/06/11/12/13
+and CAP014/015 Unverified unchanged; all19/nine remain required. Master shipped row
+N/A for this new candidate until an actual safe merge/release. Coordinate protected
+Chat consumer source via ANT161 before editing; preserve EXP01/EXP05/EXP09 leases.
 
 ## EXP04 checked prepared signer input — verified source release October23
 

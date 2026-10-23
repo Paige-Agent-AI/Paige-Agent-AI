@@ -697,7 +697,7 @@ describe("Adding a tool", () => {
     // EXP10: Slack is a curated provider, not a generic entry. The catalogue tile must open the
     // form with Slack's hosted endpoint and bearer mode already chosen (the tenant supplies only
     // a name and their Slack user token), and the create must carry provider_key=slack so the
-    // server-side descriptor (migration 20271113320000) governs it.
+    // server-side descriptor (migration 20271113410000) governs it.
     world({ rows: [] });
     const { host } = await render();
     await openCatalogue(host);

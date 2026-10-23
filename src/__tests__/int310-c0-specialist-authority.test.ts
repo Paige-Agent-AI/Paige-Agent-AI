@@ -16,7 +16,7 @@
  */
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import ts from "typescript";
 
 const root = join(__dirname, "..", "..");
@@ -85,10 +85,10 @@ function fakeSupabase(h: Harness, cronValid: boolean) {
  *  relative import loaded for real, unless named in `stubs`. `mutate` rewrites one file's source. */
 function loadEdge(
   fn: string,
-  opts: { cronValid?: boolean; stubs?: Record<string, unknown>; mutate?: Record<string, (s: string) => string> } = {},
+  opts: { cronValid?: boolean; stubs?: Record<string, unknown>; mutate?: Record<string, (s: string) => string>; database?: () => unknown } = {},
 ): Harness {
   const h = { from: [], writes: [], rpc: [] } as unknown as Harness;
-  const supa = fakeSupabase(h, opts.cronValid ?? false);
+  const supa = opts.database ? { createClient: opts.database } : fakeSupabase(h, opts.cronValid ?? false);
   const env: Record<string, string> = {
     SUPABASE_URL: "https://example.supabase.co",
     SUPABASE_SERVICE_ROLE_KEY: SERVICE,
@@ -252,6 +252,78 @@ const ORCH_STUBS = {
 };
 // No contact selector: C0 asserts WHO may invoke; contact binding is C1's suite (int310-c1-resource-binder).
 const invoke = { action: "tool_invoke", slug: "email-composer", input: { intent: "x" } };
+
+// Exercise the REAL whole handler and canonical capability recorder. Only the
+// database/model transports are synthetic; no provider or production record.
+function durableSpecialist(options: { insert?: "error" | "invalid"; update?: "error" | "missing" | "mismatch" | "wrong-id" | "throw"; receipt?: "error" | "throw"; runtimeThrows?: boolean } = {}) {
+  const id = "cccccccc-2222-4222-8222-222222222222";
+  const rows: Record<string, unknown>[] = [];
+  const rpc = vi.fn(async (_name: string, ..._args: unknown[]) => {
+    if (options.receipt === "throw") throw new Error("synthetic receipt disconnect");
+    return { data: true, error: options.receipt === "error" ? { message: "synthetic receipt refusal" } : null };
+  });
+  const model = vi.fn(async () => {
+    if (options.runtimeThrows) throw new Error("synthetic model interruption");
+    return { choices: [{ message: { content: "Synthetic planning draft" } }] };
+  });
+  const database = () => ({
+    auth: { getUser: async () => ({ data: { user: { id: USER_A } }, error: null }) },
+    rpc: async (name: string, ...args: unknown[]) => name === "get_paige_persona_context"
+      ? { data: [{ tenant_id: TENANT_A, funding_enabled: false }], error: null } : rpc(name, ...args),
+    from(table: string) {
+      let mode = "read", patch: Record<string, unknown> = {};
+      const result = () => {
+        if (table === "paige_subagents") return { data: { slug: "zion", name: "ZION", runtime: "soft", domain: "operations", enabled: true, system_prompt: "Synthetic registered instructions", config: {}, tenant_id: null }, error: null };
+        if (mode === "insert") return { data: options.insert === "error" ? null : { id: options.insert === "invalid" ? "not-a-work-identity" : id }, error: options.insert === "error" ? { message: "synthetic insert failure" } : null };
+        if (options.update === "throw") throw new Error("synthetic lost update response");
+        return { data: options.update === "missing" ? null : { id: options.update === "wrong-id" ? CONTACT : id, status: options.update === "mismatch" ? "pending" : patch.status }, error: options.update === "error" ? { message: "synthetic update failure" } : null };
+      };
+      const chain = {
+        select: () => chain, eq: () => chain, or: () => chain, is: () => chain,
+        insert: (row: Record<string, unknown>) => { mode = "insert"; rows.push(row); return chain; },
+        update: (row: Record<string, unknown>) => { mode = "update"; patch = row; return chain; },
+        single: async () => result(), maybeSingle: async () => result(),
+        then: (resolve: (value: unknown) => void) => Promise.resolve(result()).then(resolve),
+      };
+      return chain;
+    },
+  });
+  const h = loadEdge("paige-orchestrator", { database, stubs: { ...ORCH_STUBS,
+    "_shared/model-router.ts": { ...ORCH_STUBS["_shared/model-router.ts"], routedChatCompletion: model },
+  } });
+  const run = () => h.handler(post({ action: "tool_invoke", slug: "zion", input: { request: "Synthetic read-only plan" }, context: { user_id: "forged-actor" } }, bearer(USER_JWT)));
+  return { id, rows, rpc, model, run };
+}
+
+describe("EXP05 original specialist durable outcome", () => {
+  it.each(["error", "invalid"] as const)("cannot dispatch when original invocation insert is %s", async insert => {
+    const h = durableSpecialist({ insert }); const r = await h.run();
+    expect(r.status).toBe(503); expect(await r.json()).toMatchObject({ ok: false, not_applied: true });
+    expect(h.model).not.toHaveBeenCalled(); expect(h.rpc).not.toHaveBeenCalled();
+  });
+  it.each(["error", "missing", "mismatch", "wrong-id", "throw"] as const)("a %s original outcome acknowledgment is unknown, never completed or retried", async update => {
+    const h = durableSpecialist({ update }); const r = await h.run(); const body = await r.json();
+    expect(body).toMatchObject({ ok: false, outcome_unknown: true, invocation_id: h.id });
+    expect(body).not.toHaveProperty("result"); expect(h.model).toHaveBeenCalledOnce(); expect(h.rpc).not.toHaveBeenCalled();
+  });
+  it.each(["error", "throw"] as const)("a %s at the canonical receipt does not become verified completion", async receipt => {
+    const h = durableSpecialist({ receipt }); const r = await h.run();
+    expect(await r.json()).toMatchObject({ ok: false, outcome_unknown: true, invocation_id: h.id });
+    expect(h.model).toHaveBeenCalledOnce(); expect(h.rpc).toHaveBeenCalledOnce();
+  });
+  it("verified completion retains the original actor, invocation and canonical receipt", async () => {
+    const h = durableSpecialist(); const r = await h.run();
+    expect(r.status).toBe(200); expect(await r.json()).toMatchObject({ ok: true, invocation_id: h.id, receipt_recorded: true });
+    expect(h.rows[0]).toMatchObject({ invoked_by: USER_A, tenant_id: TENANT_A, subagent_slug: "zion" });
+    expect(h.model).toHaveBeenCalledOnce(); expect(h.rpc).toHaveBeenCalledOnce();
+  });
+  it("a confirmed runtime refusal retains its failed outcome and original receipt", async () => {
+    const h = durableSpecialist({ runtimeThrows: true }); const r = await h.run();
+    expect(r.status).toBe(502); expect(await r.json()).toMatchObject({ ok: false, receipt_recorded: true, invocation_id: h.id });
+    expect(h.rpc.mock.calls[0][1]).toMatchObject({ _run_id: h.id, _actor_id: USER_A, _tenant_id: TENANT_A, _outcome: "capability_failed" });
+    expect(h.model).toHaveBeenCalledOnce();
+  });
+});
 
 describe("INT-310 C0 — paige-orchestrator tool_invoke needs a real actor", () => {
   it("anon-role JWT (no verified person) → 401 before any sub-agent is resolved", async () => {

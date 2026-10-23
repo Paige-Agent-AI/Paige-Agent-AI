@@ -1,5 +1,24 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — original specialist durable outcome, development
+
+REPAIR the existing orchestrator, not a new ZION runtime. Failed or malformed
+original invocation registration now prevents dispatch. The existing saved outcome
+must acknowledge the same invocation/status, and tenant completion requires the
+original canonical receipt result. Post-start errors retain the original identity
+and unknown state without a repeated provider/runtime call. Existing runtime
+failure and asynchronous-dispatch distinctions remain. This does not supply a
+request idempotency key or make new HTTP delegation replay-safe.
+
+Eight causal failures reproduced false completion with49 incumbent cases passing;
+the first corrected handler/identity/recorder campaign passes91. Final extended
+controls and exact-head release proof are separate gates. Source guard correctly
+holds only the changed orchestrator producer until reviewed renewal; all other
+source pins and verifier logic remain. [Evidence and orchestration contract](../evidence/ui-delivery/exp05-specialist-durable-outcome.md).
+No production invocation, provider, permission, prompt, model, schedule or trigger
+was changed. All eleven recipes remain Listed / Unverified; complete ZION,
+automations, recovery, ten outcomes/E5-CV1–9/cohorts/Live/founder proof remain owed.
+
 ## October22 — ZION original invocation receipt correction, development
 
 REPAIR the existing `paige-orchestrator` receipt producer. Original invocation

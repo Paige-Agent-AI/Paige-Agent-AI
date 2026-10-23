@@ -1,5 +1,16 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## EXP02 original Finance Metric context repair — October23 local
+
+Original Finance→VERA exact-reference handoff REPAIR is local: copy original
+Metric bounds/selected range identity, no guessed dates/replacement or authority.
+Actual preceding CTA/read/reload positive and missing-context refusal are separate
+QA6373093970 evidence.80/five/lint0/type10→6/build2m58s;12 native synthetic frames,
+[bounded evidence](../evidence/ui-delivery/e2-finance-metric-review-context.md).
+Corrected released exact-reference read/reload/roles/cohorts/Live/full19/founder proof
+remain owed; no capability/algorithm readiness change.
+
+
 ## October23 — original report admission released; specialist identity correction
 
 Original capture-once admission2667 is source-released at

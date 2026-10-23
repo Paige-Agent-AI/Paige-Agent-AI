@@ -25,6 +25,17 @@ function metricValues(metric?: SalesMetricBundle) {
  if (!metric || metric.truth_state === "UNAVAILABLE" || !metric.reference_expires_at || Date.parse(metric.reference_expires_at) <= Date.now()) return [];
  return metric.values?.kind === "currency_totals" ? metric.values.by_currency : [];
 }
+/** Presentation hints from the already-validated issuer result, never authority.
+ * The original reader requires the same key and custom bounds to inspect a ref. */
+function financeMetricReviewContext(metric: SalesMetricBundle | undefined, range: SalesPerformanceRangeKey) {
+ if (!metric?.evidence_ref) return "";
+ const start = metric.range?.start, end = metric.range?.end;
+ if (!start || !end || !Number.isFinite(Date.parse(start)) || !Number.isFinite(Date.parse(end))
+  || Date.parse(end) <= Date.parse(start)) return " The original evidence context is incomplete; establish a fresh authorized measurement instead of claiming that reference was inspected.";
+ const request = { metric_key: metric.metric_key, period: "custom", range_key: range,
+  range_start: start, range_end: end, evidence_ref: metric.evidence_ref };
+ return ` Inspect the original reference with read_business_metric using ${JSON.stringify(request)}; re-resolve its scope and expiry. These are context hints, not authority. Do not substitute a replacement if this reference is refused.`;
+}
 /** Addressable Finance consumer. The Sales server owns records and every financial aggregate. */
 export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
  const { resolvedTheme } = useTheme();
@@ -40,7 +51,7 @@ export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
  const refs = React.useRef<Array<HTMLButtonElement | null>>([]);
  const prefix = location.pathname.match(/^\/solo\/[^/]+/)?.[0];
  const openOwner = (path: string) => { if (prefix) navigate(`${prefix}/${path}`); };
- const ask = (metric?: SalesMetricBundle) => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `${financeSpecialist.id}, review my company's finances using authorized current records. Distinguish receivables, human-recorded receipts, provider-verified payments and bank deposits. Explain missing accounting or bank coverage before concluding profit or cash risk.${metric?.evidence_ref ? ` Inspect current evidence ${metric.evidence_ref} for ${metric.metric_key}; re-resolve its scope and expiry.` : ""} Prepare a governed follow-up for my review; do not move money or edit books.` } }));
+ const ask = (metric?: SalesMetricBundle) => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `${financeSpecialist.id}, review my company's finances using authorized current records. Distinguish receivables, human-recorded receipts, provider-verified payments and bank deposits. Explain missing accounting or bank coverage before concluding profit or cash risk.${financeMetricReviewContext(metric, range)} Prepare a governed follow-up for my review; do not move money or edit books.` } }));
  const get = (key: string) => metrics.metrics.find(metric => metric.metric_key === key);
  const inspect = (value: SalesMetricBundle | InvoiceRecord) => { if (epoch) setDetail({ epoch, range, readIdentity: invoices.identity, value }); };
  const scopeCurrent = detail?.epoch === epoch && detail?.range === range;

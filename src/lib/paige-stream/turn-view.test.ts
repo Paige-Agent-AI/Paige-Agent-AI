@@ -27,7 +27,7 @@ const T0 = 1_000_000;
 
 it("a saved original zero-work recovery refusal stays held after reload without Ask again", () => {
   const snap = { outcome: { state: "INTERRUPTED" as const, mode: "pending" as const }, rows: [],
-    elapsedMs: null, endCause: null, source: "reload" as const, hasContent: true, recoveryReadOnlyRefusal: true };
+    elapsedMs: null, endCause: null, source: "reload" as const, hasContent: true, recoveryReadOnlyRefusal: true as const };
   const view = deriveSnapshotView(snap, { awaitingApproval: false });
   expect(view).toMatchObject({ kind: "held", glyph: "lock", text: "New actions and attachments on hold", footer: null });
 });

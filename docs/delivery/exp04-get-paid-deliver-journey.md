@@ -2489,6 +2489,79 @@ deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
 business configuration; the infrastructure supplies no clauses or completed review.
 ## October22 C7 original commercial-presentation reconciliation
 
+### C13 checked prepared signing input — pre-edit contract
+
+OWNER_INTENT: each eventual signer submits only the fields assigned on the exact
+reviewed original document. This increment adds a pure bounded input check to
+the existing field-preparation module; it performs no signing or stored mutation.
+MUST_NOT_HAPPEN: another signer's fields, guessed dates/initials/consent, omitted
+required answers, duplicate inputs, client-supplied authority or an obsolete map.
+MUST_PRESERVE: original native preparation/document/source/signers/consent/engine,
+canonical JSON/hash/field definitions, current signing/token hold and original
+Portal/Spine/Harness/Trust/LayerC/Rail/Communications/Finance architecture.
+ACCEPTANCE_CRITERIA: actual original constructor fixtures/positive behavior and
+causal missing-export/hostile-input controls, immutable snapshot and exact-source
+binding, proportional separate review/CI/source release. No local proof can
+establish hosted signing/authorization/provider/cohort/CentralQA/owner acceptance.
+
+Original paige_agreement_document_preparations is the native source. Trusted
+callers must resolve its exact retained record/bytes and original token/party
+authority. This pure helper cannot authorize client-supplied preparations. Global
+typed/drawn signature, explicit e-sign consent and actual server identity/time
+remain with the original signing engine. A required checkbox is an explicit
+boolean, including false, not fabricated consent; date fields use the original
+server timestamp. Optional omissions remain absent. No UI/backend/SQL/grant or
+capability activation, new approval/event/signature/payment store or provider.
+
+Existing2175/2158/2186/2192 and original accepted-commercial2190/effectuation2191
+source remain preserved. The latter cannot bypass prepared-document native holds;
+selective reuse and original exact-map/approval/signing/terms integration remain
+required. Full twelve outcomes and the one complete founder evaluation continue.
+
+C13 local source checkpoint: actual missing-export controls failed3 while the
+original16 tests/52 steps passed. Initial new test callback type failure is
+INVALID setup evidence, preserved separately; no no-check or permission relaxation.
+The additive prepareAgreementFieldInput reuses the original assigned-field parser,
+overlap/required-signature checks, canonical JSON/hash and original signing body
+bound. It binds original native preparation ID/hash, tenant/agreement/client and
+token-derived signer, snapshots before awaits, preserves explicit false and
+server timestamp, rejects foreign/duplicate/missing/forged answers, and returns
+only immutable proposed values/digest. No signature or authority is established.
+
+Original preparation schema1/commercial2, unready-map relabeling, source mutation,
+owner API/HTTP/artifact/retained-document and signing guards:89 tests/98 steps
+PASS under strict Deno deny-net/write/env/run/ffi/sys; actual agreement-document
+entrypoint typecheck PASS. No endpoint/native/grant/source hold/capability/Portal/
+provider/UI activation. Original field-constructor valid output and refusal
+semantics retained by extracting its existing parser/issue calculation unchanged.
+Pre-edit ten-answer/source lease: ANT161/d0a7044c and ANT163/ff698bd0.
+Separate final review/CI/normal deployed source readback and future genuine role/
+signing/approval/field rendering/recovery/CentralQA/full12/founder acceptance remain
+owed. This pure prerequisite is unmounted, never marked Live or customer accepted.
+
+The original SDK/controller/geometry consumers also pass78 cases/three suites.
+Importing the original signing body bound exposed one root TypeScript narrowing
+error in signing-guard, retained as FAIL. Its original TokenState is always literal
+usable true/false; spelling the SAME refusal as usable===false fixes the compiler
+without casts/baseline/checker/authority changes. Pre-edit lease extension records
+this one line. Final89/98 strict backend controls and both actual agreement-document
+and sign-agreement entrypoint typechecks PASS. Corrected root check is running;
+required exact-head CI/review/source release still separate and mandatory.
+
+ORCHESTRATION_CONTRACT C13: original recipient eventually proposes assigned fields
+through original signing/Portal entry, not yet wired; native preparation ID/hash,
+document and token-derived party are original authority. This pure bounded
+constructor introduces no ActionAdapter/act/admission/approval or durable store.
+Existing original signing consent/authorization/current-selection revalidation,
+approved exact-document send, native input write/seal/provider readback and Rail
+receipt must be connected before activation. Its immutable input digest is only
+proposed data, not signature, completion, legal sufficiency or execution evidence.
+ALG01/ALG12 gain supporting data validation only; official maturity and ALG02/13,
+conversational/Portal/client/cohort/full12/founder acceptance are unpromoted.
+Visible-Flow-Impact: no — new export is unmounted, original preparation parser and
+boolean access decisions are unchanged; no UI/backend action/record schema change.
+Shipped Delivery Log: N/A until an actual reviewed main merge and source release.
+
 ### Native document-preparation versions — pre-edit forward290004 contract
 
 The original parent has an automatic updated_at trigger. Retaining/selecting a

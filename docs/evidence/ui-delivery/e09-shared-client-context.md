@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: prerequisite corrects legacy implicit identity classif
 FLOW_PROTOTYPE: NOT_REQUIRED: no new interface interaction/mounted consumer; original customer gate/chooser remains authoritative
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: shared identity truth retains limited customer standing without guessing a business relationship
 VISUAL_DIRECTION: PASS: original tenant-branded CURA Operate interface/controls/styling unchanged
-AUTOMATED_EVIDENCE: PASS: local actual private function/two original wrappers/database roles21PASS7FAIL baseline then28PASS; wrong none-tier fault fails3 causal checks;4 migration refusal/state-preservation controls PASS; required hosted293 still owed
+AUTOMATED_EVIDENCE: PASS: prior28 local controls retained historically. Corrected29-case local proof includes actual original active-workspace guard:22PASS7FAIL baseline,29PASS repaired, wrong none-floor mutation26PASS3FAIL. Full hosted native294 remains required after the original fixture correctly refused a forbidden profile pointer; no production guard or privilege was weakened. Four existing migration refusal/state-preservation controls remain unchanged.
 STATIC_EVIDENCE: PASS: whole-source inverse, guarded original ABI/owner/STABLE/DEFINER/path/privateACL/unchanged wrappers and indexes; lint0warnings/1419 unique versions/private-definer controls
 RENDERED_EVIDENCE: UNVERIFIED: no rendering/control edit; prior chooser frames do not prove this native increment
 BEHAVIORAL_EVIDENCE: UNVERIFIED: reduced-dependency native proof is not an ordinary customer browser journey
@@ -25,7 +25,7 @@ MUST_PRESERVE: all original platform/agency/staff routing, actual Auth subject, 
 ACCEPTANCE_CRITERIA: ambiguous customers retain client/no account; actual Auth-bound customer gate supplies selected business; unique/staff cases/source/permissions remain compatible
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: original native Identity/Trust client fallback scoped/tested; Chat/Live/MCP/Spine/Gateway/Harness/LayerC/Rails/ModelFabric/Knowledge and all domain-writer source unchanged
-INTERNAL_BUILD_IDENTITY: source-parent=2691/c9d8fb17d3329e659ccd8005de8fbc44ea42631c; exact head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113620009); edge=NOT_APPLICABLE; evidence=assets/e09-shared-client-context/native-source-proof.json
+INTERNAL_BUILD_IDENTITY: source-parent=2691/51670c633c28534b3d4a49eea9b505cfacd7179a; exact head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113620009); edge=NOT_APPLICABLE; evidence=assets/e09-shared-client-context/native-source-proof.json
 RELEASE_CHANNEL: development: final exact-head review/full CI and normal native deployment/readback required
 RELEASE_CLASSIFICATION: internal-only: original source compatibility prerequisite, no customer announcement or complete Experience
 CUSTOMER_RELEASE_IDENTITY: none: actual full journey/founder acceptance unverified

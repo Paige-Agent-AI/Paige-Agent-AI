@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(293);
+SELECT plan(294);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -612,8 +612,8 @@ SELECT is(pg_temp.scope_read('SELECT public.get_my_access()','e0970200-0000-4000
 SELECT is(pg_temp.scope_read('SELECT public.get_my_access()','e0970200-0000-4000-8000-000000000003')->'account_id','null'::jsonb,'foreign header never supplies authority to ambiguous identity');
 SELECT is(public.account_tier('e0970200-0000-4000-8000-000000000001'),'tenant','original test origin has a higher business tier');
 SELECT is(pg_temp.scope_read('SELECT to_jsonb(public.resolve_actor_tier(''e0970100-0000-4000-8000-000000000002'',''e0970200-0000-4000-8000-000000000001''))'),to_jsonb('client'::text),'ambiguous client does not fall back to a higher origin tier');
-UPDATE public.profiles SET active_tenant_id='e0970200-0000-4000-8000-000000000003' WHERE user_id='e0970100-0000-4000-8000-000000000002';
-SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->'account_id','null'::jsonb,'a profile pointer without staff membership grants no business context');
+SELECT throws_ok($pointer$UPDATE public.profiles SET active_tenant_id='e0970200-0000-4000-8000-000000000003' WHERE user_id='e0970100-0000-4000-8000-000000000002'$pointer$,'42501','active_tenant_id must be a tenant you belong to or manage','the original active-workspace guard refuses a customer pointer without staff membership');
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->'account_id','null'::jsonb,'a refused profile pointer grants no business context');
 UPDATE public.profiles SET active_tenant_id=(SELECT client_active_tenant FROM e09_actor_before) WHERE user_id='e0970100-0000-4000-8000-000000000002';
 SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000001'),(SELECT owner_access FROM e09_actor_before),'existing current staff workspace and authority unchanged');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003','SELECT public.get_my_access()')->>'account_id','e0970200-0000-4000-8000-000000000003','another actual customer sees only their own original identity');

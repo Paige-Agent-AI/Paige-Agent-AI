@@ -2,8 +2,8 @@
   "date": "2026-10-23",
   "classification": "NOT_DEPLOYED; one original native invitation mechanism, not a new identity/sender system",
   "lease": "ANT161/0548ba61-ca74-4fba-a559-d2db231815f1",
-  "source_parent": "2695/52102efba210c5ce9f840df50aef914eae4b6bb5",
-  "observed_main": "2748432e1ab0c7c29a01b5c9516a8b68803e7844",
+  "source_parent": "2695/ff021bf0cec52de63ae3fe339e762ff9828af28f",
+  "observed_main": "907a73784f4f84e49b48b34056a422352083ba02",
   "migration": "20271113630009",
   "migration_sha256": "6c3b14d19783f817666e5c26bdfb6bab45afa8ec2c9388e34ff0052293cb73b3",
   "original_invitation_md5": "10316cc79166fbcc24825cbbacf34e89",
@@ -325,8 +325,8 @@
     {
       "file": "e09_customer_request_scope.sql",
       "indexAssertions": 2,
-      "oldPlan": "293",
-      "newPlan": "293"
+      "oldPlan": "294",
+      "newPlan": "294"
     },
     {
       "file": "e09_customer_relationship_choices.sql",
@@ -624,5 +624,12 @@
     "First local actual migration guard exposed invalid embedded JSON quoting before PR; corrected and all seven refusal/state-preservation controls pass for both observed closed ACL variants",
     "Source definitions were transferred in bounded chunks after an oversized tooling payload was rejected; no product permission bypass",
     "No managed Auth fixtures, provider communication, charge, signature, booking, upload, Knowledge publish, impersonation or new business"
-  ]
+  ],
+  "inherited_workspace_fixture_repair": {
+    "native_plan": 294,
+    "new_identity_cases": 29,
+    "actual_workspace_guard_retained": true,
+    "repaired_local_passed": 29,
+    "full_schema_and_current_head_ci": "REQUIRED"
+  }
 }

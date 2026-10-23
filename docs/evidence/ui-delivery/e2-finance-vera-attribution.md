@@ -69,7 +69,7 @@ status follow-up is N/A for this label-only correction.
 policy pointers are in the existing North Star/Development Strategy/Coordinator
 Bootstrap/official roadmap and Delivery Register Standards Evidence row15.
 Original owner handoffs: ANT50 MENTOR35c0c368; ANT81 MERIT684ce232;
-ANT11 ZIONa9120873; ANT163 CURA0b59e72d. Source incorporation remains pending their
+ANT11 ZIONa9120873; ANT163 CURA0b59e72d; ANT164 NEXUSef4ea8eb. Source incorporation remains pending their
 receipts. Dormant NEXUS/ZION consumers adopt at authorized activation; no agent
 or provider activation. Agency/subaccounts stay owner-held.
 
@@ -87,3 +87,27 @@ wins by later source order; computed/native44px was then rechecked at every
 required viewport. Native original output is never resized to simulate a viewport.
 The isolated harness does not prove model routing, bank/provider coverage or an
 actual completed review. No customer screenshots or browser metadata are included.
+
+## Additive ordinary read proof and current-main composition
+
+Original33453a80743e7e3b49ce59fc581065f6c5c208a6 earned all10 applicable exact-head
+checks/two statuses SUCCESS, including all189 database steps; normal source-only
+Preview SKIPPED. Before merge, main advanced to855fff5b85323bd4112df2d7d33edaf5ca766f19.
+The shared Master closeout insertion conflicted with EXP04's prior release row.
+Composition preserves the entire incoming Master plus the exact E02 row beside
+its existing reader/worker entries. All16 original source and19 native frame pins
+remain byte-identical, with no Finance code/test/CSS change. The composed head
+must earn renewed review and exact-head CI; earlier green is historical only.
+
+In the already released original PAIGE conversation, an additional authorized
+read-only weekly review settled when observed within58seconds and its normalized
+2863character answer survived reload exactly. A follow-up explicitly addressed
+VERA through PAIGE returned source-backed Finance interpretation, observed settled
+within76seconds; its normalized2419character answer also survived reload exactly.
+Both restored an empty composer; no action approval control was requested. Cash,
+deposits, profit and forecast limitations stayed explicit; recorded receivables,
+manual receipts and provider allocations remained distinct. Raw content is private.
+Public containing build855fff-mvladooi was sampled after reload, not inferred as
+the original request's client/worker identity. These are bounded real read results,
+not SLO proof, new-CTA verification, independently delegated VERA proof or business
+execution/receipt acceptance. Original nine-point and16-case counts are unchanged.

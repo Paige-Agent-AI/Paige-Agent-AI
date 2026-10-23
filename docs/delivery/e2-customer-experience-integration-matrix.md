@@ -19,7 +19,7 @@ a separate development slice, not a new runtime/readiness claim.65/four focused
 tests and19 untouched native synthetic frames, scoped lint/type ratchet/build
 support its source. [Finance identity evidence](../evidence/ui-delivery/e2-finance-vera-attribution.md).
 Four existing canonical Docs policy pointers and original Register/ownership
-notes read back; existing owner handoffs ANT50/81/11/163 are requested, adoption
+notes read back; existing owner handoffs ANT50/81/11/163/164 are requested, adoption
 unverified until their receipts. Other departments retain their source.
 
 Functional: report server released, Finance candidate. Visual: Finance synthetic
@@ -27,6 +27,24 @@ verified. Experiential: original Finance handoff/report/artifact/read/reload and
 real role/cohort/Live still owed. Founder Acceptance NOT_ACCEPTED; original19
 outcomes/nine analytics are unchanged. ALG03/06/11/12 Partial, ALG13 Unverified;
 no identity-only promotion. Original9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved.
+
+### October23 additive read and canonical algorithm boundaries
+
+Second fresh ordinary weekly read settled when observed within58seconds and
+retained its exact2863character normalized answer after reload. An addressed
+VERA-through-PAIGE Finance read settled when observed within76seconds and retained
+its exact2419character normalized answer after reload. Both restored empty composer;
+no action approval was requested. Private evidence only; public containing855fff
+was sampled after reload. New Finance CTA/delegated specialist/receipts/roles/Live,
+SLO and full Experience acceptance remain unverified; historical counts unchanged.
+
+| Canonical algorithm | Actual EXP02 input/use | Source owner and maturity | Customer evidence and remaining acceptance |
+| --- | --- | --- | --- |
+| ALG03 COO business-health prioritization | Existing snapshot source priorities/freshness and Systems Check findings; no new score | ANT139/Metric Fabric; Partial sources | Read-only source-ranked explanation observed; canonical algorithm version/end-to-end ranked responsibility outcomes still require proof. Intended evaluation: grounded useful priorities, not an invented business-health score. |
+| ALG06 Cash-flow forecasting | Current verified Finance/commercial evidence and missing-coverage limits; no forecast inferred from receivables or manual receipts | Finance/Operator and originating EXP11; Partial sources | Honest unavailable cash/profit/forecast observed. Source-verified cash and backtested forecast remain required before a forecast claim. |
+| ALG11 Model quality and cost evaluation | Existing Model Fabric routing/trace foundations; this slice adds no evaluation or cost calculation | Model Fabric/PAIGE Intelligence; AI2 foundation, AI3 partial | Actual response/reload is observed, not measured model quality/cost savings. Canonical measured latency/expense/outcome-quality acceptance remains due. |
+| ALG12 Anomaly and incident detection | Original recorded operational findings/status, not fabricated anomalies or an autonomous incident engine | Operations/observability; Partial | Actual source exceptions explained; detected-and-reconciled event and corrective result remain owed. |
+| ALG13 Useful next-best-action recommendations | Source-backed explanatory priorities and existing capability/authority limits, no action from a suggestion | ANT54/Operating Fabric; Unverified | Suggested priorities observed; usefulness, authorized durable outcome and later business measurement still require proof. Completion never proves causal improvement. |
 
 ## October23 — worker source release; additive ordinary review proof
 

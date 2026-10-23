@@ -14,10 +14,21 @@ Existing North Star, Strategy, Bootstrap and official roadmap policy pointers
 were saved/read back; existing Delivery Register Standards Evidence row15 and
 specialist/capability ownership notes synchronized. Original owner handoffs:
 ANT50MENTOR35c0c368, ANT81MERIT684ce232, ANT11ZIONa9120873,
-ANT163CURA0b59e72d; incorporation remains pending actual owner receipts.
+ANT163CURA0b59e72d and ANT164NEXUSef4ea8eb; incorporation remains pending actual owner receipts.
 No peer-source takeover, new agent or Agency/subaccount implementation.
 Functional candidate / Visual synthetic verified / Experiential released handoff
 owed / Founder NOT_ACCEPTED. Algorithms/readiness and all19 outcomes unchanged.
+
+Additive ordinary read evidence: second fresh weekly review observed settled
+within58seconds, same normalized2863character answer after reload; addressed
+Finance read through PAIGE observed within76seconds, same2419character answer
+after reload. Empty composer restored, no action-approval control requested.
+Original current sources/unknown cash/accounting and receipt classes remained
+distinct. Raw evidence stays private. These bounded read cases do not prove the
+unreleased VERA CTA, independent specialist delegation, execution, SLO or full19.
+Finance2672/33453 earned all10 applicable checks/two statuses including189database;
+incoming855fff only requires shared Master-row composition, preserving all peer
+rows and unchanged16source/19frame pins. New exact-head gates remain mandatory.
 
 ## EXP02 original review capture admission — October23 source released
 
@@ -166,6 +177,28 @@ effective terms are required before prepared signing; all O1–O12, actual ordin
 roles/cohorts/provider/CentralQA/one whole founder evaluation remain incomplete.
 No competing engine/store, Portal UI, provider/security activation, legal claim
 or Capabilities/Algorithm Live promotion.
+
+## EXP04 original retained signing preflight — October23 source release
+
+2656 is SOURCE RELEASE VERIFIED: reviewed5821b225eaad9a14dead88e0d1d35d9bc56a4e17,
+separate AUTHOR-REVIEW / LOWER ASSURANCE5629061115; all11 applicable exact-head
+checks/two statuses/full normal Preview PASS. Main6df73be568ab3d4283c3ac2b58e442d4475e95a4
+has actual/inspected treed297e32636b4b133344e7429c0f228e8d81fe81a. Normal Edge39968476789/
+120464514351 source/config verifies sign-agreement@32/21files, original JWT=false
+and original native token guard. Exact web3RBB READY; both public6df observed,
+then containing07c/NfSP READY/public07c-mvl247kr/null/actual original served source
+and CSS verified. Initial stale-build assertion and main Finance cancellation are
+retained, not PASS. [Release6367170814](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2656#issuecomment-6367170814), Master§4.0.
+
+Same original retained-PDF verifier/token eligibility and scoped current-credential
+write/recovery, no new engine/store.211/199 agreement, exact CI158/67 and28 original
+recipient tests PASS; local native browser navigation failed, so current rendered/
+keyboard/zoom/AT and actual recipient/CentralQA remain UNVERIFIED. Full prepared
+approval/input/consent/pre-sign appearance/seal/effective terms, original native
+atomic signature/audit and all twelve outcomes remain incomplete. Existing holds
+and actual provider/security gates preserved. Next original native candidate is
+local, not consumed/deployed; no Capabilities/Algorithm or founder acceptance
+promotion, real signature/send/payment, legal sufficiency or Portal UI claim.
 
 ## EXP02 linked finding inspection — October22 consumer candidate
 

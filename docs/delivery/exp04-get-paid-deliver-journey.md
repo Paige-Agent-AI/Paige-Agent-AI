@@ -2489,6 +2489,71 @@ deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
 business configuration; the infrastructure supplies no clauses or completed review.
 ## October22 C7 original commercial-presentation reconciliation
 
+### C15 original signing retained-document preflight — development
+
+OWNER_INTENT: a legitimately token-authorized recipient must not be bound to a
+retained presentation already missing or mismatched. REUSE original2175 exact
+03a43d695dbcd059c48034cd84c065a1fa4a7f2e preflight, REPAIR the current handler's
+omitted token_hash projection required by unchanged tokenState/decideSigningAccess.
+No original SQL/history branch wholesale adoption, new signing reader/engine/store,
+native writer/grant, prepared token/effect hold or provider activation.
+
+Source leases ANT161/e6b3d9e3 and ANT163/8b4b2f9f name the ten routing answers.
+Same original public token-gated signing POST; signer/tenant/agreement come from
+that token's original records. Add tenant equality before private file read; same
+retained PDF/hash helper or exact legacy non-upload text digest before the one-way
+signature write. Never re-render the original presentation or infer mutable terms.
+Missing/changed file/digest/text or interrupted Storage refuses with503 and no
+terminal write. No new authority is inferred from the checked bytes or digest.
+
+Initial actual-PDF fixture response buffer typing failed before execution and is
+preserved INVALID, corrected with an actual copied ArrayBuffer, no cast/no-check.
+First genuine RED: an eligible original token was404 instead of reaching the
+intentionally refused synthetic write409. Supplying ONLY original token_hash then
+exposed separate genuine RED: missing PDF still reached that write409 instead of
+refusal503. Same historical preflight selectively reused. Initial205 cases/
+182 steps and exact CI group152/50 PASS are historical. After actual2655/main
+composition, all original211 cases/199steps PASS under denied net/write/env/run/ffi/sys;
+exact existing required CI Agreements step158 cases/67steps PASS without adding
+read authority. Original recipient component/source contracts28 cases PASS. Actual
+sign-agreement entry types, UTF8/diff PASS. One existing CI step gains only the
+explicit preflight.test.ts path; no flag, baseline, condition or shared gate change.
+
+Real handler/supabase-js is exercised with intercepted neutral transports and actual
+original-renderer PDF bytes. Missing/malformed hash, missing/changed/non-PDF bytes,
+upload-without-file, changed/missing legacy text, interrupted Storage and original
+foreign/revoked/expired/missing-expiry/already-signed/declined/order/void/deadline
+refusals are checked. Ineligible/foreign credentials cannot read private PDF bytes.
+Successful preflight deliberately stops at a synthetic403 write; no signature,
+notification, database/customer/provider effect or role/cohort acceptance occurs.
+
+Separate execution review reproduced missing original tenant/agreement/current-token
+UPDATE predicates at the real supabase-js transport boundary. Same existing row
+write now includes that original scope/hash and expiry compared with the fresh
+server act timestamp; zero-row readback checks the same original tokenState/hash
+before adopting a recorded signature. Four additional controls distinguish a
+still-current credential from replaced/revoked/expired recovery. These prove the
+actual client request/response contract, not hosted/native concurrency acceptance.
+Native atomic signature/events, parent-state serialization and complete interrupted
+outcome recovery remain required; this does not declare them solved.
+
+ORCHESTRATION_CONTRACT C15: original recipient/signing UI -> existing token/native
+authority -> SAME retained original presentation/readback -> original signing row/
+events/seal/Rail outcome. This is a legitimate native recipient path, not LayerC or
+PAIGE signing on another person's behalf. Original owner agreement.send/Spine/Kit/
+Trust/approval remains unchanged. C14 assigned-field renderer and prepared native
+input/atomic events/exact-map approval/consent/seal/effective terms remain separate
+required integration. Existing future-email seal wording and interrupted/replay
+atomicity are not fixed by this preflight-only slice; never claim otherwise.
+ALG01/12 supporting correctness only; catalogue/ALG02/13/full O1-O12/CentralQA/
+founder acceptance unpromoted. Review/exact-head CI/normal deploy/readback and actual
+owner/recipient/staff/client/cohort proof remain owed. All prior immutable records
+and original native selected-preparation token/effect holds stay intact.
+Visible-Flow-Impact: yes — original recipient error handling receives an additional
+honest pre-signing refusal, even though no mounted UI source/container/navigation
+is edited. The evidence declaration covers that backend-to-visible impact; it
+does not represent the unchanged recipient UI as a new design or authenticated QA.
+
 ### C13 checked prepared signing input — pre-edit contract
 
 OWNER_INTENT: each eventual signer submits only the fields assigned on the exact

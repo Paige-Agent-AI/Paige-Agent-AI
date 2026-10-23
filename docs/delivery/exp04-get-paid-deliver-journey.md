@@ -58,6 +58,17 @@ Audit-trigger failure rolls back BOTH signer and earlier consent event. Historic
 recovery invents no audit and preserves its source record. Existing actual original
 native preparation holds are exercised by the unchanged105 cases.
 
+Required hosted database-contract39970490494/job120471548919 then FAILED on
+the existing Portal fixture's post-signature recipient rewrite. The native
+protection is retained. Signed fixtures now carry their intended email at INSERT;
+the foreign-recipient negative uses a distinct immutable agreement and the sealed
+positive adds the customer's own original signer instead of rewriting another
+person's signature. Completed synthetic evidence remains until the existing final
+ROLLBACK. All255 assertions remain:253 exact source assertions are unchanged;
+two identical foreign-recipient predicates target the new separate fixture.
+Native runtime/proof bytes remain exact323-tested source. Source comparison is
+not a pgTAP PASS; renewed full-schema hosted CI remains required before release.
+
 Normal existing Linux integrity runner gains only --signature-record on its final
 same-cluster proof; original assertions/deny flags remain. CLI-created empty local
 20261023134452 was renamed while never applied to reserved20271113480004, after

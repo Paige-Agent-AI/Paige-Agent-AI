@@ -33,6 +33,31 @@ readback and ordinary roles/cohorts/continuity remain owed. CAP014/015 Unverifie
 ALG03/06/11/12/13 unchanged, all19/nine and one full founder evaluation required.
 [Reader evidence](../evidence/ui-delivery/e2-business-review-document-reader.md).
 
+## EXP04 exact prepared-field seal — October23 source release
+
+Original1352 renderer prerequisite2655 is SOURCE RELEASE VERIFIED, not an
+activated prepared-signing capability. Reviewed03fb84ad160c9b7e1aaa6634cc65a5c106d60635,
+separate AUTHOR-REVIEW / LOWER ASSURANCE5623743662; all11 applicable exact-head
+checks/two statuses/full normal Preview SUCCESS. Mainb24d8474472263ef4d09012c79e8e7faf2de2468
+has inspected/actual tree5cc03e1d02b4c9aa96248f9c9227ed695ddc4d47. Normal Edge39961532838/
+120440468252 verifies agreement-document@80/23files, agreement-send@15/19files and
+sign-agreement@30/21files/config. Exact webAS3 READY; actual containing00ab/8xc
+public aliases, original signing source ancestry/continuity and served source/CSS
+verified. Initial stale-exact-build observation remains failure, not acceptance.
+See Master§4.0 and [release6366132659](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2655#issuecomment-6366132659).
+
+Actual210 cases/178steps and independent native PDFium inspect six synthetic
+pages/four rotated crops/all five field kinds; image reuse causal control fixes
+four embeddings versus one. Original signed/consented evidence, exact original
+document/map/party/input digest, snapshot and font/fit checks are reused; pure
+input cannot authorize execution. Existing callers never supply prepared fields.
+Native selected-preparation token/effect holds remain. Next original preflight,
+native atomic input/consent/events, exact-map approved send, seal/readback and
+effective terms are required before prepared signing; all O1–O12, actual ordinary
+roles/cohorts/provider/CentralQA/one whole founder evaluation remain incomplete.
+No competing engine/store, Portal UI, provider/security activation, legal claim
+or Capabilities/Algorithm Live promotion.
+
 ## EXP02 linked finding inspection — October22 consumer candidate
 
 Full-CI diagnostic39876480194 on f9ac actually reports20113 total/20098 passed/

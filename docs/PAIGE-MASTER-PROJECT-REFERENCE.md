@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-23 — EXP04 original prepared-field PDF renderer prerequisite released.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2655): reproduce reviewed assigned fields in the original signature seal | Reviewed `03fb84ad160c9b7e1aaa6634cc65a5c106d60635`, separate AUTHOR-REVIEW / LOWER ASSURANCE5623743662; all11 applicable exact-head checks/two web statuses/full normal Preview SUCCESS. Main `b24d8474472263ef4d09012c79e8e7faf2de2468`, actual parents e504+03fb and actual/inspected tree `5cc03e1d02b4c9aa96248f9c9227ed695ddc4d47`. Normal Edge39961532838/job120440468252 SUCCESS; canonical artifact verifies agreement-document@80/23files, agreement-send@15/19files and sign-agreement@30/21files/config. Own SQL N/A. Exact web `dpl_AS3WMKbecwGERkHDwb4J1F8D5uY4` READY. Public aliases had already advanced to containing `00ab9ee1783698eee31dae8f4305805828ac6ddb`, READY `dpl_8xcBJS4qWEJBRzQ8QCtbfkA9bvWW`; ancestry and unchanged original agreement/signing sources verified, both public00ab-mvl0d347/customerUpdate:null. Served original SoloJS39fab30d/CSS9c83f7e9 and real acceptance-versus-delivery markers verified. Initial stale-build assertion retained as failed observation. Original210 cases/178steps, actual six-page synthetic PDFium/four crop rotations/five field kinds and original three importer types PASS. [Release/source receipt6366132659](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2655#issuecomment-6366132659). | SOURCE RELEASE VERIFIED, internal production prerequisite only. Optional prepared input remains UNMOUNTED; native approval/token/effect holds and original1352 engine preserved. No real signature, completed agreement, legal sufficiency, send/payment/provider/Portal/Chat/algorithm/catalogue activation or full12/customer acceptance claimed. Native pre-sign appearance/input/consent/atomic record/exact-map approval/seal/effective terms and roles/cohorts/CentralQA/whole founder evaluation remain owed. Recovery is reviewed forward repair preserving immutable originals and avoiding uncertain external-effect replay. |
+
 **2026-10-22 — EXP02 original report-artifact privacy prerequisite released.**
 
 | Increment | Exact released identity and proof | Completion boundary |

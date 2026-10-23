@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(243);
+SELECT plan(265);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -523,6 +523,59 @@ SELECT ok(pg_temp.as_scope_recovery('e0970100-0000-4000-8000-000000000002','SELE
 SELECT is(pg_temp.as_scope_recovery('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h')->>'client_id','e0970300-0000-4000-8000-000000000001','original single-business trusted recovery stays compatible');
 
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000011';
+
+-- Native56: original tier trigger must select the original exact customer, never oldest of several.
+SELECT is((SELECT md5(replace(prosrc, E'     AND (NEW.client_id IS NULL OR id = NEW.client_id)\n     AND (NEW.client_id IS NOT NULL OR NOT EXISTS (\n       SELECT 1 FROM public.clients other_client\n        WHERE other_client.linked_user_id = NEW.user_id\n          AND other_client.id <> clients.id\n     ))\n', '')) FROM pg_proc WHERE oid='public.auto_advance_journey_on_tier()'::regprocedure),'5c2991f867ebd18fdd0805259e23aced','tier exact source inverse preserves all original business logic');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='v' AND pronargs=0 AND pg_get_function_result(oid)='trigger' AND proconfig=ARRAY['search_path=public'] FROM pg_proc WHERE oid='public.auto_advance_journey_on_tier()'::regprocedure) AND NOT has_function_privilege('authenticated','public.auto_advance_journey_on_tier()','EXECUTE') AND NOT has_function_privilege('anon','public.auto_advance_journey_on_tier()','EXECUTE'),'tier preserves original internal-only trigger ABI/owner/DEFINER/volatility/path');
+SELECT ok(EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.tier_state'::regclass AND tgname='trg_auto_advance_journey' AND tgfoid='public.auto_advance_journey_on_tier()'::regprocedure AND tgenabled='O') AND EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.tier_state'::regclass AND confrelid='public.clients'::regclass AND contype='f' AND conkey=ARRAY[(SELECT attnum FROM pg_attribute WHERE attrelid='public.tier_state'::regclass AND attname='client_id')]::smallint[]),'original enabled trigger and exact client FK remain');
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002',created_at='2020-01-02',journey_stage_id=1,journey_stage_slug='top_of_funnel' WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.clients SET created_at='2020-01-01',journey_stage_id=1,journey_stage_slug='top_of_funnel' WHERE id='e0970300-0000-4000-8000-000000000001';
+INSERT INTO public.tier_state(id,contact_email,user_id,client_id,tier,payment_status,source) VALUES ('e0975600-0000-4000-8000-000000000001','tier-scope@tests.invalid','e0970100-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002','premium','unknown','manual');
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),'paid_tier','explicit tier client advances exact B despite older linked A');
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000001'),'top_of_funnel','exact B tier event leaves older A unchanged');
+SELECT ok(EXISTS(SELECT 1 FROM public.paige_journey_stage_transitions WHERE contact_id='e0970300-0000-4000-8000-000000000002' AND from_stage_id=1 AND to_stage_id=3 AND from_stage_slug='top_of_funnel' AND to_stage_slug='paid_tier' AND source_event='tier_upgrade' AND metadata=jsonb_build_object('tier','premium')),'original transition receipt names exact B and original tier facts');
+UPDATE public.tier_state SET tier='premium' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT is((SELECT count(*) FROM public.paige_journey_stage_transitions WHERE contact_id='e0970300-0000-4000-8000-000000000002' AND source_event='tier_upgrade'),1::bigint,'replayed original tier update creates no duplicate transition');
+SELECT ok(EXISTS(SELECT 1 FROM public.tier_state WHERE id='e0975600-0000-4000-8000-000000000001' AND tier='premium' AND payment_status='unknown' AND source='manual' AND user_id='e0970100-0000-4000-8000-000000000002' AND client_id='e0970300-0000-4000-8000-000000000002'),'journey projection does not invent payment or rewrite original tier source');
+DELETE FROM public.paige_journey_stage_transitions WHERE source_event='tier_upgrade' AND contact_id IN ('e0970300-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000003');
+UPDATE public.clients SET journey_stage_id=1,journey_stage_slug='top_of_funnel' WHERE id IN ('e0970300-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000003');
+UPDATE public.tier_state SET client_id=NULL,tier='vip' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT ok(NOT EXISTS(SELECT 1 FROM public.clients WHERE id IN ('e0970300-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002') AND journey_stage_slug<>'top_of_funnel'),'ambiguous legacy event changes neither business');
+SELECT is((SELECT count(*) FROM public.paige_journey_stage_transitions WHERE source_event='tier_upgrade' AND contact_id IN ('e0970300-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002')),0::bigint,'ambiguous legacy event creates no misleading transition receipt');
+UPDATE public.tier_state SET client_id='e0970300-0000-4000-8000-000000000003',tier='premium' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT ok(NOT EXISTS(SELECT 1 FROM public.clients WHERE id IN ('e0970300-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000003') AND journey_stage_slug<>'top_of_funnel'),'foreign exact client never falls back to another linked business');
+UPDATE public.tier_state SET client_id='e0970300-0000-4000-8000-000000000002',user_id='e0970100-0000-4000-8000-000000000003',tier='vip' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT ok(NOT EXISTS(SELECT 1 FROM public.clients WHERE id IN ('e0970300-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000003') AND journey_stage_slug<>'top_of_funnel'),'exact client with wrong source user does not advance either identity');
+UPDATE public.tier_state SET user_id=NULL,tier='premium' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),'top_of_funnel','missing source user cannot advance even an explicit client');
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.tier_state SET client_id=NULL,user_id='e0970100-0000-4000-8000-000000000002',tier='standard' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000001'),'paid_tier','original single-business legacy fallback remains compatible');
+SELECT is((SELECT count(*) FROM public.paige_journey_stage_transitions WHERE contact_id='e0970300-0000-4000-8000-000000000001' AND source_event='tier_upgrade'),1::bigint,'single-business legacy event retains original exact receipt');
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002' WHERE id='e0970300-0000-4000-8000-000000000002';
+INSERT INTO public.tenant_journey_stages(tenant_id,slug,label,display_order) VALUES ('e0970200-0000-4000-8000-000000000002','test-tenant-tier-custom','Custom journey',1);
+UPDATE public.tier_state SET client_id='e0970300-0000-4000-8000-000000000002',tier='premium' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),'top_of_funnel','original business-authored Blueprint still owns B journey');
+DELETE FROM public.tenant_journey_stages WHERE tenant_id='e0970200-0000-4000-8000-000000000002' AND slug='test-tenant-tier-custom';
+UPDATE public.clients SET journey_stage_id=4,journey_stage_slug='dfy_program' WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.tier_state SET tier='vip' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),'dfy_program','original stage ordering never downgrades advanced journey');
+UPDATE public.clients SET journey_stage_id=1,journey_stage_slug='top_of_funnel' WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.tier_state SET tier='free' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),'top_of_funnel','original unsupported tier is still a no-op');
+UPDATE public.paige_journey_stages SET slug='test-tier-held-default' WHERE slug='paid_tier';
+UPDATE public.tier_state SET tier='premium' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),'top_of_funnel','missing original global paid stage degrades safely');
+UPDATE public.paige_journey_stages SET slug='paid_tier' WHERE slug='test-tier-held-default';
+CREATE FUNCTION pg_temp.e09_tier_receipt_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'synthetic original transition receipt unavailable'; END $$;
+CREATE TRIGGER e09_tier_receipt_failure BEFORE INSERT ON public.paige_journey_stage_transitions FOR EACH ROW WHEN (NEW.contact_id='e0970300-0000-4000-8000-000000000002') EXECUTE FUNCTION pg_temp.e09_tier_receipt_failure();
+UPDATE public.tier_state SET tier='premium' WHERE id='e0975600-0000-4000-8000-000000000001';
+SELECT is((SELECT journey_stage_slug FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),'top_of_funnel','original caught receipt failure atomically rolls back customer stage');
+SELECT is((SELECT count(*) FROM public.paige_journey_stage_transitions WHERE contact_id='e0970300-0000-4000-8000-000000000002' AND source_event='tier_upgrade'),0::bigint,'failed original receipt never records completion');
+DROP TRIGGER e09_tier_receipt_failure ON public.paige_journey_stage_transitions;
+SELECT is((SELECT tier FROM public.tier_state WHERE id='e0975600-0000-4000-8000-000000000001'),'premium','original tier write survives its optional journey failure');
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
+-- End Native56 tier identity proof.
 
 CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
 SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future fixture restores the original global guard before outer rollback');

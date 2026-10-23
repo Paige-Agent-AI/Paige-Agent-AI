@@ -1,5 +1,18 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — original weekly receipt correlation, development
+
+REPAIR the existing native weekly ActionAdapter: success must carry the same
+original automation/event/act and deterministic receipt in both return locations.
+Contradictory completion or receipt evidence cannot become proven absence/retry.
+Eight actual-adapter failures reproduced; final23 owning cases pass. The original
+disposable PostgreSQL engine/Gateway/native RPC observation/redrain case passes
+with executed1, adopted original result and0 outbound requests. Full native
+program, required review/exact-head CI, release and authenticated recurrence
+remain separate until evidenced on the original PR.
+[Exact source/Orchestration/capability boundary](../evidence/ui-delivery/exp05-weekly-original-receipt.md).
+No trigger, provider, ZION instructions or catalogue status is activated.
+
 ## October23 — unavailable specialist evidence, development
 
 Original specialist inspection must distinguish a failed read from no activity.

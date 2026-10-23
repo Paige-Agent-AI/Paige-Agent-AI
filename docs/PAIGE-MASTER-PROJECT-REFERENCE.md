@@ -828,6 +828,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 **2026-10-23 — EXP05 original governed-work prerequisites source/configuration verified.**
 
+Separate EXP05 development: the original weekly ActionAdapter now requires its
+same automation/event/act and stable original receipt before reporting completion;
+conflicting evidence cannot authorize a retry.23 focused cases and the original
+disposable engine/Gateway/SQL observation/redrain case pass. Full native/review/CI,
+release and authenticated recurrence remain separate in the
+[existing Experience packet](delivery/experience-05-weekly-commitment-check.md).
+No schedule, provider, ZION instructions or capability status is activated.
+
 These are bounded engineering releases for the shared SOLO implementation, not
 complete weekly execution, ZION activation, authenticated customer acceptance
 or a customer release announcement. Each original receipt preserves the exact

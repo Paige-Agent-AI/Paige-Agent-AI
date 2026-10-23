@@ -1,5 +1,7 @@
 -- EXP09: narrow three original legacy read-only contracts through the existing verified relationship.
 -- Original ABI, owner, ACL, search paths, INVOKER/RLS and global identity constraint are preserved.
+-- Original brand has Auth-only execution on fresh replay and Auth+service on production.
+-- Both observed original ACL variants are retained as-is; this migration grants neither.
 BEGIN;
 DO $lease$
 BEGIN
@@ -9,7 +11,7 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.oid=pg_catalog.to_regprocedure('public.get_client_service_agreement()') AND pg_catalog.md5(p.prosrc)='51c9aa687ef0fa236ef79c4c3255e1c2' AND pg_catalog.pg_get_userbyid(p.proowner)='postgres' AND p.prosecdef=true AND p.provolatile='s' AND p.proconfig=ARRAY['search_path=public'] AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(p.proacl) a)=ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false']) THEN
   RAISE EXCEPTION 'Original customer read source/permissions changed; reconcile' USING ERRCODE='42501';
  END IF;
- IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.oid=pg_catalog.to_regprocedure('public.get_workspace_brand()') AND pg_catalog.md5(p.prosrc)='720d537748518bc3424325ec9acd331d' AND pg_catalog.pg_get_userbyid(p.proowner)='postgres' AND p.prosecdef=true AND p.provolatile='s' AND p.proconfig=ARRAY['search_path=public'] AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(p.proacl) a)=ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false','service_role:EXECUTE:false']) THEN
+ IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.oid=pg_catalog.to_regprocedure('public.get_workspace_brand()') AND pg_catalog.md5(p.prosrc)='720d537748518bc3424325ec9acd331d' AND pg_catalog.pg_get_userbyid(p.proowner)='postgres' AND p.prosecdef=true AND p.provolatile='s' AND p.proconfig=ARRAY['search_path=public'] AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(p.proacl) a) IN (ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false'],ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false','service_role:EXECUTE:false'])) THEN
   RAISE EXCEPTION 'Original customer read source/permissions changed; reconcile' USING ERRCODE='42501';
  END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.oid=pg_catalog.to_regprocedure('public.client_portal_relationship_id(uuid)') AND pg_catalog.md5(p.prosrc)='ff84ba24689e5043d7d15ed3d9150268') OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_index WHERE indexrelid=pg_catalog.to_regclass('public.clients_linked_user_id_unique') AND indisunique) THEN

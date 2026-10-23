@@ -63,6 +63,18 @@ named test path. Actual identity/native transactions/physical files remain
 separate proof. This C20 is a backend prerequisite; the owner review/control
 mount follows, with the existing one approval component and source contracts.
 
+Required contract120710805691 at5ba2664f genuinely failed: the original
+registry's incumbent-source proof refused the new explicit HIGH action row.
+Read-only parent993 decomposition reproduces all122 original source pins and29
+dispatches; current source has exactly one risk-source finding. Removing just
+the named HIGH row recreates the original risk bytes, with original Chat exact.
+The manually reviewed risk AST literal alone changes8b21a6cd to b4e005d2;
+extractor, metadata, all29 dispatch literals, other121 pins and hostile controls
+remain unchanged. Evidence: [source decomposition](../evidence/e04-effective-terms-risk-binding.json).
+Original full registry self-test now genuinely PASS. Full normal registry and
+fresh exact-head CI remain required; the old failure is retained, never waived.
+This source-contract renewal grants no Chat/Live admission or runtime authority.
+
 ## C19 exact signed-term effectuation — October23 continuation
 
 REUSE/EXTEND original2191 selectively after C18/2681. Existing old branch and all

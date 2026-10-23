@@ -756,7 +756,12 @@ const SOURCES = {
   "supabase/functions/_shared/calendar-link-tenant-brain.ts": "28748e315a12caa855ec906192743cdad5298d37ccbd35ad83539949124800f4",
   "supabase/functions/_shared/client-seat-reply.ts": "6b2ed9c2342da886f8dff44a46bc9dadd4bcd3b079839f62b470ea363564b44d",
   "supabase/functions/_shared/outbound-draft-check.ts": "eda79597ac86a489f916075844f535fcf228518d953b48c55b2e9901920ee961",
-  "supabase/functions/_shared/action-risk.ts": "8b21a6cd7166a9d382ef832bb31afda27625a3c675923dbec943a6bd189c049f",
+  // EXP04 C20 source review, AUTHOR-REVIEW / LOWER ASSURANCE at5ba2664f.
+  // One explicit HIGH row for the UI-only exact signed-terms act. Removing
+  // that row reproduces the original risk source,122 pins and29 dispatches.
+  // Original Chat/extractor/metadata/all other pins and hostile controls stay.
+  // docs/evidence/e04-effective-terms-risk-binding.json records this boundary.
+  "supabase/functions/_shared/action-risk.ts": "b4e005d2ec8a07936c2d2c457e57a8e015ffee196c2ac90dd1544dc8b577db9e",
   "supabase/functions/_shared/finance-gate.ts": "dfa7fbec065d346ca72199313294a4418aa8be66f3dbb68cfe991a93aef0cf40",
   "supabase/functions/_shared/paige-capability-status/projection.ts": "280c36a53ed5d553f6e6467f7177d049a2c612078cdb8d8139878cec3463922f",
   "supabase/functions/_shared/paige-capability-status/readiness.ts": "56b0a8da8b1a76414a147d15bffb9b589b9bcf9e130c797290b846759e1da65e",

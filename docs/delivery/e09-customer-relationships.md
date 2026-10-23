@@ -1,3 +1,7 @@
+## Current shared-identity ordering — 2026-10-23
+
+Native59 follows parent2691/c9d8fb17d3329e659ccd8005de8fbc44ea42631c and actual main2748432e1, which legitimately applied600000 to production. This never-production-applied identity migration moves590009→620009 after parent610009. Its SQL/function/test bytes remain unchanged; old reserved versions and previous Preview statements below are historical. Fresh required exact-head CI, ordinary empty Preview and production readback remain owed. The global unique guard is still present: no second-business admission yet.
+
 ## Current-main ordering correction — 2026-10-23
 
 Shared main2748432e1ab0c7c29a01b5c9516a8b68803e7844 legitimately applied20271113600000 to production before this PR. The never-production-applied tier migration is now610009; the prior560009 Preview evidence below remains historical, not a production claim. SQL bytes and all265 scope assertions are unchanged. Preserve current main and source/ACL/trigger guards; renewed exact-head CI and normal empty Preview required. No migration history rewrite, include-all or identity activation.

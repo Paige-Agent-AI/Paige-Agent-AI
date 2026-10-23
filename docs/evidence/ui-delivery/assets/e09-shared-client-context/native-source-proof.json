@@ -1,9 +1,9 @@
 {
   "date": "2026-10-23",
   "classification": "Original private identity reader prerequisite, NOT_DEPLOYED",
-  "parent": "2691/0530e9412d7e5e24af188c258abeb64dc5d0a875",
+  "parent": "2691/c9d8fb17d3329e659ccd8005de8fbc44ea42631c",
   "lease": "ANT161/92068e5d-68f3-4e1f-84e4-29cc4a65e219",
-  "migration": "20271113590009",
+  "migration": "20271113620009",
   "migration_sha256": "6e3aed54bd8644fe7dc6284b227a700ffa3aa6bf4d277ec443e1fdfdb2b5752f",
   "original_body_md5": "574bad191b12f518da0a720fbb210369",
   "candidate_body_md5": "ac743fec2458ecf43c25db8fc0c80ad6",
@@ -155,5 +155,13 @@
     "assertions": 265,
     "conclusion": "PASS",
     "boundary": "prior parent source support; new composed head still requires its own CI"
+  },
+  "ordering_reconciliation": {
+    "observed_main": "2748432e1ab0c7c29a01b5c9516a8b68803e7844",
+    "observed_production_frontier": "20271113600000",
+    "never_production_applied_old_version": "20271113590009",
+    "current_version": "20271113620009",
+    "sql_bytes_unchanged": true,
+    "fresh_exact_head_ci_and_preview": "REQUIRED"
   }
 }

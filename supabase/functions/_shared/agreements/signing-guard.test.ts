@@ -174,6 +174,38 @@ Deno.test("A REAL PNG IS ACCEPTED, with or without its data-URL prefix", () => {
   assert(dataUrl.ok && dataUrl.base64 === png, "the data-URL prefix must be stripped, not stored");
 });
 
+Deno.test('signature PNG decoding is bounded before pixel allocation',()=>{
+  const original=Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
+  for(const [width,height] of [[0,1],[1,0],[100000,1],[1,100000],[4096,2048]]){
+    const bytes=original.slice(),view=new DataView(bytes.buffer);view.setUint32(16,width);view.setUint32(20,height);
+    const result=checkSignatureImage(btoa(String.fromCharCode(...bytes)));
+    assert(!result.ok,`An unsafe ${width}x${height} header must refuse before the real decoder`);
+  }
+  assert(!checkSignatureImage(btoa(String.fromCharCode(...original.slice(0,24)))).ok,'A truncated header is not a signature');
+});
+
+Deno.test('a drawn signature is a static PNG rather than an animated allocation',()=>{
+  const original=Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
+  const animation=new Uint8Array(20);new DataView(animation.buffer).setUint32(0,8);animation.set([97,99,84,76],4);new DataView(animation.buffer).setUint32(8,10000);
+  const bytes=new Uint8Array(original.length+animation.length);bytes.set(original.subarray(0,33));bytes.set(animation,33);bytes.set(original.subarray(33),53);
+  assert(!checkSignatureImage(btoa(String.fromCharCode(...bytes))).ok,'Animation must refuse before frame decoding');
+});
+
+Deno.test('the native PNG allocation cannot be steered by invalid sample headers',()=>{
+  const original=Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
+  for(const [offset,value] of [[24,255],[24,1],[25,255],[26,1],[27,1],[28,255]]){
+    const bytes=original.slice();bytes[offset]=value;
+    assert(!checkSignatureImage(btoa(String.fromCharCode(...bytes))).ok,`Invalid header ${offset}=${value} must refuse before decoding`);
+  }
+});
+
+Deno.test('a later PNG header cannot replace the bounded dimensions',()=>{
+  const original=Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
+  const chunk=original.slice(8,33);new DataView(chunk.buffer).setUint32(8,100000);
+  const bytes=new Uint8Array(original.length+chunk.length);bytes.set(original.subarray(0,33));bytes.set(chunk,33);bytes.set(original.subarray(33),33+chunk.length);
+  assert(!checkSignatureImage(btoa(String.fromCharCode(...bytes))).ok,'A second IHDR must refuse before native parsing');
+});
+
 Deno.test("A NON-PNG IS REFUSED AT THE DOOR, not at the seal", () => {
   // Valid base64, decodes cleanly, and is a JPEG. pdf-lib's embedPng would reject it at completion,
   // by which time the signature is terminal.

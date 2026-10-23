@@ -1,0 +1,40 @@
+{
+  "scope": "Local deterministic prototype only, synthetic state, unchanged original CSS plus prototype-only visibility fix; no product/backend/customer acceptance",
+  "rows": [
+    {
+      "variant": "recorded",
+      "checkingDisabled": true,
+      "focus": "heading",
+      "overflow": -15,
+      "state": "- complementary \"Prototype review controls\":\n  - strong: LOCAL PROTOTYPE · no real signing or sending\n  - text: Check result\n  - combobox \"Check result\":\n    - option \"Recorded\" [selected]\n    - option \"Completed with retained copy\"\n    - option \"Still unconfirmed\"\n    - option \"Retired link\"\n    - option \"Recorded, missing historical audit\"\n  - button \"Reset unknown outcome\"\n  - button \"Resolve pending check\"\n- main:\n  - heading \"Your signature is recorded\" [active] [level=2]\n  - paragraph: The agreement has not been confirmed complete. Ask the sender for its current status.\n  - status"
+    },
+    {
+      "variant": "completed",
+      "checkingDisabled": true,
+      "focus": "heading",
+      "overflow": -15,
+      "state": "- complementary \"Prototype review controls\":\n  - strong: LOCAL PROTOTYPE · no real signing or sending\n  - text: Check result\n  - combobox \"Check result\":\n    - option \"Recorded\"\n    - option \"Completed with retained copy\" [selected]\n    - option \"Still unconfirmed\"\n    - option \"Retired link\"\n    - option \"Recorded, missing historical audit\"\n  - button \"Reset unknown outcome\"\n  - button \"Resolve pending check\"\n- main:\n  - heading \"Signed and completed\" [active] [level=2]\n  - paragraph: The completed retained copy has been verified.\n  - status"
+    },
+    {
+      "variant": "unknown",
+      "checkingDisabled": true,
+      "focus": "heading",
+      "overflow": -15,
+      "state": "- complementary \"Prototype review controls\":\n  - strong: LOCAL PROTOTYPE · no real signing or sending\n  - text: Check result\n  - combobox \"Check result\":\n    - option \"Recorded\"\n    - option \"Completed with retained copy\"\n    - option \"Still unconfirmed\" [selected]\n    - option \"Retired link\"\n    - option \"Recorded, missing historical audit\"\n  - button \"Reset unknown outcome\"\n  - button \"Resolve pending check\"\n- main:\n  - heading \"Signing is not yet confirmed\" [active] [level=2]\n  - paragraph: The recorded status is still unavailable. Check again or contact the sender.\n  - button \"Check recorded status\"\n  - status"
+    },
+    {
+      "variant": "refused",
+      "checkingDisabled": true,
+      "focus": "heading",
+      "overflow": -15,
+      "state": "- complementary \"Prototype review controls\":\n  - strong: LOCAL PROTOTYPE · no real signing or sending\n  - text: Check result\n  - combobox \"Check result\":\n    - option \"Recorded\"\n    - option \"Completed with retained copy\"\n    - option \"Still unconfirmed\"\n    - option \"Retired link\" [selected]\n    - option \"Recorded, missing historical audit\"\n  - button \"Reset unknown outcome\"\n  - button \"Resolve pending check\"\n- main:\n  - heading \"This signing link is no longer available\" [active] [level=2]\n  - paragraph: Ask the sender for current authorized access.\n  - status"
+    },
+    {
+      "variant": "audit",
+      "checkingDisabled": true,
+      "focus": "heading",
+      "overflow": -15,
+      "state": "- complementary \"Prototype review controls\":\n  - strong: LOCAL PROTOTYPE · no real signing or sending\n  - text: Check result\n  - combobox \"Check result\":\n    - option \"Recorded\"\n    - option \"Completed with retained copy\"\n    - option \"Still unconfirmed\"\n    - option \"Retired link\"\n    - option \"Recorded, missing historical audit\" [selected]\n  - button \"Reset unknown outcome\"\n  - button \"Resolve pending check\"\n- main:\n  - heading \"Your signature is recorded\" [active] [level=2]\n  - paragraph: The consent and signing history could not be fully verified. Ask the sender to review this agreement.\n  - status"
+    }
+  ]
+}

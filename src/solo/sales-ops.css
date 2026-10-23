@@ -433,6 +433,12 @@ button.so-row:focus-visible { outline: 2px solid var(--violet); outline-offset: 
   box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent), var(--sh-3);
   animation: so-sheet 220ms cubic-bezier(.22,.61,.36,1);
 }
+/* The original portal is outside .so: inherit shared surfaces even when its
+   desk-only --sd-panel is absent. Other Sales dialogs keep their existing scope. */
+.so-signature-request { background: var(--sd-panel, var(--surface)); }
+.so-signature-request .so-editor-body { grid-auto-rows: max-content; }
+.so-signature-request .btn { min-height: 44px; }
+.so-signature-request .so-banner > span { flex: 1; overflow-wrap: anywhere; }
 /* The sheet's own accent: violet running into gold, the two colours this flow spends — the second
  * of which is the act at the END of it. A hairline, never a bar. */
 .so-editor::after {

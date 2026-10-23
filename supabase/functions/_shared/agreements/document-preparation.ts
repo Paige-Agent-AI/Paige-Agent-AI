@@ -1,6 +1,7 @@
 import { inspectUploadedPdf } from './document.ts';
 import { verifyRetainedAgreementPdf } from './retained-document.ts';
 import { readAgreementPdfDocument, type AgreementPdfDocument } from './field-preparation.ts';
+const PDFLIB_SPEC = 'npm:pdf-lib@1.17.1';
 
 /** Dormant native preparation inspector. Never saves/re-renders the document,
  * changes its existing metadata, approves it, or authorizes access. Caller must
@@ -16,9 +17,11 @@ export async function inspectAgreementPreparationPdf(bytes: Uint8Array, expected
   if (!inspected.ok || inspected.pages > 250) return fail();
   try {
     // SAME existing native loader/version; encryption is never ignored.
-    const { PDFDocument, PDFName, PDFNumber } = await import('npm:pdf-lib@1.17.1');
+    const { PDFDocument, PDFName, PDFNumber } = await import(PDFLIB_SPEC);
     const pdf = await PDFDocument.load(retained, { updateMetadata: false });
-    const pages = pdf.getPages().map((page, index) => {
+    const pages = [];
+    for (const page of pdf.getPages()) {
+      const index: number = pages.length;
       const unit = page.node.get(PDFName.of('UserUnit'));
       if (unit !== undefined && (!(unit instanceof PDFNumber) || unit.asNumber() !== 1)) return fail();
       const crop = page.getCropBox(), media = page.getMediaBox();
@@ -33,9 +36,9 @@ export async function inspectAgreementPreparationPdf(bytes: Uint8Array, expected
       if (!Number.isFinite(rawRotation)) return fail();
       const rotation = ((rawRotation % 360) + 360) % 360;
       if (![0, 90, 180, 270].includes(rotation)) return fail();
-      return { page: index + 1, crop_x: x, crop_y: y, crop_width: width, crop_height: height, rotation,
-        width: rotation % 180 ? height : width, height: rotation % 180 ? width : height };
-    });
+      pages.push({ page: index + 1, crop_x: x, crop_y: y, crop_width: width, crop_height: height, rotation,
+        width: rotation % 180 ? height : width, height: rotation % 180 ? width : height });
+    }
     return readAgreementPdfDocument({ sha256: expectedSha256, byte_length: retained.length, pages });
   } catch { return fail(); }
 }

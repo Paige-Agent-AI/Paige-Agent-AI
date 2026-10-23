@@ -1604,7 +1604,11 @@ describe("Agreement documents — signature state, separate from commercial stat
     expect(act1.className).toContain("btn-g");
     await act(async () => { act1.click(); });
     expect(harness.signings.sendForSignature).toHaveBeenCalledWith("s1", "tenant-1", false);
-    expect(document.querySelector('[role="dialog"]')!.textContent).toContain("Sent.");
+    const result = document.querySelector('[role="dialog"]')!;
+    expect(result.textContent).toContain("Accepted for sending");
+    expect(result.textContent).toContain("acme@example.com");
+    expect(result.textContent).toContain("Delivery, document opening and completed signatures require their own recorded evidence.");
+    expect(result.textContent).not.toContain("has a private link");
   });
 
   it("reports a refused send as a refusal, never as delivery (§13)", async () => {
@@ -1617,14 +1621,17 @@ describe("Agreement documents — signature state, separate from commercial stat
     expect(after.textContent).not.toContain("Sent.");
   });
 
-  it("says plainly when an address did not receive it — a 200 is not a delivery", async () => {
+  it("an empty apparent success cannot establish provider acceptance or prove zero delivery", async () => {
     harness.signings.sendForSignature = vi.fn(async () => ({ ok: true, sent: [], notDelivered: ["bounced@example.com"] }));
     const dialog = openSender();
     const act1 = [...dialog.querySelectorAll("button")].find((b) => b.textContent === "Send it to Acme") as HTMLButtonElement;
     await act(async () => { act1.click(); });
     const after = document.querySelector('[role="dialog"]')!;
-    expect(after.textContent).toContain("Nothing went out");
-    expect(after.textContent).toContain("did not receive it");
+    expect(after.textContent).toContain("Signing request not verified");
+    expect(after.textContent).not.toContain("Accepted for sending");
+    expect(after.textContent).not.toContain("Nothing went out");
+    expect(after.textContent).not.toContain("did not receive it");
+    expect([...after.querySelectorAll('button')].some(button=>button.textContent==='Send it to Acme')).toBe(false);
   });
 
   it("refuses to claim a link when the server returned none (§13)", async () => {

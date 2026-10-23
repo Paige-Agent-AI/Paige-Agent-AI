@@ -788,6 +788,58 @@ filed-document deliverables remain Unverified, matching the table above. No
 coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
 canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.
 
+## EXP02 Decision Desk source and continuity — October22 development
+
+Current main83008187360b12b8d76de0192f6bda3aba213bc1 composition preserves all22
+native render-input hashes. Fresh original Desk/suggestion/pending-read/source-link/
+contextual-control suite78 cases/five files PASS in37.07s, scoped ESLint0/0 and UI
+routing/whitespace PASS. This is a new bounded set, not a relabel of historical122/131.
+Original composed six native frames and earlier22 remain dated supporting evidence.
+
+Parent2626 source release is now verified: reviewed452a6ca/LOWER5622695418, all11
+exact-head checks/two statuses SUCCESS; merged7ef7cc4db5258bd1d106c805eb06dbf4fbaedd53,
+actualtree940dd10e969c9173ad760b4988a7e29347e371cf equals inspected union. Web
+dpl_AsavNJFgDwidjjnhUiqabL8Zj32a READY/public7ef-mvkapgtp/null; actual served
+SoloEntry-9E2GUs1P.js2472503bytes/SHA2566979919439d57d503180ecf345608673f1ec404dbdf56ca1cb64f837499a43a7,
+five owning markers verified. Original Edge12PASS/3deployment-changeFAIL retained;
+normal current-main recovery39885135758/120191444779 strictly verifies all16 source/
+configurations and advances edge-live to containing83008187. Chat513 and original
+three changed functions ACTIVE/config verified. [Recovery receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2626#issuecomment-6355336462).
+No scan/action/provider/role activation. Native images are synthetic; genuine
+ordinary MMA/role/isolation/cohort/Live/all19/nine/Founder Acceptance remain owed.
+
+Current parent2626/f9ac/main effc composition retains all consumer source and21/22
+original rendered hashes; only E05's shared-shell callback changed. Six new native
+composition frames/current22 pins verify desktop/narrow source→original drawer→
+return,304.8 scroll, unsent text and exact source/suggestion keyboard focus.
+Desktop1536CSS/native1535 distinction is explicit; viewport reset. Original22
+images remain dated; synthetic proof is not ordinary QA, natural production async
+reread or founder acceptance. Required final review/CI/release/readback remain owed.
+
+Original prepared work now has an exact canonical source inspection action in an
+explicitly labeled native tab, preserving review/selection/scroll/unsent Chat.
+Summary-only rows are readable Recorded summaries, original drafts remain drafts,
+missing content Details unavailable, and only original zoned preparation times
+are shown in explicit UTC. Missing/malformed/surface-only/no-account references
+withhold the source link; the original destination reauthorizes its own read.
+No click authorizes, approves, sends or executes work. Existing dismissal state
+recognizes a changed original source identity, with no new suggestions registry.
+
+Ten initial causal failures and a later genuine return-reread scroll failure
+preceded correction; final131 cases/five original suites, type ratchet10/6/zero new,
+scoped lint and actual recovery build pass. Hosted gates remain required.22 native
+synthetic frames and22 exact source pins verify the original leaf/shared shell,
+320px keyboard, actual source tab/drawer/close and284.8→284.8 scroll/draft/focus.
+A separate disclosed synthetic hold/release reread withholds stale source/count
+and restores the same presentation on settlement; production return revalidation
+is not inferred. Changed source, account retirement, close and explicit Retry
+supersede recovery. No new product listener, data store or action authority.
+No whole-page or authenticated acceptance is inferred from this bounded mount.
+Functional candidate, Visual native synthetic proof, Experiential ordinary/cohort/
+role/Live release proof and Founder Acceptance remain separate. ALG03/13 and nine
+capability states are unpromoted; original Trust/LayerC/Rail writers unchanged.
+All19/nine remain mandatory. [Evidence](../evidence/ui-delivery/e2-desk-source-continuity.md).
+
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 
@@ -808,6 +860,33 @@ Historical development notes below are superseded only at this source boundary.
 Actual report execution/read/retrieval, ordinary roles/cohorts/Chat/Live/all19/nine
 and Founder Acceptance remain owed; CAP/ALG states unchanged.
 
+
+**S2B source/native release verified:** PR2650 reviewed646e8e7d69fef99b2b45e9d2d0cf1dd218179c25,
+LOWER5623276127/5628860200/all13 final checks/two statuses SUCCESS. Actual main
+e504c252362a1174c895513c576c8de7bb9663a6/treeea73b746567b8589d93626d4ce4ac56fac4a6688
+equals recomputed clean6ccf+646 union. Concurrent E05#2645 advanced parent after
+a047 preflight; four files inspected/no native SQL/proof/ci.yml overlap.
+Normal migration39961082732/deploy120439159397 SUCCESS; actual440002 persisted.
+Claim2f1b0185ceb708564385bafad80aa125/completec0a5e4a1651e70994225865a232658d7
+and exact inverse-to-original81a2/4c58, one change each, private postgres/DEFINER/
+empty-path/service-only ACL verified. READYdpl_D1fBQE9JhvWLyECofmtWe4zBjKtt/
+canonical aliases/public200 e504-mvl06nby/customerUpdate:null. OwnEdge N/A.
+[Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2650#issuecomment-6366004658).
+Historical92Linux startup FAIL retained; corrected646 Linux/native/full CI PASS.
+No public report/type/worker/provider/permission/Chat/action activation. Native
+source metadata is not authenticated execution; all19/nine/ordinary/cohorts/
+Chat-Live/Founder Acceptance remain owed. Development notes below stay historical.
+
+**Prepared-source review source release verified:** PR2627 reviewed e35dfe7687aa0a7e7d1dd42ab4033901e17351ec,
+LOWER5623173327/all10 applicable SUCCESS/designed PreviewSKIP/two statuses.
+Main39c278447379a6b8eff530e49a9903a72d7e02e0/tree959e426e59c0f245a6a30a739ba6c83dd84730f8,
+READYdpl_GeQJnhU813CgrU2xdibjRFf4nX97/canonical aliases/public39c27844-mvkdfcn5/null.
+Actual served SoloEntry2475755bytes/SHA256658ccfc53f595bb55bb7627d818180ec581cdd44f6c9f6eace7cbdb02cf806cf,
+five own markers verified. OwnSQL/Edge N/A. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2627#issuecomment-6356238674).
+78 scoped tests plus original22/six composed native frames retain their source/
+synthetic boundaries; no actual ordinary customer/cohort/Live/zoom/founder claim.
+Original record/source/count/focus/draft/scroll retained, no execution from UI.
+Both exact postmerge rows appended to canonical Master4.0; no replacement log.
 **S2B native authority, development:** proposed440002 adds the SAME private Metric
 predicate to original document claim and completion, including before historical
 report-labelled success readback. No public type admitted: original nine types and
@@ -843,6 +922,12 @@ ordinary roles/cohorts/Chat/Live/all19/nine remain required. CAP/ALG states unch
 no model/provider/role/action or Chat activation. Master4.0 N/A until actual merge.
 ANT138349babde/ANT1613da7266c+837f1a8f record pre-edit source/CI routing; sole lead.
 
+
+S2C hosted345aba5 native/full-schema/Preview and all12 final check contexts PASS,
+including actual issuer/capture/original artifact/turn/Rail Analytics step10.
+Current-main e504 composition preserves all three product/proof files byte-for-
+byte; fresh main-target exact-head CI/review/release still required. No old
+stacked result is promoted to new composition or customer acceptance.
 
 **S2C original report artifact producer, development:** proposed450002 extends
 ONLY the original service-only complete_paige_document_work, after S2B440002.

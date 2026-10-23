@@ -21,6 +21,60 @@ const fields = () => [field(), field(6, 1)];
 const invalid = /AGREEMENT_FIELD_PREPARATION_INVALID/;
 const unavailable = /AGREEMENT_PREPARATION_PDF_UNAVAILABLE/;
 
+type FieldInputConstructor=(preparation:unknown,expected:unknown,values:unknown)=>Promise<{
+  preparation_id:string;preparation_sha256:string;document_sha256:string;signer_id:string;signed_at:string;
+  values:readonly {field_id:string;kind:string;value:string|boolean}[];field_input_sha256:string;
+}>;
+function fieldInputConstructor():FieldInputConstructor{
+  const fn=(fieldPreparation as unknown as Record<string,unknown>).prepareAgreementFieldInput;
+  assert(typeof fn==='function','Original prepared signing field input constructor is missing');return fn as FieldInputConstructor;
+}
+const fieldInputFixture=async()=>{
+  const extra=(kind:string,n:number,y:number,required=true)=>({...field(),id:uid(n),kind,y,height:25,label:kind,required});
+  const prepared=await prepareAgreementFields(source(),document(),[...fields(),extra('initials',51,300),extra('text',52,350),extra('checkbox',53,400),extra('signed_date',54,450),extra('text',55,500,false)]);
+  const expected={tenant_id:uid(1),agreement_id:uid(2),client_id:uid(3),preparation_id:uid(70),preparation_sha256:prepared.preparation_sha256,signer_id:uid(5),signed_at:'2026-10-22T12:00:00.123456Z'};
+  const values=[{field_id:uid(10),value:true},{field_id:uid(51),value:'AS'},{field_id:uid(52),value:'Business-supplied answer'},{field_id:uid(53),value:false}];
+  return {prepared,expected,values};
+};
+
+Deno.test('prepared field input uses the original map, preserves explicit false and server date without signing',async()=>{
+  const fn=fieldInputConstructor(),f=await fieldInputFixture(),actual=await fn(f.prepared,f.expected,f.values);
+  assertEquals(actual.preparation_id,f.expected.preparation_id);assertEquals(actual.preparation_sha256,f.prepared.preparation_sha256);assertEquals(actual.document_sha256,document().sha256);assertEquals(actual.signer_id,uid(5));
+  assertEquals(actual.values.map(row=>row.field_id),[10,51,52,53,54].map(uid));assertEquals(actual.values.find(row=>row.field_id===uid(53))?.value,false);
+  assertEquals(actual.values.find(row=>row.field_id===uid(54))?.value,f.expected.signed_at);assert(!actual.values.some(row=>row.field_id===uid(11)||row.field_id===uid(55)));
+  assertEquals(actual.field_input_sha256,(await fn(f.prepared,f.expected,[...f.values].reverse())).field_input_sha256);assert(Object.isFrozen(actual)&&Object.isFrozen(actual.values)&&actual.values.every(Object.isFrozen));
+  assertNotEquals(actual.field_input_sha256,(await fn(f.prepared,f.expected,f.values.map(row=>row.field_id===uid(53)?{...row,value:true}:row))).field_input_sha256);
+});
+
+Deno.test('prepared signing input refuses stale, foreign, duplicate, omitted, forged and malformed answers',async t=>{
+  const fn=fieldInputConstructor(),f=await fieldInputFixture(),bad=/AGREEMENT_PREPARED_FIELD_INPUT_INVALID/;
+  const cases:{name:string;expected?:unknown;values?:unknown;preparation?:unknown}[]=[
+    {name:'foreign business',expected:{...f.expected,tenant_id:uid(90)}},{name:'foreign client',expected:{...f.expected,client_id:uid(90)}},{name:'foreign agreement',expected:{...f.expected,agreement_id:uid(90)}},
+    {name:'stale native preparation digest',expected:{...f.expected,preparation_sha256:'f'.repeat(64)}},{name:'foreign signer',expected:{...f.expected,signer_id:uid(99)}},
+    {name:'another signer field',values:[...f.values,{field_id:uid(11),value:true}]},{name:'unknown field',values:[...f.values,{field_id:uid(99),value:true}]},{name:'duplicate field',values:[...f.values,f.values[0]]},
+    {name:'missing signature',values:f.values.slice(1)},{name:'missing required text',values:f.values.filter(row=>row.field_id!==uid(52))},{name:'empty required initials',values:f.values.map(row=>row.field_id===uid(51)?{...row,value:' '}:row)},
+    {name:'checkbox truthiness',values:f.values.map(row=>row.field_id===uid(53)?{...row,value:'false'}:row)},{name:'client supplied signing date',values:[...f.values,{field_id:uid(54),value:f.expected.signed_at}]},
+    {name:'unknown answer property',values:[{...f.values[0],signer_id:uid(6)},...f.values.slice(1)]},{name:'control character',values:f.values.map(row=>row.field_id===uid(52)?{...row,value:'word\u0000word'}:row)},
+    {name:'oversized original signing body bound',values:f.values.map(row=>row.field_id===uid(52)?{...row,value:'x'.repeat(524289)}:row)},
+    {name:'unready map cannot be relabeled',preparation:{...f.prepared,manifest:{...f.prepared.manifest,fields:[]}}},
+  ];
+  for(const entry of cases)await t.step(entry.name,async()=>{await assertRejects(()=>fn(entry.preparation??f.prepared,entry.expected??f.expected,entry.values??f.values),TypeError,bad.source);});
+});
+
+Deno.test('prepared field input snapshots all proposed values before digest awaits',async()=>{
+  const fn=fieldInputConstructor(),f=await fieldInputFixture(),pending=fn(f.prepared,f.expected,f.values);f.values[2].value='Changed during validation';f.expected.signed_at='2026-11-01T00:00:00Z';
+  const result=await pending;assertEquals(result.signed_at,'2026-10-22T12:00:00.123456Z');assertEquals(result.values.find(row=>row.field_id===uid(52))?.value,'Business-supplied answer');
+});
+
+Deno.test('prepared field input preserves commercial schema2 and independently refuses a relabeled unready map',async()=>{
+  const fn=fieldInputConstructor(),f=await fieldInputFixture();
+  const commercial=await fieldPreparation.prepareCommercialAgreementFields(source(),document(),f.prepared.manifest.fields,commercialInput());
+  const actual=await fn(commercial,{...f.expected,preparation_sha256:commercial.preparation_sha256},f.values);
+  assertEquals(actual.preparation_sha256,commercial.preparation_sha256);assertNotEquals(actual.field_input_sha256,(await fn(f.prepared,f.expected,f.values)).field_input_sha256);
+  const unready=await prepareAgreementFields(source(),document(),[]);
+  await assertRejects(()=>fn({...unready,ready_for_review:true,issues:[]},{...f.expected,preparation_sha256:unready.preparation_sha256},f.values),TypeError,'AGREEMENT_PREPARED_FIELD_INPUT_INVALID');
+});
+
 const commercialInput = () => {
   const original=source(),schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,
     deposit_date:'2026-10-22',installment_cents:30000,first_installment_date:'2026-11-22',cadence:'monthly'});

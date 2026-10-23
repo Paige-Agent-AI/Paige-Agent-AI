@@ -28,6 +28,112 @@ import {
 } from "./document.ts";
 import { sanitizeWinAnsi } from "../doc-render.ts";
 import { FakeTime } from "https://deno.land/std@0.190.0/testing/time.ts";
+import {prepareAgreementFields,prepareAgreementFieldInput} from './field-preparation.ts';
+
+import {preparedSealFixture,PREP_CLIENT,PREP_SIGNER,PREP_ID} from './test-fixtures/prepared-seal.ts';
+
+async function originalPageOperators(bytes:Uint8Array){
+  const {PDFDocument,PDFArray,PDFRawStream,decodePDFRawStream}=await import('npm:pdf-lib@1.17.1');
+  const pdf=await PDFDocument.load(bytes);
+  return pdf.getPages().slice(0,4).map(page=>{
+    const contents=page.node.Contents();if(!contents)return '';
+    const entries=contents instanceof PDFArray?contents.asArray():[contents];
+    return entries.map(entry=>{const stream=pdf.context.lookup(entry);assert(stream instanceof PDFRawStream);return new TextDecoder().decode(decodePDFRawStream(stream).decode());}).join('\n');
+  });
+}
+
+Deno.test('prepared seal stamps all five assigned kinds on each exact rotated crop, preserving original PDF bytes',async()=>{
+  const input=await preparedSealFixture(),before=input.presentedBytes.slice(),sealed=await sealAgreementPdf(input),operators=await originalPageOperators(sealed);
+  const hex=(value:string)=>[...value].map(char=>char.charCodeAt(0).toString(16).padStart(2,'0')).join('').toUpperCase();
+  for(const [index,content] of operators.entries()){
+    assert(content.includes(hex('/s/ Jordan Avery')),'signature must be on its reviewed original page');
+    assert(content.includes(hex('JA')),'actual initials must be on the original page');
+    assert(content.includes(hex('Approved scope')),'actual text must be on the original page');
+    assert(content.includes(hex(input.parties[0].signedAt!)),'date must preserve the actual signed timestamp');
+    assert(content.includes('0 0 m\n0 14 l\n14 14 l\n14 0 l\nh\nS'),'actual native checkbox border must be retained');
+    assertEquals(content.match(/^S$/gm)?.length,index%2===0?1:3,'false remains an empty box; true adds two actual crossing strokes');
+    const matrix=['1 0 0 1 20 30 cm','0 1 -1 0 520 30 cm','-1 0 0 -1 520 730 cm','0 -1 1 0 20 730 cm'][index];
+    assert(content.includes(matrix),'one exact native crop/rotation transform must position all assigned fields');
+  }
+  assertEquals(input.presentedBytes,before);assertEquals(await hashDocument(input.presentedBytes),input.presentedSha256);
+  const {PDFDocument}=await import('npm:pdf-lib@1.17.1'),pdf=await PDFDocument.load(sealed);
+  assertEquals(pdf.getPageCount(),6,'original four pages plus original signature and signing-record pages');
+});
+
+Deno.test('prepared seal rejects mismatched document, map, identity, consent and actual input evidence',async t=>{
+  const original=await preparedSealFixture();
+  const mutations:Record<string,(input:typeof original)=>void>={
+    'wrong presented hash':input=>{input.presentedSha256='a'.repeat(64);},
+    'different PDF bytes':input=>{input.presentedBytes=input.presentedBytes.slice(0,-5);},
+    'text-medium substitution':input=>{Object.assign(input,{presentedKind:'text'});},
+    'different agreement':input=>{input.agreementId=PREP_CLIENT;},
+    'stale field map':input=>{input.preparedFields.preparation.manifest.fields[0].x++;},
+    'different signer identity':input=>{input.parties[0].email='different@example.test';},
+    'different signer reference':input=>{input.parties[0].signerId=PREP_CLIENT;},
+    'signature not committed':input=>{input.parties[0].status='pending';},
+    'consent missing':input=>{Object.assign(input.parties[0],{consentAt:null});},
+    'missing typed name':input=>{Object.assign(input.parties[0],{typedName:null});},
+    'extra input':input=>{input.preparedFields.inputs.push(input.preparedFields.inputs[0]);},
+    'omitted input':input=>{input.preparedFields.inputs=[];},
+    'forged value':input=>{Object.assign(input.preparedFields.inputs[0].values[0],{value:'invented'});},
+    'different signing time':input=>{input.parties[0].signedAt='2026-06-01T12:01:00.000Z';},
+    'altered input digest':input=>{Object.assign(input.preparedFields.inputs[0],{field_input_sha256:'a'.repeat(64)});},
+  };
+  for(const [name,mutate] of Object.entries(mutations))await t.step(name,async()=>{const input=structuredClone(original);mutate(input);await assertRejects(()=>sealAgreementPdf(input),TypeError,'AGREEMENT_PREPARED_SEAL_INVALID');});
+});
+
+Deno.test('prepared seal refuses unsupported field glyphs and overflow instead of replacing or clipping accepted text',async t=>{
+  const original=await preparedSealFixture();
+  for(const value of ['不可','W'.repeat(12000)])await t.step(value.length>10?'overflow':'unsupported glyph',async()=>{
+    const input=structuredClone(original),first=input.preparedFields.inputs[0],source=input.preparedFields.preparation.manifest.source;
+    const values=first.values.filter(field=>field.kind!=='signed_date').map(field=>({field_id:field.field_id,value:field.kind==='text'?value:field.value}));
+    input.preparedFields.inputs=[await prepareAgreementFieldInput(input.preparedFields.preparation,{tenant_id:source.tenant_id,agreement_id:source.agreement_id,client_id:source.client_id,preparation_id:PREP_ID,preparation_sha256:input.preparedFields.preparation.preparation_sha256,signer_id:PREP_SIGNER,signed_at:first.signed_at},values)];
+    await assertRejects(()=>sealAgreementPdf(input),TypeError,'AGREEMENT_PREPARED_SEAL_INVALID');
+  });
+});
+
+Deno.test('prepared seal snapshots original bytes, field map and signed party evidence before awaits',async()=>{
+  const input=structuredClone(await preparedSealFixture()),pending=sealAgreementPdf(input);
+  input.presentedBytes.fill(0);input.parties[0].typedName='Changed after entry';
+  Object.assign(input.preparedFields.inputs[0].values[0],{value:'changed'});input.preparedFields.preparation.manifest.fields[0].x++;
+  const sealed=await pending,operators=await originalPageOperators(sealed);
+  assert(operators[0].includes('4A6F7264616E204176657279'),'original signer must survive source mutation');
+});
+
+Deno.test('prepared seal preserves separate actual signer fields and omits an unanswered optional field',async()=>{
+  const input=structuredClone(await preparedSealFixture()),secondId='00000000-0000-4000-8000-000000000005';
+  const second={...input.parties[0],signerId:secondId,fullName:'Casey Morgan',email:'casey@example.test',typedName:'Casey Morgan',signingOrder:2};
+  input.parties.push(second);
+  const manifest=input.preparedFields.preparation.manifest,original=input.preparedFields.inputs[0];
+  const source={...manifest.source,status:'draft',signers:input.parties.map(p=>({id:p.signerId,full_name:p.fullName,email:p.email,signer_role:p.role,signing_order:p.signingOrder,status:'pending'}))};
+  const fields=[...manifest.fields,{id:'00000000-0000-4000-8000-000000000006',signer_id:secondId,kind:'signature',page:1,x:280,y:40,width:180,height:34,required:true,label:'Second signature'},
+    {id:'00000000-0000-4000-8000-000000000007',signer_id:secondId,kind:'text',page:1,x:280,y:105,width:180,height:34,required:false,label:'Optional answer'}];
+  // Native source constructors use version/updated_at and actual pending parties;
+  // the final renderer consumes the corresponding actual signed records.
+  input.preparedFields.preparation=await prepareAgreementFields(source,manifest.document,fields);
+  const expected={tenant_id:source.tenant_id,agreement_id:source.agreement_id,client_id:source.client_id,preparation_id:PREP_ID,
+    preparation_sha256:input.preparedFields.preparation.preparation_sha256,signed_at:original.signed_at};
+  input.preparedFields.inputs=[
+    await prepareAgreementFieldInput(input.preparedFields.preparation,{...expected,signer_id:PREP_SIGNER},original.values.filter(v=>v.kind!=='signed_date').map(v=>({field_id:v.field_id,value:v.value}))),
+    await prepareAgreementFieldInput(input.preparedFields.preparation,{...expected,signer_id:secondId},[{field_id:fields[fields.length-2].id,value:true}]),
+  ];
+  const operators=await originalPageOperators(await sealAgreementPdf(input));
+  assert(operators[0].includes('2F732F204361736579204D6F7267616E'),'second signer actual name occupies its assigned original field');
+  assert(!operators[1].includes('4361736579204D6F7267616E'),'second signer must not appear on another assigned page');
+  assertEquals(input.preparedFields.inputs[1].values.length,1,'optional unanswered text remains absent');
+});
+
+Deno.test('prepared seal embeds a valid actual drawn mark and refuses corrupt image evidence',async()=>{
+  const input=structuredClone(await preparedSealFixture());input.parties[0].signatureImagePng=ONE_PX_PNG;
+  const sealed=await sealAgreementPdf(input),{PDFDocument,PDFName,PDFDict}=await import('npm:pdf-lib@1.17.1'),pdf=await PDFDocument.load(sealed),images=new Set<string>();
+  for(const page of pdf.getPages().slice(0,4)){
+    const xobjects=page.node.Resources()?.lookup(PDFName.of('XObject'),PDFDict);assert(xobjects,'drawn mark must occupy its assigned original page');
+    for(const reference of xobjects.values())images.add(reference.toString());
+  }
+  assertEquals(images.size,1,'one actual signer mark must be embedded once and reused across its assigned fields');
+  input.parties[0].signatureImagePng=new Uint8Array([1,2,3]);
+  await assertRejects(()=>sealAgreementPdf(input),TypeError,'AGREEMENT_PREPARED_SEAL_INVALID');
+});
 
 const PDF_MAGIC = "%PDF";
 

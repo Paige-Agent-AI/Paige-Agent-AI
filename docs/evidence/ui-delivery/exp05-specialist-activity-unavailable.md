@@ -51,3 +51,16 @@ No Chat, Portal, Team Hub, PO commercial, SQL, provider or peer source change.
 The earlier sandbox cache failure executed zero assertions and is not causal
 evidence. The subsequent closed execution proves three real failures, then 112
 passing corrected assertions. These do not prove authenticated production behavior.
+
+## Independent Review — AUTHOR-REVIEW / LOWER ASSURANCE
+
+Sequential review of `99c495aa1126df341f83492724181860a3d22a04` checked actual
+query/transport failure, null versus empty data, generic message, original outer
+error response and unchanged authority/receipt/dispatch boundaries. No additional
+material finding in this bounded patch. This is not distinct non-author review.
+
+Parent producer digest `f5ef6feacb632d1cb54b2dcf1aa444ca573791fc92b084435f5d9faa57621d9e`
+reproduces 122 dependencies and all 29 declarations. Only its reviewed source
+changes to `f3192f733695012c72bd501e2c32f3431720eebc252ec4d2c02a4fccf2ba8642`.
+Renew this one producer literal; no other pin, metadata or verifier changes.
+Required exact-head CI and actual release/readback remain mandatory.

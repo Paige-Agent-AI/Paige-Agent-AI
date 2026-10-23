@@ -11,6 +11,11 @@ BEGIN
     END IF;
     RETURN OLD;
   END IF;
+  IF (OLD.token_hash IS NOT NULL OR NEW.token_hash IS NOT NULL) AND
+    ROW(OLD.id,OLD.tenant_id,OLD.agreement_id,OLD.full_name,OLD.email,OLD.signer_role,OLD.signing_order)
+    IS DISTINCT FROM ROW(NEW.id,NEW.tenant_id,NEW.agreement_id,NEW.full_name,NEW.email,NEW.signer_role,NEW.signing_order) THEN
+    RAISE EXCEPTION 'Issued signing identity is immutable' USING ERRCODE='23514';
+  END IF;
   IF OLD.status='signed' AND
     ROW(OLD.id,OLD.tenant_id,OLD.agreement_id,OLD.full_name,OLD.email,OLD.signer_role,OLD.signing_order,
       OLD.typed_name,OLD.signature_image_png,OLD.signed_at,OLD.esign_consent_at,OLD.esign_consent_slug,

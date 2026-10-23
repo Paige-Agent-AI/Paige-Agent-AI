@@ -35,18 +35,23 @@ reads actual original event IDs, reports missing old audit and inserts nothing.
 It uses SECURITY INVOKER/empty search_path and existing service privileges only;
 ordinary roles have no execution grant. No provider work occurs under row locks.
 
-An original-table immutable-evidence trigger refuses subsequent recorded signer
-identity/signature/consent/attribution changes and signed-row deletion, including
-historical rows missing audit. Original retrieval-token rotation/expiry/revocation
+An original-table immutable-evidence trigger binds an issued credential to its
+original recipient identity and refuses subsequent recorded signature/consent/
+attribution changes and signed-row deletion, including historical rows missing
+audit. Original retrieval-token rotation/expiry/revocation
 and updated_at remain usable. The existing one-way status, source/party guards,
 private preparations, token/effect holds and event append-only bodies are unchanged.
 
 Proof: genuine missing-native-contract RED, same-status evidence rewrite RED, and
 historical signed-row deletion RED retained. One error-text matcher failed because
 the original runner omits localized SQLSTATE text; corrected to have PostgreSQL
-catch the exact expected SQLSTATE, preserving every negative and positive. Final
-original native319 checks PASS:44 original +75 checked +23 editability +105 document/
-commercial preparation +72 signature. Commercial29 is INCLUDED in105, not added
+catch the exact expected SQLSTATE, preserving every negative and positive. Exact
+source review then reproduced issued-credential recipient replacement as a RED;
+the same native guard now preserves that identity before signing. The out-of-order
+fixture creates its second signer through the ORIGINAL draft writer before token
+issuance; no assertion is removed. Final original native323 checks PASS:44 original
++75 checked +23 editability +105 document/commercial preparation +76 signature.
+Earlier319 is retained historical proof. Commercial29 is INCLUDED in105, not added
 again. New transaction migration replays twice; eight actual sessions/four observed
 lock waits cover duplicates, voiding, credential revocation and expiry while waiting.
 Audit-trigger failure rolls back BOTH signer and earlier consent event. Historical

@@ -3,13 +3,14 @@
 import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
 
-export async function proveSignatureRecord({sql,read,tenant,fresh,quote,startSession,observe}){
+export async function proveSignatureRecord({sql,read,context,tenant,fresh,quote,startSession,observe}){
   let checks=0;const check=(value,message)=>{assert(value,message);checks++;};
   const q=value=>value===null?'NULL':quote(value),json=input=>JSON.parse(sql(input));
   const migration=read('supabase/migrations/20271113480004_e04_atomic_original_signature.sql');sql(migration);sql(migration);
-  const source=()=>{
+  const source=(later=false)=>{
     const a=fresh(),token=createHash('sha256').update(randomUUID()).digest('hex');
-    const s=json(`SELECT row_to_json(s) FROM paige_agreement_signers s WHERE agreement_id='${a.id}' ORDER BY signing_order LIMIT 1;`);
+    if(later)sql(context+`SELECT add_agreement_signer('${tenant}','${a.id}','Later original signer','later@example.invalid','counterparty',2);`);
+    const s=json(`SELECT row_to_json(s) FROM paige_agreement_signers s WHERE agreement_id='${a.id}' ORDER BY signing_order ${later?'DESC':'ASC'} LIMIT 1;`);
     sql(`UPDATE paige_agreements SET status='sent',content_sha256=repeat('a',64),content_storage_key='${tenant}/${a.id}/original.pdf',expires_at=clock_timestamp()+interval '1 day' WHERE id='${a.id}';
       UPDATE paige_agreement_signers SET token_hash='${token}',token_expires_at=clock_timestamp()+interval '1 day' WHERE id='${s.id}';`);
     return {a,s,token};
@@ -42,12 +43,14 @@ export async function proveSignatureRecord({sql,read,tenant,fresh,quote,startSes
     const v=source();sql(`UPDATE paige_agreement_signers SET ${mutation} WHERE id='${v.s.id}';`);refuse(v,{},'42501');
   }
   for(const mutation of ["status='voided'","expires_at=clock_timestamp()-interval '1 second'"]){const v=source();sql(`UPDATE paige_agreements SET ${mutation} WHERE id='${v.a.id}';`);refuse(v);}
+  const issued=source();sql(`SET ROLE service_role;DO $proof$ BEGIN BEGIN UPDATE paige_agreement_signers SET email='replacement@example.invalid' WHERE id='${issued.s.id}';RAISE EXCEPTION 'Issued credential must preserve its original recipient';EXCEPTION WHEN SQLSTATE '23514' THEN NULL;END;END $proof$;`);checks++;
+  for(const mutation of ["full_name='Replacement recipient'","signer_role='witness'","signing_order=3"]){sql(`SET ROLE service_role;DO $proof$ BEGIN BEGIN UPDATE paige_agreement_signers SET ${mutation} WHERE id='${issued.s.id}';RAISE EXCEPTION 'Expected issued identity refusal';EXCEPTION WHEN SQLSTATE '23514' THEN NULL;END;END $proof$;`);checks++;}
   const old=source();sql(`UPDATE paige_agreement_signers SET status='signed',signed_at=clock_timestamp(),typed_name='Historical original signer',esign_consent_at=clock_timestamp()-interval '1 second',esign_consent_slug='esign-consent',esign_consent_version=1,esign_consent_sha256=repeat('c',64) WHERE id='${old.s.id}';`);
   const historical=record(old);check(historical.replayed&&historical.audit_complete===false&&historical.consented_event_id===null&&historical.signed_event_id===null,'Missing historical audit stays explicitly missing');
   check(sql(`SELECT count(*) FROM paige_agreement_events WHERE signer_id='${old.s.id}' AND event_type IN ('consented','signed');`)==='0','Recovery never invents retroactive consent/audit');
   sql(`SET ROLE service_role;DO $proof$ BEGIN BEGIN DELETE FROM paige_agreement_signers WHERE id='${old.s.id}';RAISE EXCEPTION 'Historical recorded signature must not be deleted';EXCEPTION WHEN SQLSTATE '23514' THEN NULL;END;END $proof$;`);checks++;
   check(sql(`SELECT status FROM paige_agreement_signers WHERE id='${old.s.id}';`)==='signed','Historical recorded signature survives even when original audit is missing');
-  const ordered=source();sql(`UPDATE paige_agreement_signers SET signing_order=2 WHERE id='${ordered.s.id}';INSERT INTO paige_agreement_signers(agreement_id,tenant_id,full_name,email,signing_order) VALUES('${ordered.a.id}','${tenant}','Earlier original signer','earlier@example.invalid',1);`);refuse(ordered);
+  const ordered=source(true);refuse(ordered);
   const atomic=source();
   sql(`CREATE FUNCTION public._synthetic_signature_event_failure() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN IF NEW.event_type='signed' THEN RAISE EXCEPTION 'Synthetic audit failure' USING ERRCODE='23514';END IF;RETURN NEW;END$$;
     CREATE TRIGGER z_synthetic_signature_event_failure BEFORE INSERT ON paige_agreement_events FOR EACH ROW EXECUTE FUNCTION public._synthetic_signature_event_failure();`);

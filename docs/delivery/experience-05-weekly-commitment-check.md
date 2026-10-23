@@ -1,5 +1,44 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October22 — ZION original invocation receipt correction, development
+
+REPAIR the existing `paige-orchestrator` receipt producer. Original invocation
+rows already use the trusted `ctx.user_id`, but the receipt helper selected the
+first active owner/admin instead. Five fail-first cases reproduced wrong-owner
+attribution, invented actorless attribution and missing original receipt identity;
+the original identity matrix stayed green. The helper now accepts only the same
+verified requester, skips actorless/platform-only tenant receipts, and passes the
+original invocation UUID to the existing canonical recorder. It never borrows an
+owner or creates another execution/receipt store. Historical records are unchanged.
+
+The original trusted JWT/service-member/resource/funding/local-agent checks,
+model policy, agent registry, downstream authorization and success/failed/unknown
+outcomes remain. An asynchronous dispatch remains unknown until completion is
+observed. Repeated recording of one invocation uses the same existing SQL unique
+identity; this does not establish exactly-once request dispatch or authorize a
+repeated specialist/business action. Actual receipt persistence still requires
+the original native writer and production proof.
+
+Source verification:43 tests across the original INT308 identity and canonical
+receipt suites PASS, including actual helper → original canonical recorder →
+closed RPC port, actor-substitution mutation, preserved outcome/correlation and
+stable receipt ID. These are synthetic boundary tests, not authenticated agent
+execution or SQL receipt persistence. Original Rail presentation was inspected:
+its PAIGE/agent labels and visible flow are unchanged; only internal receipt
+attribution/identity is corrected. No UI component, admission, schedule, provider,
+prompt, authority or activation changes. All eleven Operations recipes remain
+Listed / Unverified; Layer D/full ZION, weekly execution, automations, recovery,
+separate Live/cohorts and all ten outcomes/E5-CV1–9 remain owed.
+
+Grounding:ANT11/21/52/147/161 and historical ANT6; main
+`1d2b2456e6d7006e9e299592c65abfb2bb71a927`, active E01/E02/E04/CURA/EXP10 paths
+checked, narrow lease ANT161/85fe0639. E04#2637 and E02#2632 preserved; weekly2641
+is a separate release. Existing ZION platform-default/version2/enabled soft
+identity was read from production, not invoked. This source is development,
+not merged/deployed/authenticated verified or founder accepted. Normal exact-head
+review/CI/Edge source+configuration readback and same canonical release log remain
+required. No founder intermediate test requested.
+
 ### October22 bounded continuation — native future-only stop controls
 
 Pre-edit routing: EXP05 outcomes04/06/08/10 consume the original owner-human

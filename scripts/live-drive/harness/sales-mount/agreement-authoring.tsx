@@ -9,6 +9,7 @@ import { AgentPresenceProvider } from "@/components/ui/paige/AgentPresenceContex
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
 import { SalesWorkspace } from "@/solo/SalesWorkspace";
 import {AgreementDocumentFieldsMount} from './agreement-document-fields-mount';
+import {AgreementSignatureRequestMount} from './agreement-signature-request-mount';
 import {prepareDocumentProofSession} from './agreement-authoring-client';
 import { setSalesHarnessMode } from "./useSoloSalesOps-stub";
 import { setAgreementsHarnessMode } from "./useSoloCommercialTerms-stub";
@@ -39,7 +40,7 @@ async function renderAuthoring(){
             <div className="paige-solo" data-theme={theme} style={{ width:"100%", maxWidth:"none", height:"100%", minWidth:0, minHeight:0, alignSelf:"stretch", display:"flex", flexDirection:"column" }}>
               <div style={{ display:"flex", flex:1, minHeight:0, overflow:"hidden" }}>
                 <main data-solo-screen-host style={{ flex:1, overflow:"hidden", minHeight:0, minWidth:0 }}>
-                  <Routes><Route path="/solo/:account/*" element={params.get('fieldsProof')==='1'?<AgreementDocumentFieldsMount/>:<SalesWorkspace/>}/></Routes>
+                  <Routes><Route path="/solo/:account/*" element={params.get('signatureProof')==='1'?<AgreementSignatureRequestMount/>:params.get('fieldsProof')==='1'?<AgreementDocumentFieldsMount/>:<SalesWorkspace/>}/></Routes>
                 </main>
               </div>
             </div>

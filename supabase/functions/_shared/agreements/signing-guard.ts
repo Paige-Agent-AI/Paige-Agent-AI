@@ -70,7 +70,7 @@ export function decideSigningAccess(input: {
   const { signer, agreement, earlierUnsignedCount, now } = input;
 
   const state = tokenState(signer, now);
-  if (!state.usable) {
+  if (state.usable === false) {
     if (state.reason === "expired") return { allow: false, reason: "expired" };
     return { allow: false, reason: "not_found" };
   }

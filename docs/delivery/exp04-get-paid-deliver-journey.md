@@ -1,5 +1,97 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## C12 original signature-request feedback — pre-edit repair contract
+
+OWNER_INTENT: report exactly what the original signature-request result proves,
+preserve failed/warning evidence, and return uncertain work to the original
+agreement for inspection instead of claiming delivery or rollback.
+MUST_NOT_HAPPEN: stale-business dispatch, cross-identity publication, treating
+provider acceptance as delivery, dropped partial failure/status warning, immediate
+blind retry after an unknown outcome, or bypassing selected-document native holds.
+MUST_PRESERVE: original sender/permissions/signers/client/document, original
+Kit/Trust high gate, existing link/void actions, original modal/focus/return and
+canonical agreement/Communications history. No backend/provider/native change.
+ACCEPTANCE_CRITERIA: actual hook/controller causal negatives and old positives,
+local read-only review of refused/unknown/accepted/partial states before UI edits,
+actual rendered keyboard/narrow/recovery evidence, exact review/CI/release/readback.
+Actual external send/signature/provider/roles/cohorts/full12/founder proof remains
+separate and unverified. No real send is requested by source/UI tests.
+
+REPAIR original useSoloAgreementSignings/sendForSignature and SignatureSender;
+preserved ed2964 signing-context/6c528 signing-readback still carry the same old
+hook, so neither already fixes this defect. Original provider sender can accept a
+message before link/status writes fail; its response carries failed/warning
+details the current hook drops. Preserve raw sent field compatibility but label
+it provider acceptance, never delivery. A missing/changed result is uncertain;
+only pre-dispatch local refusal proves this page issued no new request. Retain
+original business and identity epoch across awaits and use only an ephemeral
+in-flight interaction guard, not a new execution/idempotency store.
+
+Pre-edit ten routing/source answers are retained in ANT161/aaafc5b6 and
+ANT163/a4e64fd2. Existing agreement.send/external_effect/high/chat-canonical,
+edge.agreement-send, original agreement/signer/event/Communications/Rail remain.
+No LayerC rewrite, new registry/approval/job/ledger/provider/Portal or activation.
+All new selected preparations keep their native signing/token holds. Full sender
+idempotency, provider reconciliation, exact document/map approval and effective
+signed terms remain later original-engine integration work, not this UI repair.
+
+C12 implementation/proof checkpoint — October22/23, development only:
+the original actor/session/business epoch is captured before invoking the same
+sender; only a validated nonempty provider-acceptance result is displayed, with
+actual partial issues and record warnings. Unknown results offer original-record
+inspection; no immediate repeat/link/void. Original copy-link and explicit void
+paths remain. Ephemeral interaction refs prevent overlapping gestures, never
+promise durable exactly-once execution. Pending requests remain escapable without
+claiming cancellation. Selected-document native holds remain unchanged.
+
+Pre-edit read-only prototype outputs/e04-signature-outcome-prototype.html and its
+12-state/viewport checks preceded UI implementation; lead selected incumbent
+direction under the owner's October21 routine UX authority, not founder approval.
+Hook RED7FAIL/1PASS and actual panel RED6FAIL/1PASS retained. Original broad
+Sales1034PASS/3FAIL exposed two obsolete false-effect assertions and the unchanged
+vocabulary guard; stronger acceptance/empty-success assertions replaced those
+claims, with an actual empty-success causal RED before correction. Current original
+Sales scope1039 cases/68 files PASS/exit0; no timeouts or tests weakened. First and
+final type gates10 baseline/current6/no new diagnostics PASS; ESLint0 errors/one
+unchanged original dependency warning. Gold/UTF8/diff PASS. Pinned Impeccable4.1.0
+has zero blockers/40 incumbent advisories, no ignore/rule/dependency changes.
+
+Actual native compiled panel/shell20 viewport/theme/panel frames/eight paths,
+23 exact source pins/zero page errors. First rendered check found original portal
+surface fallback missing in dark narrow mode; corrected with existing surface
+tokens and44px controls. Confirmation exposed original grid shrink clipping the
+recap; max-content rows and strict actual recap geometry retain every fact in the
+original body scroll owner. This final material correctness check is separate
+from cosmetic polishing. Desktop/320 actual images inspected; no further visual
+direction change. Long emails, partial/warning, unknown/refused/pending, native
+result/Tab/Escape/trigger-return and clear provider-versus-delivery evidence are
+covered. Local synthetic transports never establish hosted authorization, sending,
+signing, durable provider reconciliation, whole12/CentralQA/founder acceptance.
+
+Separate final source review caught the original producer's failed.reason wording
+inferring delivery from acceptance. The actual-source panel negative failed1/8
+before correction. The same panel now interprets its three fixed legacy reason
+sentences as acceptance-unverified, accepted-with-link-failure or reported
+suppression; unfamiliar reasons show an inspection explanation. Original raw
+failure evidence stays in the hook response and original records, never becomes
+a new provider engine. Current full1038/68 PASS and fresh original native20
+frames/eight paths/23 pins/zero errors confirm this correction using the exact
+original producer link-failure sentence in the controlled fixture. Source/API/
+permissions/native hold and all full12/customer acceptance boundaries remain.
+
+The final actor-return negative additionally reproduced A→B→A reviving an older
+response (8PASS/1FAIL). The original send-only actor ref now advances an epoch
+after every actor transition, parallel to the existing business epoch. It changes
+no read/write authority or other hook operations. Current1039/68 and final20
+rendered frames/eight paths/23 exact pins PASS; the original SOLO parity guard
+SP1–SP5 and every original mutation/legitimate eligibility control PASS.
+
+C11 preceding release is now verified:2646/mainc98f7af0537b005a4e895fff92c906bf51023628,
+normal agreement-document@71/23-file source readback and exact READY web/public
+source. Master§4.0 and Brain retain exact identities. New commercial2 authenticated
+operation remains unverified while ordinary browser connection is unavailable;
+no credential or Operator workaround and no customer send/sign/payment occurred.
+
 ## C11 commercial document review — pre-edit UI contract
 
 OWNER_INTENT: the owner chooses an actual same-client, agreement-linked invoice,
@@ -2396,6 +2488,151 @@ callers. This narrows the proposed lease and avoids an unnecessary shared Edge
 deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
 business configuration; the infrastructure supplies no clauses or completed review.
 ## October22 C7 original commercial-presentation reconciliation
+
+### C13 checked prepared signing input — pre-edit contract
+
+OWNER_INTENT: each eventual signer submits only the fields assigned on the exact
+reviewed original document. This increment adds a pure bounded input check to
+the existing field-preparation module; it performs no signing or stored mutation.
+MUST_NOT_HAPPEN: another signer's fields, guessed dates/initials/consent, omitted
+required answers, duplicate inputs, client-supplied authority or an obsolete map.
+MUST_PRESERVE: original native preparation/document/source/signers/consent/engine,
+canonical JSON/hash/field definitions, current signing/token hold and original
+Portal/Spine/Harness/Trust/LayerC/Rail/Communications/Finance architecture.
+ACCEPTANCE_CRITERIA: actual original constructor fixtures/positive behavior and
+causal missing-export/hostile-input controls, immutable snapshot and exact-source
+binding, proportional separate review/CI/source release. No local proof can
+establish hosted signing/authorization/provider/cohort/CentralQA/owner acceptance.
+
+Original paige_agreement_document_preparations is the native source. Trusted
+callers must resolve its exact retained record/bytes and original token/party
+authority. This pure helper cannot authorize client-supplied preparations. Global
+typed/drawn signature, explicit e-sign consent and actual server identity/time
+remain with the original signing engine. A required checkbox is an explicit
+boolean, including false, not fabricated consent; date fields use the original
+server timestamp. Optional omissions remain absent. No UI/backend/SQL/grant or
+capability activation, new approval/event/signature/payment store or provider.
+
+Existing2175/2158/2186/2192 and original accepted-commercial2190/effectuation2191
+source remain preserved. The latter cannot bypass prepared-document native holds;
+selective reuse and original exact-map/approval/signing/terms integration remain
+required. Full twelve outcomes and the one complete founder evaluation continue.
+
+C13 local source checkpoint: actual missing-export controls failed3 while the
+original16 tests/52 steps passed. Initial new test callback type failure is
+INVALID setup evidence, preserved separately; no no-check or permission relaxation.
+The additive prepareAgreementFieldInput reuses the original assigned-field parser,
+overlap/required-signature checks, canonical JSON/hash and original signing body
+bound. It binds original native preparation ID/hash, tenant/agreement/client and
+token-derived signer, snapshots before awaits, preserves explicit false and
+server timestamp, rejects foreign/duplicate/missing/forged answers, and returns
+only immutable proposed values/digest. No signature or authority is established.
+
+Original preparation schema1/commercial2, unready-map relabeling, source mutation,
+owner API/HTTP/artifact/retained-document and signing guards:89 tests/98 steps
+PASS under strict Deno deny-net/write/env/run/ffi/sys; actual agreement-document
+entrypoint typecheck PASS. No endpoint/native/grant/source hold/capability/Portal/
+provider/UI activation. Original field-constructor valid output and refusal
+semantics retained by extracting its existing parser/issue calculation unchanged.
+Pre-edit ten-answer/source lease: ANT161/d0a7044c and ANT163/ff698bd0.
+Separate final review/CI/normal deployed source readback and future genuine role/
+signing/approval/field rendering/recovery/CentralQA/full12/founder acceptance remain
+owed. This pure prerequisite is unmounted, never marked Live or customer accepted.
+
+The original SDK/controller/geometry consumers also pass78 cases/three suites.
+Importing the original signing body bound exposed one root TypeScript narrowing
+error in signing-guard, retained as FAIL. Its original TokenState is always literal
+usable true/false; spelling the SAME refusal as usable===false fixes the compiler
+without casts/baseline/checker/authority changes. Pre-edit lease extension records
+this one line. Final89/98 strict backend controls and both actual agreement-document
+and sign-agreement entrypoint typechecks PASS. Corrected root check is running;
+required exact-head CI/review/source release still separate and mandatory.
+
+ORCHESTRATION_CONTRACT C13: original recipient eventually proposes assigned fields
+through original signing/Portal entry, not yet wired; native preparation ID/hash,
+document and token-derived party are original authority. This pure bounded
+constructor introduces no ActionAdapter/act/admission/approval or durable store.
+Existing original signing consent/authorization/current-selection revalidation,
+approved exact-document send, native input write/seal/provider readback and Rail
+receipt must be connected before activation. Its immutable input digest is only
+proposed data, not signature, completion, legal sufficiency or execution evidence.
+ALG01/ALG12 gain supporting data validation only; official maturity and ALG02/13,
+conversational/Portal/client/cohort/full12/founder acceptance are unpromoted.
+Visible-Flow-Impact: no — new export is unmounted, original preparation parser and
+boolean access decisions are unchanged; no UI/backend action/record schema change.
+Shipped Delivery Log: N/A until an actual reviewed main merge and source release.
+
+October23 actual C13 source release supersedes that dated N/A:2654 reviewed36b,
+LOWER5623411227, all11 final latest checks/two statuses/full Preview SUCCESS;
+maina047a2ab48a0d40f586b0bc269d108692ce2c40b has verified89+36b parents/tree7b1f3096.
+Normal Edge39897418203/job120230949041/artifact12477710875 verifies original
+agreement-document@76/23 files and sign-agreement@28/11 files/config. READY web
+dpl_Gaa4rAtSJKRXHqeZfoCVbtsGD7UT and both publica047-mvkfr69o/null verified;
+original C12 feedback remains. [Actual release receipt6357008694](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2654#issuecomment-6357008694).
+Helper remains UNMOUNTED, not signing/consent/approval/native input or full12
+customer acceptance. Exact verified row and Brain entry are in this closeout.
+
+### C14 original prepared-field PDF sealing — development
+
+OWNER_INTENT: reproduce the owner's reviewed assigned field positions and each
+signer's actual recorded values in the original completed PDF. EXTEND1352's
+sealAgreementPdf, not a replacement signature/PDF/record engine. Optional prepared
+input is unmounted; no seal.ts/endpoint/native hold/permission/Portal/Chat/provider
+activation. Original global signature and signing-record appendix stay intact.
+
+Pre-edit source leases ANT161/8bd49d64 and ANT163/eab0e05d name the ten routing
+answers. Canonical preparation from300004/350004 and C13 field input are required
+dependencies. The future trusted original native caller must resolve exact selected
+preparation/bytes, recorded input, party/status/consent/time and approved send.
+The renderer cannot establish authorization or turn proposed answers into a signature.
+
+Snapshot before awaits; same original PDF inspector, manifest/byte/hash/identity/
+consent/input-digest checks; visible rotated crop coordinates transformed once to
+native PDF. Stamp actual typed/drawn signature, explicit initials/text, original
+server timestamp and checkbox true/false. Optional omissions stay absent. Unsupported
+glyphs, stale/foreign evidence and unfit text refuse; no silent truncation or smaller
+than6pt text. Native preflight must run before a signature is committed, so a later
+render refusal cannot strand an irreversible signature. Upload/readback/completion
+remains the original sealAndComplete responsibility in a later bounded integration.
+
+Two initial fixture setup failures (nullable typing and mutation of a frozen fixture)
+are preserved as INVALID, not product RED. Corrected actual baseline36 incumbent
+cases PASS,4 new cases/17 steps FAIL. Initial new strict type diagnostics preserved,
+corrected without no-check/baseline change. First checkbox assertion incorrectly
+expected a PDF rectangle shorthand; actual native operators showed four stroked
+segments. Corrected proof now requires those exact four segments, explicit false
+versus two additional checked strokes, all five exact text values and four native
+crop/rotation transforms. Final210 original cases/178 steps PASS under denied
+net/write/env/run/ffi/sys, including two actual signers, optional omission and
+drawn mark/corrupt-image refusal. Resource review reproduced four duplicate image
+embeddings versus one; one per-signer image is now reused on all assigned pages.
+Actual original three affected Edge entrypoints typecheck PASS; corrected final
+root10/6/no new PASS, no compiler/baseline/authority relaxation. The same native
+inspector uses the original const import convention and identical for-loop checks
+with explicit numeric index to keep both frontend and strict Deno compilation.
+
+Actual original renderer's two neutral PDFs, all six PDFium images and independent
+pixel/text/source readback are retained in
+[native proof](../evidence/ui-delivery/assets/e04-prepared-field-sealing/receipt.json)
+and [render inspection](../evidence/ui-delivery/assets/e04-prepared-field-sealing/render-inspection.json).
+Four actual rotated crops each retain all five field kinds with zero dark pixels
+outside reviewed fields; original two appendices retained. Poppler's bundled font
+substitution emitted Symbol/ArialUnicode warnings and dropped some appendix glyphs;
+independent native PDFium plus actual PDF text/operators verifies complete content.
+Both observations remain; no product code was changed to hide a renderer warning.
+These are SYNTHETIC records, not actual authority/consent/signing/provider/customer
+acceptance. Final exact-head review/required CI/source release/readback remain owed.
+
+ORCHESTRATION_CONTRACT C14: eventual original token-derived signer/native recorded
+input -> original selected preparation -> this pure renderer -> original immutable
+Storage/readback/completion/Rail receipt -> authorized completed-file surface.
+No new executor/approval/job/ledger/consent store or provider. Pure file reproduction
+is not an ActionAdapter or consequential action. ALG01/12 supporting verification
+only; ALG02/13/catalogue/all12/full customer/founder acceptance unpromoted. Proper
+native assigned-input write/preflight/consent, exact-map approved send, effective
+terms/PRE1 and EXP09 scoped consumption remain mandatory subsequent work.
+Visible-Flow-Impact: no — original callers never supply the optional prepared input;
+no mounted UI/action or existing legacy-render behavior changes in this increment.
 
 ### Native document-preparation versions — pre-edit forward290004 contract
 

@@ -732,11 +732,12 @@ const SOURCES = {
   "supabase/functions/comms-purchase-number/index.ts": "23f479730d2b658fe231dcbe33e3fcd864ec07e9f87ce116742f83e84c8e9237",
   "supabase/functions/comms-a2p-draft/index.ts": "49bd8acc5ed4ec7d60ba79b917438ae5eba0ce2ffcbf862baa9caa56293ada29",
   "supabase/functions/paige-write-back/index.ts": "5ff11463820b7c38e69f683cbcd8542359d5a72c37724c06846bf3dcc6d41de8",
-  // EXP05 receipt-only source review a5b89de6f / 5622760780, AUTHOR-REVIEW / LOWER ASSURANCE.
-  // Preserve trusted requester and original invocation UUID in the existing recorder;
-  // no runtime, admission, authority, prompt, provider or dispatch change. Original
-  // 84e1bb41 digest reproduced; renew only this reviewed producer, not peer pins.
-  "supabase/functions/paige-orchestrator/index.ts": "a8d0324d17761af9333901f61bf99f7ac6f3b0eb4e636c900df39fc6599246de",
+  // EXP05 durable-outcome review 1ac3aa34a, AUTHOR-REVIEW / LOWER ASSURANCE.
+  // Registration must precede dispatch; exact saved outcome/receipt acknowledgment
+  // gates tenant completion, with original-ID uncertainty and no automatic replay.
+  // Original a8d0324d digest reproduced; only this source changed/held. All peer
+  // pins, actual authority, adapters, registry, providers and verifier rules retained.
+  "supabase/functions/paige-orchestrator/index.ts": "2714d21a878ebe745a91d315109f32ca6a0412d56f6cf51a9613d0ef52691637",
   "supabase/functions/subagent-forge/index.ts": "1acb5488f11bd93a2d6b36638fddcd73323f4363eacbd58b284d1fa648b3d906",
   // EXP00 comms-door renewal (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer
   // must confirm): branch zcod/exp00-comms-door-content-order changes send-message/index.ts in ONE hunk —

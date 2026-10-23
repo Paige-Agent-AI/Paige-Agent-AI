@@ -1,7 +1,7 @@
 # EXP05 original specialist work identity and outcome truth
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: original governed delegate request -> trusted actor/tenant/resource -> original invocation -> existing runtime -> original saved outcome -> canonical capability receipt -> truthful response. Existing unknown-state inspection remains the permitted recovery; no retry is introduced.
+FLOW_BY_FLOW: PASS: docs/delivery/experience-05-weekly-commitment-check.md; original governed delegate request -> trusted actor/tenant/resource -> original invocation -> existing runtime -> original saved outcome -> canonical capability receipt -> truthful response. Original uncertainty permits inspection without replay.
 PAIGE_UI_DESIGN: PASS: installed project skill and original Operations/PAIGE status contracts applied to this backend feedback repair; no component, geometry, navigation or token changes.
 MATERIAL_FLOW_CHANGE: NO: repair the existing work-record and receipt acknowledgments without another step, interface, authority, capability, provider or execution path.
 FLOW_PROTOTYPE: NOT_REQUIRED: original refusal, completed, failed and unknown states remain; no new customer flow or control is designed.

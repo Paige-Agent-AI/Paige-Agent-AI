@@ -1898,7 +1898,11 @@ security metadata invariant before exact replay; no applied source was affected.
 Existing ci.yml invokes the SAME original native runner in one
 additive fail-closed step; no new QA engine, timeout/baseline/skip or dependencies.
 Original legacy replay/duplicate dispatch/atomic receipt rollback/conflict/authority/
-lease/unknown recovery assertions remain. Scoped syntax/migration/ACL/whitespace
+lease/unknown recovery assertions remain. First hosted92 native step99 failed
+at Linux pg_ctl startup before assertions. The original TCP-only fixture now
+explicitly disables unused Unix sockets and retains bounded pre-fixture startup
+diagnostics; no host/authority/assertion/timeout change. Original FAIL is retained,
+fresh local original legacy lifecycle +10 future-report authority scenarios PASS on PostgreSQL16.14, including the explicit TCP-only assertion. Fresh hosted proof remains required. Scoped syntax/migration/ACL/whitespace
 checks PASS. Hosted exact-head/full-schema/Preview/review/release remain owed.
 Functional local prerequisite; Visual N/A; Experiential/Founder Acceptance
 UNVERIFIED. Worker producer/public admission/immutable artifact/read/turn/Rail and

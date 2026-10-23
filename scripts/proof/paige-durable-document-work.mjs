@@ -165,11 +165,20 @@ try {
 
   await command(executable("initdb"), ["-D", cluster, "-U", "postgres", "--auth=trust", "--no-locale", "--encoding=UTF8"]);
   started = true;
-  await command(executable("pg_ctl"), [
-    "-D", cluster, "-l", join(cluster, "postgres.log"), "-w", "-t", "30",
-    "-o", `-h 127.0.0.1 -p ${port} -c max_connections=20`, "start",
-  ]);
+  try {
+    await command(executable("pg_ctl"), [
+      "-D", cluster, "-l", join(cluster, "postgres.log"), "-w", "-t", "30",
+      // Every proof connection already uses TCP loopback. Linux's default Unix
+      // socket directory need not be writable and is not part of this contract.
+      "-o", `-h 127.0.0.1 -p ${port} -c max_connections=20 -c unix_socket_directories=`, "start",
+    ]);
+  } catch (error) {
+    let detail = "Private startup log unavailable.";
+    try { detail = readFileSync(join(cluster, "postgres.log"), "utf8").trim().split(/\r?\n/).slice(-8).join("\n"); } catch { /* before any fixture or business data */ }
+    throw new Error(`Isolated PostgreSQL startup failed: ${error instanceof Error ? error.message : 'pg_ctl failed'}\n${detail}`);
+  }
 
+  assert.equal((await psql("SELECT current_setting('unix_socket_directories')='' AND inet_server_addr()='127.0.0.1'::inet AND current_setting('listen_addresses')='127.0.0.1';")).stdout, 't', 'Original proof stays TCP loopback only');
   await psql(fixtureSchema);
   await psql(envelopeMigration);
   await psql(documentMigration);

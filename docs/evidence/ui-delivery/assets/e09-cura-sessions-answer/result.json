@@ -1,0 +1,225 @@
+{
+  "at": "2026-10-23T13:59:54.985Z",
+  "component": "original PaigeChat and children/CSS; Auth, Native data and model response synthetic",
+  "scenarios": [
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-1536x770.png",
+      "pngWidth": 1536,
+      "pngHeight": 770,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 758.4000244140625,
+        "height": 44,
+        "width": 497.6000061035156,
+        "x": 12,
+        "y": 714.4000244140625
+      },
+      "height": 770,
+      "horizontalOverflow": false,
+      "scrollOwners": [],
+      "width": 1536
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-1366x768.png",
+      "pngWidth": 1366,
+      "pngHeight": 768,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 756,
+        "height": 44,
+        "width": 429.75,
+        "x": 12,
+        "y": 712
+      },
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [],
+      "width": 1366
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-1024x768.png",
+      "pngWidth": 1024,
+      "pngHeight": 768,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 756,
+        "height": 44,
+        "width": 292.8000183105469,
+        "x": 12,
+        "y": 712
+      },
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [],
+      "width": 1024
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-900x1000.png",
+      "pngWidth": 900,
+      "pngHeight": 1000,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 988,
+        "height": 44,
+        "width": 243.1999969482422,
+        "x": 12,
+        "y": 944
+      },
+      "height": 1000,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 42,
+          "label": "Message Cura",
+          "scrollHeight": 56,
+          "tag": "TEXTAREA"
+        }
+      ],
+      "width": 900
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-390x844.png",
+      "pngWidth": 390,
+      "pngHeight": 844,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 836,
+        "height": 44,
+        "width": 273.6000061035156,
+        "x": 8,
+        "y": 792
+      },
+      "height": 844,
+      "horizontalOverflow": false,
+      "scrollOwners": [],
+      "width": 390
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-320x568.png",
+      "pngWidth": 320,
+      "pngHeight": 568,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 560,
+        "height": 44,
+        "width": 203.1999969482422,
+        "x": 8,
+        "y": 516
+      },
+      "height": 568,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 339,
+          "label": "Cura conversation",
+          "scrollHeight": 465,
+          "tag": "DIV"
+        }
+      ],
+      "width": 320
+    },
+    {
+      "case": "accepted-source-unavailable-dark-reduced-motion",
+      "image": "sessions-source-held-dark-320x568.png",
+      "buttons": [
+        {
+          "bottom": 433.2000122070313,
+          "disabled": false,
+          "height": 44,
+          "label": null,
+          "right": 169.0749969482422,
+          "text": "Check conversation",
+          "width": 157.0749969482422,
+          "x": 12,
+          "y": 389.2000122070313
+        },
+        {
+          "bottom": 485.2000122070313,
+          "disabled": false,
+          "height": 44,
+          "label": null,
+          "right": 151.0625,
+          "text": "Contact business",
+          "width": 139.0625,
+          "x": 12,
+          "y": 441.2000122070313
+        },
+        {
+          "bottom": 560,
+          "disabled": true,
+          "height": 44,
+          "label": "Start voice typing",
+          "right": 261.1999969482422,
+          "text": "",
+          "width": 44,
+          "x": 217.1999969482422,
+          "y": 516
+        },
+        {
+          "bottom": 560,
+          "disabled": true,
+          "height": 44,
+          "label": "Send message",
+          "right": 311.20001220703125,
+          "text": "",
+          "width": 44,
+          "x": 267.20001220703125,
+          "y": 516
+        }
+      ],
+      "dark": true,
+      "height": 568,
+      "horizontalOverflow": false,
+      "reducedMotion": true,
+      "width": 320
+    },
+    {
+      "case": "keyboard-original-question-recovery-dark",
+      "image": "sessions-original-question-recovered-dark-320x568.png",
+      "composerValue": "",
+      "focus": "Message Cura",
+      "height": 568,
+      "horizontalOverflow": false,
+      "text": "CURA Sessions · local synthetic review · no live customer data\nN\nCura\n\nAI client success agent for Northside Coaching\n\nWhere should I begin this week?\n\nN\n\nYour shared game plan starts with the reflection worksheet. You can find it in Documents. If you need help, message your coaching team.\n\nCan you confirm my session?\n\nCura · on watch\n\nREADY WHEN YOU ARE\n\nYour saved conversation is up to date.",
+      "width": 320
+    },
+    {
+      "case": "accepted-source-unavailable-light",
+      "image": "sessions-source-held-390x844.png",
+      "actions": [
+        {
+          "bottom": 761.2000122070312,
+          "height": 44,
+          "name": "Check conversation",
+          "right": 169.0749969482422,
+          "width": 157.0749969482422,
+          "x": 12,
+          "y": 717.2000122070312
+        },
+        {
+          "bottom": 761.2000122070312,
+          "height": 44,
+          "name": "Contact business",
+          "right": 316.1374969482422,
+          "width": 139.0625,
+          "x": 177.0749969482422,
+          "y": 717.2000122070312
+        }
+      ],
+      "height": 844,
+      "horizontalOverflow": false,
+      "sendDisabled": true,
+      "text": "CURA Sessions · local synthetic review · no live customer data\nN\nCura\n\nAI client success agent for Northside Coaching\n\nWhere should I begin this week?\n\nN\n\nYour shared game plan starts with the reflection worksheet. You can find it in Documents. If you need help, message your coaching team.\n\nWhen is my next appointment?\n\nWe couldn’t confirm this reply\n\nYour question may already be saved. Check the original conversation before sending it again.\n\nCheck conversation\nContact business",
+      "voiceDisabled": true,
+      "width": 390
+    }
+  ],
+  "renderedEvidence": "9 actual original-component frames; all specified viewport rasters match; no horizontal overflow, composer/recovery controls reachable, dark and reduced motion, original history readback via keyboard restores Message Cura without duplicate send or invented reply",
+  "boundaries": "Local original-component proof only; not full authenticated shell, production customer/model, physical Safari, screen reader, browser zoom or whole seven-pillar acceptance."
+}

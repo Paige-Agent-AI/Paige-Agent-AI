@@ -1858,6 +1858,23 @@ eca1796a and ANT1613217e341 record the dependency-ordered continuation plan.
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 
+**S2A source/native release verified:** PR2647 reviewed4560f297165c3329de9daa3256a917900bf860c9,
+LOWER5622919945, all13 final checks/two statuses SUCCESS, no unresolved threads.
+Maina7ea2513a4172edb252d8640e2e6bf7f0b32d6b8/tree1f88385e509ea3ec94bdc6baede52efc76ade2b1
+matches inspected c98+456 union. Normal migration39888217187/120201499373 SUCCESS;
+actual430002 persisted. Original-table authenticated-only restrictive SELECT policy
+and enabled INVOKER trigger read back; readable/guard bodyMD5s
+4336bfd19107ac41cf993644f24074a6/d0786e4b75d3d9a67f35f446897d3149 match Git SQL.
+Original private Metric/document bodies unchanged; all expected owner/path/ACL
+contracts verified. Eligibility boolean alone is authenticated-callable; no actor
+parameter or business data. Webdpl_FCr7QZHWwc8WgyAU2NKx6ZnTnYUq READY/canonical aliases,
+public200 exacta7ea-mvkc3tf8/customerUpdate:null. Own Edge N/A; zero reserved reports,
+no report/type/worker/provider/role/Chat/action activation. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2647#issuecomment-6355753951).
+Own merged preview auto-retired/inventory22; no peer/main deletion or quota increase.
+Historical development notes below are superseded only at this source boundary.
+Actual report execution/read/retrieval, ordinary roles/cohorts/Chat/Live/all19/nine
+and Founder Acceptance remain owed; CAP/ALG states unchanged.
+
 **S2B native authority, development:** proposed440002 adds the SAME private Metric
 predicate to original document claim and completion, including before historical
 report-labelled success readback. No public type admitted: original nine types and

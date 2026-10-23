@@ -6,6 +6,7 @@ import {
   normalizeDocumentDraft,
   parseDocumentModelOutput,
   validateDocumentBrief,
+  validateBusinessReviewBrief,
   type DocumentBrief,
 } from "../../supabase/functions/_shared/document-production";
 
@@ -16,6 +17,36 @@ const brief: DocumentBrief = {
   brief: "Draft an attorney-review services agreement using the supplied program scope and dates.",
   required_facts: { client: "Example Client", start_date: "October 1, 2026" },
 };
+
+const review={version:1,doc_type:'business_review',title:'Monthly operating review',brief:'Review original verified historical sources.',
+  report_period:{key:'month',start:'2026-09-01T00:00:00Z',end:'2026-10-01T00:00:00Z'},evidence_refs:[`aneb_v1_${'b'.repeat(64)}`]};
+
+describe('source-bound business review request preflight',()=>{
+  it.each(['month','quarter'])('accepts only a reference-based %s request without changing legacy nine-type admission',key=>{
+    const input={...review,report_period:{...review.report_period,key}};
+    expect(validateBusinessReviewBrief(input)).toEqual({ok:true,value:input});
+    expect(validateDocumentBrief(input).ok).toBe(false);
+  });
+  it.each([null,[],{}, {...review,version:'1'}, {...review,doc_type:'guide'}, {...review,title:'[CLIENT NAME]'},
+    {...review,brief:''}, {...review,title:'x'.repeat(201)}, {...review,brief:'x'.repeat(12001)},
+    {...review,required_facts:{revenue:1}}, {...review,report_evidence:{}}, {...review,tenant_id:'foreign'},
+    {...review,actor_id:'foreign'}, {...review,target_content_id:'target'}, {...review,expected_revision:1},
+    {...review,audience:'owner'}, {...review,evidence_refs:[]}, {...review,evidence_refs:[null]},
+    {...review,evidence_refs:['invented']}, {...review,evidence_refs:[review.evidence_refs[0],review.evidence_refs[0]]},
+    {...review,evidence_refs:Array.from({length:13},(_,i)=>`aneb_v1_${i.toString(16).padStart(64,'0')}`)},
+    ...[{key:'week'},{key:['month']},{key:null},{start:'2026-09-01'},{start:'2026-02-31T00:00:00Z'},
+      {start:'2026-02-29T00:00:00Z'},{start:'0000-01-01T00:00:00Z'},{end:review.report_period.start},
+      {end:'2026-08-01T00:00:00Z'},{timezone:'UTC'}].map(period=>({...review,report_period:{...review.report_period,...period}}))])('refuses malformed or caller-authored report input %#',input=>expect(validateBusinessReviewBrief(input).ok).toBe(false));
+  it('keeps an independent ordered request without mutating inputs or fabricating values',()=>{
+    const input={...review,evidence_refs:[...review.evidence_refs,`aneb_v1_${'c'.repeat(64)}`]};
+    const result=validateBusinessReviewBrief(input);expect(result.ok).toBe(true);
+    if(result.ok){expect(result.value).toEqual(input);input.evidence_refs.reverse();expect(result.value.evidence_refs).toEqual(review.evidence_refs.concat(`aneb_v1_${'c'.repeat(64)}`));}
+  });
+  it('accepts real leap days and explicit offsets without rounding or relabeling the source period',()=>{
+    const input={...review,report_period:{key:'month',start:'2024-02-29T12:34:56.123456+02:00',end:'2024-03-01T00:00:00+02:00'}};
+    expect(validateBusinessReviewBrief(input)).toEqual({ok:true,value:input});
+  });
+});
 
 describe("durable document production contract", () => {
   it.each([

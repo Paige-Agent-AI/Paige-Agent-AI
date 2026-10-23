@@ -147,6 +147,42 @@ export function validDocumentBlock(block: unknown): block is Record<string, unkn
   return normalizeDocumentBlock(block) !== null;
 }
 
+export interface BusinessReviewBrief {
+  version: 1;
+  doc_type: "business_review";
+  title: string;
+  brief: string;
+  report_period: { key: "month" | "quarter"; start: string; end: string };
+  evidence_refs: string[];
+}
+
+/** Shape-only preflight. Original caller-JWT submit owns authority, resolution,
+ * source/period matching and immutable capture; references grant no permission. */
+export function validateBusinessReviewBrief(input: unknown):
+  { ok: true; value: BusinessReviewBrief } | { ok: false; code: string; message: string } {
+  const fail = () => ({ ok: false as const, code: "document_report_brief_invalid",
+    message: "Choose an explicit monthly or quarterly period and verified business sources for this review." });
+  if (!isPlainRecord(input) || input.version !== 1 || input.doc_type !== "business_review"
+    || Object.keys(input).some(key => !["version", "doc_type", "title", "brief", "report_period", "evidence_refs"].includes(key))
+    || !nonEmptyString(input.title, 200) || !nonEmptyString(input.brief, 12_000)
+    || containsDocumentPlaceholder(input.title) || containsDocumentPlaceholder(input.brief)) return fail();
+  const period = input.report_period;
+  const stamp = (value: unknown): value is string => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+      || !Number.isFinite(Date.parse(value))) return false;
+    const year=Number(value.slice(0,4)),month=Number(value.slice(5,7)),day=Number(value.slice(8,10));
+    return year>0 && month>=1 && month<=12 && day>=1 && day<=new Date(Date.UTC(year,month,0)).getUTCDate();
+  };
+  if (!isPlainRecord(period) || Object.keys(period).some(key=>!["key","start","end"].includes(key))
+    || (period.key!=="month" && period.key!=="quarter") || !stamp(period.start) || !stamp(period.end)
+    || Date.parse(period.end)<=Date.parse(period.start)) return fail();
+  const references=input.evidence_refs;
+  if (!Array.isArray(references) || references.length<1 || references.length>12
+    || references.some(value=>typeof value!=="string" || !/^aneb_v1_[0-9a-f]{64}$/.test(value))
+    || new Set(references).size!==references.length) return fail();
+  return { ok: true, value: JSON.parse(JSON.stringify(input)) as BusinessReviewBrief };
+}
+
 function optionalString(value: unknown, max = 50_000): string | undefined {
   return nonEmptyString(value, max) ? value.trim() : undefined;
 }

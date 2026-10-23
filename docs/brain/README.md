@@ -1,5 +1,13 @@
 ## EXP02 linked finding inspection — October22 consumer candidate
 
+Full-CI diagnostic39876480194 on f9ac actually reports20113 total/20098 passed/
+12 failed/3 pending, all failures in original soloCommandCenterRailPanel.test.tsx.
+Local reproduction confirms useLocation outside Router,12 FAIL/1 PASS. The original
+fixture now supplies actual MemoryRouter to every existing render, retaining the
+real Rail hook/RPC, every assertion, scope-switch FrameRecorder and timeout/guard.
+All13 original cases PASS; runtime/rendered source unchanged. Final successor
+review/full exact-head CI remain required; original9700/f9ac failures retained.
+
 Existing semantic Systems Check references now select a UUID in the mounted
 original workspace. Only a matching finding from the current scoped, completed
 snapshot supports the inline source context and explicit original drawer.
@@ -1677,6 +1685,30 @@ Original2564 source is merged1882d0142323d116ce95f61ce7b86f85d3ab2446 after all1
 
 Next private native source validation is LOCAL/NOT_DEPLOYED: reuse original230004 checks before freeze, owner-only invoker/no API grant; original freezer ABI/service grant/replay/CAS/write/event remain. Causal absent-helper42883 then66 native controls/two migration replays/two sessions/observed wait PASS on isolated PostgreSQL16.14, fixtures removed/own cluster stopped. Original production body4116200a24628e9149187e55eea2fb02 matches source; proposed helper absent. No prep consumer, hold removal, obligation/signature/provider or activation. Ordered frontier (including active330002), final review/CI/full Preview/native readback remain gates. Exact economics/PDF/assigned-map approval BEFORE C7, operation/Rail/effective terms/PRE1/2 and actual roles/provider/all12/founder acceptance remain owed. [Bounded native evidence](../evidence/ui-delivery/e04-commercial-source-validation.md).
 
+### EXP04 commercial document source — later October22 checkpoint
+
+The preceding pre-release340004 note is historical. Original validation2633 is
+now mergedab2228036789be2bf81fb48896d919a867b79e8a after all13 exact-head
+checks/full normal Preview/two statuses and final5622338107 AUTHOR-REVIEW /
+LOWER ASSURANCE. Normal native39874959218/deploy120158340110 and persistence
+guard SUCCESS. Actual production340004/helper61056f39c2e8c9a5fa7aab3641820a1b/
+freezerdb14fdd6e75b2dc4cb3eb290388cc801/ABI/private ACL match reviewed source;
+webdpl_9xhHQd1PDCqX1Nr7NqFXzk3Z4ENT READY/exact. No consumer/activation.
+
+Next native350004 EXTENDS the SAME twelve-argument private retainer and original
+immutable manifest with closed commercial2, without new table/column/store.
+Same source/version/party/PDF/map and canonical economics validator precede the
+original selection/event/write. Original v1, actor locks, CAS, historical replay
+and token/effect holds remain. Read stays agreement_and_parties/not_checked;
+actual API must revalidate current financial source and render canonical PDF.
+Old-source causal manifest2 refusal and corrected247 native controls PASS in
+Node and actual Deno denial envelope, including all76 original document controls,
+29 commercial controls, original other suites, replay2 and real terms lock/wait.
+Unknown original writer/validator guards refuse; initial fixture/SQL failures
+remain failures. This source remains LOCAL/NOT_DEPLOYED pending final gates and
+actual consumer. All12, EXP09 source boundaries, algorithms, Chat/Live holds and
+whole customer/founder acceptance remain unchanged. [Evidence](../evidence/ui-delivery/e04-commercial-document-preparation.md).
+
 ### EXP04 original upload intent — development
 
 REPAIR original business upload adapter after actual-hook3 positive/2 genuine RED controls: loaded/current business must match before Storage, and lost/context-retired results never claim rollback or no effect. Original private bucket/RLS/path/cache/no-overwrite/result contract retained. Final9 hook plus102 existing Sales cases (111) and type10/current6/lint0 PASS; initial original audit-history timeout repeated green without changing5s limit/assertions. Actual Sales/modal/hook/SDK20 rendered cases/5 paths/19 exact pins/0page errors, neutral local transports only. Native PAIGE backdrop is respected and actual open/folded states are explicit. Stable same-request upload recovery, native-supported import/wording/preview/fields and owner/staff/client/provider/all12/founder acceptance remain incomplete. No actual upload, signing, send, payment, role, bucket, provider, model or Chat activation. [Bounded evidence](../evidence/ui-delivery/e04-agreement-upload-intent.md).
@@ -1839,6 +1871,49 @@ Original Metric resolver/authority/document submit/complete bodies remain unchan
 Webdpl_5eY5SJ5RpHjGNZmprRjNpwhEZZmk READY/exactmain; public build172786-mvk5v4a3,
 customerUpdate:null. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2630#issuecomment-6353478230).
 Source/native prerequisite only; no runtime report consumer or customer acceptance.
+
+## EXP02 historical report block consumer — October22 development, unmounted
+
+**Verified source release2632:** reviewed943fd25f/finalLOWER5622432967, all11
+required checks/two web statuses SUCCESS, merged1d2b2456e6d7006e9e299592c65abfb2bb71a927.
+Actual tree144bb9b767c987ad0992ddd749548616399656af equals inspected current-main
+union. Productiondpl_45F3hz84VBVr1FA8DBXmMKuEQUSs READY/canonical aliases;
+public HTTP200 build1d2b2456e6d7006e9e299592c65abfb2bb71a927-mvk92u58/null.
+Own SQL/Edge N/A; pure module remains unused/unmounted, not a working report.
+[Receipt6354689388](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2632#issuecomment-6354689388)
+and Master4.0 close actual identity. Original artifact/worker/current Metric
+authority/retrieval/ordinary/cohort/Live/all19/nine/founder proof remain owed.
+
+D2 serializes the original native capture into existing document blocks using the
+canonical Metric parser, currency formatter and block normalizer. Explicit source
+period/as-of/coverage, null-versus-zero, separate currencies, exact large minor units,
+source categories, quarter-to-date bounds, business calendar, original workflow
+observations and all series points are retained. No bearer token/private workspace
+identity is returned. Closed detached provenance retains the original source lineage;
+no current-value, prediction, executed action or verified improvement is inferred.
+
+Two genuine async value/context mutation failures preceded correction: bounded
+original evidence, capture time and work scope are copied before the digest yields.
+Final75 cases/three original suites and23 new-module cases pass, including source
+retirement/immutable facts and the ES2020 regex compatibility correction. Strict module/test compiler and scoped ESLint/whitespace
+pass. Initial whole-app compilation found three new replaceAll/lib diagnostics; those
+methods were replaced, baseline untouched. Final whole-app exact-head CI remains owed;
+no cancelled/incomplete local ratchet is called PASS. Relevant private install retains
+UI dependencies but is not claimed as an exact complete current-lock install.
+
+No public caller, report type, UI, writer, worker/provider or Chat binding is mounted.
+Structure validation at capture time is not authorization or a fresh current read.
+Next original writer must capture once per stable intent, reject caller-supplied proof,
+and revalidate report-specific current Metric owner/admin authority at claim/completion,
+not merely generic document roles. Original artifact/turn/Rail/renderer/readback and
+ordinary permission/isolation/cohort/Live/visual/founder proof remain required.
+Functional unused local consumer; Visual N/A/unmounted; Experiential and Founder
+Acceptance UNVERIFIED. CAP014/015 remain Unverified; all19/nine/algorithms/Orchestration
+and original domain authority unchanged. Section4.0 N/A until actual merge.
+Current-main effc2bc37 composition retains the exact two source/test files from
+reviewed c7b3532. The same75 cases/three suites pass in39.83s. The first f0be
+UI routing check used the old4259 stack base and included unrelated released UI;
+main retarget and corrected original report notes require fresh exact-head CI.
 
 ## EXP02 October22 — verified Business Review reliability source release
 

@@ -70,3 +70,11 @@ approval, execution identity, original-record mutation or Rail completion receip
 All19 outcomes/nine analytics, real governed follow-through and one final founder
 evaluation remain required. Historical/foreign references deliberately cannot be
 resolved by a broader identity; current read failure offers the original retry.
+
+Required full Test on f9ac FAILED in twelve original Rail cases; run39876480194/
+artifact12470256125 ties candidatef9ac to executede73fc858. Reproduced12 FAIL/1 PASS:
+useLocation required a Router absent from the original Rail fixture. The fixture
+now wraps every original render in real MemoryRouter, preserving original reader,
+scope/FrameRecorder, all assertions and timeouts.13/13 original cases PASS; no
+runtime/rendered source change or fixture-based customer acceptance. Final fresh
+review/exact-head CI remain required; historical failed run is not relabeled.

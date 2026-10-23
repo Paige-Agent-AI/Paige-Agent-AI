@@ -269,6 +269,7 @@ import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_sh
 import { buildClientPortalPersonaMessages, readClientPortalPersonaInput } from "../_shared/client-portal-persona.ts";
 import { customerAgentName, customerSeatIdentity } from "../_shared/client-portal-identity.ts";
 import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, embedCustomerQuery, type CustomerSourceSnapshot, type CustomerQueryEmbedding } from "../_shared/client-portal-assistant-context.ts";
+import { readCustomerProgressContext, customerProgressMessages, customerProgressTerminalSource, type CustomerProgressContext, type CustomerProgressSnapshot } from "../_shared/client-portal-progress-context.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -1171,17 +1172,21 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string } | null = null;
     let customerSourceSnapshot: CustomerSourceSnapshot | null = null;
+    let customerProgressSnapshot: CustomerProgressSnapshot | null = null;
+    let customerProgressContext: CustomerProgressContext | null = null;
     const appendAssistant = async (args: Record<string, any>) => {
       if (!interactiveReceiptScope) return await supabaseClient.rpc("paige_chat_turn_append", args);
       const scope = interactiveReceiptScope;
       if (args.p_thread_id !== scope.thread || args.p_role !== "assistant") throw new Error("INTERACTIVE_RECEIPT_SCOPE_MISMATCH");
       const customerTerminal = customerTerminalSource(customerSourceSnapshot, args.p_content, args.p_bundle_ref ?? {});
+      const progressTerminal = customerProgressTerminalSource(customerProgressSnapshot, customerTerminal.content, args.p_bundle_ref ?? {});
       const terminalBundle = { ...(args.p_bundle_ref ?? {}) };
       if (customerSourceSnapshot) delete terminalBundle.customer_knowledge;
+      if (customerProgressSnapshot) delete terminalBundle.customer_progress;
       const result = await supabase.rpc("paige_chat_interactive_settle", {
         p_thread: scope.thread, p_actor: user.id, p_tenant: scope.tenant, p_intent: scope.intent,
-        p_content: customerTerminal.content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
-        p_bundle_ref: { ...terminalBundle, ...customerTerminal.metadata, interactive: {
+        p_content: progressTerminal.content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
+        p_bundle_ref: { ...terminalBundle, ...customerTerminal.metadata, ...progressTerminal.metadata, interactive: {
           ...(args.p_bundle_ref?.interactive ?? {}), request_intent_id: scope.intent,
         } }, p_tool_calls: args.p_tool_calls,
       });
@@ -1586,7 +1591,7 @@ serve(async (req) => {
         p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
           turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
-      const beginTurn = (effectful: boolean) => (customerPortal?customerCaller:supabaseClient).rpc(customerPortal ? "client_portal_assistant_begin" : "paige_chat_interactive_begin_v2", {
+      const beginTurn = (effectful: boolean) => (customerPortal?customerCaller:supabaseClient).rpc(customerPortal ? (interactiveInput.kind === "message" ? "client_portal_assistant_begin_progress" : "client_portal_assistant_begin") : "paige_chat_interactive_begin_v2", {
         p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
         p_supersedes: interactiveInput.supersedesIntentId ?? null,
         p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
@@ -1647,6 +1652,19 @@ serve(async (req) => {
         });
         interactive = started.execution;
         interactiveLifetime = started.lifetime;
+      }
+      // Original native begin has accepted this intent. A source read failure must not
+      // call that receipt unsent; handlerFinished retains original native empty cleanup.
+      if (customerPortal && !customerControl && customerPersona) {
+        const progressSource = await readCustomerProgressContext(customerCaller, user.id, validatedData.threadId,
+          validatedData.requestIntentId, customerPersona);
+        if (progressSource.status !== "available" || !progressSource.data) return new Response(JSON.stringify({
+          code:"CUSTOMER_PROGRESS_UNAVAILABLE",message_accepted:true,
+          reason:"Your shared progress could not be verified for this answer.",
+          recommendation:"Check this conversation, or contact the business through Support if this continues."}),
+          {status:progressSource.status === "unavailable" ? 409 : 503,headers:{...corsHeaders,"Content-Type":"application/json"}});
+        customerProgressContext = progressSource.data;
+        customerProgressSnapshot = progressSource.data.snapshot;
       }
       // Client and Play identifiers remain read scope; their existing caller-JWT
       // authorization below still applies. Only effect-bearing inputs are refused.
@@ -3265,7 +3283,7 @@ JSON:`;
           thread_tenant_id: threadTenantId, turn_tenant_id: personaCtx.tenant_id ?? null,
         }));
         return new Response(
-          JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+          JSON.stringify(customerPortal ? {code:"CUSTOMER_CONTEXT_CHANGED",message_accepted:true,reason:"Your access or shared information changed, so this answer stopped.",recommendation:"Check this conversation, or contact the business through Support."} : { error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
@@ -3941,7 +3959,10 @@ JSON:`;
       if (customerPortal) {
         const source = await readCustomerAssistantContext(customerCaller, user.id, payloadThreadId, validatedData.requestIntentId);
         const scope = await customerCaller.rpc("paige_chat_customer_thread_authorized", {p_thread:payloadThreadId});
+        const progressSource = customerPersona && customerProgressContext
+          ? await readCustomerProgressContext(customerCaller, user.id, payloadThreadId, validatedData.requestIntentId, customerPersona) : null;
         if (source.status === "available" && source.data?.persona.enabled === true && !scope.error && scope.data === true &&
+          progressSource?.status === "available" && JSON.stringify(progressSource.data) === JSON.stringify(customerProgressContext) &&
           JSON.stringify(source.data) === JSON.stringify(customerAssistant)) return true;
         tenantKnowledgeScopeRevoked = true;
         return false;
@@ -10108,6 +10129,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // full-source provider/output fence; no staff Knowledge or browser-history fallback.
       aiMessages.splice(0, aiMessages.length, ...buildClientPortalPersonaMessages(customerPersona),
         ...customerProgramMessages(customerAssistant),
+        ...(customerProgressContext ? customerProgressMessages(customerProgressContext) : []),
         ...messages.filter((m:any) => m.role === "user" || m.role === "assistant"));
       toolDefs.splice(0, toolDefs.length);
     } else if (callerTier === "client") {
@@ -10317,7 +10339,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     };
     if (!(await revalidateTenantKnowledgeScope())) {
       return new Response(
-        JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+        JSON.stringify(customerPortal ? {code:"CUSTOMER_CONTEXT_CHANGED",message_accepted:true,reason:"Your access or shared information changed, so this answer stopped.",recommendation:"Check this conversation, or contact the business through Support."} : { error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -10360,7 +10382,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // route), so no turn dispatches on a check older than its last awaited provider call.
       if (!(await revalidateTenantKnowledgeScope())) {
         return new Response(
-          JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+          JSON.stringify(customerPortal ? {code:"CUSTOMER_CONTEXT_CHANGED",message_accepted:true,reason:"Your access or shared information changed, so this answer stopped.",recommendation:"Check this conversation, or contact the business through Support."} : { error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
@@ -10824,7 +10846,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // chat call, exactly as after the deferred document extraction (test:knowledge-scope 12b).
     if (classifierRuns && !(await revalidateTenantKnowledgeScope())) {
       return new Response(
-        JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+        JSON.stringify(customerPortal ? {code:"CUSTOMER_CONTEXT_CHANGED",message_accepted:true,reason:"Your access or shared information changed, so this answer stopped.",recommendation:"Check this conversation, or contact the business through Support."} : { error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -10893,7 +10915,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (response && !response.ok) {
       if (response.attempts.at(-1)?.failure === "caller_refused") {
         const refused = new Response(
-          JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+          JSON.stringify(customerPortal ? {code:"CUSTOMER_CONTEXT_CHANGED",message_accepted:true,reason:"Your access or shared information changed, so this answer stopped.",recommendation:"Check this conversation, or contact the business through Support."} : { error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
         return afterAnswerClaimFailure ? afterAnswerClaimFailure(refused) : refused;
@@ -19543,7 +19565,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // "Anything I'd already finished is saved" — and the card says which of the approvals that was.
             await emitApprovalOutcome(controller);
             emitTurnTerminal(controller, "interrupted");
-            const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
+            const changed = customerPortal ? "Your access or shared information changed, so I stopped this answer. Check the conversation or contact the business." : "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
             controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
             controller.enqueue(enc.encode("data: [DONE]\n\n"));
             return;
@@ -19898,7 +19920,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             pendingTenantKbTelemetry = null;
             finalAssistantText = "";
             emitTurnTerminal(controller, "interrupted");
-            const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
+            const changed = customerPortal ? "Your access or shared information changed, so I stopped this answer. Check the conversation or contact the business." : "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
             try {
               controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
               controller.enqueue(enc.encode("data: [DONE]\n\n"));
@@ -20146,7 +20168,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (!(await revalidateTenantKnowledgeScope())) {
             pendingTenantKbTelemetry = null;
             emitDocTurnTerminal(controller, "interrupted");
-            const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
+            const changed = customerPortal ? "Your access or shared information changed, so I stopped this answer. Check the conversation or contact the business." : "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
             controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
             controller.close();
@@ -20253,7 +20275,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (!(await revalidateTenantKnowledgeScope())) {
                 pendingTenantKbTelemetry = null;
                 emitDocTurnTerminal(controller, "interrupted");
-                const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
+                const changed = customerPortal ? "Your access or shared information changed, so I stopped this answer. Check the conversation or contact the business." : "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
                 controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
                 controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
                 controller.close();
@@ -20444,7 +20466,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // the telemetry row can never disagree about whether this turn happened.
             if (!scopeHeldAtClose) {
               emitDocTurnTerminal(controller, "interrupted");
-              const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
+              const changed = customerPortal ? "Your access or shared information changed, so I stopped this answer. Check the conversation or contact the business." : "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
             } else {
               // Past the close decision and the client-seat read: FINAL or WITHHELD, ahead of the release.

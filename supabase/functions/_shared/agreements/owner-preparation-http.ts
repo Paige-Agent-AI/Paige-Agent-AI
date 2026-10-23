@@ -1,4 +1,4 @@
-import {OwnerPreparationUnavailable,executeOwnerPreparation,readOwnerPreparation,readOwnerPreparationPdf,type OwnerPreparationCaller,type OwnerPreparationService} from './owner-preparation.ts';
+import {OwnerPreparationUnavailable,executeOwnerPreparation,readOwnerPreparation,readOwnerPreparationPdf,listOwnerCommercialPreparationSources,reviewOwnerCommercialPreparation,type OwnerPreparationCaller,type OwnerPreparationService} from './owner-preparation.ts';
 import {PreparationArtifactUnavailable} from './preparation-artifact.ts';
 
 const maxBody=1048576;
@@ -22,7 +22,10 @@ export async function handleOwnerPreparation(
   const headers={...originalHeaders,'Cache-Control':'no-store, private','Vary':'Authorization','X-Content-Type-Options':'nosniff'};
   const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...headers,'Content-Type':'application/json'}});
   try{
-    const url=new URL(req.url),allowed=req.method==='GET'?['preparation','businessId','agreementId','preparationId','download']:[];
+    const url=new URL(req.url),requestedMode=url.searchParams.get('preparation');
+    const allowed=req.method!=='GET'?[]:requestedMode==='commercial_sources'?['preparation','businessId','agreementId','beforeId']
+      :requestedMode==='commercial_review'?['preparation','businessId','agreementId','invoiceId']
+      :['preparation','businessId','agreementId','preparationId','download'];
     // A token/Portal/legacy query never changes doors, including on POST.
     if([...url.searchParams.keys()].some(k=>!allowed.includes(k))||[...url.searchParams.keys()].some(k=>url.searchParams.getAll(k).length!==1))throw new OwnerPreparationUnavailable('INVALID_REQUEST');
     const auth=await caller.auth.getUser();
@@ -34,6 +37,10 @@ export async function handleOwnerPreparation(
     }
     if(req.method!=='GET')return json({ok:false,error:'GET or POST only'},405);
     const mode=url.searchParams.get('preparation'),tenant=url.searchParams.get('businessId')??'',agreement=url.searchParams.get('agreementId')??'',id=url.searchParams.get('preparationId');
+    if(mode==='commercial_sources')return json({ok:true,sources:{tenant_id:tenant,agreement_id:agreement,
+      ...await listOwnerCommercialPreparationSources(tenant,agreement,url.searchParams.get('beforeId'),caller,service)}});
+    if(mode==='commercial_review')return json({ok:true,review:{tenant_id:tenant,agreement_id:agreement,invoice_id:url.searchParams.get('invoiceId')??'',
+      ...await reviewOwnerCommercialPreparation(tenant,agreement,url.searchParams.get('invoiceId')??'',caller,service)}});
     if(mode==='metadata'){
       if(url.searchParams.has('download'))throw new OwnerPreparationUnavailable('INVALID_REQUEST');
       return json({ok:true,view:await readOwnerPreparation(tenant,agreement,id,caller,service)});

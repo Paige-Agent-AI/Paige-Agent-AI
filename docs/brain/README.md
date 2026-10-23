@@ -1700,6 +1700,25 @@ proof and evidence bytes are preserved while current main0c1 is composed for
 fresh normal gates. Final review/CI/source readback/actual roles/full12/
 founder acceptance stay separate. [Evidence](../evidence/ui-delivery/e04-commercial-field-constructor.md).
 
+### EXP04 original commercial owner document workspace — development
+
+Original invoice page/source reader/formatter feed explicit commercial review in
+the SAME owner agreement-document SDK/controller. Reviewed digest → original
+rendered PDF/private artifact/native350004 → assigned fields/event/receipt/history
+and reload. Original schema1/one parent leave guard/actor epochs/recovery remain.
+Read-only historical economics cannot imply currentness; final native selection
+is re-proven after async review. Receipt must match exact reviewed invoice/digest;
+field-only comparison derives original validator digest, not approval identity.
+Conclusive source refusal permits explicit fresh review; uncertain result keeps
+the same frozen request. No signing, send, charge, Portal grant or new engine.
+Local45 strict cases/29 steps,63 SDK/controller,1005 Sales/65 files/exit0 plus
+isolated103 PASS; worker teardown warning retained. Final compiled source20
+frames/eight paths/44 exact pins/zero errors,30 neutral images; Auth/HTTP/RPC are
+synthetic. Final root type10/current6, actual Edge entry types and lint0/0 PASS;
+exact review/CI/ordered release/actual owner/staff/client/cohort/provider/all12/founder acceptance
+remain owed. No capability/algorithm/Chat/Live/INT346 activation. EXP09 contracts
+unchanged. [Evidence](../evidence/ui-delivery/e04-commercial-document-owner-workspace.md).
+
 ### EXP04 original upload intent — development
 
 REPAIR original business upload adapter after actual-hook3 positive/2 genuine RED controls: loaded/current business must match before Storage, and lost/context-retired results never claim rollback or no effect. Original private bucket/RLS/path/cache/no-overwrite/result contract retained. Final9 hook plus102 existing Sales cases (111) and type10/current6/lint0 PASS; initial original audit-history timeout repeated green without changing5s limit/assertions. Actual Sales/modal/hook/SDK20 rendered cases/5 paths/19 exact pins/0page errors, neutral local transports only. Native PAIGE backdrop is respected and actual open/folded states are explicit. Stable same-request upload recovery, native-supported import/wording/preview/fields and owner/staff/client/provider/all12/founder acceptance remain incomplete. No actual upload, signing, send, payment, role, bucket, provider, model or Chat activation. [Bounded evidence](../evidence/ui-delivery/e04-agreement-upload-intent.md).

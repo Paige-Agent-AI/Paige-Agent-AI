@@ -9,10 +9,10 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO actor inspects a finding or
 VISUAL_DIRECTION: PASS: preserve the existing Systems Check drawer, alertdialog and shared PAIGE shell; no banner, modal redesign, new control, CSS, font or animation.
 AUTOMATED_EVIDENCE: PASS: four genuine native-inert-port/Escape failures before correction; then89 cases/three suites. Two additional stale-success/refusal source failures; corrected93 cases/three original suites and final composed106/four suites including original Rail/Router pass. A→B→A retirement, busy Escape, no repeat activation, original success and policy refusal remain covered. Initial unsupported Vitest worker flag is INVALID/zero tests, not product proof. No assertion/timeout/guard weakened.
 STATIC_EVIDENCE: PASS: scoped lint0; actual current-main composed production build1m52s with original chunk/comment advisories. Actual raw composed tsc exits2 with six incumbent errors against unchanged ten-signature/count baseline; retained-output multiset comparison proves zero new errors, not a zero-error build. Named original workspace detector0 findings, actual UI evidence guard1UI/1record PASS and SOLO parity SP1–SP5/all hostile controls PASS. Initial evidence wording failure retained/corrected, guard unchanged. Required hosted exact-head gates remain separate.
-RENDERED_EVIDENCE: UNVERIFIED: released original defect has private authorized native evidence ANT138/dbf6f914 and ANT52/6406634f. Candidate desktop/narrow frames cannot yet be obtained because Edge page-control CDP times out before dispatch. No old render is represented as this candidate's proof.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: component tests establish bounded event/inert-port/scope behavior; actual candidate Cancel/Escape, original focus, preserved Chat/composer/scroll and busy-decision behavior still require native verification because Edge page control is blocked by a CDP timeout before dispatch.
+RENDERED_EVIDENCE: UNVERIFIED: additive native desktop and390px dark dialog frames now exist after exact owner origin authorization. Eight required open/closed DOM geometries have no document overflow; some corresponding compositor frames lag their DOM state and are INVALID, not complete visual proof. Final matched captures remain required. No historical render is represented as current proof.
+BEHAVIORAL_EVIDENCE: PASS: native Cancel and Escape restore the exact original decision control after inert clears; forward/reverse focus trap, retained synthetic Chat draft and identical scroll1429.5999755859375 before/after Escape are observed. This is the original mounted component with backend-refusing ports, not authenticated customer acceptance. Native busy/late-result/other-account checks remain UNVERIFIED; original source tests retain them.
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate is not deployed; original authorized account inspection found the keyboard/focus defect without submitting an approval. Corrected released behavior/roles/tenant/cohorts/Live remain owed.
-KEYBOARD_FOCUS: UNVERIFIED: original-trigger and consumed Escape/pending guard controls pass in existing component tests. Native browser inert/focus and actual shell isolation remain required before release; JSDOM does not implement inert focus refusal.
+KEYBOARD_FOCUS: PASS: native original-trigger focus on Cancel/Escape and forward/reverse dialog focus trap verified. Original scroll layer changes from inert1 to0; Escape preserves open Chat and its own unsent synthetic draft. Busy-state and scope-retirement negatives remain source-test evidence only, not native PASS.
 ZOOM_REFLOW: UNVERIFIED: final required desktop/narrow layouts and200percent browser zoom have not been driven for this candidate; no geometry change is a source fact, not rendered proof.
 REDUCED_MOTION: UNVERIFIED: no animation/CSS change; actual preference and resulting candidate shell behavior remain to be observed.
 STATE_COVERAGE: PASS: original success/refusal, busy decision/no repeat activation, Cancel/Escape and account retirement are tested; no draft preparation, diagnostic scan, action cancellation, execution result or backend success is simulated as customer proof.
@@ -62,6 +62,24 @@ neither cancelled nor settled by this UI guard; its original domain owns readbac
 Functional: bounded source tests. Visual: candidate proof owed, no redesign.
 Experiential: genuine original defect and corrected source controls, native/released
 return verification owed. Founder Acceptance: NOT_ACCEPTED, full19/nine remain.
+
+### October23 additive native checkpoint
+
+Captured on composition2151479c82f0763d9b5ad019cfcd19f7fcb0ccaf,
+tree5bc309a637cf4e8e5d8d3ad6d9af5fa4b2bd0c3f. Original runtime/test/fixture leaves
+are byte-identical to reviewed d9e3a6; independently reconstructed d9e+main274
+tree matches. Existing Live acknowledgement source/migration is preserved without
+claiming personal consent or audio acceptance. The earlier database failure
+120678529534 is retained: older branch lacked that already-released schema.
+
+Original Edge local port5242 uses neutral fixture identities and original shell,
+workspace/drawer/alertdialog/CSS. No backend/provider/business action was submitted.
+Automatic approval review rejected the synthetic Confirm control under read-only
+scope; no alternative path or indirect approval was used. Native pending-decision
+proof stays UNVERIFIED; the indefinitely pending fixture/source tests are separate.
+Later browser input stalls/kernel reset prevent complete native signoff, not a
+product-success or safe-cessation claim. Actual release remains held for missing
+rendered/zoom/source-scope proof and final review/exact-head gates.
 
 ## Algorithm, orchestration and Capabilities
 

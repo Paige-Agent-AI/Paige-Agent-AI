@@ -52,6 +52,7 @@ it("edit, Escape and cancelled definitions cannot accidentally save a schedule",
   await click("Edit change"); expect(container.querySelector("select")?.value).toBe("5");
   await act(async () => container.querySelector("form")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
   expect(container.querySelector("form")).toBeNull(); expect(document.activeElement?.textContent).toBe("Change schedule");
+  expect(container.querySelector<HTMLDetailsElement>(".e5-weekly-controls")?.open).toBe(true);
   data.checks[0].schedule_status = "cancelled";
   await render({ status: "ready", snapshot: data }, control);
   expect(Array.from(container.querySelectorAll("button")).find(button => button.textContent === "Change schedule")?.disabled).toBe(true);

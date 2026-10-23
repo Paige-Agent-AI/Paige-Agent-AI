@@ -24,6 +24,7 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
   const [feedback, setFeedback] = useState("");
   const [stopReview, setStopReview] = useState<{ check: WeeklyCheck; action: "pause" | "cancel" } | null>(null);
   const [changing, setChanging] = useState<{ check: WeeklyCheck; draft: WeeklyScheduleDraft } | null>(null);
+  const expandedControls = useRef(new Set<string>());
   const originalChange = changing?.check;
   const change = snapshot?.checks.find(check => originalChange && check.automation_id === originalChange.automation_id
     && check.revision === originalChange.revision && check.name === originalChange.name && check.schedule_status === originalChange.schedule_status
@@ -114,7 +115,8 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
               <div><dt>Schedule revision</dt><dd>{last.schedule_revision}</dd></div><div><dt>Source</dt><dd>Planning work · observation preserved at the check</dd></div>
             </dl></details>
           </div> : <p>No receipt-backed completed check has been verified.</p>}
-          <details className="e5-weekly-controls" open={change === check || stop?.check === check || undefined}><summary>Future executions</summary><p>Pause, change, resume and cancel affect future runs. They do not terminate an act already processing.</p>
+          <details className="e5-weekly-controls" open={expandedControls.current.has(check.automation_id) || change === check || stop?.check === check || undefined}
+            onToggle={event => { if (event.currentTarget.open) expandedControls.current.add(check.automation_id); else expandedControls.current.delete(check.automation_id); }}><summary>Future executions</summary><p>Pause, change, resume and cancel affect future runs. They do not terminate an act already processing.</p>
             <div className="e5-weekly-actions">{(["pause", "cancel"] as const).map(action => <button type="button" key={action}
               disabled={!control || controlBusy || check.schedule_status === "cancelled" || action === "pause" && check.schedule_status === "paused"}
               onClick={event => { opener.current = event.currentTarget; setChanging(null); setFeedback(""); setStopReview({ check, action }); }}>

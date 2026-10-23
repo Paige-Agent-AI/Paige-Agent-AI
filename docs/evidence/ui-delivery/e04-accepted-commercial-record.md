@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: explicit owner can inspect the exact accepted source, compa
 MOTION_PURPOSE: NONE: no authored animation or haptic; immediate named feedback and focus preserve causality.
 PROTECTED_SEAMS: new owner read uses original _sales_invoice_actor and read_sales_commercial_package with current authority checked after waits; private validators are not callable by ordinary/service roles. No Portal UI, client-access grant, shared Chat admission, approval/runtime/provider/ledger/scheduler or core shell rewrite.
 
-INTERNAL_BUILD_IDENTITY: source=84d2634dfcdc60db7833d30b7dee927b56d43b4f; exact final head/review in PR2681; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113570004_e04_accepted_commercial_evidence normal full-schema release); edge=NOT_APPLICABLE; prerequisite=original530004; evidence=this record, original fenced native406 proof and prior source-pinned component frames.
+INTERNAL_BUILD_IDENTITY: source=84d2634dfcdc60db7833d30b7dee927b56d43b4f; exact final head/review in PR2681; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113630004_e04_accepted_commercial_evidence normal full-schema release); edge=NOT_APPLICABLE; prerequisite=original530004; evidence=this record, original fenced native406 proof and prior source-pinned component frames.
 RELEASE_CHANNEL: development: current full native proof passed; final exact-head gates and production source readback still owed.
 RELEASE_CLASSIFICATION: internal-only: bounded original accepted-record integration within incomplete EXP04.
 CUSTOMER_RELEASE_IDENTITY: none: full integrated Experience and founder evaluation remain incomplete.
@@ -66,3 +66,12 @@ incumbent-world fit, evidence hierarchy, narrow reflow, native disclosure,
 truthful copy, accessible focus, and one batched material fix/confirmation.
 
 Visible-Flow-Impact: yes — original owner accepted-record inspection; no new financial or external authority.
+
+Native filename continuation — October23: production advanced to600000 while
+this draft was unmerged. Never-production-applied570004 moves to630004, after
+existing peer610009/620009 reservations. SQL bytes and all original21 rendered
+inputs remain identical; only that SQL source-path slot changes. The original
+compiled-result-before-native-filename.json is preserved byte-for-byte. Current
+compiled-result.json declares the same captured images/times/assets/hashes and
+one explicit old/new source-path equivalence; no new rendering is claimed.
+Fresh exact-head full-schema/Preview/review/release evidence remains required.

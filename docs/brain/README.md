@@ -44,7 +44,9 @@ timeout/blank capture stays INVALID. Separate compiled current-source proof now
 has14 native JPEGs/21 critical inputs/three compiled assets, actual five required
 widths in light/dark, account/access clearing, cancel focus and late-result guard.
 No full authenticated shell/role/cohort/zoom/AT proof is implied. Type/hosted/release/acceptance remain owed.
-Reserved570004 has not been applied. This read does not activate terms.
+Reserved630004 replaces never-production-applied570004 after current600000;
+original SQL bytes are unchanged. Original UI captures have an explicit
+byte-identical SQL filename continuation, not a new render. This read does not activate terms.
 
 ## EXP05 governed-work prerequisites — source releases verified, October23
 

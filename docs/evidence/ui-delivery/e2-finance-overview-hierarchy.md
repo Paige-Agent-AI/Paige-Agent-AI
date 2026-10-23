@@ -76,13 +76,22 @@ explicit loading/error/unavailable/denied variants and invalid synthetic referen
 that cannot resolve against a real reader. Existing backend-refusing shell, fonts
 and burned-in no-customer-acceptance label retained; no alternate QA engine or
 product/provider data. Fixture source19dff555e54cf53c2c74d486aec7ea84a9ee5ee6.
+[Three inspected untouched supporting frames and four exact source hashes](assets/e2-finance-overview-hierarchy/source-reference.json)
+are explicitly before the focus repair; they do not establish final interaction
+signoff. Private failed/lagging captures are retained separately, never promoted.
 
 Focus defect was reproduced natively, then by a genuine original-component RED
 (trigger.isConnected false,28 incumbent cases skipped only for that targeted run).
 Initial stabilization left close-focus RED/53PASS, correctly retained. Repair uses
 the existing Sheet lifecycle and exact clicked metric/invoice control; no global
 focus manager or new workflow. Scope/range/connection guards retire its return
-target. Final54/four suites and scoped lint0 pass; final production build/raw type,
-native confirmation, exact-head review/CI and normal release/readback remain due.
+target. Final54/four suites and scoped lint0 pass. A4m41s production build passes
+with incumbent chunk/comment advisories, supporting only: current-main composition
+occurred while it ran, so no exact-tree build claim. Final raw TypeScript is still
+running; the older six-versus-ten no-new-error comparison remains historical.
+Corrected detector9 exactly matches incumbent9 signatures,0new/0blocking; an
+unsupported --format invocation was INVALID and replaced with the actual --json
+scan. No ignores or baseline were changed. Exact-head hosted install/build/type,
+native confirmation, final review and normal release/readback remain due.
 The present PR remains a draft/release hold; no claim of finished Finance or full
 19-outcome acceptance. No algorithm/catalogue/authorization/provider promotion.

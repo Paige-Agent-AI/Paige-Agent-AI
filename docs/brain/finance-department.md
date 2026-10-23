@@ -8,9 +8,14 @@ same-account Overview with query/fragment and replacement history, places origin
 Sales figures and receipt-source comparison before compact missing bank/accounting
 coverage, and preserves all original tabs, inspection and VERA controls.
 [Candidate and exact proof boundary](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
-Two actual route failures preceded correction;53 original consumer cases/four
-suites pass. Native candidate render/keyboard and release proof remain owed;
-automatic browser-origin review still rejects access despite owner authorization.
+Two actual route failures preceded correction; final54 original consumer cases/four
+suites pass after a native source-Sheet focus defect was reproduced and repaired.
+The amount remains connected; original Sheet return targets only its connected
+same-epoch/range control, with changed-workspace refusal tested. No new focus engine.
+Actual populated native desktop/narrow layout, font, landing query/fragment,
+Home/End and source opening support the candidate. Exact origin access was granted;
+later Edge became unavailable after input stalls/reset. Corrected native return,
+complete matched rendered/zoom/role/cohort/Live and release proof remain owed.
 Banking, Debt and remaining financial-readiness presentation follow in small slices.
 No provider, writer, permission, metric definition or capability status changed.
 

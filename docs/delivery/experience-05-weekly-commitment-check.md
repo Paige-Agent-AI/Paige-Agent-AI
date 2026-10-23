@@ -39,6 +39,17 @@ not merged/deployed/authenticated verified or founder accepted. Normal exact-hea
 review/CI/Edge source+configuration readback and same canonical release log remain
 required. No founder intermediate test requested.
 
+Production preflight: original orchestrator117/JWTtrue/import_mapfalse remained
+stable and all26 package files match immutable main1d2b2456 byte-for-byte. The
+existing ZION soft/version2 identity has no runtime instructions or config keys;
+its original soft executor refuses a missing prompt. In addition, the original
+soft text path uses `routedChatCompletion`/`internal_first_draft`, whose static
+policy is Featherless when configured with Anthropic fallback, rather than the
+owner-required OpenAI-primary Chat path. No model call or secret value was read.
+Full ZION integration must reuse the canonical Model Fabric policy and budget
+contract before provider proof. This receipt patch preserves that original source
+and does not claim the routing requirement or real delegated execution complete.
+
 ### October22 bounded continuation — native future-only stop controls
 
 Pre-edit routing: EXP05 outcomes04/06/08/10 consume the original owner-human

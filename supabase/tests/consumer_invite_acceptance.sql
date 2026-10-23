@@ -141,9 +141,12 @@ INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status)
  SELECT contact_a,'e0901000-0000-0000-0000-000000000001'::uuid,owner_id,'Multi','Client A','active' FROM e09_multi_fixture
  UNION ALL SELECT contact_b,'e0901000-0000-0000-0000-000000000002'::uuid,owner_id,'Multi','Client B','active' FROM e09_multi_fixture
  UNION ALL SELECT duplicate_a,'e0901000-0000-0000-0000-000000000001'::uuid,owner_id,'Duplicate','Client A','active' FROM e09_multi_fixture;
-SELECT public._attach_client_address(c.tenant_id,c.id,'email','multi-client-'||f.actor_id||'@tests.invalid') FROM e09_multi_fixture f JOIN public.clients c ON c.id IN(f.contact_a,f.contact_b,f.duplicate_a);
+-- The original CRM forbids the same email on two contacts in one business.
+-- Give the duplicate-contact negative its own canonical address; never drop that guard.
+SELECT public._attach_client_address(c.tenant_id,c.id,'email',CASE WHEN c.id=f.duplicate_a THEN 'multi-duplicate-' ELSE 'multi-client-' END||f.actor_id||'@tests.invalid') FROM e09_multi_fixture f JOIN public.clients c ON c.id IN(f.contact_a,f.contact_b,f.duplicate_a);
+SELECT is((SELECT count(DISTINCT m.match_key) FROM public.client_contact_methods m,e09_multi_fixture f WHERE m.tenant_id='e0901000-0000-0000-0000-000000000001' AND m.kind='email' AND m.client_id IN(f.contact_a,f.duplicate_a)),2::bigint,'same-business duplicate test uses two distinct canonical CRM addresses');
 INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,expires_at,max_uses,uses,contact_id,email)
- SELECT i.invite_id,i.business_id,'test-multi-'||i.invite_id,'consumer','member'::public.tenant_role,f.owner_id,now()+interval '1 day',NULL,0,i.contact_id,'multi-client-'||f.actor_id||'@tests.invalid'
+ SELECT i.invite_id,i.business_id,'test-multi-'||i.invite_id,'consumer','member'::public.tenant_role,f.owner_id,now()+interval '1 day',NULL,0,i.contact_id,CASE WHEN i.contact_id=f.duplicate_a THEN 'multi-duplicate-' ELSE 'multi-client-' END||f.actor_id||'@tests.invalid'
  FROM e09_multi_fixture f CROSS JOIN LATERAL(VALUES(f.invite_a,'e0901000-0000-0000-0000-000000000001'::uuid,f.contact_a),(f.invite_b,'e0901000-0000-0000-0000-000000000002'::uuid,f.contact_b),(f.duplicate_invite,'e0901000-0000-0000-0000-000000000001'::uuid,f.duplicate_a),(f.wrong_invite,'e0901000-0000-0000-0000-000000000002'::uuid,f.contact_b),(f.expired_invite,'e0901000-0000-0000-0000-000000000002'::uuid,f.contact_b),(f.revoked_invite,'e0901000-0000-0000-0000-000000000002'::uuid,f.contact_b),(f.foreign_invite,'e0901000-0000-0000-0000-000000000001'::uuid,f.contact_b)) i(invite_id,business_id,contact_id);
 UPDATE public.tenant_invite_tokens SET expires_at=now()-interval '1 second' WHERE id=(SELECT expired_invite FROM e09_multi_fixture);
 UPDATE public.tenant_invite_tokens SET revoked_at=now() WHERE id=(SELECT revoked_invite FROM e09_multi_fixture);
@@ -152,7 +155,13 @@ SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT wrong_invite FROM e09_mult
 SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT foreign_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'a token cannot bind the second contact to the first business','42501:portal invitation client relationship is no longer available');
 SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT expired_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'second-business expired invitation');
 SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT revoked_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'second-business revoked invitation');
+-- Model an ordinary customer's independently confirmed email change ONLY in this
+-- rollback fixture, so the native duplicate-link guard is reached after the REAL
+-- recipient/contact-method check. Restore the confirmed address before the B join.
+UPDATE auth.users SET email='multi-duplicate-'||id||'@tests.invalid' WHERE id=(SELECT actor_id FROM e09_multi_fixture);
 SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT duplicate_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'a duplicate contact inside the SAME business remains refused','42501:portal identity requires relationship access reconciliation');
+UPDATE auth.users SET email='multi-client-'||id||'@tests.invalid' WHERE id=(SELECT actor_id FROM e09_multi_fixture);
+SELECT is((SELECT email FROM auth.users WHERE id=(SELECT actor_id FROM e09_multi_fixture)),'multi-client-'||(SELECT actor_id FROM e09_multi_fixture)||'@tests.invalid','the original verified recipient is restored before second-business acceptance');
 SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT invite_b FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),true,'second legitimate business invitation',NULL,'e0901000-0000-0000-0000-000000000002');
 SELECT is((SELECT count(*) FROM public.clients WHERE linked_user_id=(SELECT actor_id FROM e09_multi_fixture)),2::bigint,'two genuine invitations produce two separate canonical relationships');
 SELECT is((SELECT count(*) FROM public.clients WHERE id IN(SELECT contact_a FROM e09_multi_fixture UNION ALL SELECT contact_b FROM e09_multi_fixture) AND linked_user_id=(SELECT actor_id FROM e09_multi_fixture)),2::bigint,'the original exact contacts are reused without a duplicate CRM');

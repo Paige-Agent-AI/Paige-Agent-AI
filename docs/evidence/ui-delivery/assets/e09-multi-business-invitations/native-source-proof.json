@@ -824,5 +824,16 @@
     "index_only_fail": 7,
     "concurrent_cases": 2,
     "full_hosted_retest": "REQUIRED on new exact reviewed head; no source/Preview/customer acceptance promotion"
+  },
+  "native_auth_type_fixture_repair": {
+    "failed_head": "7cbecd133298188c809e2462d59eef1a200c44d2",
+    "failed_native_job": 120706513119,
+    "passed_before_stop": 120,
+    "failed_assertions": 0,
+    "error": "pgTAP is(character varying,text,unknown) has no matching overload at the new restored-recipient assertion; remaining new lifecycle controls were not reached, complete job FAIL retained.",
+    "fix": "Cast only the observed Auth email assertion result to text. Local dependency now uses actual Auth character varying(255), retaining the real canonical CRM email-unique guard. The uncast fault reproduces the identical real PostgreSQL error; corrected39 core assertions pass, original32/7 and incomplete32/7 controls retained. No product/migration/authorization/token/recipient behavior changes.",
+    "local_uncast_fault": "same PostgreSQL signature error reproduced, expected nonzero",
+    "local_corrected39": "PASS",
+    "hosted_full_retest": "REQUIRED at new reviewed head; all original seven pillar suites and scope294 passed in failed job, but that does not waive failed consumer suite."
   }
 }

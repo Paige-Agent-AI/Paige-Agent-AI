@@ -1,3 +1,9 @@
+## Ordinary verified customer sign-in — October23 source candidate
+
+Pre-edit source lease ANT161/bb33a129-c658-4b4f-919f-ab9767026555 extends the original relationships flow. Existing native ambiguous profile response plus two closed actual-actor/current-Auth choices may continue ordinary sign-in to the original /app gate. Exact42501 AND original ambiguity message required; no selected-business fallback, ordinary outage substitution, operator/admin/broker regression, role backfill, index removal or new identity/action. Original native gate/chooser owns admission and any remembered authorized selection.
+
+Original parent2680/b030 is now separately merged cb1d891d7b20e09d3d09263d3d9e4a6b690a8241/deployed and served-source verified, receipt6374536491. New resolver candidate has163/seven actual focused suites, original type10→6/lint/gold/pinned detector, five raw source-pinned desktop/narrow frames and keyboard exact-B own paused recovery with synthetic SDK. It is NOT_DEPLOYED and requires current-main/exact-head CI/review/ordinary production readback. Complete real external-client/new-account/two-business/returning/founder proof remains UNVERIFIED; original global linkage/recipient-bound acceptor transition still mandatory. No new UI, provider, store, runtime, approval, job, visit or receipt. Full details: e09-ordinary-customer-signin.md.
+
 # Customer relationship selection: existing identity integration
 
 ## Current unpublished migration ordering — 2026-10-23

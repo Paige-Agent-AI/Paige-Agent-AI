@@ -1,0 +1,852 @@
+{
+  "capturedAt": "2026-10-23T18:35:14.634Z",
+  "transport": "synthetic; original Gateway, actual SDK decoder and landing resolver/router; no actual Auth/backend or customer shell",
+  "rounds": 2,
+  "firstDiagnosticGeometry": [
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "id": "portal-email",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 476.3999938964844,
+            "y": 381.8000183105469
+          }
+        },
+        {
+          "font": "16px",
+          "id": "portal-pw",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 476.3999938964844,
+            "y": 469.8000183105469
+          }
+        },
+        {
+          "font": "16px",
+          "id": "",
+          "name": "Show password",
+          "rect": {
+            "h": 44,
+            "w": 44,
+            "x": 830.7999877929688,
+            "y": 469.8000183105469
+          }
+        },
+        {
+          "font": "14px",
+          "id": "",
+          "name": "Sign in",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 476.3999938964844,
+            "y": 525.7999877929688
+          }
+        },
+        {
+          "font": "12px",
+          "id": "",
+          "name": "Forgot your password?",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 476.3999938964844,
+            "y": 581.7999877929688
+          }
+        }
+      ],
+      "height": 768,
+      "scrollHeight": 805,
+      "scrollOwner": "HTML",
+      "scrollWidth": 1351,
+      "width": 1366
+    },
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "id": "portal-email",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 305.20001220703125,
+            "y": 381.8000183105469
+          }
+        },
+        {
+          "font": "16px",
+          "id": "portal-pw",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 305.20001220703125,
+            "y": 469.8000183105469
+          }
+        },
+        {
+          "font": "16px",
+          "id": "",
+          "name": "Show password",
+          "rect": {
+            "h": 44,
+            "w": 44,
+            "x": 659.6000366210938,
+            "y": 469.8000183105469
+          }
+        },
+        {
+          "font": "14px",
+          "id": "",
+          "name": "Sign in",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 305.20001220703125,
+            "y": 525.7999877929688
+          }
+        },
+        {
+          "font": "12px",
+          "id": "",
+          "name": "Forgot your password?",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 305.20001220703125,
+            "y": 581.7999877929688
+          }
+        }
+      ],
+      "height": 768,
+      "scrollHeight": 805,
+      "scrollOwner": "HTML",
+      "scrollWidth": 1009,
+      "width": 1024
+    },
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "id": "portal-email",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 243.1999969482422,
+            "y": 497.8000183105469
+          }
+        },
+        {
+          "font": "16px",
+          "id": "portal-pw",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 243.1999969482422,
+            "y": 585.7999877929688
+          }
+        },
+        {
+          "font": "16px",
+          "id": "",
+          "name": "Show password",
+          "rect": {
+            "h": 44,
+            "w": 44,
+            "x": 597.6000366210938,
+            "y": 585.7999877929688
+          }
+        },
+        {
+          "font": "14px",
+          "id": "",
+          "name": "Sign in",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 243.1999969482422,
+            "y": 641.7999877929688
+          }
+        },
+        {
+          "font": "12px",
+          "id": "",
+          "name": "Forgot your password?",
+          "rect": {
+            "h": 44,
+            "w": 398.3999938964844,
+            "x": 243.1999969482422,
+            "y": 697.7999877929688
+          }
+        }
+      ],
+      "height": 1000,
+      "scrollHeight": 1037,
+      "scrollOwner": "HTML",
+      "scrollWidth": 885,
+      "width": 900
+    },
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "id": "portal-email",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 293.6000061035156,
+            "x": 40.79999923706055,
+            "y": 439.8000183105469
+          }
+        },
+        {
+          "font": "16px",
+          "id": "portal-pw",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 293.6000061035156,
+            "x": 40.79999923706055,
+            "y": 527.7999877929688
+          }
+        },
+        {
+          "font": "16px",
+          "id": "",
+          "name": "Show password",
+          "rect": {
+            "h": 44,
+            "w": 44,
+            "x": 290.3999938964844,
+            "y": 527.7999877929688
+          }
+        },
+        {
+          "font": "14px",
+          "id": "",
+          "name": "Sign in",
+          "rect": {
+            "h": 44,
+            "w": 293.6000061035156,
+            "x": 40.79999923706055,
+            "y": 583.7999877929688
+          }
+        },
+        {
+          "font": "12px",
+          "id": "",
+          "name": "Forgot your password?",
+          "rect": {
+            "h": 44,
+            "w": 293.6000061035156,
+            "x": 40.79999923706055,
+            "y": 639.7999877929688
+          }
+        }
+      ],
+      "height": 844,
+      "scrollHeight": 901,
+      "scrollOwner": "HTML",
+      "scrollWidth": 375,
+      "width": 390
+    },
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "id": "portal-email",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 223.1999969482422,
+            "x": 40.79999923706055,
+            "y": 333.6000061035156
+          }
+        },
+        {
+          "font": "16px",
+          "id": "portal-pw",
+          "name": "",
+          "rect": {
+            "h": 44,
+            "w": 223.1999969482422,
+            "x": 40.79999923706055,
+            "y": 421.6000061035156
+          }
+        },
+        {
+          "font": "16px",
+          "id": "",
+          "name": "Show password",
+          "rect": {
+            "h": 44,
+            "w": 44,
+            "x": 220,
+            "y": 421.6000061035156
+          }
+        },
+        {
+          "font": "14px",
+          "id": "",
+          "name": "Sign in",
+          "rect": {
+            "h": 44,
+            "w": 223.1999969482422,
+            "x": 40.79999923706055,
+            "y": 477.6000061035156
+          }
+        },
+        {
+          "font": "12px",
+          "id": "",
+          "name": "Forgot your password?",
+          "rect": {
+            "h": 44,
+            "w": 223.1999969482422,
+            "x": 40.79999923706055,
+            "y": 533.6000366210938
+          }
+        }
+      ],
+      "height": 568,
+      "scrollHeight": 650,
+      "scrollOwner": "HTML",
+      "scrollWidth": 305,
+      "width": 320
+    }
+  ],
+  "finalGeometry": [
+    {
+      "controls": [
+        {
+          "bg": "rgb(249, 250, 251)",
+          "fg": "rgb(4, 20, 57)",
+          "font": "16px",
+          "name": "portal-email",
+          "rect": {
+            "bottom": 390.2000122070313,
+            "height": 44,
+            "left": 568.7999877929688,
+            "right": 967.1999816894532,
+            "top": 346.20001220703125,
+            "width": 398.3999938964844,
+            "x": 568.7999877929688,
+            "y": 346.20001220703125
+          }
+        },
+        {
+          "bg": "rgb(249, 250, 251)",
+          "fg": "rgb(4, 20, 57)",
+          "font": "16px",
+          "name": "portal-pw",
+          "rect": {
+            "bottom": 478.2000122070313,
+            "height": 44,
+            "left": 568.7999877929688,
+            "right": 967.1999816894532,
+            "top": 434.2000122070313,
+            "width": 398.3999938964844,
+            "x": 568.7999877929688,
+            "y": 434.2000122070313
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(112, 101, 129)",
+          "font": "16px",
+          "name": "Show password",
+          "rect": {
+            "bottom": 478.2000122070313,
+            "height": 44,
+            "left": 923.2000122070312,
+            "right": 967.2000122070312,
+            "top": 434.2000122070313,
+            "width": 44,
+            "x": 923.2000122070312,
+            "y": 434.2000122070313
+          }
+        },
+        {
+          "bg": "rgb(38, 72, 62)",
+          "fg": "rgb(255, 255, 255)",
+          "font": "14px",
+          "name": "Sign in",
+          "rect": {
+            "bottom": 534.2000122070312,
+            "height": 44,
+            "left": 568.7999877929688,
+            "right": 967.1999816894532,
+            "top": 490.2000122070313,
+            "width": 398.3999938964844,
+            "x": 568.7999877929688,
+            "y": 490.2000122070313
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(112, 101, 129)",
+          "font": "12px",
+          "name": "Forgot your password?",
+          "rect": {
+            "bottom": 590.2000122070312,
+            "height": 44,
+            "left": 568.7999877929688,
+            "right": 967.1999816894532,
+            "top": 546.2000122070312,
+            "width": 398.3999938964844,
+            "x": 568.7999877929688,
+            "y": 546.2000122070312
+          }
+        }
+      ],
+      "height": 770,
+      "reduced": true,
+      "scrollHeight": 770,
+      "scrollOwner": "HTML",
+      "scrollWidth": 1536,
+      "width": 1536,
+      "capture": {
+        "width": 1536,
+        "height": 770,
+        "file": "1536-confirmed-a.png"
+      }
+    },
+    {
+      "controls": [
+        {
+          "bg": "rgb(249, 250, 251)",
+          "fg": "rgb(4, 20, 57)",
+          "font": "16px",
+          "name": "portal-email",
+          "rect": {
+            "bottom": 389,
+            "height": 44,
+            "left": 484,
+            "right": 882.3999938964844,
+            "top": 345,
+            "width": 398.3999938964844,
+            "x": 484,
+            "y": 345
+          }
+        },
+        {
+          "bg": "rgb(249, 250, 251)",
+          "fg": "rgb(4, 20, 57)",
+          "font": "16px",
+          "name": "portal-pw",
+          "rect": {
+            "bottom": 477,
+            "height": 44,
+            "left": 484,
+            "right": 882.3999938964844,
+            "top": 433,
+            "width": 398.3999938964844,
+            "x": 484,
+            "y": 433
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(112, 101, 129)",
+          "font": "16px",
+          "name": "Show password",
+          "rect": {
+            "bottom": 477,
+            "height": 44,
+            "left": 838.4000244140625,
+            "right": 882.4000244140625,
+            "top": 433,
+            "width": 44,
+            "x": 838.4000244140625,
+            "y": 433
+          }
+        },
+        {
+          "bg": "rgb(38, 72, 62)",
+          "fg": "rgb(255, 255, 255)",
+          "font": "14px",
+          "name": "Sign in",
+          "rect": {
+            "bottom": 533,
+            "height": 44,
+            "left": 484,
+            "right": 882.3999938964844,
+            "top": 489,
+            "width": 398.3999938964844,
+            "x": 484,
+            "y": 489
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(112, 101, 129)",
+          "font": "12px",
+          "name": "Forgot your password?",
+          "rect": {
+            "bottom": 589,
+            "height": 44,
+            "left": 484,
+            "right": 882.3999938964844,
+            "top": 545,
+            "width": 398.3999938964844,
+            "x": 484,
+            "y": 545
+          }
+        }
+      ],
+      "height": 768,
+      "reduced": true,
+      "scrollHeight": 768,
+      "scrollOwner": "HTML",
+      "scrollWidth": 1366,
+      "width": 1366,
+      "capture": {
+        "width": 1366,
+        "height": 768,
+        "file": "1366-confirmed-a.png"
+      }
+    },
+    {
+      "controls": [
+        {
+          "bg": "rgb(249, 250, 251)",
+          "fg": "rgb(4, 20, 57)",
+          "font": "16px",
+          "name": "portal-email",
+          "rect": {
+            "bottom": 389,
+            "height": 44,
+            "left": 312.8000183105469,
+            "right": 711.2000122070312,
+            "top": 345,
+            "width": 398.3999938964844,
+            "x": 312.8000183105469,
+            "y": 345
+          }
+        },
+        {
+          "bg": "rgb(249, 250, 251)",
+          "fg": "rgb(4, 20, 57)",
+          "font": "16px",
+          "name": "portal-pw",
+          "rect": {
+            "bottom": 477,
+            "height": 44,
+            "left": 312.8000183105469,
+            "right": 711.2000122070312,
+            "top": 433,
+            "width": 398.3999938964844,
+            "x": 312.8000183105469,
+            "y": 433
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(112, 101, 129)",
+          "font": "16px",
+          "name": "Show password",
+          "rect": {
+            "bottom": 477,
+            "height": 44,
+            "left": 667.2000122070312,
+            "right": 711.2000122070312,
+            "top": 433,
+            "width": 44,
+            "x": 667.2000122070312,
+            "y": 433
+          }
+        },
+        {
+          "bg": "rgb(38, 72, 62)",
+          "fg": "rgb(255, 255, 255)",
+          "font": "14px",
+          "name": "Sign in",
+          "rect": {
+            "bottom": 533,
+            "height": 44,
+            "left": 312.8000183105469,
+            "right": 711.2000122070312,
+            "top": 489,
+            "width": 398.3999938964844,
+            "x": 312.8000183105469,
+            "y": 489
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(112, 101, 129)",
+          "font": "12px",
+          "name": "Forgot your password?",
+          "rect": {
+            "bottom": 589,
+            "height": 44,
+            "left": 312.8000183105469,
+            "right": 711.2000122070312,
+            "top": 545,
+            "width": 398.3999938964844,
+            "x": 312.8000183105469,
+            "y": 545
+          }
+        }
+      ],
+      "height": 768,
+      "reduced": true,
+      "scrollHeight": 768,
+      "scrollOwner": "HTML",
+      "scrollWidth": 1024,
+      "width": 1024,
+      "capture": {
+        "width": 1024,
+        "height": 768,
+        "file": "1024-confirmed-a.png"
+      }
+    },
+    {
+      "controls": [
+        {
+          "bg": "rgb(249, 250, 251)",
+          "fg": "rgb(4, 20, 57)",
+          "font": "16px",
+          "name": "portal-email",
+          "rect": {
+            "bottom": 505,
+            "height": 44,
+            "left": 250.8000030517578,
+            "right": 649.1999969482422,
+            "top": 461,
+            "width": 398.3999938964844,
+            "x": 250.8000030517578,
+            "y": 461
+          }
+        },
+        {
+          "bg": "rgb(249, 250, 251)",
+          "fg": "rgb(4, 20, 57)",
+          "font": "16px",
+          "name": "portal-pw",
+          "rect": {
+            "bottom": 593,
+            "height": 44,
+            "left": 250.8000030517578,
+            "right": 649.1999969482422,
+            "top": 549,
+            "width": 398.3999938964844,
+            "x": 250.8000030517578,
+            "y": 549
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(112, 101, 129)",
+          "font": "16px",
+          "name": "Show password",
+          "rect": {
+            "bottom": 593,
+            "height": 44,
+            "left": 605.2000122070312,
+            "right": 649.2000122070312,
+            "top": 549,
+            "width": 44,
+            "x": 605.2000122070312,
+            "y": 549
+          }
+        },
+        {
+          "bg": "rgb(38, 72, 62)",
+          "fg": "rgb(255, 255, 255)",
+          "font": "14px",
+          "name": "Sign in",
+          "rect": {
+            "bottom": 649,
+            "height": 44,
+            "left": 250.8000030517578,
+            "right": 649.1999969482422,
+            "top": 605,
+            "width": 398.3999938964844,
+            "x": 250.8000030517578,
+            "y": 605
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(112, 101, 129)",
+          "font": "12px",
+          "name": "Forgot your password?",
+          "rect": {
+            "bottom": 705,
+            "height": 44,
+            "left": 250.8000030517578,
+            "right": 649.1999969482422,
+            "top": 661,
+            "width": 398.3999938964844,
+            "x": 250.8000030517578,
+            "y": 661
+          }
+        }
+      ],
+      "height": 1000,
+      "reduced": true,
+      "scrollHeight": 1000,
+      "scrollOwner": "HTML",
+      "scrollWidth": 900,
+      "width": 900,
+      "capture": {
+        "width": 900,
+        "height": 1000,
+        "file": "900-confirmed-a.png"
+      }
+    },
+    {
+      "controls": [
+        {
+          "bg": "rgb(12, 7, 18)",
+          "fg": "rgb(245, 245, 245)",
+          "font": "16px",
+          "name": "portal-email",
+          "rect": {
+            "bottom": 338.8000183105469,
+            "height": 44,
+            "left": 40.79999923706055,
+            "right": 263.99999618530273,
+            "top": 294.8000183105469,
+            "width": 223.1999969482422,
+            "x": 40.79999923706055,
+            "y": 294.8000183105469
+          }
+        },
+        {
+          "bg": "rgb(12, 7, 18)",
+          "fg": "rgb(245, 245, 245)",
+          "font": "16px",
+          "name": "portal-pw",
+          "rect": {
+            "bottom": 426.8000183105469,
+            "height": 44,
+            "left": 40.79999923706055,
+            "right": 263.99999618530273,
+            "top": 382.8000183105469,
+            "width": 223.1999969482422,
+            "x": 40.79999923706055,
+            "y": 382.8000183105469
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(166, 155, 181)",
+          "font": "16px",
+          "name": "Show password",
+          "rect": {
+            "bottom": 426.8000183105469,
+            "height": 44,
+            "left": 220,
+            "right": 264,
+            "top": 382.8000183105469,
+            "width": 44,
+            "x": 220,
+            "y": 382.8000183105469
+          }
+        },
+        {
+          "bg": "rgb(105, 75, 56)",
+          "fg": "rgb(255, 255, 255)",
+          "font": "14px",
+          "name": "Sign in",
+          "rect": {
+            "bottom": 482.8000183105469,
+            "height": 44,
+            "left": 40.79999923706055,
+            "right": 263.99999618530273,
+            "top": 438.8000183105469,
+            "width": 223.1999969482422,
+            "x": 40.79999923706055,
+            "y": 438.8000183105469
+          }
+        },
+        {
+          "bg": "rgba(0, 0, 0, 0)",
+          "fg": "rgb(166, 155, 181)",
+          "font": "12px",
+          "name": "Forgot your password?",
+          "rect": {
+            "bottom": 538.8000183105469,
+            "height": 44,
+            "left": 40.79999923706055,
+            "right": 263.99999618530273,
+            "top": 494.8000183105469,
+            "width": 223.1999969482422,
+            "x": 40.79999923706055,
+            "y": 494.8000183105469
+          }
+        }
+      ],
+      "height": 568,
+      "reduced": true,
+      "scrollHeight": 612,
+      "scrollOwner": "HTML",
+      "scrollWidth": 305,
+      "width": 320,
+      "capture": {
+        "width": 320,
+        "height": 568,
+        "file": "320-confirmed-b-dark.png"
+      }
+    }
+  ],
+  "handoff": [
+    {
+      "syntheticNativeState": "ready",
+      "actualRouterDestination": "/app?business=e0921000-0000-4000-8000-000000000002",
+      "expected": "/app?business=e0921000-0000-4000-8000-000000000002",
+      "same": true
+    },
+    {
+      "syntheticNativeState": "paused",
+      "actualRouterDestination": "/app?business=e0921000-0000-4000-8000-000000000002",
+      "expected": "/app?business=e0921000-0000-4000-8000-000000000002",
+      "same": true
+    },
+    {
+      "syntheticNativeState": "ended",
+      "actualRouterDestination": "/app?business=e0921000-0000-4000-8000-000000000002",
+      "expected": "/app?business=e0921000-0000-4000-8000-000000000002",
+      "same": true
+    }
+  ],
+  "keyboardFocus": {
+    "name": "Sign in",
+    "shadow": "rgba(12, 7, 18, 0.686) 0px 0px 0px 1.37642px, rgba(92, 38, 217, 0.686) 0px 0px 0px 2.75284px, rgba(24, 18, 43, 0.05) 0px 1px 2px 0px, rgba(24, 18, 43, 0.06) 0px 1px 3px 0px",
+    "tag": "BUTTON"
+  },
+  "refusals": [
+    {
+      "scenario": "native-error",
+      "route": "http://127.0.0.1:5278/portal/test-service-studio?brand=b&theme=dark&case=native-error",
+      "retainedForm": true,
+      "feedback": true
+    },
+    {
+      "scenario": "foreign-business",
+      "route": "http://127.0.0.1:5278/portal/test-service-studio?brand=b&case=foreign&signed=yes",
+      "retainedForm": true,
+      "feedback": true
+    }
+  ],
+  "rawCapture": "Page.captureScreenshot original PNG bytes at deviceScaleFactor1; earlier tab screenshot JPEG captures are diagnostics only",
+  "unverified": [
+    "authenticated external-client and owner",
+    "native customer shell/paused-ended notices",
+    "physical iPhone/Safari",
+    "screen reader",
+    "real email/provider recovery",
+    "full integrated Experience"
+  ]
+}

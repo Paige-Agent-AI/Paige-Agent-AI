@@ -270,6 +270,7 @@ import { buildClientPortalPersonaMessages, readClientPortalPersonaInput } from "
 import { customerAgentName, customerSeatIdentity } from "../_shared/client-portal-identity.ts";
 import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, embedCustomerQuery, type CustomerSourceSnapshot, type CustomerQueryEmbedding } from "../_shared/client-portal-assistant-context.ts";
 import { readCustomerProgressContext, customerProgressMessages, customerProgressTerminalSource, type CustomerProgressContext, type CustomerProgressSnapshot } from "../_shared/client-portal-progress-context.ts";
+import { readCustomerSessionsContext, customerSessionsMessages, customerSessionsTerminalSource, type CustomerSessionsContext, type CustomerSessionsSnapshot } from "../_shared/client-portal-sessions-context.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -1174,19 +1175,23 @@ serve(async (req) => {
     let customerSourceSnapshot: CustomerSourceSnapshot | null = null;
     let customerProgressSnapshot: CustomerProgressSnapshot | null = null;
     let customerProgressContext: CustomerProgressContext | null = null;
+    let customerSessionsSnapshot: CustomerSessionsSnapshot | null = null;
+    let customerSessionsContext: CustomerSessionsContext | null = null;
     const appendAssistant = async (args: Record<string, any>) => {
       if (!interactiveReceiptScope) return await supabaseClient.rpc("paige_chat_turn_append", args);
       const scope = interactiveReceiptScope;
       if (args.p_thread_id !== scope.thread || args.p_role !== "assistant") throw new Error("INTERACTIVE_RECEIPT_SCOPE_MISMATCH");
       const customerTerminal = customerTerminalSource(customerSourceSnapshot, args.p_content, args.p_bundle_ref ?? {});
       const progressTerminal = customerProgressTerminalSource(customerProgressSnapshot, customerTerminal.content, args.p_bundle_ref ?? {});
+      const sessionsTerminal = customerSessionsTerminalSource(customerSessionsSnapshot, progressTerminal.content, args.p_bundle_ref ?? {});
       const terminalBundle = { ...(args.p_bundle_ref ?? {}) };
       if (customerSourceSnapshot) delete terminalBundle.customer_knowledge;
       if (customerProgressSnapshot) delete terminalBundle.customer_progress;
+      if (customerSessionsSnapshot) delete terminalBundle.customer_sessions;
       const result = await supabase.rpc("paige_chat_interactive_settle", {
         p_thread: scope.thread, p_actor: user.id, p_tenant: scope.tenant, p_intent: scope.intent,
-        p_content: progressTerminal.content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
-        p_bundle_ref: { ...terminalBundle, ...customerTerminal.metadata, ...progressTerminal.metadata, interactive: {
+        p_content: sessionsTerminal.content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
+        p_bundle_ref: { ...terminalBundle, ...customerTerminal.metadata, ...progressTerminal.metadata, ...sessionsTerminal.metadata, interactive: {
           ...(args.p_bundle_ref?.interactive ?? {}), request_intent_id: scope.intent,
         } }, p_tool_calls: args.p_tool_calls,
       });
@@ -1591,7 +1596,7 @@ serve(async (req) => {
         p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
           turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
-      const beginTurn = (effectful: boolean) => (customerPortal?customerCaller:supabaseClient).rpc(customerPortal ? (interactiveInput.kind === "message" ? "client_portal_assistant_begin_progress" : "client_portal_assistant_begin") : "paige_chat_interactive_begin_v2", {
+      const beginTurn = (effectful: boolean) => (customerPortal?customerCaller:supabaseClient).rpc(customerPortal ? (interactiveInput.kind === "message" ? "client_portal_assistant_begin_sessions" : "client_portal_assistant_begin") : "paige_chat_interactive_begin_v2", {
         p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
         p_supersedes: interactiveInput.supersedesIntentId ?? null,
         p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
@@ -1665,6 +1670,15 @@ serve(async (req) => {
           {status:progressSource.status === "unavailable" ? 409 : 503,headers:{...corsHeaders,"Content-Type":"application/json"}});
         customerProgressContext = progressSource.data;
         customerProgressSnapshot = progressSource.data.snapshot;
+        const sessionsSource = await readCustomerSessionsContext(customerCaller, user.id, validatedData.threadId,
+          validatedData.requestIntentId, customerPersona);
+        if (sessionsSource.status !== "available" || !sessionsSource.data) return new Response(JSON.stringify({
+          code:"CUSTOMER_SESSIONS_UNAVAILABLE",message_accepted:true,
+          reason:"Your sessions could not be verified for this answer.",
+          recommendation:"Check this conversation, or contact the business through Support if this continues."}),
+          {status:sessionsSource.status === "unavailable" ? 409 : 503,headers:{...corsHeaders,"Content-Type":"application/json"}});
+        customerSessionsContext = sessionsSource.data;
+        customerSessionsSnapshot = sessionsSource.data.snapshot;
       }
       // Client and Play identifiers remain read scope; their existing caller-JWT
       // authorization below still applies. Only effect-bearing inputs are refused.
@@ -3961,8 +3975,11 @@ JSON:`;
         const scope = await customerCaller.rpc("paige_chat_customer_thread_authorized", {p_thread:payloadThreadId});
         const progressSource = customerPersona && customerProgressContext
           ? await readCustomerProgressContext(customerCaller, user.id, payloadThreadId, validatedData.requestIntentId, customerPersona) : null;
+        const sessionsSource = customerPersona && customerSessionsContext
+          ? await readCustomerSessionsContext(customerCaller, user.id, payloadThreadId, validatedData.requestIntentId, customerPersona) : null;
         if (source.status === "available" && source.data?.persona.enabled === true && !scope.error && scope.data === true &&
           progressSource?.status === "available" && JSON.stringify(progressSource.data) === JSON.stringify(customerProgressContext) &&
+          sessionsSource?.status === "available" && JSON.stringify(sessionsSource.data) === JSON.stringify(customerSessionsContext) &&
           JSON.stringify(source.data) === JSON.stringify(customerAssistant)) return true;
         tenantKnowledgeScopeRevoked = true;
         return false;
@@ -10130,6 +10147,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       aiMessages.splice(0, aiMessages.length, ...buildClientPortalPersonaMessages(customerPersona),
         ...customerProgramMessages(customerAssistant),
         ...(customerProgressContext ? customerProgressMessages(customerProgressContext) : []),
+        ...(customerSessionsContext ? customerSessionsMessages(customerSessionsContext) : []),
         ...messages.filter((m:any) => m.role === "user" || m.role === "assistant"));
       toolDefs.splice(0, toolDefs.length);
     } else if (callerTier === "client") {

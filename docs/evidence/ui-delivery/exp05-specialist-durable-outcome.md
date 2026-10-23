@@ -96,3 +96,13 @@ Only those separately inspected literal pins may renew; metadata, extractor,
 mutation negatives and dependency source assertions remain restrictive. Current
 original producer digest12a0c058 remains separately reviewed. New exact-head review,
 CI and actual Chat/orchestrator package/config readback remain required.
+
+Current-main composition dd79820f8 preserves the released CURA Sessions consumer,
+original Progress cleanup and exact legacy relationship reads, including migration
+500009. Fresh326 cases across the six owning suites and four actual CURA suites
+PASS. All29 new-main scalar baselines reproduce; the same independent decomposition
+isolates the specialist patch (common identity15 plus its own branch/import). The
+original conflict contained only29 literal fingerprints, which were renewed after
+this composed-source inspection; all122 current dependency assertions, CURA source
+and metadata are retained. Final composed ancestry, review and exact-head hosted
+checks must pass; the old ad1 checks do not approve this new composition.

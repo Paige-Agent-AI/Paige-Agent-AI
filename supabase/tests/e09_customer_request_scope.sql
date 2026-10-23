@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(165);
+SELECT plan(210);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -370,6 +370,88 @@ SELECT is((SELECT city FROM public.clients WHERE id='e0970300-0000-4000-8000-000
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000004';
 UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002' WHERE id='e0970300-0000-4000-8000-000000000001';
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_self_profile()','e0970200-0000-4000-8000-000000000001')->>'id','e0970300-0000-4000-8000-000000000001','original fixture relationship is restored for all incumbent controls');
+
+-- Legacy original customer reads: existing future-shape rollback only, original source/RLS intact.
+SELECT is((SELECT md5(replace(prosrc,' AND id = public.client_portal_relationship_id(NULL::uuid)','')) FROM pg_proc WHERE oid='public.customer_paige_activity_summary(integer)'::regprocedure),'7332e6e6e8d21e808b28bc50314f13a4','customer_paige_activity_summary(integer) exact reviewed predicate inverse preserves all original source');
+SELECT isnt((SELECT md5(replace(replace(prosrc,' AND id = public.client_portal_relationship_id(NULL::uuid)',''),' AND portal_access_state = ''open''','')) FROM pg_proc WHERE oid='public.customer_paige_activity_summary(integer)'::regprocedure),'7332e6e6e8d21e808b28bc50314f13a4','customer_paige_activity_summary(integer) unrelated access-predicate drift is detected');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef=false AND provolatile='v' AND proconfig=ARRAY['search_path=public'] AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(proacl) a)=ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false','service_role:EXECUTE:false'] FROM pg_proc WHERE oid='public.customer_paige_activity_summary(integer)'::regprocedure),'customer_paige_activity_summary(integer) original owner/security/volatility/search path/ACL retained');
+SELECT is((SELECT md5(replace(prosrc,'    AND c.id = public.client_portal_relationship_id(NULL::uuid)
+','')) FROM pg_proc WHERE oid='public.get_client_service_agreement()'::regprocedure),'51c9aa687ef0fa236ef79c4c3255e1c2','get_client_service_agreement() exact reviewed predicate inverse preserves all original source');
+SELECT isnt((SELECT md5(replace(replace(prosrc,'    AND c.id = public.client_portal_relationship_id(NULL::uuid)
+',''),'    AND public.client_portal_access_open(c.id)','')) FROM pg_proc WHERE oid='public.get_client_service_agreement()'::regprocedure),'51c9aa687ef0fa236ef79c4c3255e1c2','get_client_service_agreement() unrelated access-predicate drift is detected');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef=true AND provolatile='s' AND proconfig=ARRAY['search_path=public'] AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(proacl) a)=ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false'] FROM pg_proc WHERE oid='public.get_client_service_agreement()'::regprocedure),'get_client_service_agreement() original owner/security/volatility/search path/ACL retained');
+SELECT is((SELECT md5(replace(prosrc,'    AND c.id = public.client_portal_relationship_id(NULL::uuid)
+','')) FROM pg_proc WHERE oid='public.get_workspace_brand()'::regprocedure),'720d537748518bc3424325ec9acd331d','get_workspace_brand() exact reviewed predicate inverse preserves all original source');
+SELECT isnt((SELECT md5(replace(replace(prosrc,'    AND c.id = public.client_portal_relationship_id(NULL::uuid)
+',''),'    AND public.client_portal_access_open(c.id)','')) FROM pg_proc WHERE oid='public.get_workspace_brand()'::regprocedure),'720d537748518bc3424325ec9acd331d','get_workspace_brand() unrelated access-predicate drift is detected');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef=true AND provolatile='s' AND proconfig=ARRAY['search_path=public'] AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(proacl) a) IN (ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false'],ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false','service_role:EXECUTE:false']) FROM pg_proc WHERE oid='public.get_workspace_brand()'::regprocedure),'get_workspace_brand() original owner/security/volatility/search path/ACL retained');
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='open',status='active' WHERE id IN ('e0970300-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002');
+SELECT set_config('paige.portal_access_write','',true);
+INSERT INTO public.tenant_legal_profile(tenant_id,legal_business_name,brand_display_name,service_agreement_title,service_agreement_body) VALUES ('e0970200-0000-4000-8000-000000000001','Northwind Studio','Northwind client brand','A terms','Approved A terms'),('e0970200-0000-4000-8000-000000000002','Harbor Lane Advisors','Harbor client brand','B terms','Approved B terms') ON CONFLICT(tenant_id) DO UPDATE SET brand_display_name=EXCLUDED.brand_display_name,service_agreement_title=EXCLUDED.service_agreement_title,service_agreement_body=EXCLUDED.service_agreement_body;
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b','e0970200-0000-4000-8000-000000000001')->>'tenant_name','Northwind Studio','get_workspace_brand() selected A keeps actual A brand/terms');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b','e0970200-0000-4000-8000-000000000002')->>'tenant_name','Harbor Lane Advisors','get_workspace_brand() selected B keeps actual B brand/terms');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b')->>'sqlstate','42501','get_workspace_brand() ambiguous no-selection refuses');
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b','e0970200-0000-4000-8000-000000000003') IS NULL,'get_workspace_brand() foreign selection returns no record');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b','invalid')->>'sqlstate','42501','get_workspace_brand() malformed selection refuses');
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003','SELECT to_jsonb(b) FROM public.get_workspace_brand() b','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'get_workspace_brand() different actual actor cannot reuse selected business');
+SELECT ok(pg_temp.as_scope_user(NULL,'SELECT to_jsonb(b) FROM public.get_workspace_brand() b','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'get_workspace_brand() no subject gets no record');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','e0970200-0000-4000-8000-000000000001')->>'tenant_name','Northwind Studio','get_client_service_agreement() selected A keeps actual A brand/terms');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','e0970200-0000-4000-8000-000000000002')->>'tenant_name','Harbor Lane Advisors','get_client_service_agreement() selected B keeps actual B brand/terms');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b')->>'sqlstate','42501','get_client_service_agreement() ambiguous no-selection refuses');
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','e0970200-0000-4000-8000-000000000003') IS NULL,'get_client_service_agreement() foreign selection returns no record');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','invalid')->>'sqlstate','42501','get_client_service_agreement() malformed selection refuses');
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003','SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'get_client_service_agreement() different actual actor cannot reuse selected business');
+SELECT ok(pg_temp.as_scope_user(NULL,'SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'get_client_service_agreement() no subject gets no record');
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='paused' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_workspace_brand() paused selected business cannot fall through to A');
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_client_service_agreement() paused selected business cannot fall through to A');
+UPDATE public.clients SET portal_access_state='open',status='active' WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.tenants SET status='active' WHERE id='e0970200-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','',true);
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET status='archived' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_workspace_brand() archived selected business cannot fall through to A');
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_client_service_agreement() archived selected business cannot fall through to A');
+UPDATE public.clients SET portal_access_state='open',status='active' WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.tenants SET status='active' WHERE id='e0970200-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','',true);
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.tenants SET status='suspended' WHERE id='e0970200-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_workspace_brand() inactive selected business cannot fall through to A');
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_client_service_agreement() inactive selected business cannot fall through to A');
+UPDATE public.clients SET portal_access_state='open',status='active' WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.tenants SET status='active' WHERE id='e0970200-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','',true);
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_workspace_brand() revoked B cannot return A');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b')->>'tenant_name','Northwind Studio','get_workspace_brand() original single-business no-header behavior retained');
+SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_client_service_agreement() revoked B cannot return A');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b')->>'tenant_name','Northwind Studio','get_client_service_agreement() original single-business no-header behavior retained');
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES ('e0970300-0000-4000-8000-000000000011','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','Owner','Selflinked A','active'),('e0970300-0000-4000-8000-000000000012','e0970200-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','Owner','Selflinked B','active');
+INSERT INTO public.paige_context_loads(tenant_id,contact_id,caller_user_id,scope,consent_state) VALUES ('e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000011','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','denied');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}')->>'count','1','original INVOKER activity sees selected A only');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','original INVOKER RLS refuses B while actual staff workspace remains A');
+CREATE TEMP TABLE e09_legacy_staff_context ON COMMIT DROP AS SELECT active_tenant_id FROM public.profiles WHERE user_id='e0970100-0000-4000-8000-000000000001';
+UPDATE public.profiles SET active_tenant_id='e0970200-0000-4000-8000-000000000002' WHERE user_id='e0970100-0000-4000-8000-000000000001';
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT to_jsonb(public.current_user_tenant_id())'),to_jsonb('e0970200-0000-4000-8000-000000000002'::text),'synthetic fixture models genuine owner-member workspace B');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'count','2','original INVOKER activity sees selected B and granted consent only');
+UPDATE public.profiles SET active_tenant_id=(SELECT active_tenant_id FROM e09_legacy_staff_context) WHERE user_id='e0970100-0000-4000-8000-000000000001';
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()') ->>'sqlstate','42501','INVOKER staff self-link still refuses ambiguous business');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000003"}')->>'error','NO_LINKED_CONTACT','foreign hint cannot use an own activity record');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"invalid"}')->>'sqlstate','42501','malformed activity selection refuses');
+SELECT is(pg_temp.scope_read('SELECT public.customer_paige_activity_summary()','e0970200-0000-4000-8000-000000000001')->>'error','NO_LINKED_CONTACT','pure customer keeps original INVOKER clients RLS refusal');
+SELECT is(pg_temp.as_scope_user(NULL,'SELECT public.customer_paige_activity_summary()') ->>'error','NO_LINKED_CONTACT','activity never substitutes for missing Auth');
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='paused' WHERE id='e0970300-0000-4000-8000-000000000012';
+SELECT set_config('paige.portal_access_write','',true);
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','paused activity B never falls back to A');
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000012';
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','revoked activity B never falls back to A');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()') ->>'count','1','single original self-link activity stays compatible');
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000011';
 
 CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
 SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future fixture restores the original global guard before outer rollback');

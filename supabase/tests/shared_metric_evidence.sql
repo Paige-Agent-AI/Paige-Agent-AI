@@ -289,4 +289,57 @@ RESET ROLE;
 SELECT pg_temp.require_true(NOT has_function_privilege('anon','public._paige_metric_report_readable(uuid)','EXECUTE')
  AND NOT has_function_privilege('service_role','public._paige_metric_report_readable(uuid)','EXECUTE')
  AND has_function_privilege('authenticated','public._paige_metric_report_readable(uuid)','EXECUTE'),'caller-bound boolean grants no privileged actor override');
+-- Original producer over REAL issuer/capture/work/artifact/turn/Rail tables.
+-- Still an isolated rollback-only native fixture, not public admission or QA.
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+UPDATE auth.users SET banned_until=NULL,deleted_at=NULL WHERE id='a3450000-0000-4000-8000-000000000001';
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000011' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),
+ set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+INSERT INTO settings_results(key,bundle) SELECT 'native-report-bundle',public.issue_analytics_evidence_bundle(
+ 'team.active_members_current','1.0.0','{}','month',now()-interval '30 days',now(),'a3450000-0000-4000-8000-000000000011');
+RESET ROLE;
+INSERT INTO settings_results(key,bundle) SELECT 'native-report-capture',public._paige_document_capture_metric_evidence(
+ jsonb_build_array(bundle->>'evidence_ref')) FROM settings_results WHERE key='native-report-bundle';
+-- Native execution uses stored actor authority without retaining or inventing JWT identity.
+SELECT set_config('request.jwt.claim.role','service_role',true),set_config('request.jwt.claims','{"role":"service_role"}',true),set_config('request.jwt.claim.sub','',true);
+INSERT INTO public.paige_chat_threads(id,caller_user_id,tenant_id,lens,title) VALUES
+ ('a3450000-0000-4000-8000-000000000082','a3450000-0000-4000-8000-000000000001','a3450000-0000-4000-8000-000000000011','coach','Isolated native report');
+INSERT INTO public.paige_durable_work(id,tenant_id,initiating_user_id,intent_id,thread_id,capability_key,work_kind,
+ authority_context,scope_epoch,idempotency_key,lease_until,request_payload)
+ SELECT 'a3450000-0000-4000-8000-000000000081','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001',
+ 'a3450000-0000-4000-8000-000000000083','a3450000-0000-4000-8000-000000000082','document_generate','document_authoring',
+ '{}','isolated-native-report','isolated-native-report-key',now()+interval '5 minutes',
+ jsonb_build_object('version',1,'doc_type','business_review','title','Isolated native report','brief','Original source-backed native fixture',
+ 'report_evidence',bundle,'report_period',jsonb_build_object('key','month','start',bundle->'measurements'->0->'range'->'start',
+ 'end',bundle->'measurements'->0->'range'->'end')) FROM settings_results WHERE key='native-report-capture';
+GRANT SELECT ON settings_results TO service_role; -- temporary fixture DTO only, no business-table grant
+SET LOCAL ROLE service_role;
+SELECT pg_temp.require_true((SELECT work_status='claimed' FROM public.start_paige_document_work_execution('a3450000-0000-4000-8000-000000000081')),'original native report claim');
+SELECT pg_temp.require_true((SELECT content_id='a3450000-0000-4000-8000-000000000081' AND work_status='succeeded' AND receipt_recorded
+ FROM public.complete_paige_document_work('a3450000-0000-4000-8000-000000000081','isolated-native-report-key','business_review','Isolated native report',
+ jsonb_build_array(jsonb_build_object('type','stat','label',bundle->'measurements'->0->>'label',
+ 'value',coalesce(bundle->'measurements'->0->'values'->>'count','Unavailable'))),NULL,NULL,0,0)),'original report artifact/turn/Rail completion')
+ FROM settings_results WHERE key='native-report-capture';
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT m.body::jsonb->>'docType'='business_review' AND m.meta->>'document_purpose'='metric_business_review'
+ AND m.meta->'metric_provenance'->0->>'source_revision_ref'=s.bundle->'measurements'->0->>'source_revision_ref'
+ AND m.meta::text NOT LIKE '%aneb_v1_%' AND m.meta::text NOT LIKE '%account_epoch%'
+ FROM public.marketing_content m CROSS JOIN settings_results s WHERE m.id='a3450000-0000-4000-8000-000000000081' AND s.key='native-report-capture'),'persisted source lineage excludes bearer/private identity');
+SELECT pg_temp.require_true((SELECT count(*)=1 FROM public.paige_chat_turns WHERE work_id='a3450000-0000-4000-8000-000000000081'),'original completion turn');
+SELECT pg_temp.require_true((SELECT count(*)=1 FROM public.paige_workspace_events WHERE source_kind='capability_run'
+ AND source_id='a3450000-0000-4000-8000-000000000081' AND actor_id='a3450000-0000-4000-8000-000000000001'
+ AND outcome='capability_succeeded' AND detail->>'document_purpose'='metric_business_review'),'original attributable Rail receipt');
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_true((SELECT count(*)=1 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000081'),'current original customer-scope report read');
+RESET ROLE;
+SELECT pg_temp.require_invalid($q$UPDATE public.marketing_content SET meta='{}' WHERE id='a3450000-0000-4000-8000-000000000081'$q$,'native report cannot lose source privacy');
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000012' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_true((SELECT count(*)=0 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000081'),'native report withheld after active workspace switch');
+RESET ROLE;
 ROLLBACK;

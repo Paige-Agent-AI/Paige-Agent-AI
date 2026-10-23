@@ -218,18 +218,59 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   const {controlWeeklyOwner,readWeeklyOwner}=await import('../../src/solo/weekly/weekly-owner-read.ts');
   const nativeStopId=json(`SELECT draft_weekly_commitment_check(${literal(randomUUID())},'Synthetic future-stop control',1,'09:00','UTC');`,ctx).automation_id;
   const scope={actorId:owner,tenantId:tenant,epoch:1};
-  let controlCalls=0,dropAck=false;
+  let controlCalls=0,dropAck=false,configureCalls=0,dropConfigureAck=false;
   const caller={auth:{getSession:async()=>({data:{session:{user:{id:owner}}},error:null})},rpc:async(name,args={})=>{
     const calls={current_user_tenant_id:()=>`to_jsonb(current_user_tenant_id())`,
       weekly_commitment_owner:()=>`to_jsonb(weekly_commitment_owner(${literal(args._tenant)},${literal(args._actor)}))`,
       get_weekly_commitment_checks:()=>`get_weekly_commitment_checks()`,
-      control_weekly_commitment_check:()=>`control_weekly_commitment_check(${literal(args._automation_id)},${literal(args._action)},${literal(args._expected_revision)})`};
+      control_weekly_commitment_check:()=>`control_weekly_commitment_check(${literal(args._automation_id)},${literal(args._action)},${literal(args._expected_revision)})`,
+      configure_weekly_commitment_check:()=>`configure_weekly_commitment_check(${literal(args._automation_id)},${literal(args._weekday)},${literal(args._local_time)},${literal(args._timezone)},${literal(args._expected_revision)})`};
     assert(Object.hasOwn(calls,name),'closed native fixture RPC port');
     try{const data=json(`SELECT ${calls[name]()};`,ctx);
       if(name==='control_weekly_commitment_check'){controlCalls++;if(dropAck)return{data:null,error:{message:'synthetic lost acknowledgment'}};}
+      if(name==='configure_weekly_commitment_check'){configureCalls++;if(dropConfigureAck)return{data:null,error:{message:'synthetic lost configuration acknowledgment'}};}
       return{data,error:null};
     }catch(error){return{data:null,error:{code:/\b(40001|42501|22023)\b/.exec(String(error))?.[1]??'native_read_failed'}};}
   }};
+  // Match the original full proof: PostgreSQL's own catalogue, not the host ICU
+  // or an assumed alias set, determines which civil-time names can be saved.
+  const nativeScheduleZones=json("SELECT coalesce(jsonb_agg(name ORDER BY name),'[]') FROM pg_catalog.pg_timezone_names WHERE name IN ('CET','GMT','EST');");
+  console.log(JSON.stringify({native_schedule_zones:nativeScheduleZones}));
+  check('native schedule catalogue retains the required bare GMT positive',()=>assert(nativeScheduleZones.includes('GMT')));
+  let configured;
+  for(const timezone of ['CET','GMT','EST']){
+    if(!nativeScheduleZones.includes(timezone)){
+      check(`unsupported native ${timezone} cannot create a definition`,()=>refuses(
+        `SELECT draft_weekly_commitment_check(${literal(randomUUID())},${literal('Synthetic unsupported schedule '+timezone)},1,'09:00',${literal(timezone)});`,ctx,'22023'));
+      continue;
+    }
+    const nativeId=json(`SELECT draft_weekly_commitment_check(${literal(randomUUID())},${literal('Synthetic schedule correction '+timezone)},1,'09:00',${literal(timezone)});`,ctx).automation_id;
+    const before=await readWeeklyOwner(scope,caller,()=>scope);assert.equal(before.status,'ready');
+    const original=before.snapshot.checks.find(c=>c.automation_id===nativeId);assert(original);
+    const callsBefore=configureCalls,proposed={...original.schedule,weekday:5,local_time:'14:30'};
+    const changed=await controlWeeklyOwner(scope,original,'configure',caller,()=>scope,proposed);
+    check(`actual weekly consumer preserves PostgreSQL ${timezone} and disarms its original definition`,()=>{
+      assert.equal(changed.status,'saved');assert.equal(configureCalls,callsBefore+1);
+      configured=changed.snapshot.checks.find(c=>c.automation_id===nativeId);assert(configured);
+      assert.deepEqual(configured.schedule,proposed);assert.equal(configured.revision,2);
+      assert.equal(configured.schedule_status,'requested');assert.equal(configured.execution_availability,'held');assert.equal(configured.next_run_at,null);
+      assert.equal(json(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(nativeId)} AND action='weekly_check.configure';`),1);
+    });
+    const stale=await controlWeeklyOwner(scope,original,'configure',caller,()=>scope,{...proposed,weekday:6});
+    check(`stale ${timezone} review cannot write again`,()=>{assert.equal(stale.status,'stale');assert.equal(configureCalls,callsBefore+1);});
+  }
+  assert(configured);dropConfigureAck=true;
+  const callsBeforeLoss=configureCalls,changedAgain={...configured.schedule,local_time:'15:30'};
+  const uncertain=await controlWeeklyOwner(scope,configured,'configure',caller,()=>scope,changedAgain);
+  const inspected=await readWeeklyOwner(scope,caller,()=>scope);
+  check('lost native configuration acknowledgment recovers the original next revision without replay',()=>{
+    assert.equal(uncertain.status,'unknown');assert.equal(configureCalls,callsBeforeLoss+1);assert.equal(inspected.status,'ready');
+    const same=inspected.snapshot.checks.find(c=>c.automation_id===configured.automation_id);assert(same);
+    assert.deepEqual(same.schedule,changedAgain);assert.equal(same.revision,3);assert.equal(same.schedule_status,'requested');assert.equal(same.next_run_at,null);
+    assert.equal(json(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(same.automation_id)} AND action='weekly_check.configure';`),2);
+    assert.equal(run('SELECT count(*) FROM paige_native_events;'),eventsBefore);
+    assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),flagBefore);
+  });
   const nativeRead=await readWeeklyOwner(scope,caller,()=>scope);
   assert.equal(nativeRead.status,'ready');
   const reviewed=nativeRead.snapshot.checks.find(c=>c.automation_id===nativeStopId);assert(reviewed);
@@ -256,5 +297,5 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
       same_claim_commit_authority_prefix:true,current_owner_denials:true},
     incumbent_catalogue:{source:laterCatalogues.at(-1)?.file??'original_weekly_frontier',rows:catalogueBefore.length,preserved_metadata_and_defaults:true},
     decline_history:{rows:10000,actual_extracted_query:true,plan:declinePlan},proposal_history:proposalHistory,actual_native_drafts:true,actual_rail:true,concurrent_claims:6,concurrent_commits:6,
-    additional_occurrences:0,provider_effects:0,authenticated_customer_acceptance:'NOT_RUN'};
+    native_schedule_zones:nativeScheduleZones,additional_occurrences:0,provider_effects:0,authenticated_customer_acceptance:'NOT_RUN'};
 }

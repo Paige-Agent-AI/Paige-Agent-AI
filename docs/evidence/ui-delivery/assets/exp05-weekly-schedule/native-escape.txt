@@ -1,0 +1,47 @@
+Browser tab: 3, Title: "Native EXP05 weekly schedule correction", URL: "http://127.0.0.1:5221/solo/1701/operations/overview".
+1 AXWebArea Native EXP05 weekly schedule correction, URL: 127.0.0.1:5221/solo/1701/operations/overview
+	2 container
+		3 container
+			4 text PAIGE workspace ready
+		5 container Weekly responsibility, ID: radix-:r9:
+			6 heading Weekly responsibility, Value: 2, ID: radix-:ra:
+				7 text Weekly responsibility
+			8 text Current owner scope, canonical schedules and verified results.
+			9 container
+				10 heading Weekly commitment check, Value: 2
+					11 text Weekly commitment check
+				12 text Review the week. Keep the original work in Operations.
+				13 button Refresh weekly responsibility
+				14 text Read  Thu, Oct 22, 6:00 PM UTC
+				15 heading Weekly commitment check, Value: 3
+					16 text Weekly commitment check
+				17 text Paused
+				18 container
+					19 text Every  Monday  at  09:00
+					20 text UTC
+				21 definition list
+					22 container Next execution
+						23 text Next execution
+					24 text No executable next run is available
+					25 container Scope
+						26 text Scope
+					27 text Your open, in-progress and blocked Planning work assigned to you or created by you.
+					28 container Permission
+						29 text Permission
+					30 text Recorded configuration; execution also requires current permission and availability.
+				31 text Execution is held. The requested time is not a promise of a run. No booking reserves this slot.
+				32 text No receipt-backed completed check has been verified.
+				33 button (collapsed) Future executions, Secondary Actions: Expand
+					34 text Future executions
+				35 container Prepare and retrieve weekly drafts
+					36 text Draft status is unavailable. Your proposal has not been reported as saved.
+					37 button Read saved proposals
+					38 button Prepare a weekly responsibility
+				39 container Weekly responsibility records
+					40 link Description: Clients → Calendar, Value: 127.0.0.1:5221/solo/1701/clients/calendar
+					41 link Description: Operations → Work, Value: 127.0.0.1:5221/solo/1701/operations/work
+			42 button Close
+				43 image
+				44 text Close
+
+The focused UI element is 1 AXWebArea Native EXP05 weekly schedule correction, URL: 127.0.0.1:5221/solo/1701/operations/overview

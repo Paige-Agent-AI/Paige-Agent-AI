@@ -59,6 +59,16 @@ function zone(v: unknown): v is string {
 // Calendar formats the separately configured business zone and never computes recurrence.
 const scheduleZone = (v: unknown): v is string => typeof v === "string" && v.length > 0 && v.length <= 128 &&
   /^[A-Za-z0-9_+./:-]+$/.test(v) && !/^(posix|right)\//.test(v);
+/** Review only. Preserve a server-validated saved zone even when local ICU is older.
+ * A new zone must be locally recognized; PostgreSQL remains the write authority. */
+export function reviewWeeklyScheduleChange(saved: WeeklySchedule, proposed: WeeklySchedule): WeeklySchedule | null {
+  if (!Number.isInteger(proposed.weekday) || proposed.weekday < 1 || proposed.weekday > 7 ||
+    typeof proposed.local_time !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(proposed.local_time) || !scheduleZone(proposed.timezone)) return null;
+  if (proposed.timezone !== saved.timezone) {
+    try { new Intl.DateTimeFormat("en", { timeZone: proposed.timezone }).format(0); } catch { return null; }
+  }
+  return { weekday: proposed.weekday, local_time: proposed.local_time, timezone: proposed.timezone };
+}
 const STATUSES = new Set<unknown>(["scheduled", "running", "completed", "failed", "unknown", "cancelled", "needs_approval", "held", "refused", "skipped"]);
 function verified(raw: unknown, process: string, tenant: string, actor: string): VerifiedWeeklyRun | null {
   const run = record(raw), o = record(run?.observation);

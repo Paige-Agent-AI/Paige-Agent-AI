@@ -1,5 +1,40 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — exact native weekly authorization review, development
+
+EXTEND the original weekly owner controller and inline review with the existing
+`control_weekly_commitment_check(...,'authorize',original_revision)`. Only the
+current ordinary owner can review a requested/paused original definition; fixed
+personal Planning scope, day/time/zone and saved revision remain visible. The
+original native writer owns consent, concurrency, next occurrence and audit.
+Separate original readback must match the definition and acknowledged intended
+occurrence. Authorized/held is not executable/ready or a completed check. Unknown
+results offer original inspection without replay. No trigger/cron/Chat/Live,
+provider, new approval, scheduler, store, autonomy policy or domain writer change.
+
+The throwaway local Flow Prototype retained the existing compact design/CSS and
+explicit synthetic-only ports. All six outcome branches and Escape were traversed;
+320px light/1366px dark had no horizontal overflow. A real busy-state focus loss
+was corrected to a focusable live progress message before production UI. Standing
+owner design approval/autonomous delivery applies; no separate human prototype
+review is claimed. Actual native mounted/source-pinned frames remain required.
+Seventeen causal regressions failed before implementation; the first ten-suite
+run passes284. Updated native proof, final scoped/compiled/rendered review and
+exact-head hosted release checks are separate pending gates. No ordinary customer
+authorization or recurring run performed. The original global activation boundary,
+all ten outcomes/E5-CV1–9/cohorts/Live and founder evaluation remain owed.
+
+Orchestration Contract: original Operations/Chat/Calendar weekly sheet → exact
+owner-only definition authorization RPC/audit → original owner projection. This
+human control is not a Layer C business execution receipt; future occurrences
+retain original Spine/Harness/Trust/Layer C/native ActionAdapter/Planning/Rail.
+ALG-01 preserves original identity/readback/no unknown retry; ALG-08 consumes the
+native next occurrence without calculating recurrence; ALG-12/13 preserve real
+held/ready/unknown guidance. ALG-02/03/11 unchanged. All eleven catalogue recipes
+remain Listed / Unverified; weekly status read is preserved and Chat/Live mutation
+admission remains unavailable. Grounding maine504/ANT11/52/147/161, own bounded
+weekly paths only; E01/E02/E04/CURA/EXP10 source and deployed2641/2645 preserved.
+
 ## October22 — ZION original invocation receipt correction, development
 
 REPAIR the existing `paige-orchestrator` receipt producer. Original invocation

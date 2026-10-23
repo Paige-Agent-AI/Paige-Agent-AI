@@ -44,6 +44,57 @@ function configurationFixture() {
   });
   return f;
 }
+function authorizationFixture(ready = false) {
+  const f = fixture(), original = f.caller.rpc.getMockImplementation()!;
+  f.saved.schedule_status = "requested";
+  f.caller.rpc.mockImplementation(async (name, args) => {
+    if (name !== "control_weekly_commitment_check") return original(name, args);
+    f.effects.push(args); f.saved.schedule_status = "scheduled";
+    f.saved.intended_next_run_at = "2026-11-02T09:00:00Z";
+    f.saved.execution_availability = ready ? "ready" : "held";
+    f.saved.execution_hold_reason = ready ? null : "trigger_dark";
+    f.saved.next_run_at = ready ? f.saved.intended_next_run_at : null;
+    return f.response.data || f.response.error ? f.response : { data: { ok: true, automation_id: id, revision: 2,
+      state: "live", future_runs_only: true, next_run_at: f.saved.intended_next_run_at }, error: null };
+  });
+  return f;
+}
+describe("exact native weekly authorization", () => {
+  it.each([false, true])("saves exact authorization with real readiness %s", async ready => {
+    const f = authorizationFixture(ready), reviewed = structuredClone(f.saved);
+    expect((await f.control(reviewed, "authorize")).status).toBe("saved");
+    expect(f.effects).toEqual([{ _automation_id: id, _action: "authorize", _expected_revision: 2 }]);
+    expect(f.saved.execution_availability).toBe(ready ? "ready" : "held"); expect(f.saved.last_verified_run).toBeNull();
+    expect(f.caller.rpc.mock.calls.filter(([name]) => name === "get_weekly_commitment_checks")).toHaveLength(2);
+  });
+  it("a paused responsibility receives fresh authorization, never a catch-up command", async () => {
+    const f = authorizationFixture(); f.saved.schedule_status = "paused";
+    expect((await f.control(structuredClone(f.saved), "authorize")).status).toBe("saved");
+    expect(f.effects).toEqual([{ _automation_id: id, _action: "authorize", _expected_revision: 2 }]);
+  });
+  it.each(["automation_id", "revision", "state", "future_runs_only", "next_run_at"])("rejects contradictory %s acknowledgment", async field => {
+    const f = authorizationFixture();
+    f.response.data = { ok: true, automation_id: id, revision: 2, state: "live", future_runs_only: true,
+      next_run_at: "2026-11-02T09:00:00Z", [field]: field === "future_runs_only" ? false : "wrong" };
+    expect((await f.control(structuredClone(f.saved), "authorize")).status).toBe("unknown"); expect(f.effects).toHaveLength(1);
+  });
+  it("contradictory original next-run readback stays unknown without replay", async () => {
+    const f = authorizationFixture(true), original = f.caller.rpc.getMockImplementation()!;
+    f.caller.rpc.mockImplementation(async (name, args) => { const result = await original(name, args);
+      if (name === "control_weekly_commitment_check") f.saved.intended_next_run_at = "2026-11-09T09:00:00Z";
+      return result; });
+    expect((await f.control(structuredClone(f.saved), "authorize")).status).toBe("unknown"); expect(f.effects).toHaveLength(1);
+  });
+  it("lost authorization acknowledgment remains inspect-only", async () => {
+    const f = authorizationFixture(); f.response.error = { message: "lost acknowledgment" };
+    expect((await f.control(structuredClone(f.saved), "authorize")).status).toBe("unknown"); expect(f.effects).toHaveLength(1);
+  });
+  it("a changed reviewed schedule cannot authorize the current definition", async () => {
+    const f = authorizationFixture(), review = structuredClone(f.saved); review.schedule.local_time = "10:00";
+    expect((await f.control(review, "authorize")).status).toBe("stale"); expect(f.effects).toEqual([]);
+  });
+});
+
 describe("native human-owner future controls", () => {
   it.each(["CET", "GMT", "EST", "America/Coyhaique"])("preserves the saved PostgreSQL zone %s when only day/time changes", async timezone => {
     const f = configurationFixture(); f.saved.schedule.timezone = timezone;

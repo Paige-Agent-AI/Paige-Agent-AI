@@ -58,10 +58,11 @@ export async function readWeeklyOwner(scope: WeeklyBrowserScope, caller: Caller,
 
 export type WeeklyOwnerControl = { status: "saved"; snapshot: WeeklyCommitmentSnapshot }
   | { status: "refused" | "stale" | "unsupported" | "unavailable" | "unknown" };
-export type WeeklyFutureControl = (check: WeeklyCheck, action: "pause" | "cancel" | "configure", schedule?: WeeklySchedule) => Promise<WeeklyOwnerControl>;
+export type WeeklyFutureControl = (check: WeeklyCheck, action: "pause" | "cancel" | "configure" | "authorize", schedule?: WeeklySchedule) => Promise<WeeklyOwnerControl>;
 /** Deliberate human-only future control. The original native writers own authority,
- * concurrency and audit; a changed definition disarms and cannot authorize, enable or replay work. */
-export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: WeeklyCheck, action: "pause" | "cancel" | "configure",
+ * concurrency and audit. Configure disarms; exact human authorization remains
+ * distinct from execution readiness and never dispatches/replays an occurrence. */
+export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: WeeklyCheck, action: "pause" | "cancel" | "configure" | "authorize",
   caller: Caller, current: () => WeeklyBrowserScope | null, schedule?: WeeklySchedule): Promise<WeeklyOwnerControl> {
   const origin = { ...scope }, expected = { id: review.automation_id, revision: review.revision,
     status: review.schedule_status, schedule: { ...review.schedule } };
@@ -74,8 +75,10 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
         && now?.actorId === origin.actorId && now.tenantId === origin.tenantId && now.epoch === origin.epoch;
     } catch { return false; }
   };
+  const authorizing = action === "authorize";
   const proposed = action === "configure" && schedule ? reviewWeeklyScheduleChange(expected.schedule, schedule) : null;
-  if (!["pause", "cancel", "configure"].includes(action) || action === "configure" && !proposed || action !== "configure" && schedule !== undefined
+  if (!["pause", "cancel", "configure", "authorize"].includes(action) || action === "configure" && !proposed || action !== "configure" && schedule !== undefined
+    || authorizing && !["requested", "paused"].includes(expected.status)
     || !uuid.test(origin.actorId) || !uuid.test(origin.tenantId)
     || !uuid.test(expected.id) || !Number.isSafeInteger(expected.revision) || expected.revision < 1 || !matches()) return { status: "refused" };
   const stage = createWeeklyDraftDeadline(12_000, matches);
@@ -106,7 +109,7 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
       const code = typeof result.error === "object" && "code" in result.error ? result.error.code : null;
       return { status: code === "40001" ? "stale" : code === "42501" ? "refused" : code === "22023" ? "unsupported" : "unknown" };
     }
-    const data = result.data, state = proposed ? "draft" : action === "pause" ? "paused" : "cancelled";
+    const data = result.data, state = proposed ? "draft" : authorizing ? "live" : action === "pause" ? "paused" : "cancelled";
     const revision = expected.revision + (proposed ? 1 : 0);
     if (!data || typeof data !== "object" || !("ok" in data) || data.ok !== true
       || !("automation_id" in data) || data.automation_id !== expected.id || !("revision" in data) || data.revision !== revision
@@ -119,8 +122,13 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
     const saved = after.snapshot.checks.find(item => item.automation_id === expected.id);
     const definitionMatches = saved && (proposed ? saved.automation_id === expected.id && saved.revision === revision
       && saved.schedule.weekday === proposed.weekday && saved.schedule.local_time === proposed.local_time && saved.schedule.timezone === proposed.timezone
-      && saved.schedule_status === "requested" && saved.execution_availability === "held" : sameDefinition(saved) && saved.schedule_status === state);
-    return saved && definitionMatches && saved.next_run_at === null
+      && saved.schedule_status === "requested" && saved.execution_availability === "held" : sameDefinition(saved) && saved.schedule_status === (authorizing ? "scheduled" : state));
+    // Authorization and execution readiness are distinct. Only the original
+    // writer/getter's identical next occurrence is evidence; never calculate it.
+    const nextMatches = authorizing ? saved && "next_run_at" in data && typeof data.next_run_at === "string" && saved.intended_next_run_at === data.next_run_at
+      && (saved.execution_availability === "held" ? saved.next_run_at === null : saved.next_run_at === data.next_run_at)
+      : saved?.next_run_at === null;
+    return saved && definitionMatches && nextMatches
       ? { status: "saved", snapshot: after.snapshot } : { status: "unknown" };
   } catch { return { status: !matches() ? "refused" : dispatched ? "unknown" : "unavailable" }; }
   finally { retired = true; }

@@ -4,6 +4,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { routedChatCompletion, pickRoute, isJobKind, JOB_KINDS, DEFAULT_SUBAGENT_JOB_KIND, type JobKind } from "../_shared/model-router.ts";
+import { fabricCompletion } from "../_shared/model-fabric.ts";
+import { authorityAdmits, resolveWorkspaceAuthorityAs } from "../_shared/workspace-authority.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
@@ -563,39 +565,95 @@ async function dispatchLangGraph(
   return { status: resp.status, body };
 }
 
-// Soft sub-agent runtime — prompt-only, executed against the Lovable AI Gateway.
-// No new edge function required; Paige can spin these up on her own.
-async function invokeSoft(
-  agent: { slug: string; name: string; system_prompt: string | null; config: Record<string, unknown> | null },
-  input: Record<string, unknown>,
-  _context: OrchestratorRequest["context"],
+type RegisteredSoftAgent = {
+  id?: string; version?: number; slug: string; name: string;
+  system_prompt: string | null; config: Record<string, unknown> | null;
+};
+
+// A planning model call grants no tools or business authority. Reuse the original
+// workspace resolver and registered identity after EACH Fabric budget await.
+async function zionProviderAuthority(
+  agent: RegisteredSoftAgent,
+  context: OrchestratorRequest["context"],
   tenantId: string | null,
+  currentScope: () => Promise<boolean>,
+  actorlessService = false,
+): Promise<boolean> {
+  try {
+    const actor = context?.user_id;
+    if ((!actor && !actorlessService) || (actor && !UUID_RE.test(actor)) || !tenantId || !UUID_RE.test(tenantId)
+      || !agent.id || !UUID_RE.test(agent.id) || !Number.isInteger(agent.version)
+      || (agent.version ?? 0) < 1 || !await currentScope()) return false;
+    if (actor) {
+      const permission = await resolveWorkspaceAuthorityAs(supabase, actor, tenantId);
+      if (!permission.ok || !authorityAdmits("delegate_to_subagent", permission.authority, new Set())) return false;
+    }
+    const { data, error } = await supabase.from("paige_subagents")
+      .select("id,slug,version,tenant_id,runtime,enabled,system_prompt,config")
+      .eq("id", agent.id).eq("version", agent.version)
+      .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`).maybeSingle();
+    return !error && data?.slug === agent.slug && data.enabled === true && data.runtime === "soft"
+      && (data.tenant_id === null || data.tenant_id === tenantId)
+      && data.system_prompt === agent.system_prompt
+      && JSON.stringify(data.config ?? {}) === JSON.stringify(agent.config ?? {})
+      && await currentScope();
+  } catch { return false; }
+}
+
+// Original soft runtime. ZION's existing cheap drafts and plan job consume Model
+// Fabric. Protected/unknown and other unported jobs retain their original route
+// and budget contract. No prompt, global routing policy or activation change.
+async function invokeSoft(
+  agent: RegisteredSoftAgent,
+  input: Record<string, unknown>,
+  context: OrchestratorRequest["context"],
+  tenantId: string | null,
+  currentScope?: () => Promise<boolean>,
+  actorlessService = false,
 ) {
   if (!agent.system_prompt) return { status: 500, body: { ok: false, error: `Soft agent ${agent.slug} missing system_prompt` } };
   const cfg = (agent.config ?? {}) as Record<string, unknown>;
   // §14 model routing: every agent picks the cheapest-capable model per its job tier.
   // Default 'internal_first_draft' (open-model-eligible) — a sub-agent's output is an
-  // internal draft Paige integrates/reviews; an agent can override job_kind in its config
-  // (e.g. a client-facing final → 'client_copy_final', which routes to Claude reasoning).
+  // internal draft Paige integrates/reviews; the registered job_kind supplies the
+  // original capability band. ZION maps that band to the shared cognitive class.
   const jobKind = (typeof cfg.job_kind === "string" ? cfg.job_kind : "internal_first_draft") as JobKind;
   const userPayload = typeof input === "string" ? input : JSON.stringify(input);
   try {
     // §34-L5 attribution: thread the trace ctx so this routed call lands in paige_llm_trace tagged with
     // WHICH agent ran it (agent_id is a TEXT column → the stable slug) and the caller's tenant — without
-    // it these rows were writing agent_id=null. A null/absent tenant_id degrades gracefully in the L1
-    // writer (#146/#355), so we never throw on a platform/anon caller. Attribution only — routing unchanged.
-    const data = await routedChatCompletion(jobKind, {
+    // it these rows were writing agent_id=null. Existing other specialists retain
+    // their original legacy route; ZION uses metadata-only Fabric attribution.
+    const body = {
       messages: [
-        { role: "system", content: agent.system_prompt },
-        { role: "user", content: userPayload },
+        { role: "system" as const, content: agent.system_prompt },
+        { role: "user" as const, content: userPayload },
       ],
       max_tokens: 2048,
-    }, { agent_id: agent.slug, tenant_id: tenantId });
+    };
+    let data: unknown;
+    if (agent.slug === "zion" && (jobKind === "plan" || pickRoute(jobKind).tier === "classification")) {
+      if (!tenantId || !UUID_RE.test(tenantId) || (!context?.user_id && !actorlessService)
+        || (context?.user_id && !UUID_RE.test(context.user_id)) || !currentScope) {
+        return { status: 403, body: { ok: false, error: "Current workspace authority is required for ZION planning." } };
+      }
+      const completion = await fabricCompletion({ ...body,
+        cognitive_class: pickRoute(jobKind).tier === "classification" ? "cheap" : "operational",
+        job: "zion_operations_draft",
+      }, { trace: { agent_id: agent.slug, tenant_id: tenantId, content_policy: "metadata_only" },
+        beforeProviderAttempt: () => zionProviderAuthority(agent, context, tenantId, currentScope, actorlessService),
+      });
+      if (!completion.ok) return { status: 503, body: { ok: false,
+        error: "ZION could not verify current permission or model readiness. No planning result was confirmed." } };
+      data = completion.response;
+    } else data = await routedChatCompletion(jobKind, body, { agent_id: agent.slug, tenant_id: tenantId });
     const answer = (data as { choices?: Array<{ message?: { content?: string } }> })?.choices?.[0]?.message?.content ?? "";
     if (!answer) return { status: 502, body: { ok: false, error: "Model returned no content" } };
     return { status: 200, body: { ok: true, agent: agent.slug, answer } };
   } catch (e) {
-    return { status: 502, body: { ok: false, error: e instanceof Error ? e.message : "model_error" } };
+    return { status: 502, body: { ok: false, error: agent.slug === "zion"
+      ? "ZION could not finish the planning request. Inspect the original work before trying again."
+      : e instanceof Error ? e.message : "model_error" } };
   }
 }
 
@@ -675,7 +733,7 @@ Deno.serve(async (req) => {
 
     let invQ = supabase
       .from("paige_subagents")
-      .select("slug,name,domain,description,runtime,edge_function,langgraph_graph,enabled,system_prompt,config,tenant_id")
+      .select("id,version,slug,name,domain,description,runtime,edge_function,langgraph_graph,enabled,system_prompt,config,tenant_id")
       .eq("slug", payload.slug);
     // §9 isolation: only a platform default or THIS tenant's own agent is invocable. Parameterized, and
     // tenantId is a trusted uuid-or-null from resolveTenantScope (no request-body injection).
@@ -726,10 +784,20 @@ Deno.serve(async (req) => {
         result = await invokeLocal(agent.edge_function, boundInput, ctx);
       } else if (agent.runtime === "soft") {
         result = await invokeSoft(
-          { slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
+          { id: agent.id, version: agent.version, slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
           boundInput,
           ctx,
           tenantId,
+          async () => {
+            const fresh = await resolveTenantScope(req, payload);
+            if ("error" in fresh || fresh.tenantId !== tenantId || fresh.callerId !== callerId || fresh.isService !== isService) return false;
+            const trusted = await buildTrustedContext(payload, fresh);
+            return !("error" in trusted) && trusted.ctx.user_id === ctx.user_id;
+          },
+          // The ORIGINAL exact-service-key path permits actorless internal drafts
+          // (including ActionBus). Rechecked by currentScope; never request JSON,
+          // an invented human, or authority to perform a business effect.
+          isService && !ctx.user_id,
         );
       } else {
         if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);

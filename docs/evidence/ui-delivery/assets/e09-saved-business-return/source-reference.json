@@ -1,0 +1,108 @@
+{
+  "observedAt": "2026-10-23T18:40:22.977Z",
+  "sourceBase": "a13394776cbc1471556def66e5208ea66e483035",
+  "sourceState": "uncommitted actual source at capture; exact hashes below",
+  "transport": "synthetic SDK only; actual original Gateway/closed native DTO decoder/landing resolver/router; no actual Auth/backend/customer shell",
+  "sourcePins": [
+    {
+      "path": "src/pages/PortalGateway.tsx",
+      "sha256": "e8f1dc87cb84040061df2bf338f58db5b52921eeaee0147eefcd1491e219e347"
+    },
+    {
+      "path": "src/lib/auth/resolveLandingRoute.ts",
+      "sha256": "4120cfd0db0e9db21eb2a9b32ed1cb712393f2210dbeeae8fab68a969bd06578"
+    },
+    {
+      "path": "src/lib/client-portal-return.ts",
+      "sha256": "0ab41d7d1ca372dab86663914233d1e8b202f117fabb17fe0073a48cee2bce26"
+    },
+    {
+      "path": "src/lib/client-portal-entry.ts",
+      "sha256": "0586dec8165b19198d258afd3dd119eabfcb59889345368fec13e38267e33b0b"
+    },
+    {
+      "path": "src/lib/client-portal-access.ts",
+      "sha256": "45a1247b93721b6c7bcc5f8163a5c4876c9cd4e2dd5a4c7eb84c45bc19992abe"
+    },
+    {
+      "path": "src/lib/client-portal-self-profile.ts",
+      "sha256": "0e6167187869c34f0fea5f73f29f6cff3b2ba5a9b0941e9441fc3e53475e2b04"
+    },
+    {
+      "path": "src/lib/client-portal-scope.ts",
+      "sha256": "7da8e203a5153adf3a834aba79d7350e0db4420fbc710007bdee9221a56690c9"
+    },
+    {
+      "path": "src/pages/ConsumerInvitation.css",
+      "sha256": "06f51e9cf523ab194f67b3f0c3f9e0de6d89fc51310832fd07797047a7abea5c"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    }
+  ],
+  "rawPngPins": [
+    {
+      "path": "1024-confirmed-a.png",
+      "sha256": "7ccd0314154f0b1e556cdbf9aab4a3900d860b9182aee2ab4d95c4132cc102d0",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "path": "1366-confirmed-a.png",
+      "sha256": "77c9b71cf641c125f701548cc89340474f4cfa65e9609827fd6c00e15040aac8",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "path": "1536-confirmed-a.png",
+      "sha256": "9ebd246dae3bafe8b5b5754c77625fbb8ee93c33ef602e36c6c58ddabedeb904",
+      "width": 1536,
+      "height": 770
+    },
+    {
+      "path": "320-confirmed-b-dark.png",
+      "sha256": "0fcbf71211279868bddb014200b54c399691137e449b92a4c371299789ca683a",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "path": "390-confirm-b-dark.png",
+      "sha256": "4ca5995ad72af506cd94916913414b26804b459642b31f6f3773366bae7d06b0",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "path": "390-confirmed-native-error-b-dark.png",
+      "sha256": "8cd6ac52301a2fba1f7ecdfbec684d12bbe705c15daa5de6229d1bc4396835e1",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "path": "900-confirmed-a.png",
+      "sha256": "e2324547203f62276d973e55fd2f0684b9957524b1946a4eba35f714a011f5df",
+      "width": 900,
+      "height": 1000
+    }
+  ],
+  "contrast": {
+    "originalReveal": 2.4065989823574183,
+    "correctedLightReveal": 5.19602559009322
+  },
+  "browserObservation": "browser-observation.json",
+  "unverified": [
+    "ordinary customer and owner production sessions",
+    "full customer shell and genuine revoked/two-business state",
+    "physical device and assistive technology",
+    "actual email/reset/provider effects",
+    "full Experience founder acceptance"
+  ],
+  "invalidCapture": {
+    "path": "390-confirmed-foreign-refusal-b.png",
+    "verdict": "INVALID / EXCLUDED FROM PASS",
+    "originalSha256": "e91cb630e1a6fa1a00b7ad5e13ba39b817b677b84f95d5c89bad2dc4bc533ac3",
+    "protocolAttemptSha256": "2d1744694d788757f5bde78c8fa546cebc2a4f156bb2e657068f79bbb92c8cc8",
+    "retention": "original unedited frames retained as local diagnostics; not committed valid artifacts",
+    "scope": "foreign refusal DOM geometry/behavior verified; full-viewport PNG UNVERIFIED"
+  }
+}

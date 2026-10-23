@@ -1,3 +1,29 @@
+## EXP05 governed-work prerequisites — source releases verified, October23
+
+Original specialist outcome/receipt recovery, requester-and-workspace activity
+inspection, contact-free MCP workspace binding and eligible ZION Fabric routing
+now have reviewed, merged and production-source/configuration readbacks.
+Exact identities and original receipts are in the sole
+[Master §4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log);
+earlier preparation snapshots below remain historical.
+ZION classification-band drafts and plan use existing Fabric with current
+actor/workspace/registration checks per admitted provider leg. Protected, unknown
+and unported jobs retain original routing and sensitive budgets. Actorless exact-service
+internal drafts keep their original identity and explicit receipt exclusion.
+[Source and causal proof](../evidence/ui-delivery/exp05-zion-model-fabric.md)
+separates 218 owning cases, fresh77 mutation controls and earlier shared-policy evidence.
+No prompt/config was published, no real model/business action was invoked by
+release verification, and no trigger or customer capability was activated.
+Full kernel/delegation replay/cancellation, runtime instructions, weekly execution,
+automation lifecycle, authenticated cohort/Live recovery, ten outcomes/E5-CV1–9
+and founder evaluation remain incomplete. Current ownership follows the
+existing ANT-11 original-ID receiving acknowledgments; catalogue statuses are
+not promoted by source, CI or deployment.
+The current [Harness source correction](../delivery/harness-completion-map.md)
+identifies the existing Layer C engine. Reuse canonical ActionBus, durable work,
+Planning, Trust, adapters and Rails; create no replacement engine or ledger.
+
+
 ## EXP05 original MCP ZION context — source preparation, October23
 
 Original delegate_to_subagent now forwards the existing server-resolved workspace
@@ -392,6 +418,10 @@ October23 continuation: typed Sessions consumer#2659/head78cf1d05385a4c318889449
 Original legacy reader isolation#2664/head1f805967a49aeefbbb048e8a9d2fa413772a1476 mergeddd79820f8b80c79538fb741e1e54a5b71191a328/treedbf2c5406545cf1d74be1f7616a3532add038e03. All13 checks/full Preview/two statuses and210 Native assertions PASS; final LOWER5630589272/5631073709. Normal migration39984430668/job120519999005 applied500009; exact three bodies/original resolver/ABI/defaults/owner/security/search paths/ACL independently read back unchanged except the one selected-relationship predicate per original lookup. Activity stays INVOKER under original CRM RLS/consent. Both original global and within-business unique indexes remain valid; activation NOT_ACTIVATED. Exact READY webdpl_Br5E1ijUC1BD85LDk6L3uHB53ZGs/publicdd79820f-mvl61nzf verified, receipt6369356478. Earlier failed ACL replay and207/208 fixture run retained and corrected without grants/guard weakening. Actual customer/returning/full Experience proof remains owed. Sole Master4.0 rows record these source releases; this mechanical closeout adds no product, policy, algorithm or capability maturity and is not logged recursively.
 
 Original invitation entry#2665/head4fe6555140952f71835baf7e0b7e01a734dca058 merged4e9327328b873c6868f12e153d89b705a31ee683/tree3ef104f360cb3a938e80ae011720df380eb6a6e4, exact reviewed union. All10 applicable checks/two statuses SUCCESS; schema-free Preview SKIP, LOWER5630989739/5631021863/5631554493. Repaired102/five actual files and three raw desktop/narrow/keyboard component frames, earlier evidence-format FAIL retained. Exact READY webdpl_G119UXCqZfWo2oBSN5NHjFq25xWZ/public4e932732-mvl79nb3/null; actual served JoinWorkspace and original business-entry helper source hashes verified, receipt6370107225. Only the original handoff changes: the same accepted receipt, exact native client/business and final actual-Auth checks now enter the verified inviting business despite stale former-business choice. No duplicate acceptance, new authority, Auth/signup/sender/global linkage or own Native/Edge change. Actual customer returning/full-shell/device/AT/whole Experience and founder proof remain UNVERIFIED. Sole Master4.0 records this release; no recursive row or customer publication for the mechanical closeout.
+
+Original legacy self-context/protected recovery#2666 reviewed8d91e3273d73b5e2efd4ae6ba4da68177c5d9b4e merged64347d7fad7645012fd095b9efc3916d037949de/treee57fe13f1199f3efedaa0d2a05b5a1f706b0753c, actual fd123+8d union preserving E05 source. All13 exact-head/full Preview/two statuses and243 scope/28 relationship/full grant-order proof PASS; accurately AUTHOR-REVIEW / LOWER ASSURANCE5632754791/5633230234. Normal40008898874/job120604031450 applied540009; four source/ABI/owner/security/path/ACL and both original unique indexes independently verified, recovery internal-only. Exact READY webdpl_7VQgRTLHRHrSdcMBFr68etoptxNL/public64347-mvlceddp/null, receipt6372796303. Only canonical relationship predicates changed, original INVOKER consent/RLS and protected service recovery retained. Byte-identical unpublished forward rename and earlier failures preserved; no global identity activation, provider effect or own Edge. Current E05 Edge is separately owned; old515 proof remains historical. Sole Master4.0 records actual release; real customer/new-account/multiple-business/returning/full Experience and founder proof remain UNVERIFIED. This mechanical closeout has no recursive row or product/capability promotion.
+
+Verified saved-return native#2673 revieweddbf549b22a1b4fa5e8877435094ac39ede5a5dbb merged11775c238b40fa296104917005f8c9835bb3a137/tree89cbb09fd6b00ba108a8a422f4fae0c2188e3ca7, actual10eb+dbf union preserving concurrent EXP02 source. All13 exact-head/full Preview/two statuses and61 relationship/243 scope/full grant-order proof PASS; AUTHOR-REVIEW / LOWER ASSURANCE5633360391/5633730205. Normal40015247513/deploy120625730651 applied/PERSISTED550009 after540009. Actual8 source/ABI/owner/security/volatility/path/ACL and both unique indexes verified; minimal actual-Auth pointer, owner-only helper and original public ACL preserved. Exact READY webdpl_9fXLRWRpnuK3hRvwD1s3inMmbyx8; public direct containing56219-mvle4w9k/null, exact11775 intermediate not separately sampled; receipt6373570301. Own Edge N/A, consumer2680 not deployed at native release, no global identity activation or provider effect. Actual customer/new-account/returning/multiple-business/full Experience/founder acceptance remain UNVERIFIED. Sole Master4.0 holds release; this mechanical closeout is not recursively logged and promotes no capability or algorithm.
 
 These are bounded production/source increments, not client/model/full Experience acceptance. Native binding2617 is now separately deployed/source-verified; typed Progress consumer2635 is separately deployed/source-verified; seven capabilities Limited, algorithms unchanged, global identity constraint and provider/INT346 gates retained. No founder test requested before the one complete integrated evaluation. Sole Master§4.0 rows record exact releases; this mechanical closeout adds no product or capability promotion.
 
@@ -2754,3 +2784,21 @@ Current composition: recovery2663 mergedfd123cc (original993 parent), actual mai
 and original77/77 source mutation controls PASS. Worker/native-cache startup errors
 remain separate history. Chat407baseline/407current, no increase; owned lint0.
 New exact-head review/hosted CI/normal Edge source readback remain mandatory.
+
+
+## EXP02 original Finance Metric context repair — October23 local
+
+Actual released2672 ordinary SOLO QA verifies VERA label/44px keyboard prefill,
+read-only reply/reload and own-draft continuity; exact-reference inspection exposed
+missing original range context (QA6373093970, ANT1389989375b/ANT161300ed4ab).
+Bounded Finance consumer repair copies original returned bounds and selected range
+identity into the existing read_business_metric request, no date recalculation or
+reference replacement; incomplete context omits the unbound reference.
+80/five focused cases, scoped lint0/type10→6 and normal production build2m58s PASS.
+12 current-source native synthetic frames support unchanged geometry/keyboard/reflow
+and original denied state, not corrected customer behavior.
+[Evidence](../evidence/ui-delivery/e2-finance-metric-review-context.md).
+Functional local / Visual synthetic / Experiential corrected same-reference read
+and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, registry,
+authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
+All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.

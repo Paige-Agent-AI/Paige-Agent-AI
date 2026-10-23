@@ -769,7 +769,12 @@ const SOURCES = {
   // receipt exclusion without an invented identity. Same-ID uncertainty, no replay.
   // Original a8d0324d digest reproduced; only this source changed/held. All peer
   // pins, actual authority, adapters, registry, providers and verifier rules retained.
-  "supabase/functions/paige-orchestrator/index.ts": "f3192f733695012c72bd501e2c32f3431720eebc252ec4d2c02a4fccf2ba8642",
+  // EXP05 separate AUTHOR-REVIEW / LOWER ASSURANCE, October23: ZION's
+  // original soft draft uses Model Fabric with fresh context/registry checks on
+  // each leg. Exact-service actorless ActionBus drafts retain their original
+  // identity/receipt exclusion. Original f319 digest and all122/29 reproduced;
+  // only this reviewed producer changes, no extractor/dispatch/peer-pin waiver.
+  "supabase/functions/paige-orchestrator/index.ts": "587bcac1e1ae30313a3538368539e1d5934d3d54f13b9e82681712156625bd42",
   "supabase/functions/subagent-forge/index.ts": "1acb5488f11bd93a2d6b36638fddcd73323f4363eacbd58b284d1fa648b3d906",
   // EXP00 comms-door renewal (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer
   // must confirm): branch zcod/exp00-comms-door-content-order changes send-message/index.ts in ONE hunk —

@@ -187,10 +187,13 @@ describe("INT-308 §6 — the negative matrix (JWT callers cannot forge identity
     expect(source).not.toContain("user_id: payload.context?.user_id ?? callerId");
   });
 
-  it("H: soft-agent invocations receive (and deliberately ignore) the SAME trusted context — nothing to forge", () => {
-    // invokeSoft's context param is unused by design (matrix H: identity reaches the seam
-    // verified; the soft runtime does not consume it today). Pin the seam exists:
-    expect(source).toMatch(/async function invokeSoft\([\s\S]{0,200}_context: OrchestratorRequest\["context"\]/);
+  it("H: soft-agent invocations receive the SAME verified context for current authority", () => {
+    const soft = extractFn(source, "invokeSoft");
+    expect(soft).toMatch(/context: OrchestratorRequest\["context"\]/);
+    expect(soft).toContain("zionProviderAuthority(agent, context, tenantId, currentScope, actorlessService)");
+    expect(source).toContain("isService && !ctx.user_id");
+    expect(source).not.toContain("payload.actorlessService");
+    expect(source).not.toContain("user_id: payload.context?.user_id ?? callerId");
   });
 
   it("I: langgraph dispatch forwards the trusted context (same object, no re-derivation)", () => {

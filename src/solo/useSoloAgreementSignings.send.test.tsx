@@ -37,6 +37,10 @@ it('an actor change in the same business cannot publish the earlier actor respon
   let resolve!:(value:ReturnType<typeof success>)=>void;m.invoke.mockReturnValue(new Promise(done=>{resolve=done;}));let pending!:ReturnType<SigningsState['sendForSignature']>;
   await act(async()=>{pending=latest.sendForSignature(agreement,tenant);});m.context={...m.context,activeUserId:'bbbbbbbb-0000-4000-8000-000000000002'};await render();let result:unknown;await act(async()=>{resolve(success());result=await pending;});expect(result).toMatchObject({ok:false,state:'unconfirmed'});expect(JSON.stringify(result)).not.toContain('client@example.test');
 });
+it('switching actors and returning cannot revive an earlier request completion',async()=>{
+  const originalActor=m.context.activeUserId;let resolve!:(value:ReturnType<typeof success>)=>void;m.invoke.mockReturnValue(new Promise(done=>{resolve=done;}));let pending!:ReturnType<SigningsState['sendForSignature']>;
+  await act(async()=>{pending=latest.sendForSignature(agreement,tenant);});m.context={...m.context,activeUserId:'bbbbbbbb-0000-4000-8000-000000000002'};await render();m.context={...m.context,activeUserId:originalActor};await render();let result:unknown;await act(async()=>{resolve(success());result=await pending;});expect(result).toMatchObject({ok:false,state:'unconfirmed'});expect(JSON.stringify(result)).not.toContain('client@example.test');
+});
 it('retains actual partial-failure and post-send status-warning evidence',async()=>{
   const response=success();Object.assign(response.data,{failed:[{email:'other@example.test',reason:'The request was accepted but its link could not be activated.'}],warning:'The request was accepted but its record status could not be updated.'});m.invoke.mockResolvedValue(response);
   expect(await send()).toMatchObject({ok:true,sent:['client@example.test'],failed:[{email:'other@example.test',reason:expect.stringContaining('link')}],warning:expect.stringContaining('record status')});

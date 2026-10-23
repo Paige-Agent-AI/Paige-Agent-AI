@@ -316,7 +316,8 @@ async function refusalMessage(error: unknown): Promise<string | null> {
 
 export function useSoloAgreementSignings(): SigningsState {
   const { activeTenantId, activeUserId, accountContextLoading } = useTenantContext();
-  const sendActor=useRef(activeUserId);sendActor.current=activeUserId;
+  const sendActor=useRef({userId:activeUserId});
+  if(sendActor.current.userId!==activeUserId)sendActor.current={userId:activeUserId};
   // Per-instance interaction fence only. The original server/provider still
   // owns effects; this is not durable whole-operation idempotency.
   const sending=useRef(new Set<string>());
@@ -567,8 +568,8 @@ export function useSoloAgreementSignings(): SigningsState {
     const expected = loadedTenantId ?? activeTenantId;
     if (!expected||expected!==activeTenantId||accountContextLoading||!activeUserId)
       return {ok:false,state:'refused',message:'Reopen the agreement in its original business. This page did not request a send.'};
-    const openedIdentity=identity.current,openedActor=activeUserId;
-    const current=()=>identity.current===openedIdentity&&sendActor.current===openedActor;
+    const openedIdentity=identity.current,openedActor=activeUserId,openedActorEpoch=sendActor.current;
+    const current=()=>identity.current===openedIdentity&&sendActor.current===openedActorEpoch;
     const key=expected+':'+openedActor+':'+signingId;
     if(sending.current.has(key))return {ok:false,state:'refused',message:'The earlier request is still being checked. No additional request was made from this page.'};
     const inFlight=sending.current;inFlight.add(key);

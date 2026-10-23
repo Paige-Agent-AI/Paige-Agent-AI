@@ -21,7 +21,7 @@
     "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
     "src/solo/sales/sales-department.css": "e7794e2bbee16632aedbe3fb5508b1415573f468f62c82036f9b03aabf29cf07",
     "scripts/live-drive/agreement-authoring-drive.mjs": "a3714d1006aa527fd44e2b5f0824f4a7c1d2ce39fea44d859b4ad548aa784110",
-    "src/solo/useSoloAgreementSignings.ts": "aa3c4c144b1d420400e5983e90872dcf2191bdb8bc85557748b910a53b126ae5",
+    "src/solo/useSoloAgreementSignings.ts": "629f17785a98e258f2b3747d92d87602b6325ba49b2f94602091ab1116245055",
     "src/solo/sales-ops.css": "aa8b4ca864c6f20b3512fcf62609547d1567fbbf79ae3b7378023d9302a4e6f3",
     "scripts/live-drive/harness/sales-mount/agreement-signature-request-mount.tsx": "e39f6a0c233df771541c19a049f185f7b3536a2642acfd68aa4694bd3542e6b8",
     "scripts/live-drive/agreement-signature-request-paths.mjs": "18ebf764a85d3181b83ad1786972f61c0bafd3051622ae3e7c6f04ac3c467096"

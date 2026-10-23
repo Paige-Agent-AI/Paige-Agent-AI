@@ -51,7 +51,7 @@ Hook RED7FAIL/1PASS and actual panel RED6FAIL/1PASS retained. Original broad
 Sales1034PASS/3FAIL exposed two obsolete false-effect assertions and the unchanged
 vocabulary guard; stronger acceptance/empty-success assertions replaced those
 claims, with an actual empty-success causal RED before correction. Current original
-Sales scope1038 cases/68 files PASS/exit0; no timeouts or tests weakened. First and
+Sales scope1039 cases/68 files PASS/exit0; no timeouts or tests weakened. First and
 final type gates10 baseline/current6/no new diagnostics PASS; ESLint0 errors/one
 unchanged original dependency warning. Gold/UTF8/diff PASS. Pinned Impeccable4.1.0
 has zero blockers/40 incumbent advisories, no ignore/rule/dependency changes.
@@ -78,6 +78,13 @@ a new provider engine. Current full1038/68 PASS and fresh original native20
 frames/eight paths/23 pins/zero errors confirm this correction using the exact
 original producer link-failure sentence in the controlled fixture. Source/API/
 permissions/native hold and all full12/customer acceptance boundaries remain.
+
+The final actor-return negative additionally reproduced A→B→A reviving an older
+response (8PASS/1FAIL). The original send-only actor ref now advances an epoch
+after every actor transition, parallel to the existing business epoch. It changes
+no read/write authority or other hook operations. Current1039/68 and final20
+rendered frames/eight paths/23 exact pins PASS; the original SOLO parity guard
+SP1–SP5 and every original mutation/legitimate eligibility control PASS.
 
 C11 preceding release is now verified:2646/mainc98f7af0537b005a4e895fff92c906bf51023628,
 normal agreement-document@71/23-file source readback and exact READY web/public

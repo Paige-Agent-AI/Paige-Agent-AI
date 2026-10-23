@@ -1,5 +1,9 @@
 # Customer relationship selection: existing identity integration
 
+## Current unpublished migration ordering — 2026-10-23
+
+Pre-merge production readback records EXP04 atomic-signature migration `20271113530004`. The original deployment policy applies only newer migrations and forbids `--include-all`. Neither EXP09 migration `20271113510009` nor `20271113520009` reached production. Their byte-identical SQL is now reserved as `20271113540009` (legacy self-context/recovery) and `20271113550009` (verified saved-business return), released in that order after `20271113530004`. Existing main/production history, E04 signing, and original tests, guards and grants remain unchanged. The earlier 243-case and 61-case Native results and empty Preview source/ACL proofs are historical support; both renamed heads require fresh exact-head CI, empty Preview, review and production readback. Only the two owned nonpersistent `with_data:false` development branches, rechecked with zero Auth users and zero CRM contacts, were deleted for recreation through the normal Preview integration. Production reset and ledger repair are excluded.
+
 ## Verified saved-portal return prerequisite — 2026-10-23
 
 Source lease ANT-161/a119065a-e201-4e25-be9e-44e096fda53a. Reserve never-applied 20271113520009 after owned510009. Supabase CLI created the empty migration before its reserved rename; no applied history or production identity is altered. Current main preserves the invitation handoff, E05 weekly authorization and E10 health releases.

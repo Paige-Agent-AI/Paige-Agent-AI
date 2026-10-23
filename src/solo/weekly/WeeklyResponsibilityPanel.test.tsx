@@ -32,6 +32,49 @@ async function changeDay(value = "5") {
   const select = container.querySelector<HTMLSelectElement>('form[aria-label="Review future checks"] select')!;
   await act(async () => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
 }
+it("reviews the exact weekly authorization and Escape returns without an effect", async () => {
+  const data = recordedSnapshot(), control = vi.fn<WeeklyFutureControl>();
+  await render({ status: "ready", snapshot: data }, control); await click("Review authorization");
+  expect(container.textContent).toContain("saved revision 2"); expect(container.textContent).toContain("personal Planning commitments");
+  expect(container.textContent).toContain("Authorizing does not mean a check has run");
+  expect(document.activeElement?.textContent).toBe("Not now"); expect(control).not.toHaveBeenCalled();
+  await act(async () => document.activeElement!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+  expect(document.activeElement?.textContent).toBe("Review authorization"); expect(control).not.toHaveBeenCalled();
+});
+it("saved authorization reports held execution rather than completed work", async () => {
+  const data = recordedSnapshot(), saved = structuredClone(data); saved.checks[0].schedule_status = "scheduled";
+  const control = vi.fn<WeeklyFutureControl>().mockResolvedValue({ status: "saved", snapshot: saved });
+  await render({ status: "ready", snapshot: data }, control); await click("Review authorization"); await click("Authorize this weekly responsibility");
+  expect(control).toHaveBeenCalledExactlyOnceWith(data.checks[0], "authorize");
+  expect(container.textContent).toContain("Authorization saved. Future execution is on hold");
+  expect(document.activeElement?.getAttribute("aria-label")).toBe("Refresh weekly responsibility");
+});
+it("a delayed authorization has stable progress focus and cannot submit twice", async () => {
+  let settle!: (value: { status: "unknown" }) => void;
+  const data = recordedSnapshot(), control = vi.fn<WeeklyFutureControl>().mockImplementation(() => new Promise(resolve => { settle = resolve; }));
+  await render({ status: "ready", snapshot: data }, control); await click("Review authorization"); await click("Authorize this weekly responsibility");
+  expect(control).toHaveBeenCalledOnce(); expect(document.activeElement?.getAttribute("role")).toBe("status");
+  expect(document.activeElement?.closest("article")?.querySelector("h3")?.textContent).toBe("Weekly check");
+  expect(document.activeElement?.textContent).toContain("Checking the exact responsibility");
+  expect(container.querySelector<HTMLButtonElement>('button[aria-label="Refresh weekly responsibility"]')?.disabled).toBe(true);
+  await act(async () => settle({ status: "unknown" }));
+  expect(container.textContent).toContain("Nothing will be repeated automatically"); expect(control).toHaveBeenCalledOnce();
+});
+it("a changed or refused definition retires the authorization review without effect", async () => {
+  const data = recordedSnapshot(), control = vi.fn<WeeklyFutureControl>();
+  await render({ status: "ready", snapshot: data }, control); await click("Review authorization");
+  const next = structuredClone(data); next.checks[0].revision++;
+  await render({ status: "ready", snapshot: next }, control);
+  expect(container.textContent).not.toContain("Authorize future weekly checks?"); expect(control).not.toHaveBeenCalled();
+  expect(document.activeElement?.getAttribute("aria-label")).toBe("Refresh weekly responsibility");
+  await click("Review authorization"); await render({ status: "refused" }, control);
+  expect(container.textContent).not.toContain("Authorize future weekly checks?"); expect(control).not.toHaveBeenCalled();
+});
+it.each(["scheduled", "cancelled"] as const)("does not offer duplicate authorization for %s", async state => {
+  const data = recordedSnapshot(); data.checks[0].schedule_status = state;
+  await render({ status: "ready", snapshot: data }, vi.fn<WeeklyFutureControl>());
+  expect(Array.from(container.querySelectorAll("button")).find(b => b.textContent === "Review authorization")?.disabled).toBe(true);
+});
 it.each(["CET", "GMT", "EST", "America/Coyhaique"])("reviews an unchanged canonical saved zone %s", async timezone => {
   const data = recordedSnapshot(); data.checks[0].schedule.timezone = timezone;
   const control = vi.fn<WeeklyFutureControl>().mockResolvedValue({ status: "unknown" });
@@ -120,7 +163,7 @@ it("unknown latest attempt, older verified check and current source navigation r
   expect(container.textContent).toContain("No executable next run is available");
   expect(container.querySelector('a[href*="weeklySource=planning_item"]')?.getAttribute("href")).toBe(`/solo/42/operations/work?weeklySource=planning_item&item=${id}`);
   expect(container.textContent).toContain(id);
-  for (const name of ["Pause future checks", "Change schedule", "Resume unavailable", "Cancel responsibility"]) {
+  for (const name of ["Pause future checks", "Change schedule", "Review authorization", "Cancel responsibility"]) {
     expect(Array.from(container.querySelectorAll("button")).find(b => b.textContent === name)?.disabled).toBe(true);
   }
 });

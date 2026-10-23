@@ -57,13 +57,15 @@ VALUES ('f1a00000-0000-0000-0000-0000000000b1', 'email', 'resend', 'active', tru
 -- deliberately STALE — it still says enabled/connected/healthy. The live legacy row
 -- below says the owner disconnected it. 'Restricted' is NATIVE (legacy_source NULL),
 -- so the gateway is its live store and it must survive.
-INSERT INTO public.mcp_connections (connection_id, tenant_id, provider_key, label, server_url_ct, auth_kind, visibility, enabled, status, health, legacy_source, legacy_provider) VALUES
+-- EXP10 PR4: 'Restricted' carries last_checked_at=now() so it remains the FRESH-healthy
+-- proof under the staleness derivation (a NULL probe age derives degraded+stale by design).
+INSERT INTO public.mcp_connections (connection_id, tenant_id, provider_key, label, server_url_ct, auth_kind, visibility, enabled, status, health, legacy_source, legacy_provider, last_checked_at) VALUES
   ('f1a00000-0000-0000-0000-0000000000c1', 'f1a00000-0000-0000-0000-0000000000b1', 'zapier', 'Zapier (STALE projection)',
      public.platform_encrypt('https://mcp.zapier.example/rpc'), 'none', 'tenant',     true, 'connected', 'healthy',
-     'tenant_mcp_connections', 'zapier'),
+     'tenant_mcp_connections', 'zapier', now()),
   ('f1a00000-0000-0000-0000-0000000000c2', 'f1a00000-0000-0000-0000-0000000000b1', 'generic-remote', 'Restricted',
      public.platform_encrypt('https://restricted.example/rpc'), 'none', 'owner_only', true, 'connected', 'healthy',
-     NULL, NULL);
+     NULL, NULL, now());
 
 -- LEGACY registry: the SAME zapier — listed exactly ONCE, and the LIVE row is the one that must
 -- win, NOT the projection above it. Precedence keys on lineage, never on the provider name: the
@@ -72,7 +74,7 @@ INSERT INTO public.mcp_connections (connection_id, tenant_id, provider_key, labe
 -- matching provider string, which let the frozen snapshot outrank the live record it was copied
 -- FROM — assertion B below is what fails if that ever comes back.) Plus an n8n the backfill never
 -- projected (must still appear — this is the anti-lie case).
-INSERT INTO public.tenant_mcp_connections (tenant_id, provider, label, server_url_ct, auth_token_ct, auth_token_last4, transport, auth_kind, enabled, status) VALUES
+INSERT INTO public.tenant_mcp_connections (tenant_id, provider, label, server_url_ct, auth_token_ct, auth_token_last4, transport, auth_kind, enabled, status, last_probed_at) VALUES
   -- auth_kind MUST be 'oauth' (or 'url') for zapier — tenant_mcp_connections_provider_auth_chk
   -- (20261201000000:12). A first draft used 'bearer' here, which the schema forbids, and CI is
   -- where that surfaced; the fixture now models a shape the platform can actually hold.
@@ -80,9 +82,12 @@ INSERT INTO public.tenant_mcp_connections (tenant_id, provider, label, server_ur
   -- above still claims healthy. If the projection wins, Paige reports a dead connection
   -- as live — the defect this file's (B) assertion now pins.
   ('f1a00000-0000-0000-0000-0000000000b1', 'zapier', 'Zapier (LIVE)',
-     public.platform_encrypt('https://live.zapier.example/rpc'), public.platform_encrypt('tok-zapier-legacy'), 'gacy', 'http', 'oauth', false, 'connected'),
+     public.platform_encrypt('https://live.zapier.example/rpc'), public.platform_encrypt('tok-zapier-legacy'), 'gacy', 'http', 'oauth', false, 'connected', now()),
+  -- EXP10 PR4: probe 12 days old ON PURPOSE — under the staleness derivation a connected
+  -- legacy row whose last probe predates 7 days derives degraded+stale, and this row is
+  -- the LEGACY half's proof of exactly that (assertion F3, asserted inside C).
   ('f1a00000-0000-0000-0000-0000000000b1', 'n8n', 'My n8n',
-     public.platform_encrypt('https://n8n.isurf.test/mcp'),     public.platform_encrypt('tok-n8n-unprojected'), 'cted', 'http', 'bearer', true, 'connected');
+     public.platform_encrypt('https://n8n.isurf.test/mcp'),     public.platform_encrypt('tok-n8n-unprojected'), 'cted', 'http', 'bearer', true, 'connected', now() - interval '12 days');
 
 -- The n8n API-KEY facet lives in its OWN table with its OWN projection lineage
 -- ('tenant_n8n_connections'). A first version of the migration suppressed that projection while
@@ -97,6 +102,20 @@ INSERT INTO public.mcp_connections (connection_id, tenant_id, provider_key, labe
   ('f1a00000-0000-0000-0000-0000000000c3', 'f1a00000-0000-0000-0000-0000000000b1', 'n8n', 'n8n (API) [STALE projection]',
      public.platform_encrypt('https://stale.n8n.example/api'), 'api_key', 'tenant', true, 'connected', 'healthy',
      'tenant_n8n_connections', NULL);
+
+-- EXP10 PR4 fixtures: the gateway half's staleness + closed-error-code proofs.
+-- 'Stale Checked' claims connected/healthy with a 12-day-old probe — the derivation must
+-- downgrade it to degraded WITH stale=true (distinguishable from a hard error).
+-- 'Failed Refused' carries the gateway's CLOSED refusal vocabulary on its row — the code
+-- must cross to the projection (so "why isn't it working" answers from real evidence),
+-- and it must NOT be flagged stale (its check is fresh; its problem is the refusal).
+INSERT INTO public.mcp_connections (connection_id, tenant_id, provider_key, label, server_url_ct, auth_kind, visibility, enabled, status, health, legacy_source, legacy_provider, last_checked_at, last_error_code) VALUES
+  ('f1a00000-0000-0000-0000-0000000000c4', 'f1a00000-0000-0000-0000-0000000000b1', 'generic-remote', 'Stale Checked',
+     public.platform_encrypt('https://stale-checked.example/mcp'), 'none', 'tenant', true, 'connected', 'healthy',
+     NULL, NULL, now() - interval '12 days', NULL),
+  ('f1a00000-0000-0000-0000-0000000000c5', 'f1a00000-0000-0000-0000-0000000000b1', 'generic-remote', 'Failed Refused',
+     public.platform_encrypt('https://failed-refused.example/mcp'), 'none', 'tenant', true, 'error', 'needs_attention',
+     NULL, NULL, now(), 'provider_reflected_credential');
 
 SET LOCAL ROLE authenticated;
 
@@ -158,7 +177,11 @@ BEGIN
   IF _e IS NULL THEN
     RAISE EXCEPTION '(C) a LIVE legacy MCP connection is invisible. Paige would answer "you are not connected" about a connection that works — the exact failure 20270410214500 exists to prevent.';
   END IF;
-  IF _e->>'health' IS DISTINCT FROM 'healthy' THEN RAISE EXCEPTION '(C) health=%', _e->>'health'; END IF;
+  -- EXP10 PR4: this fixture's probe is 12 days old, so under the staleness derivation the
+  -- honest health is degraded WITH stale=true (the legacy half's proof — F3). The old
+  -- 'healthy' assertion pinned the pre-derivation behavior this PR deliberately replaces.
+  IF _e->>'health' IS DISTINCT FROM 'degraded' THEN RAISE EXCEPTION '(C) health=%', _e->>'health'; END IF;
+  IF (_e->>'stale')::boolean IS NOT TRUE THEN RAISE EXCEPTION '(C) stale flag missing on the 12-day-old legacy probe: %', _e; END IF;
 
   -- (C2) THE SAME INVARIANT FOR THE OTHER LEGACY STORE. Its projection is stale; the live row wins.
   SELECT e INTO _e FROM jsonb_array_elements(public.list_integration_surface()) e
@@ -174,6 +197,72 @@ BEGIN
     RAISE EXCEPTION '(C2) host-only projection broken: %', _e->>'server_host';
   END IF;
 END $$;
+
+-- ── (F) EXP10 PR4: staleness derives degraded+stale, and the closed error code crosses ─────────
+DO $$
+DECLARE _e jsonb;
+BEGIN
+  -- (F1) FRESH + HEALTHY stays healthy with stale=false and no error code.
+  SELECT e INTO _e FROM jsonb_array_elements(public.list_integration_surface()) e
+   WHERE e->>'display_name' = 'Restricted';
+  IF _e->>'health' IS DISTINCT FROM 'healthy' THEN RAISE EXCEPTION '(F1) a freshly-checked healthy row degraded: %', _e; END IF;
+  IF (_e->>'stale')::boolean IS NOT FALSE THEN RAISE EXCEPTION '(F1) fresh row flagged stale: %', _e; END IF;
+  IF _e->>'last_error_code' IS NOT NULL THEN RAISE EXCEPTION '(F1) error code invented for a healthy row: %', _e; END IF;
+
+  -- (F2) HEALTHY-CLAIMED but 12-day-old probe derives degraded + stale=true (gateway half).
+  SELECT e INTO _e FROM jsonb_array_elements(public.list_integration_surface()) e
+   WHERE e->>'display_name' = 'Stale Checked';
+  IF _e->>'health' IS DISTINCT FROM 'degraded' THEN RAISE EXCEPTION '(F2) stale row still reads healthy: %', _e; END IF;
+  IF (_e->>'stale')::boolean IS NOT TRUE THEN RAISE EXCEPTION '(F2) stale flag missing: %', _e; END IF;
+
+  -- (F3) is asserted in (C) above on the LEGACY half's 12-day-old row ('My n8n').
+
+  -- (F4) A REFUSED row carries its CLOSED error code and is NOT flagged stale (fresh check).
+  SELECT e INTO _e FROM jsonb_array_elements(public.list_integration_surface()) e
+   WHERE e->>'display_name' = 'Failed Refused';
+  IF _e->>'health' IS DISTINCT FROM 'degraded' THEN RAISE EXCEPTION '(F4) refused row health=%', _e->>'health'; END IF;
+  IF _e->>'last_error_code' IS DISTINCT FROM 'provider_reflected_credential' THEN
+    RAISE EXCEPTION '(F4) the closed refusal code did not cross to the projection: %', _e;
+  END IF;
+  IF (_e->>'stale')::boolean IS NOT FALSE THEN RAISE EXCEPTION '(F4) a freshly-checked refused row flagged stale: %', _e; END IF;
+
+  -- (F5) the n8n API facet derives the same way from its own last_sync_at (fresh here).
+  SELECT e INTO _e FROM jsonb_array_elements(public.list_integration_surface()) e
+   WHERE e->>'display_name' = 'My n8n API';
+  IF _e->>'health' IS DISTINCT FROM 'healthy' THEN RAISE EXCEPTION '(F5) n8n API health=%', _e->>'health'; END IF;
+  IF (_e->>'stale')::boolean IS NOT FALSE THEN RAISE EXCEPTION '(F5) fresh n8n API row flagged stale: %', _e; END IF;
+END $$;
+
+-- ── (G) EXP10 PR4 review hardening: last_error_code's closedness is SCHEMA-enforced ───────────
+-- Runs as the JOB role (RESET ROLE): (G) reads and writes public.mcp_connections DIRECTLY,
+-- and no authenticated caller — not even a tenant admin — holds a table grant on it (the
+-- §9 boundary this very suite proves in (D)/(E)). The claim set persists across the role
+-- reset, so (D) below re-establishes only the ROLE it needs.
+RESET ROLE;
+-- (G) body: last_error_code's closedness is SCHEMA-enforced ───────────
+-- The projection carries the code to a model-facing surface; the boundary that makes that safe
+-- is the table's own constraint, so the constraint itself is what this proves — from both sides.
+DO $$
+BEGIN
+  -- (G1) a bounded closed code writes fine (this fixture row already carries one).
+  IF NOT EXISTS (SELECT 1 FROM public.mcp_connections WHERE label = 'Failed Refused'
+                  AND last_error_code = 'provider_reflected_credential') THEN
+    RAISE EXCEPTION '(G1) the closed-code fixture row is missing';
+  END IF;
+  -- (G2) provider PROSE is refused at the write — the constraint, not a writer's goodwill,
+  -- keeps unbounded provider text out of a model-facing field.
+  BEGIN
+    INSERT INTO public.mcp_connections (connection_id, tenant_id, provider_key, label, server_url_ct, auth_kind, visibility, enabled, status, health, last_error_code)
+    VALUES ('f1a00000-0000-0000-0000-0000000000c6', 'f1a00000-0000-0000-0000-0000000000b1', 'generic-remote', 'Prose Refused',
+            public.platform_encrypt('https://prose.example/mcp'), 'none', 'tenant', true, 'error', 'needs_attention',
+            'Provider said: quota exceeded for account 12345, contact support');
+    RAISE EXCEPTION '(G2) REGRESSION: provider prose was accepted into last_error_code';
+  EXCEPTION WHEN check_violation THEN
+    NULL; -- the constraint refused it — exactly the proof
+  END;
+END $$;
+
+SET LOCAL ROLE authenticated;
 
 -- ── (D) §9: owner_only is hidden from an ordinary member and shown to an admin ─────────────────
 DO $$

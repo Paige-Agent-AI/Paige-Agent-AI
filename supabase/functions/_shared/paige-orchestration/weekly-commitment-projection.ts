@@ -21,6 +21,8 @@ export type WeeklyCheck = {
   automation_id: string; name: string; revision: number; schedule_status: "requested" | "scheduled" | "paused" | "cancelled";
   schedule: WeeklySchedule; execution_availability: "ready" | "held"; execution_hold_reason: string | null;
   next_run_at: string | null; intended_next_run_at: string | null;
+  /** Original native future-control cutoff, never a client-created version. */
+  future_control_at?: string | null;
   last_run: WeeklyRun | null; last_verified_run: VerifiedWeeklyRun | null;
 };
 export type WeeklyCommitmentSnapshot = {
@@ -108,6 +110,7 @@ export function parseWeeklyCommitmentSnapshot(raw: unknown, tenant: string, acto
       (c.intended_next_run_at !== null && !instant(c.intended_next_run_at)) ||
       (c.execution_availability === "held" && c.next_run_at !== null) ||
       (c.schedule_status !== "scheduled" && c.next_run_at !== null)) return null;
+    if (s.future_control_at !== undefined && s.future_control_at !== null && !instant(s.future_control_at)) return null;
     ids.add(c.automation_id);
     let last: WeeklyRun | null = null;
     if (c.last_run !== null) {
@@ -126,6 +129,7 @@ export function parseWeeklyCommitmentSnapshot(raw: unknown, tenant: string, acto
       execution_availability: c.execution_availability as WeeklyCheck["execution_availability"],
       execution_hold_reason: typeof c.execution_hold_reason === "string" ? c.execution_hold_reason.slice(0, 160) : null,
       next_run_at: c.next_run_at as string | null, intended_next_run_at: c.intended_next_run_at as string | null,
+      future_control_at: (s.future_control_at as string | null | undefined) ?? null,
       last_run: last, last_verified_run: past,
     });
   }
@@ -156,7 +160,7 @@ export function projectWeeklyCommitmentChat(snapshot: WeeklyCommitmentSnapshot):
   for (;;) {
     const result = JSON.stringify({ source: snapshot.source, read_at: snapshot.read_at, business_time_zone: snapshot.business_time_zone,
       included_checks: included, has_more: snapshot.has_more || included < snapshot.checks.length,
-      checks: snapshot.checks.slice(0, included).map(c => ({ ...c, last_verified_run: c.last_verified_run ? {
+      checks: snapshot.checks.slice(0, included).map(c => ({ ...c, future_control_at: undefined, last_verified_run: c.last_verified_run ? {
         event_id: c.last_verified_run.event_id, act_id: c.last_verified_run.act_id, receipt_id: c.last_verified_run.receipt_id,
         observed_at: c.last_verified_run.observed_at, scheduled_for: c.last_verified_run.scheduled_for,
         schedule_revision: c.last_verified_run.schedule_revision, status: c.last_verified_run.status,

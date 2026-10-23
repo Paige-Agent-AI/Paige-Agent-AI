@@ -1953,6 +1953,39 @@ Acceptance UNVERIFIED. CAP014/015 remain Unverified; no ALG maturity promotion.
 Full19/nine, original worker/renderer/public admission/retrieval, ordinary
 roles/isolation/cohorts/Chat/Live and actual governed-result acceptance remain open.
 ANT1389daa4628/ANT16156cd6b3a record ten-answer routing; sole lead.
+
+**S2D original report worker, development:** consumes only the original service-
+claimed immutable business_review work before the legacy model branch. D2's
+existing Metric capture formatter supplies all facts/blocks; no model/provider,
+new read, public admission, caller-supplied evidence, queue or action activation.
+Legacy9, Knowledge handlers and original sweep/recovery are unchanged. Native
+capture/version/title/period/revision boundaries are validated; original SQL
+claim/completion current authority and atomic artifact/turn/Rail remain owners.
+Success requires exactly one completion row, original artifact/work identity,
+revision1, original completion-turn UUID and receipt_recorded:true. No empty,
+foreign, malformed or unreceipted result can become success.
+
+Original-source actual-handler control reproduced20 FAIL/3 PASS for this missing
+report path. New source passed88 cases/five suites; after a fresh sequential
+review, an unconfirmed settlement still carried a refusal code. Three actual
+negative cases reproduced that finding; corrected response now reports outcome
+unknown consistently. Final159 cases/seven original/actual-handler suites PASS,
+including23 report cases, D2/parser/export/Knowledge/Chat reach and receipt
+regressions. No helper/model/SQL writer is mocked into an allow-all authority;
+handler tests use explicit isolated transport ports and are not database or
+customer proof. Original native issuer/writer/full-schema gates remain separate.
+Completion transport/missing-readback remains uncertain; original failure/unknown
+settlement must return the exact committed status before persistence is claimed.
+Otherwise original work/recovery remains authoritative, with no automatic retry.
+
+Functional development integration; Visual N/A for unadmitted report path;
+Experiential/authenticated ordinary/cohort/Live/Founder Acceptance UNVERIFIED.
+CAP014/015 remain Unverified and algorithms unchanged. Exact-head separate
+AUTHOR-REVIEW/lower assurance, hosted CI/Deno/Preview, dependency-current-main
+composition, safe release and strict actual Edge source/configuration readback
+remain required. Renderer/public server capture-once admission/retrieval and
+all19/nine acceptance still owed. Master4.0 N/A until actual merge.
+ANT161371a4b4f records pre-edit ten-answer source routing; sole lead.
 **D3A source/native release verified:** PR2643 reviewed097eaf205f57866203adbf196aa0dbddcc567f03,
 LOWER5622701932; all13 final checks and two web statuses SUCCESS, no unresolved
 threads. Main52dfacc418578c9dea9e3e7f3b33363288d17c66/tree73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6

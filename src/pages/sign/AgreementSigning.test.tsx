@@ -10,6 +10,7 @@ vi.mock('react-helmet-async',()=>({Helmet:()=>null}));
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const token='a'.repeat(64),nextToken='b'.repeat(64);
 const row=()=>({document_title:'Synthetic agreement A',document_body:null,document_path:'retained-document',business_name:'Synthetic business',brand:{},signer_display_name:'Synthetic Signer',amount_minor:350000,amount_currency:'usd',term_summary:'custom',expires_at:'2099-10-15T00:00:00Z',signature_state:'sent',is_valid:true});
+const signingReceipt=(patch:Record<string,unknown>={})=>({ok:true,state:'recorded',signed_at:'2026-10-23T12:00:00Z',audit_complete:true,replayed:false,...patch});
 const OriginalURL=URL;
 let host:HTMLDivElement,root:Root,router:ReturnType<typeof createMemoryRouter>;
 beforeEach(()=>{
@@ -64,20 +65,72 @@ it('does not create a retained-document URL from a response arriving after the c
   expect(fixture.create).not.toHaveBeenCalled();expect(host.querySelector('iframe')).toBeNull();
 });
 it.each([false,undefined,true])('reports recorded signature separately from completed=%s without claiming email delivery',async(completed)=>{
-  fixture.invoke.mockImplementation(async(name:string)=>name==='sign-agreement'?{data:{ok:true,completed},error:null}:{data:new Blob(['%PDF-1.7\nsynthetic component transport'],{type:'application/pdf'}),error:null});
+  fixture.invoke.mockImplementation(async(name:string)=>name==='sign-agreement'?{data:signingReceipt({completed}),error:null}:{data:new Blob(['%PDF-1.7\nsynthetic component transport'],{type:'application/pdf'}),error:null});
   await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
   act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input=>input.click()));
   expect(signButton().disabled).toBe(false);await act(async()=>signButton().click());
   expect(host.querySelector('h2')?.textContent).toBe(completed===true?'Signed and completed':'Your signature is recorded');
   expect(document.activeElement).toBe(host.querySelector('h2'));
   expect(host.textContent).not.toContain('a copy is on its way');expect(host.textContent).not.toContain('has been told');
+  expect(fixture.invoke).toHaveBeenCalledWith('sign-agreement',{body:{token,typed_name:'Synthetic Signer',signature_image_base64:null,consent_read:true,consent_esign:true}});
   expect(host.querySelector('.ags-sign')).toBeNull();
 });
-it.each([null,{ok:'true'},{ok:1}])('keeps an unknown/malformed signing outcome unconfirmed: %s',async(data)=>{
+it.each([null,{ok:'true'},{ok:1},{ok:true},signingReceipt({signed_at:null}),signingReceipt({audit_complete:'true'})])('keeps an unknown/malformed signing outcome unconfirmed: %s',async(data)=>{
   fixture.invoke.mockImplementation(async(name:string)=>name==='sign-agreement'?{data,error:null}:{data:new Blob(['%PDF-1.7\nsynthetic component transport'],{type:'application/pdf'}),error:null});
   await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
   act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input=>input.click()));
-  await act(async()=>signButton().click());expect(host.textContent).toContain('Signing could not be confirmed');expect(host.textContent).not.toContain('Nothing was signed');expect(host.querySelector('h2')).toBeNull();
+  await act(async()=>signButton().click());expect(host.textContent).toContain('Signing could not be confirmed');expect(host.textContent).not.toContain('Nothing was signed');
+  expect(host.querySelector('h2')?.textContent).toBe('Signing is not yet confirmed');expect(document.activeElement).toBe(host.querySelector('h2'));
+  expect([...host.querySelectorAll('button')].map(button=>button.textContent)).toEqual(['Check recorded status']);
+});
+it('recovers a lost acknowledgement using only the original token and check-only flag',async()=>{
+  let resolve!:(reply:unknown)=>void,attempts=0;
+  fixture.invoke.mockImplementation(async(name:string)=>{
+    if(name!=='sign-agreement')return {data:new Blob(['%PDF-1.7\nsynthetic component transport'],{type:'application/pdf'}),error:null};
+    attempts++;
+    if(attempts===1)return {data:null,error:{message:'FunctionsHttpError non-2xx',context:new Response(JSON.stringify({ok:false,state:'verification_pending',code:'SIGNATURE_VERIFICATION_PENDING'}),{status:503})}};
+    return new Promise(r=>{resolve=r;});
+  });
+  await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+  act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input=>input.click()));
+  await act(async()=>signButton().click());expect(host.textContent).not.toContain('FunctionsHttpError');
+  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Check recorded status')!.click());
+  expect(host.querySelector('button')?.disabled).toBe(true);expect(host.querySelector('[role=status]')?.textContent).toContain('No signature is being submitted');
+  expect(fixture.invoke).toHaveBeenLastCalledWith('sign-agreement',{body:{token,check_only:true}});
+  await act(async()=>resolve({data:signingReceipt({replayed:true,completed:false}),error:null}));
+  expect(host.querySelector('h2')?.textContent).toBe('Your signature is recorded');expect(attempts).toBe(2);
+  expect(document.activeElement).toBe(host.querySelector('h2'));expect(host.textContent).not.toContain('sent');
+});
+it('shows a known refusal from the actual non-2xx response and preserves the correctable form',async()=>{
+  fixture.invoke.mockImplementation(async(name:string)=>name==='sign-agreement'?{data:null,error:{message:'FunctionsHttpError non-2xx',context:new Response(JSON.stringify({ok:false,code:'SIGNATURE_IMAGE_UNRENDERABLE',error:'Draw that signature again or type your name.'}),{status:400})}}:{data:new Blob(['%PDF-1.7\nsynthetic component transport'],{type:'application/pdf'}),error:null});
+  await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+  act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input=>input.click()));
+  await act(async()=>signButton().click());expect(host.querySelector('[role=alert]')?.textContent).toContain('Draw that signature again');
+  expect((host.querySelector('input.ags-sig') as HTMLInputElement).value).toBe('Synthetic Signer');expect(host.textContent).not.toContain('FunctionsHttpError');expect(signButton()).toBeDefined();
+});
+it('keeps a historical signed record visible while explicitly reporting its audit gap',async()=>{
+  fixture.invoke.mockImplementation(async(name:string)=>name==='sign-agreement'?{data:signingReceipt({replayed:true,audit_complete:false,completed:true}),error:null}:{data:new Blob(['%PDF-1.7\nsynthetic component transport'],{type:'application/pdf'}),error:null});
+  await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+  act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input=>input.click()));
+  await act(async()=>signButton().click());expect(host.querySelector('h2')?.textContent).toBe('Your signature is recorded');
+  expect(host.querySelector('[role=alert]')?.textContent).toContain('history could not be fully verified');expect(host.textContent).not.toContain('Signed and completed');
+});
+it('retrieves the same recorded signature after reload even when the original peek denies a signed link',async()=>{
+  fixture.rpc.mockResolvedValue({data:[{is_valid:false}],error:null});
+  fixture.invoke.mockResolvedValue({data:signingReceipt({replayed:true,completed:false,document_title:'Original retained agreement'}),error:null});
+  await render();expect(fixture.invoke).not.toHaveBeenCalled();
+  expect(host.querySelector('h2')?.textContent).toBe('This signing link is no longer available');
+  await act(async()=>host.querySelector('button')!.click());
+  expect(fixture.invoke).toHaveBeenCalledExactlyOnceWith('sign-agreement',{body:{token,check_only:true}});
+  expect(host.querySelector('h2')?.textContent).toBe('Your signature is recorded');expect(host.textContent).toContain('Original retained agreement');
+  expect(host.textContent).toContain('Recorded');expect(host.querySelector('input.ags-sig')).toBeNull();
+});
+it('keeps a revoked or expired reload credential closed after native verification',async()=>{
+  fixture.rpc.mockResolvedValue({data:[{is_valid:false}],error:null});
+  fixture.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify({ok:false}),{status:404})}});
+  await render();await act(async()=>host.querySelector('button')!.click());
+  expect(host.querySelector('h2')?.textContent).toBe('This signing link is no longer available');expect(host.querySelector('button')).toBeNull();
+  expect(host.querySelector('input.ags-sig')).toBeNull();expect(document.activeElement).toBe(host.querySelector('h2'));
 });
 it('cancels a decline without submitting a decision',async()=>{
   vi.spyOn(window,'prompt').mockReturnValueOnce(null);await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));

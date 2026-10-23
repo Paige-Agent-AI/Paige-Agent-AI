@@ -38,7 +38,17 @@ type PeekRow = {
   is_valid: boolean | null;
 };
 
-type Phase = "loading" | "ready" | "refused" | "signature_recorded" | "completed" | "declined" | "error";
+type Phase = "loading" | "ready" | "refused" | "signature_recorded" | "completed" | "declined" | "error" | "verification_pending";
+
+async function signingReply(data:unknown,error:unknown):Promise<{payload:Record<string,unknown>|null;status:number|null}>{
+  let value=data,status:number|null=null;
+  const context=error&&typeof error==="object"?(error as {context?:unknown}).context:null;
+  if(context instanceof Response){
+    status=context.status;
+    try{value=await context.clone().json();}catch{value=null;}
+  }
+  return {payload:value&&typeof value==="object"&&!Array.isArray(value)?value as Record<string,unknown>:null,status};
+}
 
 function money(minor: number | null, currency: string | null): string | null {
   if (minor === null || minor === undefined) return null;
@@ -167,10 +177,14 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   const resultHeading = useRef<HTMLHeadingElement>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   useEffect(() => {
-    if (["signature_recorded", "completed", "declined"].includes(phase)) resultHeading.current?.focus();
+    if (["signature_recorded", "completed", "declined", "verification_pending", "refused"].includes(phase)) resultHeading.current?.focus();
   }, [phase]);
   const [row, setRow] = useState<PeekRow | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  const [auditComplete,setAuditComplete] = useState(true);
+  const [recoveredTitle,setRecoveredTitle] = useState<string|null>(null);
+  const [recordedAt,setRecordedAt] = useState<string|null>(null);
+  const [unavailableChecked,setUnavailableChecked] = useState(false);
 
   const [read, setRead] = useState(false);
   // The uploaded document's frozen bytes, streamed by agreement-document through this signer's
@@ -267,13 +281,13 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   const named = mode === "type" ? typed.trim().length > 1 : !!drawn;
   const canSign = docGateOpen && named && consentRead && consentEsign && !busy;
 
-  const sign = async () => {
-    if (!canSign) return;
+  const sign = async (checkOnly=false) => {
+    if (busy||(!checkOnly&&!canSign)) return;
     setBusy(true);
     setFailure(null);
     try {
       const { data, error } = await supabase.functions.invoke("sign-agreement", {
-        body: {
+        body: checkOnly?{token,check_only:true}:{
           token,
           typed_name: mode === "type" ? typed.trim() : typed.trim() || (row?.signer_display_name ?? ""),
           signature_image_base64: mode === "draw" ? drawn : null,
@@ -281,18 +295,33 @@ function AgreementSigningCeremony({ token }: { token: string }) {
           consent_esign: consentEsign,
         },
       });
-      const payload = data as { ok?: boolean; completed?: boolean; error?: string } | null;
-      // §13: the ONLY thing that means "signed" is the server saying so. A transport that resolved
-      // without an explicit ok is not a signature, and must never be rendered as one.
-      if (error || payload?.ok !== true) {
-        setFailure(payload?.error || error?.message || "Signing could not be confirmed. Reload this page or ask the business to verify the recorded status before trying again.");
-        setBusy(false);
+      const {payload,status}=await signingReply(data,error);
+      // A lost response is not permission to submit again. The receipt and a
+      // check-only request both use the same original record; no optimistic success.
+      if(status===404){setUnavailableChecked(true);setPhase("refused");return;}
+      const recorded=!error&&payload?.ok===true&&payload.state==="recorded"
+        &&typeof payload.signed_at==="string"&&Number.isFinite(Date.parse(payload.signed_at))
+        &&typeof payload.audit_complete==="boolean"&&(payload.audit_complete||payload.replayed===true)
+        &&(!checkOnly||payload.replayed===true);
+      if(!recorded){
+        const correctable=["SIGNER_NAME_REQUIRED","SIGNER_NAME_TOO_LONG","SIGNER_NAME_UNRENDERABLE",
+          "SIGNATURE_IMAGE_UNRENDERABLE","SIGNING_CONSENT_REQUIRED","SIGNING_DOCUMENT_UNRENDERABLE",
+          "SIGNING_DOCUMENT_UNVERIFIED","SIGNING_SENDER_UNAVAILABLE"].includes(String(payload?.code));
+        if(!checkOnly&&correctable&&typeof payload?.error==="string"){
+          setFailure(payload.error.slice(0,400));return;
+        }
+        setPhase("verification_pending");
         return;
       }
-      setPhase(payload.completed === true ? "completed" : "signature_recorded");
-    } catch (e) {
-      setFailure(e instanceof Error ? e.message : "Signing could not be confirmed. Reload this page or ask the business to verify the recorded status before trying again.");
+      setAuditComplete(payload.audit_complete===true);
+      setRecordedAt(String(payload.signed_at));
+      if(typeof payload.document_title==="string")setRecoveredTitle(payload.document_title);
+      setPhase(payload.completed===true&&payload.audit_complete===true?"completed":"signature_recorded");
+    } catch {
+      setPhase("verification_pending");
+    } finally {
       setBusy(false);
+      if(checkOnly)resultHeading.current?.focus();
     }
   };
 
@@ -323,7 +352,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
 
   const amount = useMemo(() => money(row?.amount_minor ?? null, row?.amount_currency ?? null), [row]);
   const business = row?.business_name || "This business";
-  const title = row?.document_title || "Agreement";
+  const title = row?.document_title || recoveredTitle || "Agreement";
 
   if (phase === "loading") {
     return (
@@ -341,11 +370,15 @@ function AgreementSigningCeremony({ token }: { token: string }) {
       <div className="ags">
         <Helmet><title>Signing link · not available</title></Helmet>
         <div className="ags-state">
-          <h2>This signing link is no longer available</h2>
+          <h2 ref={resultHeading} tabIndex={-1}>This signing link is no longer available</h2>
           <p>
             It may have expired, already been signed, or been withdrawn by the business that sent it.
             If you still need to sign, ask them to send you a new link.
           </p>
+          {!unavailableChecked&&<button className="ags-sign" style={{marginTop:18}} disabled={busy} onClick={()=>void sign(true)}>
+            {busy?"Checking recorded status…":"Check recorded status"}
+          </button>}
+          {busy&&<p role="status">Checking the existing record. No signature is being submitted.</p>}
         </div>
       </div>
     );
@@ -367,6 +400,20 @@ function AgreementSigningCeremony({ token }: { token: string }) {
         </div>
       </div>
     );
+  }
+
+  if(phase==="verification_pending"){
+    return <div className="ags">
+      <Helmet><title>Signing not confirmed · {title}</title></Helmet>
+      <div className="ags-state">
+        <h2 ref={resultHeading} tabIndex={-1}>Signing is not yet confirmed</h2>
+        <p>Signing could not be confirmed. Check the recorded status or ask the sender to verify it before trying to sign again.</p>
+        <button className="ags-sign" style={{marginTop:18}} disabled={busy} onClick={()=>void sign(true)}>
+          {busy?"Checking recorded status…":"Check recorded status"}
+        </button>
+        {busy&&<p role="status" aria-live="polite">Checking the existing record. No signature is being submitted.</p>}
+      </div>
+    </div>;
   }
 
   if (phase === "declined") {
@@ -393,11 +440,14 @@ function AgreementSigningCeremony({ token }: { token: string }) {
             </span>
             <div>
               <h2 ref={resultHeading} tabIndex={-1}>{phase === "completed" ? "Signed and completed" : "Your signature is recorded"}</h2>
+              <p>{title}</p>
+              {recordedAt&&<p>Recorded {new Date(recordedAt).toLocaleString()}</p>}
               <p>
                 {phase === "completed"
                   ? "Your signature, the exact document you reviewed and the completed retained copy are recorded together. Ask the business for access to your copy if you have not received it."
                   : "The agreement has not been confirmed complete. Ask the business for its current status and completed retained copy."}
               </p>
+              {!auditComplete&&<p role="alert">The consent and signing history could not be fully verified. Ask the sender to review this agreement.</p>}
             </div>
           </div>
         </div>
@@ -426,8 +476,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
               {row?.signer_display_name ? `${row.signer_display_name}, please review and sign` : "Please review and sign"}
             </h1>
             <p>
-              Read it in full below. Nothing is signed, and nothing is charged, until you choose to
-              sign at the bottom of this page.
+              Review the agreement below. Signing records your acceptance; it does not initiate a payment.
             </p>
             <dl className="ags-meta">
               <div><dt>From</dt><dd>{business}</dd></div>
@@ -544,7 +593,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
             )}
 
             <div className="ags-acts">
-              <button className="ags-sign" disabled={!canSign} onClick={sign}>
+              <button className="ags-sign" disabled={!canSign} onClick={()=>void sign()}>
                 {busy ? "Recording your signature…" : "Sign agreement"}
               </button>
               <span style={{ flex: 1 }} />

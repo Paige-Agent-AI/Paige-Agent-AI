@@ -15,6 +15,55 @@ automations, ten outcomes/E5-CV1–9 and founder evaluation remain incomplete.
 Eleven Operations catalogue recipes remain Listed / Unverified; no new router,
 work store, scheduler, approval system or competing agent runtime.
 
+
+## EXP02 Finance specialist attribution — October23 development
+
+Owner Oct23 standard is canonical in the existing
+[roster doctrine](../doctrine/paige-c-suite-roster.md#specialist-identity-and-department-attribution).
+Finance→VERA uses the original typed department edges and VP_ROSTER; global PAIGE
+and actual-contributor bylines retain their meaning. Original Finance and Debt
+review labels/addressed prompts, current records/constraints, authorization and
+editable Chat handoff are preserved. No runtime, provider, permission or capability
+activation.65 focused cases/four suites, scoped lint/type ratchet/build and19
+original native synthetic frames support the candidate; released ordinary review
+QA remains due. [Evidence](../evidence/ui-delivery/e2-finance-vera-attribution.md).
+
+Existing North Star, Strategy, Bootstrap and official roadmap policy pointers
+were saved/read back; existing Delivery Register Standards Evidence row15 and
+specialist/capability ownership notes synchronized. Original owner handoffs:
+ANT50MENTOR35c0c368, ANT81MERIT684ce232, ANT11ZIONa9120873,
+ANT163CURA0b59e72d and ANT164NEXUSef4ea8eb; incorporation remains pending actual owner receipts.
+No peer-source takeover, new agent or Agency/subaccount implementation.
+Functional candidate / Visual synthetic verified / Experiential released handoff
+owed / Founder NOT_ACCEPTED. Algorithms/readiness and all19 outcomes unchanged.
+
+Additive ordinary read evidence: second fresh weekly review observed settled
+within58seconds, same normalized2863character answer after reload; addressed
+Finance read through PAIGE observed within76seconds, same2419character answer
+after reload. Empty composer restored, no action-approval control requested.
+Original current sources/unknown cash/accounting and receipt classes remained
+distinct. Raw evidence stays private. These bounded read cases do not prove the
+unreleased VERA CTA, independent specialist delegation, execution, SLO or full19.
+Finance2672/33453 earned all10 applicable checks/two statuses including189database;
+incoming855fff only requires shared Master-row composition, preserving all peer
+rows and unchanged16source/19frame pins. New exact-head gates remain mandatory.
+
+## EXP02 original review capture admission — October23 source released
+
+PR2667 reviewed eb3ea416e30bd79a695033c9137b807b0f4e59fe/tree2cf55fdb72b3bb6dca6cd62cc01df825e1b9f602,
+AUTHOR-REVIEW / LOWER ASSURANCE5631364387+5632071752, all13 exact-head checks/full
+genuine Preview/database proof and two statuses SUCCESS. Main
+ee77807f9c65f4846d3b3ba5ca2aa12ce1f6e2e1/treeecd290a16eb9a0c481dfb336b2a5ca3664cefc86
+matches the inspected98009df+eb3e composition. Normal migration39995599642/
+deploy120558409951 SUCCESS; actual520002 and original submit5640127bb3838b8aee4f5bc38eec1fd5,
+private capture151a73a04e1e0d97ce2f641a5ee34c26/ABI/owner/config/ACL verified.
+Own Edge N/A. Productiondpl_6XMbYF5nkUiQrkXyrQQ4ARwrHJA4 READY/canonical aliases,
+public HTTP200 exactee77807f9c65f4846d3b3ba5ca2aa12ce1f6e2e1-mvl8xfsn/null.
+[Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2667#issuecomment-6370897287).
+Original Chat report consumer remains separate; no monthly/quarterly customer,
+ordinary role/cohort/Live or full19 acceptance. CAP014/015 Unverified. Historical
+9PASS/0FAIL and12PASS/0FAIL/4BLOCKED remain intact. No new runtime/store/activation.
+
 ## EXP02 report producer released — October23; original worker composed
 
 PR2652 reviewed4007a42f9da69d17c5ff01296ea04494750f7578/tree1f4295b5c07aeadcf3cd49c826d4f08fb76233f8,
@@ -146,6 +195,23 @@ effective terms are required before prepared signing; all O1–O12, actual ordin
 roles/cohorts/provider/CentralQA/one whole founder evaluation remain incomplete.
 No competing engine/store, Portal UI, provider/security activation, legal claim
 or Capabilities/Algorithm Live promotion.
+
+## EXP04 original native signature — October23 verified source release
+
+2662 reviewed1a53da9b2f87f7d40db9afd70bd01b5a3a9222d4/LOWER5631905272
+mergeda13394776cbc1471556def66e5208ea66e483035 with inspected/actual tree
+bb42aee0b07c00d4aaa28ac85b649125bd053958. All13 exact-head gates/full normal
+Preview/two statuses PASS; normal39998561769/deploy120568593233 applied530004
+after520002. Actual original signature/consent/event transaction and immutable
+issued/recorded identity guard match source,13-argument ABI, INVOKER/empty path,
+postgres ownership/service-only writer/no ordinary execute and enabled trigger.
+Native323/all255 Portal assertions retained. Exact web3GWD READY and both public
+a133-mvl9p1rd/null observed17:59UTC. Own Edge N/A; native consumer2670 still pending.
+[Native release6371363163](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2662#issuecomment-6371363163), Master4.0.
+Earlier failed Preview/grant reproduction remain evidence. Same original records,
+no historical audit fabrication, engine/store/provider/role/activation or customer
+acceptance claim. Full12/prepared-map/effective terms/Communications/retrieval,
+ordinary roles/cohorts/CentralQA/provider and one founder evaluation remain owed.
 
 ## EXP04 original retained signing preflight — October23 source release
 
@@ -315,6 +381,8 @@ Original Sessions source#2638/head3697d08619f53d5135ea60031c22d9a791c74883 merge
 October23 continuation: typed Sessions consumer#2659/head78cf1d05385a4c31888944997046bf95233d0c7e merged48532bb37885e37c4ae39eef5e8c54a114b4ba9f/tree6f14f51d776e91a2a89d483b4048b204c97c4dfc, exact reviewed union. All11 required checks/full Preview/two statuses SUCCESS; final LOWER5630431897/5631059005.180 focused cases are two actual173+7 runs; hosted Deno/type/build/C0b PASS after recorded type-only repair. Normal Edge39984261988/job120519232329 SUCCESS/source-config PASS/edge-live advanced; actual515 ACTIVE/JWTtrue/all267 served files match source, Coreb000dd61. Original native Sessions46/47/publication source/ABI/ACL retained. Exact READY webdpl_F6izksU5X22BA9UoxPkcYv9r86PX; exact public485 not independently sampled, containingdd79820f-mvl61nzf/customerUpdate:null verified. Receipt6369355348. Original business role, private accepted question/history and current source/policy checks; nine raw original-component frames, no actual customer/model/scheduling outcome or founder proof.
 
 Original legacy reader isolation#2664/head1f805967a49aeefbbb048e8a9d2fa413772a1476 mergeddd79820f8b80c79538fb741e1e54a5b71191a328/treedbf2c5406545cf1d74be1f7616a3532add038e03. All13 checks/full Preview/two statuses and210 Native assertions PASS; final LOWER5630589272/5631073709. Normal migration39984430668/job120519999005 applied500009; exact three bodies/original resolver/ABI/defaults/owner/security/search paths/ACL independently read back unchanged except the one selected-relationship predicate per original lookup. Activity stays INVOKER under original CRM RLS/consent. Both original global and within-business unique indexes remain valid; activation NOT_ACTIVATED. Exact READY webdpl_Br5E1ijUC1BD85LDk6L3uHB53ZGs/publicdd79820f-mvl61nzf verified, receipt6369356478. Earlier failed ACL replay and207/208 fixture run retained and corrected without grants/guard weakening. Actual customer/returning/full Experience proof remains owed. Sole Master4.0 rows record these source releases; this mechanical closeout adds no product, policy, algorithm or capability maturity and is not logged recursively.
+
+Original invitation entry#2665/head4fe6555140952f71835baf7e0b7e01a734dca058 merged4e9327328b873c6868f12e153d89b705a31ee683/tree3ef104f360cb3a938e80ae011720df380eb6a6e4, exact reviewed union. All10 applicable checks/two statuses SUCCESS; schema-free Preview SKIP, LOWER5630989739/5631021863/5631554493. Repaired102/five actual files and three raw desktop/narrow/keyboard component frames, earlier evidence-format FAIL retained. Exact READY webdpl_G119UXCqZfWo2oBSN5NHjFq25xWZ/public4e932732-mvl79nb3/null; actual served JoinWorkspace and original business-entry helper source hashes verified, receipt6370107225. Only the original handoff changes: the same accepted receipt, exact native client/business and final actual-Auth checks now enter the verified inviting business despite stale former-business choice. No duplicate acceptance, new authority, Auth/signup/sender/global linkage or own Native/Edge change. Actual customer returning/full-shell/device/AT/whole Experience and founder proof remain UNVERIFIED. Sole Master4.0 records this release; no recursive row or customer publication for the mechanical closeout.
 
 These are bounded production/source increments, not client/model/full Experience acceptance. Native binding2617 is now separately deployed/source-verified; typed Progress consumer2635 is separately deployed/source-verified; seven capabilities Limited, algorithms unchanged, global identity constraint and provider/INT346 gates retained. No founder test requested before the one complete integrated evaluation. Sole Master§4.0 rows record exact releases; this mechanical closeout adds no product or capability promotion.
 

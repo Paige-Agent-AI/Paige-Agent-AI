@@ -27,8 +27,24 @@ import { normaliseFormatting, renderDoc, sanitizeWinAnsi } from "../doc-render.t
 import { sha256Hex } from "./token.ts";
 import {prepareAgreementFieldInput,type AgreementFieldInput,type AgreementFieldPreparation,type CommercialAgreementFieldPreparation} from './field-preparation.ts';
 import {canonicalPresentationJson} from './preparation-json.ts';
+import {checkSignatureImage,type SignatureImageCheck} from './signing-guard.ts';
 
 const PDFLIB_SPEC = "npm:pdf-lib@1.17.1";
+
+/** Use the SAME original PNG policy and actual stamp decoder before recording
+ * an irreversible mark. Legacy completed-copy fallback is not permission to
+ * accept a new corrupt image. No PDF/file/effect is retained by this preflight. */
+export async function prepareSignatureImage(raw:unknown):Promise<SignatureImageCheck>{
+  const image=checkSignatureImage(raw);
+  if(image.ok===false||image.base64===null)return image;
+  try{
+    const {PDFDocument}=await import(PDFLIB_SPEC);
+    const pdf=await PDFDocument.create();await pdf.embedPng(image.base64);
+    return image;
+  }catch{
+    return {ok:false,reason:'That drawn signature cannot be retained. Draw it again, or type your name instead.'};
+  }
+}
 
 /**
  * A name this engine cannot faithfully put on paper.

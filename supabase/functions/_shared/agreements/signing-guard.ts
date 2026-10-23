@@ -117,6 +117,8 @@ export function explainCannotSign(signerStatus: string, earlierUnsignedCount: nu
 
 /** The largest drawn mark accepted, in base64 characters — roughly 300 KB decoded. */
 export const MAX_SIGNATURE_IMAGE_B64 = 400_000;
+export const MAX_SIGNATURE_IMAGE_PIXELS = 4_194_304;
+const PNG_SAMPLE_DEPTHS:Readonly<Record<number,readonly number[]>>={0:[1,2,4,8,16],2:[8,16],3:[1,2,4,8],4:[8,16],6:[8,16]};
 
 export type SignatureImageCheck =
   | { ok: true; base64: string | null }
@@ -169,6 +171,34 @@ export function checkSignatureImage(raw: unknown): SignatureImageCheck {
   if (bytes.length < PNG_MAGIC.length || PNG_MAGIC.some((b, i) => bytes[i] !== b)) {
     return { ok: false, reason: "A drawn signature must be a PNG image. Draw it again, or type your name instead." };
   }
+
+  // Bound the native renderer BEFORE decompression. IHDR is the first13-byte
+  // PNG chunk (W3C PNG3 §11.2.1); compressed byte limits alone do not bound pixels.
+  const unreadable = (): SignatureImageCheck => ({ ok: false, reason: "That drawn signature could not be read. Draw it again, or type your name instead." });
+  if (bytes.length < 33) return unreadable();
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (view.getUint32(8) !== 13 || String.fromCharCode(...bytes.subarray(12,16)) !== "IHDR") return unreadable();
+  const width = view.getUint32(16), height = view.getUint32(20);
+  if (!width || !height || width > 4096 || height > 2048 || width * height > MAX_SIGNATURE_IMAGE_PIXELS) {
+    return { ok: false, reason: "That drawn signature is too large. Draw it again, or type your name instead." };
+  }
+  // The existing decoder sizes its buffer from sample depth and interlace as
+  // well as dimensions. Validate PNG3 IHDR/Table12 before that allocation.
+  if(!PNG_SAMPLE_DEPTHS[bytes[25]]?.includes(bytes[24])||bytes[26]!==0||bytes[27]!==0||bytes[28]>1)return unreadable();
+  let imageData = false, ended = false;
+  for (let offset = 8; offset + 12 <= bytes.length;) {
+    const size = view.getUint32(offset), end = offset + 12 + size;
+    if (end > bytes.length) return unreadable();
+    const kind = String.fromCharCode(...bytes.subarray(offset + 4, offset + 8));
+    if(kind==="IHDR"&&offset!==8)return unreadable();
+    if (["acTL", "fcTL", "fdAT"].includes(kind)) {
+      return { ok: false, reason: "A drawn signature must be a static PNG image. Draw it again, or type your name instead." };
+    }
+    if (kind === "IDAT" && size > 0) imageData = true;
+    if (kind === "IEND") { ended = size === 0 && end === bytes.length; break; }
+    offset = end;
+  }
+  if (!imageData || !ended) return unreadable();
 
   return { ok: true, base64 };
 }

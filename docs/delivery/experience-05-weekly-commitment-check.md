@@ -50,6 +50,15 @@ Full ZION integration must reuse the canonical Model Fabric policy and budget
 contract before provider proof. This receipt patch preserves that original source
 and does not claim the routing requirement or real delegated execution complete.
 
+Current-main composition at `52dfacc41` preserves the adjacent E02/E04/EXP10
+releases. The original ancestry guard first refused exactly the changed
+orchestrator producer; its previous canonical digest was reproduced. After the
+separate receipt-source review, only that producer's fingerprint was renewed;
+all peer bindings and verifier rules remain unchanged. The original95 ancestry
+and negative tests PASS. CURA#2635 changes distinct Chat/Progress fingerprints,
+not this producer. Its published source must compose without overwriting either
+set of reviewed bindings; no CURA acknowledgment or scope transfer is inferred.
+
 ### October22 bounded continuation — native future-only stop controls
 
 Pre-edit routing: EXP05 outcomes04/06/08/10 consume the original owner-human

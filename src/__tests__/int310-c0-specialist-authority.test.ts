@@ -304,7 +304,7 @@ function durableSpecialist(options: { insert?: "error" | "invalid"; update?: "er
     },
   });
   const h = loadEdge("paige-orchestrator", { database, stubs: { ...ORCH_STUBS,
-    "_shared/model-router.ts": { ...ORCH_STUBS["_shared/model-router.ts"], routedChatCompletion: model },
+    "_shared/model-router.ts": { ...ORCH_STUBS["_shared/model-router.ts"], pickRoute: () => ({ tier: "classification" }), routedChatCompletion: model },
     "_shared/model-fabric.ts": { fabricCompletion: async (_request: unknown, options: { beforeProviderAttempt: () => Promise<boolean> }) => {
       if (!await options.beforeProviderAttempt()) return { ok: false, error: { failure: "caller_refused" } };
       return { ok: true, response: await model() };

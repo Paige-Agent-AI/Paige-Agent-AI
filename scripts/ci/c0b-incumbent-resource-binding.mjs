@@ -755,7 +755,7 @@ const SOURCES = {
   // each leg. Exact-service actorless ActionBus drafts retain their original
   // identity/receipt exclusion. Original f319 digest and all122/29 reproduced;
   // only this reviewed producer changes, no extractor/dispatch/peer-pin waiver.
-  "supabase/functions/paige-orchestrator/index.ts": "64d94d245f7f9688eb05c5e1f71c866b2dec4ad6c3cf67d2106337e91a0688ac",
+  "supabase/functions/paige-orchestrator/index.ts": "587bcac1e1ae30313a3538368539e1d5934d3d54f13b9e82681712156625bd42",
   "supabase/functions/subagent-forge/index.ts": "1acb5488f11bd93a2d6b36638fddcd73323f4363eacbd58b284d1fa648b3d906",
   // EXP00 comms-door renewal (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer
   // must confirm): branch zcod/exp00-comms-door-content-order changes send-message/index.ts in ONE hunk —

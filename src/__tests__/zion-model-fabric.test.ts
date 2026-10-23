@@ -9,6 +9,13 @@ const raw = readFileSync(resolve(__dirname, "../../supabase/functions/paige-orch
 const ast = ts.createSourceFile("orchestrator.ts", raw, ts.ScriptTarget.Latest, true);
 const selected = ast.statements.filter(n => ts.isFunctionDeclaration(n) && ["invokeSoft", "zionProviderAuthority"].includes(n.name?.text ?? ""));
 const code = ts.transpileModule(selected.map(n => n.getText(ast)).join("\n"), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+// Exercise the original pure route decision and taxonomy without provider/env
+// imports. The absent Featherless key is an explicit closed fixture port.
+const routerAst = ts.createSourceFile("router.ts", readFileSync(resolve(__dirname, "../../supabase/functions/_shared/model-router.ts"), "utf8"), ts.ScriptTarget.Latest, true);
+const taxonomy = routerAst.statements.filter(n => ts.isFunctionDeclaration(n) && ["pickRoute"].includes(n.name?.text ?? "")
+  || ts.isVariableStatement(n) && n.declarationList.declarations.some(d => ["CHEAP_KINDS", "REASONING_KINDS", "SENSITIVE_KINDS", "JOB_KINDS"].includes(d.name.getText(routerAst))));
+const taxonomyJs = ts.transpileModule(taxonomy.map(n => n.getText(routerAst)).join("\n"), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+const originalRoute = new Function("exports", "featherlessKey", "featherlessModelFor", `${taxonomyJs}; return exports.pickRoute;`)({}, () => undefined, () => "fixture-only");
 const actor = "11111111-1111-4111-8111-111111111111", tenant = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const identity = "22222222-2222-4222-8222-222222222222";
 const registered = { id: identity, version: 2, slug: "zion", name: "ZION", tenant_id: null as string | null, enabled: true, runtime: "soft", system_prompt: "Fixture: internal planning draft only.", config: { job_kind: "plan" } };
@@ -31,7 +38,7 @@ function fixture() {
     return { ok: true, response: { choices: [{ message: { content: "canonical draft" } }] }, route: { served: { provider: "fixture-only", model: "fixture-only" } } };
   });
   const invoke = new Function("supabase", "resolveWorkspaceAuthorityAs", "authorityAdmits", "fabricCompletion", "routedChatCompletion", "pickRoute", "UUID_RE", `${code}; return invokeSoft;`)(
-    { from }, permission, authorityAdmits, fabric, legacy, (job: string) => ({ tier: job === "summarize" ? "classification" : "reasoning" }), /^[0-9a-f-]{36}$/i);
+    { from }, permission, authorityAdmits, fabric, legacy, originalRoute, /^[0-9a-f-]{36}$/i);
   const scopeCheck = vi.fn(async () => scope);
   return { fabric, legacy, from, permission, scopeCheck,
     setAllowed: (value: boolean) => { allowed = value; }, setScope: (value: boolean) => { scope = value; },
@@ -52,6 +59,19 @@ describe("ZION consumes the original Model Fabric without activating a specialis
     const f = fixture(), agent = { ...registered, config: { job_kind: "summarize" } };
     f.setRow(agent); await f.invoke(agent);
     expect(f.fabric.mock.calls[0][0]).toMatchObject({ cognitive_class: "cheap" });
+  });
+  it.each(["approval_decision", "outbound_final", "client_copy_final", "action_decision", "legacy_unknown_job", "chat", "propose", "doc_draft"])("preserves the original protected/unported %s route and budget contract", async job => {
+    const f = fixture(), agent = { ...registered, config: { job_kind: job } };
+    f.setRow(agent); const result = await f.invoke(agent);
+    expect(f.fabric).not.toHaveBeenCalled();
+    expect(f.legacy).toHaveBeenCalledWith(job, expect.anything(), expect.objectContaining({ agent_id: "zion", tenant_id: tenant }));
+    expect(result).toMatchObject({ status: 200, body: { ok: true, answer: "legacy draft" } });
+  });
+  it("keeps the original default internal draft in the shared cheap class", async () => {
+    const f = fixture(), agent = { ...registered, config: {} as typeof registered.config };
+    f.setRow(agent); expect((await f.invoke(agent)).body.ok).toBe(true);
+    expect(f.fabric.mock.calls[0][0]).toMatchObject({ cognitive_class: "cheap" });
+    expect(f.legacy).not.toHaveBeenCalled();
   });
   it.each(["role", "scope", "disabled", "version", "prompt", "config", "foreign", "read"])("%s change refuses the provider instead of using a legacy fallback", async change => {
     const f = fixture();

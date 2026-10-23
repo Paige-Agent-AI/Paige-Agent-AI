@@ -600,8 +600,9 @@ async function zionProviderAuthority(
   } catch { return false; }
 }
 
-// Original soft runtime. ZION consumes the shared Model Fabric; existing other
-// specialist/ActionBus routing remains unchanged. No prompt or activation here.
+// Original soft runtime. ZION's existing cheap drafts and plan job consume Model
+// Fabric. Protected/unknown and other unported jobs retain their original route
+// and budget contract. No prompt, global routing policy or activation change.
 async function invokeSoft(
   agent: RegisteredSoftAgent,
   input: Record<string, unknown>,
@@ -631,7 +632,7 @@ async function invokeSoft(
       max_tokens: 2048,
     };
     let data: unknown;
-    if (agent.slug === "zion") {
+    if (agent.slug === "zion" && (jobKind === "plan" || pickRoute(jobKind).tier === "classification")) {
       if (!tenantId || !UUID_RE.test(tenantId) || (!context?.user_id && !actorlessService)
         || (context?.user_id && !UUID_RE.test(context.user_id)) || !currentScope) {
         return { status: 403, body: { ok: false, error: "Current workspace authority is required for ZION planning." } };
@@ -793,9 +794,9 @@ Deno.serve(async (req) => {
             const trusted = await buildTrustedContext(payload, fresh);
             return !("error" in trusted) && trusted.ctx.user_id === ctx.user_id;
           },
-          // Only the ORIGINAL exact-service-key ActionBus drafting path may have
-          // no acting human. Rechecked by currentScope above; never request JSON,
-          // an invented owner, or authority to perform a business effect.
+          // The ORIGINAL exact-service-key path permits actorless internal drafts
+          // (including ActionBus). Rechecked by currentScope; never request JSON,
+          // an invented human, or authority to perform a business effect.
           isService && !ctx.user_id,
         );
       } else {

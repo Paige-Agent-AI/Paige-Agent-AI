@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: NO: same internal planning request and result, no new cust
 FLOW_PROTOTYPE: NOT_REQUIRED: no new or materially changed customer flow, screen or interaction.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner can eventually receive a bounded ZION draft through the existing registered runtime; no account-specific code or automatic authority.
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual source changes; Impeccable clarity/status review applies to the unchanged result envelope.
-AUTOMATED_EVIDENCE: PASS: all209 cases/eight actual consumer, whole-handler authority/contact/identity/receipt/recovery suites; original171 shared Model Fabric checks with synthetic provider transport. Original actorless ActionBus draft, exact requester/invocation, unknown outcomes and failed receipt assertions remain. Earlier incomplete worker report and intermediate149/10 and209/15 failures are retained, not relabeled PASS.
-STATIC_EVIDENCE: PASS: actual source and canonical Fabric, workspace resolver, registered-row and original worker inspected; scoped test lint/diff pass. Read-only canonical proof reproduces original producer f3192f73, all122 dependency sources and29 dispatch contracts. The unchanged verifier refuses only the new producer before separate manual renewal to64d94d24. No extractor, declaration, authority, dependency or peer pin is waived.
+AUTOMATED_EVIDENCE: PASS: all218 cases/eight actual consumer, whole-handler authority/contact/identity/receipt/recovery suites after the sensitive-routing correction; original171 shared Model Fabric checks with synthetic provider transport. Original actorless service drafts, exact requester/invocation, unknown outcomes and failed receipt assertions remain. Protected/unported routing causal24PASS/5FAIL preceded correction. Earlier incomplete/217PASS1FAIL timeout and zero-assertion EPERM reports are retained, not relabeled PASS; task-owned temp and actual immutable authority exports remove fixture-loading overhead without caching case authority/results or changing timeouts/assertions.
+STATIC_EVIDENCE: PASS: actual source and canonical Fabric, workspace resolver, registered-row and original worker inspected; scoped test lint/diff pass. Read-only canonical proof reproduces original producer f3192f73, all122 dependency sources and29 dispatch contracts. The unchanged verifier refuses only the new producer before separately reviewed manual renewal to587bcac1. No extractor, declaration, authority, dependency or peer pin is waived.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no markup, styling, layout, motion or controls change; source proof is not rendered customer acceptance.
 BEHAVIORAL_EVIDENCE: PASS: actual original functions and whole Deno handler run with explicit synthetic Auth/database/model ports. Actor, tenant, role, registry enablement/version/prompt/config, missing-data and interrupted-model negatives tested. Real shared Fabric's171 synthetic checks retain budget, fallback and per-leg guard behavior.
 AUTHENTICATED_RUNTIME: UNVERIFIED: not deployed or invoked by an ordinary production owner. No registered prompt/config, provider cohort, budget, activation or production work changes.
@@ -21,8 +21,8 @@ SOLO_UI: NO: tenant-neutral backend consumer only; existing verified context and
 UNVERIFIED: required exact-head CI, actual packaged Edge source/config and startup behavior, ordinary authenticated persistence/retrieval, cohorts/new-account/isolation/Live, current approved kernel/delegation replay/cancellation, runtime instructions and complete EXP05 acceptance.
 OWNER_INTENT: one reliable Operations Experience with ZION under PAIGE using original infrastructure and OpenAI-primary/Anthropic-fallback Model Fabric policy where admitted, not a replacement model router.
 MUST_NOT_HAPPEN: invented actor, body-selected service authority, stale registry/role admitting a provider attempt, hidden fallback outside Fabric, false completed work or activation from a source repair.
-MUST_PRESERVE: original service/JWT authentication, contact/funding/local-target guards, registry identity, invocation/outcome/Rail, other specialist routing and other Experience source.
-ACCEPTANCE_CRITERIA: original ZION model call requests only a cognitive class/job, rechecks current original authority/registry on every Fabric leg, retains existing internal worker compatibility and original durable outcome semantics.
+MUST_PRESERVE: original service/JWT authentication, contact/funding/local-target guards, registry identity, invocation/outcome/Rail, protected/unknown/unported job routes and sensitive budgets, other specialist routing and other Experience source.
+ACCEPTANCE_CRITERIA: existing classification-band and plan jobs request only a Fabric cognitive class/job, recheck current original authority/registry on every Fabric leg, retain protected/unknown/unported legacy routing, existing internal worker compatibility and original durable outcome semantics.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: exact service key and trusted actor/workspace context; current workspace-role resolver; original registry identity/version/config; shared Fabric provider/budget/trace policy; original work and capability receipt.
 INTERNAL_BUILD_IDENTITY: base=a13394776cbc1471556def66e5208ea66e483035 plus reviewed recovery/activity dependencies; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-orchestrator); evidence=docs/evidence/ui-delivery/exp05-zion-model-fabric.md
@@ -41,15 +41,19 @@ the legitimate existing internal model-draft path, not a new Layer C adapter or
 permission to execute a domain action. Original exact approvals, Harness and
 domain/Layer C authority remain required for consequential follow-through.
 
-ALG-11 consumes shared `fabricCompletion`, cognitive class and stable
+ALG-11 consumes shared `fabricCompletion` for the original classification band
+and `plan` job only, using cognitive class and stable
 `zion_operations_draft` job; metadata-only trace and original budget/provider
 policy. No provider/model override, activation or competing router. Each provider
 leg revalidates the original server-derived actor/workspace and registered
 identity/version/enabled/runtime/prompt/config. Human actors use the original
-workspace-role resolver. Only the original exact-service-key actorless ActionBus
-draft may retain no human actor; it still rechecks its service/workspace context,
+workspace-role resolver. The original exact-service-key actorless internal draft
+path (including ActionBus) may retain no human actor; it still rechecks its service/workspace context,
 registered row and original receipt exclusion. Request JSON cannot select that
-authority. Other specialist routes remain unchanged.
+authority. Original protected jobs (`approval_decision`, `outbound_final`,
+`client_copy_final`, `action_decision`), unknown jobs and other unported reasoning
+jobs retain the original route and sensitive-budget contract. Their full Fabric
+adoption remains unfinished. Other specialist routes remain unchanged.
 
 ALG-01 retains original durable outcome and same-ID uncertainty without retry.
 ALG-12/13 use truthful refusal and inspection guidance, not synthetic operational

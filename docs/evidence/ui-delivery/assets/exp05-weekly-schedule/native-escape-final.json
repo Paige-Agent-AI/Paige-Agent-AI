@@ -1,0 +1,16 @@
+{
+  "source": "c7bf26db1e6eb14b491213bd292b7806e0434746",
+  "before": {
+    "source": "42757c01f83532cb8e35932a6c79efbd84b9e702",
+    "result": "FAIL",
+    "focusTag": "BODY",
+    "cause": "Disclosure closed when the review was dismissed"
+  },
+  "after": {
+    "controlsOpen": true,
+    "editor": false,
+    "focus": "Change schedule",
+    "focusTag": "BUTTON",
+    "sheet": true
+  }
+}

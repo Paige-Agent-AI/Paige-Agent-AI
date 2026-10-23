@@ -1,5 +1,58 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## C11 commercial document review — pre-edit UI contract
+
+OWNER_INTENT: the owner chooses an actual same-client, agreement-linked invoice,
+reviews its original recorded commercial terms, and retains the exact document
+before placing fields in the existing signing workspace. This is one increment
+of the full twelve-outcome journey, not agreement or Experience completion.
+MUST_NOT_HAPPEN: guessed economics, silent selection of another client invoice,
+signing/sending/charging from preparation, stale-review dispatch, a second leave
+guard, duplicate request identities, or equating retained terms with payment.
+MUST_PRESERVE: original canonical Collections reader/formatter, invoice listing,
+private artifact/native CAS/history, field validator, frozen command/recovery,
+RAM-only proposals, actor/workspace epochs, and original Sales return navigation.
+ACCEPTANCE_CRITERIA: actual scoped choices → explicit canonical review → one
+checkpointed command → exact PDF/fields/receipt → read-only historical inspection
+and reload; empty/missing facts/error/retry/stale/refused/interrupted outcomes,
+keyboard/focus and responsive reachability must be verified separately from
+authenticated native/provider/customer/founder acceptance.
+
+Goal: review real commercial records and prepare the same signing document.
+Human and feel: service-business owner; legible terms, clear consequences.
+Entry and exit: original Sales agreement → Signing document → same agreement.
+System: incumbent SOLO tokens and inline preparation, no new dialog or shell.
+Signature: original terms read as a document beside the selected invoice identity.
+Feedback: explicit loading/review-needed/retained/recovery; no decorative motion.
+Rejecting: generic metric cards, implied legal approval, automatic external effects.
+Variants: authorized owner/admin only; narrow stacked layout, historical read-only.
+
+| From | Trigger/guard | To | Recovery/exit |
+|---|---|---|---|
+| Commercial source needed | Read native invoice choices | Loading/empty/choices | Retry read or return to agreement |
+| Choices | Explicit selection and review | Reading original terms | Retry read; no write |
+| Review | Missing source facts | Correct original invoice/terms | Return to agreement; reread |
+| Review | Exact current digest | Prepare original PDF | Original checkpoint before dispatch |
+| Preparation | Lost response | Original uncertain request | Same-request retry/read only |
+| Retained | Verified bytes/source | Original assigned fields | Original single leave guard |
+| Retained | Economics changed/unavailable | Historical read-only | Rereview original current terms |
+| Any pending read | Tenant/actor/authority change | Retired/refused | No late publication or dispatch |
+
+Flow Prototype extends the original275be direction with a bounded local,
+read-only selection/review/recovery model before production UI edits. The owner
+delegates routine UX choices in the October21 directive; the lead selects the
+coherent incumbent direction. This is not founder mock or product acceptance.
+Private local prototype artifacts stay outside product source. Portable writing
+fallback: direct action names, no invented claims. No haptics/expiry/payment/
+provider behavior is simulated as native proof.
+
+Protected seams affected: auth/tenant/client binding, canonical read/write,
+immutable receipt/retry, private PDF/RAM handling, responsive geometry and focus.
+Unaffected: signup/entitlements/paywall/provisioning, Core Chat/Live/admission,
+Vault, providers/sends/payment, LayerC/approval/autonomy, schedulers and Memory.
+Original scoped source/negative suites and same native drive must verify the
+affected seams; ordinary staff/client/cohort/provider/founder proof stays owed.
+
 ## October22 actual preparation release and bounded focus repair
 
 Original2604 is released: reviewed6b8d5db6a8bb47c0f37e12f79a0bea0533a3b301,
@@ -2421,6 +2474,31 @@ October22 current template composition: native#2545/220004 is RELEASED SOURCE VE
 ## October22 C7 original-source preparation reader — development only
 
 REUSE original2192/179e52/current0a reader and all37 cases; compose original coherent2604/6b8 private PDF/field source without changing either owning reader/test file. Fresh canonical formatter/reader/field Deno25 tests/110 steps PASS with all original runtime denials and type checking. Older13/63 remains historical. No actual endpoint/Spine/Chat/Live/Portal or provider consumer is connected. This one existing-invoice draft path needs exact canonical same-client invoice/terms/source; it is not a requirement that every agreement must already have an issued invoice. Remaining integration must bind exact reviewed PDF AND assigned-map before original Kit/Trust consequential approval, then reuse the native immutable operation/freeze/Rail. No new financial obligation, external send or signature follows from a proposed presentation. Original native2599/300004/Edge37 readback is verified; own and parent final source/CI/merge/web/ordinary-role/full12/founder acceptance remain separate required legs.
+
+### Pre-edit: original owner commercial-document consumer
+
+EXTEND the SAME owner agreement-document door/SDK/preparation workspace after
+native2637/350004 and constructor2640; no bypass of their release/readback gates.
+Owner selects an actual same-client linked draft invoice, reviews canonical
+economics, prepares the exact original rendered PDF, assigns fields and reads
+back original immutable versions. Missing canonical facts require correction,
+never invented terms, automatic invoice issue or another financial obligation.
+Reuse list_sales_invoices pagination and readCommercialPresentationSource;
+preserve SDK receiver/context, original client/agreement/terms/invoice identity,
+version/microsecond CAS and exact reviewed commercial digest. Current getUser,
+business/admin and original native actor floor repeat around asynchronous work.
+Same canonical renderer/Storage metadata and bytes must match the retained map.
+Schema1 compatibility precedes commercial2 invocation. Original plain linked
+preparation still refuses; exact historical receipt is not current source proof.
+New current commercial readback never claims signature, notification or payment.
+Existing agreement.draft/send, Trust/Kit/Harness/LayerC/Rail, one leave guard,
+native request/event/Storage/recovery remain; no registry, executor, store, job,
+sender, provider, privilege, budget or consequential Chat activation. Original
+complete approved Agreements UX, design system, state/accessibility/reflow and
+actual rendered behavior govern the mounted consumer. EXP09 Portal/relationship
+contracts and EXP10 providers unchanged. Fail-first original API/HTTP/SDK/mounted
+regressions and247 native controls, strict types/denials, review/exact-head CI,
+ordered deployment/readback and proper-role/full12/founder acceptance remain.
 
 ### Pre-edit: original commercial field constructor
 

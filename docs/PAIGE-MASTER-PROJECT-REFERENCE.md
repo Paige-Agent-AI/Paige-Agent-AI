@@ -5246,6 +5246,33 @@ status and creates no recursive delivery row.
 |---|---|---|
 | Source-bound commercial PDF/field manifest [#2637](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2637) | Reviewed83196740a5e5a03cf5307cad590479dcff63753d/treeb85d016398e9e753444ff36ff8eb1baa37ebcc1a; reviews5622415979/5622631780 AUTHOR-REVIEW / LOWER ASSURANCE. All13 exact-head checks/full normal Preview/two statuses SUCCESS. Main0c1be949652959948af7c72520c4ac43898f49b5, exact parentseffc2bc37+8319674 and SAME inspected treeb85d016. Normal deploy-migrations39879828230/deploy120174381011/persistence guard SUCCESS, db-live exact0c1. Actual production350004/retainerab4f8d36f18ecef8650edb85c1d6b89b/12arg ABI/one default/postgres+service ACL/empty search_path match source. Original validator61056f39 and Save1bd28e75 preserved; private table remains postgres-only/RLS/zero policies. Webdpl_EDopJWKpZesc8W2z9w2nJNMYmPoj READY/exact/canonical aliases; public0c1-mvk8yw32/customerUpdate:null. | Native private dependency only; no current product action prepares commercial2 yet. Original schema1/token/effect/approval holds preserved. Local247 native controls and actual Preview metadata are not authenticated commercial owner/staff/client/provider/full12/founder acceptance. No financial obligation, send, signature, payment or named customer announcement. |
 
+**2026-10-22 — EXP04 commercial owner document consumer, development.**
+
+Constructor prerequisite2640 is now released: reviewed1c29b61f0613a05a517f5affe8f1367018469d59,
+main e1c7dee08ff6ed961ac15b9dc7b71ebd43fd6908/actual tree db8d842a4c0f13f1e1dbc3bf77fe65ca342d7daa,
+all10 applicable gates/two statuses SUCCESS, normal schema-free Preview SKIP,
+final review5622877147 AUTHOR-REVIEW / LOWER ASSURANCE. Webdpl_EE13d7PP8b1tEhTLfgSrEMLD3sC5
+READY/exact. Initial Edge39884026649 FAILED previous-source certification;
+original workflow_dispatch39884488108/120189357681 SUCCESS reconciles actual
+c7fa baseline→accepted52dfacc418578c9dea9e3e7f3b33363288d17c66. Only original
+agreement-document selected, ACTIVE67/verify_jwtfalse/22 served files/config pass,
+canonical artifact12471982491/edge-live52df. Root350004/retainerab4f8d36/validator61056f39/
+Save1bd28e75/ABI/ACL unchanged. Public52df-mvkajd0b/null is current source ancestry,
+not exact e1 public-response proof. No new executed customer action or acceptance.
+
+Original Sales → same-client linked invoice choice → canonical original terms
+review → exact reviewed-digest command → original PDF/artifact/native350004 →
+assigned fields/receipt/history/reload. Branchcodex/e04-commercial-document-owner-api
+from reviewed2640/1c29b61f0613a05a517f5affe8f1367018469d59; native2637 separately
+released above. Local45 Deno cases/29 steps,63 mounted/SDK cases and1005 Sales/65
+files/exit0 PASS; original worker teardown warning followed by isolated103 PASS.
+Final compiled20 viewport/theme/panel frames/eight paths/44 exact source pins/zero
+errors,30 neutral images. Auth/HTTP/RPC are synthetic. Source/receipt/late-selection
+negatives fixed; same schema1/authority/one leave guard/recovery/history preserved.
+No SQL/grant/engine/provider/Portal/Chat/algorithm activation. Final source review/
+CI/ordered Edge/web/readback/ordinary owner/staff/client/cohort/provider/all12 and
+single founder evaluation remain owed; no customer release identity. [Evidence](evidence/ui-delivery/e04-commercial-document-owner-workspace.md).
+
 **2026-10-22 — EXP04 original preparation native release verified.**
 
 The later root readback records original `20271113300004` with all eight expected

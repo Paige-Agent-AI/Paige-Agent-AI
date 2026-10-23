@@ -1,3 +1,13 @@
+## EXP05 original MCP ZION context — source preparation, October23
+
+Original delegate_to_subagent now forwards the existing server-resolved workspace
+for ZION even without a contact; missing/unavailable scope refuses before transport.
+Four causal failures/three incumbent passes become seven passing original-handler
+cases; original MCP governed-door/destructive guards and self-tests retained.
+[Evidence and boundary](../evidence/ui-delivery/exp05-mcp-zion-workspace.md).
+Source preparation only: no instructions/provider/activation or authenticated
+ZION result, historical acceptance or full ten-outcome/E5/founder closure.
+
 ## EXP02 Finance specialist attribution — October23 development
 
 Owner Oct23 standard is canonical in the existing

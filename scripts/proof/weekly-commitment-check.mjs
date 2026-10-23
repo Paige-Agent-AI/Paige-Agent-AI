@@ -15,6 +15,7 @@ import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-ca
 import {historyPerformanceProof} from './weekly-commitment-history-performance.mjs';
 import {weeklyDraftCommandProof} from './weekly-commitment-draft-command.mjs';
 import {weeklyDeadlineProof} from './weekly-commitment-deadlines.mjs';
+import {weeklyAuthorizationControlProof} from './weekly-authorization-control.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const migration='supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql';
@@ -23,12 +24,14 @@ const historyMigration='supabase/migrations/20271030000000_experience05_weekly_h
 const baselineRead=process.argv.includes('--baseline-read-preparation');
 const draftOnly=process.argv.includes('--draft-command-only');
 const deadlineBaseline=process.argv.includes('--baseline-weekly-deadlines');
+const authorizationBaseline=process.argv.includes('--baseline-weekly-authorization');
 const ci=process.argv.includes('--postgres');
 const simulateCiRole=process.argv.includes('--simulate-ci-role');
 if(ci&&process.env.CI!=='true')throw new Error('--postgres is limited to the disposable CI service');
 if(ci&&simulateCiRole)throw new Error('Role simulation is limited to a newly created local disposable cluster');
 if(ci&&baselineRead)throw new Error('Negative baseline is limited to a newly created local disposable cluster');
 if(ci&&deadlineBaseline)throw new Error('Negative deadline baseline is limited to a newly created local disposable cluster');
+if(ci&&authorizationBaseline)throw new Error('Negative authorization baseline is local only');
 if(ci&&draftOnly)throw new Error('Draft-only iteration is local only; CI always runs the complete native proof');
 if(ci&&process.env.PGHOST&&!['localhost','127.0.0.1'].includes(process.env.PGHOST))throw new Error('Loopback only');
 const bin=process.env.WEEKLY_PROOF_PG_BIN??(process.platform==='win32'?'C:/Program Files/PostgreSQL/16/bin':'');
@@ -241,6 +244,8 @@ try{
     refuses(`DELETE FROM paige_automation_acts WHERE id=${literal(act)};`,ownerCtx);
   });
   const authorized=json(`SELECT control_weekly_commitment_check(${literal(automation)},'authorize',1);`,ownerCtx);
+  const authorizationMigration='supabase/migrations/20271113510005_experience05_weekly_authorization_review.sql';
+  run(source(authorizationMigration));run(source(authorizationMigration));
   assert.equal(authorized.state,'live');
   check('schedule authorization leaves canonical permission default confirm',()=>{
     const policy=json("SELECT row_to_json(t) FROM list_tool_autonomy() t WHERE tool_key='planning_weekly_commitment_check';",ownerCtx);
@@ -581,6 +586,8 @@ try{
     ${archives.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_fk_join\(_constraint oid\)[\s\S]+?\$\$;/)[0]}
     ${retirement.match(/CREATE OR REPLACE FUNCTION public\.operator_read_archive_receipt\(_tenant_id uuid,_operation_id uuid\)[\s\S]+?END \$\$;/)[0]}
     ${retirement.match(/CREATE OR REPLACE FUNCTION public\.operator_delete_archived_account\(_tenant_id uuid,_expected_version text,_confirmation_name text,_operation_id uuid\)[\s\S]+?END \$\$;/)[0]}`);
+  const authorizationControl=await weeklyAuthorizationControlProof({run,json,literal,check,refuses,concurrent,
+    ownerCtx,member,admin,tenant,otherOwner,foreign,baseline:authorizationBaseline});
   const operator=randomUUID(),operation=randomUUID();
   run(`INSERT INTO auth.users VALUES(${literal(operator)}); INSERT INTO user_roles VALUES(${literal(operator)},'platform_admin');
     INSERT INTO operator_account_archives(id,root_tenant_id,actor_user_id,root_name,state,scope_ids,prior_tenants,prior_members)
@@ -599,6 +606,7 @@ try{
   evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,
     read_preparation:{source:readMigration,migration_sha256:readMigrationHash,actual_canonical_owner_rpc:true,actual_prepared_owner_reader:true,calendar_records_written:0},
     schema_fingerprint:schemaFingerprint,history_performance:historyPerformance,draft_command:draftCommand,deadline_proof:deadlineProof,
+    authorization_control:authorizationControl,
     fixture_service_role:roleParity,
     incumbent_catalogue:{source:declarations.at(-1).file,rows:priorCatalogue.length,preserved_metadata_and_defaults:true},
     boundary:'isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim'};

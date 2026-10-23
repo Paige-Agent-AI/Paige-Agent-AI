@@ -1,0 +1,13 @@
+{
+  "sourceLogSha256": "a765cca088f650c161dc8ccda4e144a79d6d2b745841c2d64220ee6751ee6c21",
+  "finalTeardownVerified": true,
+  "intermediatePosture": {
+    "simulated_incumbent_role": true,
+    "restoration_verified": false,
+    "original_exists": true,
+    "original_bypass_rls": false,
+    "effective_bypass_rls": true,
+    "non_bypass_failure_reproduced": true
+  },
+  "boundary": "Original114-case result emitted before finally; final service_role restoration line separately verified. Only original disposable native PostgreSQL substrate, no production/provider/customer effect."
+}

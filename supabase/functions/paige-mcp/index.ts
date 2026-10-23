@@ -3466,15 +3466,22 @@ mcp.tool("delegate_to_subagent", {
       parsedInput.contact_id = contact_id;
     }
     const actor = currentActor();
+    // ZION's existing planning runtime needs its original workspace even when
+    // there is no contact. Resolve only from the authenticated MCP actor.
+    const requiresTenant = slug === "zion" || Boolean(contact_id || parsedInput.contact_id || parsedInput.client_id);
+    let tenantId: string | null = null;
+    if (requiresTenant) {
+      try { tenantId = await actorTenantId(); }
+      catch { return err("Workspace context is temporarily unavailable. Reopen the workspace before trying again."); }
+    }
+    if (slug === "zion" && !tenantId) return err("Choose an available business workspace before asking ZION to plan.");
     const r = await callOrchestrator({
       action: "tool_invoke",
       slug,
       // INT-310 C1: a contact selector is bound by the orchestrator to this SERVER-RESOLVED workspace
-      // (the actor's active tenant), never to a tool argument; null fails closed. Sent only when a
-      // contact is selected, so contact-free delegation keeps its prior (tenant-less) behaviour.
-      ...((contact_id || parsedInput.contact_id || parsedInput.client_id)
-        ? { tenant_id: await actorTenantId() }
-        : {}),
+      // (the actor's active tenant), never to a tool argument; null fails closed.
+      // Other contact-free specialist contracts remain unchanged.
+      ...(requiresTenant ? { tenant_id: tenantId } : {}),
       input: parsedInput,
       context: { contact_id, conversation_id, user_id: actor.user_id ?? undefined },
     });

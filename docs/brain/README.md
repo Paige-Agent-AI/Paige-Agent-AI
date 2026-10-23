@@ -2203,3 +2203,57 @@ Full O1–O12/exact approval/effective terms/payment/delivery/CentralQA/founder-
 remain required. No source or acceptance reassignment, provider/Chat activation,
 customer release identity or announcement. Exact row is in Master§4.0; original
 [journey](../delivery/exp04-get-paid-deliver-journey.md) remains controlling.
+
+## EXP04 signature-request feedback — verified source release October23
+
+Original2651 reviewed9f513b26353ad2fed88bef1875a3b94f8d62888a/sourcebbac2dd7,
+final AUTHOR-REVIEW / LOWER ASSURANCE5623259280, all10 applicable exact-head
+checks/two statuses SUCCESS; normal unchanged no-schema App SKIPPED. Actual
+main89e5cea37fad64f0b1b73c844f038861a864f79b and clean unionf3c7156f match
+inspected39c+9f parents. Webdpl_EcMBTag36PKNvPua2B9B9LdZayFi READY/canonical
+aliases; both public hosts exact89e5cea-mvkeb5u4/null, served original Solo JS
+cb85b7439195d80b533a7d75757fbc1b16ab1b5903040ac7d2da8dbecd298ba2 and CSS
+9c83f7e947af5ae5d263439aad313af2cd43828066e97045dce2d1a38e2c3c44 verified.
+Own SQL/Edge N/A. The original sender, native holds, permission/admission and
+Spine/Kit/Trust/Harness/LayerC/Rail remain unchanged.
+
+Original Sales feedback distinguishes accepted requests, skipped existing links,
+partial issues/status warnings and an unconfirmed outcome. It does not claim
+delivery, opened, signed or no effect after an uncertain dispatch. Same-actor
+session capture and epoch retire A→B→A late results; interaction fences are not
+durable sender idempotency.1039 Sales/68 and20 native synthetic frames/eight
+paths/23 pins support source behavior. Full provider/execution proof remains owed.
+
+Fresh ordinary owner read shows the original unsigned schema1 selected preparation,
+saved field and exact original receipt; protected ANT52, author-run bounded proof.
+This supersedes earlier unavailable-browser wording only for that read; control
+is intermittent and no new commercial2 preparation/signature/send was performed.
+Functional SOURCE RELEASE VERIFIED; Visual synthetic source inspection; Experiential
+new request/provider/roles/cohorts/CentralQA/full12 UNVERIFIED; Founder NOT_ACCEPTED.
+No customer release name/announcement, algorithm or catalogue promotion. C13
+assigned inputs and subsequent native exact approval/signing/seal/effective terms
+remain required. Master§4.0 and the original journey retain canonical boundaries.
+
+## EXP04 checked prepared signer input — verified source release October23
+
+2654 reviewed36b68557e3a39612255c3380ea391a1b40e2b888, separate AUTHOR-REVIEW /
+LOWER ASSURANCE5623411227; all11 latest exact-head checks/two statuses/full Preview
+SUCCESS. Actual maina047a2ab48a0d40f586b0bc269d108692ce2c40b/tree7b1f3096 has
+inspected89+36b parents. Normal Edge39897418203/job120230949041/artifact12477710875
+verifies agreement-document@76/23 exact files and sign-agreement@28/11 files/config.
+Original token/application authorization remains; no SQL/grant/hold activation.
+Productiondpl_Gaa4rAtSJKRXHqeZfoCVbtsGD7UT READY/canonical aliases, both public
+hostsa047-mvkfr69o/null; original SoloEntry50484fff and C12 feedback/styles persist.
+[Release receipt6357008694](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2654#issuecomment-6357008694).
+
+Pure original-module helper remains UNMOUNTED. It validates an immutable proposed
+field input against the original map/hash/document/party, explicit checkbox false,
+optional omissions and server timestamp; it grants no authority and writes nothing.
+89 backend/98steps,78 client/three suites, actual Edge entry types/root10/6 PASS;
+capacity cancellation and original compiler failures stay dated. Existing source
+guard's literal boolean discriminant is logically unchanged. No UI or role test
+is inferred from source. Functional SOURCE VERIFIED; Visual N/A/unmounted;
+Experiential original signed-in prepared signing/approval/consent/native write/seal/
+effective terms and all12/CentralQA/cohorts/provider remain owed; Founder NOT_ACCEPTED.
+ALG01/12 supporting checks only; ALG02/13/catalogue unchanged. Next original PDF
+prepared-field renderer/source integration remains bounded, not a second engine.

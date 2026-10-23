@@ -7,6 +7,8 @@ on:
   # No `paths:` filter: this is a required check, and one that never starts blocks a PR forever.
   # The job already reports "nothing to lint" when a PR changes no migration.
   pull_request:
+  # Run the original changed-migration linter on an exact bot-pushed ref.
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -21,6 +23,12 @@ jobs:
         run: |
           base="${{ github.event.pull_request.base.sha }}"
           head="${{ github.event.pull_request.head.sha }}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+            git fetch origin main
+            base="$(git merge-base HEAD origin/main)"
+            head="$GITHUB_SHA"
+          fi
           git diff --name-only --diff-filter=AMR "$base" "$head" -- 'supabase/migrations/*.sql' \
             | tee changed_migrations.txt
           echo "count=$(grep -c . changed_migrations.txt || true)" >> "$GITHUB_OUTPUT"

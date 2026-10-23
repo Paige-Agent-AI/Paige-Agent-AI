@@ -139,6 +139,8 @@ type Action = "tool_search" | "tool_invoke" | "list_subagents" | "inspect" | "se
 
 interface OrchestratorRequest {
   action: Action;
+  invocation_id?: string; // Optional original assignment inspection, never a dispatch/replay key.
+  recent_assignments?: boolean; // Bounded own-identity discovery, never complete history.
   query?: string;
   domain?: string;
   slug?: string;
@@ -165,6 +167,144 @@ function fail(error: string, status = 400, details?: unknown) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status,
   });
+}
+
+// Read one ORIGINAL assignment; it never invokes, settles or retries a worker.
+// Private response reads use the person's JWT and existing RLS. Receipt verification
+// reads only closed server metadata after the same actor/workspace/seat is proven.
+async function inspectOriginalInvocation(req: Request, payload: OrchestratorRequest, scope: TenantScope): Promise<Response> {
+  const id = payload.invocation_id;
+  const recent = payload.recent_assignments === true;
+  if ((recent && id !== undefined) || (!recent && (typeof id !== "string" || !UUID_RE.test(id)))) {
+    return fail("Choose recent assignments or one valid original assignment reference.", 400);
+  }
+  const actor = scope.callerId, tenant = scope.tenantId;
+  const refused = () => fail("Current workspace owner or admin authority is required to read this assignment.", 403);
+  const unavailable = () => fail("The original specialist assignment is unavailable in this workspace.", 404);
+  if (scope.isService || !actor || !tenant || (payload as { tenant_id?: unknown }).tenant_id !== tenant) return refused();
+  const current = async () => {
+    const fresh = await resolveTenantScope(req, payload);
+    if ("error" in fresh || fresh.isService || fresh.callerId !== actor || fresh.tenantId !== tenant
+      || fresh.fundingEnabled !== scope.fundingEnabled) return false;
+    const permission = await resolveWorkspaceAuthorityAs(supabase, actor, tenant);
+    if (!permission.ok || !permission.authority.seat
+      || !authorityAdmits("list_subagents", permission.authority, new Set())) return false;
+    const after = await resolveTenantScope(req, payload);
+    return !("error" in after) && !after.isService && after.callerId === actor
+      && after.tenantId === tenant && after.fundingEnabled === scope.fundingEnabled;
+  };
+  try {
+    if (!await current()) return refused();
+    const caller = createClient(SUPABASE_URL, ANON_KEY, {
+      global: { headers: { Authorization: req.headers.get("Authorization")! } },
+      auth: { persistSession: false },
+    });
+    const registration = async (slug: string) => {
+      const registered = await supabase.from("paige_subagents")
+        .select("slug,runtime,tenant_id,domain,name,description,system_prompt")
+        .eq("slug", slug).or(`tenant_id.is.null,tenant_id.eq.${tenant}`).maybeSingle();
+      if (registered.error) throw new Error("registration_read_unavailable");
+      const agent = registered.data;
+      return !agent || (agent.tenant_id !== null && agent.tenant_id !== tenant)
+        || (!scope.fundingEnabled && looksLikeFinanceAgent(agent)) ? null : agent;
+    };
+    const recordedStatus = (status: string) => ["pending", "succeeded", "failed", "dispatched"].includes(status) ? status : "unknown";
+    if (recent) {
+      const history = await caller.from("paige_subagent_invocations")
+        .select("id,invoked_by,tenant_id,subagent_slug,status,created_at,contact_id")
+        .eq("tenant_id", tenant).eq("invoked_by", actor)
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(6);
+      if (!await current()) return refused();
+      if (history.error || !Array.isArray(history.data)) throw new Error("assignment_history_unavailable");
+      const entries = [];
+      for (const row of history.data.slice(0, 5)) {
+        if (typeof row.id !== "string" || !UUID_RE.test(row.id) || row.tenant_id !== tenant
+          || row.invoked_by !== actor || typeof row.subagent_slug !== "string") continue;
+        const agent = await registration(row.subagent_slug);
+        if (!await current()) return refused();
+        if (!agent) continue;
+        if (row.contact_id !== null) {
+          const bound = await bindContactToTenant(supabase, tenant, { contact_id: row.contact_id }, {});
+          if (!await current()) return refused();
+          if (!bound.ok) continue;
+        }
+        entries.push({ id: row.id, specialist: row.subagent_slug, recorded_status: recordedStatus(row.status),
+          created_at: typeof row.created_at === "string" && Number.isFinite(Date.parse(row.created_at)) ? row.created_at : null });
+      }
+      if (!await current()) return refused();
+      return ok({ ok: true, matches: [], recent_invocations: entries, sample_only: true, limit: 5,
+        note: "Only a recent permitted sample is shown. Read a returned original assignment to inspect its response and receipt. This is not complete history or proof that business work completed." });
+    }
+    if (typeof id !== "string") return fail("A valid original assignment reference is required.", 400);
+    const read = await caller.from("paige_subagent_invocations")
+      .select("id,invoked_by,tenant_id,subagent_slug,status,output,created_at,contact_id")
+      .eq("id", id).eq("tenant_id", tenant).eq("invoked_by", actor).maybeSingle();
+    if (!await current()) return refused();
+    if (read.error) throw new Error("assignment_read_unavailable");
+    const row = read.data;
+    if (!row || row.id?.toLowerCase() !== id.toLowerCase() || row.tenant_id !== tenant
+      || row.invoked_by !== actor || typeof row.subagent_slug !== "string") return unavailable();
+    const agent = await registration(row.subagent_slug);
+    if (!await current()) return refused();
+    if (!agent) return unavailable();
+    if (row.contact_id !== null) {
+      const bound = await bindContactToTenant(supabase, tenant, { contact_id: row.contact_id }, {});
+      if (!await current()) return refused();
+      if (!bound.ok) return unavailable();
+    }
+    let receiptState = "unavailable", receiptId: string | null = null, receiptAt: string | null = null;
+    try {
+      const receipt = await supabase.from("paige_workspace_events")
+        .select("id,outcome,job_attempt_id,actor_agent_slug,occurred_at")
+        .eq("tenant_id", tenant).eq("actor_id", actor).eq("source_kind", "capability_run")
+        .eq("source_id", row.id).eq("source_revision", 0).eq("capability_key", "subagent_invoke").limit(3);
+      if (!receipt.error && Array.isArray(receipt.data)) {
+        const expected = row.status === "succeeded" ? "capability_succeeded"
+          : row.status === "failed" ? "capability_failed" : null;
+        receiptState = receipt.data.length === 0 ? "missing" : "unverified";
+        const event = receipt.data[0];
+        if (receipt.data.length === 1 && expected && event.outcome === expected
+          && event.actor_agent_slug === row.subagent_slug
+          && event.job_attempt_id === idempotencyKey("subagent-invocation", row.id, "run")
+          && typeof event.id === "string" && UUID_RE.test(event.id)
+          && typeof event.occurred_at === "string" && Number.isFinite(Date.parse(event.occurred_at))) {
+          receiptState = "verified"; receiptId = event.id; receiptAt = event.occurred_at;
+        } else if (receipt.data.length > 1) receiptState = "conflicting";
+      }
+    } catch { /* The stored response survives an unavailable receipt, never a fabricated receipt. */ }
+    if (!await current()) return refused();
+    const confirmed = await caller.from("paige_subagent_invocations")
+      .select("id,invoked_by,tenant_id,subagent_slug,status,output,created_at,contact_id")
+      .eq("id", row.id).eq("tenant_id", tenant).eq("invoked_by", actor).maybeSingle();
+    if (!await current()) return refused();
+    if (confirmed.error) throw new Error("assignment_readback_unavailable");
+    if (!confirmed.data || confirmed.data.id !== row.id || confirmed.data.tenant_id !== tenant
+      || confirmed.data.invoked_by !== actor) return unavailable();
+    const beforeOutput = row.output as { ok?: unknown; agent?: unknown; answer?: unknown } | null;
+    const afterOutput = confirmed.data.output as typeof beforeOutput;
+    if (confirmed.data.status !== row.status || confirmed.data.subagent_slug !== row.subagent_slug
+      || confirmed.data.created_at !== row.created_at || confirmed.data.contact_id !== row.contact_id
+      || beforeOutput?.ok !== afterOutput?.ok
+      || beforeOutput?.agent !== afterOutput?.agent || beforeOutput?.answer !== afterOutput?.answer) {
+      return fail("The original assignment changed while being read. Read it again before drawing a conclusion.", 409);
+    }
+    const status = recordedStatus(row.status);
+    // Only the existing soft-response shape is exposed; never raw local/provider
+    // payloads, errors, input, prompts, config or asynchronous completion claims.
+    const output = row.output as { ok?: unknown; agent?: unknown; answer?: unknown } | null;
+    const answer = status === "succeeded" && agent.runtime === "soft" && output?.ok === true
+      && output.agent === row.subagent_slug && typeof output.answer === "string" ? output.answer : null;
+    return ok({ ok: true, matches: [], invocation: {
+      id: row.id, specialist: row.subagent_slug, recorded_status: status,
+      created_at: typeof row.created_at === "string" && Number.isFinite(Date.parse(row.created_at)) ? row.created_at : null,
+      observed_at: new Date().toISOString(), receipt_state: receiptState, receipt_id: receiptId, receipt_at: receiptAt,
+      response_text: answer?.slice(0, 8000) ?? null, response_truncated: (answer?.length ?? 0) > 8000,
+      completion_scope: "specialist_response_only",
+      note: "This reads the original specialist response only. It does not prove a task, booking, send or other business action completed. Do not repeat uncertain work.",
+    } });
+  } catch {
+    return fail("The original specialist assignment could not be read. Inspect it again before repeating any work.", 503);
+  }
 }
 
 async function searchSubagents(query?: string, domain?: string, tenantId?: string | null, fundingEnabled = false) {
@@ -690,6 +830,7 @@ Deno.serve(async (req) => {
 
   try {
     if (payload.action === "list_subagents" || payload.action === "tool_search") {
+      if (payload.invocation_id !== undefined || payload.recent_assignments === true) return await inspectOriginalInvocation(req, payload, scope);
       const matches = await searchSubagents(payload.query, payload.domain, tenantId, fundingEnabled);
       return ok({ ok: true, matches });
     }

@@ -8454,12 +8454,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "list_subagents",
-              description: "List Paige's ACTUAL current specialists live from the team registry (their names, desks, and what each does) — the roster is tenant-aware, so call this FIRST whenever delegation is on the table; never recite a remembered list of names. Use this when the user asks for deep analysis, audits, research, or anything beyond simple data lookups — then call delegate_to_subagent with the matching slug. AUTO-DELEGATION: when the user describes a problem, blocker, or 'why isn't X working' situation, immediately delegate_to_subagent with slug='problem-reverse-engineer' and pass {problem_statement: <verbatim user problem>, contact_id?: <if known>}. When you receive a root_cause_analysis result, embed the raw JSON inside a fenced code block tagged ```root-cause-analysis on its own line so the UI can render the Root-Cause card, then add a 2-3 sentence plainspoken summary underneath.",
+              description: "Recovery first: when asked about unfinished or previous specialist work, use recent_assignments to find its original identity, then invocation_id to inspect it; never delegate again to check what happened. This read takes precedence over auto-delegation below. List Paige's ACTUAL current specialists live from the team registry (their names, desks, and what each does) — the roster is tenant-aware, so call this FIRST whenever delegation is on the table; never recite a remembered list of names. Use this when the user asks for deep analysis, audits, research, or anything beyond simple data lookups — then call delegate_to_subagent with the matching slug. AUTO-DELEGATION: when the user describes a problem, blocker, or 'why isn't X working' situation, immediately delegate_to_subagent with slug='problem-reverse-engineer' and pass {problem_statement: <verbatim user problem>, contact_id?: <if known>}. When you receive a root_cause_analysis result, embed the raw JSON inside a fenced code block tagged ```root-cause-analysis on its own line so the UI can render the Root-Cause card, then add a 2-3 sentence plainspoken summary underneath.",
 
               parameters: {
                 type: "object",
                 properties: {
                   query: { type: "string", description: "Keyword(s) to match against agent name/description/triggers." },
+                  invocation_id: { type: "string", description: "Read one known original specialist assignment by its returned invocation_id, without delegating again. Use for recovery before any new delegation. A stored specialist response is not proof of business-action completion." },
+                  recent_assignments: { type: "boolean", description: "Read a bounded recent sample of your own assignments to find an original invocation_id, then inspect that ID. Use before repeating interrupted specialist work. This does not read complete history or execute anything." },
                   domain: { type: "string", description: fundingEnabled
                     ? "Filter by domain (fundability / compliance / credit / funding / research / outreach / intake / sales / coaching)."
                     : "Filter by domain (research / outreach / intake / sales / coaching / ops / content)." }
@@ -16646,13 +16648,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const orchTenant = personaCtx?.tenant_id ?? null;
             // §2/#206: pass the tenant's funding opt-in so the orchestrator gates funding-domain agents.
             const orchFunding = personaCtx?.funding_enabled === true;
+            const inspectingOriginal = tc.function.name === "list_subagents"
+              && (args.invocation_id !== undefined || args.recent_assignments === true);
             const body = tc.function.name === "list_subagents"
-              ? { action: "tool_search", query: args.query, domain: args.domain, tenant_id: orchTenant, funding_enabled: orchFunding }
+              ? { action: "tool_search", query: args.query, domain: args.domain, tenant_id: orchTenant, funding_enabled: orchFunding,
+                  ...(inspectingOriginal ? { invocation_id: args.invocation_id, recent_assignments: args.recent_assignments } : {}) }
               : { action: "tool_invoke", slug: args.slug, input: args.input ?? {}, tenant_id: orchTenant, funding_enabled: orchFunding, context: { contact_id: args.contact_id, user_id: user.id } };
             specialistDispatched = tc.function.name === "delegate_to_subagent";
             const r = await fetch(orchestratorUrl, {
               method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseServiceKey}`, apikey: supabaseServiceKey },
+              headers: { "Content-Type": "application/json", Authorization: inspectingOriginal ? authHeader : `Bearer ${supabaseServiceKey}`,
+                apikey: inspectingOriginal ? supabaseKey : supabaseServiceKey },
               body: JSON.stringify(body),
             });
             const text = await r.text();

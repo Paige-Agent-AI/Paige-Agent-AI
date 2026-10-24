@@ -285,7 +285,15 @@
     "originalNativeSignature13BodyUnchanged": true,
     "tokenEffectAndPreparedSendHoldsUnchanged": true,
     "actualAtomicFieldProducer": "MISSING",
-    "freshTestsReviewCIAndColdPreview": "OWED",
-    "customerAcceptance": "UNVERIFIED"
+    "freshTestsReviewCIAndColdPreview": "86strict/62handler PASS; final exact review, new required CI and source-current cold Preview OWED; old51 native checks/replays remain dated support",
+    "customerAcceptance": "UNVERIFIED",
+    "freshStrictDeno": {
+      "handlerSteps": 62,
+      "diagnostics": "Initial85/17 with handler missing-cache; original local frozen-cache missing transitive records; private inspection incorrectly assumed ignored local lock was tracked. All retained INVALID_SETUP, no claim those failures passed.",
+      "dependencyScope": "Original ignored local deno.lock redirects unversioned SDK URL to2.117.3, not a tracked product pin. Private expanded copy preserves every original entry plus11 transitive integrity records; original root hash614f9e55 unchanged. No product source, tracked lock, test, CI or native permission change.",
+      "runtime": "cached-only and strict types; net/env/read/write/run/FFI/sys denied",
+      "cases": 86,
+      "seconds": 24
+    }
   }
 }

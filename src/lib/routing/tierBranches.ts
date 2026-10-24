@@ -101,7 +101,7 @@ export interface TierTree {
 }
 
 /**
- * SOLO_BRANCHES — the Solo tree (12). Shared by `solo` AND `sub_account` (§11c/§60).
+ * SOLO_BRANCHES — the Solo tree (13). Shared by `solo` AND `sub_account` (§11c/§60).
  * Keys match `src/solo/SoloApp.tsx`'s `screens` registry.
  *
  * Sub-tabs verified screen-by-screen against the Solo screen SOURCE (47 across 9
@@ -146,6 +146,9 @@ export const SOLO_BRANCHES: Branch[] = [
       { slug: "capacity", key: "capacity", label: "Capacity" },
     ],
   },
+  // EXP08 Team Hub (owner-approved 2026-10-24): one conversation workspace with no subtabs. The
+  // legacy `/team` address still redirects to Settings → Team in SoloApp.tsx.
+  { slug: "team-hub", key: "teamhub", label: "Team Hub", group: "main" },
   {
     slug: "paige", key: "paige", label: "Paige", group: "main",
     // Source: src/solo/SoloPaigeWorkspace.tsx. Solo intentionally exposes the

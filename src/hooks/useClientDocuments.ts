@@ -95,9 +95,6 @@ export function useClientDocuments(purpose?: {kind: "customer_private"; threadId
     const p=result.error?null:readClientPortalSelfProfile(result.data,actor,wanted?.tenant);
     if(!p)throw new Error("Your customer information could not be verified.");
     const scope={actor,tenant:p.tenant_id,contact:p.id};
-    const final=await wait(supabase.auth.getUser(),deadline);
-    if(final.error||final.data.user?.id!==actor||!current()||wanted&&!sameDocumentScope(wanted,scope)||expected&&!sameDocumentScope(expected,scope))
-      throw new AccessFailure(privateMode?"Your customer session changed. Reopen the portal to continue.":"Your customer session changed. Reload Documents to continue.");
     if(privateMode){
       // Same original native service: recheck private thread, class and assistant
       // configuration before/after upload or signing, not just the self profile.
@@ -107,6 +104,11 @@ export function useClientDocuments(purpose?: {kind: "customer_private"; threadId
       readCustomerChatFilePage(gate.data,scope);
       if(!current())throw new AccessFailure("Your customer context changed.");
     }
+    // Keep the original actual-Auth check last: the additional private RPC may
+    // await across a session change before the SDK delivers its Auth event.
+    const final=await wait(supabase.auth.getUser(),deadline);
+    if(final.error||final.data.user?.id!==actor||!current()||wanted&&!sameDocumentScope(wanted,scope)||expected&&!sameDocumentScope(expected,scope))
+      throw new AccessFailure(privateMode?"Your customer session changed. Reopen the portal to continue.":"Your customer session changed. Reload Documents to continue.");
     return {scope,authorization};
   },[scopeAlive,requestedActor,requestedTenant,requestedContact,privateMode,privateThread]);
   const refresh = useCallback(async (append = false) => {

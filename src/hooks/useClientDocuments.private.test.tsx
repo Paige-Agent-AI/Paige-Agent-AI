@@ -146,6 +146,16 @@ it("a borrowed cached token cannot start native private reads", async () => {
   f.session.mockResolvedValue({data: {session: {user: {id: otherThread}, access_token: "synthetic-foreign"}}, error: null});
   await render(); expect(state.phase).not.toBe("ready"); expect(f.native).toEqual([]);
 });
+it("a session change during the private gate cannot start an upload without an Auth event", async () => {
+  await render(); const original = f.reply.getMockImplementation()!;
+  f.reply.mockImplementation((name, args) => {const result = original(name, args);
+    if (name === "client_portal_chat_files") f.user.mockResolvedValue({data: {user: {id: otherThread}}, error: null});
+    return result;
+  });
+  await act(async () => state.transfer(file(), fileId));
+  expect(f.native.filter(n => n.name === "client_portal_begin_chat_file_upload")).toEqual([]);
+  expect(f.storage).toEqual([]); expect(state.phase).toBe("unavailable");
+});
 it("a malformed ready-path reservation is not uploaded", async () => {
   const original = f.reply.getMockImplementation()!;
   f.reply.mockImplementation((name, args) => {const result = original(name, args);

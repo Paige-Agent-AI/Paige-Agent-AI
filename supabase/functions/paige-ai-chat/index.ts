@@ -21,6 +21,7 @@ import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/inter
 import { RECOVERY_READ_ONLY_REFUSAL } from "../_shared/paige-turn/interactive-refusal.ts";
 import { stageCuraKnowledge, CURA_TEACH_PURPOSE } from '../_shared/cura-knowledge-teaching.ts';
 import { readOriginalCuraPreparationHistory } from "../_shared/paige-turn/interactive-cura-history.ts";
+import { readOriginalSpecialistHistory } from "../_shared/paige-turn/interactive-specialist-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, readBusinessSnapshotTransport } from '../_shared/paige-context/business-review-chat.ts';
@@ -880,10 +881,14 @@ const messageSchema = z.object({
   requestIntentId: z.string().uuid().optional(),
   interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional(),
     includeCuraPreparationHistory: z.literal(true).optional(),
+    includeSpecialistHistory: z.literal(true).optional(),
   }).superRefine((control, context) => {
     // A projection selector, never actor, permission, approval or execution authority.
     if (control.includeCuraPreparationHistory && (control.kind !== "status" || !control.approvalTurnId)) {
       context.addIssue({ code: z.ZodIssueCode.custom, path: ["includeCuraPreparationHistory"], message: "Preparation history requires the original approval status request." });
+    }
+    if (control.includeSpecialistHistory && (control.kind !== "status" || !control.approvalTurnId)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["includeSpecialistHistory"], message: "Specialist history requires the original turn status request." });
     }
   }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
@@ -1515,9 +1520,30 @@ serve(async (req) => {
               } as unknown as Parameters<typeof readOriginalCuraPreparationHistory>[0]["caller"],
               service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
             }) : null;
+          const specialist_history = validatedData.interactive.includeSpecialistHistory === true
+            && protocolActive && thread.audience === "workspace"
+            ? await readOriginalSpecialistHistory({
+              actorId: user.id, tenantId: thread.tenant_id, threadId: validatedData.threadId,
+              intentId: validatedData.requestIntentId, turnId: validatedData.interactive.approvalTurnId,
+              caller: supabaseClient as unknown as Parameters<typeof readOriginalSpecialistHistory>[0]["caller"],
+              authorize: async () => {
+                const authority = await resolveWorkspaceAuthority(supabaseClient, supabase, user.id, thread.tenant_id);
+                return authority.seat && authorityAdmits("list_subagents", authority, WORKSPACE_BUILD_TOOLS);
+              },
+              inspectOriginal: async (invocationId: string) => {
+                // Reuse the caller-JWT inspector, never the service-role delegate.
+                const { data, error } = await supabaseClient.functions.invoke("paige-orchestrator", {
+                  body: { action: "tool_search", tenant_id: thread.tenant_id, invocation_id: invocationId },
+                  headers: { Authorization: authHeader },
+                });
+                return error ? null : data;
+              },
+              current: () => !req.signal.aborted,
+            }) : null;
           return new Response(JSON.stringify({ approval_recovery,
             ...(approval_history?.status === "verified_original" ? { approval_history } : {}),
             ...(cura_preparation_history?.status === "recorded_preparation" ? { cura_preparation_history } : {}),
+            ...(specialist_history?.status === "recorded_assignment" ? { specialist_history } : {}),
           }), { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
         const originalScope = { threadId: validatedData.threadId!,

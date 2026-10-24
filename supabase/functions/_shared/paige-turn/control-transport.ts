@@ -60,10 +60,12 @@ export function matchesChatControlHint(hint: string | null, raw: unknown, valida
   if (!input || !onlyKeys(input, ["threadId", "requestIntentId", "messages", "interactive", "surfaceContext"])
     || typeof input.threadId !== "string" || typeof input.requestIntentId !== "string") return false;
   const control = object(input.interactive);
-  const fields = hint === "status" ? ["kind", "pipelineEffectId", "workId", "approvalTurnId", "includeCuraPreparationHistory"] : ["kind", "supersedesIntentId"];
+  const fields = hint === "status" ? ["kind", "pipelineEffectId", "workId", "approvalTurnId", "includeCuraPreparationHistory", "includeSpecialistHistory"] : ["kind", "supersedesIntentId"];
   if (!control || !onlyKeys(control, fields) || control.kind !== hint) return false;
   if ("includeCuraPreparationHistory" in control && (hint !== "status"
     || control.includeCuraPreparationHistory !== true || typeof control.approvalTurnId !== "string")) return false;
+  if ("includeSpecialistHistory" in control && (hint !== "status"
+    || control.includeSpecialistHistory !== true || typeof control.approvalTurnId !== "string")) return false;
   if (hint === "stop" && control.supersedesIntentId !== input.requestIntentId) return false;
   if ("surfaceContext" in input) {
     const surface = object(input.surfaceContext);

@@ -255,6 +255,6 @@ node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofr
 # original gate above remains intact. No hosted Storage or customer proof.
 deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
   --deny-net --deny-write --deny-ffi --deny-sys \
-  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial
+  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source
 
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

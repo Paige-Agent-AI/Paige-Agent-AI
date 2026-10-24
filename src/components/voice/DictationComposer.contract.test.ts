@@ -93,8 +93,8 @@ describe("dictation composer scope and send contract", () => {
     };
     visit(source);
     expect(predicates).toHaveLength(1);
-    const disabled = new Function("state", `const {isLoading,dictationActive,customerFrame,customerAvailable,historyState,customerRecovery,input,attachedDoc}=state;return (${predicates[0]});`);
-    const ready = {isLoading:false,dictationActive:false,customerFrame:null,customerAvailable:true,historyState:"ready",customerRecovery:null,input:"Ready to send",attachedDoc:null};
+    const disabled = new Function("state", `const {isLoading,dictationActive,customerFrame,customerAvailable,historyState,customerRecovery,input,attachedDoc,privateFilesBlocked,privateFiles}=state;return (${predicates[0]});`);
+    const ready = {isLoading:false,dictationActive:false,customerFrame:null,customerAvailable:true,historyState:"ready",customerRecovery:null,input:"Ready to send",attachedDoc:null,privateFilesBlocked:false,privateFiles:{files:[]}};
     expect(disabled(ready)).toBe(false);
     expect(disabled({...ready,dictationActive:true})).toBe(true);
     expect(disabled({...ready,isLoading:true})).toBe(true);
@@ -111,6 +111,15 @@ describe("dictation composer scope and send contract", () => {
     }
     for (const historyState of ["loading","error"])
       expect(disabled({...ready,customerFrame:{},historyState})).toBe(true);
+    // File-only customer messages remain blocked until voice finalization ends.
+    const withFiles = {...ready,customerFrame:{},input:"",privateFiles:{files:[{id:"test-file"}]}};
+    expect(disabled(withFiles)).toBe(false);
+    expect(disabled({...withFiles,dictationActive:true})).toBe(true);
+    expect(disabled({...withFiles,privateFilesBlocked:true})).toBe(true);
+    expect(disabled({...withFiles,customerRecovery:{phase:"unknown"}})).toBe(true);
+    expect(disabled({...withFiles,customerAvailable:false})).toBe(true);
+    // Owner sends cannot become valid solely because private customer files exist.
+    expect(disabled({...withFiles,customerFrame:null})).toBe(true);
     expect(conversations).toContain("sendDisabled={sendDisabled || dictationActive}");
   });
 

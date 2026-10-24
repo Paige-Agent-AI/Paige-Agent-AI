@@ -44,6 +44,10 @@ below. The originals stay where they are as history (§58).
   - `messages`/`threads` are the customer inbox and have no participant ACL.
   - `paige_chat_threads` is single-owner PAIGE chat.
   - Adding the substrate is a backend change (§00). The owner approved it on 2026-10-24 (below).
+  - **Update, 2026-10-24:** increment 1 adds it (PR #2764, migration `20271113850008`,
+    `team_hub_*` tables and functions, SOLO-only). The search above describes the state before
+    that PR. It is `PROOF_OWED` until persisted-apply and an authenticated drive; see the
+    [collaboration contract](../../delivery/exp08-team-hub-collaboration-contract.md).
 - **Owner decisions, 2026-10-24.** Answered by the owner in the EXP08 Claude Code session and
   logged in `docs/brain/decision-log.md`. They are approvals to build, not proof that anything
   works.

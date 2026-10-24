@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T11:47:44.370Z",
+  "at": "2026-10-24T11:47:44.37Z",
   "original": "1a3f6a2c2d4f3745ecc0b53c7fe41ef40680bdc6",
   "incoming": "8d867d8337fc8ba3a1f8da916fa9dcfed7442656",
   "sourceLFSHA256": {
@@ -557,17 +557,25 @@
   "unit": {
     "distinctCases": 139,
     "distinctSuites": 8,
-    "finalEvidence": "138/139 first composition plus isolated final ItemRelease7/7 after fixture-label-only correction; all other seven suites unchanged",
+    "finalEvidence": "Current-source final consolidated run: all139 cases/eight suites PASS,49.74s; original fail-first and intermediate failure logs retained",
     "initialRED": "Work5 missing integrations; original child2 impure-read failures, retained",
     "preserved": "All incoming51 Work cases; original seven owning suites; original agency/client/project/row-version/reviewer/source/native/readback/uncertain controls retained"
   },
   "sourceOnly": true,
   "ordinaryRolesFullShellLaterSessionDeviceZoomCentralQAFounderAcceptance": "UNVERIFIED",
   "finalIntegration": {
-    "head": "7a074c99feb5aed2f7485dc92761a5526d9f6a4e",
-    "incoming": "65699d36369c88412e3e7e370b7c14e893272773",
+    "head": "8532199f26e833df8e18e62063c6ecff8ab00b0b",
+    "incoming": "dea2db4a7865ccf379815e5b10b2e54103337879",
     "all146CommittedLFInputsExact": true,
     "legacyWhitespace": "Original unchanged audit-six-tabs.cjs blank line/server.mjs EOF retained; new own changed paths clean",
-    "typecheck": "First old installation INVALID_SETUP(4 missing-editor/PDF diagnostics plus6 existing); full complete-dependency run pending"
+    "typecheck": {
+      "result": "PASS_NO_NEW_TYPE_DIAGNOSTICS",
+      "rawCompilerExit": 2,
+      "current": 6,
+      "committedBaseline": 10,
+      "added": [],
+      "comparator": "Original tsc-ratchet.mjs line/column normalization and signature multiset; no compiler rerun or baseline modification",
+      "limitations": "Local installed Zod4.5.4 differs from locked4.6.6; required hosted npm-ci/audit/typecheck remain authoritative. First incomplete dependency attempt is INVALID_SETUP, retained."
+    }
   }
 }

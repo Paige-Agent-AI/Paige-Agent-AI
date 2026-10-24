@@ -133,3 +133,17 @@ Experiential: original response survives inspection without repeat, late-result
 suppression proven; real customer journey still unverified.
 Founder Acceptance: NOT_REQUESTED; one complete integrated evaluation.
 
+## October24 — main composition and dependency release
+
+Source37cfd0d3 preserves current main04edecb0 (E01 consent-fold correction),
+E09 microphone and E03 inquiry work. The four UI source/test paths are byte-for-byte
+identical to262517; no rendered result is relabeled as a new full-shell run.
+Native status parent2722 remains a release dependency. Original2697/main4dc2
+passed all11 checks and production393-file readback; original2719/main600ce
+passed all11 and normal Edge40056453430 plus393-file readback. Receipts
+6379034477/6379133934 preserve failed checkpoint/public-version attempts too.
+The original native status2722 feature-parent UI check classified incoming E09
+paths; no validator is weakened. Current-main composition and a synchronize
+event after retargeting establish the correct main-targeted required gates.
+Authenticated original-assignment recovery and full Operations remain owed.
+

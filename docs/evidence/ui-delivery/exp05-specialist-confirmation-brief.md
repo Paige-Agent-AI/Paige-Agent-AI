@@ -55,6 +55,19 @@ extend or replay a confirmation, change its fingerprint or approve its own input
 
 ## Orchestration Contract and Algorithm Support
 
+The first unchanged registry gate correctly refused the altered Chat source.
+Separate pre-renewal AUTHOR-REVIEW / LOWER ASSURANCE atdec31d691 is recorded in
+reviews5637296300/5637298584. All29 baseline scalars reproduce; the original AST
+decomposition changes only enclosing-handler identity[15], preserving every
+dispatch, dominating control, other identity, helper and import. All124 actual
+dependency pins reproduce unchanged. Only29 reviewed literal scalars and their
+provenance comment are renewed; extractor, validator, metadata and source digests
+are unchanged. [Exact audit](../../evidence/exp05-specialist-confirmation-brief-binding.json).
+Unchanged registry self-test and full228-capability lint now pass. The private
+diagnostic's initial stale123-count assumption failed despite zero source digest
+mismatches; it was corrected to compare against the actual original exported
+124 paths. Required hosted exact-head contract and final review remain separate.
+
 Original Chat proposal and stored arguments -> existing Trust decision -> original
 Spine `agents.delegate`/Harness envelope -> existing specialist executor -> original
 invocation/result/Rail. This change ends at the proposal's presentation and creates

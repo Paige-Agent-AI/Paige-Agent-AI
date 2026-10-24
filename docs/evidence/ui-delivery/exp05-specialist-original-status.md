@@ -162,3 +162,20 @@ The native Chat renderer is still not mounted by this increment. No screenshot,
 browser recovery, customer execution, capability Live status or Experience
 acceptance is inferred from a passing loader/parser. The separate presentation
 slice must consume this same abort/scope owner and verify actual rendered states.
+
+## October24 — released dependencies and final main-targeted gates
+
+Current composition141d8fa0 preserves main04edecb0, including E01 Live consent,
+E09 microphone and E03 inquiry source. Native status/helper/control/loader/parser
+and all reviewed pins are byte-identical to d260. Composed actual handler18/0/0
+and local main-relative UI attestation pass; the renderer remains separate2725.
+Original2697/main4dc2 and2719/main600ce now have actual393-file production
+readbacks and normal release receipts6379034477/6379133934. The original Edge
+checkpoint failure and expected-public-version refusals remain recorded there.
+The ee344 UI check ran against the former feature parent and classified incoming
+E09 UI. No evidence or validator is relaxed. Main04ed composition plus this
+synchronize after retarget starts the correct full main-targeted required CI.
+Reviewed proof-only2727 isolates only the existing disposable cron; original19
+assertions remain. Its native/full CI and this exact final-head CI must pass.
+No new source renewal, activation, authenticated acceptance or whole-Experience
+closure is inferred from the composition or parent releases.

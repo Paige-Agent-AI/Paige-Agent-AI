@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: A canonical active business owner may explicitly revi
 FLOW_PROTOTYPE: PASS: Local outputs/e04-owner-review-prototype.html; owner explicitly authorized owner-reviewed release. Actual synthetic v1 revision, distinct v2, separate submission/review/release, lost-response reload and original-operation inspection, then separate client approval traversed. This is prototype-only proof.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An eligible standalone SOLO owner prepares exact saved work, reviews it explicitly and releases it for the client's separate approval or revisions.
 VISUAL_DIRECTION: PASS: Preserve original Operations work-item inspection and shared controls; one editable consumer of the original recovery identity at a time. No new navigation, component system or ornamental dashboard.
-AUTOMATED_EVIDENCE: UNVERIFIED: New original-adapter behavioral tests are being added before implementation; no new result claimed. Historical native 28 owner controls and full E09 scope295 passed at45f427c8f821fb2cf13679410b76a53358bc3d40, not this future head.
-STATIC_EVIDENCE: UNVERIFIED: Native ABI/ACL policy and original UI/adapters grounded; current candidate lint/type/build and source inverse are required before release. Local command and Node execution unavailable after restart; hosted required checks remain authoritative.
+AUTOMATED_EVIDENCE: PASS: At exactb1c6e134826380425c4ebf311516ae8b50bfdfd1, unchanged original adapters reproduced15 behavioral failures with6 original negative controls passing (21cases/37.89s); actual transcript outputs/e04-owner-review-red-b1c6e134.log. Current adapter/UI correction and ten added original-component cases require fresh verification; no current GREEN claim. Historical native28/fullscope295 remains dated45f proof.
+STATIC_EVIDENCE: UNVERIFIED: Native ABI/ACL policy and original UI/adapters grounded; current candidate lint/type/build and source inverse are required before release. Local command connection recovered through CMD after PowerShell/sandbox execution stalls; no flags/baselines changed. Current hosted required checks remain mandatory.
 RENDERED_EVIDENCE: UNVERIFIED: Prior synthetic prototype capture outputs/e04-owner-prototype-v2-client-accepted.png is a scrolled desktop prototype, not rendered production components or narrow evidence.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Prototype only; actual original components and required role/recovery interactions remain to be driven after integration.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Ordinary canonical owner, staff/admin self-refusal, linked external client, actual persistence/reload/revocation and equivalent existing/future eligible SOLO behavior remain proof owed.
@@ -25,12 +25,12 @@ MUST_PRESERVE: Original canonical Operations writers, exact artifact/version/dig
 ACCEPTANCE_CRITERIA: Actual eligible owner submits their exact version, explicitly reviews, separately releases, genuine client requests revision/accepts, and later sessions recover the same records without changing payment truth.
 MOTION_PURPOSE: NONE: No new motion.
 PROTECTED_SEAMS: Native is_tenant_owner remains authoritative; original release/client-decision bodies unchanged. Shared Work/Planning, root Chat/C0b/pins, E09 Portal UI and provider paths untouched.
-INTERNAL_BUILD_IDENTITY: 45f427c8f821fb2cf13679410b76a53358bc3d40; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLIED(20271113860004_e04_owner_delivery_review); edge=NOT_APPLICABLE; evidence=operations-client-review-packet.md and current PR head before review
+INTERNAL_BUILD_IDENTITY: 45f427c8f821fb2cf13679410b76a53358bc3d40; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271113860004_e04_owner_delivery_review native release and authoritative readback); edge=NOT_APPLICABLE; evidence=operations-client-review-packet.md and current PR head before review
 RELEASE_CHANNEL: development: original native source and behavioral-first continuation only, no production customer action
 RELEASE_CLASSIFICATION: internal-only: source preparation for the owner-authorized delivery workflow
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated EXP04 and founder acceptance remain owed
 RELEASE_NOTE_REQUIRED: no: no customer publication authorized for this increment
-RELEASE_TRUTH_BOUNDARY: PARTIAL historical native/prototype proof only; current source/release and authenticated full customer result PROOF OWED; Chat/Live delivery admission not promoted
+RELEASE_TRUTH_BOUNDARY: PARTIAL: historical native/prototype proof only; PROOF OWED: current source/release and authenticated full customer result; Chat/Live delivery admission not promoted
 RELEASE_RECOVERY: position=forward-fix original scoped readers/writers and retain exact uncertain operation; reference=operations-client-review-packet.md
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: actual changed original component and shell inspection owed
@@ -52,7 +52,7 @@ Choose an existing immutable Studio version and active reviewer. The owner may c
 
 ## Evidence index
 
-Original native source/proof:45f427c8f821fb2cf13679410b76a53358bc3d40, full native40112148788 SUCCESS, owner28 and original E09 scope295. Current behavioral-first continuation has no test result yet; hosted exact-head checks required. Prior synthetic prototype is local-only and does not establish production rendering or customer acceptance.
+Original native source/proof:45f427c8f821fb2cf13679410b76a53358bc3d40, full native40112148788 SUCCESS, owner28 and original E09 scope295. Behavioral-first b1c6e134 actual15RED/6PASS, no implementation changed during that run; current exact source/local/hosted checks required. Prior synthetic prototype is local-only and does not establish production rendering or customer acceptance.
 
 ## Review and limitations
 

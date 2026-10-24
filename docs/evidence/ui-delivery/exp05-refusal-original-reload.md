@@ -129,3 +129,11 @@ could not start either Windows forks worker: zero tests/two infrastructure
 errors. This is INVALID behavioral proof, not a55-case PASS or source failure.
 Original tests/thresholds are unchanged; actual hosted composed checks remain
 mandatory. No recurrence, provider, specialist instructions or Live activation.
+
+The unchanged two owning files subsequently pass55/55 with one supported local
+threads worker (--pool=threads --maxWorkers=1 --no-file-parallelism). No assertion,
+timeout, type baseline, test source or hosted configuration changed. Keep the
+separate forks startup attempt INVALID; normal hosted exact-head proof is still
+required. Source review7fb2a3484 precedes the manually inspected29-literal renewal;
+the validator/extractor, capability metadata, all old dependency pins and both
+Experience source implementations are preserved. No pin regeneration path is added.

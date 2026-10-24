@@ -3339,3 +3339,33 @@ ALG12 bounded refusal PARTIAL/monitoring unverified and ALG13 usefulness unverif
 no algorithm/capability Live promotion. All O1–O12, original consultant/SOLO
 scenario, held Agency/Subaccounts and final one integrated founder evaluation
 remain unchanged. [Source and rendered evidence](../evidence/ui-delivery/e04-sales-metric-continuity.md).
+
+
+## EXP04 Sales evidence continuity — October24 production source closeout
+
+The preceding local checkpoint is retained as dated evidence. Original2728 is now
+SOURCE RELEASE VERIFIED: reviewedd4eb35aa56af2df30f01f6b6c879a1d627217f7a, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5636851529; ten applicable exact-head checks
+SUCCESS including full native/general/audit, normal UI-only PreviewSKIP/two web
+SUCCESS. Actual main02a901fd4946759b6bddab71b03d1d590e387106/tree4413f66112f8a46c0b3c8f676fa55042e4d841ab
+equals inspected885ec367+d4eb35aa union; all22 captured critical source bytes and
+incoming Master/Brain preserved. Normal production dpl_9bFXtRwfjha5obPfUSm9gUDKexoT
+READY, both public HTTP200 exact02a901fd4-mvly2y80/null and original served
+SoloEntry f82bcc99/allfour repair markers verified05:19:37UTC. Migration/Edge N/A.
+[Receipt6380313655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2728#issuecomment-6380313655); sole Master4.0 preceding-delivery row.
+Initial filename probes selected no source module; actual observed loader/import
+graph completed the unchanged-marker verification. No product/check modified to
+obtain readback. This is public static source proof, not actual signed-in behavior.
+
+Existing read-only Sales hook, native issuer/resolver, 11 identities/versions,
+business-calendar overdue and original authorization remain. No cached figures,
+sender, ledger, financial calculation engine, Chat/Mind/Memory writer or provider
+action. Local52consumer/27hook and15 original native frames remain bounded
+synthetic evidence; original minor narrow inner-scroll/crowded-link findings stay
+open. Actual Sales→Finance/VERA/Chat same-reference read, native role revocation,
+later-session reload and two legitimate cohorts/CentralQA are still UNVERIFIED.
+Original EXP02 acceptance handoff remains. All O1–O12, professional prepared
+signing, real payment truth, Work/client service acceptance, Portal and one final
+integrated founder evaluation remain required. No algorithm/capability Live
+promotion, customer name/version/announcement or restricted activation. Ordinary
+reviewed forward fix or bounded hook revert preserves original native records.

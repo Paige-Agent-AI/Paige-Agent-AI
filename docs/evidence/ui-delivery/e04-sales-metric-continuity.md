@@ -34,8 +34,8 @@ MUST_PRESERVE: original11 Sales metric identities/versions/ranges, existing busi
 ACCEPTANCE_CRITERIA: actual authorized Sales inspection survives an automatic refresh through the same original unexpired evidence reference; Finance/VERA retrieves that same original source; revoked/expired/changed-actor cases refuse, explicit authorized refresh recovers, and reload does not invent durability. Authenticated proof of this complete criterion remains owed.
 MOTION_PURPOSE: NONE: no product motion change.
 PROTECTED_SEAMS: native analytics issue/resolve ABI, actor/tenant/accountEpoch/range/parser, evidence identity/expiry and caller receiver preserved. Chat/Live/Mind/Memory, shared registry/Spine/Kit/Trust/Harness/Rail, canonical agreement/invoice/payment/Work writers, provider, scheduler and database schema are unchanged.
-INTERNAL_BUILD_IDENTITY: source=aec7f3014f39950b3441258d5fd76d331c8bb404; exact final source/evidence review head recorded in owning PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and source-pinned native manifest.
-RELEASE_CHANNEL: development: actual local original-component source proof, no production/customer claim.
+INTERNAL_BUILD_IDENTITY: source=d4eb35aa56af2df30f01f6b6c879a1d627217f7a; merge=02a901fd4946759b6bddab71b03d1d590e387106; tree=4413f66112f8a46c0b3c8f676fa55042e4d841ab; deployment=dpl_9bFXtRwfjha5obPfUSm9gUDKexoT; environment=production; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original source-pinned native manifest.
+RELEASE_CHANNEL: production: exact web/public static-source release verified; original local rendering proof remains synthetic, authenticated cross-department behavior unverified.
 RELEASE_CLASSIFICATION: internal-only: bounded O12 reference-lifetime repair; not an announcement of the whole Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no founder-approved customer release name or announcement.
 RELEASE_NOTE_REQUIRED: no: internal bounded repair; any eventual customer announcement retains the separate policy gate.
@@ -91,3 +91,28 @@ The first local evidence guard rejected two report grammar fields (PARTIAL was
 not an allowed zoom prefix, and release claim labels lacked colons). Labels were
 corrected to the actual UNVERIFIED zoom boundary and explicit governed claim
 syntax; no validator, source, screenshot, test or proof threshold changed.
+
+
+## October24 actual production source release
+
+Original2728 reviewedd4eb35aa56af2df30f01f6b6c879a1d627217f7a/LOWER5636851529, actual main02a901fd4946759b6bddab71b03d1d590e387106,
+inspected/actual tree4413f66112f8a46c0b3c8f676fa55042e4d841ab;10 applicable checks
+SUCCESS, full native120780251695/general120780251855/audit120780251513, normal
+UI-only PreviewSKIP/two web SUCCESS. Normal production dpl_9bFXtRwfjha5obPfUSm9gUDKexoT
+READY; both public HTTP200 exact02a901fd4-mvly2y80/customerUpdate:null. Actual
+05:19:37UTC [static readback](assets/e04-sales-metric-continuity/production-readback.json)
+retains original HTML/thin-loader/application import and served SoloEntryf82bcc99
+with both original native RPCs and two new identity/final-expiry refusal markers.
+First narrow filename probes found no module and remain failed diagnostics; actual
+observed bounded import traversal completed proof without changing markers or product.
+[Release6380313655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2728#issuecomment-6380313655); sole Master4.0 row.
+
+All22 merged critical sources preserve the original captured hashes, all15 native
+PNG/sidecars/three proof assets remain unchanged. No fresh render or production
+customer behavior is inferred. Migrations/Edge N/A; no provider/Chat/admission
+activation. Actual ordinary owner/staff/client roles, native revoke/tenant negatives,
+Sales→Finance/VERA/Chat reference continuity, true later-session reload, two cohorts,
+CentralQA, full O1–O12 and founder acceptance remain UNVERIFIED. Original minor
+narrow findings stay open. No customer name/version/announcement or Algorithm/
+Capabilities maturity promotion. This is the preceding release's mechanical
+closeout; ordinary reviewed forward repair or bounded hook revert remains recovery.

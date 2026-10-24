@@ -68,4 +68,12 @@ EXP08 consumes original Work references; EXP02 owns its original report source;
 EXP03 owns customer qualification/comms and EXP10 provider readiness. No source
 writer, agent, trigger, consent, spend or business effect is activated here.
 
+Latest composition4408784f35e9d6f5263392a55c1bc36a82c910fe consumes reviewed
+refusal parentd95794a2e and maindf691e3fc, including the selected original
+E09 undici patch and E07 Studio/canvas source. The same weekly adapter/test blobs
+are unchanged;23/23 pass with one supported local threads worker, no skipped
+case, assertion, timeout or hosted CI change. Parent2697 must be source-deployed
+and read back before this child release. Fresh exact-head CI/real native proof
+remain mandatory; old stacked-head checks/audits are historical only.
+
 Full local native run disposition: FAIL at the unchanged accumulated-history performance margin assertion, after the real engine/redrain case passed. At1000 history rows per process, the repaired owner RPC's measured execution times were1498.516/998.595/1038.140ms; median1038.140ms fails the existing below1000ms margin. Preserve that failure; it is not a full native PASS. Weekly getter SQL, migrations, performance proof and threshold are byte-identical to main2748432, while this slice changes only the adapter consumer. No timing gate is relaxed or fixture replaced. The normal same-head required native proof must pass before release; runtime/customer latency is still unverified. Earlier sandbox socket denial is a separate invalid infrastructure attempt, not this measured failure.

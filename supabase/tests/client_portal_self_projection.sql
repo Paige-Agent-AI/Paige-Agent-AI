@@ -186,23 +186,21 @@ SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"br
 UPDATE public.tenants SET status='active' WHERE id='e0921000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config'->'welcome'->>'headline','Saved greeting A','returning to an active legitimate relationship reloads its saved configuration');
 
--- Future multi-business shape is synthetic within this rollback only. Production's
--- unique linkage is unchanged; current readers must already refuse ambiguity.
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'fixture starts with the canonical global partial unique link index');
-DROP INDEX public.clients_linked_user_id_unique;
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique),'future cross-business fixture preserves the per-tenant unique link');
+-- Rolled-back multi-business data uses the actual native schema.
+-- Unscoped readers must still refuse ambiguity.
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 1');
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique),'current multi-business fixture preserves the per-tenant unique link');
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001' WHERE id='e0931000-0000-0000-0000-000000000002';
 SELECT set_config('request.jwt.claims','{"sub":"e0911000-0000-0000-0000-000000000001","role":"authenticated"}',true);
 SET LOCAL ROLE authenticated;
 SELECT throws_ok($$ SELECT * FROM public.get_client_portal_brand() $$,'42501','select an authorized customer relationship','ambiguous business brand refuses instead of choosing the oldest row');
 SELECT throws_ok($$ SELECT public.get_client_portal_config() $$,'42501','select an authorized customer relationship','ambiguous business configuration refuses instead of choosing the oldest row');
-SELECT throws_ok($$ SELECT public.client_portal_frame() $$,'42501','select an authorized customer relationship','atomic frame refuses ambiguous future customer relationships');
+SELECT throws_ok($$ SELECT public.client_portal_frame() $$,'42501','select an authorized customer relationship','atomic frame refuses ambiguous customer relationships');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
-SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'42501','ambiguous future relationships cannot advance an arbitrary client stage');
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'42501','ambiguous relationships cannot advance an arbitrary client stage');
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000002' WHERE id='e0931000-0000-0000-0000-000000000002';
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future-shape cleanup restores the canonical global guard before outer rollback');
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 2');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'onboarding_stage','invited','all denied stage attempts preserve the last legitimate saved stage');
 SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action='onboarding_stage_advanced' AND target_id='e0931000-0000-0000-0000-000000000001'),2::bigint,'no-op and refused stage requests add no success audit');
 

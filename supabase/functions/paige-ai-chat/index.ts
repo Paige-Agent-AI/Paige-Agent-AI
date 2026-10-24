@@ -17283,6 +17283,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     : "Could not read that campaign's leads right now.";
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: friendly }) });
               } else {
+                // The dossier route's account segment is the workspace's account number
+                // (the shell's own /solo/{account_number}/... convention). One caller-session
+                // read resolves it; if it cannot be read the link is simply omitted rather
+                // than fabricated — the owner still has Campaigns in the workspace.
+                let accountSegment: string | null = null;
+                try {
+                  const { data: accountRow } = await supabaseClient.from("tenants")
+                    .select("account_number").eq("id", leadsResult.tenantId).limit(1);
+                  const value = Array.isArray(accountRow) ? accountRow[0]?.account_number : null;
+                  accountSegment = typeof value === "number" ? String(value) : typeof value === "string" && value.trim() ? value.trim() : null;
+                } catch { accountSegment = null; }
+                const dossierPath = accountSegment ? `/solo/${accountSegment}/growth/campaigns?brief=${leadsResult.briefId}` : null;
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
                   success: true,
                   source: leadsResult.context,
@@ -17291,8 +17303,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   leads: leadsResult.leads,
                   truncated: leadsResult.truncated,
                   ambiguous_on_campaign_forms: leadsResult.ambiguousOnCampaignForms,
-                  dossier_path: `/solo/${String(personaCtx?.account ?? "")}/growth/campaigns?brief=${leadsResult.briefId}`,
-                  note: `Attribution below is how each lead was CREDITED to this campaign (a form in the campaign, the link's campaign tag, or both) — it is not ad performance: no impressions, clicks, spend, cost per lead or return on ad spend exist behind it, so never state or estimate any of those. Members see this list without names by design. Revenue lives in Sales and is not credited to campaigns.${leadsResult.truncated ? ` The list shows the newest ${leadsResult.leads.length} of ${String(leadsResult.counts.leads ?? "?")} leads — say so, never present the list as every lead.` : ""}${leadsResult.ambiguousOnCampaignForms ? " Some leads' campaign tags matched several campaigns, so they are counted but not credited to this one — disclose that rather than presenting the counts as complete." : ""} The campaign's dossier (where the owner sees these leads with the same credit rules) is at the path in dossier_path — offer the owner that link.`,
+                  ...(dossierPath ? { dossier_path: dossierPath } : {}),
+                  note: `Attribution below is how each lead was CREDITED to this campaign (a form in the campaign, the link's campaign tag, or both) — it is not ad performance: no impressions, clicks, spend, cost per lead or return on ad spend exist behind it, so never state or estimate any of those. Members see this list without names by design. Revenue lives in Sales and is not credited to campaigns.${leadsResult.truncated ? ` The list shows the newest ${leadsResult.leads.length} of ${String(leadsResult.counts.leads ?? "?")} leads — say so, never present the list as every lead.` : ""}${leadsResult.ambiguousOnCampaignForms ? " Some leads' campaign tags matched several campaigns, so they are counted but not credited to this one — disclose that rather than presenting the counts as complete." : ""}${dossierPath ? " The campaign's dossier (where the owner sees these leads with the same credit rules) is at the path in dossier_path — offer the owner that link." : " The owner can see these leads in the campaign's dossier under Marketing > Campaigns."}`,
                 }) });
               }
             } else if (tc.function.name === "campaign_brief_list") {

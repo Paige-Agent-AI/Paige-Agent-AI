@@ -25,7 +25,7 @@ MUST_PRESERVE: original specialist identity/remit, actor/tenant/seat and registr
 ACCEPTANCE_CRITERIA: untouched global version2 factory receives nonempty instructions and job_kind=plan atomically at version3; reapplication and protected variations are exact no-ops; real existing route uses that exact prompt with no tools/provider override and refuses changed current registry/authority.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original paige_subagents identity and row version; existing Harness/authority/Fabric checks and original receipts; no Chat/Spine/C0b/TeamHub/provider source edit.
-INTERNAL_BUILD_IDENTITY: base=9d4a85179da7a186d840bc66ed24fc8828f7740e; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113740005 not applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-zion-planning-instructions.md
+INTERNAL_BUILD_IDENTITY: base=79171c8243adbe5b5d56f196fae0758cb1bdd89a; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113850005 not applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-zion-planning-instructions.md
 RELEASE_CHANNEL: development: local protected fixtures only; no production row, provider/key/budget/flag or trigger mutation.
 RELEASE_CLASSIFICATION: internal-only: existing specialist planning prerequisite, not complete ZION/Operations customer acceptance.
 CUSTOMER_RELEASE_IDENTITY: NONE: no earned customer version or announcement.
@@ -107,12 +107,21 @@ recipes. `SoloPaigeWorkspace.tsx` still derives coverage from useSoloSkills and
 presentCatalogueCoverage; access stays Unverified. No shared panel source lease
 is taken and no entry is promoted to Live from this migration.
 
-ANT161/67687c3b and8f09a40f reserve only this migration740005, native proof,
+ANT161/67687c3b and8f09a40f originally reserved migration740005, native proof,
 original role-fixture compatibility, additive existing route test, workflow entry
-and owning evidence. Preserve pending E04reader710004 → E09private710009 →
-E04exact720004 → E04catalogue730004 order and the originating EXP10 duplicate-
-700000 correction. Production registry release follows reviewed2722/2725 original
-result recovery and current migration-frontier reconciliation; no history reset.
+and owning evidence. Originating E10 correction2732 preserved its exact SQL body
+and applied800000; main79171c82 includes that correction and E03 closeout2729.
+Before edits, ANT161/1c9f91b4 withdrew our never-applied740005 and reserved850005.
+The file body is byte-identical; only the filename and exact test references
+change. No applied history or peer file is changed. E04/E09/E02 own reconciliation
+of their never-applied lower reservations;850005 must follow their acknowledged
+order. Production registry release follows reviewed2722/2725 original-result
+recovery and current frontier reconciliation; no include-all or history reset.
+
+After that filename-only composition, actual route34/34 and the same native
+20 planning +19 role assertions pass again. Reviewed migration body Git blob
+d333d703baa3a0120b8d9c333b1cb5542c604bd0 is unchanged across the old/new filenames;
+no previous applied migration is renamed. Fresh full-schema CI remains separate.
 
 EXP04 retains commercial promises and business-zone truth; EXP03 CRM, booking
 and communications; EXP02 priorities/metrics; EXP08 TeamHub consumes original

@@ -2860,7 +2860,7 @@ All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.
 
 The existing global soft ZION version2 is enabled but has no system prompt or
 job configuration; original invokeSoft correctly refuses before any provider.
-Bounded migration740005 supplies internal planning instructions and existing
+Bounded migration850005 supplies internal planning instructions and existing
 job_kind=plan atomically at version3 only for the exact untouched factory row.
 Customized, disabled, tenant, triggered and later registrations are preserved.
 No new specialist, permission, tool, provider, trigger or execution engine.
@@ -2871,6 +2871,8 @@ specialist draft/receipt/reload remain owed. Prompt installation restores draft
 callability, not execution authority or a Live catalogue promotion. Original
 Operations recipes and their access/coverage remain unchanged.
 [Evidence](../evidence/ui-delivery/exp05-zion-planning-instructions.md).
-Preserve ANT161/8f09a40f E04/E09 migration order, originating E10 main collision
-correction and2722/2725 recovery dependencies. Full ten outcomes/E5-CV1–9 and
+Preserve ANT161/1c9f91b4 E04/E09/E02 receiving-owner migration order and2722/2725
+recovery dependencies. Own never-applied740005 reservation was withdrawn after
+the originating E10 correction genuinely applied800000; SQL bytes unchanged.
+Full ten outcomes/E5-CV1–9 and
 founder evaluation remain open; source/visual/customer acceptance stay separate.

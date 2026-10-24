@@ -558,9 +558,7 @@ SELECT is((SELECT linked_user_id FROM public.clients WHERE id='e0937000-0000-400
 SELECT is(pg_temp.as_service($q$UPDATE public.clients SET linked_user_id='e0917000-0000-4000-8000-00000000000f' WHERE id='e0937000-0000-4000-8000-0000000000c3'$q$)->>'ok',
  'true','a person outside the team still links through a trusted path');
 
--- ── 16. Multi-business: a pause at A never touches B (Slice 8 simulated: the global unique link
--- index is dropped inside this rolled-back transaction) ─────────────────────────────────────────
-DROP INDEX public.clients_linked_user_id_unique;
+-- 16. Native multi-business: pausing A never touches B; actual indexes stay installed.
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0937000-0000-4000-8000-0000000000ce','e0927000-0000-4000-8000-000000000002','e0917000-0000-4000-8000-00000000000c','e0917000-0000-4000-8000-000000000002','Multi','At B','active');
 SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-00000000000c',$q$SELECT to_jsonb(public.client_portal_relationship_id())$q$)->>'sqlstate','42501','two open relationships are ambiguous');

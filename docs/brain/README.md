@@ -1,3 +1,11 @@
+## EXP04 exact preceding source releases — October24
+
+Original [#2741](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2741) reviewedb3c2dc01 (sequential LOWER6386092377/6386513022; all11 checks/two statuses SUCCESS) merged1b4a4a73f88c05a97b7a91ab3b6f09bc3d349ed1/tree6a632f0f, normal webDx6iqVuQKGXJD1Z4thY7qkAgeeXj and original immutable/public1b-mvmlokow/null readback retained. Original prepared-request input remains source-only/unused, with verified sender/exact message/HIGH request/atomic fields missing and original holds intact; no prepared-signing activation.
+
+Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) revieweda5e5984e (sequential LOWER6389425023/6389733892; all10 applicable checks+two statuses SUCCESS, schema-free Preview SKIPPED) merged d53d99e951e0f18ac1a6895598f2e4211e1367e5/tree2f176875 exactly. WebcpgpMJPHC1ZVHT4GqYwBj1w22GaE and immutable authenticated-MCP/publicd53-mvmwsq4f/null verified. The two INITIAL_SESSION guards retain original references and every material Auth/native revocation boundary. Protected original-reference customer FAIL remains open pending fresh authorized reacceptance; no ref replay or customer PASS is inferred. [Receipt6389808952](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768#issuecomment-6389808952).
+
+[Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and existing [EXP04 journey](../delivery/exp04-get-paid-deliver-journey.md) retain exact source/review/CI/deployment/acceptance boundaries. This mechanical closeout adds no product, activation, algorithm/capability maturity, provider/role change, customer version or recursive shipped row. Pending2745/2775 and full O1–O12/one integrated founder evaluation remain open.
+
 ## EXP09 private multi-file CURA Chat — October24 source released; customer proof owed
 
 Original [#2765](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2765)
@@ -276,8 +284,13 @@ Contract: [Team Hub collaboration contract](../delivery/exp08-team-hub-collabora
 Evidence: [increment 1 record](../evidence/ui-delivery/exp08-team-hub-increment1.md). Owed: the
 §32 persisted-apply check and an authenticated drive on the owner-designated SOLO account.
 
-**Not built:** a team `/PAIGE` palette, specialist requests through EXP05 Work, the Team work
-panel, attachments, Knowledge and Chat/Live continuity (increments 2–4).
+**Increment 2 (2026-10-24, `PROOF_OWED`, not yet merged):** team work. `/` commands; *Draft a
+task* creates one Operations task through `plan_assign_task_scoped` with an exactly-once link in
+`team_hub_work_refs` (migration `20271113860008`); specialist, approval and meeting requests only
+prefill PAIGE; the Team work panel reads status from `plan_items`. Contract:
+[increment 2 work contract](../delivery/exp08-team-hub-increment2-work-contract.md).
+
+**Not built:** attachments, and PAIGE/Knowledge and Chat/Live continuity (increments 3–4).
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

@@ -4,6 +4,7 @@ import { commsEmailBodyHtml, normalizeCommsEmailAddress } from "../comms-email/c
 import { readEmailSenderFacts, emailSenderReadiness, type CommsEmailAdmin,
   type EmailProviderEnvironment } from "../comms-email/readiness.ts";
 import { senderDisplayName } from "../email/sender-display-name.ts";
+import { decideContentRead } from "../inbox-intelligence/policy.ts";
 import { object, UUID } from "../sales-collections/primitives.ts";
 import type {
   OwnerPreparationCaller,
@@ -138,7 +139,15 @@ export type PreparedSignatureEmailPorts = {
     contactId: string | null }): PromiseLike<{ proceed: boolean; outcome: string }>;
 };
 function exactUnicode(value: string): boolean {
-  return new TextDecoder("utf-8", { fatal: true }).decode(new TextEncoder().encode(value)) === value;
+  return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(new TextEncoder().encode(value)) === value;
+}
+function containsSigningCredential(value: string): boolean {
+  // Decode valid percent-encoded runs exactly once, as the signing route does.
+  // A stray human "%" must not conceal another valid encoded credential URL.
+  const decoded = value.replace(/(?:%[a-f0-9]{2})+/gi, part => {
+    try { return decodeURIComponent(part); } catch { return part; }
+  });
+  return /\/sign\/[a-f0-9]{64}/i.test(decoded);
 }
 function captureMessage(value: unknown): MessageDraft {
   if (!object(value) || Object.keys(value).length !== 3 ||
@@ -148,10 +157,11 @@ function captureMessage(value: unknown): MessageDraft {
   const { subject, body_text } = value;
   if (typeof subject !== "string" || !subject.trim() || subject.length > 200 ||
     /[\r\n\u0000]/.test(subject) || subject.includes(PREPARED_SIGNING_LINK_MARKER) ||
+    containsSigningCredential(subject) ||
     !exactUnicode(subject) || typeof body_text !== "string" || !body_text.trim() ||
     body_text.length > 10000 || body_text.includes("\u0000") || !exactUnicode(body_text) ||
     body_text.split(PREPARED_SIGNING_LINK_MARKER).length !== 2 ||
-    /\/sign\/[a-f0-9]{64}/i.test(body_text)) return fail("MESSAGE_INVALID");
+    containsSigningCredential(body_text)) return fail("MESSAGE_INVALID");
   return { signer_id: value.signer_id, subject, body_text };
 }
 function captureEmailReview(value: unknown) {
@@ -188,12 +198,19 @@ async function boundRequestSender(ports: PreparedSignatureEmailPorts, tenantId: 
       return fail("SENDER_UNVERIFIED");
     }
     const result = await ports.admin.from("channel_connectors")
-      .select("id,tenant_id,channel_type,provider,status,active,from_address,from_name,reply_to")
+      .select("id,tenant_id,channel_type,provider,status,active,from_address,from_name,reply_to,mailbox_class,mailbox_owner_user_id")
       .eq("tenant_id", tenantId).eq("id", connectorId).eq("channel_type", "email").maybeSingle();
     const row = result.data;
     if (result.error || !object(row) || row.id !== connectorId || row.tenant_id !== tenantId ||
       row.provider !== "sendgrid" || row.channel_type !== "email" || row.status !== "active" ||
       row.active !== true) return fail("SENDER_UNVERIFIED");
+    // The exact identity row must still satisfy the original mailbox policy:
+    // facts may have been read just before a connection became private.
+    if (!decideContentRead({ callerUserId: actorId, callerTenantId: tenantId,
+      mailboxTenantId: String(row.tenant_id), mailbox: {
+        mailbox_class: row.mailbox_class, mailbox_owner_user_id: row.mailbox_owner_user_id,
+        active: row.active, status: row.status, mailbox_scopes: null,
+      } }).allowed) return fail("SENDER_UNVERIFIED");
     const address = normalizeCommsEmailAddress(row.from_address);
     if (!address || address !== normalizeCommsEmailAddress(facts.fromAddress)) return fail("SENDER_UNVERIFIED");
     const identity = await ports.admin.rpc("tenant_sender_identity", { _tenant_id: tenantId });
@@ -249,12 +266,12 @@ export async function prepareSignatureRequestReview(
   }
   // Original native readers re-prove actor, business, source and actual PDF
   // AFTER all sender/recipient work. A stale review never adopts new facts.
+  const finalSender = await boundRequestSender(ports, source.args.expectedTenantId,
+    intent.connector_id, expectedActorId);
   const finalSource = await prepareSignatureRequestInput(sourceInput, caller, service, expectedActorId);
   if (canonicalPresentationJson(source.args) !== canonicalPresentationJson(finalSource.args)) {
     return fail("REVIEW_CHANGED");
   }
-  const finalSender = await boundRequestSender(ports, source.args.expectedTenantId,
-    intent.connector_id, expectedActorId);
   if (canonicalPresentationJson(sender) !== canonicalPresentationJson(finalSender)) {
     return fail("SENDER_CHANGED");
   }

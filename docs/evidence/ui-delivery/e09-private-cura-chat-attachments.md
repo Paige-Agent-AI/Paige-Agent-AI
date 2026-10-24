@@ -92,7 +92,7 @@ certification contract is changed. CLI success still requires the complete origi
 downloaded-source/configuration verifier before any guarded edge-live update.
 
 The existing Python source-verification suite gains causal command/recovery tests,
-called by the ordinary required Test step through one owning Vitest wrapper. All
+run once by one additive step in the existing required verify job after checkout. All
 provider/CLI effects in these fixtures are explicit doubles and cannot prove real
 deployment or customer behavior. Local execution remains unavailable after Windows
 resource exhaustion; no local PASS is claimed. Exact-head review, new hosted CI,

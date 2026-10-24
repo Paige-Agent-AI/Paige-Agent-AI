@@ -242,7 +242,12 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings }: {
     // The Retry button is gone or replaced; return to the composer the message came from.
     window.requestAnimationFrame(() => (item.parentId ? threadComposerRef : composerRef).current?.focus());
     announce(outcome.kind === "sent" ? (item.parentId ? "Reply posted" : "Message sent") : outcome.kind === "failed" ? "Still not sent. Your message is kept here." : outcome.message);
-    if (outcome.kind === "refused") { if (item.parentId) setThreadError(outcome.message); else setComposerError(outcome.message); }
+    // A refused retry takes the pending row away, so its text goes back to the composer it came
+    // from, as a refused first send does; a draft already being written there is not overwritten.
+    if (outcome.kind === "refused") {
+      if (item.parentId) { setThreadDraft((current) => current || outcome.body); setThreadError(outcome.message); }
+      else { setDrafts((current) => current[item.channelId] ? current : { ...current, [item.channelId]: outcome.body }); setComposerError(outcome.message); }
+    }
   };
 
   const focusThreadWhenReady = useRef(false);

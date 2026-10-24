@@ -56,6 +56,93 @@ the full destination. EXP02's original Sales metric-reference revocation
 finding in ANT81 is also owned integration debt; reuse the canonical resolver
 without changing revocation/tenant/actor gates or creating another reader.
 
+## C20 governance completeness repair — October24 source checkpoint
+
+Current source union also preserves the original frozen EXP05 recovery producer
+2697/d95794a2 as an explicit PENDING dependency, not an E04 replacement or
+activation. Original2697 must release before this consumer. Its complete shared
+source, refusal marker,123rd restrictive source path and original hostile tests
+remain. Removing only E04's static target row restores that producer's entire
+Chat source. Original-extractor decomposition again changes ONLY identity[15]
+for all29 scalars; the29 literals are manually renewed with source/metadata
+inverse evidence in e04-effective-terms-recovery-union-binding.json. The earlier
+b73/122-pin proof below remains dated evidence. The separate E04 HIGH risk
+digest stays explicit; all other122 producer dependency digests are exact.
+Both complete incoming Brain additions are retained. No producer is reassigned.
+
+Native deployment interleave now explicitly includes the existing invitation
+consumer: EXP09620009 → E04630004 → EXP09630009 → E04640004 → E04650004.
+Read-only production catalogue actually shows620009 applied, original signature
+and Rail bodies unchanged, and all own63/64/65 absent. No timestamp or production
+ledger is rewritten to skip a reserved predecessor. Native/CI/deployment results
+and genuine owner/staff/client/Portal/provider/founder acceptance remain separate.
+
+REPAIR the existing effective-terms action; no new execution architecture. Retain
+the required general-verify failure120714859070 at b73ff25d. The original
+SHA256-verified attribution artifact12541205791 identifies one unit failure:
+the existing capabilities.v3 measured catalogue gap (20755 passed,1 failed,
+3 pending). The original catalogue, closed-action and receipt-coverage guards
+also correctly refused incomplete declarations. All three now pass locally.
+
+The new never-applied20271113650004 catalogue wrapper delegates the incumbent
+first, preserves its full rows/scope/grants and adds only the existing HIGH
+sales_effectuate_commercial_terms label in Payments. Missing stored mode stays
+confirm. No grant, activation or commercial write is created. The original
+six-action Collections allowlist extends by exactly this seventh key; no generic
+pattern, exemption, baseline or CI assertion is relaxed. One real emits entry
+names C19's atomic native operation/Rail and its existing rollback/replay proof.
+
+The original client-memory smoke genuinely failed1237/1 at its attribution
+inventory. One static WRITE_TARGET entry names tenant_client_agreements; the
+unchanged smoke now passes1238/0. This metadata offers no Chat schema or dispatch.
+All six focused original suites pass62 cases, including the exact failed
+catalogue test. The exact new action remains unavailable to Chat/Mind; original
+admission, approval and service/provider restrictions remain.
+
+Removing that single target row restores all original b73 Chat bytes. Read-only
+decomposition reproduces all122 original source pins/all29 baseline dispatches;
+only the enclosing-handler identity[15] changes for each. The29 reviewed literal
+scalars were renewed with extractor, metadata, source digests and hostile
+controls unchanged by byte inverse. This is AUTHOR-REVIEW / LOWER ASSURANCE,
+not independent review. Evidence: e04-effective-terms-attribution-binding.json.
+The existing EXP05 interactive.ts dependency scalar remains separately owned;
+preserve that disjoint update on composition rather than replacing its source.
+
+Added catalogue SQL:26 actual native assertions PASS, replay twice,49 original
+rows retained, ordinary current-tenant and foreign-tenant refusal, anonymous and
+private-predecessor ACLs, original public ABI, confirm/off/auto reporting and
+source timestamp instant preserved. Actual base/latest catalogue sources use
+the original disposable fixture's synthetic Auth stand-ins. The first added
+proof correctly exposed an expectation that assumed UTC formatting; native
+Eastern serialization represented the same stored instant. Only this new test's
+expectation was corrected. Product dates/time-zone code is unchanged.
+
+Separately, the full original local native run stopped at the original C19
+concurrency lock-observation assertion BEFORE this added proof. Failure remains
+recorded, original waits/timeouts unchanged; its cause is UNVERIFIED. The scoped
+26-assertion pass does not replace the full exact-head hosted native gate. The
+task cluster was verified empty and stopped after both runs. Restricted initial
+loopback permission failure is also preserved, not a product RED or PASS.
+
+C21 UI remains frozen in draft2714/4e with41 local cases,17 actual rendered
+current-source frames and29 critical source pins. Parent/current-main/security
+dependency composition, fresh full CI, ordinary release/deployment readback,
+real owner/staff/linked-client verification, CentralQA and one integrated founder
+evaluation remain required. No new native65 SQL is production-applied. Preserve
+EXP09 reserved62 before E04 native63/64/65; consume existing undici2713 repair,
+never bypass the new audit or borrow an older green result.
+
+Market acceptance: original Map FLOW:SALES/PAYMENTS/DELIVERY rows132–134 within
+the full A122:AB144 launch sequence apply to consultants/coaches/fractional
+professionals and creative/marketing firms operating their own SOLO business.
+Preserve the same EXP03 consented contact/opportunity, E04 exact agreement,
+invoice/provider-linked balance/service obligations, EXP05 original Work/result,
+EXP09 client authorization/Portal and EXP02 metric/reference. Agency/Subaccounts
+remain held. Full O1–O12, prepared-document/approved-send/assigned-field signing,
+Stripe TEST reconciliation, onboarding/delivery decisions/collections/self-service
+and durable return remain unfinished. No algorithm or catalogue Live promotion;
+ALG01 bounded Partial,02 progression/07 dunning/13 usefulness proof still owed.
+
 ## C20 owner review and durable effective-term re-entry — pre-edit route
 
 1. Outcome: the owner reviews the exact accepted economics, approves one bounded

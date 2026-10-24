@@ -1,0 +1,255 @@
+{
+  "base": "b73ff25d074907698273527ad7ab0c6592939ac6",
+  "chatInverse": "Exactly one static WRITE_TARGET row removed restores original bytes",
+  "sourcePins": 122,
+  "baseline": {
+    "findings": [],
+    "dispatches": 29
+  },
+  "sourceSha256": {
+    "before": "d8c43b33c595ac86172fae0d734a4b0e385fd7a76404508988274ee4b946254b",
+    "after": "a4b78c40a0a6b5a158322994acaf7dca577716cbf4b270b85eeab2234afcf979"
+  },
+  "changes": [
+    {
+      "tool": "comms_setup_calling",
+      "before": "2b10eb8acbef463177d4855f484a9c5443ac0362275cf5ba5a9cc7efa68abb09",
+      "after": "eabba54aad0a3a00e3ef02d5326a238b73070f07685fd9be9d3c1c6f62b8b4af",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "before": "c862fcaa52074fa3c7bd9fb8581693ccd5456a2debb247a320a4633c74f3d787",
+      "after": "0af75e718a5d82788ab8bf7eeb0b33bff82c65c57a12c77149a1d9fc8fbabbae",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "calendar_link_send",
+      "before": "bd30b83cfd3805ee060ec597706ee6888436d8eacf76f3281e4d4fb91a6db6c9",
+      "after": "5b64bbae4d72ff3e6634ca346e698de887d7075c03b36c4623a913a6b7505dd3",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "before": "0ec85d8f9e8f2860793354eebabd9b194b7278e621e5bd127033cf5df1e7c7b4",
+      "after": "d8d941f9a30afe41e93e85665b0c26507b81ee3888f952393ed8d5b096314e51",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "update_business_profile",
+      "before": "13a004cb3f5510bb1179c659bdc5ee0f882a68ddbd5c3318e494a96ac73b09d5",
+      "after": "b0280e6b14794b955d13e81dd9f3d60a4a59a0e16cf9801dcedd6359b0e23034",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "capability_status",
+      "before": "d06c9ee40503810647605e3ccbb31ca09243543f52c411e3b37a8097dc6579ac",
+      "after": "92473d8b020a6eeb99974a93ed65203472038a7b795f0964cec70f9f6c3bcc01",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "improvement_propose",
+      "before": "e09fb5f1575a05b79abb7631003cf27eecb56e16678523d1fe9182904bf19f0e",
+      "after": "e04238811a8fe1fa727685500cab14fc9c341b90a68a45ec21a61e2731346d69",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "improvement_decide",
+      "before": "6634669978257654c73b67e15032997ee28dd1c77507f18bebfd9689d949f53b",
+      "after": "172c5c44d1204d40cdf7244b29acd0d3e927467f95472762801fab40bb659fc0",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "list_subagents",
+      "before": "6d5299ec791dc8a47fcd3f26b880fedc0670eae80cca0f7dccac34dc2666f5a1",
+      "after": "427439d048a77c6a26038959087f81d2f546518b8a815686047fbadce3675b8e",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "before": "6d5299ec791dc8a47fcd3f26b880fedc0670eae80cca0f7dccac34dc2666f5a1",
+      "after": "427439d048a77c6a26038959087f81d2f546518b8a815686047fbadce3675b8e",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "forge_subagent",
+      "before": "c999858c7c9e026f46c3ab583b49108560bf6010e44be96b74d4741810c877e5",
+      "after": "873d0c2c5a229ef353de9135c68c7a333d62db9341f8499011b17013645e45c0",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "author_event_kind",
+      "before": "4382fd75eb9aaa694eac6b6d28214a677a1afa7582d383cae79baa3463fb13eb",
+      "after": "9958d1d1f7de8b573bfabc9b342bc28917665781de4726a91d7608bb77bb4dc8",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "crm_add_note",
+      "before": "b3f620fa9f1dd5086e42108fa88672b2a29790602f02588a1ff717e4137f6cdd",
+      "after": "bba024cb0fb66f1f11a93c3984ef677c21dad6beb410b76106f2f2b77b6ec435",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "crm_file_document",
+      "before": "2a4f405470f2547d6da8582c03fd24e05637e744309144867db8a2f2496b8ee0",
+      "after": "b4c7ad5cd01b194ba586dba31c671ee9e7448ef1ce6e914158df86763753eb36",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "update_client_data",
+      "before": "318d48d54e617bc42472be92ccea25667eb175bcd7bf53e5f68c0d2746e6309d",
+      "after": "696f6a64c9fb5f3a969a32f6c783442c3f8b84c65eeabf2b97ea8f4b98dc5f05",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "pipeline_configure",
+      "before": "7674eae3b1b5f0fa2753b76d7afb13f485186f5c5db13fd2a279f60446069203",
+      "after": "47ec2e4886eb88e347a7be18d8a01cd670925e8b9b1a73ef8e572badf155c3fd",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "deep_research",
+      "before": "0927297b137c90264e8b6020aa2b17afb38a48010bee289db3d76d14a02c58cc",
+      "after": "21332361d1af05631b8e007c23066af70e8b274ca210941bbb1492a491a3b61e",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "web_search",
+      "before": "24b21a771a4161c9272da5cd01ee97a9f65e9cb94fbe243b8259b42c4b545acb",
+      "after": "b6f952b76db409f64ab1741e77d649687300b376cfe9a6c9b67cb0ffb40713a4",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "web_fetch",
+      "before": "3fb75608e016df9dad1d4274713137740f19ad50363106e2f87a865eb0b7c94e",
+      "after": "14d5ea3e9503dadf15be53a83d2fb6e4346e40b61cb482f1648aab0c28253fb2",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "before": "ddb901a60e55e8f1e73ecbe51f7a511bf8cfd3d8227d7099d2a62296ed09543c",
+      "after": "a0069af2963debfce17941f9dc3063399c1664cf1e1f30f565daae572efb460f",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "automation_draft",
+      "before": "e4f6662ba6d77e49de92c76e42a9e53b2a376989f9dbe7d5723bb3d60a449982",
+      "after": "55207a850ec844c70442d9be9956d154b7b824bb4ad95ed0d0089475624f9099",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_connection_summary",
+      "before": "4aaf377f4404f580674d823bcd257a6103c04a42116ed417c05608e1563dc373",
+      "after": "b5c750364441342bed018c36e2db2089cd5e39c1fe0496ac83b76cc113912040",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_registration_status",
+      "before": "57af7084c118d6c143638e5b56d95fac98ac4093e25728052b5066a45434981c",
+      "after": "c8d218e36ad13946aa04abfce213e18bdb312f1a24be5a897231735e151be8c8",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_list_numbers",
+      "before": "7f0b6a44fef4d125e197ea4a7cefee59494ad35ffe413ff1e677f24ecd3bd5b2",
+      "after": "8e75938f746459d51895f7b8940815e096581799559dc5c5c01b7abde5044b5c",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_search_numbers",
+      "before": "a74711a2b548741fe05f7706d6cd096356c79db280b0af7920e9ea840dc200bf",
+      "after": "a7c6a7b9f90eb320cda8b024ee1f213f360836271b07bc1e216ad402d65d7d42",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_buy_number",
+      "before": "134ac6f43d9c3e81f8fa22074226ef22cfc5cdea7285ab73373154afb20e1b0f",
+      "after": "cce06d95ce9fe9ad596f373223bd7c5f88cc6fd2f0db9968069d3082c5ed9e03",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_draft_registration",
+      "before": "e2d6a302cfb287f0f8c991354f38c43808b52a00bcab1621c835c46370711e48",
+      "after": "5e21c4a25988597401f7242901bf28096b2a28311f3e0d318d093c8d409e1e75",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_name_number",
+      "before": "3b3ed7fd23b5cd84db79bfaacc77d1f771214a4a2e460e498bb8eb6a860165e5",
+      "after": "438ef5b938589afc4f156abb41746ec0e713d2671d0d40d086f2d399259be7c6",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "before": "60ce6098063208278d3453099673be2fc4335f753399e7d3ba77a2ded20e13d0",
+      "after": "9078b6bf24d0734b6628b67b43f167876bcff714151155cf893d6a3c1537611c",
+      "changedIdentity": [
+        15
+      ]
+    }
+  ],
+  "scope": "Read-only original-extractor decomposition; no pin regeneration/writes, admission or customer verification",
+  "pinContinuity": {
+    "originalBase": "b73ff25d074907698273527ad7ab0c6592939ac6",
+    "changedLiterals": 29,
+    "extractorMetadataAndAllSourceDigests": "exact original bytes after scoped inverse",
+    "sourceSha256": "b229cff7c80e46a561a3031b34b482493bdfba9b33efc7bef83e18f0cd0509cd",
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE; no independent or customer acceptance claim"
+  }
+}

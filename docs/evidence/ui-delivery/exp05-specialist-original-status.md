@@ -9,14 +9,14 @@ retained. Original status/helper/loader/parser/tests and reviewed source pins
 are unchanged. Incoming E07 product/evidence and exact weekly adapter are
 preserved. This composition requires fresh exact-head CI; prior green does not
 substitute for it. No layout, authority, provider or activation change is added.
-INTERNAL_BUILD_IDENTITY: c2716bb9ddf19489af41dd1db8f3619ce157f45c; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal affected-function deployment after exact-head required gates); evidence=docs/evidence/ui-delivery/exp05-specialist-original-status.md
-RELEASE_CHANNEL: development: reviewed original status transport and shared client loader awaiting required release gates.
+INTERNAL_BUILD_IDENTITY: 20a8983d0dd89b2e1c807705b9099d084a7a4638; deployment=dpl_14NLWzi5VQzfCa2MkCJHPMjRQjVa; environment=production; migrations=NOT_APPLICABLE; edge=APPLIED(paige-ai-chat@524); evidence=https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2722#issuecomment-6380356415
+RELEASE_CHANNEL: production: exact reviewed source, normal Edge release, independent packaged source/config and public-version readbacks verified; customer execution remains separately unverified.
 RELEASE_CLASSIFICATION: internal-only: bounded EXP05 original-result recovery integration, no customer launch.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or founder acceptance.
 RELEASE_NOTE_REQUIRED: NO: original PR, Brain and evidence retain exact source/runtime boundaries.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: original source proof only; hosted exact-head CI, production source, native Chat mounting and authenticated recovery remain owed.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: reviewed original native status source is production-verified; child2725 Chat mounting and actual authenticated original recovery remain separate and incomplete.
 RELEASE_RECOVERY: position=hold for failed required checks; reference=original server-stamped turn and immutable receipt, never reset or replay.
-UNVERIFIED: actual rendered Chat original-result control, production packages and ordinary authenticated reload/recovery remain owed; loader tests do not close the customer job or full Experience.
+UNVERIFIED: child2725 actual Chat original-result control and ordinary authenticated original-result/reload/recovery/isolation/new-existing cohorts/Live remain owed; source readback does not close the customer job or full Experience.
 FLOW_BY_FLOW: PASS: original terminal -> explicit original status read -> current workspace authority -> original invocation inspector -> closed original result, without another execution.
 PAIGE_UI_DESIGN: PASS: existing PAIGE status/recovery and Impeccable truthfulness contract preserved; no rendered component or layout is added in this backend increment.
 MATERIAL_FLOW_CHANGE: NO: complete the original read/recovery transport, not a new action or customer goal.
@@ -211,3 +211,31 @@ E10 SQL body is preserved at800000, genuinely recorded in production; the
 earlier duplicate-version hold is resolved. Full local compiler completed with
 six existing baseline signatures and no added signature; the exact parser's
 isolated compiler exits0. Fresh composed-head hosted CI remains required.
+
+## Actual production source release — October24 UTC
+
+Reviewed56b81b3ffe50d99d4cf4be76ef81b2e5bcc88d2c / accurate sequential LOWER
+5636877937 passed all11 exact check runs and both web statuses, with no unresolved
+inline thread. Main20a8983d0dd89b2e1c807705b9099d084a7a4638 has actual parents
+02a901fd4946759b6bddab71b03d1d590e387106 and reviewed56b; actual tree
+f5de8c13ec2207e448bac63f09c34b6998ea793d matches premerge union, preserving E04,
+E01/E07 and all existing runtime source. Normal deploy-edge-functions40066017776
+/job120789328755 SUCCESS, actual edge-live20a and artifact12548484749 retained
+(sha256:cab27f0fe67e92f580db24582fac1efad685dc8ca720fee1bb207e25031fc9cc).
+
+Independent production read05:24:09.736UTC compared actual394 files to exact Git
+bytes: Chat v524:269/269, ACTIVE/JWTtrue/import_mapfalse, rootSHA256
+5f5b9ff84ccf0f832db30e85dfb0a0205648edc28dfddc92dd54cda0f70cce78;
+original orchestrator v124:125/125, same configuration, rootSHA256
+0518eb57ad62542e689bf256395f7050583581195c1a47fffa9afd0eaad1f978.
+Chat524 updated05:23:28.123UTC. Orchestrator124 updated02:57:49.472UTC and is
+verified unchanged, not newly redeployed by this release. Archive hashes remain
+in original receipt6380356415; no function or business action was invoked.
+
+Exact Vercel dpl_14NLWzi5VQzfCa2MkCJHPMjRQjVa READY. Both public aliasesHTTP200
+at05:24:41UTC returned20a8983d0dd89b2e1c807705b9099d084a7a4638-mvlydf41 with
+customerUpdate:null. Source native prerequisite for child2725 is satisfied; its
+current requiredCI/release is independent. No SQL, permission, provider, recurrence,
+Live, catalogue/maturity or customer acceptance change. Full original customer
+record/receipt/reload/isolation, ZION/weekly/automation and founder proof remain owed.
+This three-document mechanical closeout records the original release, not itself.

@@ -420,7 +420,7 @@ onSignOut={()=>void performSignOut({redirectTo:'/'})}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>
 <main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'?'operations':location.pathname}`} resetKey={location.pathname}>{screenRoute==='paige'?null:screens[screenRoute]}</SoloScreenBoundary></main>
-{studio&&<VibeStudio onBack={closeStudio}/>}</div></div>
+{studio&&<VibeStudio onBack={closeStudio} openPaige={openPaige}/>}</div></div>
 </TenantCommandCenterShell>};
 
 const SoloApp=()=> (

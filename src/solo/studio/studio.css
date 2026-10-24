@@ -411,3 +411,8 @@
   @keyframes vs-orb { 50% { box-shadow: 0 0 0 7px rgba(101, 73, 219, .08); } }
   @keyframes vs-caption { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 }
+
+/* The departmental attribution line under the Studio composer (roster doctrine, EXP06): a quiet
+   fact plus a handoff link, in the composer foot's own voice. No new chrome. */
+.vs-studio .vs-dept-line { margin-top: 11px; font-size: 12.3px; color: var(--vs-dim); line-height: 1.55; }
+.vs-studio .vs-dept-line .vs-link { margin: 0 2px; }

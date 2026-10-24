@@ -246,6 +246,8 @@ export type CampaignBriefLeadsResult =
       context: CampaignBriefContext;
       leads: Record<string, unknown>[];
       counts: Record<string, unknown>;
+      truncated: boolean;
+      ambiguousOnCampaignForms: boolean;
     }
   | { ok: false; code: string; tenantId?: string };
 
@@ -290,6 +292,12 @@ export async function readCampaignBriefLeads(input: {
   }
   const leads = envelope.leads.filter((lead): lead is Record<string, unknown> =>
     !!lead && typeof lead === "object" && !Array.isArray(lead));
+  // The RPC's own honesty signals ride along: `truncated` (the list is capped at the newest 200
+  // while counts.leads is the true total) and `ambiguous_on_campaign_forms` (some leads' tags
+  // matched several campaigns, so they are counted but not credited — the owner is told rather
+  // than seeing a quiet undercount). Dropping them would let a chat answer understate honestly.
+  const truncated = envelope.truncated === true;
+  const ambiguousOnCampaignForms = envelope.ambiguous_on_campaign_forms === true;
   return {
     ok: true,
     tenantId,
@@ -304,6 +312,8 @@ export async function readCampaignBriefLeads(input: {
     },
     leads,
     counts,
+    truncated,
+    ambiguousOnCampaignForms,
   };
 }
 

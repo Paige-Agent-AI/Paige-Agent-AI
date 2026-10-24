@@ -147,10 +147,13 @@ describe("Campaign desk — §39 peer-gate invariants", () => {
 describe("S1e — the campaign leads chat read and its navigable surface", () => {
   it("registers campaign.leads as a member-seat read on the canonical leads RPC", () => {
     expect(spineDomain).toContain('key:"campaign.leads"');
-    expect(spineDomain).toContain('executor:"public.get_campaign_brief_leads",chatTool:"read_campaign_leads",riskPolicyKey:"read_only",approvalAuthority:"none"');
-    // Member seat: no admin seatAuthority declaration, so the chat gate stays non-admin like the
-    // other brief reads — the RPC redacts member views itself.
-    expect(spineDomain).not.toMatch(/campaign\.leads[\s\S]{0,400}seatAuthority/);
+    expect(spineDomain).toContain('executor:"public.get_campaign_brief_leads",chatTool:"read_campaign_leads",seatAuthority:"member"');
+    expect(spineDomain).toContain('readiness:"none"');
+    // Member seat, positively: the RPC redacts member views itself, so the chat gate must stay
+    // non-admin (an admin seat here would lock members out of a permitted read).
+    expect(spineDomain).toMatch(/campaign\.leads[\s\S]{0,400}seatAuthority:"member"/);
+    // The model-facing tool's parameters are the kit declaration's input, never a hand-written payload.
+    expect(spineDomain).toContain("parameters:CAMPAIGN_LEADS_READ_CAPABILITY.input");
     // The tool's model-facing description forbids narrating attribution as ad performance.
     expect(spineDomain).toContain("never ad performance");
   });

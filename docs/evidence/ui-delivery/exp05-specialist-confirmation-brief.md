@@ -1,6 +1,13 @@
 # EXP05 — show the stored specialist assignment before approval
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
+INTERNAL_BUILD_IDENTITY: 225ec0348d8d161b8e8b7caa6fc8985a17dd74e7; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(repaired original Chat summary requires normal production source deployment and readback); evidence=docs/evidence/ui-delivery/exp05-specialist-confirmation-brief.md
+RELEASE_CHANNEL: development: bounded original specialist approval-copy repair and native-component evidence.
+RELEASE_CLASSIFICATION: internal-only: repair the existing proposal sentence without a new capability, workflow or activation.
+CUSTOMER_RELEASE_IDENTITY: none: full EXP05 and authenticated repaired proposal remain unfinished.
+RELEASE_NOTE_REQUIRED: NO: original technical PR and Experience evidence carry the bounded repair.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: local source and rendered native fixtures verified; required hosted exact-head CI, actual production Edge source and ordinary repaired approval display remain separate.
+RELEASE_RECOVERY: position=hold for failed required checks and use reviewed normal source correction; reference=original stored confirmation and invocation, never extend or replay an expired or uncertain assignment.
 FLOW_BY_FLOW: PASS: original request -> stored specialist proposal -> review its actual purpose -> existing approve or decline -> original outcome/recovery; this slice repairs the review sentence only.
 PAIGE_UI_DESIGN: PASS: existing PAIGE confirmation card/tokens/controls; proportional clarify and harden review, no new interface engine.
 MATERIAL_FLOW_CHANGE: NO: unchanged goal, controls, authority, stored arguments, execution, states and exits; correct missing current-schema copy.

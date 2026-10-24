@@ -2855,3 +2855,22 @@ Functional local / Visual synthetic / Experiential corrected same-reference read
 and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, registry,
 authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
 All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.
+
+## EXP05 original ZION planning instructions — local source, October23
+
+The existing global soft ZION version2 is enabled but has no system prompt or
+job configuration; original invokeSoft correctly refuses before any provider.
+Bounded migration740005 supplies internal planning instructions and existing
+job_kind=plan atomically at version3 only for the exact untouched factory row.
+Customized, disabled, tenant, triggered and later registrations are preserved.
+No new specialist, permission, tool, provider, trigger or execution engine.
+Actual original route causal500 →34PASS; original routing/workspace/recovery/
+catalogue74PASS; selected original-DDL native20 + original role19 assertions PASS.
+Full migrated CI, reviewed merge, production data/readback and actual ordinary
+specialist draft/receipt/reload remain owed. Prompt installation restores draft
+callability, not execution authority or a Live catalogue promotion. Original
+Operations recipes and their access/coverage remain unchanged.
+[Evidence](../evidence/ui-delivery/exp05-zion-planning-instructions.md).
+Preserve ANT161/8f09a40f E04/E09 migration order, originating E10 main collision
+correction and2722/2725 recovery dependencies. Full ten outcomes/E5-CV1–9 and
+founder evaluation remain open; source/visual/customer acceptance stay separate.

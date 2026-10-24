@@ -46,7 +46,21 @@ function fixture() {
     invoke: (agent = registered, ctx: { user_id?: string } = { user_id: actor }, selectedTenant: string | null = tenant, actorlessService = false) => invoke(agent, { request: "Prepare a weekly plan; execute nothing." }, ctx, selectedTenant, scopeCheck, actorlessService),
   };
 }
-describe("ZION consumes the original Model Fabric without activating a specialist", () => {
+describe("ZION consumes the original Model Fabric with server-controlled authority", () => {
+  it("the versioned factory planning instructions use the existing bounded Fabric route", async () => {
+    const migration = readFileSync(resolve(__dirname, "../../supabase/migrations/20271113740005_exp05_zion_planning_instructions.sql"), "utf8");
+    const prompt = /\$zion_operations_plan_v1\$([\s\S]*?)\$zion_operations_plan_v1\$/.exec(migration)?.[1] ?? "";
+    const f = fixture(), agent = { ...registered, version: 3, system_prompt: prompt, config: { job_kind: "plan" } };
+    f.setRow(agent);
+    expect(await f.invoke(agent)).toMatchObject({ status: 200, body: { ok: true, answer: "canonical draft" } });
+    expect(f.fabric).toHaveBeenCalledOnce(); expect(f.legacy).not.toHaveBeenCalled();
+    expect(f.fabric.mock.calls[0][0]).toMatchObject({ cognitive_class: "operational", job: "zion_operations_draft",
+      max_tokens: 2048, messages: [{ role: "system", content: prompt }, { role: "user", content: expect.any(String) }] });
+    expect(f.fabric.mock.calls[0][0]).not.toHaveProperty("tools");
+    expect(f.fabric.mock.calls[0][0]).not.toHaveProperty("model");
+    f.setRow({ version: 4 });
+    expect(await f.fabric.mock.calls[0][1].beforeProviderAttempt!()).toBe(false);
+  });
   it("requests a cognitive class and stable job, with original context and no provider override", async () => {
     const f = fixture(), result = await f.invoke();
     expect(result).toMatchObject({ status: 200, body: { ok: true, answer: "canonical draft" } });

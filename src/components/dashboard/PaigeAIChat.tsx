@@ -2411,11 +2411,14 @@ const PaigeAIChatInner = ({
         else if (!typedRequestDispatched || typedRequestRejected) setInteractiveAuthorityPending(false);
       }
       // D1 (panel wedge): the preflight/document latches gate EVERY later send, so a
-      // superseded request must never leave them set. ticketAccepted() is false the moment a
-      // concurrent fence.begin() (auto-resume's selectThread, a second send) bumps the fence —
-      // but fence.begin() does NOT bump submissionGeneration, so gating on the submission
-      // generation clears OUR latch while a genuinely newer send's latch (set only after its
-      // own submissionCurrent() check) survives untouched.
+      // superseded request must never leave them set. The gap this gate closes is the
+      // direct-call surface (connection-retry / regenerate), whose streamTurn begin()
+      // bumps the fence WITHOUT bumping submissionGeneration — so ticketAccepted() goes
+      // false while the latch still belongs to THIS generation. Every selection/switch
+      // path already clears the latches itself via abortActiveRequest, and a second
+      // handleSend bumps the generation before latching; gating on the generation
+      // clears OUR latch while a genuinely newer send's latch (set only after its own
+      // submissionCurrent() check) survives untouched.
       if (submissionGenerationRef.current === sendSubmissionGeneration) {
         submissionPreflightRef.current = false;
         if (doc) documentRequestActiveRef.current = false;

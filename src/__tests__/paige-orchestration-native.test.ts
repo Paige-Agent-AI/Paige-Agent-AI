@@ -173,7 +173,9 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
         return { data: cfg.claim === "held" ? null : { id: `row-${args._act_id as string}` }, error: null };
       }
       if (fn === "execute_weekly_commitment_check") {
-        return { data: { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation", receipt_id: "test-receipt" } }, error: null };
+        return { data: { outcome: "executed", receipt_id: args._receipt_id, error: null,
+          detail: { confirmed_via: "weekly_commitment_observation", receipt_id: args._receipt_id,
+            automation_id: args._automation_id, event_id: args._event_id, act_id: args._act_id } }, error: null };
       }
       if (fn === "read_weekly_commitment_check") {
         return { data: null, error: { message: "readback unavailable" } };

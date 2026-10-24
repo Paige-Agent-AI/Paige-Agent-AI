@@ -869,6 +869,14 @@ These are actual bounded source releases, not claims of a complete customer Expe
 | [#2698](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2698): EXP06 owning delivery evidence — retained-implementation register, NET-NEW absence proofs, collision register, 18-row customer acceptance matrix, WEB-01..14 applicability, algorithm-gap statement, PR1→PR8 sequence | Reviewed `9f495d50f` by an independent NON-AUTHOR subagent reviewer (round-1 findings 1×P1 public-intake privacy overclaim + 3×P2 fixed on the amended head; round-2 PASS, [receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2698#issuecomment-6376754020)); all required checks SUCCESS incl. `verify`/`database-contract`; Supabase Preview skipped (docs-only, no migration). Merged squash `9512ebf3d`; Vercel preview deploy completed. Owning doc: `docs/delivery/exp06-build-my-brand/EXP06-BASELINE-AND-ACCEPTANCE-MATRIX.md`; ACK on [ANT-162](https://linear.app/paigeagentai/issue/ANT-162) comment `5da8bf50`. | Documentation baseline only: no product code, migration, Edge, provider/DNS/tenant effect or activation. Every capability claim in the matrix remains open debt with named dependency owners; FLOW:BRAND row 139 unchanged. EXP06 implementation begins at PR2. |
 **2026-10-23 — EXP05 original governed-work prerequisites source/configuration verified.**
 
+Separate EXP05 development: the original weekly ActionAdapter now requires its
+same automation/event/act and stable original receipt before reporting completion;
+conflicting evidence cannot authorize a retry.23 focused cases and the original
+disposable engine/Gateway/SQL observation/redrain case pass. Full native/review/CI,
+release and authenticated recurrence remain separate in the
+[existing Experience packet](delivery/experience-05-weekly-commitment-check.md).
+No schedule, provider, ZION instructions or capability status is activated.
+
 These are bounded engineering releases for the shared SOLO implementation, not
 complete weekly execution, ZION activation, authenticated customer acceptance
 or a customer release announcement. Each original receipt preserves the exact

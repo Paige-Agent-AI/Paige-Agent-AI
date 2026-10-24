@@ -161,3 +161,24 @@ lifecycle, ZION bounded delegation, monitoring/recovery and customer proof remai
 unfinished. Functional: local proof. Visual: unchanged. Experiential: original
 draft route repaired locally, customer result owed. Founder Acceptance: pending
 one complete integrated Experience evaluation.
+
+## Explicit recovery dependency and current-main composition
+
+Original507e3576534d2045611f7df3013a9bc14d8cf31f passed all13 exact checks and
+both web statuses. Before production application, native2722 actually released
+at20a898 with independent394-file/config and public readbacks. Child UI2725 then
+passed all applicable gates at2ba, but GitHub refused its normal merge405/dirty.
+The remote main94482 and2ba had two actual merge bases,885 and56b. Standard
+explicit current-main composition22811462525a330d1046494777101159887f5079
+preserves the UI bytes and now reports mergeable; its fresh requiredCI is running.
+
+This downstream composition consumes that actual dependency and main94482 rather
+than retaining ambiguous parallel ancestry. Its one owning Brain conflict keeps
+the complete ZION section plus incoming original UI/source-release sections.
+Factory800005 SQL blob d333d703baa3a0120b8d9c333b1cb5542c604bd0, original ZION
+runtime/route/role/native tests and all source fingerprints are unchanged. E04
+sales metrics and the weekly source closeout are retained. Fresh composed-head
+Independent Review, required CI and genuine Preview remain mandatory; prior green
+is dated evidence only. Production remains original soft/enabled v2 with no prompt
+or job_kind at actual05:37:05.573807UTC; source is not application or customer proof.
+No new permission, provider, specialist, recurrence or execution authority.

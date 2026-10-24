@@ -1,0 +1,22 @@
+{
+  "file": "320-dark-unresolved.png",
+  "width": 320,
+  "height": 800,
+  "scrollWidth": 320,
+  "theme": "dark",
+  "phase": "unavailable",
+  "reference": "",
+  "port": "Read state: unavailable · Issued: 22 · Resolved: 110\nOriginal reference: none visible\nActual existing presenter and repaired hook; synthetic RPC/Auth ports. Full authenticated shell, Finance, Chat and customer acceptance are not established.",
+  "active": "Clear synthetic workspace",
+  "headings": [
+    "Open pipeline",
+    "Requires attention"
+  ],
+  "scripts": [
+    "./assets/index-q5Syh8Tx.js"
+  ],
+  "nativePngWidth": 320,
+  "nativePngHeight": 800,
+  "capturedAt": "2026-10-24T03:03:32.163Z",
+  "boundary": "Synthetic ports; no actual account/provider/customer acceptance"
+}

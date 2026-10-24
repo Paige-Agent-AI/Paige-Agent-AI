@@ -91,6 +91,26 @@
 .vs-studio .vs-composer textarea { width: 100%; min-height: 84px; resize: none; border: 0; outline: none; background: transparent; color: var(--vs-text); font: 15px/1.55 var(--font); }
 .vs-studio .vs-composer textarea::placeholder { color: var(--vs-faint); }
 .vs-studio .vs-composer-foot { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--vs-line-soft); padding-top: 11px; font-size: 12.3px; color: var(--vs-dim); }
+
+/* EXP07 row 1 — the brief, captured and kept. */
+/* Home composer: optional detail fields under the job text. */
+.vs-studio .vs-brief-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 12px 2px 4px; border-top: 1px solid var(--vs-line-soft); }
+.vs-studio .vs-brief-field { display: grid; gap: 4px; min-width: 0; }
+.vs-studio .vs-brief-field label { font-size: 11.3px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--vs-faint); }
+.vs-studio .vs-brief-field input { width: 100%; border: 1px solid var(--vs-line-soft); border-radius: 9px; background: var(--vs-panel-2); color: var(--vs-text); font: 13px/1.4 var(--font); padding: 7px 10px; outline: none; }
+.vs-studio .vs-brief-field input:focus-visible { border-color: var(--vs-violet, #8b7cf6); }
+.vs-studio .vs-brief-field input::placeholder { color: var(--vs-faint); }
+.vs-studio .vs-brief-field:has(input:focus-visible) label { color: var(--vs-dim); }
+.vs-studio .vs-brief-note { grid-column: 1 / -1; margin: 0; font-size: 11.6px; color: var(--vs-faint); }
+.vs-studio .vs-brief-toggle { padding: 0; font-size: 12.3px; white-space: nowrap; }
+/* Session: the brief, pinned above the conversation so it survives reopen. */
+.vs-studio .vs-brief-card { border-bottom: 1px solid var(--vs-line-soft); background: var(--vs-panel); padding: 0 16px; }
+.vs-studio .vs-brief-card summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 10px 0; font-size: 12.3px; font-weight: 600; color: var(--vs-dim); }
+.vs-studio .vs-brief-card summary::-webkit-details-marker { display: none; }
+.vs-studio .vs-brief-card summary::before { content: "▸"; font-size: 10px; color: var(--vs-faint); transition: transform .15s ease; }
+.vs-studio .vs-brief-card[open] summary::before { transform: rotate(90deg); }
+.vs-studio .vs-brief-card .vs-md { padding: 0 0 12px; font-size: 12.6px; color: var(--vs-dim); max-height: 168px; overflow: auto; }
+.vs-studio .vs-brief-card .vs-md p { margin: 0 0 6px; white-space: pre-wrap; }
 .vs-studio .vs-composer-foot b { color: var(--vs-text); font-weight: 600; }
 .vs-studio .vs-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .vs-studio .vs-chip { height: 30px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--vs-line); background: var(--vs-panel); color: var(--vs-text); font-size: 12.6px; cursor: pointer; }
@@ -146,7 +166,7 @@
 .vs-studio .vs-crumbs option { background: #141028; }
 .vs-studio .vs-top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .vs-studio .vs-body { display: grid; grid-template-columns: 352px minmax(0, 1fr); min-height: 0; }
-.vs-studio .vs-chat { border-right: 1px solid var(--vs-line-soft); display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; background: var(--vs-ink); }
+.vs-studio .vs-chat { border-right: 1px solid var(--vs-line-soft); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; background: var(--vs-ink); }
 .vs-studio .vs-chat-log { overflow: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 14px; }
 .vs-studio .vs-msg-you { align-self: flex-end; max-width: 88%; background: var(--vs-panel-2); border: 1px solid var(--vs-line-soft); border-radius: 12px; padding: 9px 12px; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
 .vs-studio .vs-msg-paige { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; font-size: 13px; line-height: 1.6; }

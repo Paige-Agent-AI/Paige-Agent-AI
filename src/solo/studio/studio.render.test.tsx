@@ -196,6 +196,48 @@ describe("Vibe Studio project workspace", () => {
     for (const t of ["Page", "Form", "Funnel", "Copy", "Image"]) expect(button(t)).toBeUndefined();
   });
 
+  it("brief details compose into the saved brief and Paige's first message (EXP07 row 1)", async () => {
+    h.sse = [JSON.stringify({ choices: [{ delta: { content: "Got it — starting from your brief." } }] }), "[DONE]"];
+    await mount();
+    type(host.querySelector<HTMLTextAreaElement>("#vs-brief")!, "A landing page for my referral workshop");
+    // Details are optional and closed by default; the toggle opens the fields.
+    expect(host.querySelector(".vs-brief-fields")).toBeNull();
+    await act(async () => { [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Add details")!.click(); });
+    const input = (id: string) => host.querySelector<HTMLInputElement>(`#vs-brief-${id}`)!;
+    const set = (id: string, value: string) => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      act(() => { setter?.call(input(id), value); input(id).dispatchEvent(new Event("input", { bubbles: true })); });
+    };
+    set("audience", "Solo consultants");
+    set("outcome", "Bookings for the April session");
+    set("channel", "   "); // whitespace-only fields are skipped, not composed
+    const build = [...host.querySelectorAll("button")].find((b) => b.textContent?.startsWith("Build it"))!;
+    await act(async () => { build.click(); });
+    await flush();
+
+    const composed = "A landing page for my referral workshop\n\nBrief details:\nAudience: Solo consultants\nOutcome: Bookings for the April session";
+    expect(h.created).toEqual([composed]);
+    expect(h.fetchBodies[0]).toMatchObject({ messages: [{ role: "user", content: composed }] });
+  });
+
+  it("reopening a project shows the brief it started from, and the owner can collapse it (EXP07 row 1)", async () => {
+    h.openBrief = "A landing page for my referral workshop\n\nBrief details:\nAudience: Solo consultants";
+    await openPiece();
+    const card = host.querySelector("details.vs-brief-card") as HTMLDetailsElement | null;
+    expect(card).not.toBeNull();
+    expect(card!.open).toBe(true);
+    expect(card!.querySelector(".vs-md")?.textContent).toContain("Audience: Solo consultants");
+    await act(async () => { card!.querySelector("summary")!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    expect((host.querySelector("details.vs-brief-card") as HTMLDetailsElement)!.open).toBe(false);
+  });
+
+  it("a project with no stored brief shows no brief card (EXP07 row 1)", async () => {
+    h.openBrief = "";
+    await openPiece();
+    expect(host.querySelector("details.vs-brief-card")).toBeNull();
+  });
+
   async function openPiece(piece: Rec = FORM) {
     h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
     h.form = piece;

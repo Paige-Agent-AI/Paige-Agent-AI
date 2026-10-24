@@ -1,0 +1,1800 @@
+{
+  "base": "7b2ac52074e1697e961f31a28490d0e22bd2ebbb",
+  "sources": [
+    {
+      "path": "src/components/tenant-shell/settings-scroll-contract.ts",
+      "sha256": "082ad58f4c84460e2cde6c87d3b219c468fc345c0a76f1733bce5911024aeeed",
+      "gitBlob": "d3586571f60b7519404aa36cc13bde8ac44c9ebe",
+      "reviewedBaseBlob": "d3586571f60b7519404aa36cc13bde8ac44c9ebe",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-content-focus.ts",
+      "sha256": "7f32786447b99863e649add8d7f9acbf4486c780ca63de3ab66dd0e5fb312106",
+      "gitBlob": "7bae43e8a3b8d15163b283afee5db8faf63aadc6",
+      "reviewedBaseBlob": "7bae43e8a3b8d15163b283afee5db8faf63aadc6",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/operator/shell/CommandMark.tsx",
+      "sha256": "f16530566302d4b78151658e0b02ee76eaf57c2d73b97ef2bce30c27f201d46a",
+      "gitBlob": "53f8f47d7cb27f6c9cbf8bc7123db52103e64da7",
+      "reviewedBaseBlob": "53f8f47d7cb27f6c9cbf8bc7123db52103e64da7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+      "sha256": "2cd9261dd3b3f9434ba1a5d3d548eb1b322e0fc381ff4a324135713ec5fdd536",
+      "gitBlob": "a2b3197bccfe608c301d457d0b816b0e2353ee65",
+      "reviewedBaseBlob": "a2b3197bccfe608c301d457d0b816b0e2353ee65",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+      "gitBlob": "8f596a9dcc571c4786b7671814f031e94462c737",
+      "reviewedBaseBlob": "8f596a9dcc571c4786b7671814f031e94462c737",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/interactive-refusal.ts",
+      "sha256": "2b9e4de4f4e5da36b4759697e80c392fbea98484bb091a6330246abc4eedc24e",
+      "gitBlob": "99a976b3f0600a3584b7b68bafdce7f42a81fc4e",
+      "reviewedBaseBlob": "99a976b3f0600a3584b7b68bafdce7f42a81fc4e",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/vp-address.ts",
+      "sha256": "08da97f2dadd97468c54d57d8f35e9d5b22ce0348b03d12a2a9d3b33b7d4ad91",
+      "gitBlob": "2a3ef29cae374c9dc1e7cb3c62073b87e55763d2",
+      "reviewedBaseBlob": "2a3ef29cae374c9dc1e7cb3c62073b87e55763d2",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "5ace29c005c1434322501ed2441b8471d71425ec870bfa9c79d2fd42d0616a75",
+      "gitBlob": "a3240f101ec80d9c5da0305b4bdc545f371fcb3f",
+      "reviewedBaseBlob": "a3240f101ec80d9c5da0305b4bdc545f371fcb3f",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27",
+      "gitBlob": "a5ef193506d07d0459fec4f187af08283094d7c8",
+      "reviewedBaseBlob": "a5ef193506d07d0459fec4f187af08283094d7c8",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/GlyphPlate.tsx",
+      "sha256": "9e6063e589cbd28e2774fbb4de01cee2acb9b0b046d9eaa40744c061120a3c5a",
+      "gitBlob": "06c1b14ab1b81b6a7b4eac7d6f72466cc82ec682",
+      "reviewedBaseBlob": "06c1b14ab1b81b6a7b4eac7d6f72466cc82ec682",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/brand/paige-command-mark.css",
+      "sha256": "e2d17ad14b748140f6c55f08a6d248497515061e0053dcf7730539d06d5b41b8",
+      "gitBlob": "bc228fa7710d86a1bbc3981dfadd33e0d4deab18",
+      "reviewedBaseBlob": "bc228fa7710d86a1bbc3981dfadd33e0d4deab18",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/brand/PaigeCommandMark.tsx",
+      "sha256": "da4aa525f2a5eb44080c63d9768d4c6d2dfb62f73720cef3417f2879b77a7310",
+      "gitBlob": "5266b3c6f9805eb2c84079098071416161473f27",
+      "reviewedBaseBlob": "5266b3c6f9805eb2c84079098071416161473f27",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/ArtifactPreview.tsx",
+      "sha256": "a38622162e4409fee4f8a69f379cc0bc5f4e4129104b86f6fb04624a46273906",
+      "gitBlob": "365c78f5418bf3d7f6260abc4a177ef25013332d",
+      "reviewedBaseBlob": "365c78f5418bf3d7f6260abc4a177ef25013332d",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/PageShell.tsx",
+      "sha256": "2c9db0bf3dae4bdac35f8ad17a324d208011a505ad3cdd2e1b93d4a6c5a5cc8a",
+      "gitBlob": "a83a19c481f020a4eb54fd156ba541c076cfa1ad",
+      "reviewedBaseBlob": "a83a19c481f020a4eb54fd156ba541c076cfa1ad",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/PageHeader.tsx",
+      "sha256": "efd6c59507d106da7a49443730c8977ba7cddbed84088478b61346a217fd6e3e",
+      "gitBlob": "f0901bca8528c54769486e683d51aac5904611de",
+      "reviewedBaseBlob": "f0901bca8528c54769486e683d51aac5904611de",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/skeleton.tsx",
+      "sha256": "a229c310b9cbcb01ddd5e580865a6f14a19061aff7f6a97ef82a40b6a83583a4",
+      "gitBlob": "6690a131f28488723d7b4bb7d952e12ea3d03ee7",
+      "reviewedBaseBlob": "6690a131f28488723d7b4bb7d952e12ea3d03ee7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/StatTile.tsx",
+      "sha256": "6b94f8b8f4d54e550eddc1257f76033881ef56bca6818320417e6cbe6358420a",
+      "gitBlob": "aac4e2689cde92c6c76699266df27050372dcc78",
+      "reviewedBaseBlob": "aac4e2689cde92c6c76699266df27050372dcc78",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/table.tsx",
+      "sha256": "fab18d9eeb84781f534330ff4b2c2cbe3a93f9bdf5c449debff2f682a83a4876",
+      "gitBlob": "991cdbf3ba12cf4d8e768a7b161471077568d4a6",
+      "reviewedBaseBlob": "991cdbf3ba12cf4d8e768a7b161471077568d4a6",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/DataTableShell.tsx",
+      "sha256": "b4ad4f32b4177ca05220545d52b75d688681137548cccab6fe65bafe5d9bd4f0",
+      "gitBlob": "f70e9bee71a0af7a7fcc5a2d858c3cfed9625975",
+      "reviewedBaseBlob": "f70e9bee71a0af7a7fcc5a2d858c3cfed9625975",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/PageSkeleton.tsx",
+      "sha256": "c6a9a1c80c7634136fdc0e6d81a3dd8b95ba23825cc05397bfc592defabb8dfe",
+      "gitBlob": "5ce8296f707bc63b562a433816af965834a2413d",
+      "reviewedBaseBlob": "5ce8296f707bc63b562a433816af965834a2413d",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/SectionCard.tsx",
+      "sha256": "b8fa7de3319f12c8df50df15c74e131ece9bc3c3ccc21ca7e217808ccc7bb43e",
+      "gitBlob": "1293ac03ba9ae9bb4fccb8d192fa263e416d35c7",
+      "reviewedBaseBlob": "1293ac03ba9ae9bb4fccb8d192fa263e416d35c7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/SectionNote.tsx",
+      "sha256": "0bd97e46483204ed61c4a86bfec4cf22378abaa51679b9b3b65cd264e8f55f7a",
+      "gitBlob": "42ff3bb6bf7ce90815c70c02bf2d7ca6f01b0de9",
+      "reviewedBaseBlob": "42ff3bb6bf7ce90815c70c02bf2d7ca6f01b0de9",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/chart.tsx",
+      "sha256": "1889cbad6e8f0014667d05caea6bac7eaa2390562dace4c81e0c63fa7866af93",
+      "gitBlob": "70a412e58891174fb3bb063bb485d49dd7567cb2",
+      "reviewedBaseBlob": "70a412e58891174fb3bb063bb485d49dd7567cb2",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/Sparkline.tsx",
+      "sha256": "e9102b940e9ddc36e120c34b34e2837c5f23dfa20b134ab35da57f57a2b408f1",
+      "gitBlob": "fd6618aa74964577a7c82417065cf94ebb892473",
+      "reviewedBaseBlob": "fd6618aa74964577a7c82417065cf94ebb892473",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/StatPill.tsx",
+      "sha256": "e4d79201baf3d3d1ce1854ef64674a0e28611bab66f44c6113f77ebd04b49eee",
+      "gitBlob": "b29492b2c084aa60a554c4bf861ac0934e5ae3f6",
+      "reviewedBaseBlob": "b29492b2c084aa60a554c4bf861ac0934e5ae3f6",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/DrillContainer.tsx",
+      "sha256": "34565d2b1147e4c5313c21eb07680450f34a238a61401dacdc56528a00fd369f",
+      "gitBlob": "1c9e2f10c4aa413ab70009c6e55162c8f507d821",
+      "reviewedBaseBlob": "1c9e2f10c4aa413ab70009c6e55162c8f507d821",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/MetricEntityCard.tsx",
+      "sha256": "a2a51dcee3fc30382b6bb9f5d8f2b379b919764ad6fce8266c0c045951c48717",
+      "gitBlob": "f7ab19836550aab82b96fd57910ca0d5b547e15a",
+      "reviewedBaseBlob": "f7ab19836550aab82b96fd57910ca0d5b547e15a",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "sha256": "af60647e810333eab6c4a99139445436a21e11ccbb7d5531cb171685ba752f77",
+      "gitBlob": "fe9b3393ab137e691855228e734efc81fb7fdc98",
+      "reviewedBaseBlob": "fe9b3393ab137e691855228e734efc81fb7fdc98",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/ExploreChart.tsx",
+      "sha256": "e3134ae3eb9b453ac4d6d540e98ebf73579749ae12081f9152097c7cdee22238",
+      "gitBlob": "e4543b8ee5741b0616fc8b4eefac18f0854b9c74",
+      "reviewedBaseBlob": "e4543b8ee5741b0616fc8b4eefac18f0854b9c74",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/EmptyState.tsx",
+      "sha256": "af2ec5f89ae19650a3c526316700db94663612e5d4355f160950b3edfd47ee5e",
+      "gitBlob": "1101944d17fad51981017b1397dab2e55bc218e2",
+      "reviewedBaseBlob": "1101944d17fad51981017b1397dab2e55bc218e2",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/ChartCards.tsx",
+      "sha256": "c069e22e912363a058e2c29911e4c130af2f7b4257cb3624086020041576a20d",
+      "gitBlob": "bc7bc1ee5473b8a6335d2008401ce0531c1dccb7",
+      "reviewedBaseBlob": "bc7bc1ee5473b8a6335d2008401ce0531c1dccb7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/popover.tsx",
+      "sha256": "ee5f78ece57c9e8eb5f9b4186e2bb9ebe46b69b52f03f1edd9a601883bc64772",
+      "gitBlob": "59dd5252e9f4fe4c1a2da378af41ca4b0eea072b",
+      "reviewedBaseBlob": "59dd5252e9f4fe4c1a2da378af41ca4b0eea072b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/calendar.tsx",
+      "sha256": "845a0b0fdec33d8d49ab8ed05dd29a12c10b5bbcf60f24d0b9fc0a731ab18621",
+      "gitBlob": "900a69e45bafe9f68c2bf073b7441b9a943555fd",
+      "reviewedBaseBlob": "900a69e45bafe9f68c2bf073b7441b9a943555fd",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/Toolbar.tsx",
+      "sha256": "8ed6c1958fafccfe4b82e3a87d16dfbc408079b4034d871ee5f57b5baa676fee",
+      "gitBlob": "fa825f6af59ed0f97af415ae67a8e1d1341ac86e",
+      "reviewedBaseBlob": "fa825f6af59ed0f97af415ae67a8e1d1341ac86e",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/DateRangePicker.tsx",
+      "sha256": "ce7ea2b2d2465c405ffa4e09d19e9b55b0ff89051c6955d616ac2d3a9f7c60af",
+      "gitBlob": "2c97470cba15249c05d1a606adda900a21008dea",
+      "reviewedBaseBlob": "2c97470cba15249c05d1a606adda900a21008dea",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/StatePill.tsx",
+      "sha256": "c5801f43ee3abd177b85ae861d05e7818e2fda0db938f1d06d2fbdc8845d2fdc",
+      "gitBlob": "4e20e0e3309eeaf9b0abb13b3dcca51dfa9d9f36",
+      "reviewedBaseBlob": "4e20e0e3309eeaf9b0abb13b3dcca51dfa9d9f36",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/input.tsx",
+      "sha256": "aacef8933fe99ab553e12a82c874a23c97e2b5602eb6f00018454fa0a8d4f7f2",
+      "gitBlob": "09700f605e069e1856565869ac994f978d1be0b3",
+      "reviewedBaseBlob": "09700f605e069e1856565869ac994f978d1be0b3",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/select.tsx",
+      "sha256": "a2b62120a033b36c8d6c4a1693aa9231645fa69251740e15eacec24c1eea4d82",
+      "gitBlob": "6f2525465bc450154ac8083461d0f84b2c1360f2",
+      "reviewedBaseBlob": "6f2525465bc450154ac8083461d0f84b2c1360f2",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/brand-fonts.files.ts",
+      "sha256": "512aa69eb757081fd911c459267cf8cb96094e8da809eebd616a2aacb3d7a2e4",
+      "gitBlob": "88a367d636b719e9a52e1623e6ba2b995cd5cfa9",
+      "reviewedBaseBlob": "88a367d636b719e9a52e1623e6ba2b995cd5cfa9",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/brand-fonts.ts",
+      "sha256": "be20a5e5903f015424d32f6003ef4603eb951d2a3b499461e5a5443d91737a8f",
+      "gitBlob": "dceaf6b05a81b77fb84edaa1e7aa4704a80e6d5b",
+      "reviewedBaseBlob": "dceaf6b05a81b77fb84edaa1e7aa4704a80e6d5b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/hooks/useBrandFontFaces.ts",
+      "sha256": "cf7065c88d9e9d657752a44543890f13c9b2221d4543d7f86d12516060a63854",
+      "gitBlob": "c14a707aec25943d63b1f61c31d9076a4edac6b1",
+      "reviewedBaseBlob": "c14a707aec25943d63b1f61c31d9076a4edac6b1",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/brand/resolveBrand.ts",
+      "sha256": "df466f5a96dd86c26c48dbf92802ea08995fe55115fd6dddf063ee58dc4622ea",
+      "gitBlob": "961c3fb2c47facf33abb1893ad2daf07991ff0f6",
+      "reviewedBaseBlob": "961c3fb2c47facf33abb1893ad2daf07991ff0f6",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/BrandControls.tsx",
+      "sha256": "78898e24d7169a31927671e6d6f472efab2e82eb36ad9f9001903d6b13ced0fb",
+      "gitBlob": "bb7fe6800c9962f6e2d5d2fd894d30aa097a6c1b",
+      "reviewedBaseBlob": "bb7fe6800c9962f6e2d5d2fd894d30aa097a6c1b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "sha256": "4a8bc00e5514912c54d414e207266fa100906aec2754d590adcc8ccc46d4c5c9",
+      "gitBlob": "68d21bbf6d29fc68b1a19d10e4eaf1e72fa2d68c",
+      "reviewedBaseBlob": "68d21bbf6d29fc68b1a19d10e4eaf1e72fa2d68c",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/PresenceDot.tsx",
+      "sha256": "760feb343f3b9b30cebe51f3226b5c80ac988253801c1647e058ea4d7f3bf326",
+      "gitBlob": "4e48c4ee9e844708a60568f12722ca10ac66cf2c",
+      "reviewedBaseBlob": "4e48c4ee9e844708a60568f12722ca10ac66cf2c",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/PaigeAttribution.tsx",
+      "sha256": "a882da474e5a37cecdb0d18cd51174f8e9b91a225a45ab5b1f9de709ae50ee53",
+      "gitBlob": "4bf5c36db9389da7140a2cb3d6b77ebb511b21d3",
+      "reviewedBaseBlob": "4bf5c36db9389da7140a2cb3d6b77ebb511b21d3",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/page/index.ts",
+      "sha256": "f7e1f8ae0c064198f6997584b216dbec9bd7f01b86316c30027dda7738953616",
+      "gitBlob": "ab0aeab156abe110f17c2251c1e0491df60ae653",
+      "reviewedBaseBlob": "ab0aeab156abe110f17c2251c1e0491df60ae653",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paige-stream/framing.ts",
+      "sha256": "583d379140780a953c6d79b9e1c16da2e93acc6859cb17c57a3434e5fd8a8d45",
+      "gitBlob": "eb6d8866986859d7d7c8501ee86f541c2b69736c",
+      "reviewedBaseBlob": "eb6d8866986859d7d7c8501ee86f541c2b69736c",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/contract.ts",
+      "sha256": "d9f3b52e245ec6801f81e95d4960cd20f05435ae87423dd68db4c5220e152981",
+      "gitBlob": "494a7b7b5fca6a65ea050b5a20a6c0ece6c2fd84",
+      "reviewedBaseBlob": "494a7b7b5fca6a65ea050b5a20a6c0ece6c2fd84",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paige-stream/decode.ts",
+      "sha256": "b09188d5bf6797e98c52c37559823541f644bff73dbcd1da95624e4299b33c01",
+      "gitBlob": "672324afbd6ddee5853e966a709943e7e679ba97",
+      "reviewedBaseBlob": "672324afbd6ddee5853e966a709943e7e679ba97",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paige-stream/step-status.ts",
+      "sha256": "c89e615170dd8b0a54cc5b0924240eb3b98d8a2139ec2f8bd0aedc6633748fa7",
+      "gitBlob": "d4ac27701d0f21cf1158669d08fe2197c7a0d330",
+      "reviewedBaseBlob": "d4ac27701d0f21cf1158669d08fe2197c7a0d330",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/step-start.ts",
+      "sha256": "755f96391e5321a796cd4011e1cd7e5a45a4db9f380859831ba6c502daf3284e",
+      "gitBlob": "91a26a0dc6956fd13f22da207dc8272d0bc8c82b",
+      "reviewedBaseBlob": "91a26a0dc6956fd13f22da207dc8272d0bc8c82b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paige-stream/turn-view.ts",
+      "sha256": "743c17f4728557d4e4c06e5dbd72f4c7a1792b5df22ced890b128ba21810e166",
+      "gitBlob": "15b14fd2a37358ddfde9e18f2eef92bd79a99afc",
+      "reviewedBaseBlob": "15b14fd2a37358ddfde9e18f2eef92bd79a99afc",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paige-stream/index.ts",
+      "sha256": "fe24df943fd02239b8de3ca97ce19cf5c2f78e57e47886506250836e984d7f92",
+      "gitBlob": "f73645c946834724a11a82c712c14a4f17d0b4ca",
+      "reviewedBaseBlob": "f73645c946834724a11a82c712c14a4f17d0b4ca",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "sha256": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5",
+      "gitBlob": "445e5ca572f2813e02ee8bcc07855f8c0bb34b00",
+      "reviewedBaseBlob": "445e5ca572f2813e02ee8bcc07855f8c0bb34b00",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/dashboard/PaigeStepTrace.tsx",
+      "sha256": "f6ae8d83d2d667364cf588a000dafab74fb238ee0dabdf390aedf4f2f0d862d2",
+      "gitBlob": "e1651aad61a0ee57586ba0c29cf31fb6b58a3420",
+      "reviewedBaseBlob": "e1651aad61a0ee57586ba0c29cf31fb6b58a3420",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/card.tsx",
+      "sha256": "1dfb17920034a5659ddec7e016d8b8d572cda2449c67a6ab31d35d441c4a9d06",
+      "gitBlob": "7907689caea46bb7ca51ee74053a31f634656529",
+      "reviewedBaseBlob": "7907689caea46bb7ca51ee74053a31f634656529",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/textarea.tsx",
+      "sha256": "2f5b24d28dc5c41817ca69653a396adcb2fe495200f8184777d086a62fc70461",
+      "gitBlob": "4a5643e87fe235bde0aa67a092a4d5d585618eaf",
+      "reviewedBaseBlob": "4a5643e87fe235bde0aa67a092a4d5d585618eaf",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/chat/paige-research-card.css",
+      "sha256": "1804542f9d47ad95675d1e9b0da3df382c7d552f13bdc1a0ce7e699e7c695df3",
+      "gitBlob": "bce138d89bb0ca8c864a1113f5aef6014f102645",
+      "reviewedBaseBlob": "bce138d89bb0ca8c864a1113f5aef6014f102645",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeResearchCard.tsx",
+      "sha256": "cb18a4dd5204d94591ef828000cf98a6fab3901c668d3a68886579f6459a3eed",
+      "gitBlob": "90ea8ec447f8a1cc7098eea9cf7df97bd30f630c",
+      "reviewedBaseBlob": "90ea8ec447f8a1cc7098eea9cf7df97bd30f630c",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigeResearchReadback.ts",
+      "sha256": "820408782697494e7401223ffa1c1aee1ecb25732401c7f23caa6627983753c6",
+      "gitBlob": "9da2affa756e89fee0640bf5ecd1d436351a28fc",
+      "reviewedBaseBlob": "9da2affa756e89fee0640bf5ecd1d436351a28fc",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/hooks/useBeforeUnloadGuard.ts",
+      "sha256": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
+      "gitBlob": "00b543a1d37ac15812c59c82f83cfca44913face",
+      "reviewedBaseBlob": "00b543a1d37ac15812c59c82f83cfca44913face",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigeChatError.ts",
+      "sha256": "e2ab909af66bfbe0661635317be8b270570c027d6110d06c8ef62960643776c2",
+      "gitBlob": "c22c5e945ddd7c0684a64f679887f52e11307a51",
+      "reviewedBaseBlob": "c22c5e945ddd7c0684a64f679887f52e11307a51",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/utils/VoiceAudio.ts",
+      "sha256": "abbbb8ad6dfb0e82f2fca93809357bffd755ac84807be920aa0197d249683cda",
+      "gitBlob": "855bf2b0932f43b6044a8617ffc122d9e1410de4",
+      "reviewedBaseBlob": "855bf2b0932f43b6044a8617ffc122d9e1410de4",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/voice/useDictation.ts",
+      "sha256": "e356270667b3885b88fdf483480f826ad53e15d3fdbe1c010aeea1d5c6441b4f",
+      "gitBlob": "165f029fc33e4008aac3a08c6542dae3681c8fc7",
+      "reviewedBaseBlob": "165f029fc33e4008aac3a08c6542dae3681c8fc7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca",
+      "gitBlob": "e6d52110725caad8f3c1627e7a608ca997c772ab",
+      "reviewedBaseBlob": "e6d52110725caad8f3c1627e7a608ca997c772ab",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/label.tsx",
+      "sha256": "d5dc9497cbb28a5401b864bd44a15f010c302584fbe8e07e015dbe443f103753",
+      "gitBlob": "80e30eec8d12ded7da1f57c8bb83f461bc1a5d25",
+      "reviewedBaseBlob": "80e30eec8d12ded7da1f57c8bb83f461bc1a5d25",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/ResponseFeedback.tsx",
+      "sha256": "b6dbb45342b0ca4d1a0478bf0ce6c86b0adea8701d42447c2500e082ecb10154",
+      "gitBlob": "325101ddff74595f56e957d7ebc6dd0c76f71458",
+      "reviewedBaseBlob": "325101ddff74595f56e957d7ebc6dd0c76f71458",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/useCopyToClipboard.ts",
+      "sha256": "0e6f4fe79ba4211258e9639ac0507851aebc362af2631450d2805f9d759f0007",
+      "gitBlob": "c2f7820489adb929d60652844b5f4c3e1eeaceba",
+      "reviewedBaseBlob": "c2f7820489adb929d60652844b5f4c3e1eeaceba",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/MessageMeta.tsx",
+      "sha256": "69fab79f9bf30d30238ecdaa4652f20bb5fef3e65fbd2b85a5858e0e1cfeb4f4",
+      "gitBlob": "e5407e85c1057e37fb936cb7320411eae41c89bf",
+      "reviewedBaseBlob": "e5407e85c1057e37fb936cb7320411eae41c89bf",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/SlashCommandMenu.tsx",
+      "sha256": "dd2370186ba5b3b0d8352bc7cdc62e5cf6830a3308a84c2e2324b69691eaa703",
+      "gitBlob": "593663babaa10f7b6c30e85d51237a86d430fa53",
+      "reviewedBaseBlob": "593663babaa10f7b6c30e85d51237a86d430fa53",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/userClock.ts",
+      "sha256": "9582325d04f5b18599330a1126f66886800e0b59f2982400e736e9a1132e42cf",
+      "gitBlob": "9e5c54e3e0a338676aa397e2479435f253e3abb2",
+      "reviewedBaseBlob": "9e5c54e3e0a338676aa397e2479435f253e3abb2",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/hooks/use-mobile.tsx",
+      "sha256": "21eff740f9e5c965c7f0782925a7e8f67ddfcdf0f58b6613550f99c3e1c454e9",
+      "gitBlob": "502fd323934501eab408a396a9ae4a07c0ae3560",
+      "reviewedBaseBlob": "502fd323934501eab408a396a9ae4a07c0ae3560",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/EntityDiagramCard.tsx",
+      "sha256": "f82c82a9506f0f9081e1c00e2eaca63c18c3a1768b232b4aab9a20a7f536c6d9",
+      "gitBlob": "f17c51091e980a1fc3952ce1cfd73a67f9895184",
+      "reviewedBaseBlob": "f17c51091e980a1fc3952ce1cfd73a67f9895184",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/entityDiagram.ts",
+      "sha256": "80096444219b9e30c905fae9c2192653677404e6afb469caf0b6542611ff2a25",
+      "gitBlob": "7e4843ebfce34de7bd0c63f2e1b88c719a41dbcb",
+      "reviewedBaseBlob": "7e4843ebfce34de7bd0c63f2e1b88c719a41dbcb",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "5299b1ef17b7b5b816f23ed1830291d9be04689fde8b827b0f709703cfb9ed62",
+      "gitBlob": "1aa88579143d4ff65ab6a639b609e8c7a8f72104",
+      "reviewedBaseBlob": "1aa88579143d4ff65ab6a639b609e8c7a8f72104",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/hostRouting.ts",
+      "sha256": "32f9039e9363ea2109d3c619ff43e7eeaa01245c54804058dea4f599974cd30c",
+      "gitBlob": "e805e38b85c6727bb7c107106cfac177e6ec552e",
+      "reviewedBaseBlob": "e805e38b85c6727bb7c107106cfac177e6ec552e",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/MarkdownMessage.tsx",
+      "sha256": "31ff405b48ae6ec986cc4381c56a112b48c14ea6c739bbd985b1782e95d224a0",
+      "gitBlob": "b7e57dee8693d3158bc4a8495e2395afbd9bc086",
+      "reviewedBaseBlob": "b7e57dee8693d3158bc4a8495e2395afbd9bc086",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88",
+      "gitBlob": "3f6a9d687dd61aa0dca564bc2e71823ff4f98fb2",
+      "reviewedBaseBlob": "3f6a9d687dd61aa0dca564bc2e71823ff4f98fb2",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/confirmPreview.ts",
+      "sha256": "9ccde70d641e1b8cfacbedadb32b38c279cdc0e86101027b1f77b11e41f58400",
+      "gitBlob": "c3b78d099be0afafca9d7222fe277ac184c15cba",
+      "reviewedBaseBlob": "ecb602b479d86e15c3447a70ff4db6afc86d6db7",
+      "role": "candidate product source"
+    },
+    {
+      "path": "src/components/chat/PaigeAskCard.tsx",
+      "sha256": "34f8fa4ec40dab4afd4f264d611bf7423d40489429d2c9cd49f0b0eb6dbc991f",
+      "gitBlob": "e1ae5c3bee7af6858ad81e5bf0791882cfff60cd",
+      "reviewedBaseBlob": "e1ae5c3bee7af6858ad81e5bf0791882cfff60cd",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/approvalOutcome.ts",
+      "sha256": "5679e54bee4f358f75b664944102b2facc698b7e547151bb1c02ed2c698a2292",
+      "gitBlob": "31e683c581954a768f53be77cce4aefcc70ebcb7",
+      "reviewedBaseBlob": "31e683c581954a768f53be77cce4aefcc70ebcb7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/solo-classification.ts",
+      "sha256": "51daa30a31f55912ecda5aa00847aee82b78dfa61050f99c3e8e4c43a63e3245",
+      "gitBlob": "eb29faaa550eb67d826115e8f0c2dd5dec46b914",
+      "reviewedBaseBlob": "eb29faaa550eb67d826115e8f0c2dd5dec46b914",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/tier/tierFeatures.ts",
+      "sha256": "ba484c578aa74e52357be19aaf0050f0a04877f62f6271b2b9455c9774505ae9",
+      "gitBlob": "0d6e505f1ee8a534210b1e848a8d1be368d75151",
+      "reviewedBaseBlob": "0d6e505f1ee8a534210b1e848a8d1be368d75151",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f",
+      "gitBlob": "40d5242598cdb2711bfbedb460c8d9c6d4742d85",
+      "reviewedBaseBlob": "40d5242598cdb2711bfbedb460c8d9c6d4742d85",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3",
+      "gitBlob": "fa870252a40a89d2eb26399944f864dd6f0820a0",
+      "reviewedBaseBlob": "fa870252a40a89d2eb26399944f864dd6f0820a0",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/crm-result-reference.ts",
+      "sha256": "d40dbc393d2b41f70c1df9c02b87f1dd3b31171967572ede061da425a42dd77d",
+      "gitBlob": "4bb27ce3e42aafa7c9e3bc03114f32ff83b19319",
+      "reviewedBaseBlob": "4bb27ce3e42aafa7c9e3bc03114f32ff83b19319",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/PaigeCrmResultCard.tsx",
+      "sha256": "ac87d1f18334b5f4293ee32a3dd26b3b20f4499eaff351a30a626fa25cad4193",
+      "gitBlob": "d80df022dee3076fe7f26c3fc26280e93dff4322",
+      "reviewedBaseBlob": "d80df022dee3076fe7f26c3fc26280e93dff4322",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/control-transport.ts",
+      "sha256": "9d002afe748c9c41ea37207313d9dbc62c6ab65f1f9882da8a2fa944320b2e8f",
+      "gitBlob": "da70d70e6a02fd82810f021cb7ad52e67c7c26f7",
+      "reviewedBaseBlob": "da70d70e6a02fd82810f021cb7ad52e67c7c26f7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/CheckLinks.tsx",
+      "sha256": "ee9149270246b42dc725e9946f5b4714b64ba28f868fd8af9c309f546ddc5b15",
+      "gitBlob": "e62490a47cbc65ea7607761e0d65aea6a32484fd",
+      "reviewedBaseBlob": "e62490a47cbc65ea7607761e0d65aea6a32484fd",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/PaigeRecordLinks.tsx",
+      "sha256": "43a92f89a51c591068c5b5176d9c0318997eb6e903f6366d97f6bbfe919f3caf",
+      "gitBlob": "79a7309a28731d7766ffe543bf9adc59a7791579",
+      "reviewedBaseBlob": "79a7309a28731d7766ffe543bf9adc59a7791579",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/reminderHistory.ts",
+      "sha256": "57d0cce47a055607b4f5d2f870295dcf427e08f7870ce87d02abede360701939",
+      "gitBlob": "dc244451e19e8e633374af25bfcdf80bf22ba012",
+      "reviewedBaseBlob": "dc244451e19e8e633374af25bfcdf80bf22ba012",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/specialistHistory.ts",
+      "sha256": "43865633f95f3e450a8503208ceff0aa9288cb7bbafdecd4729b2d8a9558f550",
+      "gitBlob": "aa120ead790e9d79c330155349e129cbec63c4c0",
+      "reviewedBaseBlob": "aa120ead790e9d79c330155349e129cbec63c4c0",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/OriginalSpecialistResult.tsx",
+      "sha256": "38054f6e2835c967a063fc1b5e342763a2b977fb058e96e33d7fc43a5872d569",
+      "gitBlob": "3107001483420e784c9229ce171f42de5d8c81be",
+      "reviewedBaseBlob": "3107001483420e784c9229ce171f42de5d8c81be",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/curaPreparationHistory.ts",
+      "sha256": "c3ef4bb81853c1887e3f4d2e0fd5801ee93661f87644dec1fb2448a927dedc9b",
+      "gitBlob": "c3764d9f99dd70678778ccd5d123326e839de806",
+      "reviewedBaseBlob": "c3764d9f99dd70678778ccd5d123326e839de806",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/scroll-area.tsx",
+      "sha256": "998181a10164aa6e508210064ba61b2f772a92958d7bb2141867007f0ebd9783",
+      "gitBlob": "8d29b27e58e20cad63e349991dfe1d61c2c146a9",
+      "reviewedBaseBlob": "8d29b27e58e20cad63e349991dfe1d61c2c146a9",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/dropdown-menu.tsx",
+      "sha256": "0aa6dfd88b188940c62d27d6f2b6b09beb4491bf5b54933fac8b5a3a1c72201e",
+      "gitBlob": "8e82d968c82972b99c3c437e5a6a22ffbed52a25",
+      "reviewedBaseBlob": "8e82d968c82972b99c3c437e5a6a22ffbed52a25",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/alert-dialog.tsx",
+      "sha256": "c8b01137c7552e63c9ccf2c38ef92e5417bd6616b6980d56d3015db027465283",
+      "gitBlob": "6dfbfb49fedb30753b1b2c08402953d40cc3389c",
+      "reviewedBaseBlob": "6dfbfb49fedb30753b1b2c08402953d40cc3389c",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/dashboard/paige/ThreadRail.tsx",
+      "sha256": "3de8c119c752e0e93e997b416ba96bd8894d68873a29caa24a0710133953f9a2",
+      "gitBlob": "08c42b34c7bea946a3cbb347cd1ecfeef0cba2be",
+      "reviewedBaseBlob": "08c42b34c7bea946a3cbb347cd1ecfeef0cba2be",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/DocumentAttachmentChip.tsx",
+      "sha256": "0714d17978193689474fcd1d4f3f0e02cdd2263fc38adc4936c9d97ad5c6bbae",
+      "gitBlob": "a92072aa31099304574a5c3e6ef2a3eb28f8c632",
+      "reviewedBaseBlob": "a92072aa31099304574a5c3e6ef2a3eb28f8c632",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/DocumentMessageBubble.tsx",
+      "sha256": "f9b99ca20684a98c4e96a74eb8666fa47cf9a77741d72cb0892656b45b560fb2",
+      "gitBlob": "a4cfc2fcf1dcf9e0cc77d7cb5a7b63922c4da8f1",
+      "reviewedBaseBlob": "a4cfc2fcf1dcf9e0cc77d7cb5a7b63922c4da8f1",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/tooltip.tsx",
+      "sha256": "bd9361649477cf9496f4b48415a2eafb9ae1ebca81af58a29b61b1516adc88c1",
+      "gitBlob": "2dece61d05221533410c21ed07bd1fae8e91dbb5",
+      "reviewedBaseBlob": "2dece61d05221533410c21ed07bd1fae8e91dbb5",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/voice/messageTts.ts",
+      "sha256": "3debf726a4391da024997ad9a88bb3c5da224b2869c60e775f07c999518af2f4",
+      "gitBlob": "79055c8eeda893b29a387dfc8fdd80acddef6910",
+      "reviewedBaseBlob": "79055c8eeda893b29a387dfc8fdd80acddef6910",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/voice/messageTtsFailure.ts",
+      "sha256": "1832e8d497ac1d4606c9ac756b530720db82b59db663fb779ef61e65403f5edc",
+      "gitBlob": "b054fc347a28a50ee416f5d6368215904581c7bd",
+      "reviewedBaseBlob": "b054fc347a28a50ee416f5d6368215904581c7bd",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/MessageAudioButton.tsx",
+      "sha256": "af535b392a9bd1482020e320ccd4eff8901074e7714d87b8a358a95de70bc394",
+      "gitBlob": "182981e4e92dd0350718c779c88e6b11a26f7094",
+      "reviewedBaseBlob": "182981e4e92dd0350718c779c88e6b11a26f7094",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/knowledge/ingest-outcome.ts",
+      "sha256": "24019e45e3fb725a09c5a1a962b8f1e29bb0b5edbcfc20d7a3c4dffffe75f78a",
+      "gitBlob": "c1c5cb7263900e9815e5b5b7d1f025cf598125f1",
+      "reviewedBaseBlob": "c1c5cb7263900e9815e5b5b7d1f025cf598125f1",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/growth-visit.ts",
+      "sha256": "8e3f92a9b447dc2817445c84fe73765350b05505d9a1fc8fdf226b8c67915e40",
+      "gitBlob": "0a2bb33a04c16b62cd714bc68167a9fce17bed60",
+      "reviewedBaseBlob": "0a2bb33a04c16b62cd714bc68167a9fce17bed60",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/growth.ts",
+      "sha256": "a497e335ccabbc280433aa08cf32743c0f5cee208ff8b49f3d8b2b292da2bc9c",
+      "gitBlob": "b86440489ae870b3b531489a1985eff5822b342b",
+      "reviewedBaseBlob": "b86440489ae870b3b531489a1985eff5822b342b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/growth/growth-theme.ts",
+      "sha256": "c5bec29534d87af0a47b058da5c8d7d8eb32153927c9f0ee6190e08706163960",
+      "gitBlob": "cf76e4153331d0fef099a28051b95378e5d188ff",
+      "reviewedBaseBlob": "cf76e4153331d0fef099a28051b95378e5d188ff",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/admin/studio/studio-copy.ts",
+      "sha256": "6790975ecc76a088e2b75e9e1473c8d46b6cf8ab1efe4fc6b1133e29a40066f1",
+      "gitBlob": "26d995157575fff6170aa4b4ba8b91ed046c91e2",
+      "reviewedBaseBlob": "26d995157575fff6170aa4b4ba8b91ed046c91e2",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/admin/studio/studio-document.ts",
+      "sha256": "945cee2cd9dffaec24db4e571ad71a65ca07638d25cb30938e66226ca958fb1b",
+      "gitBlob": "cc30fc7c6399a31c975ca5b10706152afb7b48cc",
+      "reviewedBaseBlob": "cc30fc7c6399a31c975ca5b10706152afb7b48cc",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/admin/studio/studio.ts",
+      "sha256": "9a0e4b8ca416b05a486d14381d75e2a73d4069d56a34e4d61ef3c02344e6d028",
+      "gitBlob": "1c58f80b9a6c9efc8a21f691c7725d33420e5064",
+      "reviewedBaseBlob": "1c58f80b9a6c9efc8a21f691c7725d33420e5064",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/admin/studio/ArtifactStrip.tsx",
+      "sha256": "8c0a6483419ad8fca95d96bc617dcac125bb40b629c138f0d45190f7a13eb211",
+      "gitBlob": "6f774762433bddb3aea111d6bf56462467ce1661",
+      "reviewedBaseBlob": "6f774762433bddb3aea111d6bf56462467ce1661",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/admin/studio/DocumentPreview.tsx",
+      "sha256": "03511d34e9c2b52592f01bee91990b3e80731ae15b0261d46c7947607fb70d56",
+      "gitBlob": "88cb3c0dc79f0a40e915e951403f65af83ee83ef",
+      "reviewedBaseBlob": "88cb3c0dc79f0a40e915e951403f65af83ee83ef",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/admin/studio/studio-types.ts",
+      "sha256": "91e10916e4267b7edb63a0b988c01eaf5712ff3fba056a768fd6f0aa6a48bf05",
+      "gitBlob": "2fd282d53e7e945a60a47aaa97156d4a86d83e53",
+      "reviewedBaseBlob": "2fd282d53e7e945a60a47aaa97156d4a86d83e53",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeArtifactCard.tsx",
+      "sha256": "7bce0f610af4d0edd215253005e926894a3badc76517d067c89bf7e49acddc15",
+      "gitBlob": "c874a274b146db3eab16fede196990e914f8f7bb",
+      "reviewedBaseBlob": "c874a274b146db3eab16fede196990e914f8f7bb",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/checkbox.tsx",
+      "sha256": "178f8177bedb1704b4dd3e748f4826848981c8af43178c04e1a276a7f017cf1f",
+      "gitBlob": "759a41ce202eb6da0310bcb05bb697bc9fe611dd",
+      "reviewedBaseBlob": "759a41ce202eb6da0310bcb05bb697bc9fe611dd",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/ExtractionProposalCard.tsx",
+      "sha256": "1887d101a395aacd277dbbace438b34c8f79443fb62e91c5a776d600853c223a",
+      "gitBlob": "d712c1753977b417597f6ff803ff2cadc541f1cf",
+      "reviewedBaseBlob": "d712c1753977b417597f6ff803ff2cadc541f1cf",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeCompactingCard.tsx",
+      "sha256": "f03eaf339824986592b338c670d11017710490eb57f7a63251bdac7b49dc0eff",
+      "gitBlob": "b27ebb198fa74acddddc762af339c1b1b6718a7a",
+      "reviewedBaseBlob": "b27ebb198fa74acddddc762af339c1b1b6718a7a",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/contract.ts",
+      "sha256": "47fb9a1ab58582073688e24479ee13102a9699e35afbde46c4e5e20c3b2724aa",
+      "gitBlob": "28239866bbcbb27959cdeea87174aa3469591bee",
+      "reviewedBaseBlob": "28239866bbcbb27959cdeea87174aa3469591bee",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/client.ts",
+      "sha256": "62163cb65ee618a2f1ed0e6972ee045f5e97525ff3c802ab0dcfa8646f219fbc",
+      "gitBlob": "a007d021e4a8013f60b660c558e223bb44174673",
+      "reviewedBaseBlob": "a007d021e4a8013f60b660c558e223bb44174673",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/presence.ts",
+      "sha256": "fb8434a88a8e134d19c4858cf56cacba4ac34426ba99c9d74862375ed61dfaa7",
+      "gitBlob": "20966e3f48981624e2c8bfe2bf3d9ec8991fd1f4",
+      "reviewedBaseBlob": "20966e3f48981624e2c8bfe2bf3d9ec8991fd1f4",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/relayTransport.ts",
+      "sha256": "2f08d16c4b6000fc4e09f7a40a718a77308ff2daaefe9269518373eb4c3cb220",
+      "gitBlob": "503a00cb206637fba44c66fcce9e633c6084439e",
+      "reviewedBaseBlob": "503a00cb206637fba44c66fcce9e633c6084439e",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/live/paige-presence.css",
+      "sha256": "ae19b83af2309c9abe32fe0f1a6b415eee6ff2d06c8f698ff518695dd1d37e99",
+      "gitBlob": "d923764edae0e8d5acdebb360f1a04016c67adc5",
+      "reviewedBaseBlob": "d923764edae0e8d5acdebb360f1a04016c67adc5",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/live/PaigePresence.tsx",
+      "sha256": "ceabefdf83b24dba197ee62a40cefdcd1c8a0aa1f3ad4d3d10fc40c2bdef198b",
+      "gitBlob": "9f935ad4e90ec0e0668dc618b1f7561b2f73aa59",
+      "reviewedBaseBlob": "9f935ad4e90ec0e0668dc618b1f7561b2f73aa59",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/webgl.ts",
+      "sha256": "fdcbed31f1fdb82015dbe14b96d946de011b0789414e8c248bfc0fd8f2b54852",
+      "gitBlob": "b29870375eca960c9792de0a1b62a3fa6b66f774",
+      "reviewedBaseBlob": "b29870375eca960c9792de0a1b62a3fa6b66f774",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/live/paige-presence-3d.css",
+      "sha256": "88f17cadb66add969544ac3b112fc3ccf124d92b5b2597b6cc110dd467719625",
+      "gitBlob": "0ba5709f6f5b5d253303c2bd3c824a709828eac7",
+      "reviewedBaseBlob": "0ba5709f6f5b5d253303c2bd3c824a709828eac7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/live/PaigePresenceScene.tsx",
+      "sha256": "cbb809344f2baab9be4f63feaf29d0b88e7a58e54ef5536881597b216443a334",
+      "gitBlob": "3aaa305884614e4dfd844ababc373e7194cd1cf0",
+      "reviewedBaseBlob": "3aaa305884614e4dfd844ababc373e7194cd1cf0",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/live/PaigePresence3D.tsx",
+      "sha256": "2851f82bd24f922ce3e66af1e5b157b6bd7d5374f03e5768be478fad9d8bc0b2",
+      "gitBlob": "f6bf337a3e5bddfb843f7c893ad95be146dca729",
+      "reviewedBaseBlob": "f6bf337a3e5bddfb843f7c893ad95be146dca729",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/outputAnalysis.ts",
+      "sha256": "0f3617c5a456cc5eed684aff8be8574da6271a39236292ec97751b49ebd013b4",
+      "gitBlob": "017ba856621fc299643a74ef3d2e5ffbbdb9c9d8",
+      "reviewedBaseBlob": "017ba856621fc299643a74ef3d2e5ffbbdb9c9d8",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/live/usePaigeOutput.ts",
+      "sha256": "787603686e29eec8153e0149d36604746e40f78ece65778a6ab5424ec30cbd6a",
+      "gitBlob": "114b2edca9c4de1352ce790d3a2822c20e7d40a1",
+      "reviewedBaseBlob": "114b2edca9c4de1352ce790d3a2822c20e7d40a1",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/anchoredTranscriptScroll.ts",
+      "sha256": "53204158d3e12307ab44c8ce6c33bcf8cdbcfcc02de60a3703e04833e29dbc6e",
+      "gitBlob": "593bd4ddcecafe68f99299797ad5bfda457796da",
+      "reviewedBaseBlob": "593bd4ddcecafe68f99299797ad5bfda457796da",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/live/paige-live-conversation.css",
+      "sha256": "7d2106b8518b8c651e26efe2c0248079f7470d853e3e0a7875e46d41db7e5aff",
+      "gitBlob": "755831a034d50b3f0a9a877f5bc8f4e64cd00fbc",
+      "reviewedBaseBlob": "755831a034d50b3f0a9a877f5bc8f4e64cd00fbc",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/live/PaigeLiveConversation.tsx",
+      "sha256": "2ae038d8d6ac240d28319549274db5b8351ab5e1883c967ec4c22050e594c72f",
+      "gitBlob": "7ac915ce671eb386652530fa974a7f6778c2f2f9",
+      "reviewedBaseBlob": "7ac915ce671eb386652530fa974a7f6778c2f2f9",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/chat/paige-turn-status.css",
+      "sha256": "394aeb8e810392ce4ab21fd999134e75379f249e55e71167a4bb5a562db13517",
+      "gitBlob": "d99eb847c3e8a41de23e11266eb3485be23b55c9",
+      "reviewedBaseBlob": "d99eb847c3e8a41de23e11266eb3485be23b55c9",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeTurnStatus.tsx",
+      "sha256": "1bd5808a9d6aa926bfff5f6db1b23175f22e808ef6048a09569b23ca2830945a",
+      "gitBlob": "0a8ecdb40390b5dee4dbad1f19967f8789a6e421",
+      "reviewedBaseBlob": "0a8ecdb40390b5dee4dbad1f19967f8789a6e421",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/approval-outcome.ts",
+      "sha256": "e0f5a2ab8ab3f5be0435e8a796efca0a20f907a86e21adaca53532d1bfdbc9d1",
+      "gitBlob": "0e103e034d48f1ac458544069e67abe623433e94",
+      "reviewedBaseBlob": "0e103e034d48f1ac458544069e67abe623433e94",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/comms-email/contract.ts",
+      "sha256": "79c754ab6b261b64cdd93b225b46fb20c65f0ef46c693aea5c2b26b989f440c4",
+      "gitBlob": "5a0d3ffc77ef4bee1fe7e754d7e71adbe98aaa69",
+      "reviewedBaseBlob": "5a0d3ffc77ef4bee1fe7e754d7e71adbe98aaa69",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/resume.ts",
+      "sha256": "2ccd9ca43ae7081f5b61486d45bda7c958db20bf151766e29571d26e06487e9c",
+      "gitBlob": "8efa6bd97c096dc1806f9f525ef03a80aef12d79",
+      "reviewedBaseBlob": "8efa6bd97c096dc1806f9f525ef03a80aef12d79",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/paigeComposerScopeState.ts",
+      "sha256": "3f7a1e9f71ead22ecc9d6f190dc07cffd0417fb9ee9e03236c33e971262b0cec",
+      "gitBlob": "a8421ff14fd2e175f019f38809a171f47e80c588",
+      "reviewedBaseBlob": "a8421ff14fd2e175f019f38809a171f47e80c588",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/dashboard/PaigeAIChat.tsx",
+      "sha256": "61fd3d80e0f48566ceb774ee56843170c551f64c6cf4502a2f825442def4fce0",
+      "gitBlob": "b262a6b50e138b2c81a5f7cd939ffda6e7a1c494",
+      "reviewedBaseBlob": "ec83ef77d9b69d5e6fb8ecf1ed53c3d38bb3f4d6",
+      "role": "candidate product source"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+      "gitBlob": "1053167fbf0e046773cffc24c06eeb8581c5b5be",
+      "reviewedBaseBlob": "1053167fbf0e046773cffc24c06eeb8581c5b5be",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/contextual-suggestion.css",
+      "sha256": "a3768c2ccea13465c7bd794e51316737deb57bae6fb0c02adc7a96eebf9c5fc1",
+      "gitBlob": "49b719fed1d5edff948dc452a399b1fa5370262e",
+      "reviewedBaseBlob": "49b719fed1d5edff948dc452a399b1fa5370262e",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/chat/ContextualSuggestion.tsx",
+      "sha256": "36511578d369ce324b1bc4f4fabd299511d2b99e5663d8a79bb5c752c1a3b952",
+      "gitBlob": "7ed841aa33127327a03e55482b0b4b7d13c742d9",
+      "reviewedBaseBlob": "7ed841aa33127327a03e55482b0b4b7d13c742d9",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/prepared-work-review.css",
+      "sha256": "9b0e3f9a45a867cdac653406c919a295440f67d5dd68d50245d1871b42868468",
+      "gitBlob": "d760bfad1f9e5cc95eb03c9da13af8235400c617",
+      "reviewedBaseBlob": "d760bfad1f9e5cc95eb03c9da13af8235400c617",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/PreparedWorkReview.tsx",
+      "sha256": "7907d9f5efef57000f27cfda8e17a764661e4482cce14fc45d93e5c760276222",
+      "gitBlob": "99a2096355a77d2764ad255b19af60c182094c99",
+      "reviewedBaseBlob": "99a2096355a77d2764ad255b19af60c182094c99",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/data/useSoloActivityFeed.ts",
+      "sha256": "5b13aa95cea62e4cc0490e9e11af2370135a8c59f1e23bce76b26de3add96dd9",
+      "gitBlob": "6df1402bb688ba70c139cb2d24495e9d91365a0b",
+      "reviewedBaseBlob": "6df1402bb688ba70c139cb2d24495e9d91365a0b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/data/useSoloPendingActions.ts",
+      "sha256": "906e947cc03f8a6a21dec9ea88bd7dc196fd5f65c80fc53fd37271a3e732ed44",
+      "gitBlob": "14c4ebf674aa89eb44f10c10865a0b5935afa701",
+      "reviewedBaseBlob": "14c4ebf674aa89eb44f10c10865a0b5935afa701",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/solo-planning-suggestion.css",
+      "sha256": "ed02b3eb71206e1bf21c977eaa4463873b093839fc9721eb4a600848597d5ee0",
+      "gitBlob": "e97158f010323fa22852125b74307b6bf87de40a",
+      "reviewedBaseBlob": "e97158f010323fa22852125b74307b6bf87de40a",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/SoloPlanningSuggestion.tsx",
+      "sha256": "5dd7df9f09abb54c38cf439e8cc153333d6de22970dd45fd02cfe0db18c3b7a5",
+      "gitBlob": "3436eb49c834141bcf154e201d2cb8782af9584b",
+      "reviewedBaseBlob": "3436eb49c834141bcf154e201d2cb8782af9584b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/planning-suggestion-context.ts",
+      "sha256": "0b91140d74f04152764a56ab50a53fa1e6631d184c84fd29a1d03a6f3c3b6f8d",
+      "gitBlob": "2e7c3cf2bc89ef34174bcc0219cb05b38d409659",
+      "reviewedBaseBlob": "2e7c3cf2bc89ef34174bcc0219cb05b38d409659",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/data/capabilityTools.ts",
+      "sha256": "191f035d0c40d7b4b213d9760a4ba40a9e17823bde542b76317279153794724e",
+      "gitBlob": "718ab5d7161b95b3f9c159d082a336422f0d64d1",
+      "reviewedBaseBlob": "718ab5d7161b95b3f9c159d082a336422f0d64d1",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/dashboard/paige/PaigeComposerAutonomyChip.tsx",
+      "sha256": "552e07fdd1e7a0854f466c912418aaff464652cf06f2a3fefd57ec459cab5e9f",
+      "gitBlob": "e9710aaa3f76f6bd4c3bfebd0cc7c25672784a3a",
+      "reviewedBaseBlob": "e9710aaa3f76f6bd4c3bfebd0cc7c25672784a3a",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/auth/RequireSetupComplete.tsx",
+      "sha256": "49fc0d50de281311401a851e429e55a2525a91db023fe190ee9e283a77d46977",
+      "gitBlob": "2f23245d021e2f05667acce0ebc461cabc909ad0",
+      "reviewedBaseBlob": "2f23245d021e2f05667acce0ebc461cabc909ad0",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/dashboard/EntityDossier.tsx",
+      "sha256": "a8cc5d761b48ccab7e35d164b88d47f3a58c10bde9e63eda709c91c427e6d256",
+      "gitBlob": "51a60871241f570b31a0d613d31467b277a0ab16",
+      "reviewedBaseBlob": "51a60871241f570b31a0d613d31467b277a0ab16",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/data/deepResearch.ts",
+      "sha256": "76f74b8a27300bb0d5d5945821b81f7e5dad91c055c6849aafb8a60c350b6c62",
+      "gitBlob": "4e117680a73bb578047d865be12d8bab242a8370",
+      "reviewedBaseBlob": "4e117680a73bb578047d865be12d8bab242a8370",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/paige-research.tsx",
+      "sha256": "b9a8f1e4bcff14aecc288a78c7ecdaf625f5c59c31a5e735084abf9f658e786d",
+      "gitBlob": "7b738bb8868fb99b7276e7a3c83f6d9e83207879",
+      "reviewedBaseBlob": "7b738bb8868fb99b7276e7a3c83f6d9e83207879",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/routing/tierBranches.ts",
+      "sha256": "801680b21cfd8b473fce6473bfffdb6c3e6a1115b81842ca1cd2d98e8da809e3",
+      "gitBlob": "8ed1366301662793b4b3a31fe27177642a0f46c6",
+      "reviewedBaseBlob": "8ed1366301662793b4b3a31fe27177642a0f46c6",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/routing/useSubtabRoute.ts",
+      "sha256": "02dd34efa28e4a11d25e13b8574f6c6f9893a6485ee1be06c50c5eb498277216",
+      "gitBlob": "13c9eefd63c000279aa30e3ea124c72583b59b16",
+      "reviewedBaseBlob": "13c9eefd63c000279aa30e3ea124c72583b59b16",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/knowledge-service.ts",
+      "sha256": "66f0ecfd3df48591381e1aa15c60eb88e768ae38fe6e7e6cc6fa0d7d513c007f",
+      "gitBlob": "e6b13e36c3ee2ad35abc25912b9a51a2a988209e",
+      "reviewedBaseBlob": "e6b13e36c3ee2ad35abc25912b9a51a2a988209e",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/hooks/useKnowledgeDocuments.ts",
+      "sha256": "34f473274e6eb1032b779cda52c1d309c061ae02ff6306646fe7dd961c25e6d6",
+      "gitBlob": "78df1e5d2950788ca51d8b32f190b48ce04487ac",
+      "reviewedBaseBlob": "78df1e5d2950788ca51d8b32f190b48ce04487ac",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/data/useSoloKnowledge.ts",
+      "sha256": "aab1129b024404d01bd897777fe8024a93b5e94e308dcc67e2905d248587c28f",
+      "gitBlob": "7a5a3adef8dc1bc6ef2633fbb995180da7f6fbbf",
+      "reviewedBaseBlob": "7a5a3adef8dc1bc6ef2633fbb995180da7f6fbbf",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/data/useSoloSkills.ts",
+      "sha256": "177d244be61b5ffe180f6239f51801ed3bfb4e3bcc4867b4260510041dad0b88",
+      "gitBlob": "3e33f0ba39dcf391ebb376c583b35bf5b9cd0af3",
+      "reviewedBaseBlob": "3e33f0ba39dcf391ebb376c583b35bf5b9cd0af3",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/usePaigeLiveStatus.ts",
+      "sha256": "16c6a8a4c87fd522747eb7ef95c2503e20d9585835971da81a13a2f1f8565a82",
+      "gitBlob": "dd89099d6c842a5fce97a4b96f6cc52fbc3fa16c",
+      "reviewedBaseBlob": "dd89099d6c842a5fce97a4b96f6cc52fbc3fa16c",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/catalogue-coverage.ts",
+      "sha256": "de41b8b4a2ceff34043da027308aa46ff2fdc2732cbcd9044573548cef0d3919",
+      "gitBlob": "1161b4c0d7470868e316346b42479b2506e519c2",
+      "reviewedBaseBlob": "1161b4c0d7470868e316346b42479b2506e519c2",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/paigeClientScope.ts",
+      "sha256": "670a2031a4f180b564348fcd2592a83a87a1f0fe4df43c67f28318c472fbd1c0",
+      "gitBlob": "f21fd4a231750429c83f132c06540689d43fba55",
+      "reviewedBaseBlob": "f21fd4a231750429c83f132c06540689d43fba55",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/paigePublicPresenceScope.ts",
+      "sha256": "52f11ac31abcfb748744866c102b5a2f67139ede2c2bf6add0a0c2bad4b56d70",
+      "gitBlob": "339bc955709d453b0976b27e21935d39e82bb8fa",
+      "reviewedBaseBlob": "339bc955709d453b0976b27e21935d39e82bb8fa",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/solo-paige-workspace.css",
+      "sha256": "102217d07536ce43e9eec9a258deb541ecb7ccb226f43752c3cc2d06fdd736aa",
+      "gitBlob": "2a3a9e904e537976a9d2d55a9e5eb0ba33dbb5db",
+      "reviewedBaseBlob": "2a3a9e904e537976a9d2d55a9e5eb0ba33dbb5db",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/lib/scopedUser.ts",
+      "sha256": "ba4a0e7293f21bdd9a9f7a19be4dde43fc65cfdf920fb6ee05e659309db3e7ca",
+      "gitBlob": "d6be5bfe5dad5b0b9b275d14e548959d987e3150",
+      "reviewedBaseBlob": "d6be5bfe5dad5b0b9b275d14e548959d987e3150",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/mod.ts",
+      "sha256": "608d221c85d8fba5999ed4da613e3ce41b1aff9a17ae534666013f0d6002c70f",
+      "gitBlob": "ff3a60b9c7bacd27b9016abbfd574af64c98668b",
+      "reviewedBaseBlob": "ff3a60b9c7bacd27b9016abbfd574af64c98668b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-chat.ts",
+      "sha256": "07b8f49acb4e300a3632cf86289c335892783874fb50e91ad1045156a53ccd32",
+      "gitBlob": "b0216eb1f5502e485f085417563cbcad5d0f08d0",
+      "reviewedBaseBlob": "b0216eb1f5502e485f085417563cbcad5d0f08d0",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts",
+      "sha256": "75e7903d4571d2a0e24da8f908449596413e4c835f3ec557e55556061aabe061",
+      "gitBlob": "f09f0ae4c09065de38c6b210dc7474171dfa3856",
+      "reviewedBaseBlob": "f09f0ae4c09065de38c6b210dc7474171dfa3856",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts",
+      "sha256": "f8ee3cd39d5b942eb64b0343ae50bcd0614c750f111c3c1a1a1cf77d7c103bda",
+      "gitBlob": "c99364409eadfe057a4e1a2e1530a64b502a4715",
+      "reviewedBaseBlob": "c99364409eadfe057a4e1a2e1530a64b502a4715",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-read.ts",
+      "sha256": "9a8dbadf079aa1ec2d1b815eba7efb83b108221fe08b25b43aa78ab6d376e07d",
+      "gitBlob": "3518bd1a5d0b1a5ef612a31802b60e6528fd0cdf",
+      "reviewedBaseBlob": "3518bd1a5d0b1a5ef612a31802b60e6528fd0cdf",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/weekly-owner-read.ts",
+      "sha256": "64fd923ba9ac75fc4a8b96483fa203e9cb5cb95551abf4f0b33767bcd076b64d",
+      "gitBlob": "1d0688cc703b56eb159f2fd306175ecc0b9de622",
+      "reviewedBaseBlob": "1d0688cc703b56eb159f2fd306175ecc0b9de622",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/useWeeklyResponsibility.ts",
+      "sha256": "f10dfacf9a227709e407c05c06b9fd45a3541359f2daed798bdc790ecc1cf259",
+      "gitBlob": "d7b343ffd39981f978376399b19e13b8b1a101af",
+      "reviewedBaseBlob": "d7b343ffd39981f978376399b19e13b8b1a101af",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.ts",
+      "sha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553",
+      "gitBlob": "15f4f10f09afc59345b57063d010e8c04b1dd5ae",
+      "reviewedBaseBlob": "15f4f10f09afc59345b57063d010e8c04b1dd5ae",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyScheduleChange.tsx",
+      "sha256": "dd97ffe954f4561ac895c6cd449db8cde0ef54d105336544bee4138af2327946",
+      "gitBlob": "e5ef4ad4e6e9aadea14c47e5e83fe17ccc4dbe77",
+      "reviewedBaseBlob": "e5ef4ad4e6e9aadea14c47e5e83fe17ccc4dbe77",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "sha256": "a999cecb1193b49590ed830f633a7644bcff0d37e45003e4fbec3fc3673f8323",
+      "gitBlob": "1f84eb763e6f5f6facf5ba3b7e8f04a7764e919d",
+      "reviewedBaseBlob": "1f84eb763e6f5f6facf5ba3b7e8f04a7764e919d",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityPanel.tsx",
+      "sha256": "13028fcacf67cfcfddf2952be436c0becab74883b40d8a79c7403acc899e9e2a",
+      "gitBlob": "ffa9a4a727f35ce675288281592c663bcfb428fa",
+      "reviewedBaseBlob": "ffa9a4a727f35ce675288281592c663bcfb428fa",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-control-intent.ts",
+      "sha256": "4c5336d7b98bbb8f829120e453e548d18fd8face1640a40b945c53279cf299db",
+      "gitBlob": "2da616e686185b43834e383bcc305c45bee8253e",
+      "reviewedBaseBlob": "2da616e686185b43834e383bcc305c45bee8253e",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/weekly-draft-command.ts",
+      "sha256": "bff21801abfc5295542569985ffffe11e69f0e1617bebab0fb6e8414736d5f48",
+      "gitBlob": "6bb0b5001d548019292ffcdb0523c72d5c0bf2e9",
+      "reviewedBaseBlob": "6bb0b5001d548019292ffcdb0523c72d5c0bf2e9",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftReview.tsx",
+      "sha256": "71603bc24810bcc3042001110a22ccf0438f74b2826467df3cc65af93f783f4b",
+      "gitBlob": "03a5c3e802e86c1a7dd7df223df9a5ccf2657c4f",
+      "reviewedBaseBlob": "03a5c3e802e86c1a7dd7df223df9a5ccf2657c4f",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftComposer.tsx",
+      "sha256": "0da63639baee9bb6f9153902f5cbe3695726145eb3acefbbca838c7cd6ff9f1a",
+      "gitBlob": "019a00e4baae4e44e3c9ce299a9928952bbded8a",
+      "reviewedBaseBlob": "019a00e4baae4e44e3c9ce299a9928952bbded8a",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityEntry.tsx",
+      "sha256": "8975693256a6fccb98acc6322e98ab67d95477adda9cb21092941c98e5965d1a",
+      "gitBlob": "fb6c8b85348c28526be40da03789e454e780caee",
+      "reviewedBaseBlob": "fb6c8b85348c28526be40da03789e454e780caee",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/settings-contract.ts",
+      "sha256": "dac7493f3c3c665d3697cf68b54537af435ce9548aa06fc5a4801e96f44e1656",
+      "gitBlob": "b4b79d1354fe06002ca5edb80d29b47e66abefc3",
+      "reviewedBaseBlob": "b4b79d1354fe06002ca5edb80d29b47e66abefc3",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/settings-setup-contract.ts",
+      "sha256": "ae80c59c05bdbb0021e35c0230fe0cc31411980930ec5bc53798ffd0d4e2d7d2",
+      "gitBlob": "1949bc36cf25437a37cceb0e769455250a67096a",
+      "reviewedBaseBlob": "1949bc36cf25437a37cceb0e769455250a67096a",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/settings-business-context-contract.ts",
+      "sha256": "8a8a6daaf8c4ac466cf8c10437dfda118848b2c1c69dcf069126510cf19dc33b",
+      "gitBlob": "52e5c4572a04f63c3b0645cc860a375560bf3fa6",
+      "reviewedBaseBlob": "52e5c4572a04f63c3b0645cc860a375560bf3fa6",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/hooks/useTeamRoster.ts",
+      "sha256": "33d273c6285d3ba1e8147aa8bb4e4af0815cf736e701840de44f5849ef7ddb4a",
+      "gitBlob": "972fb15caff16f1b684d004f3c63e8d741d6be42",
+      "reviewedBaseBlob": "972fb15caff16f1b684d004f3c63e8d741d6be42",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/badge.tsx",
+      "sha256": "b851d9ba385c4d60de471c5f43da38067298bbcc3470807e992acb224041c75c",
+      "gitBlob": "0853c441dffc3ca2251118d2cca041423023f1a6",
+      "reviewedBaseBlob": "0853c441dffc3ca2251118d2cca041423023f1a6",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/ui/switch.tsx",
+      "sha256": "32355cc478fb82aff85b8bc1646a86386cb93b40167056689df3064d5f5fd09d",
+      "gitBlob": "a7830b79b63798b5df681d88e9d6f74319a158d7",
+      "reviewedBaseBlob": "a7830b79b63798b5df681d88e9d6f74319a158d7",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/hooks/useConfirm.tsx",
+      "sha256": "ca206024a3a6ab199bb5659fe011ae555fd36a863849ea03e764e5c76759608a",
+      "gitBlob": "ab5f34fc88f1f30b459a6fd62eb531ba431c485c",
+      "reviewedBaseBlob": "ab5f34fc88f1f30b459a6fd62eb531ba431c485c",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/components/admin/ManageRolesDialog.tsx",
+      "sha256": "6d265211ed1e58f7b02ce3213dec08f391956b5be60cc00b2d71be5363f6e0e7",
+      "gitBlob": "6db9330be0f9c154b36e6d7263e8cdeb01107b4a",
+      "reviewedBaseBlob": "6db9330be0f9c154b36e6d7263e8cdeb01107b4a",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/data/useSoloPeople.ts",
+      "sha256": "24ff00ec8fd4a011d4ab0afbb29d539ba00b9e87549deacf38e717d1cc190a9e",
+      "gitBlob": "54e1e08d80d4082485490917285a3221a0c20d07",
+      "reviewedBaseBlob": "54e1e08d80d4082485490917285a3221a0c20d07",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/data/useSoloBusinessContext.ts",
+      "sha256": "71fbdc370a4487cbc07a3c79d61cea867d6291fa0bae241d489dba2ca57f7386",
+      "gitBlob": "a5ed84d10d34e8f6b1cbf2101a45c3e62e157009",
+      "reviewedBaseBlob": "a5ed84d10d34e8f6b1cbf2101a45c3e62e157009",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/solo-business-interview-contract.ts",
+      "sha256": "5bc8314e7236566425f266df21a5ef49d2fd535c040bcf6deaa66c2887f6d71a",
+      "gitBlob": "ac4bedb1a5844c00b6cb0d5e979064e337419d86",
+      "reviewedBaseBlob": "ac4bedb1a5844c00b6cb0d5e979064e337419d86",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/solo-business-interview.css",
+      "sha256": "548ec2b94f8c5f8bcde57cd25b5392abbce36d0a347f78ad0daccc182fe7c108",
+      "gitBlob": "b7b2c8b19cd71522970f1c3f65902b9718cb8ffb",
+      "reviewedBaseBlob": "b7b2c8b19cd71522970f1c3f65902b9718cb8ffb",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/solo-interview-navigation.ts",
+      "sha256": "827f85888accaaf11936b5321252f83374ca02ff2698afadd71dcb796b393069",
+      "gitBlob": "72e899d20049e59ece6dd7be4eefb2ee1c10b2ca",
+      "reviewedBaseBlob": "72e899d20049e59ece6dd7be4eefb2ee1c10b2ca",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/first-value-recommendation.ts",
+      "sha256": "1f72173b6d5c12a0ccaf8c8b4124143a8a543d7a8565898f7425cd55f8a73f86",
+      "gitBlob": "72e4e6fa5ff9865f3c398e9fd49ea6c93feefb35",
+      "reviewedBaseBlob": "72e4e6fa5ff9865f3c398e9fd49ea6c93feefb35",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/SoloFirstValue.tsx",
+      "sha256": "1312edd2c5a4a11e1595bab1da3281ce982253fc4b161868a8c3e69e14e0710a",
+      "gitBlob": "01ed87e519560b83632662401bf36b42ec2bd9c3",
+      "reviewedBaseBlob": "01ed87e519560b83632662401bf36b42ec2bd9c3",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/SoloBusinessInterview.tsx",
+      "sha256": "20d8d32bd487d8ae79c33b2b62a39736973468d1ddcf5cbd360d2295e9f552f6",
+      "gitBlob": "627c3f8acae3c5d9e2f11da6d28619a1ebd3fbf4",
+      "reviewedBaseBlob": "627c3f8acae3c5d9e2f11da6d28619a1ebd3fbf4",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/solo-onboarding-stage.css",
+      "sha256": "5ccda1472c128e406d5295174baeca6188806487e0bd65233a4d2bc5d5f90f46",
+      "gitBlob": "fbd3179a2c49961502c406c1194eefede0116a6b",
+      "reviewedBaseBlob": "fbd3179a2c49961502c406c1194eefede0116a6b",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/SoloOnboardingStage.tsx",
+      "sha256": "49d245c36e9280c6436258386a2f6950238321c7d1b1d2f9b6c759aa666896b2",
+      "gitBlob": "0eca0d047021d93e6e112a34fe5a0126cb045edf",
+      "reviewedBaseBlob": "0eca0d047021d93e6e112a34fe5a0126cb045edf",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "sha256": "f0b6e9e17746d2f9b51d6e22ff2daeceb99e85f630e1fb92ce16dc1809f5575a",
+      "gitBlob": "4d1e446edfa95a2e4f06cbb86da93e36c38293a5",
+      "reviewedBaseBlob": "4d1e446edfa95a2e4f06cbb86da93e36c38293a5",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "gitBlob": "b5301f83c946ebd189e516c28dacd0233881e75d",
+      "reviewedBaseBlob": "b5301f83c946ebd189e516c28dacd0233881e75d",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "sha256": "05fb4b0f7b025bc2e09cf7169e7f225082e3948f19d06a9c2000d2388a71e257",
+      "gitBlob": "b593e66269295cb13614c76833361312275f5f31",
+      "reviewedBaseBlob": "b593e66269295cb13614c76833361312275f5f31",
+      "role": "unchanged product source"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+      "gitBlob": "ea0f36f0a91e480b4d8848f125a7ad041a3bee00",
+      "reviewedBaseBlob": "ea0f36f0a91e480b4d8848f125a7ad041a3bee00",
+      "role": "unchanged product source"
+    }
+  ],
+  "mocked": [
+    {
+      "importer": "src\\components\\tenant-shell\\TenantCommandCenterShell.tsx",
+      "module": "next-themes"
+    },
+    {
+      "importer": "src\\components\\tenant-shell\\TenantCommandCenterShell.tsx",
+      "module": "@/components/admin/voice/DialPadTrigger"
+    },
+    {
+      "importer": "src\\components\\tenant-shell\\TenantCommandCenterShell.tsx",
+      "module": "@/components/ui/paige"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/hooks/useTierFeatures"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\auth\\RequireSetupComplete.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloKnowledge.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloSkills.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloSkills.ts",
+      "module": "@/hooks/useTierFeatures"
+    },
+    {
+      "importer": "src\\components\\dashboard\\paige\\PaigeComposerAutonomyChip.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\dashboard\\paige\\PaigeComposerAutonomyChip.tsx",
+      "module": "@/hooks/use-toast"
+    },
+    {
+      "importer": "src\\components\\dashboard\\paige\\PaigeComposerAutonomyChip.tsx",
+      "module": "@/solo/data/useSoloToolGovernance"
+    },
+    {
+      "importer": "src\\solo\\usePaigeLiveStatus.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useKnowledgeDocuments.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\SoloBusinessInterview.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\SoloBusinessInterview.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@/hooks/use-toast"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@/components/voice/DictationMicButton"
+    },
+    {
+      "importer": "src\\solo\\data\\deepResearch.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\data\\deepResearch.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@tanstack/react-query"
+    },
+    {
+      "importer": "src\\components\\chat\\ContextualSuggestion.tsx",
+      "module": "next-themes"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloPendingActions.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\PreparedWorkReview.tsx",
+      "module": "next-themes"
+    },
+    {
+      "importer": "src\\solo\\weekly\\WeeklyDraftComposer.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/hooks/useTierFeatures"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/contexts/ImpersonationContext"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloActivityFeed.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloBusinessContext.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloBusinessContext.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\scopedUser.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloPeople.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\hooks\\useTeamRoster.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\ManageRolesDialog.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@/lib/playbook"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@/hooks/usePaigeThreads"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@/hooks/useScopedUserId"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\dashboard\\PaigeAIChat.tsx",
+      "module": "@/hooks/useChatDocumentUpload"
+    },
+    {
+      "importer": "src\\components\\ui\\page\\BrandControls.tsx",
+      "module": "@/hooks/use-toast"
+    },
+    {
+      "importer": "src\\components\\paige\\chat\\PaigeArtifactCard.tsx",
+      "module": "next-themes"
+    },
+    {
+      "importer": "src\\lib\\voice\\useDictation.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\chat\\MessageAudioButton.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\chat\\ResponseFeedback.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\studio\\studio.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\paigeLiveConversation\\client.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\growth.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\growth-visit.ts",
+      "module": "@/integrations/supabase/client"
+    }
+  ],
+  "ports": [
+    "next-themes",
+    "@/components/admin/voice/DialPadTrigger",
+    "@/hooks/useTierFeatures",
+    "@/contexts/ImpersonationContext",
+    "@/solo/data/useSoloToolGovernance",
+    "@/components/ui/paige",
+    "@tanstack/react-query",
+    "@/hooks/useTenantContext",
+    "@/hooks/useScopedUserId",
+    "@/lib/playbook",
+    "@/hooks/use-toast",
+    "@/components/voice/DictationMicButton",
+    "@/hooks/useChatDocumentUpload",
+    "@/integrations/supabase/client",
+    "@/hooks/usePaigeThreads"
+  ],
+  "portExtensions": [
+    "original optional tenant hook uses the same original synthetic context",
+    "exact read-only interactive status returns settled worker, no action outcome",
+    "all extra model/action/decision requests refuse"
+  ],
+  "globalCssSource": "existing weekly-entry-native/global.css",
+  "globalCssSha256": "6ebaf337fa5b0cc659f313b3e9c0cf329a01d938af623823237bed32e9f6c0af",
+  "cssSha256": "4408b43a195c078bd30d9898957c7847e1d0ab169ddd59f6d3320eaeedd6ee92",
+  "fontSha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+  "bundleSha256": "67ca73bd4d1c835149c829518aafa8d73096e6ef0f1c16f651ed1bae6d3ebb02",
+  "productTransforms": [],
+  "boundary": "Actual source UI; synthetic identity/read ports, no authenticated business or provider effects. Original narrow transcript requires vertical scrolling. Runtime proof remains owed.",
+  "files": [
+    {
+      "file": "final-light-1536-open.png",
+      "sha256": "8ccfc34d5840a664739db365788ae32eea5240d48ecc99d7e259927d57bff7a5",
+      "bytes": 67360
+    },
+    {
+      "file": "final-light-1536-closed.png",
+      "sha256": "dd6e14b7906b0c586d0c953ff6b51eb63205a8f8a725ec0861aa027042e50f13",
+      "bytes": 32751
+    },
+    {
+      "file": "final-light-1366-open.png",
+      "sha256": "2208eccc08e92e2787863e62ec76b28f0c4148b144454f24e8b1d9309c5462c4",
+      "bytes": 55105
+    },
+    {
+      "file": "final-light-1366-closed.png",
+      "sha256": "ee075c577a3b1063eed8cdfee981ccf07a096d37473eced3643b4238587eb48d",
+      "bytes": 22724
+    },
+    {
+      "file": "final-light-1024-open.png",
+      "sha256": "dfee9193dd4915ede995aa21d8e3592fcfa508d4cde4985f9840be67cf85ea20",
+      "bytes": 43157
+    },
+    {
+      "file": "final-light-1024-closed.png",
+      "sha256": "b5be0000508582e30b5036942f0b0aca4e0fef5defaeefb2301025e4780e8406",
+      "bytes": 20149
+    },
+    {
+      "file": "final-light-900-open.png",
+      "sha256": "ae9ce476c8f0aba795fad3c1e59e63135534329d76d7f28de951cf9e06f5b8e6",
+      "bytes": 54241
+    },
+    {
+      "file": "final-light-900-closed.png",
+      "sha256": "4c4fcb9e7ebcee5dc578c7779d291f0301033856c88df618cf8e0e21cdd298bd",
+      "bytes": 20944
+    },
+    {
+      "file": "final-dark-1536-open.png",
+      "sha256": "0d2c1c075b94bd7d91f554234778d6668d29f14a165de904ec8f0ce9fc48716c",
+      "bytes": 68598
+    },
+    {
+      "file": "final-dark-1536-closed.png",
+      "sha256": "3d1a1dcfe164019e1282b342ffbf7d2bb73bd26e37b9938d39edc3b52062f2ec",
+      "bytes": 33817
+    },
+    {
+      "file": "final-dark-1366-open.png",
+      "sha256": "8a1da7d2572a51a2613cd822b7f0ac2f5a4de98995be98ed81e3dbe3428adc00",
+      "bytes": 55934
+    },
+    {
+      "file": "final-dark-1366-closed.png",
+      "sha256": "0684e7c9d1ed1a43bc49054fb9e35cfc877cf8f72b2c5e831e4c5cc94786aafb",
+      "bytes": 23188
+    },
+    {
+      "file": "final-dark-1024-open.png",
+      "sha256": "7be15276639bbe5d59414dc944f018898a30bf483c0228d76f315f18ebdbeb97",
+      "bytes": 43568
+    },
+    {
+      "file": "final-dark-1024-closed.png",
+      "sha256": "7bdecc0e31c998d34fbc20a7fd1840556dacdd4cd9d927ae5c49945071f0a57b",
+      "bytes": 20684
+    },
+    {
+      "file": "final-dark-900-open.png",
+      "sha256": "0ba7eb569793474843678f72d5a4eeabf193fccc62b465f0e80cb824a2782a8b",
+      "bytes": 54588
+    },
+    {
+      "file": "final-dark-900-closed.png",
+      "sha256": "750f2c418361675f317fcb3520d4292e1f0170b3b0eb85d159fde4601789430d",
+      "bytes": 21365
+    },
+    {
+      "file": "final-320-a.png",
+      "sha256": "d085b20040f493bd7206ecd9f1a060b8cc8cc2f8090f6618bc2848e1d908f922",
+      "bytes": 25524
+    },
+    {
+      "file": "final-320-b.png",
+      "sha256": "066f42a9e4e4717fd6ebc223289fa2e645c5115a87c41540e13c3f8db2c0703a",
+      "bytes": 24525
+    },
+    {
+      "file": "final-frames.json",
+      "sha256": "a3fd3ccb5618824522e8ffa1af1c4ef70ff31146609d8592ed31e8a119b2fef3",
+      "bytes": 2324
+    },
+    {
+      "file": "final-native-timer-state.json",
+      "sha256": "5b86ea84465caa13d18b281cdc4010e3a58c06d690e1b8dfdd73e8fdf481bc4b",
+      "bytes": 537
+    },
+    {
+      "file": "final-late-decline.json",
+      "sha256": "9f9fe297aa79a8e19ddb06600bc1b38a4207f921de1d21b7614aed0c66b97953",
+      "bytes": 459
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "deadline": "2026-10-24T08:49:45.815Z",
+  "issuedAt": "1792831784815",
+  "notice": "This earlier proposal couldn't be verified for approval. Review the original record before asking again.",
+  "requests": "1",
+  "statusReads": "1",
+  "timerClock": "1792831785869",
+  "traffic": "[{\"url\":\"https://unit-test.invalid/functions/v1/paige-ai-chat\",\"method\":\"POST\",\"keys\":[\"messages\",\"threadId\",\"requestIntentId\",\"interactive\",\"userTimezone\",\"userTime\",\"userTimeFormatted\"],\"approved\":false,\"declined\":false}]"
+}

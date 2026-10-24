@@ -270,3 +270,46 @@ Required comms-provider-boundary job 116108633128 failed before checkout because
 REUSE original nomination/recovery/inspection and original native staff writers. EXTEND incumbent E09 ItemRelease to one editable child for the same browser identity; preserve standalone/client/project/row-version/second-reviewer/recorded-only controls. REPAIR child guard purity through optional showNotice=false; explicit feedback retains its existing default. Current E05 Work/CRM/focus/weekly/navigation source is preserved.139 distinct owning cases/eight suites, scoped lint0 and146 frozen inputs/final Vite22.27s/current native desktop+narrow frames are bounded engineering proof; all original assets remain unchanged dated history. First missing mock Auth subscription and misnamed light screenshot are retained diagnostics, not production defects or dark proof.
 
 Full12/consultant launch remains incomplete. Existing second-reviewer policy prevents sole-consultant formal release; owner product question is pending while existing policy remains in force. Exact-final review/CI/current-main composition/normal deployment and ordinary owner/staff/linked-client exact version/internal review/release/client accept-revise/withdrawal/reload/receipt proof remain owed.2156 client-host source requires separate reconciliation with current E09 consumers; no duplicate Portal. ALG01/12 PARTIAL,02 incomplete,13 usefulnessUNVERIFIED. See original owning UI record for the ten-point orchestration contract. No customer/provider/signature/payment/Chat/Live activation or founder acceptance.
+## C33 owner-reviewed exact-version release — October24
+
+Owner ruling in the original EXP04 conversation: **Allow owner-reviewed release to client**. Canonical receiving record ANT161 `eb9f6188-f540-4c3c-9e8a-7d6c6170ea87`; pre-edit source/CI scope `e00fd56c-d754-4311-a3d1-47155c52e6ab`. Earlier D2 second-person-only observations below remain dated evidence. The deployed rule is unchanged until the new native and UI releases pass their separate gates.
+
+Intended usable outcome: a current business owner explicitly inspects and internally approves their own exact submitted deliverable version, then separately releases that version for the linked external client's approval or revision decision. Staff self-review remains refused. Internal approval, release and client acceptance are three original records/states.
+
+## Working brief
+
+Goal: complete owner-only internal review and explicit client release for one exact deliverable version.
+Human and feel: a solo consultant retains clear accountability without inventing a second staff reviewer.
+Entry and exit: original client-linked Work item, original source preparation/review, return to the same item and original recoverable decision.
+System: incumbent Operations V3, Mineral/Obsidian tokens, Studio version/digest and scoped Delivery RPCs.
+Signature: original version and review method remain visible alongside the separate client outcome.
+Feedback: existing inline status and short explicit confirmation; no new motion or haptics.
+Rejecting: self-approval for ordinary staff; treating submission, owner review or file sharing as client acceptance.
+Variants: current business owner versus non-owner staff/admin, separate external client, desktop/narrow, revoked/stale/unknown source.
+
+| From | Trigger and guard | Result | Container | Recovery |
+| --- | --- | --- | --- | --- |
+| Original Work | Exact Studio version and reviewer selected | Source preparation | Existing inline inspection | Clear draft or return through original leave guard |
+| Preparation | Current owner explicitly chooses own review, or staff chooses another authorized reviewer | Original submission in review | Existing confirmation | Cancel restores exact selection; uncertain write retains same intent |
+| In review | Exact original version inspected; current canonical owner still valid for self review | Internal approval or documented revision request | Existing review and confirmation | Changed source/refused role blocks; retain original outcome for readback |
+| Internally approved | Explicit release to original linked external client | Awaiting client decision | Existing release confirmation | Unknown result must be inspected before another write |
+| Awaiting client | Separately authenticated client accepts or requests changes | Original client decision/history | Existing EXP09 client consumer | New version is submitted/reviewed/released separately after a revision request |
+| Any decision | Wrong actor/tenant, inactive membership, stale version or owner demotion | Refused/unavailable | Existing contextual status | Restore access/read current source without replacing an unresolved original operation |
+
+## Native source and proof boundary
+
+LOCAL/UNTESTED source `20271113840004_e04_owner_delivery_review.sql` extends seven original Delivery functions and the original submission's constrained immutable `review_mode`. Read-only actual source bodies/arguments/defaults/returns/owners/ACL/security/config and enabled trigger were grounded first; all seven bodies matched immutable current source. The migration refuses changed originals and preserves signatures/owners/ACLs, original exact source/client/item/tenant/standalone checks and the existing client release/decision writers. The owner exception uses canonical active `tenant_members.is_owner` through `is_tenant_owner`, with the original membership row held through the native transaction. Administrator, Operator and display-owner labels do not grant the exception.
+
+Original native order after receiving ACK `a75630c3`: actual E02 `840002`, proposed never-production-applied E05 `840003`, E04 owner review `840004`, original prepared-seal reader `850004`; every owning source/review/CI/native release gate remains separate. No peer source or applied history is changed here.
+
+New rollback-only native fixture has **28 written assertions, NOT YET EXECUTED**: genuine current owner submission/review/release, actual authenticated database role, exact source inspection, staff/admin self-review refusal, no direct table grant, stale source/forged client acceptance refusal, immutable review method/digest, separate linked-client decision and attribution, current-owner revalidation and honest unavailable nomination after demotion. It uses only synthetic disposable-stack records and does not prove ordinary signed-in customer acceptance. Existing full-schema native suite receives one additive step; no new test runtime or weakened check.
+
+The throwaway local prototype is private `outputs/e04-owner-review-prototype.html`, not production source. Basic explicit submit/cancel/review/release/awaiting-client and revision-reason validation were traversed; submission wording was corrected to distinguish assigned review from completed approval. Remaining client revision/history/recovery and narrow behavior are **UNVERIFIED** after browser-control timeout/reset. Production UI edits and complete visible-flow claims remain held for those checks. This draft native source is not a prototype approval or release claim.
+
+## Capabilities, orchestration and algorithms
+
+REUSE `operations.department`, canonical Planning/Studio/Delivery, existing business-owner permission, explicit native writes, original audit/readback and uncertain browser intent. No Chat/Live admission, new event executor, approval system, sender, scheduler, ledger, client grant or provider effect. Native writes are the established governed Work pathway; no ordinary read or source calculation is forced into Layer C.
+
+ALG01 exact-version/revision and readback, ALG12 role/source/unknown recovery: bounded PARTIAL source support, new execution proof owed. ALG02 progression into genuine client-accepted service is incomplete. ALG13 has no verified supporting implementation for this change. No specialist, capability or algorithm maturity promotion. Functional, visual, experiential, activation, authenticated QA/CentralQA and founder acceptance remain separate and incomplete.
+
+---

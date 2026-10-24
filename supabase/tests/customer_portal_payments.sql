@@ -233,16 +233,14 @@ SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000005','SELECT public.
 SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000001','SELECT public.client_portal_invoices()'), NULL, 'the business owner is not a customer of their own business');
 SELECT is(pg_temp.list(format('SELECT public.client_portal_invoices(%L)','e0995200-0000-4000-8000-000000000002')), NULL, 'a foreign tenant argument narrows to nothing; it never supplies authority');
 SELECT is(pg_temp.ids(pg_temp.list(format('SELECT public.client_portal_invoices(%L)','e0995200-0000-4000-8000-000000000001'))), 'NW-0004,NW-0003,NW-0002,NW-0001', 'his own tenant argument narrows to the same relationship');
--- Two relationships need the global one-login-one-client index lifted inside this rolled-back test
--- (multi-business membership is Slice 8); it is restored right after.
-DROP INDEX public.clients_linked_user_id_unique;
+-- Two original business relationships use the current per-business schema.
+-- All customer and financial scope assertions remain active.
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0995300-0000-4000-8000-000000000005','e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000009','e0995100-0000-4000-8000-000000000001','Two','Businesses','active'),
  ('e0995300-0000-4000-8000-000000000008','e0995200-0000-4000-8000-000000000002','e0995100-0000-4000-8000-000000000009','e0995100-0000-4000-8000-000000000002','Two','Businesses','active');
 SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000009','SELECT public.client_portal_invoices()')->>'error', 'select an authorized customer relationship', 'two relationships refuse with the exact message');
 SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000009',format('SELECT public.client_portal_invoices(%L)','e0995200-0000-4000-8000-000000000001'))->>'tenant_id', 'e0995200-0000-4000-8000-000000000001', 'a tenant argument selects one of two legitimate relationships');
 DELETE FROM public.clients WHERE id IN ('e0995300-0000-4000-8000-000000000005','e0995300-0000-4000-8000-000000000008');
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
 SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000010','SELECT public.client_portal_invoices()'), NULL, 'a merged contact has no relationship');
 SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000003','SELECT public.client_portal_invoices()','anon')->>'sqlstate', '42501', 'anon is refused by the grant');
 
@@ -407,7 +405,7 @@ SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoi
 SELECT ok(has_function_privilege('authenticated','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE'),'client_portal_invoices_scoped has exactly the intended customer execution grant');
 SELECT ok(has_function_privilege('authenticated','public.client_portal_invoice_ledger_scoped(uuid,uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_invoice_ledger_scoped(uuid,uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_invoice_ledger_scoped(uuid,uuid,uuid,integer,jsonb)','EXECUTE'),'client_portal_invoice_ledger_scoped has exactly the intended customer execution grant');
 SELECT ok(has_function_privilege('authenticated','public.client_portal_invoice_payment_request_scoped(uuid,uuid,uuid)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_invoice_payment_request_scoped(uuid,uuid,uuid)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_invoice_payment_request_scoped(uuid,uuid,uuid)','EXECUTE'),'client_portal_invoice_payment_request_scoped has exactly the intended customer execution grant');
-SELECT ok(EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique),'original global identity guard is present before the rollback-only future-shape scenario');
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 1');
 CREATE FUNCTION pg_temp.billing_intent(statement text,business text DEFAULT 'e0995200-0000-4000-8000-000000000001',caller uuid DEFAULT 'e0995100-0000-4000-8000-000000000003')
 RETURNS jsonb LANGUAGE plpgsql AS $fixture$
 DECLARE result jsonb;
@@ -417,8 +415,7 @@ BEGIN
  PERFORM set_config('request.headers','{}',true);
  RETURN result;
 END $fixture$;
--- Rollback-only CI future-shape scenario; no production or managed-Preview fixture/index change.
-DROP INDEX public.clients_linked_user_id_unique;
+-- Rolled-back native data scenario; current production-shaped indexes stay installed.
 SELECT set_config('paige.link_ok','1',true);
 UPDATE public.clients SET linked_user_id='e0995100-0000-4000-8000-000000000003' WHERE id='e0995300-0000-4000-8000-000000000006';
 SELECT set_config('paige.link_ok','',true);
@@ -484,8 +481,7 @@ UPDATE public.clients SET linked_user_id='e0995100-0000-4000-8000-000000000003' 
 UPDATE public.clients SET linked_user_id='e0995100-0000-4000-8000-000000000004' WHERE id='e0995300-0000-4000-8000-000000000002';
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0995300-0000-4000-8000-000000000006';
 SELECT set_config('paige.link_ok','',true);
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
-SELECT ok(EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'original global identity guard restored before the outer rollback');
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 2');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -2,6 +2,9 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 
+The following source-preparation checkpoint is dated history; the current exact
+review/CI and production identities are in the October24 supplement below.
+
 Original16492aa7 completed all11 applicable checks (schema-free Preview skipped)
 and both web statuses. The composed original-status parent56b81b3f now preserves
 released weekly recovery2700/d006 and E07/a984, with both owning Brain sections.
@@ -9,12 +12,12 @@ All four actual UI/parser/owning-test files are byte-identical to reviewed16492;
 no rendering, focus, authority or effect change is introduced by composition.
 Fresh exact-head CI and parent production readback remain required; prior green
 and dated native-component renders are not new authenticated recovery proof.
-INTERNAL_BUILD_IDENTITY: 4919d49834d4e7a9016677b19e14c925f63a38d7; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(parent2722 normal status-function deployment); evidence=docs/evidence/ui-delivery/exp05-original-specialist-result-ui.md
-RELEASE_CHANNEL: development: native original-result control, dependent on reviewed status transport.
+INTERNAL_BUILD_IDENTITY: initial-source=4919d49834d4e7a9016677b19e14c925f63a38d7; reviewed-head=22811462525a330d1046494777101159887f5079; main=84a1703ea94313d784e5d64d39fdb08fd8358be8; deployment=dpl_6EqoticqMyah481fKWhCuAh5TRwh; environment=production; migrations=NOT_APPLICABLE; own-edge=NOT_APPLICABLE; parent2722=production source20a/receipt6380356415; evidence=original PR2725 receipt6380889677.
+RELEASE_CHANNEL: production: original-result consumer served; ordinary authenticated specialist recovery remains separate.
 RELEASE_CLASSIFICATION: internal-only: bounded EXP05 recovery increment; full Operations remains unfinished.
 CUSTOMER_RELEASE_IDENTITY: none: no customer launch or founder acceptance.
 RELEASE_NOTE_REQUIRED: NO: original PR and Experience evidence carry exact boundaries.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: local source, focused behavior and actual rendered fixture verified; required hosted CI, release, production source and ordinary authenticated recovery remain owed.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: focused behavior/rendered fixture, exact-head CI and production source verified; original authenticated specialist recovery and full Experience acceptance remain owed.
 RELEASE_RECOVERY: position=hold for failed required checks; reference=original immutable native terminal and invocation, never resubmit an unknown operation.
 UNVERIFIED: real customer original-assignment reload, held-thread recovery, ZION lifecycle and complete business execution remain owed.
 FLOW_BY_FLOW: PASS: original interrupted assignment -> explicit inspection -> current server authority -> original response/receipt or truthful unavailable result -> return safely.
@@ -28,6 +31,24 @@ STATIC_EVIDENCE: PASS: scoped ESLint on four changed source/test files and diff 
 RENDERED_EVIDENCE: PASS: actual saved native components, 1536x770 and1536x900 desktop/390x844 narrow, Mineral and Obsidian. Offline synthetic ports are explicit below; screenshots observed through browser tool, no exported image files.
 BEHAVIORAL_EVIDENCE: PASS: keyboard inspection and text expansion; stale output removal; ten-second physical cancellation; business-transition late-response suppression; reload has zero automatic inspection. Actual44 owning assertions and native tool frames below.
 AUTHENTICATED_RUNTIME: UNVERIFIED: synthetic local thread/result ports do not constitute customer or production acceptance.
+
+## October24 source release (additive; original customer recovery still owed)
+
+Exact228/LOWER5637053090 passed ten applicable checks/two statuses, Preview
+skipped, no unresolved thread. Actual84a1703 parents716935+228/treea1917552e5e2f8886c4953149bbf1528da959aa3
+match inspected union. Exact READY deployment above; both public aliases
+HTTP200/84a1703-mvm0il8s/null read06:25:49/06:26:13UTC. Actual original Chat
+asset PaigeAIChat-DbYLASSk is230829 bytes, SHA256
+95b253fcdccb2298bf57f56db21ebfc0f2305db6bb3c026d42415af432b64dd1,
+with six original-control caption/attribute assertions. Earlier BUILDING/public
+old-version reads and browser CI-log transport timeout are retained as failures
+to prove the new source, not failed product tests or replacement CI passes.
+[Original receipt6380889677](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2725#issuecomment-6380889677)
+retains exact source/deployment identities. Own SQL/Edge are not applicable;
+parent native source remains separately verified. No dispatch, approval, replay,
+provider, role or activation occurs through this consumer. A later ordinary QA
+request reached the original owner approval gate; its unexecuted assignment
+does not establish authenticated original-result recovery or Live acceptance.
 KEYBOARD_FOCUS: PASS: Return activates original inspection and native details; actual focus remains Read original response with visible ring; Send stays disabled in inert fixture.
 ZOOM_REFLOW: PASS: narrow390px has document scrollWidth390, action44px high; desktop has no horizontal overflow. Browser zoom-specific behavior not separately exercised.
 REDUCED_MOTION: PASS: no new animation or transition.

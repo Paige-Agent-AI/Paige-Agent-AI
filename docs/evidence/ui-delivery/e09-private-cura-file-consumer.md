@@ -1,3 +1,23 @@
+# Local attachment integration continuation — 2026-10-24 UTC
+
+Same original lease aee09b4a, same lead and existing service boundaries. Current local174 assertions/10 suites PASS:157 original/controller plus7 actual component plus10 native context decoder cases. Focused ESLint and standalone typed native reader/tests PASS; no whole-app type or Deno/build claim. Actual unmounted component rendered in isolated no-network props harness at logical dark320x480 and light900x650: no horizontal overflow,44px controls, measured AA text contrast, long-name tail distinction, same-row recovery and causal keyboard removal/focus retained. This is not a physical phone or full shell/customer drive. Genuine original2755 Preview native bound-file projection also decodes through the actual new reader; intentionally discarded fixture leaves0 Auth/clients/files/turns and inactive control. Original native/Storage, original customer persona, current snapshot and same ordered file IDs remain authoritative; arbitrary metadata is not copied to model context. No byte download, model call, provider or new runtime/history/store. [Actual bounded evidence](assets/e09-private-cura-composer/local-flow-proof.json). Native2755/075 is still in exact-head gates;2733/fea original consumer verify running. Mount, extraction and original private reference reload remain required before any customer-ready claim. Earlier source-only records below remain dated history.
+
+# Integrated private attachment flow — pre-edit continuation
+
+Original reservation: ANT-161/aee09b4a-1a05-42e8-8f82-69050eb4d4f0. Preserve the frozen parent2723 and consumer2733 heads; this work continues on the same lead's released checkout and a separate branch, with no new agent or durable system.
+
+OWNER_INTENT: a customer explicitly pastes/selects several private files, sends the exact saved originals to CURA and returns to the same authorized message and file history. The original branded customer screen remains the host.
+
+MUST_NOT_HAPPEN: saved becomes sent/read without proof; an uncertain result silently creates another upload/message; another business, client or staff viewer gains access; customer content becomes approved business Knowledge; a provider, payment, signature or Live action is activated.
+
+MUST_PRESERVE: original Auth/frame/relationship, file/Storage reservation/status/finish/privacy, customer thread/intent and recovery, branding/CURA identity, transcript/composer scroll, microphone, owner Chat and all original domain writers. E05 confirmation/timer/C0b and E04 risk/WRITE_TARGET reservations remain protected. This initial step does not edit their shared handler or pins.
+
+ACCEPTANCE_CRITERIA: permitted files retain stable original IDs through partial/unknown saves; explicit send binds only the confirmed selection to the original private native request; actual stored bytes inform an admitted CURA answer; reload returns the same references; foreign/revoked/context changes fail closed. Draft selection, saved object, accepted message and model reading have distinct states.
+
+Design: Operate, existing semantic controls/tokens, inline file preparation beside the existing composer; 44px frequent touch targets, 16px phone input, wrapping names, visible focus, deliberate status announcements, no new shell or decorative motion. The existing isolated fourteen-state responsive prototype is engineering direction under the owner's standing creative/autonomous delivery authority; it is not founder acceptance. Impeccable context loaded the original CURA surface. Its stale design sidecar is reported only; no unsolicited design-system repair.
+
+Initial implementation scope is the local selection/preparation controller, original confirmed status return and focused tests. The actual component/native message binding/extraction/history still must be connected before any finished attachment claim. No mounted production UI, paid model call, real customer file or new provider action in this step.
+
 # Current dependency composition — 2026-10-24 UTC
 
 Existing2733 consumes parent5391a0b7 and actual main48054028 without changing its four reviewed consumer source/test blobs. Original700000 collision was repaired by2732/e35bb7f9, and actual commercial reader810004 precedes parent810009; E04later820004 remains ordered after it. Both original evidence sections are retained in the sole packet conflict. Current new-head tests/review/requiredCI remain mandatory; old proof is supporting history, not a release. No new UI callsite, message binding, model extraction, provider effect or customer authority comes from this source composition. Prior NOTEXECUTED native failures remain historical.

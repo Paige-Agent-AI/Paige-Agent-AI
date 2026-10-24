@@ -826,6 +826,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-24 — EXP06 NEXUS Studio attribution released; shared undici audit repair.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2712](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2712): NEXUS departmental attribution at the Studio's brand/website points | Implementation head `a2eef4881` reviewed NON-AUTHOR (PASS 0×P1/0×P2/6×P3 dispositioned, [receipt 6377875332](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2712#issuecomment-6377875332)); final head `627eaab98` all gates SUCCESS (Actions withheld the PR's push events — the §24 workflow_dispatch exact-ref path ran the SAME gates); merged squash `2bbeaeb8f0adfba0d6fcd9bb9b66925f4eefbd64`; Vercel Production deployment `7293497139` success; production readback: paigeagent.ai serves the build, its `SoloEntry-DtLvuUpG.js` chunk carries the shipped strings (verified). [Release receipt 6379482564](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2712#issuecomment-6379482564); evidence `docs/evidence/ui-delivery/exp06-nexus-studio-attribution.md`. | "Plan with Nexus" (Studio home) and "Review with Nexus" (prepared publish panel) prefill the owner's existing global PAIGE composer — addressed, editable, never sent — via the paigePromptHandoff seam; roster/doctrine-faithful; no byline change, second runtime, or door contact. Authenticated runtime handoff PROOF OWED; EXP06 rows 2–18 remain open. |
+| [#2715](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2715): undici 7.30.0 → 7.30.1 lockfile-only | All gates SUCCESS incl. audit; merged squash `0c885394a`; repo-wide advisory-DB event disclosed on #2712 (comment 6377615959) BEFORE merge; undici reached only via jsdom under vitest (test-harness surface, nothing shipped in the browser bundle). | Shared dependency health only: clears HIGH GHSA-4qv8-2p9j-2685/GHSA-f72v-6w45-q472/GHSA-xjj6-f33q-929c; react-router 7.x major remains a separate owner decision; no product change. |
+
 **2026-10-24 UTC — EXP05 original approval-expiry repair; production source verified.**
 
 | Increment | Exact release and production proof | Completion boundary |

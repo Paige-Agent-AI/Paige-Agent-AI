@@ -1,7 +1,7 @@
 {
   "kind": "native-original-source-with-reduced-dependencies",
-  "observedAt": "2026-10-24T03:06:36.241Z",
-  "migration": "20271113710009_e09_private_cura_files.sql",
+  "observedAt": "2026-10-24T08:30:06.409Z",
+  "migration": "20271113810009_e09_private_cura_files.sql",
   "migrationSha256": "b634388b77b3e5220f5c8fc67c449336870ca74860c1802661dc4904c377780b",
   "lease": "ANT-161/bbc58c1e-0481-4eaa-8132-1757bd3ac55b",
   "incumbentContracts": [
@@ -734,13 +734,24 @@
     "Full-schema initial head failed at new fixture line854 before its49 new assertions. Duplicate native role assignment is modeled locally with the original unique key and owner setup side effect; corrected historical50 native core PASS; current SOLO-scoped62 PASS. No failed gate waived.",
     "Current native source uses canonical SOLO class fields (standalone/no parent), preserves original relationship membership, and refuses held Agency/Subaccount new private-file admission and completion. No account class or real customer was changed.",
     "Every current local result carries the same migration SHA256, including incomplete privacy/receipt/class variants and atomic source/default/ACL drift refusals.",
-    "Previous empty owned Preview640009/current-source readback succeeded; after new main700000, byte-identical unshipped migration is renamed710009 and a fresh normal empty Preview/final-head gate remains required."
+    "Previous empty owned Preview640009/current-source readback succeeded; after new main700000, byte-identical unshipped migration is renamed710009 and a fresh normal empty Preview/final-head gate remains required.",
+    "Current resume: shared collision repaired by2732/e35bb7f9; actual production810004. Rename only owned unapplied710009 to810009; exact SQL b634 unchanged and all13 current production bindings match. Fresh final-head full native/Preview/CI and real customer proof remain required. E04 owner read is not client permission."
   ],
   "functional": "LOCAL_NATIVE_VERIFIED; NOT_DEPLOYED",
   "visual": "NOT_APPLICABLE backend increment; no finished upload interface claim",
   "experiential": "complete private Chat attachment journey and all seven pillars still in progress",
   "founderAcceptance": "NOT_REQUESTED",
   "migrationOrdering": {
+    "priorUnshipped": "20271113710009",
+    "productionFrontier": "20271113810004",
+    "composedMain": "48054028e819fba4f11d1728a8559b241bb52c74",
+    "reservation": "ANT-161/03cb5f8f-0fb6-4bdc-8747-0a37ecdd1d5b",
+    "sqlBytesUnchanged": true,
+    "productionPrivateApplied": false,
+    "nextProtectedHigher": "20271113820004",
+    "freshFinalHeadCIAndPreview": "REQUIRED"
+  },
+  "priorMigrationOrdering": {
     "priorUnshipped": "20271113640009",
     "productionFrontier": "20271113700000",
     "composedMain": "04edecb0f484d8f45a46068645892030064c5cf9",
@@ -748,5 +759,19 @@
     "sqlBytesUnchanged": true,
     "productionPrivateApplied": false,
     "freshFinalHeadCIAndPreview": "REQUIRED"
+  },
+  "currentIncumbentReadback": {
+    "observedAt": "2026-10-24T08:28:55.102Z",
+    "contracts": 13,
+    "sourceAbiDefaultsAndAclMatches": 13,
+    "productionPrivateColumn": false
+  },
+  "priorObservedAt": "2026-10-24T03:06:36.241Z",
+  "currentNativeRerun": {
+    "migration": "20271113810009",
+    "sourceSha256": "b634388b77b3e5220f5c8fc67c449336870ca74860c1802661dc4904c377780b",
+    "passed": 62,
+    "failed": 0,
+    "otherMutationEvidence": "Historical exact-byte controls retained; full fresh native305/CI still required"
   }
 }

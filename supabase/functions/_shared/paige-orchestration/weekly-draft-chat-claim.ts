@@ -27,7 +27,7 @@ const dataRecord = (raw: unknown): Record<string, unknown> | null => {
 };
 const closed = (r: Record<string, unknown>, keys: string[]) => Object.keys(r).length === keys.length &&
   keys.every(key => Object.prototype.hasOwnProperty.call(r, key));
-function nativeArgs(raw: unknown) {
+export function weeklyDraftNativeArgs(raw: unknown) {
   const r = dataRecord(raw);
   if (!r || !closed(r, ["_request_id", "_name", "_weekday", "_local_time", "_timezone"])) return null;
   const binding = bindWeeklyControlForReview("draft", { name: r._name, weekday: r._weekday,
@@ -50,7 +50,7 @@ export async function claimWeeklyDraftChatApproval(caller: Caller, options: Clai
     retryAllowed: false, genericFallbackAllowed: false });
   try {
     const p = dataRecord(options?.proposal), s = dataRecord(options?.scope), r = dataRecord(options?.runtime);
-    const expected = p ? nativeArgs(p.storedArgs) : null;
+    const expected = p ? weeklyDraftNativeArgs(p.storedArgs) : null;
     if (!p || !s || !r || !expected || !closed(p, ["id", "approvedToken", "storedArgs"]) ||
       !closed(s, ["actorId", "tenantId", "threadId", "clientId"]) ||
       !closed(r, ["intentId", "requestNonce"]) || !uuid(p.id) ||
@@ -77,7 +77,7 @@ export async function claimWeeklyDraftChatApproval(caller: Caller, options: Clai
     if (data.claimed === true) {
       if (!closed(data, ["claimed", "confirmation_id", "actor_id", "tenant_id", "args", "thread_id"]) ||
         data.confirmation_id !== id || data.actor_id !== scope.actorId || data.tenant_id !== scope.tenantId) return fail();
-      const stored = nativeArgs(data.args);
+      const stored = weeklyDraftNativeArgs(data.args);
       if (!stored || Object.keys(expected).some(key => expected[key] !== stored[key])) return fail();
       return { status: "claimed", storedArgs: stored, ...flags };
     }

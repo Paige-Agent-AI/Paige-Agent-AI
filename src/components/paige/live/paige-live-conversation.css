@@ -32,7 +32,9 @@
    standing IN the frame rather than printed on it. The one warm note arrives only while she is
    actually speaking — the same single meaning gold carries everywhere on this surface (§11). */
   background: radial-gradient(closest-side at 50% 32%, hsl(var(--primary)/.17), transparent 74%); }
-[data-live-state="speaking"] .plc-presence { background: radial-gradient(closest-side at 50% 32%, hsl(var(--accent)/.13), transparent 72%), radial-gradient(closest-side at 50% 32%, hsl(var(--primary)/.1), transparent 74%); }
+/* Compound, not descendant: the attribute lives ON this section, so a descendant combinator can
+   never match it (review round 1 caught the glow as dead code). */
+.plc-presence[data-live-state="speaking"] { background: radial-gradient(closest-side at 50% 32%, hsl(var(--accent)/.13), transparent 72%), radial-gradient(closest-side at 50% 32%, hsl(var(--primary)/.1), transparent 74%); }
 /* BOTH presences span the full column. The 3D wrapper has its own class, so when it replaced the
    flat one as the mounted component it stopped matching this rule and was auto-placed into the
    narrow .8fr track — rendering Paige at ~61% of her size and off-axis from the "Listening" label
@@ -89,7 +91,9 @@
 .plc-transcript,.plc-card-layer { min-width: 0; overflow: auto; border: 1px solid hsl(var(--foreground)/.09); border-radius: 1.1rem; background: hsl(var(--card)/.55); -webkit-backdrop-filter: blur(18px) saturate(1.25); backdrop-filter: blur(18px) saturate(1.25); box-shadow: 0 1.4rem 3.4rem hsl(var(--foreground)/.1), inset 0 1px 0 hsl(var(--foreground)/.06); }
 .plc-transcript { padding: 1rem; }
 .plc-card-layer { max-height: 46vh; padding: 1rem; }
-.plc-section-title { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; gap: 1rem; padding-bottom: .65rem; background: linear-gradient(to bottom, hsl(var(--card)/.92), hsl(var(--card)/.72)); }
+.plc-section-title { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; gap: 1rem; padding-bottom: .65rem; /* Near-opaque at the BOTTOM of the fade: turns scroll under this strip while the glass beneath
+   dropped to .55, so a lighter fade here would ghost text through the transition zone. */
+  background: linear-gradient(to bottom, hsl(var(--card)/.94), hsl(var(--card)/.88)); }
 .plc-section-title > span { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .plc-turn { max-width: 96%; margin-top: .75rem; }
 .plc-turn--owner { margin-left: auto; }
@@ -189,7 +193,7 @@
   .plc-notice { background: hsl(var(--muted)/.85); }
   .plc-working { background: hsl(var(--card)/.88); }
 }
-@media (forced-colors: active) { .plc-stage,.plc-transcript,.plc-card-layer,.plc-working,.plc-notice { border-color: CanvasText; } }
+@media (forced-colors: active) { .plc-stage,.plc-transcript,.plc-card-layer,.plc-working,.plc-notice,.plc-state { border-color: CanvasText; } }
 
 /* NO SCROLLBARS ON THE LIVE SCREEN (owner ruling, 2026-09-24).
    Nobody should be dragging a scrollbar while they are talking. The regions that need to scroll

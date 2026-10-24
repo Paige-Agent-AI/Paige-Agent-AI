@@ -17,7 +17,7 @@
         "actionsBottomPx": 680.375,
         "viewportH": 770
       },
-      "sha256": "6a9c67856ee80b547e90ccd309666dd4839bc89da7a7b256b086dbea1255c1ac",
+      "sha256": "56f01d67dc1c6b522e9ceef77a55661b9b5b11c07f5a570da2ee35f186c1281a",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-dark-denied.png": {
@@ -29,9 +29,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 44
+        "regionByteVariety": 45
       },
-      "sha256": "1573a28d43e0f928e93b572aa50a6c83c45b1d5c045ebfb065c9ca0769d11e62",
+      "sha256": "bbcf477831cc58f1835bb903ec913bf14a2bf44d16f8277a44a2f4ea942c4c52",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-dark-listening.png": {
@@ -43,9 +43,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "listening",
-        "regionByteVariety": 70
+        "regionByteVariety": 61
       },
-      "sha256": "65bb38ab6a6cd2f716e4d6f600bf4c0c7d6badaba864d7572021f9c3d9a58d7b",
+      "sha256": "fc2afd571ca900cacbf80594646ed74c211e052b593d5b0085ee5fd243ce19fd",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-light-terms.png": {
@@ -62,7 +62,7 @@
         "actionsBottomPx": 680.375,
         "viewportH": 770
       },
-      "sha256": "2a377b157ddd379ca351278a140f6d2fc028acebad1207cee34c6ebab3bdb761",
+      "sha256": "6bf33380c8c51b3a7683a365ad9a9b14ab346489dfeab9b9f506d4bfacd2e6e2",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-light-denied.png": {
@@ -74,9 +74,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 42
+        "regionByteVariety": 38
       },
-      "sha256": "233a62a54929df60e113f164676720a25f3ba55fa72d80dc14baa3003816dce8",
+      "sha256": "c9f53439a07836e2bc63caaaf0ef9629e102161de5c628e783ce4e91f2b097ef",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-light-listening.png": {
@@ -88,9 +88,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "listening",
-        "regionByteVariety": 61
+        "regionByteVariety": 58
       },
-      "sha256": "0026a659293000cb06080557d18d732503926e46ef0c65ba24123084e9b42c9b",
+      "sha256": "2af791e60d629af45d740c8a37ad5f54f03c625c25af21a56a51415ad9ae2545",
       "ihdr": "1536x770"
     },
     "immersive-900x1000-dark-terms.png": {
@@ -102,12 +102,12 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 37,
+        "regionByteVariety": 39,
         "foldOverflowPx": 138,
         "actionsBottomPx": 833.421875,
         "viewportH": 1000
       },
-      "sha256": "902783cfd1d990c65d94afd717e48fe2dc9e71acbcfe9c825305c74554200983",
+      "sha256": "0c5abbc7d2e5e9fb4421a6c2981ca8d910a2c67f61d61043e32c3a7de8f02d4b",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-dark-denied.png": {
@@ -119,9 +119,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 81
+        "regionByteVariety": 78
       },
-      "sha256": "3ecdda802d955d72237a5889822d394f5dddb7f50399ceed0f4eae4bad86b3ee",
+      "sha256": "52b023d99ae992ad32ad4b5ff53be53f503d9e806a5e37595dc5f75d0d146dd9",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-dark-listening.png": {
@@ -133,9 +133,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "listening",
-        "regionByteVariety": 84
+        "regionByteVariety": 87
       },
-      "sha256": "4a4bc6255b5ffba24e9b3e742f902576915cd4955c994f6955f9f73bebba41e6",
+      "sha256": "b9b8bbd8cca2dd1e36e3cba9d5fe4cd26c76ef1f12e936e7c81ba9e50db382af",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-light-terms.png": {
@@ -147,12 +147,12 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 37,
+        "regionByteVariety": 38,
         "foldOverflowPx": 138,
         "actionsBottomPx": 833.421875,
         "viewportH": 1000
       },
-      "sha256": "33f0adb3fface9f44b93e40890e1ccf780b7aeb93d674fc3c67e296ea551d486",
+      "sha256": "0891b4aaf8f37fc938f69047e45e55eeb54b29c18e4e76cd2ba050462d1acde3",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-light-denied.png": {
@@ -164,9 +164,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 83
+        "regionByteVariety": 77
       },
-      "sha256": "b1e2fff88f393cbb4974ef2887848f054f6d5f1fe7b3b698af9062c6750f52c9",
+      "sha256": "d40d6eb49c5848eae0441256ee3c84e09305e1276f2aac65dd90233c503ddf62",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-light-listening.png": {
@@ -178,9 +178,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "listening",
-        "regionByteVariety": 80
+        "regionByteVariety": 86
       },
-      "sha256": "770563dcd1f9db18402f82f4fbb0d927f32d355891cb91821c2cfef6b831f575",
+      "sha256": "662ced6b59e780eb81fa49af78cea7361dae4097d75cb90561203cea67fd806f",
       "ihdr": "900x1000"
     }
   }

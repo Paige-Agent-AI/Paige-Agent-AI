@@ -228,7 +228,6 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
 }) {
   const mesh = useRef<THREE.Mesh>(null);
   const group = useRef<THREE.Group>(null);
-  const halo = useRef<THREE.Mesh>(null);
   const invalidate = useThree((three) => three.invalidate);
   const viewport = useThree((three) => three.viewport);
   const crashed = useRef(false);
@@ -297,7 +296,9 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
         void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
       `,
       fragmentShader: /* glsl */ `
-        precision mediump float;
+        // highp, like the body: a long smooth falloff at mediump is the classic banding setup,
+        // and the halo is additive over the dark theme where banding is most visible.
+        precision highp float;
         uniform vec3 uColour, uGold;
         uniform float uSpeak, uGlow;
         varying vec2 vUv;
@@ -399,17 +400,22 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
   return (
     <group ref={group}>
       {/* Behind the body, additive and depth-blind, so it can only ever ADD light. */}
-      <mesh ref={halo} geometry={haloGeometry} material={haloMaterial} position={[0, 0, -0.9]} renderOrder={-1} />
+      <mesh geometry={haloGeometry} material={haloMaterial} position={[0, 0, -0.9]} renderOrder={-1} />
       <mesh ref={mesh} geometry={geometry} material={material} />
     </group>
   );
 }
 
-/** One dust field: a cloud of points in a spherical shell, drifting as a whole. */
-function Dust({ count, inner, outer, size, tint, drift, opacity }: {
+/** One dust field: a cloud of points in a spherical shell, drifting as a whole. Reduced motion
+ *  stops it cold (a demand-rendered frame with an unclamped delta would otherwise JUMP the cloud
+ *  by seconds' worth of drift on every state change), and a throw inside the frame loop reaches
+ *  no boundary — so the body is guarded here the same way it guards itself. */
+function Dust({ count, inner, outer, size, tint, drift, opacity, reduced, normal, onCrash }: {
   count: number; inner: number; outer: number; size: number; tint: THREE.Color; drift: number; opacity: number;
+  reduced: boolean; normal?: boolean; onCrash: () => void;
 }) {
   const cloud = useRef<THREE.Points>(null);
+  const crashed = useRef(false);
   const geometry = useMemo(() => {
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -429,33 +435,52 @@ function Dust({ count, inner, outer, size, tint, drift, opacity }: {
   }, [count, inner, outer]);
   const material = useMemo(() => new THREE.PointsMaterial({
     color: tint, size, sizeAttenuation: true, transparent: true, opacity,
-    blending: THREE.AdditiveBlending, depthWrite: false,
-  }), [tint, size, opacity]);
+    // ADDITIVE on a dark ground makes the motes read as light. On a LIGHT ground additive white
+    // is invisible (§23 asks for two legible rooms, not one room and an absence) — so the light
+    // room gets normal-blend motes in a deeper primary instead.
+    blending: normal ? THREE.NormalBlending : THREE.AdditiveBlending,
+    depthWrite: false,
+  }), [tint, size, opacity, normal]);
   useEffect(() => () => { geometry.dispose(); material.dispose(); }, [geometry, material]);
 
   useFrame(({ clock }, delta) => {
-    if (!cloud.current) return;
-    // Integrated rotation only — changing a rate never jumps the cloud (same rule as the body).
-    cloud.current.rotation.y += delta * drift;
-    cloud.current.rotation.x = Math.sin(clock.elapsedTime * 0.07) * 0.04;
+    if (reduced || crashed.current || !cloud.current) return;
+    try {
+      // Integrated rotation only — changing a rate never jumps the cloud (same rule as the body).
+      cloud.current.rotation.y += delta * drift;
+      cloud.current.rotation.x = Math.sin(clock.elapsedTime * 0.07) * 0.04;
+    } catch (error) {
+      crashed.current = true;
+      console.error("[PaigePresenceScene] a dust field's loop threw — standing down. Cause:", error);
+      onCrash();
+    }
   });
   return <points ref={cloud} geometry={geometry} material={material} />;
 }
 
 /** The camera drifts like a held breath: slow, small, always looking at her. It is environment —
- *  it runs even while she is silent (a room does not freeze when nobody speaks) and settles under
- *  reduced motion with everything else, because frameloop goes to demand and this stops ticking. */
-function CameraDrift() {
+ *  it runs even while she is silent (a room does not freeze when nobody speaks) and stops ticking
+ *  entirely under reduced motion, where a demand frame's unclamped delta would otherwise snap the
+ *  camera fully to its drift target. */
+function CameraDrift({ reduced, onCrash }: { reduced: boolean; onCrash: () => void }) {
   const camera = useThree((three) => three.camera);
+  const crashed = useRef(false);
   useFrame(({ clock }, delta) => {
-    const t = clock.elapsedTime;
-    const x = Math.sin(t * 0.11) * 0.09;
-    const y = Math.cos(t * 0.085) * 0.06;
-    const z = 4.2 + Math.sin(t * 0.05) * 0.06;
-    camera.position.x += (x - camera.position.x) * Math.min(1, delta * 1.5);
-    camera.position.y += (y - camera.position.y) * Math.min(1, delta * 1.5);
-    camera.position.z += (z - camera.position.z) * Math.min(1, delta * 1.5);
-    camera.lookAt(0, 0, 0);
+    if (reduced || crashed.current) return;
+    try {
+      const t = clock.elapsedTime;
+      const x = Math.sin(t * 0.11) * 0.09;
+      const y = Math.cos(t * 0.085) * 0.06;
+      const z = 4.2 + Math.sin(t * 0.05) * 0.06;
+      camera.position.x += (x - camera.position.x) * Math.min(1, delta * 1.5);
+      camera.position.y += (y - camera.position.y) * Math.min(1, delta * 1.5);
+      camera.position.z += (z - camera.position.z) * Math.min(1, delta * 1.5);
+      camera.lookAt(0, 0, 0);
+    } catch (error) {
+      crashed.current = true;
+      console.error("[PaigePresenceScene] the camera drift loop threw — standing down. Cause:", error);
+      onCrash();
+    }
   });
   return null;
 }
@@ -468,13 +493,28 @@ export default function PaigePresenceScene({ state, reduced, readEnergy = () => 
   onCrash?: () => void;
 }) {
   // The dust tints resolve from the SAME tokens the body uses, so the room and its occupant are
-  // one palette in both themes (§23) — a pale violet far field, a near-white near field.
-  const { farTint, nearTint } = useMemo(() => {
+  // one palette in both themes (§23). A dark room gets additive light motes. A LIGHT room cannot
+  // show additive light (adding to a bright ground is a no-op) — and it cannot show deep-dark
+  // motes either, which washed to invisibility on the bright canvas in review round 2's captures;
+  // what a bright room actually has is dust CATCHING the light: soft pale-violet motes, painted
+  // (normal blend) at enough depth to differ from the ground. The capture guard enforces this
+  // objectively — a flat presence region fails the run.
+  const { farTint, nearTint, lightRoom } = useMemo(() => {
     const styles = getComputedStyle(document.documentElement);
     const primary = token(styles, "--primary", "#6c5ce0");
+    const background = token(styles, "--background", "#14151c");
+    const lightRoom = background.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
+    if (lightRoom) {
+      return {
+        farTint: primary.clone().lerp(new THREE.Color("#ffffff"), 0.52),
+        nearTint: primary.clone().lerp(new THREE.Color("#ffffff"), 0.36),
+        lightRoom,
+      };
+    }
     return {
       farTint: primary.clone().lerp(new THREE.Color("#ffffff"), 0.55),
       nearTint: new THREE.Color("#ffffff"),
+      lightRoom,
     };
   }, []);
   return (
@@ -492,9 +532,9 @@ export default function PaigePresenceScene({ state, reduced, readEnergy = () => 
     >
       <Orb state={state} reduced={reduced} readEnergy={readEnergy} onCrash={onCrash} />
       {/* The room: far field inside her orbit, near field outside it, drifting opposite ways. */}
-      <Dust count={DUST_FAR} inner={2.6} outer={4.6} size={0.02} tint={farTint} drift={0.011} opacity={0.7} />
-      <Dust count={DUST_NEAR} inner={3.4} outer={5.4} size={0.032} tint={nearTint} drift={-0.006} opacity={0.5} />
-      <CameraDrift />
+      <Dust count={DUST_FAR} inner={2.6} outer={4.6} size={0.02} tint={farTint} drift={0.011} opacity={lightRoom ? 0.85 : 0.7} reduced={reduced} normal={lightRoom} onCrash={onCrash} />
+      <Dust count={DUST_NEAR} inner={3.4} outer={5.4} size={0.032} tint={nearTint} drift={-0.006} opacity={lightRoom ? 0.8 : 0.5} reduced={reduced} normal={lightRoom} onCrash={onCrash} />
+      <CameraDrift reduced={reduced} onCrash={onCrash} />
     </Canvas>
   );
 }

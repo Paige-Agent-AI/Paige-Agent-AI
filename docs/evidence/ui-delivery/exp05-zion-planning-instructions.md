@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: existing agents.delegate / delegate_to_subagent → registered ZION → original Harness invocation → existing plan/Fabric call → original draft outcome/Rail. Restore missing factory instructions; no second runtime or action system.
-PAIGE_UI_DESIGN: PASS: original Operations/Chat draft, refusal and unknown-result contracts inspected. No component, layout, navigation or visual token changes; truthful draft language retained.
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md and docs/doctrine/paige-ui-delivery-standard.md applied to the original Operations/Chat draft, refusal and unknown-result contracts; unchanged frontend source and truthful draft language retained.
 MATERIAL_FLOW_CHANGE: NO: repair the existing internal planning contract, without a new customer step, control, approval or business-effect transition.
 FLOW_PROTOTYPE: NOT_REQUIRED: no new or materially changed interface flow; this is original registration data and its actual-route regression proof.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible existing and future SOLO owners can request a bounded Operations planning draft from the same original specialist, subject to current server authority and provider/budget readiness.
@@ -25,7 +25,7 @@ MUST_PRESERVE: original specialist identity/remit, actor/tenant/seat and registr
 ACCEPTANCE_CRITERIA: untouched global version2 factory receives nonempty instructions and job_kind=plan atomically at version3; reapplication and protected variations are exact no-ops; real existing route uses that exact prompt with no tools/provider override and refuses changed current registry/authority.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original paige_subagents identity and row version; existing Harness/authority/Fabric checks and original receipts; no Chat/Spine/C0b/TeamHub/provider source edit.
-INTERNAL_BUILD_IDENTITY: base=2bbeaeb8f0adfba0d6fcd9bb9b66925f4eefbd64; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLIED(20271113740005); edge=NOT_APPLICABLE(existing consumer unchanged); evidence=docs/evidence/ui-delivery/exp05-zion-planning-instructions.md
+INTERNAL_BUILD_IDENTITY: base=9d4a85179da7a186d840bc66ed24fc8828f7740e; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113740005 not applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-zion-planning-instructions.md
 RELEASE_CHANNEL: development: local protected fixtures only; no production row, provider/key/budget/flag or trigger mutation.
 RELEASE_CLASSIFICATION: internal-only: existing specialist planning prerequisite, not complete ZION/Operations customer acceptance.
 CUSTOMER_RELEASE_IDENTITY: NONE: no earned customer version or announcement.

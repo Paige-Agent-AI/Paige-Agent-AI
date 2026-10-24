@@ -5,6 +5,7 @@ import {captureClientPortalAuthorization, withClientPortalBusiness} from "@/lib/
 import {readClientPortalSelfProfile} from "@/lib/client-portal-self-profile";
 import {CLIENT_DOCUMENT_COLUMNS, PORTAL_DOCUMENT_PAGE_SIZE, clientDocumentMime, portalDocumentFromUpload, readClientDocument,
   readPortalDocumentList, sameDocumentScope, type DocumentScope, type PortalDocument} from "@/lib/client-portal-documents";
+import {readCustomerChatFile, readCustomerChatFilePage, readCustomerChatFileStatus} from "@/lib/customer-chat-files";
 
 type RpcResult = {data: unknown; error: {code?: string; message?: string} | null};
 // Original native functions retain their existing server authority and signature.
@@ -32,12 +33,16 @@ async function wait<T>(value: PromiseLike<T>, deadline: number): Promise<T> {
 class AccessFailure extends Error {}
 
 /** Local document UI lifetime. Auth, native relationship, file and Storage policies own permission. */
-export function useClientDocuments() {
+export function useClientDocuments(purpose?: {kind: "customer_private"; threadId: string}) {
   const identity = useShellCustomerIdentity();
   const frame = identity?.viewer === "customer" ? identity.frame : null;
+  const privateMode = purpose?.kind === "customer_private", privateThread = purpose?.threadId;
+  const privateAllowed = !privateMode || !!frame && typeof privateThread === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(privateThread);
   const requested = frame ? {actor:frame.actorId,tenant:frame.profile.tenant_id,contact:frame.profile.id} : undefined;
-  const requestedKey = identity ? JSON.stringify([identity.viewer,requested?.actor,requested?.tenant,requested?.contact]) : "legacy";
-  const enabled = !identity || identity.viewer === "staff" || !!frame && identity.phase === "ready" && !identity.checking;
+  const identityKey = identity ? JSON.stringify([identity.viewer,requested?.actor,requested?.tenant,requested?.contact]) : "legacy";
+  const requestedKey = privateMode ? JSON.stringify([identityKey,"customer_private",privateThread]) : identityKey;
+  const enabled = privateAllowed && (!identity || identity.viewer === "staff" || !!frame && identity.phase === "ready" && !identity.checking);
   const [phase, setPhase] = useState<Phase>("loading"), [files, setFiles] = useState<PortalDocument[]>([]);
   const [summary, setSummary] = useState<DocumentSummary | null>(null);
   const [scope, setScope] = useState<DocumentScope | null>(null), [more, setMore] = useState(false);
@@ -78,7 +83,7 @@ export function useClientDocuments() {
     const identity=await wait(supabase.auth.getUser(),deadline);
     if(identity.error||!identity.data.user)throw new AccessFailure("Sign in with your invited account to continue.");
     const actor=identity.data.user.id;
-    if(!current()||wanted&&actor!==wanted.actor)throw new AccessFailure("Your customer session changed. Reload Documents to continue.");
+    if(!current()||wanted&&actor!==wanted.actor)throw new AccessFailure(privateMode?"Your customer session changed. Reopen the portal to continue.":"Your customer session changed. Reload Documents to continue.");
     let authorization:string;
     try{authorization=await wait(captureClientPortalAuthorization(supabase.auth,actor,current),deadline);}
     catch{throw new AccessFailure("Your customer session could not be checked.");}
@@ -92,9 +97,18 @@ export function useClientDocuments() {
     const scope={actor,tenant:p.tenant_id,contact:p.id};
     const final=await wait(supabase.auth.getUser(),deadline);
     if(final.error||final.data.user?.id!==actor||!current()||wanted&&!sameDocumentScope(wanted,scope)||expected&&!sameDocumentScope(expected,scope))
-      throw new AccessFailure("Your customer session changed. Reload Documents to continue.");
+      throw new AccessFailure(privateMode?"Your customer session changed. Reopen the portal to continue.":"Your customer session changed. Reload Documents to continue.");
+    if(privateMode){
+      // Same original native service: recheck private thread, class and assistant
+      // configuration before/after upload or signing, not just the self profile.
+      const gate=await wait(fileRpc("client_portal_chat_files",{p_thread_id:privateThread,p_tenant_id:scope.tenant,p_limit:1},scope,authorization),deadline);
+      if(gate.error?.code==="42501"||!gate.error&&!gate.data)throw new AccessFailure("Your private file access could not be verified. Reopen the portal to continue.");
+      if(gate.error)throw new Error("Private file access could not be checked.");
+      readCustomerChatFilePage(gate.data,scope);
+      if(!current())throw new AccessFailure("Your customer context changed.");
+    }
     return {scope,authorization};
-  },[scopeAlive,requestedActor,requestedTenant,requestedContact]);
+  },[scopeAlive,requestedActor,requestedTenant,requestedContact,privateMode,privateThread]);
   const refresh = useCallback(async (append = false) => {
     const l = life.current;
     if (!l.alive || !scopeAlive() || l.signedOut || l.writing) return;
@@ -104,20 +118,23 @@ export function useClientDocuments() {
     try {
       const access = await verifiedAccess(deadline,undefined,current),next=access.scope; if (!current()) return;
       if (l.last && !sameDocumentScope(l.last, next)) {
-        retire("unavailable", "Your customer context changed. Reload Documents to continue."); return;
+        retire("unavailable", privateMode?"Your customer context changed. Reopen the portal to continue.":"Your customer context changed. Reload Documents to continue."); return;
       }
       // One closed server read decides what is listed (E09 Slice 4): shared files that are saved, and the
       // customer's own uploads. The browser never queries the file table for the list.
       // The next page starts strictly after the (created_at, id) of the last file shown, so a file saved in
       // the same instant as that one is never skipped.
       const last = append ? l.files.at(-1) ?? null : null;
-      const result = await wait(fileRpc("client_portal_documents", {p_tenant_id: next.tenant, p_limit: pageSize,
+      const result = await wait(fileRpc(privateMode?"client_portal_chat_files":"client_portal_documents", {p_tenant_id: next.tenant, p_limit: pageSize,
+        ...(privateMode?{p_thread_id:privateThread}:{}),
         p_before: last?.created_at ?? null, p_before_id: last?.id ?? null},next,access.authorization), deadline);
       if (!current()) return;
       if (result.error?.code === "42501") throw new AccessFailure("Your document access could not be verified.");
       if (result.error) throw new Error("Document read failed");
       if (result.data === null) throw new AccessFailure("Your customer access could not be verified. Contact the business for help.");
-      const page = readPortalDocumentList(result.data, next);
+      const privatePage=privateMode?readCustomerChatFilePage(result.data,next):null;
+      const page=privatePage?{files:privatePage.files.map(portalDocumentFromUpload),summary:null,has_more:privatePage.has_more}
+        :readPortalDocumentList(result.data,next);
       await verifiedAccess(deadline, next,current); if (!current()) return;
       const merged = append ? [...l.files] : [];
       for (const row of page.files) {const index = merged.findIndex(f => f.id === row.id); if (index < 0) merged.push(row); else merged[index] = row;}
@@ -128,7 +145,7 @@ export function useClientDocuments() {
       if (error instanceof AccessFailure) retire("unavailable", error.message);
       else {l.scope = null; l.files=[]; dataGeneration.current=origin.current.generation; setScope(null); setFiles([]); setSummary(null); setPhase("error"); setNotice("Your documents could not be loaded. Check your connection and try again.");}
     } finally {if (current()) setReading(false);}
-  }, [retire, verifiedAccess, scopeAlive]);
+  }, [retire, verifiedAccess, scopeAlive, privateMode, privateThread]);
   useEffect(() => {
     const l=life.current;l.alive=true;let listening=true;
     if(applied.current!==requestedKey){applied.current=requestedKey;setEpoch(viewEpoch.current);setScope(null);setFiles([]);setSummary(null);setMore(false);setReading(false);setUpload(idle());setNotice("");setPhase("loading");}
@@ -148,21 +165,25 @@ export function useClientDocuments() {
   },[refresh,retire,requestedKey,enabled,scopeAlive]);
   useEffect(() => {
     if (!scope) return;
-    const channel = supabase.channel(`client-documents-${scope.contact}`)
+    const channel = supabase.channel(privateMode?`client-private-files-${scope.contact}-${privateThread}`:`client-documents-${scope.contact}`)
       .on("postgres_changes", {event: "*", schema: "public", table: "client_files", filter: `contact_id=eq.${scope.contact}`}, () => void refresh()).subscribe();
     return () => {void supabase.removeChannel(channel);};
-  }, [scope, refresh]);
+  }, [scope, refresh, privateMode, privateThread]);
 
   const inspect = useCallback(async (candidate: Candidate, deadline: number, authorization:string) => {
-    const result = await wait(fileRpc("client_portal_file_upload_status", {p_file_id: candidate.id, p_tenant_id: candidate.scope.tenant},candidate.scope,authorization), deadline);
+    const result = await wait(fileRpc(privateMode?"client_portal_chat_file_status":"client_portal_file_upload_status",
+      {p_file_id: candidate.id, p_tenant_id: candidate.scope.tenant,...(privateMode?{p_thread_id:privateThread}:{})},candidate.scope,authorization), deadline);
     if (result.error) throw new Error("Upload status could not be checked");
+    if(privateMode){const value=readCustomerChatFileStatus(result.data,candidate.scope,candidate.id);
+      if(value.file&&(value.file.original_filename!==candidate.name||value.file.mime_type!==candidate.mime||value.file.size_bytes!==candidate.size))throw new Error("Upload result changed");
+      return{file:value.file,object:value.object_verified};}
     const value = result.data as {file?: unknown; object_verified?: unknown} | null;
     if (!value || Object.keys(value).length !== 2 || typeof value.object_verified !== "boolean" || !("file" in value)) throw new Error("Invalid upload status");
     const file = value.file === null ? null : readClientDocument(value.file, candidate.scope);
     if (file && (file.id !== candidate.id || file.uploaded_by_user_id !== candidate.scope.actor
       || file.original_filename !== candidate.name || file.mime_type !== candidate.mime || file.size_bytes !== candidate.size)) throw new Error("Upload result changed");
     return {file, object: value.object_verified};
-  }, []);
+  }, [privateMode,privateThread]);
   const confirm = useCallback(async (candidate: Candidate, deadline: number, authorization:string) => {
     const l = life.current, generation = l.epoch;
     const current = () => l.alive && scopeAlive() && !l.signedOut && l.epoch === generation && sameDocumentScope(l.scope, candidate.scope);
@@ -170,10 +191,10 @@ export function useClientDocuments() {
     const result = await inspect(candidate, deadline,authorization);
     if (!current()) return false;
     if (!result.file || result.file.upload_state !== "ready" || !result.object) return false;
-    const read = await wait(supabase.from("client_files").select(CLIENT_DOCUMENT_COLUMNS)
+    const read = await wait(supabase.from("client_files").select(CLIENT_DOCUMENT_COLUMNS+(privateMode?",customer_chat_thread_id":""))
       .eq("id", candidate.id).eq("tenant_id", candidate.scope.tenant).eq("contact_id", candidate.scope.contact).setHeader("x-client-portal-business",candidate.scope.tenant).setHeader("Authorization",authorization).maybeSingle(), deadline);
     if (read.error) throw new Error("Saved document could not be reloaded");
-    const file = readClientDocument(read.data, candidate.scope);
+    const file = privateMode?readCustomerChatFile(read.data,candidate.scope):readClientDocument(read.data, candidate.scope);
     if (file.id !== candidate.id || file.storage_path !== result.file.storage_path || file.upload_state !== "ready"
       || file.uploaded_by_user_id !== candidate.scope.actor || file.original_filename !== candidate.name
       || file.mime_type !== candidate.mime || file.size_bytes !== candidate.size) throw new Error("Saved document changed");
@@ -181,10 +202,10 @@ export function useClientDocuments() {
     if (!current()) return false;
     l.files = [portalDocumentFromUpload(file), ...l.files.filter(f => f.id !== file.id)];
     setFiles(l.files); l.candidate = null;
-    setUpload({kind: "saved", id: file.id, notice: "Document uploaded. It is saved for your team."});
+    setUpload({kind: "saved", id: file.id, notice: privateMode?"File saved privately. It has not been sent in a message yet.":"Document uploaded. It is saved for your team."});
     return true;
-  }, [inspect, verifiedAccess,scopeAlive]);
-  const transfer = useCallback(async (file?: File) => {
+  }, [inspect, verifiedAccess,scopeAlive,privateMode]);
+  const transfer = useCallback(async (file?: File, reservationId?: string) => {
     const l = life.current, currentScope = l.scope;
     if (!l.alive || !scopeAlive() || l.signedOut || !currentScope || l.writing) return;
     const generation = l.epoch, current = () => l.alive && scopeAlive() && !l.signedOut && l.epoch === generation && sameDocumentScope(l.scope, currentScope);
@@ -194,8 +215,10 @@ export function useClientDocuments() {
     try {
       if (file) {
         const mime = clientDocumentMime(file);
+        if(reservationId&&(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reservationId)
+          ||candidate&&candidate.id!==reservationId))throw new Error("Choose the original file to resume this upload.");
         if (candidate && (candidate.name !== file.name || candidate.mime !== mime || candidate.size !== file.size)) throw new Error("Choose the original file to resume this upload.");
-        candidate ??= {id: crypto.randomUUID(), name: file.name, mime, size: file.size, scope: currentScope, file};
+        candidate ??= {id: reservationId??crypto.randomUUID(), name: file.name, mime, size: file.size, scope: currentScope, file};
         candidate.file = file;
       }
       if (!candidate) return;
@@ -208,10 +231,11 @@ export function useClientDocuments() {
       // Retry uses the same canonical reservation ID and immutable object path.
       // Neither an overwrite nor a second file can result from a late reply.
       dispatched = true;
-      const reserved = await wait(fileRpc("client_portal_begin_file_upload", {p_file_id: attempt.id, p_filename: attempt.name,
+      const reserved = await wait(fileRpc(privateMode?"client_portal_begin_chat_file_upload":"client_portal_begin_file_upload", {p_file_id: attempt.id, p_filename: attempt.name,
+        ...(privateMode?{p_thread_id:privateThread}:{}),
         p_expected_client_id: currentScope.contact, p_mime_type: attempt.mime, p_size_bytes: attempt.size, p_tenant_id: currentScope.tenant},currentScope,access.authorization), deadline);
       if (reserved.error) throw reserved.error;
-      const row = readClientDocument(reserved.data, currentScope); if (!current()) return;
+      const row = privateMode?readCustomerChatFile(reserved.data,currentScope):readClientDocument(reserved.data, currentScope); if (!current()) return;
       if (row.id !== attempt.id || row.uploaded_by_user_id !== currentScope.actor) throw new Error("Upload reservation changed");
       const status = await inspect(attempt, deadline,access.authorization); if (!current()) return;
       if (row.upload_state !== "ready" && !status.object) {
@@ -221,17 +245,18 @@ export function useClientDocuments() {
         if (stored.error) throw stored.error;
       }
       const finalAccess=await verifiedAccess(deadline,currentScope,current); if (!current()) return;
-      setUpload({kind: "working", id: attempt.id, notice: "Saving your upload to your client record…"});
+      setUpload({kind: "working", id: attempt.id, notice: privateMode?"Saving your private file…":"Saving your upload to your client record…"});
       const saved = await wait(fileRpc("client_portal_finish_file_upload", {p_file_id: attempt.id, p_tenant_id: currentScope.tenant},currentScope,finalAccess.authorization), deadline);
       if (saved.error) throw saved.error;
       if (!current() || !await confirm(attempt, deadline,finalAccess.authorization)) throw new Error("Unconfirmed upload");
+      return attempt.id;
     } catch (error) {
       if (!current()) return;
-      if (error instanceof AccessFailure || (error as {code?: string})?.code === "42501") retire("unavailable", "Your customer access changed. Reload Documents to continue.");
+      if (error instanceof AccessFailure || (error as {code?: string})?.code === "42501") retire("unavailable", privateMode?"Your customer access changed. Reopen the portal to continue.":"Your customer access changed. Reload Documents to continue.");
       else setUpload({kind: dispatched ? "uncertain" : "error", id: attempt.id,
         notice: dispatched ? "We couldn’t confirm your upload. Check its saved status before trying again." : "Your document could not be started. Check your connection and try again."});
     } finally {if (l.alive && l.epoch === generation) l.writing = false;}
-  }, [confirm, inspect, retire, verifiedAccess,scopeAlive]);
+  }, [confirm, inspect, retire, verifiedAccess,scopeAlive,privateMode,privateThread]);
   const checkUpload = useCallback(async (row?: PortalDocument) => {
     const l = life.current, currentScope = l.scope;
     if (!l.alive || !scopeAlive() || l.signedOut || !currentScope || l.writing) return;
@@ -247,20 +272,20 @@ export function useClientDocuments() {
       else {await verifiedAccess(deadline, currentScope,current); if (current()) {
         l.recoveryAllowed = true;
         setUpload({kind: status.object ? "finish" : "retry", id: candidate.id,
-          notice: status.object ? "Your file is stored. Finish saving it to your client record." : "The transfer is unfinished. You can retry the same upload."});
+          notice: status.object ? privateMode?"Your file is stored. Finish saving it privately.":"Your file is stored. Finish saving it to your client record." : "The transfer is unfinished. You can retry the same upload."});
       }}
     } catch (error) {if (current()) {
       if (error instanceof AccessFailure) retire("unavailable", error.message);
       else setUpload({kind: "uncertain", id: candidate.id, notice: "The upload status could not be confirmed. Check your connection and try again."});
     }} finally {if (l.alive && l.epoch === generation) l.writing = false;}
-  }, [confirm, inspect, retire, verifiedAccess,scopeAlive]);
+  }, [confirm, inspect, retire, verifiedAccess,scopeAlive,privateMode]);
   const stopWaiting = useCallback(() => {
     const l = life.current;
     if (!l.alive || !scopeAlive() || l.signedOut || !l.writing || !l.candidate) return;
     ++l.epoch; ++l.read; l.writing = false; l.recoveryAllowed = false;
     setUpload({kind: "uncertain", id: l.candidate.id,
-      notice: "Stopped waiting here. The upload may have reached your business; check its saved status before trying again."});
-  }, [scopeAlive]);
+      notice: privateMode?"Stopped waiting here. Your private file may still be uploading; check its saved status before trying again.":"Stopped waiting here. The upload may have reached your business; check its saved status before trying again."});
+  }, [scopeAlive,privateMode]);
   /**
    * Two short-lived signed links for one listed, saved file: one to view, one that downloads under its
    * own name. The path comes only from the closed list read; Storage re-checks the file's permission
@@ -294,5 +319,5 @@ export function useClientDocuments() {
   }, [retire, verifiedAccess,scopeAlive]);
   const isCurrent=useCallback((expected:number)=>life.current.alive&&scopeAlive()&&!life.current.signedOut&&viewEpoch.current===expected&&dataGeneration.current===origin.current.generation&&!!life.current.scope,[scopeAlive]);
   const masked=!scopeAlive()||dataGeneration.current!==origin.current.generation;
-  return {phase:masked?"loading" as const:phase,files:masked?[]:files,summary:masked?null:summary,scope:masked?null:scope,more:masked?false:more,reading:masked?enabled:reading,notice:masked?"":notice,upload,epoch:Math.max(epoch,viewEpoch.current),refresh,transfer,checkUpload,stopWaiting,retrieve,isCurrent};
+  return {phase:!privateAllowed?"unavailable" as const:masked?"loading" as const:phase,files:masked?[]:files,summary:masked?null:summary,scope:masked?null:scope,more:masked?false:more,reading:masked?enabled:reading,notice:!privateAllowed?"Your private conversation could not be verified.":masked?"":notice,upload:privateMode&&masked?idle():upload,epoch:Math.max(epoch,viewEpoch.current),refresh,transfer,checkUpload,stopWaiting,retrieve,isCurrent};
 }

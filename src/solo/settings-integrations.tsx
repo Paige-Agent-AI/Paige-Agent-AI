@@ -742,19 +742,28 @@ function N8nDrawer({ a, m, initialMcp, onClose, onChanged }: { initialMcp?: bool
  * close with an explicit discard choice). After a save the form stays open showing its durable
  * readback; onChanged refreshes the tile state underneath.
  */
-function SlackDrawer({ gw, onClose, onChanged }: { gw: ReturnType<typeof useMcpGateway>; onClose: () => void; onChanged: () => void }) {
+function SlackDrawer({ gw, tool, onClose, onChanged }: { gw: ReturnType<typeof useMcpGateway>; tool: ReturnType<typeof connectionForProvider>; onClose: () => void; onChanged: () => void }) {
   const [dirty, setDirty] = useState(false);
   const [confirmingClose, setConfirmingClose] = useState(false);
   useBeforeUnloadGuard(dirty || gw.saving);
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef<HTMLButtonElement>(null);
+  // Mount-only, exactly the N8nDrawer split: focus lands on the close control once on open
+  // and returns to the opener once on unmount. Form state (dirty flips on every keystroke,
+  // onDirtyChange(false) after a save) must NEVER re-run this effect - a state-keyed variant
+  // steals the caret mid-word and clobbers the form's own post-save readback focus.
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     close.current?.focus();
+    return () => { opener?.focus?.(); };
+  }, []);
+  // The keyboard contract, keyed on the state it reads (Escape branches on dirty/confirming/saving).
+  useEffect(() => {
     const root = panel.current;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (confirmingClose) setConfirmingClose(false);
+        else if (gw.saving) return;
         else if (dirty) setConfirmingClose(true);
         else onClose();
         return;
@@ -768,15 +777,22 @@ function SlackDrawer({ gw, onClose, onChanged }: { gw: ReturnType<typeof useMcpG
       else if (!event.shiftKey && document.activeElement === items[items.length - 1]) { event.preventDefault(); items[0].focus(); }
     };
     window.addEventListener("keydown", onKey);
-    return () => { window.removeEventListener("keydown", onKey); opener?.focus?.(); };
-  }, [dirty, confirmingClose, onClose]);
-  const requestClose = useCallback(() => { if (dirty) { setConfirmingClose(true); return; } onClose(); }, [dirty, onClose]);
+    return () => { window.removeEventListener("keydown", onKey); };
+  }, [dirty, confirmingClose, gw.saving, onClose]);
+  /** X / overlay / Escape: guard an unsaved draft behind ONE discard choice, and hold the
+   *  door while a save is in flight (closing mid-save mislabels a proceeding write as a
+   *  discard). The form's OWN discard path (Cancel) already asked, so it closes directly. */
+  const requestClose = useCallback(() => {
+    if (gw.saving) return;
+    if (dirty) { setConfirmingClose(true); return; }
+    onClose();
+  }, [dirty, gw.saving, onClose]);
   return <div className="ig-layer" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) requestClose(); }}>
     <aside className="ig-panel" ref={panel} role="dialog" aria-modal="true" aria-labelledby="ig-slack-title">
-      <header><span className="ss-provider-mark" data-provider-mark="slack" aria-hidden>Sl</span><div><h2 id="ig-slack-title">Slack</h2><span>Team chat, channels and messages</span></div><button ref={close} className="ig-close" type="button" aria-label="Close Slack" onClick={requestClose}><X aria-hidden size={16} /></button></header>
+      <header><span className="ss-provider-mark" data-provider-mark="slack" aria-hidden>S</span><div><h2 id="ig-slack-title">Slack</h2><span>Team chat, channels and messages</span></div><button ref={close} className="ig-close" type="button" aria-label="Close Slack" onClick={requestClose} disabled={gw.saving}><X aria-hidden size={16} /></button></header>
       <div className="ig-panel-body">
         {confirmingClose && <div className="ig-confirm-close" role="alertdialog" aria-label="Discard unsaved Slack details"><p>You have unsaved Slack details. Discard them and close?</p><div className="ig-actions"><button type="button" autoFocus className="ig-btn" data-danger onClick={onClose}>Discard changes</button><button type="button" className="ig-btn" onClick={() => setConfirmingClose(false)}>Keep editing</button></div></div>}
-        <ConnectionForm gw={gw} preset={SLACK_MCP_PRESET} onDirtyChange={setDirty} onCancel={requestClose} onSaved={() => onChanged()} />
+        <ConnectionForm gw={gw} preset={SLACK_MCP_PRESET} tool={tool ?? undefined} onDirtyChange={setDirty} onCancel={onClose} onSaved={() => onChanged()} />
       </div>
       <footer><span>Connecting lets Paige reach your Slack. What she may run is a separate, per-action approval.</span></footer>
     </aside>
@@ -898,7 +914,11 @@ export function SoloIntegrationsView() {
   /** Slack's tile reads its REAL gateway connection (provider-keyed, never a label guess):
    *  absent = not connected; the state words mirror the surface's own vocabulary. */
   const slackLive = connectionForProvider(gw.tools, { providerKey: "slack" });
-  const slackState = !slackLive ? { account: "Not connected", tone: "neutral" as const }
+  // An UNREAD list asserts nothing (the surface's own doctrine): while loading or after a
+  // refused read, the tile says so - never a false "Not connected" for a connected tenant.
+  const slackState = gw.loading ? { account: "Checking connection…", tone: "neutral" as const }
+    : gw.error ? { account: "Status unavailable", tone: "neutral" as const }
+    : !slackLive ? { account: "Not connected", tone: "neutral" as const }
     : slackLive.enabled === false ? { account: "Turned off", tone: "warn" as const }
     : slackLive.status === "connected" ? { account: "Connected", tone: "ok" as const }
     : slackLive.status === "error" ? { account: "Needs attention", tone: "warn" as const }
@@ -1090,7 +1110,7 @@ export function SoloIntegrationsView() {
       </>}
     </>}
     {open && !tenantLoading && open.scope === scopeKey && (open.row.id === "slack"
-      ? <SlackDrawer key={`${scopeKey}:slack`} gw={gw} onClose={() => setOpen(null)} onChanged={status.retry} />
+      ? <SlackDrawer key={`${scopeKey}:slack`} gw={gw} tool={slackLive} onClose={() => setOpen(null)} onChanged={status.retry} />
       : open.row.id === "stripe"
       ? <StripeMerchantDrawer key={`${scopeKey}:stripe`} merchant={stripe} onClose={() => setOpen(null)} />
       : <ProviderPanel initialMcp={open.initialMcp} m={oauth} a={api} key={`${scopeKey}:${open.row.id}`} row={open.row} onClose={() => setOpen(null)} onChanged={status.retry} />)}

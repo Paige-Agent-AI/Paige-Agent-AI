@@ -1166,6 +1166,40 @@ describe("Team chat — Slack first-class, Teams honest", () => {
     expect(host.querySelector('.ig-card[data-provider="slack"]')?.textContent).toContain("Connected");
   });
 
+  it("asserts NOTHING while the gateway list is loading or unread (review P2)", async () => {
+    // Loading: a connected tenant must not see a transient "Not connected" flash.
+    world({ gateway: [{ connection_id: "c-slack-1", provider_key: "slack", label: "Ops",
+      transport: "http", auth_kind: "bearer", configured: true, enabled: true,
+      status: "connected", health: "healthy", server_url_host: "mcp.slack.com" }] });
+    context.loading = true;
+    const view = await render();
+    expect(view.host.querySelector('.ig-card[data-provider="slack"]')?.textContent).toContain("Checking connection");
+    await act(async () => { view.root.unmount(); });
+    // Refused read: "Status unavailable", never a false not-connected.
+    context.loading = false;
+    const original = rpc.mockImplementation ? rpc.getMockImplementation() : null;
+    rpc.mockImplementation((name: string) => name === "get_mcp_connections_v2"
+      ? Promise.resolve({ data: null, error: { message: "unreadable" } })
+      : original ? original(name) : Promise.resolve({ data: null, error: null }));
+    const second = await render();
+    expect(second.host.querySelector('.ig-card[data-provider="slack"]')?.textContent).toContain("Status unavailable");
+  });
+
+  it("a CONNECTED tenant's drawer opens in manage mode, not a blank create form (review P2)", async () => {
+    world({ gateway: [{ connection_id: "c-slack-1", provider_key: "slack", label: "Ops workspace",
+      transport: "http", auth_kind: "bearer", configured: true, enabled: true,
+      status: "connected", health: "healthy", last_checked_at: "2026-10-23T10:00:00Z",
+      server_url_host: "mcp.slack.com" }] });
+    const { host } = await render();
+    await openCard(host, "slack");
+    // The form's edit shape: the address field becomes "Full address" (re-key), and the
+    // Name field is absent — this is the EXISTING connection, not a fresh add.
+    expect(fieldFor(host, "Full address")).toBeTruthy();
+    expect(fieldFor(host, "Name")).toBeNull();
+    const create = invoke.mock.calls.find(([name, options]) => name === "mcp-gateway" && options.body.action === "create");
+    expect(create).toBeUndefined();
+  });
+
   it("opens the gateway's own connect form prefilled for Slack and creates with the Slack identity", async () => {
     world({ gateway: [] });
     const { host } = await render();

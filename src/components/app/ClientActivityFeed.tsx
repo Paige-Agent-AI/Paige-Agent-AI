@@ -29,27 +29,32 @@ import {
 } from "lucide-react";
 import { useRailEvents, type RailEvent, type RailHistoryStatus } from "@/hooks/useRailEvents";
 import { useMyContactId } from "@/hooks/useMyContactId";
-import { usePlaybook } from "@/lib/playbook";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 /** How many recent rows to show — a glanceable strip, not a full history. */
 const MAX_ROWS = 6;
 
-type RowVisual = { icon: typeof MessageCircle; headline: (paige: string) => string };
+/** Who the customer reads in a row: their agent (never PAIGE) and the business. */
+/** business: mid-sentence ("Update from your team"); lead: at the start of a sentence ("Your team sent you…"). */
+type Who = { agent: string; business: string; lead: string };
+type RowVisual = { icon: typeof MessageCircle; headline: (who: Who) => string };
 
 /**
  * Map a rail `event_kind` to friendly, client-facing copy + an icon. Keyed on the
  * concrete client-visible kinds first, then the namespace, so a new kind never
- * shows a raw slug — it falls back to a warm generic line. `{paige}` is the
- * tenant's persona name (§3), not a hardcoded "Paige".
+ * shows a raw slug — it falls back to a warm generic line. A message the business
+ * sent names the business; a message to the assistant names the customer's agent
+ * (Cura, or the business's own name for it). PAIGE is the owner's COO and never
+ * appears here (owner ruling, 2026-10-19).
  */
 const KIND_VISUAL: Record<string, RowVisual> = {
-  "client.message": { icon: MessageCircle, headline: (p) => `You messaged ${p}` },
+  "client.message": { icon: MessageCircle, headline: (w) => `You messaged ${w.agent}` },
   "client.intake_answer": { icon: ClipboardCheck, headline: () => "You shared some details" },
   "client.action_response": { icon: CheckCircle2, headline: () => "You responded" },
   "comms.inbound": { icon: Send, headline: () => "You sent a message" },
-  "comms.outbound": { icon: MessageCircle, headline: (p) => `${p} sent you a message` },
+  "comms.outbound": { icon: MessageCircle, headline: (w) => `${w.lead} sent you a message` },
 };
 
 function visualFor(kind: string): RowVisual {
@@ -62,7 +67,7 @@ function visualFor(kind: string): RowVisual {
     case "comms":
       return { icon: MessageCircle, headline: () => "Message" };
     default:
-      return { icon: Sparkles, headline: (p) => `Update from ${p}` };
+      return { icon: Sparkles, headline: (w) => `Update from ${w.business}` };
   }
 }
 
@@ -72,10 +77,10 @@ function relTime(iso: string): string | null {
   return Number.isNaN(d.getTime()) ? null : formatDistanceToNow(d, { addSuffix: true });
 }
 
-function ActivityRow({ event, paige }: { event: RailEvent; paige: string }) {
+function ActivityRow({ event, who }: { event: RailEvent; who: Who }) {
   const visual = visualFor(event.event_kind);
   const Icon = visual.icon;
-  const headline = visual.headline(paige);
+  const headline = visual.headline(who);
   const when = relTime(event.occurred_at);
   // The server-authored summary carries the specifics (client_visible + voice-safe);
   // show it as a muted detail when it adds something beyond the headline.
@@ -132,8 +137,10 @@ interface Props {
  * non-client / unknown contact so it's always safe to drop onto any surface.
  */
 export function ClientActivityFeed({ contactId: contactIdProp, className }: Props) {
-  const pb = usePlaybook();
-  const paige = pb.persona?.name?.trim() || "Paige";
+  const identity = useCustomerIdentity();
+  // A business's own name is never re-cased; only the fallback is, so a headline starts with a capital (round 2,
+  // verifier #7: "your team sent you a message").
+  const who: Who = { agent: identity.agentName, business: identity.businessName ?? "your team", lead: identity.businessName ?? "Your team" };
 
   // Self-resolve only when the parent didn't hand us a contact_id (prop omitted).
   const selfResolve = contactIdProp === undefined;
@@ -162,7 +169,7 @@ export function ClientActivityFeed({ contactId: contactIdProp, className }: Prop
         </h2>
       </div>
 
-      <Body events={events} historyStatus={historyStatus} paige={paige} />
+      <Body events={events} historyStatus={historyStatus} who={who} />
     </section>
   );
 }
@@ -183,17 +190,17 @@ export function ClientActivityFeed({ contactId: contactIdProp, className }: Prop
 function Body({
   events,
   historyStatus,
-  paige,
+  who,
 }: {
   events: RailEvent[];
   historyStatus: RailHistoryStatus;
-  paige: string;
+  who: Who;
 }) {
   if (events.length > 0) {
     return (
       <ul className="space-y-2">
         {events.slice(0, MAX_ROWS).map((e) => (
-          <ActivityRow key={e.id} event={e} paige={paige} />
+          <ActivityRow key={e.id} event={e} who={who} />
         ))}
       </ul>
     );
@@ -240,7 +247,7 @@ function Body({
         </span>
         <p className="text-sm font-medium text-foreground">Nothing yet</p>
         <p className="max-w-[16rem] text-xs text-muted-foreground">
-          Your updates from {paige} will show up here as you work together.
+          Updates from {who.business} will show up here as you work together.
         </p>
       </CardContent>
     </Card>

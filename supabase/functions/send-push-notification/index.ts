@@ -5,6 +5,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { encode as encodeBase64Url } from "https://deno.land/std@0.168.0/encoding/base64url.ts";
 import { isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
+import { financePushGate } from "./finance-categories.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -297,7 +298,7 @@ serve(async (req) => {
     const {
       tenant_id,
       user_id,
-      category, // 'dispute_updates' | 'funding_matches' | 'credit_score_changes' | 'task_reminders' | 'general'
+      category, // 'dispute_updates' | 'funding_matches' | 'credit_score_changes' (finance: entitled staff only) | 'task_reminders' | 'general'
       title,
       body: msgBody,
       url: clickUrl,
@@ -308,6 +309,16 @@ serve(async (req) => {
     if (!tenant_id || !user_id || !category || !title || !msgBody) {
       return new Response(JSON.stringify({ error: "Missing required fields: tenant_id, user_id, category, title, body" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // E09 F1b: credit/funding categories reach only staff of a finance-entitled business. Checked
+    // before anything is read for the recipient; nothing is sent or logged when refused.
+    const financeSkip = await financePushGate(supabase, { tenant_id, user_id, category });
+    if (financeSkip) {
+      console.log(`[send-push] finance category refused category=${category} reason=${financeSkip.reason}`);
+      return new Response(JSON.stringify(financeSkip), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

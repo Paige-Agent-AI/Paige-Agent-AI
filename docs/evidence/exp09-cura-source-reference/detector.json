@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-21T18:05:15.104Z",
+  "engine": "impeccable-engine0.1.5",
+  "targets": [
+    "src/components/tenant-relationships/CuraKnowledgePanel.tsx",
+    "src/components/tenant-relationships/OwnerPortalDashboard.tsx"
+  ],
+  "configured": {
+    "exit": 0,
+    "findings": []
+  },
+  "rawNoConfig": {
+    "exit": 0,
+    "findings": []
+  },
+  "boundary": "Static changed-production-TSX detection. Native source captures and distinct finish review separate; no authenticated or full-Experience claim."
+}

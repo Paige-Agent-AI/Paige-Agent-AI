@@ -1,0 +1,74 @@
+Browser tab: 1738568133, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:51805/?context=a&theme=dark".
+0 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=a&theme=dark
+	1 container
+		2 container
+			3 text PAIGE workspace ready
+		4 container Review delivery milestone 7, ID: radix-:r3:
+			5 heading Review delivery milestone 7, Value: 2, ID: radix-:r4:
+				6 text Review delivery milestone 7
+			7 text Details from your current workspace.
+			70 text Save or discard your unsaved work changes before leaving.
+			8 definition list
+				9 container Responsible person
+					10 text Responsible person
+				11 text Jordan Ellis
+				12 container Status
+					13 text Status
+				14 text Open
+				15 container Priority
+					16 text Priority
+				17 text Normal
+				18 container Due date
+					19 text Due date
+				20 text 11/7/2099, 8:00:00 AM
+				21 container Project
+					22 text Project
+				23 text Standalone Work
+				24 container Work type
+					25 text Work type
+				26 text Task
+			27 container
+				28 heading Update this work, Value: 2
+					29 text Update this work
+				30 text Status
+				31 pop up button (collapsed, settable) Status, Value: In progress, Secondary Actions: Expand
+					32 menu
+						33 Ready
+						34 (selected) In progress
+						35 Blocked
+						36 Completed
+				37 text New due date and time
+				38 date field (settable) New due date and time
+					39 container
+						40 stepper
+						41 stepper
+						42 stepper
+						43 stepper
+						44 stepper
+						45 stepper
+					46 pop up button Show local date and time picker Show local date and time picker
+				47 text Priority
+				48 pop up button (collapsed, settable) Description: Priority, Value: normal, Secondary Actions: Expand
+					49 menu
+						50 low
+						51 (selected) normal
+						52 high
+						53 urgent
+				54 text Responsible person
+				55 pop up button (collapsed, settable) Responsible person, Value: Jordan Ellis, Secondary Actions: Expand
+					56 menu
+						57 (selected) Jordan Ellis
+						58 Morgan Lee
+				59 button Save change
+				69 button Discard unsaved changes
+			60 container Recorded work activity
+				61 heading Activity, Value: 2
+					62 text Activity
+				63 container
+					64 text Activity couldn’t be read.
+					65 button Retry activity
+			66 button Close
+				67 image
+				68 text Close
+
+The focused UI element is 66 button Close

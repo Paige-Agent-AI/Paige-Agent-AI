@@ -573,7 +573,7 @@ export function PaigeConfirmRecord({ decision, count }: { decision: "approved" |
   return (
     <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border/70 px-2.5 py-1 text-xs leading-4 text-muted-foreground">
       <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      {approved ? (count > 1 ? `Approved · ${count} actions` : "Approved") : "Skipped · nothing changed"}
+      {approved ? (count > 1 ? `Approved · ${count} actions` : "Approved") : "You chose Not now"}
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { OperationsEngagementEvidence } from "./OperationsEngagementEvidence";
 import type { Plan, PlanItem } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 import { inspectEngagementProject } from "./operations-engagement-project";
+import { releaseReviewers, releasesAvailable } from "./operations-item-release";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
 import "./operations-delivery.css";
 
 function date(value: string | null) {
@@ -23,12 +25,14 @@ function amount(row: ClientAgreement) {
   catch { return "Currency unavailable"; }
 }
 
-type Props = { openPaige?: () => void; plans?: Plan[]; items?: PlanItem[]; planningReady?: boolean;
+type Props = { openPaige?: () => void; onOpenAgreements?: () => void; onOpenWork?: () => void;
+  plans?: Plan[]; items?: PlanItem[]; planningReady?: boolean;
   members?: TeamMemberRecord[]; peopleReady?: boolean; onVerified?: (planId: string) => Promise<void> };
 /** Sales evidence stays source-owned; reviewed handoffs write through canonical Planning. */
-export default function OperationsDelivery({ openPaige, plans = [], items = [], planningReady = false,
+export default function OperationsDelivery({ openPaige, onOpenAgreements, onOpenWork, plans = [], items = [], planningReady = false,
   members = [], peopleReady = false, onVerified }: Props) {
   const terms = useSoloCommercialTerms();
+  const { soloStandalone } = useTierFeatures();
   const signing = useSoloAgreementSignings();
   const { activeTenantId, activeUserId, accountContextLoading } = useTenantContext();
   const epoch = useRef({ actor: activeUserId, tenant: activeTenantId, loading: accountContextLoading });
@@ -83,23 +87,29 @@ export default function OperationsDelivery({ openPaige, plans = [], items = [], 
   const projectLink = engagement && activeTenantId && engagement.offerId && planningReady
     ? inspectEngagementProject(plans, items, { tenantId: activeTenantId, contactId: engagement.contactId,
       termsId: engagement.id, offerId: engagement.offerId }) : null;
+  // E09 Slice 4: the same gate the work item releases through — a standalone business, a linked project of
+  // client work, and someone else on the team to review it. Anything short of that never claims an outcome.
+  const releaseOpen = releasesAvailable(soloStandalone) && projectLink?.kind === "linked";
+  const clientOutcome = !releaseOpen ? "Acceptance unavailable"
+    : peopleReady && releaseReviewers(members, activeUserId).length === 0 ? "Releasing needs a second reviewer on your team"
+    : "Released and accepted on each work item in the project";
   const handoffVerified = async (planId: string) => {
     const opened = epoch.current;
     await onVerified?.(planId);
     if(epoch.current === opened) setInspectedEpoch(null);
   };
   return <section ref={contentRef} className="op-delivery" aria-label="Client commitments">
-    <header className="op-delivery-heading"><div><h1>Keep the promise.</h1><p>See the agreement behind the work—and the evidence still needed to close it.</p></div><button onClick={retry}><RefreshCw size={16} /> Refresh</button></header>
+    <header className="op-delivery-heading"><h1>Keep the promise.</h1><button onClick={retry}><RefreshCw size={16} /> Refresh</button></header>
     {!ready ? <div className="op-delivery-state" role="status"><FileText size={32} /><h2>{terms.phase === "error" ? "Commitments could not be loaded" : terms.phase === "unavailable" ? "Choose a workspace to see its commitments" : "Loading client commitments…"}</h2>{terms.phase === "error" && <p>Refresh to read the current Sales records again.</p>}</div>
       : terms.authorityUnknown || !terms.agreementsReadable ? <div className="op-delivery-state"><FileText size={32} /><h2>{terms.authorityUnknown ? "Your access could not be confirmed" : "Commercial agreements are outside your current access"}</h2><p>{terms.authorityUnknown ? "Refresh before viewing client commitments." : "Ask your workspace owner for the appropriate Sales access."}</p></div>
-      : !engagement ? <div className="op-delivery-state"><FileText size={32} /><h2>Your next client promise starts in Sales</h2><p>Record an engagement in Sales. Its terms and signing evidence will appear here for review.</p></div>
+      : !engagement ? <div className="op-delivery-start"><div className="op-delivery-start-main"><span className="op-delivery-kicker">FROM PROMISE TO DELIVERY</span><h2>Agree the outcome. Follow it through.</h2><p>Start with the agreed scope in Sales. Keep its delivery plan, responsible people and original evidence connected here.</p><div className="op-delivery-start-actions"><button type="button" disabled={!onOpenAgreements} onClick={onOpenAgreements}>Open Sales agreements <ArrowRight size={16} aria-hidden="true" /></button><button type="button" disabled={!onOpenWork} onClick={onOpenWork}>Open existing work</button></div></div><ol className="op-delivery-start-path" aria-label="How a promise becomes delivered work"><li><span aria-hidden="true">01</span><div><strong>Agree the scope</strong><p>The original agreement holds the terms, dates and signing evidence.</p></div></li><li><span aria-hidden="true">02</span><div><strong>Connect the delivery plan</strong><p>Review the linked project, milestones and people responsible.</p></div></li><li><span aria-hidden="true">03</span><div><strong>Close with evidence</strong><p>Inspect delivered work and the acceptance still needed.</p></div></li></ol></div>
       : <>
         <div className="op-delivery-register" aria-label="Choose an engagement">{rows.map(row => <button key={row.id} aria-pressed={engagement.id === row.id} onClick={() => { copyRequest.current += 1; setSelection({ id: row.id, epoch: epoch.current }); setCopy(null); }}><span>{clientName(row)}</span><strong>{row.title || "Untitled engagement"}</strong><small>{label(row.status)}</small></button>)}</div>
         <div className="op-delivery-spread">
           <section className="op-delivery-promise"><div className="op-delivery-client"><span>{clientName(engagement)}</span><span className="op-delivery-status">Engagement · {label(engagement.status)}</span></div><h2>{engagement.title || "Untitled engagement"}</h2><p className="op-delivery-description">{engagement.notes || "No engagement description has been recorded in Sales."}</p><dl className="op-delivery-dates"><div><dt>Starts</dt><dd>{date(engagement.startsOn)}</dd></div><div><dt>Ends</dt><dd>{date(engagement.endsOn)}</dd></div><div><dt>Renewal</dt><dd>{date(engagement.renewsOn)}</dd></div></dl><button onClick={(event) => { inspectionInvoker.current = event.currentTarget; setInspectedEpoch(epoch.current); }}>Inspect agreement <ArrowRight size={16} /></button></section>
           <section className="op-delivery-document" aria-label="Agreement evidence"><FileCheck2 size={30} /><h2>{sealed ? "The signed promise." : "The promise, on record."}</h2><p>{sealed ? sealed.documentTitle : "Review the commercial terms and the linked signing documents."}</p><dl><div><dt>Agreed price</dt><dd>{amount(engagement)}</dd></div><div><dt>Payment arrangement</dt><dd>{label(engagement.termKind)}</dd></div><div><dt>Signature evidence</dt><dd>{!signaturesKnown ? "Cannot be confirmed" : sealed ? `Sealed copy · ${date(sealed.completedAt)}` : documents.length ? "Signing incomplete or sealed copy unavailable" : "No linked signing recorded"}</dd></div></dl>{sealed && <button disabled={visibleCopy?.busy} onClick={() => void prepareCopy(sealed)}>{visibleCopy?.busy ? "Preparing signed copy…" : "Prepare signed copy"}</button>}{visibleCopy?.url && <a href={visibleCopy.url} target="_blank" rel="noopener noreferrer">Open signed copy <ArrowRight size={14} /></a>}{visibleCopy?.message && <p role="alert">{visibleCopy.message}</p>}</section>
         </div>
-        <ol className="op-delivery-path" aria-label="Promise to outcome"><li data-observed="true"><Check size={18} /><strong>Commercial terms</strong><span>{label(engagement.status)} engagement</span></li><li data-observed={Boolean(sealed)}><FileCheck2 size={18} /><strong>Signature</strong><span>{sealed ? "Sealed copy recorded" : signaturesKnown ? "Completion not evidenced" : "Evidence unavailable"}</span></li><li data-observed={projectLink?.kind === "linked"}><ArrowRight size={18} /><strong>Delivery project</strong><span>{projectLink?.kind === "linked" ? projectLink.link.project.title : projectLink?.kind === "not_shown" ? "No linked project in the work shown" : "Project source unavailable"}</span></li><li><Check size={18} /><strong>Client outcome</strong><span>Acceptance unavailable</span></li></ol>
+        <ol className="op-delivery-path" aria-label="Promise to outcome"><li data-observed="true"><Check size={18} /><strong>Commercial terms</strong><span>{label(engagement.status)} engagement</span></li><li data-observed={Boolean(sealed)}><FileCheck2 size={18} /><strong>Signature</strong><span>{sealed ? "Sealed copy recorded" : signaturesKnown ? "Completion not evidenced" : "Evidence unavailable"}</span></li><li data-observed={projectLink?.kind === "linked"}><ArrowRight size={18} /><strong>Delivery project</strong><span>{projectLink?.kind === "linked" ? projectLink.link.project.title : projectLink?.kind === "not_shown" ? "No linked project in the work shown" : "Project source unavailable"}</span></li><li><Check size={18} /><strong>Client outcome</strong><span>{clientOutcome}</span></li></ol>
         <div className="op-delivery-next"><div><h2>The next link in the promise</h2><p>{projectLink?.kind === "linked" ? "The linked delivery project is on record. Review its milestones and work; client acceptance is still outstanding." : "Inspect the signed engagement to review its delivery plan. Commercial status and signature do not confirm delivery."}</p></div>{projectLink?.kind === "linked" && onVerified && <button onClick={() => { const opened=epoch.current; const engagementId=engagement.id; void handoffVerified(projectLink.link.project.id).catch(()=>{if(epoch.current===opened)setProjectNotice({epoch:opened,engagementId,message:"The project is on record. Refresh current work to inspect it."});}); }}>Review delivery project <ArrowRight size={16} /></button>}{openPaige && <button onClick={openPaige}>Discuss with PAIGE <ArrowRight size={16} /></button>}</div>
         {projectNotice?.epoch===epoch.current && projectNotice.engagementId===engagement.id && <p role="alert">{projectNotice.message}</p>}
       </>}

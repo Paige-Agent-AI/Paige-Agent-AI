@@ -29,7 +29,45 @@ describe("C0b canonical read declaration convergence", () => {
   it("preserves authority across every known registered and legacy Chat tool", () => {
     const outsideBefore = new Set(`list_subagents delegate_to_subagent forge_subagent propose_action read_email_campaigns read_email_campaign_audience email_campaign_draft email_campaign_request_approval read_email_series email_series_draft email_series_request_approval gmail_organize read_message_content read_support_cases get_pipeline_lead_funnel set_ad_creative_featured campaign_step_plan campaign_step_record_result campaign_step_judge process_scope_set get_business_snapshot read_client_engagement_status read_business_time_zone`.split(" "));
     const known = new Set([...Object.keys(LEGACY_CAPABILITIES), ...PAIGE_SPINE_CAPABILITIES.map((c) => c.action?.chatTool).filter((t): t is string => !!t), ...batch.map(([tool]) => tool)]);
-    for (const tool of known) expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(tool !== "capability_status" && (OWNER_OPS_BEFORE.includes(tool) || outsideBefore.has(tool)));
+    for (const tool of known) {
+      // This newly registered owner-only invitation did not exist in the frozen
+      // pre-registration roster. Preserve every incumbent assertion below.
+      if (tool === "client_portal_invitation_send") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        continue;
+      }
+      // E09 Slice 3: the newly registered owner/admin-only client-share tool, likewise absent from
+      // the frozen roster. Its SQL admits only is_tenant_admin, so the Chat gate must say admin too.
+      if (tool === "plan_item_set_client_share") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        continue;
+      }
+      // E09 Slice M: the newly registered owner/admin-only customer-menu read and writer, likewise absent
+      // from the frozen roster. Their SQL admits only can_manage_tenant_brand (owner/admin of the tenant or an
+      // ancestor agency), so the Chat gate must say admin too.
+      if (tool === "read_tenant_portal_menu" || tool === "portal_menu_update") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        continue;
+      }
+      // E09 Slice 7: the newly registered owner/admin-only portal-access read and writer, likewise absent
+      // from the frozen roster. Their SQL (_client_portal_access_authorize) admits only the invitation
+      // authority, _client_portal_invitation_owner (owner/admin of the current workspace, its managing
+      // agency, or the platform owner), never a plain member or coach, so the Chat gate must say admin too.
+      if (tool === "read_client_portal_access" || tool === "client_portal_access_set") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        continue;
+      }
+      // EXP05's newly bound private read retains the stricter native owner gate.
+      // Its shared door-seat prerequisite cannot admit a seatless Operator.
+      if (tool === "read_weekly_commitment_status") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        for (const workspaceAdmin of [false, true]) for (const platformOperator of [false, true]) {
+          expect(authorityAdmits(tool, { workspaceAdmin, platformOperator, seat: false }, new Set())).toBe(false);
+        }
+        continue;
+      }
+      expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(tool !== "capability_status" && (OWNER_OPS_BEFORE.includes(tool) || outsideBefore.has(tool)));
+    }
   });
   it("preserves the full owner-ops branch set and existing admitted authority combinations", () => {
     expect([...OWNER_OPS_BRANCH_TOOLS].sort()).toEqual(OWNER_OPS_BEFORE);

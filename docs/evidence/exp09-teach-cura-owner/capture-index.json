@@ -1,0 +1,211 @@
+{
+  "date": "2026-10-21",
+  "scope": "LOCAL_SOURCE_RENDER_SYNTHETIC_NOT_AUTHENTICATED",
+  "sourceHashes": [
+    {
+      "file": "src/lib/cura-knowledge.ts",
+      "sha256": "2d37c46978ce5fcccb52c11a95cddea40fc04263ee239a492be0ef649579679a"
+    },
+    {
+      "file": "src/hooks/useCuraKnowledge.ts",
+      "sha256": "15fd32d6b52670c79d40800f0ff8244bfa94c87739c113e21633a5e5290a2c3c"
+    },
+    {
+      "file": "src/components/tenant-relationships/CuraKnowledgePanel.tsx",
+      "sha256": "3f1ace83cb3251ce56499dde8d2c6afdd5111b3a04a196f5c932ad799d7ae1d6"
+    },
+    {
+      "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
+      "sha256": "e4afe005854cc76dd879b5ad590e228e94dee5a710b6370015403a3e30b8877b"
+    }
+  ],
+  "captures": [
+    {
+      "file": "dark-inventory.jpg",
+      "sha256": "f7400837650bf5a342b3a2fd3e61edd226ff6924a28d384a606e96a013b69a75",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768
+    },
+    {
+      "file": "dark-sharing-review.jpg",
+      "sha256": "bdb9963492aab06c6e61557a970215a4b2a998df52c810367fab298230af0e58",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768
+    },
+    {
+      "file": "flow-results.json",
+      "sha256": "f63f844cc67b67085406fd28d58b8a1cf402753a4345a8cd1535a23e8af2ef3f",
+      "origin": "Observed browser geometry/state/contrast record"
+    },
+    {
+      "file": "hover-contrast.json",
+      "sha256": "c29bc504d58cb7d6cc37e396a28345bc438b49e75335d7262506b098db9e8887",
+      "origin": "Observed browser geometry/state/contrast record"
+    },
+    {
+      "file": "inventory-1024-closed.jpg",
+      "sha256": "7d38974976bea628e92f739b5be49766583bfefd29391160a346c62f896ece19",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 1024,
+      "h": 768
+    },
+    {
+      "file": "inventory-1024-open.jpg",
+      "sha256": "f9c892f8c56a7688739d1b1f6e16e20f61d5d32ca17a662742d3fb39ef24c91f",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 1024,
+      "h": 768
+    },
+    {
+      "file": "inventory-1366-closed.jpg",
+      "sha256": "334fb8f6a9e2171e3c924468fd799d830622a050714f571f53da341c09ae6dc1",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768
+    },
+    {
+      "file": "inventory-1366-open.jpg",
+      "sha256": "df9c2b03f841d62f8c66f4f9da488159e9c2f9129db8d761fec56f33ca416979",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768
+    },
+    {
+      "file": "inventory-1536-closed.jpg",
+      "sha256": "a042d6486e4b17f20d552b4c19984bc0100f95dc31d11baaa71086681ae6bf77",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 1535,
+      "h": 770
+    },
+    {
+      "file": "inventory-1536-open.jpg",
+      "sha256": "c17c94fa8833e8891b424108486ee769d33df34f8b4126fad18db19b0dc81e40",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 1535,
+      "h": 770
+    },
+    {
+      "file": "inventory-900-closed.jpg",
+      "sha256": "92e7bfad8e688f86f8f91647f45bb76ba2d06e8a47284e0b71be5376875a67a4",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000
+    },
+    {
+      "file": "inventory-900-open.jpg",
+      "sha256": "3a3949931421aaec780ff7e54c1ac47593e3c25fa668b2c89dbe2828938c3032",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000
+    },
+    {
+      "file": "mobile-inventory.jpg",
+      "sha256": "14f9d6f31059e02d088b00f9a70b63bf30e2c9958fdae7b449af6d5f48e04a8f",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 390,
+      "h": 843
+    },
+    {
+      "file": "mobile-sharing-form.jpg",
+      "sha256": "76410e4ab739fdea94e39876977b499bb687d07a5fe01913a3d8966cd385cfd2",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 390,
+      "h": 843
+    },
+    {
+      "file": "mobile-sharing-review.jpg",
+      "sha256": "b1c5e7150de1c24cce3d358bbdad5320557a6892dc19881e493c4d3fa70b34a5",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 390,
+      "h": 843
+    },
+    {
+      "file": "narrow-reflow-450.jpg",
+      "sha256": "250fd1e56f2a60c20e869f42c8e65faf341628b7baefd174addc3f23d8eeb620",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 450,
+      "h": 999
+    },
+    {
+      "file": "publisher-denied.jpg",
+      "sha256": "429477058e2cb3816523be9e3845fa2d6b76f67bccae81a17401e8af2662ecc4",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 450,
+      "h": 999
+    },
+    {
+      "file": "recovered-original-receipt.jpg",
+      "sha256": "2ebd5fb8c4d01127e135f3372ec3d75866202ed4d333cecade28eaaf8de97074",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000
+    },
+    {
+      "file": "state-conflict.jpg",
+      "sha256": "50b4f20ea6183e728758d87c494cc4e06fd312bb889888bc1a72866473c3f33e",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000
+    },
+    {
+      "file": "state-empty.jpg",
+      "sha256": "a36a7c284d2c7f6bebcbf8427b61d131aed50963963e4a20b93345b051040f57",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000
+    },
+    {
+      "file": "state-offline.jpg",
+      "sha256": "7409a78e91d1e4e737fdd6bff26d9cab43f1decf8eb8011ab2b6398b3567cd3a",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000
+    },
+    {
+      "file": "state-unknown.jpg",
+      "sha256": "bf80bda5ce0bfe2bd7302913c7feff97eeb4f3079fdf472b97146df41609f0ed",
+      "origin": "Native CUA browser capture; JPEG bytes retained without image editing. Actual-source components, synthetic identity/RPC/shell boundary.",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000
+    },
+    {
+      "file": "viewport-results.json",
+      "sha256": "4bf2adf7e258ce7f0252a7d462d5459d7766e410b491804297e715853216e9ae",
+      "origin": "Observed browser geometry/state/contrast record"
+    }
+  ],
+  "focusCorrection": {
+    "date": "2026-10-21",
+    "file": "focus-return-draft.jpg",
+    "sha256": "d444b3ba73440133d5b48bb3ee9cdcb41d2e474bd0e7c0b37da5a573b554caf7",
+    "panelSha256": "53173b2c7374544b699bd504ba2831b1ab29a1cc4caa843b937b7ea779d9db55",
+    "result": {
+      "dialogOpen": false,
+      "disabled": false,
+      "focused": "Review or correct"
+    },
+    "boundary": "Actual original source in native Chromium; synthetic identity/RPC. Prior captures and sourceHashes remain historical."
+  }
+}

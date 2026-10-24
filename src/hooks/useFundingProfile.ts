@@ -1,7 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getEffectiveUserId } from "@/lib/scopedUser";
 import { countUniqueNegativeAccounts } from "@/lib/deduplicateNegatives";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 export interface BusinessInfraData {
   // Foundation
@@ -141,6 +146,7 @@ const defaultDemographics: DemographicProfile = {
 };
 
 export function useFundingProfile(): FundingProfileData {
+  const assistant = useAssistantName();
   const { data, isLoading } = useQuery({
     queryKey: ["funding-profile-complete"],
     queryFn: async () => {
@@ -305,7 +311,7 @@ export function useFundingProfile(): FundingProfileData {
 
       // Completeness calculation — updated weights
       const completenessItems: { label: string; weight: number; present: boolean; cta: string; unlocks: string }[] = [
-        { label: "Personal Bureau Scores", weight: 15, present: middleScore != null, cta: "Upload your credit report via Paige chat", unlocks: "score-based product matching" },
+        { label: "Personal Bureau Scores", weight: 15, present: middleScore != null, cta: `Upload your credit report in your chat with ${assistant}`, unlocks: "score-based product matching" },
         { label: "Negative Items Analysis", weight: 10, present: negItems.length > 0 || (middleScore != null && middleScore >= 740), cta: "Upload a credit report to analyze derogatory items", unlocks: "accurate derogatory risk assessment" },
         { label: "Business Revenue", weight: 15, present: annualRevenue != null && annualRevenue > 0, cta: "Upload bank statements or enter revenue data", unlocks: "revenue-based funding products" },
         { label: "Entity & Formation", weight: 10, present: hasEntity && hasEIN, cta: "Complete Foundation tab in Business Profile", unlocks: "business credit products" },

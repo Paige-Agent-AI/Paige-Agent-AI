@@ -1,0 +1,270 @@
+{
+  "at": "2026-10-23T14:54:57.538Z",
+  "component": "original PaigeChat and children/CSS; Auth, Native data and model response synthetic",
+  "dependencyVersions": {
+    "react-router-dom": "6.30.6",
+    "react-router": "6.30.6",
+    "@remix-run/router": "1.23.4"
+  },
+  "dependencyScope": "isolated review packages match current-main lockfile tarball integrity; shared node_modules remains untouched",
+  "scenarios": [
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-1536x770.png",
+      "pngWidth": 1536,
+      "pngHeight": 770,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 758.4000244140625,
+        "height": 44,
+        "width": 497.6000061035156,
+        "x": 12,
+        "y": 714.4000244140625
+      },
+      "height": 770,
+      "horizontalOverflow": false,
+      "scrollOwners": [],
+      "width": 1536,
+      "devicePixelRatio": 1.0000000149011612,
+      "sha256": "0a01dcfc165c312fc398030702839064f49dfc421785f0b314e1f3626750580d"
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-1366x768.png",
+      "pngWidth": 1366,
+      "pngHeight": 768,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 756,
+        "height": 44,
+        "width": 429.75,
+        "x": 12,
+        "y": 712
+      },
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [],
+      "width": 1366,
+      "devicePixelRatio": 1.0000000149011612,
+      "sha256": "c88f90f33e783b3ba36dc646090ceeeb50d796781df11f3b7d37950957f92674"
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-1024x768.png",
+      "pngWidth": 1024,
+      "pngHeight": 768,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 756,
+        "height": 44,
+        "width": 292.8000183105469,
+        "x": 12,
+        "y": 712
+      },
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [],
+      "width": 1024,
+      "devicePixelRatio": 1.0000000149011612,
+      "sha256": "09b2e96b7195ca884f87818717b0f37a9ea0452965c335ed60883b9d5ad0952a"
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-900x1000.png",
+      "pngWidth": 900,
+      "pngHeight": 1000,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 988,
+        "height": 44,
+        "width": 243.1999969482422,
+        "x": 12,
+        "y": 944
+      },
+      "height": 1000,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 42,
+          "label": "Message Cura",
+          "scrollHeight": 56,
+          "tag": "TEXTAREA"
+        }
+      ],
+      "width": 900,
+      "devicePixelRatio": 1.0000000149011612,
+      "sha256": "2e47c88d8abf1aa640eefdab1a259ed936f7af7360f7a65aedbb457c5481c718"
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-390x844.png",
+      "pngWidth": 390,
+      "pngHeight": 844,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 836,
+        "height": 44,
+        "width": 273.6000061035156,
+        "x": 8,
+        "y": 792
+      },
+      "height": 844,
+      "horizontalOverflow": false,
+      "scrollOwners": [],
+      "width": 390,
+      "devicePixelRatio": 1.0000000149011612,
+      "sha256": "e6752e3f9f6774fa2218da410af63307af92c33caba28f82ee789c481a55b252"
+    },
+    {
+      "case": "synthetic-authorized-source-answer",
+      "image": "sessions-answer-320x568.png",
+      "pngWidth": 320,
+      "pngHeight": 568,
+      "answerPresent": true,
+      "composer": {
+        "bottom": 560,
+        "height": 44,
+        "width": 203.1999969482422,
+        "x": 8,
+        "y": 516
+      },
+      "height": 568,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 339,
+          "label": "Cura conversation",
+          "scrollHeight": 444,
+          "tag": "DIV"
+        }
+      ],
+      "width": 320,
+      "devicePixelRatio": 1.0000000149011612,
+      "sha256": "a22f284f73596c868211fc802abfe9d514ee58887417f6d99b9e6d241a595951"
+    },
+    {
+      "case": "accepted-source-unavailable-dark-reduced-motion",
+      "image": "sessions-source-held-dark-320x568.png",
+      "pngWidth": 320,
+      "pngHeight": 568,
+      "buttons": [
+        {
+          "bottom": 433.2000122070313,
+          "disabled": false,
+          "height": 44,
+          "left": 12,
+          "name": "Check conversation",
+          "right": 169.0749969482422,
+          "top": 389.2000122070313,
+          "width": 157.0749969482422,
+          "x": 12,
+          "y": 389.2000122070313
+        },
+        {
+          "bottom": 485.2000122070313,
+          "disabled": false,
+          "height": 44,
+          "left": 12,
+          "name": "Contact business",
+          "right": 151.0625,
+          "top": 441.2000122070313,
+          "width": 139.0625,
+          "x": 12,
+          "y": 441.2000122070313
+        },
+        {
+          "bottom": 560,
+          "disabled": true,
+          "height": 44,
+          "left": 217.1999969482422,
+          "name": "Start voice typing",
+          "right": 261.1999969482422,
+          "top": 516,
+          "width": 44,
+          "x": 217.1999969482422,
+          "y": 516
+        },
+        {
+          "bottom": 560,
+          "disabled": true,
+          "height": 44,
+          "left": 267.20001220703125,
+          "name": "Send message",
+          "right": 311.20001220703125,
+          "top": 516,
+          "width": 44,
+          "x": 267.20001220703125,
+          "y": 516
+        }
+      ],
+      "dark": true,
+      "devicePixelRatio": 1.0000000149011612,
+      "height": 568,
+      "horizontalOverflow": false,
+      "reducedMotion": true,
+      "width": 320,
+      "sha256": "8a4aadb6901deb4fd0b9eaaf4987172634d0e069ff33214be63466e654a3d32e"
+    },
+    {
+      "case": "keyboard-original-question-recovery-dark",
+      "image": "sessions-original-question-recovered-dark-320x568.png",
+      "pngWidth": 320,
+      "pngHeight": 568,
+      "composerValue": "",
+      "devicePixelRatio": 1.0000000149011612,
+      "focus": "Message Cura",
+      "height": 568,
+      "horizontalOverflow": false,
+      "text": "CURA Sessions · local synthetic review · no live customer data\nN\nCura\n\nAI client success agent for Northside Coaching\n\nWhere should I begin this week?\n\nN\n\nYour shared game plan starts with the reflection worksheet. You can find it in Documents. If you need help, message your coaching team.\n\nCan you confirm my session?\n\nCura · on watch\n\nREADY WHEN YOU ARE\n\nYour saved conversation is up to date.",
+      "width": 320,
+      "sha256": "00958b85c0fef3fc60b73b1f41529ae45c9c727fb9bc02bba36f5123fe888903"
+    },
+    {
+      "case": "accepted-source-unavailable-light",
+      "image": "sessions-source-held-390x844.png",
+      "pngWidth": 390,
+      "pngHeight": 844,
+      "actions": [
+        {
+          "bottom": 761.2000122070312,
+          "height": 44,
+          "left": 12,
+          "name": "Check conversation",
+          "right": 169.0749969482422,
+          "top": 717.2000122070312,
+          "width": 157.0749969482422,
+          "x": 12,
+          "y": 717.2000122070312
+        },
+        {
+          "bottom": 761.2000122070312,
+          "height": 44,
+          "left": 177.0749969482422,
+          "name": "Contact business",
+          "right": 316.1374969482422,
+          "top": 717.2000122070312,
+          "width": 139.0625,
+          "x": 177.0749969482422,
+          "y": 717.2000122070312
+        }
+      ],
+      "devicePixelRatio": 1.0000000149011612,
+      "height": 844,
+      "horizontalOverflow": false,
+      "sendDisabled": true,
+      "text": "CURA Sessions · local synthetic review · no live customer data\nN\nCura\n\nAI client success agent for Northside Coaching\n\nWhere should I begin this week?\n\nN\n\nYour shared game plan starts with the reflection worksheet. You can find it in Documents. If you need help, message your coaching team.\n\nWhen is my next appointment?\n\nWe couldn’t confirm this reply\n\nYour question may already be saved. Check the original conversation before sending it again.\n\nCheck conversation\nContact business",
+      "voiceDisabled": true,
+      "width": 390,
+      "sha256": "6ed78f8f99252f0ec7f1d12ce75a4805160a4f65dfa94627b3f4569f25e671bf"
+    }
+  ],
+  "renderedEvidence": "9 actual original-component frames on the current-main dependency set; all viewport rasters match DOM geometry, no horizontal overflow,44px reachable recovery, dark/reduced-motion and keyboard original-question readback restores Message Cura without duplicate send or invented reply",
+  "boundaries": "Local component only; not full authenticated shell, actual customer/model/provider, physical Safari, screen reader,200% zoom or whole Experience acceptance.",
+  "captureCalibration": {
+    "method": "Actual browser viewport plus temporary Emulation deviceScaleFactor=1; raw PNG captured directly, no image resizing or cropping",
+    "reason": "Browser OS scale1.25 caused four earlier captures to crop; all nine final frames recaptured with scale normalized after navigation",
+    "restored": true,
+    "verificationTabClosed": true,
+    "userTabUntouched": true
+  }
+}

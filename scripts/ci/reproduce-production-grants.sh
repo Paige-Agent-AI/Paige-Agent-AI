@@ -17,6 +17,10 @@
 # Usage: scripts/ci/reproduce-production-grants.sh <prod-baseline-dir>   (from prod-readonly-baseline.sh)
 set -euo pipefail
 prod="${1:?usage: reproduce-production-grants.sh <prod-baseline-dir>}"
+if [ ! -s "$prod/baseline_public_acl.sql" ]; then
+  echo "::error::public-object ACL baseline is missing; rerun prod-readonly-baseline.sh (do not fall back to the filtered full dump)."
+  exit 1
+fi
 db="${RECONCILE_DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
 tool=scripts/ci/reproduce-production-grants.mjs
 aside="$(mktemp -d)"
@@ -44,7 +48,7 @@ echo "::group::Rebuild up to production's newest recorded migration ($v)"
 supabase db reset --version "$v"
 echo "::endgroup::"
 
-node "$tool" --dump "$prod/baseline_schema.sql" --db "$db"
+node "$tool" --dump "$prod/baseline_public_acl.sql" --db "$db"
 node "$tool" --defaults --dump "$prod/baseline_schema.sql" --db "$db"
 
 restore

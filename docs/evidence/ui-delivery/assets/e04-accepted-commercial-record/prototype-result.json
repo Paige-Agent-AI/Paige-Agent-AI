@@ -1,0 +1,44 @@
+{
+  "result": "PASS",
+  "scope": "Local deterministic prototype only; no backend/provider/customer acceptance",
+  "viewports": [
+    {
+      "width": 1536,
+      "height": 770
+    },
+    {
+      "width": 320,
+      "height": 720
+    }
+  ],
+  "branches": [
+    {
+      "variant": "legacy",
+      "visited": true
+    },
+    {
+      "variant": "unverified",
+      "visited": true
+    },
+    {
+      "variant": "refused",
+      "visited": true
+    },
+    {
+      "variant": "changed",
+      "visited": true
+    }
+  ],
+  "keyboard": "Enter opens explicit read; result heading and close/disclosure focus inspected",
+  "scopeChange": "Prior record hidden immediately; explicit read required in new workspace",
+  "narrowOverflow": false,
+  "decision": "Original lead selected inline inspection/native disclosure under owner October21 routine UX authority; no founder acceptance",
+  "initialSelector": "INVALID label-selector attempt; observed #response subsequently used",
+  "unverified": [
+    "native zoom",
+    "assistive technology",
+    "actual owner/customer/roles/cohorts",
+    "hosted backend",
+    "file/provider"
+  ]
+}

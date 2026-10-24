@@ -1,0 +1,101 @@
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { WeeklyDraftComposer } from "./WeeklyDraftComposer";
+import type { WeeklyDraftResult, WeeklyDraftState } from "./weekly-draft-command";
+const f=vi.hoisted(()=>({request:vi.fn(),eligible:true,auth:null as null|((event:string)=>void)}));
+vi.mock("./weekly-draft-command",()=>({requestWeeklyDraft:f.request}));
+vi.mock("./useWeeklyResponsibility",()=>({useWeeklyOwnerAudience:()=>({eligible:f.eligible,key:String(f.eligible),context:{activeUserId:"actor",activeTenantId:"tenant"}})}));
+vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{onAuthStateChange:(cb:(event:string)=>void)=>{f.auth=cb;return {data:{subscription:{unsubscribe(){f.auth=null;}}}};}}}}));
+const state=(phase:WeeklyDraftState['phase']='awaiting_approval'):WeeklyDraftState=>({phase,confirmationId:"confirmation",requestId:"request",readAt:new Date().toISOString(),expiresAt:new Date(Date.now()+600000).toISOString(),
+  summary:"Save this exact weekly proposal as an unapproved draft.",draft:{name:"Weekly responsibility",weekday:1,local_time:"09:00",timezone:"America/New_York"},token:phase==='awaiting_approval'?"0123456789abcdef:token":null,
+  automationId:phase==='saved'?"canonical-process":null,revision:phase==='saved'?1:null,processState:phase==='saved'?"draft":null,receiptId:phase==='saved'?"canonical-receipt":null});
+let root:Root,container:HTMLDivElement;const saved=vi.fn();
+(globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;
+beforeEach(()=>{f.eligible=true;f.request.mockReset();f.request.mockResolvedValue({kind:"pending",requests:[],hasMore:false});saved.mockReset();container=document.createElement('div');document.body.append(container);root=createRoot(container);});
+afterEach(()=>{act(()=>root.unmount());container.remove();});
+const render=()=>act(async()=>{root.render(<WeeklyDraftComposer businessZone="America/New_York" onSaved={saved}/>);});
+const button=(text:string)=>Array.from(container.querySelectorAll('button')).find(v=>v.textContent===text);
+const click=async(text:string)=>{expect(button(text)).toBeTruthy();await act(async()=>button(text)!.click());};
+it('places keyboard focus in the unsaved responsibility without preparing a server proposal',async()=>{
+  await render();
+  button('Prepare a weekly responsibility')!.focus();
+  await click('Prepare a weekly responsibility');
+  expect(document.activeElement).toBe(container.querySelector('.e5-weekly-planning input'));
+  expect(f.request.mock.calls.map(v=>v[3])).toEqual([{action:'pending'}]);
+  expect(saved).not.toHaveBeenCalled();
+});
+it.each([false,true])('returns cancellation to its original prepare button with existing proposal=%s',async(existing)=>{
+  if(existing)f.request.mockResolvedValueOnce({kind:'pending',requests:[state()],hasMore:false});
+  await render();
+  const opener=existing?'Prepare another responsibility':'Prepare a weekly responsibility';
+  await click(opener);
+  button('Close proposal')!.focus();
+  await click('Close proposal');
+  expect(document.activeElement).toBe(button(opener));
+  expect(container.querySelector('.e5-weekly-planning')).toBeNull();
+  expect(f.request.mock.calls.map(v=>v[3])).toEqual([{action:'pending'}]);
+  expect(saved).not.toHaveBeenCalled();
+  if(existing)expect(button('Approve')).toBeTruthy();
+});
+it('does not focus the disabled preparation control if owner authority disappears during cancellation',async()=>{
+  await render();await click('Prepare a weekly responsibility');
+  await act(async()=>{button('Close proposal')!.click();f.auth?.('SIGNED_OUT');});
+  expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);
+  expect(document.activeElement).not.toBe(button('Prepare a weekly responsibility'));
+  expect(f.request.mock.calls.map(v=>v[3])).toEqual([{action:'pending'}]);
+  expect(saved).not.toHaveBeenCalled();
+});
+it("retrieves pending canonical review on entry without submitting an approval",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state()],hasMore:false});await render();expect(container.textContent).toContain("Needs your OK");expect(f.request).toHaveBeenCalledTimes(1);expect(f.request.mock.calls[0][3]).toEqual({action:"pending"});expect(saved).not.toHaveBeenCalled();});
+it("only explicit surface approval invokes save, then exposes the actual receipt and refreshes Calendar",async()=>{f.request.mockResolvedValueOnce({kind:"pending",requests:[state()],hasMore:false}).mockResolvedValueOnce({kind:"state",state:state('saved')});await render();await click('Approve');expect(f.request.mock.calls[1][3]).toEqual({action:"commit",confirmation_id:"confirmation",approvedConfirmations:[state().token]});expect(container.textContent).toContain("No executable next run");expect(container.textContent).toContain("canonical-receipt");expect(button('Approve')).toBeUndefined();expect(saved).toHaveBeenCalledTimes(1);});
+it("lost save response hides approval and further-draft actions until readback verifies the same request",async()=>{f.request.mockResolvedValueOnce({kind:"pending",requests:[state()],hasMore:false}).mockResolvedValueOnce({kind:"unconfirmed"}).mockResolvedValueOnce({kind:"unavailable"}).mockResolvedValueOnce({kind:"state",state:state('saved')});await render();await click('Approve');expect(button('Approve')).toBeUndefined();expect(button('Prepare another responsibility')?.disabled).toBe(true);await click('Read saved status');expect(button('Prepare another responsibility')?.disabled).toBe(true);await click('Read saved status');expect(f.request.mock.calls.slice(2).map(v=>v[3])).toEqual([{action:"status",confirmation_id:"confirmation"},{action:"status",confirmation_id:"confirmation"}]);expect(container.textContent).toContain("canonical-receipt");});
+it("double approval cannot issue a second command during the first flight",async()=>{let resolve!:(r:WeeklyDraftResult)=>void;f.request.mockResolvedValueOnce({kind:"pending",requests:[state()],hasMore:false}).mockImplementationOnce(()=>new Promise(r=>{resolve=r;}));await render();await click('Approve');expect(button('Approve')).toBeUndefined();expect(button('Read saved status')?.disabled).toBe(true);expect(f.request).toHaveBeenCalledTimes(2);await act(async()=>resolve({kind:"state",state:state('saved')}));});
+it("a later session displays the canonical saved draft rather than reporting a weekly check completed",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state('saved')],hasMore:false});await render();expect(container.textContent).toContain("saved as an unapproved draft");expect(container.textContent).toContain("No business task was completed or changed");expect(container.textContent).not.toContain("Completed check");expect(saved).not.toHaveBeenCalled();});
+it("unknown state offers readback, never another approval or a replay",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state('unknown')],hasMore:false});await render();expect(container.textContent).toContain("before any retry");expect(button('Approve')).toBeUndefined();expect(button('Prepare another responsibility')?.disabled).toBe(true);});
+it("scope loss drops private proposals and all callbacks without issuing another request",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state('saved')],hasMore:false});await render();f.eligible=false;await render();expect(container.textContent).toBe("");expect(f.request).toHaveBeenCalledTimes(1);});
+it("a session change clears private state and disables actions until a fresh scope entry",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state('saved')],hasMore:false});await render();await act(async()=>f.auth?.('SIGNED_OUT'));expect(container.textContent).not.toContain('canonical-receipt');expect(button('Read saved proposals')?.disabled).toBe(true);expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);expect(f.request).toHaveBeenCalledTimes(1);});
+
+const emptyRead = "No weekly proposals were returned for this owner.";
+it("announces a verified empty proposal read without claiming work was saved",async()=>{
+  await render();
+  expect(container.querySelector('[role="status"]')?.textContent).toBe(emptyRead);
+  expect(button('Prepare a weekly responsibility')?.disabled).toBe(false);
+  expect(button('Approve')).toBeUndefined();
+  expect(saved).not.toHaveBeenCalled();
+});
+it("shows explicit refresh progress, retires the empty message and then opens the actual returned proposal",async()=>{
+  let resolve!:(value:WeeklyDraftResult)=>void;
+  await render();
+  f.request.mockImplementationOnce(()=>new Promise(value=>{resolve=value;}));
+  button('Read saved proposals')!.focus();
+  await click('Read saved proposals');
+  expect(container.querySelector('[role="status"]')?.textContent).toBe('Reading saved weekly proposals…');
+  expect(container.textContent).not.toContain(emptyRead);
+  expect(document.activeElement).toBe(button('Read saved proposals'));
+  expect(button('Read saved proposals')?.disabled).toBe(true);
+  expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);
+  expect(f.request.mock.calls[1][3]).toEqual({action:'pending'});
+  await act(async()=>resolve({kind:'pending',requests:[state('saved')],hasMore:false}));
+  expect(container.textContent).toContain('canonical-receipt');
+  expect(container.textContent).not.toContain(emptyRead);
+  expect(saved).not.toHaveBeenCalled();
+});
+it.each(['unavailable','refused'] as const)("does not present a %s refresh as an empty successful read",async(kind)=>{
+  await render();
+  f.request.mockResolvedValueOnce({kind});
+  await click('Read saved proposals');
+  expect(container.querySelector('[role="alert"]')).not.toBeNull();
+  expect(container.textContent).not.toContain(emptyRead);
+  expect(button('Approve')).toBeUndefined();
+  expect(saved).not.toHaveBeenCalled();
+});
+it("does not restore an empty result from a retired session's late response",async()=>{
+  let resolve!:(value:WeeklyDraftResult)=>void;
+  f.request.mockImplementationOnce(()=>new Promise(value=>{resolve=value;}));
+  await render();
+  await act(async()=>f.auth?.('SIGNED_OUT'));
+  await act(async()=>resolve({kind:'pending',requests:[],hasMore:false}));
+  expect(container.textContent).not.toContain(emptyRead);
+  expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);
+  expect(f.request).toHaveBeenCalledTimes(1);
+});

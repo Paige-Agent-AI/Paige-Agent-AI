@@ -693,6 +693,44 @@ describe("Adding a tool", () => {
     expect(rpc.mock.calls.filter((c) => c[0] === "get_mcp_connections_v2").length).toBeGreaterThan(1);
   });
 
+  it("routes the Slack preset to the Slack provider with the token mode preselected", async () => {
+    // EXP10: Slack is a curated provider, not a generic entry. The catalogue tile must open the
+    // form with Slack's hosted endpoint and bearer mode already chosen (the tenant supplies only
+    // a name and their Slack user token), and the create must carry provider_key=slack so the
+    // server-side descriptor (migration 20271113410000) governs it.
+    world({ rows: [] });
+    const { host } = await render();
+    await openCatalogue(host);
+    await click(tile(host, "Slack"));
+    expect((fieldFor(host, "Server URL") as HTMLInputElement).value).toBe("https://mcp.slack.com/mcp");
+    await type(fieldFor(host, "Name"), "Operations workspace");
+    await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
+    await click(byText(host, "Save configuration"));
+    expect(lastEdgeBody()).toMatchObject({
+      action: "create",
+      facet: "mcp",
+      provider_key: "slack",
+      label: "Operations workspace",
+      server_url: "https://mcp.slack.com/mcp",
+      auth_kind: "bearer",
+    });
+  });
+
+  it("finds HighLevel under the LeadConnector name the provider's own API uses", async () => {
+    // EXP10: the owner's vocabulary for this provider is "LeadConnector" (their API host is
+    // leadconnectorhq.com). A catalogue that only says "HighLevel" is unfindable for the
+    // customers who know the other name.
+    world({ rows: [] });
+    const { host } = await render();
+    await openCatalogue(host);
+    const search = host.querySelector<HTMLInputElement>('input[type="search"]');
+    await type(search, "LeadConnector");
+    const names = Array.from(host.querySelectorAll(".ig-gw-tile-name")).map((n) => n.textContent);
+    expect(names).toContain("HighLevel · LeadConnector");
+    // The scope copy names the agency-vs-location distinction the connection implies.
+    expect(host.textContent).toMatch(/company \(agency\) token can reach every location/i);
+  });
+
   it("refuses a private or non-HTTPS address instead of letting the server reject it", async () => {
     world({ rows: [] });
     const { host } = await render();
@@ -1247,6 +1285,26 @@ describe("An unreadable account is never rendered as an empty one", () => {
 });
 
 describe("A failure belongs to the tool it happened on", () => {
+  it("names the provider-side revocation step when disconnecting (the credential outlives the disconnect)", async () => {
+    // EXP10 §2: "disconnect and revoke its permissions" has two halves. The disconnect clears
+    // Paige's copy and approvals HERE; the credential itself stays valid at the provider until
+    // the tenant acts there — the confirmation must say so, in the provider's own words.
+    world({ rows: [
+      row({ provider_key: "slack", label: "Operations workspace" }),
+      row({ connection_id: "conn-2", label: "Ops server" }),
+    ] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await click(byText(host, "Disconnect"));
+    expect(dialog(host)?.textContent).toMatch(/In Slack: a workspace admin can remove the app/i);
+    await click(byText(host, "Keep it"));
+    await click(host.querySelector('[data-gateway-tool="conn-2"]'));
+    await click(byText(host, "Disconnect"));
+    // A generic-remote tool gets the honest rotate-at-the-provider truth, never an invented vendor step.
+    expect(dialog(host)?.textContent).toMatch(/rotating or revoking it at the provider/i);
+    expect(dialog(host)?.textContent).not.toMatch(/In Slack:/i);
+  });
+
   it("does not replay one tool's refusal as a live alert on the next tool opened", async () => {
     world({
       rows: [row(), row({ connection_id: "conn-2", label: "Docs tool" })],

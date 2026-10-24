@@ -31,6 +31,18 @@ state.brief = cleanSoloSetupBrief({
 });
 state.paigeProfile = EMPTY_PAIGE_PROFILE;
 
+// The real Knowledge library requires the app's settled actor/workspace context.
+// Keep this isolated Setup fixture aligned with the business-context tenant below.
+vi.mock("@/hooks/useTenantContext", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/useTenantContext")>()),
+  useTenantContext: () => ({
+    activeUserId: "owner-1",
+    activeTenantId: state.activeTenantId,
+    loading: false,
+    accountContextStatus: "ready",
+  }),
+}));
+
 vi.mock("./data/useSoloBusinessContext", () => ({
   useSoloBusinessContext: () => ({
     loading: false,
@@ -1435,6 +1447,30 @@ describe("canonical Solo Setup business context", () => {
     );
     expect(state.registerEmail).toHaveBeenCalledOnce();
     await act(async () => root.unmount());
+  });
+  it("offers the owner-scoped interview return on the People & email subtab only with a live thread pointer", async () => {
+    const thread = "10000000-0000-4000-8000-000000000001";
+    // Owner with the pointer: the return link renders on the comms destination subtab
+    // and points back at the original private thread for the SAME account.
+    const withPointer = await mount("100", `/solo/100/settings/setup/people-email?interviewThread=${thread}`);
+    const returnLink = [...withPointer.host.querySelectorAll("a")].find((a) => a.textContent === "Return to interview");
+    expect(returnLink?.getAttribute("href")).toBe(`/solo/100/paige/chat?interviewThread=${thread}`);
+    // Without the pointer there is no interview navigation on any subtab.
+    await act(async () => withPointer.root.unmount());
+    const noPointer = await mount("100", "/solo/100/settings/setup/people-email");
+    expect([...noPointer.host.querySelectorAll("a")].some((a) => a.textContent === "Return to interview")).toBe(false);
+    await act(async () => noPointer.root.unmount());
+    // A forged pointer cannot redirect the return to a foreign account; a non-owner
+    // scope never sees interview navigation even with a pointer.
+    const forged = await mount("100", `/solo/100/settings/setup/people-email?interviewThread=${thread}&account=foreign&tenantId=foreign`);
+    const forgedLink = [...forged.host.querySelectorAll("a")].find((a) => a.textContent === "Return to interview");
+    expect(forgedLink?.getAttribute("href")).toBe(`/solo/100/paige/chat?interviewThread=${thread}`);
+    await act(async () => forged.root.unmount());
+    state.accessScope = "read_only";
+    const readOnly = await mount("100", `/solo/100/settings/setup/people-email?interviewThread=${thread}`);
+    expect([...readOnly.host.querySelectorAll("a")].some((a) => a.textContent === "Return to interview")).toBe(false);
+    await act(async () => readOnly.root.unmount());
+    state.accessScope = "owner_full";
   });
   it("enforces read-only controls for a member", async () => {
     state.accessScope = "read_only";

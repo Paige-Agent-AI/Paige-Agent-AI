@@ -18,6 +18,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import ts from "typescript";
+import * as nodeUtil from "node:util";
+import * as workspaceAuthority from "../../supabase/functions/_shared/workspace-authority.ts";
 
 const root = join(__dirname, "..", "..");
 const fnDir = join(root, "supabase/functions");
@@ -168,6 +170,11 @@ interface H {
   fetches: Array<{ url: string; body: { input?: Record<string, unknown>; context?: Record<string, unknown> } }>;
 }
 
+// Cache compilation TEXT only, keyed by exact original/mutated bytes. Every load
+// still has fresh modules, Auth, world, database and results. The larger shared
+// import graph must not recompile three times inside one role-matrix assertion.
+const compiledSource = new Map<string, string>();
+
 /** rows: clients id→tenant. memberships: user→tenants they belong to. activeTenant: profiles.active_tenant_id. */
 function loadEdge(
   fn: string,
@@ -186,6 +193,9 @@ function loadEdge(
     const isUserA = PEOPLE.has(person);
     const chain = (table: string): unknown => {
       const f: Record<string, string> = {};
+      const invocationId = "44444444-4444-4444-8444-444444444444";
+      let write: "insert" | "update" | null = null;
+      let savedStatus: unknown = null;
       const c: Record<string, unknown> = {
         select: () => c,
         eq: (col: string, val: string) => { f[col] = val; h.eqCalls.push([col, val]); return c; },
@@ -196,9 +206,15 @@ function loadEdge(
         is: () => c,
         in: () => c,
         neq: () => c,
-        insert: () => c,
-        update: () => c,
-        single: () => resolveRead(table, f).then((r) => ({ data: (r.data as unknown[])[0] ?? null, error: r.error })),
+        insert: () => { write = "insert"; return c; },
+        update: (patch: Record<string, unknown>) => { write = "update"; savedStatus = patch.status; return c; },
+        single: () => {
+          // The real orchestrator now requires original durable acknowledgments.
+          // These neutral fixture writes do not replace any contact/tenant filter.
+          if (table === "paige_subagent_invocations" && write === "insert") return Promise.resolve({ data: { id: invocationId }, error: null });
+          if (table === "paige_subagent_invocations" && write === "update" && f.id === invocationId) return Promise.resolve({ data: { id: invocationId, status: savedStatus }, error: null });
+          return resolveRead(table, f).then((r) => ({ data: (r.data as unknown[])[0] ?? null, error: r.error }));
+        },
         then: (res: (v: unknown) => void) => resolveRead(table, f).then(res),
       };
       return c;
@@ -249,15 +265,18 @@ function loadEdge(
   const load = (abs: string): unknown => {
     if (cache.has(abs)) return cache.get(abs);
     let src = readFileSync(abs, "utf8");
-    const rel = abs.slice(fnDir.length + 1);
+    const rel = abs.slice(fnDir.length + 1).replace(/\\/g, "/");
     if (mutate[rel]) { const b = src; src = mutate[rel](src); if (src === b) throw new Error(`mutation ${rel} matched nothing`); }
-    const out = ts.transpileModule(src, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+    const compileKey = `${abs}\0${src}`;
+    const out = compiledSource.get(compileKey) ?? ts.transpileModule(src, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+    compiledSource.set(compileKey, out);
     const mod = { exports: {} as Record<string, unknown> };
     cache.set(abs, mod.exports);
     const req = (spec: string): unknown => {
       if (spec.endsWith("/cors")) return { corsHeaders: {} };
       if (spec.startsWith("npm:@supabase/supabase-js") || spec.includes("esm.sh/@supabase/supabase-js")) return supa;
-      if (spec.startsWith(".")) { const t = resolve(dirname(abs), spec); const k = t.slice(fnDir.length + 1); return (k in stubs) ? stubs[k] : load(t); }
+      if (spec === "node:util") return nodeUtil;
+      if (spec.startsWith(".")) { const t = resolve(dirname(abs), spec); const k = t.slice(fnDir.length + 1).replace(/\\/g, "/"); return (k in stubs) ? stubs[k] : load(t); }
       throw new Error(`unmapped ${spec} in ${rel}`);
     };
     new Function("require", "module", "exports", "Deno", "fetch", out)(req, mod, mod.exports, Deno, fakeFetch);
@@ -276,6 +295,13 @@ const post = (body: unknown, token: string) =>
 
 const ORCH_STUBS = {
   "_shared/model-router.ts": { routedChatCompletion: async () => ({}), pickRoute: () => ({}), isJobKind: () => true, JOB_KINDS: [], DEFAULT_SUBAGENT_JOB_KIND: "internal_first_draft" },
+  // Reuse the real immutable authority exports through the test runner's module
+  // loader. Its resolver still receives each case's fresh database/actor. Avoid
+  // recompiling the entire registry graph in this handler-only fixture loader.
+  "_shared/workspace-authority.ts": workspaceAuthority,
+  // These cases exercise an allowlisted local Edge specialist, never a model.
+  // An accidental Fabric call is a hard failure, not a permissive model double.
+  "_shared/model-fabric.ts": { fabricCompletion: async () => { throw new Error("Unexpected model call in local specialist binder test"); } },
 };
 const invokeAgent = (contactId: string) => ({ action: "tool_invoke", slug: "ops-helper", input: { contact_id: contactId } });
 

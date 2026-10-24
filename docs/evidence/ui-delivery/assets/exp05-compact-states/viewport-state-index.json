@@ -1,0 +1,173 @@
+{
+  "source": "89e778725",
+  "captures": [
+    {
+      "label": "1536-closed-confirmed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 770,
+      "pageWidth": 1536,
+      "role": "status",
+      "size": "16px",
+      "width": 1536,
+      "raw": {
+        "width": 1535,
+        "height": 770,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "1536-open-confirmed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 770,
+      "pageWidth": 1536,
+      "role": "status",
+      "size": "16px",
+      "width": 1536,
+      "raw": {
+        "width": 1535,
+        "height": 770,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "1366-open",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 768,
+      "pageWidth": 1366,
+      "role": "status",
+      "size": "16px",
+      "width": 1366,
+      "raw": {
+        "width": 1366,
+        "height": 768,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "1366-closed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 768,
+      "pageWidth": 1366,
+      "role": "status",
+      "size": "16px",
+      "width": 1366,
+      "raw": {
+        "width": 1366,
+        "height": 768,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "1024-closed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 768,
+      "pageWidth": 1024,
+      "role": "status",
+      "size": "16px",
+      "width": 1024,
+      "raw": {
+        "width": 1024,
+        "height": 768,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "1024-open",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 768,
+      "pageWidth": 1024,
+      "role": "status",
+      "size": "16px",
+      "width": 1024,
+      "raw": {
+        "width": 1024,
+        "height": 768,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "900-open",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 1000,
+      "pageWidth": 900,
+      "role": "status",
+      "size": "16px",
+      "width": 900,
+      "raw": {
+        "width": 900,
+        "height": 1000,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "900-closed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 1000,
+      "pageWidth": 900,
+      "role": "status",
+      "size": "16px",
+      "width": 900,
+      "raw": {
+        "width": 900,
+        "height": 1000,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "390-loading-mineral",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 844,
+      "pageWidth": 390,
+      "role": "status",
+      "size": "16px",
+      "width": 390,
+      "raw": {
+        "width": 390,
+        "height": 843,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "390-loading-obsidian",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 844,
+      "pageWidth": 390,
+      "role": "status",
+      "size": "16px",
+      "width": 390,
+      "raw": {
+        "width": 390,
+        "height": 843,
+        "format": "jpeg"
+      }
+    },
+    {
+      "label": "390-unavailable-obsidian",
+      "busy": null,
+      "heading": "Your work couldn’t be loaded",
+      "height": 844,
+      "pageWidth": 390,
+      "role": "alert",
+      "size": "16px",
+      "width": 390,
+      "raw": {
+        "width": 390,
+        "height": 843,
+        "format": "jpeg"
+      }
+    }
+  ],
+  "boundary": "ACTUAL CANDIDATE SOURCE; SYNTHETIC IDENTITY/READ PORTS; NO CUSTOMER OR PROVIDER EFFECTS",
+  "excluded": "First1528x828 frames did not meet requested1536/1366 sizes; retained private only. The dedicated QA tab corrected active-tab viewport targeting.",
+  "keyboard": "Original Try again responds to Enter and retains focus; source remains unavailable in the neutral read port."
+}

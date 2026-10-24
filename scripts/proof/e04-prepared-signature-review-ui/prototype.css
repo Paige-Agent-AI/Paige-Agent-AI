@@ -1,0 +1,6 @@
+.c23-proof{min-height:100dvh;height:auto;background:var(--pg-canvas);color:var(--pg-ink);font-family:var(--pg-font-ui)}
+.c23-proof-workspace{max-width:1120px;margin:auto}
+.c23-proof-toolbar>summary{min-height:44px;align-content:center;padding:8px 16px;font-size:12px;cursor:pointer}
+.c23-proof-controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:16px;border-bottom:1px solid var(--pg-line);background:var(--pg-surface);font-size:13px}
+.c23-proof-controls label{display:flex;gap:8px;align-items:center}.c23-proof-controls :is(select,button){min-height:44px;background:var(--pg-surface);border:1px solid var(--pg-line-strong);border-radius:var(--r-s);color:var(--pg-ink);padding:8px}.c23-proof-controls p{color:var(--pg-ink-2);max-width:70ch}
+@media(max-width:600px){.c23-proof-workspace>.e04-preparation{padding:16px}}

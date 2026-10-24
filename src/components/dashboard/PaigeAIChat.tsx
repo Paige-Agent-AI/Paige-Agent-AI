@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 import { mergeIntoDraft, subscribePaigePromptHandoff } from "@/lib/paigePromptHandoff";
 import { StepTimeline, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
 import { Card } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send, Square, Loader2, Clock, Paperclip, X, ArrowDown, Hand, CircleHelp } from "lucide-react";
 import { PaigeResearchCard, type PaigeResearchResult } from "@/components/paige/chat/PaigeResearchCard";
+import { readResearchHistoryRun } from "@/lib/paigeResearchReadback";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
@@ -21,7 +23,7 @@ import { EntityDiagramCard } from "@/components/chat/EntityDiagramCard";
 import { extractEntityDiagram } from "@/lib/entityDiagram";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { PaigeConfirmCard, PaigeConfirmRecord } from "@/components/chat/PaigeConfirmCard";
-import { previewOf, rehydrateConfirmItems, type ConfirmEmailPreview } from "@/components/chat/confirmPreview";
+import { confirmationDeadline, previewOf, rehydrateConfirmItems, type ConfirmEmailPreview } from "@/components/chat/confirmPreview";
 import { PaigeAskCard, PaigeAskRecord, type PaigeAskOption } from "@/components/chat/PaigeAskCard";
 import {
   applyServerOutcome,
@@ -33,13 +35,20 @@ import {
   type ApprovalOutcome,
 } from "@/components/chat/approvalOutcome";
 import { PaigeCrmResultCard, type PaigeCrmResult } from "@/components/chat/PaigeCrmResultCard";
+import { readCrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
+import { CHAT_CONTROL_HEADER, CHAT_CONTROL_POLL_MS, chatControlRetryDelay } from "../../../supabase/functions/_shared/paige-turn/control-transport";
 import { CheckLinks } from "@/components/chat/CheckLinks";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
+import { workspaceLinkTargets } from "@/lib/links/workspaceLinks";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
 import { usePlaybook } from "@/lib/playbook";
 import { cn } from "@/lib/utils";
 import type { QuickChip } from "@/components/paige/commandCenterTypes";
 import { usePaigeThreads, type PaigeThread } from "@/hooks/usePaigeThreads";
+import { readOriginalReminderHistory, type OriginalReminderHistory } from "@/components/chat/reminderHistory";
+import { originalSpecialistOrigin, readOriginalSpecialistHistory, type OriginalSpecialistHistory } from "@/components/chat/specialistHistory";
+import { OriginalSpecialistResult } from "@/components/chat/OriginalSpecialistResult";
+import { readOriginalCuraPreparationHistory, preparationWorkLabel, type OriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { ThreadRail } from "@/components/dashboard/paige/ThreadRail";
@@ -63,6 +72,7 @@ import {
   outcomeFromRecord,
   readPaigeStreamWithRaw,
   readTurnRecord,
+  readRecoveryReadOnlyRefusal,
   readTurnTrace,
   settleOpenSteps,
   settleTurnRows,
@@ -106,6 +116,9 @@ import {
 // Phase 1a / INT-180 relief: keep this exactly symmetric with paige-ai-chat's
 // server budget. The durable-work envelope remains the real disconnect/retry fix.
 const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
+const RESEARCH_HISTORY_READ_BUDGET_MS = 8_000;
+
+type ResearchHistoryReference = { messageId: string; run_id: string | null; question: string; saved: boolean };
 
 // INT-328 — the server's preview of the exact email a confirm card will send rides the
 // `paige_confirm` frame beside `command` (as `preview` or `confirm_preview`); `previewOf` passes it
@@ -134,10 +147,21 @@ type Message = {
    *  them back so the gate runs that call and not whatever the model re-emits — see the gate's own
    *  note. Optional: a rehydrated turn has summaries but no live fingerprints, which is correct,
    *  because a past decision must never be re-fired (§15). */
-  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: ConfirmEmailPreview }>;
+  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; expires_at?: string | null; command?: Record<string, unknown>; idempotency_key?: string; preview?: ConfirmEmailPreview }>;
   /** True on turns rehydrated from history: their confirm cards render settled,
    *  not as a live Approve button (§15 — never re-fire a past action). */
   confirmResolved?: boolean;
+  approvalRecovery?: "checking" | "unavailable";
+  originalReminderHistory?: OriginalReminderHistory;
+  originalReminderHistoryStatus?: "checking" | "unverified";
+  /** Read-only origin/projection; no stored token or permission is restored. */
+  originalPreparationOrigin?: OriginalPreparationScope;
+  originalCuraPreparationHistory?: OriginalCuraPreparationHistory;
+  originalCuraPreparationHistoryStatus?: "checking" | "unverified";
+  originalSpecialistOrigin?: OriginalPreparationScope;
+  originalSpecialistHistory?: OriginalSpecialistHistory;
+  originalSpecialistHistoryStatus?: "checking" | "unverified";
+  recoveredApprovalExpiresAt?: string;
   /** Solo: what the person decided on this turn's card. The card settles into a record where it
    *  was asked, with no button left to press twice. Live session only; a reloaded turn shows the
    *  older settled line instead. */
@@ -186,6 +210,20 @@ type Message = {
 /** C4c — what "Skip, use your best guess" sends on the person's behalf (c6). The server is told it
  *  is a skip by the request (`resume.skipped`), never by these words. */
 const ASK_SKIP_REPLY = "Use your best guess.";
+const historicalConfirmItems = (items: Message["confirm"]): Message["confirm"] => items?.map(({tool,summary,preview}) => ({
+  tool, summary, ...(preview ? {preview} : {}),
+}));
+const approvalDeadline = (message: Message): number | undefined => {
+  const initial = confirmationDeadline(message.confirm);
+  const recovered = message.recoveredApprovalExpiresAt === undefined ? undefined : Date.parse(message.recoveredApprovalExpiresAt);
+  const prior = recovered === undefined ? undefined : Number.isFinite(recovered) ? recovered : 0;
+  return initial === undefined ? prior : prior === undefined ? initial : Math.min(initial, prior);
+};
+const approvalExpired = (message: Message, now = Date.now()) => !message.confirmResolved && !message.confirmDecision
+  && approvalDeadline(message) !== undefined && approvalDeadline(message)! <= now;
+const expiredApprovalMessage = (message: Message): Message => ({ ...message,
+  confirm: historicalConfirmItems(message.confirm), confirmResolved: true,
+  recoveredApprovalExpiresAt: undefined, approvalRecovery: "unavailable" });
 
 /** C3a — the answer being read right now (or just finished in this session). Keyed by the
  *  assistant message id it belongs to; cleared at every transcript reset. */
@@ -243,7 +281,7 @@ export interface PaigeAIChatProps {
   businessMissionId?: string | null;
   /** Prose describing the focused customer — added to the chat POST body. */
   clientContext?: string;
-  surfaceContext?: { kind: "public_presence"; step: "confirm_facts" | "verify_website" | "connect_venues" | "compare_facts" | "set_authority" | "maintain_presence"; intendedAction: "review" | "plan" | "prepare_connection" | "resolve_mismatch" };
+  surfaceContext?: { kind: "public_presence"; step: "confirm_facts" | "verify_website" | "connect_venues" | "compare_facts" | "set_authority" | "maintain_presence"; intendedAction: "review" | "plan" | "prepare_connection" | "resolve_mismatch" } | { kind: "solo_business_interview" };
   /** The chat is telling the surface that OWNS focus to let it go. Two reasons, both cases where
    *  continuing to assert a focus would make the UI say something untrue:
    *
@@ -345,7 +383,18 @@ export interface PaigeAIChatProps {
    * governance seam — this component makes no authority claim of its own.
    */
   composerAutonomyControl?: React.ReactNode;
+  /** Caller-owned read/context presentation; omitted mounts remain unchanged. */
+  renderComposerContext?: (api: ChatComposerContextApi) => React.ReactNode;
 }
+
+export type ChatComposerContextApi = {
+  threadId: string | null;
+  ready: boolean;
+  busy: boolean;
+  hasOwnerMessages: boolean;
+  restoreLayout: () => void;
+  focusComposer: () => void;
+};
 
 /** Everything a caller-supplied history rail needs, and nothing it could corrupt. */
 export type ChatRailApi = {
@@ -386,6 +435,7 @@ const PaigeAIChatInner = ({
   soloTenantSafety = false,
   liveConversation = true,
   composerAutonomyControl,
+  renderComposerContext,
 }: PaigeAIChatProps) => {
   /** Claude Design's operator chrome. Presentation only — never a second engine. */
   const cd = presentation === "operator";
@@ -476,7 +526,7 @@ const PaigeAIChatInner = ({
     decisionFocusRef.current = null;
     const active = document.activeElement;
     if (active && active !== document.body) return;
-    document.querySelector<HTMLElement>(`[data-paige-message-id="${id}"] [data-paige-decided-record]`)?.focus({ preventScroll: true });
+    document.querySelector<HTMLElement>(`[data-paige-message-id="${id}"] [data-paige-decided-record], [data-paige-message-id="${id}"] [data-paige-approval-recovery="unavailable"]`)?.focus({ preventScroll: true });
   }, [messages]);
   // Which answers' "What PAIGE did" is open (the Stop footer's "See what finished" opens one).
   const [turnTraceOpen, setTurnTraceOpen] = useState<Record<string, boolean>>({});
@@ -598,6 +648,30 @@ const PaigeAIChatInner = ({
     : "identity-unresolved";
   const requestScopeRef = useRef({ handle: requestScopeHandle, epoch: requestScopeEpoch });
   requestScopeRef.current = { handle: requestScopeHandle, epoch: requestScopeEpoch };
+  // A new scope gets new control state. Object identity also fences A→B→A replies;
+  // a former actor/workspace must not install its retry delay in the current view.
+  const controlScopeRef = useRef({ epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 });
+  if (controlScopeRef.current.epoch !== scopeEpoch)
+    controlScopeRef.current = { epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 };
+  const originalReminderHydrationRef = useRef<{
+    scope: typeof requestScopeRef.current; cancel: () => void;
+  } | null>(null);
+  useLayoutEffect(() => {
+    const read = originalReminderHydrationRef.current;
+    if (read && (read.scope.epoch !== requestScopeRef.current.epoch
+      || !composerDraftHandlesMatch(read.scope.handle, requestScopeRef.current.handle))) read.cancel();
+  }, [requestScopeEpoch]);
+  useEffect(() => () => originalReminderHydrationRef.current?.cancel(), []);
+  const researchHydrationRef = useRef<{
+    scope: typeof requestScopeRef.current;
+    cancel: () => void;
+  } | null>(null);
+  useLayoutEffect(() => {
+    const hydration = researchHydrationRef.current;
+    if (hydration && (hydration.scope.epoch !== requestScopeRef.current.epoch
+      || !composerDraftHandlesMatch(hydration.scope.handle, requestScopeRef.current.handle))) hydration.cancel();
+  }, [requestScopeEpoch]);
+  useEffect(() => () => researchHydrationRef.current?.cancel(), []);
   const acceptedRequestScopeEpochRef = useRef(requestScopeEpoch);
   const requestScopeFor = (_kind: "new" | "thread", id: string) => {
     if (!draftIdentity) return null;
@@ -618,10 +692,11 @@ const PaigeAIChatInner = ({
   const input = draft.value;
   const setInput = draft.setValue;
   // Ask PAIGE from any surface puts its question in this composer (never sends it); see
-  // src/lib/paigePromptHandoff.ts. A draft already typed here is kept, the question appended.
+  // src/lib/paigePromptHandoff.ts. Typed work is kept; an explicitly addressed
+  // surface invitation retains its specialist address. Recovery merges are unchanged.
   // The composer accepts writes only once its scope is writable; until then a question waits.
   const composerWritable = Boolean(draft.writableHandle);
-  useEffect(() => composerWritable ? subscribePaigePromptHandoff((prompt) => setInput((current) => mergeIntoDraft(current, prompt))) : undefined, [composerWritable, setInput]);
+  useEffect(() => composerWritable ? subscribePaigePromptHandoff((prompt) => setInput((current) => mergeIntoDraft(current, prompt, { preserveAddressee: true }))) : undefined, [composerWritable, setInput]);
   const dictationEpoch = requestScopeEpoch;
   const dictationDeliveryEpoch = `${dictationEpoch}:${dictationGeneration}`;
   const [dictationActivity, setDictationActivity] = useState({
@@ -659,9 +734,13 @@ const PaigeAIChatInner = ({
     transcriptScrollRef.current = createAnchoredTranscriptScroll({
       storagePrefix: "paige-transcript-position-v1",
       onPinnedChange: (pinned) => {
-        atLatestRef.current = pinned;
-        setIsAtLatest(pinned);
-        if (pinned) {
+        // Layout readback may repeat without a pin transition. Do not schedule
+        // another React layout pass for the same observed state.
+        if (atLatestRef.current !== pinned) {
+          atLatestRef.current = pinned;
+          setIsAtLatest(pinned);
+        }
+        if (pinned && hasNewerContentRef.current) {
           hasNewerContentRef.current = false;
           setLatestAnnouncement("");
         }
@@ -698,7 +777,7 @@ const PaigeAIChatInner = ({
   // the turn did not happen and trying again is worth doing. A 4xx is NOT in this set — a request
   // the server refused on its merits will be refused identically on a retry, and offering one
   // would be a button that cannot work (§70).
-  const [connectionIssue, setConnectionIssue] = useState<"offline" | "timeout" | "server" | "interactive-unconfirmed" | "live-interrupted" | null>(null);
+  const [connectionIssue, setConnectionIssue] = useState<"offline" | "timeout" | "server" | "interactive-unconfirmed" | "recovery-read-only" | "live-interrupted" | null>(null);
   // INT-346 — true while the server says this turn runs in conversational mode (interactive
   // rollout staged, actions unavailable). Cleared at every turn start; set only by the
   // server's own `paige_mode` frame, never assumed locally.
@@ -755,6 +834,12 @@ const PaigeAIChatInner = ({
     return true;
   }, []);
   const abortActiveRequest = useCallback(() => {
+    originalReminderHydrationRef.current?.cancel();
+    setMessages(previous => previous.map(message => ({ ...message,
+      ...(message.originalReminderHistoryStatus === "checking" ? { originalReminderHistoryStatus: "unverified" as const } : {}),
+      ...(message.originalCuraPreparationHistoryStatus === "checking" ? { originalCuraPreparationHistoryStatus: "unverified" as const } : {}),
+      ...(message.originalSpecialistHistoryStatus === "checking" ? { originalSpecialistHistoryStatus: "unverified" as const } : {}),
+    })));
     undispatchedDraftRef.current = null;
     submissionPreflightRef.current = false;
     documentRequestActiveRef.current = false;
@@ -772,28 +857,46 @@ const PaigeAIChatInner = ({
     if (!enableHistory || !liveConversation) return;
     const target = interactiveRequestRef.current;
     if (!target?.threadId) return;
+    const controlScope = controlScopeRef.current;
     const generation = ++authorityPollRef.current.generation;
     window.clearTimeout(authorityPollRef.current.timer);
-    const current = () => generation === authorityPollRef.current.generation
+    const current = () => controlScope === controlScopeRef.current && generation === authorityPollRef.current.generation
       && interactiveRequestRef.current?.intentId === target.intentId
       && composerDraftHandlesMatch(target.handle, requestScopeRef.current.handle);
+    let failures = 0;
     const poll = async () => {
       if (!current()) return;
+      const remaining = controlScope.statusNotBefore - Date.now();
+      if (remaining > 0) {
+        authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, remaining);
+        return;
+      }
       let settled = false;
+      let delay = CHAT_CONTROL_POLL_MS;
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!current() || !session) return;
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}`, [CHAT_CONTROL_HEADER]: "status" },
           body: JSON.stringify({ threadId: target.threadId, requestIntentId: target.intentId,
             messages: [{ role: "user", content: "Status" }], interactive: { kind: "status" } }),
         });
-        if (response.ok) settled = (await response.json()).settled === true;
-      } catch { /* Unknown settlement keeps Live guarded; text remains available. */ }
+        if (!current()) return;
+        if (response.status === 429) {
+          delay = chatControlRetryDelay(response.headers?.get("Retry-After"));
+          controlScope.statusNotBefore = Date.now() + delay;
+        } else if (response.ok) {
+          settled = (await response.json()).settled === true;
+          failures = 0;
+        } else delay = Math.min(60_000, CHAT_CONTROL_POLL_MS * 2 ** Math.min(++failures, 5));
+      } catch {
+        // Unknown settlement keeps Live guarded; a failing transport must not flood ingress.
+        delay = Math.min(60_000, CHAT_CONTROL_POLL_MS * 2 ** Math.min(++failures, 5));
+      }
       if (!current()) return;
       if (settled) setInteractiveAuthorityPending(false);
-      else authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, 1000);
+      else authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, delay);
     };
     void poll();
   }, [enableHistory, liveConversation]);
@@ -810,6 +913,24 @@ const PaigeAIChatInner = ({
     }
   }, [requestScopeEpoch]);
 
+  // A streamed turn holds an older transcript snapshot. Preserve only a settled
+  // history card already present in the current scoped state; never add a message,
+  // reuse another history load, or alter the caller's other fields/decision outcome.
+  const preserveSettledResearchHistory = useCallback((next: Message[], previous: Message[]) => {
+    const hydration = researchHydrationRef.current;
+    if (!hydration || hydration.scope.epoch !== requestScopeRef.current.epoch
+      || !composerDraftHandlesMatch(hydration.scope.handle, requestScopeRef.current.handle)
+      || hydration.scope.handle?.conversationId !== hydratedFromRef.current) return next;
+    return next.map(message => {
+      if (!message.research?.some(ref => ref.rehydrating)) return message;
+      const prior = previous.find(candidate => candidate.id === message.id);
+      return !prior?.research ? message : { ...message, research: message.research.map(ref => {
+        const settled = prior.research!.find(candidate => candidate.run_id === ref.run_id && !candidate.rehydrating);
+        return ref.rehydrating && settled ? settled : ref;
+      }) };
+    });
+  }, []);
+
   const cancelSoloRequest = useCallback((opts?: { fromVoice?: boolean }) => {
     if (!soloTenantSafety) return;
     const undispatched = !opts?.fromVoice ? undispatchedDraftRef.current : null;
@@ -819,19 +940,28 @@ const PaigeAIChatInner = ({
     const cancelledTurn = retryTurnRef.current;
     const interactive = !opts?.fromVoice ? interactiveRequestRef.current : null;
     if (interactive?.threadId) {
+      const controlScope = controlScopeRef.current;
+      const current = () => controlScope === controlScopeRef.current
+        && interactiveRequestRef.current?.intentId === interactive.intentId
+        && composerDraftHandlesMatch(interactive.handle, requestScopeRef.current.handle);
       void (async () => {
+        if (!current()) return;
+        if (Date.now() < controlScope.stopRetryAt) throw new Error("stop_unconfirmed");
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!current()) return;
+        if (!session) throw new Error("stop_unconfirmed");
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}`, [CHAT_CONTROL_HEADER]: "stop" },
           body: JSON.stringify({ threadId: interactive.threadId, requestIntentId: interactive.intentId,
             messages: [{ role: "user", content: "Stop" }],
             interactive: { kind: "stop", supersedesIntentId: interactive.intentId } }),
         });
+        if (!current()) return;
+        if (response.status === 429) controlScope.stopRetryAt = Date.now() + chatControlRetryDelay(response.headers?.get("Retry-After"));
         if (!response.ok) throw new Error("stop_unconfirmed");
-        if (interactiveRequestRef.current?.intentId === interactive.intentId) refreshInteractiveAuthority();
-      })().catch(() => toast({ title: "Response stopped here", description: "I couldn't confirm the server stopped. Check completed work before repeating an action." }));
+        refreshInteractiveAuthority();
+      })().catch(() => { if (current()) toast({ title: "Response stopped here", description: "I couldn't confirm the server stopped. Check completed work before repeating an action." }); });
     }
     // C3a — the answer's line says "Stopped by you" and keeps the step that had started, marked as
     // possibly still finishing. Settled BEFORE the abort, which would otherwise drop that step.
@@ -841,11 +971,13 @@ const PaigeAIChatInner = ({
     // A decision is never rolled back: an approval may already have reached Paige and run, and
     // putting its card back would offer a second Approve for something that may be done. Its
     // outcome card stays and, with no report, says it couldn't confirm.
-    if (!interactive && cancelledTurn && !cancelledTurn.live && !cancelledTurn.decision) setMessages(cancelledTurn.rollback);
+    if (!interactive && cancelledTurn && !cancelledTurn.live && !cancelledTurn.decision) {
+      setMessages(previous => preserveSettledResearchHistory(cancelledTurn.rollback, previous));
+    }
     if (interactive || cancelledTurn?.live || cancelledTurn?.decision) retryTurnRef.current = null;
     setCancelled(true);
     setConnectionIssue(null);
-  }, [abortActiveRequest, refreshInteractiveAuthority, settleLiveTurn, soloTenantSafety, toast]);
+  }, [abortActiveRequest, preserveSettledResearchHistory, refreshInteractiveAuthority, settleLiveTurn, soloTenantSafety, toast]);
 
   const syncTranscriptPosition = useCallback(() => {
     transcriptScrollRef.current?.handleScroll();
@@ -853,6 +985,14 @@ const PaigeAIChatInner = ({
   const setTranscriptElement = useCallback((node: HTMLDivElement | null) => {
     transcriptScrollRef.current?.attach(node);
   }, []);
+  const restoreContextLayout = useCallback(() => {
+    transcriptScrollRef.current?.notifyLayoutChange("focus");
+    requestAnimationFrame(() => transcriptScrollRef.current?.notifyLayoutChange("focus"));
+  }, []);
+  const focusContextComposer = useCallback(() => {
+    inputRef.current?.focus({ preventScroll: true });
+    restoreContextLayout();
+  }, [restoreContextLayout]);
 
   const jumpToLatest = useCallback(() => {
     const reduceMotion = typeof window.matchMedia === "function"
@@ -987,7 +1127,26 @@ const PaigeAIChatInner = ({
   useEffect(() => { onTrace?.(steps, isLoading); }, [steps, isLoading, onTrace]);
 
   // Collapse the composer back to one line once it's cleared (after send / new chat).
-  useEffect(() => { if (input === "" && inputRef.current) inputRef.current.style.height = "auto"; }, [input]);
+  const resizeComposerInput = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    if (el.value) el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, []);
+  // A restored or handed-off draft needs the same readable geometry as typed input.
+  useLayoutEffect(resizeComposerInput, [input, resizeComposerInput]);
+  useEffect(() => {
+    if (!inputRef.current || typeof ResizeObserver !== "function") return;
+    let width = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry && entry.contentRect.width !== width) {
+        width = entry.contentRect.width;
+        resizeComposerInput();
+      }
+    });
+    observer.observe(inputRef.current);
+    return () => observer.disconnect();
+  }, [resizeComposerInput]);
 
   // Chip click: prefill the composer + focus so the operator can edit before
   // Paige acts (cc-spec §3). Only chips flagged autoSend dispatch immediately.
@@ -1004,10 +1163,10 @@ const PaigeAIChatInner = ({
   // Rebuild the message list from a thread's stored turns. Cards are reconstructed
   // from bundle_ref and marked resolved — a reloaded confirm renders settled, never
   // a live Approve button for an action already taken (§15).
-  const turnsToMessages = (turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>): Message[] => {
+  const turnsToMessages = (turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, originThreadId: string) => {
     // R2b §12 — every reload run reference across the transcript, resolved after the
     // map through the governed get RPC (see the runner below the map).
-    const researchRefsAll: Array<{ run_id: string | null; question: string; saved: boolean }> = [];
+    const researchRefsAll: ResearchHistoryReference[] = [];
     const mapped =
     turns
       .filter((t) => t.role === "user" || t.role === "assistant")
@@ -1019,7 +1178,7 @@ const PaigeAIChatInner = ({
         // could re-fire a decision already taken (§15). INT-328 — stored items pass the same preview
         // gate as the live frame.
         const confirm = rehydrateConfirmItems(b.paige_confirm);
-        const crmResults = Array.isArray(b.paige_crm_result) ? b.paige_crm_result as PaigeCrmResult[] : undefined;
+        const crmResults = readCrmResultMetadata(b.paige_crm_result);
         // E4-S3 — the read references this answer persisted (the same reader the live frame uses).
         const recordLinks = readRecordLinks(b.paige_record_links);
         // R2b §12 — a reloaded turn carries the run REFERENCE; the evidence rehydrates
@@ -1028,8 +1187,13 @@ const PaigeAIChatInner = ({
         // state and upgrades when the RPC resolves; a null readback (unsaved/foreign)
         // keeps the honest not-saved shape. Collected for resolution after the map.
         const turnResearchRefs = Array.isArray(b.paige_research)
-          ? (b.paige_research as Array<{ run_id: string | null; question: string; saved: boolean }>)
-          : undefined;
+          ? b.paige_research.flatMap(candidate => {
+              if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return [];
+              const ref = candidate as Record<string, unknown>;
+              return (ref.run_id === null || typeof ref.run_id === "string" && ref.run_id.length > 0)
+                && typeof ref.question === "string"
+                ? [{ run_id: ref.run_id as string | null, question: ref.question, saved: ref.saved === true }] : [];
+            }) : undefined;
         const artifacts = Array.isArray(b.paige_artifact)
           ? b.paige_artifact.flatMap((candidate): PaigeArtifact[] => {
               if (!candidate || typeof candidate !== "object") return [];
@@ -1060,6 +1224,7 @@ const PaigeAIChatInner = ({
           endCause: null,
           source: "reload",
           hasContent: t.content.trim() !== "",
+          ...(readRecoveryReadOnlyRefusal(b.interactive_refusal, record) ? { recoveryReadOnlyRefusal: true as const } : {}),
           // C4a — only an APPROVAL carried forward draws the two answers as one (a3/a4). An answer
           // carried forward (C4c) is the person speaking between them, so the two stay two (c3).
           ...(record.resumed?.kind === "approval" ? { resumed: true } : {}),
@@ -1067,7 +1232,7 @@ const PaigeAIChatInner = ({
         // C4c — the question this answer ended on, and (on the person's turn) the question it answered.
         const askRecord = t.role === "assistant" ? readAskRecord(b.paige_ask) : null;
         const answerClaim = t.role === "user" ? readAnswerClaim(b.paige_resume) : null;
-        return mkMsg({
+        const message = mkMsg({
           ...(tid ? { id: tid } : {}),
           ...(created ? { ts: Date.parse(created) } : {}),
           role: t.role as "user" | "assistant",
@@ -1075,13 +1240,23 @@ const PaigeAIChatInner = ({
           queued: queued?.length ? queued : undefined,
           confirm: confirm?.length ? confirm : undefined,
           confirmResolved: true,
+          ...(activeTenantId && originThreadId ? { originalSpecialistOrigin:
+            originalSpecialistOrigin(t, { threadId: originThreadId, tenantId: activeTenantId }) ?? undefined } : {}),
+          // This only offers an inert read. Native status re-proves the actual
+          // actor, business, original card and publisher authority independently.
+          ...(t.role === "assistant" && t.interactive_terminal_state === "WAIT_APPROVAL"
+            && confirm?.some(card => card.tool === "save_to_knowledge_base")
+            && [originThreadId, tid, t.interactive_intent_id, activeTenantId].every(value => typeof value === "string"
+              && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))
+            ? { originalPreparationOrigin: { threadId: originThreadId, turnId: tid!,
+                intentId: t.interactive_intent_id!, tenantId: activeTenantId! } } : {}),
           crmResults: crmResults?.length ? crmResults : undefined,
           recordLinks: recordLinks.length ? recordLinks : undefined,
           research: turnResearchRefs?.length
             ? turnResearchRefs.map((ref) => ({
                 run_id: ref.run_id,
                 question: ref.question,
-                saved: ref.saved,
+                saved: false,
                 configured: true,
                 stop_reason: null,
                 is_dossier: false,
@@ -1096,7 +1271,8 @@ const PaigeAIChatInner = ({
           ...(askRecord ? { ask: { askId: askRecord.ask_id, options: askRecord.options.map(({ label, value, description }) => ({ label, value, ...(description ? { description } : {}) })), multi: askRecord.multi, question: askRecord.question } } : {}),
           ...(answerClaim ? { answer: { askId: answerClaim.key.slice("answer:".length), skipped: answerClaim.skipped === true } } : {}),
         });
-        if (turnResearchRefs?.length) researchRefsAll.push(...turnResearchRefs);
+        if (turnResearchRefs?.length) researchRefsAll.push(...turnResearchRefs.map(ref => ({ ...ref, messageId: message.id })));
+        return message;
       });
     // C3a — a decision sentence the approval card sent on the person's behalf is hidden on reload too,
     // but ONLY when it is anchored: exactly one of the client's own two sentences AND directly after
@@ -1125,60 +1301,203 @@ const PaigeAIChatInner = ({
       if (!report?.actions.length) continue;
       mapped[i] = { ...m, approvalOutcome: applyServerOutcome(pendingApprovalOutcome(mapped.slice(0, i), report.actions.map((a) => a.fingerprint)), report) };
     }
-      // R2b §12 — resolve the research references through the governed get RPC after the
-      // transcript paints (history load never blocks on research reads). A resolved run
-      // upgrades the card to the full evidence (the SAME payload shape the Research
-      // library renders — one citation identity); a null readback settles the honest
-      // not-saved/not-available state.
-      if (researchRefsAll.length > 0) {
-        void (async () => {
-          const { supabase } = await import("@/integrations/supabase/client");
-          for (const ref of researchRefsAll) {
-            if (!ref.run_id) continue;
-            try {
-              const { data } = await supabase.rpc("get_workspace_research_run", { _run_id: ref.run_id });
-              if (!data) {
-                // R2b review P2/P3: settle the reference — a null readback clears the
-                // rehydrating state AND the saved claim (a once-confirmed run whose row
-                // is gone must not keep its badge), so the card shows its honest
-                // unavailable wording — never an eternal "Loading…", never a stale
-                // "Saved" badge, never a fabricated evidence card.
-                setMessages((prev) => prev.map((m) => m.research?.some((r) => r.run_id === ref.run_id)
-                  ? { ...m, research: m.research!.map((r) => r.run_id === ref.run_id ? { ...r, rehydrating: false, saved: false } : r) }
-                  : m));
-                continue;
-              }
-              const run = data as unknown as Record<string, unknown>;
-              setMessages((prev) => prev.map((m) => m.research?.some((r) => r.run_id === ref.run_id)
-                ? { ...m, research: m.research!.map((r) => r.run_id === ref.run_id
-                    ? {
-                        run_id: r.run_id, question: typeof run.question === "string" ? run.question : r.question,
-                        saved: true, configured: run.configured !== false,
-                        stop_reason: typeof run.stop_reason === "string" ? run.stop_reason : null,
-                        is_dossier: !!run.entity_profile,
-                        findings: Array.isArray(run.findings) ? run.findings as PaigeResearchResult["findings"] : [],
-                        sources: Array.isArray(run.sources)
-                          ? (run.sources as Array<Record<string, unknown>>).map((src) => ({
-                              index: Number(src.index ?? 0),
-                              url: String(src.url ?? ""),
-                              title: typeof src.title === "string" ? src.title : null,
-                              reliability: typeof src.reliability === "string" ? src.reliability : null,
-                              tier: typeof src.tier === "string" ? src.tier : null,
-                              published_at: typeof src.published_at === "string" ? src.published_at : null,
-                              excluded: src.excluded === true,
-                            })) : [],
-                        unverified_notes: Array.isArray((run.coverage as Record<string, unknown> | undefined)?.unverified_notes)
-                          ? (run.coverage as { unverified_notes: string[] }).unverified_notes
-                          : [],
-                      }
-                    : r) }
-                : m));
-            } catch { /* the card keeps its honest reference state */ }
-          }
-        })();
+    // Historical tokens can explain an already-recorded outcome above, but are
+    // never retained as live approval inputs. Only the fresh server read restores them.
+    return { messages: mapped.map(message => ({...message, confirm: historicalConfirmItems(message.confirm)})), researchRefsAll };
+  };
+
+  // R2b §12 — resolve the research references through the governed get RPC after
+  // the history is installed. This read lifecycle uses the same actor/tenant/thread
+  // scope, but is independent of a subsequent Send's request ticket. No retry or run.
+  const restoreResearchReferences = (threadId: string, references: ResearchHistoryReference[]) => {
+    researchHydrationRef.current?.cancel();
+    const scope = requestScopeRef.current;
+    if (!scope.handle || scope.handle.conversationId !== threadId || hydratedFromRef.current !== threadId) return;
+    const pending = new Map<string, ResearchHistoryReference[]>();
+    for (const ref of references) {
+      if (ref.run_id) pending.set(ref.run_id, [...pending.get(ref.run_id) ?? [], ref]);
+    }
+    if (!pending.size) return;
+    const deadline = Date.now() + RESEARCH_HISTORY_READ_BUDGET_MS;
+    const controller = new AbortController();
+    const queue = [...pending.keys()];
+    let next = 0;
+    let cancelled = false;
+    let expired = false;
+    const hydration = { scope, cancel: () => {
+      cancelled = true;
+      controller.abort();
+      window.clearTimeout(timer);
+      if (researchHydrationRef.current === hydration) researchHydrationRef.current = null;
+    } };
+    researchHydrationRef.current = hydration;
+    const current = () => !cancelled && researchHydrationRef.current === hydration
+      && scope.epoch === requestScopeRef.current.epoch
+      && composerDraftHandlesMatch(scope.handle, requestScopeRef.current.handle)
+      && hydratedFromRef.current === threadId;
+    const settle = (runId: string, result: Omit<PaigeResearchResult, "saved"> | null) => {
+      const refs = pending.get(runId);
+      if (!current() || !refs) return;
+      pending.delete(runId);
+      const timely = Date.now() < deadline ? result : null;
+      setMessages(previous => !current() ? previous : previous.map(message => {
+        const messageRefs = refs.filter(ref => ref.messageId === message.id);
+        return !messageRefs.length || !message.research ? message : { ...message, research: message.research.map(r =>
+          r.run_id !== runId || !r.rehydrating ? r : timely
+            ? { ...timely, saved: messageRefs.every(ref => ref.saved) }
+            : { ...r, rehydrating: false, saved: false }) };
+      }));
+      if (!pending.size) window.clearTimeout(timer);
+    };
+    const expire = () => {
+      if (!current() || expired) return;
+      expired = true;
+      controller.abort();
+      // Keep this hydration current until React applies its queued fallbacks.
+      // Scope cancellation, unlike expiry, invalidates those state updates.
+      for (const runId of pending.keys()) settle(runId, null);
+    };
+    const timer = window.setTimeout(expire, RESEARCH_HISTORY_READ_BUDGET_MS);
+    const readQueuedRuns = async () => {
+      while (next < queue.length && current() && !expired) {
+        if (Date.now() >= deadline) { expire(); return; }
+        const runId = queue[next++];
+        try {
+          const { data, error } = await supabase.rpc("get_workspace_research_run", { _run_id: runId })
+            .abortSignal(controller.signal);
+          if (!current() || expired) return;
+          if (Date.now() >= deadline) { expire(); return; }
+          settle(runId, error ? null : readResearchHistoryRun(data, runId));
+        } catch {
+          if (Date.now() >= deadline) { expire(); return; }
+          settle(runId, null);
+        }
       }
-    return mapped;
-  }
+    };
+    for (let worker = 0; worker < Math.min(4, queue.length); worker += 1) void readQueuedRuns();
+  };
+
+  const restoreOriginalReminderHistory = async (
+    threadId: string, turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, scopeStillCurrent: () => boolean,
+    origin?: OriginalPreparationScope, projection: "cura" | "specialist" = "cura",
+  ) => {
+    const specialist = !!origin && projection === "specialist";
+    const cura = !!origin && !specialist;
+    if (!soloTenantSafety || platform || !activeTenantId || !scopeStillCurrent()
+      || (specialist ? typeof threadsApi.loadOriginalSpecialistHistory !== "function"
+        : cura ? typeof threadsApi.loadOriginalCuraPreparationHistory !== "function"
+        : typeof threadsApi.loadOriginalReminderHistory !== "function")
+      || origin && (origin.tenantId !== activeTenantId || origin.threadId !== threadId)) return;
+    // One physical read owner and lifecycle for all original projections.
+    originalReminderHydrationRef.current?.cancel();
+    setMessages(previous => previous.map(message => ({ ...message,
+      ...(message.originalReminderHistoryStatus === "checking" ? { originalReminderHistoryStatus: "unverified" as const } : {}),
+      ...(message.originalCuraPreparationHistoryStatus === "checking" ? { originalCuraPreparationHistoryStatus: "unverified" as const } : {}),
+      ...(message.originalSpecialistHistoryStatus === "checking" ? { originalSpecialistHistoryStatus: "unverified" as const } : {}),
+    })));
+    const candidate = origin ? { id: origin.turnId, interactive_intent_id: origin.intentId }
+      : [...turns].reverse().find(turn => turn.role === "assistant"
+        && turn.interactive_terminal_state === "WAIT_APPROVAL" && !!turn.interactive_intent_id
+        && Array.isArray(turn.bundle_ref?.paige_confirm) && turn.bundle_ref.paige_confirm.some(card =>
+          !!card && typeof card === "object" && (card as { tool?: unknown }).tool === "plan_set_reminder"));
+    if (!candidate?.interactive_intent_id) return;
+    const turnId = candidate.id, intentId = candidate.interactive_intent_id;
+    const controller = new AbortController();
+    const scope = requestScopeRef.current;
+    const generation = submissionGenerationRef.current;
+    let closed = false;
+    const owner = { scope, cancel: () => {
+      closed = true; controller.abort(); window.clearTimeout(timer);
+      if (originalReminderHydrationRef.current === owner) originalReminderHydrationRef.current = null;
+    } };
+    originalReminderHydrationRef.current = owner;
+    const current = () => !closed && !controller.signal.aborted && originalReminderHydrationRef.current === owner
+      && submissionGenerationRef.current === generation && scopeStillCurrent()
+      && scope.epoch === requestScopeRef.current.epoch
+      && composerDraftHandlesMatch(scope.handle, requestScopeRef.current.handle);
+    const markUnverified = () => setMessages(previous => previous.map(message => message.id === turnId
+      ? specialist ? { ...message, originalSpecialistHistory: undefined, originalSpecialistHistoryStatus: "unverified" }
+        : cura ? { ...message, originalCuraPreparationHistory: undefined, originalCuraPreparationHistoryStatus: "unverified" }
+        : { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" } : message));
+    const timer = window.setTimeout(() => { if (current()) markUnverified(); owner.cancel(); }, 10_000);
+    setMessages(previous => previous.map(message => message.id === turnId
+      ? specialist ? { ...message, originalSpecialistHistory: undefined, originalSpecialistHistoryStatus: "checking" }
+        : cura ? { ...message, originalCuraPreparationHistoryStatus: "checking" }
+        : { ...message, originalReminderHistoryStatus: "checking" } : message));
+    try {
+      if (specialist) {
+        const raw = await threadsApi.loadOriginalSpecialistHistory(threadId, turnId, intentId, controller.signal);
+        if (!current()) return;
+        const history = readOriginalSpecialistHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
+        setMessages(previous => previous.map(message => message.id === turnId
+          ? history ? { ...message, originalSpecialistHistory: history, originalSpecialistHistoryStatus: undefined }
+            : { ...message, originalSpecialistHistory: undefined, originalSpecialistHistoryStatus: "unverified" }
+          : message));
+      } else if (cura) {
+        const raw = await threadsApi.loadOriginalCuraPreparationHistory(threadId, turnId, intentId, controller.signal);
+        if (!current()) return;
+        const history = readOriginalCuraPreparationHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
+        setMessages(previous => previous.map(message => message.id === turnId
+          ? history ? { ...message, originalCuraPreparationHistory: history, originalCuraPreparationHistoryStatus: undefined }
+            : { ...message, originalCuraPreparationHistory: undefined, originalCuraPreparationHistoryStatus: "unverified" }
+          : message));
+      } else {
+        const raw = await threadsApi.loadOriginalReminderHistory(threadId, turnId, intentId, controller.signal);
+        if (!current()) return;
+        const history = readOriginalReminderHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
+        setMessages(previous => previous.map(message => message.id === turnId
+          ? history ? { ...message, originalReminderHistory: history, originalReminderHistoryStatus: undefined }
+            : { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" }
+          : message));
+      }
+    } catch { if (current()) markUnverified(); }
+    finally { owner.cancel(); }
+  };
+
+  const restorePendingApproval = async (
+    threadId: string, turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, scopeStillCurrent: () => boolean,
+  ) => {
+    const candidate = turns.at(-1);
+    if (!soloTenantSafety || platform || !activeTenantId || typeof threadsApi.loadApprovalRecovery !== "function"
+      || candidate?.role !== "assistant" || candidate.interactive_terminal_state !== "WAIT_APPROVAL"
+      || !candidate.interactive_intent_id || !scopeStillCurrent()) return;
+    // This live reader supports CRM cards. Reminder history uses its separate
+    // read-only projection and never becomes a live approval on reload.
+    if (Array.isArray(candidate.bundle_ref?.paige_confirm) && candidate.bundle_ref.paige_confirm.some(card =>
+      !!card && typeof card === "object" && (card as { tool?: unknown }).tool === "plan_set_reminder")) return;
+    const turnId = candidate.id;
+    const intentId = candidate.interactive_intent_id;
+    setMessages(previous => previous.map(message => message.id === turnId
+      ? {...message, approvalRecovery: "checking"} : message));
+    try {
+      const recovered = await threadsApi.loadApprovalRecovery(threadId, turnId, intentId);
+      if (!scopeStillCurrent()) return;
+      const valid = recovered?.v === 1 && recovered.status === "available" && recovered.thread_id === threadId
+        && recovered.turn_id === turnId && recovered.intent_id === intentId && recovered.tenant_id === activeTenantId
+        && Date.parse(recovered.expires_at) > Date.now() && Array.isArray(recovered.confirmations) && recovered.confirmations.length > 0;
+      setMessages(previous => previous.at(-1)?.id !== turnId ? previous : previous.map(message => message.id === turnId
+        ? valid ? {...message, confirm: recovered.confirmations, confirmResolved: false, approvalRecovery: undefined,
+          recoveredApprovalExpiresAt: recovered.expires_at}
+          : {...message, approvalRecovery: "unavailable"} : message));
+    } catch {
+      if (scopeStillCurrent()) setMessages(previous => previous.map(message => message.id === turnId
+        ? {...message, approvalRecovery: "unavailable"} : message));
+    }
+  };
+
+  useEffect(() => {
+    if (!soloTenantSafety) return;
+    const expires = messages.filter(message => !message.confirmResolved && !message.confirmDecision)
+      .map(approvalDeadline).filter((time): time is number => time !== undefined);
+    if (!expires.length) return;
+    const timer = window.setTimeout(() => {
+      const now = Date.now();
+      const focused = document.activeElement?.closest('[data-paige-live-decide]')?.closest('[data-paige-message-id]')?.getAttribute('data-paige-message-id');
+      if (focused && messagesRef.current.some(message => message.id === focused && approvalExpired(message, now))) decisionFocusRef.current = focused;
+      setMessages(previous => previous.map(message => approvalExpired(message, now) ? expiredApprovalMessage(message) : message));
+    }, Math.max(0, Math.min(2147483646, Math.min(...expires) - Date.now())) + 1);
+    return () => window.clearTimeout(timer);
+  }, [messages, soloTenantSafety]);
 
   const selectThread = async (
     id: string,
@@ -1248,10 +1567,13 @@ const PaigeAIChatInner = ({
     try {
       const turns = await threadsApi.loadTurns(id);
       if (!ticketAccepted(requestTicket)) return;
-      const hydrated = turnsToMessages(turns);
-      setMessages(hydrated.length ? hydrated : [mkMsg({ role: "assistant", content: openingGreeting })]);
+      const hydrated = turnsToMessages(turns, id);
+      setMessages(hydrated.messages.length ? hydrated.messages : [mkMsg({ role: "assistant", content: openingGreeting })]);
       hydratedFromRef.current = id;
       applyConversationEvent({ type: "thread-loaded", id });
+      restoreResearchReferences(id, hydrated.researchRefsAll);
+      void restorePendingApproval(id, turns, () => ticketAccepted(requestTicket));
+      void restoreOriginalReminderHistory(id, turns, () => ticketAccepted(requestTicket));
       if (!soloTenantSafety && !isThreadControlled) setActiveThreadId(id);
       setSteps([]);
       writeLiveTurn(null);
@@ -1263,6 +1585,11 @@ const PaigeAIChatInner = ({
     } catch (e) {
       if (!ticketAccepted(requestTicket)) return;
       applyConversationEvent({ type: "thread-load-failed", id });
+      // The old transcript can remain visible after a failed selection, but its
+      // cancelled read must not leave a permanently loading reference behind.
+      setMessages(previous => previous.map(message => !message.research?.some(ref => ref.rehydrating) ? message
+        : { ...message, research: message.research.map(ref => ref.rehydrating
+          ? { ...ref, rehydrating: false, saved: false } : ref) }));
       if (soloTenantSafety || isThreadControlled) setActiveThreadId(previousTranscriptThreadId);
       console.error("[PaigeAIChat] load thread failed:", e);
       toast({ title: "Couldn't open that chat", description: "Give it another try in a moment.", variant: "destructive" });
@@ -1404,6 +1731,8 @@ const PaigeAIChatInner = ({
     if (!requestHandle || !composerDraftHandlesMatch(requestHandle, requestScope.handle)) return;
     undispatchedDraftRef.current = submittedDraft ? { intentId: requestIntentId, handle: requestHandle, submission: submittedDraft } : null;
     let requestTicket = requestFenceRef.current.begin(requestHandle, requestScope.epoch);
+    const setStreamMessages = (next: Message[]) => setMessages(previous =>
+      ticketAccepted(requestTicket) ? preserveSettledResearchHistory(next, previous) : previous);
     const priorInteractive = interactiveRequestRef.current;
     const typedInteractive = soloTenantSafety && !voiceSink;
     const supersedesIntentId = typedInteractive && priorInteractive
@@ -1434,7 +1763,7 @@ const PaigeAIChatInner = ({
       // A decision that never left is undone, card and all: the person decides again when they are
       // back online. A Retry could not carry it — an approval is never replayed on a retry.
       if (decisionTurn) {
-        setMessages(rollback);
+        setStreamMessages(rollback);
         retryTurnRef.current = null;
       }
       setConnectionIssue("offline");
@@ -1459,7 +1788,9 @@ const PaigeAIChatInner = ({
       assistantId, startedAt: assistantTs, frame: null, rows: [], writing: false, gateOpen: false,
       streaming: true, endCause: null, elapsedMs: null, userText, stopFocus: true, resumed: false, answering: !!answer,
     });
-    const gateId = window.setTimeout(() => updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true })), TURN_LINE_GATE_MS);
+    const gateId = window.setTimeout(() => {
+      if (ticketAccepted(requestTicket)) updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true }));
+    }, TURN_LINE_GATE_MS);
     const timeoutId = soloTenantSafety ? window.setTimeout(() => {
       if (!ticketAccepted(requestTicket)) return;
       // The line stops honestly ("Stopped listening at six minutes"), never "Done".
@@ -1489,7 +1820,7 @@ const PaigeAIChatInner = ({
     let outcomeThisTurn: ApprovalOutcome | undefined = approvalTurn && approvedFingerprints
       ? pendingApprovalOutcome(base, approvedFingerprints) : undefined;
     let approvalDispatched = false;
-    if (outcomeThisTurn) setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: "", approvalOutcome: outcomeThisTurn }]);
+    if (outcomeThisTurn) setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: "", approvalOutcome: outcomeThisTurn }]);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1502,7 +1833,7 @@ const PaigeAIChatInner = ({
           description: "Please sign in to use Paige AI.",
           variant: "destructive",
         });
-        setMessages(rollback);
+        setStreamMessages(rollback);
         releaseRequestBusy(requestTicket);
         return;
       }
@@ -1558,7 +1889,7 @@ const PaigeAIChatInner = ({
           restoreSubmittedDraft();
           console.error("[PaigeAIChat] ensureThread failed:", e);
           toast({ title: "Couldn't start that chat", description: "Give it another try in a moment.", variant: "destructive" });
-          setMessages(rollback);
+          setStreamMessages(rollback);
           releaseRequestBusy(requestTicket);
           return;
         }
@@ -1664,7 +1995,7 @@ const PaigeAIChatInner = ({
             }
             const where = kept || answer.card ? "" : " Your message is back in the box.";
             toast({ title: kept ? "Another message came first" : askErr.title, description: `${askErr.description}${where}` });
-            setMessages(rollback);
+            setStreamMessages(rollback);
             retryTurnRef.current = null;
             releaseRequestBusy(requestTicket);
             if (enableHistory) setStreamingThreadId(null);
@@ -1672,7 +2003,13 @@ const PaigeAIChatInner = ({
             if (threadId && code !== "ASK_ANSWER_UNAVAILABLE") {
               try {
                 const turns = await threadsApi.loadTurns(threadId);
-                if (ticketAccepted(requestTicket) && turns.length) setMessages(turnsToMessages(turns));
+                if (ticketAccepted(requestTicket) && turns.length) {
+                  const hydrated = turnsToMessages(turns, threadId);
+                  setMessages(hydrated.messages);
+                  restoreResearchReferences(threadId, hydrated.researchRefsAll);
+                  void restorePendingApproval(threadId, turns, () => ticketAccepted(requestTicket));
+                  void restoreOriginalReminderHistory(threadId, turns, () => ticketAccepted(requestTicket));
+                }
               } catch { /* the rollback stands */ }
             }
             return;
@@ -1683,7 +2020,11 @@ const PaigeAIChatInner = ({
           if (!ticketAccepted(requestTicket)) return;
           if (refusal?.message_accepted !== false) {
             retryTurnRef.current = null;
-            setConnectionIssue("interactive-unconfirmed");
+            // Explain the server's exact refusal; accepted text is not a business effect.
+            // Unknown outcomes retain the existing no-replay connection feedback.
+            const recoveryRefused = response.status === 409 && refusal?.code === RECOVERY_READ_ONLY_REFUSAL.code
+              && refusal.message_accepted === true;
+            setConnectionIssue(recoveryRefused ? "recovery-read-only" : "interactive-unconfirmed");
             setStreamingThreadId(null);
             if (enableHistory) threadsApi.onTurnPersisted();
             return;
@@ -1697,7 +2038,7 @@ const PaigeAIChatInner = ({
             description: "Please wait a moment before sending another message.",
             variant: "destructive",
           });
-          setMessages(rollback);
+          setStreamMessages(rollback);
           releaseRequestBusy(requestTicket);
           return;
         }
@@ -1706,7 +2047,7 @@ const PaigeAIChatInner = ({
         const chatErr = await parsePaigeChatError(response);
         if (!ticketAccepted(requestTicket)) return;
         toast({ title: chatErr.title, description: chatErr.description, variant: "destructive" });
-        setMessages(rollback);
+        setStreamMessages(rollback);
         releaseRequestBusy(requestTicket);
         if (enableHistory) setStreamingThreadId(null);
         // §70 — A TRANSIENT SERVER FAILURE LEFT NO WAY BACK. Retry existed only for the offline and
@@ -1734,7 +2075,7 @@ const PaigeAIChatInner = ({
       const researchThisTurn: PaigeResearchResult[] = [];
       // Accumulate EVERY pending confirmation this turn — a blanket "Approve" runs
       // all of them, so the operator must see all of them (design-crew B1).
-      const confirmThisTurn: Array<{ tool: string; summary: string; fingerprint?: string }> = [];
+      const confirmThisTurn: NonNullable<Message["confirm"]> = [];
       // #29 — deliverables (document/image) Paige persisted this turn, streamed as
       // paige_artifact frames BEFORE the reply text, rendered as inline handoff cards.
       const artifactsThisTurn: PaigeArtifact[] = [];
@@ -1745,7 +2086,7 @@ const PaigeAIChatInner = ({
       let askThisTurn: Message["ask"] | undefined;
       let streamDone = false;
 
-      setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: "", approvalOutcome: outcomeThisTurn }]);
+      setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: "", approvalOutcome: outcomeThisTurn }]);
 
       // The bytes are framed by the shared reader (src/lib/paige-stream): one buffer across chunks,
       // CR stripping, comments and blank lines skipped. This surface keeps its OWN dispatch below,
@@ -1843,7 +2184,7 @@ const PaigeAIChatInner = ({
             // — a proposal parked in a local and never committed would simply never appear, and
             // the person would be left with a document Paige said she read and nothing to do
             // about it. Same shape as the approval and confirm frames above, for the same reason.
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn }]);
             continue;
           }
           if (parsed.client_scope?.status === "refused") {
@@ -1862,7 +2203,7 @@ const PaigeAIChatInner = ({
             // explanation of a refused turn belongs, and it is what a person sees when nothing
             // else happens.
             assistantMessage = assistantMessage ? `${assistantMessage}\n\n${noticeText}` : noticeText;
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn }]);
             // It is ALSO parked — but only when focus is genuinely about to be released, because
             // that release resets the transcript and would otherwise delete the line just added.
             //
@@ -1890,7 +2231,7 @@ const PaigeAIChatInner = ({
               : [];
             askThisTurn = { askId: c.ask_id, options: options.length >= 2 ? options : [], multi: c.multi === true, ...(typeof c.prompt === "string" && c.prompt ? { question: c.prompt } : {}) };
             if (!assistantMessage && typeof c.prompt === "string") assistantMessage = c.prompt;
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, ask: askThisTurn }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, ask: askThisTurn }]);
             continue;
           }
           // #12 — conversation-compacting lifecycle (approaching/start/progress/done/skipped).
@@ -1901,7 +2242,7 @@ const PaigeAIChatInner = ({
             // #29 §39 — carry artifacts here too so the invariant "the card survives every rebuild"
             // never depends on the backend's frame ORDER (today approval_queued precedes paige_artifact,
             // but a reorder or a second approval_queued after an artifact must not wipe the card).
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn, confirm: confirmThisTurn.length ? confirmThisTurn : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn, confirm: confirmThisTurn.length ? confirmThisTurn : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
           // What became of each approval this turn carried. Only the card that asked reads it;
@@ -1909,14 +2250,14 @@ const PaigeAIChatInner = ({
           if (parsed.paige_approval_outcome) {
             if (outcomeThisTurn) {
               outcomeThisTurn = applyServerOutcome(outcomeThisTurn, parsed.paige_approval_outcome);
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+              setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             }
             continue;
           }
           // Structured event: Paige is asking to confirm a mutating action → render an approve/deny card.
           if (parsed.paige_confirm?.summary) {
-            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}), ...previewOf(parsed.paige_confirm) });
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(Object.prototype.hasOwnProperty.call(parsed.paige_confirm, "expires_at") ? { expires_at: typeof parsed.paige_confirm.expires_at === "string" ? parsed.paige_confirm.expires_at : null } : {}), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}), ...previewOf(parsed.paige_confirm) });
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
           if (parsed.paige_crm_result?.action && parsed.paige_crm_result?.receipt_recorded === true) {
@@ -1924,7 +2265,7 @@ const PaigeAIChatInner = ({
             // R2b review P2: card survival must not depend on frame order — this rebuild
             // carries the research cards too (researchTrace flushes after crmResultTrace
             // today, but the invariant is the crm pattern's, not the ordering's).
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: [...crmResultsThisTurn], recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: [...crmResultsThisTurn], recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
           // E4-S3 — the records the answer's reads drew on: references only, through the same reader the
@@ -1932,7 +2273,7 @@ const PaigeAIChatInner = ({
           if (Array.isArray(parsed.paige_record_links)) {
             recordLinksThisTurn = mergeRecordLinks(recordLinksThisTurn, parsed.paige_record_links);
             if (recordLinksThisTurn.length) {
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: [...recordLinksThisTurn], research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+              setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: [...recordLinksThisTurn], research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             }
             continue;
           }
@@ -1940,7 +2281,7 @@ const PaigeAIChatInner = ({
           // (one Paige turn, ruling §7) and renders immediately, like the crm cards.
           if (Array.isArray(parsed.paige_research?.findings)) {
             researchThisTurn.push(parsed.paige_research as PaigeResearchResult);
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: [...researchThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: [...researchThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
           // #29 — Paige handed the user a deliverable (document/image) → attach an inline handoff card.
@@ -1952,7 +2293,7 @@ const PaigeAIChatInner = ({
             // RLS-safe hydrate scopes to it, not the viewer's activeTenantId (they diverge when an
             // operator manages another tenant → wrong-tenant query → 0 rows → "Preview unavailable").
             artifactsThisTurn.push({ id: String(a.id), title: String(a.title ?? ""), url: a.url ?? undefined, artifactType: a.artifactType, tenantId: (parsed.paige_artifact.tenant_id as string | undefined) ?? undefined });
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: [...artifactsThisTurn] }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: [...artifactsThisTurn] }]);
             continue;
           }
           // Only a string is an answer's words (the shared decoder's rule): a non-string `content`
@@ -1961,7 +2302,7 @@ const PaigeAIChatInner = ({
           if (typeof content === "string" && content) {
             if (!assistantMessage) setWritingPhase(true); // #11 — first token → "Writing…"
             assistantMessage += content;
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined, ...(askThisTurn ? { ask: askThisTurn } : {}) }]);
+            setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined, ...(askThisTurn ? { ask: askThisTurn } : {}) }]);
           }
         } catch {
           halted = true;
@@ -1973,7 +2314,7 @@ const PaigeAIChatInner = ({
         // The approval reached Paige, so it may have run. Keep everything that arrived — never roll
         // the turn back and never say the message wasn't sent — and let the card say so.
         if (!outcomeThisTurn.reported) outcomeThisTurn = { ...outcomeThisTurn, dropped: true };
-        setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+        setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
         retryTurnRef.current = null;
         releaseRequestBusy(requestTicket);
         setStreamingThreadId(null);
@@ -1987,7 +2328,7 @@ const PaigeAIChatInner = ({
           voiceSink.failed();
           retryTurnRef.current = null;
         } else if (typedInteractive) retryTurnRef.current = null;
-        else setMessages(rollback);
+        else setStreamMessages(rollback);
         releaseRequestBusy(requestTicket);
         setStreamingThreadId(null);
         setConnectionIssue(voiceSink ? "live-interrupted" : typedInteractive ? "interactive-unconfirmed" : "server");
@@ -2055,7 +2396,7 @@ const PaigeAIChatInner = ({
         description: "Failed to send message. Please try again.",
         variant: "destructive",
       });
-      setMessages(rollback);
+      setStreamMessages(rollback);
       releaseRequestBusy(requestTicket);
       if (enableHistory) setStreamingThreadId(null);
       if (decisionTurn) retryTurnRef.current = null;
@@ -2427,7 +2768,7 @@ const PaigeAIChatInner = ({
     if (soloTenantSafety) submissionPreflightRef.current = true;
     if (currentDoc) documentRequestActiveRef.current = true;
     if (askedAt >= 0 && (decision === "declined" || (decision && !soloTenantSafety))) decisionFocusRef.current = messages[askedAt].id;
-    setMessages(base);
+    setMessages(previous => submissionCurrent() ? preserveSettledResearchHistory(base, previous) : previous);
     messagesRef.current = base;
     if (currentDoc) setAttachedDoc(null);
     // Once the stored proposal has EXECUTED, the rollback snapshot is the post-decision state:
@@ -2575,8 +2916,6 @@ const PaigeAIChatInner = ({
       onChange={(e) => {
         setInput(e.target.value);
         setSlashActive(0);
-        const el = e.target; el.style.height = "auto";
-        el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
       }}
       onPaste={handlePaste}
       onKeyDown={(e) => {
@@ -2756,7 +3095,14 @@ const PaigeAIChatInner = ({
   // draws the decide card below, so the line can never wait on a card that is not there.
   const confirmCardLive = (message: Message, index: number) =>
     !!message.confirm?.length && !message.confirmResolved && !message.confirmDecision
+    && !(soloTenantSafety && approvalExpired(message))
     && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint))));
+  const refuseExpiredDecision = (message: Message) => {
+    if (!soloTenantSafety || !approvalExpired(message)) return false;
+    decisionFocusRef.current = message.id;
+    setMessages(previous => previous.map(item => item.id === message.id && approvalExpired(item) ? expiredApprovalMessage(item) : item));
+    return true;
+  };
   /** C4c — where the question an answer ended on stands: open while nothing has been said since; then
    *  answered (the next thing the person said was sent AS its answer — or a skip) or not answered. */
   const askStandingAt = (index: number): AskStanding | undefined => {
@@ -2980,7 +3326,7 @@ const PaigeAIChatInner = ({
               />
             ))}
         <div
-          className={enableHistory ? "flex flex-col h-full min-w-0 flex-1" : "contents"}
+          className={enableHistory ? "flex flex-col h-full min-h-0 min-w-0 flex-1" : "contents"}
         >
         {!hideHeader && (
           <div className="mb-6">
@@ -3058,6 +3404,7 @@ const PaigeAIChatInner = ({
               <div
                 key={message.id}
                 data-paige-message-id={message.id}
+                data-paige-opening-greeting={!activeThreadId && messages.length === 1 && message.role === "assistant" && message.content === openingGreeting ? "true" : undefined}
                 data-paige-message-anchor-key={messageScrollAnchorKey(message.role, message.content)}
                 data-paige-continues={resumedHere ? "resumed" : continues ? "approval" : undefined}
                 className={cn(
@@ -3105,6 +3452,9 @@ const PaigeAIChatInner = ({
                 >
                   {message.role === "assistant" ? (() => {
                     const { before, diagram, after } = extractEntityDiagram(message.content);
+                    const verifiedAppPaths = soloTenantSafety && !platform
+                      ? workspaceLinkTargets(message.recordLinks ?? [], activeTenant).map(target => target.to)
+                      : undefined;
                     return (
                       <>
                         {/* C3a — the status line leads the answer: what PAIGE is doing, is waiting
@@ -3131,9 +3481,9 @@ const PaigeAIChatInner = ({
                             />
                           );
                         })()}
-                        {before && <MarkdownMessage content={before} />}
+                        {before && <MarkdownMessage content={before} verifiedAppPaths={verifiedAppPaths} />}
                         {diagram && <EntityDiagramCard data={diagram} />}
-                        {after && <MarkdownMessage content={after} />}
+                        {after && <MarkdownMessage content={after} verifiedAppPaths={verifiedAppPaths} />}
                         {/* C4c — the question's choices while it is open (c2), then its record in place:
                             answered below, PAIGE chose, or not answered (c3 / c6 / c5). */}
                         {message.ask && (() => {
@@ -3170,7 +3520,7 @@ const PaigeAIChatInner = ({
                         {!!message.crmResults?.length && (
                           <div className="flex flex-col gap-2">
                             {message.crmResults.map((result, resultIndex) => (
-                              <PaigeCrmResultCard key={`${result.action}:${String(result.record_locator?.record_id || resultIndex)}`} result={result} />
+                              <PaigeCrmResultCard key={`${result.action}:${String(result.record_reference?.record_id || result.record_locator?.record_id || resultIndex)}`} result={result} account={activeTenant} />
                             ))}
                           </div>
                         )}
@@ -3207,13 +3557,13 @@ const PaigeAIChatInner = ({
                             disabled={composerSendBlocked}
                             // Solo: after "Ask Paige again" the button that was pressed is gone, so
                             // the fresh card takes focus — but only when nothing else holds it.
-                            focusOnMount={soloTenantSafety}
-                            onApprove={(fps) => void handleSend(DECISION_REPLY.approved, fps)}
+                            focusOnMount={soloTenantSafety && !message.recoveredApprovalExpiresAt}
+                            onApprove={(fps) => { if (!refuseExpiredDecision(message)) void handleSend(DECISION_REPLY.approved, fps); }}
                             // Declining CANCELS the stored proposal, rather than only saying so in
                             // prose the model interprets. Without this the row stays live for its
                             // full window, and a later turn could still act on something the
                             // person had already said no to.
-                            onDeny={(fps) => void handleSend(DECISION_REPLY.declined, undefined, fps)}
+                            onDeny={(fps) => { if (!refuseExpiredDecision(message)) void handleSend(DECISION_REPLY.declined, undefined, fps); }}
                           />
                           </div>
                         )}
@@ -3239,9 +3589,19 @@ const PaigeAIChatInner = ({
                             })()}
                           </div>
                         )}
-                        {/* Reloaded from history: the confirm moment already passed —
-                            show it settled, never a live Approve button (§15). */}
-                        {!!message.confirm?.length && message.confirmResolved && (
+                        {(message.approvalRecovery === "unavailable" || soloTenantSafety && approvalExpired(message)
+                          || index === messages.length - 1 && (message.approvalRecovery === "checking"
+                            || message.recoveredApprovalExpiresAt && confirmCardLive(message, index))) && (
+                          <p role="status" tabIndex={-1} className="mt-2 text-xs text-muted-foreground" data-paige-approval-recovery={soloTenantSafety && approvalExpired(message) ? "unavailable" : message.approvalRecovery ?? "available"}>
+                            {message.approvalRecovery === "unavailable" || soloTenantSafety && approvalExpired(message)
+                              ? "This earlier proposal couldn't be verified for approval. Review the original record before asking again."
+                              : message.approvalRecovery === "checking" ? "Checking whether this proposal is still available for approval…"
+                                : "This proposal is still waiting for your decision. Review the proposed changes before approving."}
+                          </p>
+                        )}
+                        {/* History remains context unless a fresh server read verified
+                            the canonical terminal and its still-live native proposal. */}
+                        {!!message.confirm?.length && (message.confirmResolved || soloTenantSafety && approvalExpired(message)) && (
                           <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5">
                             <p className="text-xs text-muted-foreground">
                               Earlier, Paige asked you to confirm: {message.confirm.map((c) => c.summary).join("; ")}
@@ -3259,7 +3619,59 @@ const PaigeAIChatInner = ({
                             {message.confirmReceipt?.result && (
                               <p className="mt-1 text-xs text-muted-foreground" data-paige-card-result>Result: {message.confirmReceipt.result}</p>
                             )}
+                            {soloTenantSafety && !platform && message.originalPreparationOrigin
+                              && typeof threadsApi.loadOriginalCuraPreparationHistory === "function" && (
+                              <Button type="button" variant="outline" size="sm" className="mt-2"
+                                disabled={composerSendBlocked}
+                                aria-disabled={message.originalCuraPreparationHistoryStatus === "checking" || undefined}
+                                aria-busy={message.originalCuraPreparationHistoryStatus === "checking" || undefined}
+                                onClick={() => {
+                                  if (message.originalCuraPreparationHistoryStatus === "checking") return;
+                                  const origin = message.originalPreparationOrigin!;
+                                  void restoreOriginalReminderHistory(origin.threadId, [], () => composerScopeRef.current.writable, origin);
+                                }}>
+                                {message.originalCuraPreparationHistoryStatus === "checking" ? "Checking original status…" : "Check original status"}
+                              </Button>
+                            )}
+                            {message.originalCuraPreparationHistoryStatus === "unverified" && (
+                              <p role="status" className="mt-1 break-words text-xs text-muted-foreground" data-paige-cura-preparation-status="unverified">
+                                The earlier result could not be verified here. Nothing was retried.
+                              </p>
+                            )}
+                            {message.originalCuraPreparationHistory?.preparations.map(preparation => (
+                              <div key={preparation.work_id} className="mt-2" data-paige-cura-preparation-result>
+                                <p role="status" className="break-words text-xs text-muted-foreground">
+                                  {preparationWorkLabel[preparation.work_status]}. Publishing and customer sharing are separate.
+                                </p>
+                                {preparation.knowledge_doc_id && <PaigeRecordLinks
+                                  links={[{ destination: "portal_knowledge", record_id: preparation.knowledge_doc_id }]} account={activeTenant} />}
+                              </div>
+                            ))}
+                            {message.originalReminderHistoryStatus && (
+                              <p role="status" className="mt-1 break-words text-xs text-muted-foreground" data-paige-original-reminder-status={message.originalReminderHistoryStatus}>
+                                {message.originalReminderHistoryStatus === "checking" ? "Checking the earlier reminder…"
+                                  : "The earlier reminder outcome couldn't be verified. Check the record before asking again."}
+                              </p>
+                            )}
+                            {message.originalReminderHistory?.results.map(result => (
+                              <p key={result.original.receipt_run_id} role="status" className="mt-1 break-words text-xs text-muted-foreground"
+                                data-paige-original-reminder-result data-paige-original-reminder-item={result.original.item_id}
+                                data-paige-original-reminder-receipt={result.original.receipt_run_id}>
+                                Recorded earlier: {result.original.title} · Originally scheduled for {new Date(result.original.remind_at).toLocaleString()}
+                              </p>
+                            ))}
                           </div>
+                        )}
+                        {soloTenantSafety && !platform && message.originalSpecialistOrigin
+                          && typeof threadsApi.loadOriginalSpecialistHistory === "function" && (
+                          <OriginalSpecialistResult history={message.originalSpecialistHistory}
+                            status={message.originalSpecialistHistoryStatus} blocked={composerSendBlocked}
+                            onCheck={() => {
+                              if (message.originalSpecialistHistoryStatus === "checking") return;
+                              const origin = message.originalSpecialistOrigin!;
+                              if (origin.threadId !== activeThreadId) return;
+                              void restoreOriginalReminderHistory(origin.threadId, [], () => composerScopeRef.current.writable, origin, "specialist");
+                            }} />
                         )}
                         {/* #29 — inline handoff cards for the deliverables Paige produced this turn. Open
                             renders the real artifact; Send prefills the composer so Paige drives the send
@@ -3396,8 +3808,8 @@ const PaigeAIChatInner = ({
             )}
             {soloTenantSafety && connectionIssue && (
               <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
-                <span>{connectionIssue === "interactive-unconfirmed" ? "The connection ended before PAIGE confirmed the result. Your message may have reached the conversation. Check what finished before repeating any action." : connectionIssue === "live-interrupted" ? "Paige's answer was interrupted. What arrived is still shown here. You can continue in text chat." : connectionIssue === "offline" ? "You appear to be offline. This message has not been sent." : connectionIssue === "server" ? "Something went wrong on our side and PAIGE didn't get to answer. Your message wasn't sent — try again." : `PAIGE was ${writingPhase ? "writing the response" : "working on your request"} when the six-minute interactive window ended. This chat stopped listening, so I can't confirm whether that work finished or was saved.${retryTurnRef.current && !retryTurnRef.current.live ? " Retry may start the work again." : ""}`}</span>
-                {connectionIssue !== "live-interrupted" && connectionIssue !== "interactive-unconfirmed" && retryTurnRef.current && !retryTurnRef.current.live && <Button type="button" variant="outline" size="sm" disabled={!composerScope.writable || dictationActive} onClick={handleConnectionRetry}>Retry</Button>}
+                <span>{connectionIssue === "recovery-read-only" ? RECOVERY_READ_ONLY_REFUSAL.message : connectionIssue === "interactive-unconfirmed" ? "The connection ended before PAIGE confirmed the result. Your message may have reached the conversation. Check what finished before repeating any action." : connectionIssue === "live-interrupted" ? "Paige's answer was interrupted. What arrived is still shown here. You can continue in text chat." : connectionIssue === "offline" ? "You appear to be offline. This message has not been sent." : connectionIssue === "server" ? "Something went wrong on our side and PAIGE didn't get to answer. Your message wasn't sent — try again." : `PAIGE was ${writingPhase ? "writing the response" : "working on your request"} when the six-minute interactive window ended. This chat stopped listening, so I can't confirm whether that work finished or was saved.${retryTurnRef.current && !retryTurnRef.current.live ? " Retry may start the work again." : ""}`}</span>
+                {connectionIssue !== "live-interrupted" && connectionIssue !== "interactive-unconfirmed" && connectionIssue !== "recovery-read-only" && retryTurnRef.current && !retryTurnRef.current.live && <Button type="button" variant="outline" size="sm" disabled={!composerScope.writable || dictationActive} onClick={handleConnectionRetry}>Retry</Button>}
               </div>
             )}
             </div>
@@ -3553,6 +3965,10 @@ const PaigeAIChatInner = ({
             <div role="status" aria-live="polite" className={isProcessingFile ? "mb-2 px-1 text-xs text-muted-foreground" : "sr-only"}>
               {isProcessingFile ? "Preparing attachment…" : attachedDoc ? `${attachedDoc.name} attached` : ""}
             </div>
+            {soloTenantSafety && renderComposerContext && <div data-solo-contextual-suggestion className="min-w-0">
+              {renderComposerContext({ threadId: activeThreadId, ready: composerScope.status === "ready-new" || composerScope.status === "ready-thread", busy: isLoading,
+                hasOwnerMessages: messages.some(message => message.role === "user"), restoreLayout: restoreContextLayout, focusComposer: focusContextComposer })}
+            </div>}
             {/* Composer + slash palette + inline voice. The palette anchors above the
                 input in both chromes and focus never leaves the Textarea. */}
             <div
@@ -3658,8 +4074,11 @@ const PaigeAIChatInner = ({
                       it is filed as owed rather than filled in by me. */}
                   <div
                     data-solo-composer-guidance
-                    className="truncate px-3.5 pb-2 text-[10px] leading-4 text-muted-foreground"
-                  />
+                    role={input && draft.reloadProtection === "unavailable" ? "status" : undefined}
+                    className="whitespace-normal break-words px-3.5 pb-2 text-[10px] leading-4 text-muted-foreground"
+                  >{input && draft.reloadProtection === "unavailable"
+                    ? "Your draft isn't saved for reload. Keep this tab open or copy it."
+                    : null}</div>
                   <div
                     data-solo-composer-actions
                     className="flex min-w-0 flex-wrap items-center gap-1.5 border-t border-border/70 px-2.5 py-2"

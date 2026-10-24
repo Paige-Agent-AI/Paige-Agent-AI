@@ -1,0 +1,360 @@
+{
+  "kind": "supporting local native synthetic evidence",
+  "base": "429388f2528942275334fd0c916c6fcfecb4f70a",
+  "sourcePins": [
+    {
+      "path": "src/solo/SoloSystemsCheckWorkspace.tsx",
+      "sha256": "5bf171aff550b94e3bc2a3e5783af53d3f1ae26d7456bef4012e32a32d9cfde5"
+    },
+    {
+      "path": "src/solo/systems-check-areas.ts",
+      "sha256": "ec8986c7113db65fe866b700c95f386c31f0e8b1c387b6c1b0c314188ab2225b"
+    },
+    {
+      "path": "src/solo/solo-systems-check-workspace.css",
+      "sha256": "6b63f8a63c43cb6c7b839e8e48d642a2ac85244b332c806a677226d9f5095cce"
+    },
+    {
+      "path": "src/solo/CommandCenter.tsx",
+      "sha256": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "aaa330dd9ff17a906c24172c25c236d818a39454743c4825693f016dfe48a2f9"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "10f0312b86ad8df4fb5b4e886fc7a5497d1a31d2e0c99fc42f09ae9a681ddf73"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "9cad9f552151fad292d7df462db7726445bfa7a333e1b5124bd00ee377d58304"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/systems-check-fixtures.ts",
+      "sha256": "6784c0a9e7f9585d6a1b25bf716ea25409475a3d411d2823107a19309e4c2ca7"
+    },
+    {
+      "path": "scripts/live-drive/harness/systems-check-mount/useCommandCenter-stub.ts",
+      "sha256": "20546430d6952dd5175f3bcda197bc6201cedab6fe5acac428ef1a45df526466"
+    },
+    {
+      "path": "scripts/live-drive/harness/systems-check-mount/useSoloActivityFeed-stub.ts",
+      "sha256": "de194b9b75f913e342e557e3aaa05e278aea56f92ee1530e98325ce1e2483e9a"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05"
+    }
+  ],
+  "frames": [
+    {
+      "file": "1024-closed.jpg",
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "css": {
+        "width": 1024,
+        "height": 768
+      },
+      "bytes": 80466,
+      "sha256": "2792cd455ea6dd7f187880c396f145ac8dee5c16db955221507c84983f6be2be",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
+    },
+    {
+      "file": "1024-open.jpg",
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "css": {
+        "width": 1024,
+        "height": 768
+      },
+      "bytes": 44523,
+      "sha256": "b21d67c81f8097398e9d2b926b9cf695f1e2c122e9aee11d84457c034898825a",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
+    },
+    {
+      "file": "1366-closed.jpg",
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "css": {
+        "width": 1366,
+        "height": 768
+      },
+      "bytes": 86949,
+      "sha256": "f39756c5d639fbb15179377ef97336420b2f8160b7d1a0b4400efb8da206cb8c",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
+    },
+    {
+      "file": "1366-open.jpg",
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "css": {
+        "width": 1366,
+        "height": 768
+      },
+      "bytes": 96141,
+      "sha256": "4b4fc46ddc98d7c428d68c8c51264803299e2c42f4c0107869909d656d525e9c",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
+    },
+    {
+      "file": "1536-closed.jpg",
+      "raster": {
+        "width": 1536,
+        "height": 770
+      },
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "bytes": 97073,
+      "sha256": "8805f56405b0849ec41fae50b9bf3c33517704be0b7932f5e03ca58bb93f6b2b",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
+    },
+    {
+      "file": "1536-open.jpg",
+      "raster": {
+        "width": 1536,
+        "height": 770
+      },
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "bytes": 105815,
+      "sha256": "fb2bcbf066aa50daa04e08700745f9733e0f71eb3ae32dcf6365fb1ea9b4a673",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
+    },
+    {
+      "file": "320-keyboard.jpg",
+      "raster": {
+        "width": 320,
+        "height": 740
+      },
+      "css": {
+        "width": 320,
+        "height": 740
+      },
+      "bytes": 33196,
+      "sha256": "3b18dd6a6ceb0d3ba8345cb666e9bd0984bffed4e0173c90acdf88d43bbd0435",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Native320px keyboard/drawer/Escape return with44px controls and visible focus"
+    },
+    {
+      "file": "320-restored-focus.jpg",
+      "raster": {
+        "width": 320,
+        "height": 740
+      },
+      "css": {
+        "width": 320,
+        "height": 740
+      },
+      "bytes": 32478,
+      "sha256": "2a8756d023c2e3babd43d9ff30976c59c26b634fdad368c7588b0920fc14350d",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Native320px keyboard/drawer/Escape return with44px controls and visible focus"
+    },
+    {
+      "file": "900-closed.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 87752,
+      "sha256": "d43436be96e85961c59c6a15932866049ab270bd79e0d82d43dad65172d9efbe",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
+    },
+    {
+      "file": "900-empty.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 95167,
+      "sha256": "6cd840f39e1ba054a1cc2ecc102eb4c13fa0860da44bce0036ed8fe133e2368c",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "No completed run is not a healthy-check claim"
+    },
+    {
+      "file": "900-error.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 81856,
+      "sha256": "a2cbe8ecb0fb82fe58a917958ab2b8176d78f4db7d5a2ed50a655bca2a083ad1",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Failed source read is not healthy or empty"
+    },
+    {
+      "file": "900-loading.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 87530,
+      "sha256": "1a6c43a916b18ca8c1308867aff2cd81d7c0770a118862eec7c8a3e8bc6d853e",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Retained dated previous results during reread, not a newly completed check"
+    },
+    {
+      "file": "900-missing.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 89997,
+      "sha256": "e207df7c0a91386ade069ab5b84aaaeaf7d0a67ed85a2b10e56d262ca60ec8ca",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Missing expected setup result is unavailable; returned result remains inspectable"
+    },
+    {
+      "file": "900-obsidian-drawer.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 89691,
+      "sha256": "d35279d51b583ccf8c96f734505245f27439132aa9fea996a0db5473515574ce",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Settled readable original dark text, product font,44px areas and zero horizontal overflow; reduced motion observed; original drawer Escape return verified"
+    },
+    {
+      "file": "900-obsidian-reduced-motion.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 97558,
+      "sha256": "f864799ae0cd141ee6831a39669772b26706655b4697b45cc18ca278b0f5fd1b",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Settled readable original dark text, product font,44px areas and zero horizontal overflow; reduced motion observed; original drawer Escape return verified"
+    },
+    {
+      "file": "900-open.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 47597,
+      "sha256": "667a7761a7be894a648b8d2bc59117032cf27b73347bad5c1f42925c1598c243",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
+    },
+    {
+      "file": "900-resolved.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 97176,
+      "sha256": "cd61ad25905ec1f7e8e6bc9aa15c752b3cb69a96ecdd8143822133e0d469e4c1",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, final source synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Original resolved presentation; this fixture resolves a passed finding, while fail/error resolution is unit-tested"
+    }
+  ],
+  "limitations": [
+    "Not authenticated or production proof",
+    "No backend, model, provider, approval, send or execution",
+    "An intermediate unreadable dark capture was rejected; replacement dark/drawer native frames and dark-verification.json record settled rendering",
+    "No native browser zoom or assistive-technology claim",
+    "Final released source/customer/role/cohort/Live/founder proof remains owed"
+  ]
+}

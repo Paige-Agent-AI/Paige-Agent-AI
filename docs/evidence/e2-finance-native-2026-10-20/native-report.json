@@ -1,0 +1,310 @@
+[
+  {
+    "file": "finance-1024x768-closed-light.png",
+    "width": 1024,
+    "height": 768,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(32, 30, 35)",
+      "overflow": false,
+      "panelOpen": false,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 728.2499847412109,
+        "height": 582.7999877929688,
+        "left": 100.5500030517578,
+        "right": 618.4625396728516,
+        "top": 145.4499969482422,
+        "width": 517.9125366210938,
+        "x": 100.5500030517578,
+        "y": 145.4499969482422
+      },
+      "sourceOpen": true,
+      "theme": "light",
+      "viewport": [
+        1024,
+        768
+      ]
+    }
+  },
+  {
+    "file": "finance-1024x768-open-dark.png",
+    "width": 1024,
+    "height": 768,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(246, 242, 234)",
+      "overflow": false,
+      "panelOpen": true,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 728.2499847412109,
+        "height": 582.7999877929688,
+        "left": 100.5500030517578,
+        "right": 618.4625396728516,
+        "top": 145.4499969482422,
+        "width": 517.9125366210938,
+        "x": 100.5500030517578,
+        "y": 145.4499969482422
+      },
+      "sourceOpen": true,
+      "theme": "dark",
+      "viewport": [
+        1024,
+        768
+      ]
+    }
+  },
+  {
+    "file": "finance-900x1000-closed-light.png",
+    "width": 900,
+    "height": 1000,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(32, 30, 35)",
+      "overflow": false,
+      "panelOpen": false,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 676.9625091552734,
+        "height": 535.2000122070312,
+        "left": 96.8375015258789,
+        "right": 859.9625015258789,
+        "top": 141.7624969482422,
+        "width": 763.125,
+        "x": 96.8375015258789,
+        "y": 141.7624969482422
+      },
+      "sourceOpen": true,
+      "theme": "light",
+      "viewport": [
+        900,
+        1000
+      ]
+    }
+  },
+  {
+    "file": "finance-900x1000-open-dark.png",
+    "width": 900,
+    "height": 1000,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(246, 242, 234)",
+      "overflow": false,
+      "panelOpen": true,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 676.9625091552734,
+        "height": 535.2000122070312,
+        "left": 96.8375015258789,
+        "right": 859.9625015258789,
+        "top": 141.7624969482422,
+        "width": 763.125,
+        "x": 96.8375015258789,
+        "y": 141.7624969482422
+      },
+      "sourceOpen": true,
+      "theme": "dark",
+      "viewport": [
+        900,
+        1000
+      ]
+    }
+  },
+  {
+    "file": "finance-390x844-closed-light.png",
+    "width": 390,
+    "height": 844,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(32, 30, 35)",
+      "overflow": false,
+      "panelOpen": false,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 925.2000122070312,
+        "height": 785.2000122070312,
+        "left": 88,
+        "right": 359.20001220703125,
+        "top": 140,
+        "width": 271.20001220703125,
+        "x": 88,
+        "y": 140
+      },
+      "sourceOpen": true,
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  },
+  {
+    "file": "finance-320x844-closed-light.png",
+    "width": 320,
+    "height": 844,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(32, 30, 35)",
+      "overflow": false,
+      "panelOpen": false,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 1175.050033569336,
+        "height": 1015.6000366210938,
+        "left": 88,
+        "right": 288.8000030517578,
+        "top": 159.4499969482422,
+        "width": 200.8000030517578,
+        "x": 88,
+        "y": 159.4499969482422
+      },
+      "sourceOpen": true,
+      "theme": "light",
+      "viewport": [
+        320,
+        844
+      ]
+    }
+  },
+  {
+    "file": "finance-320x844-closed-dark.png",
+    "width": 320,
+    "height": 844,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(246, 242, 234)",
+      "overflow": false,
+      "panelOpen": false,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 1175.050033569336,
+        "height": 1015.6000366210938,
+        "left": 88,
+        "right": 288.8000030517578,
+        "top": 159.4499969482422,
+        "width": 200.8000030517578,
+        "x": 88,
+        "y": 159.4499969482422
+      },
+      "sourceOpen": true,
+      "theme": "dark",
+      "viewport": [
+        320,
+        844
+      ]
+    }
+  },
+  {
+    "file": "finance-1536x770-closed-light.png",
+    "width": 1536,
+    "height": 770,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(32, 30, 35)",
+      "overflow": false,
+      "panelOpen": false,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 699.1000061035156,
+        "height": 559,
+        "left": 172.40000915527344,
+        "right": 910.8500213623048,
+        "top": 140.10000610351562,
+        "width": 738.4500122070312,
+        "x": 172.40000915527344,
+        "y": 140.10000610351562
+      },
+      "sourceOpen": true,
+      "theme": "light",
+      "viewport": [
+        1536,
+        770
+      ]
+    }
+  },
+  {
+    "file": "finance-1536x770-open-dark.png",
+    "width": 1536,
+    "height": 770,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(246, 242, 234)",
+      "overflow": false,
+      "panelOpen": true,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 720.7249908447266,
+        "height": 582.7999877929688,
+        "left": 100.25,
+        "right": 612.4874877929688,
+        "top": 137.9250030517578,
+        "width": 512.2374877929688,
+        "x": 100.25,
+        "y": 137.9250030517578
+      },
+      "sourceOpen": true,
+      "theme": "dark",
+      "viewport": [
+        1536,
+        770
+      ]
+    }
+  },
+  {
+    "file": "finance-1366x768-closed-light.png",
+    "width": 1366,
+    "height": 768,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(32, 30, 35)",
+      "overflow": false,
+      "panelOpen": false,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 698.3000030517578,
+        "height": 559,
+        "left": 108,
+        "right": 821.3500366210938,
+        "top": 139.3000030517578,
+        "width": 713.3500366210938,
+        "x": 108,
+        "y": 139.3000030517578
+      },
+      "sourceOpen": true,
+      "theme": "light",
+      "viewport": [
+        1366,
+        768
+      ]
+    }
+  },
+  {
+    "file": "finance-1366x768-open-dark.png",
+    "width": 1366,
+    "height": 768,
+    "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+    "measure": {
+      "amountColor": "rgb(246, 242, 234)",
+      "overflow": false,
+      "panelOpen": true,
+      "rootOverflow": false,
+      "source": {
+        "bottom": 669.0125122070312,
+        "height": 535.2000122070312,
+        "left": 96.88750457763672,
+        "right": 861.7375411987305,
+        "top": 133.8125,
+        "width": 764.8500366210938,
+        "x": 96.88750457763672,
+        "y": 133.8125
+      },
+      "sourceOpen": true,
+      "theme": "dark",
+      "viewport": [
+        1366,
+        768
+      ]
+    }
+  }
+]

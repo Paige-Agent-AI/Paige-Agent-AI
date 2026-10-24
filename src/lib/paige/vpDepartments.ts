@@ -21,18 +21,18 @@
  *
  *   PAIGE  (Orchestrator)            → executive_office, people_talent, owner_ops
  *   NEXUS  (Marketing & growth)      → marketing
- *   MERIT  (Sales & revenue)         → sales, finance
+ *   MERIT  (Sales & revenue)         → sales
  *   CURA   (Client success)          → client_experience
- *   MENTOR (Curriculum & delivery)   → product_curriculum
+ *   MENTOR (Discovery & education)   → product_curriculum
  *   ZION   (Operations & automation) → technology_automation, operations_pmo
- *   VERA   (Quality & standards)     → legal_compliance
+ *   VERA   (Intelligence & risk)     → finance, legal_compliance
  *
  * COMPILE-SAFE BOTH WAYS (§12). {@link DEPT_VP} is `Record<DeptSlug, VP>` (every
  * department must name an owner) and {@link VP_DEPARTMENTS} is
  * `Record<VP, DeptSlug[]>` (every roster member is accounted for) — so adding a
  * department OR changing the VP roster is a TypeScript error here, never silent drift.
  */
-import type { VP } from "@/components/ui/page";
+import { VP_ROSTER, type VP } from "@/components/ui/page/PaigeAttribution";
 
 /** The canonical department slugs from `paige_departments` (§16 seed migrations):
  *  10 canonical desks + the still-active `owner_ops` general desk. */
@@ -58,11 +58,11 @@ export type DeptSlug =
 export const VP_DEPARTMENTS: Record<VP, DeptSlug[]> = {
   PAIGE: ["executive_office", "people_talent", "owner_ops"],
   NEXUS: ["marketing"],
-  MERIT: ["sales", "finance"],
+  MERIT: ["sales"],
   CURA: ["client_experience"],
   MENTOR: ["product_curriculum"],
   ZION: ["technology_automation", "operations_pmo"],
-  VERA: ["legal_compliance"],
+  VERA: ["finance", "legal_compliance"],
 };
 
 /**
@@ -76,7 +76,7 @@ export const DEPT_VP: Record<DeptSlug, VP> = {
   owner_ops: "PAIGE",
   marketing: "NEXUS",
   sales: "MERIT",
-  finance: "MERIT",
+  finance: "VERA",
   client_experience: "CURA",
   product_curriculum: "MENTOR",
   technology_automation: "ZION",
@@ -98,6 +98,13 @@ const KNOWN_DEPT = new Set<string>(Object.keys(DEPT_VP));
 export function resolveVpForDept(slug: string | null | undefined): VP {
   if (slug && KNOWN_DEPT.has(slug)) return DEPT_VP[slug as DeptSlug];
   return "PAIGE";
+}
+
+/** Presentation only: existing ownership and names, never readiness, authorship
+ * or execution authority. Unknown/global context retains PAIGE. */
+export function resolveDepartmentSpecialist(slug: string | null | undefined): Readonly<{ id: VP; name: string; remit: string }> {
+  const id = resolveVpForDept(slug);
+  return { id, ...VP_ROSTER[id] };
 }
 
 /**
@@ -126,15 +133,14 @@ const NAMESPACE_DEPT: Record<string, DeptSlug> = {
 };
 
 /**
- * Resolve the owning VP for a draft/action, keyed off its `action_kind` slug (the
+ * Resolve the current department specialist for a draft/action, keyed off its `action_kind` slug (the
  * `category` on the approval queue row). Namespaced kinds (`marketing.draft_campaign`)
  * resolve via their namespace; a bare non-namespaced legacy category (`email`,
  * `follow_up`) that maps to no department resolves to `null`.
  *
- * §13 HONESTY: returns `null` — NOT a fallback VP — whenever the kind doesn't map to
- * a real department, so {@link PaigeAttribution} renders nothing rather than crediting
- * a VP that didn't do the work. A draft's byline is a factual claim; the status tiles
- * are an always-on roster, so only the tiles fall back.
+ * This is department ownership, never authorship or proof that the specialist ran.
+ * Callers may label the department specialist; an actual contributor credit needs
+ * original run evidence. Unknown categories return null rather than inventing a desk.
  */
 export function resolveVpForActionKind(actionKind: string | null | undefined): VP | null {
   if (!actionKind) return null;

@@ -1,14 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchWithheldCustomerAccess } from "@/lib/client-portal-access";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
+import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
+import { isClientPortalBusinessId } from "@/lib/client-portal-scope";
+import { fetchClientPortalRelationshipChoices } from "@/lib/client-portal-relationships";
 
-// Pre-portal onboarding is now just two gates: welcome + agreement.
-// Anything beyond signing_agreement lands the client directly in /workspace,
-// where Paige takes over the intake/docs conversation.
-const STAGE_TO_PATH: Record<string, string> = {
-  invited: "/onboard/welcome",
-  signing_agreement: "/onboard/agreement",
-};
-const PRE_PORTAL_STAGES = new Set(Object.keys(STAGE_TO_PATH));
+// Customer onboarding and agreements remain actual work inside the portal.
+// Entry never pretends to complete Welcome or accept an unsigned agreement.
 
 /**
  * Agency default-landing (#191). For a staff user who would otherwise land on
@@ -188,15 +186,40 @@ type LandingTenant = {
  */
 export const LANDING_ROUTE_RETRY = "/auth?mode=login&route=retry";
 
-export async function resolveLandingRoute(userId: string): Promise<string> {
+/** True only when the server says this person's access was paused or ended. An unknown answer is false: it never invents a customer route. */
+async function customerAccessWithheld(businessId: string | null = null): Promise<boolean> {
   try {
+    return (await (businessId === null ? fetchWithheldCustomerAccess() : fetchWithheldCustomerAccess(businessId))) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Ordinary sign-in may reach the existing chooser; the native gate still owns admission. */
+async function customerHasMultipleRelationships(actorId: string): Promise<boolean> {
+  const controller = new AbortController();
+  try {
+    const page = await fetchClientPortalRelationshipChoices(actorId, {signal: controller.signal, limit: 2});
+    return page.relationships.length === 2;
+  } catch {
+    return false;
+  } finally {
+    controller.abort();
+  }
+}
+
+export async function resolveLandingRoute(userId: string, options: { customerPortal?: boolean; customerBusinessId?: string } = {}): Promise<string> {
+  try {
+    // Narrow only an explicit customer entry. Ordinary staff/operator landing stays unchanged.
+    const businessId = options.customerPortal ? options.customerBusinessId : undefined;
+    const invalidBusiness = businessId !== undefined && !isClientPortalBusinessId(businessId);
     const [rolesRes, clientRes, ownedTenantRes, memberTenantRes, agencyTeamRes] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase
-        .from("clients")
-        .select("id, onboarding_stage")
-        .eq("linked_user_id", userId)
-        .maybeSingle(),
+      // Customer entry must not depend on permission to read an internal CRM row.
+      invalidBusiness ? Promise.resolve({data: null, error: {message: "Customer business unavailable"}})
+      : Promise.resolve(businessId === undefined ? supabase.rpc("client_portal_self_profile")
+        : supabase.rpc("client_portal_self_profile", {p_tenant_id: businessId}))
+        .catch(() => ({ data: null, error: { message: "Customer relationship unavailable" } })),
       supabase.from("tenants").select("id, account_type, parent_tenant_id, account_number").eq("owner_user_id", userId).limit(1).maybeSingle(),
       supabase.from("tenant_members").select("tenant_id").eq("user_id", userId).limit(1).maybeSingle(),
       // Agency-team invitees don't get a tenant_members row — they live in
@@ -245,6 +268,21 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
     if (roles.includes("super_admin") || roles.includes("platform_admin")) {
       return "/choose-account";
     }
+    // /app is the existing customer surface. A person who also runs a business
+    // may deliberately open their OWN customer relationship here. This is route
+    // intent only: the native subject-bound active relationship supplies authority.
+    // Fresh ordinary staff login and operator account choice stay unchanged.
+    if (options.customerPortal) {
+      if (clientRes.error) return LANDING_ROUTE_RETRY;
+      if (clientRes.data !== null) {
+        const profile = readClientPortalSelfProfile(clientRes.data, userId, businessId);
+        if (!profile) return LANDING_ROUTE_RETRY;
+        return "/app";
+      }
+      // E09 Slice 7: no open relationship, but a business paused or ended this person's access.
+      // /app shows that business's own page; it never grants anything.
+      if (await customerAccessWithheld(businessId ?? null)) return "/app";
+    }
     // Tenant/agency operators may prefer to land on their /agency side (#191);
     // a non-agency operator, or one who prefers 'last_account', falls to /admin.
     if (roles.includes("admin")) {
@@ -255,7 +293,15 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
       return "/broker/app";
     }
 
-    let clientRow = clientRes.data;
+    if (clientRes.error) {
+      // Only native ambiguity may offer the original choice, never a selected-business refusal or outage.
+      if (!options.customerPortal && "code" in clientRes.error && clientRes.error.code === "42501"
+        && clientRes.error.message === "select an authorized customer relationship"
+        && await customerHasMultipleRelationships(userId)) return "/app";
+      return LANDING_ROUTE_RETRY;
+    }
+    let clientRow = clientRes.data as { id?: string; linked_user_id?: string; onboarding_stage?: string | null } | null;
+    if (clientRow && clientRow.linked_user_id !== userId) return LANDING_ROUTE_RETRY;
 
     // Self-heal: linked client without the `client` role, or with a missing
     // onboarding stage. Backfills both via SECURITY DEFINER RPC.
@@ -272,10 +318,6 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
     }
 
     if (clientRow?.id) {
-      const stage = clientRow.onboarding_stage ?? "invited";
-      if (PRE_PORTAL_STAGES.has(stage)) {
-        return STAGE_TO_PATH[stage];
-      }
       return "/app";
     }
 
@@ -329,6 +371,11 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
     } catch {
       try { localStorage.removeItem("paige_pending_invite"); } catch { /* ignore */ }
     }
+
+    // E09 Slice 7: a customer whose access was paused or ended has no relationship that resolves,
+    // so everything above came back empty. They are a business's client, not a prospective
+    // subscriber: /app tells them where they stand, instead of the platform's pricing page.
+    if (await customerAccessWithheld(businessId ?? null)) return "/app";
 
     // Signed in, but no tenant yet ⇒ no active platform subscription (a tenant is
     // only provisioned after payment). Pay-before-workspace: send them to /pricing to

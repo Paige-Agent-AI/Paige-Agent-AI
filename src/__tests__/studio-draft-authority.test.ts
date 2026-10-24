@@ -77,7 +77,7 @@ function world(w: World) {
     callModel: async () => { throw new Error("model down"); },
     retrieveTenantKnowledge: async (tenant: unknown) => { seen.knowledgeTenant = tenant; return []; },
     buildKnowledgeBlock: () => "",
-    deriveFinanceInScopeFromFeatures: () => false,
+    financeEntitled: async () => "not_entitled",
     assertPublicHttpUrl: async () => {},
     ingestDoc: async () => ({ ok: false, error: "not reached" }),
     flattenBlocks: () => "", flattenFormSchema: () => "",

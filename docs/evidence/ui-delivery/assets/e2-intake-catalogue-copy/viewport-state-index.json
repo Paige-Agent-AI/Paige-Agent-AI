@@ -1,0 +1,439 @@
+{
+  "kind": "SYNTHETIC_ACTUAL_COMPONENT",
+  "fixture": "source PG16 migration output; no auth or backend",
+  "componentSource": "c33dac69e5c6c58c514139222ddece03438d6747",
+  "font": "Schibsted Grotesk (loaded)",
+  "rows": [
+    {
+      "access": "Unverified",
+      "copy": "Reviews source-backed ad spend, leads and returns when those measurements are available. Automatic ROAS, cost-per-lead and attribution analysis is not available in Business Review yet; a listed ad provider does not prove a connection or a return.",
+      "coverage": "Coming Soon",
+      "name": "Ad Spend Efficiency Read"
+    },
+    {
+      "access": "Unverified",
+      "copy": "Flags client risk only when permitted activity or service-delivery evidence supports it. Current client and lifecycle totals do not establish churn risk. Source-backed client churn detection is not available in Business Review yet.",
+      "coverage": "Coming Soon",
+      "name": "Churn Signal Detection"
+    },
+    {
+      "access": "Unverified",
+      "copy": "Compares retention and expansion only from authoritative acquisition-cohort evidence. Current client totals cannot reconstruct cohort history. Cohort comparisons are not available in Business Review yet.",
+      "coverage": "Coming Soon",
+      "name": "Cohort Analysis Read"
+    },
+    {
+      "access": "Unverified",
+      "copy": "PAIGE can review recorded form intake, submissions linked to an opportunity, and current pipeline evidence when permitted. Visitor conversion, causal attribution and historical stage-to-stage drop-off diagnosis are not available in Business Review yet.",
+      "coverage": "Limited",
+      "name": "Conversion Funnel Diagnosis"
+    },
+    {
+      "access": "Unverified",
+      "copy": "Interprets authorized email, content and audience measurements when their sources provide them. Source-backed channel engagement is not available in Business Review yet. A contact count or listed connection is not evidence of engagement.",
+      "coverage": "Coming Soon",
+      "name": "Engagement Read"
+    },
+    {
+      "access": "Unverified",
+      "copy": "PAIGE can explain available business evidence for the last 30 days and identify missing information. Filing a monthly review document for approval and later retrieval remains unverified. A Chat answer is not a filed document or permission to send it.",
+      "coverage": "Unverified",
+      "name": "Monthly Business Review Draft"
+    },
+    {
+      "access": "Unverified",
+      "copy": "PAIGE can discuss the current quarter using available business evidence and its limitations. Filing a quarterly narrative for approval and later retrieval remains unverified. No unsupported financial history, forecast or delivery is promised.",
+      "coverage": "Unverified",
+      "name": "Quarterly Narrative Draft"
+    },
+    {
+      "access": "Unverified",
+      "copy": "PAIGE can compare recorded receipts where complete, compatible source periods exist, with currencies kept separate. Recorded receipts are not recognized revenue, MRR, ARR, profit or bank cash. Full revenue-series analysis requires authoritative revenue evidence.",
+      "coverage": "Limited",
+      "name": "Revenue Trend Read"
+    },
+    {
+      "access": "Unverified",
+      "copy": "Ask PAIGE for a sourced weekly review of available sales, collections, client, operations, recorded form intake and Strategic Play evidence. Missing information stays explicit and recommendations need supporting evidence. This is a read-only review; automatic scheduling, sends and business actions are not included.",
+      "coverage": "Limited",
+      "name": "Weekly Business Review"
+    }
+  ],
+  "frames": [
+    {
+      "filename": "1536-open.jpg",
+      "sha256": "a22f2ba86823af45da6a3299fd4f9536e3e7da5a78df4dc2a6a4f7c438c56e5c",
+      "documentWidth": 1536,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 1038.5625,
+        "right": 1502.3999938964844,
+        "width": 463.8374938964844
+      },
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1535,
+        770
+      ],
+      "exactRaster": false
+    },
+    {
+      "filename": "1536-closed.jpg",
+      "sha256": "46eefb371220d3b1c8f001b6edac916f6fbfaf6733af5a4983947348fe414b2d",
+      "documentWidth": 1536,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "false",
+      "panel": {
+        "left": 0,
+        "right": 0,
+        "width": 0
+      },
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1535,
+        770
+      ],
+      "exactRaster": false
+    },
+    {
+      "filename": "1366-closed.jpg",
+      "sha256": "05fcea8dcbb48516a878231f4173d617eb21187025833f6e580037d861b16dfe",
+      "documentWidth": 1366,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "false",
+      "panel": {
+        "left": 0,
+        "right": 0,
+        "width": 0
+      },
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "1366-open.jpg",
+      "sha256": "4d645ae20533a93c874e8321542e53598c4471bf3b216d0544089771a17f7a1c",
+      "documentWidth": 1366,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 926.625,
+        "right": 1332.8000183105469,
+        "width": 406.1750183105469
+      },
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "1024-closed.jpg",
+      "sha256": "a1fe597bd392d6564516944b687c9bc4a4f504a019b4b084c563c19bd616f9a3",
+      "documentWidth": 1024,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "false",
+      "panel": {
+        "left": 0,
+        "right": 0,
+        "width": 0
+      },
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "1024-open.jpg",
+      "sha256": "e94658c189b9d887dbffd527410ebce5e5552e1b25cebd1e8c98f71c9f56e351",
+      "documentWidth": 1024,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 638.7999877929688,
+        "right": 990.3999938964844,
+        "width": 351.6000061035156
+      },
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "900-closed.jpg",
+      "sha256": "651ee992a53f49ef8eff5483623ca11d340ddbf55833fb24f0305a99eeae6a48",
+      "documentWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "false",
+      "panel": {
+        "left": 0,
+        "right": 0,
+        "width": 0
+      },
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "900-open.jpg",
+      "sha256": "5a7b24f179b3b9b0f0c95f94d74aa956bab924683caca7cc2b1551aa58c59f33",
+      "documentWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 506.8000183105469,
+        "right": 874.4000244140625,
+        "width": 367.6000061035156
+      },
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "320-open.jpg",
+      "sha256": "dbafe85bcc5852219ab04ccc89d773b7b9ab2daceac07deb0e0a586e8c7bc86f",
+      "documentWidth": 320,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 84.80000305175781,
+        "right": 298.40000915527344,
+        "width": 213.6000061035156
+      },
+      "viewport": [
+        320,
+        740
+      ],
+      "encoded": [
+        320,
+        740
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "320-bottom.jpg",
+      "sha256": "abfe90969aa873866c907713b38b60b146dfebdff3f58401b7f275753a3ea91d",
+      "documentWidth": 320,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 84.80000305175781,
+        "right": 298.40000915527344,
+        "width": 213.6000061035156
+      },
+      "viewport": [
+        320,
+        740
+      ],
+      "encoded": [
+        320,
+        740
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "320-keyboard.jpg",
+      "sha256": "0bb703b68bed36ae6ff7668afc05359b91aa6628c02d29b00a03a1bd2c678368",
+      "documentWidth": 320,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 84.80000305175781,
+        "right": 298.40000915527344,
+        "width": 213.6000061035156
+      },
+      "viewport": [
+        320,
+        740
+      ],
+      "encoded": [
+        320,
+        740
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "320-weekly-copy.jpg",
+      "sha256": "a0180309baabf2324ef7d27f4839e2b1738223befc2e45deb3e835339bc5e072",
+      "documentWidth": 320,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 84.80000305175781,
+        "right": 298.40000915527344,
+        "width": 213.6000061035156
+      },
+      "viewport": [
+        320,
+        740
+      ],
+      "encoded": [
+        320,
+        740
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "900-error.jpg",
+      "sha256": "e8203bf7c34a5b917b0ba8ef2d4783b7ec6b799695c3dbca8129d3579977f771",
+      "documentWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 506.8000183105469,
+        "right": 884.0000305175781,
+        "width": 377.2000122070313
+      },
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "900-recovered.jpg",
+      "sha256": "bc76b22353311855aa77044c959c4a4258a087a89847ccf11fc7de1767c26470",
+      "documentWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 506.8000183105469,
+        "right": 874.4000244140625,
+        "width": 367.6000061035156
+      },
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "900-loading.jpg",
+      "sha256": "c9ae320d228f1b9d2e7267a9aeb077b3ca222c397be507d874ab156d59d1d605",
+      "documentWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 506.8000183105469,
+        "right": 884.0000305175781,
+        "width": 377.2000122070313
+      },
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "900-empty.jpg",
+      "sha256": "d5b2bbd4a0a9b8324dac4b201f577f0049028696b776fa378739beb0bd5ab6e7",
+      "documentWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 506.8000183105469,
+        "right": 884.0000305175781,
+        "width": 377.2000122070313
+      },
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "exactRaster": true
+    },
+    {
+      "filename": "900-denied.jpg",
+      "sha256": "af5a47ee7e48e79f2de713fc85c1fd21ed14273cdfa3870b0dc061cb2eac68c9",
+      "documentWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fonts": "loaded",
+      "open": "true",
+      "panel": {
+        "left": 506.8000183105469,
+        "right": 884.0000305175781,
+        "width": 377.2000122070313
+      },
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "exactRaster": true
+    }
+  ],
+  "diagnostics": "One synthetic retry-state carryover was invalid; corrected refusal recaptured. Original invalid frame remains local. No pixel editing or customer data."
+}

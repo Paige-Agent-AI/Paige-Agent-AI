@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { useOnboardingClient } from "./useOnboardingClient";
 
-type HookState = Omit<ReturnType<typeof useOnboardingClient>, "refresh">;
+type HookState = Omit<ReturnType<typeof useOnboardingClient>, "refresh" | "acceptSavedProfile">;
 let current: HookState;
 let setCurrent: (next: HookState) => void;
 const refresh = vi.fn();

@@ -1,7 +1,9 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { executiveAreas, executivePriorities, formatReviewInstant, formatReviewMetric } from "./executive-review";
+import { executiveAreas, executivePriorities, formatReviewInstant, formatReviewMetric, reviewGapNote } from "./executive-review";
 import type { BusinessReviewSnapshot } from "./data/useBusinessReview";
+import { composeOperatingSnapshot, type DomainSnapshotAdapter } from "../../supabase/functions/_shared/paige-context/snapshot";
+import { TEST_BUSINESS_REVIEW } from "@/test/fixtures/business-review";
 
 const review = {
   requested: ["payments", "operations", "campaigns", "game_plan"],
@@ -13,6 +15,28 @@ const review = {
 } as unknown as BusinessReviewSnapshot;
 
 describe("Executive presentation of canonical evidence", () => {
+  it("explains an actual composer gap without declaring the originating source disconnected", async () => {
+    const compose = (adapters: DomainSnapshotAdapter[]) => composeOperatingSnapshot({
+      identity: { actorId: "test-owner", tenantId: TEST_BUSINESS_REVIEW.tenant_id, workspaceId: "test-workspace", role: "owner", actAsClientId: null, accountShape: "solo", scopeEpoch: 1 },
+      period: TEST_BUSINESS_REVIEW.period, now: new Date(TEST_BUSINESS_REVIEW.composed_at),
+      domains: ["communications"], adapters, currentScopeEpoch: () => 1,
+    });
+    const missing = (await compose([])).domains.communications;
+    expect(missing.status).toBe("unavailable");
+    expect(missing.reason).toBe("no_adapter: communications");
+    expect(reviewGapNote(missing.reason)).toBe("This area is not included in this business review yet.");
+
+    const source = (await compose([{ domain: "communications", owner: "communications", read: async () => ({ status: "unavailable", data: null, reason: "no_adapter" }) }])).domains.communications;
+    expect(source.reason).toBe("adapter:no_adapter");
+    expect(reviewGapNote(source.reason)).not.toBe(reviewGapNote(missing.reason));
+  });
+  it("retains disconnected, permission and scope-change guidance separately from a review gap", () => {
+    expect(reviewGapNote("no_adapter")).toBe("This area is not included in this business review yet.");
+    expect(reviewGapNote("not_connected")).toBe("Not connected. No figures are available from this source.");
+    expect(reviewGapNote("authorization_denied")).toContain("not authorized");
+    expect(reviewGapNote("scope_changed")).toContain("workspace changed");
+    expect(reviewGapNote("no_adapter_extra")).not.toBe(reviewGapNote("no_adapter"));
+  });
   it("names every requested domain, including returned unavailable and missing entries", () => {
     const areas = executiveAreas(review);
     expect(areas.map((a) => a.key)).toEqual(["payments", "operations", "campaigns", "game_plan"]);

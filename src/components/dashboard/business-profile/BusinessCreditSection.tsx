@@ -1,4 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useState, useEffect, useCallback } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +86,8 @@ const BUREAUS: BureauConfig[] = [
 type ScoreData = Record<string, string>;
 
 export function BusinessCreditSection({ businessId, userId, onCompletionChange }: Props) {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const { invalidate: invalidateBuildScore } = useBuildScoreRefresh();
   const [scores, setScores] = useState<ScoreData>({});
   const [dates, setDates] = useState<Record<string, Date | undefined>>({});
@@ -478,13 +485,13 @@ export function BusinessCreditSection({ businessId, userId, onCompletionChange }
         </CardContent>
       </Card>
 
-      {/* Paige Business Credit Insight */}
+      {/* Business credit insight from the customer's agent */}
       <Card className="border-primary/20">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
-              Paige Business Credit Insight
+              {agentName}'s business credit insight
             </CardTitle>
             <Button size="sm" variant="outline" className="text-xs" onClick={generateInsight} disabled={loadingInsight}>
               {loadingInsight ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
@@ -498,7 +505,7 @@ export function BusinessCreditSection({ businessId, userId, onCompletionChange }
               <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{aiInsight}</p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-3">Click "Generate Insight" for Paige's assessment of your business credit status.</p>
+            <p className="text-sm text-muted-foreground text-center py-3">Click "Generate Insight" for {agentName}'s assessment of your business credit status.</p>
           )}
         </CardContent>
       </Card>

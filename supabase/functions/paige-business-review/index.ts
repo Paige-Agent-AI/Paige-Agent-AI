@@ -22,6 +22,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { composeBusinessReview } from "../_shared/paige-context/business-review.ts";
+import { dispatchBusinessSnapshotChat } from "../_shared/paige-context/business-review-chat.ts";
 import { SNAPSHOT_PERIOD_KEYS, SNAPSHOT_DOMAINS } from "../_shared/paige-context/snapshot.ts";
 
 const corsHeaders = {
@@ -99,6 +100,8 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Invalid authentication token" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    const chat = new URL(req.url).searchParams.get('chat') === '1';
+    let chatArgs: unknown = {};
     let parsed: ReturnType<typeof parseRequest>;
     if (req.method === "POST" || req.method === "GET") {
       if (req.method === "POST") {
@@ -106,7 +109,16 @@ serve(async (req: Request) => {
         if (raw.length > MAX_BODY_BYTES) {
           return new Response(JSON.stringify({ error: "The request body is too large." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
-        parsed = parseRequest(raw.trim() ? JSON.parse(raw) : undefined);
+        const body = raw.trim() ? JSON.parse(raw) : undefined;
+        if (chat) {
+          if (body !== undefined && (!body || typeof body !== 'object' || Array.isArray(body)))
+            return new Response(JSON.stringify({ error: 'The request body must be an object.' }), { status: 400, headers: corsHeaders });
+          const { timezone, ...toolArgs } = body ?? {};
+          chatArgs = toolArgs;
+          // The existing Chat parser owns tool vocabulary/aliases and its honest
+          // needs_input response. The web parser still owns time-zone validation.
+          parsed = parseRequest({ timezone });
+        } else parsed = parseRequest(body);
       } else {
         parsed = parseRequest(undefined);
       }
@@ -136,12 +148,32 @@ serve(async (req: Request) => {
     const scope = await supabaseClient.rpc("current_user_tenant_id");
     const tenantId = !scope.error && typeof scope.data === "string" && scope.data !== "" ? scope.data : null;
 
+    if (chat) {
+      // A binding assertion, never authority. A workspace switch must refuse
+      // before any composer/issuer read, not merely hide its eventual response.
+      if (!tenantId || req.headers.get('x-paige-review-scope') !== tenantId)
+        return new Response(JSON.stringify({ error: 'The original business workspace could not be verified.' }), { status: 403, headers: corsHeaders });
+      const result = await dispatchBusinessSnapshotChat(
+        { who: { actorId: user.id, tenantId, role: null, accountShape: null }, timezone: parsed.request.timezone },
+        { caller: supabaseClient }, chatArgs,
+      );
+      const after = await supabaseClient.rpc('current_user_tenant_id');
+      if (after.error || after.data !== tenantId)
+        return new Response(JSON.stringify({ error: 'The original business workspace could not be verified.' }), { status: 403, headers: corsHeaders });
+      return new Response(JSON.stringify({ version: 1, actor_id: user.id, tenant_id: tenantId,
+        timezone: parsed.request.timezone, result }), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    }
+
     const review = await composeBusinessReview(
       supabaseClient,
       // `who` is what this seam resolved; role/accountShape are not invented here (the issuer
       // decides authority), matching the chat dispatch's honest nulls.
       { actorId: user.id, tenantId, role: null, accountShape: null },
       { ...parsed.request, timezone: parsed.request.timezone },
+      // Additive response negotiation on this existing endpoint. Old web tabs
+      // omit the marker and keep their original closed snapshot shape. Old Edge
+      // versions ignore the query, so the new web can also read their response.
+      { financeEvidence: new URL(req.url).searchParams.get('finance_sources') === '1' },
     );
 
     // The composer is total: a bad period is the only ok:false; every read gap is in-snapshot.

@@ -38,6 +38,14 @@ import { createClientsSnapshotAdapter } from "./adapters/clients.ts";
 import { createOperationsSnapshotAdapter } from "./adapters/operations.ts";
 import { createPaymentsSnapshotAdapter } from "./adapters/payments.ts";
 import { createSalesPipelineSnapshotAdapter } from "./adapters/sales-pipeline.ts";
+import { createGamePlanSnapshotAdapter } from "./adapters/game-plan.ts";
+import { createMarketingIntakeSnapshotAdapter } from "./adapters/marketing-intake.ts";
+import { createFinanceSnapshotAdapter, type BusinessReviewCaller } from './adapters/finance.ts';
+
+// Finance extends this same composition with its existing caller-JWT source
+// contracts. Stored source amounts are not new Analytics metrics. The canonical
+// Finance reader decides company/binding/owner/admin authority; no provider API,
+// second store or directly admitted Finance tool is added.
 
 export const BUSINESS_REVIEW_DEFAULT_PERIOD = "last_7_days";
 /** Each metric read is several RPCs and an adapter reads up to four metrics one after another. */
@@ -78,9 +86,10 @@ function scopeAnswer(result: { data: unknown; error: unknown } | null | undefine
   return !result?.error && typeof result?.data === "string" && result.data !== "" ? result.data : SCOPE_UNREADABLE;
 }
 
-function observingCaller(caller: MetricCaller): { readonly caller: MetricCaller; readonly latest: () => string } {
+function observingCaller(caller: BusinessReviewCaller): { readonly caller: BusinessReviewCaller; readonly latest: () => string } {
   let latestTenant = SCOPE_UNREADABLE;
-  const observed: MetricCaller = {
+  const observed: BusinessReviewCaller = {
+    ...(caller.auth ? { auth: caller.auth } : {}),
     rpc(name, args) {
       if (name !== SCOPE_RPC) return caller.rpc(name, args);
       let pending: PromiseLike<{ data: unknown; error: { code?: string } | null }>;
@@ -142,10 +151,10 @@ function voidForScopeChange(snapshot: BusinessOperatingSnapshot): BusinessOperat
  * every other gap is inside the snapshot with a reason.
  */
 export async function composeBusinessReview(
-  caller: MetricCaller,
+  caller: BusinessReviewCaller,
   who: BusinessReviewWho,
   request: BusinessReviewRequest,
-  opts?: { readonly now?: Date; readonly timeoutMs?: number; readonly clock?: () => number },
+  opts?: { readonly now?: Date; readonly timeoutMs?: number; readonly clock?: () => number; readonly financeEvidence?: boolean },
 ): Promise<BusinessReviewResult> {
   const now = opts?.now ?? new Date();
   const injectedNow = opts?.now;
@@ -173,12 +182,18 @@ export async function composeBusinessReview(
     accountShape: who.accountShape,
     scopeEpoch: tenantId ?? SCOPE_UNREADABLE,
   };
-  const domains = selectSnapshotDomains({ focus: request.focus });
+  const selected = selectSnapshotDomains({ focus: request.focus });
+  // Old web tabs use the original default shape. This representation option
+  // grants no authority; Chat and current web use the same Finance reader.
+  const domains = opts?.financeEvidence === false && !request.focus?.length ? selected.filter(d => d !== 'finance') : selected;
   const adapters = [
     createPaymentsSnapshotAdapter(scope.caller, { tenantId }, clock),
     createSalesPipelineSnapshotAdapter(scope.caller, { tenantId }, clock),
     createOperationsSnapshotAdapter(scope.caller, { tenantId }, clock),
     createClientsSnapshotAdapter(scope.caller, { tenantId }, clock),
+    createMarketingIntakeSnapshotAdapter(scope.caller, { tenantId }, clock),
+    createGamePlanSnapshotAdapter(scope.caller, { tenantId }, clock),
+    ...(opts?.financeEvidence === false ? [] : [createFinanceSnapshotAdapter(scope.caller, { tenantId }, clock)]),
   ];
   // Clamped the way the composer clamps it, so the workspace reads share the adapters' budget.
   const asked = opts?.timeoutMs;

@@ -1,0 +1,12 @@
+{
+  "scope": "synthetic source interaction only",
+  "keyboardFocus": "Ask VERA to review the evidence",
+  "focusOutline": "solid",
+  "trigger": "Enter",
+  "draftPrefix": "VERA, review my business performance",
+  "draftRemainsEditable": true,
+  "sendDisabled": true,
+  "backend": "disabled; no Auth/model/provider/business action",
+  "fontsFile": "actual-fonts.json",
+  "actualZoom": "UNVERIFIED"
+}

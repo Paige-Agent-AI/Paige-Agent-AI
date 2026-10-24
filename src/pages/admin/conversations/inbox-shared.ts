@@ -6,17 +6,23 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Mail, MessageSquare, MessageCircle, Instagram, Facebook, Phone,
+  Mail, MessageSquare, MessageCircle, Instagram, Facebook, Phone, FileInput, DoorOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
 
 // ── message substrate (locked columns from public.messages) ────────────────────────
-export type ChannelType = "email" | "sms" | "whatsapp" | "instagram" | "facebook" | "voice";
+// 'portal' (E09) — the customer <-> business thread inside the client portal. Same per-contact
+// thread as email/SMS; written only by client_portal_send_message / comms_portal_reply, never by a
+// provider (no connector, no provider id). See ./portalReply.ts.
+// 'form' (E03) — a visitor's form inquiry: inbound-only, service-authored, no connector/provider;
+// replies go out through the ordinary email channel. See growth_record_form_inquiry.
+export type ChannelType = "email" | "sms" | "whatsapp" | "instagram" | "facebook" | "voice" | "portal" | "form";
 export type Direction = "inbound" | "outbound";
 export type MsgStatus = "draft" | "queued" | "sent" | "delivered" | "failed" | "received" | "read";
 
-export interface MessageParty { address?: string; display_name?: string }
+// `name` is the portal sender shape ({ kind, name }) — a portal row carries no address.
+export interface MessageParty { address?: string; display_name?: string; name?: string }
 export interface Attachment { url?: string; mime?: string; name?: string; size?: number }
 export interface ClientJoin {
   first_name: string | null;
@@ -111,6 +117,9 @@ export interface ClientContact {
   // (its invite/agreement/impersonate flow keys off it). Pulled from the same clients row,
   // no extra query.
   linked_user_id: string | null;
+  // E09 Slice 7: the business's access decision. A paused client keeps their link but must not be
+  // offered the portal channel (the server refuses PORTAL_ACCESS_PAUSED). Absent → open.
+  portal_access_state?: string | null;
   // C-2 suppression / DND surfaced on the contact card (§ read-only signal)
   dnd_active: boolean | null;
   dnd_reason: string | null;
@@ -152,7 +161,7 @@ export const THREAD_COLS =
   "id, thread_key, contact_id, snoozed_until, archived_at, labels, unread_count, " +
   "last_message_at, last_direction, " +
   "clients:contact_id(id, first_name, last_name, entity_name, entity_type, title, status, " +
-  "lifecycle_stage, source, tags, last_contacted_at, assigned_coach_user_id, linked_user_id, " +
+  "lifecycle_stage, source, tags, last_contacted_at, assigned_coach_user_id, linked_user_id, portal_access_state, " +
   "timezone, created_at, created_by, created_by_channel_type, dnd_active, dnd_reason, dnd_until, " +
   `${CLIENT_CONTACT_METHODS_EMBED})`;
 
@@ -187,11 +196,11 @@ export interface SelectedView {
 // ── channel presentation ────────────────────────────────────────────────────────────
 export const CHANNEL_ICON: Record<ChannelType, LucideIcon> = {
   email: Mail, sms: MessageSquare, whatsapp: MessageCircle,
-  instagram: Instagram, facebook: Facebook, voice: Phone,
+  instagram: Instagram, facebook: Facebook, voice: Phone, portal: DoorOpen, form: FileInput,
 };
 export const CHANNEL_LABEL: Record<ChannelType, string> = {
   email: "Email", sms: "SMS", whatsapp: "WhatsApp",
-  instagram: "Instagram", facebook: "Facebook", voice: "Voice",
+  instagram: "Instagram", facebook: "Facebook", voice: "Voice", portal: "Portal", form: "Form",
 };
 
 // #10 channel-of-origin — human label for clients.created_by_channel_type (a BROADER vocabulary
@@ -426,6 +435,22 @@ export function useCommsAttachments(getTenantId: () => string | null): CommsAtta
 /** Default undo-send grace window: a fresh send queues this far out so the toast's
  *  Undo can cancel it before delivery (owner-set 30s). */
 export const UNDO_WINDOW_MS = 30_000;
+
+export const CANCELLATION_UNCONFIRMED_COPY = "Couldn't confirm cancellation. Check this conversation's status before trying again.";
+
+/** Reads the existing cancellation RPC's receipt; it grants no authority and never sends.
+ * False may mean not found, refused or a lost claim race. None proves delivery.
+ * Missing/malformed/transport responses must not become an invented Undo success. */
+export async function requestScheduledCancellation(messageId: string): Promise<boolean> {
+  try {
+    // The canonical RPC is not yet in the generated client types (same typed-RPC ratchet).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const receipt: unknown = await (supabase as any).rpc("cancel_scheduled_message", { _id: messageId });
+    if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) return false;
+    const result = receipt as { data?: unknown; error?: unknown };
+    return result.error === null && result.data === true;
+  } catch { return false; }
+}
 
 export interface SendResult {
   outcome: string;          // sent | queued | queued_scheduled | blocked_* | failed

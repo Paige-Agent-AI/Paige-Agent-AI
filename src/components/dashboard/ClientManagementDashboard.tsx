@@ -24,6 +24,7 @@ import { useDashboardMode } from "@/contexts/DashboardModeContext";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { toast } from "sonner";
+import { isLegacyInviteHeld, legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
 
 // Widened to string: the generated types do not know the contact-methods embed yet.
@@ -433,8 +434,8 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
       if (inviteRole === "user") {
         // §9: "Client" (role 'user') gets the tenant-branded client PORTAL invite
         // (/join) via a consumer token — never the staff /accept-invite dashboard
-        // path. Mirrors ContactPortalPanel so, on accept, they get a clients row +
-        // client role with NO tenant_members membership (no operator dashboard).
+        // path. Resolve/create the canonical CRM contact first, then bind the
+        // same native invitation mechanism used by ContactPortalPanel.
         // §60: consumer-portal invite is solo + sub_account only — hard-guard it.
         if (!canInvitePortal) {
           toast.error("Client portal invites aren't available on this account type.");
@@ -444,26 +445,51 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
           toast.error("No active workspace to invite into.");
           return;
         }
+        const recipient = inviteEmail.trim().toLowerCase();
+        // The canonical RPC predates the generated SDK catalogue. Keep its seam narrow;
+        // the returned client still receives an authorized tenant-scoped read below.
+        const contactDb = supabase as unknown as {
+          rpc: (
+            name: "create_contact_v2",
+            args: { p_first_name: string; p_email: string; p_source: string; p_channel: string; p_tenant_id: string },
+          ) => Promise<{ data: { contact_id: string }[] | null; error: { message: string } | null }>;
+        };
+        const { data: contacts, error: contactError } = await contactDb.rpc("create_contact_v2", {
+          p_first_name: "", p_email: recipient, p_source: "invitation", p_channel: "portal",
+          p_tenant_id: activeTenantId,
+        });
+        if (contactError) throw contactError;
+        const contact = Array.isArray(contacts) ? contacts[0] : contacts;
+        const contactId = contact?.contact_id;
+        if (!contactId) throw new Error("Could not prepare the client record. No invitation was sent.");
+        const { data: savedContact, error: savedError } = await supabase.from("clients")
+          .select("id,tenant_id").eq("id", contactId).eq("tenant_id", activeTenantId).maybeSingle();
+        if (savedError) throw savedError;
+        if (!savedContact || savedContact.id !== contactId || savedContact.tenant_id !== activeTenantId)
+          throw new Error("The active business changed. Review the client before inviting.");
         const { data: tokRes, error: mintErr } = await supabase.rpc("create_tenant_invite_token", {
           _tenant_id: activeTenantId,
           _kind: "consumer",
           _default_role: "member",
           _expires_in_days: 30,
           _max_uses: null,
-          _contact_id: null,
-          _email: inviteEmail.trim(),
+          _contact_id: contactId,
+          _email: recipient,
         });
         if (mintErr) throw mintErr;
         const row = Array.isArray(tokRes) ? tokRes[0] : tokRes;
         const token = (row as { token?: string } | null)?.token;
         if (!token) throw new Error("Could not create the invite");
-        const { data: sent } = await supabase.functions.invoke("send-portal-invite", {
-          body: { token, email: inviteEmail.trim() },
+        const { data: sent, error: sendError } = await supabase.functions.invoke("send-portal-invite", {
+          body: { token, email: recipient },
         });
-        const emailed = (sent as { emailed?: boolean } | null)?.emailed;
-        toast[emailed === false ? "warning" : "success"](
-          emailed === false
-            ? `Invite created for ${inviteEmail}, but the email didn't send. Check delivery.`
+        // E09 Slice 6 (§37): Paige held it, or could not check; say which, no hand-off.
+        const outcome = await readLegacyInviteSend(sent, sendError);
+        if (isLegacyInviteHeld(outcome)) { toast.error(legacyInviteHeldText(recipient, outcome)); return; }
+        if (sendError) throw sendError;
+        toast[outcome === "emailed" ? "success" : "warning"](
+          outcome !== "emailed"
+            ? `Invite prepared for ${inviteEmail}. Email delivery is unconfirmed. Check delivery before resending.`
             : `Client portal invite sent to ${inviteEmail}`,
         );
       } else {

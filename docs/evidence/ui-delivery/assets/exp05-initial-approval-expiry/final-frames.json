@@ -1,0 +1,135 @@
+[
+  {
+    "theme": "light",
+    "paige": "open",
+    "active": "BODY",
+    "documentWidth": 1536,
+    "height": 770,
+    "requests": "1",
+    "statusReads": "1",
+    "width": 1536
+  },
+  {
+    "theme": "light",
+    "paige": "closed",
+    "chat": null,
+    "documentWidth": 1536,
+    "height": 770,
+    "width": 1536
+  },
+  {
+    "theme": "light",
+    "paige": "open",
+    "active": "BODY",
+    "documentWidth": 1366,
+    "height": 768,
+    "requests": "1",
+    "statusReads": "1",
+    "width": 1366
+  },
+  {
+    "theme": "light",
+    "paige": "closed",
+    "chat": null,
+    "documentWidth": 1366,
+    "height": 768,
+    "width": 1366
+  },
+  {
+    "theme": "light",
+    "paige": "open",
+    "active": "BODY",
+    "documentWidth": 1024,
+    "height": 768,
+    "requests": "1",
+    "statusReads": "1",
+    "width": 1024
+  },
+  {
+    "theme": "light",
+    "paige": "closed",
+    "documentWidth": 1024,
+    "height": 768,
+    "width": 1024
+  },
+  {
+    "theme": "light",
+    "paige": "open",
+    "documentWidth": 900,
+    "height": 1000,
+    "requests": "1",
+    "statusReads": "1",
+    "width": 900
+  },
+  {
+    "theme": "light",
+    "paige": "closed",
+    "documentWidth": 900,
+    "height": 1000,
+    "width": 900
+  },
+  {
+    "theme": "dark",
+    "paige": "open",
+    "documentWidth": 1536,
+    "height": 770,
+    "requests": "1",
+    "statusReads": "1",
+    "width": 1536
+  },
+  {
+    "theme": "dark",
+    "paige": "closed",
+    "documentWidth": 1536,
+    "height": 770,
+    "width": 1536
+  },
+  {
+    "theme": "dark",
+    "paige": "open",
+    "documentWidth": 1366,
+    "height": 768,
+    "requests": "1",
+    "statusReads": "1",
+    "width": 1366
+  },
+  {
+    "theme": "dark",
+    "paige": "closed",
+    "documentWidth": 1366,
+    "height": 768,
+    "width": 1366
+  },
+  {
+    "theme": "dark",
+    "paige": "open",
+    "documentWidth": 1024,
+    "height": 768,
+    "requests": "1",
+    "statusReads": "1",
+    "width": 1024
+  },
+  {
+    "theme": "dark",
+    "paige": "closed",
+    "documentWidth": 1024,
+    "height": 768,
+    "width": 1024
+  },
+  {
+    "theme": "dark",
+    "paige": "open",
+    "documentWidth": 900,
+    "height": 1000,
+    "requests": "1",
+    "statusReads": "1",
+    "width": 900
+  },
+  {
+    "theme": "dark",
+    "paige": "closed",
+    "documentWidth": 900,
+    "height": 1000,
+    "width": 900
+  }
+]

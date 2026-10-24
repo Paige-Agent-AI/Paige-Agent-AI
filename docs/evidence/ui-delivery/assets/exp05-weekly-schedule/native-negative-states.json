@@ -1,0 +1,26 @@
+{
+  "source": "c7bf26db1e6eb14b491213bd292b7806e0434746",
+  "cases": [
+    {
+      "mode": "denied",
+      "refused": true,
+      "unavailable": false,
+      "empty": false,
+      "changeButtons": 0
+    },
+    {
+      "mode": "failure",
+      "refused": false,
+      "unavailable": true,
+      "empty": false,
+      "changeButtons": 0
+    },
+    {
+      "mode": "empty",
+      "refused": false,
+      "unavailable": false,
+      "empty": true,
+      "changeButtons": 0
+    }
+  ]
+}

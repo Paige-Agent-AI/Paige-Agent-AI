@@ -1,0 +1,132 @@
+{
+  "createdAt": "2026-10-20T10:20:13.211Z",
+  "class": "READ_ONLY_INTERACTIVE_PROTOTYPE",
+  "base": "ea60a1810e0e09ac8570f2a79ddf20784196bcc6",
+  "incumbentParentSha256": "1f011f895dac0fa65e2db5bd7a92ea56a0c834b47272d0b30869ab94af950fcb",
+  "copiedParentSha256": "2724de26f538bf7d0d27a6cbecef3ee97fdca5b6a49b52d96e2a030a7ed7ed50",
+  "inputs": [
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react/cjs/react.production.min.js",
+      "sha256": "4b35e378f469c4f492c7514bb106b5833746dbbae80496bd4aa9acc6e9ac4b42"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react/index.js",
+      "sha256": "a216c390bf956cbb906c66d29fdb2e2ad6999464a5ca83e476533a6f25ad0ef3"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.min.js",
+      "sha256": "f6cb8cf42696980c702f6b879417ab8bd489660485eb012b46f67e92e18a78ee"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react-dom/node_modules/scheduler/index.js",
+      "sha256": "b413b3aac7bd209fd82cbe2241fda1467558daaef830744f45ed8396fac9185e"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react-dom/cjs/react-dom.production.min.js",
+      "sha256": "cbf7fe6b9726ee65f8bcd5715289cc5161c8dacf74d0b8aaa0d29412516f5f47"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react-dom/index.js",
+      "sha256": "f26fcb81b5d1dc32c6edea34645c75b60d259916293d3208c8be48ac33e882e4"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react-dom/client.js",
+      "sha256": "a510041dfc40d69b3aa574e5e111864186c711fbeb3db41aa2f27196b27c429f"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/@remix-run/router/dist/router.js",
+      "sha256": "cca89a134076e62de5e9a14bc4bfbb43ba6ee4ecd2741ddda7d0173fa96cc49e"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react-router/dist/index.js",
+      "sha256": "f380ececc20dd63112aa9c07caa0b8bd5b968bf4262295cfa6d3b4e54b256c0a"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react-router-dom/dist/index.js",
+      "sha256": "9af0b0b5e7217249e43fe147203ca08158a548d8994c0088931a95a1bc4b6b32"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react/cjs/react-jsx-runtime.production.min.js",
+      "sha256": "76e3364c46895ed2c4a8d5cc332e5e4ef31d6f732d35b1e56826dc5895245452"
+    },
+    {
+      "path": "../../../paige-shared-chat-security-integration/work/runtime/node_modules/react/jsx-runtime.js",
+      "sha256": "28170e60f2ff0bc045bc7d175f5849e86f68dd02d76d7255369420718b30295a"
+    },
+    {
+      "path": "work/automation-history-flow/prototype-ports.tsx",
+      "sha256": "c1ef3a125c96713daa98bf24f734d154b95f78047ad6562309a498f11bc9cf85"
+    },
+    {
+      "path": "supabase/functions/_shared/solo-classification.ts",
+      "sha256": "51daa30a31f55912ecda5aa00847aee82b78dfa61050f99c3e8e4c43a63e3245"
+    },
+    {
+      "path": "src/lib/tier/tierFeatures.ts",
+      "sha256": "ba484c578aa74e52357be19aaf0050f0a04877f62f6271b2b9455c9774505ae9"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "38f70329333a765fb255691cb3e692403918ab4b6e8039e415bf4ffb00d95eae"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "7af7080cdd5ceea7bc126e6315fb3d0e0b433142ecd6e673bb771c2f243ec0fd"
+    },
+    {
+      "path": "work/automation-history-flow/proposed-history.tsx",
+      "sha256": "e50568f46aeaa860ed19ab455f1bff586aa820a23a93d58c76ab2408c5814151"
+    },
+    {
+      "path": "work/automation-history-flow/proposed-process.tsx",
+      "sha256": "2724de26f538bf7d0d27a6cbecef3ee97fdca5b6a49b52d96e2a030a7ed7ed50"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "src/solo/settings-integrations.css",
+      "sha256": "5a1e7fb1342b078025825c085656eaabd174402a45e55df9eb7b959a3cf958ec"
+    },
+    {
+      "path": "work/automation-history-flow/prototype-entry.tsx",
+      "sha256": "29d6d656d0c15e615433a896c7670c8ecfb10dd5a9b3e955f2d7efe072c16593"
+    },
+    {
+      "path": "dist/assets/main-WYjXVyar.css",
+      "sha256": "24fd8ad46b314a54f246eb56dba799d3116610a2704f38a0b7b9139e68d81b58"
+    },
+    {
+      "path": "dist/assets/SoloEntry-DYmbpc6s.css",
+      "sha256": "049c34ce40dbbb20039816b7e86a7f15d3d5be7b1b0acc0fdc29bf35150a8a63"
+    },
+    {
+      "path": "dist/assets/PaigeAIChat-CTvdVEyj.css",
+      "sha256": "a43d8dc4b15bea6ac90545d63ae6ae8738810018383d656c3b05bea800bf67e1"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/solo/solo-paige-workspace.css",
+      "sha256": "8757691399d40bf17a564336f232b64fae4aac42e2e9908a342e290a5a322e37"
+    },
+    {
+      "path": "src/solo/settings.css",
+      "sha256": "d3f5bd257c442ebe2fb4386ed4242b51cf3ca4809905f47e3e24544b03e64112"
+    },
+    {
+      "path": "src/solo/settings-integrations.css",
+      "sha256": "5a1e7fb1342b078025825c085656eaabd174402a45e55df9eb7b959a3cf958ec"
+    }
+  ],
+  "network": "PROHIBITED",
+  "authentication": "SYNTHETIC",
+  "selection": "NOT_SELECTED"
+}

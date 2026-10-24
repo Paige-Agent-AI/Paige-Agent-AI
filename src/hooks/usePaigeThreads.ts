@@ -1,6 +1,11 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { ConfirmItem } from "@/components/chat/confirmPreview";
+import { readOriginalReminderHistory } from "@/components/chat/reminderHistory";
+import { readOriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
+import { readOriginalSpecialistHistory } from "@/components/chat/specialistHistory";
+import { CHAT_CONTROL_HEADER, chatControlRetryDelay } from "../../supabase/functions/_shared/paige-turn/control-transport";
 
 /**
  * Multi-chat history for "Your Paige" (#94).
@@ -37,6 +42,44 @@ export interface PaigeTurn {
   surfaces_used: string[] | null;
   seq: number;
   created_at: string | null;
+  interactive_intent_id?: string | null;
+  interactive_terminal_state?: string | null;
+}
+
+export interface RecoveredPaigeApproval {
+  v: 1; status: "available"; thread_id: string; turn_id: string; intent_id: string;
+  tenant_id: string; expires_at: string;
+  confirmations: Array<ConfirmItem & {fingerprint: string; command: Record<string, unknown>; idempotency_key: string}>;
+}
+
+/** Accept only the dedicated server read response, never bundle_ref or a cached
+ * browser card. Native single-use claim remains the execution authority. */
+export function readRecoveredPaigeApproval(raw: unknown, scope: {
+  threadId: string; turnId: string; intentId: string; tenantId: string;
+}): RecoveredPaigeApproval | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  if (r.v !== 1 || r.status !== "available" || r.thread_id !== scope.threadId || r.turn_id !== scope.turnId
+    || r.intent_id !== scope.intentId || r.tenant_id !== scope.tenantId || typeof r.expires_at !== "string"
+    || !Number.isFinite(Date.parse(r.expires_at)) || Date.parse(r.expires_at) <= Date.now()
+    || !Array.isArray(r.confirmations) || r.confirmations.length < 1 || r.confirmations.length > 10) return null;
+  const seen = new Set<string>();
+  const confirmations: RecoveredPaigeApproval["confirmations"] = [];
+  for (const candidate of r.confirmations) {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
+    const c = candidate as Record<string, unknown>;
+    if (typeof c.tool !== "string" || !/^[a-z][a-z0-9_]{0,95}$/.test(c.tool)
+      || typeof c.summary !== "string" || !c.summary.trim() || typeof c.fingerprint !== "string"
+      || !/^[0-9a-f]{16}$/.test(c.fingerprint) || seen.has(c.fingerprint)
+      || !c.command || typeof c.command !== "object" || Array.isArray(c.command)
+      || typeof (c.command as Record<string, unknown>).action !== "string"
+      || typeof c.idempotency_key !== "string" || !c.idempotency_key.trim() || c.idempotency_key.length > 192) return null;
+    seen.add(c.fingerprint);
+    confirmations.push({tool: c.tool, summary: c.summary, fingerprint: c.fingerprint,
+      command: c.command as Record<string, unknown>, idempotency_key: c.idempotency_key});
+  }
+  return {v: 1, status: "available", thread_id: scope.threadId, turn_id: scope.turnId, intent_id: scope.intentId,
+    tenant_id: scope.tenantId, expires_at: r.expires_at, confirmations};
 }
 
 // The generated Supabase types don't yet carry these owner-chat rows/RPCs; the
@@ -59,6 +102,10 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
   // platform-mode create/rename/archive/delete would invalidate the tenant slot
   // (tenantId is NULL in platform mode) and never refresh the platform rail (#130).
   const keySuffix = platform ? "platform" : tenantId;
+  const approvalScopeKey = JSON.stringify([callerUserId, tenantId, platform]);
+  const approvalScopeRef = useRef({ key: approvalScopeKey, retryAt: 0 });
+  const originalReminderReadGeneration = useRef(0);
+  if (approvalScopeRef.current.key !== approvalScopeKey) approvalScopeRef.current = { key: approvalScopeKey, retryAt: 0 };
 
   const threadsQuery = useQuery({
     // platform threads (tenant_id NULL) and tenant threads never share a cache slot.
@@ -92,12 +139,71 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
   const loadTurns = useCallback(async (threadId: string): Promise<PaigeTurn[]> => {
     const { data, error } = await db
       .from("paige_chat_turns")
-      .select("id,role,content,bundle_ref,surfaces_used,seq,created_at")
+      .select("id,role,content,bundle_ref,surfaces_used,seq,created_at,interactive_intent_id,interactive_terminal_state")
       .eq("thread_id", threadId)
       .order("seq", { ascending: true });
     if (error) throw error;
     return (data ?? []) as PaigeTurn[];
   }, []);
+
+  const loadApprovalRecovery = useCallback(async (threadId: string, turnId: string, intentId: string) => {
+    if (platform || !callerUserId || !tenantId) return null;
+    const scope = approvalScopeRef.current;
+    if (scope.key !== approvalScopeKey || Date.now() < scope.retryAt) return null;
+    try {
+      const {data, error} = await supabase.functions.invoke("paige-ai-chat", {headers: { [CHAT_CONTROL_HEADER]: "status" }, body: {
+        messages: [{role: "user", content: "Read pending approval status."}], threadId, requestIntentId: intentId,
+        interactive: {kind: "status", approvalTurnId: turnId},
+      }});
+      if (approvalScopeRef.current !== scope) return null;
+      const context = (error as { context?: Response } | null)?.context;
+      if (context?.status === 429) scope.retryAt = Date.now() + chatControlRetryDelay(context.headers?.get("Retry-After"));
+      return error ? null : readRecoveredPaigeApproval(data?.approval_recovery, {threadId, turnId, intentId, tenantId});
+    } catch { return null; }
+  }, [callerUserId, tenantId, platform, approvalScopeKey]);
+
+  // Same native status transport, separate inert historical result. A caller
+  // supplies a physical abort signal and fences its selected conversation/focus.
+  const loadOriginalHistory = useCallback(async <T>(
+    threadId: string, turnId: string, intentId: string, signal: AbortSignal,
+    project: (data: Record<string, unknown> | null, scope: OriginalPreparationScope) => T | null,
+    projection?: "cura" | "specialist",
+  ): Promise<T | null> => {
+    const generation = ++originalReminderReadGeneration.current;
+    if (platform || !callerUserId || !tenantId || !signal || signal.aborted) return null;
+    const scope = approvalScopeRef.current;
+    if (scope.key !== approvalScopeKey || Date.now() < scope.retryAt) return null;
+    try {
+      const { data, error } = await supabase.functions.invoke("paige-ai-chat", {
+        signal, headers: { [CHAT_CONTROL_HEADER]: "status" }, body: {
+          messages: [{ role: "user", content: "Read pending approval status." }], threadId, requestIntentId: intentId,
+          interactive: { kind: "status", approvalTurnId: turnId,
+            ...(projection === "cura" ? { includeCuraPreparationHistory: true } : {}),
+            ...(projection === "specialist" ? { includeSpecialistHistory: true } : {}) },
+        },
+      });
+      if (signal.aborted || approvalScopeRef.current !== scope || generation !== originalReminderReadGeneration.current) return null;
+      const context = (error as { context?: Response } | null)?.context;
+      if (context?.status === 429) scope.retryAt = Date.now() + chatControlRetryDelay(context.headers?.get("Retry-After"));
+      return error ? null : project(data && typeof data === "object" && !Array.isArray(data)
+        ? data as Record<string, unknown> : null, { threadId, turnId, intentId, tenantId });
+    } catch { return null; }
+  }, [callerUserId, tenantId, platform, approvalScopeKey]);
+
+  // One original status transport, generation, backoff and physical abort owner.
+  // The ordinary reminder request retains its exact envelope without the selector.
+  const loadOriginalReminderHistory = useCallback((
+    threadId: string, turnId: string, intentId: string, signal: AbortSignal,
+  ) => loadOriginalHistory(threadId, turnId, intentId, signal,
+    (data, scope) => readOriginalReminderHistory(data?.approval_history, scope)), [loadOriginalHistory]);
+  const loadOriginalCuraPreparationHistory = useCallback((
+    threadId: string, turnId: string, intentId: string, signal: AbortSignal,
+  ) => loadOriginalHistory(threadId, turnId, intentId, signal,
+    (data, scope) => readOriginalCuraPreparationHistory(data?.cura_preparation_history, scope), "cura"), [loadOriginalHistory]);
+  const loadOriginalSpecialistHistory = useCallback((
+    threadId: string, turnId: string, intentId: string, signal: AbortSignal,
+  ) => loadOriginalHistory(threadId, turnId, intentId, signal,
+    (data, scope) => readOriginalSpecialistHistory(data?.specialist_history, scope), "specialist"), [loadOriginalHistory]);
 
   /** Create a thread lazily on first send. Title is a placeholder the server
    *  refines from the first message. */
@@ -175,6 +281,10 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
     // empty first render and never restores the most-recent chat (#94).
     isFetched: enabled && threadsQuery.isFetched,
     loadTurns,
+    loadApprovalRecovery,
+    loadOriginalReminderHistory,
+    loadOriginalCuraPreparationHistory,
+    loadOriginalSpecialistHistory,
     ensureThread,
     renameThread: (id: string, title: string) => renameThread.mutate({ id, title }),
     archiveThread: (id: string) => archiveThread.mutate(id),

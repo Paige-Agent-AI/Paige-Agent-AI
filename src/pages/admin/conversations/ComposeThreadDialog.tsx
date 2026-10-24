@@ -34,11 +34,15 @@ import type { FocusedClient } from "@/components/paige/commandCenterTypes";
 import {
   type ChannelType, type EmailTemplate, CHANNEL_ICON, CHANNEL_LABEL,
   canonicalThreadKey, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
-  useCommsAttachments,
+  useCommsAttachments, requestScheduledCancellation, CANCELLATION_UNCONFIRMED_COPY,
 } from "./inbox-shared";
 import { AttachmentChip } from "./AttachmentChip";
 import { selectComposeConnector } from "./connectorRouting";
+import { createAccountEpochGuard } from "./solo/soloConversationModel";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
+import { LeadReplyDrafts } from "./LeadReplyDrafts";
+import { useLeadReplyReview,canReplaceFollowupDraft } from "./useLeadReplyReview";
+import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 
 // Structural subset of the page's Connector — only what the channel picker needs.
 export interface ComposeConnector {
@@ -63,18 +67,34 @@ interface PickedClient {
 type DraftTone = "professional" | "friendly" | "warm" | "direct";
 
 export function ComposeThreadDialog({
+  isSolo=false,
+  recordDisabled=false,
   open,
   onOpenChange,
   activeConnectors,
   tenantId,
+  actorId=null,
+  approvalId,
+  onHoldChange,
+  locatorConflicted=false,
+  onRestoreOrigin,
   initialContact,
   emailTemplates = [],
   onSent,
 }: {
+  isSolo?: boolean;
+  /** Parent account-readiness hold for historical status/recording only. */
+  recordDisabled?: boolean;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   activeConnectors: ComposeConnector[];
   tenantId: string | null;
+  actorId?: string | null;
+  /** Present only for a strictly parsed exact approval locator; never ordinary compose authority. */
+  approvalId?: string;
+  onHoldChange?: (held:boolean) => void;
+  locatorConflicted?: boolean;
+  onRestoreOrigin?: () => void;
   /** Pre-address the composer to this contact when opened from a Client-360 "Message {name}"
    *  deep-link (§18/§31). Resolved via the same hydrateClient the search-select path uses. */
   initialContact?: { id: string; name?: string };
@@ -84,6 +104,14 @@ export function ComposeThreadDialog({
    *  and open the new/merged thread (§36 proactive surfacing). */
   onSent: (threadKey: string) => void;
 }) {
+  // Undo outlives the dialog in a toast. A closed dialog in the same workspace is valid;
+  // switching workspace (including A-B-A) or unmounting must invalidate that old action.
+  const cancellationEpochRef = useRef(createAccountEpochGuard(tenantId));
+  useEffect(() => {
+    const guard = cancellationEpochRef.current;
+    guard.advance(tenantId);
+    return () => { guard.advance(null); };
+  }, [tenantId]);
   // send-message's contract is email|sms today — never offer a channel it can't send.
   const sendable = activeConnectors.filter(
     (c) => c.channel_type === "email" || c.channel_type === "sms",
@@ -94,6 +122,13 @@ export function ComposeThreadDialog({
   const [connectorId, setConnectorId] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [leadReplyApprovalId,setLeadReplyApprovalId]=useState<string|null>(null);
+  const bound=approvalId!==undefined;
+  const scopeKey=JSON.stringify([actorId,tenantId,initialContact?.id,approvalId,open]);
+  const scopeRef=useRef({key:scopeKey});
+  if(scopeRef.current.key!==scopeKey)scopeRef.current={key:scopeKey};
+  const scope=scopeRef.current;
+  useEffect(()=>{onHoldChange?.(open&&bound);return()=>onHoldChange?.(false);},[open,bound,onHoldChange]);
   const [scheduledFor, setScheduledFor] = useState<string | null>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [sending, setSending] = useState(false);
@@ -133,6 +168,7 @@ export function ComposeThreadDialog({
     setConnectorId(sendable[0]?.id ?? "");
     setSubject("");
     setBody("");
+    setLeadReplyApprovalId(null);
     setScheduledFor(null);
     setSending(false);
     setDrafting(false);
@@ -146,11 +182,14 @@ export function ComposeThreadDialog({
     // Resolve the operator's name once per open so {{coach_name}} in a saved template renders
     // (mirrors the retired panel; §37 the picker must not silently blank a supported merge var).
     void (async () => {
+      const capturedScope=scopeRef.current;
       const { data: { user } } = await supabase.auth.getUser();
+      if(scopeRef.current!==capturedScope)return;
       if (!user) { setCoachName(""); return; }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: prof } = await (supabase as any)
         .from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+      if(scopeRef.current!==capturedScope)return;
       setCoachName(((prof?.full_name as string | null) ?? "").trim());
     })();
     // Pre-address when opened from a Client-360 "Message {name}" deep-link (§18/§31): resolve
@@ -162,12 +201,16 @@ export function ComposeThreadDialog({
   // Address resolver — send-message hard-requires an explicit `to` and never derives it
   // from contact_id. One RLS-scoped read serves both the search-select and create paths.
   const hydrateClient = useCallback(async (id: string, fallbackName: string) => {
+    const capturedScope=scopeRef.current;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
+    let query = (supabase as any)
       .from("clients")
-      .select(`first_name, last_name, entity_name, ${CLIENT_CONTACT_METHODS_EMBED}`)
-      .eq("id", id)
-      .single();
+      .select(`id,tenant_id,first_name, last_name, entity_name, ${CLIENT_CONTACT_METHODS_EMBED}`)
+      .eq("id", id);
+    if(bound)query=query.eq("tenant_id",tenantId);
+    const {data,error}=await query.single();
+    if(scopeRef.current!==capturedScope)return;
+    if(bound&&(error||data?.id!==id||data?.tenant_id!==tenantId))return;
     // The address a message goes to is the contact's PRIMARY email / phone.
     const row = withPrimaryAddresses((data ?? {}) as {
       first_name?: string | null; last_name?: string | null; entity_name?: string | null;
@@ -182,7 +225,7 @@ export function ComposeThreadDialog({
       first_name: row.first_name ?? null, last_name: row.last_name ?? null,
       entity_name: row.entity_name ?? null,
     });
-  }, []);
+  }, [bound,tenantId]);
 
   const onPick = (f: FocusedClient) => {
     // Seed name immediately for responsiveness; resolve email/phone (esp. phone, which
@@ -360,11 +403,23 @@ export function ComposeThreadDialog({
     setBody(resolveMergeVars(t.body_markdown || (t.body_html ? t.body_html.replace(/<[^>]+>/g, "") : ""), ctx));
   }, [emailTemplates, client, coachName]);
 
+  const leadReplyReview=useLeadReplyReview({actorId,tenantId,contactId:initialContact?.id??null,
+    threadKey:tenantId&&initialContact?.id?`contact:${tenantId}:${initialContact.id}`:null,
+    approvalId:leadReplyApprovalId,connectorId,channel,subject,body,attachmentCount:attachments.length,uploading,scheduledFor,
+    signatureEnabled:false,disabled:!open||!bound||locatorConflicted||leadReplyApprovalId!==approvalId||client?.id!==initialContact?.id,
+    current:()=>scopeRef.current===scope},()=>{
+      if(tenantId&&client&&scopeRef.current===scope)onSent(canonicalThreadKey("email",tenantId,client.email??"",client.id));
+    });
+  const close=()=>{if(leadReplyReview.blocksEditing){toast.error("The original outcome is still unconfirmed. Check its recorded status before closing.");return;}
+    leadReplyReview.reset();onHoldChange?.(false);onOpenChange(false);};
+  useBeforeUnloadGuard(open && bound && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing));
   const canSend =
     !!client && !!channel && !!connectorId && !!toAddress && !!body.trim() &&
-    (channel !== "email" || !!subject.trim()) && !sending && !drafting && !uploading;
+    (channel !== "email" || !!subject.trim()) && !sending && !drafting && !uploading
+    && (!bound||!locatorConflicted&&leadReplyApprovalId===approvalId&&!leadReplyReview.blocksSending);
 
   const send = async () => {
+    if(bound){if(locatorConflicted||leadReplyApprovalId!==approvalId){toast.error("Open the exact selected reply before reviewing. No replacement was selected.");return;}await leadReplyReview.prepare();return;}
     if (!client || !channel) { toast.error("Pick a recipient and channel first."); return; }
     if (!toAddress) { toast.error("This contact has no address for that channel."); return; }
     if (!body.trim()) { toast.error("Write a message first."); return; }
@@ -378,6 +433,7 @@ export function ComposeThreadDialog({
       ? canonicalThreadKey(channel, tenantId, toAddress, client.id)
       : `${channel}:${toAddress}`; // fallback only if tenant unresolved (should not happen)
 
+    const cancellationEpoch = cancellationEpochRef.current.capture();
     setSending(true);
     try {
       // Default = undo-send: queue 30s out so the toast's Undo can cancel before delivery
@@ -413,15 +469,12 @@ export function ComposeThreadDialog({
           toast("Sending…", {
             action: {
               label: "Undo",
-              onClick: () => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                void (supabase as any).rpc("cancel_scheduled_message", { _id: id }).then(
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  ({ data: ok, error: e }: any) => {
-                    if (e || ok === false) toast.error("Too late — Paige already sent it.");
-                    else toast.success("Undone.");
-                  },
-                );
+              onClick: async () => {
+                if (!cancellationEpochRef.current.accept(cancellationEpoch)) return;
+                const confirmed = await requestScheduledCancellation(id);
+                if (!cancellationEpochRef.current.accept(cancellationEpoch)) return;
+                if (!confirmed) toast.error(CANCELLATION_UNCONFIRMED_COPY);
+                else toast.success("Undone.");
               },
             },
             duration: UNDO_WINDOW_MS,
@@ -458,16 +511,30 @@ export function ComposeThreadDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog open={open} onOpenChange={value=>{if(value)onOpenChange(true);else if(bound&&(leadReplyReview.blocksEditing||subject.trim()||body.trim()))toast.error("Use Cancel reply edit to discard this draft, or inspect its original outcome.");else close();}}>
+      <DialogContent className="sm:max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>New conversation</DialogTitle>
+            <DialogTitle>{bound?"Review reply":"New conversation"}</DialogTitle>
             <DialogDescription>
-              Start an outbound thread — pick who it's for, choose the channel, and Paige can draft it.
+              {bound?"Review the original reply and its exact sending address before approving.":"Start an outbound thread — pick who it's for, choose the channel, and Paige can draft it."}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-1">
+            {locatorConflicted?<p role="status" className="text-sm text-muted-foreground">The original reply is still open. {onRestoreOrigin?<button type="button" className="underline" onClick={onRestoreOrigin}>Return to original reply</button>:null}</p>:null}
+            {open&&bound&&tenantId&&initialContact?<LeadReplyDrafts actorId={actorId} tenantId={tenantId} contactId={initialContact.id} approvalId={approvalId}
+              threadKey={isSolo?`contact:${tenantId}:${initialContact.id}`:null}
+              current={()=>scopeRef.current===scope} disabled={leadReplyReview.blocksSending||client?.id!==initialContact.id}
+              recordDisabled={recordDisabled||sending||leadReplyReview.blocksSending||locatorConflicted||client?.id!==initialContact.id}
+              onEdit={(approval,draft)=>{
+                if(approval.id!==approvalId||approval.contact_id!==initialContact.id||approval.tenant_id!==tenantId)return;
+                if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId:null,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending})){
+                  toast.error("Finish or cancel the current draft before opening another reply.");return;
+                }
+                setLeadReplyApprovalId(approval.id);setChannel("email");
+                const sender=sendable.find(c=>c.id===connectorId&&c.channel_type==="email")??sendable.find(c=>c.channel_type==="email");
+                setConnectorId(sender?.id??"");setSubject(draft.subject);setBody(draft.body);
+              }}/>:null}
             {/* Recipient */}
             <div className="space-y-1.5">
               <Label>To</Label>
@@ -484,7 +551,7 @@ export function ComposeThreadDialog({
                   <Button
                     variant="ghost" size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
-                    onClick={() => setClient(null)} aria-label="Clear recipient"
+                    onClick={() => setClient(null)} disabled={bound} aria-label="Clear recipient"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -603,7 +670,7 @@ export function ComposeThreadDialog({
             {channel === "email" && (
               <div className="space-y-1.5">
                 <Label>Subject</Label>
-                <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="h-9" />
+                <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="h-9" disabled={bound&&leadReplyReview.blocksEditing} />
               </div>
             )}
 
@@ -612,6 +679,7 @@ export function ComposeThreadDialog({
               <Label>Message</Label>
               <Textarea
                 value={body}
+                disabled={bound&&leadReplyReview.blocksEditing}
                 onChange={(e) => setBody(e.target.value)}
                 rows={5}
                 placeholder={client ? `Write your message to ${client.name}…` : "Write your message…"}
@@ -743,10 +811,11 @@ export function ComposeThreadDialog({
             )}
           </div>
 
+          {leadReplyReview.panel}
           <DialogFooter className="flex-row items-center justify-between gap-2 sm:justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={sending}>
-                Cancel
+              <Button variant="ghost" size="sm" onClick={close} disabled={sending||leadReplyReview.blocksEditing}>
+                {bound?"Cancel reply edit":"Cancel"}
               </Button>
               <Popover open={scheduleOpen} onOpenChange={setScheduleOpen}>
                 <PopoverTrigger asChild>
@@ -791,7 +860,7 @@ export function ComposeThreadDialog({
                 : scheduledFor
                   ? <Clock className="mr-1.5 h-4 w-4" />
                   : <Send className="mr-1.5 h-4 w-4" />}
-              {scheduledFor ? "Schedule" : "Send"}
+              {bound?"Review reply":scheduledFor ? "Schedule" : "Send"}
             </Button>
           </DialogFooter>
         </DialogContent>

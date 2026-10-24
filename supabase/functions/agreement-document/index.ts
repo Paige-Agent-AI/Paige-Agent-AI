@@ -23,10 +23,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 import { sha256Hex } from "../_shared/agreements/token.ts";
 import { TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
+import { isPortalDoorRequest, resolvePortalDocument } from "../_shared/agreements/portal-door.ts";
+import { verifyRetainedAgreementPdf } from "../_shared/agreements/retained-document.ts";
+import { handleOwnerPreparation } from "../_shared/agreements/owner-preparation-http.ts";
+import type { OwnerPreparationCaller, OwnerPreparationService } from "../_shared/agreements/owner-preparation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Cache-Control": "no-store",
 };
 
@@ -40,6 +45,11 @@ const json = (body: unknown, status = 200) =>
 const refuse = () =>
   json({ ok: false, error: "This link is not valid. Ask the sender for a new copy." }, 404);
 
+const unavailableDocument = () => json({
+  ok: false,
+  error: "This document is temporarily unavailable. Please try again shortly.",
+}, 503);
+
 const serviceClient = () =>
   createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
     auth: { persistSession: false },
@@ -47,7 +57,7 @@ const serviceClient = () =>
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "GET") return json({ ok: false, error: "GET only" }, 405);
+  if (req.method !== "GET" && req.method !== "POST") return json({ ok: false, error: "GET or POST only" }, 405);
 
   const db = serviceClient();
   const url = new URL(req.url);
@@ -59,13 +69,58 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ ok: false, error: "Too many attempts. Please wait a moment and try again." }, 429);
   }
 
+  if (req.method === "POST" || url.searchParams.has("preparation")) {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader) return json({ ok: false, error: "Agreement access could not be verified." }, 403);
+    const caller = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } }, auth: { persistSession: false },
+    });
+    const service: OwnerPreparationService = {
+      rpc: (name, args) => db.rpc(name, args),
+      storage: db.storage,
+      originalUploadPath: async (tenantId, agreementId) => {
+        const { data, error } = await db.from("paige_agreements").select("document_path")
+          .eq("id", agreementId).eq("tenant_id", tenantId).maybeSingle();
+        if (error || !data || typeof data.document_path !== "string") return null;
+        return data.document_path;
+      },
+    };
+    return handleOwnerPreparation(req, caller as unknown as OwnerPreparationCaller, service, corsHeaders,
+      actorId => overRateLimit(db, `ad:prepare:${actorId}`, 120, 3600, true));
+  }
+
   const token = (url.searchParams.get("token") ?? "").trim();
   const agreementParam = (url.searchParams.get("agreementId") ?? "").trim();
 
   let sealedKey: string | null = null;
+  let expectedDigest: unknown = null;
   let filename = "agreement.pdf";
+  let disposition: "inline" | "attachment" = "inline";
 
-  if (token) {
+  if (isPortalDoorRequest(url.searchParams)) {
+    // ── DOOR THREE: the business's customer, signed in to their portal (E09) ──────────────────────
+    // Checked FIRST because it carries the same agreementId + Authorization as door two, which a
+    // portal login fails by construction. Access is decided by the caller-JWT scope function; see
+    // _shared/agreements/portal-door.ts. Only their own completed, sealed copy; never a signed URL.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const caller = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const door = await resolvePortalDocument(url.searchParams, authHeader, caller as never, db as never);
+    if (!door) return refuse();
+    sealedKey = door.sealedKey;
+    // The original portal scope already proved this exact requested agreement.
+    // Bind its checksum to that SAME id/key/completed triple, never a key-only
+    // lookup or another client's record. The portal contract itself is unchanged.
+    const { data: retained, error: retainedError } = await db.from("paige_agreements")
+      .select("sealed_sha256").eq("id", agreementParam.toLowerCase())
+      .eq("sealed_storage_key", sealedKey).eq("status", "completed").maybeSingle();
+    if (retainedError || !retained) return refuse();
+    expectedDigest = retained.sealed_sha256;
+    filename = safeFilename(door.title);
+    disposition = door.disposition;
+  } else if (token) {
     // ── DOOR ONE: the signer's retrieval token ───────────────────────────────────────────────────
     if (!TOKEN_SHAPE.test(token)) return refuse();
     const tokenHash = await sha256Hex(token);
@@ -84,7 +139,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // The agreement is read FROM THE TOKEN ROW. No query parameter names or steers it.
     const { data: agreement } = await db.from("paige_agreements")
-      .select("id,title,status,content_storage_key,sealed_storage_key")
+      .select("id,title,status,content_storage_key,sealed_storage_key,content_sha256,sealed_sha256")
       .eq("id", signer.agreement_id).maybeSingle();
     if (!agreement) return refuse();
 
@@ -97,9 +152,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (agreement.status === "completed") {
       if (!agreement.sealed_storage_key) return refuse();
       sealedKey = String(agreement.sealed_storage_key);
+      expectedDigest = agreement.sealed_sha256;
     } else if (["sent", "viewed", "partially_signed"].includes(String(agreement.status))) {
       if (!agreement.content_storage_key) return refuse();
       sealedKey = String(agreement.content_storage_key);
+      expectedDigest = agreement.content_sha256;
     } else {
       return refuse();
     }
@@ -124,10 +181,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (isAdmin !== true) return refuse();
 
     const { data: agreement } = await db.from("paige_agreements")
-      .select("id,title,status,sealed_storage_key")
+      .select("id,title,status,sealed_storage_key,sealed_sha256")
       .eq("id", agreementParam).eq("tenant_id", tenantId).maybeSingle();
     if (!agreement || agreement.status !== "completed" || !agreement.sealed_storage_key) return refuse();
     sealedKey = String(agreement.sealed_storage_key);
+    expectedDigest = agreement.sealed_sha256;
     filename = safeFilename(String(agreement.title));
   }
 
@@ -144,12 +202,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }, 503);
   }
 
-  return new Response(await file.data.arrayBuffer(), {
+  let retainedBytes: ArrayBuffer;
+  try {
+    retainedBytes = await file.data.arrayBuffer();
+    if (!await verifyRetainedAgreementPdf(new Uint8Array(retainedBytes), expectedDigest)) {
+      console.error("[agreement-document] retained document integrity could not be verified");
+      return unavailableDocument();
+    }
+  } catch {
+    console.error("[agreement-document] retained document bytes could not be verified");
+    return unavailableDocument();
+  }
+
+  return new Response(retainedBytes, {
     status: 200,
     headers: {
       ...corsHeaders,
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${filename}"`,
+      "Content-Disposition": `${disposition}; filename="${filename}"`,
       "X-Content-Type-Options": "nosniff",
       // The bytes are a signed legal document. Nothing caches them anywhere but the reader's screen.
       "Cache-Control": "no-store, private",

@@ -1,0 +1,115 @@
+/* E09 Slice 4 — "Files for {client}" on the Solo client record, after "Shared with {client}".
+   Operate mode in the record's own pg-token world, a sibling of client-shared-work.css: one list in
+   three plain sections (shared / from the client / private), each row naming the file and what it is,
+   an Open action and, on the business's own files, a switch for whether the client sees it. No card
+   grid, no eyebrow, no coloured stripe, no gold — sharing is a visibility setting, not an approval.
+   Every transition sits behind prefers-reduced-motion. */
+.trc-files { container-type: inline-size; }
+/* One header layout in every state: title and its actions share the first line, the rule sits beneath at full
+   width. On a phone-width pane the actions drop below the rule, left-aligned — empty or populated alike. */
+.trc-files-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title meta" "lede lede"; align-items: center; gap: 4px 12px; padding: 13px 14px 12px; border-bottom: 1px solid var(--pg-line-soft); }
+.trc-files-title { grid-area: title; margin: 0; min-width: 0; overflow-wrap: anywhere; font: 600 16px/1.25 var(--pg-font-display); letter-spacing: -0.01em; }
+.trc-files-lede { grid-area: lede; margin: 0; max-width: 62ch; color: var(--pg-muted); font-size: 12.5px; line-height: 1.45; }
+.trc-files-meta { grid-area: meta; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 8px; margin-block: -8px; }
+
+.trc-files-quiet-btn:disabled { opacity: .6; cursor: progress; }
+/* Scoped under .trc-files so the shell's "[data-tenant-shell] button { font: inherit }" cannot resize them: every
+   action in the section is 12.5px, in the header and in the body alike. */
+.trc-files .trc-files-refresh, .trc-files .trc-files-add, .trc-files .trc-files-quiet-btn { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; border-radius: var(--pg-r-chip); font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.trc-files .trc-files-refresh { border: 0; background: transparent; color: var(--pg-muted); font-weight: 500; padding: 0 8px; }
+/* Open is a quiet text action: the switch is the row's one decision, so Open never competes with it. */
+.trc-files .trc-files-open { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 0; border-radius: var(--pg-r-chip); background: transparent; color: var(--pg-ink-2); font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.trc-files-open svg { width: 13px; height: 13px; }
+.trc-files-open:hover { color: var(--pg-ink); background: var(--pg-surface); }
+.trc-files-open:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+.trc-files-add, .trc-files-quiet-btn { border: 1px solid var(--pg-line); background: var(--pg-surface); color: var(--pg-ink); }
+.trc-files-refresh svg, .trc-files-add svg, .trc-files-quiet-btn svg { width: 13px; height: 13px; }
+.trc-files-refresh:hover:not([aria-disabled="true"]) { color: var(--pg-ink); background: var(--pg-surface); }
+.trc-files-add:hover:not([aria-disabled="true"]), .trc-files-quiet-btn:hover:not([aria-disabled="true"]) { border-color: var(--pg-line-strong); background: var(--pg-raised); }
+.trc-files-refresh[aria-disabled="true"], .trc-files-add[aria-disabled="true"], .trc-files-quiet-btn[aria-disabled="true"] { opacity: .6; cursor: progress; }
+.trc-files-refresh:focus-visible, .trc-files-add:focus-visible, .trc-files-quiet-btn:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+
+.trc-files-connect { margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--pg-line-soft); background: var(--pg-surface); color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; }
+
+.trc-files-upload { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 10px 14px 0; padding: 8px 10px 8px 12px; border: 1px solid var(--pg-line); border-radius: 8px; background: var(--pg-surface); color: var(--pg-ink); font-size: 12.5px; line-height: 1.45; }
+.trc-files-upload p { margin: 0; min-width: 0; flex: 1 1 16rem; overflow-wrap: anywhere; }
+.trc-files-upload > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.trc-files-upload[data-kind="saved"] { border-color: color-mix(in srgb, var(--pg-positive) 45%, var(--pg-line)); }
+.trc-files-upload[data-kind="uncertain"], .trc-files-upload[data-kind="continue"] { border-color: color-mix(in srgb, var(--pg-warning) 50%, var(--pg-line)); }
+.trc-files-upload[data-kind="error"] { border-color: color-mix(in srgb, var(--pg-negative) 55%, var(--pg-line)); }
+
+.trc-files-group + .trc-files-group { border-top: 1px solid var(--pg-line-soft); }
+.trc-files-group h4 { display: flex; align-items: baseline; gap: 8px; margin: 0; padding: 12px 14px 4px; color: var(--pg-ink-2); font: 600 12.5px/1.3 var(--pg-font-ui, inherit); }
+.trc-files-count { color: var(--pg-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.trc-files-none { margin: 0; padding: 2px 14px 12px; color: var(--pg-muted); font-size: 12.5px; line-height: 1.45; }
+
+.trc-files-rows { margin: 0; padding: 0; list-style: none; }
+.trc-files-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "icon item control" "note note note"; align-items: center; gap: 4px 12px; padding: 6px 14px; }
+.trc-files-row + .trc-files-row { border-top: 1px solid var(--pg-line-soft); }
+.trc-files-icon { grid-area: icon; width: 16px; height: 16px; color: var(--pg-muted); }
+/* Shared carries the record's indigo (what the client sees); private and from-the-client stay neutral. */
+.trc-files-icon[data-kind="shared"] { color: var(--pg-violet); }
+.trc-files-icon[data-kind="client"] { color: var(--pg-ink-2); }
+.trc-files-item { grid-area: item; display: grid; gap: 2px; min-width: 0; padding: 4px 0; }
+.trc-files-item strong { color: var(--pg-ink); font: 600 14px/1.35 var(--pg-font-ui, inherit); overflow-wrap: anywhere; }
+.trc-files-item > span { color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.trc-files-item .trc-files-quiet { color: var(--pg-muted); }
+.trc-files-nowrap { white-space: nowrap; }
+.trc-files-control { grid-area: control; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 10px; }
+
+/* The whole label is the target: 44px tall, so the 24px switch is never the only thing to hit. */
+.trc-files-toggle { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 2px 0 8px; border-radius: var(--pg-r-chip); color: var(--pg-ink-2); font-size: 12.5px; font-weight: 600; cursor: pointer; user-select: none; }
+.trc-files-toggle > span { min-width: 4.5rem; text-align: right; }
+.trc-files .trc-files-switch[data-state="unchecked"] { border-color: var(--pg-muted); background: transparent; }
+.trc-files .trc-files-switch > span { background: var(--pg-muted); box-shadow: 0 1px 2px color-mix(in srgb, var(--pg-env) 40%, transparent); }
+.trc-files .trc-files-switch[data-state="checked"] { border-color: var(--pg-violet); background: var(--pg-violet); }
+.trc-files .trc-files-switch[data-state="checked"] > span { background: var(--pg-canvas); }
+.trc-files .trc-files-switch:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; box-shadow: none; }
+.trc-files .trc-files-switch:disabled { opacity: .6; cursor: progress; }
+
+.trc-files-note { grid-area: note; margin: 0 0 6px; padding: 8px 10px; border: 1px solid var(--pg-line); border-radius: 8px; background: var(--pg-surface); color: var(--pg-ink); font-size: 12.5px; line-height: 1.45; }
+/* The fallback link when a browser blocks the new tab: ink, not the shell's gold link colour ([data-pg] a) — opening a
+   file is not the act — and a full 44px target on its own line. */
+.trc-files .trc-files-note a { display: flex; align-items: center; min-height: 44px; width: fit-content; max-width: 100%; color: var(--pg-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.trc-files .trc-files-note a:hover { color: var(--pg-ink); text-decoration-thickness: 2px; }
+.trc-files .trc-files-note a:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+.trc-files-note[data-tone="ok"] { border-color: color-mix(in srgb, var(--pg-positive) 45%, var(--pg-line)); }
+.trc-files-note[data-tone="warn"] { border-color: color-mix(in srgb, var(--pg-warning) 50%, var(--pg-line)); }
+.trc-files-note[data-tone="bad"] { border-color: color-mix(in srgb, var(--pg-negative) 55%, var(--pg-line)); }
+
+.trc-files-foot { margin: 0; padding: 10px 14px 13px; border-top: 1px solid var(--pg-line-soft); color: var(--pg-muted); font-size: 11.5px; }
+.trc-files-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.trc-files-more p { margin: 0; }
+.trc-files-more .trc-files-more-error { flex-basis: 100%; color: var(--pg-ink-2); }
+.trc-files-empty, .trc-files-state { display: grid; justify-items: start; gap: 6px; margin: 0; padding: 16px 14px; color: var(--pg-ink-2); font-size: 12.5px; }
+.trc-files-empty p, .trc-files-state p { margin: 0; max-width: 62ch; }
+.trc-files-empty strong { color: var(--pg-ink); font-size: 13.5px; }
+.trc-files-empty .trc-files-add { margin-top: 4px; }
+
+.trc-files-skeleton b, .trc-files-skeleton i { display: block; height: 12px; border-radius: 6px; background: var(--pg-line-soft); }
+.trc-files-skeleton { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "item control" "meta control"; min-height: 56px; }
+.trc-files-skeleton b:first-child { grid-area: item; width: 55%; height: 14px; }
+.trc-files-skeleton b:nth-child(2) { grid-area: meta; width: 35%; }
+.trc-files-skeleton i { grid-area: control; width: 44px; height: 24px; border-radius: var(--pg-r-pill); }
+
+@container (max-width: 420px) {
+  .trc-files-head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "lede" "meta"; }
+  .trc-files-meta { justify-content: flex-start; margin: 4px 0 -6px -8px; }
+}
+@container (max-width: 480px) {
+  /* A phone's record pane: the file takes the full width and its actions sit beneath it, left-aligned. */
+  .trc-files-row { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "icon item" "control control" "note note"; gap: 0 10px; }
+  .trc-files-control { justify-content: space-between; margin-left: -10px; }
+  .trc-files-toggle { flex-direction: row-reverse; padding: 0; }
+  .trc-files-toggle > span { min-width: 0; text-align: left; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .trc-files-content > * { animation: trc-files-in 160ms cubic-bezier(.2, .7, .2, 1) both; }
+  .trc-files-note, .trc-files-upload { animation: trc-files-in 160ms cubic-bezier(.2, .7, .2, 1) both; }
+  .trc-files-skeleton b, .trc-files-skeleton i { animation: trc-files-pulse 1.4s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trc-files .trc-files-switch, .trc-files .trc-files-switch > span { transition: none; }
+}
+@keyframes trc-files-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes trc-files-pulse { 50% { opacity: .55; } }

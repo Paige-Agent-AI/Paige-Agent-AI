@@ -1,0 +1,48 @@
+[
+  {
+    "scope": "a",
+    "entry": {
+      "label": [
+        "Responsibility"
+      ],
+      "panelScroll": 304,
+      "panelWidth": 304,
+      "tag": "INPUT",
+      "width": 320
+    },
+    "edit": {
+      "activeTag": "SELECT",
+      "labels": [
+        "DayMondayTuesdayWednesdayThursdayFridaySaturdaySunday"
+      ]
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "buttonHeight": 44,
+      "form": false
+    }
+  },
+  {
+    "scope": "b",
+    "entry": {
+      "label": [
+        "Responsibility"
+      ],
+      "panelScroll": 304,
+      "panelWidth": 304,
+      "tag": "INPUT",
+      "width": 320
+    },
+    "edit": {
+      "activeTag": "SELECT",
+      "labels": [
+        "DayMondayTuesdayWednesdayThursdayFridaySaturdaySunday"
+      ]
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "buttonHeight": 44,
+      "form": false
+    }
+  }
+]

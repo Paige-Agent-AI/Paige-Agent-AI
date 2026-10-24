@@ -1,0 +1,16 @@
+{
+  "classification": "SUBSEQUENT_SOURCE_AMENDMENT",
+  "reason": "Lifted React setter is now explicitly present in the inherited hasPipeline effect dependency list. The parent supplies its stable useState setter. No markup, CSS, event arguments, data reader, writer, authorization, navigation decision or state value changes. All191 tests and102 actual-current-component renders passed again. Native images remain original captures; no pixel or original source hash rewritten.",
+  "former": {
+    "path": "src/solo/settings-automations.tsx",
+    "sha256": "c212d9d5474b3663d256d41d226783fa582ca7cfdc9d9e17abf5ca2e4720377c"
+  },
+  "current": {
+    "path": "src/solo/settings-automations.tsx",
+    "sha256": "3d7ed1624f15a18e09cf4fd0afec1ae82e46e325ffdd2edeb8c1afbbbd6102db"
+  },
+  "compiledCssUnchanged": true,
+  "originalNativeSourceManifestSha256": "e607dceca6bcd3157dc959b35781338cbad8640302d890ebc631f83358b8db4d",
+  "currentSourceManifestSha256": "29585688baabf9e17dba5d0d75a1ad1534e8eed6b7c8939ee8cfa0dfd8739627",
+  "finalNonAuthorEquivalenceReview": "PENDING"
+}

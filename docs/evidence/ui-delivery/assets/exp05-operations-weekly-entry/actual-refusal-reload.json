@@ -1,0 +1,13 @@
+{
+  "unavailableRetry": {
+    "falseEmpty": false,
+    "prepare": false,
+    "unavailable": true
+  },
+  "reload": {
+    "dialogs": 0,
+    "paige": "closed",
+    "weeklyEntries": 1
+  },
+  "identityScope": "neutral synthetic fixture ports, not authenticated QA"
+}

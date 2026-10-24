@@ -1,0 +1,49 @@
+{
+  "actions": [
+    {
+      "rect": {
+        "height": 44,
+        "width": 167.0124969482422,
+        "x": 546.7875366210938,
+        "y": 193.40000915527344
+      },
+      "text": "Weekly responsibility"
+    },
+    {
+      "rect": {
+        "height": 44,
+        "width": 144.60000610351562,
+        "x": 721.7999877929688,
+        "y": 193.40000915527344
+      },
+      "text": "Plan with PAIGE"
+    }
+  ],
+  "fixtureError": "",
+  "focus": {
+    "label": null,
+    "outline": "rgb(246, 242, 234) none 2.4px",
+    "text": "Native integration controls · offline"
+  },
+  "fontSize": "16px",
+  "h1Count": 1,
+  "headerIntroCount": 0,
+  "headerRect": {
+    "height": 44,
+    "width": 770.4000244140625,
+    "x": 96,
+    "y": 193.40000915527344
+  },
+  "heading": "Your operating week",
+  "headingColor": "rgb(23, 19, 49)",
+  "lineHeight": "22.4px",
+  "pageWidth": 900,
+  "theme": "light",
+  "url": "/solo/1701/operations/overview",
+  "viewport": {
+    "dpr": 1.0000000149011612,
+    "height": 1000,
+    "width": 900
+  },
+  "weight": "600"
+}

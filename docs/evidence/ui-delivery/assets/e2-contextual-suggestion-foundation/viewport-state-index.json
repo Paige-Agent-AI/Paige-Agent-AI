@@ -1,0 +1,610 @@
+{
+  "sources": [
+    {
+      "sha256": "a725d172dd9857b0795034742ee7e5dc5482a6de7e9ae8e3baeb3d0e706a8161",
+      "path": "src/components/dashboard/PaigeAIChat.tsx"
+    },
+    {
+      "sha256": "6309fced0e68d759e9989ee74b494029e97d68ce8e4751d88086d80398805318",
+      "path": "src/components/chat/ContextualSuggestion.tsx"
+    },
+    {
+      "sha256": "a3768c2ccea13465c7bd794e51316737deb57bae6fb0c02adc7a96eebf9c5fc1",
+      "path": "src/components/chat/contextual-suggestion.css"
+    }
+  ],
+  "effects": "Original local fixtures and refused I/O; no provider, business action or customer records",
+  "kind": "NATIVE_CHAT_SYNTHETIC_PORTS",
+  "nativeZoom": "UNVERIFIED",
+  "frames": [
+    {
+      "name": "1536-closed",
+      "chip": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "composer": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "css": [
+        1536,
+        770
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Restore synthetic suggestion",
+      "fontLoaded": true,
+      "panel": null,
+      "scrollWidth": 1536,
+      "transcript": {
+        "height": 0,
+        "scroll": 0,
+        "top": 0
+      },
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "76a33567cd8b629375b2e7090608c8da008632f31cf5813a556fc65ed5cff7e0"
+    },
+    {
+      "name": "1536-open",
+      "chip": {
+        "bottom": 579.2000122070312,
+        "height": 44,
+        "left": 1047.362548828125,
+        "right": 1203.0125579833984,
+        "top": 535.2000122070312,
+        "width": 155.65000915527344,
+        "x": 1047.362548828125,
+        "y": 535.2000122070312
+      },
+      "composer": {
+        "bottom": 713.6000213623047,
+        "height": 134.40000915527344,
+        "left": 1047.362548828125,
+        "right": 1503.2000427246094,
+        "top": 579.2000122070312,
+        "width": 455.8374938964844,
+        "x": 1047.362548828125,
+        "y": 579.2000122070312
+      },
+      "css": [
+        1536,
+        770
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "panel": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 579,
+          "height": 370,
+          "left": 639,
+          "right": 1035,
+          "top": 209,
+          "width": 396,
+          "x": 639,
+          "y": 209
+        }
+      },
+      "scrollWidth": 1536,
+      "transcript": {
+        "height": 440,
+        "scroll": 2298,
+        "top": 1857.5999755859375
+      },
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "7bb88ca38e7ae1f6654928ad4347ff6fd8a5b9fd44289865786722ed3f17c2f8"
+    },
+    {
+      "name": "1366-closed",
+      "chip": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "composer": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Direct PAIGE",
+      "fontLoaded": true,
+      "panel": null,
+      "scrollWidth": 1366,
+      "transcript": {
+        "height": 0,
+        "scroll": 0,
+        "top": 0
+      },
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "5bd68a8ac7a1ab9a8bfb83bbcf413e11d2bdc985c8fee8ffcb18482e2ece537b"
+    },
+    {
+      "name": "1366-open",
+      "chip": {
+        "bottom": 576.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1091.0749969482422,
+        "top": 532.7999877929688,
+        "width": 155.65000915527344,
+        "x": 935.4249877929688,
+        "y": 532.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "panel": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 577,
+          "height": 370,
+          "left": 527,
+          "right": 923,
+          "top": 207,
+          "width": 396,
+          "x": 527,
+          "y": 207
+        }
+      },
+      "scrollWidth": 1366,
+      "transcript": {
+        "height": 437,
+        "scroll": 2578,
+        "top": 2140
+      },
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "6207c98baac7698f70c652f3284c1851033313a724f660ca76d6bc1493ed569e"
+    },
+    {
+      "name": "1024-open",
+      "chip": {
+        "bottom": 530.8000183105469,
+        "height": 44,
+        "left": 647.6000366210938,
+        "right": 803.2500457763672,
+        "top": 486.8000183105469,
+        "width": 155.65000915527344,
+        "x": 647.6000366210938,
+        "y": 486.8000183105469
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 180.40000915527344,
+        "left": 647.6000366210938,
+        "right": 991.2000427246094,
+        "top": 530.7999877929688,
+        "width": 343.6000061035156,
+        "x": 647.6000366210938,
+        "y": 530.7999877929688
+      },
+      "css": [
+        1024,
+        768
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Service handoffSynthetic prepared source 1 · inspect only",
+      "fontLoaded": true,
+      "panel": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 569,
+          "height": 370,
+          "left": 314,
+          "right": 710,
+          "top": 199,
+          "width": 396,
+          "x": 314,
+          "y": 199
+        }
+      },
+      "scrollWidth": 1024,
+      "transcript": {
+        "height": 391,
+        "scroll": 3138,
+        "top": 2746.39990234375
+      },
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "79ecbea88b1bc96074c68adfef500f55101d3358988d17401fcfb371b2c61f9b"
+    },
+    {
+      "name": "1024-closed",
+      "chip": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "composer": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "css": [
+        1024,
+        768
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Direct PAIGE",
+      "fontLoaded": true,
+      "panel": null,
+      "scrollWidth": 1024,
+      "transcript": {
+        "height": 0,
+        "scroll": 0,
+        "top": 0
+      },
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "f0b10ad06d8a9e73135348358328c0eb6ed50efd6944a81c888863b1073e3ab4"
+    },
+    {
+      "name": "900-closed",
+      "chip": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "composer": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "css": [
+        900,
+        1000
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Direct PAIGE",
+      "fontLoaded": true,
+      "panel": null,
+      "scrollWidth": 900,
+      "transcript": {
+        "height": 0,
+        "scroll": 0,
+        "top": 0
+      },
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "c58c37e7ac8cd5c1c401f2b80c81cabd258362c5f632355c0354c879f9a5ebff"
+    },
+    {
+      "name": "900-open",
+      "chip": {
+        "bottom": 762.7999877929688,
+        "height": 44,
+        "left": 523.6000366210938,
+        "right": 679.2500457763672,
+        "top": 718.7999877929688,
+        "width": 155.65000915527344,
+        "x": 523.6000366210938,
+        "y": 718.7999877929688
+      },
+      "composer": {
+        "bottom": 943.1999969482422,
+        "height": 180.40000915527344,
+        "left": 523.6000366210938,
+        "right": 867.2000427246094,
+        "top": 762.7999877929688,
+        "width": 343.6000061035156,
+        "x": 523.6000366210938,
+        "y": 762.7999877929688
+      },
+      "css": [
+        900,
+        1000
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Service handoffSynthetic prepared source 1 · inspect only",
+      "fontLoaded": true,
+      "panel": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 685,
+          "height": 370,
+          "left": 252,
+          "right": 648,
+          "top": 315,
+          "width": 396,
+          "x": 252,
+          "y": 315
+        }
+      },
+      "scrollWidth": 900,
+      "transcript": {
+        "height": 623,
+        "scroll": 3138,
+        "top": 2514.39990234375
+      },
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "0a7f398f061db9a31773f6019dc3b796160fee9e2c0598bd8d35124d2502d5b4"
+    },
+    {
+      "name": "320-overview",
+      "chip": {
+        "bottom": 517.8000183105469,
+        "height": 61,
+        "left": 101.5999984741211,
+        "right": 239.20000457763672,
+        "top": 456.8000183105469,
+        "width": 137.60000610351562,
+        "x": 101.5999984741211,
+        "y": 456.8000183105469
+      },
+      "composer": {
+        "bottom": 787.1999816894531,
+        "height": 269.3999938964844,
+        "left": 101.5999984741211,
+        "right": 291.2000045776367,
+        "top": 517.7999877929688,
+        "width": 189.6000061035156,
+        "x": 101.5999984741211,
+        "y": 517.7999877929688
+      },
+      "css": [
+        320,
+        844
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Service handoffSynthetic prepared source 1 · inspect only",
+      "fontLoaded": true,
+      "panel": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 630.4000244140625,
+          "height": 416.8000183105469,
+          "left": 12,
+          "right": 308,
+          "top": 213.6000061035156,
+          "width": 296,
+          "x": 12,
+          "y": 213.6000061035156
+        }
+      },
+      "scrollWidth": 320,
+      "transcript": {
+        "height": 278,
+        "scroll": 6852,
+        "top": 6573.60009765625
+      },
+      "raster": {
+        "height": 844,
+        "width": 320
+      },
+      "sha256": "ce410e77868fa90e4d33cc529b77fe1dd3452131efc1ed3fbc7add39aef1164c"
+    },
+    {
+      "name": "320-chip",
+      "chip": {
+        "bottom": 542.8000183105469,
+        "height": 61,
+        "left": 101.5999984741211,
+        "right": 239.20000457763672,
+        "top": 481.8000183105469,
+        "width": 137.60000610351562,
+        "x": 101.5999984741211,
+        "y": 481.8000183105469
+      },
+      "composer": {
+        "bottom": 787.1999969482422,
+        "height": 244.40000915527344,
+        "left": 101.5999984741211,
+        "right": 291.2000045776367,
+        "top": 542.7999877929688,
+        "width": 189.6000061035156,
+        "x": 101.5999984741211,
+        "y": 542.7999877929688
+      },
+      "css": [
+        320,
+        844
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "3 items to review ▾",
+      "fontLoaded": true,
+      "panel": null,
+      "scrollWidth": 320,
+      "transcript": {
+        "height": 303,
+        "scroll": 6261,
+        "top": 5957.60009765625
+      },
+      "raster": {
+        "height": 844,
+        "width": 320
+      },
+      "sha256": "e20ed24334ed4dec00922a4f8dba6e97ef758e8209c6fd9300bcb3a2b8e41b17"
+    },
+    {
+      "name": "1366-obsidian",
+      "chip": {
+        "bottom": 576.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1091.0749969482422,
+        "top": 532.7999877929688,
+        "width": 155.65000915527344,
+        "x": 935.4249877929688,
+        "y": 532.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "panel": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 577,
+          "height": 370,
+          "left": 527,
+          "right": 923,
+          "top": 207,
+          "width": 396,
+          "x": 527,
+          "y": 207
+        }
+      },
+      "scrollWidth": 1366,
+      "transcript": {
+        "height": 437,
+        "scroll": 2578,
+        "top": 2140
+      },
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "bc16baefa8fb25a1ff1e82d4e58f52a2d4d1d1554781d07fbcd43e9758a92a0e"
+    },
+    {
+      "name": "1366-reduced-motion",
+      "chip": {
+        "bottom": 576.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1091.0749969482422,
+        "top": 532.7999877929688,
+        "width": 155.65000915527344,
+        "x": 935.4249877929688,
+        "y": 532.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "draft": "Preserve this UNSENT contextual-review draft.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "panel": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 577,
+          "height": 370,
+          "left": 527,
+          "right": 923,
+          "top": 207,
+          "width": 396,
+          "x": 527,
+          "y": 207
+        }
+      },
+      "scrollWidth": 1366,
+      "transcript": {
+        "height": 437,
+        "scroll": 2578,
+        "top": 2140
+      },
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "bc16baefa8fb25a1ff1e82d4e58f52a2d4d1d1554781d07fbcd43e9758a92a0e"
+    }
+  ],
+  "authenticatedRuntime": "UNVERIFIED"
+}

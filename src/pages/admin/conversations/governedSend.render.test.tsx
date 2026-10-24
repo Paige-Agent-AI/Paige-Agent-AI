@@ -16,7 +16,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GOVERNED_SEND_COLS, SENDING_WINDOW_MS, governedSendView, isApprovableDraft } from "./governedSend";
 import type { MessageRow } from "./inbox-shared";
 
@@ -24,6 +24,11 @@ const db = vi.hoisted(() => ({
   messages: [] as Array<Record<string, unknown>>,
   threads: [] as Array<Record<string, unknown>>,
   selects: [] as Array<{ table: string; cols: string }>,
+  cancellations: [] as string[],
+  cancel: async (): Promise<{ data: unknown; error: unknown }> => ({ data: true, error: null }),
+  contact: null as Record<string, unknown> | null,
+  invokes: [] as string[],
+  draft: null as null | (() => Promise<{ data: unknown; error: unknown }>),
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -42,7 +47,7 @@ vi.mock("@/integrations/supabase/client", () => {
     const proxy: Record<string, unknown> = new Proxy({}, {
       get(_t, key) {
         if (key === "then") return (ok: (v: unknown) => void) => ok(result());
-        if (key === "single" || key === "maybeSingle") return () => Promise.resolve({ data: null, error: null });
+        if (key === "single" || key === "maybeSingle") return () => Promise.resolve({ data: table === "clients" ? db.contact : null, error: null });
         if (key === "select") return (cols: string) => { db.selects.push({ table, cols }); return proxy; };
         return () => proxy;
       },
@@ -53,11 +58,17 @@ vi.mock("@/integrations/supabase/client", () => {
   return {
     supabase: {
       from: (table: string) => builder(table),
-      rpc: (name: string) => Promise.resolve({ data: name === "current_user_tenant_id" ? "tenant-a" : [], error: null }),
+      rpc: (name: string, args?: { _id?: string }) => {
+        if (name === "cancel_scheduled_message") { db.cancellations.push(args?._id ?? ""); return db.cancel(); }
+        return Promise.resolve({ data: name === "current_user_tenant_id" ? "tenant-a" : [], error: null });
+      },
       channel: () => channel,
       removeChannel: () => {},
-      auth: { getUser: () => Promise.resolve({ data: { user: { id: "owner-1" } } }) },
-      functions: { invoke: () => Promise.resolve({ data: null, error: null }) },
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: { id: "owner-1" } } }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      },
+      functions: { invoke: (name: string) => { db.invokes.push(name); if (name === "subagent-email-composer" && db.draft) return db.draft(); return Promise.resolve({ data: { outcome: "queued_scheduled", message_id: "queued-1" }, error: null }); } },
       storage: { from: () => ({ upload: () => Promise.resolve({ data: null, error: null }), createSignedUrl: () => Promise.resolve({ data: null, error: null }) }) },
     },
   };
@@ -78,6 +89,8 @@ vi.mock("framer-motion", async (importOriginal) => ({
 vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), message: vi.fn() }) }));
 
 import ClientsConversations from "@/pages/admin/ClientsConversations";
+import { ComposeThreadDialog } from "./ComposeThreadDialog";
+import { toast } from "sonner";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 Element.prototype.scrollIntoView = function scrollIntoView() {};
@@ -115,6 +128,10 @@ const flush = async () => {
 };
 
 const mounted: Array<() => Promise<void>> = [];
+beforeEach(() => {
+  vi.clearAllMocks(); db.cancellations = []; db.invokes = []; db.contact = client; db.draft = null;
+  db.cancel = async () => ({ data: true, error: null });
+});
 afterEach(async () => { while (mounted.length) await mounted.pop()!(); });
 
 async function mountInbox(path: string) {
@@ -131,6 +148,35 @@ async function mountInbox(path: string) {
 }
 
 const buttons = (host: HTMLElement) => Array.from(host.querySelectorAll("button")).map((b) => (b.textContent ?? "").trim());
+
+describe("draft assistance stays with its original conversation", () => {
+  async function start() {
+    const otherKey = "contact:tenant-a:contact-2";
+    const otherClient = { ...client, id: "contact-2", first_name: "Test", last_name: "Recipient", client_contact_methods: [{ kind: "email", value: "other@example.test", is_primary: true }] };
+    db.messages = [message({ direction: "inbound", status: "received" }), message({ id: "m-2", thread_key: otherKey, contact_id: "contact-2", direction: "inbound", status: "received", clients: otherClient })];
+    db.threads = [thread, { ...thread, id: "t-2", thread_key: otherKey, contact_id: "contact-2", clients: otherClient }];
+    let finish!: (answer: { data: unknown; error: unknown }) => void;
+    db.draft = () => new Promise(resolve => { finish = resolve; });
+    const host = await mountInbox("/solo/3855/clients/conversations");
+    const select = async (key: string) => {
+      const row = [...host.querySelectorAll<HTMLElement>("[data-thread-key]")].find(el => el.dataset.threadKey === key);
+      expect(row).toBeTruthy(); await act(async () => { row!.click(); await flush(); });
+    };
+    await select(KEY);
+    const draft = [...host.querySelectorAll("button")].find(b => b.textContent?.trim() === "Draft with Paige");
+    expect(draft).toBeTruthy(); await act(async () => { draft!.click(); await flush(); });
+    expect(db.invokes).toEqual(["subagent-email-composer"]);
+    return { host, select, otherKey, finish };
+  }
+  it.each([false, true])("retains the existing same-thread positive draft path (reselect: %s)", async reselect => {
+    const { host, select, finish } = await start();
+    if (reselect) await select(KEY);
+    await act(async () => { finish({ data: { draft: { subject: "Original inquiry", body_text: "Reply for original contact" } }, error: null }); await flush(); });
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")?.value).toBe("Reply for original contact");
+    expect(toast.success).toHaveBeenCalledWith("Paige drafted a reply — review before you send.");
+  });
+});
+
 
 describe("the inbox reads the governed-send state it needs", () => {
   it("the message pull selects the two binding states (and nothing else from meta)", async () => {
@@ -168,6 +214,7 @@ describe.each([
     // Not counted as a draft anywhere on the page.
     expect(host.textContent).not.toContain("Draft ready");
   });
+
 
   it.each(["prepared", "dispatching"])("a send in flight (%s) reads Sending… with no controls", async (state) => {
     db.messages = [message({ comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", comms_email_state: state })];
@@ -226,6 +273,106 @@ describe.each([
     const host = await mountInbox(path);
     expect(buttons(host)).not.toContain("Approve & send");
     expect(host.textContent).toContain("Sending…");
+  });
+});
+
+// The new-conversation dialog's scheduled Undo — THIS PR's code (ComposeThreadDialog calls
+// requestScheduledCancellation). The inbox-surface variants it once shared a describe with were
+// superseded by main's Conversations hardening and stay retired; main's own suites cover that flow.
+describe("the new-conversation dialog's scheduled cancellation receipts", () => {
+  const outcomes: Array<[string, () => Promise<{data: unknown; error: unknown}>]> = [
+    ["false", async () => ({data:false,error:null})],
+    ["missing", async () => ({data:null,error:null})],
+    ["truthy malformed", async () => ({data:"true",error:null})],
+    ["missing error envelope", async () => ({data:true,error:undefined})],
+    ["error alongside true", async () => ({data:true,error:{message:"refused"}})],
+    ["transport rejection", async () => { throw new Error("offline"); }],
+  ];
+  async function queueWithUndo() {
+    const holder = document.createElement("div"); document.body.appendChild(holder);
+    const root = createRoot(holder);
+    const render = (tenant: string, open = true) => root.render(<MemoryRouter><ComposeThreadDialog open={open} onOpenChange={()=>{}} activeConnectors={[{id:"conn-1",channel_type:"email",provider:"resend",display_name:"Test business email",from_address:"hello@business.example"}]} tenantId={tenant} initialContact={{id:"contact-1",name:"Test lead"}} onSent={()=>{}} /></MemoryRouter>);
+    await act(async () => { render("tenant-a"); await flush(); });
+    for (let i=0;i<3;i++) await act(async () => { await flush(); });
+    mounted.push(async () => { await act(async () => {root.unmount();});holder.remove(); });
+    const changeTenant = async (tenant: string) => {await act(async () => {render(tenant);await flush();});};
+    const closeSameWorkspace = async () => {await act(async () => {render("tenant-a",false);await flush();});};
+    const host = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(host).toBeTruthy();
+    const subject = host.querySelector<HTMLInputElement>('input[placeholder="Subject"]')!;
+    const body = host.querySelector<HTMLTextAreaElement>("textarea")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(subject,"Test scheduled reply");
+      subject.dispatchEvent(new Event("input",{bubbles:true}));
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(body,"Please keep this draft.");
+      body.dispatchEvent(new Event("input",{bubbles:true})); await flush();
+    });
+    const send = [...host.querySelectorAll("button")].find(b=>b.textContent?.trim()==="Send")!;
+    expect(send).toBeTruthy(); expect(send.disabled).toBe(false);
+    await act(async () => {send.click();await flush();});
+    expect(db.invokes).toEqual(["send-message"]);
+    const call = vi.mocked(toast).mock.calls.find(([,options]) => (options as {action?:{label?:string}}|undefined)?.action?.label === "Undo");
+    expect(call).toBeTruthy();
+    const undo = (call![1] as unknown as {action:{onClick:()=>void}}).action.onClick;
+    return {undo,changeTenant,closeSameWorkspace};
+  }
+  it.each(outcomes)("reports %s as unconfirmed without inventing delivery or cancellation", async (_name,cancel) => {
+    db.cancel = cancel;
+    const {undo} = await queueWithUndo();
+    await act(async () => {undo();await flush();});
+    expect(db.cancellations).toEqual(["queued-1"]);
+    expect(toast.error).toHaveBeenCalledWith("Couldn't confirm cancellation. Check this conversation's status before trying again.");
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(db.invokes).toEqual(["send-message"]);
+  });
+  it("retains the confirmed Undo result",async()=>{
+    const {undo}=await queueWithUndo();
+    await act(async()=>{undo();await flush();});
+    expect(db.cancellations).toEqual(["queued-1"]);
+    expect(toast.success).toHaveBeenCalledWith("Undone.");
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+  it("never invokes an old Undo after switching workspaces A-B-A",async()=>{
+    const {undo,changeTenant}=await queueWithUndo();
+    await changeTenant("tenant-b"); await changeTenant("tenant-a");
+    vi.mocked(toast.error).mockClear();vi.mocked(toast.success).mockClear();
+    await act(async()=>{undo();await flush();});
+    expect(db.cancellations).toEqual([]);
+    expect(toast.error).not.toHaveBeenCalled();expect(toast.success).not.toHaveBeenCalled();
+  });
+  it("never invokes an old Undo after its component unmounts",async()=>{
+    const {undo}=await queueWithUndo(); await mounted.pop()!();
+    vi.mocked(toast.error).mockClear();vi.mocked(toast.success).mockClear();
+    await act(async()=>{undo();await flush();});
+    expect(db.cancellations).toEqual([]);
+    expect(toast.error).not.toHaveBeenCalled();expect(toast.success).not.toHaveBeenCalled();
+  });
+  it("keeps Undo usable after closing the dialog in the same workspace",async()=>{
+    const {undo,closeSameWorkspace}=await queueWithUndo(); await closeSameWorkspace();
+    await act(async()=>{undo();await flush();});
+    expect(db.cancellations).toEqual(["queued-1"]);
+    expect(toast.success).toHaveBeenCalledWith("Undone.");
+  });
+  it.each([true,false])("ignores a late %s cancellation answer after a workspace switch",async result=>{
+    let settle!: (receipt:{data:boolean;error:null})=>void;
+    db.cancel=()=>new Promise(resolve=>{settle=resolve;});
+    const {undo,changeTenant}=await queueWithUndo();
+    await act(async()=>{undo();await flush();});
+    expect(db.cancellations).toEqual(["queued-1"]);
+    await changeTenant("tenant-b");
+    vi.mocked(toast.success).mockClear();vi.mocked(toast.error).mockClear();
+    await act(async()=>{settle({data:result,error:null});await flush();});
+    expect(toast.success).not.toHaveBeenCalled();expect(toast.error).not.toHaveBeenCalled();
+  });
+  it("ignores a late cancellation answer after unmount",async()=>{
+    let settle!: (receipt:{data:boolean;error:null})=>void;
+    db.cancel=()=>new Promise(resolve=>{settle=resolve;});
+    const {undo}=await queueWithUndo();
+    await act(async()=>{undo();await flush();});
+    await mounted.pop()!();
+    vi.mocked(toast.success).mockClear();vi.mocked(toast.error).mockClear();
+    await act(async()=>{settle({data:true,error:null});await flush();});
+    expect(toast.success).not.toHaveBeenCalled();expect(toast.error).not.toHaveBeenCalled();
   });
 });
 

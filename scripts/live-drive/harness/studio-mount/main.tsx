@@ -7,7 +7,9 @@ import "@/components/tenant-shell/tenant-command-center-shell.css";
 
 // Structural harness: the real Vibe Studio over the shell's own chrome (the Studio is a full-screen
 // overlay, so the PAIGE dock sits under it). `?theme=light|dark`, `?paige=open|closed`,
-// `?approval=1`. The chat stream is a scripted SSE body. NOT the live app.
+// `?approval=1`, `?nexus=1` (threads a stub openPaige so the Plan/Review-with-NEXUS handoff is
+// drivable; the prefill event and the open/close marks are recorded on window). The chat stream is
+// a scripted SSE body. NOT the live app.
 const params = new URLSearchParams(window.location.search);
 const theme = params.get("theme") === "dark" ? "dark" : "light";
 const paige = params.get("paige") === "open" ? "open" : "closed";
@@ -48,8 +50,13 @@ const frames: Array<Record<string, unknown> | "HOLD" | "GATE"> =
     { choices: [{ delta: { content: "Added “What's your budget for this?” after the goal question. It's saved as a draft change; publish when you're ready." } }] },
   ];
 const realFetch = window.fetch.bind(window);
+// EXP07 row 1: every chat request body is recorded so a drive can assert exactly what Paige was
+// sent (the composed brief is the first message) — the fetch never reaches the network.
+declare global { interface Window { __chatBodies: Array<Record<string, unknown>> } }
+window.__chatBodies = [];
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (String(input).includes("/functions/v1/paige-ai-chat")) {
+    try { window.__chatBodies.push(JSON.parse(String(init?.body ?? "{}"))); } catch { /* keep the stream even if a body isn't JSON */ }
     const enc = new TextEncoder();
     const body = new ReadableStream<Uint8Array>({
       async start(c) {
@@ -67,13 +74,25 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 };
 
 function Harness() {
+  // ?nexus=1: the EXP06 NEXUS handoff, drivable without the real shell. A stub openPaige marks
+  // window.__nexusOpen, and every paige:prefill the seam dispatches is captured on
+  // window.__nexusHandoffs — the harness never mounts PAIGE's composer, so the prefill stays
+  // visible as "handed off, not sent".
+  const nexus = params.get("nexus") === "1";
+  if (nexus && !(window as unknown as { __nexusArmed?: boolean }).__nexusArmed) {
+    (window as unknown as { __nexusArmed?: boolean }).__nexusArmed = true;
+    (window as unknown as { __nexusHandoffs: string[] }).__nexusHandoffs = [];
+    window.addEventListener("paige:prefill", ((e: CustomEvent<{ prompt: string }>) => {
+      (window as unknown as { __nexusHandoffs: string[] }).__nexusHandoffs.push(e.detail.prompt);
+    }) as EventListener);
+  }
   return (
     <div data-tenant-shell data-nav="expanded" data-paige={paige}>
       <nav className="tcs-nav" />
       <section className="tcs-canvas">
         <header className="tcs-command-row"><div className="tcs-context"><span>Campaigns · structural harness</span></div></header>
         <main id="tenant-shell-main" className="tcs-main paige-solo" data-theme={theme}>
-          <VibeStudio onBack={() => { (window as unknown as { __closed: number }).__closed = 1; }} />
+          <VibeStudio onBack={() => { (window as unknown as { __closed: number }).__closed = 1; }} openPaige={nexus ? () => { (window as unknown as { __nexusOpen: number }).__nexusOpen = 1; } : undefined} />
         </main>
       </section>
       <aside className="tcs-paige" hidden={paige !== "open"} aria-label="PAIGE dock (harness placeholder)"><div className="tcs-paige-header"><span style={{ color: "var(--pg-ink)" }}>PAIGE</span></div></aside>

@@ -21,8 +21,8 @@
  *     waiting work, ranked deterministically, and labelled as derived.
  *   • Work in motion is the recorded Rail feed. An empty *ready* read is "No recorded work yet"
  *     (owner correction 2026-09-05) — never "nothing happened", never a fabricated feed.
- *   • Owner attribution is honest: a setup gap is the OWNER's; a Paige-drafted action or an
- *     at-risk-client move is Paige's (she drafts, the owner approves).
+ *   • Owner attribution is honest: a setup gap is the OWNER's; a Paige-drafted action is a
+ *     proposal until approved. Contact follow-up recommends inspecting original records.
  *   • The view-model carries NO route strings and NO internal identifiers for display — the
  *     component maps a semantic `destination` to a real route/handler, and all copy is plain.
  */
@@ -31,7 +31,7 @@ import { useCommandCenter } from "./useCommandCenter";
 import { useSoloSetupBrief, type SoloSetupSaveResult } from "./useSoloSetupBrief";
 import { useCatalogOffers } from "../useCatalogOffers";
 import { useSoloKnowledge } from "./useSoloKnowledge";
-import { useSoloPendingActions } from "./useSoloPendingActions";
+import { useSoloPendingActions, type SoloPendingActionsData } from "./useSoloPendingActions";
 import { useSoloActivityFeed, elapsedLabel, departmentLabel, type SoloActivityStatus } from "./useSoloActivityFeed";
 import { useSystemsCheck } from "@/hooks/useSystemsCheck";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -224,9 +224,12 @@ export interface SoloGamePlanView {
   playsStatus: PlaysStatus;
   /** Decision & opportunity desk items, each source-labelled. */
   decisions: DecisionItem[];
+  /** Original prepared rows/count for the spacious Desk; no second query. */
+  preparedReview: SoloPendingActionsData;
+  reviewScope: string | null;
   /** Whether the drafts read behind `decisions` resolved. On an OUTAGE (`pending.error`) this is
    *  "unavailable" so the deck never announces "All caught up" over a queue it couldn't check (§13). */
-  decisionsStatus: "ready" | "unavailable";
+  decisionsStatus: "loading" | "ready" | "unavailable";
   /** Supporting dependencies (demoted Systems Check) that can block a play. */
   dependencies: DependencyItem[];
   /** Whether the Systems Check read behind `dependencies` actually resolved. On an OUTAGE
@@ -273,15 +276,16 @@ function checkStateTitle(interp: string | null | undefined): string {
 }
 
 export function useSoloGamePlan(account: string, workspaceId?: string | null): SoloGamePlanView {
+  const { activeTenant, activeTenantId, activeUserId, isPlatformStaff } = useTenantContext();
+  const reviewScope = activeUserId && workspaceId && activeTenantId === workspaceId ? JSON.stringify([workspaceId, activeUserId]) : null;
   const cc = useCommandCenter();
   const setup = useSoloSetupBrief();
   const catalog = useCatalogOffers();
   const knowledge = useSoloKnowledge();
-  const pending = useSoloPendingActions(workspaceId ?? null); // §9 — scope to the viewed workspace, like the activity feed
+  const pending = useSoloPendingActions(reviewScope ? workspaceId ?? null : null, activeUserId ?? null);
   const checks = useSystemsCheck("tenant");
   const activity = useSoloActivityFeed(workspaceId);
   const campaigns = useSoloCampaignBriefs();
-  const { activeTenant, activeTenantId, isPlatformStaff } = useTenantContext();
 
   // §57 identity: the personal greeting belongs to the person WHOSE workspace this is. The
   // signed-in user's name is only theirs to show when the active workspace is genuinely their own —
@@ -509,20 +513,20 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
       }
     }
 
-    // Attention: clients going quiet / follow-ups — Paige can draft, owner approves.
+    // Legacy at_risk_clients counts CRM inactivity, including leads. It is not churn.
     const at = (cc.attention ?? {}) as AttentionLike;
     if ((at.at_risk_clients ?? 0) > 0) {
       const n = at.at_risk_clients as number;
       candidates.push({
         id: "attn:atrisk",
-        title: `Re-engage ${n} client${n === 1 ? "" : "s"} before they lapse`,
-        why: "These crossed your usual quiet threshold. PAIGE can draft a note in your voice for each.",
+        title: `Review ${n} contact${n === 1 ? "" : "s"} without recent follow-up`,
+        why: "These records have no recorded contact or activity in the last 21 days. They may include leads; review them before choosing a follow-up.",
         owner: "paige",
         proof: "live",
-        evidence: `${n} client${n === 1 ? "" : "s"} flagged at risk in your book.`,
-        outcome: "PAIGE drafts the outreach; you approve and she sends.",
+        evidence: `${n} active, contactable record${n === 1 ? "" : "s"} without recent recorded contact or activity.`,
+        outcome: "Open the original records and decide whether to follow up.",
         destination: "clients",
-        ctaLabel: "See the clients",
+        ctaLabel: "Review contacts",
         rank: 5,
       });
     }
@@ -715,7 +719,7 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
       chips.push({ label: `${n} draft${n === 1 ? "" : "s"} waiting`, tone: "live", destination: "paige" });
     const at = (cc.attention ?? {}) as AttentionLike;
     if ((at.at_risk_clients ?? 0) > 0)
-      chips.push({ label: `${at.at_risk_clients} client${at.at_risk_clients === 1 ? "" : "s"} at risk`, tone: "partial", destination: "clients" });
+      chips.push({ label: `${at.at_risk_clients} contact${at.at_risk_clients === 1 ? "" : "s"} without recent follow-up`, tone: "partial", destination: "clients" });
     if ((at.follow_ups_due ?? 0) > 0)
       chips.push({ label: `${at.follow_ups_due} follow-up${at.follow_ups_due === 1 ? "" : "s"} due`, tone: "live", destination: "clients" });
     // Honest indicator that a priority signal is BLIND — present regardless of what else surfaced,
@@ -871,18 +875,20 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
   // from an ERRORED read is "couldn't check", not "nothing is blocking" (§13, peer-gate MAJOR).
   const dependenciesStatus: "ready" | "unavailable" = checks.isError ? "unavailable" : "ready";
 
-  // Decision & opportunity desk — real signals only, each source-labelled honestly (§13). Paige-drafted
-  // work and at-risk / follow-up nudges are RECOMMENDATIONS the owner decides on; never fabricated.
+  // Decision & opportunity desk — real signals only, each source-labelled honestly (§13).
+  // Drafted work and recorded-contact follow-up nudges are recommendations, never execution.
   const decisions = useMemo<DecisionItem[]>(() => {
     const out: DecisionItem[] = [];
-    const drafts = Array.isArray(pending.items) ? pending.items : [];
-    if (drafts.length > 0) {
+    const preparedReady = Boolean(reviewScope) && !pending.loading && !pending.error;
+    const drafts = preparedReady && Array.isArray(pending.items) ? pending.items : [];
+    const total = preparedReady ? pending.total : null;
+    if (drafts.length > 0 || (total ?? 0) > 0) {
       out.push({
         id: "decision:drafts",
-        title: `Review ${pending.total ?? "up to " + drafts.length} draft${pending.total === 1 ? "" : "s"} Paige is holding`,
-        detail: drafts[0]?.rationale || "Paige prepared these and stopped for your approval.",
+        title: total == null ? "Review prepared work" : `Review ${total} prepared item${total === 1 ? "" : "s"}`,
+        detail: drafts.length ? "Inspect original drafts, summaries and sources. Prepared work is separate from approvals." : "The source returned a count without readable items. Check the original work again.",
         source: "recommendation", waiting: true, destination: "paige",
-        evidence: `${pending.total ?? "up to " + drafts.length} filed items; ${drafts.length} loaded for preview.`,
+        evidence: `${total ?? "up to " + drafts.length} filed items; ${drafts.length} loaded for preview.`,
       });
     }
     const at = (cc.attention ?? {}) as AttentionLike;
@@ -890,10 +896,10 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
       const n = at.at_risk_clients as number;
       out.push({
         id: "decision:atrisk",
-        title: `Re-engage ${n} client${n === 1 ? "" : "s"} before they lapse`,
-        detail: "These crossed your usual quiet threshold. Paige can draft a note in your voice for each.",
+        title: `Review ${n} contact${n === 1 ? "" : "s"} without recent follow-up`,
+        detail: "These records have no recorded contact or activity in the last 21 days. They may include leads; review them before choosing a follow-up.",
         source: "recommendation", waiting: false, destination: "clients",
-        evidence: `${n} client${n === 1 ? "" : "s"} flagged at risk in your book.`,
+        evidence: `${n} active, contactable record${n === 1 ? "" : "s"} without recent recorded contact or activity.`,
       });
     }
     if ((at.follow_ups_due ?? 0) > 0) {
@@ -907,11 +913,11 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
       });
     }
     return out;
-  }, [pending.items, pending.total, cc.attention]);
+  }, [pending.items, pending.total, pending.loading, pending.error, reviewScope, cc.attention]);
 
   // A failed drafts read must never render as "All caught up" — an empty `decisions` from an errored
   // pending read is "couldn't check", not "nothing waiting" (§13, Codex P2).
-  const decisionsStatus: "ready" | "unavailable" = pending.error ? "unavailable" : "ready";
+  const decisionsStatus: SoloGamePlanView["decisionsStatus"] = !reviewScope || pending.loading ? "loading" : pending.error ? "unavailable" : "ready";
 
   return {
     loading,
@@ -931,6 +937,8 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
     plays,
     playsStatus,
     decisions,
+    preparedReview: pending,
+    reviewScope,
     decisionsStatus,
     dependencies,
     dependenciesStatus,

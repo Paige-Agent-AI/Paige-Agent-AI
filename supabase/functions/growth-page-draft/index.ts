@@ -116,7 +116,7 @@ import {
 } from "../_shared/growth-blocks.ts";
 import { cleanFormSchema, GROWTH_FORM_SCHEMA_SPEC, type CleanFormSchema } from "../_shared/growth-forms.ts";
 // #184 — the generic finance-in-scope signal (no vertical literal) lives in ONE home (§18).
-import { deriveFinanceInScopeFromFeatures } from "../_shared/client-context.ts";
+import { financeEntitled } from "../_shared/finance-entitlement.ts";
 import { retrieveTenantKnowledge, buildKnowledgeBlock } from "../_shared/studio-brain.ts";
 import { resolveStudioCaller } from "../_shared/studio-caller.ts";
 
@@ -417,12 +417,12 @@ serve(async (req: Request) => {
           const { data: trow } = await admin2.from("tenants").select("features").eq("id", tenantId).maybeSingle();
           const f = ((trow as { features?: Record<string, unknown> } | null)?.features ?? {}) as Record<string, unknown>;
           pb = f.playbook_config ?? null;
-          // #184 — GENERIC finance-in-scope signal, no vertical literal. The JWT path (below)
-          // reads funding_enabled from get_paige_persona_context, whose derivation is now the
-          // is_finance marketplace catalog gate OR features.finance_in_scope; this no-join
-          // service-role path reads the same flag (set by any is_finance Blueprint's install +
-          // backfilled for legacy funding tenants), so it gates EXACTLY like the JWT path.
-          fundingEnabled = deriveFinanceInScopeFromFeatures(f);
+          // #184 — GENERIC finance signal, no vertical literal. The JWT path (below) reads
+          // funding_enabled from get_paige_persona_context; this service-role path asks the
+          // database for the SAME predicate (E09 F1b: _tenant_finance_entitled — an active
+          // is_finance install OR features.finance_in_scope; it used to read the flag alone), so it
+          // gates exactly like the JWT path. A read error is not entitled (fail closed).
+          fundingEnabled = (await financeEntitled(admin2, tenantId)) === "entitled";
         }
       } else {
         const authed2 = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });

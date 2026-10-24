@@ -1,0 +1,206 @@
+Browser tab: 1738568133, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:51805/?context=b&theme=light".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=b&theme=light
+	2 container
+		3 text PAIGE conversation opened
+		4 link Description: Skip to content, Value: 127.0.0.1:51805/?context=b&theme=light#tenant-shell-main
+		5 container Tenant workspace
+			6 link Description: PAIGE Solo home, Value: 127.0.0.1:51805/solo/1702/command-center
+			7 button Expand navigation
+				8 image
+			9 link Description: Command Center, Value: 127.0.0.1:51805/solo/1702/command-center
+			10 link Description: Operations, Value: 127.0.0.1:51805/solo/1702/operations
+			11 link Description: Clients, Value: 127.0.0.1:51805/solo/1702/clients
+			12 link Description: Marketing, Value: 127.0.0.1:51805/solo/1702/growth
+			13 link Description: Ads, Value: 127.0.0.1:51805/solo/1702/ads
+			14 link Description: Sales, Value: 127.0.0.1:51805/solo/1702/sales
+			15 link Description: Finance, Value: 127.0.0.1:51805/solo/1702/finance
+			16 link Description: Marketplace, Value: 127.0.0.1:51805/solo/1702/marketplace
+			17 link Description: Settings, Value: 127.0.0.1:51805/solo/1702/settings
+			18 button Description: Use Obsidian theme, Help: Obsidian theme
+			19 button Sign out
+			20 text SY
+		21 container
+			22 text SYNTHETIC STUDIO B Operations Solo
+			181 button (expanded) Description: Direct PAIGE, Secondary Actions: Collapse
+				182 image PAIGE
+				183 text Direct PAIGE, or press ⌘\
+				184 text ⌘\
+		27 container Operations department
+			28 container
+				29 container Department views
+					30 button Overview
+					31 button Work
+					32 button Projects
+					33 button Delivery
+					34 button Playbooks
+					35 button Capacity
+				39 button New task
+				36 button Refresh work and team profiles
+					37 image
+				40 button Review with PAIGE
+			38 container
+				41 container Next deadlines in Work
+					42 button Back to Overview
+					43 container
+						44 text Next deadlines  ·  10  matching loaded records
+					45 button View all loaded work
+				46 container Work
+					47 container
+						48 heading Move the work forward, Value: 1
+							49 text Move the work forward
+						50 text See the next step and the person responsible.
+					51 container Work view
+						52 checkbox Board, Value: 0
+						53 checkbox List, Value: 1
+						54 checkbox Timeline, Value: 0
+					55 container
+						56 text Search work, people and projects
+						57 text field (settable) Search work, people and projects
+					58 container
+						59 text Filter work
+						60 pop up button (collapsed, settable) Filter work, Value: Active work, Secondary Actions: Expand
+							61 menu
+								62 (selected) Active work
+								63 All work
+								64 Blocked
+								65 Overdue
+								66 Completed
+								67 Cancelled
+					68 text 10  items shown
+					69 container Work list
+						70 table
+							71 row
+								72 cell
+									73 text Work / project
+								74 cell
+									75 text Owner
+								76 cell
+									77 text Status
+								78 cell
+									79 text Due / reminder
+							80 row
+								81 cell
+									82 button Share the agreed next steps
+									83 text Client onboarding
+								84 cell
+									85 text Jordan Ellis
+								86 cell
+									87 text Ready
+								88 cell
+									89 text Oct 21
+							90 row
+								91 cell
+									92 button Review delivery milestone 1
+									93 text Standalone work
+								94 cell
+									95 text Jordan Ellis
+								96 cell
+									97 text Ready
+								98 cell
+									99 text Nov 1
+							100 row
+								101 cell
+									102 button Review delivery milestone 2
+									103 text Standalone work
+								104 cell
+									105 text Jordan Ellis
+								106 cell
+									107 text Ready
+								108 cell
+									109 text Nov 2
+							110 row
+								111 cell
+									112 button Review delivery milestone 3
+									113 text Standalone work
+								114 cell
+									115 text Jordan Ellis
+								116 cell
+									117 text Ready
+								118 cell
+									119 text Nov 3
+							120 row
+								121 cell
+									122 button Review delivery milestone 4
+									123 text Standalone work
+								124 cell
+									125 text Jordan Ellis
+								126 cell
+									127 text Ready
+								128 cell
+									129 text Nov 4
+							130 row
+								131 cell
+									132 button Review delivery milestone 5
+									133 text Standalone work
+								134 cell
+									135 text Jordan Ellis
+								136 cell
+									137 text Ready
+								138 cell
+									139 text Nov 5
+							140 row
+								141 cell
+									142 button Review delivery milestone 6
+									143 text Standalone work
+								144 cell
+									145 text Jordan Ellis
+								146 cell
+									147 text Ready
+								148 cell
+									149 text Nov 6
+							150 row
+								151 cell
+									152 button Review delivery milestone 7
+									153 text Standalone work
+								154 cell
+									155 text Jordan Ellis
+								156 cell
+									157 text Ready
+								158 cell
+									159 text Nov 7
+							160 row
+								161 cell
+									162 button Review delivery milestone 8
+									163 text Standalone work
+								164 cell
+									165 text Jordan Ellis
+								166 cell
+									167 text Ready
+								168 cell
+									169 text Nov 8
+							170 row
+								171 cell
+									172 button Prepare the next milestone
+									173 text Standalone work
+								174 cell
+									175 text Morgan Lee
+								176 cell
+									177 text Ready
+								178 cell
+									179 text Oct 28
+				180 text This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.
+		185 button Fold PAIGE conversation
+		186 container Description: PAIGE command workspace, ID: tenant-paige-workspace
+			187 container
+				188 image PAIGE
+				189 text PAIGE Your live operating partner
+				190 button Description: Expand PAIGE panel, Help: Expand panel
+				191 button Description: Open PAIGE in full panel, Help: Open full panel
+				192 button Description: Open PAIGE in a new window, Help: Open in new window
+				193 button Description: Fold PAIGE conversation, Help: Fold PAIGE
+			194 tab group Solo PAIGE workspace
+				195 tab (selected, settable, boolean) Chat, Value: 1, ID: spw-tab-chat
+				196 tab (selectable, settable, boolean) Knowledge, Value: 0, ID: spw-tab-knowledge
+				197 tab (selectable, settable, boolean) Research, Value: 0, ID: spw-tab-research
+				198 tab (selectable, settable, boolean) Helpers, Value: 0, ID: spw-tab-helpers
+				199 tab (selectable, settable, boolean) Capabilities, Value: 0, ID: spw-tab-capabilities
+			200 container Description: Chat, ID: spw-panel-chat
+				201 text PAIGE
+				202 text Active Solo account · tenant-scoped
+				203 button Weekly responsibility
+				204 button (collapsed) Business interview, Secondary Actions: Expand
+				205 text No Chat transport in this render proof.
+			206 container
+				207 text Chat  view open
+
+The focused UI element is 181 button (expanded) Description: Direct PAIGE, Secondary Actions: Collapse

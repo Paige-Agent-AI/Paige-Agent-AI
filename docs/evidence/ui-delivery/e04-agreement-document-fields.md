@@ -1,0 +1,169 @@
+# EXP04 exact document and assigned fields — local consumer
+
+October22 combined preparation source checkpoint2e804682fe70c3b4c5d63013eb160122607eea41, based on
+reviewed main ec1c497e0d26de218f28dfd61dd614fae05097eb. Existing2604 workspace,
+2605 editor and actual-owner pending-label repair are one coherent increment;
+all23 owning source/controller/SDK/harness/test files match retained1f254d78c.
+Current canonical npm install has DOMPurify3.4.17/Mammoth1.13.0; no production
+Mammoth resolution claim. All source/version/permission/native engine boundaries
+remain original; no own SQL/Edge/workflow/grant/provider/Chat activation.
+
+Fresh scoped Sales regression986 cases/65 suites PASS. First run had one unchanged
+5s upload-test timeout (985 PASS); SAME case passed isolated170ms, then all986
+passed in unchanged quiet rerun. No assertion/timeout/baseline waiver. The earlier
+001 hosted verify failure was the benign sanitizer fixture's missing image src;
+existing real /favicon.png fixes it with all security assertions retained.
+Current lint0/two incumbent warnings, gold/UTF8 PASS, canonical Impeccable4.1.0
+0 anti-patterns/18 incumbent advisories; production audit0 high/critical with8
+moderate remaining. Earlier type ratchet10/current6 predates current main; new
+exact-head CI type proof remains required, not inferred from these local checks.
+
+This record's fresh compiled native source drive:20 viewport/theme/panel cases,
+11 paths/31 exact pins/zero page errors. All five drives together remain
+separate scoped proofs:editor20/19/26,mounted20/14/34,fields20/11/31,intake20/10/22,
+recipients20/16/29; all142 recorded pin comparisons recomputed. Actual desktop
+paper/Not signed roster and320 dark template images inspected. Synthetic Auth/
+API/RPC only. Initial native30 apply provenance unknown, six failed attempts
+preserved; canonical normal39839940779 and fresh root frontier320009 show all8
+original preparation bodies/ABI/ACL/private table/RLS/4triggers/5indexes/SAVE
+unchanged. Superseded2610 was never merged. Original owner API2599/Edge37 parity
+is separate; current combined UI NOT_DEPLOYED/NOT_ACCEPTED until final review,
+ALL exact-head gates, normal release/readback and actual ordinary roles. Protected
+existing-live owner draft/reload/history in ANT52 does not accept this candidate.
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: original exp04-get-paid-deliver-journey.md contains the pre-edit ten-point document/field contract; full original twelve outcomes remain mandatory.
+PAIGE_UI_DESIGN: PASS: existing five-module route, native SOLO Sales Operate tokens, paper/context/inspector and original future workspace/leave-guard boundary. No shared shell or competing design system.
+MATERIAL_FLOW_CHANGE: YES: professional real PDF preview, original-recipient assignment and precise field placement; this increment is not yet mounted in the customer router or connected to native Save.
+FLOW_PROTOTYPE: PASS: original complete Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 supplies document preparation and assigned-field intent; routine UX adoption under October21 owner delegation, not founder acceptance.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner reviews the actual pages, assigns required fields to actual agreement parties and prepares one exact immutable proposal for subsequent native retention.
+VISUAL_DIRECTION: PASS: native document/context hierarchy; legible white document canvas in both themes, contextual field inspector, five explicit field kinds, page/zoom tools, distinct primary preparation action and inline validation.
+AUTOMATED_EVIDENCE: PASS: fresh scoped Sales986/65 on current main composition; one unchanged5s upload timeout preserved, identical isolated170ms PASS then complete quiet986 PASS. Original SDK/controller/model/guard/terms/invoice calculations and two unchanged sanitizer controls; synthetic authority, no provider. Older coverage below is historical/separate, never summed.
+STATIC_EVIDENCE: PASS: current changed-source ESLint0/two incumbent warnings, gold/UTF8 PASS, exact Impeccable4.1.0 zero anti-patterns/18 incumbent advisories. Original npm audit --omit=dev --audit-level=high PASS,8 moderate remain. Earlier type10/6 is supporting only; fresh exact-head CI type/other gates remain UNVERIFIED.
+RENDERED_EVIDENCE: PASS: fresh actual compiled source20 viewport/theme/panel cases/11 behavioral paths/31 normalized owning pins/zero page errors; all five records142 pin comparisons recomputed. Actual desktop paper/roster and320 dark template inspected. Native PDF/worker/fonts/bytes, source components; Auth/API/RPC synthetic, not hosted persistence or legal/provider/customer acceptance.
+BEHAVIORAL_EVIDENCE: PASS: actual text pixels, cropped90-degree page, correct native-point pointer placement, precise numeric/keyboard movement, Delete/Undo/Escape, five kinds/two signers/two pages, immutable earlier captured proposal, required-signature/overlap feedback, read-only and scope mask, corrupt-byte and geometry refusal. Previous-page inspector disappears before another page can edit its dimensions.
+AUTHENTICATED_RUNTIME: UNVERIFIED: current combined candidate not deployed. Separate protected actual ordinary-owner preexisting foundation draft/create/full reload/history does not prove candidate field retention, roles/cohorts, signing/provider, full O1 or whole Experience acceptance.
+KEYBOARD_FOCUS: PASS: actual page/zoom/select/field buttons and arrow/Shift movement, Delete/Undo/Escape; associated position controls and selectable page text. Full assistive-technology/customer proof owed.
+ZOOM_REFLOW: PASS:320/390 and required desktops, actual100% phone document zoom with bounded horizontal paper pan and no application overflow; actual rotated-page coordinates. Device/browser zoom and assistive technology remain unverified.
+REDUCED_MOTION: PASS: source drive uses reducedMotion:reduce; native waiting feedback and no new animation.
+STATE_COVERAGE: PASS: loading/rendering, empty fields, editable/read-only, required/overlap issues, validated unfinished/review-ready proposal, page-change interlock, permission mask, failed hash/geometry and reload action. Twenty-second render/load cancellation exists; a prolonged deadline is source-inspected, not explicitly time-driven here.
+TRUTHFUL_STATE_LABELS: PASS: local fixture says "Local proposal captured. No native save was executed." Rendering/field readiness never means retained, approved, sent, consented, signed, paid or completed service.
+SOLO_UI: YES: original shared Sales preparation component for every eligible current/future SOLO account; actual mounting/server authorization/native writer remain prerequisites. No account-specific code, entitlement or provisioning change.
+UNVERIFIED: current final exact-head review/ALL required CI/normal Preview/own web release/readback; actual ordinary owner/staff/properly linked external-client/cohort/hosted native field retention/recovery/provider behavior, physical device/AT/zoom, canonical commercial terms/exact-map approval/effective signing/finance/Comms/delivery and all O1–O12/founder acceptance. Source fixtures never establish those legs.
+
+SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-agreement-document-fields/1536-770-light-closed.png and dark equivalent; actual rendered PDF and contextual controls.
+SOLO_1536X770_PAIGE_OPEN: PASS:1536-770-light-open.png and dark equivalent; actual original PAIGE panel preserved, no Chat transport.
+SOLO_1366X768_PAIGE_CLOSED: PASS:1366-768-light-closed.png and dark equivalent; native point placement and readable document/tools.
+SOLO_1366X768_PAIGE_OPEN: PASS:1366-768-light-open.png and dark equivalent; bounded preparation beside original PAIGE.
+SOLO_1024X768_PAIGE_CLOSED: PASS:1024-768-light-closed.png and dark equivalent; page, inspector and original host scroll remain reachable.
+SOLO_1024X768_PAIGE_OPEN: PASS: actual requested original overlay explicitly Folded before operation,1024-768-light-open.png/dark equivalent labelled folded-before-fields; no click-through/simultaneous-overlay claim.
+SOLO_900X1000_PAIGE_CLOSED: PASS:900-1000-light-closed.png and dark equivalent; bounded native page/tools.
+SOLO_900X1000_PAIGE_OPEN: PASS: actual original Fold before fields,900-1000-light-open.png/dark equivalent labelled folded-before-fields; no forced click.
+
+OWNER_INTENT: October21 professional Agreements and orchestration directives, full O1–O12 and optional infrastructure-only wording-review settings. Routine UI decisions delegated; no request for founder intermediate signoff.
+MUST_PRESERVE: native signing engine, original agreement/client/source/signers and events, E4-S3, exact document identity, tenant/actor/role gates, single future host leave guard, canonical approval/execution/receipt and Portal boundary.
+MUST_NOT_HAPPEN: silent source/signer substitution, previous-page pixel placement, private document browser persistence/URL/logging, invented retention/signature/legal review/send/payment, alternate validator/executor/approval/signing engine or authority bypass.
+ACCEPTANCE_CRITERIA: actual authorized owner opens exact original PDF, assigns fields, retains/reloads the same immutable native preparation and inspectable original event, corrects safe drafts and receives truthful stale/refused/uncertain states. This local consumer proves only rendering/proposal preparation; actual acceptance remains owed.
+MOTION_PURPOSE: NONE: no new animation; existing native waiting indicator only.
+PROTECTED_SEAMS: single original field constructor and canonical serializer; actual digest/byte length/crop/rotation; authority-key remount and current render lifecycle; original native source/party/CAS/functions and exact approval holds remain prerequisites. No Portal token, client DTO, global identity, shared Operations, Communications, Stripe or Chat source edit.
+
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-document-preparation-surface; source_base=e55f5a70268117420e8fb61c6b8c022ac61f445e; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-document-fields.md
+RELEASE_CHANNEL: development: actual local source render, not customer reachable or customer acceptance.
+RELEASE_CLASSIFICATION: internal-only: bounded dependent consumer; no finished professional Experience claim.
+CUSTOMER_RELEASE_IDENTITY: none: no complete Experience or owner acceptance.
+RELEASE_NOTE_REQUIRED: no: internal increment, no notification authority.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: real native API/retention, original customer workspace integration, authorized-role/provider/reload and full Experience. Exact field Chat/Live UNAVAILABLE; no readiness promotion.
+RELEASE_RECOVERY: position=forward correction preserving original source/document/party identities and native immutable history; reference=docs/delivery/exp04-get-paid-deliver-journey.md; no historical rewrite or activation.
+
+## Native reuse and dependency review
+
+REUSE the released#2574 actual native parser/hash/page/field contract and original
+formatter serializer. The serializer is moved without semantic change into a
+portable module and re-exported from its original import. One hasOwnProperty.call
+replaces Object.hasOwn for the existing application ES target; one role-label
+replace regex replaces replaceAll. Both genuine whole-app ratchet failures were
+fixed, with no new type baseline. Original strict23/73 cases remain intact.
+
+The browser renderer checks actual byte length/SHA before parsing, copies the
+captured bytes before awaits, validates each actual crop/rotation/UserUnit/page
+viewport against native geometry, cancels stale workers/rendering and clears old
+pixels before another page can accept fields. Source/fields/document references
+bind validation; immutable proposal snapshots cannot acquire later draft edits.
+Inspector selection belongs to the active page only. Max25MB/250pages/500fields,
+bounded16MP canvas, DPR2 and fit/100/150/200% views. No PDF scripting manager,
+interactive embedded actions, external viewer, document URL or browser cache.
+Only bundled same-origin public code/fonts/CMaps are fetched, credentials omitted.
+
+Dependency5.6.205 was rejected BEFORE release due GHSA-hq66-cqwq-w95j. Exact
+pdfjs-dist5.5.207 is outside that affected range and supports actual Node20.19+;
+latest6.x would require a runtime upgrade. Original lockfile package records are
+unchanged; only renderer/optional native-platform records are added. Audit remains
+the ORIGINAL18 findings(12moderate/6high), no PDF advisory. This is not a global
+security-clean claim or audit waiver. No install scripts/audit fix/provider spend.
+
+## Rendered finish review and limits
+
+The fixture is produced and inspected by the ORIGINAL pdf-lib1.17.1/native parser:
+2109 real bytes,612x792 page and genuinely cropped18/36/400x600 rotated90 page.
+Neutral text/party placeholders only, no legal clauses, customer or QA identity.
+The same actual compiled UI executes the ONE shared field constructor. Its Save
+callback captures RAM proposals only and displays the explicit no-native-save
+message. No source fixture or event ID is represented as durable customer evidence.
+
+Actual rendered checks caught tiny phone paper readability and an incorrect
+fixture access mask; real zoom/pan and correct actual-component masking repaired
+both. A final review caught cross-page inspector/validation lifetime defects and
+the full browser run passed after correction. Initial sandbox browser executable
+lookups are INVALID, not accepted render evidence; existing owned host browser
+passes with remote origins blocked. Final log e04-document-fields-final-compat-host.log.
+Failed diagnostics remain local/untracked and excluded from final artifact set.
+
+Installed [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
+direction/craft/clarify/harden/adapt checks and actual desktop/narrow/rotated-page
+images apply. Five owning files:0 anti-patterns/four advisories: white actual PDF
+paper, contrast-safe purple field overlay colors and2px document-field corner.
+These are bounded document/field shapes, not a new platform palette/radius system.
+Existing full-application design debt is not waived. Functional correctness,
+visual/source review, customer experience and founder acceptance stay separate.
+AUTHOR-REVIEW / LOWER ASSURANCE under October15, no non-author reviewer claimed.
+
+## Original orchestration and remaining integration
+
+1. Event: owner proposes exact document fields for the original agreement.
+2. Entry: existing Sales preparation workspace, when mounted; currently local source harness.
+3. Record/capability: original agreement/signers and subordinate preparation version; exact field Chat/Live UNAVAILABLE.
+4. Execution: legitimate native domain preparation, no forced LayerC ActionAdapter.
+5. Authority: current original business/actor/owner-admin checks must be revalidated by original owner API/native writer; fixture is not authority.
+6. Risk/approval: private draft does not authorize external send, signing or money; original consequential exact-map review/approval remains required.
+7. Identity/receipt: native immutable version and original edited event are required; local callback supplies neither.
+8. Readback: original scoped version read/actual Storage verification and same-request idempotency remain integration work.
+9. Recovery: stale render/hash/geometry/permission refuses and clears pixels; native unknown-response/reload still owed to controller/API.
+10. Visible result: exact readable pages, actual named field assignments, required/overlap feedback and honest proposal state. No manufactured execution outcome.
+
+Native#2582 forward290004 remains separate UNAPPLIED prerequisite, no selected
+preparation or signing hold bypass. Original agreement-document owner door must
+next supply actual scoped source/bytes/fields and retain/read/reload/history under
+the original workspace's ONE leave guard. Exact approved map/PDF send, actual
+recipient filling/consent/sealing, C7 effective economics and full downstream
+obligations/Stripe/Collections/onboarding/delivery/Portal remain mandatory.
+EXP09 owns its actual client UI and consumes approved linked-customer records,
+never this private owner fixture or raw Storage path. ALG01/12 bounded correctness
+evidence does not promote official algorithm acceptance; ALG02/13, all12 outcomes
+and actual ordinary-role/provider/full founder acceptance remain incomplete.
+
+Current composition retains exact native parent67184484e540c628bee325d736b7cdc269286979,
+including actual main0af948c6d/E02 actor/E05/E09 billing280009 and never-applied
+forward290004. All30 rendered source pins remain byte-identical after the clean
+merge. The initial evidence guard rejected the noncanonical metadata value
+NOT_APPLICABLE_TO_THIS_CONSUMER; corrected to its original NOT_APPLICABLE grammar,
+without changing the guard or implying its separate native prerequisite applied.
+
+October22 latest composition: original2582 is closed SUPERSEDED SOURCE and its
+native version is included in main-target2593, not an independently pending
+release. Portal native290009 is now ACTUALLY applied; never-applied proposal moves
+FORWARD300004 without changing its SQL body/history. Original218 native/replay2
+PASS again. Current main41b31270d retains scoped Portal Agreements and released
+PDF-intake2577. Both complete driver modes and both design blocks retained in
+routine conflicts. Actual current native+field source rerender20/11/30/zero PASS,
+e04-document-fields-forward30-final-browser.log. The earlier exact160 check set
+is historical after this source composition; fresh head CI/review remain required.

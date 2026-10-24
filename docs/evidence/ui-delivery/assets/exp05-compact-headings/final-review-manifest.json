@@ -1,0 +1,480 @@
+{
+  "schema": 1,
+  "purpose": "Bounded compact Operations heading finish review; not authenticated business execution or full EXP05 acceptance",
+  "sourceHead": "57db8721213f4837f29f2505de15db0ff3bba778",
+  "sourceTree": "4813c46653da35ebf839e218a9fa7ca7c7503bcc",
+  "productInputs": 304,
+  "syntheticPorts": 173,
+  "productTransforms": [],
+  "bundleSha256": "d179adb74d1827b89c51178f931aad87bd043ce04121dccab05fcc01a5d74a0c",
+  "htmlSha256": "0f054a8d075a53409b1cf122d894cf184729a052cbc2d1a653c943e28d5d1c01",
+  "owningSourceFingerprints": [
+    {
+      "path": "src/solo/operations/operations-workspace.css",
+      "sha256": "3c1384d5f589c5ac3a2a5ba8546c932726a62ffdb0e4347c4b37e92b53b71ab8",
+      "gitBlob": "58e3f8aa9cf3c48d8372e4a97a8aee413869db4e",
+      "acceptedBlob": "58e3f8aa9cf3c48d8372e4a97a8aee413869db4e",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/operations-staff-delivery-review.css",
+      "sha256": "933346721554d0c362b7955057deb3fb113c1ca0f2e7b62d18b3a482e0dffdb0",
+      "gitBlob": "7bb0fa05703f54355f538717bd0f4b24978c7665",
+      "acceptedBlob": "7bb0fa05703f54355f538717bd0f4b24978c7665",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/operations-views.css",
+      "sha256": "a444b4a9af864dd2c39fb896c6945f040b66b23e771c72d76127903f6d65c122",
+      "gitBlob": "3c75520c4799d5312a8a5c77d159288031aa5e6b",
+      "acceptedBlob": "3c75520c4799d5312a8a5c77d159288031aa5e6b",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsWork.tsx",
+      "sha256": "bdfd8d5ae1b951fc1f578dba08bd9b44c2549b464b662ef476288e85ff8687cd",
+      "gitBlob": "b7ac883b6e5de193c35a1bf259be3c90e06353ac",
+      "acceptedBlob": "b7ac883b6e5de193c35a1bf259be3c90e06353ac",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjects.tsx",
+      "sha256": "4c21f3c22ee68dbddfb77e767944cf664cfec9b9a7323df9fbb229384d67149f",
+      "gitBlob": "bd825c1f0090d7c82ad295bcf88e8d70a792a83e",
+      "acceptedBlob": "bd825c1f0090d7c82ad295bcf88e8d70a792a83e",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/operations-overview.css",
+      "sha256": "65e72a7d07eb8bfe4ef338cdfcd220b858df37dfb1866422e6ed914d5b223494",
+      "gitBlob": "2bb56f8abefdcd484a86027fb671818a654d5e8d",
+      "acceptedBlob": "2bb56f8abefdcd484a86027fb671818a654d5e8d",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsOverview.tsx",
+      "sha256": "e429d1093b014869863382462eac9f53ecd7b4d88611c382a20a8c765bd0fff7",
+      "gitBlob": "6cf67274e7aaafdd473c7f421e557470beaaf761",
+      "acceptedBlob": "6cf67274e7aaafdd473c7f421e557470beaaf761",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/operations-recorded-findings.css",
+      "sha256": "f9490234ef94a9e8ca0b1e1ab737b8976a3a0cf77e80ff9b15ed214bb0155578",
+      "gitBlob": "097ad13e551f6c2ce5ccf0c62e3105235b529bea",
+      "acceptedBlob": "097ad13e551f6c2ce5ccf0c62e3105235b529bea",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsCapacity.tsx",
+      "sha256": "6bfe6d7865600a74dcf0a16891165206967423e373932a1e636243640e21103f",
+      "gitBlob": "0f8b7c3aebc55dbdf506d6736311841fc2a39c11",
+      "acceptedBlob": "0f8b7c3aebc55dbdf506d6736311841fc2a39c11",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery.css",
+      "sha256": "1ce853b6c7560838852e9c14dac6ad1b5ec6096aa653d5f5f7f29b0ee07eef59",
+      "gitBlob": "a57fb54b5e51a5eb9bf02e410f9df116b99405b7",
+      "acceptedBlob": "a57fb54b5e51a5eb9bf02e410f9df116b99405b7",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsDelivery.tsx",
+      "sha256": "9fd91315000167748e6c9150699c714f59fa002ddb4571b16bf6c12af0c0b090",
+      "gitBlob": "adff47b201872397d3002f89b9d67cc3dcbcb316",
+      "acceptedBlob": "adff47b201872397d3002f89b9d67cc3dcbcb316",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsPlaybooks.tsx",
+      "sha256": "ca08c84c102348ff47882191c644d8539a242a6dcc1207305acf421e3b9f30f0",
+      "gitBlob": "aa1568e8fb09015441e21e73d70dd55dd1f33776",
+      "acceptedBlob": "aa1568e8fb09015441e21e73d70dd55dd1f33776",
+      "normalization": "raw",
+      "role": "accepted product source"
+    }
+  ],
+  "acceptedFrames": [
+    {
+      "image": "final-overview-1536-closed.jpg",
+      "dom": "final-overview-1536-closed.json",
+      "sha256": "37580607e80ad82ca5e9e9ba61fda3f12d413c0c200c803057bb45abd33a56d7",
+      "raster": [
+        1535,
+        770
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 770,
+        "width": 1536
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-overview-1536-open.jpg",
+      "dom": "final-overview-1536-open.json",
+      "sha256": "4ff25d1337101c82a4411a967cc35a7cd6ef6ca7820af38d5746245e74304bd0",
+      "raster": [
+        1535,
+        770
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 770,
+        "width": 1536
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-overview-1366-open.jpg",
+      "dom": "final-overview-1366-open.json",
+      "sha256": "92c4af1d299ab1a067470b3f5ac554dc8736d8fb4826e02ccdd5288818165ba2",
+      "raster": [
+        1366,
+        768
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 768,
+        "width": 1366
+      },
+      "status": "PASS",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-overview-1024-closed.jpg",
+      "dom": "final-overview-1024-closed.json",
+      "sha256": "d748906d22358398231b2cf4f3ba7543ef1acf12f1d1cbf4345e168961fd6b7d",
+      "raster": [
+        1024,
+        768
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 768,
+        "width": 1024
+      },
+      "status": "PASS",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-overview-1024-open.jpg",
+      "dom": "final-overview-1024-open.json",
+      "sha256": "414820bcd019afab50f47d076c6b0b88b0a90bda9d7ab5574b940b67ee9ef935",
+      "raster": [
+        1024,
+        768
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 768,
+        "width": 1024
+      },
+      "status": "PASS",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-overview-900-closed.jpg",
+      "dom": "final-overview-900-closed.json",
+      "sha256": "1322690a1fdc93b318dd45eac8dd59b6719231528fec51cdad17ecd0a7559872",
+      "raster": [
+        900,
+        1000
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 1000,
+        "width": 900
+      },
+      "status": "PASS",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-overview-900-open.jpg",
+      "dom": "final-overview-900-open.json",
+      "sha256": "cffebd2df4b25f999e32425234f6943c0ae9d030e4b7e41acb5852871ebeee13",
+      "raster": [
+        900,
+        1000
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 1000,
+        "width": 900
+      },
+      "status": "PASS",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "confirmed-overview-1366-closed.jpg",
+      "dom": "confirmed-overview-1366-closed.json",
+      "sha256": "3431872dbad2e32e481be7200ac0b63e9d79509684a29c15b57c909b3e330fc8",
+      "raster": [
+        1366,
+        768
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 768,
+        "width": 1366
+      },
+      "status": "PASS",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-work-1536-dark.jpg",
+      "dom": "final-work-1536-dark.json",
+      "sha256": "1f1a4059e88297ba19dfefdab81bc6040f98c1db9d835480310789cab1cabae5",
+      "raster": [
+        1535,
+        770
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 770,
+        "width": 1536
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-work-390-light.jpg",
+      "dom": "final-work-390-light.json",
+      "sha256": "79551cc827afcaa20629db548b4f7d7b1962fc247f669f557cf4779f64a07ac8",
+      "raster": [
+        390,
+        843
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 844,
+        "width": 390
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-projects-1536-dark.jpg",
+      "dom": "final-projects-1536-dark.json",
+      "sha256": "a1e1b9565fbecc54b1155c81cf692f2442a751b48aeaa02b566a37ad166c540e",
+      "raster": [
+        1535,
+        770
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 770,
+        "width": 1536
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-projects-390-light.jpg",
+      "dom": "final-projects-390-light.json",
+      "sha256": "baae5dc52f799e99ceb89104f5535533951d0156a662cdeb1cd4c2930dc95c5a",
+      "raster": [
+        390,
+        843
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 844,
+        "width": 390
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-delivery-1536-dark.jpg",
+      "dom": "final-delivery-1536-dark.json",
+      "sha256": "00517d82eb5de281b9fc553312dd4b944dbefeaeb678b0605704ef318dbf6247",
+      "raster": [
+        1535,
+        770
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 770,
+        "width": 1536
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-delivery-390-light.jpg",
+      "dom": "final-delivery-390-light.json",
+      "sha256": "3d7d1bd838aca807fa38ee584222747dcbf8155d2336ba38b4429e8edb515bce",
+      "raster": [
+        390,
+        843
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 844,
+        "width": 390
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-playbooks-1536-dark.jpg",
+      "dom": "final-playbooks-1536-dark.json",
+      "sha256": "32d674e57d22dfe9492f80b26b8005f0f719788559dcdeb1f46cc38dc346cf20",
+      "raster": [
+        1535,
+        770
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 770,
+        "width": 1536
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-playbooks-390-light.jpg",
+      "dom": "final-playbooks-390-light.json",
+      "sha256": "48a6ae61493ed38030697a5415eb22da1a862f1b237505bea8d541b87a31da01",
+      "raster": [
+        390,
+        843
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 844,
+        "width": 390
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-capacity-1536-dark.jpg",
+      "dom": "final-capacity-1536-dark.json",
+      "sha256": "e83d62cd705364d7a07e644a31ea4e41e3120690972f1a4107812ca84391b86f",
+      "raster": [
+        1535,
+        770
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 770,
+        "width": 1536
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-capacity-390-light.jpg",
+      "dom": "final-capacity-390-light.json",
+      "sha256": "7c18bdb7014f50b8e70203c4e3dcb1029042ee95852531d9bf7cf4a2d5a9a1bd",
+      "raster": [
+        390,
+        843
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 844,
+        "width": 390
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-overview-390-light.jpg",
+      "dom": "final-overview-390-light.json",
+      "sha256": "c431bcbaa2c34ced7f80f86790b485a1a0f4719c56c8de7d409e2541f2ed4908",
+      "raster": [
+        390,
+        843
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 844,
+        "width": 390
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    },
+    {
+      "image": "final-overview-390-dark.jpg",
+      "dom": "final-overview-390-dark.json",
+      "sha256": "e356c48b0c594b931e074f40b957a3f672bd3594bf427a6ffcd8d16a7b683737",
+      "raster": [
+        390,
+        843
+      ],
+      "cssViewport": {
+        "dpr": 1.0000000149011612,
+        "height": 844,
+        "width": 390
+      },
+      "status": "PASS_WITH_DISCLOSED_ONE_PIXEL_RASTER_LIMIT",
+      "renderedSource": "c837f099241888dec9f7816207e03ac7a7fc0b0b",
+      "compatibility": "Later max260px container rule is outside these accepted widths. Main composition retains the separately rendered/reviewed #2501 ZION labels and original handlers; no broader typography/layout change. Final composed browser readback remains separately owed."
+    }
+  ],
+  "final320RenderedDom": {
+    "file": "confirmed-overview-320-final.json",
+    "heading": "16px",
+    "buttonHeights": [
+      44,
+      44
+    ],
+    "pageWidth": 320,
+    "cssViewport": [
+      320,
+      844
+    ],
+    "screenshot": "UNVERIFIED: screenshot dimensions invalid, then debugger disconnected. No resampled capture is accepted."
+  },
+  "excludedFinalAttempts": [
+    "final-overview-1366-closed: invalid1366x685, replaced by native confirmed frame",
+    "final-attention-work-focus and final-overview-source-*: invalid900x460; DOM observations only",
+    "final-overview-context-b-320*: invalid320x164/163 and initial transitional layout",
+    "confirmed-overview-320-native: valid prior source, shows original action squeeze; not final correction proof",
+    "confirmed-overview-320-final.jpg: invalid320x164; final DOM remains valid"
+  ],
+  "otherLimitations": [
+    "Initial review-manifest and frames preserve pre-correction mobile25px failure.",
+    "Actual browser zoom not tested.",
+    "Fixture reload bootstraps contextA; no persistent contextB claim.",
+    "Auth, network, domain transport and composer ports are synthetic; all writes, sends and approvals prohibited.",
+    "Original Overview nested weekly entry is rendered with synthetic reader ports; shell weekly entry is a disabled substitute. No weekly workflow acceptance.",
+    "Required exact-head CI, deployment and ordinary-owner readback remain separate."
+  ]
+}

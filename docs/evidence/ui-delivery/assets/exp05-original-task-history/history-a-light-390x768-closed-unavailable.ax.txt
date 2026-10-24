@@ -1,0 +1,9 @@
+Browser tab: 1738568092, Title: "Local SOLO internal task proof", URL: "http://127.0.0.1:62911/native-final/history-a-light-390x768-closed-unavailable.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-a-light-390x768-closed-unavailable.html
+~		4 link Description: Skip to content, Value: 127.0.0.1:62911/native-final/history-a-light-390x768-closed-unavailable.html#tenant-shell-main
+~					30 heading Internal task processes, Value: 2, ID: :r41:-title
+~						36 heading Review every new contact, Value: 3, ID: :r41:-00000000-0000-4000-8000-000000000103-name
+~						41 container Description: Process history, ID: :r41:-00000000-0000-4000-8000-000000000103-history
+~									50 text The original outcome couldn’t be read. Select Inspect outcome to read it again; nothing will be rerun.
+The focused UI element is 1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-a-light-390x768-closed-unavailable.html

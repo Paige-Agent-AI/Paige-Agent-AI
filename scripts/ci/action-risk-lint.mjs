@@ -92,6 +92,49 @@ const SALES_INVOICE_HANDLER = "supabase/functions/sales-invoice-command/index.ts
 // is declared by the door's bound declaration map, and only once the door exists and binds it.
 const STUDIO_PUBLISH_MAP = "supabase/functions/_shared/paige-spine/domains/studio_publish.ts";
 const STUDIO_PUBLISH_HANDLER = "supabase/functions/growth-publish-command/index.ts";
+const WEEKLY_DRAFT_ENTRY = "supabase/functions/weekly-commitment-command/index.ts";
+const WEEKLY_DRAFT_ADAPTER = "supabase/functions/_shared/paige-orchestration/weekly-draft-command.ts";
+const WEEKLY_DRAFT_DOMAIN = "supabase/functions/_shared/paige-spine/domains/automations.ts";
+
+/** Native owner-door classification discovery, not Chat admission or an authority
+ * proof. Like invoice/Studio, an actual entry/adapter/declared Kit path must exist. */
+export function weeklyDraftDoorBound(entryText, adapterText, domainText) {
+  const parse = text => ts.createSourceFile("weekly.ts", text, ts.ScriptTarget.Latest, true);
+  const [entry, adapter, domain] = [entryText, adapterText, domainText].map(parse);
+  if ([entry, adapter, domain].some(source => source.parseDiagnostics.length)) return false;
+  const imports = (source, path, symbol) => source.statements.some(n => ts.isImportDeclaration(n)
+    && n.moduleSpecifier.text === path && n.importClause?.namedBindings && ts.isNamedImports(n.importClause.namedBindings)
+    && n.importClause.namedBindings.elements.some(e => !e.propertyName && e.name.text === symbol));
+  const value = (source, key) => {
+    const found = astNodes(source, n => ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === key);
+    return found.length === 1 ? found[0].initializer : null;
+  };
+  const field = (node, key) => {
+    if (!node || !ts.isObjectLiteralExpression(node) || node.properties.some(ts.isSpreadAssignment)) return null;
+    const found = node.properties.filter(n => ts.isPropertyAssignment(n) && n.name?.text === key);
+    return found.length === 1 ? found[0].initializer : null;
+  };
+  const literal = node => node && ts.isStringLiteral(node) ? node.text : null;
+  if (!imports(entry, "../_shared/paige-orchestration/weekly-draft-command.ts", "createWeeklyDraftCommand")
+    || !imports(adapter, "../capability-kit/decision.ts", "decideDeclaredOrdinaryCapability")
+    || !imports(adapter, "../paige-spine/domains/automations.ts", "WEEKLY_COMMITMENT_DRAFT_CAPABILITY")) return false;
+  const serve = astNodes(entry, n => ts.isCallExpression(n) && compactNode(n.expression) === "Deno.serve");
+  if (serve.length !== 1 || serve[0].arguments.length !== 1 || !ts.isCallExpression(serve[0].arguments[0])
+    || compactNode(serve[0].arguments[0].expression) !== "createWeeklyDraftCommand") return false;
+  const factory = adapter.statements.filter(n => ts.isFunctionDeclaration(n) && n.name?.text === "createWeeklyDraftCommand"
+    && n.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword));
+  const gates = factory.length === 1 && factory[0].body ? astNodes(factory[0].body,
+    n => ts.isCallExpression(n) && compactNode(n.expression) === "decideDeclaredOrdinaryCapability") : [];
+  if (gates.length !== 1 || !gates[0].arguments[0] || compactNode(gates[0].arguments[0]) !== "WEEKLY_COMMITMENT_DRAFT_CAPABILITY"
+    || literal(value(adapter, "KEY")) !== "weekly_commitment_draft") return false;
+  const declaration = value(domain, "WEEKLY_COMMITMENT_DRAFT_CAPABILITY");
+  if (!declaration || !ts.isCallExpression(declaration) || compactNode(declaration.expression) !== "defineCapability") return false;
+  const contract = declaration.arguments[0], governance = field(contract, "governance"), provider = field(contract, "providerBinding");
+  return literal(field(field(contract, "identity"), "id")) === "automations.weekly_commitment_draft"
+    && literal(field(contract, "effect")) === "mutation" && literal(field(governance, "actionRiskKey")) === "weekly_commitment_draft"
+    && literal(field(governance, "risk")) === "ordinary" && literal(field(governance, "approval")) === "confirm"
+    && literal(field(provider, "kind")) === "internal" && literal(field(provider, "operation")) === "public.commit_weekly_commitment_draft";
+}
 
 /** Every classified action, as `[tool, class, reason]`, read from the policy's own table. */
 export function parsePolicy(src) {
@@ -115,6 +158,18 @@ export function parseChat(src, importedTools = []) {
     gatesOnPolicy: /const MUTATING_TOOLS = mutatingTools\(\);/.test(src),
     retainedOwnerOnlyDenials: retainedOwnerOnlyDenials(src),
   };
+}
+
+/** Follow E09's actual catalog through the existing mounted communications consumer. */
+export function portalInvitationCatalogTools(chat,aggregate,domain){
+  if (!/import\s*\{[^}]*COMMS_EMAIL_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/comms-email\/chat\.ts['"]/.test(chat)
+    || !chat.includes('toolDefs.push(...COMMS_EMAIL_TOOLS') || !chat.includes('await dispatchCommsEmailChat(')
+    || !/import\s*\{[^}]*PORTAL_INVITATION_TOOLS[^}]*dispatchPortalInvitationChat[^}]*\}\s*from\s*['"]\.\.\/client-portal-invitation\/chat\.ts['"]/.test(aggregate)
+    || !aggregate.includes('...PORTAL_INVITATION_TOOLS')
+    || !/if\s*\(PORTAL_INVITATION_TOOL_NAMES\.has\(ctx\.toolName\)\)\s*return dispatchPortalInvitationChat\(ctx, deps\)/.test(aggregate)) throw Error('Customer invitation lost its mounted outbound dispatcher');
+  const tools=[...domain.matchAll(/\bname:\s*"([a-z0-9_]+)"/g)].map(m=>m[1]);
+  if(tools.length!==1||tools[0]!=='client_portal_invitation_send')throw Error('Customer invitation catalog could not be parsed');
+  return tools;
 }
 
 /**
@@ -331,6 +386,16 @@ function selfTest() {
     verbSourceMatches: true,
   };
   let bad = 0;
+  const portalChat=fs.readFileSync(CHAT,'utf8'),portalAggregate=fs.readFileSync('supabase/functions/_shared/comms-email/chat.ts','utf8'),portalDomain=fs.readFileSync('supabase/functions/_shared/client-portal-invitation/chat.ts','utf8');
+  bad+=ok('customer invitation follows its actual mounted domain catalog',portalInvitationCatalogTools(portalChat,portalAggregate,portalDomain).join()==='client_portal_invitation_send');
+  for(const [label,chat,aggregate,domain]of[
+    ['missing shared catalog mount',portalChat.replace('toolDefs.push(...COMMS_EMAIL_TOOLS','toolDefs.push(...OTHER_TOOLS'),portalAggregate,portalDomain],
+    ['missing shared dispatcher',portalChat.replace('await dispatchCommsEmailChat(','await missingDispatcher('),portalAggregate,portalDomain],
+    ['wrong invitation import',portalChat,portalAggregate.replace('../client-portal-invitation/chat.ts','../untrusted/chat.ts'),portalDomain],
+    ['missing invitation catalog spread',portalChat,portalAggregate.replace('...PORTAL_INVITATION_TOOLS','...OTHER_TOOLS'),portalDomain],
+    ['missing invitation delegation',portalChat,portalAggregate.replace('return dispatchPortalInvitationChat(ctx, deps)','return missingDispatcher(ctx, deps)'),portalDomain],
+    ['missing literal tool',portalChat,portalAggregate,portalDomain.replace('name:"client_portal_invitation_send"','name:"missing_tool"')],
+  ]){let refused=false;try{portalInvitationCatalogTools(chat,aggregate,domain)}catch{refused=true}bad+=ok('customer invitation refuses '+label,refused);}
   const merchantSources=MERCHANT_PATHS.map(path=>fs.readFileSync(path,'utf8'));
   bad += ok('merchant declarations discovered through mounted Chat and canonical edge gate',salesMerchantDoorBound(...merchantSources));
   for(const [index,token]of [[0,'toolDefs.push(...SALES_INVOICE_TOOLS'],[1,'...SALES_MERCHANT_TOOLS'],[1,'return dispatchMerchantChat(ctx,deps,'],[2,"invoke('tenant-stripe-connect'"],[3,'await admitMerchantCommand(body,context,'],[4,'decideDeclaredCapability(MERCHANT_KIT_BY_TOOL[tool],'],[4,'await port.claim(tool,req.approved_fingerprint)'],[5,"risk:'high'"],[6,'classifyAction(key) !== declaration.governance.risk']]){
@@ -462,6 +527,32 @@ function selfTest() {
     MUTATION_VERB.test("improvement_decide") && MUTATION_VERB.test("x_decide") && !MUTATION_VERB.test("decided_list"));
   bad += ok("`pull` reads as a mutation verb for paid provider actions",
     MUTATION_VERB.test("nav_pull_business_credit") && MUTATION_VERB.test("smartcredit_pull_snapshot"));
+  if (fs.existsSync(WEEKLY_DRAFT_ENTRY)) {
+    const original=[WEEKLY_DRAFT_ENTRY,WEEKLY_DRAFT_ADAPTER,WEEKLY_DRAFT_DOMAIN].map(path=>fs.readFileSync(path,'utf8'));
+    bad += ok('the real native weekly entry binds its original declared Kit adapter',weeklyDraftDoorBound(...original));
+    for (const [index,label,before,after] of [
+      [0,'entry import','../_shared/paige-orchestration/weekly-draft-command.ts','../_shared/fake.ts'],
+      [0,'actual served factory','Deno.serve(createWeeklyDraftCommand','Deno.serve(otherFactory'],
+      [1,'exported adapter','export function createWeeklyDraftCommand','function createWeeklyDraftCommand'],
+      [1,'canonical Kit import','../capability-kit/decision.ts','../fake-kit.ts'],
+      [1,'domain import','../paige-spine/domains/automations.ts','../fake-domain.ts'],
+      [1,'actual Kit call','decideDeclaredOrdinaryCapability(','otherDecision('],
+      [1,'adapter action key','const KEY = "weekly_commitment_draft"','const KEY = "other_draft"'],
+      [2,'canonical identity','id: "automations.weekly_commitment_draft"','id: "automations.other_draft"'],
+      [2,'declared mutation','effect: "mutation"','effect: "read"'],
+      [2,'risk key','actionRiskKey: "weekly_commitment_draft"','actionRiskKey: "other_draft"'],
+      [2,'risk class','risk: "ordinary"','risk: "owner_only"'],
+      [2,'exact confirmation','approval: "confirm"','approval: "none"'],
+      [2,'internal writer','operation: "public.commit_weekly_commitment_draft"','operation: "public.other_writer"'],
+      [2,'closed declaration','effect: "mutation"','...unknownContract, effect: "mutation"'],
+    ]) {
+      const changed=[...original];changed[index]=changed[index].replace(before,after);
+      if(changed[index]===original[index])throw Error(`Weekly fixture did not alter actual ${label}`);
+      bad += ok(`weekly native discovery refuses changed ${label}`,!weeklyDraftDoorBound(...changed));
+    }
+    bad += ok('a missing weekly entry is not a native classification exemption',!weeklyDraftDoorBound('',original[1],original[2]));
+    bad += ok('a second served path is not the one canonical weekly door',!weeklyDraftDoorBound(original[0]+'\nDeno.serve(other);',original[1],original[2]));
+  }
   console.log(bad === 0 ? "\n✓ action-risk-lint self-test passed." : `\n✗ ${bad} self-test(s) failed.`);
   process.exit(bad === 0 ? 0 : 1);
 }
@@ -518,6 +609,13 @@ if (chatSrc.includes('...KNOWLEDGE_TOOLS')) {
   if (knowledgeTools.length !== 3) throw new Error('Knowledge catalog could not be parsed');
   importedTools.push(...knowledgeTools);
 }
+// E09 joins the already mounted outbound communications consumer. Follow the
+// domain-owned catalog, not an exemption or a second runtime registry.
+const portalAggregate = fs.readFileSync('supabase/functions/_shared/comms-email/chat.ts','utf8');
+if (portalAggregate.includes('...PORTAL_INVITATION_TOOLS')) {
+  const portalSource=fs.readFileSync('supabase/functions/_shared/client-portal-invitation/chat.ts','utf8');
+  importedTools.push(...portalInvitationCatalogTools(chatSrc,portalAggregate,portalSource));
+}
 if (chatSrc.includes('...EMAIL_CAMPAIGN_TOOLS')) {
   if (!/import\s*\{[^}]*EMAIL_CAMPAIGN_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/email-campaign-chat\.ts['"]/.test(chatSrc)) throw new Error('Unresolved email campaign catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/email-campaign-chat.ts', 'utf8');
@@ -566,6 +664,30 @@ if (chatSrc.includes('...AGREEMENT_TOOLS')) {
   const agreementTools = [...source.matchAll(/\bname:\s*"(agreement_[a-z_]+)"/g)].map(m => m[1]);
   if (!agreementTools.length) throw new Error('Agreement catalog could not be parsed');
   importedTools.push(...agreementTools);
+}
+// E09 Slice 3: the client-share planning tool enters Chat through its domain catalog, the same way.
+if (chatSrc.includes('...PLANNING_CLIENT_SHARE_TOOLS')) {
+  if (!/import\s*\{[^}]*PLANNING_CLIENT_SHARE_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/planning_writes\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Planning client-share catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/planning_writes.ts', 'utf8');
+  const shareTools = [...source.matchAll(/\bname:\s*"(plan_item_set_client_share)"/g)].map(m => m[1]);
+  if (!shareTools.length) throw new Error('Planning client-share catalog could not be parsed');
+  importedTools.push(...shareTools);
+}
+// E09 Slice M: the customer portal menu tools enter Chat through their domain catalog, the same way.
+if (chatSrc.includes('...PORTAL_MENU_TOOLS')) {
+  if (!/import\s*\{[^}]*PORTAL_MENU_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/client_portal\.ts['"]/.test(chatSrc)) throw new Error('Unresolved portal menu catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/client_portal.ts', 'utf8');
+  const menuTools = [...source.matchAll(/\bname:\s*'(read_tenant_portal_menu|portal_menu_update)'/g)].map(m => m[1]);
+  if (menuTools.length !== 2) throw new Error('Portal menu catalog could not be parsed');
+  importedTools.push(...menuTools);
+}
+// E09 Slice 7: the client portal access tools enter Chat through their domain catalog, the same way.
+if (chatSrc.includes('...PORTAL_ACCESS_TOOLS')) {
+  if (!/import\s*\{[^}]*PORTAL_ACCESS_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/client_portal\.ts['"]/.test(chatSrc)) throw new Error('Unresolved portal access catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/client_portal.ts', 'utf8');
+  const accessTools = [...source.matchAll(/\bname:\s*'(read_client_portal_access|client_portal_access_set)'/g)].map(m => m[1]);
+  if (accessTools.length !== 2) throw new Error('Portal access catalog could not be parsed');
+  importedTools.push(...accessTools);
 }
 if (chatSrc.includes('...GROWTH_FORM_TOOLS')) {
   if (!/import\s*\{[^}]*GROWTH_FORM_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/growth_form\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Growth Form catalog import');
@@ -651,6 +773,12 @@ if (fs.existsSync(STUDIO_PUBLISH_HANDLER)) {
   if (!actions.length) throw new Error('Studio publish declaration map could not be parsed');
   governedEdgeActions.push(...actions);
   requiredClassifications.push(...actions);
+}
+if (fs.existsSync(WEEKLY_DRAFT_ENTRY)) {
+  if (!weeklyDraftDoorBound(fs.readFileSync(WEEKLY_DRAFT_ENTRY, 'utf8'), fs.readFileSync(WEEKLY_DRAFT_ADAPTER, 'utf8'),
+    fs.readFileSync(WEEKLY_DRAFT_DOMAIN, 'utf8'))) throw new Error('Weekly draft door lost its original entry/adapter/declared Kit binding');
+  governedEdgeActions.push('weekly_commitment_draft');
+  requiredClassifications.push('weekly_commitment_draft');
 }
 if (!mcpCanonicals.length) {
   console.error(`✗ action-risk-lint: read no canonical keys out of ${MCP_POLICY}. That file is the MCP door's second declaring surface, so an empty read would silently condemn every MCP-only classification as a ghost. Fix this guard rather than letting it pass.`);

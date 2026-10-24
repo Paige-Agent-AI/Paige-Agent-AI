@@ -1,0 +1,46 @@
+Browser tab: 170265290, Title: "Isolated source recovery proof", URL: "http://127.0.0.1:5298/".
+1 AXWebArea Isolated source recovery proof, URL: 127.0.0.1:5298/
+	2 container root
+		3 container
+			4 text PAIGE workspace ready
+			5 link Description: Skip to content, Value: 127.0.0.1:5298/#tenant-shell-main
+			6 container Tenant workspace
+				7 button Expand navigation
+					8 image
+				9 link Description: Command Center, Value: 127.0.0.1:5298/solo/test-account/command-center
+				10 link Description: Operations, Value: 127.0.0.1:5298/solo/test-account/operations
+				11 link Description: Clients, Value: 127.0.0.1:5298/solo/test-account/clients
+				12 link Description: Marketing, Value: 127.0.0.1:5298/solo/test-account/growth
+				13 link Description: Ads, Value: 127.0.0.1:5298/solo/test-account/ads
+				14 link Description: Sales, Value: 127.0.0.1:5298/solo/test-account/sales
+				15 link Description: Finance, Value: 127.0.0.1:5298/solo/test-account/finance
+				16 link Description: Marketplace, Value: 127.0.0.1:5298/solo/test-account/marketplace
+				17 link Description: Settings, Value: 127.0.0.1:5298/solo/test-account/settings
+				18 button Description: Use Mineral theme, Help: Mineral theme
+				19 button Sign out
+				20 text TE
+			21 container
+				22 text TEST STUDIO A Clients Solo
+				23 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+					24 image PAIGE
+					25 text Direct PAIGE, or press ⌘\
+					26 text ⌘\
+			27 container tenant-shell-main
+				28 container Isolated proof controls
+					29 text Isolated source proof · no business actions
+					30 button Simulate missing screen
+					31 button Switch synthetic account
+					32 button Toggle fixture PAIGE
+					33 button Toggle fixture theme
+				34 container Page unavailable
+					35 heading This page couldn’t open, Value: 3
+						36 text This page couldn’t open
+					37 text You can keep working from the navigation.
+		38 container Paige update
+			39 container
+				40 text An update is ready Reload when you’re ready to use the latest build.
+				41 button Reload
+			42 button Dismiss update notice
+				43 image
+
+The focused UI element is 30 button Simulate missing screen

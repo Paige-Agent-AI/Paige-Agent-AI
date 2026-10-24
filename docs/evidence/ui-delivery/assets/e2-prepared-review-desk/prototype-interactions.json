@@ -1,0 +1,70 @@
+{
+  "class": "SYNTHETIC_NATIVE_SHELL_PROTOTYPE",
+  "productAcceptance": "UNVERIFIED",
+  "cases": [
+    {
+      "case": "dirty edit, keep editing, save and return preserves nonzero Chat scroll/draft/focus",
+      "pass": true,
+      "before": {
+        "draft": "Unsent planning question stays here.",
+        "scroll": 344
+      },
+      "after": {
+        "draft": "Unsent planning question stays here.",
+        "scroll": 344
+      }
+    },
+    {
+      "case": "suggestion/overview/review alone does not execute; original approval step remains",
+      "pass": true
+    },
+    {
+      "case": "uncertain result preserves original request and offers status read",
+      "pass": true
+    },
+    {
+      "case": "simulated original status confirmation distinguishes verified result",
+      "pass": true
+    },
+    {
+      "case": "unrelated keeps the suggestion quiet",
+      "pass": true
+    },
+    {
+      "case": "loading keeps the suggestion quiet",
+      "pass": true
+    },
+    {
+      "case": "empty keeps the suggestion quiet",
+      "pass": true
+    },
+    {
+      "case": "denied keeps the suggestion quiet",
+      "pass": true
+    },
+    {
+      "case": "other-account keeps the suggestion quiet",
+      "pass": true
+    },
+    {
+      "case": "failed read withholds count/details and has retry",
+      "pass": true
+    },
+    {
+      "case": "dismiss stays quiet until new identity despite same count",
+      "pass": true
+    },
+    {
+      "case": "narrow overview readable within viewport; Escape restores trigger",
+      "pass": true
+    },
+    {
+      "case": "reduced motion retains overview without animation",
+      "pass": true
+    },
+    {
+      "case": "wide overview Escape restores suggestion focus",
+      "pass": true
+    }
+  ]
+}

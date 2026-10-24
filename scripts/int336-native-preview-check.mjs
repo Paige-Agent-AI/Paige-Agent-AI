@@ -22,7 +22,7 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{profiles:[{active_tenant
 const res=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Approve exact card'}],threadId:thread,requestIntentId:intent,interactive:{kind:'message'},approvedConfirmations:[fp]})}));
 const wire=await res.text();const calls=rec.functions.filter(c=>c.name==='crm-command');
 assert.equal(calls.length,1,wire);
-assert.deepEqual(calls[0].options.body,{command,idempotency_key:'exact-native-key',approved_fingerprint:fp});
+assert.deepEqual(calls[0].options.body,{command,expected_tenant_id:tenant,idempotency_key:'exact-native-key',approved_fingerprint:fp});
 assert.equal(calls[0].client,'jwt');assert.equal(executor,null);
 console.log('PASS actual native CRM preview resume: stored authority fingerprint/key, exact canonical card validation command, caller JWT, serialized executor');
 

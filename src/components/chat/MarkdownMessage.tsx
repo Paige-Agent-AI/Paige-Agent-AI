@@ -1,10 +1,32 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import { APP_HOST, MARKETING_HOST, isMarketingOnlyRoute } from "@/lib/hostRouting";
+import { PAIGE_APP_ORIGIN } from "../../../supabase/functions/_shared/canonical-app-url";
 
 interface MarkdownMessageProps {
   content: string;
   className?: string;
+  /** Present only for scoped workspace answers; paths come from the canonical record resolver. */
+  verifiedAppPaths?: readonly string[];
+}
+
+function verifiedHref(href: string | undefined, paths: readonly string[] | undefined): string | null {
+  if (!href) return null;
+  if (paths === undefined || href.startsWith("#")) return href;
+  try {
+    const url = new URL(href, PAIGE_APP_ORIGIN);
+    const host = url.hostname.replace(/\.$/, "");
+    // External citations retain the existing Markdown policy. App addresses require
+    // a current-account target from the same native references as the visible link row.
+    if (![MARKETING_HOST, `www.${MARKETING_HOST}`, APP_HOST].includes(host)) return href;
+    // The existing host router owns public-site classification too. Preserve
+    // real public citations without admitting app navigation from model prose.
+    if (isMarketingOnlyRoute(url.pathname) || (host !== APP_HOST && url.pathname === "/")) return href;
+    if (url.protocol !== "https:" || url.port || url.username || url.password) return null;
+    const path = `${url.pathname}${url.search}${url.hash}`;
+    return paths.includes(path) ? path : null;
+  } catch { return null; }
 }
 
 /**
@@ -12,7 +34,7 @@ interface MarkdownMessageProps {
  * Supports: bold, italic, headings, ordered/unordered lists,
  * code, blockquotes, links, and GFM tables.
  */
-export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
+export function MarkdownMessage({ content, className, verifiedAppPaths }: MarkdownMessageProps) {
   return (
     <div
       className={cn(
@@ -32,7 +54,8 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
         "[&_li]:leading-relaxed [&_li>p]:my-0",
         "[&_li>ul]:my-1 [&_li>ol]:my-1",
         // Links
-        "[&_a]:text-accent [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:opacity-80",
+        "[&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:opacity-80",
+        verifiedAppPaths === undefined ? "[&_a]:text-accent" : "[&_a]:text-foreground",
         // Code
         "[&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-muted [&_code]:text-[12px] [&_code]:font-mono",
         "[&_pre]:my-2 [&_pre]:p-2.5 [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:overflow-x-auto",
@@ -53,10 +76,12 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          // Force links to open in a new tab safely
-          a: ({ node, ...props }) => (
-            <a {...props} target="_blank" rel="noopener noreferrer" />
-          ),
+          a: ({ node, href, children, ...props }) => {
+            const verified = verifiedHref(href, verifiedAppPaths);
+            return verified
+              ? <a {...props} href={verified} target="_blank" rel="noopener noreferrer">{children}</a>
+              : <span>{children}</span>;
+          },
           // A wide GFM table is genuinely wide content: it self-scrolls in its own container so every
           // column stays reachable, even under a transcript that hides its own horizontal overflow
           // (the skill's wide-content pattern — never hidden/clipped).

@@ -1,0 +1,115 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+12:22:11 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-swc" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+
+ RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-14/paige-engineering-2-0-solo-to/work/weekly-solo-eligibility
+
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects the reminder time truthfully without reading due_at (2099-01-02T13:15:00+03:00) 259ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects the reminder time truthfully without reading due_at (null) 52ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects the reminder time truthfully without reading due_at (invalid-date) 49ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects the reminder time truthfully without reading due_at (undefined) 42ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retains the task inspector's native due date 70ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retains the milestone inspector's native due date 57ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > opts into native cancellation history only for Work 27ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > effective client view immediately removes business work and its open inspection 34ms
+ × src/solo/operations/OperationsWorkspace.test.tsx > continues an Overview group through List and the original guarded inspector 18ms
+   → expected undefined to be truthy
+ × src/solo/operations/OperationsWorkspace.test.tsx > clears an attention group through the ordinary Work destination 8ms
+   → expected undefined to be truthy
+ × src/solo/operations/OperationsWorkspace.test.tsx > retires group context and original selection on a workspace change 8ms
+   → expected undefined to be truthy
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > removes old workspace work and the open detail drawer on switching 42ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > refuses an inconsistent source bundle instead of rendering foreign work 6ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > does not mount the department while authenticated context is unresolved or failed 2ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > closes details when a canonical URL-controlled view changes 52ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > hands a bounded review draft to existing PAIGE after clearing old customer scope 11ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retains uncertain project creation after refresh without an identity 26ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > keeps native CRM work usable while Planning is unavailable 30ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects overdue native work from Overview while disclosing the missing project source 32ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > keeps the original source and current record in a prepared PAIGE task review without executing work 18ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > keeps native capacity assignments visible with an explicit Planning gap 27ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > offers scoped retained recovery even when the original task is outside the loaded read 33ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > shows the original pending task before confirmation instead of the newly selected task 38ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > offers the existing In progress selector for pending CRM work and routes it to review 33ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > excludes In progress from a completed CRM task selector 32ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > excludes In progress from a cancelled CRM task selector 34ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > opens the point-read Planning record outside the loaded bundle and refreshes that exact record 33ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > never uses a loaded row or CRM UUID as authority for a weekly source link 22ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > rejects malformed or duplicate typed targets without reading or replacing work 19ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > drops a delayed point read when the actor/workspace changes 42ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > preserves dirty work through a repeated link, URL Back removal, destination change and sheet close 53ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > opens an exact Task independently of failed bounded lists 23ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for a standalone business, client work in a project 22ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for work with no client 24ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for client work outside a project 23ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for work with no row version 20ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for a business that is not standalone 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/solo/operations/OperationsWorkspace.test.tsx > continues an Overview group through List and the original guarded inspector
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ click src/solo/operations/OperationsWorkspace.test.tsx:92:18
+     90| async function click(text: string) {
+     91|   const button = Array.from(container.querySelectorAll("button")).find…
+     92|   expect(button).toBeTruthy(); await act(async () => button?.click());
+       |                  ^
+     93| }
+     94| it("continues an Overview group through List and the original guarded …
+ ❯ src/solo/operations/OperationsWorkspace.test.tsx:96:8
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/solo/operations/OperationsWorkspace.test.tsx > clears an attention group through the ordinary Work destination
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ click src/solo/operations/OperationsWorkspace.test.tsx:92:18
+     90| async function click(text: string) {
+     91|   const button = Array.from(container.querySelectorAll("button")).find…
+     92|   expect(button).toBeTruthy(); await act(async () => button?.click());
+       |                  ^
+     93| }
+     94| it("continues an Overview group through List and the original guarded …
+ ❯ src/solo/operations/OperationsWorkspace.test.tsx:113:64
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/solo/operations/OperationsWorkspace.test.tsx > retires group context and original selection on a workspace change
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ click src/solo/operations/OperationsWorkspace.test.tsx:92:18
+     90| async function click(text: string) {
+     91|   const button = Array.from(container.querySelectorAll("button")).find…
+     92|   expect(button).toBeTruthy(); await act(async () => button?.click());
+       |                  ^
+     93| }
+     94| it("continues an Overview group through List and the original guarded …
+ ❯ src/solo/operations/OperationsWorkspace.test.tsx:119:64
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 34 passed (37)
+   Start at  12:22:12
+   Duration  9.12s (transform 2.82s, setup 80ms, import 6.10s, tests 1.35s, environment 1.31s)

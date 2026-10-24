@@ -1,9 +1,10 @@
 import type { ReadLinkDestination } from "../../supabase/functions/_shared/paige-turn/record-links";
-import { formatSnapshotMetricValue } from "../../supabase/functions/_shared/paige-context/snapshot";
+import { formatSnapshotMetricValue, rankOperatingSnapshotRisks } from "../../supabase/functions/_shared/paige-context/snapshot";
 import type { BusinessReviewSnapshot, ReviewMetric } from "./data/useBusinessReview";
 
 /** Presentation metadata only. The Fabric owns figures, risks, coverage and provenance. */
 const AREAS: Record<string, { label: string; destination?: ReadLinkDestination; recommendation: string }> = {
+  finance: { label: "Financial source evidence", destination: "finance", recommendation: "Inspect the source facts and missing information in Finance." },
   payments: { label: "Finance & collections", destination: "finance", recommendation: "Review the collections records and decide the next step." },
   sales_pipeline: { label: "Sales pipeline", destination: "sales_pipeline", recommendation: "Review the opportunities behind this risk with PAIGE." },
   operations: { label: "Operations & Systems Check", destination: "systems_check", recommendation: "Open the findings and review the required setup or repair." },
@@ -11,7 +12,7 @@ const AREAS: Record<string, { label: string; destination?: ReadLinkDestination; 
   revenue: { label: "Revenue", recommendation: "Review the available financial sources." },
   communications: { label: "Conversations", recommendation: "Review communications readiness." },
   email: { label: "Email", recommendation: "Review email readiness." },
-  campaigns: { label: "Marketing campaigns", recommendation: "Review campaign evidence." },
+  campaigns: { label: "Marketing intake", destination: "marketing", recommendation: "Review routing and processing in the existing Marketing records. No correction has run." },
   bookings: { label: "Bookings", recommendation: "Review the recorded bookings." },
   work: { label: "Delivery work", destination: "operations_work", recommendation: "Review the delivery records." },
   game_plan: { label: "Game Plan performance", destination: "business_game_plan", recommendation: "Review the recorded direction and strategic plays." },
@@ -27,10 +28,10 @@ export function executiveAreas(snapshot: BusinessReviewSnapshot) {
 }
 
 export function executivePriorities(snapshot: BusinessReviewSnapshot) {
-  const rank = { act: 0, watch: 1, info: 2 };
-  return executiveAreas(snapshot).flatMap((area) => area.entry.status === "available" && area.entry.data
-    ? area.entry.data.risks.filter((risk) => risk.severity !== "info").map((risk) => ({ ...risk, area })) : [])
-    .sort((a, b) => rank[a.severity] - rank[b.severity]);
+  const areas = executiveAreas(snapshot);
+  return rankOperatingSnapshotRisks(snapshot).map(({ domain, ...risk }) => ({
+    ...risk, area: areas.find(area => area.key === domain)!,
+  }));
 }
 
 export function formatReviewMetric(metric: ReviewMetric): string {
@@ -49,7 +50,8 @@ export function formatReviewInstant(instant: string, timezone: string, withTime 
 }
 
 export function reviewGapNote(reason?: string): string {
-  if (reason === "no_adapter") return "This source is not connected to the business review yet.";
+  if (reason?.replace(/^adapter:/, '').startsWith('finance_')) return 'Financial evidence could not be verified for this review. Inspect its sources in Finance, then refresh.';
+  if (reason === "no_adapter" || reason?.startsWith("no_adapter:")) return "This area is not included in this business review yet.";
   if (reason === "not_connected") return "Not connected. No figures are available from this source.";
   if (reason === "scope_changed") return "The workspace changed during the read. Refresh to read the active workspace.";
   if (reason === "forbidden" || reason === "authorization_denied") return "This read was not authorized for the current workspace.";

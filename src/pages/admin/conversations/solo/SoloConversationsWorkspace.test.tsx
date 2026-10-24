@@ -200,6 +200,33 @@ describe("Solo Conversations workspace", () => {
     expect(html).not.toMatch(/Save|Edit owner|Invite now|Assign pipeline/);
   });
 
+  // E09 Slice 7: a paused client keeps their link; the fact must not read as "can get in".
+  it.each([
+    ["paused", "login-1", "Linked account · portal access paused"],
+    ["ended", null, "Portal access ended"],
+    ["open", "login-1", "Linked account reported"],
+  ] as const)("names a %s client's portal access honestly", (state, linked, fact) => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <SoloClientContextPane
+          contact={{
+            id: "person-1", first_name: "Jordan", last_name: "Rivera", entity_name: null,
+            email: "jordan@example.test", phone: null, status: "active", timezone: null,
+            created_at: null, created_by: null, created_by_channel_type: null, lifecycle_stage: "client",
+            entity_type: "person", title: null, source: null, tags: [],
+            last_contacted_at: null, assigned_coach_user_id: null,
+            linked_user_id: linked, portal_access_state: state, dnd_active: false, dnd_reason: null, dnd_until: null,
+          }}
+          labels={[]}
+          recentMessages={[]}
+          links={{ people: "/people", portal: "/portal", campaigns: "/campaigns", connections: "/connections" }}
+        />
+      </MemoryRouter>,
+    );
+    expect(html).toContain(fact);
+    if (state !== "open") expect(html).not.toContain("Linked account reported");
+  });
+
   it("retains focus when the bounded context rail is collapsed", async () => {
     const host = document.createElement("div");
     document.body.append(host);

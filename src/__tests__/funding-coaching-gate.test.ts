@@ -70,7 +70,24 @@ function mockDb(cfg: MockCfg): FundingGateDb {
     };
     return q;
   };
-  return { from: (t: string) => make(t) };
+  // E09 F1b: the resolver asks the database (`_tenant_finance_entitled`) instead of reading the tables
+  // itself. This stands in for that function over the same configured rows: an active install of a
+  // finance item, OR the flag read the way SQL's ::boolean reads it; any configured read error fails.
+  const rpc = (fn: string, args?: Record<string, unknown>) => {
+    cfg.reads!.push(`rpc:${fn}`);
+    if (fn !== "_tenant_finance_entitled" || typeof args?._tenant !== "string") {
+      return Promise.resolve({ data: null, error: { message: "unexpected rpc" } });
+    }
+    if (cfg.installsError || cfg.itemsError || cfg.tenantError) {
+      return Promise.resolve({ data: null, error: { message: "entitlement_read_failed" } });
+    }
+    const finance = new Set((cfg.financeItems ?? []).map((r) => r.id));
+    const viaInstall = (cfg.installs ?? []).some((r) => finance.has(r.item_id));
+    const flag = cfg.tenantRowMissing ? undefined : (cfg.tenantFeatures as Record<string, unknown> | undefined)?.finance_in_scope;
+    const viaFlag = flag === true || (typeof flag === "string" && ["t", "true", "y", "yes", "on", "1"].includes(flag.trim().toLowerCase()));
+    return Promise.resolve({ data: viaInstall || viaFlag, error: null });
+  };
+  return { from: (t: string) => make(t), rpc };
 }
 
 const connAbsent: FundingConnectionFact = { satisfied: false, missing: "connection" };
@@ -205,7 +222,7 @@ describe("resolveFundingCoachingGate — the async resolver reads the EXACT is_f
     expect((await call({ installs: [], tenantFeatures: { finance_in_scope: false } })).state).toBe("entitlement_missing");
   });
 
-  it("FAIL CLOSED: an installs read error / items read error / tenants read error → read_error → unavailable", async () => {
+  it("FAIL CLOSED: an entitlement read error (the database call fails) → read_error → unavailable", async () => {
     expect((await call({ installsError: true })).result).toBe("unavailable");
     expect((await call({ installs: [{ item_id: "i1" }], itemsError: true })).result).toBe("unavailable");
     expect((await call({ installs: [], tenantError: true })).result).toBe("unavailable");

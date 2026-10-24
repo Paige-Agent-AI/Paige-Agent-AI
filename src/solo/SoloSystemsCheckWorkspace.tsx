@@ -1,5 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { routeLinkTarget } from "@/lib/links/workspaceLinks";
+import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
 import {
   AlertTriangle, ArrowUpRight, Bot, ChevronRight, RefreshCw, X,
 } from "lucide-react";
@@ -172,11 +174,10 @@ function RailActivityPanel({ activity }: { activity: ReturnType<typeof useSoloAc
  *   LIVE · PARTIAL · NOT CONNECTED · NEEDS ATTENTION · PENDING PROVIDER · UNAVAILABLE · PROOF OWED ·
  *   PAUSED · NOT CHECKED
  *
- * Only THREE come from a persisted finding, a structural fact rather than an omission:
- * `paige_systems_check_finding.status` is CHECK-constrained to `pass | fail | skip | error`, which
- * maps to LIVE / NEEDS ATTENTION / UNAVAILABLE. PENDING PROVIDER and PAUSED can never come from
- * this store — they are published by the workstream that owns the provider, through the result
- * contract (docs/product/provider-result-contract.md).
+ * Recorded setup checks are NOT provider-readiness certification. A pass or resolved finding
+ * supports only PARTIAL area coverage; its own result is labelled Pass or Resolved. Preserve
+ * the provider-owned vocabulary without turning handle presence, saved settings or a registered
+ * workflow into LIVE operation. Provider states remain with their original result contract.
  *
  * NOT CHECKED is an AREA-level word, never a finding: it means no check covers that area yet
  * (`coveredBy: []` in systems-check-areas.ts) — a marker of unfinished backend work, and a
@@ -189,25 +190,30 @@ function RailActivityPanel({ activity }: { activity: ReturnType<typeof useSoloAc
  * was set up wrongly; the item's own sentence carries which, because guessing "not connected" from
  * a `has_x: false` would be the surface inventing a status the runner never recorded.
  */
-type FindingStatusWord = "live" | "attention" | "unavailable";
+type FindingStatusWord = "partial" | "attention" | "unavailable";
 type StatusWord = FindingStatusWord | "notchecked";
 
 const STATUS_TEXT: Record<StatusWord, string> = {
-  live: "Live",
+  partial: "Partial",
   attention: "Needs attention",
   unavailable: "Unavailable",
   notchecked: "Not checked",
 };
 
 function statusOf(finding: SystemsCheckFinding): FindingStatusWord {
-  if (isResolved(finding)) return "live";
-  if (finding.status === "pass") return "live";
+  if (isResolved(finding)) return "partial";
+  if (finding.status === "pass") return "partial";
   if (isUnavailable(finding)) return "unavailable";
   return "attention";
 }
 
 function StatusPill({ state }: { state: StatusWord }) {
   return <span className={`sc-status sc-status--${state}`}><i />{STATUS_TEXT[state]}</span>;
+}
+
+function FindingPill({ finding }: { finding: SystemsCheckFinding }) {
+  const state = statusOf(finding);
+  return <span className={`sc-status sc-status--${state}`}><i />{isResolved(finding) ? "Resolved" : finding.status === "pass" ? "Pass" : STATUS_TEXT[state]}</span>;
 }
 
 /** The owner-facing title. Falls back to the registry name so an unmapped check stays visible. */
@@ -241,7 +247,7 @@ function AttentionItem({
     <article className={`sc-item sc-item--${severity}`}>
       <div className="sc-item-t">
         <h3>{findingTitle(finding)}</h3>
-        <StatusPill state={statusOf(finding)} />
+        <FindingPill finding={finding} />
       </div>
       {finding.paige_interpretation && <p className="sc-why" style={{ margin: "3px 0 0" }}>{finding.paige_interpretation}</p>}
       <dl className="sc-meta">
@@ -281,6 +287,15 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const systems = useSystemsCheck("tenant");
   const resolvedAccount = resolveTenantAccountContext(accountContext);
   const account = useParams().account ?? "";
+  const location = useLocation();
+  const sourceQuery = new URLSearchParams(location.search);
+  const sourceValues = sourceQuery.getAll("finding");
+  const sourceRequested = sourceValues.length > 0;
+  const sourceId = sourceValues.length === 1
+    ? readRecordLinks([{ destination: "systems_check", record_id: sourceValues[0] }])[0]?.record_id : null;
+  sourceQuery.delete("finding");
+  const remainingSearch = sourceQuery.toString();
+  const businessReview = routeLinkTarget({ destination: "executive", record_id: null }, "solo", account);
   const [openArea, setOpenArea] = useState<string | null>(null);
   const [selected, setSelected] = useState<SystemsCheckFinding | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -289,6 +304,8 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const [decisionBusy, setDecisionBusy] = useState(false);
   const [decisionMessage, setDecisionMessage] = useState("");
   const returnFocus = useRef<HTMLElement | null>(null);
+  const refreshTrigger = useRef<HTMLButtonElement | null>(null);
+  const sourceWasRequested = useRef(false);
   const restoreFindingFocus = useRef(false);
   const proposalReturnFocus = useRef<HTMLElement | null>(null);
   const decisionReturnFocus = useRef<HTMLElement | null>(null);
@@ -307,6 +324,15 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const confirmedFindings = currentFindings.filter((finding) => evidenceFilter(finding) === "confirmed");
   const completedAt = systems.run?.completed_at ? new Date(systems.run.completed_at) : null;
   const hasCompletedRun = !!completedAt && !Number.isNaN(completedAt.getTime());
+  // The URL selects only evidence already returned by the original scoped snapshot.
+  // It grants no broader finding lookup, historical access or action authority.
+  const linkedFinding = !systems.loading && !systems.isError && hasCompletedRun && sourceId
+    ? currentFindings.find(finding => finding.id.toLowerCase() === sourceId) : null;
+  const linkedMessage = !sourceId ? "This source reference is not valid. Clear the selection to continue."
+    : systems.loading ? "Reading the linked finding…"
+      : systems.isError ? "The linked finding could not be read. Refresh current data to retry."
+        : !hasCompletedRun ? "No completed check is available for this source."
+          : "The linked finding is not in the last completed check. It may be older or unavailable in this workspace.";
   /**
    * WHY the picture is incomplete, computed BEFORE the flag that announces it — because the flag
    * used to be the only thing computed, and the sentence beside it was written for just one of the
@@ -361,6 +387,21 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
   const isStale = hasCompletedRun && Date.now() - completedAt.getTime() > 24 * 60 * 60 * 1000;
   const selectedEvidence = projectEvidence(selected?.evidence ?? null);
+
+  useLayoutEffect(() => {
+    const wasRequested = sourceWasRequested.current;
+    sourceWasRequested.current = sourceRequested;
+    if (!sourceRequested && !wasRequested) return;
+    // Back, a new source, a new run or a failed/pending reread must retire old inspection.
+    const hadInspectionFocus = Boolean(drawerRef.current?.contains(document.activeElement)
+      || proposalRef.current?.contains(document.activeElement));
+    setSelected(null);
+    setExpanded(false);
+    setProposal(false);
+    proposalReturnFocus.current = null;
+    restoreFindingFocus.current = hadInspectionFocus;
+    returnFocus.current = hadInspectionFocus ? refreshTrigger.current : null;
+  }, [location.key, sourceRequested, systems.loading, systems.isError, systems.run?.id]);
 
   useEffect(() => {
     setSelected(null);
@@ -500,17 +541,15 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
     [orderedAttention],
   );
 
-  /**
-   * The freshness line. Counts come from the RUN's own summary where it has one — never from a
-   * tally this component computed and then presented as the check's result. When the run carries
-   * no counts the finding set is counted instead, and the wording says which is being shown.
-   */
+  // This is a recorded, server-bounded unfinished run, not a heartbeat or a new result.
+  const scanStart = typeof systems.scanInProgressSince === "string" ? new Date(systems.scanInProgressSince) : null;
+  const unfinishedAtRead = !systems.loading && !systems.isError && scanStart && Number.isFinite(scanStart.getTime()) ? scanStart : null;
+
+  /** The completed result keeps its own timestamp and finding-derived tallies. */
   const freshHeading = systems.isError
     ? "The last check could not be read"
-    : systems.scanPending
-      ? "Your first check is running"
-      : !systems.run
-        ? "No check has finished yet"
+    : !systems.run
+      ? systems.scanPending ? "Awaiting the first completed check" : "No check has finished yet"
         : hasCompletedRun
         ? `Last checked ${completedAt.toLocaleString()}`
         : `A check started ${new Date(systems.run.started_at).toLocaleString()} and has not finished`;
@@ -533,9 +572,8 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
    * They stay anyway. They are correct, they cost nothing, and they are the thing that holds if a
    * future change re-widens either predicate — which is exactly how the hole they defend against
    * was opened in the first place. What they no longer do is TELL THE READER a scan is running:
-   * that signal moved to `scanInProgressSince` on the hook and is deliberately not wired to any
-   * sentence here, because repointing these words changes what the console says during a scan and
-   * that is Claude Design's call (§00). Flagged on the PR, not decided here.
+   * that signal moved to `scanInProgressSince` on the hook. The separate as-of-read notice now
+   * names that unfinished check without substituting its incomplete counts for the last result.
    *
    * Reading the row regardless would print "0 passed · 0 need attention" directly above a list of
    * things needing attention. So the verdict tallies are ALWAYS derived from the findings actually
@@ -561,7 +599,11 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
    * treats this number as the size of the full sweep is wrong for that flavour.
    */
   const freshDetail = !systems.run
-    ? "Nothing has been recorded for this workspace."
+    ? systems.loading
+      ? "Reading recorded check evidence…"
+      : systems.isError
+        ? "Refresh current data to retry the recorded check read."
+        : "No completed check has been recorded for this workspace."
     : (() => {
         const trustRun = hasCompletedRun;
         const total = trustRun ? (systems.run.check_count ?? currentFindings.length) : currentFindings.length;
@@ -599,7 +641,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
    * missing count is omitted rather than rendered as zero, because zero is a claim.
    */
   const businessAttention = useMemo<Array<[string, number]>>(() => ([
-    ["Clients at risk", command.attention?.at_risk_clients],
+    ["Contacts without recent follow-up", command.attention?.at_risk_clients],
     ["Follow-ups due", command.attention?.follow_ups_due],
     ["Tasks due", command.attention?.tasks_due],
   ] as Array<[string, number | undefined | null]>)
@@ -620,21 +662,22 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
       const worst: StatusWord | null = inArea.some((finding) => statusOf(finding) === "attention")
         ? "attention"
         : inArea.some((finding) => statusOf(finding) === "unavailable")
+          || (inArea.length > 0 && area.coveredBy.some(check => !inArea.some(finding => finding.check_id === check)))
           ? "unavailable"
-          : inArea.length ? "live" : null;
+          : inArea.length ? "partial" : null;
       map[area.id] = worst ?? (area.coveredBy.length === 0 ? "notchecked" : systems.run ? "unavailable" : null);
     }
     return map;
   }, [currentFindings, systems.run]);
 
   /**
-   * The operating brief's plain-English lead — DERIVED from the real area statuses, never a score
-   * or a roll-up. A clause appears only when it is true: the areas that are ready are named, then
+   * The recorded-check brief's plain-English lead — DERIVED from the real area statuses, never a score
+   * or a roll-up. A clause appears only when it is true: areas with no open recorded findings, then
    * the ones that need the owner. "Start here" is the single highest-priority owner action and the
    * exact surface it lives on. These are the same signals the sections below render, said in a
    * sentence — nothing here is a claim a section does not also make.
    */
-  const readyAreas = SYSTEMS_CHECK_AREAS.filter((area) => areaStatus[area.id] === "live");
+  const readyAreas = SYSTEMS_CHECK_AREAS.filter((area) => areaStatus[area.id] === "partial");
   const needAreas = SYSTEMS_CHECK_AREAS.filter((area) => areaStatus[area.id] === "attention");
   const nameAreas = (areas: typeof SYSTEMS_CHECK_AREAS) =>
     areas.length === 0 ? ""
@@ -645,7 +688,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const topTodoDest = topTodo ? destinationForCheck(topTodo.check_id) : null;
   const showBrief = Boolean(systems.run) && !systems.isError;
 
-  const isReading = systems.loading || command.loading || systems.scanPending;
+  const isReading = systems.loading || command.loading;
   return (
     <main className="sc-workspace" aria-label="Solo Systems Check">
       <div ref={scrollOwnerRef} className="sc-scroll-owner" aria-hidden={Boolean(selected || proposal || decision) || undefined}>
@@ -657,7 +700,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                 still gets the page heading, and the document keeps its h1. Same rule applies to
                 Mind, and to Game Plan and Trust Compass when they land. */}
             <h1 className="sc-sr-only">Systems Check</h1>
-            <p>What your business systems can actually do right now, and what is stopping the rest.</p>
+            <p>Inspect the last recorded setup check and the issues that need attention.</p>
             <span className="sc-sr-only"><span data-tenant-account-name>{resolvedAccount.accountName}</span>, <span data-tenant-account-tier>{resolvedAccount.accountTypeLabel}</span>, {command.greeting.dateLabel}. {command.greeting.name}: {command.loading ? "operating sources are still loading." : command.isError ? "some operating sources are unavailable." : command.greeting.summary}</span>
           </div>
           <div className="sc-heading-actions">
@@ -670,6 +713,24 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
         {command.isError && <div className="sc-source-warning" role="status"><AlertTriangle size={16} /> Some business operating sources could not be read. No empty state is being treated as healthy; refresh current data to retry.</div>}
 
         <div className="sc-console">
+          {sourceRequested && (
+            <section className="sc-linked-source" aria-labelledby="sc-linked-title">
+              <div className="sc-block-head">
+                <h2 id="sc-linked-title">Linked recorded finding</h2>
+                <Link className="sc-button sc-button--quiet" aria-label="Clear source selection"
+                  to={{ pathname: location.pathname, search: remainingSearch ? `?${remainingSearch}` : "", hash: location.hash }}
+                  onClick={() => refreshTrigger.current?.focus()}>Clear selection</Link>
+              </div>
+              <div aria-live="polite">
+                {linkedFinding ? <>
+                  <div className="sc-item-t"><h3>{findingTitle(linkedFinding)}</h3><FindingPill finding={linkedFinding} /></div>
+                  {linkedFinding.paige_interpretation && <p>{linkedFinding.paige_interpretation}</p>}
+                  <p className="sc-linked-date">From the last completed check · <time dateTime={systems.run!.completed_at!}>{completedAt!.toLocaleString()}</time></p>
+                  <button type="button" className="sc-button sc-button--paige" onClick={event => openFinding(linkedFinding, event.currentTarget)}>Inspect linked evidence</button>
+                </> : <p>{linkedMessage}</p>}
+              </div>
+            </section>
+          )}
           <div className="sc-strip">
             <div className="sc-strip-l">
               {/* The operating brief — the plain-English lead (§3). Derived from the real area
@@ -677,7 +738,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
               {showBrief && (readyAreas.length > 0 || needAreas.length > 0) && (
                 <p className="sc-brief-say">
                   {readyAreas.length > 0 && (
-                    <span className="sc-w-ready">{nameAreas(readyAreas)} {readyAreas.length === 1 ? "is" : "are"} ready.</span>
+                    <span className="sc-w-ready">{nameAreas(readyAreas)} {readyAreas.length === 1 ? "has" : "have"} no open findings in the recorded checks.</span>
                   )}
                   {readyAreas.length > 0 && needAreas.length > 0 ? " " : null}
                   {needAreas.length > 0 && (
@@ -702,6 +763,16 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
               )}
               <div className="sc-strip-h">{freshHeading}</div>
               <div className="sc-strip-s">{freshDetail}</div>
+              {unfinishedAtRead && (
+                <div className="sc-strip-s sc-run-state" role="status" aria-label="Unfinished check at last read">
+                  An unfinished check was reported at the last read. Started{" "}
+                  <time dateTime={unfinishedAtRead.toISOString()}>{unfinishedAtRead.toLocaleString()}</time>.{" "}
+                  {hasCompletedRun
+                    ? "Results below still come from the last completed check."
+                    : "No completed results are available yet."}{" "}
+                  Refresh current data to check for a completed result.
+                </div>
+              )}
               {systems.isError && (
                 <div className="sc-strip-err" role="alert">
                   The last read failed. Nothing below is being reported as healthy.
@@ -710,6 +781,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
             </div>
             <div className="sc-strip-a">
               <button
+                ref={refreshTrigger}
                 type="button"
                 className="sc-button sc-button--quiet"
                 onClick={refresh}
@@ -727,7 +799,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
               re-reading a stale run under a label that implies a re-check. */}
           <p className="sc-note">
             <strong>This re-reads the last recorded check.</strong> Running the checks again on demand is
-            not wired to this surface yet, so nothing here is newer than the time above.
+            not wired to this surface yet. Refresh does not start a check.
           </p>
 
           {/* Three separate things can make this reading incomplete: the run never finished, it
@@ -745,12 +817,12 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
             </div>
           )}
 
-          {!systems.run && !systems.loading && !systems.isError && (
+          {!systems.run && !systems.loading && !systems.isError && !unfinishedAtRead && (
             <div className="sc-first">
-              <h3>{systems.scanPending ? "Your first check is running" : "Nothing has been checked yet"}</h3>
+              <h3>{systems.scanPending ? "Awaiting the first completed check" : "Nothing has been checked yet"}</h3>
               <p>
                 {systems.scanPending
-                  ? "It started when this workspace was created. Nothing is shown until it finishes, because a partial answer would read as a whole one."
+                  ? "No completed check is recorded yet. Refresh current data to see the latest available result."
                   : "Systems Check reads what your business systems actually report. None of them has answered for this workspace yet — and that is not a claim that anything is wrong."}
               </p>
             </div>
@@ -771,7 +843,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                     <span key={name}>{i > 0 ? " · " : ""}{value} {name.toLowerCase()}</span>
                   ))}
                   {". "}
-                  These come from your live client records, not from the setup check.
+                  These come from existing business records, separate from the last setup check.
                 </div>
               )}
               {attentionFindings.length === 0 ? (
@@ -799,7 +871,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
           {(confirmedFindings.length > 0 || resolvedFindings.length > 0) && (
             <section className="sc-block" aria-labelledby="sc-ready-title">
               <div className="sc-block-head">
-                <h2 id="sc-ready-title">What is ready to operate</h2>
+                <h2 id="sc-ready-title">Passed and resolved checks</h2>
                 <span className="sc-n">{confirmedFindings.length + resolvedFindings.length}</span>
                 <span className="sc-aside">Each one names the check that answered for it</span>
               </div>
@@ -825,34 +897,25 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                   </li>
                 ))}
               </ul>
-              {command.metrics.length > 0 && (
-                <ul className="sc-ready">
-                  {command.metrics.map((metric) => (
-                    <li key={metric.k}>
-                      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                        <path d="M2.6 7.4l2.8 2.8L11.4 4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <div>
-                        <p>{metric.k}: <strong>{metric.v}</strong></p>
-                        <small>
-                          {command.isError
-                            ? "Last available — the current read failed, so this may not be today's number"
-                            : "Live read from your own records"}
-                        </small>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </section>
           )}
+
+          {/* Business figures retain the same Metric/Evidence consumer as PAIGE.
+              Legacy practice totals are not client-health or revenue evidence. */}
+          <section className="sc-block sc-business-review" aria-labelledby="sc-business-review-title">
+            <div className="sc-block-head"><h2 id="sc-business-review-title">Business performance</h2></div>
+            {businessReview ? <>
+              <p>Executive shows business figures with their source, currency and reporting window.</p>
+              <div><Link className="sc-button sc-button--quiet" to={businessReview.to}>Review business performance<ChevronRight size={14} aria-hidden="true" /></Link></div>
+            </> : <p>Business figures are available in Executive once this workspace resolves.</p>}
+          </section>
 
           {/* 3 — the nine operating areas */}
           <section className="sc-block" aria-labelledby="sc-areas-title">
             <div className="sc-block-head">
               <h2 id="sc-areas-title">Your operating areas</h2>
               <span className="sc-n">{SYSTEMS_CHECK_AREAS.length}</span>
-              <span className="sc-aside">Each carries its own status. There is deliberately no total.</span>
+              <span className="sc-aside">Recorded setup coverage, not operational certification.</span>
             </div>
             <div className="sc-areas">
               {SYSTEMS_CHECK_AREAS.map((area) => {
@@ -883,11 +946,13 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                           </p>
                         ) : (
                           <div className="sc-area-checks">
+                            <p className="sc-why">Recorded setup results do not verify provider readiness or successful work.</p>
+                            {area.coveredBy.some(check => !inArea.some(finding => finding.check_id === check)) && <p className="sc-why">Some expected checks have no result in this recorded run.</p>}
                             {inArea.map((finding) => {
                               const dest = destinationForCheck(finding.check_id);
                               return (
                                 <div className="sc-area-check" key={finding.id}>
-                                  <StatusPill state={statusOf(finding)} />
+                                  <FindingPill finding={finding} />
                                   <strong>{findingTitle(finding)}</strong>
                                   {dest && account && (
                                     <a className="sc-button sc-button--quiet" href={dest.path(account)}>{dest.label}</a>
@@ -917,7 +982,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                 <ul>
                   {ownerTodo.length
                     ? ownerTodo.map((f) => <li key={f.id}>{findingTitle(f)}</li>)
-                    : <li className="sc-none">Nothing from the last check is waiting on you</li>}
+                    : <li className="sc-none">{hasCompletedRun ? "Nothing in the returned findings is waiting on you" : "No completed check is available to identify required repairs"}</li>}
                 </ul>
               </div>
               {/* Approving and dismissing has to stay REACHABLE here. The panel it used to live in
@@ -958,7 +1023,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                 <ul>
                   {unavailableFindings.length
                     ? unavailableFindings.map((f) => <li key={f.id}>{findingTitle(f)}</li>)
-                    : <li className="sc-none">Everything the check looked at returned an answer</li>}
+                    : <li className="sc-none">{hasCompletedRun ? "No skipped or unavailable results were returned" : "No completed results are available yet"}</li>}
                 </ul>
               </div>
             </div>
@@ -968,10 +1033,10 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
       {selected && (
         <div ref={drawerRef} className={`sc-drawer ${expanded ? "is-expanded" : ""}`} role="dialog" aria-modal={proposal ? undefined : true} aria-hidden={proposal || undefined} aria-label={expanded ? "Expanded finding details" : "Finding details"}>
-          <div className="sc-drawer-head"><div><span className="sc-kicker">{label(selected.domain)} · {label(selected.severity_at_finding)}</span><h2>{selected.check_name || label(selected.check_id)}</h2></div><div><button data-initial-focus type="button" className="sc-icon-button" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "Return to drawer" : "Expand"}><ArrowUpRight size={18} /> <span>{expanded ? "Return" : "Expand"}</span></button><button type="button" className="sc-icon-button" onClick={closeFinding} aria-label="Close finding details"><X size={19} /></button></div></div>
+          <div className="sc-drawer-head"><div><span className="sc-kicker">{label(selected.domain)} · {label(selected.severity_at_finding)}</span><h2>{findingTitle(selected)}</h2></div><div><button data-initial-focus type="button" className="sc-icon-button" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "Return to drawer" : "Expand"}><ArrowUpRight size={18} /> <span>{expanded ? "Return" : "Expand"}</span></button><button type="button" className="sc-icon-button" onClick={closeFinding} aria-label="Close finding details"><X size={19} /></button></div></div>
           <div className="sc-drawer-body">
             <div className="sc-evidence-meta"><Proof tone={isResolved(selected) ? "resolved" : selected.status === "pass" ? "live" : "attention"}>{isResolved(selected) ? "Resolved" : label(selected.status)}</Proof><span>Recorded {new Date(selected.created_at).toLocaleString()}</span></div>
-            <section><h3>Signal</h3><p>{selected.check_name || label(selected.check_id)} · {evidenceStateLabel(evidenceFilter(selected))}</p></section>
+            <section><h3>Signal</h3><p>{findingTitle(selected)} · {evidenceStateLabel(evidenceFilter(selected))}</p></section>
             <section><h3>Evidence and provenance</h3><p>Persisted finding {selected.id} from Systems Check run {selected.run_id}.</p>{selectedEvidence.rows.length ? <dl>{selectedEvidence.rows.map(([key, value]) => <React.Fragment key={key}><dt>{label(key)}</dt><dd>{value}</dd></React.Fragment>)}</dl> : <p>No presentation-safe evidence fields are available.</p>}{selectedEvidence.hasSuppressed && <p>Additional evidence is retained but not displayed here.</p>}</section>
             <section><h3>Impact</h3><p>{selected.paige_interpretation || "No PAIGE interpretation is attached to this persisted finding."}</p></section>
             {isResolved(selected)

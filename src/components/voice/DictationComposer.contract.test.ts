@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import ts from "typescript";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
@@ -74,7 +75,42 @@ describe("dictation composer scope and send contract", () => {
     expect(paigeAiChat).toContain("const composerSendBlocked = composerBlocked || dictationActive");
     expect(paigeAiChat).toContain("if (dictationActive || !originDraft) { voiceSink?.failed(); return; }");
     expect(paigeChat).toContain("if (dictationActive) return;");
-    expect(paigeChat).toContain("disabled={isLoading || dictationActive || (!input.trim() && !attachedDoc)}");
+    // Drive the actual Send predicate. Customer history/availability adds a
+    // stricter guard; it must not remove dictation finalization or disable the
+    // ordinary ready composer. An exact old string cannot express both facts.
+    const source = ts.createSourceFile("PaigeChat.tsx", paigeChat, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const predicates: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        const attributes = node.attributes.properties.filter(ts.isJsxAttribute);
+        const send = attributes.some(a => a.name.getText(source) === "aria-label"
+          && a.initializer && ts.isStringLiteral(a.initializer) && a.initializer.text === "Send message");
+        const disabled = attributes.find(a => a.name.getText(source) === "disabled");
+        if (send && disabled?.initializer && ts.isJsxExpression(disabled.initializer) && disabled.initializer.expression)
+          predicates.push(disabled.initializer.expression.getText(source));
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(predicates).toHaveLength(1);
+    const disabled = new Function("state", `const {isLoading,dictationActive,customerFrame,customerAvailable,historyState,customerRecovery,input,attachedDoc}=state;return (${predicates[0]});`);
+    const ready = {isLoading:false,dictationActive:false,customerFrame:null,customerAvailable:true,historyState:"ready",customerRecovery:null,input:"Ready to send",attachedDoc:null};
+    expect(disabled(ready)).toBe(false);
+    expect(disabled({...ready,dictationActive:true})).toBe(true);
+    expect(disabled({...ready,isLoading:true})).toBe(true);
+    expect(disabled({...ready,input:""})).toBe(true);
+    expect(disabled({...ready,input:"",attachedDoc:{}})).toBe(false);
+    expect(disabled({...ready,customerFrame:{}})).toBe(false);
+    expect(disabled({...ready,customerFrame:{},dictationActive:true})).toBe(true);
+    expect(disabled({...ready,customerFrame:{},customerAvailable:false})).toBe(true);
+    // Recovery holds only the customer send; every original voice/owner guard remains.
+    for (const phase of ["sending","unknown","checking","unconfirmed","error"]) {
+      expect(disabled({...ready,customerFrame:{},customerRecovery:{phase}})).toBe(true);
+      expect(disabled({...ready,customerRecovery:{phase}})).toBe(false);
+      expect(disabled({...ready,dictationActive:true,customerRecovery:{phase}})).toBe(true);
+    }
+    for (const historyState of ["loading","error"])
+      expect(disabled({...ready,customerFrame:{},historyState})).toBe(true);
     expect(conversations).toContain("sendDisabled={sendDisabled || dictationActive}");
   });
 
@@ -104,4 +140,22 @@ describe("dictation composer scope and send contract", () => {
     expect(page).toContain('dictationScopeEpoch: `${activeTenantId ?? "resolving"}|${selected.key}|${editingDraftId ?? "new-reply"}`');
     expect(page).toContain("setScheduledFor(null); setEditingDraftId(null);");
   });
+  it("retires a customer dictation generation when access is rechecked, while preserving owner behavior", () => {
+    const text = read("src/components/app/PaigeChat.tsx");
+    const source = ts.createSourceFile("PaigeChat.tsx", text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    let expression = "";
+    const visit = (node: ts.Node) => {
+      if (ts.isVariableDeclaration(node) && node.name.getText(source) === "dictationScopeEpoch") expression = node.initializer!.getText(source);
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(expression).not.toBe("");
+    const epoch = new Function("user", "clientId", "location", "customerFrame", "customerAvailable", "return (" + expression + ");");
+    const actor = {id:"test-customer"}, route = {pathname:"/app",search:""}, frame = {};
+    expect(epoch(actor, null, route, frame, true)).not.toBe(epoch(actor, null, route, frame, false));
+    expect(epoch(actor, null, route, undefined, true)).toBe(epoch(actor, null, route, undefined, false));
+    // Existing hook scope-change controls prove that retired generations close
+    // their recorder/socket and cannot deliver trailing finals into a draft.
+  });
+
 });

@@ -1,0 +1,429 @@
+{
+  "source": "99a92bbda1508ffcfb6694b73e8ed675fa0c314d",
+  "boundary": "ACTUAL_SOURCE_NATIVE_SHELL_SYNTHETIC_PORTS_NO_AUTH_NO_REAL_EFFECTS",
+  "frames": [
+    {
+      "name": "fenced-a-dark-1536-closed",
+      "expectedOpen": false,
+      "dom": {
+        "clientWidth": 1536,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 770,
+        "pageWidth": 1536,
+        "paigeExpanded": "false",
+        "subject": "Your project next steps",
+        "width": 1536
+      },
+      "nativeImagePixels": [
+        1535,
+        770
+      ],
+      "sha256": "3bdbe4d15d601fb8462a5e97e74a19fd88d0bfba41c454a658a54b0e3378b3ec",
+      "axSha256": "e0e381115cd25211131aa8d184d4d24bc4979b1a7a79f7af24676b3379429682"
+    },
+    {
+      "name": "fenced-a-dark-1536-open",
+      "expectedOpen": true,
+      "dom": {
+        "clientWidth": 1536,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 770,
+        "pageWidth": 1536,
+        "paigeExpanded": "true",
+        "subject": "Your project next steps",
+        "width": 1536
+      },
+      "nativeImagePixels": [
+        1535,
+        770
+      ],
+      "sha256": "ce048ce70c58224f255c714887bf0dfa74d0d12a90ae3579ffda74be152b5699",
+      "axSha256": "087195f529287a9c24b70a2b4fdfc41e1743be6eabbb30a5fe820dcb6b1f6d79"
+    },
+    {
+      "name": "fenced-a-dark-1366-closed",
+      "expectedOpen": false,
+      "dom": {
+        "clientWidth": 1366,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 768,
+        "pageWidth": 1366,
+        "paigeExpanded": "false",
+        "subject": "Your project next steps",
+        "width": 1366
+      },
+      "nativeImagePixels": [
+        1366,
+        768
+      ],
+      "sha256": "f6e949bfc3f646f0ffb63bd87e39f6fd98d60d484202c4f04c9e55f7af01e01e",
+      "axSha256": "c90da5aec296bbd6261bc6154c25538a26f3cadd2ad18a3add8e16d175dfbb9f"
+    },
+    {
+      "name": "fenced-a-dark-1366-open",
+      "expectedOpen": true,
+      "dom": {
+        "clientWidth": 1366,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 768,
+        "pageWidth": 1366,
+        "paigeExpanded": "true",
+        "subject": "Your project next steps",
+        "width": 1366
+      },
+      "nativeImagePixels": [
+        1366,
+        768
+      ],
+      "sha256": "84f4d3d52c3bded206b8f94a47b02b2a722099810b479fcc1af97cdc0c1a75e5",
+      "axSha256": "060086522e1d29e7bef6318920a04a31a31ad43252d3f437ed51dd36c9138d1b"
+    },
+    {
+      "name": "fenced-a-dark-1024-closed",
+      "expectedOpen": false,
+      "dom": {
+        "clientWidth": 1024,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 768,
+        "pageWidth": 1024,
+        "paigeExpanded": "false",
+        "subject": "Your project next steps",
+        "width": 1024
+      },
+      "nativeImagePixels": [
+        1024,
+        768
+      ],
+      "sha256": "e2607cd2a07e375d2c5dd444503762716225e0ef9117e51a65a5bb40d07048e5",
+      "axSha256": "4c738875e9d0db7a5fe035e6307276f47ca143a247b54683719809ecb706dc2d",
+      "privateRawAxSha256": "cc0872d24fcb5e43d5c659abdcfd7ac7a7d4391369c53c973e37cb8e6fce5998",
+      "axFormatting": "Trailing line spaces normalized in exported text only; private raw AX retained, native JPEG untouched"
+    },
+    {
+      "name": "fenced-a-dark-1024-open",
+      "expectedOpen": true,
+      "dom": {
+        "clientWidth": 1024,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 768,
+        "pageWidth": 1024,
+        "paigeExpanded": "true",
+        "subject": "Your project next steps",
+        "width": 1024
+      },
+      "nativeImagePixels": [
+        1024,
+        768
+      ],
+      "sha256": "3a78f57563d2d3f97fb5003811bee668e0d62334b996e0192721c7f218651393",
+      "axSha256": "6210a617aab05086c1f4b2b5d15b64ddacd15d6548bbd270a5d296f4b0010929"
+    },
+    {
+      "name": "fenced-a-dark-900-closed",
+      "expectedOpen": false,
+      "dom": {
+        "clientWidth": 900,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 1000,
+        "pageWidth": 900,
+        "paigeExpanded": "false",
+        "subject": "Your project next steps",
+        "width": 900
+      },
+      "nativeImagePixels": [
+        900,
+        1000
+      ],
+      "sha256": "891ac97c7f3ecd10bdb417c64aa25381179777d4a7c22a7cd013ed073bf2e267",
+      "axSha256": "e1319ebb54f3459fdf53c5dd9c39919acfeee3874909031aae6a7bb8777f55aa"
+    },
+    {
+      "name": "fenced-a-dark-900-open",
+      "expectedOpen": true,
+      "dom": {
+        "clientWidth": 900,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 1000,
+        "pageWidth": 900,
+        "paigeExpanded": "true",
+        "subject": "Your project next steps",
+        "width": 900
+      },
+      "nativeImagePixels": [
+        900,
+        1000
+      ],
+      "sha256": "08734cc94e93fd9dc47615eed8ec065070a73d15f6dd23d74db1043129538fbd",
+      "axSha256": "e2c1b91f50da3b8869e5e4577c32a0153143eb5836e40f218b01ef4d7ea206f4"
+    },
+    {
+      "name": "fenced-b-light-1536-closed",
+      "expectedOpen": false,
+      "dom": {
+        "clientWidth": 1536,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 770,
+        "pageWidth": 1536,
+        "paigeExpanded": "false",
+        "subject": "Your project next steps",
+        "width": 1536
+      },
+      "nativeImagePixels": [
+        1535,
+        770
+      ],
+      "sha256": "43667556a6c279807de7bb1894bcd0762ee835702df71eb6cd69437d3b69c95e",
+      "axSha256": "6b63dfbfed61333bde8e144068ee611622db55f431dbff07578815cc49723994",
+      "privateRawAxSha256": "9710ddb2c5b6b371765e36a7497ee27ae79e6aef5380ec03260eb41cf065de83",
+      "axFormatting": "Trailing line spaces normalized in exported text only; private raw AX retained, native JPEG untouched"
+    },
+    {
+      "name": "fenced-b-light-1536-open",
+      "expectedOpen": true,
+      "dom": {
+        "clientWidth": 1536,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 770,
+        "pageWidth": 1536,
+        "paigeExpanded": "true",
+        "subject": "Your project next steps",
+        "width": 1536
+      },
+      "nativeImagePixels": [
+        1535,
+        770
+      ],
+      "sha256": "62db127008716555d9e774ddc4262ffffc4ab4a30923dd60e364fa2431dc2456",
+      "axSha256": "07d9cf1e1bbe2e8735270d41141309acc8b254fd5988a18580d7aff7009e165c",
+      "privateRawAxSha256": "14c430d963059f7de9f87bc6f9a1cba18b481a1cee19c66694e159ec42877727",
+      "axFormatting": "Trailing line spaces normalized in exported text only; private raw AX retained, native JPEG untouched"
+    },
+    {
+      "name": "fenced-b-light-1366-closed",
+      "expectedOpen": false,
+      "dom": {
+        "clientWidth": 1366,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 768,
+        "pageWidth": 1366,
+        "paigeExpanded": "false",
+        "subject": "Your project next steps",
+        "width": 1366
+      },
+      "nativeImagePixels": [
+        1366,
+        768
+      ],
+      "sha256": "e87d97fa0e1e7c42077c7cbdaff50cafa7a0d0252d0fec2bcc5287686fadca64",
+      "axSha256": "b15554ec8791208b358c204108d6a988ba5a0c749fbda32aecd87d8840501f74"
+    },
+    {
+      "name": "fenced-b-light-1366-open",
+      "expectedOpen": true,
+      "dom": {
+        "clientWidth": 1366,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 768,
+        "pageWidth": 1366,
+        "paigeExpanded": "true",
+        "subject": "Your project next steps",
+        "width": 1366
+      },
+      "nativeImagePixels": [
+        1366,
+        768
+      ],
+      "sha256": "179d6ec827cdc9ab624066f7cd57b803c21de57b758d7ddecef2d44da8251012",
+      "axSha256": "d8a7867c0c9d2da79b4698943d0ccc1882786b7f9bbfe04a597b25108d178271"
+    },
+    {
+      "name": "fenced-b-light-1024-closed",
+      "expectedOpen": false,
+      "dom": {
+        "clientWidth": 1024,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 768,
+        "pageWidth": 1024,
+        "paigeExpanded": "false",
+        "subject": "Your project next steps",
+        "width": 1024
+      },
+      "nativeImagePixels": [
+        1024,
+        768
+      ],
+      "sha256": "70e98299580ed1efce707549b70ba1899a0afbe296fc1f5711e1e64ea3204b75",
+      "axSha256": "db80c1dce24677461f569e83217bfbcdf8c9d467ece4046f23a485a4fb8ab256"
+    },
+    {
+      "name": "fenced-b-light-1024-open",
+      "expectedOpen": true,
+      "dom": {
+        "clientWidth": 1024,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 768,
+        "pageWidth": 1024,
+        "paigeExpanded": "true",
+        "subject": "Your project next steps",
+        "width": 1024
+      },
+      "nativeImagePixels": [
+        1024,
+        768
+      ],
+      "sha256": "0ecd4c28d17973f113e7524357cd4abef2c366d97a10b357b6b8ee6e9cc6dfe7",
+      "axSha256": "2eb5d26eb6ba68fb5faf7f97397a343a572fabb694d280063200b818d0801e23"
+    },
+    {
+      "name": "fenced-b-light-900-closed",
+      "expectedOpen": false,
+      "dom": {
+        "clientWidth": 900,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 1000,
+        "pageWidth": 900,
+        "paigeExpanded": "false",
+        "subject": "Your project next steps",
+        "width": 900
+      },
+      "nativeImagePixels": [
+        900,
+        1000
+      ],
+      "sha256": "05084345741342287d011d40fd5f3b9f7a2af08b68f5fd9673cbce3735efb648",
+      "axSha256": "2b8a0d70650751da52c9019bc04f6a3f4967ca614027faabb3a3486f385b4b98"
+    },
+    {
+      "name": "fenced-b-light-900-open",
+      "expectedOpen": true,
+      "dom": {
+        "clientWidth": 900,
+        "composer": [
+          {
+            "length": 139,
+            "rawFence": false,
+            "text": "Thank you for sharing your goals.\n\nHere are the next steps for the project. Please let me know a convenient time to talk.\n\nNeutral reviewer"
+          }
+        ],
+        "height": 1000,
+        "pageWidth": 900,
+        "paigeExpanded": "true",
+        "subject": "Your project next steps",
+        "width": 900
+      },
+      "nativeImagePixels": [
+        900,
+        1000
+      ],
+      "sha256": "b0f5b036e7cfa9b3de4169f85071da61eca6f66c8b54e3d73bf69c550655b48d",
+      "axSha256": "ae6b615a5b30d0b9a2876ef41596729bbb7a2473c626b52eca572bd4eb3a7433"
+    }
+  ],
+  "additionalArtifacts": {
+    "fenced-exact-preview.jpg": "d90fdb802048a450e69b19dada38cdf0fbf0c7fbe571c60a0bec32e59e51053f",
+    "fenced-exact-preview.ax.txt": "7058483c6afaf8cd24607356de63a531be359b7e3937011ab7ff2f40b750aa27",
+    "fenced-preview-cancelled.ax.txt": "1ada6a6266d9ad0f77cf5ff374fbbbe133c31faa54c42a967656b4a9569bf9c9",
+    "fenced-review-cancelled.jpg": "9f8712500df95604fd3e141fe101595c054e313add32108fc65408ff67811d9b"
+  },
+  "captureCorrection": {
+    "priorEvidenceHead": "869a3a6c2d881f4fd7bb6b939f3305db714cce88",
+    "review": "REVISE; original three invalid images retained in Git/private history",
+    "correctedFrames": [
+      "fenced-a-dark-1024-closed",
+      "fenced-b-light-1536-closed",
+      "fenced-b-light-1536-open"
+    ],
+    "method": "Fresh scoped tab and explicit tab parameter per original native screenshot; no resizing, cropping or relabeling",
+    "native1536CssPixelCaptures": "1535 original image pixels; actual dimensions retained, not rewritten to1536"
+  }
+}

@@ -379,6 +379,168 @@ const drafts = new Map<string, string>();
 const draftRevisions = new Map<string, number>();
 const listeners = new Map<string, Set<Listener>>();
 
+/** Optional same-tab recovery, disabled until the canonical account context binds it.
+ * This is not authentication, business Memory, attachment storage or a send queue.
+ * The caller must supply the actual subject, never an effective/impersonated user.
+ */
+export type ComposerDraftSessionScope =
+  | Readonly<{ kind: "ready"; tenantId: string; userId: string }>
+  | Readonly<{ kind: "unresolved" | "clear" }>;
+
+const DRAFT_SESSION_KEY = "paige.composer.drafts.v1";
+const DRAFT_SESSION_TTL = 24 * 60 * 60 * 1000;
+const DRAFT_SESSION_LIMIT = 8;
+const DRAFT_TEXT_LIMIT = 20_000;
+const DRAFT_CACHE_LIMIT = 200_000;
+type SessionOwner = Readonly<{ tenantId: string; userId: string }>;
+type SessionDraft = Readonly<{ key: string; text: string; updatedAt: number }>;
+let sessionOwner: SessionOwner | null = null;
+const draftTouchedAt = new Map<string, number>();
+let persistedDraftKeys = new Set<string>();
+
+export type ComposerDraftReloadProtection = "disabled" | "protected" | "unavailable";
+
+function publishPersistedDraftKeys(keys: string[]): void {
+  const next = new Set(keys);
+  const changed = new Set([...persistedDraftKeys, ...next]);
+  const previous = persistedDraftKeys;
+  persistedDraftKeys = next;
+  for (const key of changed) {
+    if (previous.has(key) !== next.has(key)) emit(key);
+  }
+}
+
+function reloadProtectionForKey(key: string | null): ComposerDraftReloadProtection {
+  if (!key || !sessionOwner || !sessionOwns(key, sessionOwner)) return "disabled";
+  const age = Date.now() - (draftTouchedAt.get(key) ?? 0);
+  return persistedDraftKeys.has(key) && age >= 0 && age < DRAFT_SESSION_TTL ? "protected" : "unavailable";
+}
+
+export function readComposerDraftReloadProtection(handle: ComposerDraftHandle): ComposerDraftReloadProtection {
+  return reloadProtectionForKey(composerDraftKey(handle));
+}
+
+function sessionKeyParts(key: string): string[] | null {
+  try {
+    const parts: unknown = JSON.parse(key);
+    return Array.isArray(parts) && parts.length === 5
+      && parts.every((part) => typeof part === "string" && part.length > 0 && part.length <= 200)
+      ? parts : null;
+  } catch { return null; }
+}
+
+function sessionOwns(key: string, owner: SessionOwner): boolean {
+  const parts = sessionKeyParts(key);
+  return parts?.[0] === owner.tenantId && parts[1] === owner.userId;
+}
+
+function discardSessionCache(): void {
+  publishPersistedDraftKeys([]);
+  try { window.sessionStorage.removeItem(DRAFT_SESSION_KEY); } catch { /* Current memory still works. */ }
+}
+
+function persistSessionDrafts(): void {
+  if (!sessionOwner) return;
+  const now = Date.now();
+  const entries: SessionDraft[] = [];
+  // Reverse edit order also breaks same-millisecond ties in favor of new input.
+  for (const [key, updatedAt] of [...draftTouchedAt].reverse()) {
+    const text = drafts.get(key);
+    if (text && sessionOwns(key, sessionOwner) && text.length <= DRAFT_TEXT_LIMIT
+      && updatedAt <= now && now - updatedAt < DRAFT_SESSION_TTL) {
+      entries.push({ key, text, updatedAt });
+    }
+  }
+  entries.sort((a, b) => b.updatedAt - a.updatedAt);
+  try {
+    if (entries.length === 0) discardSessionCache();
+    else {
+      const retained = entries.slice(0, DRAFT_SESSION_LIMIT);
+      const serialize = () => JSON.stringify({ version: 1, owner: sessionOwner, entries: retained });
+      let raw = serialize();
+      while (retained.length && raw.length > DRAFT_CACHE_LIMIT) {
+        retained.pop();
+        raw = serialize();
+      }
+      if (retained.length) {
+        window.sessionStorage.setItem(DRAFT_SESSION_KEY, raw);
+        publishPersistedDraftKeys(retained.map(entry => entry.key));
+      }
+      else discardSessionCache();
+    }
+  } catch {
+    // If setItem fails but removal works, an older text must not return on reload.
+    discardSessionCache();
+  }
+}
+
+export function setComposerDraftSessionScope(scope: ComposerDraftSessionScope): void {
+  const next = scope.kind === "ready" && scope.tenantId && scope.userId
+    ? { tenantId: scope.tenantId, userId: scope.userId } : null;
+  if (next && sessionOwner?.tenantId === next.tenantId && sessionOwner.userId === next.userId) return;
+  const previous = sessionOwner;
+  sessionOwner = null;
+  if (previous) {
+    // Retain monotonic revisions: an old refused send cannot resurrect retired text,
+    // including an actor/workspace A→B→A transition.
+    for (const key of draftRevisions.keys()) {
+      if (sessionKeyParts(key)?.[1] !== previous.userId) continue;
+      draftRevisions.set(key, (draftRevisions.get(key) ?? 0) + 1);
+      // Preserve existing same-actor workspace drafts in memory. Only the
+      // currently verified workspace may be retained for reload.
+      if (!next || next.userId !== previous.userId) {
+        drafts.delete(key);
+        draftTouchedAt.delete(key);
+      }
+      emit(key);
+    }
+    discardSessionCache();
+  }
+  if (!next) {
+    // A cold unresolved identity cannot read a cache or destroy one before auth
+    // resolves. An authoritative sign-out/ineligible verdict must remove it.
+    if (scope.kind === "clear") discardSessionCache();
+    return;
+  }
+  sessionOwner = next;
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_SESSION_KEY);
+    if (raw) {
+      if (raw.length > DRAFT_CACHE_LIMIT) throw new Error("Oversized draft cache");
+      const cache = JSON.parse(raw);
+      if (cache?.version !== 1 || cache.owner?.tenantId !== next.tenantId
+        || cache.owner?.userId !== next.userId || !Array.isArray(cache.entries)
+        || cache.entries.length > DRAFT_SESSION_LIMIT) throw new Error("Invalid draft cache");
+      const seen = new Set<string>();
+      const now = Date.now();
+      for (const entry of cache.entries) {
+        if (!entry || typeof entry.key !== "string" || !sessionOwns(entry.key, next)
+          || seen.has(entry.key) || typeof entry.text !== "string" || !entry.text.length
+          || entry.text.length > DRAFT_TEXT_LIMIT || !Number.isFinite(entry.updatedAt)
+          || entry.updatedAt > now || now - entry.updatedAt >= DRAFT_SESSION_TTL) {
+          throw new Error("Invalid draft entry");
+        }
+        seen.add(entry.key);
+      }
+      const currentEdits = [...draftTouchedAt];
+      for (const entry of [...cache.entries as SessionDraft[]].reverse()) {
+        // Any in-memory revision, including an explicit empty tombstone, wins.
+        if (draftRevisions.has(entry.key)) continue;
+        drafts.set(entry.key, entry.text);
+        draftRevisions.set(entry.key, 1);
+        draftTouchedAt.set(entry.key, entry.updatedAt);
+        emit(entry.key);
+      }
+      // Cached edit order is older than any work already done in this module.
+      for (const [key, at] of currentEdits) {
+        draftTouchedAt.delete(key);
+        draftTouchedAt.set(key, at);
+      }
+    }
+  } catch { discardSessionCache(); }
+  persistSessionDrafts();
+}
+
 export function composerDraftKey(handle: ComposerDraftHandle): string {
   return JSON.stringify([
     handle.tenantId,
@@ -399,8 +561,13 @@ function emit(key: string): void {
 
 function writeKey(key: string, value: string): void {
   draftRevisions.set(key, (draftRevisions.get(key) ?? 0) + 1);
+  draftTouchedAt.delete(key);
   if (value.length === 0) drafts.delete(key);
-  else drafts.set(key, value);
+  else {
+    drafts.set(key, value);
+    draftTouchedAt.set(key, Date.now());
+  }
+  persistSessionDrafts();
   emit(key);
 }
 
@@ -450,6 +617,8 @@ export function moveComposerDraft(from: ComposerDraftHandle, to: ComposerDraftHa
   if (destinationValue !== undefined) {
     if (destinationValue === value) {
       drafts.delete(fromKey);
+      draftTouchedAt.delete(fromKey);
+      persistSessionDrafts();
       emit(fromKey);
     }
     return;
@@ -457,7 +626,11 @@ export function moveComposerDraft(from: ComposerDraftHandle, to: ComposerDraftHa
 
   drafts.delete(fromKey);
   drafts.set(toKey, value);
+  draftTouchedAt.delete(toKey);
+  draftTouchedAt.set(toKey, draftTouchedAt.get(fromKey) ?? Date.now());
+  draftTouchedAt.delete(fromKey);
   draftRevisions.set(toKey, (draftRevisions.get(toKey) ?? 0) + 1);
+  persistSessionDrafts();
   emit(fromKey);
   emit(toKey);
 }
@@ -479,6 +652,8 @@ export function useComposerDraft(state: ComposerScopeState) {
   const subscribe = useCallback((listener: Listener) => subscribeKey(visibleKey, listener), [visibleKey]);
   const getSnapshot = useCallback(() => readKey(visibleKey), [visibleKey]);
   const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const getReloadSnapshot = useCallback(() => reloadProtectionForKey(visibleKey), [visibleKey]);
+  const reloadProtection = useSyncExternalStore(subscribe, getReloadSnapshot, getReloadSnapshot);
 
   const setValue = useCallback((next: SetStateAction<string>) => {
     const writableHandle = state.writableHandle;
@@ -495,6 +670,7 @@ export function useComposerDraft(state: ComposerScopeState) {
 
   return {
     value,
+    reloadProtection,
     setValue,
     visibleHandle: state.visibleHandle,
     writableHandle: state.writableHandle,

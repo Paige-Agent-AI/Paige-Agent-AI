@@ -157,6 +157,53 @@ describe("Paige Live Conversation owner surface", () => {
     expect(getUserMedia).not.toHaveBeenCalled();
   });
 
+  it("opens the stage from the first-run voice-entry request and ANSWERS a blocked request", async () => {
+    // Disabled (composer busy / dictation / authority pending): the request must not start
+    // anything — but it is never silently dropped (review #2611 P2-2): the onboarding stage
+    // cannot see the composer's blocked states, so the person hears why nothing opened.
+    await render(null, "tenant-a||", false, null, true);
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige-live-open-request")); });
+    await flush();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(control.start).not.toHaveBeenCalled();
+    expect(getUserMedia).not.toHaveBeenCalled();
+    const announced = [...document.querySelectorAll("span")].find(node => node.className.includes("sr-only") && node.getAttribute("aria-live"));
+    expect(announced?.textContent).toContain("Live can’t start right now");
+    // Enabled: the request goes through the SAME begin() path as the trigger — one session
+    // request, no microphone before readiness, same immersive stage.
+    await render(null, "tenant-a||", false, null, false);
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige-live-open-request")); });
+    await flush();
+    expect(control.start).toHaveBeenCalledWith(expect.objectContaining({ threadId: "11111111-1111-4111-8111-111111111111", contextEpoch: "tenant-a||", entryMode: "embedded" }));
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Live Conversation with Paige");
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it("pins the acceptance and retry actions outside the disclosure's scroll fold", async () => {
+    // The #2710 evidence review caught the gold acceptance button below the notice's internal
+    // 34vh scroll fold (scrollbars hidden) on ordinary laptop heights — the one control the
+    // consent gate exists for was invisible. The actions row now sits outside the scroll region.
+    control.start.mockResolvedValueOnce({
+      ok: false, sessionId: null, availability: "PROOF OWED", code: "live_audio_not_enabled",
+      explanation: "Live audio needs your one-time acknowledgement first: Paige explains what the speech provider keeps, you accept it yourself, and then she starts listening. Or keep working in chat.",
+    });
+    await render();
+    await act(async () => clickText("Talk live with Paige"));
+    await flush();
+    const actions = document.querySelector(".plc-notice__actions");
+    expect(actions, "the pinned actions row exists").toBeTruthy();
+    expect(actions!.contains(document.querySelector("button")!), "accept lives in the actions row").toBe(false);
+    const accept = [...(actions?.querySelectorAll("button") ?? [])].find(b => b.textContent?.includes("I understand"));
+    const retry = [...(actions?.querySelectorAll("button") ?? [])].find(b => b.textContent?.includes("Retry"));
+    expect(accept, "the acceptance button is in the PINNED row, not the scrolling disclosure").toBeTruthy();
+    expect(retry, "retry is pinned too").toBeTruthy();
+    const scroll = document.querySelector(".plc-notice__scroll");
+    expect(scroll, "the disclosure scrolls in its own region").toBeTruthy();
+    expect(scroll!.contains(accept!), "acceptance is NOT inside the scroll region").toBe(false);
+    expect(scroll!.textContent).toContain("default retention");
+    expect(scroll!.textContent).toContain("one speaker");
+  });
+
   it("uses the one-use ticket only for the first-party relay and keeps capture off until ready", async () => {
     control.start.mockResolvedValueOnce({
       ok: true, sessionId: "22222222-2222-4222-8222-222222222222",

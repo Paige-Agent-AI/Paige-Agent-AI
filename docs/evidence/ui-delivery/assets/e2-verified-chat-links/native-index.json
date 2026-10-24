@@ -1,0 +1,423 @@
+{
+  "evidence": "Synthetic actual component, not authenticated customer acceptance",
+  "cases": [
+    {
+      "case": {
+        "width": 1536,
+        "height": 770,
+        "theme": "dark",
+        "state": "available"
+      },
+      "filename": "links-available-1536-dark.jpg",
+      "dom": {
+        "anchors": [
+          {
+            "color": "rgb(246, 242, 234)",
+            "height": 15.199999809265137,
+            "href": "https://example.org/research",
+            "text": "source citation"
+          },
+          {
+            "color": "rgb(246, 242, 234)",
+            "height": 27.80000114440918,
+            "href": "/solo/7001/clients/conversations",
+            "text": "Open Conversations"
+          }
+        ],
+        "background": "rgb(12, 7, 18)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 770,
+        "overflow": false,
+        "text": "Message review\n\nThe permitted inbox sample is available; it is not a business total. Open Conversations.\n\nA source citation remains available. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or action.",
+        "width": 1536
+      },
+      "sha256": "057de56aa5d0a980b9b09f5cd4323b4ec51499c1c84f8d3b6a0a6af589180157",
+      "contrast": [
+        {
+          "label": "source citation",
+          "normal": 17.831114557361992,
+          "hoverOpacity80": 11.368002806514582
+        },
+        {
+          "label": "Open Conversations",
+          "normal": 17.831114557361992,
+          "hoverOpacity80": 11.368002806514582
+        }
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 770,
+        "width": 1535
+      },
+      "exactRaster": false,
+      "dimensionEvidence": "UNVERIFIED:1536 CSS produced1535px native JPEG"
+    },
+    {
+      "case": {
+        "width": 1366,
+        "height": 768,
+        "theme": "light",
+        "state": "available"
+      },
+      "filename": "links-available-1366-light.jpg",
+      "dom": {
+        "anchors": [
+          {
+            "color": "rgb(33, 30, 36)",
+            "height": 15.199999809265137,
+            "href": "https://example.org/research",
+            "text": "source citation"
+          },
+          {
+            "color": "rgb(33, 30, 36)",
+            "height": 27.80000114440918,
+            "href": "/solo/7001/clients/conversations",
+            "text": "Open Conversations"
+          }
+        ],
+        "background": "rgb(251, 248, 244)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 768,
+        "overflow": false,
+        "text": "Message review\n\nThe permitted inbox sample is available; it is not a business total. Open Conversations.\n\nA source citation remains available. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or action.",
+        "width": 1366
+      },
+      "sha256": "cea713800623e9f64a315256b4b4347448e144e8c72f3ad5fe19e16841c85cf6",
+      "contrast": [
+        {
+          "label": "source citation",
+          "normal": 15.546595318534123,
+          "hoverOpacity80": 8.299328310250834
+        },
+        {
+          "label": "Open Conversations",
+          "normal": 15.546595318534123,
+          "hoverOpacity80": 8.299328310250834
+        }
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1366
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
+    },
+    {
+      "case": {
+        "width": 1024,
+        "height": 768,
+        "theme": "dark",
+        "state": "available"
+      },
+      "filename": "links-available-1024-dark.jpg",
+      "dom": {
+        "anchors": [
+          {
+            "color": "rgb(246, 242, 234)",
+            "height": 15.199999809265137,
+            "href": "https://example.org/research",
+            "text": "source citation"
+          },
+          {
+            "color": "rgb(246, 242, 234)",
+            "height": 27.80000114440918,
+            "href": "/solo/7001/clients/conversations",
+            "text": "Open Conversations"
+          }
+        ],
+        "background": "rgb(12, 7, 18)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 768,
+        "overflow": false,
+        "text": "Message review\n\nThe permitted inbox sample is available; it is not a business total. Open Conversations.\n\nA source citation remains available. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or action.",
+        "width": 1024
+      },
+      "sha256": "e26a6cacdd00ad7ea7325bc858ad9d9b842cde8b014565666e3a10a524e2e14f",
+      "contrast": [
+        {
+          "label": "source citation",
+          "normal": 17.831114557361992,
+          "hoverOpacity80": 11.368002806514582
+        },
+        {
+          "label": "Open Conversations",
+          "normal": 17.831114557361992,
+          "hoverOpacity80": 11.368002806514582
+        }
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1024
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
+    },
+    {
+      "case": {
+        "width": 900,
+        "height": 1000,
+        "theme": "light",
+        "state": "available"
+      },
+      "filename": "links-available-900-light.jpg",
+      "dom": {
+        "anchors": [
+          {
+            "color": "rgb(33, 30, 36)",
+            "height": 15.199999809265137,
+            "href": "https://example.org/research",
+            "text": "source citation"
+          },
+          {
+            "color": "rgb(33, 30, 36)",
+            "height": 27.80000114440918,
+            "href": "/solo/7001/clients/conversations",
+            "text": "Open Conversations"
+          }
+        ],
+        "background": "rgb(251, 248, 244)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 1000,
+        "overflow": false,
+        "text": "Message review\n\nThe permitted inbox sample is available; it is not a business total. Open Conversations.\n\nA source citation remains available. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or action.",
+        "width": 900
+      },
+      "sha256": "8e86792c27e364d8809bfa7ab89ed0b899343040d70c9e8df4d6d055158a56bf",
+      "contrast": [
+        {
+          "label": "source citation",
+          "normal": 15.546595318534123,
+          "hoverOpacity80": 8.299328310250834
+        },
+        {
+          "label": "Open Conversations",
+          "normal": 15.546595318534123,
+          "hoverOpacity80": 8.299328310250834
+        }
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
+    },
+    {
+      "case": {
+        "width": 320,
+        "height": 780,
+        "theme": "dark",
+        "state": "available"
+      },
+      "filename": "links-available-320-dark.jpg",
+      "dom": {
+        "anchors": [
+          {
+            "color": "rgb(246, 242, 234)",
+            "height": 16,
+            "href": "https://example.org/research",
+            "text": "source citation"
+          },
+          {
+            "color": "rgb(246, 242, 234)",
+            "height": 27.80000114440918,
+            "href": "/solo/7001/clients/conversations",
+            "text": "Open Conversations"
+          }
+        ],
+        "background": "rgb(12, 7, 18)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 780,
+        "overflow": false,
+        "text": "Message review\n\nThe permitted inbox sample is available; it is not a business total. Open Conversations.\n\nA source citation remains available. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or action.",
+        "width": 320
+      },
+      "sha256": "41d324ccb101b3b2ec829fc45b1a5cd0309d2151f7edf6255b8713c9b7e96af0",
+      "contrast": [
+        {
+          "label": "source citation",
+          "normal": 17.831114557361992,
+          "hoverOpacity80": 11.368002806514582
+        },
+        {
+          "label": "Open Conversations",
+          "normal": 17.831114557361992,
+          "hoverOpacity80": 11.368002806514582
+        }
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 780,
+        "width": 320
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
+    },
+    {
+      "case": {
+        "width": 320,
+        "height": 780,
+        "theme": "light",
+        "state": "available"
+      },
+      "filename": "links-available-320-light.jpg",
+      "dom": {
+        "anchors": [
+          {
+            "color": "rgb(33, 30, 36)",
+            "height": 16,
+            "href": "https://example.org/research",
+            "text": "source citation"
+          },
+          {
+            "color": "rgb(33, 30, 36)",
+            "height": 27.80000114440918,
+            "href": "/solo/7001/clients/conversations",
+            "text": "Open Conversations"
+          }
+        ],
+        "background": "rgb(251, 248, 244)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 780,
+        "overflow": false,
+        "text": "Message review\n\nThe permitted inbox sample is available; it is not a business total. Open Conversations.\n\nA source citation remains available. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or action.",
+        "width": 320
+      },
+      "sha256": "399cf6828c4ed81dd2c739d79af26e20420fe42ebb25490a6e24c9e0a2f2d191",
+      "contrast": [
+        {
+          "label": "source citation",
+          "normal": 15.546595318534123,
+          "hoverOpacity80": 8.299328310250834
+        },
+        {
+          "label": "Open Conversations",
+          "normal": 15.546595318534123,
+          "hoverOpacity80": 8.299328310250834
+        }
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 780,
+        "width": 320
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
+    },
+    {
+      "case": {
+        "width": 320,
+        "height": 780,
+        "theme": "light",
+        "state": "unavailable"
+      },
+      "filename": "links-unavailable-320-light.jpg",
+      "dom": {
+        "anchors": [],
+        "background": "rgb(251, 248, 244)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 780,
+        "overflow": false,
+        "text": "Message review\n\nThe message source could not be verified. Open Conversations. No result or action is inferred.\n\nSynthetic reference preview. No real account, message, provider or action.",
+        "width": 320
+      },
+      "sha256": "f902eea7597f63cf5f2d2823e5f50360551cde926e0f33f152d10d74207e3107",
+      "contrast": [],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 780,
+        "width": 320
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
+    },
+    {
+      "case": {
+        "width": 320,
+        "height": 780,
+        "theme": "dark",
+        "state": "parented"
+      },
+      "filename": "links-parented-320-dark.jpg",
+      "dom": {
+        "anchors": [
+          {
+            "color": "rgb(246, 242, 234)",
+            "height": 16,
+            "href": "https://example.org/research",
+            "text": "source citation"
+          }
+        ],
+        "background": "rgb(12, 7, 18)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 780,
+        "overflow": false,
+        "text": "Message review\n\nThe permitted inbox sample is available; it is not a business total. Open Conversations.\n\nA source citation remains available. Nothing was sent or changed.\n\nSynthetic reference preview. No real account, message, provider or action.",
+        "width": 320
+      },
+      "sha256": "7ce84220f97ef5b99f33b17cc413936870c66f38cbe9872ac83314add9469099",
+      "contrast": [
+        {
+          "label": "source citation",
+          "normal": 17.831114557361992,
+          "hoverOpacity80": 11.368002806514582
+        }
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 780,
+        "width": 320
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
+    }
+  ],
+  "keyboard": {
+    "active": "Open Conversations",
+    "href": "/solo/7001/clients/conversations",
+    "outline": "rgb(101, 90, 150) solid 1.6px",
+    "outlineOffset": "2.4px",
+    "visible": true,
+    "filename": "links-keyboard-320-light.jpg",
+    "sha256": "4e776c46add81c92041a43233d402ff2ebcf4ed576641127a26f411082df7d2a"
+  },
+  "firstPassFinding": "Existing light citation contrast corrected by scoped foreground token; prior artifacts retained in owned outputs",
+  "sourceHashes": {
+    "src/components/chat/MarkdownMessage.tsx": "31ff405b48ae6ec986cc4381c56a112b48c14ea6c739bbd985b1782e95d224a0",
+    "src/components/dashboard/PaigeAIChat.tsx": "ec25ba5a27518826891bec9fffa2b1a32b2850f84210e0f3841d35411116c309",
+    "src/components/chat/PaigeRecordLinks.tsx": "43a92f89a51c591068c5b5176d9c0318997eb6e903f6366d97f6bbfe919f3caf",
+    "src/components/chat/CheckLinks.tsx": "ee9149270246b42dc725e9946f5b4714b64ba28f868fd8af9c309f546ddc5b15",
+    "src/lib/links/workspaceLinks.ts": "31ed8eac9f0d2f271bd006601480558092bf54c603d79ce00801436757886920",
+    "src/lib/hostRouting.ts": "32f9039e9363ea2109d3c619ff43e7eeaa01245c54804058dea4f599974cd30c",
+    "supabase/functions/_shared/canonical-app-url.ts": "ab8700bfcf5d5adbd75e87362862c3feac2cce6b9eba31770dc81de881180150",
+    "supabase/functions/_shared/paige-turn/record-links.ts": "1f99474e881532a2c1f23adefccbdea012e8afd6e506df13685a34a7cdc8b304",
+    "scripts/live-drive/harness/paige-chat-mount/verified-links-main.tsx": "6e4a612aa194849bbea0060a7e79dbf161c898bc2be35c9ea9384e7472faf911"
+  },
+  "review": {
+    "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "boundedNativePasses": 2,
+    "firstPassFinding": "Existing light citation color failed contrast; scoped foreground correction applied",
+    "finalMaterialFindings": [],
+    "fullAuthenticatedShell": "PROOF OWED",
+    "synthetic": true,
+    "currentEvidenceFinding": "Exact1536 raster UNVERIFIED: native JPEG was1535px; historical render/contrast review did not establish exact raster or customer acceptance"
+  },
+  "rasterCorrection": {
+    "date": "2026-10-21",
+    "format": "JPEG",
+    "bytesPreserved": true,
+    "exact1536": "UNVERIFIED: actual1535x770; never accepted as exact native proof",
+    "proofBoundary": "Supporting component render only; source, deployment, authenticated account QA and owner acceptance are separate"
+  }
+}

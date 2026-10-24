@@ -4,7 +4,7 @@ import type { Plan, PlanItem, PlanItemStatus } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "../team-workspace-contract";
 import { OperationsAssignee } from "./OperationsAssignee";
 import { presentNativeWork, crmActionForStage, type CrmWorkRecord } from "./operations-native-work";
-import { workStatusLabel, workStages as stages } from "./operations-presentation";
+import { workDateLabel, workStatusLabel, workStages as stages } from "./operations-presentation";
 import "./operations-views.css";
 
 export interface OperationsWorkProps {
@@ -12,6 +12,7 @@ export interface OperationsWorkProps {
   items: PlanItem[];
   members: TeamMemberRecord[];
   onInspectItem: (item: PlanItem) => void;
+  initialView?: "Board" | "List" | "Timeline";
   onInspectPlan?: (plan: Plan) => void;
   onProposeStage?: (item: PlanItem, status: PlanItemStatus, invoker: HTMLButtonElement | null) => void;
   crmTasks?: CrmWorkRecord[];
@@ -20,12 +21,13 @@ export interface OperationsWorkProps {
 }
 
 type WorkRow = ReturnType<typeof presentNativeWork>;
+const WORK_VIEWS = ["Board", "List", "Timeline"] as const;
 const unfinished = (item: WorkRow) => !["done", "cancelled"].includes(item.status);
-const isOverdue = (item: WorkRow) => Boolean(item.due_at && unfinished(item) && new Date(item.due_at).getTime() < Date.now());
+const isOverdue = (item: WorkRow) => Boolean(item.item_type !== "reminder" && item.due_at && unfinished(item) && new Date(item.due_at).getTime() < Date.now());
 const dueLabel = (value: string | null) => value && !Number.isNaN(new Date(value).getTime())
   ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(value)) : "No due date";
 
-export function OperationsWork({ plans, items: planningItems, crmTasks = [], members, onInspectItem, onProposeStage, onInspectCrmTask, onProposeCrmStage }: OperationsWorkProps) {
+export function OperationsWork({ plans, items: planningItems, crmTasks = [], members, initialView = "Board", onInspectItem, onProposeStage, onInspectCrmTask, onProposeCrmStage }: OperationsWorkProps) {
   const items = useMemo(() => [
     ...planningItems.map(record => presentNativeWork({ source:"planning", key:`planning:${record.id}`, record })),
     ...crmTasks.map(record => presentNativeWork({ source:"crm", key:`crm:${record.id}`, record })),
@@ -50,7 +52,7 @@ export function OperationsWork({ plans, items: planningItems, crmTasks = [], mem
     // Resolve from the current scoped read, never from a browser/external payload.
     if (item && item.status !== status) propose(item, status, invoker);
   };
-  const [view, setView] = useState("Board");
+  const [view, setView] = useState<typeof WORK_VIEWS[number]>(initialView);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("active");
   const people = useMemo(() => new Map(members.map(member => [member.user_id, member])), [members]);
@@ -66,8 +68,8 @@ export function OperationsWork({ plans, items: planningItems, crmTasks = [], mem
   const owner = (item: WorkRow) => item.assigned_to_user_id
     ? people.has(item.assigned_to_user_id) ? <OperationsAssignee member={people.get(item.assigned_to_user_id)} /> : <span className="ops-view-muted">Member unavailable</span>
     : <span className="ops-view-muted">Unassigned</span>;
-  const date = (item: WorkRow) => <span className={isOverdue(item) ? "ops-view-overdue" : "ops-view-muted"}>{isOverdue(item) ? "Overdue · " : ""}{dueLabel(item.due_at)}</span>;
-  const dated = visible.filter(item => item.due_at && Number.isFinite(new Date(item.due_at).getTime())).sort((a,b) => new Date(a.due_at!).getTime() - new Date(b.due_at!).getTime());
+  const date = (item: WorkRow) => <span className={isOverdue(item) ? "ops-view-overdue" : "ops-view-muted"}>{item.item_type === "reminder" ? "Reminder · " : isOverdue(item) ? "Overdue · " : ""}{workDateLabel(item)}</span>;
+  const dated = visible.filter(item => item.item_type !== "reminder" && item.due_at && Number.isFinite(new Date(item.due_at).getTime())).sort((a,b) => new Date(a.due_at!).getTime() - new Date(b.due_at!).getTime());
   const undated = visible.filter(item => !dated.includes(item));
   const day = 86400000;
   const earliest = dated.length ? new Date(dated[0].due_at!).getTime() : Date.now();
@@ -75,21 +77,21 @@ export function OperationsWork({ plans, items: planningItems, crmTasks = [], mem
   const rangeStart = earliest - day;
   const rangeEnd = Math.max(latest + day, rangeStart + 4 * day);
   const timeline = <div className="ops-work-timeline">
-    {dated.length > 0 && <><p className="ops-timeline-guide">Due dates across time. Each marker is a deadline.</p><div className="ops-timeline-scroll" tabIndex={0} role="region" aria-label="Deadline timeline. Scroll horizontally to view dates."><div className="ops-timeline-canvas"><div className="ops-timeline-axis"><span>Work / owner</span><div>{Array.from({ length: 5 }, (_, index) => <span key={index} style={{ left: `${index * 25}%` }}>{dueLabel(new Date(rangeStart + (rangeEnd - rangeStart) * index / 4).toISOString())}</span>)}</div></div>{dated.map(item => <div className="ops-timeline-row" key={item.id}><div><button type="button" className="ops-view-text-action" onClick={() => inspect(item)}>{item.title}</button>{owner(item)}</div><div className="ops-timeline-track"><button className="ops-timeline-marker" data-status={item.status} type="button" style={{ left: `${(new Date(item.due_at!).getTime() - rangeStart) / (rangeEnd - rangeStart) * 100}%` }} aria-label={`${item.title}, ${dueLabel(item.due_at)}, ${workStatusLabel(item.status)}. Inspect work.`} onClick={() => inspect(item)}><span />{date(item)}</button></div></div>)}</div></div></>}
-    {undated.length > 0 && <section className="ops-timeline-undated"><h2 className="ops-view-section-title">Without a due date</h2>{undated.map(item => <div key={item.id}><button type="button" className="ops-view-text-action" onClick={() => inspect(item)}>{item.title}</button>{owner(item)}<span className="ops-view-status" data-status={item.status}>{workStatusLabel(item.status)}</span></div>)}</section>}
+    {dated.length > 0 && <><p className="ops-timeline-guide">Due dates across time. Each marker is a deadline.</p><div className="ops-timeline-scroll" tabIndex={0} role="region" aria-label="Deadline timeline. Scroll horizontally to view dates."><div className="ops-timeline-canvas"><div className="ops-timeline-axis"><span>Work / owner</span><div>{Array.from({ length: 5 }, (_, index) => <span key={index} style={{ left: `${index * 25}%` }}>{dueLabel(new Date(rangeStart + (rangeEnd - rangeStart) * index / 4).toISOString())}</span>)}</div></div>{dated.map(item => <div className="ops-timeline-row" key={item.id}><div><button type="button" className="ops-view-text-action" data-work-key={item.id} onClick={() => inspect(item)}>{item.title}</button>{owner(item)}</div><div className="ops-timeline-track"><button className="ops-timeline-marker" data-status={item.status} type="button" style={{ left: `${(new Date(item.due_at!).getTime() - rangeStart) / (rangeEnd - rangeStart) * 100}%` }} aria-label={`${item.title}, ${dueLabel(item.due_at)}, ${workStatusLabel(item.status)}. Inspect work.`} onClick={() => inspect(item)}><span />{date(item)}</button></div></div>)}</div></div></>}
+    {undated.length > 0 && <section className="ops-timeline-undated"><h2 className="ops-view-section-title">Without a due date</h2>{undated.map(item => <div key={item.id}><button type="button" className="ops-view-text-action" data-work-key={item.id} onClick={() => inspect(item)}>{item.title}</button>{owner(item)}{item.item_type === "reminder" && date(item)}<span className="ops-view-status" data-status={item.status}>{workStatusLabel(item.status)}</span></div>)}</section>}
   </div>;
 
   return <section className="ops-views" aria-label="Work">
-    <header className="ops-view-heading"><div><h1>Move the work forward</h1><p>See the next step and the person responsible.</p></div></header>
+    <header className="ops-view-heading"><h1 tabIndex={-1} data-operations-work-heading>Move the work forward</h1></header>
     <div className="ops-view-toolbar">
-      <div className="ops-view-segments" aria-label="Work view">{["Board", "List", "Timeline"].map(name => <button key={name} type="button" aria-pressed={view === name} onClick={() => setView(name)}>{name}</button>)}</div>
+      <div className="ops-view-segments" aria-label="Work view">{WORK_VIEWS.map(name => <button key={name} type="button" aria-pressed={view === name} onClick={() => setView(name)}>{name}</button>)}</div>
       <label className="ops-view-search"><Search size={16} aria-hidden="true" /><span className="sr-only">Search work, people and projects</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Find work, people, projects" /></label>
       <label><span className="sr-only">Filter work</span><select value={filter} onChange={event => setFilter(event.target.value)}><option value="active">Active work</option><option value="all">All work</option><option value="blocked">Blocked</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="cancelled">Cancelled</option></select></label>
       <span className="ops-view-muted">{visible.length} items shown</span>
     </div>
     {visible.length === 0 ? <div className="ops-view-empty"><CircleCheck size={32} aria-hidden="true" /><h2>{items.length ? "No work matches this view" : "Your next steps belong here"}</h2><p>{items.length ? "Try another status or a different search." : "Your tasks and milestones will appear together, with their owners and due dates."}</p>{items.length > 0 && <button type="button" onClick={() => { setFilter("all"); setQuery(""); }}>Clear filters</button>}</div>
       : view === "Board" ? <><p className="ops-board-scroll-cue"><ArrowRight size={15} aria-hidden="true" />Drag to review a stage change · Open a task to change it with the keyboard</p><div className="ops-work-board" tabIndex={0} role="region" aria-label="Work board. Scroll horizontally to view later stages.">{stages.filter(stage => filter === "all" || (filter === "active" ? ["open", "in_progress", "blocked", "done"].includes(stage.status) : visible.some(item => item.status === stage.status))).map(stage => <section className="ops-work-lane" key={stage.status} aria-label={stage.label} data-drop-target={dropStage === stage.status || undefined} onDragOver={event => { if (items.some(item => item.id === draggedId.current && canMove(item, stage.status))) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDropStage(stage.status); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropStage(null); }} onDrop={event => { event.preventDefault(); proposeDrop(stage.status); }}><header><h2>{stage.status === "blocked" ? <CirclePause size={16} aria-hidden="true" /> : stage.status === "done" ? <CircleCheck size={16} aria-hidden="true" /> : <Circle size={14} aria-hidden="true" />}{stage.label}</h2><span>{visible.filter(item => item.status === stage.status).length}</span></header><div className="ops-work-stack">{visible.filter(item => item.status === stage.status).map(item => <button className="ops-work-card" data-work-key={item.id} type="button" key={item.id} draggable={canMove(item)} onDragStart={event => { event.currentTarget.focus(); draggedInvoker.current = event.currentTarget; draggedId.current = item.id; event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", "Operations work"); }} onDragEnd={() => { draggedInvoker.current = null; draggedId.current = null; setDropStage(null); }} onClick={() => inspect(item)}><span className="ops-work-context">{item.priority ? `${item.priority} priority` : "Priority unknown"} · {item.item_type}</span><strong>{item.title}</strong><span className="ops-view-muted">{projectLabel(item)}</span><div className="ops-work-owner">{owner(item)}</div><footer>{date(item)}{item.linked_action_id && <span className="ops-work-link">Linked action</span>}</footer></button>)}</div></section>)}</div></>
-      : view === "List" ? <><div className="ops-view-table-scroll" tabIndex={0} role="region" aria-label="Work list"><table className="ops-work-table" role="table"><thead><tr><th>Work / project</th><th>Owner</th><th>Status</th><th>Due</th></tr></thead><tbody>{visible.map(item => <tr key={item.id}><td data-label="Work"><button type="button" className="ops-view-text-action" onClick={() => inspect(item)}>{item.title}</button><small>{projectLabel(item)}</small></td><td data-label="Owner">{owner(item)}</td><td data-label="Status"><span className="ops-view-status" data-status={item.status}>{stages.find(stage => stage.status === item.status)?.label}</span></td><td data-label="Due">{date(item)}</td></tr>)}</tbody></table></div></>
+      : view === "List" ? <><div className="ops-view-table-scroll" tabIndex={0} role="region" aria-label="Work list"><table className="ops-work-table" role="table"><thead><tr><th>Work / project</th><th>Owner</th><th>Status</th><th>Due / reminder</th></tr></thead><tbody>{visible.map(item => <tr key={item.id}><td data-label="Work"><button type="button" className="ops-view-text-action" data-work-key={item.id} onClick={() => inspect(item)}>{item.title}</button><small>{projectLabel(item)}</small></td><td data-label="Owner">{owner(item)}</td><td data-label="Status"><span className="ops-view-status" data-status={item.status}>{stages.find(stage => stage.status === item.status)?.label}</span></td><td data-label={item.item_type === "reminder" ? "Reminder" : "Due"}>{date(item)}</td></tr>)}</tbody></table></div></>
       : timeline}
   </section>;
 }

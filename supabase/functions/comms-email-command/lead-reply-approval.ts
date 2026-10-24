@@ -5,8 +5,8 @@
 // the service role and filtered to the server-derived tenant, that the approval is
 //   * in this business,
 //   * still `pending`,
-//   * the approval of an `owner.lead_followup` action (metadata.action_id → paige_actions whose
-//     approval_id points back at it, same business) — the one send-kind with a record path,
+//   * the approval of an `owner.lead_followup`, `client.followup` or `owner.followup_email` action
+//     (metadata.action_id → paige_actions whose approval_id points back at it, same business),
 //   * for the SAME person the email goes to (the action's contact, and the approval's own contact
 //     when it carries one),
 //   * NOT already answered by another send: no other operation prepared for it is still live
@@ -24,12 +24,14 @@
 import { UUID } from "../_shared/comms-email/contract.ts";
 
 export const LEAD_REPLY_ACTION_KIND = "owner.lead_followup" as const;
+const isGovernedEmailReplyKind = (kind: unknown): boolean => kind === LEAD_REPLY_ACTION_KIND
+  || kind === "client.followup" || kind === "owner.followup_email";
 
 export type LeadReplyApprovalRefusal =
   | "LEAD_REPLY_APPROVAL_UNAVAILABLE"     // the read failed: nothing was proposed or sent; safe to retry
   | "LEAD_REPLY_APPROVAL_NOT_FOUND"       // no such approval in THIS business (another business's id reads the same)
   | "LEAD_REPLY_APPROVAL_NOT_PENDING"     // already approved / declined / sent
-  | "LEAD_REPLY_APPROVAL_WRONG_KIND"      // not a drafted reply to a new lead
+  | "LEAD_REPLY_APPROVAL_WRONG_KIND"      // not one of the governed email reply kinds
   | "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH" // the approval is for a different person
   | "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS"  // another send of this reply is prepared/dispatching/unknown
   | "LEAD_REPLY_APPROVAL_ALREADY_SENT";     // another send of this reply was accepted by the provider
@@ -65,7 +67,7 @@ export async function verifyLeadReplyApproval(
     if (act.error) return "LEAD_REPLY_APPROVAL_UNAVAILABLE";
     const action = object(act.data);
     if (!action || lower(action.id) !== actionId || lower(action.tenant_id) !== tenantId || lower(action.approval_id) !== approvalId
-      || action.action_kind !== LEAD_REPLY_ACTION_KIND) return "LEAD_REPLY_APPROVAL_WRONG_KIND";
+      || !isGovernedEmailReplyKind(action.action_kind)) return "LEAD_REPLY_APPROVAL_WRONG_KIND";
     if (lower(action.contact_id) !== contactId) return "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH";
     if (approval.contact_id !== null && approval.contact_id !== undefined && lower(approval.contact_id) !== contactId) return "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH";
     // Any OTHER operation prepared for this approval that has not failed or been refused answers it.

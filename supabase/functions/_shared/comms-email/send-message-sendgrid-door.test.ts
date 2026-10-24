@@ -1,3 +1,4 @@
+import { decideContentRead } from "../inbox-intelligence/policy.ts";
 // Experience 03 · S3 — security H2: PAIGE Email (SendGrid) sends ONLY as the governed email door's
 // dispatch. The REAL send-message handler is transpiled and executed with only its imports and the
 // network substituted (send-message-sendgrid.test.ts technique). `fetch` is a stub that records every
@@ -11,6 +12,7 @@ import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from
 import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
+import { senderDisplayName } from "../email/sender-display-name.ts";
 
 const MSG = "33333333-3333-4333-8333-3333333333bb";
 const TENANT = "44444444-4444-4444-8444-4444444444bb";
@@ -41,7 +43,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean } = 
         if (mode !== "select") return { data: { id: table === "messages" ? MSG : "row-id" }, error: null };
         if (table === "messages") return { data: { tenant_id: TENANT, status: opts.queued ? "queued" : "draft", connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { scheduled_binding: { contact_id: CONTACT, connector_id: CONNECTOR } } }, error: null };
         if (table === "clients") return { data: { tenant_id: TENANT, emails: ["lead@example.test"] }, error: null };
-        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", provider, from_address: "hello@someone-elses.example.test", from_name: "Spoof", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
+        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider, from_address: "hello@someone-elses.example.test", from_name: "Spoof", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         return { data: null, error: null };
       };
       q.maybeSingle = async () => result();
@@ -61,7 +63,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean } = 
     fetchCalls.push(url);
     return Promise.resolve(new Response(JSON.stringify({ id: "provider-id" }), { status: url.includes("sendgrid") ? 202 : 200, headers: { "X-Message-Id": "sg-id" } }));
   };
-  const scope = { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
       env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? "re_key" : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },
@@ -70,6 +72,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean } = 
     registerOutboundAdapter: (a: { channel_type: string; send: (...x: unknown[]) => Promise<unknown> }) => { adapters[a.channel_type] = a; },
     getOutboundAdapter: (channel: string) => adapters[channel],
     buildListUnsubscribeHeaders: () => ({}),
+    senderDisplayName,
     runPreSend: async () => ({ proceed: true, outcome: "proceed" }),
     CLIENT_CONTACT_METHODS_EMBED: "client_contact_methods",
     clientAddresses: (row: { emails?: string[] }) => ({ emails: row.emails ?? [], phones: [] }),

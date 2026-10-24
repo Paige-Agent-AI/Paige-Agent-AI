@@ -240,6 +240,36 @@ describe('operations adapter', () => {
     expect(data(await ops(f)).risks[0].summary).toMatch(/^Systems Check could not check your website \(high priority/);
   });
 
+  it.each([
+    ['payment_processor_connected', 'fail', 'Systems Check: no payment processor is declared in your business setup'],
+    ['payment_method_options', 'fail', 'Systems Check: no accepted payment methods are declared in your business setup'],
+    ['payment_processor_connected', 'error', 'Systems Check could not check your recorded payment processor declaration'],
+    ['payment_method_options', 'error', 'Systems Check could not check your recorded payment-method declarations'],
+  ] as const)('preserves %s/%s as declaration evidence, never operational payment proof', async (key, status, beginning) => {
+    const f = fakeCaller({ script: (k) => k === OPERATIONS_METRICS.exceptions
+      ? { values: events(finding(key, 'blocking', 1, status)) } : undefined });
+    const s = data(await ops(f));
+    expect(s.risks[0]).toMatchObject({
+      kind: 'systems_check_blocking', severity: 'act',
+      summary: `${beginning} (blocking; found 2026-10-11 09:01 UTC). This declaration check does not verify a provider connection, payment availability or settlement.`,
+    });
+    expect(fig(s, 'operations.exceptions_blocking')?.value).toBe(1);
+    expect(s.sources).toHaveLength(3);
+    expect(s.sources.every((source) => source.system === 'operations_pmo')).toBe(true);
+    expect(f.issuedKeys()).toEqual([OPERATIONS_METRICS.exceptions, OPERATIONS_METRICS.unresolved, OPERATIONS_METRICS.workflowRuns]);
+    expect(JSON.stringify(s)).not.toContain('taking payment is not set up');
+  });
+
+  it('does not recast non-payment findings as declarations or weaken actual failed-run evidence', async () => {
+    const s = data(await ops(fakeCaller({ script: (k) => k === OPERATIONS_METRICS.exceptions
+      ? { values: events(finding('website_connected', 'high', 1)) }
+      : k === OPERATIONS_METRICS.workflowRuns ? { values: dist(['failed', 2]) } : undefined })));
+    expect(s.risks.find((r) => r.kind === 'systems_check_high')?.summary).toBe('Systems Check: no website is connected (high priority; found 2026-10-11 09:01 UTC).');
+    expect(s.risks[0]).toMatchObject({ kind: 'automation_runs_failed', severity: 'act', summary: expect.stringMatching(/^2 automation runs failed in /) });
+    expect(fig(s, 'operations.workflow_runs_failed')?.value).toBe(2);
+    expect(JSON.stringify(s)).not.toMatch(/declaration|payment availability/);
+  });
+
   it('when the producer has more findings than it listed: says the list is incomplete and per-priority counts are not available', async () => {
     const twenty = Array.from({ length: 20 }, (_, i) => finding('company_info_populated', 'medium', i + 1));
     const f = fakeCaller({ script: (k) => k === OPERATIONS_METRICS.exceptions ? { values: events(...twenty), truth: 'PARTIAL', excluded: 5 } : undefined });
@@ -485,13 +515,21 @@ describe('generalised issuer helpers', () => {
 // ── the composition ──────────────────────────────────────────────────────────────────────────────────
 
 describe('composeBusinessReview with F2b', () => {
-  it('operations and clients are now read; work, game plan, campaigns and the rest stay honest gaps', async () => {
+  it('operations and clients are read; a missing owner Game Plan contract is degraded and unmounted domains remain gaps', async () => {
     const f = fakeCaller();
     const r = await composeBusinessReview(f.caller, WHO, { timezone: 'UTC' }, { now: NOW });
     if (!('snapshot' in r)) throw new Error(r.reason);
     const d = r.snapshot.domains;
     for (const area of ['payments', 'sales_pipeline', 'operations', 'clients']) expect(d[area].status).toBe('available');
-    for (const area of ['work', 'game_plan', 'campaigns', 'revenue', 'communications', 'email', 'bookings', 'outcomes']) {
+    expect(d.game_plan.status).toBe('degraded');
+    expect(d.game_plan.reason).toBe('mission_review_unavailable');
+    expect(d.game_plan.data).toBeNull();
+    // This fixture has no Marketing producer proof. Its mounted read fails
+    // verification honestly, rather than claiming that the adapter is absent.
+    expect(d.campaigns.status).toBe('degraded');
+    expect(d.campaigns.data).toBeNull();
+    expect(d.campaigns.reason).not.toMatch(/^no_adapter/);
+    for (const area of ['work', 'revenue', 'communications', 'email', 'bookings', 'outcomes']) {
       expect(d[area].status).toBe('unavailable');
       expect(d[area].reason).toMatch(/^no_adapter/);
     }
@@ -500,7 +538,8 @@ describe('composeBusinessReview with F2b', () => {
     expect(r.projection).toMatch(/\[Operations\] read at/);
     expect(r.projection).toMatch(/\[Clients\] read at/);
     expect(r.projection).toMatch(/\[Work and tasks\] NOT AVAILABLE/);
-    expect(r.projection).toMatch(/Risk \(act\): "Systems Check: taking payment is not set up/);
+    expect(r.projection).toMatch(/Risk \(act\): "Systems Check: no payment processor is declared in your business setup/);
+    expect(r.projection).toContain('This declaration check does not verify a provider connection, payment availability or settlement.');
     expect(JSON.stringify(r)).not.toMatch(/aneb_v1_/);
     // 8 F2a reads + 3 operations + 3 clients; each domain read its own keys only
     expect(f.issuedKeys().filter((k) => k.startsWith('operations.'))).toHaveLength(3);

@@ -20,13 +20,14 @@ const m = vi.hoisted(() => ({
   cc: {} as Loose, setup: {} as Loose, catalog: {} as Loose, knowledge: {} as Loose,
   pending: {} as Loose, checks: {} as Loose, activity: {} as Loose, tenant: {} as Loose,
   campaigns: {} as Loose,
+  pendingArgs: [] as unknown[],
 }));
 
 vi.mock("./useCommandCenter", () => ({ useCommandCenter: () => m.cc }));
 vi.mock("./useSoloSetupBrief", () => ({ useSoloSetupBrief: () => m.setup }));
 vi.mock("../useCatalogOffers", () => ({ useCatalogOffers: () => m.catalog }));
 vi.mock("./useSoloKnowledge", () => ({ useSoloKnowledge: () => m.knowledge }));
-vi.mock("./useSoloPendingActions", () => ({ useSoloPendingActions: () => m.pending }));
+vi.mock("./useSoloPendingActions", () => ({ useSoloPendingActions: (...args: unknown[]) => { m.pendingArgs = args; return m.pending; } }));
 vi.mock("@/hooks/useSystemsCheck", () => ({ useSystemsCheck: () => m.checks }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => m.tenant }));
 vi.mock("../useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => m.campaigns }));
@@ -50,6 +51,26 @@ function render() {
   act(() => { root.render(React.createElement(Probe)); });
 }
 
+it("reuses the original prepared read with actor binding and keeps exact total separate from preview", () => {
+  m.pending = { ...m.pending, total: 37, items: [{ id: "test-work", title: "Review scope", rationale: null }] };
+  render();
+  expect(m.pendingArgs).toEqual(["42", "test-actor"]);
+  expect(view.preparedReview).toBe(m.pending);
+  expect(view.decisions.find(item => item.id === "decision:drafts")?.title).toBe("Review 37 prepared items");
+  expect(view.decisions.find(item => item.id === "decision:drafts")?.evidence).toContain("1 loaded for preview");
+  m.pending.items = []; render();
+  expect(view.decisions.find(item => item.id === "decision:drafts")?.detail).toContain("count without readable items");
+  m.pending.total = null; m.pending.items = [{ id: "test-work", title: "Review scope", rationale: null }]; render();
+  expect(view.decisions.find(item => item.id === "decision:drafts")?.title).toBe("Review prepared work");
+});
+
+it("does not enable the prepared read when the actor or viewed workspace has not resolved", () => {
+  m.tenant.activeUserId = null; render();
+  expect(m.pendingArgs).toEqual([null, null]); expect(view.reviewScope).toBeNull();
+  m.tenant.activeUserId = "test-actor"; m.tenant.activeTenantId = "other-workspace"; render();
+  expect(m.pendingArgs).toEqual([null, "test-actor"]); expect(view.reviewScope).toBeNull();
+});
+
 /** Baseline: everything loaded, nothing set up (a fresh workspace). */
 function resetEmpty() {
   m.cc = { loading: false, isError: false, empty: true, greeting: { name: "Jordan" }, attention: {}, counts: { approvals: 0 }, refresh: vi.fn() };
@@ -63,7 +84,7 @@ function resetEmpty() {
   // Default: the signed-in user OWNS the active workspace — a NON-staff viewer with an active tenant
   // is, by RLS scoping, in their own workspace (the normal Solo case). `activeTenant.name` is the
   // business name, distinct from any personal greeting name.
-  m.tenant = { isPlatformStaff: false, activeTenantId: "42", activeTenant: { name: "Clearpath Advisory" } };
+  m.tenant = { isPlatformStaff: false, activeTenantId: "42", activeUserId: "test-actor", activeTenant: { name: "Clearpath Advisory" } };
 }
 
 beforeEach(() => {
@@ -213,6 +234,13 @@ describe("useSoloGamePlan derivation", () => {
     render();
     expect(view.decisionsStatus).toBe("unavailable");
   });
+  it("withholds prepared decisions and distinguishes loading from a completed empty read", () => {
+    m.pending = { ...m.pending, loading: true, total: 37, items: [{ id: "test-stale-work", title: "Previous source" }] };
+    render(); expect(view.decisionsStatus).toBe("loading");
+    expect(view.decisions.some(item => item.id === "decision:drafts")).toBe(false);
+    m.pending = { ...m.pending, loading: false, total: 0, items: [] };
+    render(); expect(view.decisionsStatus).toBe("ready");
+  });
 
   it("proposalPlanOnly reflects whether the proposal patch stays within the plan fields (Codex P1)", () => {
     m.setup = { ...m.setup, pendingProposal: { id: "p1", reason: "r", patch: { currentPriority: "x", goals90Day: "y" } } };
@@ -303,9 +331,38 @@ describe("useSoloGamePlan derivation", () => {
     render();
     const byLabel = (needle: string) => view.attention.find((a) => a.label.includes(needle));
     expect(byLabel("drafts waiting")?.destination).toBe("paige");
-    expect(byLabel("clients at risk")?.destination).toBe("clients");
+    expect(byLabel("contacts without recent follow-up")?.destination).toBe("clients");
     expect(byLabel("follow-up")?.destination).toBe("clients");
     // Every chip has SOME real destination — none is a dead label.
     expect(view.attention.every((a) => typeof a.destination === "string" && a.destination.length > 0)).toBe(true);
+  });
+
+  it("a legacy inactivity count is contact follow-up evidence, never predicted client churn or a send promise", () => {
+    m.setup.brief = { publicName: "Test business", legalName: "Test company", industry: "Consulting", website: "test.example", provenance: { website: { source: "owner_confirmed" } } };
+    m.setup.managedSendingEmail = "owner@test.example";
+    m.catalog.offers = [{ availability: "active" }];
+    m.knowledge = { ...m.knowledge, documentsIndexed: 1, empty: false };
+    m.cc = { ...m.cc, attention: { at_risk_clients: 3 } };
+    render();
+    const move = [view.bestMove, ...view.priorities].find((item) => item?.id === "attn:atrisk");
+    const decision = view.decisions.find((item) => item.id === "decision:atrisk");
+    expect(move?.title).toContain("3 contacts");
+    expect(move?.destination).toBe("clients");
+    expect(move?.why).toContain("21 days");
+    expect(move?.why).toContain("leads");
+    expect(move?.ctaLabel).toBe("Review contacts");
+    expect(move?.outcome).not.toMatch(/she sends|drafts the outreach|will send/i);
+    expect(decision?.destination).toBe("clients");
+    expect(decision?.detail).toContain("recorded contact or activity");
+    const copy = JSON.stringify({ move, decision, chips: view.attention });
+    expect(copy).not.toMatch(/before they lapse|usual quiet threshold|flagged at risk|clients at risk/i);
+  });
+
+  it.each([undefined, 0])("does not manufacture a contact follow-up recommendation from %s", (count) => {
+    m.cc = { ...m.cc, attention: count === undefined ? {} : { at_risk_clients: count } };
+    render();
+    expect(view.decisions.some((item) => item.id === "decision:atrisk")).toBe(false);
+    expect([view.bestMove, ...view.priorities].some((item) => item?.id === "attn:atrisk")).toBe(false);
+    expect(view.attention.some((item) => item.label.includes("without recent follow-up"))).toBe(false);
   });
 });

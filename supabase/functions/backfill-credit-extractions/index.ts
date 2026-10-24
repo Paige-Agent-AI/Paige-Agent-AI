@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { refuseCustomerTier, staffOfSubject } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,12 +31,36 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // E09 F1b: re-extraction is not a customer feature — a portal customer is refused.
+    const tier = await refuseCustomerTier(supabase, user.id);
+    if (!tier.ok) {
+      return new Response(JSON.stringify({ error: tier.error }), { status: tier.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Parse optional single_user_id for targeted re-extraction
     let singleUserId: string | null = null;
     try {
       const body = await req.json();
       singleUserId = body?.target_user_id || null;
     } catch { /* no body = bulk */ }
+
+    // E09 F1b (§59): the header above said "must be admin" but nothing checked it, so any signed-in
+    // user could start a re-extraction across EVERY business (model spend plus writes). A bulk run is
+    // operator work — the platform owner only. A targeted run is the person themselves, an owner/admin
+    // of a business where that person holds a seat, or the platform owner.
+    if (!singleUserId) {
+      const { data: isOwner, error: ownerErr } = await supabase.rpc("is_platform_owner", { _user_id: user.id });
+      if (ownerErr || isOwner !== true) {
+        return new Response(JSON.stringify({ error: ownerErr ? "authority_unavailable" : "forbidden" }), {
+          status: ownerErr ? 503 : 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (singleUserId !== user.id) {
+      const staff = await staffOfSubject(supabase, user.id, singleUserId);
+      if (!staff.ok) {
+        return new Response(JSON.stringify({ error: staff.error }), { status: staff.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
 
     // Step 1: Find all completed reports whose extraction is not still WAITING ON A PERSON.
     //

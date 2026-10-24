@@ -4,8 +4,9 @@ import { crmActionForStage, type CrmWorkRecord } from "./operations-native-work"
 import { restoreCrmWorkEditOperation, type CrmWorkEditOperation } from "./operations-crm-work-edit";
 
 export type CrmWorkStageOperation = Readonly<{
-  actorId:string; tenantId:string; key:string; taskId:string; targetStatus:"pending"|"completed";
-  command:Readonly<{action:"task.complete"|"task.reopen";task_id:string;expected_updated_at:string}>;
+  actorId:string; tenantId:string; key:string; taskId:string; targetStatus:"pending"|"in_progress"|"completed";
+  command:Readonly<{action:"task.complete"|"task.reopen";task_id:string;expected_updated_at:string}>
+    | Readonly<{action:"task.update";task_id:string;expected_updated_at:string;patch:Readonly<{status:"in_progress"}>}>;
 }>;
 export type CrmWorkOperation = CrmWorkStageOperation | CrmWorkEditOperation;
 export type CrmWorkCommandResult =
@@ -21,9 +22,11 @@ export function buildCrmWorkStageOperation(record:CrmWorkRecord,stage:PlanItemSt
   const action=crmActionForStage(record,stage);
   const version=record.updated_at??record.created_at;
   if(!action||!version)return null;
-  const command=Object.freeze({action,task_id:record.id,expected_updated_at:version});
+  const command=action==="task.update"
+    ?Object.freeze({action,task_id:record.id,expected_updated_at:version,patch:Object.freeze({status:"in_progress" as const})})
+    :Object.freeze({action,task_id:record.id,expected_updated_at:version});
   return Object.freeze({actorId,tenantId,key,taskId:record.id,
-    targetStatus:stage==="done"?"completed":"pending",command});
+    targetStatus:stage==="done"?"completed":stage==="in_progress"?"in_progress":"pending",command});
 }
 
 /** Browser recovery metadata is never authority and cannot broaden this caller's actions. */
@@ -32,6 +35,12 @@ export function restoreCrmWorkStageOperation(value:unknown,actorId:string,tenant
     !value.key||value.key.length>192||typeof value.taskId!=="string"||!value.taskId||!object(value.command))return null;
   const command=value.command;
   if(command.task_id!==value.taskId||typeof command.expected_updated_at!=="string"||!Number.isFinite(Date.parse(command.expected_updated_at)))return null;
+  if(command.action==="task.update"){
+    if(value.targetStatus!=="in_progress"||!object(command.patch)||command.patch.status!=="in_progress"||
+      Object.keys(command.patch).length!==1||Object.keys(command).some(key=>!["action","task_id","expected_updated_at","patch"].includes(key)))return null;
+    return Object.freeze({actorId,tenantId,key:value.key,taskId:value.taskId,targetStatus:"in_progress",
+      command:Object.freeze({action:"task.update",task_id:value.taskId,expected_updated_at:command.expected_updated_at,patch:Object.freeze({status:"in_progress"})})});
+  }
   const actions={"task.complete":"completed","task.reopen":"pending"} as const;
   if(typeof command.action!=="string"||!Object.prototype.hasOwnProperty.call(actions,command.action))return null;
   const action=command.action as keyof typeof actions;

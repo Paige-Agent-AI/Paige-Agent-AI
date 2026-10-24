@@ -1,0 +1,30 @@
+Browser tab: 170269640, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:62499/?theme=light&workspace=a".
+0 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:62499/?theme=light&workspace=a
+	1 container
+		2 container
+			3 text PAIGE workspace ready
+		4 container Weekly responsibility, ID: radix-:r0:
+			5 heading Weekly responsibility, Value: 2, ID: radix-:r1:
+				6 text Weekly responsibility
+			7 text Current owner scope, canonical schedules and verified results.
+			8 container
+				9 heading Weekly commitment check, Value: 2
+					10 text Weekly commitment check
+				11 text Review the week. Keep the original work in Operations.
+				12 button Refresh weekly responsibility
+			13 container
+				14 text Read  Tue, Oct 20, 4:00 AM EDT
+			15 heading No weekly responsibility is registered, Value: 3
+				16 text No weekly responsibility is registered
+			17 text Prepare the schedule and scope for review. Recurring execution is currently unavailable.
+			18 container Prepare and retrieve weekly drafts
+				19 button Read saved proposals
+				20 button Prepare a weekly responsibility
+			21 container Weekly responsibility records
+				22 link Description: Clients → Calendar, Value: 127.0.0.1:62499/solo/1701/clients/calendar
+				23 link Description: Operations → Work, Value: 127.0.0.1:62499/solo/1701/operations/work
+			24 button Close
+				25 image
+				26 text Close
+
+The focused UI element is 24 button Close

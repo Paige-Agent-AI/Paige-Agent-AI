@@ -27,7 +27,7 @@
  */
 
 export type OperatorSlotId =
-  | "fleet" | "relationships" | "campaigns" | "marketplace" | "analytics" | "settings";
+  | "fleet" | "relationships" | "sales" | "campaigns" | "marketplace" | "analytics" | "settings";
 
 export type OperatorSlot = {
   readonly id: OperatorSlotId;
@@ -51,15 +51,20 @@ export const OPERATOR_SLOTS: readonly OperatorSlot[] = [
   {
     id: "relationships",
     label: "Relationships",
-    views: ["People", "Conversations", "Calendar", "Segments"],
+    views: ["Customers", "People", "Conversations", "Calendar", "Segments"],
     absence: {
       title: "Drawn, not wired",
       body: "People, Conversations, Segments and Calendar are specified and their contract is fixed. None of the four reads live data yet: the surfaces exist, the joins behind them do not. Nothing here is waiting on a decision — only on the wiring.",
     },
   },
   {
+    id: "sales",
+    label: "Sales",
+    views: ["Pipeline", "Leads", "Activity"],
+  },
+  {
     id: "campaigns",
-    label: "Campaigns",
+    label: "Marketing",
     views: ["Active", "Catalog", "Sales", "Pipeline", "Social", "Performance"],
     absence: {
       title: "Substrate exists \u00b7 one seam missing",

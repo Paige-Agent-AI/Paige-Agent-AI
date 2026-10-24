@@ -61,6 +61,11 @@ export interface MessageBubbleProps {
   error?: string | null;
   /** Optional leading glyph (e.g. a channel icon) so SMS/email/DM read distinctly in one thread (§49). */
   channelIcon?: ReactNode;
+  /**
+   * Optional small chip in the sender/meta line, after the sender (e.g. the tenant's "Help request"
+   * marker on a portal help request). The caller owns its content; it must stay gold-free (§11).
+   */
+  badge?: ReactNode;
   /** Optional subject line rendered above the body (email). */
   subject?: string;
   /** Optional slot under the body for attachment chips (the tenant's <Paperclip> list). */
@@ -84,7 +89,7 @@ export interface MessageBubbleProps {
 }
 
 export function MessageBubble({
-  direction, body, timestamp, senderLabel, status, error, channelIcon,
+  direction, body, timestamp, senderLabel, status, error, channelIcon, badge,
   subject, attachments, foldable = false, defaultExpanded = false, footer, call,
 }: MessageBubbleProps) {
   const outbound = direction === "outbound";
@@ -122,6 +127,7 @@ export function MessageBubble({
               </span>
             )}
           </span>
+          {badge}
           {status && <span className="ml-auto">{status}</span>}
         </div>
         {call ? (

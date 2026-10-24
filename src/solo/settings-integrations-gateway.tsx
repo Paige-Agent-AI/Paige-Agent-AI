@@ -88,7 +88,7 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
   { n: "Instagram · Facebook · LinkedIn · TikTok · YouTube", c: "Social", m: "zapier", g: "◎", d: "No official direct path — post through Buffer, Metricool or Hootsuite.", legacy: "social" },
   { n: "WhatsApp Business", c: "Social", m: "zapier", g: "W", d: "Business Tools MCP announced; not verified yet. Bridge via Zapier." },
   // CRM & Sales
-  { n: "HighLevel", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", req: ["locationId"] },
+  { n: "HighLevel · LeadConnector", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", net: "A location token stays inside one sub-account; a company (agency) token can reach every location under the agency. Connect the narrowest token that does the job — Paige reads and acts only inside the location you point her at.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", req: ["locationId"] },
   { n: "HubSpot", c: "CRM & Sales", m: "zapier", g: "HS", d: "CRM records, activities, pipelines. No direct path for Paige yet — bridge via Zapier." },
   { n: "Close", c: "CRM & Sales", m: "connect", g: "C", d: "Leads, contacts, opportunities; read and write scopes.", pop: true, r: 13, url: "https://mcp.close.com/mcp" },
   { n: "Attio", c: "CRM & Sales", m: "connect", g: "A", d: "Records, lists, notes, tasks.", url: "https://mcp.attio.com/mcp" },
@@ -124,8 +124,8 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
   { n: "Linear", c: "Productivity", m: "connect", g: "L", d: "Issues, projects.", url: "https://mcp.linear.app/mcp" },
   { n: "monday.com", c: "Productivity", m: "connect", g: "mo", d: "60+ read/write tools.", url: "https://mcp.monday.com/mcp" },
   { n: "Google Workspace", c: "Productivity", m: "setup", g: "GW", d: "Gmail, Calendar, Drive. Developer Preview + per-client setup — bridge via Zapier meanwhile.", pop: true, r: 2 },
-  { n: "Microsoft 365", c: "Productivity", m: "zapier", g: "MS", d: "Mail, Calendar, Teams. No direct path for Paige yet — bridge via Zapier." },
-  { n: "Slack", c: "Productivity", m: "setup", g: "Sl", d: "Search/read/send messages, files. Workspace admin approval.", url: "https://mcp.slack.com/mcp" },
+  { n: "Microsoft 365", c: "Productivity", m: "zapier", g: "MS", d: "Mail, Calendar, Teams. No direct path for Paige yet — bridge via Zapier.", net: "Teams is coming: a native connection needs an Azure AD app registration with admin consent (an owner/provider step, not a switch we can flip from here)." },
+  { n: "Slack", c: "Productivity", m: "connect", pk: "slack", auth: "bearer", g: "Sl", pop: true, r: 4, d: "Search, read and send messages in channels you connect. Create a Slack app in your workspace (internal), add the MCP tool scopes, paste its user token here.", net: "Slack runs its own hosted server — the token's granted scopes decide what Paige can see and do. Workspace admin approval applies.", url: "https://mcp.slack.com/mcp" },
   { n: "Asana", c: "Productivity", m: "setup", g: "As", d: "Tasks, projects.", url: "https://mcp.asana.com/v2/mcp" },
   { n: "Zoom", c: "Productivity", m: "setup", g: "Zm", d: "Meetings, recordings, notes." },
   { n: "Miro", c: "Productivity", m: "setup", g: "Mi", d: "Boards, diagrams. Verify + register." },
@@ -431,10 +431,24 @@ const AUTH_CHOICES: ReadonlyArray<{ value: AuthenticationChoice; label: string }
   { value: "none", label: "None" },
 ];
 
+/**
+ * The Slack connect preset the FIRST-CLASS Integrations tile opens — the same contract the
+ * catalogue drawer's Slack tile routes to (one preset, two doors; §18 one home). Provider
+ * facts: Slack's hosted MCP at mcp.slack.com/mcp, Streamable HTTP, NO Dynamic Client
+ * Registration — the bearer facet (a Slack app user token; the token's granted scopes govern
+ * which tools the server offers) is the verified path (descriptor migration 20271113410000).
+ */
+export const SLACK_MCP_PRESET: AddPreset = {
+  label: "Slack",
+  url: "https://mcp.slack.com/mcp",
+  providerKey: "slack",
+  auth: "bearer",
+};
+
 /** One configuration form for preset/custom entry and replacement. A host is never an endpoint.
  * The encrypted address stays private; replacement deliberately requires its complete value.
  * Acknowledgement, durable readback, OAuth and provider checking are separate transitions. */
-function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel, onSaved }: {
+export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel, onSaved }: {
   gw: UseMcpGateway;
   preset?: AddPreset;
   tool?: GatewayConnection;
@@ -751,6 +765,27 @@ function Catalogue({
 }
 
 /* ── Detail (re-key / disconnect / honest tool state) ────────────────────────── */
+
+/**
+ * The provider-side half of "disconnect and revoke" (EXP10): disconnecting here removes
+ * PAIGE's stored credential and every approval, but the credential itself stays VALID at the
+ * provider until the tenant acts there. Each connectable provider's real step, honestly named;
+ * an unknown provider gets the generic rotate-the-credential truth instead of an invented one.
+ */
+function providerRevokeStep(providerKey: string | null): string {
+  switch (providerKey) {
+    case "slack":
+      return "In Slack: a workspace admin can remove the app (Tools & settings → Manage apps), or rotate the token you pasted — until then the token itself stays valid at Slack.";
+    case "gohighlevel":
+      return "In GoHighLevel: delete the Private Integration in the sub-account's or agency's Settings → Private Integrations, wherever it was created — the token stays valid at HighLevel until deleted there.";
+    case "n8n":
+      return "In n8n: revoke the API key or disconnect the OAuth client under n8n's settings — the key stays valid at your n8n until revoked there.";
+    case "zapier":
+      return "In Zapier: disconnect or regenerate the MCP connection in your Zapier MCP settings — the credential stays valid at Zapier until then.";
+    default:
+      return "Wherever this credential came from: rotating or revoking it at the provider is the step that kills it — disconnecting here removes Paige's copy only.";
+  }
+}
 /* ── The actions a connection offers ──────────────────────────────────────────
    Until this shipped, the drawer ended in a paragraph saying that choosing which
    actions Paige may use "needs a change on Paige's side that hasn't shipped yet."
@@ -1359,6 +1394,9 @@ function DisconnectConfirm({ gw, tool, onDone, onCancel }: { gw: UseMcpGateway; 
   return (
     <>
       <div className="ig-gw-warn" role="note"><span>Either way, Paige stops using {tool.label} right now.</span></div>
+      {/* The provider-side revocation step (EXP10): the disconnect clears Paige's copy + approvals;
+          the credential itself lives on at the provider until the tenant acts there. */}
+      <p className="ig-note" role="note">{providerRevokeStep(tool.providerKey)}</p>
       {message && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{message}</span></div>}
       <div
         className="ig-gw-choices"
@@ -1592,8 +1630,15 @@ function ScopedIntegrationsGatewaySection({
               label: item.manual ? undefined : item.n,
               url: item.url,
               providerKey: item.pk,
-              // A preset with required headers is a Token + headers contract by definition.
-              auth: item.pk && item.req?.length ? "headers" : undefined,
+              // A preset with required headers is a Token + headers contract by definition; a
+              // curated row that names its proven auth mode preselects that mode (the catalogue's
+              // singular "header" is the form's "headers" choice). The GENERIC entry stays
+              // unprefilled by its own documented contract ("nothing prefilled, since it names no
+              // vendor") — its historical auth field is dead data, never a preselection.
+              auth: item.manual ? undefined
+                : item.pk && item.req?.length ? "headers"
+                : item.auth === "header" ? "headers"
+                : item.auth,
               requiredHeaders: item.req,
             } })}
             onSetup={(item) => setDrawer({ kind: "stop", item, via: "setup" })}

@@ -1,5 +1,18 @@
 # Config Registry — infra & integration state
 
+## October20 — current-main composition preparation; NOT RELEASED
+
+Original2163/36ab and2189/9f sources/acceptance are preserved, with bounded successor b27e95 corrections independently reviewed. This own composition retains currentmain40c1 authority, source, Task recovery/navigation and all later Experience work. The inherited dated sections below remain historical; old deployment observations and ownership statements are not current proof or a formal Coordinator handoff. The draft writer/Edge and old090500 migration are absent/unapplied in current production; forward migration/schema proof, current source-pin derivation/review, final exact-head CI/deployment and ordinary authenticated acceptance remain owed. No recurrence, provider, Chat/Live activation or18/25/50 closure. Current owner EXP-only doctrine and the ten-outcome/E5-CV1–9 contract control.
+
+**2026-10-16 E01 timing source RELEASED:** PR [#2273](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2273), reviewed `00f9726e5a9c86da27ea4e625d0eaff1b69cac0c` -> main `6a2c4258033c6438deab211f56d5188f1b32c9ec`. All11 exact-head checks including Preview, six workflows and both Vercel statuses SUCCESS; AUTHOR-REVIEW / LOWER ASSURANCE. Production Vercel `dpl_FqwfkNiPWWdkzQVTfvoP5j36na5E` READY; stable served-module graph13/13. Actual paige-tts76 source/configuration matches7/7 merged files, separately from deployment artifact75. Three canonical checkpoint definitions/access controls unchanged. Optional native playback phases and same-response numeric Server-Timing are source-released, not actual Jessica/provider p50/p95 or customer acceptance. Global Edge certification remains HELD on shared BUG#2271 after the selected deployment/source checks passed and final baseline-record step failed; no tag bypass. No provider/customer operation. Original23 cases and all ten outcomes remain OPEN. Subsequent Live phase observation remains development-only; its neutral unit/cost binding is separately incomplete. No interim owner testing request.
+
+
+### Preserved inherited EXP05 checkpoint (historical, unmerged source)
+
+## 2026-10-15 — E5 A3 prepared owner draft command (not deployed)
+
+`weekly-commitment-command` is a prepared JWT-verified owner-only Edge wrapper over existing confirmations/Kit/Trust/native draft/Rail. It reuses existing Supabase URL/anon/service credentials; no new secret, provider, budget, cron or flag. Browser `x-paige-expected-tenant` is a stale-scope constraint, never authority; real caller/tenant/owner are server-verified. Draft permission metadata defaults confirm and writes no tenant override. Migration20271105090500 is forward-only, adds nullable consuming nonce and indexes for canonical draft reconciliation/history, and is **not applied**. Prepared Spine metadata is unregistered; no Chat/Live tool offer changes. Production04:11:56UTC confirms writer absent, triggerOFF and all weekly process/event/receipt/cron/permission-override counts0. See the [existing E5 matrix](../delivery/experience-05-weekly-commitment-check.md). Deployment/accepted customer operation are not inferred.
+
 Durable record of the platform's integration configuration so no future session re-diagnoses
 "how is X wired / what's the account / which secret drives this."
 
@@ -309,6 +322,16 @@ not re-propose it.)* Module header `_shared/twilio.ts:24-35` states the model ex
 
 ## Voice / TTS / STT — Paige Voice Profile
 
+**2026-10-16 backend release identity:** #2268 maindd27f5a5a47b0e19d1a1ad8967be2538e1f93669 has exact READY production web and actual source/configuration PASS for paige-tts73 and paige-live-relay31. Global marker certification is still HELD pending shared BUG#2271; existing recovery does not authorize overriding that result. Earlier local streaming/frontend notes below are historical. Numeric same-response/client timing remains LOCAL; Live readiness and real provider/customer proof remain owed. No config/profile/credential/activation or spending-limit change.
+
+**2026-10-16 E01 metadata recheck (read only):** the existing global readiness row still has surface enabled but transport disabled, pilot disabled and rollout scope `off`; availability/realtime STT are `PROOF OWED`, streaming TTS `PARTIAL`. Scope, voice, retention, zero-retention and quota verification flags remain false; cost limits and provider/account verification are absent. This is recorded authorization/readiness, not proof of provider incapability. The separately approved active Jessica profile does not override this Live gate. No flag, credential, account or budget was changed. Complete Live/provider latency acceptance requires the existing verified-provider/readiness process, never an E01 bypass.
+
+**2026-10-16 timing continuation (LOCAL/UNRELEASED):** same-response numeric Server-Timing stages and optional native Performance entries extend incumbent paige-tts/messageTts. No request-reference header, business/message/thread identity, network reporter or parallel telemetry store.52 focused Node20 assertions pass. Two native synthetic decoder observations start before EOF; they establish neither approved-voice/provider p50/p95 nor customer acceptance. Backend streaming #2268 remains separately gated.
+
+**2026-10-16 E01 streaming development:** existing HTTP read-aloud adapter/handler now have local first-byte delivery, original-request cancellation, complete-only cache and stage durations on incumbent usage records; model, approved voice, retention, budgets and Live dialogue transport remain unchanged. Provider-neutral56 checks and real Deno graph pass; production provider latency, activated transport and ordinary-customer acceptance are not established by this candidate. Cache remains provider:model:voice:text under existing tenant prefix, with revision attribution in cost/usage.
+
+**2026-10-16 E01 read-only production metadata:** active slot remains ElevenLabs revision `elevenlabs-jessica-r1`, approved/active/status approved. The separate `elevenlabs-jessica-take5-r1` candidate remains unapproved/inactive/pending-provider-proof. No profile, credential, readiness, routing or budget was changed. This supersedes the earlier activation snapshot below; it does not establish current provider latency, consented Live acceptance or full readiness. Local progressive message playback is unreleased and retains this existing server selection.
+
 **2026-09-08 full-audio continuation (development):** owner authority now permits existing-account
 inspection and server-only use of the existing credential, not purchase/upgrade or legal acceptance.
 The existing `paige-voice-profile-admin` gains `inspect-configured-account`: platform-owner JWT
@@ -331,12 +354,12 @@ voice reference. Profile rows carry an immutable revision, approval/effective me
 speech policy, and operator audit trail; a new session resolves the current revision while an active
 session retains its snapshot. Customer UI shows only Paige.
 
-The requested ElevenLabs reference is stored only in the service-owned profile table as a pending,
+Historical activation snapshot (2026-09-07; superseded above): the requested ElevenLabs reference was stored only in the service-owned profile table as a pending,
 inactive candidate. The separately approved OpenAI fallback is the initial active profile. Neither
 provider reference is a client setting, prompt value, or request override. Missing/deleted/
 unauthorized profiles fail closed unless a separately approved fallback resolves.
 
-**Provider-backed realtime audio: `PROOF OWED`.** The production readiness record is deliberately
+**Historical readiness snapshot (2026-09-08): `PROOF OWED`.** At that read the production readiness record was deliberately
 transport-disabled until an authorized operator independently verifies the existing account's
 minimum key scopes, exact voice authorization, realtime STT eligibility/concurrency, quota, Paige
 calendar-month UTC hard cost ceiling, approved maximum price per 1,000 characters, and retention

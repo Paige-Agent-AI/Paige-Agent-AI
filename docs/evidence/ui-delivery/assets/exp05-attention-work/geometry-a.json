@@ -1,0 +1,320 @@
+[
+  {
+    "key": "a-1536-paige-closed",
+    "buttons": [
+      {
+        "height": 44,
+        "right": 371.33750915527344,
+        "text": "Back to Overview",
+        "width": 131.33750915527344,
+        "x": 240
+      },
+      {
+        "height": 44,
+        "right": 1502.4000091552734,
+        "text": "View all loaded work",
+        "width": 152.65000915527344,
+        "x": 1349.75
+      }
+    ],
+    "focus": "Next deadlines in Work",
+    "pageWidth": 1536,
+    "scrollOwners": [
+      {
+        "class": "ops-department-body",
+        "height": 643,
+        "overflowY": "auto",
+        "scroll": 1195
+      },
+      {
+        "class": "ops-work-set-context",
+        "height": 60,
+        "overflowY": "visible",
+        "scroll": 60
+      }
+    ],
+    "viewport": {
+      "height": 770,
+      "width": 1536
+    },
+    "workCount": 10
+  },
+  {
+    "key": "a-1536-paige-open",
+    "buttons": [
+      {
+        "height": 44,
+        "right": 371.33750915527344,
+        "text": "Back to Overview",
+        "width": 131.33750915527344,
+        "x": 240
+      },
+      {
+        "height": 44,
+        "right": 980.1625213623048,
+        "text": "View all loaded work",
+        "width": 152.65000915527344,
+        "x": 827.5125122070312
+      }
+    ],
+    "focus": "Direct PAIGE",
+    "pageWidth": 1536,
+    "scrollOwners": [
+      {
+        "class": "ops-department-body",
+        "height": 594,
+        "overflowY": "auto",
+        "scroll": 1211
+      },
+      {
+        "class": "ops-work-set-context",
+        "height": 60,
+        "overflowY": "visible",
+        "scroll": 60
+      }
+    ],
+    "viewport": {
+      "height": 770,
+      "width": 1536
+    },
+    "workCount": 10
+  },
+  {
+    "key": "a-1366-paige-closed",
+    "buttons": [
+      {
+        "height": 44,
+        "right": 371.33750915527344,
+        "text": "Back to Overview",
+        "width": 131.33750915527344,
+        "x": 240
+      },
+      {
+        "height": 44,
+        "right": 1332.800033569336,
+        "text": "View all loaded work",
+        "width": 152.65000915527344,
+        "x": 1180.1500244140625
+      }
+    ],
+    "focus": "Direct PAIGE",
+    "pageWidth": 1366,
+    "scrollOwners": [
+      {
+        "class": "ops-department-body",
+        "height": 641,
+        "overflowY": "auto",
+        "scroll": 1195
+      },
+      {
+        "class": "ops-work-set-context",
+        "height": 60,
+        "overflowY": "visible",
+        "scroll": 60
+      }
+    ],
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    },
+    "workCount": 10
+  },
+  {
+    "key": "a-1366-paige-open",
+    "buttons": [
+      {
+        "height": 44,
+        "right": 371.33750915527344,
+        "text": "Back to Overview",
+        "width": 131.33750915527344,
+        "x": 240
+      },
+      {
+        "height": 44,
+        "right": 868.2250213623047,
+        "text": "View all loaded work",
+        "width": 152.65000915527344,
+        "x": 715.5750122070312
+      }
+    ],
+    "focus": "Direct PAIGE",
+    "pageWidth": 1366,
+    "scrollOwners": [
+      {
+        "class": "ops-department-body",
+        "height": 592,
+        "overflowY": "auto",
+        "scroll": 1211
+      },
+      {
+        "class": "ops-work-set-context",
+        "height": 60,
+        "overflowY": "visible",
+        "scroll": 60
+      }
+    ],
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    },
+    "workCount": 10
+  },
+  {
+    "key": "a-1024-paige-closed",
+    "buttons": [
+      {
+        "height": 44,
+        "right": 227.33750915527344,
+        "text": "Back to Overview",
+        "width": 131.33750915527344,
+        "x": 96
+      },
+      {
+        "height": 44,
+        "right": 990.4000091552734,
+        "text": "View all loaded work",
+        "width": 152.65000915527344,
+        "x": 837.75
+      }
+    ],
+    "focus": "Direct PAIGE",
+    "pageWidth": 1024,
+    "scrollOwners": [
+      {
+        "class": "ops-department-body",
+        "height": 641,
+        "overflowY": "auto",
+        "scroll": 1195
+      },
+      {
+        "class": "ops-work-set-context",
+        "height": 60,
+        "overflowY": "visible",
+        "scroll": 60
+      }
+    ],
+    "viewport": {
+      "height": 768,
+      "width": 1024
+    },
+    "workCount": 10
+  },
+  {
+    "key": "a-1024-paige-open",
+    "buttons": [
+      {
+        "height": 44,
+        "right": 227.33750915527344,
+        "text": "Back to Overview",
+        "width": 131.33750915527344,
+        "x": 96
+      },
+      {
+        "height": 44,
+        "right": 990.4000091552734,
+        "text": "View all loaded work",
+        "width": 152.65000915527344,
+        "x": 837.75
+      }
+    ],
+    "focus": "Direct PAIGE",
+    "pageWidth": 1024,
+    "scrollOwners": [
+      {
+        "class": "ops-department-body",
+        "height": 641,
+        "overflowY": "auto",
+        "scroll": 1195
+      },
+      {
+        "class": "ops-work-set-context",
+        "height": 60,
+        "overflowY": "visible",
+        "scroll": 60
+      }
+    ],
+    "viewport": {
+      "height": 768,
+      "width": 1024
+    },
+    "workCount": 10
+  },
+  {
+    "key": "a-900-paige-closed",
+    "buttons": [
+      {
+        "height": 44,
+        "right": 227.33750915527344,
+        "text": "Back to Overview",
+        "width": 131.33750915527344,
+        "x": 96
+      },
+      {
+        "height": 44,
+        "right": 866.4000091552734,
+        "text": "View all loaded work",
+        "width": 152.65000915527344,
+        "x": 713.75
+      }
+    ],
+    "pageWidth": 900,
+    "scrollOwners": [
+      {
+        "class": "ops-department-body",
+        "height": 824,
+        "overflowY": "auto",
+        "scroll": 1211
+      },
+      {
+        "class": "ops-work-set-context",
+        "height": 60,
+        "overflowY": "visible",
+        "scroll": 60
+      }
+    ],
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    },
+    "workCount": 10
+  },
+  {
+    "key": "a-900-paige-open",
+    "buttons": [
+      {
+        "height": 44,
+        "right": 227.33750915527344,
+        "text": "Back to Overview",
+        "width": 131.33750915527344,
+        "x": 96
+      },
+      {
+        "height": 44,
+        "right": 866.4000091552734,
+        "text": "View all loaded work",
+        "width": 152.65000915527344,
+        "x": 713.75
+      }
+    ],
+    "pageWidth": 900,
+    "scrollOwners": [
+      {
+        "class": "ops-department-body",
+        "height": 824,
+        "overflowY": "auto",
+        "scroll": 1211
+      },
+      {
+        "class": "ops-work-set-context",
+        "height": 60,
+        "overflowY": "visible",
+        "scroll": 60
+      }
+    ],
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    },
+    "workCount": 10
+  }
+]

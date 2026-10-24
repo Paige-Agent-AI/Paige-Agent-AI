@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "long",
+    "approve": true,
+    "docWidth": 320,
+    "error": "",
+    "injected": false,
+    "reduced": true,
+    "summary": "Needs your OKRequest an assignment from ZION: “Review the original commitments and prepare a weekly plan. Review the original commitments and prepare a weekly plan. Review the original commitments and prepare a weekly plan. Rev…”Approve Not now"
+  },
+  {
+    "mode": "empty",
+    "approve": true,
+    "docWidth": 320,
+    "error": "",
+    "injected": false,
+    "reduced": true,
+    "summary": "Needs your OKRequest an assignment from ZION. Review its scope before approving.Approve Not now"
+  },
+  {
+    "mode": "unbound",
+    "approve": false,
+    "docWidth": 320,
+    "error": "",
+    "injected": false,
+    "reduced": true,
+    "summary": "Needs your OKRequest an assignment from ZION: “Prepare a weekly planning draft from the original commitments. Do not change work or send communications.”This conversation can’t complete approvals, so nothing has changed. Ask for it again where Paige can show you an approval control."
+  },
+  {
+    "mode": "markup",
+    "approve": true,
+    "docWidth": 320,
+    "error": "",
+    "injected": false,
+    "reduced": true,
+    "summary": "Needs your OKRequest an assignment from ZION: “<script>untrusted brief</script> Review recorded work.”Approve Not now"
+  }
+]

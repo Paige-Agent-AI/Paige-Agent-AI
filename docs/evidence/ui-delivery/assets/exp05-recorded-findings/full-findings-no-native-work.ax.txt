@@ -1,0 +1,76 @@
+Browser tab: 170270628, Title: "Offline Operations findings flow prototype", URL: "http://127.0.0.1:63673/solo/1701/operations/overview".
+1 AXWebArea Offline Operations findings flow prototype, URL: 127.0.0.1:63673/solo/1701/operations/overview
+	2 container root
+		3 button (collapsed) Native integration controls · offline, Secondary Actions: Expand
+			4 text Native integration controls · offline
+		5 container
+			6 text PAIGE folded; your conversation is preserved
+			7 link Description: Skip to content, Value: 127.0.0.1:63673/solo/1701/operations/overview#tenant-shell-main
+			8 container Tenant workspace
+				9 link Description: PAIGE Solo home, Value: 127.0.0.1:63673/solo/1701/command-center
+				10 button Expand navigation
+					11 image
+				12 link Description: Command Center, Value: 127.0.0.1:63673/solo/1701/command-center
+				13 link Description: Operations, Value: 127.0.0.1:63673/solo/1701/operations
+				14 link Description: Clients, Value: 127.0.0.1:63673/solo/1701/clients
+				15 link Description: Marketing, Value: 127.0.0.1:63673/solo/1701/growth
+				16 link Description: Ads, Value: 127.0.0.1:63673/solo/1701/ads
+				17 link Description: Sales, Value: 127.0.0.1:63673/solo/1701/sales
+				18 link Description: Finance, Value: 127.0.0.1:63673/solo/1701/finance
+				19 link Description: Marketplace, Value: 127.0.0.1:63673/solo/1701/marketplace
+				20 link Description: Settings, Value: 127.0.0.1:63673/solo/1701/settings
+				21 button Description: Use Mineral theme, Help: Mineral theme
+				22 button Sign out
+				23 text TE
+			117 container
+				118 text TEST STUDIO A Operations Solo
+				119 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+					120 image PAIGE
+					121 text Direct PAIGE, or press ⌘\
+					122 text ⌘\
+			28 container Operations department
+				29 container
+					30 container Department views
+						31 button Overview
+						32 button Work
+						33 button Projects
+						34 button Delivery
+						35 button Playbooks
+						36 button Capacity
+					37 button Refresh work and team profiles
+						38 image
+				39 container
+					40 container Overview
+						41 container
+							42 heading Your operating week, Value: 1
+								43 text Your operating week
+							44 text Current commitments, responsible people and the next decisions.
+							45 button Weekly responsibility
+							46 button Plan with PAIGE
+						123 container Recorded Operations findings
+							124 container
+								125 heading Recorded Operations findings, Value: 2, ID: recorded-findings-heading
+									126 text Recorded Operations findings
+								127 text Separate from blocked or overdue Work.
+								128 button Refresh recorded Operations findings
+							129 text Read  Oct 20, 2026, 8:00 AM  ·  America/New_York Source coverage reported complete
+							130 container Original source windows
+								131 text Recorded runs in the selected reporting window.
+								132 text From the latest Systems Check, as of 2026-10-19 09:02 UTC
+							133 content list
+								134 container
+									135 text Recorded automation runs Needs review One automation run failed in the last 7 days. Recorded run totals ·  the last 7 days . Individual runs aren’t available here.
+								136 container
+									137 text Systems Check Needs review Business setup needs attention, recorded 2026-10-19 09:00 UTC.
+							138 button Open Systems Check
+							139 button Prepare a read-only PAIGE review
+						140 container
+							141 heading Start with one real commitment, Value: 2
+								142 text Start with one real commitment
+							143 text What needs to happen next, who should own it, and when does it matter? Prepare it with PAIGE or open Work to record the next step.
+							144 button Open Work
+							145 button Plan a project
+							146 text Only work available in the current sources appears here.
+					116 text Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.
+
+The focused UI element is 128 button Refresh recorded Operations findings

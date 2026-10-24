@@ -1,6 +1,7 @@
 import React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,6 +21,11 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("./data/useCommandCenter", () => ({ useCommandCenter: () => harness.command() }));
 vi.mock("@/hooks/useSystemsCheck", () => ({ useSystemsCheck: () => harness.systems() }));
+vi.mock("./data/useSoloActivityFeed", async (original) => ({
+  ...await original<typeof import("./data/useSoloActivityFeed")>(),
+  // Rail's own states have a separate owning suite; keep this console suite synchronous.
+  useSoloActivityFeed: () => ({ status: "ready", items: [], refresh: () => {} }),
+}));
 
 import { SoloSystemsCheckWorkspace } from "./SoloSystemsCheckWorkspace";
 
@@ -77,8 +83,11 @@ afterEach(() => {
   host.remove();
 });
 
-function render() {
-  act(() => root.render(<SoloSystemsCheckWorkspace accountContext={{ accountName: "First Sterling Capital", accountType: "standalone" }} openPaige={openPaige} />));
+function render(entry = "/") {
+  const workspace = <SoloSystemsCheckWorkspace accountContext={{ accountName: "First Sterling Capital", accountType: "standalone" }} openPaige={openPaige} />;
+  act(() => root.render(<MemoryRouter initialEntries={[entry]}><Routes>
+    <Route path="/solo/:account/*" element={workspace} /><Route path="*" element={workspace} />
+  </Routes></MemoryRouter>));
 }
 
 function button(name: string) {
@@ -86,6 +95,149 @@ function button(name: string) {
 }
 
 describe("Solo Systems Check workspace", () => {
+  const sourceId = "e2000000-0000-4000-8000-000000000001";
+  const sourceEntry = `/solo/7100001/command-center/systems-check?keep=1&finding=${sourceId}#evidence`;
+  it("offers explicit source inspection in the original drawer and returns keyboard focus", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    const context = host.querySelector('[aria-labelledby="sc-linked-title"]');
+    expect(context?.textContent).toContain("Payment connection needs attention");
+    expect(context?.textContent).toContain("From the last completed check");
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    const inspect = button("Inspect linked evidence")!;
+    expect(inspect).toBeTruthy();
+    act(() => { inspect.focus(); inspect.click(); });
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain("disconnected");
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(inspect);
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+    expect(baseCommand.decline).not.toHaveBeenCalled();
+    expect(refreshSystems).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { loading: true, message: "Reading the linked finding" },
+    { isError: true, message: "could not be read" },
+    { run: null, message: "No completed check" },
+    { run: { ...baseSystems.run, completed_at: null }, message: "No completed check" },
+    { findings: [{ ...finding, id: sourceId, run_id: "older-run" }], message: "not in the last completed check" },
+    { findings: [], message: "not in the last completed check" },
+  ])("withholds linked source evidence when its current scoped read cannot support it: %j", patch => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }], ...patch });
+    render(sourceEntry);
+    const context = host.querySelector('[aria-labelledby="sc-linked-title"]');
+    expect(context?.textContent).toContain(patch.message);
+    expect(context?.textContent).not.toContain(finding.paige_interpretation);
+    expect(context?.textContent).not.toContain(sourceId);
+    expect(button("Inspect linked evidence")).toBeUndefined();
+  });
+
+  it.each(["../other", "", `${sourceId}&finding=${sourceId}`])("refuses a malformed or ambiguous source reference: %s", reference => {
+    render(`/solo/7100001/command-center/systems-check?finding=${reference}`);
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')?.textContent).toContain("source reference is not valid");
+    expect(button("Inspect linked evidence")).toBeUndefined();
+  });
+
+  it("clears only the source selection without running work", () => {
+    render(sourceEntry);
+    expect(host.querySelector('a[aria-label="Clear source selection"]')?.getAttribute("href"))
+      .toBe("/solo/7100001/command-center/systems-check?keep=1#evidence");
+    const clear = host.querySelector('a[aria-label="Clear source selection"]') as HTMLAnchorElement;
+    act(() => clear.click());
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')).toBeNull();
+    expect(document.activeElement).toBe(button("Refresh current data"));
+    expect(refreshSystems).not.toHaveBeenCalled();
+  });
+
+  it("retires an inspected linked source during reread and shows only its returned resolution", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    act(() => button("Inspect linked evidence")!.click());
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    harness.systems.mockReturnValue({ ...baseSystems, loading: true, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')?.textContent).not.toContain(finding.paige_interpretation);
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId, resolved_at: "2026-08-27T18:00:00Z" }] });
+    render(sourceEntry);
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')?.textContent).toContain("Resolved");
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+  });
+
+  it("retires the original Ask First presentation when a linked source becomes unreadable", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    act(() => button("Inspect linked evidence")!.click());
+    act(() => button("Put PAIGE to work")!.click());
+    expect(host.querySelector('[aria-labelledby="ask-first-title"]')).not.toBeNull();
+    harness.systems.mockReturnValue({ ...baseSystems, isError: true, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    expect(host.querySelector('[aria-labelledby="ask-first-title"]')).toBeNull();
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(host.querySelector('.sc-scroll-owner')?.getAttribute("aria-hidden")).toBeNull();
+    expect(document.activeElement).toBe(button("Refresh current data"));
+    expect(openPaige).not.toHaveBeenCalled();
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+  });
+
+  it("adds no source section to ordinary navigation", () => {
+    render();
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')).toBeNull();
+  });
+
+  it("keeps completed findings while naming the unfinished check reported at the last read", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, scanInProgressSince: "2026-08-27T18:00:00Z" });
+    render();
+    const notice = host.querySelector('[aria-label="Unfinished check at last read"]');
+    expect(notice?.textContent).toContain("An unfinished check was reported at the last read");
+    expect(notice?.textContent).toContain("Results below still come from the last completed check");
+    expect(host.textContent).toContain("Last checked");
+    expect(host.textContent).toContain("1 passed");
+    expect(host.textContent).toContain("1 needs attention");
+    expect(host.querySelector(".sc-spin")).toBeNull();
+    const refresh = button("Refresh current data")!;
+    expect(refresh.disabled).toBe(false);
+    act(() => refresh.click());
+    expect(refreshSystems).toHaveBeenCalledOnce();
+    expect(refreshCommand).toHaveBeenCalledOnce();
+    expect(openPaige).not.toHaveBeenCalled();
+  });
+
+  it("withholds results when only an unfinished check is reported", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, run: null, findings: [], scanInProgressSince: "2026-08-27T18:00:00Z" });
+    render();
+    expect(host.textContent).toContain("No completed results are available yet");
+    expect(host.querySelector(".sc-strip")?.textContent).not.toContain("Nothing has been recorded");
+    expect(host.textContent).not.toContain("Nothing has been checked yet");
+    expect(host.textContent).not.toContain("0 passed");
+    expect(host.textContent).not.toContain("Everything the check looked at returned an answer");
+    expect(host.textContent).not.toContain("Nothing from the last check is waiting on you");
+    expect(host.querySelector(".sc-spin")).toBeNull();
+  });
+
+  it("does not report a running check or active read from recent workspace age alone", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, run: null, findings: [], scanPending: true, scanInProgressSince: null });
+    render();
+    expect(host.textContent).toContain("Awaiting the first completed check");
+    expect(host.textContent).not.toContain("Your first check is running");
+    expect(host.querySelector('[aria-label="Unfinished check at last read"]')).toBeNull();
+    expect(host.querySelector(".sc-spin")).toBeNull();
+  });
+
+  it.each([
+    { scanInProgressSince: null },
+    { scanInProgressSince: "not-a-date" },
+    { scanInProgressSince: "2026-08-27T18:00:00Z", isError: true },
+    { scanInProgressSince: "2026-08-27T18:00:00Z", loading: true },
+  ])("withholds an invalid or unverified unfinished-check notice: %j", (patch) => {
+    harness.systems.mockReturnValue({ ...baseSystems, ...patch });
+    render();
+    expect(host.querySelector('[aria-label="Unfinished check at last read"]')).toBeNull();
+    expect(host.textContent).not.toContain("Invalid Date");
+  });
+
   it("renders the five parts of the operating-readiness console", () => {
     render();
 
@@ -95,7 +247,7 @@ describe("Solo Systems Check workspace", () => {
     // The owner's five parts, all present and in order.
     for (const part of [
       "What needs you now",
-      "What is ready to operate",
+      "Passed and resolved checks",
       "Your operating areas",
       "Recent activity",
       "Who does what next",
@@ -118,6 +270,68 @@ describe("Solo Systems Check workspace", () => {
     const css = readFileSync(resolve(process.cwd(), "src/solo/solo-systems-check-workspace.css"), "utf8");
     expect(css).toContain(".sc-heading h1{font:700 19px/1.2");
     expect(css).toContain("@media(prefers-reduced-motion:reduce)");
+  });
+
+  it("reports a captured social handle as a passed setup check, never live Marketing", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      id: "social-1", check_id: "social_accounts_connected", status: "pass",
+      evidence: { social_handle_count: 1, declared_capture_only: true },
+      paige_interpretation: "One social handle is on record.",
+    }] });
+    render();
+    const area = [...host.querySelectorAll(".sc-area-b")].find(row => row.textContent?.includes("Marketing, social"));
+    expect(area?.textContent).toContain("Partial");
+    expect(area?.textContent).toContain("performance is not tested");
+    expect(host.querySelector(".sc-brief-say")?.textContent).not.toContain("ready");
+    expect(host.querySelector("#sc-ready-title")?.textContent).toBe("Passed and resolved checks");
+    expect([...host.querySelectorAll(".sc-status")].some(row => row.textContent?.trim() === "Live")).toBe(false);
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+  });
+
+  it("does not turn a passed communications setup check into delivery or calling readiness", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      check_id: "comms_configured", status: "pass",
+      evidence: { has_email_identity: true, has_primary_phone: true, has_business_phone: true, calling_account_configured: false },
+    }] });
+    render();
+    expect(host.querySelector(".sc-ready")?.textContent).toContain("Email and phone setup");
+    expect(host.textContent).not.toContain("Email, phone and texting are ready");
+    expect(host.textContent).toContain("delivery is not tested");
+  });
+
+  it("withholds an area's all-clear when another expected setup check is absent", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      check_id: "company_info_populated", status: "pass",
+    }] });
+    render();
+    const trigger = [...host.querySelectorAll<HTMLButtonElement>(".sc-area-b")].find(row => row.textContent?.includes("Business setup and identity"))!;
+    expect(trigger.textContent).toContain("Unavailable");
+    act(() => trigger.click());
+    expect(host.querySelector(".sc-area-d")?.textContent).toContain("Some expected checks have no result in this recorded run");
+    expect(host.querySelector(".sc-area-d")?.textContent).toContain("Business details");
+  });
+
+  it.each(["fail", "error"])("keeps resolved %s findings distinct from a passed check or provider verification", status => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      check_id: "social_accounts_connected", status, resolved_at: "2026-08-27T18:00:00Z", resolution: "Reviewed by owner.",
+    }] });
+    render();
+    const trigger = [...host.querySelectorAll<HTMLButtonElement>(".sc-area-b")].find(row => row.textContent?.includes("Marketing, social"))!;
+    expect(trigger.textContent).toContain("Partial");
+    act(() => trigger.click());
+    expect(host.querySelector(".sc-area-d .sc-status")?.textContent).toBe("Resolved");
+    expect(host.querySelector(".sc-area-d")?.textContent).toContain("Recorded setup results do not verify provider readiness or successful work");
+  });
+
+  it("keeps contact follow-up counts separate from client-risk predictions and setup findings", () => {
+    render();
+    expect(host.textContent).toContain("contacts without recent follow-up");
+    expect(host.textContent).not.toContain("clients at risk");
+    expect(host.textContent).toContain("existing business records, separate from the last setup check");
+    expect(host.textContent).not.toContain("These come from your live client records");
+    // A read-only summary does not change or resolve any originating record.
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+    expect(baseCommand.decline).not.toHaveBeenCalled();
   });
 
   it("sorts findings into what needs the owner and what is already working", () => {
@@ -234,13 +448,11 @@ describe("Solo Systems Check workspace", () => {
   // action link never renders at all. Asserting an href here would test the harness, not the app.
 
   it("animates only the honest read state and does not manufacture category progress", () => {
-    harness.systems.mockReturnValue({ ...baseSystems, scanPending: true });
+    harness.systems.mockReturnValue({ ...baseSystems, loading: true });
     render();
 
     expect(host.querySelector(".sc-spin")).not.toBeNull();
-    expect(host.textContent).toContain("Your first check is running");
-    // A running check reports that it is running. It never reports how far along it is,
-    // because nothing measures that.
+    // Read loading is distinct from execution. Neither reports invented percentage progress.
     expect(host.textContent).not.toMatch(/\d+\s?%/);
   });
 
@@ -249,8 +461,9 @@ describe("Solo Systems Check workspace", () => {
     expect(host.textContent).toContain("Systems Check");
     expect(host.querySelector("[data-tenant-account-name]")?.textContent).toBe("First Sterling Capital");
     expect(host.querySelector("[data-tenant-account-tier]")?.textContent).toBe("Solo");
-    expect(host.textContent).toContain("Active clients");
-    expect(host.textContent).toContain("Live read from your own records");
+    expect(host.textContent).not.toContain("Active clients");
+    expect(host.textContent).not.toContain("Pipeline value");
+    expect(host.textContent).not.toContain("Live read from your own records");
     expect(host.textContent).toContain("Payment connection needs attention");
     // The Departments panel went with the radial: it listed names beside the words
     // "Status totals unavailable here", which is not information the owner can act on.
@@ -304,8 +517,16 @@ describe("Solo Systems Check workspace", () => {
     render();
     expect(host.textContent).toContain("The last check could not be read");
     expect(host.textContent).toContain("Nothing below is being reported as healthy");
+    expect(host.textContent).not.toContain("No completed check has been recorded");
     act(() => button("Refresh current data")?.click());
     expect(refreshSystems).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not claim an empty history while the recorded check is still loading", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, run: null, findings: [], loading: true });
+    render();
+    expect(host.textContent).not.toContain("No completed check has been recorded");
+    expect(host.textContent).toContain("Reading");
   });
 
   it("uses no-run wording when no persisted Systems Check exists", () => {
@@ -315,6 +536,9 @@ describe("Solo Systems Check workspace", () => {
     expect(host.textContent).toContain("Nothing has been checked yet");
     // An absent check is never a claim that anything is wrong.
     expect(host.textContent).toContain("not a claim that anything is wrong");
+    expect(host.querySelector('.sc-area-b .sc-status--partial')).toBeNull();
+    expect(host.querySelector('.sc-area-b .sc-status--unavailable')).toBeNull();
+    expect(host.querySelectorAll('.sc-area-b .sc-status--notchecked')).toHaveLength(3);
   });
 
   it.each([0, 2])("never infers all-clear from an empty persisted run with check_count=%s", (checkCount) => {
@@ -541,12 +765,38 @@ describe("Solo Systems Check workspace", () => {
     expect(refreshCommand).toHaveBeenCalledTimes(1);
   });
 
-  it("labels retained metrics as last available when the current operating read fails", () => {
+  it("does not revive legacy business figures when the operating read fails", () => {
     harness.command.mockReturnValue({ ...baseCommand, isError: true });
     render();
-    expect(host.textContent).toContain("Active clients");
-    expect(host.textContent).toContain("this may not be today's number");
+    expect(host.textContent).not.toContain("Active clients");
+    expect(host.textContent).not.toContain("Pipeline value");
+    expect(host.textContent).not.toContain("this may not be today's number");
     expect(host.textContent).not.toContain("Live read from your own records");
+    expect(host.textContent).toContain("Some business operating sources could not be read");
+  });
+
+  it("opens the canonical Executive for the current account independently of check completion", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, run: null, findings: [] });
+    act(() => root.render(<MemoryRouter initialEntries={["/solo/7100001/command-center/systems-check"]}>
+      <Routes><Route path="/solo/:account/command-center/systems-check" element={
+        <SoloSystemsCheckWorkspace accountContext={{ accountName: "Test tenant operations", accountType: "standalone" }} openPaige={openPaige} />
+      } /><Route path="/solo/:account/command-center/executive" element={<p role="status">Canonical Executive destination</p>} /></Routes>
+    </MemoryRouter>));
+    const link = [...host.querySelectorAll("a")].find(a => a.textContent?.includes("Review business performance"));
+    expect(link?.getAttribute("href")).toBe("/solo/7100001/command-center/executive");
+    expect(host.textContent).not.toContain("Active clients");
+    expect(host.textContent).not.toContain("$48,000");
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+    expect(baseCommand.decline).not.toHaveBeenCalled();
+    expect(openPaige).not.toHaveBeenCalled();
+    act(() => link?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })));
+    expect(host.querySelector('[role="status"]')?.textContent).toBe("Canonical Executive destination");
+  });
+
+  it("withholds the business-review link until the route account resolves", () => {
+    render();
+    expect([...host.querySelectorAll("a")].filter(a => a.textContent?.includes("Review business performance"))).toHaveLength(0);
+    expect(host.textContent).toContain("Business figures are available in Executive once this workspace resolves.");
   });
 
   it("reviews a governed approval once, disables repeat activation, and announces success", async () => {
@@ -585,7 +835,7 @@ describe("Solo Systems Check workspace", () => {
     expect(css).toContain('@media(min-width:761px) and (max-width:940px){[data-tenant-shell][data-nav="expanded"][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"]');
     expect(css).toContain('nav[aria-label="Command Center sections"] button{gap:0!important;padding-inline:6px!important;font-size:0!important;border-radius:6px}');
     expect(css).toContain('nav[aria-label="Command Center sections"] button:hover{background:var(--pg-canvas)!important;color:var(--pg-ink)!important;box-shadow:inset 0 0 0 1px var(--pg-line)}');
-    expect(css).toContain('nav[aria-label="Command Center sections"] button[aria-current="page"]{border-bottom:3px solid Highlight!important}');
+    expect(css).toContain('nav[aria-label="Command Center sections"] button[aria-current="page"]{outline:2px solid Highlight!important;outline-offset:-2px}');
     expect(css).not.toMatch(/--pg-(?:bg|card|shadow-sm|shadow-lg)\b/);
     expect(css).toContain("--sc-paige:var(--pg-violet)");
     expect(css).toContain("--sc-critical:var(--pg-negative)");

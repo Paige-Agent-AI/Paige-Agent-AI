@@ -217,4 +217,44 @@ if ! grep -q 'C1 .*signed' "$OUT" || ! grep -q 'C2 .*signed' "$OUT"; then
   echo "FAIL — positive controls did not succeed, so the negatives prove nothing."
   exit 1
 fi
+# E04: reuse this same disposable cluster for the current pgcrypto-qualified
+# signing-context contract. The proof fences the exact data directory before
+# creating its own synthetic database and always drops that database afterward.
+node "$HERE/signing-context-economics-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+# Same original cluster/engine, distinct disposable synthetic database. Includes
+# two real concurrent sessions and refusal controls, not another acceptance engine.
+node "$HERE/draft-request-identity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+# Retain the original agreement's actual draft revisions under the same native
+# cluster, including stale concurrent edits and the original signing freeze.
+node "$HERE/draft-revision-history-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+# Original frozen-document protection also applies before delivery leaves Draft.
+node "$HERE/frozen-draft-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
+# Original business template library; version-bound wording options are not
+# completed legal review or a second agreement/authorization store.
+node "$HERE/template-wording-options-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
+# Reconciled EXP04 commercial preparation uses the same original agreement engine,
+# existing Collections schedule/conditions and this verified disposable cluster.
+deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+  "$REPO/supabase/functions/_shared/agreements/commercial-presentation.test.ts" \
+  "$REPO/supabase/functions/_shared/agreements/commercial-presentation-read.test.ts" \
+  "$REPO/supabase/functions/_shared/agreements/field-preparation.test.ts"
+# The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
+# runtime already exercised above, with this same fenced native cluster and all
+# 54 original assertions. No transpiled copy or relaxed test is substituted.
+deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
+  --deny-net --deny-write --deny-ffi --deny-sys \
+  "$HERE/commercial-presentation-retention-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
+# Original signer preparation is serialized before native party/order changes.
+node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability
+
+# Same native cluster and original signer proof, with its additional immutable
+# document/map cases. Deno imports the ONE source TypeScript validator; Node's
+# original gate above remains intact. No hosted Storage or customer proof.
+deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
+  --deny-net --deny-write --deny-ffi --deny-sys \
+  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial
+
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

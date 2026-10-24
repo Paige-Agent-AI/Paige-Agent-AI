@@ -72,6 +72,17 @@ class Builder {
 class Client {
   constructor(kind) { this._kind = kind; }
   from(t) { return new Builder(this._kind, t); }
+  // E09 F1b: the caller-tier check. Only the service client may ask (the function is service-only).
+  rpc(fn, args) {
+    const sc = ACTIVE.scenario;
+    ACTIVE.rec.rpcs ??= [];
+    ACTIVE.rec.rpcs.push({ fn, args, client: this._kind, seq: ++seq });
+    if (fn === "_user_is_portal_customer_only" && this._kind === "service") {
+      if (sc.tierError) return Promise.resolve({ data: null, error: { message: "tier read failed" } });
+      return Promise.resolve({ data: (sc.portalCustomers ?? []).includes(args?._user), error: null });
+    }
+    return Promise.resolve({ data: null, error: { message: `fake-supabase: unstubbed rpc ${fn} on ${this._kind}` } });
+  }
   get auth() {
     return {
       getUser: async () => {

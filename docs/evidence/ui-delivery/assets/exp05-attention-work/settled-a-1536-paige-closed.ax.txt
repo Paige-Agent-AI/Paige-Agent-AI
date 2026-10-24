@@ -1,0 +1,185 @@
+Browser tab: 1738568133, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:51805/?context=a&theme=dark".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=a&theme=dark
+	2 container
+		3 text PAIGE workspace ready
+		4 link Description: Skip to content, Value: 127.0.0.1:51805/?context=a&theme=dark#tenant-shell-main
+		5 container Tenant workspace
+			6 link Description: PAIGE Solo home, Value: 127.0.0.1:51805/solo/1701/command-center
+			7 button Fold navigation
+				8 image
+			9 link Description: Command Center, Value: 127.0.0.1:51805/solo/1701/command-center
+			10 link Description: Operations, Value: 127.0.0.1:51805/solo/1701/operations
+			11 link Description: Clients, Value: 127.0.0.1:51805/solo/1701/clients
+			12 link Description: Marketing, Value: 127.0.0.1:51805/solo/1701/growth
+			13 link Description: Ads, Value: 127.0.0.1:51805/solo/1701/ads
+			14 link Description: Sales, Value: 127.0.0.1:51805/solo/1701/sales
+			15 link Description: Finance, Value: 127.0.0.1:51805/solo/1701/finance
+			16 link Description: Marketplace, Value: 127.0.0.1:51805/solo/1701/marketplace
+			17 link Description: Settings, Value: 127.0.0.1:51805/solo/1701/settings
+			18 button Use Mineral theme
+			19 button Sign out
+			20 text SY
+			21 text Synthetic Studio A
+			22 text Owner workspace
+		23 container
+			24 text SYNTHETIC STUDIO A Operations Solo
+			25 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+				26 image PAIGE
+				27 text Direct PAIGE, or press ⌘\
+				28 text ⌘\
+		29 container Operations department
+			30 container
+				31 container Department views
+					32 button Overview
+					33 button Work
+					34 button Projects
+					35 button Delivery
+					36 button Playbooks
+					37 button Capacity
+				41 button New task
+				38 button Refresh work and team profiles
+					39 image
+				42 button Review with PAIGE
+			40 container
+				43 container Next deadlines in Work
+					44 button Back to Overview
+					45 container
+						46 text Next deadlines  ·  10  matching loaded records
+					47 button View all loaded work
+				48 container Work
+					49 container
+						50 heading Move the work forward, Value: 1
+							51 text Move the work forward
+						52 text See the next step and the person responsible.
+					53 container Work view
+						54 checkbox Board, Value: 0
+						55 checkbox List, Value: 1
+						56 checkbox Timeline, Value: 0
+					57 container
+						58 text Search work, people and projects
+						59 text field (settable) Search work, people and projects
+					60 container
+						61 text Filter work
+						62 pop up button (collapsed, settable) Filter work, Value: Active work, Secondary Actions: Expand
+							63 menu
+								64 (selected) Active work
+								65 All work
+								66 Blocked
+								67 Overdue
+								68 Completed
+								69 Cancelled
+					70 text 10  items shown
+					71 container Work list
+						72 table
+							73 row
+								74 cell
+									75 text Work / project
+								76 cell
+									77 text Owner
+								78 cell
+									79 text Status
+								80 cell
+									81 text Due / reminder
+							82 row
+								83 cell
+									84 button Share the agreed next steps
+									85 text Client onboarding
+								86 cell
+									87 text Jordan Ellis
+								88 cell
+									89 text Ready
+								90 cell
+									91 text Oct 21
+							92 row
+								93 cell
+									94 button Review delivery milestone 1
+									95 text Standalone work
+								96 cell
+									97 text Jordan Ellis
+								98 cell
+									99 text Ready
+								100 cell
+									101 text Nov 1
+							102 row
+								103 cell
+									104 button Review delivery milestone 2
+									105 text Standalone work
+								106 cell
+									107 text Jordan Ellis
+								108 cell
+									109 text Ready
+								110 cell
+									111 text Nov 2
+							112 row
+								113 cell
+									114 button Review delivery milestone 3
+									115 text Standalone work
+								116 cell
+									117 text Jordan Ellis
+								118 cell
+									119 text Ready
+								120 cell
+									121 text Nov 3
+							122 row
+								123 cell
+									124 button Review delivery milestone 4
+									125 text Standalone work
+								126 cell
+									127 text Jordan Ellis
+								128 cell
+									129 text Ready
+								130 cell
+									131 text Nov 4
+							132 row
+								133 cell
+									134 button Review delivery milestone 5
+									135 text Standalone work
+								136 cell
+									137 text Jordan Ellis
+								138 cell
+									139 text Ready
+								140 cell
+									141 text Nov 5
+							142 row
+								143 cell
+									144 button Review delivery milestone 6
+									145 text Standalone work
+								146 cell
+									147 text Jordan Ellis
+								148 cell
+									149 text Ready
+								150 cell
+									151 text Nov 6
+							152 row
+								153 cell
+									154 button Review delivery milestone 7
+									155 text Standalone work
+								156 cell
+									157 text Jordan Ellis
+								158 cell
+									159 text Ready
+								160 cell
+									161 text Nov 7
+							162 row
+								163 cell
+									164 button Review delivery milestone 8
+									165 text Standalone work
+								166 cell
+									167 text Jordan Ellis
+								168 cell
+									169 text Ready
+								170 cell
+									171 text Nov 8
+							172 row
+								173 cell
+									174 button Prepare the next milestone
+									175 text Standalone work
+								176 cell
+									177 text Morgan Lee
+								178 cell
+									179 text Ready
+								180 cell
+									181 text Oct 28
+				182 text This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.
+
+The focused UI element is 43 container Next deadlines in Work

@@ -1,0 +1,17 @@
+{
+  "proofClass": "NATIVE_CSS_REDUCED_MOTION",
+  "buttons": [
+    {
+      "animation": "1e-05s",
+      "text": "Refresh",
+      "transition": "1e-05s"
+    },
+    {
+      "animation": "1e-05s",
+      "text": "Review to enable",
+      "transition": "1e-05s"
+    }
+  ],
+  "reduce": true,
+  "hydratedMotionBehavior": "UNVERIFIED"
+}

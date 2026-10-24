@@ -2,25 +2,33 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { PlanItem } from "@/hooks/usePlanList";
-const mock = vi.hoisted(() => ({ rpc: vi.fn(), submit: vi.fn() }));
+const mock = vi.hoisted(() => ({ rpc: vi.fn(), submit: vi.fn(), roles: { loading: false, userId: "assignee" as string | null, roles: [] as string[] } }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mock.rpc } }));
+vi.mock("@/hooks/useUserRoles", () => ({ useUserRoles: () => mock.roles }));
 vi.mock("./operations-work-update", () => ({ submitOperationsWorkUpdate: mock.submit }));
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
 let container: HTMLDivElement;
 let root: Root;
+let fixtureSequence = 0;
 const item = { id: "item-a", tenant_id: "tenant-a", status: "open", created_by: "creator", assigned_to_user_id: "assignee", due_at: null, updated_at: "2026-10-10T12:00:00Z" } as PlanItem;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-beforeEach(() => { vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: false, error: null });
+beforeEach(() => { item.id = `work-fixture-${++fixtureSequence}`;
+  vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: false, error: null });
+  mock.roles = { loading: false, userId: "assignee", roles: [] };
   container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
-async function render(value = item, actorId = "assignee", refresh = vi.fn().mockResolvedValue(undefined)) {
-  await act(async () => root.render(<OperationsWorkEditor item={value} actorId={actorId} tenantId="tenant-a" members={[]} refresh={refresh} sourceError={false} />));
+async function render(value = item, actorId = "assignee", refresh = vi.fn().mockResolvedValue(undefined), tenantId = "tenant-a") {
+  await act(async () => root.render(<OperationsWorkEditor item={value} actorId={actorId} tenantId={tenantId} members={[]} refresh={refresh} sourceError={false} />));
 }
 async function status(value: string) {
   const select = container.querySelector("select")!;
   await act(async () => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
 }
 async function requestSave() { await act(async () => container.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))); }
+async function date(value:string) {
+  const input=container.querySelector<HTMLInputElement>('input[type="datetime-local"]')!;
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(input,value);input.dispatchEvent(new Event("input",{bubbles:true}));});
+}
 async function save() {
   await requestSave();
   const confirm = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')).find(button => button.textContent === "Confirm change");
@@ -47,6 +55,70 @@ it("preserves supported admin controls for work assigned to another person", asy
   expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();
   expect(Array.from(container.querySelectorAll("label")).some(label => label.textContent?.startsWith("Responsible person"))).toBe(true);
 });
+it.each(["creator", "admin", "super_admin"])("preserves the qualified %s reminder-time path and exact submitted field", async role => {
+  const reminder = { ...item, item_type: "reminder" as const, priority: "normal" as const };
+  const actor = role === "creator" ? "creator" : "manager";
+  mock.roles = { loading: false, userId: actor, roles: role === "creator" ? [] : [role] };
+  mock.rpc.mockResolvedValue({ data: role !== "creator", error: null });
+  mock.submit.mockResolvedValue({ kind: "acknowledged" });
+  await render(reminder, actor);
+  expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();
+  await date("2099-02-01T09:30"); await save();
+  expect(mock.submit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ actorId: actor, tenantId: "tenant-a", expectedUpdatedAt: item.updated_at }),
+    { remindAt: new Date("2099-02-01T09:30").toISOString() });
+});
+it.each([
+  ["missing app role", { loading: false, userId: "manager", roles: [] }],
+  ["unavailable role-read output", { loading: false, userId: "manager", roles: [] }],
+  ["retired title role", { loading: false, userId: "manager", roles: ["coach"] }],
+  ["platform role alone", { loading: false, userId: "manager", roles: ["platform_admin"] }],
+  ["loading role proof", { loading: true, userId: "manager", roles: ["admin"] }],
+  ["another actor's roles", { loading: false, userId: "someone-else", roles: ["admin"] }],
+  ["absent actor", { loading: false, userId: null, roles: ["super_admin"] }],
+] as const)("keeps a noncreator tenant admin's reminder time read-only with %s", async (_label, roles) => {
+  mock.roles = { ...roles, roles: [...roles.roles] };
+  mock.rpc.mockResolvedValue({ data: true, error: null });
+  await render({ ...item, item_type: "reminder" }, "manager");
+  expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
+  expect(container.querySelector('[role="status"]')?.textContent).toContain("Reminder time is read-only");
+  expect(mock.submit).not.toHaveBeenCalled();
+});
+it.each([{ data: false, error: null }, { data: true, error: { message: "permission lookup unavailable" } }])("does not replace tenant authority with app admin (%j)", async reply => {
+  mock.roles = { loading: false, userId: "assignee", roles: ["admin"] };
+  mock.rpc.mockResolvedValue(reply);
+  await render({ ...item, item_type: "reminder" }, "assignee");
+  expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
+  expect(container.querySelector("select")).not.toBeNull();
+  expect(mock.submit).not.toHaveBeenCalled();
+});
+it("does not reuse a tenant-admin proof while the target workspace check is pending or denied", async () => {
+  mock.roles = { loading: false, userId: "manager", roles: ["admin"] };
+  mock.rpc.mockResolvedValue({ data: true, error: null });
+  const reminder = { ...item, item_type: "reminder" as const };
+  await render(reminder, "manager");
+  expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();
+  let finish!: (reply: { data: boolean; error: null }) => void;
+  mock.rpc.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+  await render({ ...reminder, tenant_id: "tenant-b" }, "manager", vi.fn(), "tenant-b");
+  expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
+  await act(async () => finish({ data: false, error: null }));
+  expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
+  expect(mock.submit).not.toHaveBeenCalled();
+});
+it("refuses a retained reminder-time draft after the actor changes and retains manual discard", async () => {
+  mock.roles = { loading: false, userId: "manager", roles: ["admin"] };
+  mock.rpc.mockResolvedValue({ data: true, error: null });
+  const reminder = { ...item, item_type: "reminder" as const };
+  await render(reminder, "manager"); await date("2099-02-01T09:30");
+  await render(reminder, "new-manager");
+  expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
+  await save();
+  expect(mock.submit).not.toHaveBeenCalled();
+  const discard = Array.from(container.querySelectorAll("button")).find(button => button.textContent === "Discard unsaved changes")!;
+  await act(async () => discard.click());
+  expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  expect(container.textContent).toContain("Unsaved changes discarded");
+});
 it("requires matching canonical readback after an acknowledgement", async () => {
   mock.submit.mockResolvedValue({ kind: "acknowledged" }); const refresh = vi.fn().mockResolvedValue(undefined);
   await render(item, "assignee", refresh); await status("done"); await save();
@@ -54,6 +126,52 @@ it("requires matching canonical readback after an acknowledgement", async () => 
   expect(container.textContent).not.toContain("Saved and confirmed");
   await render({ ...item, status: "done" }, "assignee", refresh);
   expect(container.textContent).toContain("Saved and confirmed in current work");
+});
+it("reschedules an active reminder through remindAt and confirms only its canonical reminder time",async()=>{
+  const reminder={...item,item_type:"reminder" as const,priority:"normal" as const,remind_at:"2099-01-01T13:00:00Z"};
+  const refresh=vi.fn().mockResolvedValue(undefined);mock.submit.mockResolvedValue({kind:"acknowledged"});
+  await render(reminder,"creator",refresh);
+  expect(container.textContent).toContain("New reminder time");expect(container.textContent).not.toContain("New due date and time");
+  await date("2099-02-01T09:30");await save();
+  const requested=new Date("2099-02-01T09:30").toISOString();
+  expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({expectedUpdatedAt:item.updated_at}),{remindAt:requested});
+  expect(container.textContent).not.toContain("Saved and confirmed");
+  await render({...reminder,remind_at:requested,updated_at:"2026-10-10T12:01:00Z"},"creator",refresh);
+  expect(container.textContent).toContain("Saved and confirmed in current work");
+});
+it("never confirms an active reminder when only due_at changed",async()=>{
+  const reminder={...item,item_type:"reminder" as const,priority:"normal" as const,remind_at:"2099-01-01T13:00:00Z"};
+  mock.submit.mockResolvedValue({kind:"acknowledged"});await render(reminder,"creator");await date("2099-02-01T09:30");await save();
+  await render({...reminder,due_at:new Date("2099-02-01T09:30").toISOString(),updated_at:"2026-10-10T12:01:00Z"},"creator");
+  expect(container.textContent).toContain("Current work differs");expect(container.textContent).not.toContain("Saved and confirmed");
+});
+it("holds an uncertain active reschedule and requires read-only review without retry",async()=>{
+  mock.submit.mockResolvedValue({kind:"uncertain",message:"Reminder result unconfirmed"});
+  const reminder={...item,item_type:"reminder" as const,priority:"normal" as const,remind_at:"2099-01-01T13:00:00Z"};
+  const refresh=vi.fn().mockResolvedValue(undefined);await render(reminder,"creator",refresh);await date("2099-02-01T09:30");await save();await save();
+  expect(mock.submit).toHaveBeenCalledOnce();expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  const review=Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(button=>button.textContent==="Refresh and review")!;
+  await act(async()=>review.click());await render({...reminder,remind_at:new Date("2099-02-01T09:30").toISOString(),updated_at:"2026-10-10T12:01:00Z"},"creator",refresh);
+  expect(mock.submit).toHaveBeenCalledOnce();expect(container.textContent).toContain("Current work refreshed. Review");expect(container.textContent).not.toContain("Saved and confirmed");
+});
+it.each([{tenant_id:"foreign-tenant"},{id:"foreign-item"},{remind_at:"invalid"}])("refuses a foreign or unavailable reminder readback (%o)",async override=>{
+  mock.submit.mockResolvedValue({kind:"acknowledged"});const reminder={...item,item_type:"reminder" as const,priority:"normal" as const,remind_at:"2099-01-01T13:00:00Z"};
+  await render(reminder,"creator");await date("2099-02-01T09:30");await save();
+  await render({...reminder,remind_at:new Date("2099-02-01T09:30").toISOString(),...override},"creator");
+  expect(container.textContent).toContain("Current work differs");expect(container.textContent).not.toContain("Saved and confirmed");
+});
+it("refuses a reminder time combined with another edit and never offers terminal rescheduling",async()=>{
+  mock.submit.mockResolvedValue({kind:"uncertain",message:"Unexpected old route"});
+  const reminder={...item,item_type:"reminder" as const,priority:"normal" as const};
+  await render(reminder,"creator");await date("2099-02-01T09:30");
+  const priority=container.querySelector<HTMLSelectElement>('select[aria-label="Priority"]')!;
+  await act(async()=>{priority.value="high";priority.dispatchEvent(new Event("change",{bubbles:true}));});
+  await requestSave();expect(mock.submit).not.toHaveBeenCalled();expect(container.textContent).toContain("Review reminder rescheduling separately");
+  await render({...reminder,status:"done"},"creator");expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
+});
+it.each(["task","milestone"] as const)("retains %s dueAt editing",async itemType=>{
+  mock.submit.mockResolvedValue({kind:"acknowledged"});await render({...item,item_type:itemType},"creator");
+  await date("2099-02-01T09:30");await save();expect(mock.submit).toHaveBeenCalledWith(expect.anything(),{dueAt:new Date("2099-02-01T09:30").toISOString()});
 });
 it("keeps uncertain results from becoming successful saves or automatic retries", async () => {
   mock.submit.mockResolvedValue({ kind: "uncertain", message: "Result uncertain" });
@@ -135,6 +253,42 @@ it("retains a linked dirty draft across route unmount without borrowing a newer 
   expect(container.querySelector("select")?.value).toBe("done");
   mock.submit.mockResolvedValue({ kind: "refused", message: "Stale edit refused" }); await save();
   expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: original.updated_at }), { status: "done" });
+});
+
+it("retains ordinary dirty work after shell departure with its original CAS version", async () => {
+  const original = { ...item, id: "ordinary-dirty-retention", updated_at: "2026-10-10T12:00:00.123456Z" };
+  await render(original); await status("done");
+  await act(async () => root.render(<div />));
+  await render({ ...original, status: "in_progress", updated_at: "2026-10-10T12:01:00.123456Z" });
+  expect(container.querySelector("select")?.value).toBe("done");
+  mock.submit.mockResolvedValue({ kind: "refused", message: "Stale edit refused" });
+  await save();
+  expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: original.updated_at }), { status: "done" });
+});
+
+it("keeps an ordinary interrupted submission unknown after remount without replay", async () => {
+  const original = { ...item, id: "ordinary-uncertain-retention" };
+  const refresh = vi.fn(); let resolve: (value: { kind: "acknowledged" }) => void = () => {};
+  mock.submit.mockImplementation(() => new Promise(done => { resolve = done; }));
+  await render(original, "assignee", refresh); await status("done"); await save();
+  await act(async () => root.render(<div />));
+  await render(original, "assignee", refresh); await act(async () => resolve({ kind: "acknowledged" }));
+  expect(mock.submit).toHaveBeenCalledOnce(); expect(refresh).not.toHaveBeenCalled();
+  expect(container.textContent).toContain("earlier change is unconfirmed");
+  expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  expect(container.textContent).not.toContain("Saved and confirmed");
+});
+
+it("never lends retained ordinary intent to another actor or tenant", async () => {
+  const original = { ...item, id: "ordinary-scope-retention" };
+  await render(original); await status("done"); await act(async () => root.render(<div />));
+  await render(original, "creator"); expect(container.querySelector("select")?.value).toBe("open");
+  await act(async () => root.render(<div />));
+  await act(async () => root.render(<OperationsWorkEditor item={{ ...original, tenant_id: "tenant-b" }} actorId="assignee"
+    tenantId="tenant-b" members={[]} refresh={vi.fn()} sourceError={false} />));
+  expect(container.querySelector("select")?.value).toBe("open"); expect(mock.submit).not.toHaveBeenCalled();
+  await act(async () => root.render(<div />)); await render(original);
+  expect(container.querySelector("select")?.value).toBe("done");
 });
 it("retains interrupted submission as unknown and does not replay it when the linked editor returns", async () => {
   const original = { ...item, id: "linked-uncertain-retention" };

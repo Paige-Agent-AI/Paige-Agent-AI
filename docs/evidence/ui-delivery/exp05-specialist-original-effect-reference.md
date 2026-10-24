@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: NO: repair a dropped reference in the existing receipt cha
 FLOW_PROTOTYPE: NOT_REQUIRED: the approved original-result/recovery flow and its boundaries are unchanged.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owners retain the exact original specialist identity as evidence for subsequent inspection; an identity grants no completion, authority or retry.
 VISUAL_DIRECTION: NOT_APPLICABLE: metadata-only correction in the existing shared turn contract.
-AUTOMATED_EVIDENCE: PASS: original Node interactive check causally failed with missing original reference; repaired actual module passes known/unknown projection, wrong-tool, malformed, original Task preservation, closed-read contradiction and minimized-context controls. Unchanged actual-registry27 and original-handler75 recording-transport cases PASS. No real provider or customer operation.
+AUTOMATED_EVIDENCE: PASS: scripts/int336-interactive-check.mjs causally failed with a dropped invocation UUID; repaired actual module passes the positive and fail-closed projections, original Task preservation and minimized-context assertions. Unchanged actual-registry27 and original-handler75 recording-port cases PASS. No real provider or customer operation.
 STATIC_EVIDENCE: PASS: scoped ESLint/diff checks; actual canonical validator refuses exactly the changed interactive.ts dependency while its review pin remains deliberately unrenewed. This refusal is a release hold, not a passing source-binding proof.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no UI component or visual state is modified; local metadata tests cannot establish rendered or authenticated execution.
-BEHAVIORAL_EVIDENCE: PASS: actual original projection retains invocation UUID for delegate_to_subagent only, including outcome_unknown; no other tool may carry that kind through receipt context. Existing task identity remains. No execution, approval, retry or hold reset occurs in the checks.
+BEHAVIORAL_EVIDENCE: PASS: actual original projection retains invocation UUID for delegate_to_subagent only; wrong-tool, malformed and contradictory-read cases are excluded. Existing Task identity remains. No execution, retry or hold reset occurs in these assertions.
 AUTHENTICATED_RUNTIME: UNVERIFIED: local candidate only; no original customer invocation/result/reload or held-thread recovery claim is closed.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no customer control or focus change.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout change.
@@ -24,7 +24,7 @@ MUST_PRESERVE: original actor/tenant/seat checks, Spine/Harness/Trust, native ex
 ACCEPTANCE_CRITERIA: original ID survives both metadata projections; invalid/wrong-tool references are excluded; unknown is unchanged; exact source review, restrictive pin renewal, required CI/release and authenticated proof remain distinct.
 PROTECTED_SEAMS: affected only original interactiveEffect/interactiveReceiptContext. Orchestrator dispatch and receipt writer, Chat admission/read allowlist, control schema/status, E09 customer scope, E04 action-risk policy and all business-domain writers are unchanged.
 MOTION_PURPOSE: NONE: no motion change.
-INTERNAL_BUILD_IDENTITY: ed3f3a8eedebfbdb9e29d44ea9728d6b29f7731b; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED; evidence=docs/evidence/ui-delivery/exp05-specialist-original-effect-reference.md
+INTERNAL_BUILD_IDENTITY: ed3f3a8eedebfbdb9e29d44ea9728d6b29f7731b; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original Chat deployment after reviewed source pin and required CI); evidence=docs/evidence/ui-delivery/exp05-specialist-original-effect-reference.md
 RELEASE_CHANNEL: development: local source correction, not customer reachable.
 RELEASE_CLASSIFICATION: internal-only: bounded original-reference repair within EXP05 recovery.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement, launch or founder acceptance.
@@ -43,6 +43,10 @@ No pin was generated into source or automatically accepted. The actual unchanged
 validator checks123 source paths and returns exactly one changed-source finding;
 its diagnostic tool map stops early and does not establish29 admitted dispatches.
 Original Chat and the29 literal dispatch identities are unchanged in the diff.
+An in-memory diagnostic control restoring only the immutable parent interactive.ts
+body reproduces zero findings/all29 original dispatches. Restoring that source is
+not shipped; the actual candidate still refuses the stale pin. Every other122
+source path is unchanged. This is an inverse source control, not a runtime grant.
 
 ANT-11/ANT-161 current scope and main33bb85dcc883d1b31631fc0c954babafda9eeea9
 were read before editing. Lease/pre-edit packetc4eecd95 and coordinationb494d3d3

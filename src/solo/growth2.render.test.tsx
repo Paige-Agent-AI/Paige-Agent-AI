@@ -157,6 +157,13 @@ vi.mock("./useCatalogOffers", () => ({
 
 // A form's Details drawer mounts the intake panel, which reads through its own adapter. This file
 // proves the drawer wiring; the panel's reads, writes and states are proven in form-intake.test.tsx.
+// Keep the real shared feature policy; this isolated shell supplies its current tenant context.
+vi.mock("@/hooks/useTenantContext", () => ({
+  useTenantContext: () => ({
+    activeTenant: { id: harness.state.tenantId, account_type: "solo", parent_tenant_id: null },
+    isPlatformStaff: false, loading: false,
+  }),
+}));
 vi.mock("./useFormIntake", () => ({
   FORM_INTAKE_PAGE_SIZE: 20,
   useFormIntake: (_tenantId: string, formId: string) => ({

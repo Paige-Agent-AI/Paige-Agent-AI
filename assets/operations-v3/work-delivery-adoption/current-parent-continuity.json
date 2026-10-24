@@ -562,5 +562,12 @@
     "preserved": "All incoming51 Work cases; original seven owning suites; original agency/client/project/row-version/reviewer/source/native/readback/uncertain controls retained"
   },
   "sourceOnly": true,
-  "ordinaryRolesFullShellLaterSessionDeviceZoomCentralQAFounderAcceptance": "UNVERIFIED"
+  "ordinaryRolesFullShellLaterSessionDeviceZoomCentralQAFounderAcceptance": "UNVERIFIED",
+  "finalIntegration": {
+    "head": "7a074c99feb5aed2f7485dc92761a5526d9f6a4e",
+    "incoming": "65699d36369c88412e3e7e370b7c14e893272773",
+    "all146CommittedLFInputsExact": true,
+    "legacyWhitespace": "Original unchanged audit-six-tabs.cjs blank line/server.mjs EOF retained; new own changed paths clean",
+    "typecheck": "First old installation INVALID_SETUP(4 missing-editor/PDF diagnostics plus6 existing); full complete-dependency run pending"
+  }
 }

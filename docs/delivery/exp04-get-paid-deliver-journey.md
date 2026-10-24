@@ -1,5 +1,61 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## C21 exact accepted terms: mounted owner review — local verification
+
+REUSE/EXTEND the incumbent invoice commercial-package inspection, private
+accepted-agreement reader and CollectionCommandReview. The actual owner/admin
+parent remains authoritative; account/scope/read changes retire private content
+and old replies. No package DTO, native writer, approval engine, payment ledger,
+sender, provider adapter or Chat/Live admission is introduced.
+
+The owner explicitly reviews the accepted schema2 source, including original
+signing and terms versions, raw microsecond timestamp, invoice draft, payload
+digest and original seal. Mutable current timestamps are not substituted. The
+existing domain endpoint checks its original operation before a new preview,
+so a later pause or source revision cannot silently reactivate a historical act.
+An already active consequence clearly records accepted-version provenance.
+Draft activation and that provenance-only effect remain distinct.
+
+The incumbent high-risk Kit review/approval, server-stored exact command, native
+transaction and immutable Collections operation/Rail provide the execution path.
+Strict complete receipt checks precede success. If a different operation was
+saved, recover that original action first and never attribute its receipt to the
+new agreement. A receipt is historical; refresh the current canonical record
+separately. Neither receipt nor signing establishes payment or completed service.
+
+Current41 tests/three original component suites PASS, with original controls and
+genuine8 review/5 mount baseline failures retained. Restricted Windows worker
+startup failures executed no affected assertions; unchanged current tests pass
+with worker communication available. No CI flag, assertion or timeout changes.
+The final original-component compiled build succeeds. Actual17 native PNGs,
+29 unchanged current raw source pins and three compiled assets are in the
+[bounded UI record](../evidence/ui-delivery/e04-effective-terms-review.md).
+Native narrow inspection corrected clipped/offscreen controls, forced-theme
+mismatch and approval focus pushed below the viewport. The existing Dialog
+receives heading focus before approval and keeps tab targets visible.
+
+The screenshot byte/source manifest is bounded proof, not an automated DOM
+observation count: an earlier observation-writer binding failure is retained
+as diagnostic. Full confirmed browser reload, actual owner/staff/linked-client
+roles, full shell/AT/zoom and customer acceptance remain UNVERIFIED. One minor
+mobile receipt-card refresh-label refinement is queued for the next ordinary
+UI increment; its complete action remains visible and usable.
+
+Local source only, not merged/deployed/activated/accepted. Parent2681 native63,
+2689 native64 and2705 governed endpoint must first release/read back in order,
+preserving earlier peer610009/620009 native reservations. Exact-head review,
+required CI, ordinary safe production/source and authenticated evidence remain
+gates. The new Spine action stays Chat/Mind UNAVAILABLE and PARTIAL.
+
+All O1–O12 remain mandatory. Prepared fields/rendering and their legacy send/
+token holds remain intact and require the canonical approved-send/recipient-
+input/seal integration. Actual invoices/obligations/Stripe TEST reconciliation,
+qualification/onboarding, scoped Work/deliverable decisions/completion,
+Collections/Communications, E09 self-service and joined client standing remain
+the full destination. EXP02's original Sales metric-reference revocation
+finding in ANT81 is also owned integration debt; reuse the canonical resolver
+without changing revocation/tenant/actor gates or creating another reader.
+
 ## C20 owner review and durable effective-term re-entry — pre-edit route
 
 1. Outcome: the owner reviews the exact accepted economics, approves one bounded

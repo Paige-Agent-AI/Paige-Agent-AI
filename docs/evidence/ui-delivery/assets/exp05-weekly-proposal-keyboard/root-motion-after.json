@@ -1,0 +1,22 @@
+{
+  "active": "INPUT",
+  "childAnimation": "1e-05s",
+  "clientWidth": 599,
+  "labels": [
+    "Responsibility"
+  ],
+  "rect": {
+    "bottom": 1000,
+    "height": 1000,
+    "left": 300,
+    "right": 900,
+    "top": 0,
+    "width": 600,
+    "x": 300,
+    "y": 0
+  },
+  "reduced": true,
+  "scrollWidth": 599,
+  "sheetAnimation": "1e-05s",
+  "sheetTransition": "1e-05s"
+}

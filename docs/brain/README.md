@@ -62,6 +62,16 @@ settled original-focus return. Original receipt6380668920 and sole Master4.0 row
 retain the exact review/CI/source identities. Populated weekly execution/Rail,
 cohorts/Live and complete Operations/founder acceptance remain unfinished.
 
+October24 original weekly proposal keyboard correction is locally verified:
+ordinary no-write owner inspection reproduced lost entry/cancel focus. Three
+causal failures are corrected; original63 Composer/Panel/Entry cases pass.
+Explicit cancellation returns its own enabled opener and owner/session loss cannot
+focus a disabled control. The same weekly Sheet root now respects reduced motion;
+default motion/layout/authority remain unchanged. [Source and native proof](../evidence/ui-delivery/exp05-weekly-proposal-keyboard.md)
+retain final responsive frames, synthetic/no-effect boundaries and remaining
+review/CI/web/authenticated obligations. No weekly save/activation, catalogue or
+algorithm maturity, full Experience or founder acceptance is inferred.
+
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
 The bounded original#2401 successor preserves a known pre-processing refusal on
@@ -2991,6 +3001,10 @@ byte-identical SQL filename continuation, not a new render. This read does not a
 
 ## EXP04 C18 current-main source continuation — October24
 
+SOURCE RELEASE VERIFIED, October24 07:46:46UTC: original2681 reviewed2a24465b/LOWER5637255408/all14 exact checks+two webSUCCESS → mainba97335e016b9fea741da5005d1e8dedd7baa696/tree85622aed, actual e328+2a parents equal inspected union. Normal production dpl_5N4vqtooBsZC9sDQ7qkJzJSgiKeK READY/both public200exactba-mvm39n7q/customerUpdate:null; actual served SoloEntry-DA7JaV92.js/1524cbcd9/allthree owning markers. Normal deploy-migrations40075012907 SUCCESS, actual native810004/owner readerffc779/private validators5347818+235026/original13 signature3a2fa340 ABI/ACL/config preserved. All21 reviewed Git blobs unchanged:20 historical raw frame pins exact, one accepted-commercial-read.ts pin exactly its WindowsCRLF checkout. The failed raw-only assertion and original manifest/images remain; no new rendered/authenticated claim. No changed Edge entrypoint or Edge importer of the new isomorphic browser read SDK; normal workflow40075012882 succeeded, no fresh Edge-version claim. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2681#issuecomment-6381631848). Ordinary owner/staff/linked-client private records/file availability/roles/reload/revocation/CentralQA/fullO1–O12/founder acceptance remain UNVERIFIED. Higher820004 waits E09 proposed810009 actual receiving/release. No charge/send/signing/service-completion or Algorithm/Capabilities activation.
+
+Earlier pre-merge source checkpoint follows unchanged.
+
 Actual incoming mainc9ab5325ae318b0602eab2883a5d25269f569aaf is preserved in full,
 including E03/E05/E07/E10 releases. The sole Brain append conflict retains BOTH
 contributions. Original C18 SQL810004/SHA221b0365, all21 captured critical
@@ -3055,7 +3069,7 @@ main duplicate-version failures remain recorded; originating E10 correction2732
 now records800000 and is consumed with main79171c82. This closes only the
 test-source release record, not original customer recovery or an Experience.
 
-## EXP05 original specialist proposal brief — development, October24
+## EXP05 original specialist proposal brief — source released, October24
 
 The original confirmation branch used legacy `task`, omitting current stored
 `input.request`. Bounded summary repair uses the actual purpose and server-scoped
@@ -3063,7 +3077,14 @@ roster, preserves legacy input and never infers authority or completion.90 focus
 and original-confirmation cases pass, with both causal failures retained; unchanged
 native confirmation renders cover required sizes/themes and320px reflow.
 [Exact source and proof boundary](../evidence/ui-delivery/exp05-specialist-confirmation-brief.md).
-Trust risk/fingerprints/stored arguments/Harness/executor/Rail remain unchanged.
-Required review/exact-head CI, production source and repaired authenticated display
-are owed. The original protected QA proposal expired unconsumed; no assignment,
+Trust risk, confirmation fingerprints, stored arguments/Harness/executor/Rail
+remain unchanged; the reviewed29 source-binding literal renewals are recorded in
+the original source audit. All11 exact checks/two statuses and LOWER5637311646/
+5637407558 precede actual main48054028e819fba4f11d1728a8559b241bb52c74.
+Normal first Edge run correctly failed its prior-baseline record guard after
+selected deployment/readback; existing recovery40076295305 succeeded without a
+workflow/tag bypass. ActualChat526/JWTtrue/import_mapfalse/all269 reviewed files
+and exact READY/public web verified08:01UTC. Master4.0 and original receipt6381759625
+retain complete source identities. Repaired ordinary display and actual specialist
+result/receipt/reload remain owed. The protected proposal expired unconsumed; no assignment,
 replay, catalogue promotion or complete weekly/ZION/automation acceptance is claimed.

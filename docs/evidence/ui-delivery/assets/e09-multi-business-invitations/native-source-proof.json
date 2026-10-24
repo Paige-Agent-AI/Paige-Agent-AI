@@ -2,7 +2,7 @@
   "date": "2026-10-23",
   "classification": "NOT_DEPLOYED; one original native invitation mechanism, not a new identity/sender system",
   "lease": "ANT161/0548ba61-ca74-4fba-a559-d2db231815f1",
-  "source_parent": "2695/357df219ea7cb1e4225e0c100f3d080bb4aa46be",
+  "source_parent": "2695/8ea10710148688bf7f500540953f902bc1f1a149",
   "observed_main": "33bb85dcc883d1b31631fc0c954babafda9eeea9",
   "migration": "20271113630009",
   "migration_sha256": "6c3b14d19783f817666e5c26bdfb6bab45afa8ec2c9388e34ff0052293cb73b3",
@@ -633,6 +633,18 @@
       "failed": 1,
       "status": "FAIL; exact new-head full rerun required",
       "note": "All joined two-business frames, choices, pause/restore/end/re-invitation, receipt recovery and interrupted-audit assertions reached; one new finite-use error expectation corrected. No release gate waived."
+    },
+    "clean_supporting_run": {
+      "head": "ffc137913fb9cd66167884668d6dce1147523711",
+      "job": 120721723331,
+      "run": 40044107745,
+      "status": "SUCCESS",
+      "consumer": 453,
+      "scope": 294,
+      "business_choices": 61,
+      "all_seven_pillar_suites": "SUCCESS",
+      "full_grant_ordering": "SUCCESS",
+      "boundary": "Actual complete isolated native original schema with synthetic rollback Auth fixtures, not production/customer/provider/founder proof. Final composed head must rerun all required gates."
     }
   },
   "production_customer_device_and_founder": "UNVERIFIED",
@@ -849,7 +861,7 @@
   },
   "main_composition": {
     "main": "33bb85dcc883d1b31631fc0c954babafda9eeea9",
-    "parent": "357df219ea7cb1e4225e0c100f3d080bb4aa46be",
+    "parent": "8ea10710148688bf7f500540953f902bc1f1a149",
     "parent_sync": "only a virtual-base Brain insertion conflicted; exact existing2691 note retained, other side empty, no runtime change",
     "main_sync": "normal clean ort merge; original EXP01 evidence repairs, EXP02/EXP03/EXP05/EXP07 records and source preserved",
     "actual_released_row": "2691/main3b8f973 and receipt6376896655 only; no anticipated2695/2701 row",
@@ -920,5 +932,13 @@
       "failed": 0
     },
     "proof_boundary": "Supplement checks the exact finite-token original function path under isolated roles after the corrected39 core. Hosted run already reached all joined frame, lifecycle, atomic audit and recovery controls but is FAIL452/453, not PASS. Full453 exact-new-head hosted rerun remains required."
+  },
+  "compatible_locked_audit_prerequisite": {
+    "pr": 2713,
+    "head": "ebbb5b06cb594bd4521ef42da02f69d3a09ded47",
+    "original_failed_audit": 120721490032,
+    "changes": "Only original undici lock version/resolved/integrity7.30.0→7.30.1 and bounded original delivery note; main9512 EXP06 source inventory preserved.",
+    "local_locked_audit": "PASS0high0critical5moderate",
+    "release": "MUST reach main/required gates before this release"
   }
 }

@@ -57,3 +57,17 @@ assets/e04-effective-terms-review/native-filename-continuity.json maps that ONE
 path; the prior screenshot manifest is separately retained with its SHA.
 All29 raw/LF source hashes,17 original PNG bytes/dimensions and three assets
 remain exact. No new capture, actual runtime effect or customer proof is claimed.
+
+
+### October24 current-main filename/source continuity
+
+Original main now includes E03700000. Never-applied reader631004 moves only to
+710004, exact SQL SHA221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb.
+Immediately preceding631 screenshot manifest is retained byte-for-byte as
+current-screenshot-manifest-before-second-native-filename.json; its digest is
+in the explicit current continuation. Original source snapshot SHA3ef05731,
+29 critical sources,17 native PNG bytes/dimensions, three assets and capture times
+remain unchanged. This is source/filename equivalence, not new rendering or
+authenticated acceptance. Fresh exact source review/CI, ordered native/API/web
+release and actual role/reload/customer/founder proof remain separate. No pin
+renewal, screenshot reencoding, provider/Chat/Live or consequential activation.

@@ -129,12 +129,15 @@
   ],
   "nativeFilenameContinuation": {
     "capturedSourcePath": "supabase/migrations/20271113630004_e04_accepted_commercial_evidence.sql",
-    "currentSourcePath": "supabase/migrations/20271113631004_e04_accepted_commercial_evidence.sql",
+    "currentSourcePath": "supabase/migrations/20271113710004_e04_accepted_commercial_evidence.sql",
     "sourceSHA256": "221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb",
     "capturedSnapshot": "source-before-current-capture.json",
     "capturedSnapshotSHA256": "3ef057318265e06506a345496fcd5ce6d4bbf5b0c4efd7c040badc1f863a37d7",
     "originalManifest": "current-screenshot-manifest-before-native-filename.json",
     "originalManifestSHA256": "099e98cac7c9f0c4e652e56c7230416a6e0cdf3e01bc69969a6165fb824aed20",
-    "boundary": "One never-applied native filename only. All29 raw/LF source byte hashes, original snapshot,17 PNG bytes/dimensions,three compiled assets and original capture times remain unchanged. No fresh render, runtime/source release or authenticated acceptance claim."
+    "boundary": "One never-applied native filename only. All29 raw/LF source byte hashes, original snapshot,17 PNG bytes/dimensions,three compiled assets and original capture times remain unchanged. No fresh render, runtime/source release or authenticated acceptance claim. Current source main700000 overtook never-applied631004;710004 has identical SQL. Immediately prior631 manifest preserved separately; source snapshot, original frames/assets/times remain unchanged.",
+    "previousSourcePath": "supabase/migrations/20271113631004_e04_accepted_commercial_evidence.sql",
+    "previousManifest": "current-screenshot-manifest-before-second-native-filename.json",
+    "previousManifestSHA256": "5512b220a9bd013bb533229e71b3e03672d48895229e23e5eeb17347392055db"
   }
 }

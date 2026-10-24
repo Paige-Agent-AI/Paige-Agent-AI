@@ -13,7 +13,7 @@ RENDERED_EVIDENCE: PASS: assets/e04-sales-metric-continuity/native-screenshot-ma
 BEHAVIORAL_EVIDENCE: PASS: actual automatic resolution retains issuance11 and original reference/as-of while reads advance22→99; refusal clears figures with issuance11; existing explicit product Refresh issues22/new reference; unresolved scope displays UNAVAILABLE. Original ports are synthetic and deny network; no provider/customer act.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no real ordinary owner/staff/linked-client, Finance/VERA/Chat handoff, native authority/provider or customer acceptance proved by local ports.
 KEYBOARD_FOCUS: PASS: native original Sheet opens to Technical definition/provenance; Tab reaches Open Opportunities, Escape closes and returns focus to Inspect value. No changed product focus code. Full screen-reader/device coverage remains owed.
-ZOOM_REFLOW: PARTIAL: actual CSS viewports down to320px captured without document-width overflow; native200–400 percent browser zoom was not exercised. Existing320px unavailable inner results can scroll horizontally; recovery remains reachable. This repair does not change layout or claim complete responsive acceptance.
+ZOOM_REFLOW: UNVERIFIED: native200–400 percent browser zoom was not exercised. Actual CSS viewports down to320px captured without document-width overflow. Existing320px unavailable inner results can scroll horizontally; recovery remains reachable. This repair does not change layout or claim complete responsive acceptance.
 REDUCED_MOTION: PASS: no product animation/style change; original loading uses semantic text and hides previous figures. No new motion or timing-dependent visual effect introduced.
 STATE_COVERAGE: PASS: loading, ready, original evidence inspection, permission refusal, explicit retry/recovery and unresolved scope captured; malformed/network/auth/expiry/scope transitions covered by owning tests. Full actual tenant and later-session proof remains owed.
 TRUTHFUL_STATE_LABELS: PASS: local toolbar and fixture source explicitly identify synthetic values. Original LIVE labels apply only inside the synthetic contract fixture; never asserted as actual business/payment/service evidence. Refusal hides figures, unresolved scope is UNAVAILABLE.
@@ -39,7 +39,7 @@ RELEASE_CHANNEL: development: actual local original-component source proof, no p
 RELEASE_CLASSIFICATION: internal-only: bounded O12 reference-lifetime repair; not an announcement of the whole Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no founder-approved customer release name or announcement.
 RELEASE_NOTE_REQUIRED: no: internal bounded repair; any eventual customer announcement retains the separate policy gate.
-RELEASE_TRUTH_BOUNDARY: PARTIAL bounded source/render verification; PROOF OWED native authenticated cross-department acceptance and full12; no Algorithm/Capabilities Live promotion.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: bounded source/render verification; PROOF OWED: native authenticated cross-department acceptance and full12; no Algorithm/Capabilities Live promotion.
 RELEASE_RECOVERY: position=ordinary reviewed forward repair or revert this bounded hook change; reference=original native resolver/issuer and source/evidence owning PR; no production history, data or provider operation to reverse here.
 
 ## Source, inputs and real observations
@@ -86,3 +86,8 @@ source or competing design system is introduced by this repair.
 Sequential exact-final AUTHOR-REVIEW / LOWER ASSURANCE and hosted CI/normal
 deployment/source readback remain required. Actual CentralQA and final founder
 acceptance remain separate from every source/render result above.
+
+The first local evidence guard rejected two report grammar fields (PARTIAL was
+not an allowed zoom prefix, and release claim labels lacked colons). Labels were
+corrected to the actual UNVERIFIED zoom boundary and explicit governed claim
+syntax; no validator, source, screenshot, test or proof threshold changed.

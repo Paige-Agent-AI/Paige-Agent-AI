@@ -44,9 +44,26 @@ below. The originals stay where they are as history (§58).
   - `messages`/`threads` are the customer inbox and have no participant ACL.
   - `paige_chat_threads` is single-owner PAIGE chat.
   - Adding the substrate is a backend change and goes to the owner for a decision (§00).
-- **Interface prototype.** An interactive Team Hub prototype for owner approval exists as a private
-  artifact, with sample data and nothing saved or sent. Production Team Hub UI waits for that
-  approval. Any approved design will be recorded here.
+- **Owner decisions, 2026-10-24.** These are recorded as answered in this Claude Code session. They
+  are approvals to build, not proof that anything works.
+  - **Design and behavior: APPROVED.** The Team Hub interactive prototype v2 (private artifact,
+    sample data, nothing saved or sent) is approved for production, and it is approved-frozen
+    under §28.
+    - Placement: its own SOLO menu item directly below Operations.
+    - Layout: conversations, then the conversation, then Team work.
+    - Collaboration: channels with public/private membership, DMs and threads.
+    - Mentions: active people in the conversation plus the six specialists. Ambiguous or removed
+      names are refused.
+    - Commands: `/PAIGE` commands preview their scope and risk first.
+    - Records: Operations-linked task, request and approval cards read their status from the
+      original record.
+    - Recovery: offline and send-failure handling never re-dispatches.
+    - Access: a removed teammate loses Team Hub and PAIGE team answers.
+  - **Collaboration storage: APPROVED.** Team channels, channel members, messages, threads,
+    mentions and read markers may be added as reviewed, additive migrations with tenant and
+    channel-membership enforcement. Isolation must be proven before release, and no Slack or Teams
+    connection is involved.
+  - Neither approval authorizes ownership transfer, an external send, or a provider connection.
 
 **Truth label: `PARTIAL`.** The capability runs correctly and is governed correctly; the owner
 cannot see what Paige did. See *Rail outcome* below — that is the whole reason this is not `LIVE`.

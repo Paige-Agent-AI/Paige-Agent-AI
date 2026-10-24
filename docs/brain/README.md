@@ -177,9 +177,12 @@ Team index. Read these before any Team or Team Hub work:
 palette, and the messaging tables behind them. Searching the migrations for `team_message`,
 `team_channel`, `channel_members`, `direct_message` and `message_mentions` returned zero hits.
 
-**Waiting on the owner:**
-- the Team Hub design, shown as an interactive prototype;
-- whether to add the collaboration storage.
+**Owner decisions, 2026-10-24:**
+- The Team Hub design (prototype v2) is approved and frozen under §28.
+- The collaboration storage is approved, as additive migrations with isolation proven before
+  release.
+
+Both are approvals to build. Neither is runtime proof.
 
 Slack and Teams connections belong to EXP10, and Team Hub doesn't depend on them.
 

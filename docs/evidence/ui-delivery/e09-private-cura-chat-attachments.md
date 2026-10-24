@@ -73,3 +73,38 @@ Fresh local results: Knowledge20/20, Progress24/24, accepted-receipt cleanup3/3,
 Required full database run40116050493 at166bbd51fe9205aaa754beb599d8fe865458863e FAILED four of294 original request-scope assertions198/209/218/226. The same source file creates three synthetic owner memberships with tied joined_at=now(); those original INVOKER checks assumed workspace A without explicitly selecting it. The canonical resolver does not promise an A result under that tie. Production resolver/RLS/role/permission behavior is not changed.
 
 Reuse ONLY the exact existing fixture correction from EXP04 commit45f427c8f821fb2cf13679410b76a53358bc3d40, Git blob4f00e4195c9d8d95572249f1d377859600298f89: select the existing authorized synthetic owner workspace A and assert its canonical resolution before all original INVOKER checks. All original294 assertions remain; plan becomes295. No other unpublished EXP04 commercial code or document is imported. Its original full native run40112148788 proved295/295; that is upstream evidence, not a passing current EXP09 run. Fresh exact-head CI/native proof and sequential review are required again. All275 deployed-runtime source files remain unchanged. No merge or production release is claimed.
+
+## October 24 — automatic deployment packaging recovery candidate
+
+This follow-up changes the original release command, not the customer UI or model
+runtime. Original production531/source2765 observations remain historical evidence.
+Automatic run40120140274 rejected the raw API package with the exact5MB error; the
+failed run stays failed and edge-live remains uncertified.
+
+The original pinned Supabase CLI2.116.0 is used for both paths. API is first.
+Only its exact source-size413 rejection permits one local-Docker request, after
+rechecking the same immutable source/certified project and actual Docker readiness.
+A configured or discovered import map blocks fallback because the earlier Docker
+map omission is not resolved by this change. No auth/transport/timeout/unknown
+outcome, different413 message, stale source or failed local build triggers another
+upload. No JWT, entrypoint, map, provider credential, retirement or source/tag
+certification contract is changed. CLI success still requires the complete original
+downloaded-source/configuration verifier before any guarded edge-live update.
+
+The existing Python source-verification suite gains causal command/recovery tests,
+called by the ordinary required Test step through one owning Vitest wrapper. All
+provider/CLI effects in these fixtures are explicit doubles and cannot prove real
+deployment or customer behavior. Local execution remains unavailable after Windows
+resource exhaustion; no local PASS is claimed. Exact-head review, new hosted CI,
+actual source deployment/certification and customer/model/reload proof are pending.
+
+Primary sources:
+- [Supabase size limits](https://supabase.com/kb/troubleshooting/edge-function-bundle-size-issues)
+- [Pinned vendor bundler routing](https://github.com/supabase/cli/blob/v2.116.0/apps/cli/src/shared/functions/deploy.ts#L2324)
+- [Pinned vendor flags](https://github.com/supabase/cli/blob/v2.116.0/apps/cli/src/legacy/commands/functions/deploy/deploy.command.ts)
+
+Functional: recovery candidate only, not a repaired live automation claim.
+Visual: no DOM, styling, navigation or customer control changed.
+Experiential: original upload/history source and recovery remain; ordinary client
+and complete42/seven-pillar evidence stay owed.
+Founder Acceptance: NOT_ACCEPTED; one complete integrated evaluation remains.

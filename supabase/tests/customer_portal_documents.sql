@@ -851,7 +851,7 @@ INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefi
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES
  ('e0947200-0000-4000-8000-000000000001','e0947100-0000-4000-8000-000000000001','owner','active',true,now());
 UPDATE public.profiles SET active_tenant_id='e0947200-0000-4000-8000-000000000001' WHERE user_id='e0947100-0000-4000-8000-000000000001';
-INSERT INTO public.user_roles(user_id,role) VALUES ('e0947100-0000-4000-8000-000000000001','admin');
+INSERT INTO public.user_roles(user_id,role) VALUES ('e0947100-0000-4000-8000-000000000001','admin') ON CONFLICT DO NOTHING;
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0947300-0000-4000-8000-000000000001','e0947200-0000-4000-8000-000000000001','e0947100-0000-4000-8000-000000000002','e0947100-0000-4000-8000-000000000001','Test','Customer A','active'),
  ('e0947300-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000002','e0947100-0000-4000-8000-000000000002','e0947100-0000-4000-8000-000000000001','Test','Customer B','active'),

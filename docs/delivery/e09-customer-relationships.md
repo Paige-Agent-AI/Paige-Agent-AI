@@ -1,3 +1,7 @@
+## Native private-file fixture correction — 2026-10-24 UTC
+
+Initial2723/9e12768ed/native120751273390 passed original244 controls, then correctly refused a duplicate admin role in the new fixture before49 new assertions. Use ON CONFLICT DO NOTHING on only the new role insert, preserving actual uniqueness and original owner setup. Full migration7e60d738/source/privacy guards unchanged. Reduced local role dependency now mirrors this setup;50PASS. Fresh exact-head293/native/Preview/CI/review remain mandatory; no failed run waived.
+
 ## Private CURA attachment purpose — development checkpoint (2026-10-24 UTC)
 
 Pre-edit source lease ANT161/bbc58c1e-0481-4eaa-8132-1757bd3ac55b records all ten routing answers. Extend original client_files/Storage reservation, object verification, status and finish; no private file is silently shared as business Documents. Native actor/business/private-thread gates, immutable historical origin, restrictive table/Storage access, narrowed original owner/customer-business lists and DSR file export, and caller-scoped audit preserve private history. The original business share writer and ordinary document Rail behavior remain unchanged. Thirteen incumbent source/ABI/default/ACL contracts refuse drift; bounded lock timeout and ordinary retry preserve active CI readers. No new store, inbox, runtime, provider or orchestration lane.

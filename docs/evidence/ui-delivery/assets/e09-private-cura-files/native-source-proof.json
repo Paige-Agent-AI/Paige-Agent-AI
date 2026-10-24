@@ -1,6 +1,6 @@
 {
   "kind": "native-original-source-with-reduced-dependencies",
-  "observedAt": "2026-10-24T02:15:43.073Z",
+  "observedAt": "2026-10-24T02:31:03.776Z",
   "migration": "20271113640009_e09_private_cura_files.sql",
   "migrationSha256": "7e60d73847526285825721a35f792f800e9d0b994873c549873c27b0516caeca",
   "lease": "ANT-161/bbc58c1e-0481-4eaa-8132-1757bd3ac55b",
@@ -572,14 +572,20 @@
     "incumbent": 244,
     "added": 49,
     "total": 293,
-    "status": "UNVERIFIED until exact-head hosted run"
+    "initialHead": "9e12768ed2c90c4985e828721c4afe10bd28a50f",
+    "initialJob": 120751273390,
+    "initialResult": "FAIL after244 original assertions passed; new49 not reached",
+    "cause": "new fixture duplicate user_roles_user_id_role_key after existing owner setup already assigned admin",
+    "correction": "ON CONFLICT DO NOTHING on only the new fixture role insert, matching incumbent fixture convention; role uniqueness and all product source unchanged",
+    "status": "fresh exact-head hosted run owed"
   },
   "limits": [
     "Auth/frame/config and auxiliary Storage/Rail/DSR dependencies are reduced; actual original request resolver, thread gate, relationship lock and protected writer bodies execute.",
     "The repaired complete source/default/ACL-guarded migration executes locally. Mutation variants intentionally incomplete; they must fail.",
     "RLS/list/export/receipt variants were exercised before the final full source-guard runner composition, with identical product delta bytes.",
     "Initial sandbox socket denial was INVALID before assertions. A reduced optional-argument fixture mistake caused seven dependent assertions to fail; explicit incumbent tenant argument corrected it. Neither is a claimed product RED.",
-    "No ordinary production customer upload, extraction, mobile UI, paste/bulk or authenticated reload proven. No provider/Knowledge/business action performed."
+    "No ordinary production customer upload, extraction, mobile UI, paste/bulk or authenticated reload proven. No provider/Knowledge/business action performed.",
+    "Full-schema initial head failed at new fixture line854 before its49 new assertions. Duplicate native role assignment is modeled locally with the original unique key and owner setup side effect; corrected50 native core PASS. No failed gate waived."
   ],
   "functional": "LOCAL_NATIVE_VERIFIED; NOT_DEPLOYED",
   "visual": "NOT_APPLICABLE backend increment; no finished upload interface claim",

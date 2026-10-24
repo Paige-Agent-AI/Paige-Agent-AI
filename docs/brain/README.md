@@ -11,6 +11,16 @@ Overview/Banking visual refinements2694/2696 are drafts, not released or accepte
 All19/nine, original monthly CPU/recovery/claim hold and one complete founder
 evaluation remain open. No provider/permission/algorithm/catalogue activation.
 
+## EXP05 business-calendar return — local correction, October23
+
+Known missing/invalid calendar now has guarded reentry to the original current-account
+Setup setting; native Back restores the original control and keyboard focus.
+The [owning evidence](../evidence/ui-delivery/exp05-business-week-zone-reentry.md)
+records94/94 tests, causal focus correction and native responsive/theme checks with
+explicit synthetic ports. Settings authority and source failures are unchanged.
+Review/CI/release and authenticated read-only proof remain owed; no zone was saved,
+trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed.
+
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist outcome/receipt recovery, requester-and-workspace activity

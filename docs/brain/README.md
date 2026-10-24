@@ -1,3 +1,19 @@
+## EXP09 access and invitation source releases — October24 UTC
+
+Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc0b5dad per-business original invitation admission are actually released and read back. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records exact heads/parents/trees, accurate lower-assurance sequential reviews, all required checks, normal migrations620009/630009, all16 original ABI/ACL/source pins, unchanged S7 and actual READY web/public versions. Receipts6377892283/6378046694/6378167524. First630009 deployment57014 is retained; precisely bounded read-only administrative-session cleanup (later identified as including a legitimate CI snapshot; affected microphone verification must rerun) and unchanged normal retry succeeded, with no customer/data/role/history/DDL workaround. Native453/294/61/all seven/grant proof is engineering evidence, not ordinary customer acceptance. Private CURA history remains separate from shared Conversations; current microphone2718/attachments/permitted research work stays in the original relationship packet. Full42/seven-pillar authenticated owner/client/reload/revoke/device and Founder Acceptance remain unfinished; one complete integrated evaluation, no per-slice owner request. This mechanical cross-reference changes no capability/algorithm maturity and has no recursive release row.
+
+## EXP05 original refusal/reload — source verified, release owed, October23
+
+The bounded original#2401 successor preserves a known pre-processing refusal on
+the same native assistant record and hydrates its held status without replay.
+Original late/unknown outcomes stay uncertain, scope changes remove old feedback,
+and no file is represented as parsed or published. Owning source/rendered tests
+pass; review, exact-head CI, production and ordinary authenticated proof remain owed.
+[Original Experience packet](../delivery/experience-05-weekly-commitment-check.md)
+retains all outstanding Operations/ZION/weekly/automation acceptance. EXP13's full
+Knowledge upload experience and attachment restoration remain separate, incomplete
+obligations. No new tracker, engine, registry, privilege or activation.
+
 ## EXP09 original exact-customer tier journey — source released, October23
 
 Original2691/main3b8f9736621cf5763a0a398c7ab98ff5a5094ff0 passed all13 reviewed-head checks/two statuses and actual Native265/61/seven-pillar/full-grant proof. Normal610009 deployment and productiona6e37/private ACL/original tier_state trigger/SET NULL FKs/two unique guards verified. Exact READY webHE4 and actual containing public33bb85/customerUpdate:null verified; [receipt6376896655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2691#issuecomment-6376896655), sole Master4.0 exact row. Original tier/payment semantics preserved; actual customer actions/full Experience/founder acceptance remain UNVERIFIED and global multi-business admission NOT_ACTIVATED. No new runtime, sender, financial writer, permission or provider activation.
@@ -34,6 +50,13 @@ trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed
 
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
+Original specialist invocation identity is now preserved in a local candidate
+of the existing turn receipt, with wrong-tool and unknown-outcome controls.
+The [owning evidence](../evidence/ui-delivery/exp05-specialist-original-effect-reference.md)
+retains the actual causal failure,27 registry/75 handler cases and the deliberately
+held source-binding pin. No new status consumer, delegation, hold clearance or
+full recovery/Experience acceptance is claimed by this source correction.
+
 Original specialist outcome/receipt recovery, requester-and-workspace activity
 inspection, contact-free MCP workspace binding and eligible ZION Fabric routing
 now have reviewed, merged and production-source/configuration readbacks.
@@ -57,12 +80,16 @@ The current [Harness source correction](../delivery/harness-completion-map.md)
 identifies the existing Layer C engine. Reuse canonical ActionBus, durable work,
 Planning, Trust, adapters and Rails; create no replacement engine or ledger.
 
-Original-result reentry is now a source candidate in the existing reader:
+Original-result reentry2692 is now source-released in the existing reader:
 bounded own-identity discovery followed by exact response/receipt inspection,
 never a repeat dispatch. Six original suites192PASS and77 original hostile/binding
 cases PASS; stale outcome/contact races were causally reproduced and corrected.
-Review, hosted exact-head CI, deployment and ordinary authenticated proof remain
-separate gates. [Bounded contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
+Reviewed b880/all11 checks plus two statuses passed; main400118998 and normal
+Chat519/orchestrator122 packages match all392 returned files. Both public aliases
+serve the exact merged build. [Production receipt6376512781](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2692#issuecomment-6376512781)
+and the sole Master row retain exact source/configuration identities. Ordinary
+authenticated reentry and native held-thread specialist inspection remain owed.
+[Bounded contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
 No ZION instructions, provider effect, workflow activation or catalogue Live
 promotion occurs. All full ten-outcome/E5-CV1–9 obligations above remain open.
 

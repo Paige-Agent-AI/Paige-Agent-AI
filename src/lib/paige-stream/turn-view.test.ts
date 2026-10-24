@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { STEP_START_LABELS } from "../../../supabase/functions/_shared/paige-turn/step-start";
-import { TURN_MODES, TURN_STATES, type TurnFrame, type TurnMode, type TurnState } from "../../../supabase/functions/_shared/paige-turn/contract";
+import { TURN_MODES, TURN_STATES, type TurnFrame, type TurnMode, type TurnRecord, type TurnState } from "../../../supabase/functions/_shared/paige-turn/contract";
 import {
   DECISION_REPLY,
   STILL_RESEARCHING,
@@ -16,6 +16,7 @@ import {
   isDecisionReplyText,
   mergeResumedRows,
   readTurnTrace,
+  readRecoveryReadOnlyRefusal,
   settleTurnRows,
   upsertTurnRow,
   type LiveTurnInput,
@@ -23,6 +24,40 @@ import {
 } from "./turn-view";
 
 const T0 = 1_000_000;
+
+it("a saved original zero-work recovery refusal stays held after reload without Ask again", () => {
+  const snap = { outcome: { state: "INTERRUPTED" as const, mode: "pending" as const }, rows: [],
+    elapsedMs: null, endCause: null, source: "reload" as const, hasContent: true, recoveryReadOnlyRefusal: true as const };
+  const view = deriveSnapshotView(snap, { awaitingApproval: false });
+  expect(view).toMatchObject({ kind: "held", glyph: "lock", text: "New actions and attachments on hold", footer: null });
+});
+describe("the original recovery-refusal record", () => {
+  const record: TurnRecord = { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 };
+  const marker = { v: 1, code: "INTERACTIVE_RECOVERY_READ_ONLY" };
+  it("accepts the exact server marker on its original zero-work record", () => {
+    expect(readRecoveryReadOnlyRefusal(marker, record)).toBe(true);
+  });
+  it.each([null, undefined, [], "INTERACTIVE_RECOVERY_READ_ONLY", {}, { v: 2, code: marker.code },
+    { v: 1, code: "OTHER" }, { ...marker, extra: true }])("never infers refusal from missing or conflicting metadata %j", (bad) => {
+    expect(readRecoveryReadOnlyRefusal(bad, record)).toBe(false);
+  });
+  it.each([null, { ...record, state: "FINAL" }, { ...record, mode: "action" }, { ...record, rounds: 1 },
+    { ...record, tools: 1 }, { ...record, waiting_on: { kind: "work" } }, { ...record, resumed: { kind: "approval" } }])(
+    "never relabels a contradictory or worked original record %j", (other) => {
+      expect(readRecoveryReadOnlyRefusal(marker, other as TurnRecord | null)).toBe(false);
+    });
+  it("preserves uncertainty when trace, mode or live state contradicts the saved refusal", () => {
+    const snap = { outcome: { state: "INTERRUPTED" as const, mode: "pending" as const }, rows: [], elapsedMs: null,
+      endCause: null, source: "reload" as const, hasContent: true, recoveryReadOnlyRefusal: true as const };
+    for (const changed of [{ ...snap, recoveryReadOnlyRefusal: undefined }, { ...snap, source: "live" as const },
+      { ...snap, outcome: { state: "INTERRUPTED" as const, mode: "action" as const } },
+      { ...snap, rows: [{ id: "original", label: "Read a record", group: "owner" as const, status: "done" as const }] }]) {
+      expect(deriveSnapshotView(changed, { awaitingApproval: false })).toMatchObject({ kind: "warn", glyph: "triangle" });
+    }
+    expect(deriveSnapshotView({ ...snap, endCause: "cancelled" }, { awaitingApproval: false })?.text).toBe("Stopped by you");
+    expect(deriveSnapshotView({ ...snap, endCause: "timeout" }, { awaitingApproval: false })?.text).toBe("Stopped listening at six minutes");
+  });
+});
 const frame = (event: TurnFrame["event"], state: TurnState, mode: TurnMode): TurnFrame => ({ v: 1, event, state, mode });
 const row = (id: string, label: string, status: TurnRow["status"] = "done", since = T0): TurnRow =>
   ({ id, label, group: "owner", status, since });

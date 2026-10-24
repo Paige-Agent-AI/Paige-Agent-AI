@@ -7328,8 +7328,14 @@ Current gaps:
   TEAM HUB destination at `/solo/{n}/team-hub`. It is `PROOF_OWED` until the §32 persisted-apply
   check and an authenticated drive on the owner-designated existing SOLO account. Contract:
   [Team Hub collaboration contract](delivery/exp08-team-hub-collaboration-contract.md).
-- Still not built: specialist and `/PAIGE` requests through EXP05 Work, the Team work panel,
-  attachments, Knowledge and Chat/Live continuity (increments 2–4).
+- Increment 2 (2026-10-24, not yet merged) adds team work: `/` commands in the composer;
+  *Draft a task*, which creates one task in Operations through the existing
+  `plan_assign_task_scoped` with an exactly-once link in `team_hub_work_refs` (migration
+  `20271113860008`); PAIGE prefill handoffs for specialist, approval and meeting requests (no
+  link-back, owner ruling); and the Team work panel, with status read from `plan_items`. It is
+  `PROOF_OWED` on the same terms as increment 1. Contract:
+  [increment 2 work contract](delivery/exp08-team-hub-increment2-work-contract.md).
+- Still not built: attachments, and PAIGE/Knowledge and Chat/Live continuity (increments 3–4).
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

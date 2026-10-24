@@ -239,8 +239,13 @@ Contract: [Team Hub collaboration contract](../delivery/exp08-team-hub-collabora
 Evidence: [increment 1 record](../evidence/ui-delivery/exp08-team-hub-increment1.md). Owed: the
 §32 persisted-apply check and an authenticated drive on the owner-designated SOLO account.
 
-**Not built:** a team `/PAIGE` palette, specialist requests through EXP05 Work, the Team work
-panel, attachments, Knowledge and Chat/Live continuity (increments 2–4).
+**Increment 2 (2026-10-24, `PROOF_OWED`, not yet merged):** team work. `/` commands; *Draft a
+task* creates one Operations task through `plan_assign_task_scoped` with an exactly-once link in
+`team_hub_work_refs` (migration `20271113860008`); specialist, approval and meeting requests only
+prefill PAIGE; the Team work panel reads status from `plan_items`. Contract:
+[increment 2 work contract](../delivery/exp08-team-hub-increment2-work-contract.md).
+
+**Not built:** attachments, and PAIGE/Knowledge and Chat/Live continuity (increments 3–4).
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

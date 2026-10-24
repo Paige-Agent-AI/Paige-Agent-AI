@@ -1,29 +1,29 @@
 # EXP05 — retire the original initial approval at its stored deadline
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: base=7b2ac52074e1697e961f31a28490d0e22bd2ebbb; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED; evidence=assets/exp05-initial-approval-expiry/source-and-frames.json
+INTERNAL_BUILD_IDENTITY: source=b07aef8d21c7c6723a6127445fb0ca0540bf7750; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(production source release required); evidence=assets/exp05-initial-approval-expiry/source-and-frames.json
 RELEASE_CHANNEL: development: bounded original approval-expiry repair, no production deployment or activation.
-RELEASE_CLASSIFICATION: internal: recovery correctness increment, no customer release identity.
+RELEASE_CLASSIFICATION: internal-only: recovery correctness increment before complete integrated Experience acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: routine repair before complete integrated Experience acceptance.
 RELEASE_NOTE_REQUIRED: NO: internal repair, no customer announcement authorized.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: production SOLO metadata/UI requires final source review, successful exact CI and deployment/readback; actual business/delegated execution and full Experience remain unverified.
-RELEASE_RECOVERY: Preserve original server claim and authority; rollback through reviewed source release, never renew or retry a consumed/unknown action.
+RELEASE_RECOVERY: position=restore prior reviewed metadata/display source through normal release while retaining native claim authority; reference=original generic proposal and Chat diff; no persistent data or migration reversal.
 
-FLOW_BY_FLOW: PASS: original request -> exact pending proposal -> decide before expiry, or existing historical/refusal state -> inspect original record. No new decision, workflow or authority.
+FLOW_BY_FLOW: PASS: original request -> stored proposal -> decide before its native deadline, or existing historical/refusal state -> inspect original record. Existing goal, controls, exits and authority retained; ANT161 pre-edit routing f797a163.
 PAIGE_UI_DESIGN: PASS: existing Chat, confirmation card, historical summary, recovery status and canonical scroller; no new banner, navigation or component system.
 MATERIAL_FLOW_CHANGE: NO: correct stale original controls inside the existing approved request/decision/recovery flow.
 FLOW_PROTOTYPE: NOT_REQUIRED: original controls, fields, states and exits preserved; actual source rendered for this bounded hardening.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible SOLO actor sees a current decision only while its original server-issued deadline remains usable.
 VISUAL_DIRECTION: PASS: unchanged PAIGE tokens and original shell/card; expiration becomes the existing unavailable notice and historical context.
-AUTOMATED_EVIDENCE: UNVERIFIED: original96 passed before final late-decline parameter. Later sandbox temporary rename failure ran zero tests; unsandboxed run95/97 had one5000ms timeout and the new selector missed the actual leading whitespace on Not now. Selector corrected, final owning rerun and hosted CI required; old failures preserved. Original five UI and three actual-writer metadata RED failures remain causal evidence, not native/RLS proof.
-STATIC_EVIDENCE: Original source binding correctly REFUSES the changed handler; all29 baseline dispatch pins and124 canonical dependency pins reproduce. Original AST decomposition changes enclosing-handler identity[15] only; branch/control/other identity/helper/import arrays stay exact. Renewal requires separate immutable-source review; no validator or metadata waiver.
+AUTOMATED_EVIDENCE: PASS: corrected owning renderer25/25; unchanged auxiliary72 passed in the preceding four-file run,97 total current assertions across the same four suites. Earlier sandbox0-test startup,95/97 timeout/selector failure and original five UI/three writer RED retained. Final exact hosted proof remains separate.
+STATIC_EVIDENCE: PASS: original gate correctly refused modified handler; all29 baseline dispatch and124 dependency pins reproduced. Exact original AST decomposition changes identity[15] only; every branch/control/other identity/helper/import preserved. Pre-renewal LOWER6382339584 inspected immutableb07 source; exact binding artifact records narrow29 literal renewal with original metadata/validator retained.
 RENDERED_EVIDENCE: PASS: bounded actual Chat/card/Workspace/shell,16 required desktop/theme/open/closed frames;320px A/B reflow. Synthetic read/identity ports and Operations underlay are explicitly fixture-only.
 BEHAVIORAL_EVIDENCE: PASS: native original deadline retires the decision; separate native late Not now refuses before dispatch and focuses original unavailable status. One original model request and one canonical read-only status read; no approval, decline, retry, business write or provider request.
 AUTHENTICATED_RUNTIME: UNVERIFIED: repair is not deployed; original ordinary-owner proposal independently remained visually actionable after its native deadline; actual original row was expired and unconsumed. Reload already refused it correctly. No protected expired approval was clicked or renewed. Corrected ordinary production metadata/display requires release/readback.
 KEYBOARD_FOCUS: PASS: bounded expiry focus remains on the original unavailable status when a decision disappears; native late-decline refusal retains it. Original composer-focus negative and valid exact approval remain in the owning suite.
 ZOOM_REFLOW: PASS: document width matches all tested viewports, including320px. Compact inherited mobile transcript requires vertical scrolling; browser zoom was not separately exercised.
 REDUCED_MOTION: NOT_APPLICABLE: no new animation, transition, listener or stylesheet. Existing canonical motion preferences preserved.
-STATE_COVERAGE: PASS: initial/reused original deadline, expired/malformed/null metadata, earliest batch deadline, legacy absent metadata, valid decision, late clock change, historical refusal, reload and existing settled/unknown recovery tested within stated fixture boundaries.
+STATE_COVERAGE: PASS: original25 renderer cases cover initial deadline, malformed/null metadata, earliest batch, absent legacy field, valid and late decisions, composer-focus preservation and historical/settled recovery; actual closed writer3 covers stored creation/reuse/unverifiable metadata.
 TRUTHFUL_STATE_LABELS: PASS: expiry means the original proposal cannot be approved; it does not claim any action ran, did not run or may be repeated. Original record/readback required.
 SOLO_UI: YES: shared initial stream and Chat code, no account allowlist, provisioning, entitlement, role or provider special case.
 UNVERIFIED: final exact-head review/CI/production web/Edge/native metadata; actual authorized specialist result/Rail/reload, weekly/automation execution, cohorts/new provisioning, eligible Live, all ten outcomes/E5-CV1–9 and founder acceptance.

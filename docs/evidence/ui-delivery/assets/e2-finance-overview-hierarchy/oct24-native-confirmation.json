@@ -1,0 +1,73 @@
+{
+  "kind": "SYNTHETIC_NATIVE_PROOF_NOT_CUSTOMER_ACCEPTANCE",
+  "rendered_head": "4fd24ea2519eb1589e75988855afda63be3e2bbc",
+  "current_composition": "5caa3cf64d904d60ed7337ccb291b07f6e935c2c",
+  "sources": [
+    {
+      "path": "src/solo/finance/FinanceWorkspace.tsx",
+      "normalized_sha256": "be49106ac68df9cc27914795557f15439fd160eaac3c3780d77aa0c960c0003f",
+      "unchanged_since_rendered_head": true
+    },
+    {
+      "path": "src/solo/finance/finance.css",
+      "normalized_sha256": "d52e131c4eaa0ac3ab2b54755ff67c51ce28c15d8a113a0fe1b79834af4771ec",
+      "unchanged_since_rendered_head": true
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/stubs.tsx",
+      "normalized_sha256": "010568c02f6c4b12c1821b4648c194f33ecaa3021cb4ac1526de934d9c8330f5",
+      "unchanged_since_rendered_head": true
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/main.tsx",
+      "normalized_sha256": "d85f4bc9c206d0b843ac32b6f847192fa65397a5a8a008b69729544306d6b55e",
+      "unchanged_since_rendered_head": true
+    }
+  ],
+  "observations": [
+    {
+      "file": "oct24-native-320-light-money.jpg",
+      "sha256": "8c1113dd3c0abec1d605943f9108e4b6937f510b39ecdcf471011818a41b75d7",
+      "window_pixels": {
+        "width": 1523,
+        "height": 906
+      },
+      "viewport": {
+        "width": 320,
+        "height": 734,
+        "method": "Observed Edge Responsive toolbar; automatic height734"
+      },
+      "inspection": "Compact amounts retain all digits and decimals; original controls/source labels visible."
+    },
+    {
+      "file": "oct24-native-320-light-escape-focus.jpg",
+      "sha256": "bd0cdea11fca5f30048a302f33e3beec27302f8a4abab8ed19a25b45e53d2a10",
+      "window_pixels": {
+        "width": 1523,
+        "height": 906
+      },
+      "viewport": {
+        "width": 320,
+        "height": 734,
+        "method": "Observed Edge Responsive toolbar; automatic height734"
+      },
+      "inspection": "Original Sheet closes on Escape; visible focus outline returns to original metric."
+    },
+    {
+      "file": "oct24-native-1536x770-light-closed.jpg",
+      "sha256": "51a3bb7b012be94dfe60f05ffe86db96cae9cfcf142990b1e4daef4d8311ba2f",
+      "window_pixels": {
+        "width": 1523,
+        "height": 906
+      },
+      "viewport": {
+        "width": 1536,
+        "height": 770,
+        "method": "Observed Edge Responsive toolbar; fit to window"
+      },
+      "inspection": "Closed-rail Overview retains intact amounts, source comparison and unavailable cash/accounting."
+    }
+  ],
+  "format_note": "Original capture bytes are JPEG; .png names in private output were misleading. Published .jpg copies are byte-identical, no resampling or editing.",
+  "proof_boundary": "Only named states. Remaining all-eight viewports/open/zoom/reduced-motion/ordinary roles/VERA exact-reference/reload and complete Finance acceptance owed. Latest physical-Escape stop retained."
+}

@@ -14,6 +14,19 @@ export interface OriginalSpecialistHistory {
   origin_intent_id: string; tenant_id: string; read_only: true; new_effect_possible: false;
   results: OriginalSpecialistObservation[]; limited: boolean;
 }
+/** A UI locator only. The native status reader must prove its authority again. */
+export function originalSpecialistOrigin(turn: unknown, scope: { threadId: string; tenantId: string }): OriginalPreparationScope | null {
+  if (!object(turn) || ![scope.threadId, scope.tenantId, turn.id, turn.interactive_intent_id].every(uuid)
+    || turn.role !== 'assistant' || !['FINAL', 'INTERRUPTED', 'LIMIT_REACHED', 'WAIT_WORK', 'WAIT_APPROVAL', 'ASK_USER'].includes(String(turn.interactive_terminal_state))
+    || !object(turn.bundle_ref) || !object(turn.bundle_ref.turn_state) || turn.bundle_ref.turn_state.v !== 1
+    || turn.bundle_ref.turn_state.state !== turn.interactive_terminal_state || !object(turn.bundle_ref.interactive)
+    || turn.bundle_ref.interactive.request_intent_id !== turn.interactive_intent_id
+    || !Array.isArray(turn.bundle_ref.interactive.effects) || turn.bundle_ref.interactive.effects.length > 20) return null;
+  const original = turn.bundle_ref.interactive.effects.some(effect => object(effect) && effect.tool === 'delegate_to_subagent'
+    && Array.isArray(effect.record_refs) && effect.record_refs.length <= 8
+    && effect.record_refs.some(ref => object(ref) && ref.kind === 'subagent_invocation' && uuid(ref.id)));
+  return original ? { ...scope, turnId: turn.id as string, intentId: turn.interactive_intent_id as string } : null;
+}
 
 /** Only a dedicated, freshly scoped native status response may populate this
  * projection. A stored bundle, model statement or copied receipt is not proof. */

@@ -46,4 +46,26 @@ ALG-01: exact original operation/receipt correlation and safe no-repeat reconcil
 
 Functional: focused source and real-engine case verified; release owed. Visual: unchanged. Experiential: original lost-ack/redrain and permission controls remain; ordinary customer proof owed. Founder Acceptance: pending the complete integrated Experience.
 
+### Current-main composition and market acceptance checkpoint
+
+Composed main79e9bd4eb21de55ba4f72dcaae5d0387ad961c88 into the original
+weekly branch (composition5abc9f82b72c4e8604ffaf894e62dea40d8848cd).
+EXP09's610009 migration and original test, EXP01 consent, EXP02 evidence,
+EXP03/06/07 records and released Operations calendar reentry are preserved.
+The weekly adapter blob172c58a2de37374e6c7ae45d0b4952d52a35c5cb and
+all23 owning cases are unchanged; the actual composed23-case run passes.
+Original refusal/reload parent2697/ec466 remains a release-before dependency.
+Retargeted this existing PR to main so normal exact-head security CI runs;
+earlier stacked-head checks are historical, never inherited as current green.
+Current evidence guard and diff check pass; normal CI/readback remain owed.
+
+Canonical Outcome Map rows135–138 (FLOW:OPS, FLOW:AUTOMATION, FLOW:AGENTS,
+FLOW:CALENDAR) retain their full ten-outcome/E5-CV1–9 acceptance. The consultant,
+coach and fractional-professional launch scenario, and creative/marketing firms
+running their own SOLO business, connect those outcomes without narrowing them.
+EXP04 supplies original engagement/delivery and confirmed Setup-zone authority;
+EXP08 consumes original Work references; EXP02 owns its original report source;
+EXP03 owns customer qualification/comms and EXP10 provider readiness. No source
+writer, agent, trigger, consent, spend or business effect is activated here.
+
 Full local native run disposition: FAIL at the unchanged accumulated-history performance margin assertion, after the real engine/redrain case passed. At1000 history rows per process, the repaired owner RPC's measured execution times were1498.516/998.595/1038.140ms; median1038.140ms fails the existing below1000ms margin. Preserve that failure; it is not a full native PASS. Weekly getter SQL, migrations, performance proof and threshold are byte-identical to main2748432, while this slice changes only the adapter consumer. No timing gate is relaxed or fixture replaced. The normal same-head required native proof must pass before release; runtime/customer latency is still unverified. Earlier sandbox socket denial is a separate invalid infrastructure attempt, not this measured failure.

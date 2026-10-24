@@ -117,3 +117,10 @@ Main now contains the separate E03/E10 duplicate700000 migration; originating
 EXP10 owns its never-applied correction. No peer rename/history reset/check waiver
 or blind retry. Required corrected-composition CI, safe merge/production source
 readback, actual original owner recurrence/recovery and full EXP05 remain owed.
+
+Originating correction2732 is now merged e35bb7f9, consumed with main79171c82
+and E03 closeout2729. E10's SQL body is unchanged at800000 and production records
+that exact new identity; applied E03 history remains untouched. The collision
+hold above is historical and resolved on this composition. Weekly source/tests
+remain identical to the green416 head; no new migration or activation. Fresh
+composed-head review/CI and actual production readback remain required.

@@ -1,0 +1,81 @@
+{
+  "pr": 2734,
+  "reviewed_head": "408923cc07d730c4eb4e28395f438c9b046945a0",
+  "review": {
+    "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "id": 5638380473
+  },
+  "merge": "d3617646e494923887b9b9781c470901427a6c8a",
+  "channel": "production",
+  "required_checks": "13 SUCCESS",
+  "web_statuses": "2 SUCCESS",
+  "real_issuer_database": {
+    "job": 120882183080,
+    "steps": 190,
+    "status": "SUCCESS"
+  },
+  "preview": {
+    "job": 120882695967,
+    "status": "SUCCESS"
+  },
+  "migration": {
+    "version": "20271113840002",
+    "count": 1,
+    "statements": 6,
+    "statements_md5": "3ef6713f3b61026dd05e611d2c411b50",
+    "workflow": 40099957248,
+    "job": 120889968225,
+    "status": "SUCCESS"
+  },
+  "native_source_md5": {
+    "submit": "12e0110cccc9a495314b6ffaf862ee54",
+    "private_selector": "baa874f37fd616727384e1fea5c3c27a",
+    "unchanged_private_capture": "151a73a04e1e0d97ce2f641a5ee34c26"
+  },
+  "permissions": "Original postgres owner, submit SECURITY DEFINER with authenticated execute only; private helpers INVOKER, no caller grants; fixed empty search_path and helper UTC preserved",
+  "edge": {
+    "workflow": 40099957279,
+    "job": 120889886747,
+    "artifact": 12561934316,
+    "zip_sha256": "7977c5b20c692a7dadbb11937feadd77921982a0bac86efbe60db98b6c3e03c4",
+    "status": "SUCCESS",
+    "commit": "d3617646e494923887b9b9781c470901427a6c8a",
+    "functions": [
+      {
+        "name": "paige-ai-chat",
+        "version": 530,
+        "paths": 271,
+        "verify_jwt": true
+      },
+      {
+        "name": "paige-document-worker",
+        "version": 57,
+        "paths": 36,
+        "verify_jwt": false
+      }
+    ],
+    "unique_paths": 284,
+    "all_paths_match": true,
+    "normalization": "Exact incumbent UTF-8, CRLF to LF, remove one terminal LF then add one terminal LF"
+  },
+  "guarded_tags": {
+    "db-live": "d3617646e494923887b9b9781c470901427a6c8a",
+    "edge-live": "d3617646e494923887b9b9781c470901427a6c8a"
+  },
+  "web": {
+    "original_deployment": "dpl_7ECFqH3dDC3n4qyFnuYQcdiRQy4U",
+    "original_state": "READY",
+    "containing_commit": "11e4f8e4f6cb35c4bce7f23252d0cc67357e8251",
+    "containing_deployment": "dpl_cC9t6f9hRTSLj3XyWaSVkepC6H7g",
+    "state": "READY",
+    "both_public_version_status": 200,
+    "build_id": "11e4f8e4f6cb35c4bce7f23252d0cc67357e8251-mvmgknne",
+    "customerUpdate": null
+  },
+  "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2734#issuecomment-6385101081",
+  "invalid_attempts": [
+    "Separate direct rollback-only Preview MCP suite ended transport invalid_request_state; no SQL PASS or retry; postcounts unchanged",
+    "Initial local hash comparator over-trimmed multiple trailing LF on three paths; exact incumbent comparator passed all307 paths, no deployed source defect"
+  ],
+  "proof_boundary": "Source/native/selected Edge/web only. Later leased original Chat consumer and genuine report/artifact/turn/Rail/save/reopen/retrieval/role/tenant/recovery/Live/full19/nine/founder acceptance remain owed. Original uncertain monthly operation unretried. No provider/permission/heldE13/consequential activation."
+}

@@ -1,20 +1,26 @@
-## EXP02 original report source requests — October24 source candidate
+## EXP02 original report source requests — October24 source released
 
-The original document_generate report path now has a local closed source-request
-alternative to reference-based admission: canonical Metric issuer/resolver facts
-are captured once under the original work lock, retaining the existing worker,
-private artifact, completion turn and Rail. Exact replay never reissues facts;
-legacy references/nine document types and current authority remain intact.
-[Bounded evidence](../evidence/ui-delivery/e2-report-source-requests.md):116 owning
-tests, isolated native proof and scoped lint; genuine full-schema issuer suite,
-exact-head review/CI, ordered migration/Edge readback and actual customer settlement
-remain owed. Original E03/E10 migration700000 collision is resolved by2732/e35bb7f9.
-Current main6667393a and actual native820004 are verified; never-applied840002
-follows original E04catalogue830004. Current composed review/CI/Preview remain owed.
-No shared Chat entry edit, new engine/store, provider or action activation.
-CAP014/015 remain Unverified, full19/nine and the consultant SOLO launch scenario
-remain required. Original CPU-failed uncertain monthly request stays unretried
-with EXP05; this source foundation is not root-cause or recovery evidence.
+Original #2734 exact408923cc/author-related LOWER5638380473 passed all13 required
+checks and both web statuses, then merged d3617646e494923887b9b9781c470901427a6c8a.
+Normal migration40099957248/120889968225 persisted original840002 once; submit,
+private helper, unchanged capture and original ABI/ACL/security settings match
+reviewed source. Normal Edge40099957279/120889886747 and independently verified
+artifact12561934316 match all271 Chat530 and36 document-worker57 files. Guarded
+db-live/edge-live identify d361; normal web7EC READY and containing11e4/cC9 READY
+plus both public11e4-mvmgknne/null were observed. [Source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2734#issuecomment-6385101081)
+and [bounded evidence](../evidence/ui-delivery/e2-report-source-requests.md).
+
+The original issuer/resolver captures permitted facts once under the existing
+work lock; exact replay never reissues facts. Legacy references/nine document
+types, actor authority, private artifact, completion turn and Rail remain intact.
+The new selectors are not advertised by the original Chat tool yet: its narrowly
+leased consumer follows this source release. No new store, runtime or provider.
+Real-issuer full-schema CI passed; genuine new report/artifact/turn/Rail/save,
+reopen/retrieval, role/tenant/recovery/Live and full19/nine customer proof remain
+owed. CAP014/015 remain Unverified; ALG03/06/11/12 Partial,13 impact Unverified.
+Original CPU-failed uncertain monthly work stays unretried with EXP05; no claimed
+root-cause recovery, heldE13 or consequential activation. Founder acceptance waits
+for one complete integrated Experience. Earlier candidate records remain in Git.
 
 ## EXP09 private CURA files — native source released, October24 UTC
 

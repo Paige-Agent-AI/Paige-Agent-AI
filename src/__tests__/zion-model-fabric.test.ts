@@ -48,7 +48,7 @@ function fixture() {
 }
 describe("ZION consumes the original Model Fabric with server-controlled authority", () => {
   it("the versioned factory planning instructions use the existing bounded Fabric route", async () => {
-    const migration = readFileSync(resolve(__dirname, "../../supabase/migrations/20271113850005_exp05_zion_planning_instructions.sql"), "utf8");
+    const migration = readFileSync(resolve(__dirname, "../../supabase/migrations/20271113800005_exp05_zion_planning_instructions.sql"), "utf8");
     const prompt = /\$zion_operations_plan_v1\$([\s\S]*?)\$zion_operations_plan_v1\$/.exec(migration)?.[1] ?? "";
     const f = fixture(), agent = { ...registered, version: 3, system_prompt: prompt, config: { job_kind: "plan" } };
     f.setRow(agent);

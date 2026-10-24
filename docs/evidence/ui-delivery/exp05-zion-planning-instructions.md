@@ -25,7 +25,7 @@ MUST_PRESERVE: original specialist identity/remit, actor/tenant/seat and registr
 ACCEPTANCE_CRITERIA: untouched global version2 factory receives nonempty instructions and job_kind=plan atomically at version3; reapplication and protected variations are exact no-ops; real existing route uses that exact prompt with no tools/provider override and refuses changed current registry/authority.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original paige_subagents identity and row version; existing Harness/authority/Fabric checks and original receipts; no Chat/Spine/C0b/TeamHub/provider source edit.
-INTERNAL_BUILD_IDENTITY: base=79171c8243adbe5b5d56f196fae0758cb1bdd89a; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113850005 not applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-zion-planning-instructions.md
+INTERNAL_BUILD_IDENTITY: base=79171c8243adbe5b5d56f196fae0758cb1bdd89a; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113800005 not applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-zion-planning-instructions.md
 RELEASE_CHANNEL: development: local protected fixtures only; no production row, provider/key/budget/flag or trigger mutation.
 RELEASE_CLASSIFICATION: internal-only: existing specialist planning prerequisite, not complete ZION/Operations customer acceptance.
 CUSTOMER_RELEASE_IDENTITY: NONE: no earned customer version or announcement.
@@ -122,6 +122,19 @@ After that filename-only composition, actual route34/34 and the same native
 20 planning +19 role assertions pass again. Reviewed migration body Git blob
 d333d703baa3a0120b8d9c333b1cb5542c604bd0 is unchanged across the old/new filenames;
 no previous applied migration is renamed. Fresh full-schema CI remains separate.
+
+The original2f981 candidate subsequently passed its FULL migrated native CI
+database-contract120774864287, including original role step28 and new planning
+step29. That is dated exact-head engineering proof, not current deployment.
+Fresh read-only production still has frontier800000. E04 acknowledged its
+own810004/820004/830004 source continuations in ANT161/0336d76e.
+Before further edits, ANT161/47c9175c withdrew our unused850005 and reserved
+800005 immediately after800000, below every proposed/acknowledged receiving
+frontier. The migration SQL blob remains d333d703baa3a0120b8d9c333b1cb5542c604bd0;
+only its filename and exact test includes change. This avoids advancing past
+peer migrations while preserving their relative order and independent writers.
+It does not bypass recovery2722/2725 release/readback, fresh exact-head review,
+required CI/Preview, actual registry/ACL readback or any activation control.
 
 EXP04 retains commercial promises and business-zone truth; EXP03 CRM, booking
 and communications; EXP02 priorities/metrics; EXP08 TeamHub consumes original

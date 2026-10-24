@@ -1004,8 +1004,12 @@ const ANCESTRY_SOURCES = {
  // Historical Research context and its pure status-result constructors.
  "supabase/functions/_shared/research-history-context.ts": "fa64f9d267b6f2196ae7ff754ef2660a918bcd6da79698700acbfc05222685b2",
  "supabase/functions/_shared/paige-context/mod.ts": "56fb44fcb3c78d6cf3a221290550b57694be6eb99e8eda608e610ddfc65dd6a8",
- // Independently reviewed completed-lifecycle publication reader; no effect authority.
- "supabase/functions/_shared/paige-turn/interactive.ts": "c11ff1572df36f4efdc5534e6fa19177748acd551e56e2c147b88b421a256432",
+ // EXP05 AUTHOR-REVIEW / LOWER ASSURANCE, sourcea7961d9d/reviewf07a6b682:
+ // retain only the original delegate invocation UUID in effect/receipt context;
+ // wrong-tool/invalid references excluded, unknown outcomes unchanged. Original
+ // c11ff157 reproduced; other122 sources/29 dispatches/validator remain exact.
+ // EXP04 C20 shared-file write released by ANT161/48ebd0a0; preserve its scalar.
+ "supabase/functions/_shared/paige-turn/interactive.ts": "2917df7c8f03806e63b5f38f4aa386d6df0a1ca6892028cf8384cf98646c74ff",
  // Independently reviewed canonical approval-status projection; no effect authority.
  "supabase/functions/_shared/paige-turn/interactive-approval.ts": "1fbe20d09c91d4082932a75cb8e52ecb6eaf11a0c516d3f2e0342469a3c9a870",
  "supabase/functions/_shared/planning/approved-reminder.ts": "2aa731c9f9c116955fb6a7a99a8c814ca0676464ee1fcfbe1b7780b373b68196",

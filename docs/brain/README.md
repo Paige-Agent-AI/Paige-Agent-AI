@@ -61,6 +61,13 @@ trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed
 
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
+Original specialist invocation identity is now preserved in a local candidate
+of the existing turn receipt, with wrong-tool and unknown-outcome controls.
+The [owning evidence](../evidence/ui-delivery/exp05-specialist-original-effect-reference.md)
+retains the actual causal failure,27 registry/75 handler cases and the deliberately
+held source-binding pin. No new status consumer, delegation, hold clearance or
+full recovery/Experience acceptance is claimed by this source correction.
+
 Original specialist outcome/receipt recovery, requester-and-workspace activity
 inspection, contact-free MCP workspace binding and eligible ZION Fabric routing
 now have reviewed, merged and production-source/configuration readbacks.

@@ -140,4 +140,22 @@ describe("dictation composer scope and send contract", () => {
     expect(page).toContain('dictationScopeEpoch: `${activeTenantId ?? "resolving"}|${selected.key}|${editingDraftId ?? "new-reply"}`');
     expect(page).toContain("setScheduledFor(null); setEditingDraftId(null);");
   });
+  it("retires a customer dictation generation when access is rechecked, while preserving owner behavior", () => {
+    const text = read("src/components/app/PaigeChat.tsx");
+    const source = ts.createSourceFile("PaigeChat.tsx", text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    let expression = "";
+    const visit = (node: ts.Node) => {
+      if (ts.isVariableDeclaration(node) && node.name.getText(source) === "dictationScopeEpoch") expression = node.initializer!.getText(source);
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(expression).not.toBe("");
+    const epoch = new Function("user", "clientId", "location", "customerFrame", "customerAvailable", "return (" + expression + ");");
+    const actor = {id:"test-customer"}, route = {pathname:"/app",search:""}, frame = {};
+    expect(epoch(actor, null, route, frame, true)).not.toBe(epoch(actor, null, route, frame, false));
+    expect(epoch(actor, null, route, undefined, true)).toBe(epoch(actor, null, route, undefined, false));
+    // Existing hook scope-change controls prove that retired generations close
+    // their recorder/socket and cannot deliver trailing finals into a draft.
+  });
+
 });

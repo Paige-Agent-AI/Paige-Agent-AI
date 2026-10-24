@@ -136,6 +136,23 @@ peer migrations while preserving their relative order and independent writers.
 It does not bypass recovery2722/2725 release/readback, fresh exact-head review,
 required CI/Preview, actual registry/ACL readback or any activation control.
 
+Original076c Preview120780154645 failed because its disposable branch retained
+the former850005 migration. Supported reset returned success but authoritative
+readback still found850005; that attempt did not fix the check. Official Supabase
+branch-recreation procedure on the verified own nondefault/nonpersistent/no-data
+PR branch produced new previewlyamlalhwimyetgxjauw. Same-head check120782133715
+then succeeded; actual original ZION was version3/soft/enabled/plan with nonempty
+instructions ONLY IN PREVIEW. Production and peer branches were untouched.
+
+The next composition preserves reviewed original-status56b81 and native consumer
+bc489 dependencies, actual released weekly2700/d006, E07/a984, E01 Live visual
+2bf and pure closeout2730/885. Two original EXP05 Brain append conflicts retain
+ALL complete sections; the original result packet's extra EOF blank is removed.
+All native registration/prompt/route/role-test bytes remain unchanged. Original
+recovery product files are inherited exactly, with no new layout or authority.
+Fresh composed-head CI/Preview and actual sequential parent release/readback
+are mandatory; composition and preview do not earn customer execution proof.
+
 EXP04 retains commercial promises and business-zone truth; EXP03 CRM, booking
 and communications; EXP02 priorities/metrics; EXP08 TeamHub consumes original
 Work; EXP10 readiness/revocation; EXP09 client-session authority. No received

@@ -1427,6 +1427,39 @@ SOLO report/receipt/read/reload/permission and recovery proof. All19/nine remain
 
 ## October23 — original source-backed review Chat consumer source released
 
+### Consultant launch acceptance alignment — October23/24
+
+Consultants, coaches and fractional professionals are the first market; small
+creative/marketing firms running their own SOLO business are second. Agency and
+Subaccounts remain held. Enrollment → confirmed Setup → consented lead →
+qualification/booking → approved agreement/payment → onboarding → delivery →
+support → review actual results → repeat connects all19 outcomes and CAP009–017;
+it does not replace their definitions or authorize providers or business actions.
+Reuse the existing Capability Outcome Map rows122–144, including FLOW:REVIEW126,
+FLOW:REPORT127 and FLOW:RESEARCH128. Preserve IDs, aliases and per-item closure;
+this section is an acceptance crosswalk, not another inventory.
+
+| Original producer | EXP02 review handoff and remaining proof |
+| --- | --- |
+| EXP00/EXP01 | Provisioned SOLO identity and confirmed Setup/offer/goals/conversation; legitimate actor/context and later-return proof. No reprovisioning or Setup writer. |
+| EXP03 | Consented lead, source/campaign and qualification facts; attributable funnel/period evidence, never invented conversion or ROI. |
+| EXP04 | Original opportunity/agreement/invoice/payment/collection and Metric evidence; exact currency/source/period, genuine payment truth and reference continuity. A later UI issuance currently revokes the preceding reference before expiry; positive same-reference review remains owed. |
+| EXP05 | Original Work, commitments, approval, attempt/result/Rail and recovery; reconcile the original monthly CPU-failed operation without replay/reset, then verify actual result and reload. |
+| EXP09 | Authorized client relationship/onboarding/service/delivery evidence; permission-filtered populated read, retention limitations and reload. |
+| EXP10 | Actual connection health/readiness and revocation; preserve unavailable states and held future full-Finance/provider authority. |
+| EXP06/EXP07/EXP08 | Original permitted published website/media and Work-linked collaboration evidence when produced; no takeover of publishing, collaboration or Work writers. |
+
+Next proof is a useful source-backed review/report, original authorized action,
+verified domain result/Rail, and reload/recovery. Recommendation, preparation,
+approval, execution and subsequent measurement remain separate. ALG03/06/11/12
+stay Partial; ALG13 usefulness/impact remains Unverified. No predictive or causal
+claim follows from this scenario. Functional, Visual, Experiential, Founder
+Acceptance, source review/CI, merge/deployment, activation and authenticated proof
+remain distinct. One integrated founder evaluation is still owed.
+[Receiving checkpoint](https://linear.app/paige-agent-ai/issue/ANT-138#comment-f6905278-a7a2-44bc-954c-8ff9bee69ac0).
+
+### Verified source release and actual report QA
+
 Source2675 reviewed1f893139364fbdcb0607ddac6798952d5fd6c3dd/tree0187aa25,
 LOWER5633346286; all11 exact-head applicable checks/genuine Preview/full native/
 Edge ratchet and both statuses SUCCESS. Actual main10eb1647fdd0b527c2dd2cc919c7a169cdac11bc

@@ -2740,6 +2740,12 @@ prepared-field renderer/source integration remains bounded, not a second engine.
 
 ## EXP02 original source-backed report Chat consumer — October23 source released
 
+The consultant launch workflow and secondary creative-firm SOLO scenario connect
+the full19/nine scope. See the original [matrix acceptance crosswalk](../delivery/e2-customer-experience-integration-matrix.md#consultant-launch-acceptance-alignment--october2324)
+and existing Capability Outcome Map126–128; original IDs/writers, held Agency and
+Subaccounts, algorithm maturity, actual source/result/Rail proof and one final
+integrated founder evaluation remain intact. No new provider or business activation.
+
 Source2675 reviewed1f893139364fbdcb0607ddac6798952d5fd6c3dd/tree0187aa25,
 LOWER5633346286; all11 exact-head applicable checks/genuine Preview/full native/
 Edge ratchet and both statuses SUCCESS. Actual main10eb1647fdd0b527c2dd2cc919c7a169cdac11bc

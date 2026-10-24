@@ -1,3 +1,31 @@
+## C19 actual predecessor and released Clients composition — October24
+
+Actual main58416369d2de317c7c6e9301248e0ea36e2d0989 is composed as
+66428e57d82963c970d7c8db080b8d3d679b7497/treeb5e6f8d298ef16f02d74a598779e81d7b06aab49.
+All six original runtime/native/proof/test blobs remain exact6eaa93b2; the existing
+dated Preview artifact is unchanged. Only those seven paths and this original
+journal differ from main; exact own-hunk inverse reproduces the ENTIRE incoming
+journal, and all other incoming source, C26 release, Brain/Master and peer work
+is preserved. SQL820004 remains57d7f2b1c4445605641e2484a8476ad44189ca003216ef834ed9ea844b05bfbf.
+
+Original E09 source2723/a2db and810009 SQLb634388b/34817bytes are verified in actual
+containingmain28622. Direct09:32 production metadata confirms810009 recorded once,
+frontier810009/820004absent; originating receipt6382571591 preserves actual native
+failure/retry/source/ACL/readback. The predecessor release hold is RESOLVED, not
+customer acceptance. Current source includes E05800005 and E07800010 before
+E04810004→E09810009→E04820004, without rewriting applied or another owner's history.
+
+The EARLIER dated692a3b05 Preview below lacks new lower810009, despite matching
+the same13 function bodies; it does not establish final combined-schema proof.
+Use only normal verified-empty/disposable same-PR replacement, no reset/include-all/
+history change/direct DDL. Final exact-head review/CI/complete native Preview and
+source/security readback remain required. Original37 source cases and native564
+are dated unchanged-source support until current integration gates actually pass.
+No provider, financial, send, signer or effectful Chat activation is authorized.
+Full O1–O12 and one complete integrated founder evaluation remain unfinished.
+
+Earlier dated checkpoints below remain unchanged history.
+
 ## C19 current-main7b continuation — October24, not released
 
 Current normal cold Preview692a3b05/fymtisosylqfmzgwwlhg is nonpersistent/

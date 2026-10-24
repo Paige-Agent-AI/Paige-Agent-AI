@@ -19,7 +19,7 @@ const recordedDay=(value:string|null)=>{const at=value?new Date(value):null;retu
  * nobody else on the team can review, so "nothing submitted yet — nominate a reviewer" never contradicts the plain
  * "releasing needs a second person" above it, while a release recorded earlier is still shown.
  */
-export function OperationsStaffDeliveryReview({scope,members,theme="dark",registerCloseGuard,recoveryStorage,recordedOnly=false}:{scope:StaffDeliveryScope;members:TeamMemberRecord[];theme?:string;registerCloseGuard?:(guard:()=>boolean)=>()=>void;recoveryStorage?:RecoveryStorage;recordedOnly?:boolean}) {
+export function OperationsStaffDeliveryReview({scope,members,theme="dark",registerCloseGuard,recoveryStorage,recordedOnly=false}:{scope:StaffDeliveryScope;members:TeamMemberRecord[];theme?:string;registerCloseGuard?:(guard:(showNotice?:boolean)=>boolean)=>()=>void;recoveryStorage?:RecoveryStorage;recordedOnly?:boolean}) {
  const key=JSON.stringify(scope),live=useRef(key);live.current=key;
  const storage=recoveryStorage??browserDeliveryRecoveryStorage(),draftScope=useRef({key,scope}),draftSubmission=useRef<Extract<StaffDeliveryAction,{kind:"review"}>["submission"]|null>(null);
  const [recoveryChecked,setRecoveryChecked]=useState<string|null>(null),[recoveryUnavailable,setRecoveryUnavailable]=useState(false);
@@ -86,7 +86,7 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark",regist
  const needsGuard=busy||dirty||unknown;
  useBeforeUnloadGuard(needsGuard);
  useEffect(()=>registerAccountSwitchGuard(()=>!needsGuard),[needsGuard]);
- useEffect(()=>registerCloseGuard?.(()=>{if(needsGuard){setHint(unknown?"Inspect the original change before closing; its outcome remains unconfirmed.":busy?"Wait for recorded readback before closing.":"Clear the unsaved review note explicitly before closing.");return false;}return true;}),[registerCloseGuard,needsGuard,unknown,busy]);
+ useEffect(()=>registerCloseGuard?.((showNotice=true)=>{if(needsGuard){if(showNotice)setHint(unknown?"Inspect the original change before closing; its outcome remains unconfirmed.":busy?"Wait for recorded readback before closing.":"Clear the unsaved review note explicitly before closing.");return false;}return true;}),[registerCloseGuard,needsGuard,unknown,busy]);
 
  const request=(action:StaffDeliveryAction,button:HTMLButtonElement)=>{
   if(!current()||locked)return;

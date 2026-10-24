@@ -164,6 +164,7 @@ export function useTenantContext() {
     accountContextLoading: false, accountContextStatus: "ready", loading: false, isPlatformStaff: false, isPlatformOwner: false, refresh: () => undefined,
   };
 }
+export function useOptionalTenantContext() { return useTenantContext(); }
 export function useUserRoles() { return { loading: false, userId: ACTOR, roles: ["admin"], isAdmin: true, isClient: false, isStaff: true }; }
 
 const person = {

@@ -1,4 +1,4 @@
-import { useRef, useState, type MouseEvent } from "react";
+import { useId, useRef, useState, type MouseEvent } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -10,22 +10,48 @@ import type { WeeklyFutureControl, WeeklyOwnerRead } from "./weekly-owner-read";
 import { WeeklyDraftComposer } from "./WeeklyDraftComposer";
 
 /** Same owner review entry in PAIGE and Calendar; conversational tools stay unadmitted. */
-export function WeeklyResponsibilityEntry({ hideEmpty = false }: { hideEmpty?: boolean }) {
+export function WeeklyResponsibilityEntry({ hideEmpty = false, showOutcome = false }: { hideEmpty?: boolean; showOutcome?: boolean }) {
   const audience = useWeeklyOwnerAudience();
   if (!audience.eligible) return null;
-  return <ScopedEntry key={audience.key} hideEmpty={hideEmpty} />;
+  return <ScopedEntry key={audience.key} hideEmpty={hideEmpty} showOutcome={showOutcome} />;
 }
-function ScopedEntry({ hideEmpty }: { hideEmpty: boolean }) {
+/** Original receipt projection only; a latest attempt never becomes proof of completion. */
+function entryOutcome(read: WeeklyOwnerRead): { text: string; title: string } | null {
+  if (read.status !== "ready") return {
+    text: read.status === "loading" ? "Checking weekly status…" : read.status === "refused" ? "Owner access needed" : "Status unverified",
+    title: "Open the original weekly inspection to check current access and status.",
+  };
+  const { checks, has_more: more, business_time_zone: businessZone, read_at: readAt } = read.snapshot;
+  if (!checks.length && !more) return null;
+  const zone = businessZone.state === "configured" ? businessZone.zone : null;
+  const verified = checks.flatMap(check => check.last_verified_run ? [check.last_verified_run] : [])
+    .sort((a, b) => Date.parse(b.observed_at) - Date.parse(a.observed_at))[0];
+  const needsReview = checks.some(check => check.last_run?.status === "unknown" || check.last_run?.status === "failed");
+  const earlierVerified = checks.some(check => (check.last_run?.status === "unknown" || check.last_run?.status === "failed")
+    && check.last_verified_run && Date.parse(check.last_verified_run.scheduled_for) < Date.parse(check.last_run.scheduled_for));
+  const text = needsReview ? `Needs review${earlierVerified ? " · Earlier result verified" : ""}`
+    : verified ? "Verified result available" : "No verified result";
+  return {
+    text: `${more ? "Shown checks · " : ""}${text}`,
+    title: [verified ? `Last verified: ${weeklyInstantLabel(verified.observed_at, zone)}.` : "No receipt-verified result in the checks shown.",
+      `Status read: ${weeklyInstantLabel(readAt, zone)}.`, !zone ? "Business time zone is not configured; times shown in UTC." : "",
+      more ? "Other responsibilities may not be shown." : ""].filter(Boolean).join(" "),
+  };
+}
+function ScopedEntry({ hideEmpty, showOutcome }: { hideEmpty: boolean; showOutcome: boolean }) {
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState("dark");
   const opener = useRef<HTMLButtonElement | null>(null);
+  const outcomeId = useId();
   const location = useLocation();
-  const { read, refresh, control, controlBusy } = useWeeklyResponsibility(open || hideEmpty);
+  const { read, refresh, control, controlBusy } = useWeeklyResponsibility(open || hideEmpty || showOutcome);
   const snapshot = read.status === "ready" ? read.snapshot : null;
+  const outcome = showOutcome ? entryOutcome(read) : null;
   // First-run onboarding owns its conversation; no weekly prompt without a verified existing responsibility.
   if (hideEmpty && (!snapshot || snapshot.checks.length === 0)) return null;
-  return <div className="e5-weekly-chat-entry">
-    <button ref={opener} type="button" className="e5-weekly-open" aria-label="Weekly responsibility" title="Weekly responsibility" onClick={event => { setTheme(event.currentTarget.closest("[data-pg]")?.getAttribute("data-pg") ?? "dark"); setOpen(true); }}><CalendarDays size={15} aria-hidden /><span className="e5-weekly-open-label">Weekly responsibility</span></button>
+  return <div className="e5-weekly-chat-entry" data-weekly-outcome={showOutcome || undefined}>
+    <button ref={opener} type="button" className="e5-weekly-open" aria-label="Weekly responsibility" aria-describedby={outcome ? outcomeId : undefined} title="Weekly responsibility" onClick={event => { setTheme(event.currentTarget.closest("[data-pg]")?.getAttribute("data-pg") ?? "dark"); if (showOutcome) void refresh(); setOpen(true); }}><CalendarDays size={15} aria-hidden /><span className="e5-weekly-open-label">Weekly responsibility</span></button>
+    {outcome && <span id={outcomeId} className="e5-weekly-entry-outcome" data-weekly-entry-outcome role="status" title={outcome.title}>{outcome.text}</span>}
     <WeeklyResponsibilityDialog open={open} onOpenChange={setOpen} theme={theme} read={read} refresh={refresh} control={control} controlBusy={controlBusy} pathname={location.pathname} onReturnFocus={() => opener.current?.focus()} />
   </div>;
 }

@@ -1,0 +1,56 @@
+{
+  "acceptedMain": "c9ab5325ae318b0602eab2883a5d25269f569aaf",
+  "acceptedTree": "98eefe58fe802b612c05bffd97077738543a4dec",
+  "productInputs": 351,
+  "unchangedProductInputs": 350,
+  "candidateProductInputs": [
+    {
+      "path": "supabase/functions/_shared/paige-turn/specialist-step-label.ts",
+      "sha256": "fd0f601ed9b0239667335779220914172ad0cb97ac13aead356eb3954825fa3c",
+      "gitBlob": "13f3aacb57325f7c3ce2afc2b4d925c09801ed5c",
+      "acceptedBlob": "27ecbd9310eb23fb2480151592a479b736b0829c",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    }
+  ],
+  "productTransforms": [],
+  "explicitPorts": 178,
+  "selectedSources": [
+    {
+      "path": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88",
+      "gitBlob": "3f6a9d687dd61aa0dca564bc2e71823ff4f98fb2",
+      "acceptedBlob": "3f6a9d687dd61aa0dca564bc2e71823ff4f98fb2",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/specialist-step-label.ts",
+      "sha256": "fd0f601ed9b0239667335779220914172ad0cb97ac13aead356eb3954825fa3c",
+      "gitBlob": "13f3aacb57325f7c3ce2afc2b4d925c09801ed5c",
+      "acceptedBlob": "27ecbd9310eb23fb2480151592a479b736b0829c",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "gitBlob": "b5301f83c946ebd189e516c28dacd0233881e75d",
+      "acceptedBlob": "b5301f83c946ebd189e516c28dacd0233881e75d",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "sha256": "05fb4b0f7b025bc2e09cf7169e7f225082e3948f19d06a9c2000d2388a71e257",
+      "gitBlob": "b593e66269295cb13614c76833361312275f5f31",
+      "acceptedBlob": "b593e66269295cb13614c76833361312275f5f31",
+      "normalization": "raw",
+      "role": "accepted product source"
+    }
+  ],
+  "bundleSha256": "c38e7494653f0a37f48d27f14e8c6fe70020a09aed39bedba83b00a0db5cb2ee",
+  "htmlSha256": "ea74205d9af8dffd83988ea8e013972e626e3ebef112980d60223c4f7e9f2506",
+  "cssSha256": "6e34b4b88153bc7e287b27ff5de26c725de6d3e0ffe7dc09a1c4641130f70505",
+  "boundary": "Original native components; synthetic identity, reads and local callbacks; no authentication, provider or execution proof"
+}

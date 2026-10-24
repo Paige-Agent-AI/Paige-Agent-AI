@@ -88,7 +88,7 @@ const flush = async () => {
 type Reply = ReturnType<typeof sse> | { ok: false; status: number; json: () => Promise<unknown>; text: () => Promise<string> } | Error | Promise<unknown>;
 
 /** A scripted server: turn 1 proposes, later turns answer however the case needs. */
-function server(proposal: Array<{ tool: string; summary: string; fingerprint: string }>, ...later: Reply[]) {
+function server(proposal: Array<{ tool: string; summary: string; fingerprint: string; expires_at?: unknown }>, ...later: Reply[]) {
   const bodies: Array<Record<string, unknown>> = [];
   vi.stubGlobal("fetch", vi.fn(async (_url: unknown, init?: { body?: unknown }) => {
     bodies.push(JSON.parse(String(init?.body ?? "{}")));
@@ -139,6 +139,73 @@ async function press(button: HTMLButtonElement | undefined) {
   expect(button).toBeTruthy();
   await act(async () => { button!.click(); await flush(); });
 }
+
+describe("initial original approval deadline", () => {
+  it("retires an initial proposal at its server deadline without sending or consuming anything", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      const bodies = server([{ ...DRAFTS[0], expires_at: new Date(Date.now() + 1500).toISOString() }]);
+      const host = await mount(); await ask(host);
+      expect(buttons(host, /^Approve/)).toHaveLength(1);
+      await act(async () => { vi.advanceTimersByTime(1501); await flush(); });
+      expect(buttons(host, /^Approve|Not now/)).toHaveLength(0);
+      expect(host.textContent).toContain("This earlier proposal couldn't be verified for approval.");
+      expect(document.activeElement).toBe(host.querySelector('[data-paige-approval-recovery="unavailable"]'));
+      expect(bodies).toHaveLength(1);
+    } finally { vi.useRealTimers(); }
+  });
+  it.each([new Date(0).toISOString(), null, "not-a-deadline"])("never offers a decision for a declared expired or unverifiable deadline: %s", async (expires_at) => {
+    const bodies = server([{ ...DRAFTS[0], expires_at }]);
+    const host = await mount(); await ask(host);
+    expect(buttons(host, /^Approve|Not now/)).toHaveLength(0);
+    expect(host.textContent).toContain("This earlier proposal couldn't be verified for approval.");
+    expect(bodies).toHaveLength(1);
+  });
+  it("retires the whole original batch at its earliest deadline without shifting fingerprints", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      const bodies = server(DRAFTS.map((c, i) => ({ ...c, expires_at: new Date(Date.now() + (i ? 90000 : 1200)).toISOString() })));
+      const host = await mount(); await ask(host);
+      expect(buttons(host, /^Approve 2/)).toHaveLength(1);
+      await act(async () => { vi.advanceTimersByTime(1201); await flush(); });
+      expect(buttons(host, /^Approve|Not now/)).toHaveLength(0);
+      expect(bodies).toHaveLength(1);
+    } finally { vi.useRealTimers(); }
+  });
+  it("keeps a valid original deadline on the existing exact approval path", async () => {
+    const bodies = server([{ ...DRAFTS[0], expires_at: new Date(Date.now() + 90000).toISOString() }]);
+    const host = await mount(); await ask(host);
+    await press(buttons(host, /^Approve/)[0]);
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1].approvedConfirmations).toEqual([FP_A]);
+    expect(buttons(host, /^Approve|Not now/)).toHaveLength(0);
+  });
+  it.each([/^Approve/, /^\s*Not now/])("refuses %s if the clock passes the stored deadline before its timer runs", async (decision) => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      const now = Date.now();
+      const bodies = server([{ ...DRAFTS[0], expires_at: new Date(now + 90000).toISOString() }]);
+      const host = await mount(); await ask(host);
+      vi.setSystemTime(now + 100000);
+      await press(buttons(host, decision)[0]);
+      expect(bodies).toHaveLength(1);
+      expect(buttons(host, /^Approve|Not now/)).toHaveLength(0);
+      expect(host.textContent).toContain("This earlier proposal couldn't be verified for approval.");
+    } finally { vi.useRealTimers(); }
+  });
+  it("does not take focus away from the owner's message when the proposal expires", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      server([{ ...DRAFTS[0], expires_at: new Date(Date.now() + 1500).toISOString() }]);
+      const host = await mount(); await ask(host);
+      const composer = host.querySelector('textarea')!;
+      composer.focus();
+      await act(async () => { vi.advanceTimersByTime(1501); await flush(); });
+      expect(buttons(host, /^Approve|Not now/)).toHaveLength(0);
+      expect(document.activeElement).toBe(composer);
+    } finally { vi.useRealTimers(); }
+  });
+});
 
 describe("PAIGE chat, Solo — after Approve the card answers for what happened", () => {
   it("says Running… the moment Approve is pressed, keeps a record where it asked, and takes focus", async () => {

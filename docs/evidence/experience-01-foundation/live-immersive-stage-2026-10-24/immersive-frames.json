@@ -1,0 +1,187 @@
+{
+  "capturedAt": "2026-10-24",
+  "syntheticOnly": true,
+  "guard": "state text pre-asserted; 3D canvas (not flat fallback) required; presence-region byte-variety >= 24; terms fold geometry held; sha256 distinct per viewport+theme; IHDR == viewport",
+  "frames": {
+    "immersive-1536x770-dark-terms.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "terms",
+      "asserted": {
+        "stateText": "I understand",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "unavailable",
+        "regionByteVariety": 26,
+        "foldOverflowPx": 72,
+        "actionsBottomPx": 680.375,
+        "viewportH": 770
+      },
+      "sha256": "6a9c67856ee80b547e90ccd309666dd4839bc89da7a7b256b086dbea1255c1ac",
+      "ihdr": "1536x770"
+    },
+    "immersive-1536x770-dark-denied.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "denied",
+      "asserted": {
+        "stateText": "Microphone permission denied",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "unavailable",
+        "regionByteVariety": 44
+      },
+      "sha256": "1573a28d43e0f928e93b572aa50a6c83c45b1d5c045ebfb065c9ca0769d11e62",
+      "ihdr": "1536x770"
+    },
+    "immersive-1536x770-dark-listening.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "listening",
+      "asserted": {
+        "stateText": "Same workspace",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "listening",
+        "regionByteVariety": 70
+      },
+      "sha256": "65bb38ab6a6cd2f716e4d6f600bf4c0c7d6badaba864d7572021f9c3d9a58d7b",
+      "ihdr": "1536x770"
+    },
+    "immersive-1536x770-light-terms.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "terms",
+      "asserted": {
+        "stateText": "I understand",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "unavailable",
+        "regionByteVariety": 25,
+        "foldOverflowPx": 72,
+        "actionsBottomPx": 680.375,
+        "viewportH": 770
+      },
+      "sha256": "2a377b157ddd379ca351278a140f6d2fc028acebad1207cee34c6ebab3bdb761",
+      "ihdr": "1536x770"
+    },
+    "immersive-1536x770-light-denied.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "denied",
+      "asserted": {
+        "stateText": "Microphone permission denied",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "unavailable",
+        "regionByteVariety": 42
+      },
+      "sha256": "233a62a54929df60e113f164676720a25f3ba55fa72d80dc14baa3003816dce8",
+      "ihdr": "1536x770"
+    },
+    "immersive-1536x770-light-listening.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "listening",
+      "asserted": {
+        "stateText": "Same workspace",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "listening",
+        "regionByteVariety": 61
+      },
+      "sha256": "0026a659293000cb06080557d18d732503926e46ef0c65ba24123084e9b42c9b",
+      "ihdr": "1536x770"
+    },
+    "immersive-900x1000-dark-terms.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "terms",
+      "asserted": {
+        "stateText": "I understand",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "unavailable",
+        "regionByteVariety": 37,
+        "foldOverflowPx": 138,
+        "actionsBottomPx": 833.421875,
+        "viewportH": 1000
+      },
+      "sha256": "902783cfd1d990c65d94afd717e48fe2dc9e71acbcfe9c825305c74554200983",
+      "ihdr": "900x1000"
+    },
+    "immersive-900x1000-dark-denied.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "denied",
+      "asserted": {
+        "stateText": "Microphone permission denied",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "unavailable",
+        "regionByteVariety": 81
+      },
+      "sha256": "3ecdda802d955d72237a5889822d394f5dddb7f50399ceed0f4eae4bad86b3ee",
+      "ihdr": "900x1000"
+    },
+    "immersive-900x1000-dark-listening.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "listening",
+      "asserted": {
+        "stateText": "Same workspace",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "listening",
+        "regionByteVariety": 84
+      },
+      "sha256": "4a4bc6255b5ffba24e9b3e742f902576915cd4955c994f6955f9f73bebba41e6",
+      "ihdr": "900x1000"
+    },
+    "immersive-900x1000-light-terms.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "terms",
+      "asserted": {
+        "stateText": "I understand",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "unavailable",
+        "regionByteVariety": 37,
+        "foldOverflowPx": 138,
+        "actionsBottomPx": 833.421875,
+        "viewportH": 1000
+      },
+      "sha256": "33f0adb3fface9f44b93e40890e1ccf780b7aeb93d674fc3c67e296ea551d486",
+      "ihdr": "900x1000"
+    },
+    "immersive-900x1000-light-denied.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "denied",
+      "asserted": {
+        "stateText": "Microphone permission denied",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "unavailable",
+        "regionByteVariety": 83
+      },
+      "sha256": "b1e2fff88f393cbb4974ef2887848f054f6d5f1fe7b3b698af9062c6750f52c9",
+      "ihdr": "900x1000"
+    },
+    "immersive-900x1000-light-listening.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "listening",
+      "asserted": {
+        "stateText": "Same workspace",
+        "scene3dMounted": true,
+        "motionMode": "reduced",
+        "presenceState": "listening",
+        "regionByteVariety": 80
+      },
+      "sha256": "770563dcd1f9db18402f82f4fbb0d927f32d355891cb91821c2cfef6b831f575",
+      "ihdr": "900x1000"
+    }
+  }
+}

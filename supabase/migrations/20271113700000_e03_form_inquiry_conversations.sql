@@ -13,9 +13,11 @@ COMMENT ON COLUMN public.messages.form_submission_id IS
 CREATE UNIQUE INDEX IF NOT EXISTS messages_form_submission_once
   ON public.messages(form_submission_id) WHERE form_submission_id IS NOT NULL;
 
+-- The replaced check carries the UNION of both vocabularies: main's E09 'portal' channel and
+-- this migration's 'form' channel. Dropping 'portal' here would break every portal insert.
 ALTER TABLE public.messages DROP CONSTRAINT IF EXISTS messages_channel_type_check;
 ALTER TABLE public.messages ADD CONSTRAINT messages_channel_type_check
-  CHECK (channel_type IN ('email','sms','whatsapp','instagram','facebook','voice','form'));
+  CHECK (channel_type IN ('email','sms','whatsapp','instagram','facebook','voice','portal','form'));
 ALTER TABLE public.messages DROP CONSTRAINT IF EXISTS messages_form_inbound_only;
 ALTER TABLE public.messages ADD CONSTRAINT messages_form_inbound_only CHECK (
   (channel_type = 'form') = (form_submission_id IS NOT NULL)

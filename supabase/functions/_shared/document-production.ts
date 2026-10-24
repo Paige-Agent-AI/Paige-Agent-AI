@@ -1,10 +1,12 @@
 /**
  * Canonical document-production contract shared by chat and the durable worker.
  *
- * This module is deliberately dependency-free so edge functions and Vitest exercise the exact
+ * This module uses I/O-free canonical contracts so edge functions and Vitest exercise the exact
  * same validation. Generated model text is untrusted data: only the allowlisted block vocabulary
  * crosses into marketing_content, and a placeholder can never become a completed artifact.
  */
+import { BUSINESS_METRIC_KEYS, MARKETING_METRIC_KEYS } from './analytics-metrics/keys.ts';
+import { currentMetricVersion } from './analytics-metrics/metric-contract.ts';
 
 export const DOCUMENT_TYPES = [
   "guide",
@@ -147,23 +149,38 @@ export function validDocumentBlock(block: unknown): block is Record<string, unkn
   return normalizeDocumentBlock(block) !== null;
 }
 
-export interface BusinessReviewBrief {
+interface BusinessReviewMetadata {
   version: 1;
   doc_type: "business_review";
   title: string;
   brief: string;
   report_period: { key: "month" | "quarter"; start: string; end: string };
-  evidence_refs: string[];
+}
+type BusinessReviewMetricRequest = { metric_key: string; metric_version: string };
+export type BusinessReviewBrief = BusinessReviewMetadata & (
+  { evidence_refs: string[]; metric_requests?: never }
+  | { metric_requests: BusinessReviewMetricRequest[]; evidence_refs?: never }
+);
+
+/** Selectors request original issuer facts; they never carry authority or values. */
+export function validBusinessReviewMetricRequests(input: unknown): input is BusinessReviewMetricRequest[] {
+  return Array.isArray(input) && input.length >= 1 && input.length <= 12
+    && input.every(item => isPlainRecord(item)
+      && Object.keys(item).length === 2
+      && typeof item.metric_key === 'string'
+      && [...BUSINESS_METRIC_KEYS, ...MARKETING_METRIC_KEYS].some(key => key === item.metric_key)
+      && item.metric_version === currentMetricVersion(item.metric_key))
+    && new Set(input.map(item => item.metric_key)).size === input.length;
 }
 
-/** Shape-only preflight. Original caller-JWT submit owns authority, resolution,
+/** Shape-only preflight. Original caller-JWT submit owns authority, issuance/resolution,
  * source/period matching and immutable capture; references grant no permission. */
 export function validateBusinessReviewBrief(input: unknown):
   { ok: true; value: BusinessReviewBrief } | { ok: false; code: string; message: string } {
   const fail = () => ({ ok: false as const, code: "document_report_brief_invalid",
     message: "Choose an explicit monthly or quarterly period and verified business sources for this review." });
   if (!isPlainRecord(input) || input.version !== 1 || input.doc_type !== "business_review"
-    || Object.keys(input).some(key => !["version", "doc_type", "title", "brief", "report_period", "evidence_refs"].includes(key))
+    || Object.keys(input).some(key => !["version", "doc_type", "title", "brief", "report_period", "evidence_refs", "metric_requests"].includes(key))
     || !nonEmptyString(input.title, 200) || !nonEmptyString(input.brief, 12_000)
     || containsDocumentPlaceholder(input.title) || containsDocumentPlaceholder(input.brief)) return fail();
   const period = input.report_period;
@@ -176,10 +193,15 @@ export function validateBusinessReviewBrief(input: unknown):
   if (!isPlainRecord(period) || Object.keys(period).some(key=>!["key","start","end"].includes(key))
     || (period.key!=="month" && period.key!=="quarter") || !stamp(period.start) || !stamp(period.end)
     || Date.parse(period.end)<=Date.parse(period.start)) return fail();
-  const references=input.evidence_refs;
-  if (!Array.isArray(references) || references.length<1 || references.length>12
-    || references.some(value=>typeof value!=="string" || !/^aneb_v1_[0-9a-f]{64}$/.test(value))
-    || new Set(references).size!==references.length) return fail();
+  if (('metric_requests' in input) === ('evidence_refs' in input)) return fail();
+  if ('metric_requests' in input) {
+    if (!validBusinessReviewMetricRequests(input.metric_requests)) return fail();
+  } else {
+    const references=input.evidence_refs;
+    if (!Array.isArray(references) || references.length<1 || references.length>12
+      || references.some(value=>typeof value!=="string" || !/^aneb_v1_[0-9a-f]{64}$/.test(value))
+      || new Set(references).size!==references.length) return fail();
+  }
   return { ok: true, value: JSON.parse(JSON.stringify(input)) as BusinessReviewBrief };
 }
 

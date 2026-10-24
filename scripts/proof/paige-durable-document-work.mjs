@@ -27,6 +27,7 @@ const reportPrivacy = readFileSync(join(root, "supabase/migrations/2027111343000
 const reportArtifact = readFileSync(join(root, "supabase/migrations/20271113450002_exp02_native_report_artifact.sql"), "utf8");
 const reportCaptureMigration = readFileSync(join(root, "supabase/migrations/20271113330002_exp02_document_metric_capture.sql"), "utf8");
 const reportAdmission = readFileSync(join(root, "supabase/migrations/20271113520002_exp02_report_capture_admission.sql"), "utf8");
+const reportSourceRequests = readFileSync(join(root, "supabase/migrations/20271113740002_exp02_report_source_requests.sql"), "utf8");
 
 let port;
 let started = false;
@@ -608,6 +609,58 @@ try {
   assert.match((await psql(reportAdmission,true)).stderr,/DOCUMENT_REPORT_ADMISSION_SOURCE_CHANGED/);
   await psql(finalDefinition); assert.equal((await psql(submitMetadata)).stdout,originalSubmitMetadata);
   console.log('PASS: original public report submit, closed request, current actor, source/period refusals, atomic rollback, competing intent, one capture, expired-reference active/terminal replay and same artifact/turn/Rail; resolver port isolated, no actual issuer/worker/customer claim.');
+
+  // Original public submit with canonical source selectors. Issuer/resolver ports
+  // are explicitly isolated here; no invented metric calculation or live proof.
+  await psql(`CREATE TABLE public.proof_metric_issues(id bigserial,key text,version text,dimensions jsonb,tenant uuid);
+    CREATE FUNCTION public.issue_analytics_evidence_bundle(k text,v text,d jsonb,r text,s timestamptz,e timestamptz,t uuid)
+      RETURNS jsonb LANGUAGE plpgsql AS $$ DECLARE b jsonb; token text; BEGIN
+      IF t IS DISTINCT FROM public.current_user_tenant_id() OR NOT public._analytics_metric_authorized(t) THEN
+        RAISE EXCEPTION 'ISSUER_SCOPE_REFUSED' USING ERRCODE='42501'; END IF;
+      IF k NOT IN ('business.active_clients_current','sales.cash.recorded_received') OR v<>'1.0.0' OR d<>'{}'::jsonb THEN
+        RAISE EXCEPTION 'ISSUER_SOURCE_REFUSED' USING ERRCODE='22023'; END IF;
+      token:='aneb_v1_'||encode(public.digest(gen_random_uuid()::text,'sha256'),'hex');
+      SELECT bundle INTO b FROM public.proof_evidence_references WHERE proof_evidence_references.token='${admissionToken}';
+      b:=b||jsonb_build_object('metric_key',k,'metric_version',v,'evidence_ref',token,'account_epoch',t,
+        'reference_expires_at',clock_timestamp()+interval '15 minutes',
+        'range',jsonb_build_object('key',r,'start',s,'end',e,'bounds','[start,end)','timezone','UTC','semantics','current_snapshot'));
+      INSERT INTO public.proof_evidence_references VALUES(token,b,0);
+      INSERT INTO public.proof_metric_issues(key,version,dimensions,tenant) VALUES(k,v,d,t);
+      RETURN b; END $$;`);
+  await psql(reportSourceRequests); await psql(reportSourceRequests);
+  assert.equal((await psql(submitMetadata)).stdout,originalSubmitMetadata);
+  const {evidence_refs:_oldRefs,...requestMetadata}=request;
+  const plan={...requestMetadata,metric_requests:[{metric_key:'sales.cash.recorded_received',metric_version:'1.0.0'},
+    {metric_key:'business.active_clients_current',metric_version:'1.0.0'}]};
+  const planIntent=randomUUID(),planResults=await Promise.all([reportSubmit(planIntent,plan),reportSubmit(planIntent,plan)]);
+  const planRows=planResults.map(r=>firstLineContaining(r.stdout,'|claimed|').split('|'));
+  assert.equal(planRows[0][0],planRows[1][0]);assert.deepEqual(planRows.map(r=>r[2]).sort(),['false','true']);
+  const planId=planRows[0][0],plannedCapture=(await psql(`SELECT request_payload::text FROM public.paige_durable_work WHERE id='${planId}';`)).stdout;
+  assert.deepEqual(JSON.parse(plannedCapture).report_evidence.measurements.map(m=>m.metric_key),plan.metric_requests.map(m=>m.metric_key));
+  assert.equal((await psql("SELECT string_agg(key,',' ORDER BY id) FROM public.proof_metric_issues;")).stdout,
+    'business.active_clients_current,sales.cash.recorded_received','Use original issuer in canonical lock order while retaining requested display order');
+  const planCounts=await counts(),issues=()=>psql('SELECT count(*) FROM public.proof_metric_issues;');
+  for(const metric_requests of [[],null,[null],[{...plan.metric_requests[0],values:{count:999}}],
+    [plan.metric_requests[0],plan.metric_requests[0]],[{...plan.metric_requests[0],metric_version:'9.0.0'}],
+    [plan.metric_requests[1],{metric_key:'zz.invalid',metric_version:'1.0.0'}]]) {
+    assert.match((await reportSubmit(randomUUID(),{...plan,metric_requests},true)).stderr,/22023/);
+  }
+  assert.match((await reportSubmit(randomUUID(),{...plan,evidence_refs:[admissionToken]},true)).stderr,/22023/);
+  assert.equal(await counts(),planCounts);assert.equal((await issues()).stdout,'2','All refused plans roll back work, wakeups and issuer effects');
+  for(const [retire,restore] of admissionChanges){await psql(retire);
+    assert.match((await reportSubmit(planIntent,plan,true)).stderr,/42501/);await psql(restore);}
+  assert.match((await reportSubmit(planIntent,{...plan,metric_requests:[...plan.metric_requests].reverse()},true)).stderr,/DURABLE_WORK_INTENT_REPLAY_MISMATCH/);
+  assert.match((await reportSubmit(planIntent,request,true)).stderr,/DURABLE_WORK_INTENT_REPLAY_MISMATCH/);
+  await psql("UPDATE public.proof_evidence_references SET bundle=jsonb_set(bundle,'{reference_expires_at}',to_jsonb((now()-interval '1 second')::text));");
+  assert.equal(firstLineContaining((await reportSubmit(planIntent,plan)).stdout,planId),`${planId}|claimed|true`);
+  assert.equal((await issues()).stdout,'2');
+  assert.equal((await psql(`SELECT request_payload::text FROM public.paige_durable_work WHERE id='${planId}';`)).stdout,plannedCapture);
+  assert.equal((await psql("SELECT NOT p.prosecdef AND p.proconfig=ARRAY['search_path=\"\"','TimeZone=UTC'] AND NOT has_function_privilege('anon',p.oid,'EXECUTE') AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE') AND NOT has_function_privilege('service_role',p.oid,'EXECUTE') AND NOT EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE a.grantee=0) FROM pg_proc p WHERE p.oid='public._paige_document_capture_metric_requests(jsonb,text,timestamptz,timestamptz)'::regprocedure;")).stdout,'t');
+  const plannedDefinition=(await psql("SELECT pg_get_functiondef('public.submit_paige_document_work(uuid,uuid,jsonb)'::regprocedure);")).stdout;
+  await psql(plannedDefinition.replace('  _scope text;','  _scope text; -- isolated new-source canary'));
+  assert.match((await psql(reportSourceRequests,true)).stderr,/DOCUMENT_REPORT_REQUEST_SOURCE_CHANGED/);
+  await psql(plannedDefinition);assert.equal((await psql(submitMetadata)).stdout,originalSubmitMetadata);
+  console.log('PASS: original native source-plan admission, ordered capture, same-intent concurrency/replay, current authority and rollback; issuer/resolver ports isolated, actual issuer integration/customer proof owed.');
 
   const receiptIntent = randomUUID();
   const receiptSubmit = await psql(submitSql(receiptIntent));

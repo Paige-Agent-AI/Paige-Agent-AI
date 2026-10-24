@@ -1,3 +1,20 @@
+## EXP02 original report source requests — October24 source candidate
+
+The original document_generate report path now has a local closed source-request
+alternative to reference-based admission: canonical Metric issuer/resolver facts
+are captured once under the original work lock, retaining the existing worker,
+private artifact, completion turn and Rail. Exact replay never reissues facts;
+legacy references/nine document types and current authority remain intact.
+[Bounded evidence](../evidence/ui-delivery/e2-report-source-requests.md):116 owning
+tests, isolated native proof and scoped lint; genuine full-schema issuer suite,
+exact-head review/CI, ordered migration/Edge readback and actual customer settlement
+remain owed. Original E03/E10 migration700000 collision is an originating release
+hold; unapplied740002 follows existing E04/E09 reservations, with no history rewrite.
+No shared Chat entry edit, new engine/store, provider or action activation.
+CAP014/015 remain Unverified, full19/nine and the consultant SOLO launch scenario
+remain required. Original CPU-failed uncertain monthly request stays unretried
+with EXP05; this source foundation is not root-cause or recovery evidence.
+
 ## EXP09 access and invitation source releases — October24 UTC
 
 Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc0b5dad per-business original invitation admission are actually released and read back. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records exact heads/parents/trees, accurate lower-assurance sequential reviews, all required checks, normal migrations620009/630009, all16 original ABI/ACL/source pins, unchanged S7 and actual READY web/public versions. Receipts6377892283/6378046694/6378167524. First630009 deployment57014 is retained; precisely bounded read-only administrative-session cleanup (later identified as including a legitimate CI snapshot; affected microphone verification must rerun) and unchanged normal retry succeeded, with no customer/data/role/history/DDL workaround. Native453/294/61/all seven/grant proof is engineering evidence, not ordinary customer acceptance. Private CURA history remains separate from shared Conversations; current microphone2718/attachments/permitted research work stays in the original relationship packet. Full42/seven-pillar authenticated owner/client/reload/revoke/device and Founder Acceptance remain unfinished; one complete integrated evaluation, no per-slice owner request. This mechanical cross-reference changes no capability/algorithm maturity and has no recursive release row.

@@ -46,6 +46,8 @@ import { cn } from "@/lib/utils";
 import type { QuickChip } from "@/components/paige/commandCenterTypes";
 import { usePaigeThreads, type PaigeThread } from "@/hooks/usePaigeThreads";
 import { readOriginalReminderHistory, type OriginalReminderHistory } from "@/components/chat/reminderHistory";
+import { originalSpecialistOrigin, readOriginalSpecialistHistory, type OriginalSpecialistHistory } from "@/components/chat/specialistHistory";
+import { OriginalSpecialistResult } from "@/components/chat/OriginalSpecialistResult";
 import { readOriginalCuraPreparationHistory, preparationWorkLabel, type OriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -156,6 +158,9 @@ type Message = {
   originalPreparationOrigin?: OriginalPreparationScope;
   originalCuraPreparationHistory?: OriginalCuraPreparationHistory;
   originalCuraPreparationHistoryStatus?: "checking" | "unverified";
+  originalSpecialistOrigin?: OriginalPreparationScope;
+  originalSpecialistHistory?: OriginalSpecialistHistory;
+  originalSpecialistHistoryStatus?: "checking" | "unverified";
   recoveredApprovalExpiresAt?: string;
   /** Solo: what the person decided on this turn's card. The card settles into a record where it
    *  was asked, with no button left to press twice. Live session only; a reloaded turn shows the
@@ -822,6 +827,7 @@ const PaigeAIChatInner = ({
     setMessages(previous => previous.map(message => ({ ...message,
       ...(message.originalReminderHistoryStatus === "checking" ? { originalReminderHistoryStatus: "unverified" as const } : {}),
       ...(message.originalCuraPreparationHistoryStatus === "checking" ? { originalCuraPreparationHistoryStatus: "unverified" as const } : {}),
+      ...(message.originalSpecialistHistoryStatus === "checking" ? { originalSpecialistHistoryStatus: "unverified" as const } : {}),
     })));
     undispatchedDraftRef.current = null;
     submissionPreflightRef.current = false;
@@ -1223,6 +1229,8 @@ const PaigeAIChatInner = ({
           queued: queued?.length ? queued : undefined,
           confirm: confirm?.length ? confirm : undefined,
           confirmResolved: true,
+          ...(activeTenantId && originThreadId ? { originalSpecialistOrigin:
+            originalSpecialistOrigin(t, { threadId: originThreadId, tenantId: activeTenantId }) ?? undefined } : {}),
           // This only offers an inert read. Native status re-proves the actual
           // actor, business, original card and publisher authority independently.
           ...(t.role === "assistant" && t.interactive_terminal_state === "WAIT_APPROVAL"
@@ -1360,20 +1368,23 @@ const PaigeAIChatInner = ({
 
   const restoreOriginalReminderHistory = async (
     threadId: string, turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, scopeStillCurrent: () => boolean,
-    curaOrigin?: OriginalPreparationScope,
+    origin?: OriginalPreparationScope, projection: "cura" | "specialist" = "cura",
   ) => {
-    const cura = !!curaOrigin;
+    const specialist = !!origin && projection === "specialist";
+    const cura = !!origin && !specialist;
     if (!soloTenantSafety || platform || !activeTenantId || !scopeStillCurrent()
-      || (cura ? typeof threadsApi.loadOriginalCuraPreparationHistory !== "function"
+      || (specialist ? typeof threadsApi.loadOriginalSpecialistHistory !== "function"
+        : cura ? typeof threadsApi.loadOriginalCuraPreparationHistory !== "function"
         : typeof threadsApi.loadOriginalReminderHistory !== "function")
-      || curaOrigin && (curaOrigin.tenantId !== activeTenantId || curaOrigin.threadId !== threadId)) return;
-    // One physical read owner and lifecycle for both original projections.
+      || origin && (origin.tenantId !== activeTenantId || origin.threadId !== threadId)) return;
+    // One physical read owner and lifecycle for all original projections.
     originalReminderHydrationRef.current?.cancel();
     setMessages(previous => previous.map(message => ({ ...message,
       ...(message.originalReminderHistoryStatus === "checking" ? { originalReminderHistoryStatus: "unverified" as const } : {}),
       ...(message.originalCuraPreparationHistoryStatus === "checking" ? { originalCuraPreparationHistoryStatus: "unverified" as const } : {}),
+      ...(message.originalSpecialistHistoryStatus === "checking" ? { originalSpecialistHistoryStatus: "unverified" as const } : {}),
     })));
-    const candidate = curaOrigin ? { id: curaOrigin.turnId, interactive_intent_id: curaOrigin.intentId }
+    const candidate = origin ? { id: origin.turnId, interactive_intent_id: origin.intentId }
       : [...turns].reverse().find(turn => turn.role === "assistant"
         && turn.interactive_terminal_state === "WAIT_APPROVAL" && !!turn.interactive_intent_id
         && Array.isArray(turn.bundle_ref?.paige_confirm) && turn.bundle_ref.paige_confirm.some(card =>
@@ -1394,14 +1405,24 @@ const PaigeAIChatInner = ({
       && scope.epoch === requestScopeRef.current.epoch
       && composerDraftHandlesMatch(scope.handle, requestScopeRef.current.handle);
     const markUnverified = () => setMessages(previous => previous.map(message => message.id === turnId
-      ? cura ? { ...message, originalCuraPreparationHistory: undefined, originalCuraPreparationHistoryStatus: "unverified" }
+      ? specialist ? { ...message, originalSpecialistHistory: undefined, originalSpecialistHistoryStatus: "unverified" }
+        : cura ? { ...message, originalCuraPreparationHistory: undefined, originalCuraPreparationHistoryStatus: "unverified" }
         : { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" } : message));
     const timer = window.setTimeout(() => { if (current()) markUnverified(); owner.cancel(); }, 10_000);
     setMessages(previous => previous.map(message => message.id === turnId
-      ? cura ? { ...message, originalCuraPreparationHistoryStatus: "checking" }
+      ? specialist ? { ...message, originalSpecialistHistory: undefined, originalSpecialistHistoryStatus: "checking" }
+        : cura ? { ...message, originalCuraPreparationHistoryStatus: "checking" }
         : { ...message, originalReminderHistoryStatus: "checking" } : message));
     try {
-      if (cura) {
+      if (specialist) {
+        const raw = await threadsApi.loadOriginalSpecialistHistory(threadId, turnId, intentId, controller.signal);
+        if (!current()) return;
+        const history = readOriginalSpecialistHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
+        setMessages(previous => previous.map(message => message.id === turnId
+          ? history ? { ...message, originalSpecialistHistory: history, originalSpecialistHistoryStatus: undefined }
+            : { ...message, originalSpecialistHistory: undefined, originalSpecialistHistoryStatus: "unverified" }
+          : message));
+      } else if (cura) {
         const raw = await threadsApi.loadOriginalCuraPreparationHistory(threadId, turnId, intentId, controller.signal);
         if (!current()) return;
         const history = readOriginalCuraPreparationHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
@@ -3618,6 +3639,17 @@ const PaigeAIChatInner = ({
                               </p>
                             ))}
                           </div>
+                        )}
+                        {soloTenantSafety && !platform && message.originalSpecialistOrigin
+                          && typeof threadsApi.loadOriginalSpecialistHistory === "function" && (
+                          <OriginalSpecialistResult history={message.originalSpecialistHistory}
+                            status={message.originalSpecialistHistoryStatus} blocked={composerSendBlocked}
+                            onCheck={() => {
+                              if (message.originalSpecialistHistoryStatus === "checking") return;
+                              const origin = message.originalSpecialistOrigin!;
+                              if (origin.threadId !== activeThreadId) return;
+                              void restoreOriginalReminderHistory(origin.threadId, [], () => composerScopeRef.current.writable, origin, "specialist");
+                            }} />
                         )}
                         {/* #29 — inline handoff cards for the deliverables Paige produced this turn. Open
                             renders the real artifact; Send prefills the composer so Paige drives the send

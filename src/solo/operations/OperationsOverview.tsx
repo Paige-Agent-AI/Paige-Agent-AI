@@ -56,7 +56,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
 
   return <section className="ops-views ops-operating-desk" aria-label="Overview">
     <header className="ops-desk-heading"><h1 tabIndex={-1}>Your operating week</h1>
-      <div className="ops-desk-actions"><WeeklyResponsibilityEntry />
+      <div className="ops-desk-actions"><WeeklyResponsibilityEntry showOutcome />
         {onReviewWithPaige && <button type="button" className="ops-desk-primary" onClick={onReviewWithPaige}><Sparkles size={16} aria-hidden="true" />Plan with ZION</button>}
       </div>
     </header>

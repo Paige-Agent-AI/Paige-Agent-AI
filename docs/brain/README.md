@@ -299,6 +299,24 @@ PASS103.69seconds after unchanged retry of a pre-assertion sandbox native-cache
 startup failure. All17 original render-input pins/19 original frame hashes match;
 no reader or harness changes. Final exact-head checks still mandatory.
 
+## EXP04 original Sales reference continuity — October24 source release
+
+Original2728 reviewedd4eb35aa56af2df30f01f6b6c879a1d627217f7a/LOWER5636851529 merged
+02a901fd4946759b6bddab71b03d1d590e387106/tree4413f66112f8a46c0b3c8f676fa55042e4d841ab after
+all10 applicable checks SUCCESS, normal UI-only PreviewSKIP/two web SUCCESS.
+Normal production dpl_9bFXtRwfjha5obPfUSm9gUDKexoT READY; both public versions
+exact02a901fd4-mvly2y80/null and actual served SoloEntry f82bcc99/allfour repair
+markers verified05:19:37UTC. [Original receipt6380313655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2728#issuecomment-6380313655), sole
+Master4.0 row and [owning evidence](../evidence/ui-delivery/e04-sales-metric-continuity.md)
+retain exact identities, immutable captured source and original failed probes.
+Automatic/foreground reads use the same original unexpired native reference;
+refusal hides figures without auto-issuance. Explicit Refresh/expiry/new identity
+retain original authority. No schema, Edge, provider, date engine or writer change.
+Actual Finance/VERA/Chat handoff, native roles/cohorts/reload, CentralQA, full12 and
+one founder acceptance remain UNVERIFIED; original EXP02 consumer handoff remains.
+Bounded source/render proof does not promote Algorithm/Capabilities maturity.
+No recursive closeout release, customer announcement or restricted activation.
+
 ## EXP04 exact prepared-field seal — October23 source release
 
 Original1352 renderer prerequisite2655 is SOURCE RELEASE VERIFIED, not an

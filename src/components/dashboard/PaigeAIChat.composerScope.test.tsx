@@ -1222,7 +1222,7 @@ data: [DONE]
     // submission latch is held and the request has not left the browser yet.
     let resolveSession!: (value: { data: { session: { access_token: string } } }) => void;
     vi.mocked(supabase.auth.getSession).mockImplementationOnce(
-      () => new Promise((resolve) => { resolveSession = resolve; }),
+      () => new Promise((resolve) => { resolveSession = resolve as unknown as typeof resolveSession; }),
     );
     await type("second thought");
     await act(async () => { send().click(); await settle(); });

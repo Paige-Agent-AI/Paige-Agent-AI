@@ -1,0 +1,31 @@
+{
+  "scope": "LOCAL pure source-data consumer only; unmounted and unadmitted. No actual S3/customer/provider/model/production proof.",
+  "sourceHashes": {
+    "supabase/functions/_shared/client-portal-file-input.ts": "4acbef4c62a43cf918ffdf31662f7e4685d4ee8e26358b54f7b1cccbed83ad1f",
+    "src/lib/customer-file-input.test.ts": "91e4849cd1462b9cb779a4032b4592b5e13102e54dfd1afe3330a56def5832df"
+  },
+  "tests": {
+    "cases": 8,
+    "suites": 1,
+    "result": "PASS",
+    "runner": "Vitest threads one worker;3.96s final run"
+  },
+  "lint": "PASS",
+  "strictTypes": "PASS for both new native reader modules and owning tests; no full project or Deno claim",
+  "behavior": [
+    "bound accepted native intent required",
+    "original ordered fixed Storage paths only",
+    "original processing authority before and after read",
+    "current native snapshot and projection before and after download",
+    "provided original byte budget and actual declared/body size/MIME checks",
+    "parent cancellation and whole-read deadline retire late results",
+    "actual in-memory returned bytes are SHA-256 hashed without another store or receipt"
+  ],
+  "limits": [
+    "ports are synthetic; no actual stored customer bytes read",
+    "downloaded/hashed does not mean parsed, extracted, model-read, sent or published",
+    "mounted original handler/processor/model/private history and customer proof remain unfinished",
+    "canonical shared attachment-extract currently supports PDF/images and skips Office binaries; DOCX storage is not DOCX model reading"
+  ],
+  "activation": "No change"
+}

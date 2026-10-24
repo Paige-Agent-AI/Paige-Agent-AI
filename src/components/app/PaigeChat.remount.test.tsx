@@ -29,6 +29,13 @@ vi.mock("@/lib/playbook", () => ({
 }));
 const portalFixture=vi.hoisted(()=>({phase:"not-client",frame:null as unknown,checking:false,
   read:vi.fn(),outcome:vi.fn(),reload:vi.fn(),summary:vi.fn()}));
+const privateFileFixture=vi.hoisted(()=>({files:[] as Array<{id:string;file:File;mime:string;phase:"selected"|"saved"|"check"|"saving"}>,
+ prepare:vi.fn(),release:vi.fn(),paste:vi.fn(),drop:vi.fn(),stop:vi.fn(),open:vi.fn()}));
+vi.mock("@/hooks/useCustomerChatAttachments",()=>({useCustomerChatAttachments:()=>({
+ files:privateFileFixture.files,issues:[],notice:"",busy:false,available:true,nativeUpload:{kind:"idle",id:null},
+ prepare:privateFileFixture.prepare,releaseSentSelection:privateFileFixture.release,handlePaste:privateFileFixture.paste,handleDrop:privateFileFixture.drop,
+ handleDragOver:vi.fn(),append:vi.fn(),remove:vi.fn(),check:vi.fn(),resume:vi.fn(),stop:privateFileFixture.stop,openFile:privateFileFixture.open,
+})}));
 const memoryFixture = vi.hoisted(() => ({
   actor: "d2000000-0000-4000-8000-000000000001", tenant: "d2100000-0000-4000-8000-000000000001" as string | null,
   loading: false, scope: vi.fn(), session: vi.fn(), auth: vi.fn(), unsubscribe:vi.fn(),
@@ -114,6 +121,7 @@ describe("normal PaigeChat remount scroll behavior", () => {
   let root: Root;
 
   beforeEach(() => {
+    privateFileFixture.files=[];privateFileFixture.prepare.mockReset();privateFileFixture.release.mockReset();privateFileFixture.paste.mockReset();privateFileFixture.drop.mockReset();privateFileFixture.open.mockReset();
     vi.stubGlobal("ResizeObserver", HarnessResizeObserver);
     portalFixture.phase="not-client";portalFixture.frame=null;portalFixture.checking=false;
     staffFixture.isAdmin=true;staffFixture.loading=false;
@@ -715,6 +723,54 @@ describe("normal PaigeChat remount scroll behavior", () => {
     const other=document.createElement("textarea");document.body.append(other);other.focus();
     await act(async()=>{pending.resolve({executor_active:false,settled:true});await memoryFlush();});
     expect(document.activeElement).toBe(other);other.remove();
+  });
+
+  // Original component; only the file/native data boundary is synthetic here.
+  it("waits for verified private uploads, sends IDs only, and clears selection only after the exact original saved receipt",async()=>{
+    const props=returningCustomer(),thread="e0945000-0000-4000-8000-000000000001",id="e0995000-0000-4000-8000-000000000001";
+    privateFileFixture.files=[{id,file:new File(["test"],"Notes.pdf",{type:"application/pdf"}),mime:"application/pdf",phase:"selected"}];
+    const pending=pendingMemory<{status:"ready";ids:string[]}>();privateFileFixture.prepare.mockReturnValueOnce(pending.promise);
+    portalFixture.read.mockResolvedValue({threadId:thread,messages:[]});
+    const sent=vi.fn(async(_url:unknown,options:RequestInit)=>{const payload=JSON.parse(String(options.body));
+      portalFixture.read.mockResolvedValue({threadId:thread,messages:[{id:"saved-user",role:"user",content:"Read my files",requestIntentId:payload.requestIntentId,files:[{id,filename:"Notes.pdf"}]}]});
+      return new Response('data: {"choices":[{"delta":{"content":"Here is what I could read."}}]}\n\ndata: [DONE]\n\n');});vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const input=host.querySelector("textarea")!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(input,"Read my files");input.dispatchEvent(new Event("input",{bubbles:true}));});
+    await act(async()=>{input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));await memoryFlush();});
+    expect(sent).not.toHaveBeenCalled();expect(privateFileFixture.release).not.toHaveBeenCalled();
+    await act(async()=>{pending.resolve({status:"ready",ids:[id]});await memoryFlush();});
+    expect(sent).toHaveBeenCalledTimes(1);const payload=JSON.parse(String(sent.mock.calls[0][1].body));expect(payload.customerFileIds).toEqual([id]);
+    for(const forbidden of ["document","attachments","clientId","sessionDocumentContext"])expect(payload).not.toHaveProperty(forbidden);
+    expect(privateFileFixture.release).toHaveBeenCalledWith([id]);expect(host.textContent).toContain("Notes.pdf");
+  });
+  it("keeps the files and draft when an upload is unconfirmed, without dispatching Chat",async()=>{
+    privateFileFixture.files=[{id:"original",file:new File(["test"],"Notes.pdf"),mime:"application/pdf",phase:"selected"}];privateFileFixture.prepare.mockResolvedValue({status:"not_ready"});
+    const {input,sent}=await prepareCustomerRecovery(async()=>new Response("unused"));
+    expect(sent).not.toHaveBeenCalled();expect(privateFileFixture.release).not.toHaveBeenCalled();expect(input.value).toBe("My original private question");
+  });
+  it("delegates real file paste in the customer composer without automatically sending",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"private-thread",messages:[]});const sent=vi.fn();vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const event=new Event("paste",{bubbles:true,cancelable:true});Object.defineProperty(event,"clipboardData",{value:{files:[new File(["a"],"One.pdf"),new File(["b"],"Two.pdf")]}});
+    act(()=>host.querySelector("textarea")!.dispatchEvent(event));expect(privateFileFixture.paste).toHaveBeenCalledTimes(1);expect(sent).not.toHaveBeenCalled();
+  });
+
+  it("reopens a saved private file only after original authorization and exposes a short-lived link",async()=>{
+    const props=returningCustomer();const file={id:"e0995000-0000-4000-8000-000000000001",filename:"Saved notes.pdf",state:"ready",source:"you",storage_path:"test/path"};
+    portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",messages:[{id:"saved-user",role:"user",content:"Question",files:[file]}]});
+    privateFileFixture.open.mockResolvedValue({view:"https://storage.tests.invalid/private",download:"https://storage.tests.invalid/private",expiresAt:Date.now()+60000});
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    await act(async()=>{[...host.querySelectorAll("button")].find(button=>button.textContent==="Saved notes.pdf")!.click();await memoryFlush();});
+    expect(privateFileFixture.open).toHaveBeenCalledWith(file);expect(host.querySelector('a[href="https://storage.tests.invalid/private"]')).not.toBeNull();
+  });
+
+  it("blocks Send while the original private upload needs a status check",async()=>{
+    const props=returningCustomer();privateFileFixture.files=[{id:"original",file:new File(["test"],"Notes.pdf"),mime:"application/pdf",phase:"check"}];
+    portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",messages:[]});const sent=vi.fn();vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    expect(host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!.disabled).toBe(true);
+    await act(async()=>{host.querySelector("textarea")!.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));await memoryFlush();});
+    expect(privateFileFixture.prepare).not.toHaveBeenCalled();expect(sent).not.toHaveBeenCalled();
   });
 
 });

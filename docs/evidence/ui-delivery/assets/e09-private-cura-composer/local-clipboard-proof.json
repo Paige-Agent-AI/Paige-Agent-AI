@@ -1,0 +1,33 @@
+{
+  "recordedAt": "2026-10-24T11:51:36.951Z",
+  "scope": "Unpublished private composer callbacks; no mounted customer path",
+  "base": "a200cd393421cd5977f2b07da397a7507256ce95",
+  "sourceHashes": {
+    "src/hooks/useChatDocumentUpload.ts": "e1970b452890879d58ec41615f2d138c97b247f03672c0b94a751f79c72aa95a",
+    "src/hooks/useCustomerChatAttachments.ts": "42ddc98a52475ad95aa21c9745ffa5c799ca6752a77c40d84253c5cd9e1b10f0",
+    "src/hooks/useCustomerChatAttachments.test.tsx": "e660272c62a7a4c591f1d3d794bd4593e75a4584830fa984c01b02cdf1fbdc3c"
+  },
+  "ownerExportOnlyInverse": true,
+  "beforeImplementation": {
+    "newTests": 4,
+    "result": "FAIL: handlePaste/handleDrop absent; original13 pass"
+  },
+  "afterImplementation": {
+    "tests": 51,
+    "suites": 2,
+    "result": "PASS",
+    "durationSeconds": 2.16,
+    "ownerExpectedUnreadableError": "intentional regression fixture; original assertions pass"
+  },
+  "lint": "PASS",
+  "behavior": [
+    "original actual file list preferred over duplicate clipboard items",
+    "real file items fallback only",
+    "plain text/HTML/URLs native insertion/no implicit fetch",
+    "same private bulk selection, no upload on paste/drop",
+    "stale/unavailable callbacks do not cross scope"
+  ],
+  "activation": "NONE",
+  "mounted": "NO",
+  "actualClipboardStorageModelCustomerProof": "UNVERIFIED"
+}

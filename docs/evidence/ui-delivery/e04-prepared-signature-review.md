@@ -88,3 +88,30 @@ None in the bounded read increment after the single correction batch. Missing pr
 Same saved PDF/source/recipients, native authority and one original editor/leave guard; retain honest approval/sending unavailability.
 
 Documenter fallback: No changes to DESIGN.md/.impeccable/design.json. Checked actual components/CSS, original index.css/solo tokens, source snapshots and10 final frames. Palette: original Mineral/Obsidian; type: native fixed UI scale; structure: document workspace and signer sequence; controls:44px native actions/focus; source inspection: optional wrapping references. Four incumbent paper/overlay advisories are retained and not canonized as new system tokens. Source/provider/authenticated/whole-Experience gaps remain unaccepted.
+
+## Required compiler gate repair — October24
+
+Original192bfc required verify120785895788/run40064875758 failed Typecheck
+ratchet step93. Primary and official provider log reads returned HTTP502; actual
+provider step metadata confirms that failure. The unchanged local ratchet using
+the locked/installed TypeScript5.9.3 independently identified three new TS2540
+assignments in agreementDocumentApi.test.ts: review digest, PDF digest and signer
+email on a readonly DTO. No baseline or production type is loosened.
+
+The hostile transport fixture already uses structuredClone. A test-only recursive
+mutable wire type now describes that copied JSON so the SAME intentionally bad
+wire cases remain legal to construct. Every assertion, variant, input and timeout
+is retained. Actual before/after emitted test JavaScript is byte-identical,
+SHA2562f19fdfd648aec123586be3be0d734220ac21ad11d917c4b2ee968b6e3468db2.
+Scoped original SDK57/57 PASS42.73s; the full repaired ratchet/new exact-head CI
+remain separate pending gates. [Type-only continuity](assets/e04-prepared-signature-review/source-typecheck-continuity.json)
+preserves the original snapshot, all32 other captured runtime/read/test inputs,
+current original producer CI,196 frozen compiled files,10 native PNGs/sidecars.
+The earlier all33-byte statement applies to its dated192bfc parent: this one
+non-rendering test file has changed types only, with its exact inverse recorded.
+
+This is no new visual/source-runtime behavior or fresh render claim. Original
+visual finish disposition does not waive the required compiler/CI release hold.
+No sender, approval, signature, native writer, permission, provider, algorithm or
+Capabilities state changed. All authenticated/CentralQA/full12/founder acceptance
+and the prepared-send/assigned-input/final-seal integration remain unfinished.

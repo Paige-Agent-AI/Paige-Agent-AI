@@ -64,3 +64,22 @@ passes264 assertions/nine suites and the exact original browser-parser inverse.
 Actual main5ff2e588 composes at76aae7c3 without changing those owning source/test
 paths. Scoped ES2020 compilation, original live dependency audit, focused lint,
 separate correction review and required new-head CI remain independent evidence.
+
+## Production source release — October24 UTC
+
+Exactadfebf0047762508b9d18c59dae1b5f01a4fad8f (LOWER6386232702/6386573621) passed
+all11 final-head checks/genuine Preview and both web statuses, then merged actual
+77b88428e0d5c79c57f699bd8fec32e5f6064642. Parentsebbd+adfeb and tree
+1d0f4b1c883308c76989969745dd5ff8d9a6ffc9 equal the inspected union; all six owning
+blobs are unchanged. Actual web5XRe READY and both public77b-mvmlvuip/null read back
+16:23:55–56UTC. Normal Edge40111131429/120922900694 SUCCESS with affected/retired0,
+no deployed entry or tag advancement. No own migration; #2758 native840003 is applied.
+
+[Actual readback](../exp05-weekly-chat-source-production-readback.json) and
+[original receipt6386642987](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2762#issuecomment-6386642987)
+preserve the repaired ES2020 failure and source/production identities. This is
+unadmitted recovery preparation and original parser extraction, not Chat mutation,
+new receipt, recurring authorization, ZION execution, Live or customer acceptance.
+There is no DOM/style/geometry delta or new rendered-interface claim. Actual
+approved record/Rail/reload, equivalent SOLO cohorts and complete founder evaluation
+remain owed; all existing ten-outcome/E5-CV1–9 acceptance requirements are preserved.

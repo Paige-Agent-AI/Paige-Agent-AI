@@ -1,0 +1,207 @@
+{
+  "result": "PASS",
+  "at": "2026-10-24T09:15:13.231Z",
+  "project": "fymtisosylqfmzgwwlhg",
+  "branch": "692a3b05-e9fd-4f25-98fd-544e0f76d302",
+  "frontier": "20271113820004",
+  "has_800005": true,
+  "has_810009": false,
+  "auth_users": 0,
+  "clients": 0,
+  "agreements": 0,
+  "files": 0,
+  "functions": [
+    {
+      "name": "_execute_sales_effectuation",
+      "identity": "_execute_sales_effectuation(uuid,uuid,uuid,jsonb,jsonb)",
+      "body_md5": "d0fadc565ec92654a3622525557fbccc",
+      "definer": true,
+      "volatility": "v",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "_paige_accepted_commercial_payload",
+      "identity": "_paige_accepted_commercial_payload(paige_agreements)",
+      "body_md5": "235026b37dfde7b0f151588c680c8ca9",
+      "definer": false,
+      "volatility": "s",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "_preview_sales_effectuation",
+      "identity": "_preview_sales_effectuation(uuid,uuid,jsonb)",
+      "body_md5": "66e1e8dd52f1560e8229c3c0e3f49115",
+      "definer": true,
+      "volatility": "v",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "_record_agreement_signature",
+      "identity": "_record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)",
+      "body_md5": "3a2fa340fca9838aa9c6737f1e41ae61",
+      "definer": false,
+      "volatility": "v",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "name": "_sales_effective_provenance_guard",
+      "identity": "_sales_effective_provenance_guard()",
+      "body_md5": "5250ce89de90a007b4ff8a0dff9b0072",
+      "definer": false,
+      "volatility": "v",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "_set_client_agreement_status",
+      "identity": "_set_client_agreement_status(uuid,uuid,uuid,text,timestamp with time zone)",
+      "body_md5": "b3a2fbca5ad01acb5bfb5ed1fbd5fc50",
+      "definer": false,
+      "volatility": "v",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "_validate_sales_effectuation",
+      "identity": "_validate_sales_effectuation(jsonb)",
+      "body_md5": "c72a8fdabb404c18505de615c04133a1",
+      "definer": false,
+      "volatility": "i",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "_workspace_event_display",
+      "identity": "_workspace_event_display(text,text)",
+      "body_md5": "74ae364c374aa2f6be09fab557617e46",
+      "definer": false,
+      "volatility": "i",
+      "settings": [
+        "search_path=public, pg_catalog"
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "_workspace_event_display",
+      "identity": "_workspace_event_display(text,text,text)",
+      "body_md5": "e551ecbcca75dda0764353647757feed",
+      "definer": false,
+      "volatility": "i",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "_workspace_event_display_before_e04_effectuation",
+      "identity": "_workspace_event_display_before_e04_effectuation(text,text,text)",
+      "body_md5": "8798140accd05c06fa406796efd7dbdd",
+      "definer": false,
+      "volatility": "i",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": [
+        "postgres=X/postgres"
+      ]
+    },
+    {
+      "name": "execute_sales_collection_command",
+      "identity": "execute_sales_collection_command(uuid,uuid,uuid,jsonb,jsonb)",
+      "body_md5": "4a25621d37c0b292aa3b38d5b7f055f2",
+      "definer": true,
+      "volatility": "v",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "name": "preview_sales_collection_command",
+      "identity": "preview_sales_collection_command(uuid,uuid,jsonb)",
+      "body_md5": "9ccde31a3199fefc4aac2afbd9547fc0",
+      "definer": true,
+      "volatility": "v",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "name": "read_sales_collection_command_result",
+      "identity": "read_sales_collection_command_result(uuid,uuid,uuid,jsonb)",
+      "body_md5": "ed9ee0effd12873fd7853c887bc7de8c",
+      "definer": true,
+      "volatility": "v",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "name": "set_client_agreement_status",
+      "identity": "set_client_agreement_status(uuid,uuid,text,timestamp with time zone)",
+      "body_md5": "f88b77e51d282ef5ecc8b951297a99a6",
+      "definer": true,
+      "volatility": "v",
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ]
+    }
+  ],
+  "originalSourceHead": "a6b3aca1fe275d9dd5f6cf3fd50a80b4a681bc0b",
+  "verifiedTargetFunctions": 13,
+  "untouchedAdditionalOverload": "_workspace_event_display(text,text), separately listed; not a new E04 function",
+  "sqlSHA256": "57d7f2b1c4445605641e2484a8476ad44189ca003216ef834ed9ea844b05bfbf",
+  "boundary": "Cold normal nonpersistent with_datafalse Preview metadata only. No customer/role/action/payment/signature/provider acceptance. E09reserved810009 production release/readback remains required before820004."
+}

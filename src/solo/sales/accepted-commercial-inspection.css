@@ -8,4 +8,8 @@
 .accepted-commercial pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:16px;line-height:1.65;max-width:70ch;margin:12px 0}
 .accepted-commercial ol{padding-inline-start:24px;max-width:640px}.accepted-commercial li{padding-block:6px;font-variant-numeric:tabular-nums}.accepted-commercial li span{float:inline-end;margin-inline-start:16px}
 .accepted-commercial :focus-visible{outline:2px solid var(--violet);outline-offset:3px}.accepted-commercial ::selection{background:var(--violet-tint);color:var(--ink)}
+.accepted-effectuation{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-block-start:24px;padding-block-start:20px;border-block-start:1px solid var(--line)}
+.accepted-effectuation>div:first-child{flex:1 1 280px}.accepted-effectuation h5{margin:0}.accepted-effectuation p{max-width:62ch;margin:8px 0 0}
+.accepted-effect-receipt{flex-basis:100%;min-width:0;padding:18px;border:1px solid var(--violet-line);border-radius:var(--r-s);background:var(--violet-tint)}
+.accepted-effect-receipt dl{margin-block:16px}.accepted-effect-receipt dd{font-size:13px;overflow-wrap:anywhere}.accepted-effect-receipt .btn{margin-block-start:12px}
 @media(max-width:520px){.sb-paper .accepted-commercial dl{grid-template-columns:1fr;gap:4px}.sb-paper .accepted-commercial dd{text-align:start;margin-block-end:12px}.accepted-commercial li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}.accepted-commercial li span{float:none;margin:0}.accepted-commercial .btn{min-height:44px}}

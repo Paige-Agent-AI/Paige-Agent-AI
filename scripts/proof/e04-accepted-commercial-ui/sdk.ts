@@ -1,10 +1,11 @@
 import {prepareCommercialPresentation,commercialPresentationText} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
 import {assembleFixedRepaymentSchedule} from '../../../supabase/functions/_shared/sales-collections/model';
+import {parseCommercialEffectuationCommand} from '../../../supabase/functions/_shared/sales-commercial/effectuation-command';
 const id=(n:number)=>`${String(n).padStart(8,'0')}-0000-4000-8000-000000000001`;
 const tenant=id(1),client=id(2),offer=id(3),agreement=id(4),terms=id(5),invoice=id(6);
 const none={state:'not_applicable',charges:[],source:'Synthetic recorded decision',policy:'No additional charge'};
 const conditions={schema_version:1,tax:none,fees:none};
-export const fixture={mode:'recorded',calls:[] as string[],pending:null as null|(()=>void),tenant,invoice};
+export const fixture={mode:'recorded',effect:'review',calls:[] as string[],commands:[] as Record<string,unknown>[],pending:null as null|(()=>void),effectPending:null as null|(()=>void),tenant,invoice};
 async function retained(){
  const schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,deposit_date:'2026-10-15',installment_cents:30000,first_installment_date:'2026-11-15',cadence:'monthly'});
  if(schedule.state!=='ready')throw Error('Synthetic schedule unavailable');
@@ -12,12 +13,25 @@ async function retained(){
  const presentation=await prepareCommercialPresentation({schema_version:fixture.mode==='legacy'?1:2,
   ...(fixture.mode==='legacy'?{}:{engagement:{starts_on:'2026-10-15',ends_on:null,price_basis:'negotiated'}}),
   source:{tenant_id:tenant,client_id:client,offer_id:offer,agreement_id:agreement,agreement_version:4,agreement_updated_at:'2026-10-14T18:00:00Z',body_source:'tenant_template',status:'draft',content_sha256:null,
-   terms_id:terms,terms_version:3,terms_updated_at:'2026-10-14T18:00:00Z',invoice_id:invoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:'2026-10-14T18:00:00Z'},
+   terms_id:terms,terms_version:3,terms_updated_at:'2026-10-14T18:00:00.123456Z',invoice_id:invoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:'2026-10-14T18:00:00Z'},
   title:'Service engagement agreement',body_markdown:body,principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions,lines:[{unit_minor:350000,quantity:1}]});
  return {schema_version:1,state:'recorded',tenant_id:tenant,invoice_id:invoice,agreement_id:agreement,receipt_id:id(7),completed_at:'2026-10-15T12:00:00Z',
   payload:presentation.payload,payload_digest:presentation.payload_digest,body_markdown:body,presented_body_markdown:commercialPresentationText(body,presentation),document_sha256:'a'.repeat(64),sealed_sha256:'b'.repeat(64)};
 }
-export const supabase={rpc:async(name:string,args:Record<string,unknown>)=>{
+export const supabase={
+ auth:{getSession:async()=>({data:{session:{user:{id:id(14)}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},
+ functions:{invoke:async(name:string,{body}:{body:Record<string,unknown>})=>{
+  fixture.calls.push(name);fixture.commands.push(structuredClone(body));
+  if(name!=='sales-collection-command'||body.expected_tenant_id!==tenant)throw Error('Unexpected synthetic operation');
+  const command=parseCommercialEffectuationCommand(body.command);
+  if(fixture.effect==='pending')await new Promise<void>(resolve=>{fixture.effectPending=resolve;});
+  if(fixture.effect==='refused'||fixture.mode==='changed')return {data:{ok:false,outcome:'refused',message:'Signed and current commercial terms must match exactly. Refresh the original records.'},error:null};
+  if(!body.approved_fingerprint)return {data:{outcome:'approval_required',fingerprint:'0123456789abcdef',preview:{eligible:true,consequence:{agreement_id:command.agreement_id,signing_id:command.signing_id,signing_version:command.signing_version,terms_version:command.expected_version,invoice_id:command.invoice_id,payload_digest:command.payload_digest,sealed_sha256:command.sealed_sha256,expected_updated_at:command.expected_updated_at,invoice_draft_version:command.invoice_draft_version,client_id:client,amount_cents:350000,currency:'usd',starts_on:'2026-10-15',ends_on:null,price_basis:'negotiated',state_before:fixture.effect==='active'?'active':'draft',state_after:'active',effect:fixture.effect==='active'?'record_provenance_only':'activate_matching_terms'}}},error:null};
+  if(fixture.effect==='unknown')throw Error('Synthetic uncertain acknowledgement');
+  if(fixture.effect==='bad-receipt')return {data:{ok:true},error:null};
+  return {data:{ok:true,outcome:'commercial_terms_effectuated',historical_receipt:true,receipt_id:id(16),row:{id:command.agreement_id,tenant_id:tenant,status_at_execution:'active',signing_id:command.signing_id,signing_version:command.signing_version,terms_version:command.expected_version,effective_at:'2026-10-16T12:00:00Z',source_digest:command.payload_digest,actor_user_id:id(14),effect:fixture.effect==='active'?'record_provenance_only':'activate_matching_terms'},operation:{id:body.operation_id,action:command.action}},error:null};
+ }},
+ rpc:async(name:string,args:Record<string,unknown>)=>{
  fixture.calls.push(name);
  if(args._expected_tenant_id!==tenant||args._invoice_id!==invoice)return {data:null,error:{code:'42501'}};
  if(name==='read_sales_accepted_agreement'){

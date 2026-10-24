@@ -55,3 +55,11 @@ it("a frame-held upload keeps its original reservation and checks saved status b
 it("a sign-out observed while the frame is held stays closed until a fresh sign-in",async()=>{await render();await render(a,"error");await act(async()=>{for(const cb of [...f.listeners])cb("SIGNED_OUT",null);await flush();});const count=f.native.length;await render();expect(state.files).toEqual([]);expect(f.native).toHaveLength(count);await act(async()=>{for(const cb of [...f.listeners])cb("SIGNED_IN",{user:{id:actor}});await flush();});expect(state.phase).toBe("ready");expect(state.files[0].id).toBe(id(a));});
 
 it("a retired ready-status reply cannot start an independent metadata read",async()=>{await render();const old=pending<unknown>(),original=f.reply.getMockImplementation()!;let statuses=0;f.reply.mockImplementation((name,args)=>name==="client_portal_file_upload_status"&&++statuses===2?old.promise:original(name,args));let operation!:Promise<void>;act(()=>{operation=state.transfer(new File(["test"],"Test.pdf",{type:"application/pdf"}));});await act(flush);expect(statuses).toBe(2);expect(f.metadata).toHaveLength(0);const row=[...f.reserved.values()][0];await render(b);old.resolve({data:{file:row,object_verified:true},error:null});await act(async()=>{await operation;await flush();});expect(f.metadata).toHaveLength(0);expect(state.scope?.tenant).toBe(b);});
+
+it("ordinary Documents retains its void result and original upload path", async () => {
+  await render(); let result: void;
+  await act(async () => {result = await state.transfer(new File(["test"], "Notes.pdf", {type: "application/pdf"}));});
+  expect(result).toBeUndefined(); expect(state.upload.kind).toBe("saved");
+  expect(f.native.filter(n => n.name === "client_portal_begin_file_upload")).toHaveLength(1);
+  expect(f.native.some(n => n.name === "client_portal_begin_chat_file_upload")).toBe(false);
+});

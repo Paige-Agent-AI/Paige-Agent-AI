@@ -52,7 +52,31 @@ ANT-11/ANT-161 current scope and main33bb85dcc883d1b31631fc0c954babafda9eeea9
 were read before editing. Lease/pre-edit packetc4eecd95 and coordinationb494d3d3
 preserve EXP04's separate action-risk scalar write; that shared file is not edited.
 Existing2697/ec466,2700/a8c574 and2709/b68 remain frozen separate releases.
-No other lead, agent, registry, scheduler, provider, runtime or business record is created.
+No other lead, agent, registry, scheduler, provider, platform execution runtime or business record is created.
+
+### Sequential source review before dependency renewal
+
+AUTHOR-REVIEW / LOWER ASSURANCE, exact sourcea7961d9daee8a2b7c780813004981d3022caa059.
+This is the owner-permitted sequential author exception, not a non-author review.
+The complete three-file product/test diff against immutable parentec466 was read.
+Only the original UUID reference projection and its tests change: invocation_id
+is retained for delegate_to_subagent only, both effect/context filters reject
+other tools, and its addition to the existing contradiction check prevents a
+declared read from borrowing an effect identity. Original outcomes, domain IDs,
+bounded private-field stripping, tenant/actor checks, and all dispatches remain.
+No completion, retry, invocation, admission or held-thread clearance is granted.
+No blocking source finding remains in this bounded metadata patch; the missing
+native held-thread consumer and runtime proof remain explicit separate gaps.
+
+The original canonical printer independently reproduces oldc11ff157 and candidate
+2917df7c; all other122 original source bodies are byte-identical, all29 literal
+dispatches and the validator/extractor are unchanged. Before renewal the actual
+validator refuses exactly this source; the inverse original-source control
+returns zero findings/all29. This review occurs BEFORE changing its pin.
+EXP04's explicit ANT161/48ebd0a0 disposition releases its frozen C20 pin-writing
+boundary; E05 acknowledgmentb52e3584 preserves its independent risk scalar and
+provenance on composition. The permitted next edit is this one dependency scalar
+and its review comment; no automatic regeneration or security-gate exception.
 
 ### Local Edge runtime correction and proof
 

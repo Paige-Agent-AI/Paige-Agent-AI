@@ -2974,3 +2974,16 @@ assertions/180s retained. No product SQL/Edge/cron changes. Web metadata is READ
 main duplicate-version failures remain recorded; originating E10 correction2732
 now records800000 and is consumed with main79171c82. This closes only the
 test-source release record, not original customer recovery or an Experience.
+
+## EXP05 original specialist proposal brief — development, October24
+
+The original confirmation branch used legacy `task`, omitting current stored
+`input.request`. Bounded summary repair uses the actual purpose and server-scoped
+roster, preserves legacy input and never infers authority or completion.90 focused
+and original-confirmation cases pass, with both causal failures retained; unchanged
+native confirmation renders cover required sizes/themes and320px reflow.
+[Exact source and proof boundary](../evidence/ui-delivery/exp05-specialist-confirmation-brief.md).
+Trust risk/fingerprints/stored arguments/Harness/executor/Rail remain unchanged.
+Required review/exact-head CI, production source and repaired authenticated display
+are owed. The original protected QA proposal expired unconsumed; no assignment,
+replay, catalogue promotion or complete weekly/ZION/automation acceptance is claimed.

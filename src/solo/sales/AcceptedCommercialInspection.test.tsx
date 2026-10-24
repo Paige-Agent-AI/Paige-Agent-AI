@@ -5,22 +5,24 @@ import {AcceptedCommercialInspection} from './AcceptedCommercialInspection';
 import {prepareCommercialPresentation,commercialPresentationText} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
 import {assembleFixedRepaymentSchedule} from '../../../supabase/functions/_shared/sales-collections/model';
 import type {AcceptedCommercialRead} from '../../../supabase/functions/_shared/agreements/accepted-commercial-read';
+import type {CollectionCommand} from '../../../supabase/functions/_shared/sales-collections/contract';
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
-const h=vi.hoisted(()=>({read:vi.fn()}));
+const h=vi.hoisted(()=>({read:vi.fn(),review:null as null|{tenantId:string;command:CollectionCommand;onComplete(result:Record<string,unknown>,executed:CollectionCommand):void;onClose():void}}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:vi.fn()}}));
 vi.mock('../../../supabase/functions/_shared/agreements/accepted-commercial-read',()=>({readAcceptedCommercialAgreement:h.read}));
+vi.mock('./collections/CollectionCommandReview',()=>({CollectionCommandReview:(p:NonNullable<typeof h.review>)=>{h.review=p;return <div data-testid="effective-review"><button onClick={p.onClose}>Cancel effective review</button></div>}}));
 const id=(n:number)=>`${String(n).padStart(8,'0')}-0000-4000-8000-000000000001`;
 const props={tenantId:id(1),invoiceId:id(6),agreementId:id(4),version:2,currentTermsId:id(5),currentTermsVersion:3,currentPrincipal:350000,currentCurrency:'usd',currentDraftVersion:1};
 let host:HTMLDivElement,root:Root,recorded:Extract<AcceptedCommercialRead,{state:'recorded'}>;
 beforeEach(async()=>{
- h.read.mockReset();host=document.createElement('div');document.body.append(host);root=createRoot(host);
+ h.read.mockReset();h.review=null;host=document.createElement('div');document.body.append(host);root=createRoot(host);
  const schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,deposit_date:'2026-10-15',installment_cents:30000,first_installment_date:'2026-11-15',cadence:'monthly'});
  if(schedule.state!=='ready')throw Error('Fixture schedule unavailable');
  const none={state:'not_applicable',charges:[],source:'Synthetic decision',policy:'No additional charge'};
  const body='Synthetic retained words. <script>private-marker</script>';
  const presentation=await prepareCommercialPresentation({schema_version:2,engagement:{starts_on:'2026-10-15',ends_on:null,price_basis:'negotiated'},
   source:{tenant_id:id(1),client_id:id(2),offer_id:id(3),agreement_id:id(4),agreement_version:4,agreement_updated_at:'2026-10-14T18:00:00Z',body_source:'tenant_template',status:'draft',content_sha256:null,
-   terms_id:id(5),terms_version:3,terms_updated_at:'2026-10-14T18:00:00Z',invoice_id:id(6),invoice_version:1,invoice_draft_version:1,invoice_updated_at:'2026-10-14T18:00:00Z'},
+   terms_id:id(5),terms_version:3,terms_updated_at:'2026-10-14T18:00:00.123456Z',invoice_id:id(6),invoice_version:1,invoice_draft_version:1,invoice_updated_at:'2026-10-14T18:00:00Z'},
   title:'Synthetic service agreement',body_markdown:body,principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions:{schema_version:1,tax:none,fees:none},lines:[{unit_minor:350000,quantity:1}]});
  recorded={state:'recorded',presentation,presented_body_markdown:commercialPresentationText(body,presentation),completed_at:'2026-10-15T00:00:00Z',receipt_id:id(7),sealed_sha256:'b'.repeat(64)};
 });
@@ -66,4 +68,29 @@ it('ignores an old in-flight response after changing the workspace',async()=>{
 });
 it('turns a transport exception into a recoverable, private unavailable state',async()=>{
  h.read.mockRejectedValue(Error('Synthetic private transport detail'));render();await inspect();expect(host.querySelector('[role="alert"]')).not.toBeNull();expect(host.textContent).not.toContain('Synthetic private transport detail');
+});
+
+const openEffective=()=>act(async()=>button('Review effective terms').click());
+const receipt=()=>{const c=h.review!.command;if(c.action!=='collection.effectuate_terms')throw Error('Expected exact commercial command');return {ok:true,outcome:'commercial_terms_effectuated',historical_receipt:true,receipt_id:id(10),row:{id:c.agreement_id,tenant_id:props.tenantId,status_at_execution:'active',signing_id:c.signing_id,signing_version:c.signing_version,terms_version:c.expected_version,effective_at:'2026-10-16T12:00:00Z',source_digest:c.payload_digest,actor_user_id:id(8),effect:'activate_matching_terms'},operation:{id:id(9),action:c.action}};};
+it('mounts the incumbent review with exact immutable signing, terms and raw microsecond source',async()=>{
+ h.read.mockResolvedValue(recorded);render();expect(h.review).toBeNull();await inspect();await openEffective();
+ expect(h.review!.tenantId).toBe(props.tenantId);expect(h.review!.command).toEqual({action:'collection.effectuate_terms',agreement_id:id(5),expected_version:3,expected_updated_at:'2026-10-14T18:00:00.123456Z',signing_id:id(4),signing_version:4,invoice_id:id(6),invoice_draft_version:1,payload_digest:recorded.presentation.payload_digest,sealed_sha256:recorded.sealed_sha256});
+ await act(async()=>button('Cancel effective review').click());expect(host.querySelector('[data-testid="effective-review"]')).toBeNull();expect(document.activeElement).toBe(button('Review effective terms'));
+});
+it('allows native history recovery from the immutable accepted source even after current revisions change',async()=>{
+ h.read.mockResolvedValue(recorded);render({currentTermsVersion:99,currentPrincipal:999,currentDraftVersion:99});await inspect();await openEffective();expect(h.review!.command).toMatchObject({expected_version:3,invoice_draft_version:1,expected_updated_at:'2026-10-14T18:00:00.123456Z'});
+});
+it('displays only a verified historical receipt and never presents it as current balance or current status',async()=>{
+ h.read.mockResolvedValue(recorded);render();await inspect();await openEffective();await act(async()=>h.review!.onComplete(receipt(),h.review!.command));
+ expect(host.textContent).toContain('Accepted-version operation recorded');expect(host.textContent).toContain(id(9));expect(host.textContent).toContain(id(10));expect(host.textContent).toContain('Current status must be read separately');expect(host.textContent).toContain('No payment or completed service is confirmed');expect(host.querySelector('[data-testid="effective-review"]')).toBeNull();
+});
+it('does not misattribute a different recovered pending action to this accepted agreement',async()=>{
+ h.read.mockResolvedValue(recorded);render();await inspect();await openEffective();await act(async()=>h.review!.onComplete({ok:true},{action:'collection.stage_import',source_account:'Example',rows:[{entity:'invoice',entity_id:'EX',client_id:id(2),invoice_id:null,invoice_number:'EX',currency:'usd',amount_cents:100,due_date:null,memo:null}]}));
+ expect(host.textContent).toContain('Original pending operation recovered');expect(host.textContent).toContain('This agreement action has not started');expect(host.textContent).not.toContain('Accepted-version operation recorded');
+});
+it('retires the review and ignores its stale completion when invoice identity changes',async()=>{
+ h.read.mockResolvedValue(recorded);render();await inspect();await openEffective();const old=h.review!,completed=receipt();render({invoiceId:id(99)});expect(host.querySelector('[data-testid="effective-review"]')).toBeNull();await act(async()=>old.onComplete(completed,old.command));expect(host.textContent).not.toContain(id(10));expect(host.textContent).not.toContain('Accepted-version operation recorded');
+});
+it('does not convert an incomplete success callback into a recovered or completed operation',async()=>{
+ h.read.mockResolvedValue(recorded);render();await inspect();await openEffective();await act(async()=>h.review!.onComplete({ok:true},h.review!.command));expect(host.querySelector('[data-testid="effective-review"]')).not.toBeNull();expect(host.textContent).not.toContain('Accepted-version operation recorded');expect(host.textContent).not.toContain('Original pending operation recovered');
 });

@@ -22,6 +22,6 @@ export function CommercialPackageInspection({tenantId,invoiceId,version,accountE
  {canInspectAccepted&&agreement.status==='completed'&&typeof agreement.id==='string'&&<AcceptedCommercialInspection key={`${scope}:${request}`} tenantId={tenantId} invoiceId={invoiceId} agreementId={agreement.id} version={version}
   currentTermsId={typeof terms.id==='string'?terms.id:undefined} currentTermsVersion={typeof terms.version==='number'?terms.version:undefined}
   currentPrincipal={typeof terms.amount_minor==='number'?terms.amount_minor:undefined} currentCurrency={typeof terms.currency==='string'?terms.currency:undefined}
-  currentDraftVersion={typeof invoice.draft_version==='number'?invoice.draft_version:undefined}/>}
+  currentDraftVersion={typeof invoice.draft_version==='number'?invoice.draft_version:undefined} onRefreshCurrent={()=>setRequest(n=>n+1)}/>}
  </>)}</section>;
 }

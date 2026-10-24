@@ -5,6 +5,36 @@ Original2689 reviewed eaa6aa0817573c5b4d71c642f5aa1e23676a89af/LOWER5638092378/a
 
 Earlier dated source and failure observations follow unchanged.
 
+## C21 current commercial-terms parent — October24
+
+Original2714 consumes original2705/c30323d5 and actual main5a signed-terms source, preserving all original current E05/E09/C29/native/source and original C21 UI/runtime/tests/proof. Original820004 source/native/web is now verified under receipt6384139888: actual5a/count1/db-live,14 full function/security definitions and provenance schema match fresh Preview, exact production aliases read back. First55P03 failure retained; observed atomic rollback and zero locks justified one unchanged normal retry, original5s bound/no session bypass. Higher830004+ retain their own current review/CI/normal deployed source gates; actual owner API/permission/reload acceptance remains owed. Current2705 fresh CI/cold disposable Preview and this consumer final source/29-input continuity/review/CI remain required. No Chat/Live/provider/send/payment or capabilities activation. All12 consultant-first outcomes and one integrated founder evaluation remain open.
+
+Earlier dated source checkpoints follow unchanged.
+
+## C21 owner review consumes actual released-source union — October24
+
+Original2714/ee501 UI and all29 captured LF/committed inputs are preserved on
+original2705/3ac93e97223f1f08abbebe7b60ea71257225f26a. All incoming Master/Brain
+and complete journal are preserved by exact own-insertion inverse.28 raw inputs
+match; accepted-commercial-read working bytes have explicit WindowsCRLF
+equivalence only. Original17 native PNGs/manifests remain unchanged dated proof.
+
+Current55 cases in six suites, scoped ESLint and Vite47.67s PASS. Three emitted
+entrypoint files plus140 byte-verified original public copies are frozen(143
+total). Five NEW native desktop/narrow/light/dark review/unknown/recovery/focus
+frames follow that freeze. Keyboard cancellation returns to the original entry;
+44px narrow primary/Close and sticky heading stay visible. A real allowed reload
+after recovery returned a fresh approval requirement resets the fixture and
+reopens the saved original action, explicitly preventing a new action. Raw
+unknown beforeunload-confirmed reload remains UNVERIFIED: the leave guard
+blocked both bounded automated attempts, and no guard/pending data was cleared.
+No actual owner/business/native/provider approval, signature, charge or receipt
+was executed. Initial wrong document-origin capture remains private diagnostic,
+not product failure or accepted frame. Existing minor320 Refresh-label issue
+remains recorded. Final exact-head review/CI/ordered native/API/web deployment,
+ordinary-role/server/later-session proof, all12/CentralQA/founder acceptance owed.
+See original e04-effective-terms-review/current-parent-continuity.json.
+
 ## C20 current signed-terms parent composition — October24
 
 This same original2705 consumes exact reviewed2689/eaa6, whose all13 named checks/two web statuses are now SUCCESS and actual source merge5a4837d357f9c9a75d85e158143170a9e4255ff8/tree22d55f58 is verified. Actual parent native deployment failed at the original5s lock bound55P03; read-only production confirms820004unrecorded/newcolumns0/original functions. Normal migration retry requires actual lock-clearance/rollback evidence; no session termination/directDDL/include-all/history/timeout weakening. Exact web5a is separatelyREADY, not native success. Higher native830004+ remain held. All original C20 implementation, HIGH risk, one static target,29 reviewed literal/124-path provenance and original native830004 remain unchanged by this composition. Final current-main/source/security comparison, independent review and fresh exact-head CI are still required. No new pin renewal, native authority, payment, send or Chat/Live admission. Full12 and integrated customer/founder acceptance remain unfinished.
@@ -3878,3 +3908,72 @@ No product comment, scalar, source digest, metadata, extractor or test changed
 to make the comparison pass. Real original full CI and native/API readback remain
 required. EXP09 now reserves its own710009 after actual700000; preserve reader
 710004→E09private710009→native720004→catalogue730004 in normal release.
+
+
+## C21 exact accepted terms: mounted owner review — local verification
+
+REUSE/EXTEND the incumbent invoice commercial-package inspection, private
+accepted-agreement reader and CollectionCommandReview. The actual owner/admin
+parent remains authoritative; account/scope/read changes retire private content
+and old replies. No package DTO, native writer, approval engine, payment ledger,
+sender, provider adapter or Chat/Live admission is introduced.
+
+The owner explicitly reviews the accepted schema2 source, including original
+signing and terms versions, raw microsecond timestamp, invoice draft, payload
+digest and original seal. Mutable current timestamps are not substituted. The
+existing domain endpoint checks its original operation before a new preview,
+so a later pause or source revision cannot silently reactivate a historical act.
+An already active consequence clearly records accepted-version provenance.
+Draft activation and that provenance-only effect remain distinct.
+
+The incumbent high-risk Kit review/approval, server-stored exact command, native
+transaction and immutable Collections operation/Rail provide the execution path.
+Strict complete receipt checks precede success. If a different operation was
+saved, recover that original action first and never attribute its receipt to the
+new agreement. A receipt is historical; refresh the current canonical record
+separately. Neither receipt nor signing establishes payment or completed service.
+
+Current41 tests/three original component suites PASS, with original controls and
+genuine8 review/5 mount baseline failures retained. Restricted Windows worker
+startup failures executed no affected assertions; unchanged current tests pass
+with worker communication available. No CI flag, assertion or timeout changes.
+The final original-component compiled build succeeds. Actual17 native PNGs,
+29 unchanged current raw source pins and three compiled assets are in the
+[bounded UI record](../evidence/ui-delivery/e04-effective-terms-review.md).
+Native narrow inspection corrected clipped/offscreen controls, forced-theme
+mismatch and approval focus pushed below the viewport. The existing Dialog
+receives heading focus before approval and keeps tab targets visible.
+
+The screenshot byte/source manifest is bounded proof, not an automated DOM
+observation count: an earlier observation-writer binding failure is retained
+as diagnostic. Full confirmed browser reload, actual owner/staff/linked-client
+roles, full shell/AT/zoom and customer acceptance remain UNVERIFIED. One minor
+mobile receipt-card refresh-label refinement is queued for the next ordinary
+UI increment; its complete action remains visible and usable.
+
+Local source only, not merged/deployed/activated/accepted. Parent2681 native63,
+2689 native64 and2705 governed endpoint must first release/read back in order,
+preserving earlier peer610009/620009 native reservations. Exact-head review,
+required CI, ordinary safe production/source and authenticated evidence remain
+gates. The new Spine action stays Chat/Mind UNAVAILABLE and PARTIAL.
+
+All O1–O12 remain mandatory. Prepared fields/rendering and their legacy send/
+token holds remain intact and require the canonical approved-send/recipient-
+input/seal integration. Actual invoices/obligations/Stripe TEST reconciliation,
+qualification/onboarding, scoped Work/deliverable decisions/completion,
+Collections/Communications, E09 self-service and joined client standing remain
+the full destination. EXP02's original Sales metric-reference revocation
+finding in ANT81 is also owned integration debt; reuse the canonical resolver
+without changing revocation/tenant/actor gates or creating another reader.
+
+## October24 current owner-review source composition
+
+Original review UI source/captured29inputs remain unchanged; consume original
+current native/API parent17efecb9 with710004/720004/730004 filename equivalents,
+released E05 source and original E09 private710009 interleave. Existing original
+source snapshot,17 PNGs/three assets/capture times remain historical synthetic
+proof; immediately prior631 manifest is separately preserved. No new render or
+full reload/role/provider claim. Fresh exact-head review/CI, actual ordered
+native/API/web readback and all12/CentralQA/founder acceptance remain separate.
+Original Sales reference debt now has bounded draft2728 with local52 cases and
+15 actual synthetic frames; not yet a Finance/VERA/authenticated acceptance.

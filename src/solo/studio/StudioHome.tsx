@@ -7,6 +7,7 @@ import { Ic, Logo } from "../_shared";
 import { VsStars } from "./VsStars";
 import { createSession, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
 import { loadArtifact, type Brand, type LoadedArtifact } from "./artifact-state";
+import { nexusDepartmentRemit, nexusDisplayName, planWithNexusPrompt } from "./nexus";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 
 const SUGGESTIONS = [
@@ -114,10 +115,12 @@ export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: 
   );
 }
 
-export function StudioHome({ sessions, sessionsError, tenantSlug, onOpen }: {
+export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff, onOpen }: {
   sessions: StudioSession[] | null;
   sessionsError: string | null;
   tenantSlug: string;
+  /** Present only when the shell can open the global PAIGE chat; the affordance hides without it. */
+  onNexusHandoff?: (prompt: string) => void;
   onOpen: (sessionId: string, seedBrief: string | null) => void;
 }) {
   const [brand, setBrand] = React.useState<Brand>({ floor: buildGrowthBrandFloor(null), name: null, logoUrl: null });
@@ -165,6 +168,13 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onOpen }: {
             </div>
           </div>
           {error && <p className="vs-alert" role="alert">{error}</p>}
+          {onNexusHandoff && (
+            <p className="vs-dept-line">
+              Brand and public presence are {nexusDisplayName()}'s department ({nexusDepartmentRemit()}).
+              <button type="button" className="vs-link" onClick={() => onNexusHandoff(planWithNexusPrompt())}>Plan with {nexusDisplayName()}</button>
+              — opens your Chat; the question is yours to send.
+            </p>
+          )}
           <div className="vs-chips" aria-label="Ideas">
             {SUGGESTIONS.map((s) => <button key={s} type="button" className="vs-chip" disabled={creating} onClick={() => { setBrief(s); ref.current?.focus(); }}>{s}</button>)}
           </div>

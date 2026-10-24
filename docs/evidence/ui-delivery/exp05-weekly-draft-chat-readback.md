@@ -1,7 +1,7 @@
 # EXP05 — original weekly draft readback preparation
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: source=a203767e5bb7e4e62a22e8cb9814ab2d86e790bb; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=work/verify-weekly-projection-extraction.mjs,work/weekly-chat-isolated-reader-final-tests.txt
+INTERNAL_BUILD_IDENTITY: source=76aae7c3304bc772e9d2516f9d71e7bad64d0698; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=work/verify-weekly-projection-extraction.mjs,work/weekly-chat-read-es2020-regression.txt
 RELEASE_CHANNEL: development: bounded readback preparation, no customer tool admission.
 RELEASE_CLASSIFICATION: internal-only: reuse the original parser and native record rather than duplicate authority or execution.
 CUSTOMER_RELEASE_IDENTITY: none: complete Experience acceptance remains separate.
@@ -40,8 +40,27 @@ SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no geometry or rendered surface change
 
 Original `automations.weekly_commitment_draft` declaration/Kit, native owner and exact stored approval, Harness and canonical definition/Rail remain authoritative. This source adds no registry, Gateway route, approval, executor, job, provider, scheduler or store. The future caller must supply original caller-JWT authority and current scope, then use the existing untrusted-data boundary. Parsing is not authentication. New `weekly-draft-chat-read.ts` calls only native `read_weekly_commitment_chat_draft`; readback produces no execution receipt. Unknown or changed work requires original-record reconciliation.
 
-ANT161 reservation ddcc4b80 and correction36d4509c preserve E09's shared-root lease and all original E04/E05 contracts. Actual import tracing found the older helper is transitively live despite its dated header; the initial local edit was removed before publication. No shared root/C0b pins were renewed. Source7d5b composes actual main11e4f8e4 at a203; all five owning source/test paths stay unchanged. Native release remains original840002→E04owner-review840004→850004→E05draft860005; no migration is included here.
+ANT161 reservation ddcc4b80 and correction36d4509c preserve E09's shared-root lease and all original E04/E05 contracts. Actual import tracing found the older helper is transitively live despite its dated header; the initial local edit was removed before publication. No shared root/C0b pins were renewed. Source7d5b composes actual main11e4f8e4 at a203; all five owning source/test paths stay unchanged. Native2758 is being reconciled to never-production-applied840003 under E04a75630c3/E026d9f2bf6 receiving ACKs, after840002 and before E04reserved840004/850004; no migration is included here.
 
 The first reader result44/2 and earlier composed193/7 predate that source-isolation correction. Final264/9 covers the corrected module and original live-status path. Full local type commands did not finish and were interrupted; direct scoped compiler passed, never substituted for required CI. Private exact124-dependency audit and original browser transport inverse pass. Existing pinned Impeccable4.1.0 offline detection returned zero; clarify/harden/Operate checks preserve original feedback and prevent invented completion. [Impeccable source](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md).
 
 Algorithm Support: ALG-01 retains original operation identity and prohibits read-triggered replay; ALG-12/13 preserve truthful unknown/history and next permitted inspection. ALG-02/03/08/11 maturity, OpenAI-primary/fallback and budgets are unchanged. Weekly Priorities Plan/Workflow Design Draft and `operations.department` gain no Live or completion promotion; availability remains governed by the existing catalogue, permission and readiness contracts. Functional: prepared/local proof. Visual: unchanged original UI. Experiential: original recovery groundwork, actual integration owed. Founder Acceptance: NOT_ACCEPTED; one full integrated evaluation remains.
+
+## ES2020 compatibility correction
+
+Hosted exact54d verify120893673593 failed its Typecheck step; database/Preview and
+other checks are separate. The initial scoped ES2022 compiler did not match the
+application's ES2020 target. Repeating the scoped compile with actual ES2020 libs
+reproduced three TS2550 errors at the new own-property guards. Replace only those
+three calls with `Object.prototype.hasOwnProperty.call`, preserving inherited-key
+refusal and current thread checks. No compiler/lib/baseline, registry, authority,
+runtime or shared source change. ES2020 scoped compile now passes; refreshed
+regression, independent review and new exact-head CI remain separately required.
+Earlier local full-app compiler interruptions are not passing evidence. The
+workflow log connector was unavailable; the equivalent local diagnostics and
+hosted failed step remain retained rather than relabeled infrastructure success.
+Final ES2020 correction `ad03b1b7715c97908b8303a4d75ff2168005baa3`
+passes264 assertions/nine suites and the exact original browser-parser inverse.
+Actual main5ff2e588 composes at76aae7c3 without changing those owning source/test
+paths. Scoped ES2020 compilation, original live dependency audit, focused lint,
+separate correction review and required new-head CI remain independent evidence.

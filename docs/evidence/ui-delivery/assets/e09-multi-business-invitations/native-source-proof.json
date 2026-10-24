@@ -2,7 +2,7 @@
   "date": "2026-10-23",
   "classification": "NOT_DEPLOYED; one original native invitation mechanism, not a new identity/sender system",
   "lease": "ANT161/0548ba61-ca74-4fba-a559-d2db231815f1",
-  "source_parent": "eb7fdb18e85220162d7a6a60fd6da27218dd9775",
+  "source_parent": "2695/357df219ea7cb1e4225e0c100f3d080bb4aa46be",
   "observed_main": "33bb85dcc883d1b31631fc0c954babafda9eeea9",
   "migration": "20271113630009",
   "migration_sha256": "6c3b14d19783f817666e5c26bdfb6bab45afa8ec2c9388e34ff0052293cb73b3",
@@ -849,11 +849,12 @@
   },
   "main_composition": {
     "main": "33bb85dcc883d1b31631fc0c954babafda9eeea9",
-    "parent": "eb7fdb18e85220162d7a6a60fd6da27218dd9775",
+    "parent": "357df219ea7cb1e4225e0c100f3d080bb4aa46be",
     "parent_sync": "only a virtual-base Brain insertion conflicted; exact existing2691 note retained, other side empty, no runtime change",
     "main_sync": "normal clean ort merge; original EXP01 evidence repairs, EXP02/EXP03/EXP05/EXP07 records and source preserved",
     "actual_released_row": "2691/main3b8f973 and receipt6376896655 only; no anticipated2695/2701 row",
-    "production_prerequisite": "610009/a6e37 actually applied and read back;620009/ac743 remains required before630009"
+    "production_prerequisite": "610009/a6e37 actually applied and read back;620009/ac743 remains required before630009",
+    "parent_final_composition": "Normal clean main33bb merge on parent2695; actual result8cc1f031c5a02b6ce37b96fe7ea853254ff55603 equals pre-reviewed merge tree. Child normal merge is tree-identical to its corrected e676 state; no runtime/SQL/test drift."
   },
   "native_finite_replay_fixture_repair": {
     "failed_head": "c34d55584ee8cf02dd27db0d7bc24c80067b208d",

@@ -25,7 +25,7 @@ MUST_PRESERVE: original confirmed Auth recipient, token/contact/email binding, t
 ACCEPTANCE_CRITERIA: two different genuine invitations bind the same ordinary login to their original contacts; one-business duplicate, wrong/expired/revoked/replayed invitations still refuse atomically; return/switch/revoke/reinvite stay business-scoped and receipts attributable.
 MOTION_PURPOSE: NONE: no presentation change.
 PROTECTED_SEAMS: original Auth/Identity/S7/CRM definitions and authority are guarded; original sender, owner approval, Chat/Live/Spine/Gateway/Harness/Trust/LayerC/Rail/Knowledge/ModelFabric and financial/signing/scheduling writers remain unchanged.
-INTERNAL_BUILD_IDENTITY: source-parent=2695/eb7fdb18e85220162d7a6a60fd6da27218dd9775; exact head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113630009); edge=NOT_APPLICABLE; evidence=assets/e09-multi-business-invitations/native-source-proof.json
+INTERNAL_BUILD_IDENTITY: source-parent=2695/357df219ea7cb1e4225e0c100f3d080bb4aa46be; exact head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113630009); edge=NOT_APPLICABLE; evidence=assets/e09-multi-business-invitations/native-source-proof.json
 RELEASE_CHANNEL: development: required exact-head review/full CI, ordinary empty Preview and normal production native/source readback before live claims.
 RELEASE_CLASSIFICATION: internal-only: original invitation integration, no complete Experience announcement or invented customer version.
 CUSTOMER_RELEASE_IDENTITY: none: complete live owner/client journey and founder acceptance remain unverified.

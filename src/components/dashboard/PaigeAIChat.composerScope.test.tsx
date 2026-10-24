@@ -1203,4 +1203,100 @@ data: [DONE]
     expect(statuses).toHaveLength(2);
     expect(statuses[1]).toBe(`${harness.userId}:${harness.tenantId}`);
   });
+
+  // PR6 — chat continuity proofs. The panel defects this section pins (send wedge after a
+  // superseded preparation, dead composer after reload, truncated returning transcript,
+  // missing retry) are owner-reported ANT-50 cases; each test drives the public surface
+  // only, because that is the path a person has.
+  it("keeps Send alive after a conversation switch supersedes a preparing send", async () => {
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(async () => streamed("first answer"))
+      .mockImplementationOnce(async () => streamed("after switch answer"));
+    vi.stubGlobal("fetch", fetchMock);
+    harness.threads = [{ id: "thread-past", title: "Past", updated_at: "2026-10-01T00:00:00Z" }];
+    await render(); await waitForWritable();
+    await type("first instruction");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("first answer");
+    // The second send hangs inside its preparation window (session resolution): the
+    // submission latch is held and the request has not left the browser yet.
+    let resolveSession!: (value: { data: { session: { access_token: string } } }) => void;
+    vi.mocked(supabase.auth.getSession).mockImplementationOnce(
+      () => new Promise((resolve) => { resolveSession = resolve; }),
+    );
+    await type("second thought");
+    await act(async () => { send().click(); await settle(); });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // The owner opens another conversation mid-preparation — the rail's real selection path.
+    await act(async () => { harness.rail!.onSelect("thread-other"); await settle(); });
+    await act(async () => {
+      resolveSession({ data: { session: { access_token: "test-token" } } });
+      await settle();
+    });
+    // The superseded preparation must not wedge the composer for every later send.
+    await waitForWritable();
+    await type("still sends after the switch");
+    await act(async () => { send().click(); await settle(); });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(host.textContent).toContain("after switch answer");
+  });
+
+  it("recovers a transient server failure through the visible Retry affordance", async () => {
+    // The Retry affordance lives in the Solo notice block, and Solo typed turns only earn it
+    // when the server's own body says the message was NOT accepted (`message_accepted:false`)
+    // — an ambiguous 5xx must not offer a blind resend (pinned by "keeps an ambiguous HTTP
+    // failure truthful…" above). This is the designed safe-recovery path, previously untested.
+    const definitiveFailure = () => Response.json(
+      { code: "chat_unavailable", reason: "Temporary failure.", message_accepted: false },
+      { status: 503 },
+    );
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(async () => definitiveFailure())
+      .mockImplementationOnce(async () => streamed("recovered answer"));
+    vi.stubGlobal("fetch", fetchMock);
+    await render(); await waitForWritable();
+    await type("do the thing");
+    await act(async () => { send().click(); await settle(); });
+    // Definitively not sent: the words return to the composer, and the way back is offered.
+    expect(textarea().value).toBe("do the thing");
+    expect(host.textContent).toContain("didn't get to answer");
+    const retry = Array.from(host.querySelectorAll("button")).find((b) => b.textContent === "Retry");
+    expect(retry).toBeTruthy();
+    await act(async () => { retry!.click(); await settle(); });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(host.textContent).toContain("recovered answer");
+  });
+
+  it("rehydrates the COMPLETE saved transcript when the conversation returns", async () => {
+    harness.threads = [{ id: "thread-past", title: "Past", updated_at: "2026-10-01T00:00:00Z" }];
+    harness.loadTurns.mockResolvedValue(
+      Array.from({ length: 12 }, (_, i) => ({
+        role: i % 2 === 0 ? "user" as const : "assistant" as const,
+        content: `saved turn ${i + 1} of twelve`,
+      })),
+    );
+    await render();
+    for (let attempt = 0; attempt < 10 && !host.textContent?.includes("saved turn 12 of twelve"); attempt += 1) {
+      await act(async () => { await settle(); });
+    }
+    for (let turn = 1; turn <= 12; turn += 1) {
+      expect(host.textContent).toContain(`saved turn ${turn} of twelve`);
+    }
+    await waitForWritable();
+  });
+
+  it("returns the owner's unsent draft after a full remount (reload)", async () => {
+    // The App-level ComposerDraftSessionBinding owns the session scope; bind it exactly as
+    // the real shell would so this remount crosses the same store a reload crosses.
+    setComposerDraftSessionScope({ kind: "ready", tenantId: harness.tenantId!, userId: harness.userId! });
+    await render(); await waitForWritable();
+    await type("unsent thought");
+    await act(async () => { root.unmount(); });
+    host.remove();
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await render(); await waitForWritable();
+    expect(textarea().value).toBe("unsent thought");
+  });
 });

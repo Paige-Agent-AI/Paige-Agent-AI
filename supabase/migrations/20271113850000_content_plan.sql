@@ -41,7 +41,7 @@ GRANT SELECT ON public.content_plan_entries TO service_role;
 -- only). Status may move planned↔ready↔cancelled freely — every state is a plan state, and no
 -- state does anything.
 CREATE OR REPLACE FUNCTION public.content_plan_upsert(
-  p_id uuid DEFAULT NULL, p_content_id uuid DEFAULT NULL, p_channel text, p_planned_for timestamptz,
+  p_id uuid DEFAULT NULL, p_content_id uuid DEFAULT NULL, p_channel text DEFAULT NULL, p_planned_for timestamptz DEFAULT NULL,
   p_note text DEFAULT NULL, p_status text DEFAULT 'planned', p_tenant_id uuid DEFAULT NULL
 ) RETURNS public.content_plan_entries
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
@@ -74,6 +74,9 @@ BEGIN
     SELECT 1 FROM public.marketing_content mc WHERE mc.id = p_content_id AND mc.tenant_id = _tenant
   ) THEN
     RAISE EXCEPTION 'CONTENT_NOT_FOUND: that piece is not in this workspace' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_channel IS NULL OR NULLIF(btrim(p_channel), '') IS NULL THEN
+    RAISE EXCEPTION 'CONTENT_INVALID: a channel is required' USING ERRCODE = '22023';
   END IF;
   IF p_planned_for IS NULL THEN
     RAISE EXCEPTION 'CONTENT_INVALID: a planned time is required' USING ERRCODE = '22023';

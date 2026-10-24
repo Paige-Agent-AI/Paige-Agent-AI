@@ -212,6 +212,9 @@ BEGIN
   v := pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', '',
     $sql$ SELECT 1 FROM public.content_plan_upsert(NULL, NULL, 'social_post', NULL, NULL, 'planned', NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'err:22023:CONTENT_INVALID%', 'a NULL planned_for is invalid: ' || v);
+  v := pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', '',
+    $sql$ SELECT 1 FROM public.content_plan_upsert(NULL, NULL, NULL, '2026-11-04T14:00:00Z', NULL, 'planned', NULL) $sql$);
+  PERFORM pg_temp.chk(v LIKE 'err:22023:CONTENT_INVALID%', 'a NULL channel is invalid: ' || v);
 
   -- 6. The service path.
   v := pg_temp.run('', 'service_role', 'service_role',

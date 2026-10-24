@@ -28,7 +28,7 @@
 --  10. A turn begun through the original 7-argument begin (a v1 binding) replays through the unchanged
 --      v1 context.
 BEGIN;
-SELECT plan(245);
+SELECT plan(247);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
@@ -694,6 +694,13 @@ SELECT is((SELECT pg_temp.files_ctx('b2',th,intent,ids)->>'sqlstate' FROM files_
 SELECT is((SELECT pg_temp.files_ctx('a2',th,intent,'[]')->>'sqlstate' FROM files_turn),'22023','empty selection is not a file request');
 SELECT is((SELECT pg_temp.files_ctx('a2',th,intent,jsonb_build_array(pg_temp.file_id(3)))->>'sqlstate' FROM files_turn),'42501','unknown file is not invented');
 SELECT is((SELECT pg_temp.files_begin(th,intent,ids,false)->>'sqlstate' FROM files_turn),'42501','processing cannot bypass effectful native admission with a read-only downgrade');
+SELECT is((SELECT pg_temp.files_begin(th,intent,ids)->>'error' FROM files_turn),'INTERACTIVE_PROTOCOL_NOT_READY','inactive original protocol refuses file processing');
+SELECT is((SELECT count(*) FROM public.paige_chat_turns t,files_turn f WHERE t.thread_id=f.th AND t.interactive_intent_id=f.intent AND t.role='user'),0::bigint,'refused admission creates no user receipt');
+-- Isolated native fixture only, inside the original BEGIN/ROLLBACK. The prior208
+-- conversational tests intentionally use the inactive protocol. Model the active
+-- source state for these effectful native cases; no real Edge/provider is invoked,
+-- no activation evidence is invented, and this row update never commits.
+UPDATE public.paige_chat_interactive_rollout SET active=true WHERE singleton;
 SELECT is((SELECT pg_temp.files_begin(th,intent,ids)->>'status' FROM files_turn),'accepted','same original native begin accepts exact private files');
 SELECT ok((SELECT bundle_ref ?& ARRAY['customer_knowledge','customer_progress','customer_sessions','customer_files']
  FROM public.paige_chat_turns t,files_turn f WHERE t.thread_id=f.th AND t.interactive_intent_id=f.intent AND t.role='user'),

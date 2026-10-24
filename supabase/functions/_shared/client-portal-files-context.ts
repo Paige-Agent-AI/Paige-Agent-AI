@@ -17,7 +17,7 @@ const object = (v: unknown): Record<string, unknown> | null =>
   v !== null && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
 const closed = (v: unknown, keys: string[]) => {
   const r = object(v);
-  return r && Object.keys(r).length === keys.length && keys.every(k => Object.hasOwn(r, k)) ? r : null;
+  return r && Object.keys(r).length === keys.length && keys.every(k => Object.prototype.hasOwnProperty.call(r, k)) ? r : null;
 };
 const uuid = (v: unknown): v is string => typeof v === "string"
   && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v);
@@ -79,7 +79,7 @@ export async function readCustomerFilesContext(caller: Caller, actorInput: strin
         || typeof f.original_filename !== "string" || !f.original_filename || f.original_filename !== f.original_filename.trim()
         || f.original_filename.length > 255 || !f.original_filename.includes(".") || /[/\\]/.test(f.original_filename)
         || Array.from(f.original_filename).some(c => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127)
-        || typeof f.mime_type !== "string" || !Object.hasOwn(mimeExtensions, f.mime_type)
+        || typeof f.mime_type !== "string" || !Object.prototype.hasOwnProperty.call(mimeExtensions, f.mime_type)
         || !mimeExtensions[f.mime_type].includes(f.original_filename.split(".").pop()?.toLowerCase() ?? "")
         || typeof f.size_bytes !== "number" || !Number.isSafeInteger(f.size_bytes) || f.size_bytes < 1 || f.size_bytes > 20971520
         || !uuid(stored.id) || !date(stored.updated_at)

@@ -7,7 +7,8 @@ type Ports = Parameters<typeof loadCustomerFileInputs>[1] & {
   /** The existing handler's processor limits; storage capacity is not model capacity. */
   preflight(file: CustomerFileBytes): Promise<boolean>;
   /** The ORIGINAL admitted Model Fabric seam, never a new provider client. */
-  invokeModel: ModelInvoker;
+  invokeModel: (system: Parameters<ModelInvoker>[0], parts: Parameters<ModelInvoker>[1],
+    processing: {assertCurrent: () => Promise<void>; signal: AbortSignal}) => ReturnType<ModelInvoker>;
 };
 type Limits = {byteBudget: number; timeoutMs: number; maxTextChars: number};
 type FileResult = {fileId: string; filename: string; sha256: string; status: "read" | "unread";
@@ -61,7 +62,8 @@ export async function readCustomerFileText(context: CustomerFilesContext, ports:
       const allowed = await ports.preflight(input); await assertCurrent();
       if (allowed !== true) {results.push({...base, status: "unread", reason: "processing_limit"}); continue;}
       const text = await extractAttachmentText({base64: bytesToBase64(input.bytes),
-        mimeType: input.file.mime, fileName: input.file.filename}, ports.invokeModel);
+        mimeType: input.file.mime, fileName: input.file.filename}, (system, parts) =>
+          ports.invokeModel(system, parts, {assertCurrent, signal: controller.signal}));
       await assertCurrent();
       if (!text) {results.push({...base, status: "unread", reason: "empty"}); continue;}
       characters += text.length;

@@ -153,7 +153,7 @@ export function useCustomerChatAttachments(threadId: string | null, available: b
   return {
     files: visible ? snapshot.files : [], issues: visible ? snapshot.issues : [],
     notice: visible ? snapshot.notice : "", busy: visible && snapshot.busy, available: current(),
-    nativeUpload, append, handlePaste, handleDrop, handleDragOver, remove, prepare,
+    nativeUpload, openFile:documents.retrieve, append, handlePaste, handleDrop, handleDragOver, remove, prepare,
     check: (id: string) => recover(id, false), resume: (id: string) => recover(id, true), stop, releaseSentSelection,
   };
 }

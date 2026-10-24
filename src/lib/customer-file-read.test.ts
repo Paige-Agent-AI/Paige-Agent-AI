@@ -102,3 +102,12 @@ test("total text bound is enforced and uploaded marker/instruction text stays fe
   await assert.rejects(readCustomerFileText(fixture(), invalid, {...limits, maxTextChars: 0}), code("CUSTOMER_FILES_PROCESSING_INVALID"));
   assert.equal(invalid.download.mock.calls.length, 0);
 });
+
+test("the original provider entry receives the same retiring processing fence, including after local timeout", async()=>{
+ const p=ports();let gate:{assertCurrent:()=>Promise<void>;signal:AbortSignal}|null=null;
+ const task=readCustomerFileText(fixture(),{...p,invokeModel:async(_system,_parts,processing)=>{gate=processing;return await new Promise<string>(()=>{});}},
+  {byteBudget:20,timeoutMs:30,maxTextChars:100});
+ await assert.rejects(task,/CUSTOMER_FILES_PROCESSING_TIMED_OUT/);
+ assert(gate);assert.equal((gate as {signal:AbortSignal}).signal.aborted,true);
+ await assert.rejects((gate as {assertCurrent:()=>Promise<void>}).assertCurrent(),/CUSTOMER_FILES_PROCESSING_TIMED_OUT/);
+});

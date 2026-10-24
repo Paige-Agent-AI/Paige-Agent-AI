@@ -71,3 +71,10 @@ it("a confirmed local removal keeps keyboard focus on the next file, then Add fi
   act(() => button("Remove Two.pdf from message").click()); props.files = []; render();
   expect(document.activeElement).toBe(button("Add files"));
 });
+
+it("restores focus to the same file after a successful Resume removes its old button",()=>{
+ props.files=[draft("original","check")];props.upload={id:"original",kind:"finish"};render();
+ const resume=button("Resume upload of Private notes.pdf");resume.focus();act(()=>resume.click());
+ props.busy=true;render();props.files=[draft("original","saved")];props.busy=false;render();
+ expect(document.activeElement).toBe(button("Remove Private notes.pdf from message"));
+});

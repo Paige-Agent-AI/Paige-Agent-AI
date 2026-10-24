@@ -215,3 +215,17 @@ it("returns the same verified saved identity after an uncertain finish", async (
   expect(f.storage.filter(s => s.kind === "upload")).toHaveLength(1);
   expect(f.native.filter(n => n.name === "client_portal_begin_chat_file_upload")).toHaveLength(1);
 });
+
+it("reopens an original own attachment outside the first file page using the original status authority",async()=>{
+ await render();await act(async()=>state.transfer(file(),fileId));const row=state.files[0];expect(row).toBeTruthy();
+ const original=f.reply.getMockImplementation()!;f.reply.mockImplementation((name,args)=>name==="client_portal_chat_files"&&args.p_limit===50
+  ?{data:{tenant_id:tenant,client_id:contact,files:[],has_more:false},error:null}:original(name,args));
+ await act(async()=>state.refresh());expect(state.files).toEqual([]);let links:unknown;
+ await act(async()=>{links=await state.retrieve(row);});expect(links).toBeTruthy();expect(f.storage.filter(r=>r.kind==="sign")).toHaveLength(2);
+ expect(f.native.filter(r=>r.name==="client_portal_chat_file_status").some(r=>r.args.p_thread_id===thread&&r.args.p_file_id===fileId)).toBe(true);
+});
+it("never signs a forged historical private filename or path",async()=>{
+ await render();await act(async()=>state.transfer(file(),fileId));const row=state.files[0];
+ await expect(state.retrieve({...row,filename:"Foreign.pdf"})).rejects.toThrow();expect(f.storage.filter(r=>r.kind==="sign")).toHaveLength(0);
+ await expect(state.retrieve({...row,storage_path:tenant+"/foreign"})).rejects.toThrow();expect(f.storage.filter(r=>r.kind==="sign")).toHaveLength(0);
+});

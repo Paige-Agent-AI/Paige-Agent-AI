@@ -1,8 +1,14 @@
 import {supabase} from "@/integrations/supabase/client";
 import {readClientPortalFrame,sameClientPortalFrame,type ClientPortalFrame} from "./client-portal-frame";
 import {captureClientPortalAuthorization,withClientPortalBusiness} from "./client-portal-scope";
+import {CLIENT_DOCUMENT_COLUMNS,portalDocumentFromUpload,type PortalDocument} from "./client-portal-documents";
+import {readCustomerChatFile,readCustomerChatFilePage} from "./customer-chat-files";
+
+type NativeFileRead=PromiseLike<{data:unknown;error:unknown}>&{setHeader(name:string,value:string):NativeFileRead;abortSignal(signal:AbortSignal):NativeFileRead};
+type CustomerTurnProjection={id:unknown;role:unknown;content:unknown;customer_file_ids:unknown;request_intent_id:unknown};
+const CUSTOMER_TURN_COLUMNS:string="id,role,content,customer_file_ids:bundle_ref->customer_files->file_ids,request_intent_id:bundle_ref->interactive->>request_intent_id";
 type CustomerThreadProjection={id:unknown;caller_user_id:unknown;contact_id:unknown;tenant_id:unknown;lens:unknown;interactive_latest_intent:unknown};
-export type CustomerChatMessage={id:string;role:"user"|"assistant";content:string};
+export type CustomerChatMessage={id:string;role:"user"|"assistant";content:string;files?:PortalDocument[];unavailableFiles?:number;requestIntentId?:string};
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
 /** Canonical Chat read/create only; turns are written by the existing protected runtime. */
@@ -58,14 +64,47 @@ export async function readCustomerChat(frame:ClientPortalFrame,signal?:AbortSign
  if(made.error||!uuid(made.data))throw Error("Conversation could not be opened");
  const threadId=made.data;
  await readCustomerThread(scope,threadId);
- const turns=await request(supabase.from("paige_chat_turns").select("id,role,content")
-  .eq("thread_id",threadId).order("seq",{ascending:false})).limit(100);
+ const turns=await request(supabase.from("paige_chat_turns").select(CUSTOMER_TURN_COLUMNS)
+  .eq("thread_id",threadId).order("seq",{ascending:false}).returns<CustomerTurnProjection[]>()).limit(100);
  current();
  if(turns.error)throw Error("Conversation history could not be loaded");
+ // Project only ordered IDs from the original user receipt, never the internal bundle.
+ const receiptIds=new Map<string,string[]>();
+ for(const row of turns.data??[]){
+  if(row.role!=="user"||row.customer_file_ids==null)continue;
+  if(!uuid(row.id))throw Error("Saved attachment identity changed");
+  const ids:unknown=row.customer_file_ids;
+  if(!Array.isArray(ids)||ids.length<1||ids.length>5||!ids.every(uuid)||new Set(ids).size!==ids.length)
+   throw Error("Saved attachments could not be verified");
+  receiptIds.set(row.id,ids);
+ }
+ const documents=new Map<string,PortalDocument>();
+ if(receiptIds.size){
+  // Original private service proves current assistant/thread access. Historical
+  // rows are read under the same captured JWT/RLS, including older own origins.
+  const gate=await request(supabase.rpc("client_portal_chat_files" as never,
+   {p_thread_id:threadId,p_tenant_id:scope.business,p_limit:1} as never) as unknown as NativeFileRead);
+  current();if(gate.error||!gate.data)throw Error("Saved attachments could not be verified");
+  readCustomerChatFilePage(gate.data,{actor:scope.captured.actorId,tenant:scope.business,contact:scope.captured.profile.id});
+  const ids=[...new Set([...receiptIds.values()].flat())];
+  for(let offset=0;offset<ids.length;offset+=25){
+   const rows=await request(supabase.from("client_files").select(CLIENT_DOCUMENT_COLUMNS+",customer_chat_thread_id")
+    .eq("tenant_id",scope.business).eq("contact_id",scope.captured.profile.id)
+    .eq("uploaded_by_user_id",scope.captured.actorId).in("id",ids.slice(offset,offset+25)).returns<Record<string,unknown>[]>());
+   current();if(rows.error)throw Error("Saved attachments could not be loaded");
+   for(const raw of rows.data??[]){
+    const file=readCustomerChatFile(raw,{actor:scope.captured.actorId,tenant:scope.business,contact:scope.captured.profile.id});
+    if(!ids.slice(offset,offset+25).includes(file.id)||documents.has(file.id))throw Error("Saved attachment identity changed");
+    if(file.upload_state==="ready")documents.set(file.id,portalDocumentFromUpload(file));
+   }
+  }
+ }
  const messages:CustomerChatMessage[]=[];
  for(const row of [...(turns.data??[])].reverse()){
   if((row.role==="user"||row.role==="assistant")&&uuid(row.id)&&typeof row.content==="string")
-   messages.push({id:row.id,role:row.role,content:row.content});
+   {const ids=receiptIds.get(row.id);
+    messages.push({id:row.id,role:row.role,content:row.content,...(uuid(row.request_intent_id)?{requestIntentId:row.request_intent_id}:{}),...(ids?{files:ids.flatMap(id=>documents.has(id)?[documents.get(id)!]:[]),
+      unavailableFiles:ids.filter(id=>!documents.has(id)).length}:{})});}
  }
  const latestThread=await readCustomerThread(scope,threadId);
  await check();

@@ -6,6 +6,7 @@ import type {CustomerAttachmentDraft} from "@/hooks/useCustomerChatAttachments";
 
 type Props = {
   enabled: boolean;
+  locked?: boolean;
   files: readonly CustomerAttachmentDraft[];
   issues: CustomerChatFileSelection["issues"];
   busy: boolean;
@@ -30,11 +31,19 @@ function size(bytes: number) {
 export function CustomerChatAttachments(props: Props) {
   const input = useRef<HTMLInputElement>(null), help = useId();
   const add = useRef<HTMLButtonElement>(null), actions = useRef(new Map<string, HTMLButtonElement>());
+  const recoveryFocus = useRef<{id:string;from:HTMLElement}|null>(null);
   const removal = useRef<{id: string; next: string | null; from: HTMLButtonElement} | null>(null);
   const files = props.enabled ? props.files : NO_FILES;
   const uncertain = files.some(file => file.phase === "check");
   useEffect(() => {
     if (!props.enabled) {removal.current = null; return;}
+    const recovering=recoveryFocus.current;
+    if(recovering&&props.enabled&&!props.busy){
+      recoveryFocus.current=null;
+      if(document.activeElement===document.body||document.activeElement===recovering.from){
+        const target=actions.current.get(recovering.id);if(target&&!target.disabled)target.focus();
+      }
+    }
     const pending = removal.current;
     // A requested removal may be refused by the original controller. Move focus
     // only after the actual local selection no longer contains that file.
@@ -43,22 +52,22 @@ export function CustomerChatAttachments(props: Props) {
     if (document.activeElement !== document.body && document.activeElement !== pending.from) return;
     const target = (pending.next ? actions.current.get(pending.next) : null) ?? add.current;
     if (target && !target.disabled) target.focus();
-  }, [files, props.enabled]);
+  }, [files, props.enabled, props.busy]);
   return <section aria-label="Files for this message" aria-busy={props.enabled && props.busy} className="min-w-0 space-y-1.5">
     <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
       <Button ref={add} type="button" variant="ghost" className="min-h-11 shrink-0 gap-2 px-2 text-sm"
-        disabled={!props.enabled || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
+        disabled={!props.enabled || props.locked || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
         aria-describedby={help} onClick={() => input.current?.click()}>
         <Paperclip aria-hidden="true" className="h-4 w-4"/>Add files
       </Button>
       {files.length > 0 && <span className="text-xs text-muted-foreground">{files.length} of {CUSTOMER_CHAT_FILE_LIMIT} files</span>}
       <input ref={input} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.docx" tabIndex={-1}
         aria-label="Choose private files for this message" className="sr-only"
-        disabled={!props.enabled || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
+        disabled={!props.enabled || props.locked || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
         onChange={event => {
           const selected = Array.from(event.currentTarget.files ?? []);
           event.currentTarget.value = "";
-          if (props.enabled && !props.busy && !uncertain && selected.length) props.onSelect(selected);
+          if (props.enabled && !props.locked && !props.busy && !uncertain && selected.length) props.onSelect(selected);
         }}/>
     </div>
     {files.length > 0 && <ul className="max-h-32 overflow-y-auto overscroll-contain rounded-lg border border-border bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -80,13 +89,13 @@ export function CustomerChatAttachments(props: Props) {
           </div>
           {checking ? <div className="flex w-full shrink-0 flex-wrap justify-end gap-1 pb-1">
             <Button ref={node => {if (node) actions.current.set(file.id, node); else actions.current.delete(file.id);}}
-              type="button" variant="outline" className="min-h-11 px-2 text-sm" disabled={props.busy}
+              type="button" variant="outline" className="min-h-11 px-2 text-sm" disabled={props.busy || props.locked}
               aria-label={`Check upload of ${file.file.name}`} onClick={() => props.onCheck(file.id)}>Check upload</Button>
-            {canResume && <Button type="button" variant="secondary" className="min-h-11 px-2 text-sm" disabled={props.busy}
-              aria-label={`Resume upload of ${file.file.name}`} onClick={() => props.onResume(file.id)}>Resume</Button>}
+            {canResume && <Button type="button" variant="secondary" className="min-h-11 px-2 text-sm" disabled={props.busy || props.locked}
+              aria-label={`Resume upload of ${file.file.name}`} onClick={event => {recoveryFocus.current={id:file.id,from:event.currentTarget};props.onResume(file.id);}}>Resume</Button>}
           </div> : <Button ref={node => {if (node) actions.current.set(file.id, node); else actions.current.delete(file.id);}}
             type="button" variant="ghost" size="icon" className="h-11 w-11 shrink-0"
-            disabled={props.busy || file.phase === "saving"} aria-label={`Remove ${file.file.name} from message`}
+            disabled={props.locked || props.busy || file.phase === "saving"} aria-label={`Remove ${file.file.name} from message`}
             onClick={event => {
               const index = files.findIndex(candidate => candidate.id === file.id);
               removal.current = {id: file.id, next: files[index + 1]?.id ?? files[index - 1]?.id ?? null, from: event.currentTarget};
@@ -96,7 +105,7 @@ export function CustomerChatAttachments(props: Props) {
       })}
     </ul>}
     <p id={help} className="text-xs text-muted-foreground">{files.length ? "Files stay private. Saving a file does not send your message."
-      : "PDF, JPG, PNG or Word · up to 5 files, 20 MB each"}</p>
+      : "PDF, JPG, PNG or Word · up to 5 files, 20 MB total"}</p>
     {props.enabled && props.issues.length > 0 && <ul role="status" className="space-y-1 text-sm text-foreground">
       {props.issues.map((issue, index) => <li key={index} className="break-words [overflow-wrap:anywhere]">
         {issue.filename ? `${issue.filename}: ` : ""}{issue.message}

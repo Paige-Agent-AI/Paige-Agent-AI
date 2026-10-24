@@ -724,7 +724,9 @@ Deno.test("original agreement-send mounts private request review before legacy p
         const table = url.pathname.slice("/rest/v1/".length);
         const value = table === "channel_connectors" ? x.state.connector : x.state.domain;
         assert.equal(url.searchParams.get("tenant_id"), "eq." + tenant);
-        return json(project(value, url));
+        if (x.state.readError) return json({ message: "private provider detail" }, 500);
+        const many = table === "channel_connectors" && !url.searchParams.has("id");
+        return json(many ? (x.state.connector.active ? [project(value, url)] : []) : project(value, url));
       }
       if (req.method === "GET" && url.pathname === "/rest/v1/clients") {
         assert.equal(url.searchParams.get("tenant_id"), "eq." + tenant);
@@ -774,6 +776,25 @@ Deno.test("original agreement-send mounts private request review before legacy p
       assert.equal(data.review.execution, "unavailable");
       assert(!wire.includes("credentials_vault_ref") && !wire.includes("content_storage_key"));
       assert.deepEqual(effects(x.f), before);
+    });
+    await t.step("original read door lists verified current-business sender choices without messaging", async () => {
+      const response = await invoke(listInput(x), "?review=senders");
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("cache-control"), "no-store, private");
+      const data = await response.json();
+      assert.equal(data.review.kind, "prepared_signature_sender_choices");
+      assert.equal(data.review.provider_execution_verified, false);
+      assert.deepEqual(data.review.senders, [{ connector_id: connectorId, from_address: x.state.connector.from_address,
+        state: "ready", reason: null }]);
+      assert.deepEqual(effects(x.f), before);
+    });
+    await t.step("sender lookup failure remains unavailable instead of falsely reporting no connection", async () => {
+      x.state.readError = true;
+      try { const response = await invoke(listInput(x), "?review=senders");
+        assert.equal(response.status, 503);
+        const text = await response.text();
+        assert(text.includes("sender_choices_unverified") && !text.includes("private provider detail"));
+      } finally { x.state.readError = false; }
     });
     await t.step("foreign business is refused before private source reads", async () => {
       const reads = x.f.calls.source;

@@ -1,7 +1,7 @@
 import { canonicalPresentationJson } from "./preparation-json.ts";
 import { sha256Hex } from "./token.ts";
 import { commsEmailBodyHtml, normalizeCommsEmailAddress } from "../comms-email/contract.ts";
-import { readEmailSenderFacts, emailSenderReadiness, type CommsEmailAdmin,
+import { readEmailSenderFacts, emailSenderReadiness, listCommsEmailSenders, type CommsEmailAdmin,
   type EmailProviderEnvironment } from "../comms-email/readiness.ts";
 import { senderDisplayName } from "../email/sender-display-name.ts";
 import { decideContentRead } from "../inbox-intelligence/policy.ts";
@@ -29,6 +29,7 @@ export class PreparedSignatureRequestUnavailable extends Error {
       | "FIELD_CORRECTIONS_REQUIRED"
       | "MESSAGE_INVALID"
       | "SENDER_UNVERIFIED"
+      | "SENDER_CHOICES_UNVERIFIED"
       | "SENDER_CHANGED"
       | "RECIPIENT_HELD",
   ) {
@@ -280,4 +281,47 @@ export async function prepareSignatureRequestReview(
     tool: "agreement_send" as const, args,
     request_sha256: await sha256Hex(canonicalPresentationJson(args)),
     approval: "not_requested" as const, execution: "unavailable" as const });
+}
+
+
+/** Authorized sender metadata for the same exact saved request. These choices
+ * are a read, not sender approval or proof of delivery. Unlike the generic
+ * email party resolver, this preserves agreement witnesses/business signers. */
+export async function readPreparedSignatureSenders(
+  value: unknown, caller: OwnerPreparationCaller, service: OwnerPreparationService,
+  expectedActorId: string, ports: PreparedSignatureEmailPorts,
+) {
+  const intent = capture(value);
+  const initial = await prepareSignatureRequestInput(intent, caller, service, expectedActorId);
+  const readChoices = async () => {
+    try {
+      const list = await listCommsEmailSenders(ports.admin,
+        { tenantId: initial.args.expectedTenantId, actorUserId: expectedActorId }, ["sendgrid"]);
+      const choices = [];
+      for (const identity of list) {
+        const facts = await readEmailSenderFacts(ports.admin, initial.args.expectedTenantId,
+          identity.connector_id, expectedActorId);
+        if (!facts || facts.provider !== "sendgrid" ||
+          normalizeCommsEmailAddress(facts.fromAddress) !== identity.from_address) {
+          return fail("SENDER_CHANGED");
+        }
+        const setup = emailSenderReadiness(facts, ports.environment());
+        choices.push({ ...identity, state: setup?.state ?? "ready" as const, reason: setup?.reason ?? null });
+      }
+      return choices;
+    } catch (error) {
+      if (error instanceof PreparedSignatureRequestUnavailable) throw error;
+      return fail("SENDER_CHOICES_UNVERIFIED");
+    }
+  };
+  const choices = await readChoices();
+  const finalChoices = await readChoices();
+  // The actual authenticated actor/source is always the LAST private read.
+  const final = await prepareSignatureRequestInput(intent, caller, service, expectedActorId);
+  if (canonicalPresentationJson(initial.args) !== canonicalPresentationJson(final.args)) return fail("REVIEW_CHANGED");
+  if (canonicalPresentationJson(choices) !== canonicalPresentationJson(finalChoices)) return fail("SENDER_CHANGED");
+  return frozen({ kind: "prepared_signature_sender_choices" as const,
+    review_sha256: initial.args.reviewSha256, senders: choices,
+    provider_execution_verified: false as const, approval: "not_requested" as const,
+    execution: "unavailable" as const });
 }

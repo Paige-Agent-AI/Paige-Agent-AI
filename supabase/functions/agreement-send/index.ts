@@ -1,5 +1,5 @@
 import { object } from "../_shared/sales-collections/primitives.ts";
-import { prepareSignatureRequestReview, PreparedSignatureRequestUnavailable,
+import { prepareSignatureRequestReview, readPreparedSignatureSenders, PreparedSignatureRequestUnavailable,
   type PreparedSignatureEmailPorts } from "../_shared/agreements/prepared-signature-request.ts";
 import { PreparedSignatureReviewUnavailable } from "../_shared/agreements/prepared-signature-review.ts";
 import { OwnerPreparationUnavailable, type OwnerPreparationService,
@@ -106,7 +106,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       result.headers.set("X-Content-Type-Options", "nosniff");
       return result;
     };
-    if (reviewUrl.searchParams.get("review") !== "prepared-request" ||
+    if (!["prepared-request", "senders"].includes(reviewUrl.searchParams.get("review") ?? "") ||
       reviewUrl.searchParams.getAll("review").length !== 1 ||
       [...reviewUrl.searchParams.keys()].some(key => key !== "review")) {
       return reply({ ok: false, code: "invalid_request",
@@ -139,7 +139,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
           return !error && data && typeof data.document_path === "string" ? data.document_path : null;
         },
       };
-      const review = await prepareSignatureRequestReview(input,
+      const readReview = reviewUrl.searchParams.get("review") === "senders"
+        ? readPreparedSignatureSenders : prepareSignatureRequestReview;
+      const review = await readReview(input,
         caller as unknown as OwnerPreparationCaller, service, actorId, {
           admin: admin as unknown as PreparedSignatureEmailPorts["admin"],
           environment: () => ({ resendConfigured: false, googleConfigured: false,
@@ -155,6 +157,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           FIELD_CORRECTIONS_REQUIRED: { status: 422, code: "fields_incomplete", error: "Complete the required signer fields before preparing this request." },
           MESSAGE_INVALID: { status: 400, code: "message_invalid", error: "Review each signer's subject and message. Keep the secure signing link included, and remove private signing links pasted from earlier requests." },
           SENDER_UNVERIFIED: { status: 422, code: "sender_unverified", error: "Email sending could not be verified for this request. Check your email connection or try the review again later." },
+          SENDER_CHOICES_UNVERIFIED: { status: 503, code: "sender_choices_unverified", error: "Sending identities could not be checked. Keep your draft and try again." },
           SENDER_CHANGED: { status: 409, code: "sender_changed", error: "The sending identity changed. Review the current sender before continuing." },
           RECIPIENT_HELD: { status: 409, code: "recipient_held", error: "This request could not be cleared for every recipient. Check their communication preferences and try the review again." },
         }[error.code];

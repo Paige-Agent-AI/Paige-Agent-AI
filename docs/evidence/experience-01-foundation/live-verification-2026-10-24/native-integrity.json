@@ -1,7 +1,8 @@
 {
  "capturedAt": "2026-10-24",
- "process": "temporary vite harness (tmp-capture/, uncommitted) mounting the actual PaigeLiveConversation with synthetic client/relayTransport stubs; Playwright Chromium reduced-motion; direct browser PNG captures (no crop/resize); dimensions verified by independent IHDR decode",
- "syntheticOnly": "no auth, no network, no provider, no microphone, no writes; the stub reproduces the acknowledgement-refusal, permission-denied and ready-relay result shapes the real edge functions emit",
+ "round": 2,
+ "process": "temporary vite harness (tmp-capture/, uncommitted) mounting the actual PaigeLiveConversation with SYNCHRONOUS synthetic client/relayTransport stubs (matching the real transport contracts; the ready emission mirrors relayTransport.ts:113); the OPEN gesture is a real Playwright click on the real trigger; every open state is ASSERTED by state-specific text before capture; a sha256 distinctness guard fails the run on identical bytes across states (round 1's module-scope click raced React's mount and was caught by review)",
+ "syntheticOnly": "no auth, no network, no provider, no microphone, no writes",
  "sources": {
   "supabase/migrations/20271113600000_live_acknowledgement_before_audio.sql": {
    "gitBlobSha1": "1c79e4bf23f45b31aa93386c094edf05290c51c1"
@@ -24,121 +25,141 @@
    "ihdr": "1536x770",
    "theme": "dark",
    "state": "closed",
-   "liveNodes": 1
+   "liveNodes": 1,
+   "asserted": "trigger visible"
   },
   "live-1536x770-dark-terms.png": {
    "ihdr": "1536x770",
    "theme": "dark",
    "state": "terms",
-   "liveNodes": 1
-  },
-  "live-1536x770-dark-listening.png": {
-   "ihdr": "1536x770",
-   "theme": "dark",
-   "state": "listening",
-   "liveNodes": 1
+   "liveNodes": 2,
+   "asserted": "I understand"
   },
   "live-1536x770-dark-denied.png": {
    "ihdr": "1536x770",
    "theme": "dark",
    "state": "denied",
-   "liveNodes": 1
+   "liveNodes": 2,
+   "asserted": "Microphone permission denied"
+  },
+  "live-1536x770-dark-listening.png": {
+   "ihdr": "1536x770",
+   "theme": "dark",
+   "state": "listening",
+   "liveNodes": 2,
+   "asserted": "Same workspace"
   },
   "live-1536x770-light-closed.png": {
    "ihdr": "1536x770",
    "theme": "light",
    "state": "closed",
-   "liveNodes": 1
+   "liveNodes": 1,
+   "asserted": "trigger visible"
   },
   "live-1536x770-light-terms.png": {
    "ihdr": "1536x770",
    "theme": "light",
    "state": "terms",
-   "liveNodes": 1
-  },
-  "live-1536x770-light-listening.png": {
-   "ihdr": "1536x770",
-   "theme": "light",
-   "state": "listening",
-   "liveNodes": 1
+   "liveNodes": 2,
+   "asserted": "I understand"
   },
   "live-1536x770-light-denied.png": {
    "ihdr": "1536x770",
    "theme": "light",
    "state": "denied",
-   "liveNodes": 1
+   "liveNodes": 2,
+   "asserted": "Microphone permission denied"
+  },
+  "live-1536x770-light-listening.png": {
+   "ihdr": "1536x770",
+   "theme": "light",
+   "state": "listening",
+   "liveNodes": 2,
+   "asserted": "Same workspace"
   },
   "live-1366x768-dark-closed.png": {
    "ihdr": "1366x768",
    "theme": "dark",
    "state": "closed",
-   "liveNodes": 1
+   "liveNodes": 1,
+   "asserted": "trigger visible"
   },
   "live-1366x768-light-closed.png": {
    "ihdr": "1366x768",
    "theme": "light",
    "state": "closed",
-   "liveNodes": 1
+   "liveNodes": 1,
+   "asserted": "trigger visible"
   },
   "live-1024x768-dark-closed.png": {
    "ihdr": "1024x768",
    "theme": "dark",
    "state": "closed",
-   "liveNodes": 1
+   "liveNodes": 1,
+   "asserted": "trigger visible"
   },
   "live-1024x768-light-closed.png": {
    "ihdr": "1024x768",
    "theme": "light",
    "state": "closed",
-   "liveNodes": 1
+   "liveNodes": 1,
+   "asserted": "trigger visible"
   },
   "live-900x1000-dark-closed.png": {
    "ihdr": "900x1000",
    "theme": "dark",
    "state": "closed",
-   "liveNodes": 1
+   "liveNodes": 1,
+   "asserted": "trigger visible"
   },
   "live-900x1000-dark-terms.png": {
    "ihdr": "900x1000",
    "theme": "dark",
    "state": "terms",
-   "liveNodes": 1
-  },
-  "live-900x1000-dark-listening.png": {
-   "ihdr": "900x1000",
-   "theme": "dark",
-   "state": "listening",
-   "liveNodes": 1
+   "liveNodes": 2,
+   "asserted": "I understand"
   },
   "live-900x1000-dark-denied.png": {
    "ihdr": "900x1000",
    "theme": "dark",
    "state": "denied",
-   "liveNodes": 1
+   "liveNodes": 2,
+   "asserted": "Microphone permission denied"
+  },
+  "live-900x1000-dark-listening.png": {
+   "ihdr": "900x1000",
+   "theme": "dark",
+   "state": "listening",
+   "liveNodes": 2,
+   "asserted": "Same workspace"
   },
   "live-900x1000-light-closed.png": {
    "ihdr": "900x1000",
    "theme": "light",
    "state": "closed",
-   "liveNodes": 1
+   "liveNodes": 1,
+   "asserted": "trigger visible"
   },
   "live-900x1000-light-terms.png": {
    "ihdr": "900x1000",
    "theme": "light",
    "state": "terms",
-   "liveNodes": 1
-  },
-  "live-900x1000-light-listening.png": {
-   "ihdr": "900x1000",
-   "theme": "light",
-   "state": "listening",
-   "liveNodes": 1
+   "liveNodes": 2,
+   "asserted": "I understand"
   },
   "live-900x1000-light-denied.png": {
    "ihdr": "900x1000",
    "theme": "light",
    "state": "denied",
-   "liveNodes": 1
+   "liveNodes": 2,
+   "asserted": "Microphone permission denied"
+  },
+  "live-900x1000-light-listening.png": {
+   "ihdr": "900x1000",
+   "theme": "light",
+   "state": "listening",
+   "liveNodes": 2,
+   "asserted": "Same workspace"
   }
  }
 }

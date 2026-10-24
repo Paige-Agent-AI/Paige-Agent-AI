@@ -1,146 +1,168 @@
 {
   "capturedAt": "2026-10-24",
+  "round": 2,
   "syntheticOnly": true,
+  "distinctnessGuard": "sha256-per-viewport-theme; identical bytes across states fail the run",
   "frames": {
     "live-1536x770-dark-closed.png": {
       "viewport": "1536x770",
       "theme": "dark",
       "state": "closed",
       "observedViewport": "1536x770",
-      "liveNodes": 1
+      "liveNodes": 1,
+      "asserted": "trigger visible"
     },
     "live-1536x770-dark-terms.png": {
       "viewport": "1536x770",
       "theme": "dark",
       "state": "terms",
       "observedViewport": "1536x770",
-      "liveNodes": 1
-    },
-    "live-1536x770-dark-listening.png": {
-      "viewport": "1536x770",
-      "theme": "dark",
-      "state": "listening",
-      "observedViewport": "1536x770",
-      "liveNodes": 1
+      "liveNodes": 2,
+      "asserted": "I understand"
     },
     "live-1536x770-dark-denied.png": {
       "viewport": "1536x770",
       "theme": "dark",
       "state": "denied",
       "observedViewport": "1536x770",
-      "liveNodes": 1
+      "liveNodes": 2,
+      "asserted": "Microphone permission denied"
+    },
+    "live-1536x770-dark-listening.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "listening",
+      "observedViewport": "1536x770",
+      "liveNodes": 2,
+      "asserted": "Same workspace"
     },
     "live-1536x770-light-closed.png": {
       "viewport": "1536x770",
       "theme": "light",
       "state": "closed",
       "observedViewport": "1536x770",
-      "liveNodes": 1
+      "liveNodes": 1,
+      "asserted": "trigger visible"
     },
     "live-1536x770-light-terms.png": {
       "viewport": "1536x770",
       "theme": "light",
       "state": "terms",
       "observedViewport": "1536x770",
-      "liveNodes": 1
-    },
-    "live-1536x770-light-listening.png": {
-      "viewport": "1536x770",
-      "theme": "light",
-      "state": "listening",
-      "observedViewport": "1536x770",
-      "liveNodes": 1
+      "liveNodes": 2,
+      "asserted": "I understand"
     },
     "live-1536x770-light-denied.png": {
       "viewport": "1536x770",
       "theme": "light",
       "state": "denied",
       "observedViewport": "1536x770",
-      "liveNodes": 1
+      "liveNodes": 2,
+      "asserted": "Microphone permission denied"
+    },
+    "live-1536x770-light-listening.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "listening",
+      "observedViewport": "1536x770",
+      "liveNodes": 2,
+      "asserted": "Same workspace"
     },
     "live-1366x768-dark-closed.png": {
       "viewport": "1366x768",
       "theme": "dark",
       "state": "closed",
       "observedViewport": "1366x768",
-      "liveNodes": 1
+      "liveNodes": 1,
+      "asserted": "trigger visible"
     },
     "live-1366x768-light-closed.png": {
       "viewport": "1366x768",
       "theme": "light",
       "state": "closed",
       "observedViewport": "1366x768",
-      "liveNodes": 1
+      "liveNodes": 1,
+      "asserted": "trigger visible"
     },
     "live-1024x768-dark-closed.png": {
       "viewport": "1024x768",
       "theme": "dark",
       "state": "closed",
       "observedViewport": "1024x768",
-      "liveNodes": 1
+      "liveNodes": 1,
+      "asserted": "trigger visible"
     },
     "live-1024x768-light-closed.png": {
       "viewport": "1024x768",
       "theme": "light",
       "state": "closed",
       "observedViewport": "1024x768",
-      "liveNodes": 1
+      "liveNodes": 1,
+      "asserted": "trigger visible"
     },
     "live-900x1000-dark-closed.png": {
       "viewport": "900x1000",
       "theme": "dark",
       "state": "closed",
       "observedViewport": "900x1000",
-      "liveNodes": 1
+      "liveNodes": 1,
+      "asserted": "trigger visible"
     },
     "live-900x1000-dark-terms.png": {
       "viewport": "900x1000",
       "theme": "dark",
       "state": "terms",
       "observedViewport": "900x1000",
-      "liveNodes": 1
-    },
-    "live-900x1000-dark-listening.png": {
-      "viewport": "900x1000",
-      "theme": "dark",
-      "state": "listening",
-      "observedViewport": "900x1000",
-      "liveNodes": 1
+      "liveNodes": 2,
+      "asserted": "I understand"
     },
     "live-900x1000-dark-denied.png": {
       "viewport": "900x1000",
       "theme": "dark",
       "state": "denied",
       "observedViewport": "900x1000",
-      "liveNodes": 1
+      "liveNodes": 2,
+      "asserted": "Microphone permission denied"
+    },
+    "live-900x1000-dark-listening.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "listening",
+      "observedViewport": "900x1000",
+      "liveNodes": 2,
+      "asserted": "Same workspace"
     },
     "live-900x1000-light-closed.png": {
       "viewport": "900x1000",
       "theme": "light",
       "state": "closed",
       "observedViewport": "900x1000",
-      "liveNodes": 1
+      "liveNodes": 1,
+      "asserted": "trigger visible"
     },
     "live-900x1000-light-terms.png": {
       "viewport": "900x1000",
       "theme": "light",
       "state": "terms",
       "observedViewport": "900x1000",
-      "liveNodes": 1
-    },
-    "live-900x1000-light-listening.png": {
-      "viewport": "900x1000",
-      "theme": "light",
-      "state": "listening",
-      "observedViewport": "900x1000",
-      "liveNodes": 1
+      "liveNodes": 2,
+      "asserted": "I understand"
     },
     "live-900x1000-light-denied.png": {
       "viewport": "900x1000",
       "theme": "light",
       "state": "denied",
       "observedViewport": "900x1000",
-      "liveNodes": 1
+      "liveNodes": 2,
+      "asserted": "Microphone permission denied"
+    },
+    "live-900x1000-light-listening.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "listening",
+      "observedViewport": "900x1000",
+      "liveNodes": 2,
+      "asserted": "Same workspace"
     }
   }
 }

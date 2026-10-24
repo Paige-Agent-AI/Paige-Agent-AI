@@ -59,3 +59,10 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL: source-backed private file Chat integration wit
 RELEASE_RECOVERY: position=guarded source revert or forward-fix retaining original native private files and turns; reference=docs/evidence/ui-delivery/e09-private-cura-chat-attachments.md
 
 First hosted UI-evidence check120917103250 correctly failed for seven missing structured release fields and ambiguous state-description wording. The record is repaired; the original validator/workflow is unchanged and new exact-head checks are required.
+
+
+## 2026-10-24 incumbent regression repair
+
+Required verify run40111150396 at candidate a3165061e2eb3d692912b33874a48e846840b3b3 FAILED: original attribution reports46 failing tests across existing Knowledge, Progress, cleanup, Sessions and dictation integration suites. The focused attachment tests had missed these no-file harnesses. Local reproduction identified missing file-context/ID/terminal-helper bindings and the actual Send-predicate harness missing privateFilesBlocked/privateFiles. No production guard or extraction/validation assertion was weakened. Existing no-file tests now explicitly bind null file state and use the real file terminal helper. All original assertion expressions are preserved; six additional file-only/voice/recovery/owner-negative Send assertions were added.
+
+Fresh local results: Knowledge20/20, Progress24/24, accepted-receipt cleanup3/3, Sessions13/13, dictation7/7 (67 tests across five suites, executed sequentially); private file admission/context/read lifetime27/27 across three suites. Original incumbent validator:124 source pins, zero findings. Original UI classifier/evidence validator: required=true, PASS. These are local source/controller checks, not authenticated external-client or physical-iPhone evidence. The interrupted initial multi-suite Windows run is not counted as passing. Production source, protected migration history, peer Chat source, C0b metadata and the deployment bundle are unchanged by this test-only repair. New exact-head review/CI and production readback remain required.

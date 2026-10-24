@@ -80,3 +80,14 @@ it("recordedOnly renders nothing when nothing is recorded, and the record when i
  await act(async()=>root.unmount());root=createRoot(host);
  await act(async()=>{root.render(<OperationsStaffDeliveryReview scope={scope} members={[]} recordedOnly />);});
  expect(host.textContent).toContain("Client acceptance recorded");});
+it("pure shell queries hold a dirty review without publishing feedback; explicit leave explains it",async()=>{
+ let close:(showNotice?:boolean)=>boolean=()=>true;
+ await act(async()=>root.render(<OperationsStaffDeliveryReview scope={scope} members={[]} registerCloseGuard={guard=>{close=guard;return()=>{close=()=>true;};}}/>));
+ await writeNote("Keep this exact source review");
+ const before=host.textContent;
+ await act(async()=>{expect(close(false)).toBe(false);expect(close(false)).toBe(false);});
+ expect(host.textContent).toBe(before);
+ await act(async()=>{expect(close()).toBe(false);});
+ expect(host.textContent).toContain("Clear the unsaved review note explicitly before closing.");
+ expect(writeStaffDelivery).not.toHaveBeenCalled();
+});

@@ -75,3 +75,14 @@ it("offers each source choice as a labelled, keyboard-operable combobox, never a
  expect(document.querySelector('[role="listbox"]')).toBeNull();
  expect(trigger.textContent).toBe("Choose a teammate");
 });
+it("pure shell queries retain preparation without changing feedback; explicit leave still explains the hold",async()=>{
+ let close:(showNotice?:boolean)=>boolean=()=>true;
+ await act(async()=>root.render(<OperationsDeliverablePreparation scope={scope} members={[member]} registerCloseGuard={guard=>{close=guard;return()=>{close=()=>true;};}}/>));
+ await choose("Studio session",id(6));
+ const before=host.textContent;
+ await act(async()=>{expect(close(false)).toBe(false);expect(close(false)).toBe(false);});
+ expect(host.textContent).toBe(before);
+ await act(async()=>{expect(close()).toBe(false);});
+ expect(host.textContent).toContain("Clear this preparation explicitly before closing.");
+ expect(writeStaffDelivery).not.toHaveBeenCalled();
+});

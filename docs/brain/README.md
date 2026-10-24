@@ -2916,6 +2916,30 @@ and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, regist
 authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
 All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.
 
+## EXP05 original ZION planning instructions — local source, October23
+
+The existing global soft ZION version2 is enabled but has no system prompt or
+job configuration; original invokeSoft correctly refuses before any provider.
+Bounded migration800005 supplies internal planning instructions and existing
+job_kind=plan atomically at version3 only for the exact untouched factory row.
+Customized, disabled, tenant, triggered and later registrations are preserved.
+No new specialist, permission, tool, provider, trigger or execution engine.
+Actual original route causal500 →34PASS; original routing/workspace/recovery/
+catalogue74PASS; selected original-DDL native20 + original role19 assertions PASS.
+Full migrated CI, reviewed merge, production data/readback and actual ordinary
+specialist draft/receipt/reload remain owed. Prompt installation restores draft
+callability, not execution authority or a Live catalogue promotion. Original
+Operations recipes and their access/coverage remain unchanged.
+[Evidence](../evidence/ui-delivery/exp05-zion-planning-instructions.md).
+Preserve E04/E09/E02 receiving-owner order and2722/2725 recovery dependencies.
+After the originating E10 correction genuinely applied800000, the original
+740005→850005 reservation was superseded BEFORE edits by ANT161/47c9175c:
+own unused800005 now sits BELOW the receiving frontier, SQL bytes unchanged.
+Original2f981 full migrated native CI passed; fresh renamed-head CI/review and
+actual production source/data remain separate gates, with no peer/history edit.
+Full ten outcomes/E5-CV1–9 and
+founder evaluation remain open; source/visual/customer acceptance stay separate.
+
 ## EXP05 — original specialist result, native UI source
 
 [Original recovery UI evidence](../evidence/ui-delivery/exp05-original-specialist-result-ui.md)

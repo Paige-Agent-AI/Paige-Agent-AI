@@ -174,4 +174,3 @@ with main79171c82 plus E03 closeout2729. The earlier duplicate-version hold is
 resolved on this composition. Renderer, parser and owning test source are
 unchanged from reviewed900f; fresh exact-head CI and native parent production
 readback remain required. No customer verification is inferred from composition.
-

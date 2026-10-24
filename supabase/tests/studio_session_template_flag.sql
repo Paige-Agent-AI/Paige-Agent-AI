@@ -213,45 +213,45 @@ DECLARE v text;
 BEGIN
   -- 1. The creator flags their own project; the row really flipped; clearing restores it.
   v := pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', '',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'ok:true%', 'creator flags own project: ' || v);
   PERFORM pg_temp.chk((SELECT is_template FROM public.studio_sessions WHERE id = '00000000-0000-4000-8000-00000000a101'::uuid),
     'the row really flipped to is_template');
   v := pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', '',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, false, NULL) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, false, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'ok:false%', 'creator clears the flag: ' || v);
   PERFORM pg_temp.chk(NOT (SELECT is_template FROM public.studio_sessions WHERE id = '00000000-0000-4000-8000-00000000a101'::uuid),
     'the row really flipped back');
 
   -- 2. Role gate + owner-or-admin predicate.
   v := pg_temp.run('00000000-0000-4000-8000-00000000e003', 'authenticated', '',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'err:42501:%STUDIO_FORBIDDEN%', 'plain member: refused by the role gate: ' || v);
   v := pg_temp.run('00000000-0000-4000-8000-00000000e004', 'authenticated', '',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'err:P0002:%STUDIO_NOT_FOUND%', 'global coach on someone else''s project: not found (owner-or-admin predicate): ' || v);
   v := pg_temp.run('00000000-0000-4000-8000-00000000e002', 'authenticated', '',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'ok:true%', 'workspace admin templates someone else''s project: ' || v);
   PERFORM pg_temp.run('00000000-0000-4000-8000-00000000e002', 'authenticated', '',
-    $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, false, NULL) $$);
+    $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, false, NULL) $sql$);
 
   -- 3. The tenant wall: B's owner names A's session — NOT_FOUND, never swapped, row untouched.
   v := pg_temp.run('00000000-0000-4000-8000-00000000e005', 'authenticated', '',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'err:P0002:%STUDIO_NOT_FOUND%', 'another workspace''s owner: not found (tenant wall): ' || v);
   PERFORM pg_temp.chk(NOT (SELECT is_template FROM public.studio_sessions WHERE id = '00000000-0000-4000-8000-00000000a101'::uuid),
     'the wall left the row untouched');
 
   -- 4. The service path.
   v := pg_temp.run('', 'service_role', 'service_role',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'err:22023:%STUDIO_NO_TENANT%', 'service path without a tenant: refused: ' || v);
   v := pg_temp.run('', 'service_role', 'service_role',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, '00000000-0000-4000-8000-00000000d0a1'::uuid) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, '00000000-0000-4000-8000-00000000d0a1'::uuid) $$);
   PERFORM pg_temp.chk(v LIKE 'ok:true%', 'service path naming the tenant: works: ' || v);
   PERFORM pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', '',
-    $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, false, NULL) $$);
+    $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, false, NULL) $sql$);
 
   -- 5. Privileges.
   PERFORM pg_temp.chk(has_function_privilege('authenticated', 'public.set_studio_session_template(uuid, boolean, uuid)', 'EXECUTE'),
@@ -261,7 +261,7 @@ BEGIN
   PERFORM pg_temp.chk(NOT has_function_privilege('anon', 'public.set_studio_session_template(uuid, boolean, uuid)', 'EXECUTE'),
     'anon may not execute');
   v := pg_temp.run('', 'anon', 'anon',
-    $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+    $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'err:42501:%', 'anon by a real call: refused: ' || v);
 
   -- 6. Shape: the family's exact posture.
@@ -290,7 +290,7 @@ BEGIN
       RETURN _row;
     END $fn$;
     v := pg_temp.run('00000000-0000-4000-8000-00000000e003', 'authenticated', '',
-      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no role gate): the plain member succeeds — the gate is what the probe tests: ' || v);
     ROLLBACK TO SAVEPOINT m1;
   END;
@@ -308,7 +308,7 @@ BEGIN
       RETURN _row;
     END $fn$;
     v := pg_temp.run('00000000-0000-4000-8000-00000000e005', 'authenticated', '',
-      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no tenant wall): the other workspace''s owner finds it — the wall is what the probe tests: ' || v);
     ROLLBACK TO SAVEPOINT m2;
   END;
@@ -328,14 +328,14 @@ BEGIN
       RETURN _row;
     END $fn$;
     v := pg_temp.run('00000000-0000-4000-8000-00000000e004', 'authenticated', '',
-      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $$);
+      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no owner-or-admin predicate): the coach templates another''s project — the predicate is what the probe tests: ' || v);
     ROLLBACK TO SAVEPOINT m3;
   END;
   -- Every mutation was rolled back: the production body answers again (the wall refuses the
   -- foreign owner where the mutated one succeeded), and no row stayed a template.
   v := pg_temp.run('00000000-0000-4000-8000-00000000e005', 'authenticated', '',
-    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'err:P0002:%STUDIO_NOT_FOUND%', 'after the mutations rolled back: the real wall answers again: ' || v);
   PERFORM pg_temp.chk((SELECT count(*) FROM public.studio_sessions WHERE is_template) = 0,
     'every mutation was rolled back — no row stayed a template');

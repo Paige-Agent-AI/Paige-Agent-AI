@@ -90,6 +90,7 @@ export {
   mergeResumedRows,
   outcomeFromRecord,
   readTurnRecord,
+  readRecoveryReadOnlyRefusal,
   readTurnTrace,
   settleTurnRows,
   upsertTurnRow,

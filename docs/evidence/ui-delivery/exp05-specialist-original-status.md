@@ -1,6 +1,14 @@
 # EXP05 — original specialist status through the native history channel
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
+INTERNAL_BUILD_IDENTITY: c2716bb9ddf19489af41dd1db8f3619ce157f45c; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal affected-function deployment after exact-head required gates); evidence=docs/evidence/ui-delivery/exp05-specialist-original-status.md
+RELEASE_CHANNEL: development: reviewed original status transport and shared client loader awaiting required release gates.
+RELEASE_CLASSIFICATION: internal-only: bounded EXP05 original-result recovery integration, no customer launch.
+CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or founder acceptance.
+RELEASE_NOTE_REQUIRED: NO: original PR, Brain and evidence retain exact source/runtime boundaries.
+RELEASE_TRUTH_BOUNDARY: PARTIAL source proof; PROOF OWED exact-head hosted CI, production source, native Chat mounting and authenticated recovery.
+RELEASE_RECOVERY: position=hold for failed required checks; reference=original server-stamped turn and immutable receipt, never reset or replay.
+UNVERIFIED: actual rendered Chat original-result control, production packages and ordinary authenticated reload/recovery remain owed; loader tests do not close the customer job or full Experience.
 FLOW_BY_FLOW: PASS: original terminal -> explicit original status read -> current workspace authority -> original invocation inspector -> closed original result, without another execution.
 PAIGE_UI_DESIGN: PASS: existing PAIGE status/recovery and Impeccable truthfulness contract preserved; no rendered component or layout is added in this backend increment.
 MATERIAL_FLOW_CHANGE: NO: complete the original read/recovery transport, not a new action or customer goal.

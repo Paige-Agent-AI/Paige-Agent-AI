@@ -31,16 +31,38 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   run(source(migration));run(source(migration));
   const declineScopeMigration='supabase/migrations/20271113020000_experience05_weekly_decline_scope.sql';
   run(source(declineScopeMigration));run(source(declineScopeMigration));
+  const chatScopeMigration='supabase/migrations/20271113860005_experience05_weekly_chat_draft_scope.sql';
+  run(source(chatScopeMigration));run(source(chatScopeMigration));
+  check('thread-bound weekly draft uses explicit native Chat facades',()=>{
+    for(const signature of ['read_weekly_commitment_chat_draft(uuid,uuid)',
+      'claim_weekly_commitment_chat_draft(uuid,text,uuid,uuid,uuid,uuid)',
+      'commit_weekly_commitment_chat_draft(uuid,uuid,jsonb,uuid,uuid,uuid)',
+      'decline_weekly_commitment_chat_draft(uuid,text,uuid,uuid,uuid)'])
+      assert.notEqual(run(`SELECT to_regprocedure('public.${signature}') IS NULL;`),'t',signature+' is missing');
+  });
   check('native decline freezes the same owner scope in the same lock order as claim and commit',()=>{
-    const body=name=>run(`SELECT prosrc FROM pg_proc WHERE oid='public.${name}'::regprocedure;`);
+    const body=name=>run(`SELECT prosrc FROM pg_proc WHERE oid=${literal(name)}::regprocedure;`);
     const authorityPrefix=value=>value.slice(value.indexOf('BEGIN'),value.indexOf('_p:=public._weekly_draft_proposal'))
       .replace(/--[^\n]*/g,'').replace(/\s+/g,' ').trim();
-    const prefix=authorityPrefix(body('decline_weekly_commitment_draft(uuid,text)'));
+    const prefix=authorityPrefix(body('private.weekly_draft_decline(uuid,text,uuid)'));
     assert(prefix.includes('FROM public.profiles WHERE user_id=_uid FOR SHARE;'));
     assert(prefix.includes('public.current_user_tenant_id() IS DISTINCT FROM _tid'));
     assert(prefix.includes('FOR SHARE OF m,t;'));
-    assert.equal(prefix,authorityPrefix(body('claim_weekly_commitment_draft(uuid,text,uuid)')));
-    assert.equal(prefix,authorityPrefix(body('commit_weekly_commitment_draft(uuid,uuid,jsonb)')));
+    assert.equal(prefix,authorityPrefix(body('private.weekly_draft_claim(uuid,text,uuid,uuid)')));
+    assert.equal(prefix,authorityPrefix(body('private.weekly_draft_commit(uuid,uuid,jsonb,uuid)')));
+    for(const [signature,call] of [
+      ['read_weekly_commitment_draft(uuid)','private.weekly_draft_read(_confirmation_id,NULL::uuid)'],
+      ['claim_weekly_commitment_draft(uuid,text,uuid)','private.weekly_draft_claim(_confirmation_id,_approved_token,_request_nonce,NULL::uuid)'],
+      ['commit_weekly_commitment_draft(uuid,uuid,jsonb)','private.weekly_draft_commit(_confirmation_id,_request_nonce,_expected_args,NULL::uuid)'],
+      ['decline_weekly_commitment_draft(uuid,text)','private.weekly_draft_decline(_confirmation_id,_declined_token,NULL::uuid)']])
+      assert.equal(body('public.'+signature).replace(/\s+/g,' ').trim(),'SELECT '+call+';','original UI facade fixes NULL thread scope');
+  });
+  check('scope-aware native cores and helper overload are inaccessible to every API role',()=>{
+    for(const signature of ['public._weekly_draft_proposal(uuid,uuid)','private.weekly_draft_read(uuid,uuid)',
+      'private.weekly_draft_claim(uuid,text,uuid,uuid)','private.weekly_draft_commit(uuid,uuid,jsonb,uuid)',
+      'private.weekly_draft_decline(uuid,text,uuid)','private.weekly_chat_draft_mutation_scope(uuid,uuid,uuid)'])
+      for(const role of ['anon','authenticated','service_role'])
+        assert.equal(run(`SELECT has_function_privilege(${literal(role)},${literal(signature)},'EXECUTE');`),'f',role+' '+signature);
   });
   check('draft catalogue preserves every incumbent permission and adds only default-confirm metadata',()=>{
     const after=json(`SELECT jsonb_agg(to_jsonb(t) ORDER BY tool_key) FROM list_tool_autonomy(${literal(tenant)}) t;`,ctx);
@@ -336,7 +358,48 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
     assert.deepEqual(json("SELECT jsonb_build_object('is_live',is_live,'dark_reason',dark_reason) FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),originalTrigger);
     assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),flagBefore);
   }
+  // Extend this SAME disposable fixture with the actual original Chat runtime;
+  // never a stubbed scope/runtime validator or another native proof engine.
+  run(`ALTER TABLE public.tenants ADD COLUMN status text NOT NULL DEFAULT 'active';
+    CREATE TABLE public.paige_chat_threads(id uuid PRIMARY KEY,caller_user_id uuid,tenant_id uuid,
+      message_count int DEFAULT 0,last_message_at timestamptz,auto_delete_at timestamptz,updated_at timestamptz,
+      audience text NOT NULL DEFAULT 'workspace',is_archived boolean NOT NULL DEFAULT false,contact_id uuid,lens text);
+    CREATE TABLE public.paige_chat_turns(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),thread_id uuid,
+      role text,content text,bundle_ref jsonb,surfaces_used text[],load_id uuid,model text,tokens_used int,latency_ms int,tool_calls jsonb);
+    GRANT SELECT,INSERT,UPDATE ON public.paige_chat_threads TO authenticated;
+    GRANT ALL ON public.paige_chat_threads,public.paige_chat_turns TO service_role;
+    CREATE FUNCTION public.client_portal_relationship_id() RETURNS uuid LANGUAGE sql AS $$ SELECT NULL::uuid $$;`);
+  const appendSource=source('supabase/migrations/20261020100000_chat_turn_append_tenant_scope.sql');
+  run(appendSource.slice(appendSource.indexOf('CREATE OR REPLACE FUNCTION')));
+  for(const path of ['20270601000000_int336_interactive_thread_fence.sql','20270601000008_int346_server_issued_interactive_receipts.sql',
+    '20270602000301_int346_conversational_admission.sql','20271108110000_int346_database_executor_isolation.sql'])
+    run(source('supabase/migrations/'+path));
+  const exactFunction=(sql,name)=>{
+    const at=sql.search(new RegExp('CREATE\\s+OR\\s+REPLACE\\s+FUNCTION\\s+public\\.'+name+'\\s*\\(','i'));
+    assert(at>=0,name);const tail=sql.slice(at),tag=/\bAS\s+(\$\w*\$)/i.exec(tail);assert(tag,name);
+    const end=tail.indexOf(tag[1],tag.index+tag[0].length);assert(end>=0,name);
+    return tail.slice(0,end+tag[1].length)+';';
+  };
+  const privateChat=source('supabase/migrations/20271108201000_e09_customer_private_chat.sql');
+  for(const name of ['paige_chat_customer_thread_authorized','paige_chat_turn_append','paige_chat_interactive_begin_v2'])
+    run(exactFunction(privateChat,name));
+  const recovery=source('supabase/migrations/20271110021000_chat_runtime_recovery.sql');
+  const displayAt=recovery.indexOf('-- Compose only the new display case'),guardAt=recovery.indexOf('-- INVOKER trigger:');
+  assert(displayAt>0&&guardAt>displayAt,'original runtime source boundaries');
+  // The existing weekly fixture intentionally doubles human Rail display only.
+  // Exclude its unrelated display composition; all runtime DDL/guards/functions are exact.
+  run(recovery.slice(0,displayAt)+recovery.slice(guardAt));
+  run(source('supabase/migrations/20271112110000_bound_answer_executor_acquire.sql'));
+  const reminder=source('supabase/migrations/20271110070000_reminder_approved_intent.sql');
+  const argsAt=reminder.indexOf('create or replace function private.paige_reminder_args(');
+  assert(argsAt>0,'original scope/runtime source boundaries');
+  run(reminder.slice(0,argsAt)+'\nCOMMIT;');
+  const chatProof=run(source('supabase/tests/weekly_commitment_chat_draft.sql'));
+  const chatCases=Number(/WEEKLY_CHAT_DRAFT_PASS=(\d+)/.exec(chatProof)?.[1]);
+  check('actual bound Chat draft lifecycle and hostile controls pass in the original fixture',()=>assert(chatCases>=100));
   return {status:'PASS',source:migration,migration_sha256:createHash('sha256').update(source(migration)).digest('hex'),
+    chat_scope:{source:chatScopeMigration,migration_sha256:createHash('sha256').update(source(chatScopeMigration)).digest('hex'),
+      cases:chatCases,actual_native_runtime_helpers:true,fixture_protocol_rolled_back:true,production_admission:'UNAVAILABLE'},
     decline_scope:{source:declineScopeMigration,migration_sha256:createHash('sha256').update(source(declineScopeMigration)).digest('hex'),
       same_claim_commit_authority_prefix:true,current_owner_denials:true},
     incumbent_catalogue:{source:laterCatalogues.at(-1)?.file??'original_weekly_frontier',rows:catalogueBefore.length,preserved_metadata_and_defaults:true},

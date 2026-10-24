@@ -102,7 +102,7 @@ try{
     IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated; END IF;
     IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role BYPASSRLS; END IF;
     END $roles$;
-    CREATE SCHEMA auth; CREATE SCHEMA cron; CREATE SCHEMA vault; CREATE SCHEMA net; CREATE SCHEMA realtime;
+    CREATE SCHEMA auth; CREATE SCHEMA cron; CREATE SCHEMA vault; CREATE SCHEMA net; CREATE SCHEMA realtime; CREATE SCHEMA private;
     GRANT USAGE ON SCHEMA public,auth TO authenticated,anon,service_role;
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.actor',true),'')::uuid $$;
     CREATE TABLE auth.users(id uuid PRIMARY KEY);
@@ -180,8 +180,14 @@ try{
   run(zoneSource.match(/REVOKE ALL ON public\.tenant_business_time_zones[^;]+;/)[0]);
   if(!baselineRead){run(readMigrationSource);run(readMigrationSource);run(source(historyMigration));run(source(historyMigration));}
   if(draftOnly){
+    // Match the incumbent full proof's setup before its UI authorization cases.
+    // This mode is already forbidden in CI and uses only this disposable cluster.
+    run(source('supabase/migrations/20271113510005_experience05_weekly_authorization_review.sql'));
+    run("UPDATE paige_automation_triggers SET is_live=true,dark_reason=NULL WHERE key='schedule.weekly_commitment_check';");
+    run("SELECT set_tool_autonomy('planning_weekly_commitment_check','auto');",ownerCtx);
     const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource});
-    evidence={status:'PASS',cases:cases.length,checks:cases,draft_command:draftCommand,boundary:'local additive draft-only iteration; full native CI unchanged; no production/provider/authenticated acceptance'};
+    evidence={status:'PASS',cases:cases.length,checks:cases,draft_command:draftCommand,fixture_service_role:roleParity,
+      boundary:'local additive draft-only iteration; full native CI unchanged; no production/provider/authenticated acceptance'};
     writeFileSync(join(scratch,'result.json'),JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence));console.log(`Evidence: ${join(scratch,'result.json')}`);
   }else{
   check('migration applies twice; catalogue stays dark',()=>assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),'f'));

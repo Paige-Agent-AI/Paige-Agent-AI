@@ -241,5 +241,7 @@ export async function proveEffectiveCommercialCurrent({sql:originalSql,read,quot
  };
  const checks=await proveEffectiveCommercialTerms({sql,read,concurrent,refuseAfterLock,scope:`SET test.uid='${actor}';SET test.tenant='${tenant}';SET test.admin='true';SET test.member='true';`,
   tenant,actor,termsId:c.terms,invoiceId:c.invoice,agreementId,prepared,migration:'supabase/migrations/20271113820004_e04_exact_signed_terms.sql'});
- return {checks,concurrentSessions:5,observedLockWaits:3,migrationReplay:2,scope:'Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance'};
+ const {proveEffectiveCommercialCatalogue}=await import('./effective-commercial-catalogue-proof.mjs');
+ const catalogue=proveEffectiveCommercialCatalogue({sql,read,tenant,actor});
+ return {checks:checks+catalogue.checks,catalogue,concurrentSessions:5,observedLockWaits:3,migrationReplay:2,scope:'Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance'};
 }

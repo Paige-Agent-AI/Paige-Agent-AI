@@ -25,7 +25,7 @@ MUST_PRESERVE: Original paige-dictate sender/authentication, shared relay, PCM r
 ACCEPTANCE_CRITERIA: Physical authorized customer taps, speaks, stops, sees editable words, sends explicitly and returns to accurate private history; denial/failure leaves a usable composer and appropriate recovery. Agent synthetic assertions do not close physical acceptance.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: AudioRecorder shared by useDictation and E01 relay; actual relay suite17 passes. Original provider, Harness, Trust, Spine, admissions, INT346, tenant relationship and canonical private history unchanged. No financial/scheduling/knowledge writer.
-INTERNAL_BUILD_IDENTITY: source-base=df691e3fc82719863baa495a3e17fd09b76e8d2a; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e09-customer-dictation-recovery/rendered-observations.json exact source hashes
+INTERNAL_BUILD_IDENTITY: source-base=bc0b5dad56f1683336668615d2a06195f0d9adfd; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e09-customer-dictation-recovery/rendered-observations.json exact source hashes
 RELEASE_CHANNEL: development: local candidate for ordinary production under standing owner delegation; no staged cohort or activation.
 RELEASE_CLASSIFICATION: patch: microphone startup/resampling/cleanup and customer recovery layout.
 CUSTOMER_RELEASE_IDENTITY: none: no new owner-approved public release version.
@@ -40,3 +40,8 @@ ANT161 source leases f8345701-f5d7-46da-b6c0-e387d26be1ff and ef045615-9990-4790
 Existing orchestration contract: original request is customer voice draft; entry Portal; specialist CURA; original authenticated actor/relationship captured by existing frame; no consequential execution or approval added. Original paige-dictate STT and editable composer are the appropriate existing path, not LayerC event execution. This change creates no durable work/receipt ledger; actual explicit Chat Send remains original private thread writer. Cancellation invalidates pending generations; uncertain capture never sends an action. Source/API/provider activation and actual customer outcome remain distinct.
 
 Scope includes the consultant customer journey without narrowing full EXP09. EXP03 owns channel send/delivery evidence; EXP04 agreements/invoices/payment facts; EXP05 original Work/scheduling; EXP01 shared Chat/eligible Live; EXP10 provider readiness. These remain original-record handoffs. Local error detection is not production verification of ALG12; canonical ALG01/12 bounded partial and ALG02/04/13 outcomes unverified. All42 assigned outcomes, original IDs and seven pillars unchanged.
+
+
+## Required CI recovery and composition
+
+Initial native120735190849 is FAIL: original production snapshot pg_dump was interrupted at01:25:39UTC by our administrative read-session cleanup during2701 deployment recovery. Idle/no-write sessions were incorrectly classified as stale without proving CI ownership. The missing local stack and subsequent tests did not execute successfully and are not credited. No product records were changed; original failed run remains visible. Current mainbc0b5dad, including deployed620009/630009 and their incumbent fixtures, is now composed without microphone source changes. A new exact-head native/general CI run and sequential author-review are mandatory; no additional unknown-session cleanup or gate waiver.

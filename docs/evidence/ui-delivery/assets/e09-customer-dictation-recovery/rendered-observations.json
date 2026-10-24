@@ -203,11 +203,15 @@
     "src/components/voice/DictationMicButton.test.tsx": "720d3ae5bde886d65c659785d5328398c8b327ee90702d3248c020f658389fc3",
     "src/components/voice/DictationComposer.contract.test.ts": "7cbbfaada56bc46a707123b7022c2e6a97bf0ad0c41a8e8d8ed7ac168aa5b5bd"
   },
-  "composedMain": "df691e3fc82719863baa495a3e17fd09b76e8d2a",
+  "composedMain": "bc0b5dad56f1683336668615d2a06195f0d9adfd",
   "tests": {
     "focused": 151,
     "files": 6,
     "result": "PASS",
     "lastNewTestChange": "formatting only; final recorder rerun10PASS,0FAIL after composing current main"
+  },
+  "requiredCI": {
+    "originalNative120735190849": "FAIL: our cleanup interrupted readonly CI snapshot; no local stack/test success credited",
+    "recovery": "current main composed; new exact-head gates required; microphone source pins unchanged"
   }
 }

@@ -7,7 +7,7 @@ import { setScopedUserId } from "@/lib/scopedUser";
 
 const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
   crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null, planningOptions: [] as unknown[], planningOverrides:{} as Record<string,unknown>,
-  planningLoading:false, crmLoading:false, crmHasMore:false, peoplePartial:false }));
+  planningLoading:false, crmLoading:false, crmHasMore:false, peoplePartial:false, deliveryGuard:false }));
 const weekly = vi.hoisted(() => ({ read: vi.fn(), refresh: vi.fn(), taskRead: vi.fn() }));
 // Supply the calendar read port; do not let this integration suite escape to RPC.
 vi.mock("../data/useBusinessTimeZone", async original => ({ ...await original<typeof import("../data/useBusinessTimeZone")>(),
@@ -29,7 +29,7 @@ vi.mock("./OperationsDelivery", () => ({ default: () => <div>Delivery test seam<
 const release = vi.hoisted(() => ({ standalone: false }));
 vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => true, tierKey: "solo", soloStandalone: release.standalone, loading: false }) }));
 vi.mock("./OperationsItemRelease", () => ({
-  OperationsItemRelease: ({ item }: { item: { id: string } }) => <div data-testid="release-flow">Release flow for {item.id}</div> }));
+  OperationsItemRelease: ({ item, registerCloseGuard }: { item: { id: string; updated_at?:string }; registerCloseGuard?:(guard:(showNotice?:boolean)=>boolean)=>()=>void }) => {React.useLayoutEffect(()=>registerCloseGuard?.(()=>!harness.deliveryGuard),[registerCloseGuard]);return <div data-testid="release-flow" data-version={item.updated_at}>Release flow for {item.id}<button onClick={()=>{harness.deliveryGuard=false;}}>Fixture clear delivery decision</button></div>;} }));
 vi.mock("./OperationsPlaybooks", () => ({ OperationsPlaybooks: ({onPrepare}:{onPrepare?:(source:{id:string;tenant_id:string;title:string;revision:number}|null,routine?:string)=>void}) => <div>Playbook test seam
   <button disabled={!onPrepare} onClick={()=>onPrepare?.({id:"test-procedure",tenant_id:"test-tenant-a",title:'Untrusted "title"',revision:4})}>Prepare source workflow</button>
   <button onClick={()=>onPrepare?.({id:"foreign-procedure",tenant_id:"test-tenant-b",title:"Foreign source",revision:1})}>Foreign source workflow</button>
@@ -46,6 +46,12 @@ vi.mock("./OperationsCrmWorkEditor",()=>({OperationsCrmWorkEditor:()=> <div>Nati
 vi.mock("./OperationsProjectCreator", () => ({ OperationsProjectCreator: ({ onRecover }: { onRecover: (id?: string) => Promise<void> }) => <div data-testid="project-creator"><button onClick={() => void onRecover()}>Refresh unknown project</button><button onClick={() => void onRecover("test-project")}>Inspect acknowledged project</button></div> }));
 vi.mock("./useOperationsCrmWork",()=>({useOperationsCrmWork:()=>({tasks:harness.crmTasks,loading:harness.crmLoading,error:harness.crmError,forbidden:false,hasMore:harness.crmHasMore,refresh:vi.fn(),readTask:weekly.taskRead})}));
 vi.mock("./OperationsCrmStageReview",()=>({OperationsCrmStageReview:({operation}:{operation:{taskId:string}})=><div>Recovery test seam: {operation.taskId}</div>}));
+vi.mock("./OperationsDeliveryReviewQueue",()=>({OperationsDeliveryReviewQueue:({onInspect}:{onInspect:(row:import("./operations-delivery-reviews").PendingDeliveryReview)=>void})=><button onClick={()=>onInspect({submission_id:deliveryId(6),work_item_id:deliveryId(3),plan_id:deliveryId(4),client_id:deliveryId(5),artifact_version_id:deliveryId(7),artifact_digest:"a".repeat(64),revision_no:1,submitted_by:deliveryId(8),reviewer_user_id:harness.user,submission_updated_at:"2026-10-13T12:00:00.123456Z",work_updated_at:"2026-10-13T12:00:00.123456Z",title:"Synthetic review nomination"})}>Fixture review nomination</button>}));
+vi.mock("./OperationsDeliveryInspection",()=>({OperationsDeliveryInspection:({scope,registerCloseGuard,reviewOnly}:{scope:import("./operations-delivery-staff").StaffDeliveryScope;registerCloseGuard:(guard:()=>boolean)=>()=>void;reviewOnly?:boolean})=>{
+ React.useLayoutEffect(()=>registerCloseGuard(()=>!harness.deliveryGuard),[registerCloseGuard]);
+ return<div data-testid="delivery-inspection" data-review-only={String(Boolean(reviewOnly))} data-work={scope.workItemId} data-version={scope.workUpdatedAt}>Delivery inspection test seam<button onClick={()=>{harness.deliveryGuard=false;}}>Fixture clear delivery decision</button></div>;
+}}));
+const deliveryId=(n:number)=>`ed820000-0000-4000-8000-${String(n).padStart(12,"0")}`;
 import { OperationsWorkspace } from "./OperationsWorkspace";
 let container: HTMLDivElement;
 let root: Root;
@@ -53,7 +59,7 @@ let root: Root;
 beforeEach(() => { setScopedUserId(null); harness.tenant = "test-tenant-a"; harness.user = "test-user"; harness.status = "ready";
   vi.clearAllMocks();
   harness.planningOptions=[];
-  harness.planningOverrides={};release.standalone=false;
+  harness.planningOverrides={};release.standalone=false;harness.deliveryGuard=false;
   harness.planningLoading=false;harness.crmLoading=false;harness.crmHasMore=false;harness.peoplePartial=false;
   sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];harness.guard=null;
   weekly.read.mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
@@ -482,7 +488,7 @@ it.each([
   ["work with no row version", true, { contact_id: "test-contact", plan_id: "test-plan", updated_at: undefined }, false],
   ["a business that is not standalone", false, { contact_id: "test-contact", plan_id: "test-plan", updated_at: "2099-01-01T00:00:00Z" }, false],
 ])("mounts the client release flow in the work item only for %s", async (_label, standalone, overrides, mounted) => {
-  release.standalone = standalone; harness.planningOverrides = overrides;
+  deliveryWorkspace(); release.standalone = standalone; harness.planningOverrides = {...harness.planningOverrides,...overrides,contact_id:overrides.contact_id?deliveryId(5):null,plan_id:overrides.plan_id?deliveryId(4):null};
   const errors = vi.spyOn(console, "error");
   await act(async () => root.render(<OperationsWorkspace view="work" />));
   await act(async () => container.querySelector<HTMLButtonElement>(".ops-work-card")!.click());
@@ -525,3 +531,13 @@ it("uses Playbook design context for the existing ZION review instead of project
   expect(paige.handoff).toHaveBeenCalledWith(expect.stringContaining("repeatable business process"));
   expect(paige.handoff).not.toHaveBeenCalledWith(expect.stringContaining("active projects and work"));
 });
+
+// Current-main composition of original2161 owning integration assertions. The incumbent
+// ItemRelease replaces the old duplicate work/delivery toggle, preserving one original release surface.
+function deliveryWorkspace(){harness.user=deliveryId(1);harness.tenant=deliveryId(2);release.standalone=true;harness.planningOverrides={id:deliveryId(3),plan_id:deliveryId(4),contact_id:deliveryId(5),created_by:harness.user,updated_at:"2026-10-13T12:00:00.123456Z"};}
+it("client-linked work retains ONE incumbent release with its exact saved version",async()=>{deliveryWorkspace();await act(async()=>root.render(<OperationsWorkspace view="work"/>));await act(async()=>container.querySelector<HTMLButtonElement>(".ops-work-card")?.click());expect(document.querySelectorAll('[data-testid="release-flow"]')).toHaveLength(1);expect(document.querySelector('[data-testid="release-flow"]')?.getAttribute('data-version')).toBe("2026-10-13T12:00:00.123456Z");expect(document.querySelector('[data-testid="delivery-inspection"]')).toBeNull();expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Work edit test seam");});
+it("Planning draft guard refuses a nomination until the original editor is clear",async()=>{deliveryWorkspace();await act(async()=>root.render(<OperationsWorkspace view="work"/>));await act(async()=>container.querySelector<HTMLButtonElement>(".ops-work-card")?.click());harness.guard="Unsaved native work";await click("Fixture review nomination");expect(document.querySelector('[data-testid="delivery-inspection"]')).toBeNull();harness.guard=null;await click("Fixture review nomination");expect(document.querySelector('[data-testid="delivery-inspection"]')).not.toBeNull();});
+it("the original release child guards pure shell reads, explicit Close and department change",async()=>{deliveryWorkspace();let pure:(()=>string|null)|null=null;await act(async()=>root.render(<OperationsWorkspace view="work" onNavigationGuardChange={guard=>{pure=guard;}}/>));await act(async()=>container.querySelector<HTMLButtonElement>(".ops-work-card")?.click());harness.deliveryGuard=true;expect(pure?.()).toContain('delivery decision');const close=document.querySelector<HTMLButtonElement>('[role="dialog"] button.sr-only')??Array.from(document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')).find(b=>b.textContent?.trim()==='Close');expect(close).toBeTruthy();await act(async()=>close?.click());expect(document.querySelector('[data-testid="release-flow"]')).not.toBeNull();await click('Capacity');expect(container.querySelector('[aria-current="page"]')?.textContent).toBe('Work');harness.deliveryGuard=false;expect(pure?.()).toBeNull();await act(async()=>close?.click());expect(document.querySelector('[role="dialog"]')).toBeNull();});
+it("nomination opens review-only inspection without Planning edits or duplicate release",async()=>{deliveryWorkspace();await act(async()=>root.render(<OperationsWorkspace view="work"/>));await click("Fixture review nomination");expect(document.querySelector('[data-testid="delivery-inspection"]')?.getAttribute('data-review-only')).toBe('true');expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Work edit test seam');expect(document.querySelector('[data-testid="release-flow"]')).toBeNull();});
+it("saved delivery decision outside the work bundle reopens only its original scope",async()=>{deliveryWorkspace();const scope={actorId:harness.user,tenantId:harness.tenant,workItemId:deliveryId(13),planId:deliveryId(4),clientId:deliveryId(5),workUpdatedAt:"2026-10-13T11:00:00.123456Z"};sessionStorage.setItem(`paige:operations-delivery-inspection:${harness.user}:${harness.tenant}:${scope.workItemId}`,JSON.stringify({version:1,scope,kind:"attempt",action:{kind:"submit",artifactVersionId:deliveryId(7),reviewerId:deliveryId(8),expectedRevisionNo:0}}));await act(async()=>root.render(<OperationsWorkspace view="work"/>));await click("Inspect original delivery decision");expect(document.querySelector('[data-testid="delivery-inspection"]')?.getAttribute('data-work')).toBe(scope.workItemId);expect(document.querySelector('[data-testid="delivery-inspection"]')?.getAttribute('data-version')).toBe(scope.workUpdatedAt);expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Work edit test seam');});
+it("effective client persona removes nomination and retained inspection controls",async()=>{deliveryWorkspace();await act(async()=>root.render(<OperationsWorkspace view="work"/>));await click("Fixture review nomination");await act(async()=>setScopedUserId("client"));expect(document.querySelector('[data-testid="delivery-inspection"]')).toBeNull();expect(container.textContent).not.toContain('Fixture review nomination');expect(document.querySelector('[role="dialog"]')).toBeNull();});

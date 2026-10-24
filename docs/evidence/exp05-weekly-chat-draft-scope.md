@@ -20,13 +20,14 @@ provider readiness. No account-specific implementation or new test tenant.
 
 ## Reuse and precise source change
 
-Forward migration `20271113860005_experience05_weekly_chat_draft_scope.sql`
+Forward migration `20271113840003_experience05_weekly_chat_draft_scope.sql`
 has normalized SHA256
-`664ad6c30e224493c840b9a8c2f14335009187cc5de992e9cc748bb7038cfe7b`.
-It is reserved after the existing lower native source sequence
-`810109 → 820004 → 830004 → proposed840002 → 850004`. Those originating
-sources and authoritative readbacks must be reconciled before native release;
-do not apply ahead, reset history or use include-all.
+`228ecd4611f8d08f6fad6f14b101bab22ec938055094117a258005e257d62a94`.
+Receiving E04 ACKa75630c3 and E02 ACK6d9f2bf6 permit this never-production-applied
+source to follow deployed840002 and precede E04reserved840004/850004. All15
+function bodies/ABI/grants are identical to the original860005 candidate; only
+the path and one source-order comment change. No applied production history is
+rewritten. Fresh exact-head native/Preview/CI and frontier gates remain required.
 
 - **REUSE:** one original pending-confirmation store, current owner check,
   native `draft_weekly_commitment_check`, partial request-identity index,
@@ -157,3 +158,30 @@ not authenticated customer acceptance; full exact-head hosted CI runs separately
 Fresh production readback has830004 present and no840002/850004/860005.
 The original E02→E04→E05 native release order remains a hold; no migration,
 Chat admission, delegated assignment, recurring run or provider action occurred.
+
+## Receiving-owner release-order reconciliation — October24
+
+The preceding native-order/current-main checks remain dated evidence. At15:30UTC,
+production contains840002 and neither840003/840004/850004/860005. Current main
+`5ff2e58825e901fbe1565aac3a47adb6cd454f6b` composes normally at
+`01577ff08b45a74f6a38030c629382b3db1ea1af`. No competing840003 source reservation
+was found in current main or the inspected original owner records. Explicit E04
+and E02 receiving acknowledgments confirm no semantic dependency and preserve
+their existing native bodies, ownership and840004→850004 slots.
+
+Only NEVER-PRODUCTION-APPLIED860005 moves to840003. A whole-file inverse outside
+one ordering comment proves all15 bodies/ABI/security/grants unchanged. Earlier
+`664ad6c3` source hash, original review/green0aa and old managed Preview remain
+historical proof, never a replacement for the renamed head's release gates.
+Own nondefault/nonpersistent/no-data managed Preview1836d29b had fresh0Auth,
+0confirmations/automations/Rail/specialist invocations before normal PR retirement;
+its removal was observed. Original PR2758 is temporarily closed solely for that
+empty-environment replacement and reopens on the same preserved source branch.
+No production DDL/history reset/include-all, peer source edit, new tenant/provider
+or business effect occurred. New native proof, separate review, exact CI, genuine
+normal Preview and actual production readback remain mandatory before release.
+Renamed-source local draft iteration passes43 cases, including170 actual scoped
+Chat assertions, with original service-role posture restored and zero provider
+effects. Transcript `work/weekly-chat-draft-840003-native.txt` and original result
+`../test-temp/paige-weekly-proof-G4Iznp/result.json` retain this bounded proof;
+required hosted CI still runs the unchanged complete native suite.

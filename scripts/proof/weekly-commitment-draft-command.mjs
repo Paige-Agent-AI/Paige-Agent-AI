@@ -31,7 +31,7 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   run(source(migration));run(source(migration));
   const declineScopeMigration='supabase/migrations/20271113020000_experience05_weekly_decline_scope.sql';
   run(source(declineScopeMigration));run(source(declineScopeMigration));
-  const chatScopeMigration='supabase/migrations/20271113860005_experience05_weekly_chat_draft_scope.sql';
+  const chatScopeMigration='supabase/migrations/20271113840003_experience05_weekly_chat_draft_scope.sql';
   run(source(chatScopeMigration));run(source(chatScopeMigration));
   check('thread-bound weekly draft uses explicit native Chat facades',()=>{
     for(const signature of ['read_weekly_commitment_chat_draft(uuid,uuid)',

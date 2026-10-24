@@ -1,5 +1,5 @@
 -- EXP05 native prerequisite only; Chat tool admission and recurring activation remain OFF.
--- Follows original E09/E04/E02 reserved lower-source sequence through850004.
+-- Re-sequenced after deployed840002 and before E04reserved840004/850004 by receiving ACK.
 -- Preserve every original weekly UI signature, NULL-thread scope and response.
 -- One native implementation per operation, same confirmation/definition/Rail writers.
 -- No data backfill, role change, flag, event, cron or shared runtime-helper change.

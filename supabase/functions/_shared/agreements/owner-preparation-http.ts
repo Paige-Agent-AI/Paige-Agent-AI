@@ -1,5 +1,6 @@
 import {OwnerPreparationUnavailable,executeOwnerPreparation,readOwnerPreparation,readOwnerPreparationPdf,listOwnerCommercialPreparationSources,reviewOwnerCommercialPreparation,type OwnerPreparationCaller,type OwnerPreparationService} from './owner-preparation.ts';
 import {PreparationArtifactUnavailable} from './preparation-artifact.ts';
+import {PreparedSignatureReviewUnavailable,readPreparedSignatureReview} from './prepared-signature-review.ts';
 
 const maxBody=1048576;
 async function boundedJson(req:Request):Promise<unknown>{
@@ -25,9 +26,11 @@ export async function handleOwnerPreparation(
     const url=new URL(req.url),requestedMode=url.searchParams.get('preparation');
     const allowed=req.method!=='GET'?[]:requestedMode==='commercial_sources'?['preparation','businessId','agreementId','beforeId']
       :requestedMode==='commercial_review'?['preparation','businessId','agreementId','invoiceId']
+      :requestedMode==='signing_review'?['preparation','businessId','agreementId','preparationId','preparationSha256','sourceClientId','sourceVersion','sourceUpdatedAt']
       :['preparation','businessId','agreementId','preparationId','download'];
     // A token/Portal/legacy query never changes doors, including on POST.
     if([...url.searchParams.keys()].some(k=>!allowed.includes(k))||[...url.searchParams.keys()].some(k=>url.searchParams.getAll(k).length!==1))throw new OwnerPreparationUnavailable('INVALID_REQUEST');
+    if(requestedMode==='signing_review'&&!/^[1-9]\d*$/.test(url.searchParams.get('sourceVersion')??''))throw new OwnerPreparationUnavailable('INVALID_REQUEST');
     const auth=await caller.auth.getUser();
     if(auth.error||!auth.data.user||auth.data.user.is_anonymous)throw new OwnerPreparationUnavailable('ACCESS_UNVERIFIED');
     if(req.method==='POST'){
@@ -37,6 +40,11 @@ export async function handleOwnerPreparation(
     }
     if(req.method!=='GET')return json({ok:false,error:'GET or POST only'},405);
     const mode=url.searchParams.get('preparation'),tenant=url.searchParams.get('businessId')??'',agreement=url.searchParams.get('agreementId')??'',id=url.searchParams.get('preparationId');
+    if(mode==='signing_review')return json({ok:true,review:await readPreparedSignatureReview({
+      tenant_id:tenant,agreement_id:agreement,preparation_id:id,
+      preparation_sha256:url.searchParams.get('preparationSha256'),
+      expected_source:{client_id:url.searchParams.get('sourceClientId'),version:Number(url.searchParams.get('sourceVersion')),updated_at:url.searchParams.get('sourceUpdatedAt')},
+    },caller,service,auth.data.user.id)});
     if(mode==='commercial_sources')return json({ok:true,sources:{tenant_id:tenant,agreement_id:agreement,
       ...await listOwnerCommercialPreparationSources(tenant,agreement,url.searchParams.get('beforeId'),caller,service)}});
     if(mode==='commercial_review')return json({ok:true,review:{tenant_id:tenant,agreement_id:agreement,invoice_id:url.searchParams.get('invoiceId')??'',
@@ -51,6 +59,16 @@ export async function handleOwnerPreparation(
       'Content-Disposition':`${url.searchParams.get('download')==='1'?'attachment':'inline'}; filename="agreement-preparation.pdf"`,
       'X-Agreement-Document-SHA256':actual.sha256,'Access-Control-Expose-Headers':'X-Agreement-Document-SHA256','Content-Security-Policy':"default-src 'none'; sandbox"}});
   }catch(error){
+    if(error instanceof PreparedSignatureReviewUnavailable){
+      const response={
+        INVALID_REQUEST:{status:400,code:'invalid_request',error:'Choose the exact saved agreement and document version to review.'},
+        ACCESS_UNVERIFIED:{status:403,code:'access_unverified',error:'Agreement access could not be verified. Reopen it in the intended business.'},
+        SOURCE_CHANGED:{status:409,code:'source_changed',error:'The saved document, signers or commercial source changed. Reload the original preparation.'},
+        DOCUMENT_UNVERIFIED:{status:422,code:'document_unavailable',error:'The retained PDF could not be verified. Reopen the original document before continuing.'},
+        UNCONFIRMED:{status:503,code:'unconfirmed',error:'This saved-document review could not be confirmed. Retry the review or return to the document.'},
+      }[error.code];
+      return json({ok:false,code:response.code,error:response.error},response.status);
+    }
     if(error instanceof OwnerPreparationUnavailable){
       if(error.code==='INVALID_REQUEST')return json({ok:false,code:'invalid_request',error:'Choose the original agreement and preparation request before continuing.'},400);
       if(error.code==='ACCESS_UNVERIFIED')return json({ok:false,code:'access_unverified',error:'Agreement access could not be verified. Check your selected business and sign-in.'},403);

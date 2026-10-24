@@ -3713,3 +3713,27 @@ full reload/role/provider claim. Fresh exact-head review/CI, actual ordered
 native/API/web readback and all12/CentralQA/founder acceptance remain separate.
 Original Sales reference debt now has bounded draft2728 with local52 cases and
 15 actual synthetic frames; not yet a Finance/VERA/authenticated acceptance.
+
+## C23 — same saved document to signing-request review
+
+Existing owner field placement/native Save is already mounted (2604/2646), not
+rebuilt. Extend original authenticated agreement-document GET and existing pane
+with same-source private PDF/signers/order/assigned-field inspection. Pure shared
+projection grants no authority; original owner/native/Storage readers and final
+source/actor recheck remain authoritative. Missing fields stay correctable; dirty
+or unknown Save blocks review. No approval/link/send/signature/obligation created.
+
+Actual local44 Deno/HTTP and87 SDK/mounted-pane cases, scoped lint0/strict Deno
+types, actual source build and10 raw native frames/34 frozen inputs/13 observed
+browser paths are bounded synthetic evidence. Mandatory Impeccable0primary/four
+incumbent advisories; original system preserved. See existing UI-delivery packet
+e04-prepared-signature-review.md. No Chat/Live prepared-review registration or
+Algorithm/Capabilities Live promotion. Existing sales.department PROOF_OWED.
+
+Remaining originating agreement chain: exact approved prepared request through
+canonical Kit/Communications, assigned recipient inputs/consent, original atomic
+signature/evidence/final prepared seal and actual role/reload proof. Legacy effect
+and token holds remain. All O1–O12, Stripe TEST/payment truth, onboarding/Work,
+client acceptance/completion/self-service and integrated founder evaluation stay
+in scope. Own PR/current main/review/CI/release/Auth/acceptance remain independent;
+this LOCAL source increment has no shipped-log row until actual merge/readback.

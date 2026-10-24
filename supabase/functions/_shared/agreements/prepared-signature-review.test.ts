@@ -128,6 +128,13 @@ Deno.test("overlapping assigned fields remain a genuine correction requirement",
     review = await reader()(intent, f.caller, f.service);
   assert.equal(review.ready_for_review, false);
   assert(review.issues.some((issue) => issue.code === "overlapping_fields"));
+  assert(Object.isFrozen(review.issues));
+  for (const issue of review.issues) {
+    assert(Object.isFrozen(issue));
+    if (issue.code === "overlapping_fields") {
+      assert(Object.isFrozen(issue.field_ids));
+    }
+  }
 });
 for (
   const change of [

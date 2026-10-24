@@ -5,6 +5,7 @@ import fixture from './fixtures/agreement-document-source.json';
 import {prepareAgreementFields,prepareCommercialAgreementFields,type AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
 import {assembleFixedRepaymentSchedule} from '../../../supabase/functions/_shared/sales-collections/model';
 import {prepareCommercialPresentation,commercialPresentationText} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
+import {projectPreparedSignatureReview} from '../../../supabase/functions/_shared/agreements/prepared-signature-review-contract';
 import * as documentSDK from './agreementDocumentApi';
 const {getSession,invoke,rpc,setHeader,abortSignal}=vi.hoisted(()=>({getSession:vi.fn(),invoke:vi.fn(),rpc:vi.fn(),setHeader:vi.fn(),abortSignal:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:{getSession},functions:{invoke},rpc}}));
@@ -85,6 +86,54 @@ describe('canonical commercial document SDK',()=>{
     invoke.mockResolvedValue({data:{ok:true,view:raw},error:null});expect((await readAgreementDocument(context(),request)).ok).toBe(false);
     raw.can_edit=false;raw.can_prepare=false;raw.preparation.source_matches=false;
     const result=await readAgreementDocument(context(),request);expect(result.ok).toBe(true);if(result.ok)expect(prepareAgreementDocumentCommand(context(),request,result.value)).toBeNull();
+  });
+});
+
+async function signingReview(value=retained()){
+  return projectPreparedSignatureReview({tenant_id:value.source.tenant_id,agreement_id:value.source.agreement_id,preparation_id:value.preparation.id,
+    preparation_sha256:value.preparation.preparation_sha256,expected_source:{client_id:value.source.client_id,version:value.source.version,updated_at:value.source.updated_at}},value);
+}
+describe('saved signature review on the original owner document SDK',()=>{
+  it('reads the exact retained tuple with the actual actor token and preserves honest unready field work',async()=>{
+    const value=retained(),review=await signingReview(value);invoke.mockResolvedValue({data:{ok:true,review},error:null});
+    const result=await documentSDK.readAgreementSigningReview(context(),value);expect(result).toEqual({ok:true,value:review});
+    expect(review.ready_for_review).toBe(false);expect(review.approval).toBe('not_requested');expect(review.sending).toBe('not_connected');
+    const [name,args]=invoke.mock.calls[0],url=new URL('https://local-fixture.invalid/'+name);
+    expect(url.searchParams.get('preparation')).toBe('signing_review');expect(url.searchParams.get('preparationId')).toBe(request);
+    expect(url.searchParams.get('preparationSha256')).toBe(value.preparation.preparation_sha256);expect(url.searchParams.get('sourceUpdatedAt')).toBe(fixture.source.updated_at);
+    expect(args).toMatchObject({method:'GET',headers:{Authorization:'Bearer controlled-auth-token'}});expect(args.body).toBeUndefined();expect(rpc).not.toHaveBeenCalled();
+  });
+  it.each(['digest','document','signer','source','approved','sending','unknown_field','missing_issue'] as const)('refuses changed or expanded %s review evidence',async variant=>{
+    const value=retained(),review=structuredClone(await signingReview(value));
+    if(variant==='digest')review.review_sha256='0'.repeat(64);if(variant==='document')review.document.sha256='0'.repeat(64);
+    if(variant==='signer')review.signers[0].email='other@example.test';if(variant==='source')review.request.expected_source.version++;
+    if(variant==='approved')Object.assign(review,{approval:'approved'});if(variant==='sending')Object.assign(review,{sending:'sent'});
+    if(variant==='unknown_field')Object.assign(review,{token:'forbidden'});if(variant==='missing_issue')Object.assign(review,{issues:[],ready_for_review:true});
+    invoke.mockResolvedValue({data:{ok:true,review},error:null});expect(await documentSDK.readAgreementSigningReview(context(),value)).toMatchObject({ok:false,reason:'unconfirmed'});
+  });
+  it.each(['historical','changed_source','foreign_scope','not_editable'] as const)('refuses %s retained work before requesting review',async variant=>{
+    const value=retained();if(variant==='historical')value.preparation.is_selected=false;if(variant==='changed_source')value.preparation.source_matches=false;
+    if(variant==='foreign_scope')value.source.tenant_id=event;if(variant==='not_editable')value.can_edit=false;
+    expect((await documentSDK.readAgreementSigningReview(context(),value)).ok).toBe(false);expect(invoke).not.toHaveBeenCalled();expect(getSession).not.toHaveBeenCalled();
+  });
+  it('captures both the source and context before awaits instead of mixing later caller edits',async()=>{
+    const value=retained(),ctx=context(),review=await signingReview(value),auth=held<ReturnType<typeof session>>();getSession.mockReturnValue(auth.promise);
+    invoke.mockResolvedValue({data:{ok:true,review},error:null});const waiting=documentSDK.readAgreementSigningReview(ctx,value);
+    value.source.version++;ctx.tenantId=event;ctx.actorId=event;await vi.waitFor(()=>expect(getSession).toHaveBeenCalledOnce());auth.resolve(session());
+    expect(await waiting).toEqual({ok:true,value:review});expect(invoke.mock.calls[0][0]).toContain(fixture.source.tenant_id);
+  });
+  it('retires a late signature review after the original access epoch changes',async()=>{
+    let active=true;const value=retained(),review=await signingReview(value),work=held<{data:unknown;error:null}>();invoke.mockReturnValue(work.promise);
+    const waiting=documentSDK.readAgreementSigningReview({...context(),isCurrent:()=>active},value);await vi.waitFor(()=>expect(invoke).toHaveBeenCalledOnce());active=false;work.resolve({data:{ok:true,review},error:null});
+    expect(await waiting).toMatchObject({ok:false,reason:'retired'});
+  });
+  it('withholds the source when the actual current actor differs and never makes a request',async()=>{
+    const auth=session();auth.data.session.user.id=event;getSession.mockResolvedValue(auth);
+    expect(await documentSDK.readAgreementSigningReview(context(),retained())).toMatchObject({ok:false,reason:'access_unverified'});expect(invoke).not.toHaveBeenCalled();
+  });
+  it('keeps unknown read recovery distinct from a possibly executed preparation command',async()=>{
+    invoke.mockRejectedValue(Error('SECRET raw provider detail'));const result=await documentSDK.readAgreementSigningReview(context(),retained());
+    expect(result).toMatchObject({ok:false,reason:'unconfirmed'});expect(JSON.stringify(result)).not.toMatch(/SECRET|already.*recorded|may.*recorded/i);expect(JSON.stringify(result)).toContain('Retry the review');
   });
 });
 

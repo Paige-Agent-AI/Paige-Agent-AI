@@ -212,7 +212,7 @@ BEGIN
  SELECT value INTO item FROM jsonb_array_elements(r.resource_plan) WHERE value->>'key'=_key;
  IF item IS NULL OR _state NOT IN ('verified','blocked','unknown') THEN RAISE EXCEPTION 'invalid resource result' USING ERRCODE='22023'; END IF;
  t:=(item->>'tenant_id')::uuid;
- IF NOT(r.resource_results ? _key) AND (CASE WHEN item->>'provider'='tts_cache' THEN NOT public.operator_tts_cache_subset(t,item->'objects') WHEN item->>'provider'='generated_media' THEN NOT public.operator_generated_media_subset(t,item->'objects') WHEN item->>'provider'='team_hub_files' THEN NOT public.operator_team_hub_files_subset(t,item->'objects') ELSE item->>'fingerprint' IS DISTINCT FROM public.operator_resource_fingerprint(item->>'provider',t) END) THEN RAISE EXCEPTION 'resource binding changed' USING ERRCODE='40001'; END IF;
+ IF NOT(r.resource_results ? _key) AND (CASE WHEN item->>'provider'='tts_cache' THEN NOT public.operator_tts_cache_subset(t,item->'objects') WHEN item->>'provider'='generated_media' THEN NOT public.operator_generated_media_subset(t,item->'objects') ELSE item->>'fingerprint' IS DISTINCT FROM public.operator_resource_fingerprint(item->>'provider',t) END) THEN RAISE EXCEPTION 'resource binding changed' USING ERRCODE='40001'; END IF;
  IF _state='verified' THEN
   PERFORM set_config('paige.operator_retirement_claim',_claim::text,true);
   IF item->>'provider'='twilio' THEN

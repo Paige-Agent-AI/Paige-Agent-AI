@@ -668,7 +668,56 @@ SELECT pg_temp.check(pg_temp.touched(format('DELETE FROM storage.objects WHERE n
 RESET ROLE;
 SELECT pg_temp.check((pg_temp.object(:'px')).metadata=jsonb_build_object('size',1000,'mimetype',:'pdf') AND (pg_temp.object(:'px')).owner_id=:'u1',
  'update/delete: the Team Hub object is exactly as uploaded');
-\echo 'PASS: no browser caller overwrites, moves, renames into or deletes a Team Hub object; Inbox attachments in the same bucket are unaffected'
+-- The prefix is the second path segment, split_part(name,'/',2)='team-hub', the rule the
+-- retirement manifest and guard use. The two-segment name <tenant>/team-hub is inside it, so no
+-- browser caller can create it and leave the account's retirement blocked on an unremovable name.
+SELECT :'ta'||'/'||gen_random_uuid()||'-inbox.pdf' AS pin2 \gset
+SELECT pg_temp.act(:'u2'); SET ROLE authenticated;
+SELECT pg_temp.check(pg_temp.put(:'pin2'), 'prefix: setup: a member''s Inbox attachment');
+SELECT pg_temp.check(NOT pg_temp.put(:'ta'||'/team-hub'), 'prefix: a member cannot create the two-segment name <tenant>/team-hub'),
+ pg_temp.check(NOT pg_temp.put(:'ta'||'/team-hub/y/z'), 'prefix: nor a four-segment name under the prefix'),
+ pg_temp.check(pg_temp.touched(format('UPDATE storage.objects SET name=%L WHERE name=%L',:'ta'||'/team-hub',:'pin2'))='denied',
+  'prefix: nor rename an Inbox object onto <tenant>/team-hub');
+SELECT pg_temp.check(pg_temp.touched(format('DELETE FROM storage.objects WHERE name=%L',:'pin2'))='1', 'prefix: the Inbox attachment is removed as before');
+SELECT pg_temp.act(:'u10');
+SELECT pg_temp.check(NOT pg_temp.put(:'ta'||'/team-hub'), 'prefix: nor can the platform owner');
+RESET ROLE;
+INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES ('comms-attachments',:'ta'||'/team-hub',:'u2','{}');
+SELECT pg_temp.act(:'u2'); SET ROLE authenticated;
+SELECT pg_temp.check(NOT pg_temp.sees(:'ta'||'/team-hub'), 'prefix: an existing <tenant>/team-hub object is not readable'),
+ pg_temp.check(pg_temp.touched(format('UPDATE storage.objects SET metadata=''{}'' WHERE name=%L',:'ta'||'/team-hub'))='0', 'prefix: nor writable'),
+ pg_temp.check(pg_temp.touched(format('DELETE FROM storage.objects WHERE name=%L',:'ta'||'/team-hub'))='0', 'prefix: nor removable in a browser');
+RESET ROLE;
+-- Postgres applies SELECT policies to the rows an UPDATE or DELETE reads and writes, so the read
+-- boundary alone already hides that name. Each write boundary must hold on its own as well:
+-- without the read boundary (rolled back), the update and delete boundaries still refuse it.
+BEGIN;
+DROP POLICY team_hub_files_select_boundary ON storage.objects;
+SELECT :'ta'||'/'||gen_random_uuid()||'-inbox.pdf' AS pin3 \gset
+SELECT pg_temp.act(:'u2'); SET ROLE authenticated;
+SELECT pg_temp.check(pg_temp.put(:'pin3'), 'prefix: isolated: setup: a member''s Inbox attachment');
+SELECT pg_temp.check(pg_temp.sees(:'ta'||'/team-hub'), 'prefix: isolated: without the read boundary the member policy shows the object'),
+ pg_temp.check(pg_temp.touched(format('UPDATE storage.objects SET metadata=''{}'' WHERE name=%L',:'ta'||'/team-hub'))='0',
+  'prefix: isolated: the update boundary alone refuses writing <tenant>/team-hub'),
+ pg_temp.check(pg_temp.touched(format('DELETE FROM storage.objects WHERE name=%L',:'ta'||'/team-hub'))='0',
+  'prefix: isolated: the delete boundary alone refuses removing <tenant>/team-hub');
+RESET ROLE;
+DELETE FROM storage.objects WHERE bucket_id='comms-attachments' AND name=:'ta'||'/team-hub';
+SELECT pg_temp.act(:'u2'); SET ROLE authenticated;
+SELECT pg_temp.check(pg_temp.touched(format('UPDATE storage.objects SET name=%L WHERE name=%L',:'ta'||'/team-hub',:'pin3'))='denied',
+  'prefix: isolated: the update boundary alone refuses renaming an Inbox object onto <tenant>/team-hub');
+ROLLBACK;
+RESET ROLE;
+DELETE FROM storage.objects WHERE bucket_id='comms-attachments' AND name=:'ta'||'/team-hub';
+-- The segment is case-sensitive in every layer: an upper-case TEAM-HUB folder is an ordinary
+-- comms object, governed by the member policies exactly as an Inbox attachment is.
+SELECT :'ta'||'/TEAM-HUB/'||gen_random_uuid() AS pup \gset
+SELECT pg_temp.act(:'u2'); SET ROLE authenticated;
+SELECT pg_temp.check(pg_temp.put(:'pup'), 'prefix: an upper-case TEAM-HUB folder is outside the prefix; a member uploads it as an Inbox object');
+SELECT pg_temp.check(pg_temp.sees(:'pup'), 'prefix: and reads it as before'),
+ pg_temp.check(pg_temp.touched(format('DELETE FROM storage.objects WHERE name=%L',:'pup'))='1', 'prefix: and removes it as before');
+RESET ROLE;
+\echo 'PASS: no browser caller overwrites, moves, renames into or deletes a Team Hub object; the prefix is the second segment, so <tenant>/team-hub is inside it; Inbox attachments in the same bucket are unaffected'
 
 ---------------------------------------------------------------------------------------------
 -- 6. for_check: the uploader's own pending or ready file, in a conversation they see.
@@ -889,23 +938,37 @@ SELECT pg_temp.check(public.team_hub_discard_file(:'ta',:'fh')->>'ok'='true'
 \echo 'PASS: discard is the uploader''s, on unposted files only, and idempotent'
 
 ---------------------------------------------------------------------------------------------
--- 11. The stale sweep: the uploader's own pending files older than a day, and nothing else.
+-- 11. The stale sweep: the uploader's own unposted files older than a day, pending or ready, and
+-- nothing else. A ready file nobody posted is unreadable, so its bytes are claimed for removal.
 ---------------------------------------------------------------------------------------------
 SELECT public.team_hub_begin_file(:'ta',:'general','fresh.pdf',:'pdf',1000,gen_random_uuid())#>>'{file,id}' AS fresh \gset
 RESET ROLE;
 SELECT pg_temp.ready(:'u1',:'ta',:'general','old-ready.pdf') AS fold \gset
 RESET ROLE;
-UPDATE public.team_hub_files SET created_at=now()-interval '3 days' WHERE id=:'fold';
+SELECT pg_temp.ready(:'u1',:'ta',:'general','fresh-ready.pdf') AS fnew \gset
+RESET ROLE;
+SELECT pg_temp.ready(:'u1',:'ta',:'general','old-posted.pdf') AS fpost \gset
+SET ROLE authenticated;
+SELECT pg_temp.check(public.team_hub_post_message(:'ta',:'general','',gen_random_uuid(),NULL,'{}',ARRAY[:'fpost']::uuid[])->>'ok'='true', 'claim: setup: a posted file');
+RESET ROLE;
+UPDATE public.team_hub_files SET created_at=now()-interval '3 days' WHERE id IN (:'fold',:'fpost');
 SELECT pg_temp.service();
-SELECT pg_temp.check(public.team_hub_claim_stale_files(:'u1')=jsonb_build_object('ok',true,'paths',jsonb_build_array(:'pw')),
- 'claim: returns exactly the uploader''s pending file older than a day');
+SELECT pg_temp.check(public.team_hub_claim_stale_files(:'u1')=jsonb_build_object('ok',true,'paths',
+  (SELECT jsonb_agg(x ORDER BY x) FROM unnest(ARRAY[:'pw',pg_temp.path(:'fold')]) x)),
+ 'claim: returns exactly the uploader''s pending and ready unposted files older than a day');
 SELECT pg_temp.check(public.team_hub_claim_stale_files(:'u1')=jsonb_build_object('ok',true,'paths','[]'::jsonb), 'claim: a second sweep finds nothing');
 RESET ROLE;
-SELECT pg_temp.check((SELECT state FROM public.team_hub_files WHERE storage_path=:'pw')='discarded', 'claim: the stale file is discarded'),
- pg_temp.check((pg_temp.file(:'fresh')).state='pending' AND (pg_temp.file(:'fold')).state='ready', 'claim: a fresh pending file and a ready file are untouched'),
+SELECT pg_temp.check((SELECT state FROM public.team_hub_files WHERE storage_path=:'pw')='discarded', 'claim: the stale pending file is discarded'),
+ pg_temp.check((pg_temp.file(:'fold')).state='discarded' AND (pg_temp.file(:'fold')).message_id IS NULL, 'claim: the stale ready, never-posted file is discarded'),
+ pg_temp.check((pg_temp.file(:'fresh')).state='pending' AND (pg_temp.file(:'fnew')).state='ready', 'claim: fresh pending and ready files are untouched'),
+ pg_temp.check((pg_temp.file(:'fpost')).state='ready' AND (pg_temp.file(:'fpost')).message_id IS NOT NULL, 'claim: a posted file, however old, is untouched'),
  pg_temp.check((SELECT state FROM public.team_hub_files WHERE client_request_id='60000000-0000-4000-8000-000000000013')='pending',
   'claim: another person''s stale file is untouched');
-\echo 'PASS: the stale sweep is service-role only and discards only that uploader''s day-old pending files'
+SELECT pg_temp.act(:'u1'); SET ROLE authenticated;
+SELECT pg_temp.check(public.team_hub_post_message(:'ta',:'general','Too late',gen_random_uuid(),NULL,'{}',ARRAY[:'fold']::uuid[])->>'code'='invalid',
+ 'claim: a claimed ready file can no longer be posted');
+RESET ROLE;
+\echo 'PASS: the stale sweep is service-role only and discards only that uploader''s day-old unposted files, pending or ready; posted files stay'
 
 ---------------------------------------------------------------------------------------------
 -- 12. Increment 2 still works on the replaced post door.

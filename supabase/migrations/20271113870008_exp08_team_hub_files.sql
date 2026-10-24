@@ -114,24 +114,28 @@ GRANT EXECUTE ON FUNCTION public._team_hub_file_can_read(text) TO authenticated;
 
 -- Restrictive policies are AND-ed with every permissive one. On any object outside the Team Hub
 -- prefix each is true, so Inbox attachments in the same bucket behave exactly as before. The
--- coalesce keeps a one-segment name, whose second folder is NULL, outside the prefix.
+-- prefix is the second path segment, split_part(name,'/',2)='team-hub', exactly the rule the
+-- retirement manifest and guard (20271113870009) use, so every layer agrees on what a Team Hub
+-- object is: the two-segment name <tenant>/team-hub is inside it and refused, not left for any
+-- member to create and block retirement with. The segment is case-sensitive everywhere. The
+-- coalesce keeps a NULL name outside the prefix.
 DROP POLICY IF EXISTS team_hub_files_insert_boundary ON storage.objects;
 CREATE POLICY team_hub_files_insert_boundary ON storage.objects AS RESTRICTIVE FOR INSERT TO authenticated
- WITH CHECK (NOT coalesce(bucket_id='comms-attachments' AND (storage.foldername(name))[2]='team-hub', false)
+ WITH CHECK (NOT coalesce(bucket_id='comms-attachments' AND split_part(name,'/',2)='team-hub', false)
   OR (owner_id=(auth.uid())::text AND public._team_hub_file_can_upload(name)));
 DROP POLICY IF EXISTS team_hub_files_select_boundary ON storage.objects;
 CREATE POLICY team_hub_files_select_boundary ON storage.objects AS RESTRICTIVE FOR SELECT TO authenticated
- USING (NOT coalesce(bucket_id='comms-attachments' AND (storage.foldername(name))[2]='team-hub', false)
+ USING (NOT coalesce(bucket_id='comms-attachments' AND split_part(name,'/',2)='team-hub', false)
   OR public._team_hub_file_can_read(name));
 -- No overwrite of a Team Hub object, and no rename or move of any object into the prefix.
 DROP POLICY IF EXISTS team_hub_files_update_boundary ON storage.objects;
 CREATE POLICY team_hub_files_update_boundary ON storage.objects AS RESTRICTIVE FOR UPDATE TO authenticated
- USING (NOT coalesce(bucket_id='comms-attachments' AND (storage.foldername(name))[2]='team-hub', false))
- WITH CHECK (NOT coalesce(bucket_id='comms-attachments' AND (storage.foldername(name))[2]='team-hub', false));
+ USING (NOT coalesce(bucket_id='comms-attachments' AND split_part(name,'/',2)='team-hub', false))
+ WITH CHECK (NOT coalesce(bucket_id='comms-attachments' AND split_part(name,'/',2)='team-hub', false));
 -- Only the service role, which bypasses RLS, removes Team Hub objects.
 DROP POLICY IF EXISTS team_hub_files_delete_boundary ON storage.objects;
 CREATE POLICY team_hub_files_delete_boundary ON storage.objects AS RESTRICTIVE FOR DELETE TO authenticated
- USING (NOT coalesce(bucket_id='comms-attachments' AND (storage.foldername(name))[2]='team-hub', false));
+ USING (NOT coalesce(bucket_id='comms-attachments' AND split_part(name,'/',2)='team-hub', false));
 
 -- A message may now carry files and no text. The door still refuses a message with neither; this
 -- storage check keeps the length and trim rules and allows the empty body only the door writes.
@@ -376,8 +380,12 @@ END $$;
 REVOKE ALL ON FUNCTION public.team_hub_file_verdict(uuid,uuid,text,boolean,text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.team_hub_file_verdict(uuid,uuid,text,boolean,text) TO service_role;
 
--- Service role only: that uploader's own pending files older than a day are discarded, and their
--- paths returned so the edge function removes the objects. Nobody else's files, and nothing posted.
+-- Service role only: that uploader's own unposted files older than a day, pending or ready, are
+-- discarded, and their paths returned so the edge function removes the objects. A ready file
+-- nobody posted is readable by no one, so after a day its bytes are claimed too rather than kept
+-- until account retirement. Nobody else's files, and nothing posted: the post door locks the
+-- file FOR UPDATE and requires it ready and unposted, so a sweep and a post of the same file
+-- serialize and exactly one of them wins.
 CREATE OR REPLACE FUNCTION public.team_hub_claim_stale_files(p_uploader uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE paths jsonb;
@@ -385,7 +393,7 @@ BEGIN
  IF auth.role() IS DISTINCT FROM 'service_role' THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
  WITH claimed AS (
   UPDATE public.team_hub_files x SET state='discarded'
-   WHERE x.uploaded_by=p_uploader AND x.state='pending' AND x.message_id IS NULL AND x.created_at<=now()-interval '1 day'
+   WHERE x.uploaded_by=p_uploader AND x.state IN ('pending','ready') AND x.message_id IS NULL AND x.created_at<=now()-interval '1 day'
    RETURNING x.storage_path)
  SELECT coalesce(jsonb_agg(c.storage_path ORDER BY c.storage_path),'[]'::jsonb) INTO paths FROM claimed c;
  RETURN jsonb_build_object('ok',true,'paths',paths);

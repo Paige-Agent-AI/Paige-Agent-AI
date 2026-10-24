@@ -19,11 +19,16 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const BUCKET = "comms-attachments";
-const ALLOWED_ORIGINS = new Set(
-  (Deno.env.get("TEAM_HUB_ALLOWED_ORIGINS") ?? "https://paigeagent.ai,https://app.paigeagent.ai")
-    .split(",")
-    .map((value) => value.trim()),
-);
+// The house CORS pattern (send-message): any origin may call, because the bearer JWT is the auth and
+// it is never a cookie. No-store and nosniff stay on every response.
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Cache-Control": "no-store",
+  "Content-Security-Policy": "default-src 'none'",
+  "X-Content-Type-Options": "nosniff",
+};
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // The only object names this function will ever ask the service role to remove.
 const TEAM_HUB_PATH = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/team-hub\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -58,23 +63,12 @@ function storageMissing(error: unknown): boolean {
 }
 
 Deno.serve(async (request) => {
-  const origin = request.headers.get("origin");
-  const cors = {
-    "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info",
-    "Access-Control-Allow-Methods": "POST,OPTIONS",
-    "Cache-Control": "no-store",
-    "Content-Security-Policy": "default-src 'none'",
-    "X-Content-Type-Options": "nosniff",
-    "Vary": "Origin",
-    ...(origin && ALLOWED_ORIGINS.has(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
-  };
   const json = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
   const refuse = (code: string, status = 200) => json({ ok: false, code }, status);
 
-  if (request.method === "OPTIONS") return new Response(null, { status: origin && ALLOWED_ORIGINS.has(origin) ? 204 : 403, headers: cors });
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   if (request.method !== "POST") return refuse("method_not_allowed", 405);
-  if (origin && !ALLOWED_ORIGINS.has(origin)) return refuse("origin_refused", 403);
   if (!SUPABASE_URL || !ANON_KEY || !SERVICE_KEY) return refuse("unavailable", 503);
   if (Number(request.headers.get("content-length") ?? 0) > 4096) return refuse("invalid", 413);
 
@@ -182,7 +176,7 @@ Deno.serve(async (request) => {
     return refuse("unavailable", 503);
   }
 
-  const sniffed = teamHubFileVerdict(bytes, file.mime);
+  const sniffed = await teamHubFileVerdict(bytes, file.mime);
   // The declared size was fixed at begin; bytes of any other length are not the file that was declared.
   const sizeMatches = bytes.byteLength === file.size;
   const accept = sniffed.accept && sizeMatches;

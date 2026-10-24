@@ -3,7 +3,7 @@
 // Every fixture is real bytes: the Office files are genuine ZIP archives written by the tiny writer
 // below (stored and deflated entries, real CRC-32, central directory and end record), so the
 // detector is exercised on the structure Office itself produces, not on a string that merely
-// starts with "PK".
+// starts with "PK". The check is async (it inflates Word and Excel parts), so every call is awaited.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { deflateRawSync } from "node:zlib";
@@ -30,7 +30,11 @@ function crc32(bytes: Uint8Array) {
   return (c ^ 0xffffffff) >>> 0;
 }
 
-type Entry = { name: string; data: string | Uint8Array; deflate?: boolean; hideFromDirectory?: boolean };
+type Entry = {
+  name: string; data: string | Uint8Array; deflate?: boolean; hideFromDirectory?: boolean;
+  // Hostile shapes: a recorded size that lies, a compression method other than stored/deflate, or a body that is not what the method says.
+  declaredSize?: number; method?: number; body?: Uint8Array;
+};
 
 /** A real ZIP: local header + data per entry, then the central directory and the end record. */
 function zip(entries: Entry[]): Uint8Array {
@@ -39,17 +43,18 @@ function zip(entries: Entry[]): Uint8Array {
   for (const entry of entries) {
     const name = text(entry.name);
     const raw = typeof entry.data === "string" ? text(entry.data) : entry.data;
-    const body = entry.deflate ? new Uint8Array(deflateRawSync(raw)) : raw;
-    const method = entry.deflate ? 8 : 0, crc = crc32(raw);
+    const body = entry.body ?? (entry.deflate ? new Uint8Array(deflateRawSync(raw)) : raw);
+    const method = entry.method ?? (entry.deflate ? 8 : 0), crc = crc32(raw);
+    const size = entry.declaredSize ?? raw.length;
     const local = new Uint8Array(30 + name.length), lv = new DataView(local.buffer);
     lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true); lv.setUint16(8, method, true);
-    lv.setUint32(14, crc, true); lv.setUint32(18, body.length, true); lv.setUint32(22, raw.length, true);
+    lv.setUint32(14, crc, true); lv.setUint32(18, body.length, true); lv.setUint32(22, size, true);
     lv.setUint16(26, name.length, true); local.set(name, 30);
     if (!entry.hideFromDirectory) {
       const central = new Uint8Array(46 + name.length), cv = new DataView(central.buffer);
       cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
       cv.setUint16(10, method, true); cv.setUint32(16, crc, true); cv.setUint32(20, body.length, true);
-      cv.setUint32(24, raw.length, true); cv.setUint16(28, name.length, true); cv.setUint32(42, offset, true);
+      cv.setUint32(24, size, true); cv.setUint16(28, name.length, true); cv.setUint32(42, offset, true);
       central.set(name, 46);
       centrals.push(central);
       listed++;
@@ -113,88 +118,88 @@ describe("allowed types are accepted when the bytes match the declared type", ()
     ["CSV", text("name,stage\nAva,Onboarding\n"), "text/csv"],
   ];
   for (const [label, bytes, mime] of cases) {
-    it(label, () => {
-      assert.deepEqual(teamHubFileVerdict(bytes, mime), { accept: true, detectedMime: mime, reason: null });
+    it(label, async () => {
+      assert.deepEqual(await teamHubFileVerdict(bytes, mime), { accept: true, detectedMime: mime, reason: null });
     });
   }
 });
 
 describe("refusals", () => {
-  it("a Word file carrying a macro project is refused", () => {
+  it("a Word file carrying a macro project is refused", async () => {
     const bytes = zip([...docxEntries(true), { name: "word/vbaProject.bin", data: VBA }]);
-    assert.deepEqual(teamHubFileVerdict(bytes, DOCX), { accept: false, detectedMime: null, reason: "macro_content" });
+    assert.deepEqual(await teamHubFileVerdict(bytes, DOCX), { accept: false, detectedMime: null, reason: "macro_content" });
   });
-  it("an Excel file carrying a macro project is refused, whatever the case of its name", () => {
+  it("an Excel file carrying a macro project is refused, whatever the case of its name", async () => {
     const bytes = zip([...xlsxEntries(), { name: "xl/VBAPROJECT.BIN", data: VBA, deflate: true }]);
-    assert.equal(teamHubFileVerdict(bytes, XLSX).reason, "macro_content");
+    assert.equal((await teamHubFileVerdict(bytes, XLSX)).reason, "macro_content");
   });
-  it("a macro project hidden from the central directory is still found", () => {
+  it("a macro project hidden from the central directory is still found", async () => {
     const bytes = zip([...docxEntries(), { name: "word/vbaProject.bin", data: VBA, hideFromDirectory: true }]);
     assert.deepEqual(zipEntryNames(bytes), ["[Content_Types].xml", "_rels/.rels", "word/document.xml"]);
-    assert.equal(teamHubFileVerdict(bytes, DOCX).reason, "macro_content");
+    assert.equal((await teamHubFileVerdict(bytes, DOCX)).reason, "macro_content");
   });
-  it("a legacy OLE .doc is refused even when it claims to be Word", () => {
-    assert.deepEqual(teamHubFileVerdict(ole, DOCX), { accept: false, detectedMime: null, reason: "legacy_office" });
+  it("a legacy OLE .doc is refused even when it claims to be Word", async () => {
+    assert.deepEqual(await teamHubFileVerdict(ole, DOCX), { accept: false, detectedMime: null, reason: "legacy_office" });
   });
-  it("an executable named .pdf is refused", () => {
-    assert.deepEqual(teamHubFileVerdict(exe, "application/pdf"), { accept: false, detectedMime: null, reason: "unrecognised" });
+  it("an executable named .pdf is refused", async () => {
+    assert.deepEqual(await teamHubFileVerdict(exe, "application/pdf"), { accept: false, detectedMime: null, reason: "unrecognised" });
   });
-  it("text containing a NUL byte is not text", () => {
-    assert.equal(teamHubFileVerdict(text("line one\u0000line two"), "text/plain").reason, "unrecognised");
+  it("text containing a NUL byte is not text", async () => {
+    assert.equal((await teamHubFileVerdict(text("line one\u0000line two"), "text/plain")).reason, "unrecognised");
   });
-  it("invalid UTF-8 is not text", () => {
-    assert.equal(teamHubFileVerdict(new Uint8Array([0x68, 0x69, 0xc3, 0x28, 0x0a]), "text/csv").reason, "unrecognised");
+  it("invalid UTF-8 is not text", async () => {
+    assert.equal((await teamHubFileVerdict(new Uint8Array([0x68, 0x69, 0xc3, 0x28, 0x0a]), "text/csv")).reason, "unrecognised");
   });
-  it("a real type that differs from the declared one is a mismatch", () => {
-    assert.deepEqual(teamHubFileVerdict(png, "text/plain"), { accept: false, detectedMime: "image/png", reason: "mismatch" });
-    assert.deepEqual(teamHubFileVerdict(zip(docxEntries()), XLSX), { accept: false, detectedMime: DOCX, reason: "mismatch" });
-    assert.deepEqual(teamHubFileVerdict(pdf, "image/jpeg"), { accept: false, detectedMime: "application/pdf", reason: "mismatch" });
+  it("a real type that differs from the declared one is a mismatch", async () => {
+    assert.deepEqual(await teamHubFileVerdict(png, "text/plain"), { accept: false, detectedMime: "image/png", reason: "mismatch" });
+    assert.deepEqual(await teamHubFileVerdict(zip(docxEntries()), XLSX), { accept: false, detectedMime: DOCX, reason: "mismatch" });
+    assert.deepEqual(await teamHubFileVerdict(pdf, "image/jpeg"), { accept: false, detectedMime: "application/pdf", reason: "mismatch" });
   });
-  it("a ZIP that is not a Word or Excel document is refused", () => {
-    assert.equal(teamHubFileVerdict(zip([{ name: "notes.txt", data: "hi" }]), DOCX).reason, "malformed_document");
-    assert.equal(teamHubFileVerdict(zip([{ name: "[Content_Types].xml", data: CONTENT_TYPES }]), DOCX).reason, "malformed_document");
+  it("a ZIP that is not a Word or Excel document is refused", async () => {
+    assert.equal((await teamHubFileVerdict(zip([{ name: "notes.txt", data: "hi" }]), DOCX)).reason, "malformed_document");
+    assert.equal((await teamHubFileVerdict(zip([{ name: "[Content_Types].xml", data: CONTENT_TYPES }]), DOCX)).reason, "malformed_document");
   });
-  it("an OOXML package without [Content_Types].xml is refused", () => {
+  it("an OOXML package without [Content_Types].xml is refused", async () => {
     const bytes = zip(docxEntries().filter((entry) => entry.name !== "[Content_Types].xml"));
-    assert.equal(teamHubFileVerdict(bytes, DOCX).reason, "malformed_document");
+    assert.equal((await teamHubFileVerdict(bytes, DOCX)).reason, "malformed_document");
   });
-  it("a package claiming to be both Word and Excel is refused", () => {
+  it("a package claiming to be both Word and Excel is refused", async () => {
     const bytes = zip([...docxEntries(), { name: "xl/workbook.xml", data: "<workbook/>" }]);
-    assert.equal(teamHubFileVerdict(bytes, DOCX).reason, "malformed_document");
+    assert.equal((await teamHubFileVerdict(bytes, DOCX)).reason, "malformed_document");
   });
-  it("a truncated ZIP is refused", () => {
+  it("a truncated ZIP is refused", async () => {
     const whole = zip(docxEntries());
-    assert.equal(teamHubFileVerdict(whole.subarray(0, whole.length - 30), DOCX).reason, "malformed_document");
+    assert.equal((await teamHubFileVerdict(whole.subarray(0, whole.length - 30), DOCX)).reason, "malformed_document");
     assert.equal(zipEntryNames(whole.subarray(0, whole.length - 30)), null);
   });
-  it("a RIFF container that is not WEBP is refused", () => {
+  it("a RIFF container that is not WEBP is refused", async () => {
     const wave = concat(text("RIFF"), new Uint8Array([4, 0, 0, 0]), text("WAVEfmt "));
-    assert.equal(teamHubFileVerdict(wave, "image/webp").reason, "unrecognised");
+    assert.equal((await teamHubFileVerdict(wave, "image/webp")).reason, "unrecognised");
   });
-  it("a declared type outside the allow-list is refused before the bytes are read", () => {
+  it("a declared type outside the allow-list is refused before the bytes are read", async () => {
     for (const mime of ["application/msword", "application/vnd.ms-excel",
       "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/zip", "text/html", ""]) {
-      assert.deepEqual(teamHubFileVerdict(pdf, mime), { accept: false, detectedMime: null, reason: "not_allowed" });
+      assert.deepEqual(await teamHubFileVerdict(pdf, mime), { accept: false, detectedMime: null, reason: "not_allowed" });
     }
   });
-  it("an empty file is refused", () => {
-    assert.equal(teamHubFileVerdict(new Uint8Array(0), "text/plain").reason, "empty");
+  it("an empty file is refused", async () => {
+    assert.equal((await teamHubFileVerdict(new Uint8Array(0), "text/plain")).reason, "empty");
   });
-  it("a file over 10 MB is refused", () => {
+  it("a file over 10 MB is refused", async () => {
     const big = new Uint8Array(10 * 1024 * 1024 + 1).fill(0x61);
-    assert.equal(teamHubFileVerdict(big, "text/plain").reason, "too_large");
-    assert.equal(teamHubFileVerdict(big.subarray(0, 10 * 1024 * 1024), "text/plain").accept, true);
+    assert.equal((await teamHubFileVerdict(big, "text/plain")).reason, "too_large");
+    assert.equal((await teamHubFileVerdict(big.subarray(0, 10 * 1024 * 1024), "text/plain")).accept, true);
   });
 });
 
 describe("text is the one class the declared type splits", () => {
-  it("plain text and CSV are both text, and nothing else", () => {
+  it("plain text and CSV are both text, and nothing else", async () => {
     const bytes = text("a,b\n1,2\n");
-    assert.equal(detectTeamHubFileType(bytes, "text/csv").mime, "text/csv");
-    assert.equal(detectTeamHubFileType(bytes, "text/plain").mime, "text/plain");
-    assert.equal(detectTeamHubFileType(bytes, "application/pdf").mime, "text/plain");
+    assert.equal((await detectTeamHubFileType(bytes, "text/csv")).mime, "text/csv");
+    assert.equal((await detectTeamHubFileType(bytes, "text/plain")).mime, "text/plain");
+    assert.equal((await detectTeamHubFileType(bytes, "application/pdf")).mime, "text/plain");
   });
-  it("binary signatures win over text, so a renamed image is never text", () => {
-    assert.equal(detectTeamHubFileType(gif89, "text/plain").mime, "image/gif");
+  it("binary signatures win over text, so a renamed image is never text", async () => {
+    assert.equal((await detectTeamHubFileType(gif89, "text/plain")).mime, "image/gif");
   });
 });

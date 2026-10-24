@@ -75,7 +75,8 @@ function losingSealFixture(mode='ready'){
   const row:Record<string,unknown>={id:agreement,tenant_id:tenant,title:'Synthetic retained agreement',status:'partially_signed',
     body_source:'paige_draft',body_markdown:'Recorded service responsibilities.',content_storage_key:presentedKey,content_sha256:digest,sealed_sha256:null,sealed_storage_key:null};
   let agreementReads=0,completionAttempts=0;const removed:string[]=[];
-  const db={from(table:string){
+  const db={rpc(name:string,args:Record<string,unknown>){assertEquals(name,'_read_prepared_agreement_seal');assertEquals(args,{_agreement:agreement});
+    return Promise.resolve({data:{state:'legacy',agreement_id:agreement,tenant_id:tenant},error:null});},from(table:string){
     let columns='',writing=false;const query={
       select(value:string){columns=value;return query;},eq(){return query;},neq(){return query;},in(){return query;},order(){return query;},
       update(){assertEquals(table,'paige_agreements');writing=true;completionAttempts++;return query;},

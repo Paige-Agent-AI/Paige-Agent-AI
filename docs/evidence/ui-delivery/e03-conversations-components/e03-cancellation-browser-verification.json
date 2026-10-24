@@ -1,0 +1,31 @@
+{
+  "scope": "Real ClientsConversations component; simulated RPC receipts, no authentication/provider calls",
+  "source": "f2a6676ead640610b7399983848da9367d054668",
+  "unconfirmed": {
+    "response": {
+      "data": null,
+      "error": null
+    },
+    "observed": "Couldn't confirm cancellation. Check this conversation's status before trying again.",
+    "queuedRowRetained": true,
+    "boundaryCalls": 1,
+    "providerCalls": 0,
+    "file": "e03-actual-cancellation-unconfirmed.jpg"
+  },
+  "confirmed": {
+    "response": {
+      "data": true,
+      "error": null
+    },
+    "observed": "Canceled — back to your draft.",
+    "sameMessageReturnedToDraft": true,
+    "boundaryCalls": 1,
+    "providerCalls": 0,
+    "file": "e03-actual-cancellation-confirmed.jpg"
+  },
+  "limits": [
+    "Undo toast paths proved in actual mounted component tests; browser drive covers scheduled Cancel only",
+    "Server private-mail cancellation security is unchanged; issue2135 remains open",
+    "No production release or authenticated acceptance"
+  ]
+}

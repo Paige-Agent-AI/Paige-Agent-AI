@@ -106,6 +106,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
   const dictationScopeEpoch = [
     user.id,
     clientId ?? "",
+    customerFrame ? (customerAvailable ? "customer-ready" : "customer-withheld") : "",
     location.pathname,
     location.search ?? "",
   ].join("|");
@@ -924,7 +925,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 
       {/* Input area — safe area padding on mobile */}
       <div className="p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]">
-        <div className="flex gap-1.5 sm:gap-2 items-center">
+        <div className={`flex gap-1.5 sm:gap-2 items-center${customerFrame ? " flex-wrap" : ""}`}>
           {!customerFrame&&<Button variant="ghost" size="icon" className="h-[44px] w-[44px] md:h-9 md:w-9 flex-shrink-0 text-muted-foreground hover:text-primary" onClick={openFilePicker} disabled={isLoading} title="Attach a document (PDF)">
             <Paperclip className="w-4 h-4" />
           </Button>}
@@ -942,6 +943,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
           {/* Tap-to-dictate — neutral/indigo mic (never gold; Send owns the act, §11).
               Dictated words append into the composer for the client to edit + send. */}
           <DictationMicButton
+            statusLayout={customerFrame ? "composer-row" : "inline"}
             scopeEpoch={dictationScopeEpoch}
             composerRef={inputRef}
             onText={(seg, insertionPoint) => setInput((prev) => appendDictation(prev, seg, insertionPoint))}

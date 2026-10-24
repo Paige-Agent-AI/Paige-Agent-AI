@@ -174,3 +174,13 @@ with main79171c82 plus E03 closeout2729. The earlier duplicate-version hold is
 resolved on this composition. Renderer, parser and owning test source are
 unchanged from reviewed900f; fresh exact-head CI and native parent production
 readback remain required. No customer verification is inferred from composition.
+
+## Main885 documentation composition
+
+The next composition retains both original EXP05 Brain append sections from
+main885 and this UI branch. Incoming E01 immersive Live source and render evidence
+are preserved exactly. Original result renderer, parser and owning tests remain
+byte-identical to bc489; no authority, action, size, focus or activation changes.
+The old child head was conflicted and had no required Actions runs. Fresh
+exact-head required CI is owed after this correction; earlier green heads do not
+substitute. Native2722 production readback remains the release dependency.

@@ -45,9 +45,9 @@ GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 CREATE SCHEMA IF NOT EXISTS auth;
 GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
 CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
-$sql$ SELECT nullif(current_setting('test.uid', true), '')::uuid $$;
+$$ SELECT nullif(current_setting('test.uid', true), '')::uuid $$;
 CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS
-$sql$ SELECT nullif(current_setting('test.role', true), '') $$;
+$$ SELECT nullif(current_setting('test.role', true), '') $$;
 CREATE TABLE IF NOT EXISTS auth.users (id uuid PRIMARY KEY);
 
 -- ── Production column shapes (as migration_d carries them) ───────────────────────────────────────

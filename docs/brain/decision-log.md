@@ -2,6 +2,18 @@
 
 ## October24 — EXP08 Team Hub owner decisions
 
+- **EXP08 Team Hub increment 4, PAIGE with Team Hub (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
+  - **PAIGE reads Team Hub: APPROVED for any active member, for what they can see.**
+    - Covers Chat and Live.
+    - Read-only and fresh every turn, always with the asker's own identity through the existing `team_hub_*` definers.
+    - Nothing is stored, indexed or embedded.
+    - Read-only Spine capabilities `team.hub_*`. This touches the PAIGE chat code (Chat lane) under this approval.
+  - **Search: APPROVED.** One additive EXP08 search function that searches only conversations the asker can see.
+  - **Saving to Knowledge or Memory: NOT in increment 4.** No Team Hub content enters Knowledge or Memory. Knowledge is tenant-wide today, so a DM or private-channel save would leak.
+  - **PAIGE posting into Team Hub: APPROVED only with the person's approval.**
+    - PAIGE may draft a reply into a Team Hub conversation the person can post in.
+    - It is posted under the person's own name only after the person approves it, through the existing approval path.
+    - It is never sent autonomously.
 - **EXP08 Team Hub increment 3, attachments (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
   - **Storage: APPROVED. Reuse the existing private `comms-attachments` bucket, with access locked down.**
     - Files live under a Team Hub path.

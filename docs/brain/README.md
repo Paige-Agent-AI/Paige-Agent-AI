@@ -1,3 +1,15 @@
+## EXP02 Finance Overview refinement — October23, development only
+
+Owner requests Overview landing and clearer visuals across all seven Finance
+subpages. First bounded original-consumer refinement and current source/QA limits
+are in the existing [Finance brain](finance-department.md#october23--overview-visual-refinement-development-only)
+and [evidence](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Corrected released context handoff/refusal/reload is verified separately;
+EXP04 original reference-continuity repair2728 is now merged; positive
+same-reference customer proof remains owed. Earlier revocation/refusal evidence
+remains historical and is not new post-repair acceptance. Original authority, domain ownership and
+all19/nine remain unchanged. No candidate release or founder acceptance claimed.
+
 ## EXP02 original report source requests — October24 source released
 
 Original #2734 exact408923cc/author-related LOWER5638380473 passed all13 required

@@ -1,5 +1,39 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+### October24 — bounded Finance native follow-through
+
+Current original Finance55edea4de source now has native desktop/390px Sheet trap
+and exact-control Escape return, bare Overview/query/fragment and Home/End proof.
+Actual1366px-with-Chat and320px red frames exposed split monetary decimals; the
+same candidate groups the original amount and applies documented compact type.
+Original54/four regression cases/lint0 and detector9incumbent/0blocking support
+the correction. Final typography native confirmation/CI/release/current customer
+proof remain owed after control staled/reset. This is O04/O14/O16 source progress,
+not all-seven Finance completion, analytics promotion or founder acceptance.
+
+## October23 — Finance visual direction and additive released negative
+
+Owner requires Overview landing and more useful visual presentation across all
+seven Finance subpages. First bounded local consumer slice: same-account bare
+Finance→Overview replacement preserving query/fragment, supported figures and
+source comparison first, compact unavailable bank/accounting coverage.
+Original inspection, VERA, seven routes, authority and sources remain intact.
+Two actual route failures then53 original cases/four suites PASS; candidate native
+render/keyboard, review/CI/release and ordinary customer proof remain owed.
+[Candidate evidence](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Banking, Debt and remaining financial-readiness presentation remain in sequence.
+
+Released2684 source/merge/deployment/readback remains in6374834566. Additive
+ordinary QA6375398254 proves exact original bounds/reference handoff, truthful
+refusal without substitution and saved reply after reload; not positive original
+reference availability. Later issuance revoked the original before expiry at60s,
+so the existing Sales hook refresh contract remains an EXP04-coordinated consumer
+gap, never a reason to weaken reference authority. Protected monthly CPU-failed
+request stays unretried/unknown with original EXP05 recovery coordination.
+All original19 and CAP009–017 remain required per ANT138/f4c4c060; no renamed
+outcome, new registry, algorithm or catalogue-readiness promotion. Functional,
+Visual, Experiential and Founder Acceptance remain distinct and incomplete.
+
 ## October24 — report source foundation deployed; customer outcome still owed
 
 Original2734/408923cc passed all13 exact checks/two statuses with labeled

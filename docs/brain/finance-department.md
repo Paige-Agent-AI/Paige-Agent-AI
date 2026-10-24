@@ -1,5 +1,62 @@
 # Finance department — current source and full operating target
 
+## October24 — resumed final-source visual confirmation
+
+All eight required desktop/panel states now have actual native Responsive
+captures on unchanged original Finance product source, alongside the original320
+monetary/focus proof. [Original confirmation](../evidence/ui-delivery/assets/e2-finance-overview-hierarchy/oct24-native-confirmation.json)
+records byte hashes, actual window pixels, toolbar geometry and synthetic scope.
+Initial auto-height1000 input was not applied; native stepper verification fixed
+the proof setup before accepted captures. No product workaround or state change.
+Browser200percent zoom, ordinary role/cohort/Live, actual VERA same-reference
+review/reload and post-release acceptance remain owed; source candidate release
+stays gated. Existing authorized customer Overview was separately observed with
+truthful source-backed facts versus unavailable cash/accounting; no customer
+amounts or browser metadata are published. All seven subpages remain in scope.
+
+## October23 — Overview visual refinement, development only
+
+October24 checkpoint: current-source native Sheet focus return now works on
+desktop/390px. Rendered1366px-with-Chat and320px exposed split monetary decimals;
+the same candidate corrects amount grouping and compact type without changing
+values or sources.54 original cases/four suites and scoped lint pass. Final
+typography native confirmation, exact-head CI and release remain owed after Edge
+control again staled/reset; pre-correction frames are not a finished-UI claim.
+
+Owner requires Overview entry and clearer visual presentation across all seven
+Finance subpages. First bounded consumer slice canonicalizes bare Finance to its
+same-account Overview with query/fragment and replacement history, places original
+Sales figures and receipt-source comparison before compact missing bank/accounting
+coverage, and preserves all original tabs, inspection and VERA controls.
+[Candidate and exact proof boundary](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Two actual route failures preceded correction; final54 original consumer cases/four
+suites pass after a native source-Sheet focus defect was reproduced and repaired.
+The amount remains connected; original Sheet return targets only its connected
+same-epoch/range control, with changed-workspace refusal tested. No new focus engine.
+Actual populated native desktop/narrow layout, font, landing query/fragment,
+Home/End and source opening support the candidate. Exact origin access was granted;
+later Edge became unavailable after input stalls/reset. Corrected native return,
+complete matched rendered/zoom/role/cohort/Live and release proof remain owed.
+Banking, Debt and remaining financial-readiness presentation follow in small slices.
+No provider, writer, permission, metric definition or capability status changed.
+
+Released Finance context repair2684 is independently source-verified at main
+`d780fd85e3cfd0c73256847c79f2692a5a399d1a`; original
+[release6374834566](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6374834566).
+Additive ordinary QA verifies exact original custom bounds/reference handoff,
+read-only refusal without substitution and persisted reply after reload, within a
+46-second observation bound. It does not prove positive reference availability.
+Original reference metadata shows a later same-series issuance revoked it60seconds
+after issuance, before expiry; the original Sales hook refresh contract is being
+coordinated with EXP04 in ANT81/758eaeae. Keep original revocation/authority intact.
+[QA6375398254](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6375398254).
+The protected CPU-failed monthly request remains unknown and unretried; this
+Finance negative is a separate independent read, not report recovery.
+
+Functional: bounded source candidate plus dated released negative. Visual:
+candidate unverified. Experiential: actual refusal/reload, positive cross-surface
+reference lifetime incomplete. Founder Acceptance: NOT_ACCEPTED; all19/nine remain.
+
 ## October21 17:35 UTC — Banking receiver released, bounded customer proof
 
 Original #2414 merged `950d1dac0f355050eb46e6ce5f39850eefc59620`, exact reviewed

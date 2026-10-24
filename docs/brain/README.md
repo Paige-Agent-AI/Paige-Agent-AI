@@ -2987,6 +2987,10 @@ byte-identical SQL filename continuation, not a new render. This read does not a
 
 ## EXP04 C18 current-main source continuation — October24
 
+SOURCE RELEASE VERIFIED, October24 07:46:46UTC: original2681 reviewed2a24465b/LOWER5637255408/all14 exact checks+two webSUCCESS → mainba97335e016b9fea741da5005d1e8dedd7baa696/tree85622aed, actual e328+2a parents equal inspected union. Normal production dpl_5N4vqtooBsZC9sDQ7qkJzJSgiKeK READY/both public200exactba-mvm39n7q/customerUpdate:null; actual served SoloEntry-DA7JaV92.js/1524cbcd9/allthree owning markers. Normal deploy-migrations40075012907 SUCCESS, actual native810004/owner readerffc779/private validators5347818+235026/original13 signature3a2fa340 ABI/ACL/config preserved. All21 reviewed Git blobs unchanged:20 historical raw frame pins exact, one accepted-commercial-read.ts pin exactly its WindowsCRLF checkout. The failed raw-only assertion and original manifest/images remain; no new rendered/authenticated claim. No changed Edge entrypoint or Edge importer of the new isomorphic browser read SDK; normal workflow40075012882 succeeded, no fresh Edge-version claim. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2681#issuecomment-6381631848). Ordinary owner/staff/linked-client private records/file availability/roles/reload/revocation/CentralQA/fullO1–O12/founder acceptance remain UNVERIFIED. Higher820004 waits E09 proposed810009 actual receiving/release. No charge/send/signing/service-completion or Algorithm/Capabilities activation.
+
+Earlier pre-merge source checkpoint follows unchanged.
+
 Actual incoming mainc9ab5325ae318b0602eab2883a5d25269f569aaf is preserved in full,
 including E03/E05/E07/E10 releases. The sole Brain append conflict retains BOTH
 contributions. Original C18 SQL810004/SHA221b0365, all21 captured critical

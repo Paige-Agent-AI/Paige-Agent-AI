@@ -1,3 +1,7 @@
+## EXP09 private CURA files — native source released, October24 UTC
+
+Original2723/5391 → maina2db/tree0c858 is actually deployed through containing28622/normal40081233729/deploy120837432245. Production records810009;13 incumbent source/ABI/default/ACL bindings,6 helper/wrapper bodies/permissions, restrictiveALLprivacy/purposeCHECK/enabledorigintrigger and original private20MBbucket match tested source. Native305/453/294/61/allseven/Knowledge208/grantordering and all13 exactchecks/two statusesPASS; lower5637529215. [Sole Master4.0 shipped row](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log), [receipt6382571591](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2723#issuecomment-6382571591), [actual sanitized readback](../evidence/ui-delivery/assets/e09-private-cura-files/production-readback.json). First lock refusal and concurrent originating Studio migration reconciliation are historical, not waived. No ownEdge/provider/business/Live activation. This is a native foundation: actual paste/bulk/private message/model/customer return and all42/seven/Teach/full founder acceptance remain in the original E09 packet and PROOF OWED. No customer version or algorithm/capability promotion.
+
 ## EXP09 customer microphone — source release verified, October24 UTC
 
 Original#2718/5868 → maina2d9b3e5/treedf941330 is deployed, exact productionFLfGdD READY/publica2d-mvlt2i7h/null. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records actual parents, unchanged six reviewed source/test blobs, lower5636374775, all exact-head checks and fresh native/full-pillar/grant proof; [release receipt6379127602](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2718#issuecomment-6379127602). Original paige-dictate and newer EXP05#2697 recovery remain; no migration, Edge, provider or Live activation. Actual physical iPhone capture/transcription, ordinary customer reload and full Experience/founder acceptance remain UNVERIFIED. Private file storage, Chat integration, all42/seven outcomes and source-owned dependencies continue in the original [EXP09 packet](../delivery/e09-customer-relationships.md). No recursive documentation-release row or algorithm maturity promotion.
@@ -7,6 +11,19 @@ Original#2718/5868 → maina2d9b3e5/treedf941330 is deployed, exact productionFL
 Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc0b5dad per-business original invitation admission are actually released and read back. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records exact heads/parents/trees, accurate lower-assurance sequential reviews, all required checks, normal migrations620009/630009, all16 original ABI/ACL/source pins, unchanged S7 and actual READY web/public versions. Receipts6377892283/6378046694/6378167524. First630009 deployment57014 is retained; precisely bounded read-only administrative-session cleanup (later identified as including a legitimate CI snapshot; affected microphone verification must rerun) and unchanged normal retry succeeded, with no customer/data/role/history/DDL workaround. Native453/294/61/all seven/grant proof is engineering evidence, not ordinary customer acceptance. Private CURA history remains separate from shared Conversations; current microphone2718/attachments/permitted research work stays in the original relationship packet. Full42/seven-pillar authenticated owner/client/reload/revoke/device and Founder Acceptance remain unfinished; one complete integrated evaluation, no per-slice owner request. This mechanical cross-reference changes no capability/algorithm maturity and has no recursive release row.
 
 ## EXP05 original specialist status — source released; customer recovery owed
+
+October24 original initial-approval expiry repair2753 is source-released at
+main2b14cedd546eb285e3db0c24fecf374d2a986659. Exact reviewed129f/LOWER6382749770,
+all11 required checks/two statuses, normal Edge40084962989, actual Chat527/all269
+source/config matches and READY/public web2b14 are retained in the sole Master4.0
+row and [original release receipt6382984309](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2753#issuecomment-6382984309).
+The [owning evidence](../evidence/ui-delivery/exp05-initial-approval-expiry.md)
+separates native rendered deadline/late-click proof from ordinary repaired-proposal
+metadata/display, which remains UNVERIFIED. No approval, replay, business/provider
+effect, recurrence/Live activation, catalogue or algorithm promotion is claimed.
+Actual weekly/automation/ZION/Rail/recovery/cohort/eligibleLive and all ten outcomes/
+E5-CV1–9/founder acceptance remain unfinished. Current Outcome Map rows135–138
+retain Operations, Automations, Specialists and Calendar within the complete scope.
 
 The original native status channel can project only the exact assignment named
 by a server-issued terminal and the existing caller-JWT inspector. Current seat,
@@ -3002,6 +3019,10 @@ byte-identical SQL filename continuation, not a new render. This read does not a
 
 
 ## EXP04 C26 existing client scope and recovery — October24
+
+SOURCE RELEASE VERIFIED, October24 09:41:20UTC: original2752 reviewed5514a4ee7f4ce79012f4a66643bff21c7de8f4b1/LOWER5637616199/all10 applicable exact checks+two webSUCCESS/designed UI-only PreviewSKIP → actual main58416369d2de317c7c6e9301248e0ea36e2d0989/tree307084990f418b799e4bb9b3d4e05a3e050e0ff5, actual28622+5514 parents equal inspected union. Only28 own paths; all20 captured LF source inputs/reviewed Git blobs and original11 native source-component PNGs preserved; full incoming Brain/journey and all other source intact. Normal production dpl_4VtW9LhKrc7x5J5ptKmob7KNCaJh READY/both public200exact584-mvm7cya3/customerUpdate:null. Actual shared source LiveTranscriptPanel-C-vRaFUJ.js/82764bfe and corresponding CSS/1140c270 contain all four source markers/three repaired reflow rules. Initial filename-filter failures remain recorded; actual public-import discovery located the shared bundle. Its NAME does not establish Live/Chat activation. No SQL/Edge source/importer or new native/Edge version claim. Original97 local cases PASS, raw whole-app compiler has six known baseline errors/zero new instances; required hosted verifier is separately SUCCESS. Ordinary owner/staff/client/reload/revocation/full-shell/mobile/AT/200percent/CentralQA/all12/founder acceptance remain UNVERIFIED. No business/provider/permission/capability/algorithm activation. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2752#issuecomment-6382675131).
+
+Earlier pre-release source checkpoint follows unchanged.
 
 LOCAL SOURCE, NOT RELEASED: same original Clients read/standing/shared-work consumers
 now retire account/workspace/client lifetimes before paint and at unmount commit.

@@ -1,0 +1,91 @@
+{
+  "boundary": "Synthetic local transport only; original native database/identity/provider/durable reload acceptance is UNVERIFIED",
+  "flows": [
+    {
+      "path": "actual keyboard field edit",
+      "reviewEnabled": false
+    },
+    {
+      "path": "original save and receipt",
+      "text": "Return to agreementSigning documentUnsigned preparation for reviewPreparation 3 · SelectedDocument preparation recorded. Nothing has been sent for signature.Inspect preparation historyCheck the saved signing requestReview recipients, signing order and assigned fields against this saved document.Review saved signing requestPlace fields for the intended recipients. Nothing is sent from this workspace.2 fieldsAssign fields toControlled Client · counterpartyControlled Business Signer · tenant signatorySignatureInitialsSigned dateTextCheckboxPage 1 of 2ZoomFit to width100%150%200%Verifying document…Place a signatureAssigned to Controlled Client.Place on documentAdd at page centreUse the position controls or arrow keys for precise adjustments. Shift moves ten points.Assigned fieldsControlled Cli"
+    },
+    {
+      "path": "review newly saved preparation",
+      "text": "Review signing requestSaved preparation 3 · Agreement version 1Back to documentSaved request checkedThe recipients and assigned fields match the selected saved preparation.Recipients and signing orderRecipients at the same step may sign in parallel.Step 1Controlled Clientclient@example.testClient1 assigned fieldStep 1Controlled Business Signerbusiness@example.testBusiness signer1 assigned fieldExact saved sourceDocument SHA-256d1d3dd5cb4d57ab39af79a4dc0e450b0df3137a54728c7557687024c522878f6Pages2Preparation referencec0a8f9f2-a2a2-4d70-913f-804b8cc4fcf5Review fingerprint1eec627e536e08fef4d5fcac85855f068e43a8ea93ee4f629e6613c59a266b89The fingerprint identifies this read. It is not an approval or execution receipt.This review does not request signatures. Approval and sending are not connected to it yet."
+    },
+    {
+      "path": "actual source issues",
+      "observed": {
+        "focus": "Review signing request",
+        "paneVisible": true,
+        "review": "Review signing requestSaved preparation 2 · Agreement version 1Back to documentField corrections neededControlled Client needs a required signature field.Controlled Business Signer needs a required signature field.Recipients and signing orderRecipients at the same step may sign in parallel.Step 1Controlled Clientclient@example.testClient0 assigned fieldsStep 1Controlled Business Signerbusiness@example.testBusiness signer0 assigned fieldsExact saved sourceDocument SHA-256d1d3dd5cb4d57ab39af79a4dc0e450b0df3137a54728c7557687024c522878f6Pages2Preparation referenceb1111111-0000-4000-8000-000000000001Review fingerprint21ae68d0e7e0fcf6354337a8cb8c8af3b5cd881167774f378ae1ea635394b237The fingerprint identifies this read. It is not an approval or execution receipt.This review does not request signatures. Approval and sending are not connected to it yet.",
+        "text": "Return to agreementSigning documentUnsigned preparation for reviewPreparation 2 · SelectedInspect preparation historyReview signing requestSaved preparation 2 · Agreement version 1Back to documentField corrections neededControlled Client needs a required signature field.Controlled Business Signer needs a required signature field.Recipients and signing orderRecipients at the same step may sign in parallel.Step 1Controlled Clientclient@example.testClient0 assigned fieldsStep 1Controlled Business Signerbusiness@example.testBusiness signer0 assigned fieldsExact saved sourceDocument SHA-256d1d3dd5cb4d57ab39af79a4dc0e450b0df3137a54728c7557687024c522878f6Pages2Preparation referenceb1111111-0000-4000-8000-000000000001Review fingerprint21ae68d0e7e0fcf6354337a8cb8c8af3b5cd881167774f378ae1ea635394b23"
+      }
+    },
+    {
+      "path": "actual source network",
+      "observed": {
+        "focus": "Review signing request",
+        "paneVisible": true,
+        "review": "Review signing requestSaved preparation 2Back to documentReview unavailableThe saved signing review could not be confirmed. Retry the review or return to the document.Retry saved reviewThis review does not request signatures. Approval and sending are not connected to it yet.",
+        "text": "Return to agreementSigning documentUnsigned preparation for reviewPreparation 2 · SelectedInspect preparation historyReview signing requestSaved preparation 2Back to documentReview unavailableThe saved signing review could not be confirmed. Retry the review or return to the document.Retry saved reviewThis review does not request signatures. Approval and sending are not connected to it yet.Inspect the retained PDF and field positions. This view cannot change the document.2 fieldsReturn to the document to change and save field assignments.Assign fields toControlled Client · counterpartyControlled Business Signer · tenant signatorySignatureInitialsSigned dateTextCheckboxPage 1 of 2ZoomFit to width100%150%200%Controlled Client signature *Controlled Business Signer signature *Read page textCONT"
+      }
+    },
+    {
+      "path": "actual source source_changed",
+      "observed": {
+        "focus": "Review signing request",
+        "paneVisible": true,
+        "review": "Review signing requestSaved preparation 2Back to documentThe saved source changedThe agreement or selected preparation changed. Inspect its current version before continuing.Read current document sourceThis review does not request signatures. Approval and sending are not connected to it yet.",
+        "text": "Return to agreementSigning documentUnsigned preparation for reviewPreparation 2 · SelectedInspect preparation historyReview signing requestSaved preparation 2Back to documentThe saved source changedThe agreement or selected preparation changed. Inspect its current version before continuing.Read current document sourceThis review does not request signatures. Approval and sending are not connected to it yet.Inspect the retained PDF and field positions. This view cannot change the document.2 fieldsReturn to the document to change and save field assignments.Assign fields toControlled Client · counterpartyControlled Business Signer · tenant signatorySignatureInitialsSigned dateTextCheckboxPage 1 of 2ZoomFit to width100%150%200%Controlled Client signature *Controlled Business Signer signature *R"
+      }
+    },
+    {
+      "path": "actual source access_denied",
+      "observed": {
+        "focus": "!function(){var d=document.documentElement,c=d.classList;c.remove('light','dark');d.style.colorScheme = 'dark';c.add('dark')}()Local verification controls · synthetic recordsFixture statereadyissuesloadingnetworksource_changedaccess_deniedemptysave_unknownToggle themeResolve pending readRetire business contextNo real identity, backend, approval, provider, notification, signature, payment or service result. Canonical API/components use synthetic local ports only.Agreement access unavailableThe original parent received access refusal and retired the private pane.Reopen local fixture\n",
+        "paneVisible": false,
+        "text": "Agreement access unavailableThe original parent received access refusal and retired the private pane.Reopen local fixture"
+      }
+    },
+    {
+      "path": "actual source loading",
+      "observed": {
+        "focus": "Review signing request",
+        "paneVisible": true,
+        "review": "Review signing requestSaved preparation 2Back to documentChecking the saved document, recipients and field assignments…This review does not request signatures. Approval and sending are not connected to it yet.",
+        "text": "Return to agreementSigning documentUnsigned preparation for reviewPreparation 2 · SelectedInspect preparation historyReview signing requestSaved preparation 2Back to documentChecking the saved document, recipients and field assignments…This review does not request signatures. Approval and sending are not connected to it yet.Inspect the retained PDF and field positions. This view cannot change the document.2 fieldsReturn to the document to change and save field assignments.Assign fields toControlled Client · counterpartyControlled Business Signer · tenant signatorySignatureInitialsSigned dateTextCheckboxPage 1 of 2ZoomFit to width100%150%200%Controlled Client signature *Controlled Business Signer signature *Read page textCONTROLLED DOCUMENT - PAGE ONE  Actual native PDF bytes for source-onl"
+      }
+    },
+    {
+      "path": "resolve original pending read",
+      "observed": "Review signing requestSaved preparation 2 · Agreement version 1Back to documentSaved request checkedThe recipients and assigned fields match the selected saved preparation.Recipients and signing orderRecipients at the same step may sign in parallel.Step 1Controlled Clientclient@example.testClient1 assigned fieldStep 1Controlled Business Signerbusiness@example.testBusiness signer1 assigned fieldExact saved sourceDocument SHA-256d1d3dd5cb4d57ab39af79a4dc0e450b0df3137a54728c7557687024c522878f6Pages2Preparation referenceb1111111-0000-4000-8000-000000000001Review fingerprint0ab63714cfcf12929f7347917ad701c941269eba8812c76599a9c691b8d72860The fingerprint identifies this read. It is not an approval or execution receipt.This review does not request signatures. Approval and sending are not connected to it yet."
+    },
+    {
+      "path": "actual source empty",
+      "observed": {
+        "focus": "Local verification controls · synthetic records",
+        "paneVisible": true,
+        "text": "Return to agreementSigning documentUnsigned preparation for reviewNo signing document has been preparedCreate a retained PDF from this exact agreement. Then place and save the required signing fields.Prepare exact PDF"
+      }
+    },
+    {
+      "path": "unknown original save prevents signing review",
+      "observed": {
+        "hasReview": false,
+        "text": "Return to agreementSigning documentUnsigned preparation for reviewPreparation 2 · SelectedThe result could not be confirmed. Check the same preparation request; it may already be recorded.Check the same preparationThe earlier request may have completed. Its original identity is kept on this page; a new request is unavailable while its result is unconfirmed.Check original preparationRetry same request"
+      }
+    },
+    {
+      "path": "read same original preparation after lost save response",
+      "observed": "Return to agreementSigning documentUnsigned preparation for reviewPreparation 3 · SelectedThe retained preparation was read from its original agreement. Current signing and payment status are separate.Inspect preparation historyCheck the saved signing requestReview recipients, signing order and assigned fields against this saved document.Review saved signing requestPlace fields for the intended recipients. Nothing is sent from this workspace.2 fieldsAssign fields toControlled Client · counterpartyControlled Business Signer · tenant signatorySignatureInitialsSigned dateTextCheckboxPage 1 of 2ZoomFit to width100%150%200%Controlled Client signat"
+    },
+    {
+      "path": "retire context during pending source read",
+      "observed": {
+        "reviewVisible": false,
+        "text": "Return to agreementSigning documentUnsigned preparation for reviewPreparation 2 · SelectedInspect preparation historyCheck the saved signing requestReview recipients, signing order and assigned fields against this saved document.Review saved signing requestPlace fields for the intended recipients. Nothing is sent from this workspace.2 fieldsAssign fields toControlled Client · counterpartyControlle"
+      }
+    }
+  ]
+}

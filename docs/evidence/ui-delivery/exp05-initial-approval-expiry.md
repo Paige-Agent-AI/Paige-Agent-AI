@@ -84,3 +84,28 @@ stated boundaries. Experiential: truthful expiration and existing recovery, no d
 Founder Acceptance: NOT_ACCEPTED; one integrated EXP05 evaluation remains.
 Release channel: development until actual review/CI/merge/deployment readback. No customer version
 or announcement. Source log N/A before main; later append only original delivery in Master4.0.
+
+## Current-main composition and native CI correction
+
+Composed original source54af onto released main28622e6d825a404169834bbd4714952094bb6967
+at ff821395ad713b99cd35cbcdd6818a5e9d17046d. Incoming33 paths preserve E09 private
+files/810009, original2748 source closeout and E07 templates/800010; all207 captured
+product/style/font baseline inputs remain byte-identical in Git. Both committed UI
+candidate blobs still match their captured source. This is continuity evidence,
+not a claimed new render or authenticated execution.
+
+Original native job120834452735 correctly failed grant reproduction because the
+older branch lacked E07 objects already present in the production snapshot, first
+set_studio_session_template(uuid,boolean,uuid). Subsequent24 native failures followed
+that refusal. Actual production SELECT grants on clients/files/uploads remained true;
+no grant, production-history or policy repair was performed. Latest reviewed main
+contains the missing migration. Fresh composed-head native/exact CI is required.
+
+Own empty managed Preview initially failed23505 on recorded historical181000.
+Verified Auth/clients/files/turns/conversations/Storage all0; normal same-PR close/reopen
+recreated it without production or another Preview changes. Actual replacement
+Preview5c6a8b5a/projectztbwcradaiigjsxkpufj passed its required check120835170149.
+Its function snapshot remains incumbent Chat526:269 files,268 matching candidate,
+root intentionally different. The badge is database/managed-Preview evidence;
+new Edge code is not claimed verified there. Exact production Edge/web/readback
+remains a normal post-merge proof obligation. Original failure histories retained.

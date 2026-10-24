@@ -40,6 +40,17 @@ describe("canonical control transport helpers", () => {
   it.each([[null, 60_000], [undefined, 60_000], ["", 60_000], ["invalid", 60_000], ["-1", 60_000], ["Infinity", 60_000], ["0", 1_000], ["10", 10_000], ["0.5", 1_000], ["999999", 300_000]] as const)("bounds Retry-After %j", (raw, expected) => {
     expect(chatControlRetryDelay(raw, Date.UTC(2026, 9, 18))).toBe(expected);
   });
+  it("selects original specialist history only on the bounded original status read", () => {
+    const selected = { ...input, interactive: { kind: "status", approvalTurnId: id, includeSpecialistHistory: true } };
+    expect(matchesChatControlHint("status", selected, "status")).toBe(true);
+    for (const value of [false, null, "true", 1]) {
+      expect(matchesChatControlHint("status", { ...selected, interactive: { ...selected.interactive, includeSpecialistHistory: value } }, "status")).toBe(false);
+    }
+    expect(matchesChatControlHint("status", { ...input, interactive: { kind: "status", includeSpecialistHistory: true } }, "status")).toBe(false);
+    expect(matchesChatControlHint("status", { ...selected, approvedConfirmations: ["untrusted"] }, "status")).toBe(false);
+    expect(matchesChatControlHint("stop", { ...selected, interactive: { ...selected.interactive, kind: "stop", supersedesIntentId: id } }, "stop")).toBe(false);
+    expect(matchesChatControlHint("status", selected, "message")).toBe(false);
+  });
   it("honors bounded HTTP dates and holds a past date at the minimum delay", () => {
     const now = Date.UTC(2026, 9, 18);
     expect(chatControlRetryDelay(new Date(now + 12_000).toUTCString(), now)).toBe(12_000);

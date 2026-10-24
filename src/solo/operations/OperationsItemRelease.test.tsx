@@ -1,11 +1,12 @@
-import { act } from "react";
+import { act, useLayoutEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 import { OperationsItemRelease } from "./OperationsItemRelease";
 import { canReleaseItem, releaseReviewers, releasesAvailable } from "./operations-item-release";
 
-vi.mock("./OperationsDeliverablePreparation", () => ({ OperationsDeliverablePreparation: ({ scope }: { scope: { clientId: string } }) => <div data-testid="prepare">Prepare for {scope.clientId}</div> }));
+const preparation=vi.hoisted(()=>({held:false}));
+vi.mock("./OperationsDeliverablePreparation", () => ({ OperationsDeliverablePreparation: ({ scope, registerCloseGuard, onSubmitted }: { scope: { clientId: string }; registerCloseGuard?:(guard:(showNotice?:boolean)=>boolean)=>()=>void;onSubmitted?:()=>void }) => {useLayoutEffect(()=>registerCloseGuard?.(()=>!preparation.held),[registerCloseGuard]);return <><div data-testid="prepare">Prepare for {scope.clientId}</div><button onClick={onSubmitted}>Fixture verified submission</button></>;} }));
 vi.mock("./OperationsStaffDeliveryReview", () => ({ OperationsStaffDeliveryReview: ({ scope, recordedOnly }: { scope: { workItemId: string; workUpdatedAt: string }; recordedOnly?: boolean }) => <div data-testid="review" data-recorded-only={String(Boolean(recordedOnly))}>Review {scope.workItemId} at {scope.workUpdatedAt}</div> }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const actor = "e0914000-0000-4000-8000-0000000000b1";
@@ -13,7 +14,7 @@ const member = (id: string, status = "active"): TeamMemberRecord => ({ membershi
   permission: "member" as TeamMemberRecord["permission"], is_owner: false, job_title: null, responsibilities: null, last_sign_in_at: null });
 const item = { id: "e0974000-0000-4000-8000-000000000001", plan_id: "e0984000-0000-4000-8000-000000000001", contact_id: "e0934000-0000-4000-8000-000000000001", updated_at: "2026-01-02T00:00:00Z" };
 let host: HTMLDivElement, root: Root;
-beforeEach(() => { host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+beforeEach(() => { sessionStorage.clear();preparation.held=false; host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 const render = async (members: TeamMemberRecord[], peopleReady = true) => act(async () => root.render(
   <OperationsItemRelease actorId={actor} tenantId="e0924000-0000-4000-8000-0000000000b1" item={item} members={members} peopleReady={peopleReady} theme="light" />));
@@ -27,10 +28,14 @@ it("says plainly that a second reviewer is needed, instead of an empty reviewer 
   // …but only what is recorded: no "nominate a reviewer" advice under "needs a second person".
   expect(host.querySelector('[data-testid="review"]')?.getAttribute("data-recorded-only")).toBe("true");
 });
-it("mounts preparation and review, scoped to this item and client, when someone else can review", async () => {
+it("opens preparation and review one at a time with the same exact item and client scope", async () => {
   await render([member(actor), member("e0914000-0000-4000-8000-0000000000b2")]);
   expect(host.querySelector('[data-testid="prepare"]')?.textContent).toBe(`Prepare for ${item.contact_id}`);
-  expect(host.querySelector('[data-testid="review"]')).not.toBeNull();
+  // One original recovery identity has one editable consumer at a time.
+  expect(host.querySelector('[data-testid="review"]')).toBeNull();
+  const review=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Review delivery');expect(review).toBeTruthy();await act(async()=>review?.click());
+  expect(host.querySelector('[data-testid="prepare"]')).toBeNull();
+  expect(host.querySelector('[data-testid="review"]')?.textContent).toBe(`Review ${item.id} at ${item.updated_at}`);
   expect(host.textContent).not.toContain("second person");
   expect(host.querySelector('[data-testid="review"]')?.getAttribute("data-recorded-only")).toBe("false");
 });
@@ -57,3 +62,6 @@ it("never offers the signed-in person, or someone not yet active, as their own r
   expect(releasesAvailable(true)).toBe(true);
   expect(releasesAvailable(false)).toBe(false);
 });
+
+it("forwards the existing close guard and refuses another editable mode while preparation is held",async()=>{let close:(showNotice?:boolean)=>boolean=()=>true;await act(async()=>root.render(<OperationsItemRelease actorId={actor} tenantId="e0924000-0000-4000-8000-0000000000b1" item={item} members={[member(actor),member("e0914000-0000-4000-8000-0000000000b2")]} peopleReady theme="light" registerCloseGuard={guard=>{close=guard;return()=>{close=()=>true;};}}/>));preparation.held=true;expect(close(false)).toBe(false);const review=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Review delivery');await act(async()=>review?.click());expect(host.querySelector('[data-testid="prepare"]')).not.toBeNull();expect(host.querySelector('[data-testid="review"]')).toBeNull();preparation.held=false;expect(close(false)).toBe(true);await act(async()=>review?.click());expect(host.querySelector('[data-testid="prepare"]')).toBeNull();expect(host.querySelector('[data-testid="review"]')).not.toBeNull();});
+it("refreshes the original nomination read only after a verified submission callback",async()=>{const submitted=vi.fn();await act(async()=>root.render(<OperationsItemRelease actorId={actor} tenantId="e0924000-0000-4000-8000-0000000000b1" item={item} members={[member(actor),member("e0914000-0000-4000-8000-0000000000b2")]} peopleReady theme="light" onSubmitted={submitted}/>));expect(submitted).not.toHaveBeenCalled();const confirmed=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Fixture verified submission');await act(async()=>confirmed?.click());expect(submitted).toHaveBeenCalledOnce();expect(host.querySelectorAll('[data-testid="prepare"]')).toHaveLength(1);expect(host.querySelector('[data-testid="review"]')).toBeNull();});

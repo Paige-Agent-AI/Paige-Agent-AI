@@ -25,7 +25,11 @@ const doc = (docType: string, cover: Record<string, string>, sections: string[])
   { type: "cta", headline: "Ready to start?", action: "Book a call" },
 ] });
 const content = [
-  { id: "mc-1", kind: "image", channel: null, status: "published", title: "Spring workshop hero: a rising line over a city at dawn, warm light, room for a headline on the left", updated_at: day(1), image_url: "/samples/hero.svg", size: "3:2", body: null, brief: null },
+  // mc-1 carries the metadata a real generated image's completion records (EXP07 row 3):
+  // served MIME, parsed pixel dimensions, the model, the license class. mc-7 (below) carries
+  // none, so the contrast between recorded facts and honest absence is capturable in one drive.
+  { id: "mc-1", kind: "image", channel: null, status: "published", title: "Spring workshop hero: a rising line over a city at dawn, warm light, room for a headline on the left", updated_at: day(1), image_url: "/samples/hero.svg", size: "3:2", body: null, brief: null,
+    meta: { mime_type: "image/svg+xml", width: 1440, height: 960, model: "fal-ai/flux-pro", license_class: "provider_and_model_terms", mode: "image", review_state: "review_ready" } },
   { id: "mc-2", kind: "text", channel: "email_campaign", status: "draft", title: "Workshop reminder: two days out", updated_at: day(2), body: "Subject: Two days to go\n\nHi {first name},\n\nThe spring workshop is this Thursday at 10am. Bring one goal for the quarter; we'll leave with a plan for it.\n\nSee you there." },
   { id: "mc-3", kind: "document", channel: null, status: "draft", title: "Client onboarding guide", updated_at: day(3), body: doc("guide", { eyebrow: "Northfield Studio", title: "Your first 30 days with us", subhead: "What happens each week, and what we need from you" }, ["Week one", "Your plan", "How we work together"]) },
   { id: "mc-4", kind: "text", channel: "social_post", status: "draft", title: "Three questions to ask before hiring help", updated_at: day(4), body: "## Before you hire help, ask three questions\n**1. What will be different in 90 days?**\n2. Who owns the result?\n3. How will we know it worked?\n\nIf you can't answer them yet, start there." },

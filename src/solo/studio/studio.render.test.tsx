@@ -40,6 +40,8 @@ const h = vi.hoisted(() => ({
   renamed: [] as Array<[string, string]>,
   held: [] as Array<{ tool: string; summary: string; fingerprint: string }>,
   openBrief: "An intake form for new clients",
+  templates: [] as Rec[],
+  templateCalls: [] as Array<[string, boolean]>,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -66,7 +68,7 @@ vi.mock("../useMediaJobs", () => ({
 vi.mock("@/components/admin/studio/LivePreview", () => ({ LivePreview: () => <div data-testid="live-preview" /> }));
 vi.mock("./studio-data", async (orig) => {
   const real = await orig<typeof import("./studio-data")>();
-  const session = (id: string, title: string, brief: string) => ({ id, title, seedBrief: brief, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z" });
+  const session = (id: string, title: string, brief: string, extra: Rec = {}) => ({ id, title, seedBrief: brief, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z", isTemplate: false, ...extra });
   return {
     ...real,
     listSessions: async () => h.sessions,
@@ -82,6 +84,8 @@ vi.mock("./studio-data", async (orig) => {
     loadImage: async () => { if (!h.content) throw new Error("missing"); return h.content; },
     loadFunnel: async () => { if (!h.funnel) throw new Error("missing"); return h.funnel; },
     restoreVersion: async (id: string) => { h.restored.push(id); },
+    listTemplates: async () => h.templates.map((t) => ({ ...t, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z", isTemplate: true })),
+    setSessionTemplate: async (id: string, isTemplate: boolean) => { h.templateCalls.push([id, isTemplate]); return session(id, h.openTitle, h.openBrief, { isTemplate }); },
   };
 });
 
@@ -98,6 +102,7 @@ const published = () => ok({ ok: true, action: "publish", kind: "form", id: "f-1
 const happyDoor = (body: Rec) => (body.approved_fingerprint ? published() : ready());
 
 const { VibeStudio } = await import("../vibe");
+const { takePendingPaigePrompt } = await import("@/lib/paigePromptHandoff");
 
 let host: HTMLDivElement;
 let root: Root | null = null;
@@ -137,7 +142,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
-  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients" });
+  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [] });
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -193,6 +198,83 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).toContain("Saved · draft");
     // No artifact-type tabs anywhere in the session (§21).
     for (const t of ["Page", "Form", "Funnel", "Copy", "Image"]) expect(button(t)).toBeUndefined();
+  });
+
+  it("brief details compose into the saved brief and Paige's first message (EXP07 row 1)", async () => {
+    h.sse = [JSON.stringify({ choices: [{ delta: { content: "Got it — starting from your brief." } }] }), "[DONE]"];
+    await mount();
+    type(host.querySelector<HTMLTextAreaElement>("#vs-brief")!, "A landing page for my referral workshop");
+    // Details are optional and closed by default; the toggle opens the fields.
+    expect(host.querySelector(".vs-brief-fields")).toBeNull();
+    await act(async () => { [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Add details")!.click(); });
+    const input = (id: string) => host.querySelector<HTMLInputElement>(`#vs-brief-${id}`)!;
+    const set = (id: string, value: string) => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      act(() => { setter?.call(input(id), value); input(id).dispatchEvent(new Event("input", { bubbles: true })); });
+    };
+    set("audience", "Solo consultants");
+    set("outcome", "Bookings for the April session");
+    set("channel", "   "); // whitespace-only fields are skipped, not composed
+    const build = [...host.querySelectorAll("button")].find((b) => b.textContent?.startsWith("Build it"))!;
+    await act(async () => { build.click(); });
+    await flush();
+
+    const composed = "A landing page for my referral workshop\n\nBrief details:\nAudience: Solo consultants\nOutcome: Bookings for the April session";
+    expect(h.created).toEqual([composed]);
+    expect(h.fetchBodies[0]).toMatchObject({ messages: [{ role: "user", content: composed }] });
+  });
+
+  it("reopening a project shows the brief it started from, and the owner can collapse it (EXP07 row 1)", async () => {
+    h.openBrief = "A landing page for my referral workshop\n\nBrief details:\nAudience: Solo consultants";
+    await openPiece();
+    const card = host.querySelector("details.vs-brief-card") as HTMLDetailsElement | null;
+    expect(card).not.toBeNull();
+    expect(card!.open).toBe(true);
+    expect(card!.querySelector(".vs-md")?.textContent).toContain("Audience: Solo consultants");
+    await act(async () => { card!.querySelector("summary")!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    expect((host.querySelector("details.vs-brief-card") as HTMLDetailsElement)!.open).toBe(false);
+  });
+
+  it("a project with no stored brief shows no brief card (EXP07 row 1)", async () => {
+    h.openBrief = "";
+    await openPiece();
+    expect(host.querySelector("details.vs-brief-card")).toBeNull();
+  });
+
+  it("Save as template runs the governed setter, says what moved, and can bring it back (EXP07 row 6)", async () => {
+    await openPiece();
+    const save = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Save as template") as HTMLButtonElement;
+    expect(save).toBeDefined();
+    await act(async () => { save.click(); });
+    await flush();
+    expect(h.templateCalls).toEqual([["s-1", true]]);
+    expect(text()).toContain("Saved as a workspace template");
+    expect(text()).toContain("Saved as template");
+    const back = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Saved as template") as HTMLButtonElement;
+    await act(async () => { back.click(); });
+    await flush();
+    expect(h.templateCalls).toEqual([["s-1", true], ["s-1", false]]);
+    expect(text()).toContain("Back in your drafts");
+  });
+
+  it("a template on Studio home starts a new project seeded from its brief, and the template is untouched (EXP07 row 6)", async () => {
+    h.templates = [{ id: "s-t", title: "Workshop page template", seedBrief: "A landing page for my referral workshop", isTemplate: true, artifacts: [], updatedAt: "2026-10-03T12:00:00Z" }];
+    h.sse = [JSON.stringify({ choices: [{ delta: { content: "Starting from your template." } }] }), "[DONE]"];
+    await mount();
+    const card = [...host.querySelectorAll(".vs-card")].find((c) => c.textContent?.includes("Starts a new project from this brief")) as HTMLButtonElement;
+    expect(card).toBeDefined();
+    await act(async () => { card.click(); });
+    await flush();
+    // The new project's brief is the TEMPLATE's brief — createSession received it verbatim.
+    expect(h.created).toEqual(["A landing page for my referral workshop"]);
+    expect(h.fetchBodies[0]).toMatchObject({ messages: [{ role: "user", content: "A landing page for my referral workshop" }] });
+  });
+
+  it("no templates saved: the Start-from-a-template section stays hidden (EXP07 row 6)", async () => {
+    h.templates = [];
+    await mount();
+    expect([...host.querySelectorAll("section")].some((sec) => sec.getAttribute("aria-label") === "Start from a template")).toBe(false);
   });
 
   async function openPiece(piece: Rec = FORM) {
@@ -796,6 +878,70 @@ describe("Vibe Studio project workspace", () => {
     h.sse = [JSON.stringify({ paige_artifact: { kind: "form", id: "f-1", title: "New client intake" } }), "[DONE]"];
     await startProject("An intake form for new clients");
     expect(h.renamed).toEqual([["s-new", "New client intake"]]);
+  });
+
+  // EXP06 (ANT-162): "Plan/Review with NEXUS" hands an addressed, EDITABLE prompt to the global
+  // PAIGE chat and closes the Studio. It never sends into the Studio's own design conversation,
+  // never touches the publish door, and relabels nothing.
+  describe("NEXUS departmental attribution", () => {
+    let opens = 0;
+    const mountNexus = async () => {
+      opens = 0;
+      root = createRoot(host);
+      act(() => { root!.render(<VibeStudio onBack={() => { backs++; }} openPaige={() => { opens++; }} />); });
+      await flush();
+    };
+    // The real seam (imported at top with the others): handOffPaigePrompt holds the prompt for
+    // PAIGE's composer, which this harness never mounts, so takePendingPaigePrompt hands out
+    // exactly what the button handed off.
+    const tookHandoff = (): string => takePendingPaigePrompt() ?? "";
+
+    it("without a shell handoff the affordances are simply absent", async () => {
+      await mount();
+      expect(text()).not.toContain("Plan with");
+      expect(text()).not.toContain("Review with");
+    });
+
+    it("Plan with NEXUS on Studio home prefills the global chat, closes the Studio, sends nothing", async () => {
+      await mountNexus();
+      const plan = button("Plan with Nexus");
+      expect(plan).toBeTruthy();
+      expect(text()).toContain("Marketing & growth");
+      const sends = h.fetchBodies.length;
+      await act(async () => { plan!.click(); });
+      await flush();
+      const prompt = tookHandoff();
+      expect(prompt.startsWith("Nexus,")).toBe(true);
+      expect(prompt).toContain("Do not take an action");
+      expect(tookHandoff()).toBe(""); // handed out once
+      expect(opens).toBe(1);
+      expect(backs).toBe(1); // the Studio closed so the chat is reachable
+      expect(h.fetchBodies).toHaveLength(sends); // nothing was sent anywhere
+    });
+
+    it("Review with NEXUS cites the door's prepared facts and never approaches the door's publish", async () => {
+      h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
+      h.form = FORM;
+      h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: null, artifacts: h.manifest, thumbnailUrl: null, updatedAt: "2026-10-03T12:00:00Z" }];
+      await mountNexus();
+      await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      await flush();
+      await openPanel();
+      expect(text()).toContain("Ready to go live?");
+      const review = button("Review with Nexus");
+      expect(review).toBeTruthy();
+      const doorCount = h.doorCalls.length;
+      await act(async () => { review!.click(); });
+      await flush();
+      const prompt = tookHandoff();
+      expect(prompt).toContain('form "New client intake"');
+      expect(prompt).toContain(`/form/f-1`);
+      expect(prompt).toContain("Do not publish anything");
+      expect(tookHandoff()).toBe("");
+      expect(h.doorCalls).toHaveLength(doorCount); // the review changes nothing at the door
+      expect(opens).toBe(1);
+      expect(backs).toBe(1);
+    });
   });
 
   it("a redesign that was not saved shows over the saved piece, marked not saved", async () => {

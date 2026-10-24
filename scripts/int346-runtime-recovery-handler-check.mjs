@@ -71,6 +71,7 @@ async function execute(tool=null,extras={},content='Explain the current business
 async function check(name,fn){try{await fn();console.log(`ok ${++passed} - ${name}`);}catch(e){failed++;console.error(`not ok - ${name}: ${e.message}`);}}
 await check('new held claim uses server-bound acquire and offers only proven incumbent reads',async()=>{
  const r=await execute();assert.equal(r.response.status,200);assert.ok(bodies.length);
+ assert.ok(receipts.every(r=>r.bundle_ref.interactive_refusal===undefined),'an ordinary held read is not an input refusal');
  for(const body of bodies)for(const tool of body.tools??[])assert.ok(reads.has(tool.name));
  const bound=r.rec.rpc.find(c=>c.name==='paige_chat_interactive_acquire_bound');assert.ok(bound);assert.equal(bound.args.p_execution_id,id(80));assert.match(bound.args.p_request_nonce,/^[0-9a-f-]{36}$/);
  assert.ok(!r.rec.rpc.some(c=>c.name==='paige_chat_interactive_recover_bound'),'customer Chat never invokes operator recovery');
@@ -112,6 +113,10 @@ for(const mode of ['foreign','unknown'])await check('held Play focus '+mode+' re
 for(const [name,extra]of focusInputs)await check('held '+name+' focus cannot admit an attached document',async()=>{
  const r=await execute(null,{...extra,document:{kind:'pdf',mimeType:'application/pdf',fileName:'protected.pdf',base64:'JVBERi0='}});
  assert.equal(r.response.status,409);assert.equal(bodies.length,0);assert.equal(r.rec.functions.length,0);
+ assert.equal(receipts.length,1,'the refused original turn must settle once');
+ assert.deepEqual(receipts[0].bundle_ref.interactive_refusal,{v:1,code:'INTERACTIVE_RECOVERY_READ_ONLY'});
+ assert.deepEqual(receipts[0].bundle_ref.turn_state,{v:1,state:'INTERRUPTED',mode:'pending',rounds:0,tools:0});
+ assert.match(receipts[0].content,/Your message was recorded, but new actions and attachments are on hold/);
 });
 for(const [name,extra]of focusInputs)await check('held '+name+' focus preserves the read lane without recording a preference',async()=>{
  const r=await execute(null,extra,'Please be brief.');assert.equal(r.response.status,200);assert.ok(bodies.length);
@@ -128,6 +133,7 @@ for(const [name,extra]of focusInputs)for(const [input,payload]of[
 ])await check('held '+name+' focus keeps '+input+' input closed',async()=>{
  const r=await execute(null,{...extra,...payload});assert.equal(r.response.status,409);assert.ok(r.wire.includes('INTERACTIVE_RECOVERY_READ_ONLY'));assert.equal(bodies.length,0);
  assert.equal(r.rec.functions.length,0);assert.ok(!r.rec.rpc.some(c=>/approve|decline|record_paige_memory/.test(c.name)));
+ assert.equal(receipts.length,1);assert.deepEqual(receipts[0].bundle_ref.interactive_refusal,{v:1,code:'INTERACTIVE_RECOVERY_READ_ONLY'});
 });
 for(const [name,extra]of focusInputs)await check('workspace changed during held '+name+' focus read never reaches provider',async()=>{
  focusWorkspaceFlip=name;try{const r=await execute(null,extra);assert.equal(selectedWorkspace,id(91));assert.equal(bodies.length,0);
@@ -197,6 +203,7 @@ lateHold='provider';held=false;
 await check('hold arriving after a legacy provider response prevents its tool mutation',async()=>{
  const r=await execute('crm_create_task',{interactive:undefined});assert.ok(held);
  assert.ok(!r.rec.rpc.some(c=>/execute_crm|prepare_comms|approve/.test(c.name)));assert.equal(r.rec.functions.length,0);
+ assert.ok(receipts.every(r=>r.bundle_ref.interactive_refusal===undefined),'a late provider hold is not a zero-work input refusal');
 });
 lateHold=null;
 for(const shape of ['missing','undefined','array'])await check('native '+shape+' hold projection fails closed rather than unheld',async()=>{

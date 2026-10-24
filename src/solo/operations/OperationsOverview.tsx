@@ -18,6 +18,8 @@ export interface OperationsOverviewProps {
   onInspectItem: (item: PlanItem) => void; onInspectPlan: (plan: Plan) => void;
   onNavigate?: (destination: Destination) => void;
   onInspectWorkSet?: (group: OperationsWorkSet) => void;
+  onOpenBusinessTimeZone?: () => void;
+  businessTimeZoneRef?: (node: HTMLButtonElement | null) => void;
   onReviewWithPaige?: () => void;
   onReviewWorkWithPaige?: (work: NativeOperationsWork) => void;
   recordedFindings?: ReactNode; nativeWorkState?: 'ready' | 'loading' | 'unavailable';
@@ -25,7 +27,7 @@ export interface OperationsOverviewProps {
 
 export function OperationsOverview({ tenantId, plans, items, members, crmTasks = [], onInspectCrmTask,
   onInspectItem, onInspectPlan, onNavigate, onInspectWorkSet, onReviewWithPaige, onReviewWorkWithPaige,
-  recordedFindings, nativeWorkState = 'ready' }: OperationsOverviewProps) {
+  recordedFindings, nativeWorkState = 'ready', onOpenBusinessTimeZone, businessTimeZoneRef }: OperationsOverviewProps) {
   const people = new Map(members.map(member => [member.user_id, member]));
   const projects = new Map(plans.map(plan => [plan.id, plan]));
   const work = overviewNativeWork(tenantId, nativeWorkState === 'ready' ? items : [], nativeWorkState === 'ready' ? crmTasks : []);
@@ -54,13 +56,13 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
 
   return <section className="ops-views ops-operating-desk" aria-label="Overview">
     <header className="ops-desk-heading"><h1 tabIndex={-1}>Your operating week</h1>
-      <div className="ops-desk-actions"><WeeklyResponsibilityEntry />
+      <div className="ops-desk-actions"><WeeklyResponsibilityEntry showOutcome />
         {onReviewWithPaige && <button type="button" className="ops-desk-primary" onClick={onReviewWithPaige}><Sparkles size={16} aria-hidden="true" />Plan with ZION</button>}
       </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
     {hasNativeWork && <OperationsWeek tenantId={tenantId} items={items} tasks={crmTasks}
-      onInspectItem={onInspectItem} onInspectTask={onInspectCrmTask} />}
+      onInspectItem={onInspectItem} onInspectTask={onInspectCrmTask} onOpenBusinessTimeZone={onOpenBusinessTimeZone} businessTimeZoneRef={businessTimeZoneRef} />}
     <div className={hasNativeWork ? 'ops-desk-columns' : undefined}><div className={hasNativeWork ? 'ops-desk-primary-column' : undefined}>
       {hasNativeWork && (spotlight ? <section className="ops-desk-attention" aria-label="Priority work to inspect"><header>
         <h2>{spotlight.status === "blocked" ? <CirclePause size={17} aria-hidden="true" /> : <CalendarClock size={17} aria-hidden="true" />}Needs your attention</h2>

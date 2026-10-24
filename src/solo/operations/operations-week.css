@@ -2,6 +2,7 @@
 .ops-week>header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 16px; }
 .ops-week h2 { font-size:16px; margin:0; line-height:1.4; font-weight:600; }
 .ops-week nav { display:flex; align-items:center; gap:4px; }
+.ops-week-recovery { display:flex; flex-wrap:wrap; gap:8px; }
 .ops-week button { min-height:44px; border:1px solid var(--pg-line); border-radius:7px; padding:8px; color:var(--pg-ink); background:transparent; }
 .ops-week nav button { min-width:44px; }
 .ops-week button:focus-visible { outline:2px solid var(--pg-violet); outline-offset:3px; }

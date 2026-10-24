@@ -22,6 +22,11 @@ const history = () => ({ v: 1, status: 'verified_original', thread_id: scope.thr
   results: [{ tool: 'plan_set_reminder', receipt_version: 1, original: { item_id: id(5), title: 'Original service review',
     remind_at: '2030-01-02T10:00:00.123456Z', source_version: '2026-10-18T06:40:00.765432Z', receipt_run_id: id(6) } }] });
 const response = () => ({ data: { approval_history: history() }, error: null });
+const specialistHistory = () => ({ v: 1, status: 'recorded_assignment', thread_id: scope.threadId, turn_id: scope.turnId,
+  origin_intent_id: scope.intentId, tenant_id: scope.tenantId, read_only: true, new_effect_possible: false, limited: false,
+  results: [{ id: id(8), specialist: 'zion', recorded_status: 'pending', created_at: '2026-10-23T12:00:00Z',
+    observed_at: '2026-10-23T12:01:00Z', receipt_state: 'missing', receipt_id: null, receipt_at: null,
+    response_text: null, response_truncated: false, completion_scope: 'specialist_response_only' }] });
 type Props = { callerUserId: string | null; tenantId: string | null; platform?: boolean };
 const eligible: Props = { callerUserId: id(7), tenantId: scope.tenantId, platform: false };
 const cleanup: Array<() => Promise<void>> = [];
@@ -52,6 +57,46 @@ beforeEach(() => {
   ports.from.mockReset().mockImplementation(() => { throw new Error('No direct table reader/writer'); });
   ports.rpc.mockReset().mockImplementation(() => { throw new Error('No direct effect RPC'); });
   ports.invalidate.mockReset();
+});
+describe('original specialist history shares the native status owner', () => {
+  const specialistRead = (api: UsePaigeThreads, signal = new AbortController().signal) =>
+    api.loadOriginalSpecialistHistory(scope.threadId, scope.turnId, scope.intentId, signal);
+  it('selects original specialist status with the same physical abort signal and no action payload', async () => {
+    ports.invoke.mockResolvedValue({ data: { specialist_history: specialistHistory() }, error: null });
+    const view = await mount(), abort = new AbortController();
+    expect(await specialistRead(view.api, abort.signal)).toEqual(specialistHistory());
+    expect(ports.invoke).toHaveBeenCalledExactlyOnceWith('paige-ai-chat', {
+      signal: abort.signal, headers: { 'x-paige-chat-control': 'status' },
+      body: { messages: [{ role: 'user', content: 'Read pending approval status.' }], threadId: scope.threadId,
+        requestIntentId: scope.intentId, interactive: { kind: 'status', approvalTurnId: scope.turnId, includeSpecialistHistory: true } },
+    });
+    expect(ports.from).not.toHaveBeenCalled(); expect(ports.rpc).not.toHaveBeenCalled(); expect(ports.invalidate).not.toHaveBeenCalled();
+  });
+  it('does not hydrate a result from the stored bundle or approval container', async () => {
+    ports.invoke.mockResolvedValue({ data: { approval_history: specialistHistory(), bundle_ref: { specialist_history: specialistHistory() } }, error: null });
+    expect(await specialistRead((await mount()).api)).toBeNull();
+  });
+  it('uses one result generation across reminder and specialist reads', async () => {
+    let finish!: (value: unknown) => void;
+    ports.invoke.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }))
+      .mockResolvedValueOnce({ data: { specialist_history: specialistHistory() }, error: null });
+    const view = await mount(), oldReminder = read(view.api);
+    expect(await specialistRead(view.api)).toEqual(specialistHistory());
+    finish(response()); expect(await oldReminder).toBeNull();
+  });
+  it.each(['actor', 'tenant', 'platform', 'abort'] as const)('rejects a late specialist result after %s change', async change => {
+    let finish!: (value: unknown) => void;
+    ports.invoke.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const view = await mount(), abort = new AbortController(), pending = specialistRead(view.api, abort.signal);
+    if (change === 'abort') abort.abort();
+    else {
+      await view.render({ ...eligible, ...(change === 'actor' ? { callerUserId: id(98) }
+        : change === 'tenant' ? { tenantId: id(99) } : { platform: true }) });
+      await view.render(eligible);
+    }
+    finish({ data: { specialist_history: specialistHistory() }, error: null }); expect(await pending).toBeNull();
+    expect(ports.invoke).toHaveBeenCalledTimes(1);
+  });
 });
 afterEach(async () => {
   for (const dispose of cleanup.splice(0)) await dispose();

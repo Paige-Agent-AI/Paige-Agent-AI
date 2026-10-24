@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getScopedUserId } from "@/lib/scopedUser";
 import { useWeeklyOwnerAudience } from "./useWeeklyResponsibility";
@@ -22,9 +22,16 @@ function ScopedComposer({ actor, tenant, businessZone, onSaved }: {
   const [hasMore, setHasMore] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [proposalRead, setProposalRead] = useState<"unread" | "reading" | "empty">("unread");
+  const prepareRef = useRef<HTMLButtonElement>(null), returnToPrepare = useRef(false);
   const scope = useRef<WeeklyBrowserScope | null>({ actorId: actor, tenantId: tenant, epoch: 0 });
   const ticket = useRef(0), flight = useRef(false);
   const current = () => getScopedUserId() === null ? scope.current : null;
+  useLayoutEffect(() => {
+    if (planning || !returnToPrepare.current) return;
+    returnToPrepare.current = false;
+    const target = prepareRef.current;
+    if (!blocked && scope.current && getScopedUserId() === null && target?.isConnected && !target.disabled) target.focus();
+  }, [planning, blocked]);
   const adopt = (result: WeeklyDraftResult) => {
     setLoading(false); setBusy(false); setUnavailable(false); setProposalRead("unread");
     if (result.kind === "refused") { setBlocked(true); setRequests([]); setSelected(null); setPlanning(false); setMessage("Current owner access could not be verified. Reopen this view after checking your workspace."); return; }
@@ -85,8 +92,8 @@ function ScopedComposer({ actor, tenant, businessZone, onSaved }: {
       onDecline={tokens => void command({ action: "decline", confirmation_id: selected.confirmationId, declinedConfirmations: tokens })}
       onReadback={() => void command({ action: "status", confirmation_id: selected.confirmationId })} />}
     {hasMore && <p>Showing the latest 10 proposals. Calendar reads registered responsibilities separately.</p>}
-    {planning ? <WeeklyDraftForm businessZone={businessZone} busy={busy} onPrepare={draft => void command({ action: "prepare", draft })} onCancel={() => setPlanning(false)} />
-      : <button type="button" className="e5-weekly-primary" disabled={busy || loading || blocked || unconfirmed || selected?.phase === "unknown"}
+    {planning ? <WeeklyDraftForm businessZone={businessZone} busy={busy} onPrepare={draft => void command({ action: "prepare", draft })} onCancel={() => { returnToPrepare.current = true; setPlanning(false); }} />
+      : <button ref={prepareRef} type="button" className="e5-weekly-primary" disabled={busy || loading || blocked || unconfirmed || selected?.phase === "unknown"}
         onClick={() => setPlanning(true)}>{selected ? "Prepare another responsibility" : "Prepare a weekly responsibility"}</button>}
   </section>;
 }

@@ -172,6 +172,35 @@ const openTrace = async (el: HTMLElement) => {
 };
 const C4_LANGUAGE = /resum|pick(ing)? (this|it) back up|keep going|same answer/i;
 
+describe("original zero-work refusal on canonical history reload", () => {
+  const refusal = "An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. You can still ask questions about existing records.";
+  function refusedHistory(marker: unknown = { v: 1, code: "INTERACTIVE_RECOVERY_READ_ONLY" }, tools = 0) {
+    harness.threads = [{ id: "original-refused-thread", title: "Protected refused upload", updated_at: "2026-10-19T15:57:00Z" }];
+    harness.turns = [{ id: "original-refused-turn", role: "assistant", content: refusal, created_at: "2026-10-19T15:57:00Z",
+      bundle_ref: { interactive_refusal: marker, turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools } } }];
+  }
+  it("shows the saved reason and permitted recovery without replay or Ask again", async () => {
+    refusedHistory(); const requests = server(); const host = await mount();
+    expect(lineText(lastLine(host))).toBe("New actions and attachments on hold");
+    expect(host.textContent).toContain(refusal);
+    expect(host.querySelector('[data-paige-turn-footer]')).toBeNull();
+    expect(Array.from(host.querySelectorAll("button")).some(b => /Ask again|Retry|Approve/.test(b.textContent ?? ""))).toBe(false);
+    expect(requests).toHaveLength(0);
+    harness.tenant = "different-refusal-scope"; harness.threads = []; harness.turns = [];
+    await act(async () => { lastRoot!.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} />); await flush(); });
+    expect(host.textContent).not.toContain(refusal);
+    expect(host.textContent).not.toContain("New actions and attachments on hold");
+    expect(requests).toHaveLength(0);
+  });
+  it.each([[undefined, 0], [{ v: 2, code: "INTERACTIVE_RECOVERY_READ_ONLY" }, 0],
+    [{ v: 1, code: "INTERACTIVE_RECOVERY_READ_ONLY" }, 1]])("keeps actual uncertainty for inconsistent saved metadata %j / %s", async (marker, tools) => {
+      refusedHistory(marker === undefined ? null : marker, tools as number); const requests = server(); const host = await mount();
+      expect(lineText(lastLine(host))).toBe("Stopped before finishing");
+      expect(host.querySelector('[data-paige-turn-footer]')).not.toBeNull();
+      expect(requests).toHaveLength(0);
+    });
+});
+
 describe("C3a — proof (1): a fast answer has no status or trace chrome", () => {
   it("draws no line before, during or after a fast answer", async () => {
     const hold = deferred();

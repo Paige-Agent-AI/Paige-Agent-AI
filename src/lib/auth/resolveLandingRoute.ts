@@ -3,6 +3,7 @@ import { fetchWithheldCustomerAccess } from "@/lib/client-portal-access";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
 import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 import { isClientPortalBusinessId } from "@/lib/client-portal-scope";
+import { fetchClientPortalRelationshipChoices } from "@/lib/client-portal-relationships";
 
 // Customer onboarding and agreements remain actual work inside the portal.
 // Entry never pretends to complete Welcome or accept an unsigned agreement.
@@ -194,6 +195,19 @@ async function customerAccessWithheld(businessId: string | null = null): Promise
   }
 }
 
+/** Ordinary sign-in may reach the existing chooser; the native gate still owns admission. */
+async function customerHasMultipleRelationships(actorId: string): Promise<boolean> {
+  const controller = new AbortController();
+  try {
+    const page = await fetchClientPortalRelationshipChoices(actorId, {signal: controller.signal, limit: 2});
+    return page.relationships.length === 2;
+  } catch {
+    return false;
+  } finally {
+    controller.abort();
+  }
+}
+
 export async function resolveLandingRoute(userId: string, options: { customerPortal?: boolean; customerBusinessId?: string } = {}): Promise<string> {
   try {
     // Narrow only an explicit customer entry. Ordinary staff/operator landing stays unchanged.
@@ -279,7 +293,13 @@ export async function resolveLandingRoute(userId: string, options: { customerPor
       return "/broker/app";
     }
 
-    if (clientRes.error) return LANDING_ROUTE_RETRY;
+    if (clientRes.error) {
+      // Only native ambiguity may offer the original choice, never a selected-business refusal or outage.
+      if (!options.customerPortal && "code" in clientRes.error && clientRes.error.code === "42501"
+        && clientRes.error.message === "select an authorized customer relationship"
+        && await customerHasMultipleRelationships(userId)) return "/app";
+      return LANDING_ROUTE_RETRY;
+    }
     let clientRow = clientRes.data as { id?: string; linked_user_id?: string; onboarding_stage?: string | null } | null;
     if (clientRow && clientRow.linked_user_id !== userId) return LANDING_ROUTE_RETRY;
 

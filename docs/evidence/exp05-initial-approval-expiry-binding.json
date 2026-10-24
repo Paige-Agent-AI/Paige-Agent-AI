@@ -1,0 +1,541 @@
+{
+  "base": "7b2ac52074e1697e961f31a28490d0e22bd2ebbb",
+  "reviewedHead": "b07aef8d21c7c6723a6127445fb0ca0540bf7750",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE",
+  "reviewIds": [
+    6382339584
+  ],
+  "baselineScalarsReproduced": true,
+  "dependencyCount": 124,
+  "allDependencyPinsReproduced": true,
+  "originalRefusal": [
+    "incumbent reviewed dispatch changed: comms_setup_calling"
+  ],
+  "scalarChanges": [
+    {
+      "tool": "comms_setup_calling",
+      "pinned": "03804b0f0bb80ed4b5110cf73741d6e18c827f8f7d3bced3adcd41dae3b2742d",
+      "before": "03804b0f0bb80ed4b5110cf73741d6e18c827f8f7d3bced3adcd41dae3b2742d",
+      "after": "cd0ff75ae909aa7fec94dc191f43ab22051f54e5d6293d7c84503a34cdf4780b"
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "pinned": "992a640e18b55ccdcc7d1d62e5f575b555eeeaafa3548575447a4c641f996fce",
+      "before": "992a640e18b55ccdcc7d1d62e5f575b555eeeaafa3548575447a4c641f996fce",
+      "after": "ae966877f6a561c8a57fa55a0502d373dc18d47edfa35b511f00abe6260855ee"
+    },
+    {
+      "tool": "calendar_link_send",
+      "pinned": "f9b2c21633ae6f45591c6b51bb9e68d7aff4a18de86c1fc41d3dfa7d4eb77379",
+      "before": "f9b2c21633ae6f45591c6b51bb9e68d7aff4a18de86c1fc41d3dfa7d4eb77379",
+      "after": "e98cec6dee52f97e6ebf0a23297ff07b2bba9d02a4666733b0175121ff7d1354"
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "pinned": "73272da69d4dcacd0d08a00713824b8086ed94e5e7c292bf36a551abdecdb8d8",
+      "before": "73272da69d4dcacd0d08a00713824b8086ed94e5e7c292bf36a551abdecdb8d8",
+      "after": "47e98ac6689d67319730b1ccad42062ad0b256288ca6b1b70abfc07effd8ad60"
+    },
+    {
+      "tool": "update_business_profile",
+      "pinned": "78738e91079533e9b3128cdd21cb0b3a07307b8757cefcb9e5a67752260d5561",
+      "before": "78738e91079533e9b3128cdd21cb0b3a07307b8757cefcb9e5a67752260d5561",
+      "after": "c23a11d4b9a5cdcd93e0d266ab768e78a1577a16f41e6a81098073ea5232728e"
+    },
+    {
+      "tool": "capability_status",
+      "pinned": "6854f1ac21c7aacde404e392936d3707d5112f77d7937639cd62b524e5692a4b",
+      "before": "6854f1ac21c7aacde404e392936d3707d5112f77d7937639cd62b524e5692a4b",
+      "after": "27257078449e8158eefea550d570898ce91f506a690c0dd054236a5cc8bb24b4"
+    },
+    {
+      "tool": "improvement_propose",
+      "pinned": "05b3844e83f440a2d0a737be9d49afdd217e52edfdc6ddde18a8bcd4e711a77c",
+      "before": "05b3844e83f440a2d0a737be9d49afdd217e52edfdc6ddde18a8bcd4e711a77c",
+      "after": "c0b8a34c192b4289d1dd8b0eb81a37bbcb926f49b44ef0005b0374a67fad00b5"
+    },
+    {
+      "tool": "improvement_decide",
+      "pinned": "5f07ff0c6394ca5420d64f78e4cd00de7d8e3bd9a9264e45b23ea1e05303dbcf",
+      "before": "5f07ff0c6394ca5420d64f78e4cd00de7d8e3bd9a9264e45b23ea1e05303dbcf",
+      "after": "015e6243dfc3dcf4177f2c077b343b20845d4760f958740da2d27c12ed77eb2f"
+    },
+    {
+      "tool": "list_subagents",
+      "pinned": "e732083b93ae771ac4f935d4d20cc0e2c02ac50921e1cb5347a7b6d57763791b",
+      "before": "e732083b93ae771ac4f935d4d20cc0e2c02ac50921e1cb5347a7b6d57763791b",
+      "after": "4fe91c7849ac75fedd107840fe75c241b508afc37ca0be2219d75e536cb0e826"
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "pinned": "e732083b93ae771ac4f935d4d20cc0e2c02ac50921e1cb5347a7b6d57763791b",
+      "before": "e732083b93ae771ac4f935d4d20cc0e2c02ac50921e1cb5347a7b6d57763791b",
+      "after": "4fe91c7849ac75fedd107840fe75c241b508afc37ca0be2219d75e536cb0e826"
+    },
+    {
+      "tool": "forge_subagent",
+      "pinned": "2bc9d358e464e44672c13ffefc36a190a5eff88d537c1457eb56ece7b75ab50f",
+      "before": "2bc9d358e464e44672c13ffefc36a190a5eff88d537c1457eb56ece7b75ab50f",
+      "after": "442edc78f948185398fa2146a39802d0fcba10df12d3cda0e8d74aa0934267b5"
+    },
+    {
+      "tool": "author_event_kind",
+      "pinned": "74ec4d77abe2f984f7b6ab8c2fac13dfa216e04f59e3d940dbe7f3aaaec556b2",
+      "before": "74ec4d77abe2f984f7b6ab8c2fac13dfa216e04f59e3d940dbe7f3aaaec556b2",
+      "after": "843c6af913689a416e47904663cb8cfbab937863ccc5d4975130b2c089c94998"
+    },
+    {
+      "tool": "crm_add_note",
+      "pinned": "657bc8df1b7467d4f10b465a77137315ad4d63dbe2d4e306c0c726996ad32d0d",
+      "before": "657bc8df1b7467d4f10b465a77137315ad4d63dbe2d4e306c0c726996ad32d0d",
+      "after": "3d5364e3aaa5441e1de8257782c8dfec068a6f6db59dd69f14afccbdfbbd6dca"
+    },
+    {
+      "tool": "crm_file_document",
+      "pinned": "9358502ae262e57894b91302cd4c243bbf78dbb46b3e32af41b364198657dad5",
+      "before": "9358502ae262e57894b91302cd4c243bbf78dbb46b3e32af41b364198657dad5",
+      "after": "f9f54cb56253546b10ced4a9284cba161a22ea5c8b59460838beb89ddf103375"
+    },
+    {
+      "tool": "update_client_data",
+      "pinned": "2258c582d17bda25da54da1fcdb21c82d7c7b63aae226d169d9cbfe7dbdfa943",
+      "before": "2258c582d17bda25da54da1fcdb21c82d7c7b63aae226d169d9cbfe7dbdfa943",
+      "after": "93b449545af4488701ce1dfc60af70cd506f0d08bfe78a34d7f32debf0d39403"
+    },
+    {
+      "tool": "pipeline_configure",
+      "pinned": "407db1bc608f038f82d33b324c892591b3006d9f40dd4b758e474dc75531f5b3",
+      "before": "407db1bc608f038f82d33b324c892591b3006d9f40dd4b758e474dc75531f5b3",
+      "after": "ad5c077695d0f70f411e75a12d9f9401283a60fd549910d7ab306d2893ab44dd"
+    },
+    {
+      "tool": "deep_research",
+      "pinned": "bc841b339ff66e3611f9c326f8f63b380d088a418a8ece7aa8d0f1f2ddf4b3aa",
+      "before": "bc841b339ff66e3611f9c326f8f63b380d088a418a8ece7aa8d0f1f2ddf4b3aa",
+      "after": "e8013c6418dc88ab17a654bedd7f5d1c58fbac466eb0c9b710153a3428f79870"
+    },
+    {
+      "tool": "web_search",
+      "pinned": "8e2c5ba1f8a9d394d131797a120b403b01e88d46e746277158f4723af3238a47",
+      "before": "8e2c5ba1f8a9d394d131797a120b403b01e88d46e746277158f4723af3238a47",
+      "after": "dcf7b164653866a2613c2d271057a8db813e470310870df58c4c6ce60c094f3a"
+    },
+    {
+      "tool": "web_fetch",
+      "pinned": "a43e808865a54568ed985e506926e6bc1ba359a08849a97ebcb4595de9669ef4",
+      "before": "a43e808865a54568ed985e506926e6bc1ba359a08849a97ebcb4595de9669ef4",
+      "after": "17012df78fcd56436756c30dc2bb58c268deb37e0bd773bff6841f9d9a6471a5"
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "pinned": "d60cc618239c8bb9186a53488482e98f20a69a62c9da20c39a03b73850d3e6d3",
+      "before": "d60cc618239c8bb9186a53488482e98f20a69a62c9da20c39a03b73850d3e6d3",
+      "after": "66b8c5dfd2c382550ab70be0c136b98852ef1442ac83ead3cc7643c06c4876d1"
+    },
+    {
+      "tool": "automation_draft",
+      "pinned": "64d1a502321a3111d06e46681365ea7f9bffb104c949fa43ca7493d7ae91875c",
+      "before": "64d1a502321a3111d06e46681365ea7f9bffb104c949fa43ca7493d7ae91875c",
+      "after": "926a1a2e3b083f7b233bdf0418772ac8cfa8281a6536d3cabbcf6f54cea96e58"
+    },
+    {
+      "tool": "comms_connection_summary",
+      "pinned": "a0e26c7ce95a3c56432a37b538e7dac0394f0fe3b6c9e2e5671c48cbf66ded90",
+      "before": "a0e26c7ce95a3c56432a37b538e7dac0394f0fe3b6c9e2e5671c48cbf66ded90",
+      "after": "499a75ca1ab437a446c162c7778bf90a90ebdfe9add13daff18537bed446f210"
+    },
+    {
+      "tool": "comms_registration_status",
+      "pinned": "51d33dfeae9e818e3e3e642359afde88a5b0ffa9fb6aa5e10438d1163d33ac9c",
+      "before": "51d33dfeae9e818e3e3e642359afde88a5b0ffa9fb6aa5e10438d1163d33ac9c",
+      "after": "08bbc6b985b864f7f01b51af76920a823995278201b32feb117e54c6dff4b3c6"
+    },
+    {
+      "tool": "comms_list_numbers",
+      "pinned": "cebdeae2cee0d0c196cc40e4dbc492fcee2770dea3c882f094bde306da2a41b7",
+      "before": "cebdeae2cee0d0c196cc40e4dbc492fcee2770dea3c882f094bde306da2a41b7",
+      "after": "879137df00f639effa1ee1034d4d1d7559090b0905f986afb8b9cd59dfee8075"
+    },
+    {
+      "tool": "comms_search_numbers",
+      "pinned": "efa854b99cbc29df3aa4c7638548b9118493d068f47c89b5e0a1300442a423d6",
+      "before": "efa854b99cbc29df3aa4c7638548b9118493d068f47c89b5e0a1300442a423d6",
+      "after": "4716ef7e4c7908412a7e8f0927c3358a60398f3b0e464286e7b9ee126c683403"
+    },
+    {
+      "tool": "comms_buy_number",
+      "pinned": "3f6c36ee51f4d834402a0cd0dd09d876c104f9aca04ae5cdaf4d9ec903ad773b",
+      "before": "3f6c36ee51f4d834402a0cd0dd09d876c104f9aca04ae5cdaf4d9ec903ad773b",
+      "after": "b12f187bd17ea845a8358614b22c227efadb5bf570a4d065fd296a43fce7e527"
+    },
+    {
+      "tool": "comms_draft_registration",
+      "pinned": "fcabc759118c6ca6ad66d6d2a6635da7222e0a71efa178cffe489b5bcd76ce1e",
+      "before": "fcabc759118c6ca6ad66d6d2a6635da7222e0a71efa178cffe489b5bcd76ce1e",
+      "after": "0efffb36b37d99d4bcf73b96c55047d6b7b5e7c9cedaab611eb4063727d842af"
+    },
+    {
+      "tool": "comms_name_number",
+      "pinned": "c987bef2531dd16a72e706314cfe47ab687639656748664012c0355f2ecbe491",
+      "before": "c987bef2531dd16a72e706314cfe47ab687639656748664012c0355f2ecbe491",
+      "after": "b1ebda2f97be8d521927dc98a5207d9385a41117d6f156ee7922adcd833ef943"
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "pinned": "656a92b22859abde9ee0e67c100eb5d5e978be848453217f4f152684954c80bd",
+      "before": "656a92b22859abde9ee0e67c100eb5d5e978be848453217f4f152684954c80bd",
+      "after": "6ccc9da6e5506232972a1f4c01e94805a36dc88948a8b8c7321c05e577624c73"
+    }
+  ],
+  "decomposition": [
+    {
+      "tool": "comms_setup_calling",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "calendar_link_send",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "update_business_profile",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "capability_status",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "improvement_propose",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "improvement_decide",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "list_subagents",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "forge_subagent",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "author_event_kind",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "crm_add_note",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "crm_file_document",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "update_client_data",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "pipeline_configure",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "deep_research",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "web_search",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "automation_draft",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "comms_connection_summary",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "comms_registration_status",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "comms_list_numbers",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "comms_search_numbers",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "comms_buy_number",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "comms_draft_registration",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "comms_name_number",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "changed": {
+        "branches": [],
+        "controls": [],
+        "identity": [
+          15
+        ],
+        "helpers": [],
+        "imports": []
+      }
+    }
+  ],
+  "boundary": "Only independently inspected literal source bindings renewed; original metadata/extractor/validator/124 dependencies preserved. Not activation, business effects or authenticated customer acceptance."
+}

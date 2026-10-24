@@ -656,6 +656,10 @@ SELECT public.team_hub_create_channel(:'tb','b-private','private',ARRAY[:'u8']::
 SELECT pg_temp.act(:'u4');
 SELECT public.team_hub_create_channel(:'ta','u4-only','private','{}',gen_random_uuid())->>'channel_id' AS u4only \gset
 RESET ROLE;
+-- Retirement deletes by planned ctids and fires the seat trigger mid-way, so the trigger must
+-- never rewrite a channel row.
+SELECT string_agg(id::text||'@'||ctid::text||'@'||coalesce(archived_at::text,''),',' ORDER BY id) AS channel_rows_before
+ FROM public.team_hub_channels WHERE tenant_id=:'ta' \gset
 SELECT count(*) AS u2_private_before FROM public.team_hub_channel_members m JOIN public.team_hub_channels c ON c.id=m.channel_id
  WHERE m.user_id=:'u2' AND c.visibility='private' \gset
 -- A status write that leaves the seat active, and a write to another column, change nothing.
@@ -665,14 +669,15 @@ SELECT pg_temp.check((SELECT count(*) FROM public.team_hub_channel_members m JOI
   WHERE m.user_id=:'u2' AND c.visibility='private')=:u2_private_before, 'seat ended: an active seat that stays active keeps everything');
 DELETE FROM public.tenant_members WHERE user_id=:'u4' AND tenant_id=:'ta';
 DELETE FROM public.tenant_members WHERE user_id=:'u8' AND tenant_id=:'ta';
+SELECT pg_temp.check((SELECT string_agg(id::text||'@'||ctid::text||'@'||coalesce(archived_at::text,''),',' ORDER BY id)
+  FROM public.team_hub_channels WHERE tenant_id=:'ta')=:'channel_rows_before',
+ 'seat ended: no channel row is rewritten, so a ctid-planned retirement still finds every row');
 SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM public.team_hub_channel_members WHERE user_id=:'u4' AND channel_id=:'dm24'),
   'seat ended (delete): the DM membership goes with the seat'),
  pg_temp.check(EXISTS(SELECT 1 FROM public.team_hub_channel_members WHERE user_id=:'u8' AND channel_id=:'bprivate'),
   'seat ended: a private channel in another workspace is untouched'),
- pg_temp.check((SELECT archived_at IS NOT NULL FROM public.team_hub_channels WHERE id=:'u4only'),
-  'seat ended (A5): a private channel left with no members is archived'),
- pg_temp.check((SELECT archived_at IS NULL FROM public.team_hub_channels WHERE id=:'dm24'),
-  'seat ended: the DM is not archived, so the other person can still reopen it');
+ pg_temp.check(NOT EXISTS(SELECT 1 FROM public.team_hub_channel_members WHERE channel_id=:'u4only'),
+  'seat ended: a private channel left with no members has no one who can reach it');
 SELECT pg_temp.check((SELECT count(*) FROM public.tenant_members WHERE user_id IN (:'u4',:'u8') AND tenant_id=:'ta')=0
   AND (SELECT status FROM public.tenant_members WHERE user_id=:'u2' AND tenant_id=:'ta')='active'
   AND (SELECT job_title FROM public.tenant_members WHERE user_id=:'u2' AND tenant_id=:'ta')='Lead Designer',

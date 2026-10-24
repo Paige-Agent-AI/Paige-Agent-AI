@@ -137,12 +137,11 @@ BEGIN
    AND (TG_OP='DELETE' OR coalesce(NEW.status,'') NOT IN ('active','archived')) THEN
   DELETE FROM public.team_hub_channel_members m USING public.team_hub_channels c
    WHERE m.channel_id=c.id AND m.tenant_id=OLD.tenant_id AND m.user_id=OLD.user_id AND c.visibility='private';
-  -- A5 holds here too: a private channel this emptied is archived, as if its last member left.
-  -- DMs are not archived: the other person can still reopen one.
-  UPDATE public.team_hub_channels c SET archived_at=now()
-   WHERE c.tenant_id=OLD.tenant_id AND c.kind='channel' AND c.visibility='private' AND c.archived_at IS NULL
-    AND NOT EXISTS(SELECT 1 FROM public.team_hub_channel_members m WHERE m.channel_id=c.id);
  END IF;
+ -- This trigger never writes team_hub_channels. Account retirement deletes rows by the ctids it
+ -- planned, and fires this trigger mid-way; an UPDATE here would move a channel's ctid and make
+ -- retirement roll back. A private channel left with no members is unreachable by every door,
+ -- so it is left as it is rather than archived.
  RETURN NULL;
 END $$;
 REVOKE ALL ON FUNCTION public._team_hub_seat_ended() FROM PUBLIC, anon, authenticated, service_role;

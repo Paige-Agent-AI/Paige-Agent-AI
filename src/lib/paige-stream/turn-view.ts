@@ -18,6 +18,7 @@
 // progress the record cannot drive.
 import type { TurnFrame, TurnMode, TurnRecord, TurnState } from "../../../supabase/functions/_shared/paige-turn/contract";
 import { STEP_START_LABELS } from "../../../supabase/functions/_shared/paige-turn/step-start";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 import { normalizeStepStatus } from "./step-status";
 
 export type TurnRowStatus = "running" | "done" | "error" | "stopped";
@@ -90,6 +91,8 @@ export interface TurnSnapshot {
    *  record has `turn_state.resumed`): today, an approved act the server ran from its stored
    *  proposal. Presentation reads it to draw the two answers as one; it never decides a state. */
   resumed?: boolean;
+  /** Exact saved zero-work refusal, validated against this original TurnRecord on hydration. */
+  recoveryReadOnlyRefusal?: true;
 }
 
 export interface LiveTurnInput {
@@ -197,6 +200,15 @@ export function outcomeFromRecord(record: TurnRecord | null): TurnOutcome | null
   return record ? { state: record.state, mode: record.mode } : null;
 }
 
+/** Read original server metadata only; answer prose and unknown/worked turns are never evidence. */
+export function readRecoveryReadOnlyRefusal(marker: unknown, record: TurnRecord | null): boolean {
+  if (!record || record.state !== "INTERRUPTED" || record.mode !== "pending" || record.rounds !== 0
+    || record.tools !== 0 || record.waiting_on !== undefined || record.resumed !== undefined
+    || !marker || typeof marker !== "object" || Array.isArray(marker)) return false;
+  const m = marker as Record<string, unknown>;
+  return Object.keys(m).length === 2 && m.v === 1 && m.code === RECOVERY_READ_ONLY_REFUSAL.code;
+}
+
 /**
  * Is this user turn one of the card's own decision sentences? Presentation only: the bubble is
  * hidden, the turn itself stays in the transcript and in what is sent. Exact match, plus the
@@ -297,6 +309,10 @@ export function deriveSnapshotView(
     case "LIMIT_REACHED":
       return { kind: "warn", glyph: "triangle", text: "Reached the limit for one answer", elapsed: null, steps: rows.length || null, rows, footer: null, announce: `${name} reached a limit` };
     case "INTERRUPTED":
+      if (snap.source === "reload" && snap.recoveryReadOnlyRefusal === true && o.mode === "pending" && !rows.length) {
+        return { kind: "held", glyph: "lock", text: "New actions and attachments on hold", elapsed: null,
+          steps: null, rows, footer: null, announce: "New actions and attachments on hold" };
+      }
       return {
         kind: "warn", glyph: "triangle", text: "Stopped before finishing", elapsed, steps: null, rows,
         footer: { text: snap.hasContent ? "What arrived is above." : "", actions: ["askAgain"] },

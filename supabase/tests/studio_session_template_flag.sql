@@ -248,7 +248,7 @@ BEGIN
     $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
   PERFORM pg_temp.chk(v LIKE 'err:22023:%STUDIO_NO_TENANT%', 'service path without a tenant: refused: ' || v);
   v := pg_temp.run('', 'service_role', 'service_role',
-    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, '00000000-0000-4000-8000-00000000d0a1'::uuid) $$);
+    $sql$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, '00000000-0000-4000-8000-00000000d0a1'::uuid) $sql$);
   PERFORM pg_temp.chk(v LIKE 'ok:true%', 'service path naming the tenant: works: ' || v);
   PERFORM pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', '',
     $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, false, NULL) $sql$);

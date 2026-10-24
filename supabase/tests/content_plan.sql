@@ -250,7 +250,7 @@ BEGIN
 
   -- 9. Mutation proofs (each broken inside a rolled-back subtransaction, migration_g's pattern).
   BEGIN
-    CREATE OR REPLACE FUNCTION public.content_plan_upsert(p_id uuid DEFAULT NULL, p_content_id uuid DEFAULT NULL, p_channel text, p_planned_for timestamptz,
+    CREATE OR REPLACE FUNCTION public.content_plan_upsert(p_id uuid DEFAULT NULL, p_content_id uuid DEFAULT NULL, p_channel text DEFAULT NULL, p_planned_for timestamptz DEFAULT NULL,
       p_note text DEFAULT NULL, p_status text DEFAULT 'planned', p_tenant_id uuid DEFAULT NULL)
     RETURNS public.content_plan_entries LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
     DECLARE _caller uuid := auth.uid(); _tenant uuid; _row public.content_plan_entries;
@@ -267,7 +267,7 @@ BEGIN
   EXCEPTION WHEN SQLSTATE 'ZZ998' THEN NULL;
   END;
   BEGIN
-    CREATE OR REPLACE FUNCTION public.content_plan_upsert(p_id uuid DEFAULT NULL, p_content_id uuid DEFAULT NULL, p_channel text, p_planned_for timestamptz,
+    CREATE OR REPLACE FUNCTION public.content_plan_upsert(p_id uuid DEFAULT NULL, p_content_id uuid DEFAULT NULL, p_channel text DEFAULT NULL, p_planned_for timestamptz DEFAULT NULL,
       p_note text DEFAULT NULL, p_status text DEFAULT 'planned', p_tenant_id uuid DEFAULT NULL)
     RETURNS public.content_plan_entries LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
     DECLARE _caller uuid := auth.uid(); _tenant uuid; _row public.content_plan_entries;
@@ -288,7 +288,7 @@ BEGIN
   EXCEPTION WHEN SQLSTATE 'ZZ998' THEN NULL;
   END;
   BEGIN
-    CREATE OR REPLACE FUNCTION public.content_plan_upsert(p_id uuid DEFAULT NULL, p_content_id uuid DEFAULT NULL, p_channel text, p_planned_for timestamptz,
+    CREATE OR REPLACE FUNCTION public.content_plan_upsert(p_id uuid DEFAULT NULL, p_content_id uuid DEFAULT NULL, p_channel text DEFAULT NULL, p_planned_for timestamptz DEFAULT NULL,
       p_note text DEFAULT NULL, p_status text DEFAULT 'planned', p_tenant_id uuid DEFAULT NULL)
     RETURNS public.content_plan_entries LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
     DECLARE _caller uuid := auth.uid(); _tenant uuid; _row public.content_plan_entries;

@@ -1,0 +1,61 @@
+{
+  "result": "PASS_ACTUAL_STAFF_WORK_SOURCE_STYLE_RELEASE_READBACK",
+  "at": "2026-10-24T12:50:48.942Z",
+  "pr": 2161,
+  "reviewedHead": "8daf227617fe627310210bf3fe3cb6423b413419",
+  "merge": "6c0cc01e4c8ea6e55e2a161e302462f320cd53d7",
+  "tree": "ad2b6c82b6834abc4eda3ed716483bc7b76cd0b4",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE5638174767",
+  "preMergeReceipt": 6384382736,
+  "deployment": "dpl_GQ3Tf8YqB5wBGGVhR86bvzpwMqw1 READY",
+  "requiredCI": "All10 applicable named checks/two webSUCCESS/designed schema-free PreviewSKIPPED",
+  "versions": [
+    {
+      "url": "https://paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "6c0cc01e4c8ea6e55e2a161e302462f320cd53d7-mvme81ga",
+        "customerUpdate": null
+      }
+    },
+    {
+      "url": "https://app.paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "6c0cc01e4c8ea6e55e2a161e302462f320cd53d7-mvme81ga",
+        "customerUpdate": null
+      }
+    }
+  ],
+  "sourceInputs": 146,
+  "allActualMergeInputsExact": true,
+  "actualServedModules": [
+    {
+      "url": "https://app.paigeagent.ai/assets/SoloEntry-DaWJZTTi.js",
+      "SHA256": "944dc0e1c32cf748845e9034e8bf640deeea7220f5e42b55a3cd364fd51f69cd",
+      "markers": [
+        "Ready for your review",
+        "Continue an unfinished decision",
+        "Finish or inspect the current delivery decision before leaving.",
+        "Review deliverable",
+        "Review delivery",
+        "Releasing work needs a second person on your team to review it."
+      ]
+    }
+  ],
+  "actualStylesheet": {
+    "url": "https://app.paigeagent.ai/assets/SoloEntry-BhDqTx5H.css",
+    "SHA256": "09058aee998ebe4adab10a03b4a85d0554f6f59623b42dc420ebfecb1446f46f",
+    "mode": "min-height:44px;flex:1 1 140px",
+    "recovery": "min-height:44px"
+  },
+  "discovery": {
+    "modules": 27,
+    "bytes": 5559009,
+    "onlyObservedImports": true
+  },
+  "ownNativeEdge": "NOT_APPLICABLE; incoming native/CI/Route/WorkEditor/weekly unchanged",
+  "policy": "Original second-reviewer/D2/recordedOnly retained; sole-consultant product question unanswered",
+  "activation": "No provider/business/signature/payment/send/Chat/Live or capabilities promotion",
+  "boundary": "Actual production public static source/style/version readback only. Prior native source-component frames are synthetic ports, no ordinary owner/staff/linked-client permissions/submit-review-release/client decision/private files/reload/full-shell/device/AT/zoom/CentralQA/all12/founder acceptance."
+}

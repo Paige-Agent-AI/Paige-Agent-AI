@@ -1,3 +1,7 @@
+# Actual native source release — 2026-10-24 UTC
+
+Original2755 exact1919/lower5637979787 passed all13 required checks/two statuses and actual native247/allseven, then merged65699/tree351627 preserving8d867d8+1919. Normal40089541033 lint120859223369/deploy120859317009SUCCESS; actual810109 persisted. Production11 native bodies/API/default/access fields match tested source; full arguments/default expressions/results/names/modes/language/volatility/parallel match exact SQL/captured originals, four original dependencies unchanged and file terminal trigger enabled. Exact9fgi productionREADY/public65699-mvmb61so/customerUpdate:null. [Actual source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2755#issuecomment-6383622816), [sanitized full readback](assets/e09-private-cura-file-intents/production-readback.json). After merge, branch inventory confirms the owned nonpersistent Preview absent; no later full-header Preview comparison is claimed. No own runtime endpoint/provider/activation or data/history workaround. This source-identity closeout records no new feature or capability state. Actual mounted composer/byte-model/private references/customer return/phone/all42/seven/Teach/founder acceptance remain unfinished. Earlier exact candidate fields and failures below remain supporting development history.
+
 # Private CURA files bound to original messages
 
 UI_CHANGE: NO

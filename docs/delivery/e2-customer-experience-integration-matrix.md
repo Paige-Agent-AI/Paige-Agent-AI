@@ -32,6 +32,24 @@ acceptance are unchanged.
 
 
 
+## October24 — source-request report foundation, not customer settlement
+
+All original19 outcome rows and CAP009–017 remain required. O01/O18/CAP014/015
+source progress extends the same native document_generate admission with closed
+metric selectors and explicit month/quarter period. Original issuer/resolver,
+immutable capture, worker, private artifact/turn/Rail and current role/tenant gates
+are reused. References and nine legacy document types remain compatible; no
+foreground Chat advertisement or separate runtime/store/queue is added.
+[Evidence](../evidence/ui-delivery/e2-report-source-requests.md):116 owning local
+tests/scoped lint and isolated native controls; real-issuer full-schema CI and
+normal source release/readback remain owed. Original collision2732 is resolved; current main6667393a/native820004 verified.
+Never-applied840002 follows pending E04catalogue830004. Current composed gates
+and normal release remain owed. CAP014/015 remain
+Unverified; no source test proves CPU recovery, actual customer settlement or Live.
+Original uncertain monthly request stays unretried with EXP05. Full source-backed
+artifact/retrieval/reload/recovery/permission/cohort/customer and single integrated
+founder acceptance remain outstanding. ALG03/06/11/12 Partial;13 impact Unverified.
+
 ## EXP02 original Finance Metric context repair — October23 local
 
 Original Finance→VERA exact-reference handoff REPAIR is local: copy original
@@ -1457,7 +1475,69 @@ readback → narrow original Chat consumer, coordinated through ANT161 → actua
 SOLO report/receipt/read/reload/permission and recovery proof. All19/nine remain owed.
 
 
-## October23 — original source-backed review Chat consumer candidate
+## October23 — original source-backed review Chat consumer source released
+
+### Consultant launch acceptance alignment — October23/24
+
+Consultants, coaches and fractional professionals are the first market; small
+creative/marketing firms running their own SOLO business are second. Agency and
+Subaccounts remain held. Enrollment → confirmed Setup → consented lead →
+qualification/booking → approved agreement/payment → onboarding → delivery →
+support → review actual results → repeat connects all19 outcomes and CAP009–017;
+it does not replace their definitions or authorize providers or business actions.
+Reuse the existing Capability Outcome Map rows122–144, including FLOW:REVIEW126,
+FLOW:REPORT127 and FLOW:RESEARCH128. Preserve IDs, aliases and per-item closure;
+this section is an acceptance crosswalk, not another inventory.
+
+| Original producer | EXP02 review handoff and remaining proof |
+| --- | --- |
+| EXP00/EXP01 | Provisioned SOLO identity and confirmed Setup/offer/goals/conversation; legitimate actor/context and later-return proof. No reprovisioning or Setup writer. |
+| EXP03 | Consented lead, source/campaign and qualification facts; attributable funnel/period evidence, never invented conversion or ROI. |
+| EXP04 | Original opportunity/agreement/invoice/payment/collection and Metric evidence; exact currency/source/period, genuine payment truth and reference continuity. Prior QA observed issuer revocation; original EXP04 continuity repair2728 is now merged. Positive same-reference customer review/reload after the repair remains owed. |
+| EXP05 | Original Work, commitments, approval, attempt/result/Rail and recovery; reconcile the original monthly CPU-failed operation without replay/reset, then verify actual result and reload. |
+| EXP09 | Authorized client relationship/onboarding/service/delivery evidence; permission-filtered populated read, retention limitations and reload. |
+| EXP10 | Actual connection health/readiness and revocation; preserve unavailable states and held future full-Finance/provider authority. |
+| EXP06/EXP07/EXP08 | Original permitted published website/media and Work-linked collaboration evidence when produced; no takeover of publishing, collaboration or Work writers. |
+
+Next proof is a useful source-backed review/report, original authorized action,
+verified domain result/Rail, and reload/recovery. Recommendation, preparation,
+approval, execution and subsequent measurement remain separate. ALG03/06/11/12
+stay Partial; ALG13 usefulness/impact remains Unverified. No predictive or causal
+claim follows from this scenario. Functional, Visual, Experiential, Founder
+Acceptance, source review/CI, merge/deployment, activation and authenticated proof
+remain distinct. One integrated founder evaluation is still owed.
+[Receiving checkpoint](https://linear.app/paige-agent-ai/issue/ANT-138#comment-f6905278-a7a2-44bc-954c-8ff9bee69ac0).
+
+### Verified source release and actual report QA
+
+Source2675 reviewed1f893139364fbdcb0607ddac6798952d5fd6c3dd/tree0187aa25,
+LOWER5633346286; all11 exact-head applicable checks/genuine Preview/full native/
+Edge ratchet and both statuses SUCCESS. Actual main10eb1647fdd0b527c2dd2cc919c7a169cdac11bc
+exactly matches inspected64347+1f/tree0187aa25. Normal Edge40015241840/120625516345
+SUCCESS, source artifact12528421385. Independent actual Chat518/all267 files/
+verify_jwt:true and original worker56/all36 files/verify_jwt:false match the reviewed
+tree; original internal-caller safeguards retained. Own SQL N/A. Web9GL READY/exact
+10eb metadata; actual public HTTP200 containing56219-mvle4w9k/null, ancestry and
+unchanged original sources verified. Exact10eb public version not sampled.
+[Production source6373627396](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2675#issuecomment-6373627396).
+
+Actual ordinary monthly report QA did not settle successfully: matching Chat518
+CPU exhaustion2026-10-23T20:17:31Z before confirmed work. Original saved user turn,
+no assistant terminal, zero original document work/completion at readback; existing
+executor claim retained. No retry, claim/drain/recovery reset or safe-cessation
+inference. Existing protected recovery owner coordinated through ANT11de6fb038.
+[Actual QA6373990753](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2675#issuecomment-6373990753).
+This is a real remaining reliability finding, not a source/CI/deployment failure.
+
+Actual released nine-entry catalogue read6374099460 retains Coming Soon for
+CAP009/010/011/013, Limited012/016/017 and Unverified014/015; actor access Unverified.
+Functional source deployed / Visual unchanged supporting renderer / Experiential
+report interrupted, ordinary artifact/Rail/read/reload/refusal/recovery/roles/cohorts/
+Live/full19 proof owed / Founder NOT_ACCEPTED. Algorithms and original9PASS/0FAIL
+plus12PASS/0FAIL/4BLOCKED unchanged. No new provider/model/permission/INT346 or
+consequential activation, runtime, registry or customer release identity.
+
+### Historical candidate preparation — superseded by the source release above
 
 Reuse released native520002/original worker51/reader2661 through the original
 document_generate tool. Closed monthly/quarterly period plus original issued

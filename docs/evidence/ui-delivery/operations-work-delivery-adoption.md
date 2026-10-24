@@ -36,12 +36,12 @@ ACCEPTANCE_CRITERIA: Eligible client-linked Planning details offer source-backed
 MOTION_PURPOSE: NONE: No new motion; inherited drawer/confirmation transitions and reduced-motion support retained.
 PROTECTED_SEAMS: Current E05 pure reason-bearing shell/navigation/CRM/task focus/weekly and E09 original ItemRelease availability/client/project/version/second-reviewer/recorded-only controls retained. Child close guards accept optional showNotice=false for a pure query; default explicit feedback is unchanged. Native writers/Auth/permissions/CAS, original single recovery identity and uncertain intent remain canonical.
 
-INTERNAL_BUILD_IDENTITY: source=7a074c99feb5aed2f7485dc92761a5526d9f6a4e; incoming=65699d36369c88412e3e7e370b7c14e893272773; original=1a3f6a2c2d4f3745ecc0b53c7fe41ef40680bdc6; final reviewed metadata head recorded in PR2161; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/operations-v3/work-delivery-adoption/current-parent-continuity.json.
-RELEASE_CHANNEL: development: original-source composition/current native browser inspection only; normal review/exact-head checks/production readback required.
+INTERNAL_BUILD_IDENTITY: source=6c0cc01e4c8ea6e55e2a161e302462f320cd53d7; reviewed=8daf227617fe627310210bf3fe3cb6423b413419; deployment=dpl_GQ3Tf8YqB5wBGGVhR86bvzpwMqw1 READY; environment=production; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/e04-staff-work-production-readback.json; original parent native and Edge release recorded separately6384790221.
+RELEASE_CHANNEL: production: actual public source/style/build readback verified; authenticated customer outcome remains PROOF OWED.
 RELEASE_CLASSIFICATION: internal-only: Bounded owner-approved source/UI integration, not full Operations completion.
 CUSTOMER_RELEASE_IDENTITY: none: No complete authenticated department outcome or publication authority claimed.
 RELEASE_NOTE_REQUIRED: no: Internal bounded source adoption; a customer announcement remains separate.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: bounded original staff Work integration/current source-component behavior; PROOF OWED: actual ordinary roles/server persistence/full12/CentralQA/founder acceptance. No provider, business, signing, payment or Chat/Live activation.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: SOURCE/WEB VERIFIED only. Original E05 scoped Work/Planning and E09 release composed; second-person/recordedOnly/dirty-unknown recovery retained. Sole-consultant D2 question unanswered. Synthetic native frames are not ordinary owner/staff/client approval/reload. Raw TypeScript six existing signatures/baseline10/zeroNEW, not compiler-green. No own native/Edge or restricted activation.
 RELEASE_RECOVERY: position=reviewed source revert or forward correction, preserve canonical Delivery/Planning records and original uncertain intent; reference=docs/delivery/operations-client-review-packet.md
 
 ## Earlier dated original2161 scope, review and verification history
@@ -100,3 +100,14 @@ Current integration7a074c99f consumes actual released65699 E09 native source wit
 
 
 Final current-main composition 8532199f26e833df8e18e62063c6ecff8ab00b0b preserves actual released dea2db4a7865ccf379815e5b10b2e54103337879 including original E09 private-file consumer and every original owning146 LF input. The metadata-only follow-up binds these source and type observations; current final-head review and hosted checks remain pending.
+
+
+## Actual production source release, October24
+
+Exact8daf/LOWER5638174767; all10 applicable checks/two webSUCCESS/designed schema-freePreviewSKIP. Actual6c0cc01e/treead2b6c82,139cases/eight suites and146 captured inputs. ProductionGQ3READY/bothpublic6c-mvme81ga/null; actual JS944dc0e1/CSS09058aee/sixmarkers44px controls verified12:50:48UTC. SOURCE/WEB VERIFIED only. Original E05 scoped Work/Planning and E09 release composed; second-person/recordedOnly/dirty-unknown recovery retained. Sole-consultant D2 question unanswered. Synthetic native frames are not ordinary owner/staff/client approval/reload. Raw TypeScript six existing signatures/baseline10/zeroNEW, not compiler-green. No own native/Edge or restricted activation. [Original release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2161#issuecomment-6384446832). Full source/readback: `docs/evidence/e04-staff-work-production-readback.json`. This metadata does not create new screenshots or authenticated behavior. All previous failures, source pins, native synthetic frames and explicitly unverified boundaries remain dated history.
+
+Dated pre-release header values retained for audit:
+
+- Historical INTERNAL_BUILD_IDENTITY: source=7a074c99feb5aed2f7485dc92761a5526d9f6a4e; incoming=65699d36369c88412e3e7e370b7c14e893272773; original=1a3f6a2c2d4f3745ecc0b53c7fe41ef40680bdc6; final reviewed metadata head recorded in PR2161; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/operations-v3/work-delivery-adoption/current-parent-continuity.json.
+- Historical RELEASE_CHANNEL: development: original-source composition/current native browser inspection only; normal review/exact-head checks/production readback required.
+- Historical RELEASE_TRUTH_BOUNDARY: PARTIAL: bounded original staff Work integration/current source-component behavior; PROOF OWED: actual ordinary roles/server persistence/full12/CentralQA/founder acceptance. No provider, business, signing, payment or Chat/Live activation.

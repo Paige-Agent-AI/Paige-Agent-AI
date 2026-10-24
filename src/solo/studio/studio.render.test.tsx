@@ -40,6 +40,8 @@ const h = vi.hoisted(() => ({
   renamed: [] as Array<[string, string]>,
   held: [] as Array<{ tool: string; summary: string; fingerprint: string }>,
   openBrief: "An intake form for new clients",
+  templates: [] as Rec[],
+  templateCalls: [] as Array<[string, boolean]>,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -66,7 +68,7 @@ vi.mock("../useMediaJobs", () => ({
 vi.mock("@/components/admin/studio/LivePreview", () => ({ LivePreview: () => <div data-testid="live-preview" /> }));
 vi.mock("./studio-data", async (orig) => {
   const real = await orig<typeof import("./studio-data")>();
-  const session = (id: string, title: string, brief: string) => ({ id, title, seedBrief: brief, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z" });
+  const session = (id: string, title: string, brief: string, extra: Rec = {}) => ({ id, title, seedBrief: brief, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z", isTemplate: false, ...extra });
   return {
     ...real,
     listSessions: async () => h.sessions,
@@ -82,6 +84,8 @@ vi.mock("./studio-data", async (orig) => {
     loadImage: async () => { if (!h.content) throw new Error("missing"); return h.content; },
     loadFunnel: async () => { if (!h.funnel) throw new Error("missing"); return h.funnel; },
     restoreVersion: async (id: string) => { h.restored.push(id); },
+    listTemplates: async () => h.templates.map((t) => ({ ...t, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z", isTemplate: true })),
+    setSessionTemplate: async (id: string, isTemplate: boolean) => { h.templateCalls.push([id, isTemplate]); return session(id, h.openTitle, h.openBrief, { isTemplate }); },
   };
 });
 
@@ -138,7 +142,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
-  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients" });
+  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [] });
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -236,6 +240,41 @@ describe("Vibe Studio project workspace", () => {
     h.openBrief = "";
     await openPiece();
     expect(host.querySelector("details.vs-brief-card")).toBeNull();
+  });
+
+  it("Save as template runs the governed setter, says what moved, and can bring it back (EXP07 row 6)", async () => {
+    await openPiece();
+    const save = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Save as template") as HTMLButtonElement;
+    expect(save).toBeDefined();
+    await act(async () => { save.click(); });
+    await flush();
+    expect(h.templateCalls).toEqual([["s-1", true]]);
+    expect(text()).toContain("Saved as a workspace template");
+    expect(text()).toContain("Saved as template");
+    const back = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Saved as template") as HTMLButtonElement;
+    await act(async () => { back.click(); });
+    await flush();
+    expect(h.templateCalls).toEqual([["s-1", true], ["s-1", false]]);
+    expect(text()).toContain("Back in your drafts");
+  });
+
+  it("a template on Studio home starts a new project seeded from its brief, and the template is untouched (EXP07 row 6)", async () => {
+    h.templates = [{ id: "s-t", title: "Workshop page template", seedBrief: "A landing page for my referral workshop", isTemplate: true, artifacts: [], updatedAt: "2026-10-03T12:00:00Z" }];
+    h.sse = [JSON.stringify({ choices: [{ delta: { content: "Starting from your template." } }] }), "[DONE]"];
+    await mount();
+    const card = [...host.querySelectorAll(".vs-card")].find((c) => c.textContent?.includes("Starts a new project from this brief")) as HTMLButtonElement;
+    expect(card).toBeDefined();
+    await act(async () => { card.click(); });
+    await flush();
+    // The new project's brief is the TEMPLATE's brief — createSession received it verbatim.
+    expect(h.created).toEqual(["A landing page for my referral workshop"]);
+    expect(h.fetchBodies[0]).toMatchObject({ messages: [{ role: "user", content: "A landing page for my referral workshop" }] });
+  });
+
+  it("no templates saved: the Start-from-a-template section stays hidden (EXP07 row 6)", async () => {
+    h.templates = [];
+    await mount();
+    expect([...host.querySelectorAll("section")].some((sec) => sec.getAttribute("aria-label") === "Start from a template")).toBe(false);
   });
 
   async function openPiece(piece: Rec = FORM) {

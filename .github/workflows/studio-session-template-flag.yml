@@ -1,0 +1,35 @@
+name: Studio session template flag proof
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20271113800010_studio_session_template_flag.sql'
+      - 'supabase/tests/studio_session_template_flag.sql'
+      - '.github/workflows/studio-session-template-flag.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-template-flag-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Synthetic fixtures only; the suite's isolated-DB guard refuses any other database.
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: studio_session_template_flag_contract
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: studio_session_template_flag_contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: EXP07 row 6 — set_studio_session_template flips the flag through the role gate, owner-or-admin predicate and tenant wall; every protection proven breakable (isolated DB, never production)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/studio_session_template_flag.sql

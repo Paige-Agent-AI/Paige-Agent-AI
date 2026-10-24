@@ -1,0 +1,22 @@
+{
+  "file": "900-light-layout.png",
+  "width": 900,
+  "height": 1000,
+  "scrollWidth": 900,
+  "theme": "light",
+  "phase": "ready",
+  "reference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001",
+  "port": "Read state: ready · Issued: 11 · Resolved: 22\nOriginal reference: aneb_v1_0000000000000000000000000000000000000000000000000000000000000001\nActual existing presenter and repaired hook; synthetic RPC/Auth ports. Full authenticated shell, Finance, Chat and customer acceptance are not established.",
+  "active": "!function(){var d=document.documentElement,c=d.classList;c.remove('light','dark');d.style.colorSchem",
+  "headings": [
+    "Open pipeline",
+    "Requires attention"
+  ],
+  "scripts": [
+    "./assets/index-q5Syh8Tx.js"
+  ],
+  "nativePngWidth": 900,
+  "nativePngHeight": 1000,
+  "capturedAt": "2026-10-24T02:56:29.781Z",
+  "boundary": "Synthetic ports; no actual account/provider/customer acceptance"
+}

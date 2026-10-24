@@ -32,6 +32,8 @@ vi.mock("@/hooks/useTenantContext", () => ({
 vi.mock("./studio/studio-data", async (orig) => ({
   ...(await orig<typeof import("./studio/studio-data")>()),
   listSessions: async () => [],
+  // EXP07 row 6: Studio home also lists workspace templates on mount — no templates here.
+  listTemplates: async () => [],
   // Studio home also reads the brand on mount. This render harness has no stored
   // brand; keep that seam explicit rather than catching a real backend failure.
   loadBrand: async () => ({

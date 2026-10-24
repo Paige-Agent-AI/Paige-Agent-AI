@@ -33,3 +33,23 @@ release gates. Parent restoration releases and customer acceptance stay separate
 Primary API reference: [pg_cron](https://github.com/citusdata/pg_cron).
 Pre-edit reservation: ANT161/cac773dc.
 
+## Observed source release — October24
+
+Reviewed3f716e0872191126c3912807daa18f2e579e4f0f / LOWER5636492569 passed
+ten exact checks and two statuses, schema-free Preview correctly skipped.
+Original native120759193629 and full verify120759193621 SUCCESS. Actual merge
+9d4a85179da7a186d840bc66ed24fc8828f7740e/treeb739f2bad9cb46e2d0cc305e112f7d27931c608b
+matches reviewed3f plus actual2bbe parent. Only the original CI proof and this
+packet changed; no product function, migration, production cron or action.
+
+Actual web metadata READY dpl_BTrMZWFkvAo9LKo8ZuJKKTxXwUs8 at9d4a. Strict
+public9d4a identity check refused because newer containinge35bb7f9 was served;
+the read-only public GET at04:02:52Z returned200/e35bb7f9-mvlvfvzj/null. No public
+9d4a asset PASS is invented. Main9d4a inherited an E03/E10 duplicate700000;
+main native/Preview failed and verify cancelled, so it was not globally green.
+Originating correction2732/e35 preserved E10 SQL bytes and genuinely records
+800000 in production, consumed with main79171c82; applied E03 remains intact.
+[Original release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2727#issuecomment-6379615240).
+Actual customer original-effect recovery, ZION/weekly/automation outcomes and
+full EXP05/founder acceptance remain unverified; this is test-source delivery.
+

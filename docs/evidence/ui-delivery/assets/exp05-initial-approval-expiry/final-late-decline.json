@@ -1,0 +1,7 @@
+{
+  "focused": "unavailable",
+  "notice": "This earlier proposal couldn't be verified for approval. Review the original record before asking again.",
+  "requests": "1",
+  "statusReads": "1",
+  "traffic": "[{\"url\":\"https://unit-test.invalid/functions/v1/paige-ai-chat\",\"method\":\"POST\",\"keys\":[\"messages\",\"threadId\",\"requestIntentId\",\"interactive\",\"userTimezone\",\"userTime\",\"userTimeFormatted\"],\"approved\":false,\"declined\":false}]"
+}

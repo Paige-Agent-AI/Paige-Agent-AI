@@ -2,7 +2,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const port = vi.hoisted(() => ({ tenant: '00000000-0000-4000-8000-000000000002' as string | null,
-  actor: 'test-owner-a', turns: [] as Array<Record<string, unknown>>, history: vi.fn(), pending: vi.fn(), load: vi.fn() }));
+  actor: 'test-owner-a', turns: [] as Array<Record<string, unknown>>, history: vi.fn(), specialist: vi.fn(), pending: vi.fn(), load: vi.fn() }));
 vi.mock('@tanstack/react-query', () => ({ useQuery: () => ({ data: null }) }));
 vi.mock('@/hooks/useTenantContext', () => ({ useTenantContext: () => ({ activeTenantId: port.tenant }) }));
 vi.mock('@/hooks/useScopedUserId', () => ({ useScopedUserId: () => port.actor }));
@@ -22,6 +22,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: {
 vi.mock('@/hooks/usePaigeThreads', () => ({ usePaigeThreads: () => ({
   threads: [], isLoading: false, isFetched: true, loadTurns: (...args: unknown[]) => port.load(...args),
   loadOriginalReminderHistory: (...args: unknown[]) => port.history(...args),
+  loadOriginalSpecialistHistory: (...args: unknown[]) => port.specialist(...args),
   loadApprovalRecovery: (...args: unknown[]) => port.pending(...args),
   ensureThread: vi.fn(), onTurnPersisted: vi.fn(), renameThread: vi.fn(), archiveThread: vi.fn(), deleteThread: vi.fn(),
 }) }));
@@ -51,6 +52,7 @@ describe('original reminder recovery on the actual saved Chat surface', () => {
     port.turns = [original(), { id: 'later-user', role: 'user', content: 'Thanks.' },
       { id: 'later-assistant', role: 'assistant', content: 'The later conversation remains here.' }];
     port.history.mockReset().mockResolvedValue(projection()); port.pending.mockReset().mockResolvedValue(null);
+    port.specialist.mockReset().mockResolvedValue(null);
     port.load.mockReset().mockImplementation(async () => port.turns);
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('Unexpected effect/model transport'); }));
     host = document.createElement('div'); document.body.append(host); root = createRoot(host);
@@ -133,5 +135,61 @@ describe('original reminder recovery on the actual saved Chat surface', () => {
   it('does not read non-reminder or unsealed card history', async () => {
     port.turns = [{ ...original(), interactive_terminal_state: 'FINAL' }]; await render();
     expect(port.history).not.toHaveBeenCalled(); inert();
+  });
+  const specialistTurn = () => ({ ...original(), content: 'The specialist assignment needs an original result check.',
+    interactive_terminal_state: 'INTERRUPTED', bundle_ref: {
+      turn_state: { v: 1, state: 'INTERRUPTED', blocks: [], actions: [] },
+      interactive: { request_intent_id: ids.intent, effects: [{ tool: 'delegate_to_subagent', outcome: 'outcome_unknown',
+        record_refs: [{ kind: 'subagent_invocation', id: ids.item }] }] },
+    } });
+  const specialistResult = () => ({ v: 1, status: 'recorded_assignment', thread_id: ids.thread, turn_id: ids.turn,
+    origin_intent_id: ids.intent, tenant_id: port.tenant, read_only: true, new_effect_possible: false, limited: false,
+    results: [{ id: ids.item, specialist: 'zion', recorded_status: 'succeeded', created_at: '2026-10-23T12:00:00Z',
+      observed_at: '2026-10-23T12:01:00Z', receipt_state: 'verified', receipt_id: ids.receipt, receipt_at: '2026-10-23T12:00:01Z',
+      response_text: 'Original bounded planning response', response_truncated: false, completion_scope: 'specialist_response_only' }] });
+  const specialistButton = () => Array.from(host.querySelectorAll('button')).find(button => button.textContent === 'Check original result');
+  it('deliberately reads the original specialist assignment without model, approval or execution', async () => {
+    port.turns = [specialistTurn()]; port.specialist.mockResolvedValue(specialistResult()); await render();
+    expect(port.specialist).not.toHaveBeenCalled(); expect(specialistButton()).toBeTruthy();
+    await act(async () => { specialistButton()!.click(); await flush(); });
+    expect(port.specialist).toHaveBeenCalledTimes(1);
+    expect(port.specialist.mock.calls[0].slice(0, 3)).toEqual([ids.thread, ids.turn, ids.intent]);
+    expect(host.textContent).toContain('ZION · Response recorded'); expect(host.textContent).toContain('Original receipt verified');
+    expect(host.querySelector('details')?.textContent).toContain('Original bounded planning response');
+    expect(port.history).not.toHaveBeenCalled(); expect(port.pending).not.toHaveBeenCalled(); inert();
+  });
+  it('cancels a specialist read on account change and cannot publish its late result', async () => {
+    const read = deferred<ReturnType<typeof specialistResult>>();
+    port.turns = [specialistTurn()]; port.specialist.mockReturnValue(read.promise); await render();
+    expect(specialistButton()).toBeTruthy();
+    await act(async () => { specialistButton()!.click(); await flush(); });
+    const signal = port.specialist.mock.calls[0][3] as AbortSignal;
+    expect(Array.from(host.querySelectorAll('button')).find(button => button.textContent === 'Checking original result…')?.disabled).toBe(true);
+    port.tenant = '00000000-0000-4000-8000-000000000099'; await render();
+    await act(async () => { read.resolve(specialistResult()); await flush(); });
+    expect(signal.aborted).toBe(true); expect(host.textContent).not.toContain('Original bounded planning response'); inert();
+  });
+  it.each(['legacy', 'wrong tool'])('does not offer an original specialist read from %s history', async kind => {
+    const turn = specialistTurn();
+    if (kind === 'legacy') turn.interactive_intent_id = '';
+    else turn.bundle_ref.interactive.effects[0].tool = 'list_subagents';
+    port.turns = [turn]; await render(); expect(specialistButton()).toBeUndefined();
+    expect(port.specialist).not.toHaveBeenCalled(); inert();
+  });
+  it('reports an unavailable original specialist result truthfully without repeating work', async () => {
+    port.turns = [specialistTurn()]; await render();
+    await act(async () => { specialistButton()!.click(); await flush(); });
+    expect(host.textContent).toContain('The original result could not be verified. Nothing was retried.');
+    expect(port.specialist).toHaveBeenCalledTimes(1); expect(port.history).not.toHaveBeenCalled(); inert();
+  });
+  it('bounds the specialist read and ignores a lost acknowledgement without automatic repeat', async () => {
+    vi.useFakeTimers(); const read = deferred<ReturnType<typeof specialistResult>>();
+    port.turns = [specialistTurn()]; port.specialist.mockReturnValue(read.promise); await render();
+    await act(async () => { specialistButton()!.click(); await flush(); });
+    const signal = port.specialist.mock.calls[0][3] as AbortSignal;
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_001); await flush(); });
+    expect(signal.aborted).toBe(true); expect(host.textContent).toContain('Nothing was retried.');
+    await act(async () => { read.resolve(specialistResult()); await flush(); });
+    expect(host.textContent).not.toContain('Original bounded planning response'); expect(port.specialist).toHaveBeenCalledTimes(1); inert();
   });
 });

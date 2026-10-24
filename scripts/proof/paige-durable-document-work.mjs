@@ -27,7 +27,7 @@ const reportPrivacy = readFileSync(join(root, "supabase/migrations/2027111343000
 const reportArtifact = readFileSync(join(root, "supabase/migrations/20271113450002_exp02_native_report_artifact.sql"), "utf8");
 const reportCaptureMigration = readFileSync(join(root, "supabase/migrations/20271113330002_exp02_document_metric_capture.sql"), "utf8");
 const reportAdmission = readFileSync(join(root, "supabase/migrations/20271113520002_exp02_report_capture_admission.sql"), "utf8");
-const reportSourceRequests = readFileSync(join(root, "supabase/migrations/20271113740002_exp02_report_source_requests.sql"), "utf8");
+const reportSourceRequests = readFileSync(join(root, "supabase/migrations/20271113840002_exp02_report_source_requests.sql"), "utf8");
 
 let port;
 let started = false;

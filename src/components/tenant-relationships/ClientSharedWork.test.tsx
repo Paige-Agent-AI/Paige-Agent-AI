@@ -15,7 +15,7 @@ const V1 = "2026-10-14T12:00:00.123456+00:00", V2 = "2026-10-14T12:05:00.654321+
 
 const mock = vi.hoisted(() => ({ rpc: vi.fn(), session: vi.fn(), creator: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...a: unknown[]) => mock.rpc(...a), auth: { getSession: () => mock.session() } } }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: TENANT, activeUserId: ACTOR, accountContextLoading: false }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: TENANT, activeUserId: ACTOR, accountContextStatus: "ready", accountContextLoading: false }) }));
 vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({ plans: [], forbidden: false, error: null, loading: false }) }));
 vi.mock("@/solo/operations/useOperationsPeople", () => ({ useOperationsPeople: () => ({ members: [], loading: false, error: null }) }));
 vi.mock("@/solo/operations/OperationsWorkCreator", () => ({

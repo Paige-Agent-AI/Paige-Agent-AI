@@ -10,8 +10,9 @@ are reused. References and nine legacy document types remain compatible; no
 foreground Chat advertisement or separate runtime/store/queue is added.
 [Evidence](../evidence/ui-delivery/e2-report-source-requests.md):116 owning local
 tests/scoped lint and isolated native controls; real-issuer full-schema CI and
-normal source release/readback remain owed. Migration740002 follows existing
-E04/E09 order after originating duplicate700000 disposition. CAP014/015 remain
+normal source release/readback remain owed. Original collision2732 is resolved; current main6667393a/native820004 verified.
+Never-applied840002 follows pending E04catalogue830004. Current composed gates
+and normal release remain owed. CAP014/015 remain
 Unverified; no source test proves CPU recovery, actual customer settlement or Live.
 Original uncertain monthly request stays unretried with EXP05. Full source-backed
 artifact/retrieval/reload/recovery/permission/cohort/customer and single integrated

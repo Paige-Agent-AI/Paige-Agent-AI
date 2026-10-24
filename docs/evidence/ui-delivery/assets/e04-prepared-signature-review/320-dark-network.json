@@ -1,0 +1,32 @@
+{
+  "buttons": [
+    {
+      "height": 44,
+      "text": "Back to document",
+      "width": 160.33750915527344
+    },
+    {
+      "height": 44,
+      "text": "Retry saved review",
+      "width": 163.16250610351562
+    }
+  ],
+  "documentWidth": 305,
+  "focus": "Review signing request",
+  "heading": "Review signing request",
+  "height": 800,
+  "ink": "#f6f2ea",
+  "pdfWells": [
+    {
+      "height": 325,
+      "scrollHeight": 325,
+      "scrollWidth": 251,
+      "width": 251
+    }
+  ],
+  "reviewText": "Review signing requestSaved preparation 2Back to documentReview unavailableThe saved signing review could not be confirmed. Retry the review or return to the document.Retry saved reviewThis review does not request signatures. Approval and sending are not connected to it yet.",
+  "scrollOwner": "HTML",
+  "scrollY": 0,
+  "theme": "dark",
+  "width": 320
+}

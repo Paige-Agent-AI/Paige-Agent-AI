@@ -1,0 +1,27 @@
+{
+  "buttons": [
+    {
+      "height": 44,
+      "text": "Back to document",
+      "width": 160.33750915527344
+    }
+  ],
+  "documentWidth": 1521,
+  "focus": "Local verification controls · synthetic records",
+  "heading": "Review signing request",
+  "height": 770,
+  "ink": "#f6f2ea",
+  "pdfWells": [
+    {
+      "height": 539,
+      "scrollHeight": 964,
+      "scrollWidth": 745,
+      "width": 745
+    }
+  ],
+  "reviewText": "Review signing requestSaved preparation 2 · Agreement version 1Back to documentSaved request checkedThe recipients and assigned fields match the selected saved preparation.Recipients and signing orderRecipients at the same step may sign in parallel.Step 1Controlled Clientclient@example.testClient1 assigned fieldStep 1Controlled Business Signerbusiness@example.testBusiness signer1 assigned fieldExact saved sourceDocument SHA-256d1d3dd5cb4d57ab39af79a4dc0e450b0df3137a54728c7557687024c522878f6Pages2Preparation referenceb1111111-0000-4000-8000-000000000001Review fingerprint0ab63714cfcf12929f7347917ad701c941269eba8812c76599a9c691b8d72860The fingerprint identifies this read. It is not an approval or execution receipt.This review does not request signatures. Approval and sending are not connected to it yet.",
+  "scrollOwner": "HTML",
+  "scrollY": 0,
+  "theme": "dark",
+  "width": 1536
+}

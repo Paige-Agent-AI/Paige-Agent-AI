@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: existing report flow and interface retained; this 
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner/admin explicitly requests a private draft report using original permitted sources, without authoring facts or keeping foreground Chat busy issuing each source.
 VISUAL_DIRECTION: PASS: preserve approved Executive design and original spacious report reader. No generic dashboard or fabricated chart.
 AUTOMATED_EVIDENCE: UNVERIFIED: real-issuer full-schema additions await required native CI. Original validator/worker RED3FAIL113PASS →116PASS; four owning/formatting/source-Chat-admission suites171PASS. Final existing isolated PostgreSQL proof first rejects planned sources, then passes same-intent concurrency, ordered issuance/capture, current authority, rollback, expired-reference replay, private ACL/metadata and source-drift refusal. Port fixtures are not real-issuer proof.
-STATIC_EVIDENCE: UNVERIFIED: required exact-head CI, deployed source/ACL parity and migration compatibility remain owed; scoped ESLint0 and diff-check pass locally. Current main's original E03/E10 duplicate700000 is a known originating-owner hold; no peer rename or guard waiver.
+STATIC_EVIDENCE: UNVERIFIED: required exact-head CI, deployed source/ACL parity and migration compatibility remain owed; scoped ESLint0 and diff-check pass locally. The original E03/E10 collision is resolved by2732; composed current-head source/CI and migration840002 remain unverified.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no visual source change; old screenshots do not prove this new backend path.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: released customer behavior remains owed; local original validator, worker and isolated native transaction controls only. No production customer request was submitted or retried.
 AUTHENTICATED_RUNTIME: UNVERIFIED: genuine new authorized report, actual artifact/turn/Rail, reload, permitted retrieval, role/tenant negatives and recovery remain owed after legitimate release/admission. Original CPU-failed uncertain request remains unretried with EXP05.
@@ -28,7 +28,7 @@ SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no visual source change.
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no visual source change.
 UNVERIFIED: exact-head review/CI, real-issuer native suite, ordered normal Preview/production migration and affected Edge source readback, later leased Chat consumer, actual report settlement/receipts/reload/permission/recovery/Live and full19/nine/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: base=9d4a85179da7a186d840bc66ed24fc8828f7740e; branch=codex/e2-report-source-plan; deployment=none; environment=development; migrations=PROOF_OWED(20271113740002 normal ordered release); edge=PROOF_OWED(paige-ai-chat and paige-document-worker source readback); evidence=ANT161/9b29a091. Exact committed identity in PR review.
+INTERNAL_BUILD_IDENTITY: base=6667393a6ddc5d227b8cb1906e967f28c1cdb644; branch=codex/e2-report-source-plan; deployment=none; environment=development; migrations=PROOF_OWED(20271113840002 normal ordered release); edge=PROOF_OWED(paige-ai-chat and paige-document-worker source readback); evidence=ANT161/9b29a091. Exact committed identity in PR review.
 RELEASE_CHANNEL: development: original private report foundation only; no activation or customer announcement.
 RELEASE_CLASSIFICATION: internal-only: one bounded existing report-admission outcome.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated founder evaluation remains pending.
@@ -62,8 +62,8 @@ marketing_content artifact, completion turn and attributable Rail. Read-only
 analysis does not become a consequential domain action. No Layer C rewrite,
 provider call, send, approval, money or original domain record mutation.
 
-Release order: originating E03/E10 collision correction and existing E04reader
-710004 → E09private710009 → E04exact720004 → E04catalogue730004 reservations
-precede this unapplied740002. Normal Preview/required checks cannot be skipped.
+Release order: collision correction2732 and original E04reader810004, E09
+private810009/810109 and E04exact820004 are released. Pending E04catalogue830004
+precedes this never-applied840002. Normal Preview/required checks cannot be skipped.
 Verify compatible affected worker and native source before advertising the new
 input in a separate leased consumer PR; no shared Chat index/C0b edit here.

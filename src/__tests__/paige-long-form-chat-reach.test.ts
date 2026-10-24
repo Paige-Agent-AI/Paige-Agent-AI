@@ -6,6 +6,8 @@ import { classifyAction } from '../../supabase/functions/_shared/action-risk.ts'
 import { LEGACY_CAPABILITIES } from '../../supabase/functions/_shared/paige-capability-status/legacy-capabilities.ts';
 import { projectCapabilities, type Lane } from '../../supabase/functions/_shared/paige-capability-status/projection.ts';
 import ts from 'typescript';
+import { BUSINESS_METRIC_KEYS, MARKETING_METRIC_KEYS } from '../../supabase/functions/_shared/analytics-metrics/keys.ts';
+import { currentMetricVersion } from '../../supabase/functions/_shared/analytics-metrics/metric-contract.ts';
 
 const chat = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 const dashboard = readFileSync("src/components/dashboard/PaigeAIChat.tsx", "utf8");
@@ -50,6 +52,23 @@ async function runOriginalDocumentBranch(args:Record<string,unknown>,overrides:R
 
 const reportRequest={version:1,doc_type:'business_review',title:'Monthly operating review',brief:'Review the original source-backed business evidence.',
  report_period:{key:'month',start:'2026-09-01T00:00:00Z',end:'2026-10-01T00:00:00Z'},evidence_refs:[`aneb_v1_${'b'.repeat(64)}`]};
+const {evidence_refs: _originalReferences, ...reportMetadata}=reportRequest;
+const plannedReport={...reportMetadata,metric_requests:[{
+  metric_key:'sales.invoices.issued_amount',metric_version:currentMetricVersion('sales.invoices.issued_amount'),
+}]};
+
+function originalDocumentTool() {
+  const source=ts.createSourceFile('chat.ts',chat,ts.ScriptTarget.Latest,true);
+  const tools=walk(source,n=>ts.isObjectLiteralExpression(n)&&n.properties.some(p=>
+    ts.isPropertyAssignment(p)&&p.name.getText(source)==='name'
+      &&ts.isStringLiteral(p.initializer)&&p.initializer.text==='document_generate'));
+  expect(tools).toHaveLength(1);
+  const code=ts.transpileModule(`const tool=${tools[0].getText(source)};`,{
+    compilerOptions:{target:ts.ScriptTarget.ES2022},
+  }).outputText;
+  return new Function('BUSINESS_METRIC_KEYS','MARKETING_METRIC_KEYS','currentMetricVersion',
+    `${code};return tool;`)(BUSINESS_METRIC_KEYS,MARKETING_METRIC_KEYS,currentMetricVersion);
+}
 
 describe("durable long-form Chat reach", () => {
   it('offers source-bound reviews through the original document tool',()=>{
@@ -57,6 +76,41 @@ describe("durable long-form Chat reach", () => {
     expect(tool).toContain('"business_review"');
     expect(tool).toContain('report_period');expect(tool).toContain('evidence_refs');
   });
+  it('offers only canonical source selectors without caller-authored facts or authority',()=>{
+    const tool=originalDocumentTool(),plan=tool.parameters.properties.metric_requests;
+    const keys=[...BUSINESS_METRIC_KEYS,...MARKETING_METRIC_KEYS];
+    expect(plan).toMatchObject({type:'array',minItems:1,maxItems:12,uniqueItems:true,
+      items:{type:'object',additionalProperties:false,required:['metric_key','metric_version']}});
+    expect(Object.keys(plan.items.properties).sort()).toEqual(['metric_key','metric_version']);
+    expect(plan.items.properties.metric_key.enum).toEqual(keys);
+    expect(plan.items.properties.metric_version.enum).toEqual([...new Set(keys.map(currentMetricVersion))]);
+    expect(tool.parameters.properties.evidence_refs).toBeDefined();
+    expect(tool.parameters.required).toEqual(['doc_type','title','brief']);
+  });
+  it('hands the exact source plan and period to original caller-JWT work once',async()=>{
+    const {result,rpc}=await runOriginalDocumentBranch(plannedReport);
+    expect(rpc).toHaveBeenCalledExactlyOnceWith('submit_paige_document_work',{
+      _intent_id:'original-stable-intent',_thread_id:'original-thread',_request_payload:plannedReport});
+    expect(result).toMatchObject({accepted:true,work_id:'original-work',work_status:'claimed'});
+    expect(result.completed).toBeUndefined();
+  });
+  it.each([
+    {evidence_refs:reportRequest.evidence_refs},{evidence_refs:undefined},
+    {metric_requests:[{...plannedReport.metric_requests[0],value:999}]},
+    {metric_requests:[{...plannedReport.metric_requests[0],tenant_id:'foreign'}]},
+    {metric_requests:[{metric_key:'invented.metric',metric_version:'1.0.0'}]},
+    {metric_requests:[{...plannedReport.metric_requests[0],metric_version:'future'}]},
+    {metric_requests:[...plannedReport.metric_requests,...plannedReport.metric_requests]},
+  ])('refuses mixed, forged or noncanonical report selectors before native work %#',async change=>{
+    const {result,rpc}=await runOriginalDocumentBranch({...plannedReport,...change});
+    expect(rpc).not.toHaveBeenCalled();
+    expect(result).toMatchObject({success:false,code:'document_report_brief_invalid'});
+  });
+  it.each([{studioSessionId:'studio'},{payloadRequestIntentId:null},{payloadThreadId:null}])(
+    'retains original conversation and Studio authority gates for source plans %#',async overrides=>{
+      const {result,rpc}=await runOriginalDocumentBranch(plannedReport,overrides);
+      expect(rpc).not.toHaveBeenCalled();expect(result.success).toBe(false);
+    });
   it('hands the exact original report references and period to caller-JWT submit without claiming completion',async()=>{
     const {result,rpc}=await runOriginalDocumentBranch(reportRequest);
     expect(rpc).toHaveBeenCalledExactlyOnceWith('submit_paige_document_work',{

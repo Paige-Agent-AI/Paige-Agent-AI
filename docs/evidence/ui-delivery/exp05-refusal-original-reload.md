@@ -97,3 +97,35 @@ family227/227 PASS, no skips,196.317s; separate original resource suite79/79 PAS
 No validator, extraction, source fingerprint, permission, threshold or admission
 change. The failed086 check remains FAIL. Final new-head hosted gates/review/release
 and ordinary authenticated proof remain owed.
+
+### October24 current-main composition review before binding renewal
+
+AUTHOR-REVIEW / LOWER ASSURANCE of exact merge22bcdffcb0be9aa4862231bca6ded6922709ebbc,
+combining original reviewedec466 with maindf691e3fc82719863baa495a3e17fd09b76e8d2a.
+This is the owner-permitted sequential author exception, not non-author review.
+The composed Chat blob is5d43ef723fe67cb2c20ec2bc2f1c524269d56e51. Read its complete
+delta against current main: only the original refusal import, guarded fallback
+marker and exact pre-processing branch change. All incoming EXP07 canvas/copy
+hint, clamp, schema and original snapshot writer, and its capability metadata,
+are preserved. E09's610009 SQL, EXP01 consent and all other source remain intact.
+
+The text conflict is confined to the two provenance headers and29 enclosing
+handler fingerprints. Kept both headers and incoming main literals first;
+these deliberately do not yet accept the combined source. A read-only audit
+reproduces every incoming main literal through the actual original extractor;
+private decomposition agrees with that extractor on both main and combined
+source. For all29 tools only identity[15] changes. Every dispatch branch,
+dominating control, other identity, helper and import remains identical. The
+extractor implementation is byte-identical to both immutable parents; no
+metadata or old source pin is relaxed. Originalec466 full CI/Preview remains
+dated proof, not the combined head's gates. No blocking source finding remains
+in this bounded union. Record this review BEFORE renewing its29 literal pins;
+the already-reviewed restrictive refusal dependency remains the123rd pin.
+
+The selected original E09 lock repair2713 is merged in this main; exact required
+npm audit --omit=dev --audit-level=high now exits0 (zero high/critical, five
+moderate). No E05 package edit or threshold waiver. A local composed Vitest run
+could not start either Windows forks worker: zero tests/two infrastructure
+errors. This is INVALID behavioral proof, not a55-case PASS or source failure.
+Original tests/thresholds are unchanged; actual hosted composed checks remain
+mandatory. No recurrence, provider, specialist instructions or Live activation.

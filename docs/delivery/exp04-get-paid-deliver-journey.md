@@ -3436,6 +3436,10 @@ reviewed forward fix or bounded hook revert preserves original native records.
 
 ## C26 original Clients scope, refusal and uncertain readback — October24
 
+SOURCE RELEASE VERIFIED, October24 09:41:20UTC: original2752 reviewed5514a4ee7f4ce79012f4a66643bff21c7de8f4b1/LOWER5637616199/all10 applicable exact checks+two webSUCCESS/designed UI-only PreviewSKIP → actual main58416369d2de317c7c6e9301248e0ea36e2d0989/tree307084990f418b799e4bb9b3d4e05a3e050e0ff5, actual28622+5514 parents equal inspected union. Only28 own paths; all20 captured LF source inputs/reviewed Git blobs and original11 native source-component PNGs preserved; full incoming Brain/journey and all other source intact. Normal production dpl_4VtW9LhKrc7x5J5ptKmob7KNCaJh READY/both public200exact584-mvm7cya3/customerUpdate:null. Actual shared source LiveTranscriptPanel-C-vRaFUJ.js/82764bfe and corresponding CSS/1140c270 contain all four source markers/three repaired reflow rules. Initial filename-filter failures remain recorded; actual public-import discovery located the shared bundle. Its NAME does not establish Live/Chat activation. No SQL/Edge source/importer or new native/Edge version claim. Original97 local cases PASS, raw whole-app compiler has six known baseline errors/zero new instances; required hosted verifier is separately SUCCESS. Ordinary owner/staff/client/reload/revocation/full-shell/mobile/AT/200percent/CentralQA/all12/founder acceptance remain UNVERIFIED. No business/provider/permission/capability/algorithm activation. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2752#issuecomment-6382675131).
+
+Earlier pre-release source checkpoint follows unchanged.
+
 REPAIR/REUSE, LOCAL SOURCE: consultants/coaches/fractional professionals and
 own-SOLO creative firms retain the complete O1–O12 roadmap. Original Clients
 standing/shared Work now follows canonical actor/workspace/client/status, retires

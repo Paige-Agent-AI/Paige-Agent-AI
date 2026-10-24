@@ -179,3 +179,20 @@ Reviewed proof-only2727 isolates only the existing disposable cron; original19
 assertions remain. Its native/full CI and this exact final-head CI must pass.
 No new source renewal, activation, authenticated acceptance or whole-Experience
 closure is inferred from the composition or parent releases.
+
+## Hosted type gate — original response projection correction
+
+Exact candidate19b288952fbfe06a540ad86e1dd84b4dd7703484 completed native/
+contract/authority/audit and full unit checks, but verify120764454525 failed its
+Typecheck step93: TS2322 at specialistHistory response_text, unknown assigned to
+string. The actual GitHub job UI established the error after the log connector
+closed; it was not dismissed as infrastructure or added to the type baseline.
+The unchanged parser causally reproduces the same error with the actual TypeScript
+compiler. After existing closed-shape/type/length validation, project response_text
+explicitly as string-or-null, without a cast or relaxed validation. The same
+isolated compiler command now exits0. Five added hostile non-text cases remain
+refused, and all83 original loader/parser controls pass. Scoped lint passes.
+No server helper, source pin, authority, renderer/layout or execution route changes.
+Fresh exact-head full-project CI remains mandatory; current main's separate
+duplicate700000 migration must be corrected by its originating owner before
+release. Prior native success is not a current-main green-gate claim.

@@ -48,7 +48,8 @@ export function readOriginalSpecialistHistory(raw: unknown, scope: OriginalPrepa
     seen.add(item.id.toLowerCase());
     results.push({ id: item.id, specialist: item.specialist, recorded_status: status, created_at: item.created_at,
       observed_at: item.observed_at, receipt_state: receipt, receipt_id: typeof item.receipt_id === 'string' ? item.receipt_id : null,
-      receipt_at: typeof item.receipt_at === 'string' ? item.receipt_at : null, response_text: item.response_text,
+      receipt_at: typeof item.receipt_at === 'string' ? item.receipt_at : null,
+      response_text: typeof item.response_text === 'string' ? item.response_text : null,
       response_truncated: item.response_truncated, completion_scope: 'specialist_response_only' });
   }
   return { v: 1, status: 'recorded_assignment', thread_id: scope.threadId, turn_id: scope.turnId,

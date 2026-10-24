@@ -10,13 +10,13 @@ VISUAL_DIRECTION: PASS: compact inherited Operations typography/tokens, one supp
 AUTOMATED_EVIDENCE: PASS: actual three owning entry/Overview/controller suites36/36; failing-first original entry11 cases9 FAIL/2 PASS before implementation; final entry13, Overview4 and original controller19 pass. Required hosted exact-head CI remains owed.
 STATIC_EVIDENCE: PASS: scoped ESLint exit0, full working-diff whitespace clean, pinned cached Impeccable4.1.0 detector JSON[]/exit0. No native writer, registry, provider, action-risk, execution or migration changes.
 RENDERED_EVIDENCE: PASS: assets/exp05-weekly-entry-outcome/frames.json and16 actual native-shell viewport/theme images; two neutral synthetic workspace contexts. states.json/nine narrow-state images and320px reflow also captured. Synthetic ports are not authenticated business evidence.
-BEHAVIORAL_EVIDENCE: PASS: actual original inspector displays latest unknown beside older verified result; genuine owner refusal displays no other-account records; Enter opens and settled Escape returns to the exact original Overview control. Immediate transition snapshots remain retained rather than misreported as settled failures.
+BEHAVIORAL_EVIDENCE: PASS: assets/exp05-weekly-entry-outcome/interaction.json records the original inspector preserving the latest uncertain attempt beside older verified history, refusal without another-account record, Enter entry and settled Escape to the exact original control. Immediate transition snapshots are retained separately.
 AUTHENTICATED_RUNTIME: UNVERIFIED: this new candidate is not deployed. Existing authenticated empty reads of two authorized businesses predate it and cannot establish populated original-result or recurring-execution proof.
 KEYBOARD_FOCUS: PASS: native Enter -> same original sheet -> Escape -> exact original opener, settled read in interaction.json. Original panel refresh/read remains; no action is approved.
 ZOOM_REFLOW: PASS: actual320px CSS viewport and390px narrow cases have no document overflow or clipped caption; native200-percent browser zoom remains UNVERIFIED.
 REDUCED_MOTION: PASS: actual prefers-reduced-motion reduce emulation, original44px minimum, caption animation none and inherited1e-05s transition; emulation reset afterward. No motion added.
 STATE_COVERAGE: PASS: loading, empty, denied, unavailable, verified, unverified, newer failed/unknown and bounded coverage; defaults, stale audience retirement and explicit original-sheet refresh covered by owning tests.
-TRUTHFUL_STATE_LABELS: PASS: completed-looking attempts without verified receipts cannot produce verified-result copy. A newer unknown/failed occurrence remains Needs review; unseen responsibilities are explicitly excluded. No schedule/task completion or provider delivery is inferred.
+TRUTHFUL_STATE_LABELS: PASS: completed-looking attempts without verified receipts cannot produce verified-result copy. A newer uncertain or failed occurrence remains Needs review; unseen responsibilities are explicitly excluded. No schedule/task completion or provider delivery is inferred.
 SOLO_UI: YES: existing canonical Operations Overview weekly entry only; Chat/Calendar/onboarding defaults retained.
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/exp05-weekly-entry-outcome/light-1536-770-closed.jpg and dark-b equivalent, original44px target/no overflow.
 SOLO_1536X770_PAIGE_OPEN: PASS: assets/exp05-weekly-entry-outcome/light-1536-770-open.jpg and dark-b equivalent, original split workspace preserved.
@@ -33,7 +33,7 @@ MUST_PRESERVE: original sheet, focus/close, authorizations, caller/tenant/sessio
 ACCEPTANCE_CRITERIA: current eligible owner sees truthful bounded status, opens the same original inspection with a fresh read, can inspect original evidence and return without creating or executing work.
 MOTION_PURPOSE: NONE: status presentation adds no animation; existing reduced-motion behavior retained and inspected.
 PROTECTED_SEAMS: impacted original weekly read controller and default callers tested; unchanged native role/RLS, approvals, Work writers, LayerC adapters, provider clients, catalogue and shared PAIGE panel remain original.
-INTERNAL_BUILD_IDENTITY: parent885ec3675bceda0a79d1ad5d0ace3d83d4346ce8; exact candidate=head recorded by Git/PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original render manifest.
+INTERNAL_BUILD_IDENTITY: source=064241ec2797eae2aa0d899c9c05c8a495c24d9c; base=885ec3675bceda0a79d1ad5d0ace3d83d4346ce8; candidate=head recorded by Git/PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/assets/exp05-weekly-entry-outcome/render-source.json.
 RELEASE_CHANNEL: development: original-source isolated native shell and owning tests, not production or customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: bounded existing-entry status improvement; not a named complete customer release.
 CUSTOMER_RELEASE_IDENTITY: none: full original weekly execution and integrated Experience proof remains owed.
@@ -88,3 +88,9 @@ failures were test-environment failures, not product evidence. Task-owned TEMP a
 authorized loopback-only render hosting resolved them. Npm's sandbox DNS lookup
 failed; the exact installed cached4.1.0 CLI produced JSON[]/exit0 without downloading.
 No check, assertion, permission or security control was weakened.
+
+The first local committed evidence guard refused three metadata fields: the base
+SHA lacked a separating delimiter, and two passing behavior sentences triggered
+its unresolved-proof grammar. This correction delimits the actual source064241
+and describes the same tested uncertainty precisely. No product or guard changed;
+the original guard failure is retained rather than counted as a pass.

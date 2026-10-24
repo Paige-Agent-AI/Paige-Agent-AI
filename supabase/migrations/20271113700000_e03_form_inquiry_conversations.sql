@@ -1,7 +1,11 @@
 -- E03: opted-in business form inquiries join the existing Messages -> Threads projection.
 -- No mailbox, provider, scheduler, approval store or historical backfill is introduced.
--- Created with CLI 2.109.1 as 20261014223525, then renamed above the verified applied
--- frontier 20271101142133. Never rename an applied migration. Apply before the processor.
+-- Created with CLI 2.109.1 as 20261014223525, renamed 20271101143000 -> 20271102120000 ->
+-- 20271103140117, then 2026-10-23 renamed again above the production frontier 20271113610009
+-- (main carried 118 newer migrations while the PR waited; deploy-migrations refuses a whole
+-- push when any unrecorded file sorts below the recorded frontier, and the processor's
+-- inquiry call fails every opted-in submission closed until the RPC exists). Never rename
+-- an applied migration. Apply before the processor. Every statement is re-run safe.
 
 ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS form_submission_id uuid;
 COMMENT ON COLUMN public.messages.form_submission_id IS
@@ -12,6 +16,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS messages_form_submission_once
 ALTER TABLE public.messages DROP CONSTRAINT IF EXISTS messages_channel_type_check;
 ALTER TABLE public.messages ADD CONSTRAINT messages_channel_type_check
   CHECK (channel_type IN ('email','sms','whatsapp','instagram','facebook','voice','form'));
+ALTER TABLE public.messages DROP CONSTRAINT IF EXISTS messages_form_inbound_only;
 ALTER TABLE public.messages ADD CONSTRAINT messages_form_inbound_only CHECK (
   (channel_type = 'form') = (form_submission_id IS NOT NULL)
   AND (channel_type <> 'form' OR (
@@ -21,7 +26,7 @@ ALTER TABLE public.messages ADD CONSTRAINT messages_form_inbound_only CHECK (
   ))
 );
 
-CREATE FUNCTION public._growth_form_message_guard() RETURNS trigger
+CREATE OR REPLACE FUNCTION public._growth_form_message_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY INVOKER SET search_path = pg_catalog, public AS $$
 BEGIN
   IF TG_OP = 'UPDATE' AND OLD.form_submission_id IS NOT NULL THEN
@@ -37,12 +42,13 @@ BEGIN
   RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._growth_form_message_guard() FROM PUBLIC, anon, authenticated, service_role;
+DROP TRIGGER IF EXISTS trg_growth_form_message_guard ON public.messages;
 CREATE TRIGGER trg_growth_form_message_guard BEFORE INSERT OR UPDATE ON public.messages
 FOR EACH ROW EXECUTE FUNCTION public._growth_form_message_guard();
 
 -- Invoker, service-only. The native processor supplies labelled answers (identity numbers
 -- already excluded by labelledAnswers), not a raw payload or browser-authored tenant/contact.
-CREATE FUNCTION public.growth_record_form_inquiry(_submission_id uuid, _submitted_email text, _body_text text)
+CREATE OR REPLACE FUNCTION public.growth_record_form_inquiry(_submission_id uuid, _submitted_email text, _body_text text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path = pg_catalog, public AS $$
 DECLARE
   submission public.growth_form_submissions;

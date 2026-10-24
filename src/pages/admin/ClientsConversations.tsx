@@ -1753,6 +1753,7 @@ export default function ClientsConversations() {
             {activeTenantId && selected.contactId ? <LeadReplyDrafts
               key={`${activeTenantId}:${selected.contactId}`}
               tenantId={activeTenantId} contactId={selected.contactId}
+              focusApprovalId={searchParams.get("approval")}
               disabled={sending || leadReplyReview.blocksSending || (isSolo && handlingMode === "governed")}
               onEdit={(approval, draft) => {
                 if (body.trim() || attachments.length || scheduledFor || editingDraftId || leadReplyApprovalId) { toast.error("Finish or clear the current draft before opening another reply."); return; }

@@ -59,3 +59,27 @@ describe("returning to the same lead reply",()=>{
     await act(async()=>{finish({data:[],error:null});await flush();});expect(editButton()).toBeUndefined();expect(host.textContent).toContain("Checking this reply's recorded status");
   });
 });
+
+describe("the ?approval= deep link",()=>{
+  it("opens the editable reply's review exactly once",async()=>{
+    await render({focusApprovalId:approval});
+    expect(edit).toHaveBeenCalledTimes(1);expect(edit).toHaveBeenCalledWith(expect.objectContaining({id:approval}),{subject:"Your inquiry",body:"Thanks for asking."});
+    expect(editButton()).toBeTruthy();await act(async()=>{editButton()!.click();await flush();});expect(edit).toHaveBeenCalledTimes(2);
+  });
+  it("never reopens a reply with a recorded sending attempt",async()=>{
+    db.read.mockResolvedValue({data:[row()],error:null});await render({focusApprovalId:approval});
+    expect(edit).not.toHaveBeenCalled();expect(host.textContent).toContain("Don't resend");
+  });
+  it("waits for the recorded-status readback before opening",async()=>{
+    db.read.mockImplementation(()=>new Promise(()=>{}));await render({focusApprovalId:approval});
+    expect(edit).not.toHaveBeenCalled();expect(host.textContent).toContain("Checking this reply's recorded status");
+  });
+  it("ignores a focus id that is not this contact's pending reply",async()=>{
+    await render({focusApprovalId:"88888888-8888-4888-8888-888888888888"});
+    expect(edit).not.toHaveBeenCalled();expect(editButton()).toBeTruthy();
+  });
+  it("does not auto-open while sending is disabled",async()=>{
+    await render({focusApprovalId:approval,disabled:true});
+    expect(edit).not.toHaveBeenCalled();expect(editButton()).toBeUndefined();
+  });
+});

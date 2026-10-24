@@ -8,13 +8,14 @@ import { UUID } from "../../../../supabase/functions/_shared/comms-email/contrac
 type EntryProps = {
   tenantId: string; contactId: string; approval: ApprovalQueueRow; canEdit: boolean;
   disabled: boolean; onEdit: (approval: ApprovalQueueRow, draft: { subject: string; body: string }) => void;
+  focused?: boolean;
 };
 type Readback = { scope: object; editable: boolean; loading: boolean; note: string | null };
 const object = (value: unknown): Record<string, unknown> | null => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const UNCONFIRMED = "This reply already has a recorded sending attempt. Don't resend. Check its recorded status.";
 const UNVERIFIED = "Sending status couldn't be verified. Don't resend. Check its recorded status.";
 
-function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,onEdit}: EntryProps) {
+function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,onEdit,focused}: EntryProps) {
   const key=JSON.stringify([tenantId,contactId,approval.id]);
   const scopeRef=useRef({key});
   if(scopeRef.current.key!==key)scopeRef.current={key};
@@ -55,7 +56,18 @@ function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,onEdi
   useEffect(()=>{if(canEdit)void refresh();return()=>{request.current+=1;};},[canEdit,refresh]);
   const draft=object(approval.draft_content);
   const ready=draft?.channel==="email"&&typeof draft.subject==="string"&&draft.subject.trim()&&typeof draft.body==="string"&&draft.body.trim();
-  return <div className="space-y-2">
+  // Deep-link (?approval=): open the review exactly once, and only when the recorded-status
+  // readback says this reply is still editable — a reply with a recorded send attempt must
+  // never reopen into the composer, link or no link.
+  const focusedRef=useRef(false);
+  const openDraft=()=>onEdit(approval,{subject:draft!.subject as string,body:draft!.body as string});
+  useEffect(()=>{
+    if(!focused||focusedRef.current||disabled||!canEdit||!ready) return;
+    if(!current||current.loading) return;
+    focusedRef.current=true;
+    if(current.editable) openDraft();
+  },[focused,disabled,canEdit,ready,current]);
+  return <div className={focused?"space-y-2 rounded-md border border-border p-2":"space-y-2"}>
     <p className="text-sm font-medium">{ready?"PAIGE prepared a reply":"Reply draft needs attention"}</p>
     {ready?<p className="break-words text-sm text-muted-foreground">{draft.subject as string}</p>:<p className="text-sm text-muted-foreground">No complete email draft is available.</p>}
     {!canEdit?<p className="text-xs text-muted-foreground">An owner or admin can review and approve this reply.</p>
@@ -66,11 +78,12 @@ function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,onEdi
 }
 
 /** A contextual entry to the existing composer; the approval queue remains the draft's home. */
-export function LeadReplyDrafts({ tenantId, contactId, onEdit, disabled }: {
+export function LeadReplyDrafts({ tenantId, contactId, onEdit, disabled, focusApprovalId }: {
   tenantId: string;
   contactId: string;
   onEdit: (approval: ApprovalQueueRow, draft: { subject: string; body: string }) => void;
   disabled: boolean;
+  focusApprovalId?: string | null;
 }) {
   const approvals = usePendingApprovals({ contactId });
   const authorityScopeRef = useRef({ tenantId });
@@ -95,6 +108,6 @@ export function LeadReplyDrafts({ tenantId, contactId, onEdit, disabled }: {
   if (approvals.error) return <p role="status" className="text-sm text-muted-foreground">Reply drafts couldn't load. <button type="button" className="underline" onClick={() => { void approvals.refresh(); }}>Try again</button></p>;
   if (!drafts.length) return null;
   return <section aria-label="PAIGE lead replies" className="space-y-3 border-t border-border pt-3">
-    {drafts.map(approval=><LeadReplyDraftEntry key={approval.id} tenantId={tenantId} contactId={contactId} approval={approval} canEdit={canEdit} disabled={disabled} onEdit={onEdit}/>)}
+    {drafts.map(approval=><LeadReplyDraftEntry key={approval.id} tenantId={tenantId} contactId={contactId} approval={approval} canEdit={canEdit} disabled={disabled} onEdit={onEdit} focused={approval.id===focusApprovalId}/>)}
   </section>;
 }

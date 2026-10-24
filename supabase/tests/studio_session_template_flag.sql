@@ -332,10 +332,11 @@ BEGIN
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no owner-or-admin predicate): the coach templates another''s project — the predicate is what the probe tests: ' || v);
     ROLLBACK TO SAVEPOINT m3;
   END;
-  -- Every mutation was rolled back: the real body is the production one again, and the rows are unchanged.
-  PERFORM pg_temp.chk(md5(pg_get_functiondef('public.set_studio_session_template(uuid, boolean, uuid)'::regprocedure))
-    = md5((SELECT pg_get_functiondef('public.set_studio_session_template(uuid, boolean, uuid)'::regprocedure))),
-    'definition readable');
+  -- Every mutation was rolled back: the production body answers again (the wall refuses the
+  -- foreign owner where the mutated one succeeded), and no row stayed a template.
+  v := pg_temp.run('00000000-0000-4000-8000-00000000e005', 'authenticated', '',
+    $$ SELECT is_template::text FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $$);
+  PERFORM pg_temp.chk(v LIKE 'err:P0002:%STUDIO_NOT_FOUND%', 'after the mutations rolled back: the real wall answers again: ' || v);
   PERFORM pg_temp.chk((SELECT count(*) FROM public.studio_sessions WHERE is_template) = 0,
     'every mutation was rolled back — no row stayed a template');
 END $$;

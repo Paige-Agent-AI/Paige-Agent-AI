@@ -1136,3 +1136,64 @@ describe("a connected tool does not also render as a tile offering to set it up"
     expect(countOnChip(host, "Automation")).toBe(beforeAuto);
   });
 });
+
+describe("Team chat — Slack first-class, Teams honest", () => {
+  const fieldFor = (host: HTMLElement, label: string) =>
+    Array.from(host.querySelectorAll<HTMLLabelElement>("label.ig-field"))
+      .find((l) => l.querySelector("span")?.textContent === label)
+      ?.querySelector("input");
+
+  it("shows Slack as a first-class tile in its own group with its real connection state", async () => {
+    world({ gateway: [] });
+    const { host } = await render();
+    const card = host.querySelector('.ig-card[data-provider="slack"]');
+    expect(card).toBeTruthy();
+    const group = card?.closest("section.ig-group");
+    expect(group?.querySelector(".ig-group-head b")?.textContent).toBe("Team chat");
+    expect(card?.textContent).toContain("Not connected");
+    // Teams sits in the same group, honestly not available.
+    const teams = host.querySelector('.ig-card[data-provider="microsoft-teams"]');
+    expect(teams?.textContent).toContain("Microsoft Teams");
+    expect(teams?.textContent).toContain("Not available");
+  });
+
+  it("reads the tile state from the tenant's REAL gateway connection, never a guess", async () => {
+    world({ gateway: [{ connection_id: "c-slack-1", provider_key: "slack", label: "Ops workspace",
+      transport: "http", auth_kind: "bearer", configured: true, enabled: true,
+      status: "connected", health: "healthy", last_checked_at: "2026-10-23T10:00:00Z",
+      server_url_host: "mcp.slack.com" }] });
+    const { host } = await render();
+    expect(host.querySelector('.ig-card[data-provider="slack"]')?.textContent).toContain("Connected");
+  });
+
+  it("opens the gateway's own connect form prefilled for Slack and creates with the Slack identity", async () => {
+    world({ gateway: [] });
+    const { host } = await render();
+    await openCard(host, "slack");
+    const dialog = host.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain("Slack");
+    expect((fieldFor(host, "Server URL") as HTMLInputElement)?.value).toBe("https://mcp.slack.com/mcp");
+    await type(fieldFor(host, "Name"), "Operations workspace");
+    await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
+    await click(byText(host, "Save configuration"));
+    await act(async () => { await Promise.resolve(); });
+    const create = invoke.mock.calls.find(([name, options]) => name === "mcp-gateway" && options.body.action === "create");
+    expect(create).toBeTruthy();
+    expect(create?.[1]?.body).toMatchObject({
+      facet: "mcp", provider_key: "slack", auth_kind: "bearer",
+      label: "Operations workspace", server_url: "https://mcp.slack.com/mcp",
+    });
+  });
+
+  it("Teams explains its real prerequisite and offers no connect path", async () => {
+    world({ gateway: [] });
+    const { host } = await render();
+    await openCard(host, "microsoft-teams");
+    const dialog = host.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toMatch(/Azure AD app registration/i);
+    expect(dialog?.textContent).toMatch(/admin consent/i);
+    // No gateway create ever fires for Teams — there is no native path to create.
+    const create = invoke.mock.calls.find(([name, options]) => name === "mcp-gateway" && options.body.action === "create");
+    expect(create).toBeUndefined();
+  });
+});

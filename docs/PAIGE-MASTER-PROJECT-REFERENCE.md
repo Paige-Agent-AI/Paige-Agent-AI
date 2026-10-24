@@ -826,6 +826,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-23 — EXP09 original exact-customer tier journey source released.**
+
+| Increment | Exact released identity and original proof | Completion boundary |
+| --- | --- | --- |
+| [#2691](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2691): bind the original tier journey to its canonical customer | Reviewed51670c633c28534b3d4a49eea9b505cfacd7179a, accurate AUTHOR-REVIEW / LOWER ASSURANCE5635303707/5635517277/5635518927; all13 exact-head checks and two Vercel statuses SUCCESS. Real Native120699157670:265 scope,61 choices, all seven original pillar suites/full grant-order proof. Main3b8f9736621cf5763a0a398c7ab98ff5a5094ff0, actual06112c8ddf0e8f0787d291815ca992a4b6845cc1+51670c parents/tree0b26a7ed5f2577e2229746e5817bf0b7a8803739 independently reproduced. Normal migration40040374489/lint120709784581/deploy120709901742 actually applied only20271113610009; source SHA2567be32551288005633c7417ce489ca01c9ce9a1e3d32f11ce6304361c656a43b3, production bodya6e37b8e7881c142be52d3b65e1c6f8c/original postgres owner/private ACL/public path/VOLATILE DEFINER/original enabled tier_state trigger and SET NULL FKs verified. Both original unique indexes retained. Exact webdpl_HE4RSB1CaxbeTRYZxXDq1rPXSEpR READY/aliases verified; actual public33bb85dcc883d1b31631fc0c954babafda9eeea9-mvllx1ty/customerUpdate:null is one documentation-only containing descendant (ahead1/behind0). [Receipt6376896655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2691#issuecomment-6376896655). | SOURCE RELEASE VERIFIED. Exact client_id plus linked user, unique-only NULL fallback; original tier/payment semantics and atomic transition/receipt retained. No new tier/money writer, grant, data backfill, provider effect or own Edge. Global multi-business admission NOT_ACTIVATED at this release; original owner/client/private history/Teach/all-seven/new-existing/revoked/interrupted/returning/device/AT/founder journey UNVERIFIED. Earlier failure/canceled evidence retained; internal production increment, no customer announcement or catalogue/algorithm promotion. |
+
+
 **2026-10-23 — EXP09 original ordinary customer sign-in source released.**
 
 | Increment | Exact released identity and original proof | Completion boundary |

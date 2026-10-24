@@ -19,13 +19,12 @@ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,las
  ('e0960300-0000-4000-8000-000000000001','e0960200-0000-4000-8000-000000000001','e0960100-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000001','Jordan','Rivera','active'),
  ('e0960300-0000-4000-8000-000000000003','e0960200-0000-4000-8000-000000000003','e0960100-0000-4000-8000-000000000003','e0960100-0000-4000-8000-000000000001','Casey','Morgan','active');
 
--- Current production permits one linked client per login globally. Prove that
--- guard before exercising the explicitly future shape, only in this rollback.
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'actual global unique linkage exists before the future-shape fixture');
+-- Current native multi-business shape; prove duplicate contacts within one
+-- business still fail, while distinct businesses use the genuine schema.
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 1');
 SELECT throws_ok($guard$ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
- ('e0960300-0000-4000-8000-000000000002','e0960200-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000001','Jordan','Rivera','active'); $guard$,'23505',NULL,'current native global guard refuses a second business link');
-DROP INDEX public.clients_linked_user_id_unique;
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique),'future fixture retains original within-business uniqueness');
+ ('e0960300-0000-4000-8000-000000000002','e0960200-0000-4000-8000-000000000001','e0960100-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000001','Jordan','Rivera','active'); $guard$,'23505',NULL,'original per-business constraint refuses a duplicate contact for the same login');
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique),'current schema retains original within-business uniqueness');
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0960300-0000-4000-8000-000000000002','e0960200-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000001','Jordan','Rivera','active');
 
@@ -140,8 +139,7 @@ SELECT ok(has_function_privilege('authenticated','public.client_portal_relations
  AND NOT has_function_privilege('anon','public.client_portal_relationship_choices(integer,uuid)','EXECUTE')
  AND NOT has_function_privilege('service_role','public.client_portal_relationship_choices(integer,uuid)','EXECUTE'),'authenticated-only execution; no anonymous/service grant');
 
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future fixture restores the original global guard before outer rollback');
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 2');
 
 SELECT * FROM finish();
 ROLLBACK;

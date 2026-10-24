@@ -1,0 +1,14 @@
+{
+  "base": "c9ab5325ae318b0602eab2883a5d25269f569aaf",
+  "at": "2026-10-24T08:45:20.078Z",
+  "boundary": "Static owned-patch preservation, not authenticated or native execution evidence",
+  "originalTestsOnlyCanonicalMockIdentityExtended": true,
+  "eightCanonicalSeamsUnchanged": true,
+  "originalNativeReadAndComposerCallUnchanged": true,
+  "originalStandingBodyExceptOneTerminalCacheClearUnchanged": true,
+  "originalSharedMarkupExceptOneTruthfulRecoverySentenceUnchanged": true,
+  "originalSharedSubcomponentsAndWriterArgumentsUnchanged": true,
+  "bothConsumersClearFallbackOnTerminalReadState": true,
+  "onlyThreeExistingReflowDeclarationsChanged": true,
+  "preservedNativeReadSHA256": "bf91addc20a3c82790202ccc27b81f52400ec217f0623d8269d09dd224e59b68"
+}

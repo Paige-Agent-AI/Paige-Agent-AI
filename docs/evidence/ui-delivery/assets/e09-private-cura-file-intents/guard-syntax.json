@@ -1,0 +1,6 @@
+{
+  "environment": "isolated PostgreSQL16; guard parser only, no original contracts installed",
+  "beforeSyntaxError": true,
+  "afterRefusesMissingContract": true,
+  "newNativeSuite": "UNEXECUTED; required real Preview/native CI separate"
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTenantContext } from '@/hooks/useTenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -26,15 +26,16 @@ export class ClientStatusRefused extends Error {
 /**
  * E09 Slice 3: the client record mounts two sections on this one read ("Where {client} stands" and
  * "Shared with {client}"). Opening a record still reads ONCE: a read started in the same render pass
- * for the same workspace and client is joined, never repeated. The join lasts only until the current
+ * for the same authenticated actor, workspace and client is joined, never repeated. The join lasts only until the current
  * task ends, so nothing is cached and a read that never settles can't capture a later one; a `fresh`
  * read (a confirm after a write) never joins at all.
  */
 const sameTick = new Map<string, Promise<ClientEngagementStatus>>();
 
-export function readClientEngagementStatus(tenantId: string, contactId: string, options: { fresh?: boolean } = {}): Promise<ClientEngagementStatus> {
+export function readClientEngagementStatus(tenantId: string, contactId: string, options: { fresh?: boolean; actorId?: string } = {}): Promise<ClientEngagementStatus> {
   if (options.fresh) return readOnce(tenantId, contactId);
-  const key = `${tenantId}:${contactId}`;
+  // This partitions a transient join, not permission: the original RPC still resolves its own actor.
+  const key = JSON.stringify([options.actorId ?? null, tenantId, contactId]);
   const joined = sameTick.get(key);
   if (joined) return joined;
   const started = readOnce(tenantId, contactId);
@@ -80,43 +81,87 @@ export function shareableWorkItem(item: SourceWorkItem): item is ShareableWorkIt
     && (item.item_type === 'milestone' || item.item_type === 'task') && item.status !== 'cancelled';
 }
 
+/** A render lifetime only. The canonical context and native RPC retain all authorization. */
+export function clientEngagementScopeKey(context: Pick<ReturnType<typeof useTenantContext>,
+  'activeUserId' | 'activeTenantId' | 'accountContextLoading' | 'accountContextStatus'>, contactId: string | null): string {
+  return JSON.stringify([context.activeUserId, context.activeTenantId, contactId, context.accountContextLoading, context.accountContextStatus]);
+}
+
 export function useClientEngagementStatus(contactId: string | null) {
-  const { activeTenantId, accountContextLoading } = useTenantContext();
-  const [state, setState] = useState<State>({ phase: 'idle', status: null, error: '' });
+  const context = useTenantContext();
+  const { activeTenantId, activeUserId, accountContextLoading, accountContextStatus } = context;
+  const identity = clientEngagementScopeKey(context, contactId);
+  const current = useRef({ identity, mounted: false });
+  // Retire BEFORE paint, including A → B → A. An effect-only reset exposes the preceding answer.
+  if (current.current.identity !== identity) current.current = { identity, mounted: false };
+  const frame = current.current;
+  const [state, setState] = useState<{ frame: typeof frame; value: State } | null>(null);
   const [refresh, setRefresh] = useState(0);
   const generation = useRef(0);
   const reloads = useRef(0);
+  const confirmedReads = useRef(0);
+  const latestSuccessfulReload = useRef(0);
+  // Keyed consumers unmount instead of rendering the next identity. Retire their callbacks in
+  // commit, before a parent's layout work or a session continuation can start another request.
+  useLayoutEffect(() => () => {
+    frame.mounted = false;
+    generation.current++;
+  }, [frame]);
+  const isCurrent = useCallback(() => current.current === frame && frame.mounted, [frame]);
+  let blocked: State | null = null;
+  if (accountContextLoading || accountContextStatus === 'resolving' || !contactId) blocked = { phase: 'idle', status: null, error: '' };
+  else if (accountContextStatus !== 'ready' || !activeUserId) blocked = { phase: 'error', status: null, error: UNREADABLE };
+  else if (!activeTenantId) blocked = { phase: 'no_workspace', status: null, error: '' };
+  const blockedPhase = blocked?.phase;
   useEffect(() => {
     const opened = ++generation.current;
-    if (accountContextLoading || !contactId) {
-      setState({ phase: 'idle', status: null, error: '' });
-      return;
-    }
-    // An operator or agency manager outside any workspace has no client book to read here.
-    if (!activeTenantId) {
-      setState({ phase: 'no_workspace', status: null, error: '' });
-      return;
-    }
-    setState({ phase: 'loading', status: null, error: '' });
-    readClientEngagementStatus(activeTenantId, contactId)
-      .then(status => { if (generation.current === opened) setState({ phase: 'ready', status, error: '' }); })
+    const startedBeforeConfirmation = confirmedReads.current;
+    frame.mounted = true;
+    const cleanup = () => {
+      frame.mounted = false;
+      if (generation.current === opened) generation.current++;
+    };
+    const accepts = () => isCurrent() && generation.current === opened && confirmedReads.current === startedBeforeConfirmation;
+    if (blockedPhase || !activeTenantId || !activeUserId || !contactId) return cleanup;
+    setState({ frame, value: { phase: 'loading', status: null, error: '' } });
+    readClientEngagementStatus(activeTenantId, contactId, { actorId: activeUserId })
+      .then(status => { if (accepts()) setState({ frame, value: { phase: 'ready', status, error: '' } }); })
       .catch((err: unknown) => {
-        if (generation.current !== opened) return;
-        if (err instanceof ClientStatusRefused) setState({ phase: 'refused', status: null, error: err.message });
-        else setState({ phase: 'error', status: null, error: err instanceof Error ? err.message : UNREADABLE });
+        if (!accepts()) return;
+        const value: State = err instanceof ClientStatusRefused
+          ? { phase: 'refused', status: null, error: err.message }
+          : { phase: 'error', status: null, error: err instanceof Error ? err.message : UNREADABLE };
+        setState({ frame, value });
       });
-  }, [activeTenantId, accountContextLoading, contactId, refresh]);
+    return cleanup;
+  }, [frame, isCurrent, blockedPhase, activeTenantId, activeUserId, contactId, refresh]);
   /**
    * A fresh read that keeps the current answer on screen (no skeleton) and RESOLVES with what the
    * server says now, so a caller can confirm its own write against a read that started after it
-   * (§70.1). A newer reload, or a change of client or workspace, wins over an older one.
+   * (§70.1). A retired or superseded answer REJECTS, so it cannot confirm a write in another scope.
    */
   const reload = useCallback(async (): Promise<ClientEngagementStatus> => {
-    if (accountContextLoading || !activeTenantId || !contactId) throw new Error(UNREADABLE);
+    if (!isCurrent() || blockedPhase || !activeTenantId || !activeUserId || !contactId) throw new Error(UNREADABLE);
     const opened = generation.current, mine = ++reloads.current;
-    const status = await readClientEngagementStatus(activeTenantId, contactId, { fresh: true });
-    if (generation.current === opened && reloads.current === mine) setState({ phase: 'ready', status, error: '' });
+    let status: ClientEngagementStatus;
+    try {
+      status = await readClientEngagementStatus(activeTenantId, contactId, { fresh: true, actorId: activeUserId });
+    } catch (error) {
+      // A transient failure is not a confirmation and must not strand an otherwise valid refresh.
+      // A real server refusal retires cached data unless a newer successful read re-proved access.
+      if (error instanceof ClientStatusRefused && isCurrent() && generation.current === opened
+        && mine > latestSuccessfulReload.current) {
+        confirmedReads.current++;
+        setState({ frame, value: { phase: 'refused', status: null, error: error.message } });
+      }
+      throw error;
+    }
+    if (!isCurrent() || generation.current !== opened || reloads.current !== mine) throw new Error(UNREADABLE);
+    confirmedReads.current++;
+    latestSuccessfulReload.current = mine;
+    setState({ frame, value: { phase: 'ready', status, error: '' } });
     return status;
-  }, [activeTenantId, accountContextLoading, contactId]);
-  return { ...state, retry: () => setRefresh(n => n + 1), reload };
+  }, [frame, isCurrent, blockedPhase, activeTenantId, activeUserId, contactId]);
+  const visible = blocked ?? (state?.frame === frame ? state.value : { phase: 'loading', status: null, error: '' } as State);
+  return { ...visible, retry: () => { if (isCurrent()) setRefresh(n => n + 1); }, reload, isCurrent };
 }

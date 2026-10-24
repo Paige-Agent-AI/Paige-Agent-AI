@@ -1,0 +1,21 @@
+{
+  "file": "1536-light-loading.png",
+  "width": 1536,
+  "height": 770,
+  "scrollWidth": 1536,
+  "theme": "light",
+  "phase": "loading",
+  "reference": "",
+  "port": "Read state: loading · Issued: 11 · Resolved: 11\nOriginal reference: none visible\nActual existing presenter and repaired hook; synthetic RPC/Auth ports. Full authenticated shell, Finance, Chat and customer acceptance are not established.",
+  "active": "!function(){var d=document.documentElement,c=d.classList;c.remove('light','dark');d.style.colorSchem",
+  "headings": [
+    "Reading Sales performance"
+  ],
+  "scripts": [
+    "./assets/index-q5Syh8Tx.js"
+  ],
+  "nativePngWidth": 1536,
+  "nativePngHeight": 770,
+  "capturedAt": "2026-10-24T02:54:36.027Z",
+  "boundary": "Synthetic ports; no actual account/provider/customer acceptance"
+}

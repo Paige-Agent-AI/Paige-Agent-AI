@@ -6,6 +6,7 @@ import { useTenantContext } from "@/hooks/useTenantContext";
 import { usePlanList } from "@/hooks/usePlanList";
 import {
   shareableWorkItem,
+  clientEngagementScopeKey,
   useClientEngagementStatus,
   type ShareableWorkItem,
 } from "@/solo/engagement/useClientEngagementStatus";
@@ -106,7 +107,12 @@ function refusalNote(code: unknown, name: string): { text: string; reread: boole
   }
 }
 
-export function ClientSharedWork({ contactId, clientName, portalConnected, portalPaused = false, portalEnded = false }: Props) {
+export function ClientSharedWork(props: Props) {
+  const context = useTenantContext();
+  return <ClientSharedWorkScope key={clientEngagementScopeKey(context, props.contactId)} {...props} />;
+}
+
+function ClientSharedWorkScope({ contactId, clientName, portalConnected, portalPaused = false, portalEnded = false }: Props) {
   const read = useClientEngagementStatus(contactId);
   const { activeTenantId, activeUserId } = useTenantContext();
   const [pending, setPending] = useState<Record<string, boolean>>({});
@@ -122,6 +128,7 @@ export function ClientSharedWork({ contactId, clientName, portalConnected, porta
   const last = useRef<{ contactId: string; status: ClientEngagementStatus } | null>(null);
   if (read.phase === "ready") last.current = { contactId, status: read.status };
   const busy = read.phase === "loading" || read.phase === "idle";
+  if (!busy && read.phase !== "ready") last.current = null;
   const shown = read.phase === "ready" ? read.status : busy && last.current?.contactId === contactId ? last.current.status : null;
   const items = shown?.work.items ?? [];
   // Cancelled work is never in the client's view, so it is not counted as shareable.
@@ -142,11 +149,12 @@ export function ClientSharedWork({ contactId, clientName, portalConnected, porta
   const recheck = async () => { try { await read.reload(); return true; } catch { return false; } };
 
   const share = async (item: ShareableWorkItem, next: boolean) => {
-    if (pending[item.id]) return;
+    if (!read.isCurrent() || pending[item.id] !== undefined) return;
     setPending(current => ({ ...current, [item.id]: next }));
     note(item.id, null);
     try {
       const session = await supabase.auth.getSession();
+      if (!read.isCurrent()) return;
       const actorId = session.data.session?.user.id ?? null;
       // The actor is the signed-in session; the workspace is the one this record was read for.
       if (session.error || !actorId || !activeTenantId || (activeUserId && actorId !== activeUserId)) {
@@ -158,6 +166,7 @@ export function ClientSharedWork({ contactId, clientName, portalConnected, porta
         p_expected_actor_id: actorId, p_expected_tenant_id: activeTenantId, p_item_id: item.id,
         p_shared: next, p_expected_updated_at: item.updated_at,
       });
+      if (!read.isCurrent()) return;
       if (error) {
         note(item.id, (error as { code?: string }).code === "42501"
           ? { tone: "bad", text: "Your workspace or role changed. Reopen this client to share work." }
@@ -177,9 +186,11 @@ export function ClientSharedWork({ contactId, clientName, portalConnected, porta
       // Success is what a fresh read says, not what the writer acknowledged (§70.1).
       let fresh: ClientEngagementStatus;
       try { fresh = await read.reload(); } catch {
+        if (!read.isCurrent()) return;
         note(item.id, { tone: "bad", text: "The change couldn’t be confirmed. Use Refresh before changing it again." });
         return;
       }
+      if (!read.isCurrent()) return;
       const now = fresh.work.items.find(row => row.id === item.id);
       if (now?.shared === next) {
         note(item.id, { tone: "ok", text: !next ? `No longer shared with ${clientName}.`
@@ -191,9 +202,10 @@ export function ClientSharedWork({ contactId, clientName, portalConnected, porta
         note(item.id, { tone: "bad", text: "The change couldn’t be confirmed. Use Refresh before changing it again." });
       }
     } catch {
+      if (!read.isCurrent()) return;
       note(item.id, { tone: "bad", text: "We couldn’t confirm whether that changed. Refresh before trying again." });
     } finally {
-      setPending(current => { const rest = { ...current }; delete rest[item.id]; return rest; });
+      if (read.isCurrent()) setPending(current => { const rest = { ...current }; delete rest[item.id]; return rest; });
     }
   };
 
@@ -246,7 +258,7 @@ export function ClientSharedWork({ contactId, clientName, portalConnected, porta
         {read.phase === "no_workspace" && <p className="trc-shared-state" role="status">Open a business workspace to share work with this client.</p>}
         {read.phase === "error" && (
           <div className="trc-shared-state" role="alert">
-            <p>We couldn’t check what {clientName} can see. Nothing has been shared or unshared.</p>
+            <p>We couldn’t check what {clientName} can see. Try again before changing what you share.</p>
             <button type="button" className="trc-shared-quiet" onClick={read.retry}><RefreshCw aria-hidden />Try again</button>
           </div>
         )}

@@ -50,8 +50,13 @@ const frames: Array<Record<string, unknown> | "HOLD" | "GATE"> =
     { choices: [{ delta: { content: "Added “What's your budget for this?” after the goal question. It's saved as a draft change; publish when you're ready." } }] },
   ];
 const realFetch = window.fetch.bind(window);
+// EXP07 row 1: every chat request body is recorded so a drive can assert exactly what Paige was
+// sent (the composed brief is the first message) — the fetch never reaches the network.
+declare global { interface Window { __chatBodies: Array<Record<string, unknown>> } }
+window.__chatBodies = [];
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (String(input).includes("/functions/v1/paige-ai-chat")) {
+    try { window.__chatBodies.push(JSON.parse(String(init?.body ?? "{}"))); } catch { /* keep the stream even if a body isn't JSON */ }
     const enc = new TextEncoder();
     const body = new ReadableStream<Uint8Array>({
       async start(c) {

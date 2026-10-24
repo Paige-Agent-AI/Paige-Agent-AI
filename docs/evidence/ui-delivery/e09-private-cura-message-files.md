@@ -1,0 +1,60 @@
+# Private CURA files bound to original messages
+
+UI_CHANGE: NO
+SOLO_UI: NO: Native service only; no SOLO owner interface or customer component is changed.
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Existing EXP09 private file flow and native source packet below trace original customer selection, authorization, same intent, result and recovery without a duplicate execution path.
+PAIGE_UI_DESIGN: PASS: Project skill and routed modules read; this native-only increment preserves the approved existing customer shell, tokens, navigation and private conversation boundary.
+MATERIAL_FLOW_CHANGE: NO: This increment adds native file/intent binding and source revalidation; no component or browser caller is connected here. The larger attachment workflow remains a separate unfinished integration.
+FLOW_PROTOTYPE: NOT_REQUIRED: No rendered state, navigation, interaction or customer-facing caller is changed by this native service increment.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Original external customer binds their explicitly selected private files to one CURA question, with immutable selection and source withdrawal checks.
+VISUAL_DIRECTION: NOT_APPLICABLE: No visible component or styling change; preserve the existing customer Portal design system.
+AUTOMATED_EVIDENCE: PASS: Supporting exact075 native120849861200 actually executes247 assertions and all seven original pillar suites successfully. SQL and247 test bytes stay unchanged; this does not substitute for final-head required CI.
+STATIC_EVIDENCE: PASS: Exact final native source and39 added assertions reviewed; original208 assertions byte-preserved except plan; protected original E05 sources unchanged;1429 migration versions and guard self-test pass.
+RENDERED_EVIDENCE: NOT_APPLICABLE: No rendered component in this native service increment; future composer evidence cannot prove an integrated customer file result.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: Bounded isolated Preview admission/refusal and rollback diagnostics are recorded below; mounted browser upload, extraction and returning-customer behavior have not been driven.
+AUTHENTICATED_RUNTIME: UNVERIFIED: Ordinary external-customer upload, model read, relationship isolation, source withdrawal and reload remain untested in production.
+KEYBOARD_FOCUS: NOT_APPLICABLE: No focusable element, keyboard handler or component changes in this native increment.
+ZOOM_REFLOW: NOT_APPLICABLE: No rendered layout change in this native increment.
+REDUCED_MOTION: NOT_APPLICABLE: No animation, scrolling or motion behavior changes in this native increment.
+STATE_COVERAGE: UNVERIFIED: Native assertions cover admission, replay, refusal, withdrawal and publication; full customer loading, error, recovery and returning-session behavior requires the later integrated caller.
+TRUTHFUL_STATE_LABELS: PASS: Native draft, supporting Preview, failed245 and repaired247 awaiting execution are distinguished from production behavior and founder acceptance.
+UNVERIFIED: Actual composer, byte extraction/model, private file-reference history, customer session/reload/mobile and the full seven-pillar Experience require integrated source-backed proof.
+INTERNAL_BUILD_IDENTITY: 2df558a2a5496e3d7f30931d952ff58cac961167; deployment=PROOF_OWED(final exact-head deployment and readback); environment=preview; migrations=PROOF_OWED(final required replay of20271113810109_e09_private_cura_message_files); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-private-cura-message-files.md
+RELEASE_CHANNEL: preview: Internal native service candidate; production release follows required exact-head gates and normal source readback.
+RELEASE_CLASSIFICATION: internal-only: native file-intent persistence and revalidation increment.
+CUSTOMER_RELEASE_IDENTITY: none: No customer release version or announcement is earned by this unmounted native contract.
+RELEASE_NOTE_REQUIRED: NO: Internal native contract only; original customer Experience remains unfinished.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: integrated file processing, mounted conversation behavior, production customer return and founder acceptance; no LIVE customer claim.
+RELEASE_RECOVERY: position=forward-fix with original same-intent native status and empty terminal cleanup; reference=docs/evidence/ui-delivery/e09-private-cura-message-files.md
+
+Owner outcome: a customer adds private files to one CURA question, obtains an answer grounded in those authorized files, and returns to that same question and history. This native increment binds original ready file identities to the original user intent; component wiring and actual-byte extraction are separate remaining work. It does not complete that customer outcome by itself.
+
+## Source and authority
+
+Pre-edit reservation ANT161/dc07cc9a. Migration20271113810109 follows actually released810009 and precedes the originating held E04 higher migrations. No applied migration or incoming owner source is changed. Current-main composition2b14cedd preserves EXP05 initial-approval expiry source and bindings unchanged; no protected source was edited by EXP09. Six exact original source/security/default/ACL dependencies are checked before changes. Existing native Knowledge, Progress and Sessions admission remains the sole underlying begin path. Only fingerprint-guarded additions to the original context/publication functions consume the private-file manifest; original noncustomer branches and function signatures/defaults/ACL are preserved.
+
+The current original actor, tenant, CRM relationship, own private thread, SOLO class and assistant configuration are required. Ready original client_files rows and their private client-files objects must have matching own uploader, fixed path, MIME, size and stored-object metadata. A maximum of five distinct canonical UUIDs is bound in its explicit order. The source fingerprint includes the original file projection and stored-object identity/revision/metadata. It is metadata provenance; it is not a claim that the model has downloaded or understood those bytes.
+
+The new context and begin wrappers are authenticated-customer only; helpers remain internal. A file question cannot choose a read-only processing downgrade, Stop or bound-answer execution. No new executor or provider permission is granted. The original runtime must still enforce Gateway admission, tenant budget, recovery holds, existing executor authority and settlement. Existing no-file callers keep their original entry. Browser-provided text, file descriptions and metadata are not approved Knowledge or instructions.
+
+## Persistence and recovery
+
+The original paige_chat_turns user receipt holds a closed customer_files manifest. Replays return the original turn and cannot swap file identities or ordering. Native terminal insertion, publication and new model history check current file/object/relationship source. A missing or changed source withholds the nonempty answer. Empty original interrupted/refused/withheld cleanup remains possible, without fabricating a completion or retry. No second history, file store, receipt ledger, scheduler, Layer C adapter, sender or CURA runtime is created.
+
+## Verification state
+
+Implementation: DRAFT. Initial actual Preview on26fa failed42601 in the pre-change guard before any migration application. Parenthesizing the two CASE expressions repairs the PL/pgSQL condition. An isolated PostgreSQL16 control reproduces the original42601 and the repaired source reaches its intended42501 missing-contract refusal; [bounded actual result](assets/e09-private-cura-file-intents/guard-syntax.json). Initial sandbox loopback denial is not credited; the authorized loopback rerun passed and stopped only its own test server. This proves the guard parser/refusal, not complete native execution or the full native assertions. Fresh Preview/native gates remain required. Original Knowledge retrieval suite208 assertions preserved byte for byte except its explicit plan update;39 file assertions extend the same existing native suite to247. Cases cover helper/entry grants, malformed and excessive IDs, exact ordering, owner/peer/business refusal, unknown files, native downgrade refusal, same-turn replay, immutable selection, missing/forged terminal manifests, current publication and withdrawn-source history. The initial245 suite actually executed and failed11 cases, starting at effectful begin: the fresh native database correctly reports INTERACTIVE_PROTOCOL_NOT_READY. My positive case lacked the active protocol fixture. The source runtime/migration guards are unchanged. The new247 suite explicitly proves inactive refusal/no receipt, then seeds the active canonical row only inside its original BEGIN/ROLLBACK, with no provider/model/worker or invented activation evidence. A bounded Preview source probe reproduces the inactive refusal and obtains an accepted original user receipt with that controlled precondition; all fixture Auth/client/file/turn rows and control changes roll back. [Actual source-only diagnostic](assets/e09-private-cura-file-intents/admission-fixture-readback.json). Production was read only and its existing active/database_executor_isolation state was already present. Supporting exact075 required native120849861200 actually passes247 and all original seven-pillar suites. Final-head full required CI remains separately mandatory. Migration-version guard1429 PASS and diff check PASS only. Full real replay, required exact-head CI, separate documented review and release/source readback remain mandatory.
+
+Functional: native draft, no production activation. Visual: no changed component or rendered path. Experiential: actual composer/paste/bulk, native reference history, admitted actual-byte extraction and ordinary customer return/mobile remain unfinished. Founder Acceptance: NOT REQUESTED; one complete integrated Experience evaluation.
+
+ALG01/12 receive only potential bounded deterministic reconciliation/refusal support; no maturity promotion. ALG02/04/13 actual customer outcomes remain UNVERIFIED. All original42 obligations, seven pillars, Teach CURA, permitted links/web and original billing/communications/calendar/Work ownership remain in the original delivery packet.
+
+## Orchestration contract
+
+Original request: explicit private files attached to one customer question. Entry: existing Portal/CURA, later component wiring. Specialist: CURA; original native Chat/File services, no invented dedicated Spine tool. Identity: original customer actor, business, CRM relationship and private thread. Permission: private own files only, never business-owner authority or publishing consent. Execution: original native begin_sessions/begin_progress/begin/executor/settlement and original Auth/Storage; Layer C is not forced onto an ordinary bounded question. Work and receipt: existing file UUID/object and original user/assistant intent receipts. Recovery: same native intent, unknown results observed before any retry; no automatic duplicate upload/send/model execution. Return: verified original receipt to the same private conversation. Production customer evidence: UNVERIFIED. No provider, Research, Live, Knowledge publication, communications, signing or financial effect is activated.
+
+## Documentation collision prevention
+
+Only this native checkpoint moves from the shared packet introduction to its end, preserving every preceding byte and the original consumer checkpoint. The two own PRs previously collided on that introduction. This creates a clean native/consumer composition before release; all SQL and247 assertion bytes remain unchanged. Existing native247/Preview proof supports the unchanged source, but fresh exact-head required gates and lower-assurance review still apply. No shared execution source or policy is edited.

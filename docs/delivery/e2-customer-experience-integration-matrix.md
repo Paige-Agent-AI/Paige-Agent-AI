@@ -1443,7 +1443,7 @@ this section is an acceptance crosswalk, not another inventory.
 | --- | --- |
 | EXP00/EXP01 | Provisioned SOLO identity and confirmed Setup/offer/goals/conversation; legitimate actor/context and later-return proof. No reprovisioning or Setup writer. |
 | EXP03 | Consented lead, source/campaign and qualification facts; attributable funnel/period evidence, never invented conversion or ROI. |
-| EXP04 | Original opportunity/agreement/invoice/payment/collection and Metric evidence; exact currency/source/period, genuine payment truth and reference continuity. A later UI issuance currently revokes the preceding reference before expiry; positive same-reference review remains owed. |
+| EXP04 | Original opportunity/agreement/invoice/payment/collection and Metric evidence; exact currency/source/period, genuine payment truth and reference continuity. Prior QA observed issuer revocation; original EXP04 continuity repair2728 is now merged. Positive same-reference customer review/reload after the repair remains owed. |
 | EXP05 | Original Work, commitments, approval, attempt/result/Rail and recovery; reconcile the original monthly CPU-failed operation without replay/reset, then verify actual result and reload. |
 | EXP09 | Authorized client relationship/onboarding/service/delivery evidence; permission-filtered populated read, retention limitations and reload. |
 | EXP10 | Actual connection health/readiness and revocation; preserve unavailable states and held future full-Finance/provider authority. |

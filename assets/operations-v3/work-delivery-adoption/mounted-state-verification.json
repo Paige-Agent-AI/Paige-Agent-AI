@@ -1,0 +1,81 @@
+{
+  "boundary": "Actual mounted Solo Work and original-intent domain recovery; explicit synthetic RPC ports, no customer/persistence/provider acceptance.",
+  "results": [
+    {
+      "theme": "dark",
+      "mode": "unknown",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "refused",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "loading",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unavailable",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "accepted",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "prepare",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "unknown",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "refused",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "loading",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "unavailable",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "accepted",
+      "explicitState": true,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "prepare",
+      "explicitState": true,
+      "noReplay": true
+    }
+  ],
+  "errors": [],
+  "productCommit": "d537ed907e8e97cef7d93bbd02f79fc973377eda",
+  "candidateBase": "5c90859ac1d4fe560200069c5a783e90fb21be19",
+  "evidenceMetadataNote": "Original underlying UI baseline was 1203b58; documentation-only main 5c90859 was preserved before the frozen product commit. No executed action or result was changed."
+}

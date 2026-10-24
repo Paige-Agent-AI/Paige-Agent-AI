@@ -135,7 +135,7 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
  await Promise.all([barrier,oneSession,twoSession]);
  check(sql(`SELECT count(*) FROM paige_agreement_document_preparations WHERE agreement_id='${competingSource.agreement_id}'`)==='1','Real competing selected-version CAS retains only one winner');
  check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${competingSource.agreement_id}' AND detail->>'action'='document_preparation_recorded'`)==='1','Losing concurrent selection creates no success event');
- let commercialChecks=0;
+ let commercialChecks=0,acceptedEvidence=null;
  if(commercialProof){
   const start=checks,hex=value=>createHash('sha256').update(value).digest('hex');
   const literal=value=>quote(JSON.stringify(value))+'::jsonb';
@@ -160,7 +160,7 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
    const base=await prepare(source),baseManifest=JSON.parse(base.manifest);
    const prepared=await prepareCommercialAgreementFields(source,baseManifest.document,baseManifest.fields,input);
    return {p:{...base,manifest:canonicalPresentationJson(prepared.manifest),digest:prepared.preparation_sha256,
-    commercial:prepared.manifest.commercial.payload_digest},terms,invoice};
+    commercial:prepared.manifest.commercial.payload_digest},terms,invoice,input};
   };
   const c=await makeCommercial(),cp=c.p,sourceBefore=stamp(cp.source.agreement_id);
   const financialState=()=>sql(`SELECT jsonb_build_object('terms',to_jsonb(t),'invoice',to_jsonb(i)) FROM tenant_client_agreements t,paige_invoices i WHERE t.id='${c.terms}' AND i.id='${c.invoice}';`);
@@ -217,6 +217,12 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
   sql(validation);
   check(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${validationIdentity}'::regprocedure;`)==='61056f39c2e8c9a5fa7aab3641820a1b','Original commercial validator is not rewritten by the document extension');
   commercialChecks=checks-start;
+  if(process.argv.includes('--accepted-commercial')){
+   const {proveAcceptedCommercial}=await import('./accepted-commercial-evidence-proof.mjs');
+   const accepted=await proveAcceptedCommercial({sql,read,quote,tenant,actor,client,makeCommercial,startSession,observe});
+   acceptedEvidence=accepted;
+   checks+=accepted.checks;
+  }
  }
- return {checks,migrationReplay:2,concurrentSessions:6,observedLockWaits:4,commercial:commercialProof?{checks:commercialChecks,migrationReplay:2,concurrentSessions:2,observedLockWaits:1}:null,scope:'Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance'};
+ return {checks,migrationReplay:2,concurrentSessions:6,observedLockWaits:4,commercial:commercialProof?{checks:commercialChecks,migrationReplay:2,concurrentSessions:2,observedLockWaits:1}:null,acceptedEvidence,scope:'Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance'};
 }

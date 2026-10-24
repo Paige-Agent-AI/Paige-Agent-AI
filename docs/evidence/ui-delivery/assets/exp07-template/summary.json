@@ -1,0 +1,155 @@
+{
+  "results": [
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the governed setter ran (is_template true, tenant never named by the browser)",
+      "detail": "{\"p_id\":\"s-form\",\"p_is_template\":true,\"p_tenant_id\":null}"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the notice says what moved",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the governed setter ran (is_template true, tenant never named by the browser)",
+      "detail": "{\"p_id\":\"s-form\",\"p_is_template\":true,\"p_tenant_id\":null}"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the notice says what moved",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the governed setter ran (is_template true, tenant never named by the browser)",
+      "detail": "{\"p_id\":\"s-form\",\"p_is_template\":true,\"p_tenant_id\":null}"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the notice says what moved",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the governed setter ran (is_template true, tenant never named by the browser)",
+      "detail": "{\"p_id\":\"s-form\",\"p_is_template\":true,\"p_tenant_id\":null}"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the notice says what moved",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the governed setter ran (is_template true, tenant never named by the browser)",
+      "detail": "{\"p_id\":\"s-form\",\"p_is_template\":true,\"p_tenant_id\":null}"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the notice says what moved",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the governed setter ran (is_template true, tenant never named by the browser)",
+      "detail": "{\"p_id\":\"s-form\",\"p_is_template\":true,\"p_tenant_id\":null}"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the notice says what moved",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the governed setter ran (is_template true, tenant never named by the browser)",
+      "detail": "{\"p_id\":\"s-form\",\"p_is_template\":true,\"p_tenant_id\":null}"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the notice says what moved",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the governed setter ran (is_template true, tenant never named by the browser)",
+      "detail": "{\"p_id\":\"s-form\",\"p_is_template\":true,\"p_tenant_id\":null}"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the notice says what moved",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "the template section is present on Studio home",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "the saved template is listed",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "template card carries the starts-a-project note",
+      "detail": "Not started\nWorkshop page template\nStarts a new project from this brief"
+    },
+    {
+      "ok": true,
+      "name": "the new project's first message is the template's brief, verbatim",
+      "detail": "\"A landing page for my referral workshop\""
+    },
+    {
+      "ok": true,
+      "name": "starting from a template never calls the setter (the template is untouched)",
+      "detail": "[]"
+    },
+    {
+      "ok": true,
+      "name": "no templates saved: the section stays hidden",
+      "detail": ""
+    }
+  ],
+  "pageErrors": []
+}

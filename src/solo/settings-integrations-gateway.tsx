@@ -431,10 +431,24 @@ const AUTH_CHOICES: ReadonlyArray<{ value: AuthenticationChoice; label: string }
   { value: "none", label: "None" },
 ];
 
+/**
+ * The Slack connect preset the FIRST-CLASS Integrations tile opens — the same contract the
+ * catalogue drawer's Slack tile routes to (one preset, two doors; §18 one home). Provider
+ * facts: Slack's hosted MCP at mcp.slack.com/mcp, Streamable HTTP, NO Dynamic Client
+ * Registration — the bearer facet (a Slack app user token; the token's granted scopes govern
+ * which tools the server offers) is the verified path (descriptor migration 20271113410000).
+ */
+export const SLACK_MCP_PRESET: AddPreset = {
+  label: "Slack",
+  url: "https://mcp.slack.com/mcp",
+  providerKey: "slack",
+  auth: "bearer",
+};
+
 /** One configuration form for preset/custom entry and replacement. A host is never an endpoint.
  * The encrypted address stays private; replacement deliberately requires its complete value.
  * Acknowledgement, durable readback, OAuth and provider checking are separate transitions. */
-function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel, onSaved }: {
+export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel, onSaved }: {
   gw: UseMcpGateway;
   preset?: AddPreset;
   tool?: GatewayConnection;

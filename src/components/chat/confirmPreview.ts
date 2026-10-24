@@ -45,10 +45,21 @@ export type ConfirmItem = {
   tool: string;
   summary: string;
   fingerprint?: string;
+  expires_at?: string | null;
   command?: Record<string, unknown>;
   idempotency_key?: string;
   preview?: ConfirmEmailPreview;
 };
+
+/** Display retirement only. The original server claim always owns authority.
+ * Absence preserves legacy frames; declared but unverifiable metadata cannot
+ * become a fresh decision. A batch keeps its earliest original deadline. */
+export function confirmationDeadline(items: readonly { expires_at?: unknown }[] | undefined): number | undefined {
+  const declared = items?.filter(item => Object.prototype.hasOwnProperty.call(item, "expires_at")) ?? [];
+  if (!declared.length) return undefined;
+  const times = declared.map(item => typeof item.expires_at === "string" ? Date.parse(item.expires_at) : NaN);
+  return times.every(Number.isFinite) ? Math.min(...times) : 0;
+}
 
 /** The preview a frame or stored item carries — under `preview` or the server's `confirm_preview`. */
 export function previewOf(frame: Record<string, unknown>): { preview?: ConfirmEmailPreview } {

@@ -5,6 +5,7 @@ import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts"
 import { SALES_COLLECTION_KIT_BY_ACTION } from "../_shared/paige-spine/domains/sales_collections.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { UUID, COLLECTION_ACTIONS, parseCollectionCommand } from "../_shared/sales-collections/contract.ts";
+import { hasCommercialEffectuationReceipt, readCommercialEffectuationConsequence } from "../_shared/sales-commercial/effectuation-command.ts";
 
 const headers = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Content-Type": "application/json", "Cache-Control": "no-store" };
 const response = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), { status, headers });
@@ -48,11 +49,21 @@ Deno.serve(async req => {
   const { data: replay, error: replayError } = await admin.rpc("read_sales_collection_command_result", rpcArgs);
   if (replayError) return response(409, { ok: false, outcome: "refused", code: "SALES_COLLECTION_REPLAY_UNAVAILABLE" });
   const preparedRecovery = false;
+  if (command.action === "collection.effectuate_terms" && replay !== null) {
+    if (!hasCommercialEffectuationReceipt(replay, tenantId, command)) return response(503, { ok: false, outcome: "outcome_unknown",
+      code: "SALES_COLLECTION_READBACK_INVALID", operation_id: body.operation_id,
+      message: "The original operation could not be verified. Recover it before starting another action." });
+    if (!(await stillCurrent())) return response(409, { ok: false, outcome: "outcome_unknown", code: "WORKSPACE_CHANGED", operation_id: body.operation_id });
+  }
   if (object(replay)) return response(200, { ...object(replay)!, replayed: true, capability });
 
   const { data: previewData, error: previewError } = await admin.rpc("preview_sales_collection_command", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _command: command });
   const preview = object(previewData);
   if (previewError || !preview || preview.eligible !== true) return response(422, { ok: false, outcome: "refused", code: "SALES_COLLECTION_INELIGIBLE", ...(preview ? { preview } : {}) });
+  if (command.action === "collection.effectuate_terms" && !readCommercialEffectuationConsequence(preview.consequence, command)) {
+    return response(422, { ok: false, outcome: "refused", code: "COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE", operation_id: body.operation_id,
+      message: "The exact signed terms could not be verified. Refresh the original records before approval." });
+  }
   if (preparedRecovery || body.approved_fingerprint === undefined) {
     // Reuse a live server-issued proposal cycle. If an approval was consumed but
     // the process stopped before its business record, mint a fresh card for the
@@ -148,6 +159,7 @@ Deno.serve(async req => {
     outcome: databaseAnswered(executeError) ? "refused" : "outcome_unknown", code: "SALES_COLLECTION_COMMAND_FAILED",
     message: databaseAnswered(executeError) ? "The collection action could not complete. Reload its current state before trying again." : "The result is unknown. Recover this operation before starting another.", operation_id: args.operation_id });
   const resultObject = object(result);
-  if (!resultObject || resultObject.ok !== true) return response(503, { ok: false, outcome: "outcome_unknown", code: "SALES_COLLECTION_READBACK_INVALID", operation_id: args.operation_id });
+  if (!resultObject || resultObject.ok !== true || decided.action === "collection.effectuate_terms" && !hasCommercialEffectuationReceipt(resultObject, tenantId, decided)) return response(503, { ok: false, outcome: "outcome_unknown", code: "SALES_COLLECTION_READBACK_INVALID", operation_id: args.operation_id });
+  if (decided.action === "collection.effectuate_terms" && !(await stillCurrent())) return response(409, { ok: false, outcome: "outcome_unknown", code: "WORKSPACE_CHANGED", operation_id: args.operation_id });
   return response(200, { ...resultObject, capability });
 });

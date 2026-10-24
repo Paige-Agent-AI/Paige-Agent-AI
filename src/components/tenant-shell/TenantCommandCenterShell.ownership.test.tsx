@@ -80,6 +80,8 @@ vi.mock("@/solo/useMediaJobs", () => ({
 vi.mock("@/solo/studio/studio-data", async (original) => ({
   ...(await original<typeof import("@/solo/studio/studio-data")>()),
   listSessions: async () => [],
+  // EXP07 row 6: Studio home also lists workspace templates on mount — none in this harness.
+  listTemplates: async () => [],
   loadBrand: async () => ({
     floor: (await import("@/components/growth/growth-theme")).buildGrowthBrandFloor(null),
     name: null, logoUrl: null,
@@ -489,7 +491,9 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(campaigns).toContain('eyebrow="Marketing"');
     expect(campaigns).not.toContain('eyebrow="Growth & acquisition"');
     expect(solo).toContain("window.addEventListener('paige-studio',h)");
-    expect(solo).toContain("<VibeStudio onBack={closeStudio}/>");
+    // EXP06: the one Studio mount also receives the shell's openPaige (the NEXUS handoff's
+    // destination); the ownership fact is unchanged — one VibeStudio, closed by its owner.
+    expect(solo).toContain("<VibeStudio onBack={closeStudio} openPaige={openPaige}/>");
     expect(solo.match(/<VibeStudio/g)).toHaveLength(1);
     expect(vibe).toContain("<StudioRail");
     expect(vibe).toContain("onBack={onBack}");

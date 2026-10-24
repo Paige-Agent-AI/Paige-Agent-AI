@@ -16,6 +16,7 @@
 // published work lives in Marketing › Overview (capture points).
 import React from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { StudioHome, StudioRail } from "./studio/StudioHome";
 import { StudioSession } from "./studio/StudioSession";
 import { MediaTools } from "./studio/MediaTools";
@@ -28,11 +29,22 @@ export { VsStars } from "./studio/VsStars";
 // passes it: threads are per person, so a teammate (or an expired thread) would otherwise rebuild it.
 type View = { name: "home" } | { name: "media" } | { name: "session"; id: string; seedBrief: string | null };
 
-export const VibeStudio = ({ onBack }: { onBack: () => void }) => {
+export const VibeStudio = ({ onBack, openPaige }: { onBack: () => void; openPaige?: () => void }) => {
   const { activeTenantId, activeTenant } = useTenantContext();
   const [view, setView] = React.useState<View>({ name: "home" });
   const [sessions, setSessions] = React.useState<Session[] | null>(null);
   const [sessionsError, setSessionsError] = React.useState<string | null>(null);
+
+  // "Plan/Review with NEXUS" (roster doctrine, EXP06): the handoff PREFILLS the owner's global
+  // PAIGE composer — addressed to NEXUS, editable, never sent — and closes the Studio so the chat
+  // is reachable. It never relabels the Studio's design conversation, and no artifact byline changes.
+  // Without a shell that can open the chat there is no affordance at all (a stranded prefill would
+  // be a dishonest entry), so the callback itself is absent.
+  const onNexusHandoff = React.useMemo(
+    () => openPaige
+      ? (prompt: string) => { handOffPaigePrompt(prompt); onBack(); openPaige(); }
+      : undefined,
+    [onBack, openPaige]);
 
   const refresh = React.useCallback(() => {
     if (!activeTenantId) return;
@@ -87,6 +99,7 @@ export const VibeStudio = ({ onBack }: { onBack: () => void }) => {
           tenantSlug={activeTenant?.slug ?? ""}
           sessionId={view.id}
           seedBrief={view.seedBrief}
+          onNexusHandoff={onNexusHandoff}
           onBack={() => { setView({ name: "home" }); refresh(); }}
         />
       ) : (
@@ -102,7 +115,7 @@ export const VibeStudio = ({ onBack }: { onBack: () => void }) => {
           {view.name === "media" ? (
             <div className="vs-main" data-vibe-scroll-owner><MediaTools /></div>
           ) : (
-            <StudioHome sessions={sessions} sessionsError={sessionsError} tenantSlug={activeTenant?.slug ?? ""} onOpen={(id, brief) => setView({ name: "session", id, seedBrief: brief })} />
+            <StudioHome sessions={sessions} sessionsError={sessionsError} tenantSlug={activeTenant?.slug ?? ""} onNexusHandoff={onNexusHandoff} onOpen={(id, brief) => setView({ name: "session", id, seedBrief: brief })} />
           )}
         </div>
       )}

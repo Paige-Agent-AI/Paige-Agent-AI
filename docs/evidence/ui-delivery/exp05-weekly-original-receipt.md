@@ -99,3 +99,21 @@ hosted CI/native proof and actual production/customer evidence remain required.
 ANT161/74d4bc4c records the pre-edit boundary. Source composes current main04ed
 and preserves incoming E01/E03/E09 behavior. Full weekly activation and
 whole Operations acceptance remain unfinished.
+
+## Required full native proof passed; current-main release hold
+
+Exact41651457a8b7e2e3865cc7a7c3778ff9564ee11e now has all11 check runs
+SUCCESS and two successful Vercel statuses. Original comms-provider-boundary
+job120764074037 completed its unchanged full weekly native proof step22,
+approved-internal-task23, approval-visibility24 and event-enqueue25 successfully.
+The full weekly runner includes both100/1000-history scenarios and the unchanged
+below1000ms median margin assertion; no measured duration is invented here.
+The earlier local1038.140ms failure remains historical and is not rewritten.
+
+Local compositionbfda0b38f5f2dfe30df9e3928be9a234ddb91546 preserves main9d4a,
+including E06/E10 source and original applied E03 inquiry. Actual weekly adapter
+and all three owning test files remain byte-identical to the green416 head.
+Main now contains the separate E03/E10 duplicate700000 migration; originating
+EXP10 owns its never-applied correction. No peer rename/history reset/check waiver
+or blind retry. Required corrected-composition CI, safe merge/production source
+readback, actual original owner recurrence/recovery and full EXP05 remain owed.

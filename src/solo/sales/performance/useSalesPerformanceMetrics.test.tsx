@@ -2,8 +2,8 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { salesMetricRange, useSalesPerformanceMetrics } from "./useSalesPerformanceMetrics";
-const { rpc, auth } = vi.hoisted(() => ({ rpc: vi.fn(), auth: { listener: (() => {}) as () => void } }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc, auth: { onAuthStateChange: (listener:()=>void) => { auth.listener=listener; return { data: { subscription: { unsubscribe: vi.fn() } } }; } } } }));
+const { rpc, auth } = vi.hoisted(() => ({ rpc: vi.fn(), auth: { listener: (() => {}) as (event?: string) => void } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc, auth: { onAuthStateChange: (listener:(event?: string)=>void) => { auth.listener=listener; return { data: { subscription: { unsubscribe: vi.fn() } } }; } } } }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root, host: HTMLDivElement;
 const A = "a3400000-0000-4000-8000-000000000011", B = "a3400000-0000-4000-8000-000000000022";
@@ -108,6 +108,48 @@ const resolveCount = () => rpc.mock.calls.filter(([name]) => name === "resolve_a
 
 describe("existing metric references across a Sales-to-Finance review", () => {
   beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-07T19:42:00Z")); });
+
+  it.each(["pending", "completed"] as const)("does not supersede the original %s issuance on the subscription's initial-session notice", async timing => {
+    // Model the native contract: another issuance of the same metric revokes its old reference.
+    const latest = new Map<string, string>();
+    const port = referenceReads(row => {
+      const previous = latest.get(row.metric_key);
+      if (previous) port.rows.delete(previous);
+      latest.set(row.metric_key, row.evidence_ref);
+    });
+    const pending: Array<() => void> = [];
+    if (timing === "pending") rpc.mockImplementation((name, args) => name === "issue_analytics_evidence_bundle"
+      ? port.read(name, args).then(result => new Promise(resolve => pending.push(() => resolve(result))))
+      : port.read(name, args));
+    await render(A);
+    const original = [...port.rows.keys()][0];
+    expect(port.issued()).toBe(11);
+    await act(async () => { auth.listener("INITIAL_SESSION"); });
+    expect(port.issued()).toBe(11);
+    expect(port.rows.has(original)).toBe(true);
+    await act(async () => { pending.forEach(done => done()); });
+    expect(host.textContent).toBe(`ready:11:${original}`);
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(resolveCount()).toBe(11);
+    expect(port.issued()).toBe(11);
+    expect(host.textContent).toBe(`ready:11:${original}`);
+  });
+
+  it.each(["SIGNED_OUT", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED"])("still retires pending references on %s", async event => {
+    const port = referenceReads();
+    await render(A);
+    const pending: Array<() => void> = [];
+    rpc.mockImplementation((name, args) => name === "resolve_analytics_evidence_reference"
+      ? new Promise(resolve => pending.push(() => { void port.read(name, args).then(resolve); }))
+      : Promise.resolve({ data: null, error: { code: "42501" } }));
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(pending).toHaveLength(11);
+    await act(async () => { auth.listener(event); });
+    expect(host.textContent).toBe("denied:0:none");
+    await act(async () => { pending.forEach(done => done()); });
+    expect(host.textContent).toBe("denied:0:none");
+    expect(port.issued()).toBe(11);
+  });
 
   it("keeps an unchanged original reference after the automatic sixty-second read", async () => {
     const port = referenceReads();

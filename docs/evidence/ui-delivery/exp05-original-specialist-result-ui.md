@@ -184,3 +184,19 @@ byte-identical to bc489; no authority, action, size, focus or activation changes
 The old child head was conflicted and had no required Actions runs. Fresh
 exact-head required CI is owed after this correction; earlier green heads do not
 substitute. Native2722 production readback remains the release dependency.
+
+## Explicit current-main reconciliation after GitHub merge refusal
+
+Exact2ba02b20fb0c9da21a4cb7cfaa2455a5c6390fad passed all ten applicable check
+runs and two web statuses, with schema-free Preview skipped and no unresolved
+inline thread. Native2722 was actually merged and its394-file source/config,
+normal Edge and public20a readbacks verified in receipt6380356415.
+GitHub nevertheless returned405/dirty on the normal expected-head merge.
+Remote main94482, branch/pull head2ba and the original refs were independently
+checked; local automatic union30134e27858c62703b93e5d7670722f8c4d90a36 was clean.
+The standard current-main merge is now explicitly composed on the same branch,
+preserving all E04 sales-metric source, original weekly log/source and both Brain
+sections. Original UI/parser/Chat/controller bytes remain unchanged from2ba.
+No direct main push, gate waiver, effect, new render or customer acceptance is
+claimed. Fresh exact composed-head required CI and actual GitHub merge/readback
+remain mandatory; the old all-green head is dated evidence only.

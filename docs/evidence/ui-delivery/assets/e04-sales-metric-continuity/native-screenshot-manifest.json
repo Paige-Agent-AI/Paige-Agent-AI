@@ -1,0 +1,184 @@
+{
+  "status": "PASS_BOUNDED_ORIGINAL_COMPONENT_RENDER",
+  "sourceSnapshot": "source-before-render.json",
+  "sourceSnapshotSHA256": "97c2c424d37140444382432358c67f0100a2f7bf43b835781bbfd100a97eca9c",
+  "sourceInputs": 22,
+  "originalCompiledAssets": 3,
+  "frames": [
+    {
+      "file": "1024-dark-layout.png",
+      "SHA256": "f7f56832e0d99d9c0bbcb257ff321dc11f94c476c15d03e6b9dccccc6642f053",
+      "sidecar": "1024-dark-layout.json",
+      "sidecarSHA256": "014c0400fc75c9925e70e0ac075ff4665559673473f13a33ba50d684730ce832",
+      "pngWidth": 1024,
+      "pngHeight": 768,
+      "phase": "ready",
+      "theme": "dark",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "1024-light-layout.png",
+      "SHA256": "a4b5a304c93644007a04a4cfd5c3407b7689f8351f6283a6ec0627904b038df8",
+      "sidecar": "1024-light-layout.json",
+      "sidecarSHA256": "718a407c981e76bb0efcc83b7ea076cd883f7a36fba9390efa811f7a6171621a",
+      "pngWidth": 1024,
+      "pngHeight": 768,
+      "phase": "ready",
+      "theme": "light",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "1366-dark-layout.png",
+      "SHA256": "268ca6ffe7733e6795c9382648ffd352051fa46809eb311bba33ec58a8334e9b",
+      "sidecar": "1366-dark-layout.json",
+      "sidecarSHA256": "cd7f86d2034191fea5d16eb2e4372823a75be699e765bbb7cfd62b7a62b3c1e5",
+      "pngWidth": 1366,
+      "pngHeight": 768,
+      "phase": "ready",
+      "theme": "dark",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "1366-light-layout.png",
+      "SHA256": "855bccae475d984b6ed9ebacbdcaf7ef9f67de731743794b214591f0ac5cc722",
+      "sidecar": "1366-light-layout.json",
+      "sidecarSHA256": "6197b2a90bb8f199c4c071f8f7182e71f8ce69ec10beb9cd3ed6221bf90fe32a",
+      "pngWidth": 1366,
+      "pngHeight": 768,
+      "phase": "ready",
+      "theme": "light",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "1536-dark-evidence.png",
+      "SHA256": "5ddd43996975a4d056180694021790ce52063df239d0ad9392be00e100b4b11b",
+      "sidecar": "1536-dark-evidence.json",
+      "sidecarSHA256": "1ba7abc5b2a27624b5a01f2e5e9d4ee73fb076adfbbdafa2be4bc5603c68d584",
+      "pngWidth": 1536,
+      "pngHeight": 770,
+      "phase": "ready",
+      "theme": "dark",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "1536-dark-layout.png",
+      "SHA256": "d68f4741d3b459f77dff0d8e114e81ab95106a1439d9c9e7e806a57b03b6ea61",
+      "sidecar": "1536-dark-layout.json",
+      "sidecarSHA256": "49a56dca31842262dccc5b7888f7492ecafe4be89962b47fa9f92c6f65178259",
+      "pngWidth": 1536,
+      "pngHeight": 770,
+      "phase": "ready",
+      "theme": "dark",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "1536-light-baseline.png",
+      "SHA256": "a3db043187748506c252921f8f02643f0b6ad37c4a0118f35b164aaeaa9373f5",
+      "sidecar": "1536-light-baseline.json",
+      "sidecarSHA256": "e6fc4dcf56ae07961c20322ca3cbaf797f8f2426ba2368606b189f859d0ea3b8",
+      "pngWidth": 1536,
+      "pngHeight": 770,
+      "phase": "ready",
+      "theme": "light",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "1536-light-loading.png",
+      "SHA256": "119fc3a8fa11095079fa2e5c35ce05a4c646f123cdbcf18553acbbb5fd655ad9",
+      "sidecar": "1536-light-loading.json",
+      "sidecarSHA256": "2090001b5e2129a79156119a130107e5f931c757c192b02df0666c73c15490b4",
+      "pngWidth": 1536,
+      "pngHeight": 770,
+      "phase": "loading",
+      "theme": "light",
+      "observedReference": ""
+    },
+    {
+      "file": "320-dark-layout.png",
+      "SHA256": "18e6088517bf1f9ac06af3802bbb0661836d247e3165f97c8c26a51e9535b6f1",
+      "sidecar": "320-dark-layout.json",
+      "sidecarSHA256": "e1d37a171f58bf226c1515f277b5fe030d0fc45d55adc04db200320ce81ff1d3",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "phase": "ready",
+      "theme": "dark",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "320-dark-recovered.png",
+      "SHA256": "40f639f40480b5d7be992ad58be445a9ba4af658d09ccb87574d512873ea9ab2",
+      "sidecar": "320-dark-recovered.json",
+      "sidecarSHA256": "62f2c4cdff488d0123186d1402a5fc86ea40dcfd1a9856dcb0fc05bc97af4344",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "phase": "ready",
+      "theme": "dark",
+      "observedReference": "aneb_v1_000000000000000000000000000000000000000000000000000000000000000c"
+    },
+    {
+      "file": "320-dark-refusal.png",
+      "SHA256": "60dca715679ef07959b660a0a3391a3cbabe1801010b56a42d08af53ca3f4bec",
+      "sidecar": "320-dark-refusal.json",
+      "sidecarSHA256": "49b35966764518d6ea6c5a405bed1c4bec465eeeb0341f5a645b1e41751f2c79",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "phase": "denied",
+      "theme": "dark",
+      "observedReference": ""
+    },
+    {
+      "file": "320-dark-unresolved.png",
+      "SHA256": "e9e06af43684833bc192d3568cdfe3d2a5c51b1948556e73e2cceb80b9343534",
+      "sidecar": "320-dark-unresolved.json",
+      "sidecarSHA256": "75099055cf622fba6d8505a241f1c56f10a8ffd09a85e64aed5914be556b5435",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "phase": "unavailable",
+      "theme": "dark",
+      "observedReference": ""
+    },
+    {
+      "file": "320-light-layout.png",
+      "SHA256": "b692df39d74cc5fc6b5d40800c57d9969b09289b3a594cbcb72d33bd79d60634",
+      "sidecar": "320-light-layout.json",
+      "sidecarSHA256": "01254931d5da3729f8212b17e2aebf45b26acda557d4a60519fe1e5f3b1c2a81",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "phase": "ready",
+      "theme": "light",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "900-dark-layout.png",
+      "SHA256": "a2f7e0337a02e01fc110c24ea8b0cf4d16e0423fa2266be4a770554c0ab707f7",
+      "sidecar": "900-dark-layout.json",
+      "sidecarSHA256": "9796d9d67bafa0cf7fd18a16e29e1fb0d42ec86b11f249b15296c63edf7f87cb",
+      "pngWidth": 900,
+      "pngHeight": 1000,
+      "phase": "ready",
+      "theme": "dark",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "file": "900-light-layout.png",
+      "SHA256": "1a4a3ca472f9975b26d013e0f829633f2c564d4dd10b2f973c87012b0691c714",
+      "sidecar": "900-light-layout.json",
+      "sidecarSHA256": "39ea13f4cf56aa1b9894f86504cb9c9a6e2f7f92a63b4e61dcfc71369d5bee12",
+      "pngWidth": 900,
+      "pngHeight": 1000,
+      "phase": "ready",
+      "theme": "light",
+      "observedReference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001"
+    }
+  ],
+  "browser": "Native IAB tab9; actual compiled original presenter/hook; CDP measured CSS viewports and unmodified PNG bytes. Native keyboard/input only.",
+  "behavior": "Repeated automatic resolution retains original issuance11/reference/as-of; explicit refusal hides figures without substitution; explicit product Refresh requests new authority read and issuance22; unresolved scope is unavailable. Evidence Sheet Tab/Escape returns focus to Inspect value.",
+  "observedAt": "2026-10-24T03:08:12.840Z",
+  "limitations": [
+    "Original SalesPerformance presenter and repaired useSalesPerformanceMetrics; synthetic denied-network RPC/Auth ports. Not the complete authenticated shell, Finance, Chat, canonical database/provider/customer outcome or founder acceptance.",
+    "Read-only DOM observation precedes native screenshot; counters can advance between the two. No atomic observation or provider claim.",
+    "All document widths fit. Existing 320px unavailable inner results panel can scroll horizontally; existing 900px adjacent attention links remain crowded. Recovery is reachable. This repair does not change incumbent layout.",
+    "QA toolbar is fixture-only. This is not full PAIGE-open/closed shell, real owner/staff/linked-client authorization, Finance/VERA/Chat handoff, durable record reload, physical device, assistive technology, 200–400 percent zoom or founder/CentralQA acceptance.",
+    "Initial 1536-light loading frame was renamed to reflect its actual loading phase; PNG bytes were never changed. Intermediate failed build and wrong output-path diagnostics remain retained."
+  ]
+}

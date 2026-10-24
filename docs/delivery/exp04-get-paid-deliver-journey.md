@@ -3313,3 +3313,29 @@ one leave guard, exact-map approval/Communications/send/consent/seal/effective
 economics and all twelve outcomes remain mandatory. Chat/Live exact fields
 UNAVAILABLE; no LayerC/algorithm/readiness promotion or new engine/store. See
 [bounded evidence](../evidence/ui-delivery/e04-agreement-document-fields.md).
+
+## EXP04 Sales evidence continuity — October24 local repair
+
+Original ANT81 reference-revocation debt is repaired in the existing Sales hook:
+automatic60s/foreground reads resolve the same valid original reference through
+the canonical native resolver. No cached values, metric engine, database grant,
+Finance/Chat/Memory writer or provider action. Refusal/unknown never silently
+issues replacement evidence; original expiry/identity change and explicit retry
+retain the native issuer authority. Final parallel-barrier expiry clears figures.
+
+Untouched13 original controls plus11 causal REDs precede27 hook/52 original
+consumer cases PASS and scoped lint0. Actual original-component build1652 modules
+and15 native light/dark frames at1536/1366/1024/900/320 preserve frozen22 input
+and three asset hashes. Automatic refresh preserves issuance11/reference/as-of;
+refusal hides figures, explicit product Refresh issues a new authorized read in
+synthetic ports, unresolved scope is unavailable, Sheet Tab/Escape restores focus.
+Existing narrow inner-scroll/link-fit findings are retained. No actual business,
+provider, Finance/VERA/Chat, authenticated role or durable reload acceptance.
+
+LOCAL/UNRELEASED; exact final review/CI/deployment/readback remain required.
+E02 retains grounded Finance/VERA acceptance, E04 owns this originating hook.
+Canonical ALG01 bounded reconciliation PARTIAL, ALG02 progression incomplete,
+ALG12 bounded refusal PARTIAL/monitoring unverified and ALG13 usefulness unverified;
+no algorithm/capability Live promotion. All O1–O12, original consultant/SOLO
+scenario, held Agency/Subaccounts and final one integrated founder evaluation
+remain unchanged. [Source and rendered evidence](../evidence/ui-delivery/e04-sales-metric-continuity.md).

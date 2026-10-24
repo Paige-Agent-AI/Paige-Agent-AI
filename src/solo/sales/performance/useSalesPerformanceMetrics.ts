@@ -17,6 +17,7 @@ export function salesMetricRange(key: SalesPerformanceRangeKey, now = new Date()
 }
 
 type ReadState = { identity: string; metrics: SalesMetricBundle[]; phase: SalesPerformancePhase; unavailableKeys: Record<string, string> };
+type MetricReference = { evidenceRef: string; sourceRevisionRef: string; asOf: string; expiresAt: string };
 export function useSalesPerformanceMetrics(epoch: string | null | undefined, range: SalesPerformanceRangeKey) {
   const [attempt, setAttempt] = useState(0);
   const [authRevision, setAuthRevision] = useState(0);
@@ -36,6 +37,9 @@ export function useSalesPerformanceMetrics(epoch: string | null | undefined, ran
     let alive = true;
     let running = false;
     let expiryTimer: number | undefined;
+    // Only opaque identity metadata survives an automatic read. The canonical resolver
+    // re-produces the source; neither metric values nor an authority decision are cached.
+    const references = new Map<string, MetricReference>();
     const isCurrent = () => alive && current.current === identity;
     if (!epoch) { setState({ identity, metrics: [], phase: "unavailable", unavailableKeys: {} }); return; }
     const read = async () => {
@@ -49,12 +53,20 @@ export function useSalesPerformanceMetrics(epoch: string | null | undefined, ran
         const metricVersion = currentMetricVersion(metricKey);
         const expected: MetricRequestIdentity = { metricKey, metricVersion, accountEpoch: epoch, rangeKey: range, rangeStart: bounds.start, rangeEnd: bounds.end, dimensions: {} };
         try {
-          const issue = supabase.rpc.bind(supabase) as unknown as (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string } | null }>;
-          const { data, error } = await issue("issue_analytics_evidence_bundle", { p_metric_key: metricKey, p_metric_version: metricVersion, p_dimensions: {}, p_range_key: range, p_range_start: bounds.start, p_range_end: bounds.end, p_account_epoch: epoch });
+          const requestMetric = supabase.rpc.bind(supabase) as unknown as (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string } | null }>;
+          const prior = references.get(metricKey);
+          const retained = prior && Date.parse(prior.expiresAt) > Date.now() ? prior : undefined;
+          const { data, error } = retained
+            ? await requestMetric("resolve_analytics_evidence_reference", { p_evidence_ref: retained.evidenceRef })
+            : await requestMetric("issue_analytics_evidence_bundle", { p_metric_key: metricKey, p_metric_version: metricVersion, p_dimensions: {}, p_range_key: range, p_range_start: bounds.start, p_range_end: bounds.end, p_account_epoch: epoch });
           if (error) { if (["42501", "28000"].includes(error.code ?? "")) denied = true; throw error; }
           const result = parseMetricResult(data, expected);
+          if (retained && (result.evidence_ref !== retained.evidenceRef || result.source_revision_ref !== retained.sourceRevisionRef
+            || result.as_of !== retained.asOf || result.reference_expires_at !== retained.expiresAt)) throw new Error("Unexpected metric reference identity");
           if (result.owner_department !== "sales") throw new Error("Unexpected metric owner");
           if (result.values && result.values.kind !== "count" && result.values.kind !== "currency_totals") throw new Error("Unexpected Sales value shape");
+          if (!isCurrent()) return;
+          references.set(metricKey, { evidenceRef: result.evidence_ref, sourceRevisionRef: result.source_revision_ref, asOf: result.as_of, expiresAt: result.reference_expires_at });
           if (result.truth_state === "UNAVAILABLE") unavailableKeys[metricKey] = "This metric is not measurable from the available records.";
           const values: SalesMetricBundle["values"] = result.values === null ? null : result.values.kind === "count" || result.values.kind === "currency_totals" ? result.values : null;
           metrics.push({ ...result, owner_department: "sales", values });
@@ -62,13 +74,19 @@ export function useSalesPerformanceMetrics(epoch: string | null | undefined, ran
       }));
       running = false;
       if (isCurrent()) {
-        setState({ identity, metrics: denied ? [] : metrics, phase: denied ? "denied" : metrics.length ? "ready" : "error", unavailableKeys });
+        const currentMetrics = metrics.filter(metric => {
+          if (Date.parse(metric.reference_expires_at!) > Date.now()) return true;
+          unavailableKeys[metric.metric_key] = "The verified metric expired while checking. Refresh to try again.";
+          return false;
+        });
+        setState({ identity, metrics: denied ? [] : currentMetrics, phase: denied ? "denied" : currentMetrics.length ? "ready" : "error", unavailableKeys });
         window.clearTimeout(expiryTimer);
-        if (metrics.length) expiryTimer = window.setTimeout(() => { if (isCurrent()) { setState({ identity, metrics: [], phase: "loading", unavailableKeys: {} }); void read(); } }, Math.max(0, Math.min(...metrics.map(metric => Date.parse(metric.reference_expires_at!))) - Date.now()));
+        if (currentMetrics.length) expiryTimer = window.setTimeout(() => { if (isCurrent()) { setState({ identity, metrics: [], phase: "loading", unavailableKeys: {} }); void read(); } }, Math.max(0, Math.min(...currentMetrics.map(metric => Date.parse(metric.reference_expires_at!))) - Date.now()));
       }
     };
     void read();
-    // Refresh issuance rather than retain expired or invalidated evidence. Never display old data while checking.
+    // Revalidate unchanged references rather than revoke a review link every minute.
+    // Refusal/error never falls back to issuance; expiry or a new explicit read has its own native gate.
     const timer = window.setInterval(() => void read(), 60_000);
     const foreground = () => { if (document.visibilityState === "visible") void read(); };
     window.addEventListener("online", foreground);

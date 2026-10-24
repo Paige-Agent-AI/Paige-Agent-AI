@@ -25,6 +25,18 @@ Original2691/main3b8f9736621cf5763a0a398c7ab98ff5a5094ff0 passed all13 reviewed-
 
 PR2680 reviewedb0300921744d37f0a12f574f2a2c664b22b19516 mergedcb1d891d7b20e09d3d09263d3d9e4a6b690a8241/tree9c920fad; normal productionDQZE/publiccb1 and actual served Gateway/entry/landing source verified. Original receipt6374536491 and sole [Master4.0 log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) retain review/ten passing checks+PreviewSKIP/two statuses/145 focused and actual Native61+243/full grant proof. Original Auth/role priorities/native gate/unsaved work/domain sources remain; no workspace/identity writer/provider effect. Bounded raw render/keyboard proof is not customer acceptance; invalid foreign frame excluded. Global multiple-membership, complete owner/client/new-account/revoked/returning/all7/device/AT journey and one founder evaluation remain unfinished. Source candidates stay in the original [relationship packet](../delivery/e09-customer-relationships.md), not another ledger or Live promotion.
 
+## EXP06 Build My Brand & Online Presence — workstream baseline, October23
+
+zCod accepted the EXP06 Experience (ANT-162 authorization; ACK comment 5da8bf50).
+The owning baseline and complete 18-row acceptance matrix live in
+[docs/delivery/exp06-build-my-brand/EXP06-BASELINE-AND-ACCEPTANCE-MATRIX.md](../delivery/exp06-build-my-brand/EXP06-BASELINE-AND-ACCEPTANCE-MATRIX.md)
+(released `9512ebf3d` after non-author review): retained Studio/publish-door/public-intake
+implementation verified at main, NET-NEW absence proofs (portable export WEB-04, hosting
+WEB-05 with no registry entry, DNS guidance WEB-06, TLS WEB-07, NEXUS Studio attribution,
+full published-page SEO), the #2172 FormSettings collision hold, and the WEB-01..14/SAAS/ALG
+applicability registers with honest states. No capability was promoted; every matrix row
+names its debt class, dependency owner and proof plan. Provider authority, Google-sheet
+writes and downstream E03/E04/E09 dependencies stay explicitly held.
 ## EXP02 Finance metric context — October23 source released, proof bounded
 
 Original2684/main d780fd85e3cfd0c73256847c79f2692a5a399d1a exact review/CI,

@@ -463,6 +463,14 @@ async function requestSeed() {
           const filters: Record<string, unknown> = {};
           const query = {
             eq(key: string, value: unknown) { filters[key] = value; return query; },
+            then(resolve: (value: unknown) => unknown, reject: (error: unknown) => unknown) {
+              if (table === "channel_connectors") { state.connectorReads++; state.onConnectorRead?.(state.connectorReads); }
+              state.reads.push({ table, filters: { ...filters } });
+              const rows = table === "channel_connectors" ? [state.connector] : [];
+              return Promise.resolve({ data: rows.filter(row => Object.entries(filters)
+                .every(([key, value]) => (row as unknown as Record<string, unknown>)[key] === value)).map(row => structuredClone(row)),
+                error: state.readError ? { message: "private provider detail" } : null }).then(resolve, reject);
+            },
             async maybeSingle() {
               if (table === "channel_connectors") { state.connectorReads++; state.onConnectorRead?.(state.connectorReads); }
               state.reads.push({ table, filters: { ...filters } });
@@ -809,4 +817,60 @@ Deno.test("original agreement-send mounts private request review before legacy p
   } finally {
     Deno.serve = previousServe; Deno.env.get = previousEnv; globalThis.fetch = previousFetch;
   }
+});
+
+const senderChoices = () => {
+  const fn = (candidate as unknown as { readPreparedSignatureSenders?: ReviewBuilder }).readPreparedSignatureSenders;
+  assert.equal(typeof fn, "function", "Missing original agreement sender choices");
+  return fn!;
+};
+const listInput = (x: Awaited<ReturnType<typeof requestSeed>>) => ({
+  operation_id: x.input.operation_id, review: x.input.review,
+  expected_review_sha256: x.input.expected_review_sha256,
+});
+Deno.test("sender choices preserve exact saved source, use canonical email policy and perform no effects", async () => {
+  const x = await requestSeed(), before = effects(x.f);
+  const result = await senderChoices()(listInput(x), x.f.caller, x.f.service, actor, x.emailPorts) as unknown as Record<string, unknown>;
+  assert.equal(result.kind, "prepared_signature_sender_choices");
+  assert.equal(result.review_sha256, x.packet.review_sha256);
+  assert.deepEqual(result.senders, [{ connector_id: connectorId, from_address: x.state.connector.from_address,
+    state: "ready", reason: null }]);
+  assert.equal(result.provider_execution_verified, false);
+  assert.equal(result.approval, "not_requested");
+  assert.equal(result.execution, "unavailable");
+  assert.deepEqual(effects(x.f), before);
+  assert.deepEqual(x.state.preSendCalls, []);
+  assert.equal(x.state.identityReads, 0);
+});
+Deno.test("sender choices distinguish truly empty from unreadable and unconfigured", async () => {
+  const x = await requestSeed(), read = () => senderChoices()(listInput(x), x.f.caller, x.f.service, actor, x.emailPorts) as unknown as Promise<Record<string, unknown>>;
+  x.state.connector.active = false;
+  assert.deepEqual((await read()).senders, []);
+  x.state.connector.active = true; x.state.configured = false;
+  assert.deepEqual((await read()).senders, [{ connector_id: connectorId, from_address: x.state.connector.from_address,
+    state: "needs_setup", reason: "EMAIL_PROVIDER_NOT_CONFIGURED" }]);
+  x.state.readError = true;
+  await assert.rejects(read(), refuses("SENDER_CHOICES_UNVERIFIED"));
+});
+Deno.test("sender choices do not expose another person's private mailbox", async () => {
+  const x = await requestSeed();
+  x.state.connector.mailbox_class = "personal"; x.state.connector.mailbox_owner_user_id = operation;
+  const result = await senderChoices()(listInput(x), x.f.caller, x.f.service, actor, x.emailPorts) as unknown as Record<string, unknown>;
+  assert.deepEqual(result.senders, []);
+  assert(!JSON.stringify(result).includes(x.state.connector.from_address));
+});
+Deno.test("sender choices recheck actual actor after the final private read", async () => {
+  const x = await requestSeed();
+  x.state.onConnectorRead = read => { if (read === 4) x.f.state.admin = false; };
+  await assert.rejects(senderChoices()(listInput(x), x.f.caller, x.f.service, actor, x.emailPorts));
+});
+Deno.test("sender choices refuse a connector changed during the list without adopting its new identity", async () => {
+  const x = await requestSeed();
+  x.state.onConnectorRead = read => { if (read === 3) x.state.connector.from_address = "changed@studio.example.test"; };
+  await assert.rejects(senderChoices()(listInput(x), x.f.caller, x.f.service, actor, x.emailPorts), refuses("SENDER_CHANGED"));
+});
+Deno.test("sender choices reject forged tenant and sender inputs before private reads", async () => {
+  const x = await requestSeed(), before = x.state.reads.length;
+  await assert.rejects(senderChoices()(x.input, x.f.caller, x.f.service, actor, x.emailPorts), refuses("INVALID_REQUEST"));
+  assert.equal(x.state.reads.length, before);
 });

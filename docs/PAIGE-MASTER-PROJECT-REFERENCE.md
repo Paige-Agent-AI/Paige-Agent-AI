@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-24 UTC — EXP05 original approval-expiry repair; production source verified.**
+
+| Increment | Exact release and production proof | Completion boundary |
+| --- | --- | --- |
+| [#2753](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2753), retire initial Chat approval controls at their original stored deadline | Reviewed129f200ee83982141223d1a9a561ed939de4acb6, AUTHOR-REVIEW / LOWER ASSURANCE6382339584/6382364067/6382622404/6382749770; all11 exact checks including general120839025032/native120838955766/genuinePreview120839485803 and both web statuses SUCCESS, no review threads. Main2b14cedd546eb285e3db0c24fecf374d2a986659 parents58416369d2de317c7c6e9301248e0ea36e2d0989+129f/tree15c5aa910cdd89a5c62d472bd66b2039b577dcdd equals inspected union. Normal Edge40084962989/job120845906458 SUCCESS and guarded edge-live2b14; artifact12556148261/digest4cb6a4c24ad9eb4e931efe5db198dd1b27042f52c1b2cd601498cb90e6d2f715. Actual10:14:03UTC Chat527 ACTIVE/JWTtrue/import_mapfalse/all269 files independently exact2b14, rootcc8290faabf929819856ca6eab4e1bcf23cb60f42c508121a8fd878aa547ea71/archive5d0cc3058e5e1ccda321f0f01ea258f0fcf26575fb741c164f2b8df2e2f236fd. Exact webdpl_4ADpBKyLE5JBG7UKESaqfdMjbksj READY; both public HTTP200/build2b14-mvm8pk0i/customerUpdate:null10:13:52–53UTC. [Original release receipt6382984309](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2753#issuecomment-6382984309). | Original deadline metadata, truthful retirement and late-decision refusal only; existing exact authority/claim/consume/native records remain intact. No migration, provider, role, recurrence, Live or business-action activation. Original25 renderer/72 auxiliary/79 hostile assertions and16 native desktop/theme/open/closed plus320A/B evidence retained; earlier failures remain historical. Ordinary repaired new-proposal metadata/display and actual weekly/automation/ZION result/Rail/reload/cohort/eligibleLive/full ten-outcome/E5-CV1–9/founder acceptance remain UNVERIFIED. Catalogue and algorithm maturity unchanged; no customer version/announcement. |
+
 **2026-10-24 UTC — EXP05 original specialist approval brief; source release, customer execution still owed.**
 
 | Increment | Exact release and production proof | Completion boundary |

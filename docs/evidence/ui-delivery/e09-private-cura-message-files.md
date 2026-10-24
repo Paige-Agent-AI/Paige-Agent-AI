@@ -1,7 +1,33 @@
 # Private CURA files bound to original messages
 
 UI_CHANGE: NO
-SOLO_UI: NO
+SOLO_UI: NO: Native service only; no SOLO owner interface or customer component is changed.
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Existing EXP09 private file flow and native source packet below trace original customer selection, authorization, same intent, result and recovery without a duplicate execution path.
+PAIGE_UI_DESIGN: PASS: Project skill and routed modules read; this native-only increment preserves the approved existing customer shell, tokens, navigation and private conversation boundary.
+MATERIAL_FLOW_CHANGE: NO: This increment adds native file/intent binding and source revalidation; no component or browser caller is connected here. The larger attachment workflow remains a separate unfinished integration.
+FLOW_PROTOTYPE: NOT_REQUIRED: No rendered state, navigation, interaction or customer-facing caller is changed by this native service increment.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Original external customer binds their explicitly selected private files to one CURA question, with immutable selection and source withdrawal checks.
+VISUAL_DIRECTION: NOT_APPLICABLE: No visible component or styling change; preserve the existing customer Portal design system.
+AUTOMATED_EVIDENCE: UNVERIFIED: Initial native245 ran with11 failures; controlled protocol fixture repaired for247. Required new-head native execution is running, with no247 PASS inferred.
+STATIC_EVIDENCE: PASS: Exact final native source and39 added assertions reviewed; original208 assertions byte-preserved except plan; protected original E05 sources unchanged;1429 migration versions and guard self-test pass.
+RENDERED_EVIDENCE: NOT_APPLICABLE: No rendered component in this native service increment; future composer evidence cannot prove an integrated customer file result.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: Bounded isolated Preview admission/refusal and rollback diagnostics are recorded below; mounted browser upload, extraction and returning-customer behavior have not been driven.
+AUTHENTICATED_RUNTIME: UNVERIFIED: Ordinary external-customer upload, model read, relationship isolation, source withdrawal and reload remain untested in production.
+KEYBOARD_FOCUS: NOT_APPLICABLE: No focusable element, keyboard handler or component changes in this native increment.
+ZOOM_REFLOW: NOT_APPLICABLE: No rendered layout change in this native increment.
+REDUCED_MOTION: NOT_APPLICABLE: No animation, scrolling or motion behavior changes in this native increment.
+STATE_COVERAGE: UNVERIFIED: Native assertions cover admission, replay, refusal, withdrawal and publication; full customer loading, error, recovery and returning-session behavior requires the later integrated caller.
+TRUTHFUL_STATE_LABELS: PASS: Native draft, supporting Preview, failed245 and repaired247 awaiting execution are distinguished from production behavior and founder acceptance.
+UNVERIFIED: Actual composer, byte extraction/model, private file-reference history, customer session/reload/mobile and the full seven-pillar Experience require integrated source-backed proof.
+INTERNAL_BUILD_IDENTITY: 2df558a2a5496e3d7f30931d952ff58cac961167; deployment=PROOF_OWED(final exact-head deployment and readback); environment=preview; migrations=PROOF_OWED(final required replay of20271113810109_e09_private_cura_message_files); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-private-cura-message-files.md
+RELEASE_CHANNEL: preview: Internal native service candidate; production release follows required exact-head gates and normal source readback.
+RELEASE_CLASSIFICATION: internal-only: native file-intent persistence and revalidation increment.
+CUSTOMER_RELEASE_IDENTITY: none: No customer release version or announcement is earned by this unmounted native contract.
+RELEASE_NOTE_REQUIRED: NO: Internal native contract only; original customer Experience remains unfinished.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: integrated file processing, mounted conversation behavior, production customer return and founder acceptance; no LIVE customer claim.
+RELEASE_RECOVERY: position=forward-fix with original same-intent native status and empty terminal cleanup; reference=docs/evidence/ui-delivery/e09-private-cura-message-files.md
 
 Owner outcome: a customer adds private files to one CURA question, obtains an answer grounded in those authorized files, and returns to that same question and history. This native increment binds original ready file identities to the original user intent; component wiring and actual-byte extraction are separate remaining work. It does not complete that customer outcome by itself.
 

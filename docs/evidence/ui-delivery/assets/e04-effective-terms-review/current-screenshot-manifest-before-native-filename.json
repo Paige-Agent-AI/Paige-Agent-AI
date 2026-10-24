@@ -1,0 +1,130 @@
+{
+  "status": "PASS: bounded current-source native screenshot bytes and source continuity",
+  "boundary": "Original mounted components/parsers/Dialog/ThemeProvider; synthetic Auth/RPC/function ports only. No real native operation, signature, payment, send or completed service.",
+  "sourceSnapshot": "source-before-current-capture.json",
+  "sourceSnapshotSHA256": "3ef057318265e06506a345496fcd5ce6d4bbf5b0c4efd7c040badc1f863a37d7",
+  "sourcePins": 29,
+  "compiledAssets": {
+    "scripts/proof/e04-accepted-commercial-ui/index.html": "86ad51261a4bd53420c4da23e37f29dd375754ccb0ba96772337462a87fe2724",
+    "assets/index-BIV7aRoZ.css": "7d3d3264141b24de49f12acc30e8b9fee3cce2e59bafebd50e381d30c636cef0",
+    "assets/index-DcnW33Us.js": "64db1b06676d604a58185f41f35d5f513eee4aa3a63a7fef09a89650a6b01619"
+  },
+  "runtimes": {
+    "vite": "5.4.21",
+    "react": "18.3.1",
+    "@radix-ui/react-dialog": "1.1.23",
+    "next-themes": "0.3.0"
+  },
+  "frames": [
+    {
+      "file": "current-d-1024-dark-review.png",
+      "SHA256": "a7ff20f67f425e311bca2a342c9f26f0ba9fb282c6a45e2dd42e3ec644b5819d",
+      "pngWidth": 1024,
+      "pngHeight": 768
+    },
+    {
+      "file": "current-d-1024-light-review.png",
+      "SHA256": "85b9417211c8986e77063c439ec57be904e3db2039449964eeaf36152186620b",
+      "pngWidth": 1024,
+      "pngHeight": 768
+    },
+    {
+      "file": "current-d-1366-dark-review.png",
+      "SHA256": "a21911a964c345cca603dabf62d2fc44bb3ae704996e88c9259a8ebc29f8a35e",
+      "pngWidth": 1366,
+      "pngHeight": 768
+    },
+    {
+      "file": "current-d-1366-light-review.png",
+      "SHA256": "d68b512040e5a1dc4fb0300186b90cb66ce490673157669405519b9d7cf5349c",
+      "pngWidth": 1366,
+      "pngHeight": 768
+    },
+    {
+      "file": "current-d-1536-dark-review.png",
+      "SHA256": "491ae1a5bb3494f4dcc68ec7ba1246075aaf77b86f3a10eba19e16687c36d1ac",
+      "pngWidth": 1536,
+      "pngHeight": 770
+    },
+    {
+      "file": "current-d-1536-light-review.png",
+      "SHA256": "3f02dfd65a32dc57ecd90f12775695fec6c652d83f83438d89c2d9097bd9cb22",
+      "pngWidth": 1536,
+      "pngHeight": 770
+    },
+    {
+      "file": "current-d-320-dark-active-provenance.png",
+      "SHA256": "4e147a559ee90ccc9cbc6f9829b9fbd71016482a0c9287dbdce1a13b3c26dbc7",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-320-dark-original-recovery-review.png",
+      "SHA256": "5e1872da2ca7e7219c4fe232ed2fc2939c9a9dcc19553ac41ad7bfea91daa522",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-320-dark-owner-access-withdrawn.png",
+      "SHA256": "883288fe061134fa670afe30c9404e58aea5a96c30108add33abe140f43ba59c",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-320-dark-recorded-receipt.png",
+      "SHA256": "eb7da3860bddde483eb0f1ee96dd1935cd2ffd793235f2545867de4292af4aec",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-320-dark-refused.png",
+      "SHA256": "8b007f289ffe6220ae12bbad6f7d85b7a79a9dd1d79bddbc1a59671a9859e1ae",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-320-dark-review.png",
+      "SHA256": "852a13645ebb59e5d99d79dbdef9b0b8488b2d4acc21f4f9e80ad764745d34d7",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-320-dark-unknown.png",
+      "SHA256": "e26cfd7e25a4b18f770b468da3726424bfe4adb88da7062af1a7c56fdd6a3efd",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-320-light-approve-focus.png",
+      "SHA256": "01953ed1f2af6c8686b26eb1f81a5ee9a2958b5996239f0d1a645d2320774dfa",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-320-light-heading.png",
+      "SHA256": "463ea9545b2bc68e960747d453a73243d53c2f09fc143f4e0065029543ac5d22",
+      "pngWidth": 320,
+      "pngHeight": 800
+    },
+    {
+      "file": "current-d-900-dark-review.png",
+      "SHA256": "f9c2d27a45db7736ca1224eac134262e2fa37eed5fda02692ab7a1b3b8aa6dcd",
+      "pngWidth": 900,
+      "pngHeight": 1000
+    },
+    {
+      "file": "current-d-900-light-review.png",
+      "SHA256": "68acf3490e288d55340467f03988fe27520e3fdbe1226424d542c5267728e651",
+      "pngWidth": 900,
+      "pngHeight": 1000
+    }
+  ],
+  "method": "Original compiled components. Native Page.captureScreenshot with explicit current CSS viewport clip, no image editing or reencoding. PNG dimensions and source/asset hashes are machine checked; visible states/focus were inspected through native AX/DOM and screenshots during this run.",
+  "limitations": [
+    "Synthetic ports do not establish actual identity/native/provider/customer acceptance.",
+    "A separate observation writer retained stale array bindings and produced empty final metadata. Those diagnostic files are not proof; this manifest records actual screenshot files, bytes and dimensions only. No automated DOM-observation count is claimed.",
+    "The tool reload attempt left the original uncertain dialog mounted. Full confirmed browser reload remains UNVERIFIED; exact operation remount is separately tested.",
+    "Full authenticated shell, assistive technology and physical 200/400 percent zoom remain UNVERIFIED.",
+    "Minor mobile receipt-card finding: the fully visible refresh action extends beyond its inner card; tighten its label in the next ordinary UI increment."
+  ]
+}

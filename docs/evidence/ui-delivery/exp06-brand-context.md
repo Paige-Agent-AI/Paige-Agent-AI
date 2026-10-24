@@ -1,0 +1,42 @@
+# Brand context line in the Studio session (EXP06 row 2)
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: EXP06 assignment row 2 + resumption directive (ANT-162 comment 923ed16f): the Studio shows the brand a project's pages actually use, with honest missing states; read-only, brand facts stay owned by Setup. Per-account flow-by-flow skill is not installed in this delivery environment; the repo's local binding contract (`.claude/skills/README.md`) routes through the five installed Paige modules, all read.
+PAIGE_UI_DESIGN: PASS: project UI skill + five modules + quality-gates + review-and-testing + vendored core read in full (session 1); Impeccable SKILL + craft-floor read, `impeccable context` run (session 1); this change reuses that grounding. Operate mode, refinement-preserving: one quiet bordered line in the composer-foot's own voice under EXP07's brief card; no new chrome, banner, gradient, or motion.
+MATERIAL_FLOW_CHANGE: NO: a truthful read-only context line inside the existing project surface; no action, state, transition, exit, approval, or consequence changes.
+FLOW_PROTOTYPE: NOT_REQUIRED: presentation-only addition; no goal, choice, step, or side effect is gained or changed.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a coach/consultant inside a Studio project sees which brand facts their public pages will carry (name, logo, page color) and what is still missing, without leaving the work.
+VISUAL_DIRECTION: PASS: existing Studio world — `--vs-dim`/`--vs-text`/`--vs-line-soft` tokens, 12.3px line, 10px swatch with hairline border, logo ≤84px contain; no new tokens.
+AUTOMATED_EVIDENCE: PASS: `studio.render.test.tsx` 59/59 on the branch — four new brand-context cases (set brand names the business + own color swatch + missing-logo note; logo thumbnail rides the line and the note clears; nothing-set renders every honest state incl. "add it in Setup"; Studio home shows NO brand line). The suite's `loadBrand` override now honors a hoisted brand double (previously a fixed hardcoded answer); the supabase client mock keeps its intentional no-rpc anti-bypass property. Full studio wall re-run: 103/103.
+STATIC_EVIDENCE: PASS: full `tsc --noEmit` 0 errors; scoped ESLint 0 errors on all changed files; semantic tokens only.
+RENDERED_EVIDENCE: PASS: docs/evidence/ui-delivery/assets/exp06-brand-context/ — 5 labelled "harness render · not live" frames: present brand 1536×770 and 900×1000 (chat drawer opened the way an owner does) and dark 1366×768; missing brand 1366×768 and 900×1000 (drawer open). Real Studio components in Chromium over the stubbed door + brand read.
+BEHAVIORAL_EVIDENCE: PASS: drive-brand.mjs — present line reads "Northwind Studio · your page color · no logo yet…"; swatch carries the tenant's own #2F6B55; missing line reads "No business name yet — add it in Setup · Paige's default page color · no logo yet"; no document overflow at any frame; home shows no line; zero page errors. Found and recorded real product behavior: at ≤980px the line lives in the chat drawer and is visible only when the owner opens it (drive opens it via the Chat toggle).
+AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in browser in this environment; a real owner reopening a project must see their own brand facts (and their real missing ones) post-deploy.
+KEYBOARD_FOCUS: PASS: the line is static text with no focusable content by design (reading order after the brief card); global studio focus rules untouched. Tab-keying and screen-reader passes not driven and not claimed.
+ZOOM_REFLOW: PASS: the line wraps at 900×1000 (drawer open) with no overflow; 200%-equivalent not separately framed for this line (bounded by the NEXUS record's 683×384 leg for the same column).
+REDUCED_MOTION: PASS: no motion added or changed.
+STATE_COVERAGE: PASS: set brand, set brand with logo, all-missing, dark theme, narrow-drawer-closed→open; no loading/error state belongs to a static read (the loader's catch path is the all-missing state, proven in jsdom).
+TRUTHFUL_STATE_LABELS: PASS: the line never claims a brand exists when the read returns null — each missing fact names its honest default and where to set it ("Setup"); "your page color" appears only when the tenant's own color was returned (the raw value now travels alongside the floor); no claim that a logo was uploaded, that brand voice is used by the site, or that any intake happened here.
+SOLO_UI: YES: Solo Marketing → Vibe Studio → a project (the canonical Studio session surface).
+UNVERIFIED: authenticated owner reopen with their real brand facts; brand-voice display (intentionally NOT shown — the portal read carries name/logo/color only, and the site does not claim the setup brief's voice); device/AT beyond the harness.
+OWNER_INTENT: Resumption directive item 2 ("Brand details, assets and revisions save and reopen correctly") + matrix row 2: surface the confirmed brand the website work uses, read-only, honest about what is missing; intake capture itself stays in Setup/E01 with its provenance.
+MUST_NOT_HAPPEN: no new brand store/registry/write path; no change to EXP07's brief card/templates; no claim of brand-voice use; no change to the publish door, layout C, Esc/Tab, or the chat drawer behavior; no fabricated logo/color/name.
+MUST_PRESERVE: EXP07's brief card directly above; the anon-safe portal-brand read as the one source; the studio-data mock's anti-bypass property; the retained studio test wall (103/103).
+ACCEPTANCE_CRITERIA: an eligible owner opening a project sees "Working from your brand" with their business name, logo thumbnail when set, and their own page color when set; every missing fact says its honest state and points at Setup; Studio home shows no line; nothing else changes.
+MOTION_PURPOSE: NONE: no motion change.
+PROTECTED_SEAMS: NONE_AFFECTED structurally: no writes, no authority, no door, no isolation surface touched (the read is the existing anon-safe RPC through the existing loader). Not affected: tenant isolation, auth, entitlements, approval rules, Spine execution, canonical writes, Rail, chat transcript, Live, Vault, providers, jobs, shell geometry (re-verified at 5 frames), accessibility, privacy (the same public facts the published pages already expose).
+INTERNAL_BUILD_IDENTITY: (set at merge); deployment=preview-of-PR; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + assets/exp06-brand-context/
+RELEASE_CHANNEL: preview: ordinary PR preview of the Solo shell; no staged rollout, no external eligibility.
+RELEASE_CLASSIFICATION: internal-only: brand-context increment within EXP06 row 2; not a customer release event.
+CUSTOMER_RELEASE_IDENTITY: none: coherent owner-visible EXP06 evaluation has not occurred.
+RELEASE_NOTE_REQUIRED: no: context increment; the owner's one EXP06 evaluation covers it.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: the line, its honest states and its narrow-drawer behavior are proven at structural-harness and jsdom levels; authenticated reopen with real brand facts remains PROOF OWED.
+RELEASE_RECOVERY: position=forward-fix; reference=revert of this PR restores the prior session surface exactly (additive line + optional field + test/stub doubles only).
+SOLO_1536X770_PAIGE_CLOSED: PASS: assets/exp06-brand-context/brand-present-1536x770.png — brand line under the brief card, docOverflowX 0.
+SOLO_1536X770_PAIGE_OPEN: PASS: same-frame overlay geometry as closed for this line (the Studio is a full-screen modal; the NEXUS record's 1536 open frame covers the column geometry for this surface).
+SOLO_1366X768_PAIGE_CLOSED: PASS: assets/exp06-brand-context/brand-missing-1366x768.png — every honest missing state visible; and brand-present-dark-1366x768.png for the present state in dark.
+SOLO_1366X768_PAIGE_OPEN: PASS: same-frame overlay geometry as closed (see NEXUS record's 1366 open frame).
+SOLO_1024X768_PAIGE_CLOSED: PASS: bounded by 1536 and 900 legs of the same single-line wrap (no breakpoint sits between; the line is content-driven), drawer closed-then-opened behavior proven at 900.
+SOLO_1024X768_PAIGE_OPEN: PASS: same-frame overlay geometry as closed.
+SOLO_900X1000_PAIGE_CLOSED: PASS: assets/exp06-brand-context/brand-present-900x1000.png and brand-missing-900x1000.png — chat drawer opened via the Chat toggle; line wraps, no overflow.
+SOLO_900X1000_PAIGE_OPEN: PASS: same-frame overlay geometry as closed.

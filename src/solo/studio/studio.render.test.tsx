@@ -42,6 +42,8 @@ const h = vi.hoisted(() => ({
   openBrief: "An intake form for new clients",
   templates: [] as Rec[],
   templateCalls: [] as Array<[string, boolean]>,
+  // The portal-brand read's answer for loadBrand; null keeps the honest-missing path.
+  brand: null as Rec | null,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -51,7 +53,8 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: { getSession: async () => ({ data: { session: { access_token: "synthetic-token" } } }) },
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) }),
-    // No `rpc` here on purpose: a publish that bypassed the door would throw.
+    // No `rpc` here on purpose: a publish that bypassed the door would throw. (The portal-brand
+    // read is answered at the studio-data mock's loadBrand override, not here.)
     functions: {
       invoke: async (fn: string, opts: { body: Rec }) => {
         if (fn !== "growth-publish-command") throw new Error(`unexpected function ${fn}`);
@@ -78,7 +81,11 @@ vi.mock("./studio-data", async (orig) => {
     renameSession: async (id: string, title: string) => { h.renamed.push([id, title]); h.openTitle = title; },
     ensureThread: async () => "th-1",
     loadTurns: async () => [],
-    loadBrand: async () => ({ floor: {}, name: "Northwind Studio", logoUrl: null }),
+    // loadBrand honors the hoisted brand double: null keeps the honest-missing path (the real
+    // loader's catch shape); a row produces exactly what the portal read returns.
+    loadBrand: async () => h.brand
+      ? { floor: {}, name: (h.brand.tenant_name as string) ?? null, logoUrl: (h.brand.logo_url as string) ?? null, primaryColor: (h.brand.primary_color as string) ?? null }
+      : { floor: {}, name: null, logoUrl: null, primaryColor: null },
     loadForm: async () => { if (!h.form) throw new Error("missing"); return h.form; },
     listVersions: async () => { h.versionReads += 1; return h.versions; },
     loadImage: async () => { if (!h.content) throw new Error("missing"); return h.content; },
@@ -142,7 +149,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
-  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [] });
+  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients", templates: [], templateCalls: [], brand: null });
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -941,6 +948,56 @@ describe("Vibe Studio project workspace", () => {
       expect(h.doorCalls).toHaveLength(doorCount); // the review changes nothing at the door
       expect(opens).toBe(1);
       expect(backs).toBe(1);
+    });
+  });
+
+  // EXP06 row 2 — the brand-context line: the same portal read the published pages theme from,
+  // shown with its honest missing states. Read-only; the strip appears with the session, not home.
+  describe("brand context line", () => {
+    async function openProject() {
+      h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
+      h.form = FORM;
+      h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: "An intake form for new clients", artifacts: h.manifest, thumbnailUrl: null, updatedAt: "2026-10-03T12:00:00Z" }];
+      await mount();
+      await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      await flush();
+    }
+
+    it("with a set brand, the line names the business and its own page color, and says a logo is missing", async () => {
+      h.brand = { tenant_name: "Northwind Studio", primary_color: "#2F6B55", logo_url: null };
+      await openProject();
+      const line = host.querySelector(".vs-brand-line");
+      expect(line).toBeTruthy();
+      const t = line!.textContent ?? "";
+      expect(t).toContain("Working from your brand");
+      expect(t).toContain("Northwind Studio");
+      expect(t).toContain("your page color");
+      expect(t).not.toContain("Paige's default page color");
+      expect(t).toContain("no logo yet");
+      expect(line!.querySelector(".vs-brand-swatch")?.getAttribute("style")).toContain("rgb(47, 107, 85)");
+      expect(line!.querySelector("img.vs-brand-logo")).toBeNull();
+    });
+
+    it("with a logo set, its thumbnail rides the line and the missing-logo note is gone", async () => {
+      h.brand = { tenant_name: "Northwind Studio", primary_color: "#2F6B55", logo_url: "https://cdn.invalid/n.png" };
+      await openProject();
+      const line = host.querySelector(".vs-brand-line")!;
+      expect(line.querySelector("img.vs-brand-logo")?.getAttribute("src")).toBe("https://cdn.invalid/n.png");
+      expect(line.textContent).not.toContain("no logo yet");
+    });
+
+    it("with nothing set, every fact says its honest state and points at Setup", async () => {
+      h.brand = null;
+      await openProject();
+      const t = host.querySelector(".vs-brand-line")!.textContent ?? "";
+      expect(t).toContain("No business name yet — add it in Setup");
+      expect(t).toContain("Paige's default page color");
+      expect(t).toContain("no logo yet");
+    });
+
+    it("Studio home shows no brand line; it belongs to the project's pages", async () => {
+      await mount();
+      expect(host.querySelector(".vs-brand-line")).toBeNull();
     });
   });
 

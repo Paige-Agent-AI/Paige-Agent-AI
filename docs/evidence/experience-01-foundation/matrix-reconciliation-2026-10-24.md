@@ -72,7 +72,7 @@ divergence resolves to it.
 | D12 first action proposal→approval→task+Rail | None (pgTAP chain contracts; #2780 public journey) | Real approval + receipt | Founder | Window (step 5) |
 
 **No case is missing implementation.** Every engineering-verifiable precondition is
-green on main `d90a04f7c`. The single class of missing customer proof is the
+green on main as of `d90a04f7c`, unchanged through `a9166be54`. The single class of missing customer proof is the
 authenticated executions themselves, and one owner decision (Live activation) plus one
 platform-lane decision (Live usage persistence) sit outside E01's authority.
 

@@ -275,11 +275,11 @@ BEGIN
      FROM pg_proc WHERE oid = 'public.set_studio_session_template(uuid, boolean, uuid)'::regprocedure),
     'plpgsql function');
 
-  -- 7. Mutation proofs: each protection, broken on purpose inside a rolled-back subtransaction,
-  --    makes the matching probe answer differently — so the checks above can fail.
+  -- 7. Mutation proofs: each protection, broken on purpose inside a subtransaction that is then
+  --    rolled back (plpgsql's EXCEPTION block), makes the matching probe answer differently — so
+  --    the checks above can fail. The pattern is migration_g's: mutate, probe, raise ZZ998, catch it.
   -- 7a. Role gate removed → the plain member's refusal becomes a success.
   BEGIN
-    SAVEPOINT m1;
     CREATE OR REPLACE FUNCTION public.set_studio_session_template(p_id uuid, p_is_template boolean, p_tenant_id uuid DEFAULT NULL)
     RETURNS public.studio_sessions LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
     DECLARE _caller uuid := auth.uid(); _tenant uuid; _row public.studio_sessions;
@@ -292,11 +292,11 @@ BEGIN
     v := pg_temp.run('00000000-0000-4000-8000-00000000e003', 'authenticated', '',
       $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no role gate): the plain member succeeds — the gate is what the probe tests: ' || v);
-    ROLLBACK TO SAVEPOINT m1;
+    RAISE EXCEPTION USING ERRCODE = 'ZZ998', MESSAGE = 'roll back the mutation';
+  EXCEPTION WHEN SQLSTATE 'ZZ998' THEN NULL;
   END;
   -- 7b. Tenant wall removed → B's owner finds A's session.
   BEGIN
-    SAVEPOINT m2;
     CREATE OR REPLACE FUNCTION public.set_studio_session_template(p_id uuid, p_is_template boolean, p_tenant_id uuid DEFAULT NULL)
     RETURNS public.studio_sessions LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
     DECLARE _caller uuid := auth.uid(); _row public.studio_sessions;
@@ -310,11 +310,11 @@ BEGIN
     v := pg_temp.run('00000000-0000-4000-8000-00000000e005', 'authenticated', '',
       $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no tenant wall): the other workspace''s owner finds it — the wall is what the probe tests: ' || v);
-    ROLLBACK TO SAVEPOINT m2;
+    RAISE EXCEPTION USING ERRCODE = 'ZZ998', MESSAGE = 'roll back the mutation';
+  EXCEPTION WHEN SQLSTATE 'ZZ998' THEN NULL;
   END;
   -- 7c. Owner-or-admin predicate removed → the coach templates someone else's project.
   BEGIN
-    SAVEPOINT m3;
     CREATE OR REPLACE FUNCTION public.set_studio_session_template(p_id uuid, p_is_template boolean, p_tenant_id uuid DEFAULT NULL)
     RETURNS public.studio_sessions LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
     DECLARE _caller uuid := auth.uid(); _tenant uuid; _row public.studio_sessions;
@@ -330,7 +330,8 @@ BEGIN
     v := pg_temp.run('00000000-0000-4000-8000-00000000e004', 'authenticated', '',
       $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no owner-or-admin predicate): the coach templates another''s project — the predicate is what the probe tests: ' || v);
-    ROLLBACK TO SAVEPOINT m3;
+    RAISE EXCEPTION USING ERRCODE = 'ZZ998', MESSAGE = 'roll back the mutation';
+  EXCEPTION WHEN SQLSTATE 'ZZ998' THEN NULL;
   END;
   -- Every mutation was rolled back: the production body answers again (the wall refuses the
   -- foreign owner where the mutated one succeeded), and no row stayed a template.

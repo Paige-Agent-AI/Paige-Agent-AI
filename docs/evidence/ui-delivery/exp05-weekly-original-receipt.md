@@ -77,3 +77,25 @@ and read back before this child release. Fresh exact-head CI/real native proof
 remain mandatory; old stacked-head checks/audits are historical only.
 
 Full local native run disposition: FAIL at the unchanged accumulated-history performance margin assertion, after the real engine/redrain case passed. At1000 history rows per process, the repaired owner RPC's measured execution times were1498.516/998.595/1038.140ms; median1038.140ms fails the existing below1000ms margin. Preserve that failure; it is not a full native PASS. Weekly getter SQL, migrations, performance proof and threshold are byte-identical to main2748432, while this slice changes only the adapter consumer. No timing gate is relaxed or fixture replaced. The normal same-head required native proof must pass before release; runtime/customer latency is still unverified. Earlier sandbox socket denial is a separate invalid infrastructure attempt, not this measured failure.
+
+## October24 — exact native fixture reconciliation
+
+Hosted candidatee964 / executed merge85d4 full-unit artifact12545595967 retained
+four failures in the original weekly/engine fixtures (20760 passed,4 failed,
+3 pending). The same four failures reproduced locally before this correction.
+Their success mocks omitted canonical top-level receipt/error and original
+process/event/act identity, or used the arbitrary string durable. The absence
+fixture omitted the native weekly_check_not_observed code.
+
+Only the two owning test files are corrected to the original SQL response,
+including the original stableRunId and exact canonical occurrence coordinates.
+The old incomplete success shape remains in the negative cases and cannot
+claim completion or absence/retry authority. No production adapter, SQL,
+fingerprint, assertion removal, security threshold or workflow alteration.
+Actual original suites plus23 exact-receipt cases now96/96 PASS,25.51s;
+scoped ESLint and diff check PASS. Earlier full native history-performance FAIL
+remains retained above, not converted into a local PASS. Fresh final-head
+hosted CI/native proof and actual production/customer evidence remain required.
+ANT161/74d4bc4c records the pre-edit boundary. Source composes current main04ed
+and preserves incoming E01/E03/E09 behavior. Full weekly activation and
+whole Operations acceptance remain unfinished.

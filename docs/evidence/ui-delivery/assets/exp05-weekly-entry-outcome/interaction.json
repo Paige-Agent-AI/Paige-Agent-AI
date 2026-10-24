@@ -1,0 +1,25 @@
+[
+  {
+    "background": "rgb(251, 249, 245)",
+    "color": "rgb(103, 97, 107)",
+    "contrast": 5.707692331559825,
+    "state": "light contrast"
+  },
+  {
+    "focus": null,
+    "state": "original inspection",
+    "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Sat, Oct 24, 12:00 PM UTC · Set a business time zone in Setup for local display.Weekly commitment checkPausedEvery Monday at 09:00UTCNext executionNo executable next run is availableScopeYour open, in-progress and blocked Planning work assigned to you or created by you.PermissionRecorded configuration; execution also requires current permission and availability.Execution is held. The requested time is not a promise of a run. No booking reserves this slot.Latest attemptAwaiting attention · Sat, Oct 24, 12:00 PM UTCThe result is unknown. It must be reconciled before any replay; an older verified check does not resolve this attempt.Last verified checkCompleted check · Fri, Oct 23, 12:00 PM UTC2 outstanding · 0 blocked. Work deadlines: 0 overdue · 1 due in the following week · 1 without a deadline.The check reviewed this work. It did not complete or change the underlying tasks.Source links are unavailable for this receipt. Open Operations to inspect current work.Verified receiptReceipte5050000-0000-4000-8000-000000000004Occurrencee5050000-0000-4000-8000-000000000002Acte5050000-0000-4000-8000-000000000003Schedule revision1SourcePlanning work · observation preserved at the checkFuture executionsPause, change, resume and cancel affect future runs. They do not terminate an act already processing.Pause future checksCancel responsibilityChange scheduleReview authorizationAuthorization applies to this saved definition. A paused responsibility needs a fresh review before future checks can continue; nothing runs retroactively here.Draft status is unavailable. Your proposal has not been reported as saved.Read saved proposalsPrepare a weekly responsibilityClients → CalendarOperations → WorkClose"
+  },
+  {
+    "dialog": true,
+    "exactOpener": false,
+    "focus": null,
+    "state": "settled Escape"
+  },
+  {
+    "dialog": false,
+    "exactOpener": true,
+    "focus": "Weekly responsibility",
+    "state": "settled Escape after native transition"
+  }
+]

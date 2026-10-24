@@ -1,0 +1,541 @@
+{
+  "result": "PASS",
+  "at": "2026-10-24T08:44:48.654Z",
+  "scope": "Original Clients standing/shared-work components, real parser/composer/controls, original synthetic Auth/RPC harness only",
+  "frames": [
+    {
+      "file": "verified-1536x770-populated-light.png",
+      "state": "populated",
+      "theme": "light",
+      "at": "2026-10-24T08:42:00.221Z",
+      "controls": [
+        {
+          "contrast": 5.9040230020071185,
+          "height": 44,
+          "inside": true,
+          "label": "Shared 3",
+          "width": 64.07500457763672,
+          "x": 1091.5999755859375,
+          "y": 1197.300048828125
+        },
+        {
+          "contrast": 5.9040230020071185,
+          "height": 44,
+          "inside": true,
+          "label": "Private 2",
+          "width": 63.25,
+          "x": 1160.25,
+          "y": 1197.300048828125
+        },
+        {
+          "contrast": 5.9040230020071185,
+          "height": 44,
+          "inside": true,
+          "label": "Refresh",
+          "width": 73,
+          "x": 1229.5,
+          "y": 1197.300048828125
+        },
+        {
+          "contrast": 14.782646509174324,
+          "height": 44,
+          "inside": true,
+          "label": "Add work for Jordan Rivera",
+          "width": 211.4750061035156,
+          "x": 1267.3250732421875,
+          "y": 2131.199951171875
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 16.247967256160013,
+      "height": 770,
+      "pane": {
+        "height": 1078.3499755859375,
+        "width": 416.8000183105469,
+        "x": 1076.800048828125,
+        "y": 1110.6500244140625
+      },
+      "scrollWidth": 1536,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.Shared 3·Private 2RefreshJordan Rivera hasn’t joined your portal yet; shared items appear when they do.Draft discovery reportTask · In progress · Due Oct 10, 2026PrivateBrand workshop prepTask · Blocked · Due Oct 20, 2026Jordan sees: In progress · Due Tue, Oct 20SharedStrategy reviewMilestone · Ready · Due Oct 26, 2026Jordan sees: Not started · Due Mon, Oct 26SharedHomepage wireframe with the founder's notes on the studio's first year in Harbour LaneTask · Ready · No due datePrivateKickoff workshopMilestone · Completed · Due Sep 12, 2026Jordan sees: Done · Finished Sun, Sep 13SharedOld proposal draftTask · Cancelled · No due dateCancelled · hidden from JordanRetired briefTask · Cancelled · No due dateCancelled · hidden from JordanAdd work for Jordan Rivera",
+      "standingText": "Where Jordan Rivera standsChecked 8:10 PM EDTCheck againAgreementCompletedTest consulting agreementSent Aug 28, 2026 · Completed Sep 1, 2026Terms: Active · $3,500.00 agreed · 11 scheduled paymentsMoneyOverduePaid · verified by your payment provider$100.00Recorded by you · not provider-verified$500.00Outstanding$3,020.00Overdue$320.00$200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment requestTest payments (not real money): $300.00 — never counted above.DeliveryBehind1 of 7 done · 1 blocked · 1 overdueNext: Draft discovery report · due Oct 10, 2026Next steps6 to look atA payment is overdue.Payments are behind the agreed schedule.A payment attempt has an unknown outcome; it is not counted as paid.Show 3 moreAsk PAIGE about Jordan RiveraFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid.",
+      "width": 1536,
+      "bytes": 85790,
+      "sha256": "44163b8107d336355af2c21789f63371902137bfd7bb5aa88967ad86b83016c6",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "verified-1366x768-populated-light.png",
+      "state": "populated",
+      "theme": "light",
+      "at": "2026-10-24T08:42:01.653Z",
+      "controls": [
+        {
+          "contrast": 5.9040230020071185,
+          "height": 44,
+          "inside": true,
+          "label": "Shared 3",
+          "width": 64.07500457763672,
+          "x": 922,
+          "y": 1197.300048828125
+        },
+        {
+          "contrast": 5.9040230020071185,
+          "height": 44,
+          "inside": true,
+          "label": "Private 2",
+          "width": 63.25,
+          "x": 990.6500244140624,
+          "y": 1197.300048828125
+        },
+        {
+          "contrast": 5.9040230020071185,
+          "height": 44,
+          "inside": true,
+          "label": "Refresh",
+          "width": 73,
+          "x": 1059.9000244140625,
+          "y": 1197.300048828125
+        },
+        {
+          "contrast": 14.782646509174324,
+          "height": 44,
+          "inside": true,
+          "label": "Add work for Jordan Rivera",
+          "width": 211.4750061035156,
+          "x": 1097.7249755859375,
+          "y": 2131.199951171875
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 16.247967256160013,
+      "height": 768,
+      "pane": {
+        "height": 1078.3499755859375,
+        "width": 416.8000183105469,
+        "x": 907.2000122070312,
+        "y": 1110.6500244140625
+      },
+      "scrollWidth": 1366,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.Shared 3·Private 2RefreshJordan Rivera hasn’t joined your portal yet; shared items appear when they do.Draft discovery reportTask · In progress · Due Oct 10, 2026PrivateBrand workshop prepTask · Blocked · Due Oct 20, 2026Jordan sees: In progress · Due Tue, Oct 20SharedStrategy reviewMilestone · Ready · Due Oct 26, 2026Jordan sees: Not started · Due Mon, Oct 26SharedHomepage wireframe with the founder's notes on the studio's first year in Harbour LaneTask · Ready · No due datePrivateKickoff workshopMilestone · Completed · Due Sep 12, 2026Jordan sees: Done · Finished Sun, Sep 13SharedOld proposal draftTask · Cancelled · No due dateCancelled · hidden from JordanRetired briefTask · Cancelled · No due dateCancelled · hidden from JordanAdd work for Jordan Rivera",
+      "standingText": "Where Jordan Rivera standsChecked 8:10 PM EDTCheck againAgreementCompletedTest consulting agreementSent Aug 28, 2026 · Completed Sep 1, 2026Terms: Active · $3,500.00 agreed · 11 scheduled paymentsMoneyOverduePaid · verified by your payment provider$100.00Recorded by you · not provider-verified$500.00Outstanding$3,020.00Overdue$320.00$200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment requestTest payments (not real money): $300.00 — never counted above.DeliveryBehind1 of 7 done · 1 blocked · 1 overdueNext: Draft discovery report · due Oct 10, 2026Next steps6 to look atA payment is overdue.Payments are behind the agreed schedule.A payment attempt has an unknown outcome; it is not counted as paid.Show 3 moreAsk PAIGE about Jordan RiveraFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid.",
+      "width": 1366,
+      "bytes": 85102,
+      "sha256": "c3f5fda86570fd2fc0217f180f85779c889ae272c390e2066efbc365381dffb2",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "verified-1024x768-populated-dark.png",
+      "state": "populated",
+      "theme": "dark",
+      "at": "2026-10-24T08:42:03.359Z",
+      "controls": [
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Shared 3",
+          "width": 64.07500457763672,
+          "x": 755.9000244140625,
+          "y": 1032.7750244140625
+        },
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Private 2",
+          "width": 63.25,
+          "x": 824.5499877929688,
+          "y": 1032.7750244140625
+        },
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Refresh",
+          "width": 73,
+          "x": 893.7999877929688,
+          "y": 1032.7750244140625
+        },
+        {
+          "contrast": 16.008500761955702,
+          "height": 44,
+          "inside": true,
+          "label": "Add work for Jordan Rivera",
+          "width": 211.4750061035156,
+          "x": 755.3250122070312,
+          "y": 1694.5
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 14.812463118490252,
+      "height": 768,
+      "pane": {
+        "height": 733.3250122070312,
+        "width": 876.7999877929688,
+        "x": 104.8000030517578,
+        "y": 1018.9750366210938
+      },
+      "scrollWidth": 1024,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.Shared 3·Private 2RefreshJordan Rivera hasn’t joined your portal yet; shared items appear when they do.Draft discovery reportTask · In progress · Due Oct 10, 2026PrivateBrand workshop prepTask · Blocked · Due Oct 20, 2026Jordan sees: In progress · Due Tue, Oct 20SharedStrategy reviewMilestone · Ready · Due Oct 26, 2026Jordan sees: Not started · Due Mon, Oct 26SharedHomepage wireframe with the founder's notes on the studio's first year in Harbour LaneTask · Ready · No due datePrivateKickoff workshopMilestone · Completed · Due Sep 12, 2026Jordan sees: Done · Finished Sun, Sep 13SharedOld proposal draftTask · Cancelled · No due dateCancelled · hidden from JordanRetired briefTask · Cancelled · No due dateCancelled · hidden from JordanAdd work for Jordan Rivera",
+      "standingText": "Where Jordan Rivera standsChecked 8:10 PM EDTCheck againAgreementCompletedTest consulting agreementSent Aug 28, 2026 · Completed Sep 1, 2026Terms: Active · $3,500.00 agreed · 11 scheduled paymentsMoneyOverduePaid · verified by your payment provider$100.00Recorded by you · not provider-verified$500.00Outstanding$3,020.00Overdue$320.00$200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment requestTest payments (not real money): $300.00 — never counted above.DeliveryBehind1 of 7 done · 1 blocked · 1 overdueNext: Draft discovery report · due Oct 10, 2026Next steps6 to look atA payment is overdue.Payments are behind the agreed schedule.A payment attempt has an unknown outcome; it is not counted as paid.Show 3 moreAsk PAIGE about Jordan RiveraFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid.",
+      "width": 1024,
+      "bytes": 77011,
+      "sha256": "eac32245376cffb0b3f45821e7d964ed9e54b9753b21252a4a9da4223cb1aab3",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "verified-900x1000-populated-dark.png",
+      "state": "populated",
+      "theme": "dark",
+      "at": "2026-10-24T08:42:04.762Z",
+      "controls": [
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Shared 3",
+          "width": 64.07500457763672,
+          "x": 631.9000244140625,
+          "y": 1032.7750244140625
+        },
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Private 2",
+          "width": 63.25,
+          "x": 700.5499877929688,
+          "y": 1032.7750244140625
+        },
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Refresh",
+          "width": 73,
+          "x": 769.7999877929688,
+          "y": 1032.7750244140625
+        },
+        {
+          "contrast": 16.008500761955702,
+          "height": 44,
+          "inside": true,
+          "label": "Add work for Jordan Rivera",
+          "width": 211.4750061035156,
+          "x": 631.3250122070312,
+          "y": 1694.5
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 14.812463118490252,
+      "height": 1000,
+      "pane": {
+        "height": 733.3250122070312,
+        "width": 752.7999877929688,
+        "x": 104.8000030517578,
+        "y": 1018.9750366210938
+      },
+      "scrollWidth": 900,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.Shared 3·Private 2RefreshJordan Rivera hasn’t joined your portal yet; shared items appear when they do.Draft discovery reportTask · In progress · Due Oct 10, 2026PrivateBrand workshop prepTask · Blocked · Due Oct 20, 2026Jordan sees: In progress · Due Tue, Oct 20SharedStrategy reviewMilestone · Ready · Due Oct 26, 2026Jordan sees: Not started · Due Mon, Oct 26SharedHomepage wireframe with the founder's notes on the studio's first year in Harbour LaneTask · Ready · No due datePrivateKickoff workshopMilestone · Completed · Due Sep 12, 2026Jordan sees: Done · Finished Sun, Sep 13SharedOld proposal draftTask · Cancelled · No due dateCancelled · hidden from JordanRetired briefTask · Cancelled · No due dateCancelled · hidden from JordanAdd work for Jordan Rivera",
+      "standingText": "Where Jordan Rivera standsChecked 8:10 PM EDTCheck againAgreementCompletedTest consulting agreementSent Aug 28, 2026 · Completed Sep 1, 2026Terms: Active · $3,500.00 agreed · 11 scheduled paymentsMoneyOverduePaid · verified by your payment provider$100.00Recorded by you · not provider-verified$500.00Outstanding$3,020.00Overdue$320.00$200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment requestTest payments (not real money): $300.00 — never counted above.DeliveryBehind1 of 7 done · 1 blocked · 1 overdueNext: Draft discovery report · due Oct 10, 2026Next steps6 to look atA payment is overdue.Payments are behind the agreed schedule.A payment attempt has an unknown outcome; it is not counted as paid.Show 3 moreAsk PAIGE about Jordan RiveraFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid.",
+      "width": 900,
+      "bytes": 98951,
+      "sha256": "cb449549b5a141f73115c30f35f54782e26732d91959fc36b1a59f145893f784",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "target-320x900-populated-dark.png",
+      "state": "populated",
+      "theme": "dark",
+      "at": "2026-10-24T08:42:59.659Z",
+      "controls": [
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Shared 3",
+          "width": 64.07500457763672,
+          "x": 119.5999984741211,
+          "y": 480.5500183105469
+        },
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Private 2",
+          "width": 63.25,
+          "x": 188.25,
+          "y": 480.5500183105469
+        },
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Refresh",
+          "width": 73,
+          "x": 119.5999984741211,
+          "y": 526.5499877929688
+        },
+        {
+          "contrast": 16.008500761955702,
+          "height": 61,
+          "inside": true,
+          "label": "Add work for Jordan Rivera",
+          "width": 143.1999969482422,
+          "x": 119.5999984741211,
+          "y": 1751.4500732421875
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 14.812463118490252,
+      "height": 900,
+      "pane": {
+        "height": 1526.4500732421875,
+        "width": 172.8000030517578,
+        "x": 104.8000030517578,
+        "y": 299.8000183105469
+      },
+      "scrollWidth": 320,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.Shared 3·Private 2RefreshJordan Rivera hasn’t joined your portal yet; shared items appear when they do.Draft discovery reportTask · In progress · Due Oct 10, 2026PrivateBrand workshop prepTask · Blocked · Due Oct 20, 2026Jordan sees: In progress · Due Tue, Oct 20SharedStrategy reviewMilestone · Ready · Due Oct 26, 2026Jordan sees: Not started · Due Mon, Oct 26SharedHomepage wireframe with the founder's notes on the studio's first year in Harbour LaneTask · Ready · No due datePrivateKickoff workshopMilestone · Completed · Due Sep 12, 2026Jordan sees: Done · Finished Sun, Sep 13SharedOld proposal draftTask · Cancelled · No due dateCancelled · hidden from JordanRetired briefTask · Cancelled · No due dateCancelled · hidden from JordanAdd work for Jordan Rivera",
+      "standingText": "Where Jordan Rivera standsChecked 8:10 PM EDTCheck againAgreementCompletedTest consulting agreementSent Aug 28, 2026 · Completed Sep 1, 2026Terms: Active · $3,500.00 agreed · 11 scheduled paymentsMoneyOverduePaid · verified by your payment provider$100.00Recorded by you · not provider-verified$500.00Outstanding$3,020.00Overdue$320.00$200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment requestTest payments (not real money): $300.00 — never counted above.DeliveryBehind1 of 7 done · 1 blocked · 1 overdueNext: Draft discovery report · due Oct 10, 2026Next steps6 to look atA payment is overdue.Payments are behind the agreed schedule.A payment attempt has an unknown outcome; it is not counted as paid.Show 3 moreAsk PAIGE about Jordan RiveraFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid.",
+      "width": 320,
+      "bytes": 52522,
+      "sha256": "df9dce3e466d15cee2a33f01b9cc4924e8a077fc902807773ed5c416dfdfcf0f",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "target-320x900-empty-dark.png",
+      "state": "empty",
+      "theme": "dark",
+      "at": "2026-10-24T08:43:00.965Z",
+      "controls": [
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Refresh",
+          "width": 73,
+          "x": 119.5999984741211,
+          "y": 480.5
+        },
+        {
+          "contrast": 16.008500761955702,
+          "height": 56.35000228881836,
+          "inside": true,
+          "label": "Add work for Jordan Rivera",
+          "width": 143.1999969482422,
+          "x": 119.5999984741211,
+          "y": 762.6749877929688
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 14.812463118490252,
+      "height": 900,
+      "pane": {
+        "height": 536.0750122070312,
+        "width": 172.8000030517578,
+        "x": 104.8000030517578,
+        "y": 299.75
+      },
+      "scrollWidth": 320,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.RefreshJordan Rivera hasn’t joined your portal yet; shared items appear when they do.No work is linked to Jordan Rivera yet.Add a task for Jordan Rivera. It stays private until you share it here.Add work for Jordan Rivera",
+      "standingText": "Where Jordan Rivera standsChecked 8:10 PM EDTCheck againAgreementCompletedTest consulting agreementSent Aug 28, 2026 · Completed Sep 1, 2026Terms: Active · $3,500.00 agreed · 11 scheduled paymentsMoneyOverduePaid · verified by your payment provider$100.00Recorded by you · not provider-verified$500.00Outstanding$3,020.00Overdue$320.00$200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment requestTest payments (not real money): $300.00 — never counted above.DeliveryNo delivery workNo delivery work is linked to Jordan Rivera.Next steps4 to look atA payment is overdue.Payments are behind the agreed schedule.A payment attempt has an unknown outcome; it is not counted as paid.Show 1 moreAsk PAIGE about Jordan RiveraFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid.",
+      "width": 320,
+      "bytes": 50354,
+      "sha256": "69563af7b6b5461960b7b220f25be26ca743a628d101936314ee1582bd5537c4",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "target-320x900-refused-dark.png",
+      "state": "refused",
+      "theme": "dark",
+      "at": "2026-10-24T08:43:02.547Z",
+      "controls": [],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 14.812463118490252,
+      "height": 900,
+      "pane": {
+        "height": 303.8500061035156,
+        "width": 172.8000030517578,
+        "x": 104.8000030517578,
+        "y": 300.2749938964844
+      },
+      "scrollWidth": 320,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.Only the business owner or an admin can choose what Jordan Rivera sees in their portal.",
+      "standingText": "Where Jordan Rivera standsOnly the business owner or an admin can see agreements and payments for Jordan Rivera.",
+      "width": 320,
+      "bytes": 48543,
+      "sha256": "a63af86e44fa1601935672916566d148330bfe1802b560086e7d0fca0b37fa31",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "target-320x900-error-dark.png",
+      "state": "error",
+      "theme": "dark",
+      "at": "2026-10-24T08:43:04.644Z",
+      "controls": [
+        {
+          "contrast": 16.008500761955702,
+          "height": 44,
+          "inside": true,
+          "label": "Try again",
+          "width": 93.8000030517578,
+          "x": 119.5999984741211,
+          "y": 686.4500122070312
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 14.812463118490252,
+      "height": 900,
+      "pane": {
+        "height": 447.1499938964844,
+        "width": 172.8000030517578,
+        "x": 104.8000030517578,
+        "y": 300.1000061035156
+      },
+      "scrollWidth": 320,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.Jordan Rivera hasn’t joined your portal yet; shared items appear when they do.We couldn’t check what Jordan Rivera can see. Try again before changing what you share.Try again",
+      "standingText": "Where Jordan Rivera standsWe couldn’t check where Jordan Rivera stands. Nothing here is shown as zero; it wasn’t read.Try again",
+      "width": 320,
+      "bytes": 49180,
+      "sha256": "0999eebb121261e63d33923764e7d79dd515d175e1adcbff32da523bec2a3204",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "target-320x900-loading-dark.png",
+      "state": "loading",
+      "theme": "dark",
+      "at": "2026-10-24T08:43:07.009Z",
+      "controls": [
+        {
+          "contrast": 6.848404814296711,
+          "height": 44,
+          "inside": true,
+          "label": "Refresh",
+          "width": 73,
+          "x": 119.5999984741211,
+          "y": 480.5500183105469
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "headingContrast": 14.812463118490252,
+      "height": 900,
+      "pane": {
+        "height": 531.25,
+        "width": 172.8000030517578,
+        "x": 104.8000030517578,
+        "y": 299.8000183105469
+      },
+      "scrollWidth": 320,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.RefreshJordan Rivera hasn’t joined your portal yet; shared items appear when they do.Checking what Jordan Rivera can see…",
+      "standingText": "Where Jordan Rivera standsCheck againChecking where Jordan Rivera stands…",
+      "width": 320,
+      "bytes": 43092,
+      "sha256": "607cd6a41cc5634c5c1eb287fa5281c5cd2ebffc46bc68ecd8de27fecfd73565",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "keyboard-unshared-confirmed.png",
+      "width": 320,
+      "height": 900,
+      "state": "keyboard-unshare",
+      "theme": "dark",
+      "bytes": 53126,
+      "sha256": "86d7e7ba0a04100328f7f83cc8c86e7d67afa42b6f48d2a6998e2b50b65fef9e",
+      "format": "PNG-native-unmodified"
+    },
+    {
+      "file": "existing-operations-creator.png",
+      "width": 320,
+      "height": 900,
+      "state": "original-operations-form-unsaved",
+      "theme": "dark",
+      "bytes": 35942,
+      "sha256": "488e9cc35332d5c210c33b908cd9423bbaf664ee85c7c0f95eed5ec02d8cc464",
+      "format": "PNG-native-unmodified"
+    }
+  ],
+  "keyboard": {
+    "at": "2026-10-24T08:44:06.873Z",
+    "sharedResult": {
+      "checked": "true",
+      "notes": [
+        "Shared. Jordan will see this once they join your portal."
+      ]
+    },
+    "unsharedResult": {
+      "checked": "false",
+      "notes": [
+        "No longer shared with Jordan Rivera."
+      ]
+    },
+    "nextFocus": {
+      "label": "Share Brand workshop prep with Jordan Rivera",
+      "outline": "rgb(155, 141, 224) solid 1.6px"
+    },
+    "boundary": "Original controls and local synthetic ports only; no live customer access was changed."
+  },
+  "creator": {
+    "at": "2026-10-24T08:44:37.230Z",
+    "openedCreator": {
+      "dialogVisible": true,
+      "text": "Give the next step an ownerCreate a task with a clear responsibility and deadline. It stays private until you share it with Jordan.For clientJordan RiveraTaskContextResponsible personAvery Lin (you)Sam OkaforALAvery LinProjectStandalone workPrioritylownormalhighurgentDue dateCreate taskCloseClose"
+    },
+    "creatorFocus": {
+      "label": "Close",
+      "tag": "BUTTON"
+    },
+    "creatorClosed": {
+      "dialogVisible": false,
+      "focus": "Add work for Jordan Rivera"
+    },
+    "boundary": "Original unsaved Operations form; no record created or provider effect."
+  },
+  "beforeEmptyGrid": {
+    "scope": "Earlier v3 confirmation failure, not current source",
+    "measurement": {
+      "file": "final-320x900-empty-dark.png",
+      "state": "empty",
+      "theme": "dark",
+      "at": "2026-10-24T07:50:05.345Z",
+      "controls": [
+        {
+          "height": 44,
+          "inside": true,
+          "label": "Refresh",
+          "width": 73,
+          "x": 119.5999984741211
+        },
+        {
+          "height": 44,
+          "inside": false,
+          "label": "Add work for Jordan Rivera",
+          "width": 193.4750061035156,
+          "x": 119.5999984741211
+        }
+      ],
+      "harness": "HARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+      "height": 900,
+      "pane": {
+        "width": 172.8000030517578,
+        "x": 104.8000030517578
+      },
+      "scrollWidth": 320,
+      "sharedText": "Shared with Jordan RiveraJordan Rivera sees only what you share here: title, status and due date. Notes, priority and who it’s assigned to stay private.RefreshJordan Rivera hasn’t joined your portal yet; shared items appear when they do.No work is linked to Jordan Rivera yet.Add a task for Jordan Rivera. It stays private until you share it here.Add work for Jordan Rivera",
+      "standingText": "Where Jordan Rivera standsChecked 8:10 PM EDTCheck againAgreementCompletedTest consulting agreementSent Aug 28, 2026 · Completed Sep 1, 2026Terms: Active · $3,500.00 agreed · 11 scheduled paymentsMoneyOverduePaid · verified by your payment provider$100.00Recorded by you · not provider-verified$500.00Outstanding$3,020.00Overdue$320.00$200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment requestTest payments (not real money): $300.00 — never counted above.DeliveryNo delivery workNo delivery work is linked to Jordan Rivera.Next steps4 to look atA payment is overdue.Payments are behind the agreed schedule.A payment attempt has an unknown outcome; it is not counted as paid.Show 1 moreAsk PAIGE about Jordan RiveraFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid.",
+      "width": 320
+    },
+    "cssSourceSHA256": "7d0692b3ba902de8636be621124266ce9216579ac84607792a0580b4cf649363"
+  },
+  "unverified": [
+    "Authenticated owner/staff/linked-client operation, role revocation and cohorts",
+    "Full real Solo shell and PAIGE open/closed, actual mobile/device/assistive technology/200-percent zoom",
+    "Actual native writer/provider/customer notification/task creation/payment/signature/service acceptance",
+    "Whole O1–O12 and founder acceptance"
+  ],
+  "residuals": [
+    "Existing Operations form initially focuses its Close button; Escape returns to Add work. No save was attempted.",
+    "Existing synthetic harness dummy navigation reduces narrow pane; this is source-component stress proof, not complete mobile-shell acceptance."
+  ],
+  "recovery": "Original actor/tenant/client/status retirement source cases, stale callback/read rejection and same-scope refresh are covered by 97 owning tests; native geometry cannot establish authentication. An already-dispatched native write is not undone by retiring its UI."
+}

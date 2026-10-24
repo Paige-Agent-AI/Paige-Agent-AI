@@ -1,0 +1,125 @@
+{
+  "status": "PASS_BOUNDED_ORIGINAL_SOURCE_RENDER",
+  "sourceSnapshot": "source-before-render.json",
+  "sourceSnapshotSHA256": "ac226078bbb2ecdba8e69705219f248b34efe2769d595b5f885be930e4f40461",
+  "criticalInputs": 34,
+  "frozenCompiledDirectoryFiles": 196,
+  "frames": [
+    {
+      "file": "1536-light-review.png",
+      "SHA256": "1ffc7214c451a9dce79f08a7a812ac5472a97392a0812d43bae41a038e75fdce",
+      "sidecar": "1536-light-review.json",
+      "sidecarSHA256": "ee1d611c4f95cddec1f7f99e012ab73140e64627bedab822b9f5e0d1f8d18285",
+      "pngWidth": 1536,
+      "pngHeight": 770,
+      "theme": "light",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "1366-light-review.png",
+      "SHA256": "8941b57b1e71249ba26f89218282329ce3570dbb6c4a916eabebf9f126d468b2",
+      "sidecar": "1366-light-review.json",
+      "sidecarSHA256": "1a0739d2828ac72edb44a4d93e4977c6d289b1bc1da9ad3814da4694a6842df2",
+      "pngWidth": 1366,
+      "pngHeight": 768,
+      "theme": "light",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "1024-light-review.png",
+      "SHA256": "22aec252614ef3b384a6bf7e64e07201a130610281669c7c8f8cae2619d60408",
+      "sidecar": "1024-light-review.json",
+      "sidecarSHA256": "6d94ce2f6e98eb09c9cc605fca8df92b2565d4705c2dc98b3925b5d383c73223",
+      "pngWidth": 1024,
+      "pngHeight": 768,
+      "theme": "light",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "900-light-review.png",
+      "SHA256": "6819ed642bd51810d2e627694bb0cdff0479b62dde095ca632ade024956b1fee",
+      "sidecar": "900-light-review.json",
+      "sidecarSHA256": "c24d497239b8887a339b0c535f8ede41d435158b391f0aca0d3ab0c803ae3e54",
+      "pngWidth": 900,
+      "pngHeight": 1000,
+      "theme": "light",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "320-light-review.png",
+      "SHA256": "1b8750a7f48110c2ec4bb1635545e83f75e80bf8ca1dc97f6ea3687f602dfda6",
+      "sidecar": "320-light-review.json",
+      "sidecarSHA256": "3b05afc66f97798a3c94c8b51afa19df9aff3d8653d47e55de9ea2c59e2f6f9c",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "theme": "light",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "1536-dark-review.png",
+      "SHA256": "ca473f8de05dfed4dce7f66bc87e42d77816ce7acce6e836434fab14489d0d08",
+      "sidecar": "1536-dark-review.json",
+      "sidecarSHA256": "604362554351fa8fba7418e1cfb0fec8741a0f73b10567033bc06d31571d0ee1",
+      "pngWidth": 1536,
+      "pngHeight": 770,
+      "theme": "dark",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "320-dark-review.png",
+      "SHA256": "991e45279f768f69cf38a00e7c0efd7eddb9b857aebbc6054c5b0f4572a14263",
+      "sidecar": "320-dark-review.json",
+      "sidecarSHA256": "473cbdf85807e68ff2fe9b29147b41a19f5ac22cea10a73b8a4f22f371835551",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "theme": "dark",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "1366-dark-new-saved-review.png",
+      "SHA256": "2243212d021da03c1ac5979de909eb222cb3d8a1dd0f36150157c17766cd11d4",
+      "sidecar": "1366-dark-new-saved-review.json",
+      "sidecarSHA256": "9fdf5782e5925bc6f57409620e4083376bfa2ca868077b8d3e6942aa037eb310",
+      "pngWidth": 1366,
+      "pngHeight": 768,
+      "theme": "dark",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "320-dark-issues.png",
+      "SHA256": "3753eb5db192e30458c53dfbe802701aa31f0c6b12010cb303536965f32598fa",
+      "sidecar": "320-dark-issues.json",
+      "sidecarSHA256": "458d35c28638f15d005ba73ac85eb7203da38f4cbc40d75b5f123b7baf9c0761",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "theme": "dark",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    },
+    {
+      "file": "320-dark-network.png",
+      "SHA256": "823f668acf6c0390dc41be0b44fca7836b285f5a6d7691ed62fa3e82ee9424f0",
+      "sidecar": "320-dark-network.json",
+      "sidecarSHA256": "d7223c4ef6f5a441037ffbe3da90c6cdbf2d0ff2b5807b7cc1a50f1f78b58a19",
+      "pngWidth": 320,
+      "pngHeight": 800,
+      "theme": "dark",
+      "scope": "Synthetic original-source pane, not authenticated shell/customer acceptance"
+    }
+  ],
+  "browserFlowObservations": "browser-flow-observations.json",
+  "browserFlowObservationsSHA256": "2ec780e2a19b91f6ff122efd81ba71b990408551b5505c61dd5d41ab9e728672",
+  "flowObservations": 13,
+  "detector": {
+    "primary": 0,
+    "incumbentPaperOverlayAdvisories": 4
+  },
+  "method": "Native IAB/CDP Page.captureScreenshot, explicit measured CSS viewport, original PNG bytes with no editing/reencoding. All10 images visually inspected in one final batched source round. DOM sidecars are sampled before each capture, not an atomic backend receipt.",
+  "limitations": [
+    "Synthetic Auth/function/native transport ports do not establish actual permission/customer/provider acceptance.",
+    "No complete authenticated shell, PAIGE-open/closed coexistence, second legitimate cohort, physical device/AT/native200–400 percent zoom or durable full browser reload established.",
+    "Actual prepared-document approval/send/assigned signer inputs/consent/final seal remain separate missing integration; this read creates no signing link or operation.",
+    "Source build directory includes retained unreferenced prior build chunks; frozen current HTML and referenced asset identities are retained. No directory-size or all-chunk production bundle claim.",
+    "First prototype wide/narrow captures lacked the original data-pg host binding and are not accepted visual proof; source host corrected and prototype UI absorbed before this final round."
+  ],
+  "boundary": "Original mounted document pane/API/PDF/field editor and sole existing leave guard; only Auth/functions/native transport are explicit synthetic local ports. No actual provider/signature/payment/service/customer or founder acceptance."
+}

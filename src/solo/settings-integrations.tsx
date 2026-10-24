@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyRound, Link2Off, Plug, RefreshCw, TriangleAlert, Workflow, X, Zap } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { SoloAutomationsView } from "./settings-automations";
-import { IntegrationsGatewaySection, connectionForProvider, type GatewayLegacyTarget } from "./settings-integrations-gateway";
+import { IntegrationsGatewaySection, connectionForProvider, ConnectionForm, SLACK_MCP_PRESET, type GatewayLegacyTarget } from "./settings-integrations-gateway";
 import { useMcpGateway } from "./data/useMcpGateway";
 import { IntegrationLogo } from "./integration-logos";
 import { SocialDrawer } from "./settings-integrations-social";
@@ -88,8 +88,8 @@ function sanitizeMcpByProvider(value: unknown): Partial<Record<"n8n" | "zapier",
   return out;
 }
 
-type ProviderIdentity = "n8n" | "zapier" | "mcp" | "quickbooks" | "stripe" | "paypal" | "docusign" | "apollo" | "plaid" | "api";
-type CatalogueCategory = "all" | "social" | "marketing" | "automation" | "financial" | "documents" | "client-data" | "developer";
+type ProviderIdentity = "n8n" | "zapier" | "mcp" | "slack" | "microsoft-teams" | "quickbooks" | "stripe" | "paypal" | "docusign" | "apollo" | "plaid" | "api";
+type CatalogueCategory = "all" | "social" | "marketing" | "automation" | "collaboration" | "financial" | "documents" | "client-data" | "developer";
 
 
 function statusPresentation(value: SafeConnectionStatus | null) {
@@ -171,6 +171,13 @@ const PROVIDERS: ReadonlyArray<ProviderRow> = [
   // the card is named for what it is rather than for the protocol underneath it.
   { id: "mcp", name: "Zapier", kind: "Automation", filter: "automation", connectable: true,
     note: "" },
+  // First-class doors to the collaboration providers the owner asked for by name. Slack's
+  // connect is REAL (the gateway's own form, the verified bearer facet); Teams states its
+  // prerequisite plainly instead of pretending a native path exists.
+  { id: "slack", name: "Slack", kind: "Team chat", filter: "collaboration", connectable: true,
+    note: "" },
+  { id: "microsoft-teams", name: "Microsoft Teams", kind: "Team chat", filter: "collaboration", connectable: false,
+    note: "A native Teams connection needs an Azure AD app registration with Microsoft 365 admin consent — an owner and administrator step, not a switch Paige can flip. Until that exists, Teams actions can bridge through Zapier." },
   { id: "quickbooks", name: "QuickBooks", kind: "Financial tools", filter: "financial", connectable: false,
     note: "The sync seams exist, but nothing yet proves a connection belongs to this workspace, so no setup is offered." },
   { id: "stripe", name: "Stripe Connect", kind: "Commerce", filter: "financial", connectable: true,
@@ -198,9 +205,10 @@ function providerMark(id: ProviderIdentity) {
  * so it is named once, on the group heading, and the tools below it carry only their own identity.
  * Each group takes one of the platform's existing --k-* accents; no new colour enters the system.
  */
-type GroupId = "automation" | "social" | "financial" | "documents" | "client-data" | "developer";
+type GroupId = "automation" | "collaboration" | "social" | "financial" | "documents" | "client-data" | "developer";
 const GROUPS: ReadonlyArray<{ id: GroupId; label: string; accent: string; blurb: string; note?: string }> = [
   { id: "automation", label: "Automation", accent: "var(--k-automation)", blurb: "Run workflows and reach other apps." },
+  { id: "collaboration", label: "Team chat", accent: "var(--k-integration)", blurb: "Workplace chat and channels." },
   {
     id: "social", label: "Social", accent: "var(--k-template)", blurb: "Post, schedule and read.",
     // Shipped copy, kept verbatim and on its original condition (it showed only while the Social
@@ -215,7 +223,7 @@ const GROUPS: ReadonlyArray<{ id: GroupId; label: string; accent: string; blurb:
 ];
 /** Providers whose own `filter` value already names their group; the rest map straight across. */
 const GROUP_OF: Record<string, GroupId> = {
-  automation: "automation", social: "social", financial: "financial",
+  automation: "automation", collaboration: "collaboration", social: "social", financial: "financial",
   documents: "documents", "client-data": "client-data", developer: "developer",
   marketing: "social",
 };
@@ -727,6 +735,70 @@ function N8nDrawer({ a, m, initialMcp, onClose, onChanged }: { initialMcp?: bool
     </aside>
   </div>;
 }
+/**
+ * The first-class Slack drawer: the gateway's OWN ConnectionForm carrying the Slack preset —
+ * one form, one writer, the same contract the catalogue drawer routes to. Chrome mirrors the
+ * sibling drawers (focus on open, Tab trapped, focus restored to the opener, dirty-guarded
+ * close with an explicit discard choice). After a save the form stays open showing its durable
+ * readback; onChanged refreshes the tile state underneath.
+ */
+function SlackDrawer({ gw, tool, onClose, onChanged }: { gw: ReturnType<typeof useMcpGateway>; tool: ReturnType<typeof connectionForProvider>; onClose: () => void; onChanged: () => void }) {
+  const [dirty, setDirty] = useState(false);
+  const [confirmingClose, setConfirmingClose] = useState(false);
+  useBeforeUnloadGuard(dirty || gw.saving);
+  const panel = useRef<HTMLDivElement>(null);
+  const close = useRef<HTMLButtonElement>(null);
+  // Mount-only, exactly the N8nDrawer split: focus lands on the close control once on open
+  // and returns to the opener once on unmount. Form state (dirty flips on every keystroke,
+  // onDirtyChange(false) after a save) must NEVER re-run this effect - a state-keyed variant
+  // steals the caret mid-word and clobbers the form's own post-save readback focus.
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    close.current?.focus();
+    return () => { opener?.focus?.(); };
+  }, []);
+  // The keyboard contract, keyed on the state it reads (Escape branches on dirty/confirming/saving).
+  useEffect(() => {
+    const root = panel.current;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (confirmingClose) setConfirmingClose(false);
+        else if (gw.saving) return;
+        else if (dirty) setConfirmingClose(true);
+        else onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !root) return;
+      const items = Array.from(root.querySelectorAll<HTMLElement>('button,input,select,textarea,a[href],[tabindex="0"]'))
+        .filter(item => !item.hasAttribute("disabled") && item.tabIndex !== -1 && item.offsetParent !== null);
+      if (!items.length) return;
+      if (!root.contains(document.activeElement)) { event.preventDefault(); items[0].focus(); }
+      else if (event.shiftKey && document.activeElement === items[0]) { event.preventDefault(); items[items.length - 1].focus(); }
+      else if (!event.shiftKey && document.activeElement === items[items.length - 1]) { event.preventDefault(); items[0].focus(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("keydown", onKey); };
+  }, [dirty, confirmingClose, gw.saving, onClose]);
+  /** X / overlay / Escape: guard an unsaved draft behind ONE discard choice, and hold the
+   *  door while a save is in flight (closing mid-save mislabels a proceeding write as a
+   *  discard). The form's OWN discard path (Cancel) already asked, so it closes directly. */
+  const requestClose = useCallback(() => {
+    if (gw.saving) return;
+    if (dirty) { setConfirmingClose(true); return; }
+    onClose();
+  }, [dirty, gw.saving, onClose]);
+  return <div className="ig-layer" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) requestClose(); }}>
+    <aside className="ig-panel" ref={panel} role="dialog" aria-modal="true" aria-labelledby="ig-slack-title">
+      <header><span className="ss-provider-mark" data-provider-mark="slack" aria-hidden>S</span><div><h2 id="ig-slack-title">Slack</h2><span>Team chat, channels and messages</span></div><button ref={close} className="ig-close" type="button" aria-label="Close Slack" onClick={requestClose} disabled={gw.saving}><X aria-hidden size={16} /></button></header>
+      <div className="ig-panel-body">
+        {confirmingClose && <div className="ig-confirm-close" role="alertdialog" aria-label="Discard unsaved Slack details"><p>You have unsaved Slack details. Discard them and close?</p><div className="ig-actions"><button type="button" autoFocus className="ig-btn" data-danger onClick={onClose}>Discard changes</button><button type="button" className="ig-btn" onClick={() => setConfirmingClose(false)}>Keep editing</button></div></div>}
+        <ConnectionForm gw={gw} preset={SLACK_MCP_PRESET} tool={tool ?? undefined} onDirtyChange={setDirty} onCancel={onClose} onSaved={() => onChanged()} />
+      </div>
+      <footer><span>Connecting lets Paige reach your Slack. What she may run is a separate, per-action approval.</span></footer>
+    </aside>
+  </div>;
+}
+
 function ProviderPanel(props: { initialMcp?: boolean; m: ReturnType<typeof useN8nOAuth>; a: ReturnType<typeof useN8nConnection>; row: ProviderRow; onClose: () => void; onChanged: () => void }) {
   return props.row.id === "n8n" ? <N8nDrawer initialMcp={props.initialMcp} m={props.m} a={props.a} onClose={props.onClose} onChanged={props.onChanged} /> : props.row.id === "mcp" ? <ZapierDrawer onClose={props.onClose} onChanged={props.onChanged}/> : <LegacyProviderPanel {...props} />;
 }
@@ -839,6 +911,18 @@ export function SoloIntegrationsView() {
   /** One instance, read twice: the Automation group renders these tiles and the filter bar counts
    *  them. A chip that promises a number the wall below it does not show is a lie (§13). */
   const gw = useMcpGateway();
+  /** Slack's tile reads its REAL gateway connection (provider-keyed, never a label guess):
+   *  absent = not connected; the state words mirror the surface's own vocabulary. */
+  const slackLive = connectionForProvider(gw.tools, { providerKey: "slack" });
+  // An UNREAD list asserts nothing (the surface's own doctrine): while loading or after a
+  // refused read, the tile says so - never a false "Not connected" for a connected tenant.
+  const slackState = gw.loading ? { account: "Checking connection…", tone: "neutral" as const }
+    : gw.error ? { account: "Status unavailable", tone: "neutral" as const }
+    : !slackLive ? { account: "Not connected", tone: "neutral" as const }
+    : slackLive.enabled === false ? { account: "Turned off", tone: "warn" as const }
+    : slackLive.status === "connected" ? { account: "Connected", tone: "ok" as const }
+    : slackLive.status === "error" ? { account: "Needs attention", tone: "warn" as const }
+    : { account: "Setup not finished", tone: "neutral" as const };
   const [category, setCategory] = useState<CatalogueCategory>("all");
   const [open, setOpen] = useState<{ row: ProviderRow; scope: string; initialMcp?: boolean } | null>(null);
   const [socialOpen, setSocialOpen] = useState<{ platform: SocialPlatformDefinition; scope: string } | null>(null);
@@ -985,7 +1069,8 @@ export function SoloIntegrationsView() {
             </> : row.id === "stripe" ? <span className="ig-card-state" data-tone={stripe.state === "ready" ? "ok" : "neutral"}>
               <i aria-hidden />{stripe.loading ? "Checking connection…" : stripe.error ? "Status unavailable" : stripeMerchantWords[stripe.state]}
               {stripe.environment && ` · ${stripe.environment.toUpperCase()}`}
-            </span> : <span className="ig-card-state" data-tone="neutral"><i aria-hidden />Not available</span>}
+            </span> : row.id === "slack" ? <span className="ig-card-state" data-tone={slackState.tone}><i aria-hidden />{slackState.account}</span>
+            : <span className="ig-card-state" data-tone="neutral"><i aria-hidden />Not available</span>}
           </span>
         </button>
       </li>
@@ -1024,7 +1109,9 @@ export function SoloIntegrationsView() {
         </section>)}
       </>}
     </>}
-    {open && !tenantLoading && open.scope === scopeKey && (open.row.id === "stripe"
+    {open && !tenantLoading && open.scope === scopeKey && (open.row.id === "slack"
+      ? <SlackDrawer key={`${scopeKey}:slack`} gw={gw} tool={slackLive} onClose={() => setOpen(null)} onChanged={status.retry} />
+      : open.row.id === "stripe"
       ? <StripeMerchantDrawer key={`${scopeKey}:stripe`} merchant={stripe} onClose={() => setOpen(null)} />
       : <ProviderPanel initialMcp={open.initialMcp} m={oauth} a={api} key={`${scopeKey}:${open.row.id}`} row={open.row} onClose={() => setOpen(null)} onChanged={status.retry} />)}
     {socialOpen && !tenantLoading && socialOpen.scope === scopeKey && <SocialDrawer social={social} platform={socialOpen.platform} key={`${scopeKey}:social:${socialOpen.platform.key}`} onClose={() => setSocialOpen(null)} />}

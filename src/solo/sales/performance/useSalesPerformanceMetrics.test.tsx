@@ -15,7 +15,7 @@ function response(args: Record<string,string>) {
 }
 function Probe({epoch,range="month"}:{epoch:string|null;range?:"month"|"week"}) { const read=useSalesPerformanceMetrics(epoch,range); return <output>{read.phase}:{read.metrics.length}:{read.metrics[0]?.evidence_ref ?? "none"}</output>; }
 beforeEach(()=>{rpc.mockReset();host=document.createElement("div");document.body.append(host);root=createRoot(host);});
-afterEach(()=>{act(()=>root.unmount());host.remove();});
+afterEach(()=>{act(()=>root.unmount());host.remove();vi.useRealTimers();});
 async function render(epoch:string|null,range:"month"|"week"="month") { await act(async()=>{root.render(<Probe epoch={epoch} range={range}/>);}); }
 describe("Sales shared metric consumer",()=>{
   it("requests business-calendar overdue 1.1.0 without changing the other ten metric identities",async()=>{
@@ -82,4 +82,173 @@ describe("Sales shared metric consumer",()=>{
     await act(async()=>auth.listener());expect(host.textContent).toBe("loading:0:none");expect(rpc).toHaveBeenCalledTimes(22);
   });
   it("uses exact completed UTC day bounds for date cohorts",()=>{expect(salesMetricRange("week",new Date("2026-10-07T19:42:00Z"))).toEqual({start:"2026-09-30T00:00:00.000Z",end:"2026-10-07T00:00:00.000Z"});});
+});
+
+function referenceReads(adjust?: (row: ReturnType<typeof response>, index: number) => void) {
+  const rows = new Map<string, ReturnType<typeof response>>();
+  let issued = 0;
+  const read = async (name: string, args: Record<string, string>) => {
+    if (name === "issue_analytics_evidence_bundle") {
+      const row = response(args);
+      row.evidence_ref = `aneb_v1_${(++issued).toString(16).padStart(64, "0")}`;
+      adjust?.(row, issued);
+      rows.set(row.evidence_ref, structuredClone(row));
+      return { data: row, error: null };
+    }
+    if (name === "resolve_analytics_evidence_reference") {
+      const row = rows.get(args.p_evidence_ref);
+      return { data: row ? structuredClone(row) : null, error: row ? null : { code: "42501" } };
+    }
+    throw new Error("Unexpected metric RPC");
+  };
+  rpc.mockImplementation(read);
+  return { rows, read, issued: () => issued };
+}
+const resolveCount = () => rpc.mock.calls.filter(([name]) => name === "resolve_analytics_evidence_reference").length;
+
+describe("existing metric references across a Sales-to-Finance review", () => {
+  beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-07T19:42:00Z")); });
+
+  it("keeps an unchanged original reference after the automatic sixty-second read", async () => {
+    const port = referenceReads();
+    await render(A);
+    const before = host.textContent;
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    expect(port.issued()).toBe(11);
+    expect(resolveCount()).toBe(11);
+    expect(host.textContent).toBe(before);
+  });
+
+  it("clears figures while foreground reference verification is pending, then restores the same reference", async () => {
+    const port = referenceReads();
+    await render(A);
+    const before = host.textContent;
+    const pending: Array<() => void> = [];
+    rpc.mockImplementation((name, args) => name === "resolve_analytics_evidence_reference"
+      ? new Promise(resolve => pending.push(() => { void port.read(name, args).then(resolve); }))
+      : port.read(name, args));
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(host.textContent).toBe("loading:0:none");
+    expect(pending).toHaveLength(11);
+    expect(port.issued()).toBe(11);
+    await act(async () => { pending.forEach(done => done()); });
+    expect(host.textContent).toBe(before);
+  });
+
+  it("keeps a refused reference refused across automatic reads instead of silently issuing a substitute", async () => {
+    const port = referenceReads();
+    await render(A);
+    rpc.mockImplementation((name, args) => name === "resolve_analytics_evidence_reference"
+      ? Promise.resolve({ data: null, error: { code: "42501" } }) : port.read(name, args));
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(host.textContent).toBe("denied:0:none");
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    expect(host.textContent).toBe("denied:0:none");
+    expect(port.issued()).toBe(11);
+    expect(resolveCount()).toBe(22);
+  });
+
+  it.each(["reference", "revision", "as-of", "expiry"] as const)("refuses a resolver response that changes the original %s identity", async changed => {
+    const port = referenceReads();
+    await render(A);
+    rpc.mockImplementation(async (name, args) => {
+      const result = await port.read(name, args);
+      if (name !== "resolve_analytics_evidence_reference" || !result.data) return result;
+      return { ...result, data: { ...result.data,
+        ...(changed === "reference" ? { evidence_ref: `aneb_v1_${"f".repeat(64)}` } : {}),
+        ...(changed === "revision" ? { source_revision_ref: `sr_v1_${"e".repeat(64)}` } : {}),
+        ...(changed === "as-of" ? { as_of: "2026-10-07T19:41:59Z", freshness: { ...result.data.freshness, queried_at: "2026-10-07T19:41:59Z" } } : {}),
+        ...(changed === "expiry" ? { reference_expires_at: new Date(Date.now() + 1_000_000).toISOString() } : {}),
+      } };
+    });
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(host.textContent).toBe("error:0:none");
+    expect(port.issued()).toBe(11);
+  });
+
+  it("rechecks the same reference after a transport failure without renewing its authority or expiry", async () => {
+    const port = referenceReads();
+    await render(A);
+    const before = host.textContent;
+    rpc.mockImplementation((name, args) => name === "resolve_analytics_evidence_reference"
+      ? Promise.resolve({ data: null, error: { code: "FETCH_FAILED" } }) : port.read(name, args));
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(host.textContent).toBe("error:0:none");
+    expect(port.issued()).toBe(11);
+    rpc.mockImplementation(port.read);
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(host.textContent).toBe(before);
+    expect(port.issued()).toBe(11);
+  });
+
+  it("requires a fresh authorized UI read after refusal and still honors current issuer denial", async () => {
+    const port = referenceReads();
+    function ExplicitRead() {
+      const read = useSalesPerformanceMetrics(A, "month");
+      return <><output>{read.phase}:{read.metrics.length}:{read.metrics[0]?.evidence_ref ?? "none"}</output><button onClick={read.retry}>Refresh verified metrics</button></>;
+    }
+    await act(async () => { root.render(<ExplicitRead />); });
+    const original = host.querySelector("output")?.textContent;
+    let issuerDenied = true;
+    rpc.mockImplementation((name, args) => name === "resolve_analytics_evidence_reference" || issuerDenied
+      ? Promise.resolve({ data: null, error: { code: "42501" } }) : port.read(name, args));
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(host.querySelector("output")?.textContent).toBe("denied:0:none");
+    expect(port.issued()).toBe(11);
+    await act(async () => { host.querySelector("button")?.click(); });
+    expect(host.querySelector("output")?.textContent).toBe("denied:0:none");
+    expect(port.issued()).toBe(11);
+    issuerDenied = false;
+    await act(async () => { host.querySelector("button")?.click(); });
+    expect(host.querySelector("output")?.textContent).toContain("ready:11:");
+    expect(host.querySelector("output")?.textContent).not.toBe(original);
+    expect(port.issued()).toBe(22);
+  });
+
+  it("renews only the reference that actually expired while resolving the other ten", async () => {
+    const port = referenceReads((row, index) => { if (index === 1) row.reference_expires_at = new Date(Date.now() + 50_000).toISOString(); });
+    await render(A);
+    const before = host.textContent;
+    await act(async () => { await vi.advanceTimersByTimeAsync(50_000); });
+    expect(port.issued()).toBe(12);
+    expect(resolveCount()).toBe(10);
+    expect(host.textContent).toContain("ready:11:");
+    expect(host.textContent).not.toBe(before);
+  });
+
+  it("does not publish early results that expired while the final reference was still being checked", async () => {
+    const port = referenceReads(row => { row.reference_expires_at = new Date(Date.now() + 50_000).toISOString(); });
+    await render(A);
+    let finish: (() => void) | undefined;
+    const last = [...port.rows.keys()].at(-1);
+    rpc.mockImplementation((name, args) => name === "resolve_analytics_evidence_reference" && args.p_evidence_ref === last
+      ? new Promise(resolve => { finish = () => { void port.read(name, args).then(resolve); }; }) : port.read(name, args));
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(host.textContent).toBe("loading:0:none");
+    await act(async () => { await vi.advanceTimersByTimeAsync(50_000); });
+    expect(finish).toBeDefined();
+    await act(async () => { finish?.(); });
+    expect(host.textContent).toBe("error:0:none");
+    expect(port.issued()).toBe(11);
+  });
+
+  it.each(["workspace", "authentication", "period"] as const)("retires pending reference replies when the %s changes", async changed => {
+    const port = referenceReads();
+    await render(A);
+    const pending: Array<() => void> = [];
+    rpc.mockImplementation((name, args) => name === "resolve_analytics_evidence_reference"
+      ? new Promise(resolve => pending.push(() => { void port.read(name, args).then(resolve); }))
+      : port.read(name, args));
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(pending).toHaveLength(11);
+    if (changed === "workspace") await render(B);
+    else if (changed === "period") await render(A, "week");
+    else await act(async () => { auth.listener(); });
+    expect(port.issued()).toBe(22);
+    const current = host.textContent;
+    expect(current).toContain("ready:11:");
+    await act(async () => { pending.forEach(done => done()); });
+    expect(host.textContent).toBe(current);
+    expect(port.issued()).toBe(22);
+  });
 });

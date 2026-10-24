@@ -84,6 +84,7 @@ on:
       - "supabase/tests/team_authority_readiness.sql"
       - "supabase/tests/business_mission_foundation.sql"
       - "supabase/tests/zion_role_remap.sql"
+      - "supabase/tests/zion_planning_instructions.sql"
       - "supabase/tests/business_mission_numeric_targets.sql"
       - "supabase/tests/business_mission_target_attribution.sql"
       - "supabase/tests/e2_read_receipt_labels.sql"
@@ -348,6 +349,10 @@ jobs:
       - name: ZION Operations remit — original identity and no activation (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/zion_role_remap.sql
+
+      - name: ZION original planning instructions — customization and replay safety (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/zion_planning_instructions.sql
 
       - name: Operations priority and bounded activity authority (rolled back)
         if: ${{ !cancelled() }}

@@ -1,0 +1,787 @@
+{
+  "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56",
+  "kind": "Actual ClientsConversations component tree; fixture-only boundary adapters",
+  "status": "PARTIAL",
+  "matrix": [
+    {
+      "width": 1366,
+      "height": 768,
+      "panel": "closed",
+      "file": "e03-actual-1366-closed.jpg",
+      "controls": [
+        {
+          "bottom": 433.6499938964844,
+          "label": "Edit and review reply",
+          "right": 512.8249969482422,
+          "width": 138.4499969482422,
+          "x": 374.375,
+          "y": 402.1499938964844
+        },
+        {
+          "bottom": 585.3500366210938,
+          "label": "Subject",
+          "right": 992.0125122070312,
+          "width": 621.1375122070312,
+          "x": 370.875,
+          "y": 553.8500366210938
+        },
+        {
+          "bottom": 676.3500366210938,
+          "label": "Reply to Test Lead…  (drop a file to attach)",
+          "right": 995.5125122070312,
+          "width": 624.6375122070312,
+          "x": 370.875,
+          "y": 592.3500366210938
+        },
+        {
+          "bottom": 669.3500366210938,
+          "label": "Send",
+          "right": 978.0125350952148,
+          "width": 81.8499984741211,
+          "x": 896.1625366210938,
+          "y": 634.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Attach",
+          "right": 455.9124984741211,
+          "width": 85.0374984741211,
+          "x": 370.875,
+          "y": 683.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Draft with Paige",
+          "right": 695,
+          "width": 136.9375,
+          "x": 558.0625,
+          "y": 683.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Schedule",
+          "right": 830.5250396728516,
+          "width": 98.9250030517578,
+          "x": 731.6000366210938,
+          "y": 683.3500366210938
+        }
+      ],
+      "documentOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 648,
+          "label": null,
+          "scrollHeight": 991,
+          "tag": "DIV",
+          "width": 348
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768,
+        "mimeType": "image/jpeg"
+      },
+      "exactRasterDimensions": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "panel": "open",
+      "file": "e03-actual-1366-open.jpg",
+      "controls": [
+        {
+          "bottom": 453.5500183105469,
+          "label": "Edit and review reply",
+          "right": 402.3000030517578,
+          "width": 138.4499969482422,
+          "x": 263.8500061035156,
+          "y": 422.0500183105469
+        },
+        {
+          "bottom": 550.3500366210938,
+          "label": "Subject",
+          "right": 682.5375061035156,
+          "width": 422.1875,
+          "x": 260.3500061035156,
+          "y": 518.8500366210938
+        },
+        {
+          "bottom": 641.3500366210938,
+          "label": "Reply to Test Lead…  (drop a file to attach)",
+          "right": 686.0375061035156,
+          "width": 425.6875,
+          "x": 260.3500061035156,
+          "y": 557.3500366210938
+        },
+        {
+          "bottom": 634.3500366210938,
+          "label": "Send",
+          "right": 668.5374984741211,
+          "width": 81.8499984741211,
+          "x": 586.6875,
+          "y": 599.3500366210938
+        },
+        {
+          "bottom": 676.3500366210938,
+          "label": "Attach",
+          "right": 345.3875045776367,
+          "width": 85.0374984741211,
+          "x": 260.3500061035156,
+          "y": 648.3500366210938
+        },
+        {
+          "bottom": 676.3500366210938,
+          "label": "Draft with Paige",
+          "right": 584.4750061035156,
+          "width": 136.9375,
+          "x": 447.5375061035156,
+          "y": 648.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Schedule",
+          "right": 359.27500915527344,
+          "width": 98.9250030517578,
+          "x": 260.3500061035156,
+          "y": 683.3500366210938
+        }
+      ],
+      "documentOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 518,
+          "label": null,
+          "scrollHeight": 1793,
+          "tag": "DIV",
+          "width": 409
+        },
+        {
+          "height": 274,
+          "label": null,
+          "scrollHeight": 283,
+          "tag": "DIV",
+          "width": 437
+        },
+        {
+          "height": 648,
+          "label": null,
+          "scrollHeight": 1035,
+          "tag": "DIV",
+          "width": 238
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768,
+        "mimeType": "image/jpeg"
+      },
+      "exactRasterDimensions": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "panel": "closed",
+      "file": "e03-actual-1024-closed.jpg",
+      "controls": [
+        {
+          "bottom": 453.5500183105469,
+          "label": "Edit and review reply",
+          "right": 422.71250915527344,
+          "width": 138.4499969482422,
+          "x": 284.26251220703125,
+          "y": 422.0500183105469
+        },
+        {
+          "bottom": 585.3500366210938,
+          "label": "Subject",
+          "right": 739.7250061035156,
+          "width": 458.9624938964844,
+          "x": 280.76251220703125,
+          "y": 553.8500366210938
+        },
+        {
+          "bottom": 676.3500366210938,
+          "label": "Reply to Test Lead…  (drop a file to attach)",
+          "right": 743.2250061035156,
+          "width": 462.4624938964844,
+          "x": 280.76251220703125,
+          "y": 592.3500366210938
+        },
+        {
+          "bottom": 669.3500366210938,
+          "label": "Send",
+          "right": 725.7249984741211,
+          "width": 81.8499984741211,
+          "x": 643.875,
+          "y": 634.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Attach",
+          "right": 365.80001068115234,
+          "width": 85.0374984741211,
+          "x": 280.76251220703125,
+          "y": 683.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Draft with Paige",
+          "right": 604.8875122070312,
+          "width": 136.9375,
+          "x": 467.9500122070313,
+          "y": 683.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Schedule",
+          "right": 740.4124908447266,
+          "width": 98.9250030517578,
+          "x": 641.4874877929688,
+          "y": 683.3500366210938
+        }
+      ],
+      "documentOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 518,
+          "label": null,
+          "scrollHeight": 1793,
+          "tag": "DIV",
+          "width": 409
+        },
+        {
+          "height": 648,
+          "label": null,
+          "scrollHeight": 1026,
+          "tag": "DIV",
+          "width": 258
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768,
+        "mimeType": "image/jpeg"
+      },
+      "exactRasterDimensions": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "panel": "open",
+      "file": "e03-actual-1024-open.jpg",
+      "controls": [
+        {
+          "bottom": 473.4500122070313,
+          "label": "Edit and review reply",
+          "right": 335.8999938964844,
+          "width": 138.4499969482422,
+          "x": 197.4499969482422,
+          "y": 441.9500122070313
+        },
+        {
+          "bottom": 550.3500366210938,
+          "label": "Subject",
+          "right": 478.3874969482422,
+          "width": 284.4375,
+          "x": 193.9499969482422,
+          "y": 518.8500366210938
+        },
+        {
+          "bottom": 641.3500366210938,
+          "label": "Reply to Test Lead…  (drop a file to attach)",
+          "right": 481.8874969482422,
+          "width": 287.9375,
+          "x": 193.9499969482422,
+          "y": 557.3500366210938
+        },
+        {
+          "bottom": 634.3500366210938,
+          "label": "Send",
+          "right": 464.3875045776367,
+          "width": 81.8499984741211,
+          "x": 382.5375061035156,
+          "y": 599.3500366210938
+        },
+        {
+          "bottom": 676.3500366210938,
+          "label": "Attach",
+          "right": 278.9874954223633,
+          "width": 85.0374984741211,
+          "x": 193.9499969482422,
+          "y": 648.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Draft with Paige",
+          "right": 330.8874969482422,
+          "width": 136.9375,
+          "x": 193.9499969482422,
+          "y": 683.3500366210938
+        },
+        {
+          "bottom": 711.3500366210938,
+          "label": "Schedule",
+          "right": 466.4125213623047,
+          "width": 98.9250030517578,
+          "x": 367.4875183105469,
+          "y": 683.3500366210938
+        }
+      ],
+      "documentOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 518,
+          "label": null,
+          "scrollHeight": 1793,
+          "tag": "DIV",
+          "width": 409
+        },
+        {
+          "height": 274,
+          "label": null,
+          "scrollHeight": 303,
+          "tag": "DIV",
+          "width": 299
+        },
+        {
+          "height": 82,
+          "label": null,
+          "scrollHeight": 102,
+          "tag": "TEXTAREA",
+          "width": 277
+        },
+        {
+          "height": 648,
+          "label": null,
+          "scrollHeight": 1281,
+          "tag": "DIV",
+          "width": 171
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768,
+        "mimeType": "image/jpeg"
+      },
+      "exactRasterDimensions": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "panel": "closed",
+      "file": "e03-actual-900-closed.jpg",
+      "controls": [
+        {
+          "bottom": 453.5500183105469,
+          "label": "Edit and review reply",
+          "right": 387.5625,
+          "width": 138.4499969482422,
+          "x": 249.1125030517578,
+          "y": 422.0500183105469
+        },
+        {
+          "bottom": 810.3500366210938,
+          "label": "Subject",
+          "right": 641.2750091552734,
+          "width": 395.6625061035156,
+          "x": 245.6125030517578,
+          "y": 778.8500366210938
+        },
+        {
+          "bottom": 901.3500366210938,
+          "label": "Reply to Test Lead…  (drop a file to attach)",
+          "right": 644.7750091552734,
+          "width": 399.1625061035156,
+          "x": 245.6125030517578,
+          "y": 817.3500366210938
+        },
+        {
+          "bottom": 894.3500366210938,
+          "label": "Send",
+          "right": 627.2749862670898,
+          "width": 81.8499984741211,
+          "x": 545.4249877929688,
+          "y": 859.3500366210938
+        },
+        {
+          "bottom": 936.3500366210938,
+          "label": "Attach",
+          "right": 330.6500015258789,
+          "width": 85.0374984741211,
+          "x": 245.6125030517578,
+          "y": 908.3500366210938
+        },
+        {
+          "bottom": 936.3500366210938,
+          "label": "Draft with Paige",
+          "right": 569.7375183105469,
+          "width": 136.9375,
+          "x": 432.8000183105469,
+          "y": 908.3500366210938
+        },
+        {
+          "bottom": 971.3500366210938,
+          "label": "Schedule",
+          "right": 344.5375061035156,
+          "width": 98.9250030517578,
+          "x": 245.6125030517578,
+          "y": 943.3500366210938
+        }
+      ],
+      "documentOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 1000,
+          "label": null,
+          "scrollHeight": 1005,
+          "tag": "BODY",
+          "width": 890
+        },
+        {
+          "height": 518,
+          "label": null,
+          "scrollHeight": 1793,
+          "tag": "DIV",
+          "width": 409
+        },
+        {
+          "height": 908,
+          "label": null,
+          "scrollHeight": 1076,
+          "tag": "DIV",
+          "width": 223
+        }
+      ],
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000,
+        "mimeType": "image/jpeg"
+      },
+      "exactRasterDimensions": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "panel": "open",
+      "file": "e03-actual-900-open.jpg",
+      "controls": [
+        {
+          "bottom": 510.8500061035156,
+          "label": "Edit and review reply",
+          "right": 317.8625030517578,
+          "width": 138.4499969482422,
+          "x": 179.41250610351562,
+          "y": 479.3500061035156
+        },
+        {
+          "bottom": 775.3500366210938,
+          "label": "Subject",
+          "right": 404.9750061035156,
+          "width": 229.0625,
+          "x": 175.91250610351562,
+          "y": 743.8500366210938
+        },
+        {
+          "bottom": 866.3500366210938,
+          "label": "Reply to Test Lead…  (drop a file to attach)",
+          "right": 408.4750061035156,
+          "width": 232.5625,
+          "x": 175.91250610351562,
+          "y": 782.3500366210938
+        },
+        {
+          "bottom": 859.3500366210938,
+          "label": "Send",
+          "right": 390.9749984741211,
+          "width": 81.8499984741211,
+          "x": 309.125,
+          "y": 824.3500366210938
+        },
+        {
+          "bottom": 901.3500366210938,
+          "label": "Attach",
+          "right": 260.9500045776367,
+          "width": 85.0374984741211,
+          "x": 175.91250610351562,
+          "y": 873.3500366210938
+        },
+        {
+          "bottom": 936.3500366210938,
+          "label": "Draft with Paige",
+          "right": 312.8500061035156,
+          "width": 136.9375,
+          "x": 175.91250610351562,
+          "y": 908.3500366210938
+        },
+        {
+          "bottom": 971.3500366210938,
+          "label": "Schedule",
+          "right": 274.83750915527344,
+          "width": 98.9250030517578,
+          "x": 175.91250610351562,
+          "y": 943.3500366210938
+        }
+      ],
+      "documentOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 1000,
+          "label": null,
+          "scrollHeight": 1005,
+          "tag": "BODY",
+          "width": 890
+        },
+        {
+          "height": 518,
+          "label": null,
+          "scrollHeight": 1793,
+          "tag": "DIV",
+          "width": 409
+        },
+        {
+          "height": 82,
+          "label": null,
+          "scrollHeight": 154,
+          "tag": "TEXTAREA",
+          "width": 221
+        },
+        {
+          "height": 908,
+          "label": null,
+          "scrollHeight": 1324,
+          "tag": "DIV",
+          "width": 153
+        }
+      ],
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000,
+        "mimeType": "image/jpeg"
+      },
+      "exactRasterDimensions": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "panel": "open",
+      "file": "e03-actual-1536-open.jpg",
+      "controls": [
+        {
+          "bottom": 453.5500183105469,
+          "label": "Edit and review reply",
+          "right": 467.6125030517578,
+          "width": 138.4499969482422,
+          "x": 329.1625061035156,
+          "y": 422.0500183105469
+        },
+        {
+          "bottom": 587.75,
+          "label": "Subject",
+          "right": 786.8250122070312,
+          "width": 461.1625061035156,
+          "x": 325.6625061035156,
+          "y": 556.25
+        },
+        {
+          "bottom": 678.75,
+          "label": "Thanks for your inquiry. What time works for a short introductory call?",
+          "right": 790.3250122070312,
+          "width": 464.6625061035156,
+          "x": 325.6625061035156,
+          "y": 594.75
+        },
+        {
+          "bottom": 671.75,
+          "label": "Review reply",
+          "right": 772.8249893188477,
+          "width": 124.0875015258789,
+          "x": 648.7374877929688,
+          "y": 636.75
+        },
+        {
+          "bottom": 713.75,
+          "label": "Attach",
+          "right": 410.7000045776367,
+          "width": 85.0374984741211,
+          "x": 325.6625061035156,
+          "y": 685.75
+        },
+        {
+          "bottom": 713.75,
+          "label": "Draft with Paige",
+          "right": 649.7875366210938,
+          "width": 136.9375,
+          "x": 512.8500366210938,
+          "y": 685.75
+        },
+        {
+          "bottom": 713.75,
+          "label": "Schedule",
+          "right": 785.3125152587891,
+          "width": 98.9250030517578,
+          "x": 686.3875122070312,
+          "y": 685.75
+        }
+      ],
+      "documentOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 518,
+          "label": null,
+          "scrollHeight": 1793,
+          "tag": "DIV",
+          "width": 409
+        },
+        {
+          "height": 650,
+          "label": null,
+          "scrollHeight": 991,
+          "tag": "DIV",
+          "width": 303
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      },
+      "raster": {
+        "width": 1535,
+        "height": 770,
+        "mimeType": "image/jpeg"
+      },
+      "exactRasterDimensions": false,
+      "rasterLimit": "CSS viewport1536x770 was observed; native screenshot is1535x770. Exact raster-width proof remains owed; no padding/resizing performed."
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "panel": "closed",
+      "file": "e03-actual-1536-closed.jpg",
+      "controls": [
+        {
+          "bottom": 423.25,
+          "label": "Edit and review reply",
+          "right": 557.4499969482422,
+          "width": 138.4499969482422,
+          "x": 419,
+          "y": 391.75
+        },
+        {
+          "bottom": 587.75,
+          "label": "Subject",
+          "right": 1116.9874877929688,
+          "width": 701.4874877929688,
+          "x": 415.5,
+          "y": 556.25
+        },
+        {
+          "bottom": 678.75,
+          "label": "Thanks for your inquiry. What time works for a short introductory call?",
+          "right": 1120.4874877929688,
+          "width": 704.9874877929688,
+          "x": 415.5,
+          "y": 594.75
+        },
+        {
+          "bottom": 671.75,
+          "label": "Review reply",
+          "right": 1102.9875259399414,
+          "width": 124.0875015258789,
+          "x": 978.9000244140624,
+          "y": 636.75
+        },
+        {
+          "bottom": 713.75,
+          "label": "Attach",
+          "right": 500.5374984741211,
+          "width": 85.0374984741211,
+          "x": 415.5,
+          "y": 685.75
+        },
+        {
+          "bottom": 713.75,
+          "label": "Draft with Paige",
+          "right": 739.625,
+          "width": 136.9375,
+          "x": 602.6875,
+          "y": 685.75
+        },
+        {
+          "bottom": 713.75,
+          "label": "Schedule",
+          "right": 875.1500396728516,
+          "width": 98.9250030517578,
+          "x": 776.2250366210938,
+          "y": 685.75
+        }
+      ],
+      "documentOverflow": false,
+      "scrollOwners": [
+        {
+          "height": 518,
+          "label": null,
+          "scrollHeight": 1793,
+          "tag": "DIV",
+          "width": 409
+        },
+        {
+          "height": 650,
+          "label": null,
+          "scrollHeight": 991,
+          "tag": "DIV",
+          "width": 393
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      },
+      "raster": {
+        "width": 1535,
+        "height": 770,
+        "mimeType": "image/jpeg"
+      },
+      "exactRasterDimensions": false,
+      "rasterLimit": "CSS viewport1536x770 was observed; native screenshot is1535x770. Exact raster-width proof remains owed; no padding/resizing performed."
+    }
+  ],
+  "keyboard": {
+    "reviewFocus": "Needs your OK group, not Approve",
+    "tabOrder": [
+      "Approve",
+      "Not now"
+    ],
+    "enterOnNotNow": "returns focus to Review reply and retains subject/body"
+  },
+  "limits": [
+    "Full Solo shell and actual PAIGE panel not mounted; width fixture only",
+    "No authenticated tenant/role acceptance or provider send",
+    "No complete assistive-tech, zoom/reflow or reduced-motion proof",
+    "900px fixture produced a 5px document vertical scroll; full-shell scroll owner still owed"
+  ],
+  "priorBlankCapture": "INVALID; superseded by visible-tab normal screenshots"
+}

@@ -1,5 +1,21 @@
 # Agreements preparation — Operate
 
+## Direction contract — C23 saved signing review
+
+THESIS: The owner checks the same saved PDF, recipient identities and field map before any later signature-request approval. No second editor, approval dialog or execution claim.
+
+OWN-WORLD: Extend the original Mineral/Obsidian document workspace, existing PAIGE typography, semantic tokens, 44px controls, one scroll/leave guard and white PDF paper. No design-system change.
+
+STORY: Save fields, read the source-backed request, inspect signer sequence and correction requirements, then return to the same preparation. Approval and sending remain visibly unconnected in this bounded increment.
+
+FIRST VIEWPORT: Existing document heading and return action remain. The review summary names the saved preparation and readiness, followed by signer sequence and assigned-field counts; the existing verified PDF remains inspectable. Narrow layouts stack naturally without page-width overflow.
+
+FORM: Local extension of the established document workspace; no whole-surface concept tournament or new visual world. Code-led deterministic prototype uses original components/tokens and synthetic ports, selected by the same lead under October21 routine UX delegation, not founder acceptance.
+
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+Verification boundaries: prototype and source renders are synthetic. Actual permissions, ordinary roles, provider/signing/consent, durable reload, Central QA and complete twelve-outcome founder acceptance remain separately owed. Preserve incumbent DESIGN.md; no shipping illustration or generated raster is required. No other agent participates.
+
 ## October22 exact document/field surface — local, not customer mounted
 
 Existing delegated document/recipient direction continues: real white PDF paper

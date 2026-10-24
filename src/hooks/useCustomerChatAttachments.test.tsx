@@ -47,6 +47,39 @@ it("selection is private preparation and sends nothing until explicit preparatio
   expect(state.notice).toContain("not been sent");
   expect(f.purposes.every(p => JSON.stringify(p) === JSON.stringify({kind: "customer_private", threadId: thread}))).toBe(true);
 });
+it("pastes the original actual file list once, keeping bulk selection private and unsent", async () => {
+  await render(); const files = [pdf("One.pdf"), pdf("Two.pdf")], preventDefault = vi.fn();
+  const clipboardData = {files, items: files.map(file => ({kind: "file", getAsFile: () => file}))} as unknown as DataTransfer;
+  act(() => state.handlePaste({clipboardData, preventDefault}));
+  expect(preventDefault).toHaveBeenCalledOnce();
+  expect(state.files.map(item => item.file)).toEqual(files);
+  expect(f.transfer).not.toHaveBeenCalled();
+});
+it("leaves plain text, HTML and links to normal paste without fetching or creating a file", async () => {
+  await render(); const preventDefault = vi.fn(), getData = vi.fn(() => "https://untrusted.invalid/file.pdf");
+  const clipboardData = {files: [], items: [{kind: "string", type: "text/html"}], getData} as unknown as DataTransfer;
+  act(() => state.handlePaste({clipboardData, preventDefault}));
+  expect(state.files).toEqual([]); expect(preventDefault).not.toHaveBeenCalled();
+  expect(getData).not.toHaveBeenCalled(); expect(f.transfer).not.toHaveBeenCalled();
+});
+it("falls back only to real file clipboard items and ignores null/non-file entries", async () => {
+  await render(); const file = pdf(), preventDefault = vi.fn();
+  const clipboardData = {files: [], items: [{kind: "file", getAsFile: () => file},
+    {kind: "file", getAsFile: () => null}, {kind: "string", getAsFile: () => {throw Error("not a file");}}]} as unknown as DataTransfer;
+  act(() => state.handlePaste({clipboardData, preventDefault}));
+  expect(state.files.map(item => item.file)).toEqual([file]); expect(f.transfer).not.toHaveBeenCalled();
+});
+it("bulk drop uses the same selection while a stale or unavailable paste never crosses scope", async () => {
+  await render(); const files = [pdf("One.pdf"), pdf("Two.pdf")];
+  const dataTransfer = {files, items: [], types: ["Files"], dropEffect: "none"} as unknown as DataTransfer;
+  const preventDefault = vi.fn(), stopPropagation = vi.fn();
+  act(() => state.handleDrop({dataTransfer, preventDefault, stopPropagation}));
+  expect(state.files.map(item => item.file)).toEqual(files); expect(preventDefault).toHaveBeenCalledOnce();
+  const oldPaste = state.handlePaste; await render(other, false);
+  act(() => oldPaste({clipboardData: dataTransfer, preventDefault}));
+  act(() => state.handlePaste({clipboardData: dataTransfer, preventDefault}));
+  expect(state.files).toEqual([]); expect(f.transfer).not.toHaveBeenCalled();
+});
 it("keeps the selection intact when a sixth file is pasted", async () => {
   await render(); act(() => state.append(Array.from({length: 5}, (_, n) => pdf(`${n}.pdf`))));
   const ids = state.files.map(file => file.id); act(() => state.append([pdf("Extra.pdf")]));

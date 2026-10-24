@@ -1,5 +1,6 @@
-import {useCallback, useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState, type ClipboardEvent, type DragEvent} from "react";
 import {useClientDocuments} from "./useClientDocuments";
+import {transferFiles, hasFileDrag} from "./useChatDocumentUpload";
 import {selectCustomerChatFiles, type CustomerChatFileDraft, type CustomerChatFileSelection} from "@/lib/customer-chat-files";
 
 export type CustomerAttachmentDraft = CustomerChatFileDraft & {phase: "selected" | "saving" | "saved" | "check"};
@@ -79,6 +80,22 @@ export function useCustomerChatAttachments(threadId: string | null, available: b
     life.files = selection.files.map(file => life.files.find(previous => previous.id === file.id) ?? {...file, phase: "selected"});
     life.issues = selection.issues; life.notice = ""; publish();
   }, [life, current, publish]);
+  const handlePaste = useCallback((event: Pick<ClipboardEvent, "clipboardData" | "preventDefault">) => {
+    const files = transferFiles(event.clipboardData);
+    if (!files.length) return; // Text, HTML and URLs keep native insertion; never fetch or invent a file.
+    event.preventDefault();
+    append(files);
+  }, [append]);
+  const handleDrop = useCallback((event: Pick<DragEvent, "dataTransfer" | "preventDefault" | "stopPropagation">) => {
+    if (!hasFileDrag(event.dataTransfer) && !event.dataTransfer.files?.length) return;
+    event.preventDefault(); event.stopPropagation();
+    append(transferFiles(event.dataTransfer));
+  }, [append]);
+  const handleDragOver = useCallback((event: Pick<DragEvent, "dataTransfer" | "preventDefault" | "stopPropagation">) => {
+    if (!hasFileDrag(event.dataTransfer)) return;
+    event.preventDefault(); event.stopPropagation();
+    event.dataTransfer.dropEffect = current() && !life.operation && !life.files.some(f => f.phase === "check") ? "copy" : "none";
+  }, [life, current]);
   const remove = useCallback((id: string) => {
     if (!current() || life.operation) return;
     const file = life.files.find(f => f.id === id);
@@ -136,7 +153,7 @@ export function useCustomerChatAttachments(threadId: string | null, available: b
   return {
     files: visible ? snapshot.files : [], issues: visible ? snapshot.issues : [],
     notice: visible ? snapshot.notice : "", busy: visible && snapshot.busy, available: current(),
-    nativeUpload, append, remove, prepare,
+    nativeUpload, append, handlePaste, handleDrop, handleDragOver, remove, prepare,
     check: (id: string) => recover(id, false), resume: (id: string) => recover(id, true), stop, releaseSentSelection,
   };
 }

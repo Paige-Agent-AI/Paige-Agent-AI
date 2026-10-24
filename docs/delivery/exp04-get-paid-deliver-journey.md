@@ -1,3 +1,7 @@
+## C25 current native and actual-handler proof — October24
+
+Actual main1b4a4a73 helper release and all incoming E02 documentation are preserved. Original C25 runtime/native bytes match tested0b078b6a8; fresh44 strict cases/45 actual-handler steps PASS28s with all runtime external/env/read/write/run/FFI/sys denied. Same original fenced local native proof PASS51 C25 checks/three replays/forward-contract refusal/observed two-session wait plus all original preparation/signature controls; task cluster verified empty and stopped. Initial sandbox socket denial executed no tests and is retained. Original86/62 support remains dated, not inflated into this fresh run. New exact-head review/CI/managed Preview/native850004/importer production readback and actual prepared-send/atomic-field producer/ordinary roles/results/receipt/reload/CentralQA/full12/founder acceptance remain owed. No activation.
+
 ## C25 current original helper composition — October24
 
 Composes original helper b3c2 and actual5ff main, keeping the entire incoming journal, shared Chat/C0b/CI/native/Work/UI/Master/Brain and original reviewed prepared-seal source. Original850004 SQL and private reader bytes are unchanged. Dated4d3 exact14 checks/cold Preview/native/strict proof remain history; new final-head review/CI/source-consumer proof and ordered normal release/readback remain required. Prepared HIGH sending, actual assigned-field producer, ordinary-role signing/consent/seal/reload and full12/CentralQA/founder acceptance remain incomplete.

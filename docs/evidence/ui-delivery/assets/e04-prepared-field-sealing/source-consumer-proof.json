@@ -295,5 +295,102 @@
       "cases": 86,
       "seconds": 24
     }
+  },
+  "current_parent_checkpoint": {
+    "at": "2026-10-24T16:19:00.948Z",
+    "source_tested": "0b078b6a8b398fdb48760ef5ab8560da8b9d743e",
+    "current_source_before_evidence": "38c594615dd82906c09861446f9c312611e6c74f",
+    "actual_main": "1b4a4a73f88c05a97b7a91ab3b6f09bc3d349ed1",
+    "source_blobs": {
+      "scripts/agreements/prepared-seal-source-proof.mjs": "af8f79850ce5ba4dd7b9b4f87851e092cbcd3ffe",
+      "scripts/agreements/signer-preparation-integrity-proof.mjs": "cbaf096fab92b702b269df51ea320aaf19851302",
+      "supabase/functions/_shared/agreements/prepared-seal-source.ts": "3a106cd531742258c15e41c4cb75c67fc2ac7904",
+      "supabase/functions/_shared/agreements/prepared-seal-source.test.ts": "3332e40467af9141c4a064912ec3919dd87de04f",
+      "supabase/functions/_shared/agreements/seal.ts": "54083021ad071154f9034aa692d141661b154210",
+      "supabase/functions/_shared/agreements/seal-readback.test.ts": "f43197e521d4eed22c3f850e67822c2c68d17545",
+      "supabase/functions/sign-agreement/preflight.test.ts": "dffcdb1338edfe2d054e3fb454a9548fe4501b5c",
+      "supabase/migrations/20271113850004_e04_prepared_seal_source.sql": "a33dc8ace5062e101af7fe8e803a4c507d3c2c6a"
+    },
+    "strict": {
+      "cases": 44,
+      "steps": 45,
+      "result": "PASS",
+      "runtime_permissions": "Network/environment/read/write/run/FFI/system denied; cached/frozen private test lock only"
+    },
+    "native": {
+      "result": "PASS",
+      "checks": 51,
+      "migrationReplay": 3,
+      "forwardGuardRefusals": 1,
+      "concurrentSessions": 2,
+      "observedLockWaits": 1,
+      "scope": "Actual local original13 controls plus controlled private metadata projection; no real prepared send/signing/Storage/customer acceptance",
+      "original_controls": {
+        "result": "PASS",
+        "checks": 44,
+        "checked": {
+          "checks": 75,
+          "migrationReplay": 2,
+          "concurrentSessions": 8,
+          "observedLockWaits": 4,
+          "scope": "Checked native preparation and original receipts only; no customer JWT/provider/signature acceptance"
+        },
+        "editability": {
+          "checks": 23,
+          "migrationReplay": 2,
+          "authority": "original reader metadata and floor preserved",
+          "scope": "Original closed editability only; synthetic fixture is not customer acceptance"
+        },
+        "documentPreparations": {
+          "checks": 188,
+          "migrationReplay": 2,
+          "concurrentSessions": 6,
+          "observedLockWaits": 4,
+          "commercial": {
+            "checks": 29,
+            "migrationReplay": 2,
+            "concurrentSessions": 2,
+            "observedLockWaits": 1
+          },
+          "acceptedEvidence": {
+            "checks": 83,
+            "migrationReplay": 2,
+            "ownerRead": {
+              "checks": 27,
+              "concurrentSessions": 2,
+              "observedLockWaits": 1,
+              "scope": "Actual original native package/balance/actor/Rail bodies with synthetic session identity; no hosted customer acceptance"
+            },
+            "scope": "Synthetic original native evidence only; metadata PDF hashes are not actual file/provider/customer acceptance"
+          },
+          "scope": "Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance"
+        },
+        "signatureRecord": {
+          "result": "PASS",
+          "checks": 76,
+          "migrationReplay": 2,
+          "concurrentSessions": 8,
+          "observedLockWaits": 4,
+          "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+        },
+        "preparedSealSource": {
+          "result": "PASS",
+          "checks": 51,
+          "migrationReplay": 3,
+          "forwardGuardRefusals": 1,
+          "concurrentSessions": 2,
+          "observedLockWaits": 1,
+          "scope": "Actual local original13 controls plus controlled private metadata projection; no real prepared send/signing/Storage/customer acceptance"
+        },
+        "migrationReplay": 2,
+        "concurrentSessions": 5,
+        "observedLockWaits": 3,
+        "scope": "Original native signer preparation only; no actual JWT/signature/provider/customer acceptance"
+      },
+      "log_sha256": "787df95d3d3a0ffefff7b56de0e8a7a0f258c21e1159127dc184cc9d4cf9f399",
+      "cleanup": "Owned cluster verified empty and stopped"
+    },
+    "setup": "First sandbox loopback socket permission denial executed no tests. Same original fenced runner and source succeeded after actual task-cluster identity/empty-scope verification; no timeout/role/assertion/permission gate weakened.",
+    "boundary": "Dated original86/62 remains separate. Current44/45 plus actual native51 do not prove prepared sending, atomic field producer, actual recipient/customer/private Storage, production deployment, ordinary auth, CentralQA/full12/founder acceptance."
   }
 }

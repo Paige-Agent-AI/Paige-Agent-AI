@@ -25,7 +25,7 @@ MUST_PRESERVE: Original agreement/source/preparation/party identities and PDF by
 ACCEPTANCE_CRITERIA: Ordinary authorized owner checks the original saved PDF and roles, chooses verified business email, edits every invitation, sees truthful exact results, corrects errors and reloads the original record. Sending must remain unavailable until its complete original HIGH/claim/native/recipient path is implemented and independently verified.
 MOTION_PURPOSE: NONE: Immediate existing state feedback; no new animation.
 PROTECTED_SEAMS: No shared Chat root, registry, C0b, pins, approval/native/provider writer, Portal/Work or shared Master/Brain edit. One reserved Communications extraction preserves the incumbent resolver byte-for-byte by inverse.
-INTERNAL_BUILD_IDENTITY: source=a2726179a151e492c3e3a831ddb62beb1073dbe2; tree=9e82345b9f37cf6c7c24894ac92660d0a50610c5; base=ef1a6cfb93e15e4853fb865e42a8556382604b71; deployment=UNVERIFIED; environment=development; native=NOT_APPLICABLE; edge=agreement-send source only
+INTERNAL_BUILD_IDENTITY: source=a2726179a151e492c3e3a831ddb62beb1073dbe2; tree=9e82345b9f37cf6c7c24894ac92660d0a50610c5; base=ef1a6cfb93e15e4853fb865e42a8556382604b71; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(agreement-send deployment after source review and release gates); evidence=docs/evidence/ui-delivery/e04-prepared-invitation-review.md
 RELEASE_CHANNEL: development: local original agreement request review; final PR head separately recorded
 RELEASE_CLASSIFICATION: internal-only: no customer release or announcement
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated EXP04 remains unaccepted

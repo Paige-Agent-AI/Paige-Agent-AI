@@ -2,6 +2,26 @@
 
 Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc0b5dad per-business original invitation admission are actually released and read back. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records exact heads/parents/trees, accurate lower-assurance sequential reviews, all required checks, normal migrations620009/630009, all16 original ABI/ACL/source pins, unchanged S7 and actual READY web/public versions. Receipts6377892283/6378046694/6378167524. First630009 deployment57014 is retained; precisely bounded read-only administrative-session cleanup (later identified as including a legitimate CI snapshot; affected microphone verification must rerun) and unchanged normal retry succeeded, with no customer/data/role/history/DDL workaround. Native453/294/61/all seven/grant proof is engineering evidence, not ordinary customer acceptance. Private CURA history remains separate from shared Conversations; current microphone2718/attachments/permitted research work stays in the original relationship packet. Full42/seven-pillar authenticated owner/client/reload/revoke/device and Founder Acceptance remain unfinished; one complete integrated evaluation, no per-slice owner request. This mechanical cross-reference changes no capability/algorithm maturity and has no recursive release row.
 
+## EXP05 original specialist status — local source, release and presentation owed
+
+The original native status channel can project only the exact assignment named
+by a server-issued terminal and the existing caller-JWT inspector. Current seat,
+tenant, original turn and receipt are rechecked; unknown is not replay authority.
+[Bounded source and proof](../evidence/ui-delivery/exp05-specialist-original-status.md)
+retain missing UI mounting, exact-head release and authenticated recovery evidence.
+Full Operations/weekly/automation/ZION outcomes remain open; no activation.
+
+## EXP05 original weekly receipt validation — source development, October23
+
+The original weekly ActionAdapter now correlates committed observation and receipt
+to its exact original work identities. Mismatches remain unconfirmed and cannot
+turn into retry permission.23 focused cases and the original real-engine/Gateway/
+SQL observation/redrain case pass locally; full native program, review, exact-head
+CI, release/readback and authenticated recurrence remain separate proof obligations.
+[Original Experience packet](../delivery/experience-05-weekly-commitment-check.md)
+preserves all ten outcomes/E5-CV1–9 and activation boundaries. No new engine,
+scheduler, ledger, approval, domain writer, provider or ZION instructions activation.
+
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
 The bounded original#2401 successor preserves a known pre-processing refusal on
@@ -2879,3 +2899,11 @@ Original2f981 full migrated native CI passed; fresh renamed-head CI/review and
 actual production source/data remain separate gates, with no peer/history edit.
 Full ten outcomes/E5-CV1–9 and
 founder evaluation remain open; source/visual/customer acceptance stay separate.
+
+## EXP05 — original specialist result, native UI source
+
+[Original recovery UI evidence](../evidence/ui-delivery/exp05-original-specialist-result-ui.md)
+records the compact manual original-result inspection,44 owning assertions,
+actual desktop/narrow native renders and late/account-change refusal. Parent2722
+transport, exact-head release, production source, authenticated recovery and full
+weekly/automation/ZION/Operations acceptance remain owed; no new action or activation.

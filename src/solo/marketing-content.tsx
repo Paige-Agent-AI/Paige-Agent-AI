@@ -21,7 +21,7 @@ import { ChartBoundary } from "./marketing-ui";
 import { parseAdCopy } from "./marketing-ads";
 import { DetailDrawer } from "./detail-drawer";
 import {
-  CONTENT_KINDS, channelCounts, copyParts, safeMediaUrl, documentCover, downloadName, kindCounts, kindNoun, parsePieceDocument, pieceKind, pieceLabel, plainCopy, shapeLabel, shortTitle,
+  CONTENT_KINDS, channelCounts, copyParts, generatedFacts, safeMediaUrl, documentCover, downloadName, kindCounts, kindNoun, parsePieceDocument, pieceKind, pieceLabel, plainCopy, shapeLabel, shortTitle,
   type ContentKindFilter, type ContentPiece, type PieceKind,
 } from "./marketing-content-model";
 import "./marketing-overview.css";
@@ -30,7 +30,7 @@ import "./marketing-content.css";
 const DocumentPreview = React.lazy(() => import("@/components/admin/studio/DocumentPreview").then((module) => ({ default: module.DocumentPreview })));
 
 export const LIBRARY_READ_LIMIT = 60;
-const COLUMNS = "id,kind,channel,status,title,body,image_url,size,brief,updated_at";
+const COLUMNS = "id,kind,channel,status,title,body,image_url,size,brief,meta,updated_at";
 const NO_PIECES: ContentPiece[] = [];
 
 /** The newest saved pieces, or only one kind's, filtered on the server so the cap never hides a kind. */
@@ -252,7 +252,7 @@ function PiecePreview({ tenantId, id, known, listPhase, onClose }: { tenantId: s
   const ad = kind === "copy" && piece.channel === "ad_copy" ? parseAdCopy(piece.body) : null;
   const parts = kind === "copy" ? copyParts(piece.body, piece.channel) : null;
   const body = <div className="mct-preview">
-    <p className="mct-facts">{[pieceLabel(piece, doc), shape, piece.status === "published" ? IN_CATALOG : "Draft", `saved ${formatDay(piece.updated_at)}`].filter(Boolean).join(" · ")}</p>
+    <p className="mct-facts">{[pieceLabel(piece, doc), shape, ...generatedFacts(piece), piece.status === "published" ? IN_CATALOG : "Draft", `saved ${formatDay(piece.updated_at)}`].filter(Boolean).join(" · ")}</p>
     {(kind === "image" || kind === "video") && (safeMediaUrl(piece.image_url) ? <FullMedia kind={kind} url={safeMediaUrl(piece.image_url)!} alt={title.text}/> : <p className="mct-note">No file was saved with this {kind}.</p>)}
     {kind === "document" && (doc
       ? <div className="mct-doc"><ChartBoundary className="mct-doc-skel" failed="This document couldn’t be shown. Reload the page to try again; nothing was changed."><DocumentPreview document={doc} toolbar={false}/></ChartBoundary></div>

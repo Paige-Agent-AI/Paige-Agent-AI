@@ -1,0 +1,200 @@
+{
+  "frames": [
+    {
+      "frame": "solo-1536x770-paige-closed",
+      "crashed": false,
+      "line": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22",
+      "overflowX": 0,
+      "sideways": false,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1536x770-paige-open",
+      "crashed": false,
+      "line": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22",
+      "overflowX": 0,
+      "sideways": false,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1366x768-paige-closed",
+      "crashed": false,
+      "line": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22",
+      "overflowX": 0,
+      "sideways": false,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1366x768-paige-open",
+      "crashed": false,
+      "line": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22",
+      "overflowX": 0,
+      "sideways": false,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1024x768-paige-closed",
+      "crashed": false,
+      "line": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22",
+      "overflowX": 0,
+      "sideways": false,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1024x768-paige-open",
+      "crashed": false,
+      "line": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22",
+      "overflowX": 0,
+      "sideways": false,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-900x1000-paige-closed",
+      "crashed": false,
+      "line": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22",
+      "overflowX": 0,
+      "sideways": false,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-900x1000-paige-open",
+      "crashed": false,
+      "line": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22",
+      "overflowX": 0,
+      "sideways": false,
+      "pageErrors": []
+    }
+  ],
+  "results": [
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed facts line carries the recorded fragments",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open facts line carries the recorded fragments",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed facts line carries the recorded fragments",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open facts line carries the recorded fragments",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed facts line carries the recorded fragments",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open facts line carries the recorded fragments",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed facts line carries the recorded fragments",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open facts line carries the recorded fragments",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "no-meta image shows no invented facts",
+      "detail": "Image · Square · Draft · saved Oct 12"
+    },
+    {
+      "ok": true,
+      "name": "dark theme shows the same facts",
+      "detail": "Image · Landscape · SVG · 1440×960 · made by fal-ai/flux-pro · provider & model terms · In your Catalog · saved Oct 22"
+    }
+  ]
+}

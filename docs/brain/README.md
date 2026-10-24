@@ -8,6 +8,19 @@ Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc
 
 ## EXP05 original specialist status — source released; customer recovery owed
 
+October24 original initial-approval expiry repair2753 is source-released at
+main2b14cedd546eb285e3db0c24fecf374d2a986659. Exact reviewed129f/LOWER6382749770,
+all11 required checks/two statuses, normal Edge40084962989, actual Chat527/all269
+source/config matches and READY/public web2b14 are retained in the sole Master4.0
+row and [original release receipt6382984309](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2753#issuecomment-6382984309).
+The [owning evidence](../evidence/ui-delivery/exp05-initial-approval-expiry.md)
+separates native rendered deadline/late-click proof from ordinary repaired-proposal
+metadata/display, which remains UNVERIFIED. No approval, replay, business/provider
+effect, recurrence/Live activation, catalogue or algorithm promotion is claimed.
+Actual weekly/automation/ZION/Rail/recovery/cohort/eligibleLive and all ten outcomes/
+E5-CV1–9/founder acceptance remain unfinished. Current Outcome Map rows135–138
+retain Operations, Automations, Specialists and Calendar within the complete scope.
+
 The original native status channel can project only the exact assignment named
 by a server-issued terminal and the existing caller-JWT inspector. Current seat,
 tenant, original turn and receipt are rechecked; unknown is not replay authority.

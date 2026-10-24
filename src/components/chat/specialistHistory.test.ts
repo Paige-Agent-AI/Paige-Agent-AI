@@ -19,6 +19,10 @@ describe('original specialist status response projection', () => {
       receipt_id: null, receipt_at: null, response_text: null });
     expect(readOriginalSpecialistHistory(raw, scope)).toEqual(raw);
   });
+  it.each([0, false, {}, [], undefined])('refuses non-text responses before projection: %j', response => {
+    const raw = history(); Object.assign(raw.results[0], { response_text: response });
+    expect(readOriginalSpecialistHistory(raw, scope)).toBeNull();
+  });
   it.each(['thread_id', 'turn_id', 'origin_intent_id', 'tenant_id'])('refuses foreign %s', key => {
     expect(readOriginalSpecialistHistory({ ...history(), [key]: id(99) }, scope)).toBeNull();
   });

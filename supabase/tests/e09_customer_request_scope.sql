@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(265);
+SELECT plan(294);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -18,13 +18,12 @@ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,las
  ('e0970300-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','Jordan','Rivera','active'),
  ('e0970300-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000003','e0970100-0000-4000-8000-000000000003','e0970100-0000-4000-8000-000000000001','Casey','Morgan','active');
 
--- Actual production linkage is still global. This future-shape fixture is
--- confined to the rolled-back CI clone, matching original projection proofs.
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'actual global unique linkage exists before the future-shape fixture');
+-- Current native multi-business shape, with real per-business uniqueness.
+-- Fixture data rolls back; tests do not alter production-shaped indexes.
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 1');
 SELECT throws_ok($guard$ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
- ('e0970300-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','Jordan','Rivera','active'); $guard$,'23505',NULL,'current native global guard refuses a second business link');
-DROP INDEX public.clients_linked_user_id_unique;
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique),'future fixture retains original within-business uniqueness');
+ ('e0970300-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','Jordan','Rivera','active'); $guard$,'23505',NULL,'original per-business constraint refuses a duplicate contact for the same login');
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique),'current schema retains original within-business uniqueness');
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0970300-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','Jordan','Rivera','active');
 
@@ -263,7 +262,7 @@ SELECT is((SELECT jsonb_build_object('tenant',m.tenant_id,'contact',m.contact_id
  jsonb_build_object('tenant','e0970200-0000-4000-8000-000000000001','contact','e0970300-0000-4000-8000-000000000001','channel','portal','actor','e0970100-0000-4000-8000-000000000002'),
  'physical business record retains original tenant/client and actual customer attribution');
 
--- Existing original private conversation service/RLS under the same future-shape
+-- Existing original private conversation service/RLS under the same current-schema
 -- CI fixture. No turn/provider execution, extra production identity or new writer.
 CREATE FUNCTION pg_temp.open_scoped_chat(business text DEFAULT NULL)
 RETURNS jsonb LANGUAGE sql AS $chat$
@@ -371,7 +370,7 @@ UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-
 UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002' WHERE id='e0970300-0000-4000-8000-000000000001';
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_self_profile()','e0970200-0000-4000-8000-000000000001')->>'id','e0970300-0000-4000-8000-000000000001','original fixture relationship is restored for all incumbent controls');
 
--- Legacy original customer reads: existing future-shape rollback only, original source/RLS intact.
+-- Legacy original customer reads: existing current-schema rollback only, original source/RLS intact.
 SELECT is((SELECT md5(replace(prosrc,' AND id = public.client_portal_relationship_id(NULL::uuid)','')) FROM pg_proc WHERE oid='public.customer_paige_activity_summary(integer)'::regprocedure),'7332e6e6e8d21e808b28bc50314f13a4','customer_paige_activity_summary(integer) exact reviewed predicate inverse preserves all original source');
 SELECT isnt((SELECT md5(replace(replace(prosrc,' AND id = public.client_portal_relationship_id(NULL::uuid)',''),' AND portal_access_state = ''open''','')) FROM pg_proc WHERE oid='public.customer_paige_activity_summary(integer)'::regprocedure),'7332e6e6e8d21e808b28bc50314f13a4','customer_paige_activity_summary(integer) unrelated access-predicate drift is detected');
 SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef=false AND provolatile='v' AND proconfig=ARRAY['search_path=public'] AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(proacl) a)=ARRAY['authenticated:EXECUTE:false','postgres:EXECUTE:false','service_role:EXECUTE:false'] FROM pg_proc WHERE oid='public.customer_paige_activity_summary(integer)'::regprocedure),'customer_paige_activity_summary(integer) original owner/security/volatility/search path/ACL retained');
@@ -452,7 +451,7 @@ UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','revoked activity B never falls back to A');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()') ->>'count','1','single original self-link activity stays compatible');
 
--- Original legacy self-context and protected recovery: selected future-shape CI only.
+-- Original legacy self-context and protected recovery: selected current-schema CI only.
 SELECT is((SELECT md5(replace(prosrc,' AND id = public.client_portal_relationship_id(NULL::uuid)','')) FROM pg_proc WHERE oid='public.load_self_context()'::regprocedure),'ab8f20546c8231cbac0efc5bcc4b3381','legacy self-context exact predicate inverse preserves original consent/source path');
 SELECT is((SELECT md5(replace(prosrc,'    AND id = public.client_portal_relationship_id(NULL::uuid)
 ','')) FROM pg_proc WHERE oid='public.ensure_client_role_self_heal()'::regprocedure),'2c3c45b1007a7658666b4863a8b9dbd0','protected recovery exact predicate inverse preserves original role/stage/audit path');
@@ -577,8 +576,63 @@ SELECT is((SELECT tier FROM public.tier_state WHERE id='e0975600-0000-4000-8000-
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
 -- End Native56 tier identity proof.
 
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
-SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future fixture restores the original global guard before outer rollback');
+-- Native59: original shared identity reader preserves client floor without guessing a business.
+CREATE FUNCTION pg_temp.e09_actor_service(subject uuid) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE result jsonb;
+BEGIN
+ SET LOCAL ROLE service_role;
+ BEGIN SELECT public.get_actor_access(subject) INTO result;
+ EXCEPTION WHEN OTHERS THEN result:=jsonb_build_object('sqlstate',SQLSTATE); END;
+ RESET ROLE;RETURN result;
+END $$;
+SELECT is((SELECT md5(replace(replace(prosrc,$identity_predicate$    AND NOT EXISTS (SELECT 1 FROM public.clients other_client
+      WHERE other_client.linked_user_id = _actor AND other_client.id <> c.id)
+$identity_predicate$,''),$identity_ambiguous$  IF EXISTS (SELECT 1 FROM public.clients c WHERE c.linked_user_id = _actor) THEN
+    RETURN jsonb_build_object('tier','client','account_id',NULL,'agency_id',NULL,'is_manager',false,'roles',to_jsonb(_roles),'via','client_relationship_required');
+  END IF;
+
+$identity_ambiguous$,'')) FROM pg_proc WHERE oid='public.get_actor_access(uuid)'::regprocedure),'574bad191b12f518da0a720fbb210369','shared identity exact inverse preserves every original staff/agency/platform branch');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='s' AND proconfig=ARRAY['search_path=public'] AND pg_get_function_result(oid)='jsonb' AND pg_get_function_identity_arguments(oid)='_actor uuid' FROM pg_proc WHERE oid='public.get_actor_access(uuid)'::regprocedure) AND has_function_privilege('service_role','public.get_actor_access(uuid)','EXECUTE') AND NOT has_function_privilege('authenticated','public.get_actor_access(uuid)','EXECUTE') AND NOT has_function_privilege('anon','public.get_actor_access(uuid)','EXECUTE'),'shared identity original stable private service ABI and permissions retained');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.get_my_access()'::regprocedure),'4fdea684b3d4dfdf08753fe18820c4ed','original caller-bound identity wrapper unchanged');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.resolve_actor_tier(uuid,uuid)'::regprocedure),'a577a7bfb44322bebb0e407cfd440c1e','original tier fallback wrapper unchanged');
+CREATE TEMP TABLE e09_actor_before ON COMMIT DROP AS SELECT public.get_actor_access('e0970100-0000-4000-8000-000000000001') owner_access,public.get_actor_access('e0970100-0000-4000-8000-000000000002') client_access,(SELECT active_tenant_id FROM public.profiles WHERE user_id='e0970100-0000-4000-8000-000000000002') client_active_tenant;
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->>'account_id','e0970200-0000-4000-8000-000000000001','original unique client identity returns its sole business');
+SELECT is(pg_temp.scope_read('SELECT public.get_my_access()')->>'account_id','e0970200-0000-4000-8000-000000000001','original authenticated wrapper reads its actual single relationship');
+SELECT is(pg_temp.scope_read('SELECT public.get_actor_access(''e0970100-0000-4000-8000-000000000003'')')->>'sqlstate','42501','ordinary customer cannot supply a delegated service actor');
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->'account_id','null'::jsonb,'two genuine client links never select the oldest business');
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->>'tier','client','ambiguous client standing retains the least-privileged client floor');
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->>'via','client_relationship_required','unscoped identity read truthfully requires explicit customer context');
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->>'is_manager','false','multiple client memberships never grant management');
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->'agency_id','null'::jsonb,'multiple client memberships never acquire agency authority');
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->'roles',(SELECT client_access->'roles' FROM e09_actor_before),'original actor role facts unchanged');
+SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')) k),ARRAY['account_id','agency_id','is_manager','roles','tier','via']::text[],'identity response keeps the original closed six keys');
+SELECT is(pg_temp.scope_read('SELECT public.get_my_access()')->'account_id','null'::jsonb,'caller-bound identity wrapper refuses an ambiguous business');
+SELECT is(pg_temp.scope_read('SELECT public.get_my_access()','e0970200-0000-4000-8000-000000000001')->'account_id','null'::jsonb,'request header cannot steer the legacy service identity reader');
+SELECT is(pg_temp.scope_read('SELECT public.get_my_access()','e0970200-0000-4000-8000-000000000003')->'account_id','null'::jsonb,'foreign header never supplies authority to ambiguous identity');
+SELECT is(public.account_tier('e0970200-0000-4000-8000-000000000001'),'tenant','original test origin has a higher business tier');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(public.resolve_actor_tier(''e0970100-0000-4000-8000-000000000002'',''e0970200-0000-4000-8000-000000000001''))'),to_jsonb('client'::text),'ambiguous client does not fall back to a higher origin tier');
+SELECT throws_ok($pointer$UPDATE public.profiles SET active_tenant_id='e0970200-0000-4000-8000-000000000003' WHERE user_id='e0970100-0000-4000-8000-000000000002'$pointer$,'42501','active_tenant_id must be a tenant you belong to or manage','the original active-workspace guard refuses a customer pointer without staff membership');
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->'account_id','null'::jsonb,'a refused profile pointer grants no business context');
+UPDATE public.profiles SET active_tenant_id=(SELECT client_active_tenant FROM e09_actor_before) WHERE user_id='e0970100-0000-4000-8000-000000000002';
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000001'),(SELECT owner_access FROM e09_actor_before),'existing current staff workspace and authority unchanged');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003','SELECT public.get_my_access()')->>'account_id','e0970200-0000-4000-8000-000000000003','another actual customer sees only their own original identity');
+SELECT is(pg_temp.e09_actor_service(NULL)->>'tier','none','missing delegated subject keeps original null-actor result');
+SELECT is(pg_temp.e09_actor_service('e0975900-0000-4000-8000-000000000099')->>'tier','none','unknown actual subject remains unplaced');
+SELECT is(pg_temp.as_scope_user(NULL,'SELECT public.get_my_access()')->>'tier','none','missing authenticated subject never borrows a known customer');
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='paused' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','',true);
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->'account_id','null'::jsonb,'paused membership does not cause an ambiguous legacy identity to guess another business');
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='open' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','',true);
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT is(pg_temp.e09_actor_service('e0970100-0000-4000-8000-000000000002')->>'account_id','e0970200-0000-4000-8000-000000000001','remaining unique original business is resolved after unlink');
+SELECT is(pg_temp.scope_read('SELECT public.get_my_access()')->>'account_id','e0970200-0000-4000-8000-000000000001','returning authenticated wrapper retains compatible single-business identity');
+-- End Native59 identity proof.
+
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 2');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -384,14 +384,12 @@ SELECT is(pg_temp.as_user(NULL,$q$SELECT public.client_portal_documents()$q$)->>
 SELECT ok(pg_temp.as_user('e0941000-0000-4000-8000-000000000005',$q$SELECT public.client_portal_documents()$q$) IS NULL,'staff with no relationship gets NULL');
 SELECT ok(pg_temp.owner($q$SELECT public.client_portal_documents()$q$) IS NULL,'the business owner is not a customer of their own business');
 SELECT ok(pg_temp.jordan($q$SELECT public.client_portal_documents(p_tenant_id=>'e0942000-0000-4000-8000-000000000002')$q$) IS NULL,'a foreign business argument returns NULL, never that business''s rows');
-DROP INDEX public.clients_linked_user_id_unique;
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0943000-0000-4000-8000-000000000009','e0942000-0000-4000-8000-000000000001','e0941000-0000-4000-8000-000000000009','e0941000-0000-4000-8000-000000000001','Two','Businesses','active'),
  ('e0943000-0000-4000-8000-000000000010','e0942000-0000-4000-8000-000000000002','e0941000-0000-4000-8000-000000000009','e0941000-0000-4000-8000-000000000002','Two','Businesses','active');
 SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000009',$q$SELECT public.client_portal_documents()$q$),
  '{"sqlstate":"42501","error":"select an authorized customer relationship"}'::jsonb,'two relationships raise 42501 with the exact message');
 DELETE FROM public.clients WHERE id IN ('e0943000-0000-4000-8000-000000000009','e0943000-0000-4000-8000-000000000010');
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
 
 -- 10. Customer read: exact allowlist.
 SELECT is((SELECT (r->>'tenant_id')||'|'||(r->>'client_id') FROM jr),'e0942000-0000-4000-8000-000000000001|e0943000-0000-4000-8000-000000000001','the read resolves the customer''s own business and relationship');

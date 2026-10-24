@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: the progress line keeps its honest confirmed-count/
 SOLO_UI: YES: one Solo shell for every tenant; no account-specific branching
 UNVERIFIED: post-deploy rendered screenshot and the authenticated first-run pass remain owed
 
-INTERNAL_BUILD_IDENTITY: 530b0ee6fc87b28c3418439a878b0bd6d0db7b36; deployment=PROOF_OWED(undeployed fix branch; post-deploy screenshot owed); environment=local; migrations=NOT_APPLICABLE;edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/onboarding-ui-correction.md
+INTERNAL_BUILD_IDENTITY: branch-head-was=530b0ee6fc87b28c3418439a878b0bd6d0db7b36; merge-commit=4f87f850b; deployment=prod-bundle-verified(SoloEntry-CGk2xi75.js and later snapshots); environment=production; migrations=NOT_APPLICABLE;edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/onboarding-ui-correction.md
 RELEASE_CHANNEL: development: local/development build environment; proven by the rendered component suites
 RELEASE_CLASSIFICATION: internal-only: correction of unauthorized onboarding chrome inside the Solo Chat shell ahead of the owner's single EXP01 evaluation; not a release-note-visible feature change
 CUSTOMER_RELEASE_IDENTITY: none: fix branch only
@@ -35,3 +35,13 @@ SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: removal-only change; no new layout
 SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: removal-only change; no new layout
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: removal-only change; no new layout
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: removal-only change; no new layout
+
+## Release identity addendum (2026-10-23 identity repair)
+
+Deployed 2026-10-21 (merge commit `4f87f850b` — a two-parent merge, not a squash). Production bundle readback (fresh
+build, EXP01 lead): zero "Meet PAIGE"/"Business interview"/"Start interview"
+strings; `.sos-progress--link` present; re-verified on every later snapshot
+(`SoloEntry-CGk2xi75.js` → `SoloEntry-D3K7QEgW.js` → `SoloEntry-DosxqvBq.js`,
+2026-10-23 current). RENDERED_EVIDENCE/AUTHENTICATED_RUNTIME above remain
+UNVERIFIED — no screenshot exists (browser-capture tooling unavailable) and
+the founder's evaluation window has not occurred; both are owed there.

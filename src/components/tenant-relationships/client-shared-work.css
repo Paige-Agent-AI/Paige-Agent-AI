@@ -8,7 +8,7 @@
 .trc-shared-heading { display: grid; gap: 4px; min-width: 0; flex: 1 1 18rem; }
 .trc-shared-heading h3 { margin: 0; overflow-wrap: anywhere; font: 600 16px/1.25 var(--pg-font-display); letter-spacing: -0.01em; }
 .trc-shared-heading p { margin: 0; max-width: 62ch; color: var(--pg-muted); font-size: 12.5px; line-height: 1.45; }
-.trc-shared-meta { display: flex; flex-wrap: nowrap; align-items: center; gap: 2px 6px; color: var(--pg-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.trc-shared-meta { display: flex; flex-wrap: wrap; min-width: 0; max-width: 100%; align-items: center; gap: 2px 6px; color: var(--pg-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 
 /* "Shared N · Private M": the count leads, and each half narrows the list. Quiet text, not chips —
    the pressed half takes the ink colour and a hairline underline, never a fill or a second accent. */
@@ -54,14 +54,14 @@
 
 .trc-shared-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; padding: 10px 14px 13px; border-top: 1px solid var(--pg-line-soft); }
 .trc-shared-foot p { margin: 0; color: var(--pg-muted); font-size: 11.5px; line-height: 1.45; }
-.trc-shared-add, .trc-shared-quiet { display: inline-flex; width: max-content; min-height: 44px; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); color: var(--pg-ink); background: var(--pg-surface); font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.trc-shared-add, .trc-shared-quiet { display: inline-flex; width: max-content; max-width: 100%; min-height: 44px; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); color: var(--pg-ink); background: var(--pg-surface); font-size: 12px; font-weight: 600; white-space: normal; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
 .trc-shared-add { margin-left: auto; }
 .trc-shared-add svg, .trc-shared-quiet svg { width: 13px; height: 13px; }
 .trc-shared-add:hover, .trc-shared-quiet:hover:not([aria-disabled="true"]) { border-color: var(--pg-line-strong); background: var(--pg-raised); }
 .trc-shared-quiet[aria-disabled="true"] { opacity: .55; cursor: progress; }
 .trc-shared-add:focus-visible, .trc-shared-quiet:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
 
-.trc-shared-empty, .trc-shared-state { display: grid; justify-items: start; gap: 6px; margin: 0; padding: 16px 14px; color: var(--pg-ink-2); font-size: 12.5px; }
+.trc-shared-empty, .trc-shared-state { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; justify-items: start; gap: 6px; margin: 0; padding: 16px 14px; color: var(--pg-ink-2); font-size: 12.5px; }
 .trc-shared-empty p, .trc-shared-state p { margin: 0; max-width: 62ch; }
 .trc-shared-empty strong { color: var(--pg-ink); font-size: 13.5px; }
 .trc-shared-empty .trc-shared-add { margin: 4px 0 0; }

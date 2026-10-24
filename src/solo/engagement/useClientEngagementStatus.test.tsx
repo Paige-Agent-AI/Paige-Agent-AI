@@ -10,7 +10,7 @@ import source from "../../__tests__/fixtures/exp04-client-status-source.json";
 const TENANT = (source as { tenant_id: string }).tenant_id, CLIENT = (source as { contact_id: string }).contact_id;
 const rpc = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...a: unknown[]) => rpc(...a) } }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: TENANT, accountContextLoading: false }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: TENANT, activeUserId: "e0400000-0000-4000-8000-000000000001", accountContextStatus: "ready", accountContextLoading: false }) }));
 import { readClientEngagementStatus, shareableWorkItem, useClientEngagementStatus } from "./useClientEngagementStatus";
 
 const V1 = "2026-10-14T12:00:00.123456+00:00";

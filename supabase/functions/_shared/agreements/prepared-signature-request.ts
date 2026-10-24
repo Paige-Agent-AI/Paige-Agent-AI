@@ -156,7 +156,7 @@ function captureMessage(value: unknown): MessageDraft {
     value.signer_id !== value.signer_id.toLowerCase()) return fail("MESSAGE_INVALID");
   const { subject, body_text } = value;
   if (typeof subject !== "string" || !subject.trim() || subject.length > 200 ||
-    /[\r\n\u0000]/.test(subject) || subject.includes(PREPARED_SIGNING_LINK_MARKER) ||
+    (/[\r\n]/.test(subject) || subject.includes("\u0000")) || subject.includes(PREPARED_SIGNING_LINK_MARKER) ||
     containsSigningCredential(subject) ||
     !exactUnicode(subject) || typeof body_text !== "string" || !body_text.trim() ||
     body_text.length > 10000 || body_text.includes("\u0000") || !exactUnicode(body_text) ||
@@ -183,7 +183,7 @@ function captureEmailReview(value: unknown) {
 }
 const optionalIdentityText = (value: unknown): string | null => {
   if (value === undefined || value === null) return null;
-  if (typeof value !== "string" || /[\r\n\u0000<>]/.test(value) || !exactUnicode(value)) {
+  if (typeof value !== "string" || (/[\r\n<>]/.test(value) || value.includes("\u0000")) || !exactUnicode(value)) {
     return fail("SENDER_UNVERIFIED");
   }
   return value;

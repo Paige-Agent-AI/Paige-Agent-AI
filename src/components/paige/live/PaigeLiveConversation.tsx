@@ -602,6 +602,13 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
           <div className="plc-working" aria-live="polite"><span>Paige is working on</span><strong>{working ? (workingLabel || "your current request") : "No active work"}</strong></div>
           {(state !== "checking" && availability !== "LIVE") && (
             <div className="plc-notice">
+              {/* The disclosure SCROLLS; the actions never do. The notice used to cap its whole
+                  content at 34vh with hidden scrollbars, so the gold acceptance button sat below
+                  the internal fold on ordinary laptop heights — the one control the consent gate
+                  exists for was invisible until a person scrolled a bar they could not see
+                  (caught as a non-blocking observation in the #2710 evidence review). The text
+                  region keeps the cap; the actions row is pinned outside it. */}
+              <div className="plc-notice__scroll">
               {/* Only the availability line is a live region. It used to wrap the whole notice,
                   which was fine when that was a heading, a sentence and one static button — but the
                   terms added ~90 words and a button whose label changes on press, and any mutation
@@ -623,24 +630,27 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
                     <li>Paige treats the microphone as one speaker — you. She cannot tell voices apart, so anyone else in the room is heard as you.</li>
                   </ul>
                   <p className="plc-terms__scope">This is your own decision for your own account. Nobody can make it on your behalf, and you can stop at any time.</p>
-                  {consentRefused ? (
-                    // Once the database has refused, offering the button again would be asking the
-                    // person to repeat an act that cannot succeed. Say what is actually blocking and
-                    // who can move it, and stop pretending this is theirs to unlock (§36/§70).
-                    <p className="plc-terms__blocked">
-                      Live audio has not been opened on this platform yet, so there is nothing for you
-                      to accept right now. This is not something you can turn on from here — it is
-                      released centrally once the speech provider’s data-retention review is settled.
-                      Paige will ask you again when it is.
-                    </p>
-                  ) : (
-                    <Button variant="gold" size="sm" disabled={disabled || acceptingTerms} onClick={() => void acceptTerms()}>
-                      <ShieldCheck aria-hidden />{acceptingTerms ? "Turning on Live…" : "I understand — turn on Live"}
-                    </Button>
-                  )}
                 </div>
               )}
-              <Button variant="outline" size="sm" disabled={disabled} onClick={() => void retry()}><RefreshCw aria-hidden />Retry setup check</Button>
+              </div>
+              <div className="plc-notice__actions">
+                {reason === "live_audio_not_enabled" && consentRefused ? (
+                  // Once the database has refused, offering the button again would be asking the
+                  // person to repeat an act that cannot succeed. Say what is actually blocking and
+                  // who can move it, and stop pretending this is theirs to unlock (§36/§70).
+                  <p className="plc-terms__blocked">
+                    Live audio has not been opened on this platform yet, so there is nothing for you
+                    to accept right now. This is not something you can turn on from here — it is
+                    released centrally once the speech provider’s data-retention review is settled.
+                    Paige will ask you again when it is.
+                  </p>
+                ) : reason === "live_audio_not_enabled" ? (
+                  <Button variant="gold" size="sm" disabled={disabled || acceptingTerms} onClick={() => void acceptTerms()}>
+                    <ShieldCheck aria-hidden />{acceptingTerms ? "Turning on Live…" : "I understand — turn on Live"}
+                  </Button>
+                ) : null}
+                <Button variant="outline" size="sm" disabled={disabled} onClick={() => void retry()}><RefreshCw aria-hidden />Retry setup check</Button>
+              </div>
             </div>
           )}
         </section>

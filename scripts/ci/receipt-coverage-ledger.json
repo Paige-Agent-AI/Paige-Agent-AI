@@ -1128,6 +1128,12 @@
       "evidence": "_create_sales_commercial_terms_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270587000000_sales_governed_commercial_create.sql; scripts/sql/sales-commercial-create-proof.mjs verifies exactly-once replay and receipt-failure rollback."
     },
     {
+      "tool": "sales_effectuate_commercial_terms",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "_execute_sales_effectuation in supabase/migrations/20271113820004_e04_exact_signed_terms.sql atomically calls canonical record_capability_run and stores the original Collections operation with exact accepted-source provenance. scripts/agreements/effective-commercial-proof.mjs proves receipt-failure rollback, concurrent exactly-once execution and historical replay without reactivation."
+    },
+    {
       "tool": "sales_save_collection_terms",
       "risk": "high",
       "receipt": "emits",

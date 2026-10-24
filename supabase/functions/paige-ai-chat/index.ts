@@ -18397,6 +18397,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
         sales_create_invoice_link: "paige_invoices",
         sales_create_commercial_terms: "tenant_client_agreements",
+        sales_effectuate_commercial_terms: "tenant_client_agreements",
         sales_save_collection_terms: "tenant_client_agreements",
         sales_stage_collection_import: "paige_sales_import_batches",
         sales_commit_collection_import: "paige_sales_import_batches",

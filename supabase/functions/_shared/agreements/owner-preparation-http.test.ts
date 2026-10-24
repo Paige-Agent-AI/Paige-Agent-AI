@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {handleOwnerPreparation} from './owner-preparation-http.ts';
-import {fixture,commercialFixture,tenant,agreement,request,next,prepare,save} from './test-fixtures/owner-preparation.ts';
+import {fixture,commercialFixture,tenant,agreement,actor,client,at,request,next,prepare,save} from './test-fixtures/owner-preparation.ts';
 import {sha256Hex} from './token.ts';
 
 const base='https://source-fixture.invalid/agreement-document';
@@ -66,4 +66,50 @@ Deno.test('unsupported original generated text produces a correctable PDF error 
 Deno.test('provider/native exceptions never expose private path, words, identity or secrets',async()=>{
   const f=await fixture();f.service.rpc=async()=>{throw Error('SECRET raw-private-key SIGNER@example.test private terms');};
   const r=await handleOwnerPreparation(post(prepare()),f.caller,f.service,headers,async()=>false);assert.equal(r.status,503);const body=await r.text();assert(!/SECRET|raw-private|SIGNER|private terms/.test(body));assert.equal(JSON.parse(body).code,'unconfirmed');
+});
+
+async function savedSigningReview(){
+  const f=await fixture(),run=(r:Request)=>handleOwnerPreparation(r,f.caller,f.service,headers,async()=>{throw Error('Read must not enter the write limiter');});
+  const writer=(r:Request)=>handleOwnerPreparation(r,f.caller,f.service,headers,async()=>false);
+  assert.equal((await writer(post(prepare()))).status,200);assert.equal((await writer(post(save()))).status,200);
+  const query=new URLSearchParams({preparation:'signing_review',businessId:tenant,agreementId:agreement,preparationId:next,
+    preparationSha256:String(f.rows.get(next)!.preparation_sha256),sourceClientId:client,sourceVersion:'1',sourceUpdatedAt:at});
+  return {f,run,query,request:()=>new Request(base+'?'+query,{headers:{Authorization:'Bearer local-fixture-only'}})};
+}
+Deno.test('saved signature review uses the same private owner GET door and never invokes the writer or limiter',async()=>{
+  const s=await savedSigningReview(),before={...s.f.calls},r=await s.run(s.request());assert.equal(r.status,200);
+  assert.equal(r.headers.get('cache-control'),'no-store, private');assert.equal(r.headers.get('vary'),'Authorization');
+  const body=await r.json();assert.equal(body.review.request.preparation_id,next);assert.equal(body.review.request.expected_source.updated_at,at);
+  assert.equal(body.review.ready_for_review,true);assert.equal(body.review.approval,'not_requested');assert.equal(body.review.sending,'not_connected');
+  assert.equal(s.f.calls.write,before.write);assert.equal(s.f.calls.upload,before.upload);assert(s.f.calls.download>before.download);
+  assert(!/storage_key|token|operation_id/.test(JSON.stringify(body)));
+});
+Deno.test('signature review rejects duplicate keys and token, Portal, download and authority injection before private reads',async()=>{
+  const s=await savedSigningReview();for(const extra of ['&token=x','&portal=1','&download=1','&approved=true','&actor_user_id='+actor,'&preparationId='+next]){
+    const before=s.f.calls.service,r=await s.run(new Request(base+'?'+s.query+extra));assert.equal(r.status,400);assert.equal(s.f.calls.service,before);
+  }
+});
+Deno.test('signature review refuses missing capture fields and changed exact source instead of substituting current work',async()=>{
+  const s=await savedSigningReview();s.query.delete('preparationSha256');assert.equal((await s.run(s.request())).status,400);
+  s.query.set('preparationSha256',String(s.f.rows.get(next)!.preparation_sha256));s.query.set('sourceVersion','2');
+  const r=await s.run(s.request());assert.equal(r.status,409);assert.equal((await r.json()).code,'source_changed');
+});
+Deno.test('signature review refuses noncanonical version aliases without reading private source',async()=>{
+  const s=await savedSigningReview();for(const value of ['0','NaN','1e0','1.0','01','+1','9007199254740992']){
+    s.query.set('sourceVersion',value);const before=s.f.calls.service;assert.equal((await s.run(s.request())).status,400);assert.equal(s.f.calls.service,before);
+  }
+});
+Deno.test('signature review preserves owner access and verified private PDF floors',async()=>{
+  const s=await savedSigningReview();s.f.state.admin=false;assert.equal((await s.run(s.request())).status,403);
+  s.f.state.admin=true;s.f.state.corrupt=true;const r=await s.run(s.request());assert.equal(r.status,422);assert.equal((await r.json()).code,'document_unavailable');
+});
+Deno.test('signature review binds the initial HTTP actor across its independently authorized native reads',async()=>{
+  const s=await savedSigningReview(),getUser=s.f.caller.auth.getUser.bind(s.f.caller.auth);let calls=0;
+  s.f.caller.auth.getUser=async()=>{if(++calls===2)s.f.state.actor='cccccccc-0000-4000-8000-000000000002';return getUser();};
+  const before=s.f.calls.service,r=await s.run(s.request());assert.equal(r.status,403);assert.equal(s.f.calls.service,before);
+});
+Deno.test('unknown signature read has sanitized retry wording without implying that an action may have executed',async()=>{
+  const s=await savedSigningReview();s.f.service.rpc=async()=>{throw Error('SECRET recipient@example.test private-path');};
+  const r=await s.run(s.request()),body=await r.text();assert.equal(r.status,503);assert.equal(JSON.parse(body).code,'unconfirmed');
+  assert(!/SECRET|recipient@example|private-path|already.*recorded/i.test(body));assert.match(body,/Retry the review/);
 });

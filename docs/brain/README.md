@@ -2852,3 +2852,11 @@ Functional local / Visual synthetic / Experiential corrected same-reference read
 and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, registry,
 authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
 All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.
+
+## EXP05 — original specialist result, native UI source
+
+[Original recovery UI evidence](../evidence/ui-delivery/exp05-original-specialist-result-ui.md)
+records the compact manual original-result inspection,44 owning assertions,
+actual desktop/narrow native renders and late/account-change refusal. Parent2722
+transport, exact-head release, production source, authenticated recovery and full
+weekly/automation/ZION/Operations acceptance remain owed; no new action or activation.

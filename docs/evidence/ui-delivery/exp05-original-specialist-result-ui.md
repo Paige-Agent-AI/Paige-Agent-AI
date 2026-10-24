@@ -1,7 +1,7 @@
 # EXP05 — inspect the original specialist result in Chat
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: 4919d49834d4e7a9016677b19e14c925f63a38d7; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=DEPENDENCY_2722; evidence=docs/evidence/ui-delivery/exp05-original-specialist-result-ui.md
+INTERNAL_BUILD_IDENTITY: 4919d49834d4e7a9016677b19e14c925f63a38d7; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(parent2722 normal status-function deployment); evidence=docs/evidence/ui-delivery/exp05-original-specialist-result-ui.md
 RELEASE_CHANNEL: development: native original-result control, dependent on reviewed status transport.
 RELEASE_CLASSIFICATION: internal-only: bounded EXP05 recovery increment; full Operations remains unfinished.
 CUSTOMER_RELEASE_IDENTITY: none: no customer launch or founder acceptance.
@@ -18,7 +18,7 @@ VISUAL_DIRECTION: PASS: compact native message-level action, deliberate status h
 AUTOMATED_EVIDENCE: PASS: actual owning Chat behavior and closed parser44/44; original loader/parser78/78 retained in parent2722. Initial missing-control2/19 RED; source implementation then44 PASS.
 STATIC_EVIDENCE: PASS: scoped ESLint on four changed source/test files and diff check; required hosted exact-lock typecheck remains separate.
 RENDERED_EVIDENCE: PASS: actual saved native components, 1536x770 and1536x900 desktop/390x844 narrow, Mineral and Obsidian. Offline synthetic ports are explicit below; screenshots observed through browser tool, no exported image files.
-BEHAVIORAL_EVIDENCE: PASS: keyboard read/response expansion; pending clears original response; unavailable clears prior result; timeout cancels once; business transition suppresses late result; reload offers original locator without automatic inspection.
+BEHAVIORAL_EVIDENCE: PASS: keyboard inspection and text expansion; stale output removal; ten-second physical cancellation; business-transition late-response suppression; reload has zero automatic inspection. Actual44 owning assertions and native tool frames below.
 AUTHENTICATED_RUNTIME: UNVERIFIED: synthetic local thread/result ports do not constitute customer or production acceptance.
 KEYBOARD_FOCUS: PASS: Return activates original inspection and native details; actual focus remains Read original response with visible ring; Send stays disabled in inert fixture.
 ZOOM_REFLOW: PASS: narrow390px has document scrollWidth390, action44px high; desktop has no horizontal overflow. Browser zoom-specific behavior not separately exercised.
@@ -26,6 +26,14 @@ REDUCED_MOTION: PASS: no new animation or transition.
 STATE_COVERAGE: PASS: checking, response recorded, pending, unknown, refused, late, timed out and account-switched states covered by owning behavior tests; representative rendered states checked.
 TRUTHFUL_STATE_LABELS: PASS: Response recorded and Original receipt verified describe assignment evidence only; Business actions need their own results remains explicit.
 SOLO_UI: YES: shared tenant-neutral SOLO native message recovery.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: isolated native Chat renders at1536x770; the full SOLO shell with panel closed was outside this fixture.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: actual embedded Chat inspected; the surrounding full shell/panel geometry was not mounted.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no shell/layout source changes; full shell1366 close-state inspection remains integrated proof.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: isolated native controls only; full shell1366 open-state inspection remains integrated proof.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: full shell1024 close-state inspection not performed by this native fixture.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: full shell1024 overlay inspection not performed by this native fixture.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: full shell900 close-state inspection not performed; actual390 native reflow is separately recorded.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: full shell900 overlay inspection not performed; no panel/navigation source change.
 OWNER_INTENT: usable Operations recovery across eligible current/future SOLO businesses, preserving original records, approvals and real results.
 MUST_NOT_HAPPEN: model send, new delegation, approval, unknown-effect replay, hold clearance, old/foreign result display or provider activation.
 MUST_PRESERVE: native Chat/reminder/CURA history lifecycle, canonical status transport, server reauthorization, original receipt and adjacent Experience source.

@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-24 UTC — EXP09 private CURA file foundation; native source release, integrated attachments still owed.**
+
+| Increment | Exact release and production proof | Completion boundary |
+| --- | --- | --- |
+| [#2723](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2723), private purpose in the original file service | Reviewed5391a0b700e85e173da9bacc8016fb309d880d6e/LOWER5637529215; all13 latest checks/two statusesSUCCESS. Maina2dbbe5be27b239f6a51cd6fbbae8ebf6cade9ae/tree0c858b603b13d836250f0b958a9b6b185b0f9403 preserves7b2+5391. Native120826664459:305Documents,453invite,294scope,61choices/allseven/208Knowledge/grantorderingPASS. Normal containing-main28622 run40081233729/deploy120837432245/lint120837433659SUCCESS; actual810009,13 incumbent bindings and6 helper/wrapper hashes/defaults/grants, restrictiveALLpolicy/null-safeCHECK/enabledtrigger/private20MBbucket read back. Exactweb9sQ3 READY; containingdpl_6pNUFgQdNnqAk5ZRSEYH1D3A9L6W READY/public28622-mvm6oppc/null. [Actual receipt6382571591](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2723#issuecomment-6382571591); [sanitized source readback](evidence/ui-delivery/assets/e09-private-cura-files/production-readback.json). Initial55P03 and concurrent Studio800010 source reconciliation retained; no history reset/include-all/session termination. | Native privacy foundation only. Original2733 consumer/composer/private message binding/admitted extraction, actual ordinary customer upload/reload/mobile and full42/seven/Teach/founder outcomes remain PROOF OWED. No ownEdge/provider/Live/Knowledge/business action or customer-release announcement; no algorithm maturity promotion. |
+
 **2026-10-24 UTC — EXP05 original specialist approval brief; source release, customer execution still owed.**
 
 | Increment | Exact release and production proof | Completion boundary |

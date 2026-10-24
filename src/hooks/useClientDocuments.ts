@@ -32,8 +32,9 @@ async function wait<T>(value: PromiseLike<T>, deadline: number): Promise<T> {
 }
 class AccessFailure extends Error {}
 
+type PrivateDocumentPurpose = {kind: "customer_private"; threadId: string};
 /** Local document UI lifetime. Auth, native relationship, file and Storage policies own permission. */
-export function useClientDocuments(purpose?: {kind: "customer_private"; threadId: string}) {
+function useClientDocumentsConsumer(purpose?: PrivateDocumentPurpose) {
   const identity = useShellCustomerIdentity();
   const frame = identity?.viewer === "customer" ? identity.frame : null;
   const privateMode = purpose?.kind === "customer_private", privateThread = purpose?.threadId;
@@ -251,7 +252,7 @@ export function useClientDocuments(purpose?: {kind: "customer_private"; threadId
       const saved = await wait(fileRpc("client_portal_finish_file_upload", {p_file_id: attempt.id, p_tenant_id: currentScope.tenant},currentScope,finalAccess.authorization), deadline);
       if (saved.error) throw saved.error;
       if (!current() || !await confirm(attempt, deadline,finalAccess.authorization)) throw new Error("Unconfirmed upload");
-      return attempt.id;
+      return privateMode ? attempt.id : undefined;
     } catch (error) {
       if (!current()) return;
       if (error instanceof AccessFailure || (error as {code?: string})?.code === "42501") retire("unavailable", privateMode?"Your customer access changed. Reopen the portal to continue.":"Your customer access changed. Reload Documents to continue.");
@@ -322,4 +323,17 @@ export function useClientDocuments(purpose?: {kind: "customer_private"; threadId
   const isCurrent=useCallback((expected:number)=>life.current.alive&&scopeAlive()&&!life.current.signedOut&&viewEpoch.current===expected&&dataGeneration.current===origin.current.generation&&!!life.current.scope,[scopeAlive]);
   const masked=!scopeAlive()||dataGeneration.current!==origin.current.generation;
   return {phase:!privateAllowed?"unavailable" as const:masked?"loading" as const:phase,files:masked?[]:files,summary:masked?null:summary,scope:masked?null:scope,more:masked?false:more,reading:masked?enabled:reading,notice:!privateAllowed?"Your private conversation could not be verified.":masked?"":notice,upload:privateMode&&masked?idle():upload,epoch:Math.max(epoch,viewEpoch.current),refresh,transfer,checkUpload,stopWaiting,retrieve,isCurrent};
+}
+
+export type PrivateClientDocuments = ReturnType<typeof useClientDocumentsConsumer>;
+type OriginalClientDocuments = Omit<PrivateClientDocuments, "transfer" | "checkUpload"> & {
+  transfer: (file?: File) => Promise<void>;
+  checkUpload: (row?: PortalDocument) => Promise<void>;
+};
+// Existing no-argument callers keep their original void-returning API. The
+// explicit private purpose alone exposes its independently verified saved ID.
+export function useClientDocuments(purpose: PrivateDocumentPurpose): PrivateClientDocuments;
+export function useClientDocuments(): OriginalClientDocuments;
+export function useClientDocuments(purpose?: PrivateDocumentPurpose): PrivateClientDocuments | OriginalClientDocuments {
+  return useClientDocumentsConsumer(purpose);
 }

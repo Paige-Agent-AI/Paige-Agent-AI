@@ -2,7 +2,7 @@ import {act} from "react";
 import {createRoot, type Root} from "react-dom/client";
 import {afterEach, beforeEach, expect, it, vi} from "vitest";
 import {CustomerIdentityProvider, type CustomerIdentityState} from "@/lib/portal/customerIdentity";
-import {useClientDocuments} from "./useClientDocuments";
+import {useClientDocuments, type PrivateClientDocuments} from "./useClientDocuments";
 
 const f = vi.hoisted(() => ({
   user: vi.fn(), session: vi.fn(), reply: vi.fn(),
@@ -59,7 +59,7 @@ const frameState = (): CustomerIdentityState => ({phase: "ready", frame: {
   actorId: actor, profile: profile(), brand: {tenant_name: "Test Practice"}, config: {},
 } as never});
 const file = () => new File(["test"], "Notes.pdf", {type: "application/pdf"});
-let host: HTMLDivElement, root: Root, state: ReturnType<typeof useClientDocuments>;
+let host: HTMLDivElement, root: Root, state: PrivateClientDocuments;
 const paints: {thread: string; files: string[]; upload: string | null}[] = [];
 function Probe({currentThread}: {currentThread: string}) {
   state = useClientDocuments({kind: "customer_private", threadId: currentThread});

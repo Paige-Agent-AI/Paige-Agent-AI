@@ -1,0 +1,225 @@
+{
+  "result": "PASS",
+  "at": "2026-10-24T07:46:46.360Z",
+  "pr": 2681,
+  "reviewedHead": "2a24465b0bc329afb2be1f76651827e9afb2eb04",
+  "merge": "ba97335e016b9fea741da5005d1e8dedd7baa696",
+  "tree": "85622aedb9a40cc6c993de1c2f6315edadbbf8e3",
+  "deployment": "dpl_5N4vqtooBsZC9sDQ7qkJzJSgiKeK",
+  "normalMigrationRun": 40075012907,
+  "versions": [
+    {
+      "url": "https://paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "ba97335e016b9fea741da5005d1e8dedd7baa696-mvm39n7q",
+        "customerUpdate": null
+      }
+    },
+    {
+      "url": "https://app.paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "ba97335e016b9fea741da5005d1e8dedd7baa696-mvm39n7q",
+        "customerUpdate": null
+      }
+    }
+  ],
+  "sourcePins": 21,
+  "pinForms": [
+    {
+      "path": "src/solo/sales/CommercialPackageInspection.tsx",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "4757e231756d3b9f1f81be01756e128e13d73ec4c152063e1161fc93d872fb91",
+      "historicalRawPin": "4757e231756d3b9f1f81be01756e128e13d73ec4c152063e1161fc93d872fb91"
+    },
+    {
+      "path": "src/solo/sales/AcceptedCommercialInspection.tsx",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "be125dfbeeb4b7395f7d272f2e116bd420ea0d6da8ca062b92fd7da1fc9ed165",
+      "historicalRawPin": "be125dfbeeb4b7395f7d272f2e116bd420ea0d6da8ca062b92fd7da1fc9ed165"
+    },
+    {
+      "path": "src/solo/sales/accepted-commercial-inspection.css",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "f4f35451a5608afa58a9f7f79a323cb6742e8dfb15ce670dbdbc4282349c3543",
+      "historicalRawPin": "f4f35451a5608afa58a9f7f79a323cb6742e8dfb15ce670dbdbc4282349c3543"
+    },
+    {
+      "path": "src/solo/sales/sales-billing.css",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "707ab36fb8573c0f00b31d8b12a28fea2b33ab8277f19f50309076a1fb38132e",
+      "historicalRawPin": "707ab36fb8573c0f00b31d8b12a28fea2b33ab8277f19f50309076a1fb38132e"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+      "historicalRawPin": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/accepted-commercial-read.ts",
+      "form": "exact-Windows-checkout-CRLF",
+      "reviewedGitSHA256": "cb4df28003e4dea2c5e40f67e3205b84ecd2fc04baf5a01216533310480fba41",
+      "historicalRawPin": "4e14c5c9ecf96d2e504b0338ad432dee0942c631594b6b9ad874f55d5d2a6263"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419",
+      "historicalRawPin": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8",
+      "historicalRawPin": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+      "historicalRawPin": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/package-projection.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "e65a4549d40ee09482aaa36033367f898bafc64e4eae38caf9f7639db70bbb51",
+      "historicalRawPin": "e65a4549d40ee09482aaa36033367f898bafc64e4eae38caf9f7639db70bbb51"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2",
+      "historicalRawPin": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/terms-reference.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "d9048bb3aae0e7507930c5d7257c7398614e966792868d0bfef04e4c5d3d1b5f",
+      "historicalRawPin": "d9048bb3aae0e7507930c5d7257c7398614e966792868d0bfef04e4c5d3d1b5f"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/contract.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "aad73fa38bb9c960f4362e5cd741c85dbae2e4cdcc46ec7f635869d51df8e2d3",
+      "historicalRawPin": "aad73fa38bb9c960f4362e5cd741c85dbae2e4cdcc46ec7f635869d51df8e2d3"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/model.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+      "historicalRawPin": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91",
+      "historicalRawPin": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91"
+    },
+    {
+      "path": "scripts/proof/e04-accepted-commercial-ui/vite.config.mjs",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "fb7699b67cd2db12b109db9d5931be69bf3ed99f77fd162c6fde9722beaf9dfc",
+      "historicalRawPin": "fb7699b67cd2db12b109db9d5931be69bf3ed99f77fd162c6fde9722beaf9dfc"
+    },
+    {
+      "path": "scripts/proof/e04-accepted-commercial-ui/sdk.ts",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "6a72b9faede65226a8d79529073d7e2eaa2b3e1e686ff211ca4bfd9b2e4eed7f",
+      "historicalRawPin": "6a72b9faede65226a8d79529073d7e2eaa2b3e1e686ff211ca4bfd9b2e4eed7f"
+    },
+    {
+      "path": "scripts/proof/e04-accepted-commercial-ui/source.tsx",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "99ca79f543d1794ea21cce0d7dabb234c8745b1ae0681027691a299ef46d784d",
+      "historicalRawPin": "99ca79f543d1794ea21cce0d7dabb234c8745b1ae0681027691a299ef46d784d"
+    },
+    {
+      "path": "scripts/proof/e04-accepted-commercial-ui/index.html",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "2f69a396c12a84a023221c98fbc5a6218f266d194617a34349b64602b8b63863",
+      "historicalRawPin": "2f69a396c12a84a023221c98fbc5a6218f266d194617a34349b64602b8b63863"
+    },
+    {
+      "path": "src/solo/sales/SalesBillingWorkspace.tsx",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "9d861d46989f982657c1f8c0b7c9abc7d918b69d00dd9250aff6b8deaff7ecdc",
+      "historicalRawPin": "9d861d46989f982657c1f8c0b7c9abc7d918b69d00dd9250aff6b8deaff7ecdc"
+    },
+    {
+      "path": "supabase/migrations/20271113810004_e04_accepted_commercial_evidence.sql",
+      "form": "exact-bytes",
+      "reviewedGitSHA256": "221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb",
+      "historicalRawPin": "221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb"
+    }
+  ],
+  "actualServedModule": {
+    "url": "https://app.paigeagent.ai/assets/SoloEntry-DA7JaV92.js",
+    "sha256": "1524cbcd9187abfe5d0196e44ab6fe1b33dfac899cd6c46e438006465a052ace",
+    "markers": [
+      "read_sales_accepted_agreement",
+      "Inspect accepted terms",
+      "Current payment terms cannot establish what was signed."
+    ]
+  },
+  "nativeReadback": {
+    "source": "Actual read-only production Supabase execute_sql result after merge ba97335e016b9fea741da5005d1e8dedd7baa696",
+    "timeBoundary": "The original query did not return a server timestamp; public readback time is separate.",
+    "evidence": {
+      "frontier": "20271113810004",
+      "reader_present": true,
+      "functions": [
+        {
+          "name": "_record_agreement_signature",
+          "body_md5": "3a2fa340fca9838aa9c6737f1e41ae61",
+          "definer": false,
+          "acl": [
+            "postgres=X/postgres",
+            "service_role=X/postgres"
+          ],
+          "config": [
+            "search_path=\"\""
+          ]
+        },
+        {
+          "name": "_paige_retained_commercial_payload",
+          "body_md5": "5347818ecd1dda3b7b28129e1b8f8033",
+          "definer": false,
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "config": [
+            "search_path=\"\""
+          ]
+        },
+        {
+          "name": "_paige_accepted_commercial_payload",
+          "body_md5": "235026b37dfde7b0f151588c680c8ca9",
+          "definer": false,
+          "acl": [
+            "postgres=X/postgres"
+          ],
+          "config": [
+            "search_path=\"\""
+          ]
+        },
+        {
+          "name": "read_sales_accepted_agreement",
+          "body_md5": "ffc7795288582b4eca5b506e5aada042",
+          "definer": true,
+          "acl": [
+            "postgres=X/postgres",
+            "authenticated=X/postgres"
+          ],
+          "config": [
+            "search_path=\"\""
+          ]
+        }
+      ]
+    }
+  },
+  "edge": "No changed Edge entrypoint or Edge importer of the new isomorphic browser read module; normal workflow40075012882 succeeded, no fresh Edge-version claim",
+  "boundary": "Public static source and version verification only; not owner/client Auth, actual accepted document, paid/fulfilled status, later-session reload, CentralQA/all12/founder acceptance. No provider or business action invoked.",
+  "releaseReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2681#issuecomment-6381631848"
+}

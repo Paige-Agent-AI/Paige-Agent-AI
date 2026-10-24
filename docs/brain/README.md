@@ -62,15 +62,17 @@ settled original-focus return. Original receipt6380668920 and sole Master4.0 row
 retain the exact review/CI/source identities. Populated weekly execution/Rail,
 cohorts/Live and complete Operations/founder acceptance remain unfinished.
 
-October24 original weekly proposal keyboard correction is locally verified:
-ordinary no-write owner inspection reproduced lost entry/cancel focus. Three
-causal failures are corrected; original63 Composer/Panel/Entry cases pass.
-Explicit cancellation returns its own enabled opener and owner/session loss cannot
-focus a disabled control. The same weekly Sheet root now respects reduced motion;
-default motion/layout/authority remain unchanged. [Source and native proof](../evidence/ui-delivery/exp05-weekly-proposal-keyboard.md)
-retain final responsive frames, synthetic/no-effect boundaries and remaining
-review/CI/web/authenticated obligations. No weekly save/activation, catalogue or
-algorithm maturity, full Experience or founder acceptance is inferred.
+October24 original weekly proposal keyboard correction2748 is source-released at
+mainfdb681682037ff57e5a4b9295a56dad3866e49f7, actual READY/public readback.
+Original63 cases and native desktop/narrow keyboard/motion proof remain intact.
+Ordinary owner no-write entry focuses Responsibility, explicit cancel returns
+Prepare, outer exit returns the original entry; reload and root reduced motion
+were verified. [Original receipt6382070456](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2748#issuecomment-6382070456)
+and sole Master4.0 row preserve exact lower review/CI/web identities.
+[Owning evidence](../evidence/ui-delivery/exp05-weekly-proposal-keyboard.md) excludes
+weekly preparation/save/approval/activation/execution and all provider effects.
+Full ten outcomes/E5-CV1–9, weekly/automation/ZION/Rail/recovery, cohorts/eligible
+Live and founder acceptance remain unfinished. No catalogue/algorithm promotion.
 
 ## EXP05 original refusal/reload — source verified, release owed, October23
 

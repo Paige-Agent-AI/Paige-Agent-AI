@@ -5,7 +5,7 @@ import React from "react";
 import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles, Images } from "lucide-react";
 import { Ic, Logo } from "../_shared";
 import { VsStars } from "./VsStars";
-import { createSession, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
+import { createSession, listTemplates, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
 import { BRIEF_FIELDS, EMPTY_BRIEF_DETAILS, composeBrief, hasBriefDetails, type BriefDetails } from "./brief-fields";
 import { loadArtifact, type Brand, type LoadedArtifact } from "./artifact-state";
 import { nexusDepartmentRemit, nexusDisplayName, planWithNexusPrompt } from "./nexus";
@@ -126,6 +126,9 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
 }) {
   const [brand, setBrand] = React.useState<Brand>({ floor: buildGrowthBrandFloor(null), name: null, logoUrl: null });
   React.useEffect(() => { void loadBrand(tenantSlug).then(setBrand); }, [tenantSlug]);
+  // EXP07 row 6 — the workspace's templates. Empty (and the section hidden) until someone saves one.
+  const [templates, setTemplates] = React.useState<StudioSession[] | null>(null);
+  React.useEffect(() => { void listTemplates().then(setTemplates).catch(() => setTemplates([])); }, []);
   const [brief, setBrief] = React.useState("");
   const [details, setDetails] = React.useState<BriefDetails>(EMPTY_BRIEF_DETAILS);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
@@ -142,6 +145,20 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
     try {
       const s = await createSession(composed);
       onOpen(s.id, composed);
+    } catch (e) {
+      setError(plainError(e, "The project couldn't be started. Try again."));
+      setCreating(false);
+    }
+  };
+
+  // A template starts a NEW project seeded from its brief — the template itself never changes.
+  const startFromTemplate = async (t: StudioSession) => {
+    const brief = (t.seedBrief ?? sessionName(t)).trim();
+    if (brief.length < 4 || creating) return;
+    setCreating(true); setError(null);
+    try {
+      const s = await createSession(brief);
+      onOpen(s.id, brief);
     } catch (e) {
       setError(plainError(e, "The project couldn't be started. Try again."));
       setCreating(false);
@@ -205,6 +222,19 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
           </div>
         </div>
       </div>
+      {templates !== null && templates.length > 0 && (
+        <section className="vs-section" aria-label="Start from a template">
+          <h2>Start from a template</h2>
+          <div className="vs-cards">
+            {templates.slice(0, 8).map((t) => (
+              <button key={t.id} type="button" className="vs-card" disabled={creating} onClick={() => void startFromTemplate(t)}>
+                <CardPreview s={t} brand={brand} />
+                <div className="vs-card-body"><b className="vs-trunc">{sessionName(t)}</b><span>Starts a new project from this brief</span></div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="vs-section" aria-label="Pick up where you left off">
         <h2>Pick up where you left off</h2>
         {sessionsError ? <p className="vs-alert" role="alert">{sessionsError}</p>

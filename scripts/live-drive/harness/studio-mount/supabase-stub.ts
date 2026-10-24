@@ -27,6 +27,11 @@ const sessions: Record<string, unknown>[] = [
   { id: "s-page", title: "Referral workshop page", seed_brief: "A landing page for my November workshop\n\nBrief details:\nAudience: Solo consultants planning a referral engine\nOutcome: Twenty bookings for the November 14 session\nChannel: Email and LinkedIn\nDeliverables: One page and three posts", artifact_refs: [{ kind: "page", id: "p-1", title: "Referral workshop" }], updated_at: ago(90) },
   { id: "s-blank", title: "Untitled project", seed_brief: "Design me a landing page for my referral workshop", artifact_refs: [], updated_at: ago(30) },
   { id: "s-funnel", title: "Free strategy call", seed_brief: "A funnel for a free consultation", artifact_refs: [], updated_at: ago(60 * 26) },
+  // EXP07 row 6: a workspace template someone already saved. It must NOT appear in Drafts; it
+  // appears under "Start from a template". `?templates=0` drops it (the no-templates home frame).
+  ...(new URLSearchParams(window.location.search).get("templates") === "0" ? [] : [
+    { id: "s-tmpl", title: "Workshop page template", seed_brief: "A landing page for my referral workshop", artifact_refs: [], is_template: true, updated_at: ago(60 * 48) },
+  ]),
 ];
 // `?publish=` picks the publish door's answer (see `door` below): ready (default) · slow · blocked ·
 // off · forbidden · no-workspace · refused (stale once, then fine) · notdone (503, nothing ran) · unverified ·
@@ -139,10 +144,11 @@ export const supabase = {
   rpc: async (fn: string, args: Record<string, unknown>) => {
     window.__studioCalls.push({ fn, args });
     switch (fn) {
-      case "list_studio_sessions": return { data: sessions, error: null };
+      case "list_studio_sessions": return { data: args.p_filter === "templates" ? sessions.filter((s) => s.is_template) : sessions.filter((s) => !s.is_template), error: null };
       case "create_studio_session": { const s = { id: "s-new", title: String(args.p_title), seed_brief: args.p_seed_brief, artifact_refs: [], updated_at: now }; sessions.unshift(s); return { data: s, error: null }; }
       case "touch_studio_session": return { data: sessions.find((s) => s.id === args.p_id) ?? null, error: null };
       case "rename_studio_session": { const s = sessions.find((x) => x.id === args.p_id); if (s) s.title = String(args.p_title); return { data: s ?? null, error: null }; }
+      case "set_studio_session_template": { const s = sessions.find((x) => x.id === args.p_id); if (s) s.is_template = args.p_is_template === true; return { data: s ?? null, error: null }; }
       case "paige_studio_thread_ensure": return { data: `th-${args.p_session_id}`, error: null };
       case "peek_tenant_portal_brand": return { data: [{ tenant_name: "Northwind Studio", primary_color: "#2F6B55", logo_url: null }], error: null };
       case "list_artifact_versions": return { data: args.p_kind === "form" ? versions : versions.slice(0, 1).map((v) => ({ ...v, is_current: true, title: "First draft" })), error: null };

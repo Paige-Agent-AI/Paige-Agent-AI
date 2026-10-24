@@ -18,14 +18,14 @@ AUTOMATED_EVIDENCE: PASS: original Composer/Panel/Entry suites63/63, including e
 STATIC_EVIDENCE: PASS: changed TSX/test ESLint, diff check and pinned installed Impeccable detector with no findings. Scoped React quality pass: typed local refs, bounded primitive dependencies, DOM-after-commit focus only, no business action moved into an effect, new listener, data waterfall, package or router. Hosted exact-lock CI remains required.
 RENDERED_EVIDENCE: PASS: final actual native full-shell images at1536x770/1366x768/1024x768/900x1000, both themes and PAIGE open/closed;320px A/B synthetic contexts and original reduced-motion root before/after. Final captures use reduced-motion preference for settled frames; ingress captures remain private nonfinal evidence.
 BEHAVIORAL_EVIDENCE: PASS: all16 final drives focus Responsibility on entry and original Prepare on cancellation.320px edit/Tab/Day update retains focus on Day instead of stealing it; cancellation returns to original44px action. No Review draft, proposal save, approval, activation or execution was submitted.
-AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary production owner independently reproduced focus returning to the dialog container on both entry and cancellation. Only no-write original form inspection occurred. Corrected source remains unreleased and requires equivalent ordinary-owner verification after deployment.
+AUTHENTICATED_RUNTIME: PASS_BOUNDED: original ordinary owner entry, explicit cancel, outer exit and reload verified after exact production deployment; no draft preparation/save/approval or action occurred. Full weekly execution remains UNVERIFIED.
 KEYBOARD_FOCUS: PASS: entry field and original opener observed through actual native components, existing-proposal cancellation and owner-loss negatives covered in the original suite; no asynchronous focus callback survives scope loss.
 ZOOM_REFLOW: PASS:320px viewport/reflow, document width320 and sheet content width=scrollWidth304, all fields/actions reachable through the original vertical scroller; browser zoom control was not separately exercised.
 REDUCED_MOTION: PASS: actual preference true previously left root animation/transition0.5s while children were0.00001s. Scoped root correction now yields0.00001s for both; explicit no-preference still0.5s. Temporary emulation is reset.
 STATE_COVERAGE: PASS: empty/new form, existing canonical awaiting-decision proposal, cancellation, saved-result entry, stale/unconfirmed, unavailable/refused and session/owner loss retain original behavior. Only user-triggered cancellation restores Prepare; access loss cannot focus a disabled control.
 TRUTHFUL_STATE_LABELS: PASS: an unsaved form is not a server proposal, approved responsibility, enabled schedule, completed check or receipt; availability and original uncertainty text are unchanged.
 SOLO_UI: YES: same source for every eligible existing/future SOLO owner, no tenant-specific code or production identity in shared artifacts.
-UNVERIFIED: final review/hosted CI, production web and corrected ordinary-owner path; original saves, recurring execution, notices, ZION, cohorts, separate Live and full ten-outcome/E5-CV1–9/founder acceptance remain owed at their original boundaries.
+UNVERIFIED: populated weekly drafts, actual approval/recurrence/execution/Rail, automation/ZION/recovery, eligible existing/new cohorts, separate Live and complete ten-outcome/E5-CV1–9/founder acceptance remain owed.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/exp05-weekly-proposal-keyboard/final-light-1536-closed.png; Obsidian counterpart retained.
 SOLO_1536X770_PAIGE_OPEN: PASS: assets/exp05-weekly-proposal-keyboard/final-light-1536-open.png; keyboard focus and original sheet retained.
@@ -97,8 +97,9 @@ guard. Original Panel act-environment warnings remain visible, not suppressed.
 
 Applied [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
 clarify/harden/craft floor and the installed React ref/effect/accessibility checks.
-Functional: bounded local repair verified. Visual: original rendered components
+Functional: bounded source deployed and ordinary no-write path verified. Visual: original rendered components
 and preference verified. Experiential: keyboard continuity with unchanged authority.
 Founder Acceptance: NOT_ACCEPTED; one complete integrated EXP05 evaluation remains.
-Exact final head/review/CI and later web deployment belong to the original PR;
-source log is N/A until main and closes only in the existing Master4.0.
+Exact original finalda68/LOWER5637398693 and current-main union review5637524973 passed all ten applicable named checks/two web statuses; schema-free PreviewSKIPPED. Mainfdb681682037ff57e5a4b9295a56dad3866e49f7/treeb44d9263a7a301a7f57f53c98f120f6d425d82dc matches480+da68. Exact READY dpl_DFp8eFHM2AT7YgmVmMayhYVyrXuR; both public200/fdb-mvm51gou/null08:32:05–06UTC. Receipt6382070456 and the sole original2748 Master4.0 row hold production proof. No SQL/Edge deployment or authority/provider/activation change.
+
+Production owner verification: original empty weekly read -> Prepare -> Responsibility field -> explicit Close proposal -> same Prepare control -> outer Escape -> original entry; repeat after reload. Original root reduced-motion preference measured animation/transition0.00001s, then temporary emulation reset. One attempted clipped cancel screenshot timed out and is not accepted evidence; original full entry capture and separate DOM focus/reload/motion readbacks are preserved privately. No Review draft, save, approval, schedule, message or provider effect. This closes only the bounded accessibility defect, not the complete Experience.

@@ -1,7 +1,18 @@
 .plc-trigger { flex: none; gap: .4rem; border-radius: .65rem; }
 .plc-trigger svg { width: 1rem; height: 1rem; }
-.plc-stage { position: fixed; inset: 0; z-index: 100; display: grid; grid-template-rows: auto minmax(0,1fr) auto; min-width: 0; overflow: hidden; color: hsl(var(--foreground)); background: radial-gradient(circle at 50% 12%, hsl(var(--primary)/.1), transparent 34%), hsl(var(--background)); }
-.plc-stage__header { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem clamp(.75rem,2vw,1.5rem); border-bottom: 1px solid hsl(var(--border)/.8); background: hsl(var(--background)/.9); }
+/* THE STAGE IS A ROOM, NOT A PANEL. Two depths of ground — a primary-tinted field overhead and a
+   darker floor below — so the frame has a Z axis before anything is drawn on it. All colour is
+   token-derived, so the light theme stays unmistakably its own room (§23). */
+.plc-stage { position: fixed; inset: 0; z-index: 100; display: grid; grid-template-rows: auto minmax(0,1fr) auto; min-width: 0; overflow: hidden; color: hsl(var(--foreground)); background: radial-gradient(130% 100% at 50% -12%, hsl(var(--primary)/.16), transparent 56%), radial-gradient(100% 80% at 8% 112%, hsl(var(--primary)/.11), transparent 62%), hsl(var(--background)); }
+/* The nebula: two soft drifting fields behind everything, moving on minute-long phases. This is
+   environment in the same sense the body's resting breath is — ambient, slow, and carrying no
+   claim about anything being heard. Pointer events none, or it would eat the stage's clicks. */
+.plc-stage::before { content: ""; position: absolute; inset: -12%; z-index: 0; pointer-events: none; background: radial-gradient(38% 30% at 26% 30%, hsl(var(--primary)/.13), transparent 70%), radial-gradient(34% 26% at 76% 66%, hsl(var(--primary)/.09), transparent 72%); filter: blur(2px); animation: plc-nebula 52s ease-in-out infinite alternate; }
+/* The vignette: attention gathers toward the centre where the conversation is. */
+.plc-stage::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(120% 100% at 50% 44%, transparent 58%, hsl(var(--background)/.5) 100%); }
+.plc-stage > * { position: relative; z-index: 1; }
+@keyframes plc-nebula { from { transform: translate3d(-1.4%, -1%, 0) scale(1.02); } to { transform: translate3d(1.6%, 1.2%, 0) scale(1.07); } }
+.plc-stage__header { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem clamp(.75rem,2vw,1.5rem); border-bottom: 1px solid hsl(var(--foreground)/.08); background: hsl(var(--background)/.55); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); }
 .plc-stage__identity,.plc-stage__header-actions,.plc-controls,.plc-card__actions,.plc-governed__status { display: flex; align-items: center; }
 .plc-stage__identity { min-width: 0; gap: .7rem; }
 .plc-stage__identity div { min-width: 0; display: grid; }
@@ -17,7 +28,11 @@
 .plc-stage__main { min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr); gap: clamp(1rem,2.5vw,2.5rem); padding: clamp(.9rem,1.8vw,1.5rem); }
 /* Rows, not a centred stack: the wave takes whatever height is left (1fr), the labels and panels
    take what they need, and nothing can push a sibling out of the frame. */
-.plc-presence { min-width: 0; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); grid-template-rows: minmax(11rem,1fr) auto auto auto; align-items: start; justify-items: center; column-gap: .75rem; text-align: center; }
+.plc-presence { min-width: 0; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); grid-template-rows: minmax(11rem,1fr) auto auto auto; align-items: start; justify-items: center; column-gap: .75rem; text-align: center; /* Her light lands on the room: a soft primary field under the canvas, so the body reads as
+   standing IN the frame rather than printed on it. The one warm note arrives only while she is
+   actually speaking — the same single meaning gold carries everywhere on this surface (§11). */
+  background: radial-gradient(closest-side at 50% 32%, hsl(var(--primary)/.17), transparent 74%); }
+[data-live-state="speaking"] .plc-presence { background: radial-gradient(closest-side at 50% 32%, hsl(var(--accent)/.13), transparent 72%), radial-gradient(closest-side at 50% 32%, hsl(var(--primary)/.1), transparent 74%); }
 /* BOTH presences span the full column. The 3D wrapper has its own class, so when it replaced the
    flat one as the mounted component it stopped matching this rule and was auto-placed into the
    narrow .8fr track — rendering Paige at ~61% of her size and off-axis from the "Listening" label
@@ -46,16 +61,16 @@
 .plc-notice { display: flex; flex-direction: column; gap: .6rem; overflow: hidden; }
 .plc-notice__scroll { min-height: 0; overflow-y: auto; }
 .plc-notice__actions { flex: none; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
-.plc-state { margin-top: 1rem; display: flex; align-items: center; gap: .5rem; font-weight: 650; }
+.plc-state { margin-top: 1rem; display: flex; align-items: center; gap: .5rem; font-weight: 650; padding: .42rem .95rem; border-radius: 999px; border: 1px solid hsl(var(--foreground)/.08); background: hsl(var(--background)/.5); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 .plc-state span { width: .55rem; height: .55rem; border-radius: 50%; background: hsl(var(--muted-foreground)); }
 [data-live-state="listening"] .plc-state span,[data-live-state="speaking"] .plc-state span { background: hsl(var(--primary)); }
 [data-live-state="thinking"] .plc-state span,[data-live-state="checking"] .plc-state span,[data-live-state="reconnecting"] .plc-state span { animation: plc-pulse 1.5s ease-in-out infinite; background: hsl(var(--primary)); }
 [data-live-state="interrupted"] .plc-state span,[data-live-state="permission-denied"] .plc-state span,[data-live-state="unavailable"] .plc-state span { background: hsl(var(--destructive)); }
 .plc-context { max-width: 28rem; margin-top: .45rem; color: hsl(var(--muted-foreground)); font-size: .8rem; line-height: 1.5; }
-.plc-working { width: min(100%,28rem); display: grid; gap: .2rem; margin-top: 1rem; padding: .75rem 1rem; border: 1px solid hsl(var(--border)); border-radius: .8rem; text-align: left; background: hsl(var(--card)/.72); }
+.plc-working { width: min(100%,28rem); display: grid; gap: .2rem; margin-top: 1rem; padding: .75rem 1rem; border: 1px solid hsl(var(--foreground)/.09); border-radius: .9rem; text-align: left; background: hsl(var(--card)/.55); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); box-shadow: 0 1rem 2.6rem hsl(var(--foreground)/.08), inset 0 1px 0 hsl(var(--foreground)/.05); }
 .plc-working span,.plc-section-title small,.plc-card__source { color: hsl(var(--muted-foreground)); font-size: .7rem; }
 .plc-working strong { font-size: .82rem; }
-.plc-notice { width: min(100%,28rem); margin-top: .8rem; padding: .9rem; border: 1px solid hsl(var(--border)); border-radius: .8rem; text-align: left; background: hsl(var(--muted)/.65); }
+.plc-notice { width: min(100%,28rem); margin-top: .8rem; padding: .9rem; border: 1px solid hsl(var(--foreground)/.09); border-radius: .9rem; text-align: left; background: hsl(var(--muted)/.5); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); box-shadow: 0 1rem 2.6rem hsl(var(--foreground)/.08), inset 0 1px 0 hsl(var(--foreground)/.05); }
 .plc-notice > strong { font-size: .68rem; letter-spacing: .08em; }
 /* The terms a person agrees to before Paige can hear them. Token-only, AA in both themes, and
    deliberately unhurried: this is a consent surface, not a banner, so it earns its height by
@@ -68,10 +83,13 @@
 .plc-terms > button { justify-self: start; margin-top: .15rem; }
 .plc-notice p { margin: .3rem 0 .7rem; font-size: .78rem; line-height: 1.45; }
 .plc-workspace { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0,1fr) auto; gap: .9rem; }
-.plc-transcript,.plc-card-layer { min-width: 0; overflow: auto; border: 1px solid hsl(var(--border)/.9); border-radius: 1rem; background: hsl(var(--card)/.76); box-shadow: 0 1rem 3rem hsl(var(--foreground)/.04); }
+/* GLASS, NOT CARD-BOARD. The workspace floats above the room: translucent ground, real backdrop
+   blur, a hairline top edge catching light, and a shadow deep enough to lift it off the stage.
+   Without backdrop-filter support the solid fallbacks below keep the surface fully readable. */
+.plc-transcript,.plc-card-layer { min-width: 0; overflow: auto; border: 1px solid hsl(var(--foreground)/.09); border-radius: 1.1rem; background: hsl(var(--card)/.55); -webkit-backdrop-filter: blur(18px) saturate(1.25); backdrop-filter: blur(18px) saturate(1.25); box-shadow: 0 1.4rem 3.4rem hsl(var(--foreground)/.1), inset 0 1px 0 hsl(var(--foreground)/.06); }
 .plc-transcript { padding: 1rem; }
 .plc-card-layer { max-height: 46vh; padding: 1rem; }
-.plc-section-title { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; gap: 1rem; padding-bottom: .65rem; background: hsl(var(--card)/.96); }
+.plc-section-title { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; gap: 1rem; padding-bottom: .65rem; background: linear-gradient(to bottom, hsl(var(--card)/.92), hsl(var(--card)/.72)); }
 .plc-section-title > span { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .plc-turn { max-width: 96%; margin-top: .75rem; }
 .plc-turn--owner { margin-left: auto; }
@@ -100,7 +118,7 @@
 .plc-recap { display: grid; gap: .55rem; margin-top: .8rem; }
 .plc-recap li { display: flex; gap: .5rem; font-size: .8rem; }
 .plc-recap svg { width: 1rem; height: 1rem; flex: none; }
-.plc-controls { min-width: 0; justify-content: center; flex-wrap: wrap; gap: .45rem; padding: .75rem; border-top: 1px solid hsl(var(--border)/.8); background: hsl(var(--background)/.92); }
+.plc-controls { min-width: 0; justify-content: center; flex-wrap: wrap; gap: .45rem; padding: .75rem; border-top: 1px solid hsl(var(--foreground)/.08); background: hsl(var(--background)/.55); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); }
 .plc-controls button { gap: .4rem; min-height: 44px; }
 .plc-stage button,.plc-stage input { min-height: 44px; }
 .plc-stage button:focus-visible,.plc-stage input:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
@@ -121,10 +139,11 @@
 /* The terms are a consent surface: they arrive a beat later and unhurried, so the control is not
    under the cursor before the sentence above it has been read. */
 .plc-terms { animation: plc-rise .44s cubic-bezier(.22,1,.36,1) both; animation-delay: .06s; }
-/* Controls answer the pointer. Gold stays on the act; this is only lift and edge. */
-.plc-controls button, .plc-terms button { transition: transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s ease-out; }
-.plc-controls button:hover:not(:disabled), .plc-terms button:hover:not(:disabled) { transform: translateY(-1px); }
-.plc-controls button:active:not(:disabled), .plc-terms button:active:not(:disabled) { transform: translateY(0); }
+/* Controls answer the pointer. Gold stays on the act; this is only lift and edge. The notice's
+   pinned actions row gets the same courtesy the terms button and the footer already had. */
+.plc-controls button, .plc-terms button, .plc-notice__actions button { transition: transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s ease-out; }
+.plc-controls button:hover:not(:disabled), .plc-terms button:hover:not(:disabled), .plc-notice__actions button:hover:not(:disabled) { transform: translateY(-1px); }
+.plc-controls button:active:not(:disabled), .plc-terms button:active:not(:disabled), .plc-notice__actions button:active:not(:disabled) { transform: translateY(0); }
 @media (max-width: 800px) {
   /* The fixed frame holds on a phone too. This block used to set the inner regions to
      `overflow: visible` and let the page grow, which worked only because .plc-stage__main scrolled —
@@ -150,13 +169,25 @@
 }
 @media (prefers-reduced-motion: reduce) {
   [data-live-state] .plc-state span { animation: none; }
+  /* The room holds still too: the nebula stops drifting (the scene settles itself, on demand). */
+  .plc-stage::before { animation: none !important; }
   /* The stage arrives, it does not animate in. Written per-primitive rather than relying on the
      blanket transition-duration rule below, because an animation-delay with `both` fill would
      otherwise hold each element invisible for its delay and then snap it in. */
   .plc-stage, .plc-presence, .plc-workspace, .plc-controls, .plc-terms { animation: none !important; }
-  .plc-controls button, .plc-terms button { transition: none !important; }
-  .plc-controls button:hover:not(:disabled), .plc-terms button:hover:not(:disabled) { transform: none; }
+  .plc-controls button, .plc-terms button, .plc-notice__actions button { transition: none !important; }
+  .plc-controls button:hover:not(:disabled), .plc-terms button:hover:not(:disabled), .plc-notice__actions button:hover:not(:disabled) { transform: none; }
   .plc-stage * { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+/* SOLID GROUND WHERE BLUR IS UNAVAILABLE. Translucency without backdrop-filter is just a washed
+   panel, so browsers that cannot blur restore the near-opaque grounds this surface used before
+   the glass — readable first, immersive second. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .plc-stage__header, .plc-controls { background: hsl(var(--background)/.92); }
+  .plc-state { background: hsl(var(--background)/.85); }
+  .plc-transcript,.plc-card-layer { background: hsl(var(--card)/.9); }
+  .plc-notice { background: hsl(var(--muted)/.85); }
+  .plc-working { background: hsl(var(--card)/.88); }
 }
 @media (forced-colors: active) { .plc-stage,.plc-transcript,.plc-card-layer,.plc-working,.plc-notice { border-color: CanvasText; } }
 

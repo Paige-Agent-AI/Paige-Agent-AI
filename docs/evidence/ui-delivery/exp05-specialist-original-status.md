@@ -224,9 +224,9 @@ E01/E07 and all existing runtime source. Normal deploy-edge-functions40066017776
 (sha256:cab27f0fe67e92f580db24582fac1efad685dc8ca720fee1bb207e25031fc9cc).
 
 Independent production read05:24:09.736UTC compared actual394 files to exact Git
-bytes: Chat524269/269, ACTIVE/JWTtrue/import_mapfalse, rootSHA256
+bytes: Chat v524:269/269, ACTIVE/JWTtrue/import_mapfalse, rootSHA256
 5f5b9ff84ccf0f832db30e85dfb0a0205648edc28dfddc92dd54cda0f70cce78;
-original orchestrator124125/125, same configuration, rootSHA256
+original orchestrator v124:125/125, same configuration, rootSHA256
 0518eb57ad62542e689bf256395f7050583581195c1a47fffa9afd0eaad1f978.
 Chat524 updated05:23:28.123UTC. Orchestrator124 updated02:57:49.472UTC and is
 verified unchanged, not newly redeployed by this release. Archive hashes remain

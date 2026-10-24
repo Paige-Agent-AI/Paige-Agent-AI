@@ -23,7 +23,7 @@ import { EntityDiagramCard } from "@/components/chat/EntityDiagramCard";
 import { extractEntityDiagram } from "@/lib/entityDiagram";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { PaigeConfirmCard, PaigeConfirmRecord } from "@/components/chat/PaigeConfirmCard";
-import { previewOf, rehydrateConfirmItems, type ConfirmEmailPreview } from "@/components/chat/confirmPreview";
+import { confirmationDeadline, previewOf, rehydrateConfirmItems, type ConfirmEmailPreview } from "@/components/chat/confirmPreview";
 import { PaigeAskCard, PaigeAskRecord, type PaigeAskOption } from "@/components/chat/PaigeAskCard";
 import {
   applyServerOutcome,
@@ -147,7 +147,7 @@ type Message = {
    *  them back so the gate runs that call and not whatever the model re-emits — see the gate's own
    *  note. Optional: a rehydrated turn has summaries but no live fingerprints, which is correct,
    *  because a past decision must never be re-fired (§15). */
-  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: ConfirmEmailPreview }>;
+  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; expires_at?: string | null; command?: Record<string, unknown>; idempotency_key?: string; preview?: ConfirmEmailPreview }>;
   /** True on turns rehydrated from history: their confirm cards render settled,
    *  not as a live Approve button (§15 — never re-fire a past action). */
   confirmResolved?: boolean;
@@ -213,6 +213,17 @@ const ASK_SKIP_REPLY = "Use your best guess.";
 const historicalConfirmItems = (items: Message["confirm"]): Message["confirm"] => items?.map(({tool,summary,preview}) => ({
   tool, summary, ...(preview ? {preview} : {}),
 }));
+const approvalDeadline = (message: Message): number | undefined => {
+  const initial = confirmationDeadline(message.confirm);
+  const recovered = message.recoveredApprovalExpiresAt === undefined ? undefined : Date.parse(message.recoveredApprovalExpiresAt);
+  const prior = recovered === undefined ? undefined : Number.isFinite(recovered) ? recovered : 0;
+  return initial === undefined ? prior : prior === undefined ? initial : Math.min(initial, prior);
+};
+const approvalExpired = (message: Message, now = Date.now()) => !message.confirmResolved && !message.confirmDecision
+  && approvalDeadline(message) !== undefined && approvalDeadline(message)! <= now;
+const expiredApprovalMessage = (message: Message): Message => ({ ...message,
+  confirm: historicalConfirmItems(message.confirm), confirmResolved: true,
+  recoveredApprovalExpiresAt: undefined, approvalRecovery: "unavailable" });
 
 /** C3a — the answer being read right now (or just finished in this session). Keyed by the
  *  assistant message id it belongs to; cleared at every transcript reset. */
@@ -515,7 +526,7 @@ const PaigeAIChatInner = ({
     decisionFocusRef.current = null;
     const active = document.activeElement;
     if (active && active !== document.body) return;
-    document.querySelector<HTMLElement>(`[data-paige-message-id="${id}"] [data-paige-decided-record]`)?.focus({ preventScroll: true });
+    document.querySelector<HTMLElement>(`[data-paige-message-id="${id}"] [data-paige-decided-record], [data-paige-message-id="${id}"] [data-paige-approval-recovery="unavailable"]`)?.focus({ preventScroll: true });
   }, [messages]);
   // Which answers' "What PAIGE did" is open (the Stop footer's "See what finished" opens one).
   const [turnTraceOpen, setTurnTraceOpen] = useState<Record<string, boolean>>({});
@@ -1475,15 +1486,18 @@ const PaigeAIChatInner = ({
   };
 
   useEffect(() => {
-    const expires = messages.filter(message => message.recoveredApprovalExpiresAt && !message.confirmResolved && !message.confirmDecision)
-      .map(message => Date.parse(message.recoveredApprovalExpiresAt!)).filter(Number.isFinite);
+    if (!soloTenantSafety) return;
+    const expires = messages.filter(message => !message.confirmResolved && !message.confirmDecision)
+      .map(approvalDeadline).filter((time): time is number => time !== undefined);
     if (!expires.length) return;
-    const timer = window.setTimeout(() => setMessages(previous => previous.map(message =>
-      message.recoveredApprovalExpiresAt && Date.parse(message.recoveredApprovalExpiresAt) <= Date.now()
-        ? {...message, confirm: historicalConfirmItems(message.confirm), confirmResolved: true,
-          recoveredApprovalExpiresAt: undefined, approvalRecovery: "unavailable"} : message)), Math.max(0, Math.min(...expires) - Date.now()) + 1);
+    const timer = window.setTimeout(() => {
+      const now = Date.now();
+      const focused = document.activeElement?.closest('[data-paige-live-decide]')?.closest('[data-paige-message-id]')?.getAttribute('data-paige-message-id');
+      if (focused && messagesRef.current.some(message => message.id === focused && approvalExpired(message, now))) decisionFocusRef.current = focused;
+      setMessages(previous => previous.map(message => approvalExpired(message, now) ? expiredApprovalMessage(message) : message));
+    }, Math.max(0, Math.min(2147483646, Math.min(...expires) - Date.now())) + 1);
     return () => window.clearTimeout(timer);
-  }, [messages]);
+  }, [messages, soloTenantSafety]);
 
   const selectThread = async (
     id: string,
@@ -2061,7 +2075,7 @@ const PaigeAIChatInner = ({
       const researchThisTurn: PaigeResearchResult[] = [];
       // Accumulate EVERY pending confirmation this turn — a blanket "Approve" runs
       // all of them, so the operator must see all of them (design-crew B1).
-      const confirmThisTurn: Array<{ tool: string; summary: string; fingerprint?: string }> = [];
+      const confirmThisTurn: NonNullable<Message["confirm"]> = [];
       // #29 — deliverables (document/image) Paige persisted this turn, streamed as
       // paige_artifact frames BEFORE the reply text, rendered as inline handoff cards.
       const artifactsThisTurn: PaigeArtifact[] = [];
@@ -2242,7 +2256,7 @@ const PaigeAIChatInner = ({
           }
           // Structured event: Paige is asking to confirm a mutating action → render an approve/deny card.
           if (parsed.paige_confirm?.summary) {
-            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}), ...previewOf(parsed.paige_confirm) });
+            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(Object.prototype.hasOwnProperty.call(parsed.paige_confirm, "expires_at") ? { expires_at: typeof parsed.paige_confirm.expires_at === "string" ? parsed.paige_confirm.expires_at : null } : {}), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}), ...previewOf(parsed.paige_confirm) });
             setStreamMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, recordLinks: recordLinksThisTurn.length ? [...recordLinksThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
@@ -3081,7 +3095,14 @@ const PaigeAIChatInner = ({
   // draws the decide card below, so the line can never wait on a card that is not there.
   const confirmCardLive = (message: Message, index: number) =>
     !!message.confirm?.length && !message.confirmResolved && !message.confirmDecision
+    && !(soloTenantSafety && approvalExpired(message))
     && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint))));
+  const refuseExpiredDecision = (message: Message) => {
+    if (!soloTenantSafety || !approvalExpired(message)) return false;
+    decisionFocusRef.current = message.id;
+    setMessages(previous => previous.map(item => item.id === message.id && approvalExpired(item) ? expiredApprovalMessage(item) : item));
+    return true;
+  };
   /** C4c — where the question an answer ended on stands: open while nothing has been said since; then
    *  answered (the next thing the person said was sent AS its answer — or a skip) or not answered. */
   const askStandingAt = (index: number): AskStanding | undefined => {
@@ -3537,12 +3558,12 @@ const PaigeAIChatInner = ({
                             // Solo: after "Ask Paige again" the button that was pressed is gone, so
                             // the fresh card takes focus — but only when nothing else holds it.
                             focusOnMount={soloTenantSafety && !message.recoveredApprovalExpiresAt}
-                            onApprove={(fps) => void handleSend(DECISION_REPLY.approved, fps)}
+                            onApprove={(fps) => { if (!refuseExpiredDecision(message)) void handleSend(DECISION_REPLY.approved, fps); }}
                             // Declining CANCELS the stored proposal, rather than only saying so in
                             // prose the model interprets. Without this the row stays live for its
                             // full window, and a later turn could still act on something the
                             // person had already said no to.
-                            onDeny={(fps) => void handleSend(DECISION_REPLY.declined, undefined, fps)}
+                            onDeny={(fps) => { if (!refuseExpiredDecision(message)) void handleSend(DECISION_REPLY.declined, undefined, fps); }}
                           />
                           </div>
                         )}
@@ -3568,18 +3589,19 @@ const PaigeAIChatInner = ({
                             })()}
                           </div>
                         )}
-                        {(message.approvalRecovery === "unavailable"
+                        {(message.approvalRecovery === "unavailable" || soloTenantSafety && approvalExpired(message)
                           || index === messages.length - 1 && (message.approvalRecovery === "checking"
                             || message.recoveredApprovalExpiresAt && confirmCardLive(message, index))) && (
-                          <p role="status" className="mt-2 text-xs text-muted-foreground" data-paige-approval-recovery={message.approvalRecovery ?? "available"}>
-                            {message.approvalRecovery === "checking" ? "Checking whether this proposal is still available for approval…"
-                              : message.approvalRecovery === "unavailable" ? "This earlier proposal couldn't be verified for approval. Review the original record before asking again."
+                          <p role="status" tabIndex={-1} className="mt-2 text-xs text-muted-foreground" data-paige-approval-recovery={soloTenantSafety && approvalExpired(message) ? "unavailable" : message.approvalRecovery ?? "available"}>
+                            {message.approvalRecovery === "unavailable" || soloTenantSafety && approvalExpired(message)
+                              ? "This earlier proposal couldn't be verified for approval. Review the original record before asking again."
+                              : message.approvalRecovery === "checking" ? "Checking whether this proposal is still available for approval…"
                                 : "This proposal is still waiting for your decision. Review the proposed changes before approving."}
                           </p>
                         )}
                         {/* History remains context unless a fresh server read verified
                             the canonical terminal and its still-live native proposal. */}
-                        {!!message.confirm?.length && message.confirmResolved && (
+                        {!!message.confirm?.length && (message.confirmResolved || soloTenantSafety && approvalExpired(message)) && (
                           <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5">
                             <p className="text-xs text-muted-foreground">
                               Earlier, Paige asked you to confirm: {message.confirm.map((c) => c.summary).join("; ")}

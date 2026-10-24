@@ -147,3 +147,17 @@ paths; no validator is weakened. Current-main composition and a synchronize
 event after retargeting establish the correct main-targeted required gates.
 Authenticated original-assignment recovery and full Operations remain owed.
 
+## Exact parent type correction and current main
+
+Current composition preserves main9d4a and corrected native-status parentb859.
+Hosted parent19b failed its actual Typecheck on unknown response_text; the owning
+parser now projects string-or-null explicitly after unchanged closed validation.
+Five new hostile non-text values are refused. The three renderer/component-test
+files are unchanged from4a113ee1; the parser adds only that type-safe projection.
+Actual owning Chat/parser49/49 PASS after composition. Original desktop/narrow
+native render evidence remains dated and synthetic, not a new full-shell or
+authenticated proof. No new screen, size, focus, control or effect path.
+Fresh exact-head required CI and parent release/readback remain mandatory.
+The originating EXP10 duplicate700000 correction is a separate current-main
+release hold; no peer migration, history or guard is modified here.
+

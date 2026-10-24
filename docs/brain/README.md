@@ -1,3 +1,40 @@
+## EXP09 private multi-file CURA Chat — October24 source released; customer proof owed
+
+Original [#2765](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2765)
+reviewed8e17244d73df650e0c362c8ccbcd47c995ac28a7 passed all11 exact-head checks/two
+web statuses, full verify40117385591 and native40117385515 (actual295scope,
+original294 assertions retained). Sequential AUTHOR-REVIEW / LOWER ASSURANCE
+5639196694 plus5639392449 is not a non-author review. Main
+bec74b8ecb9c1284e21b6f96ed35581a124b78eb/tree144560adedf1f5418086fcd907a95d58310dca21
+preserves43e9b4b+8e17244. Production web2YVTP1irHMhcxQUW5jGzq5Xci6BE READY and
+immutable/publicbec74b8e-mvmq3xwg/null, Chat531/JWTtrue/originalentry/noimportmap
+and all275 runtime source hashes were independently read back. Original810109
+and all11 native source/API/ACL/searchpath/terminal controls remain exact.
+[Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and
+[original receipt6389411898](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2765#issuecomment-6389411898)
+retain the exact source-release boundaries.
+
+Automatic Edge40120140274 FAILED413 and left530 unchanged. Official
+standing-authorized Supabase MCP deployed only the exact complete275-file
+reviewed runtime closure used by successful Preview; independent production531
+source/config readback then matched. Original CLI collection added three
+erased-type dependencies. Automatic packaging repair stays OPEN and edge-live
+was NOT advanced; the failed workflow remains failed. No provider, role, sender,
+money, Knowledge/Research/Live activation, new identity or second store/history
+was introduced. No native migration in this increment.
+
+Mounted private uploads/bulk file paste, admitted PDF/image bytes and original
+private file-reference history are implemented/source-deployed. Original current
+relationship/source/Stop/terminal guards and same-ID unknown recovery remain.
+Actual ordinary customer/model/reload/wrong-business/revoked/physicaliPhone/
+zoom/AT and all42/seven-pillar/Teach outcomes remain PROOF OWED. Prior compiled
+desktop/narrow/light-dark/keyboard/focus/44px/contrast5.43 observations are
+supporting evidence only; Word reading remains unpublished local work. Root
+Chat/C0b edit lease is RELEASED at this exact source for the existing queued
+owners. CAP018–024 and ALG01/02/04/12/13 maturity and one integrated Founder
+Acceptance remain unchanged; no customer version/announcement or recursive
+product-release credit for this mechanical closeout.
+
 ## EXP02 original report source requests — October24 source released
 
 Original #2734 exact408923cc/author-related LOWER5638380473 passed all13 required

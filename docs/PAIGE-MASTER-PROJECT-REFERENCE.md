@@ -7293,6 +7293,33 @@ Recovery: reviewed additive forward correction preserving original records.
 
 ## 5. Current focus + known gaps
 
+**EXP08 Manage My Team / Team Hub — receiving lead and coordination (2026-10-23).** The owner has
+authorized one Claude Code lead for EXP08; ZION is the supervised product specialist. Team Hub
+keeps the owner's full October 21 scope: channels, DMs, threads, scoped @mentions of people and
+the six specialists, `/PAIGE` commands, attachments, document, research and scheduling requests,
+source-linked tasks, approvals and results, permission-filtered knowledge, Chat/Live continuity,
+roster, invitations, roles, onboarding and offboarding. It is its own SOLO main-menu item directly
+below Operations.
+
+How the work splits:
+- **EXP05 keeps** the canonical Work, task, assignment, Planning and Calendar writers, the ZION
+  runtime, delegation lifecycle, execution receipts and recovery.
+- **EXP08 owns** the Team Hub surface and collaboration, and the Team membership, invitation,
+  permission and offboarding lifecycle.
+
+A Team Hub request references one original EXP05 Work record, and its status is read from that
+record.
+
+Current gaps:
+- No team channel, message, membership or mention substrate exists.
+- `/solo/{n}/team` already redirects to Settings → Team.
+- Team actions still emit no Rail outcome.
+
+On 2026-10-24 the owner approved the design (prototype v2, frozen under §28) and the
+collaboration storage, as additive migrations with isolation proven before release. These are
+approvals to build; production Team Hub is not built yet. Current source: [Team surface card](doctrine/surface-cards/team.md). Staffing is not a
+release, so §4.0 is unchanged.
+
 **E09 CURA identity — tracked follow-ups (2026-10-19; CURA merged #2378 and live; recorded, not fixed there).** (a) **Action-item kind mapping.** `advance_action` (`20271110220000`) builds the portal action item with `action_type` = the action kind (`client.portal_recommendation`, `client.portal_welcome`, `owner.onboarding_nudge`, `owner.schedule_meeting`), but `paige_customer_actions_action_type_check` allows only `task`, `message`, `recommendation`, `nudge`. Every action item the owner's PAIGE chat files through `action_file` / `action_advance` therefore ends `blocked` with `client_surface_failed: … action_type_check` (proved in a rolled-back transaction on the round-4 pgTAP fixtures with the synthetic customer Jordan Rivera). Consequence today: the customer's data-sharing switch (CURA-D1) has no practical effect, because neither route that it gates delivers anything (the staff `ContactPaigePanel` is unmounted). (b) **PAIGE in AI-drafted action-item text.** The chat's model-written title and draft reach `paige_customer_actions` unfiltered, so nothing stops one that names PAIGE; the owner ruled PAIGE is never in the Customer Portal. **(b) must be fixed before (a)**, or fixing the mapping starts delivering PAIGE-named items to customers. Neither is changed on this branch.
 
 **E09 C1 campaign portal audience, known gaps (2026-10-19, branch `e09-c1`, not merged).** (1) A **series** cannot use the portal audience (its checker refuses the key, and a saved segment carrying it is refused when a series freezes it); series sends are not re-proved against portal access. (2) A customer dropped at send for closed portal access is recorded as `contact_removed` (the existing skip reason; no new reason was added to the recipients CHECK). (3) `_email_audience` still does not filter `clients.status` (plan H2): an inactive contact stays in non-portal audiences; the portal audience excludes them. (4) "Announce to customers" from Teach Your Agent (K3b) and CURA explaining a received campaign (C2) are later slices. (5) `email_segment_save` still stores any rule shape; the check happens when a campaign freezes it. (6) Q1 covers promotion, announcement and newsletter only, as approved: standard, custom, event, reengagement and welcome campaigns and every series still reach portal-linked customers whatever their Updates choice.

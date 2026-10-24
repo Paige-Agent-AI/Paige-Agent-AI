@@ -175,6 +175,41 @@ explicit synthetic ports. Settings authority and source failures are unchanged.
 Review/CI/release and authenticated read-only proof remain owed; no zone was saved,
 trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed.
 
+## EXP08 Manage My Team / Team Hub — receiving lead and Team index, October23
+
+**Owner authorization:** one Claude Code lead owns EXP08, with ZION as the supervised product
+specialist. EXP05 keeps Work, assignments, Planning, Calendar execution, the ZION runtime and
+receipts. Team Hub messages and requests reference one original EXP05 Work record and read their
+status from it. Staffing, a receiving acknowledgment, runtime proof and customer acceptance are
+separate states.
+
+Team index. Read these before any Team or Team Hub work:
+
+| Source | What it carries |
+|---|---|
+| [Team surface card](../doctrine/surface-cards/team.md) | Current source and its corrections (Oct 23), owner decisions D1–D4, the six `high` access tools, why Team is `PARTIAL` (no Rail outcome) |
+| [Ownership & authority lifecycle](../handoff/team-ownership-authority-lifecycle.md) | Received by EXP08 and still `UNAVAILABLE`; business-ownership facts never grant authority |
+| [Recipient binding P0](../delivery/solo-team-recipient-binding-p0.md) | Invites bind to the confirmed recipient email (`20261200000300`); production persistence not re-read |
+| [Team Spine packet](../delivery/spine-integration-packet-team.md) | `team.authority` read (shipped #876). Its "no code yet" and four-fact statements are historical |
+
+**Live today:**
+- Settings → Team (`src/solo/team-workspace.tsx`).
+- 11 `team.*` Spine capabilities.
+- Presence RPCs.
+
+**Not built:** a Team Hub main-menu item, channels, DMs, threads, mentions, a team `/PAIGE`
+palette, and the messaging tables behind them. Searching the migrations for `team_message`,
+`team_channel`, `channel_members`, `direct_message` and `message_mentions` returned zero hits.
+
+**Owner decisions, 2026-10-24:**
+- The Team Hub design (prototype v2) is approved and frozen under §28.
+- The collaboration storage is approved, as additive migrations with isolation proven before
+  release.
+
+Both are approvals to build. Neither is runtime proof.
+
+Slack and Teams connections belong to EXP10, and Team Hub doesn't depend on them.
+
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist invocation identity is now preserved in a local candidate

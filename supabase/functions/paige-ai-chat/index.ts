@@ -35,7 +35,7 @@ import { ADS_FUNNEL_TOOLS, ADS_FUNNEL_TOOL_NAMES, dispatchAdsFunnelChat } from '
 import { CAMPAIGN_STEP_TOOLS, CAMPAIGN_STEP_TOOL_NAMES, CAMPAIGN_STEP_WRITE_TOOLS, dispatchCampaignStepsChat } from '../_shared/campaign-steps-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
 import { PUBLISH_DOOR_CHAT_TOOLS } from '../_shared/growth-publish-command/contract.ts';
-import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
+import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext, readCampaignBriefLeads } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
 import { executeVerifiedCalendarPresetMutation, resolveCalendarPresetListContext, type CalendarPresetMutationTool } from '../_shared/calendar-preset-tenant-brain.ts';
 // E7 — governed calendar-link sharing (prepare/send/social-copy). The send routes through the
@@ -511,6 +511,7 @@ function describeStep(
       ? { label: "Campaign Brief revision saved, evidence incomplete", group: "owner", detail: "canonical planning record verified · Rail not recorded" }
       : { label: failed ? "Could not verify that Campaign Brief revision" : "Revised and verified a Campaign Brief", group: "owner", detail: failed ? "no verified outcome" : "planning record · Rail recorded · nothing launched" };
     case "campaign_brief_list": return { label: failed ? "Couldn't read your campaign briefs" : "Checked your campaign briefs", group: "owner" };
+    case "read_campaign_leads": return { label: failed ? "Couldn't read that campaign's leads" : "Checked who that campaign brought in", group: "owner" };
     // Marketing email (owner) — a draft sends nothing; filing waits for a person to approve.
     case "read_email_campaigns": return { label: failed ? "Couldn't read your email campaigns" : "Checked your email campaigns", group: "owner" };
     case "read_email_campaign_audience": return { label: failed ? "Couldn't count that campaign's audience" : "Counted who that campaign would reach", group: "owner" };
@@ -9378,6 +9379,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       campaign_brief_create: "saving a campaign brief",
       campaign_brief_revise: "revising a campaign brief",
       campaign_brief_list: "checking your campaign briefs",
+      read_campaign_leads: "checking who that campaign brought in",
       read_email_campaigns: "checking your email campaigns",
       read_email_campaign_audience: "counting who an email would reach",
       email_campaign_draft: "writing an email campaign draft",
@@ -17171,7 +17173,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               ? { success: false, outcome: "outcome_unknown", error: "The campaign change did not report back.", note: "Read the campaign's steps or the process before saying anything changed, and do not retry automatically." }
               : { success: false, error: "That could not be read right now." }) });
           }
-        } else if (tc.function.name === "campaign_brief_create" || tc.function.name === "campaign_brief_revise" || tc.function.name === "campaign_brief_list") {
+        } else if (tc.function.name === "campaign_brief_create" || tc.function.name === "campaign_brief_revise" || tc.function.name === "campaign_brief_list" || tc.function.name === "read_campaign_leads") {
           // Solo Tenant Brain — Campaign Brief planning records. The helper uses the CALLER JWT
           // for tenant/role resolution and the EXISTING configure RPC, then independently reopens
           // the canonical projector and compares id/version/lifecycle/fields. Only a match reaches
@@ -17180,7 +17182,35 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
             const tid = personaCtx?.tenant_id ?? null;
-            if (tc.function.name === "campaign_brief_list") {
+            if (tc.function.name === "read_campaign_leads") {
+              // S1e — "who did this campaign bring in?" The SAME canonical RPC the dossier's
+              // Brought in lane reads, on the caller's OWN session; the RPC decides who may
+              // read and redacts member views itself. Attribution is linkage, never ad
+              // performance — the note the model receives says so. Reads record nothing.
+              const leadsResult = tid ? await readCampaignBriefLeads({ caller: supabaseClient, expectedTenantId: tid, briefId: args.briefId }) : { ok: false as const, code: "CAMPAIGN_BRIEF_TENANT_NOT_RESOLVED" };
+              if (!leadsResult.ok) {
+                const code = String(leadsResult.code);
+                const friendly = code === "CAMPAIGN_BRIEF_FORBIDDEN"
+                  ? "You don't have access to that campaign's leads."
+                  : code === "CAMPAIGN_BRIEF_NOT_FOUND"
+                    ? "That campaign is not in this workspace. List the campaign briefs to see the ones here."
+                  : code === "ACTIVE_ACCOUNT_CHANGED"
+                    ? "The active workspace changed. Reopen Campaigns in the current workspace."
+                  : code === "CAMPAIGN_BRIEF_ARGUMENTS_INVALID"
+                    ? "That request needs the campaign's briefId from campaign_brief_list."
+                    : "Could not read that campaign's leads right now.";
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: friendly }) });
+              } else {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+                  success: true,
+                  source: leadsResult.context,
+                  brief_id: leadsResult.briefId,
+                  counts: leadsResult.counts,
+                  leads: leadsResult.leads,
+                  note: "Attribution below is how each lead was CREDITED to this campaign (a form in the campaign, the link's campaign tag, or both) — it is not ad performance: no impressions, clicks, spend, cost per lead or return on ad spend exist behind it, so never state or estimate any of those. Members see this list without names by design. Revenue lives in Sales and is not credited to campaigns.",
+                }) });
+              }
+            } else if (tc.function.name === "campaign_brief_list") {
               const listResult = tid ? await resolveCampaignBriefListContext({ caller: supabaseClient, expectedTenantId: tid }) : { ok: false as const, code: "CAMPAIGN_BRIEF_TENANT_NOT_RESOLVED" };
               if (!listResult.ok) {
                 const friendly = listResult.code === "CAMPAIGN_BRIEF_FORBIDDEN"

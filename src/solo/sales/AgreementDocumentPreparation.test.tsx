@@ -8,11 +8,12 @@ import {prepareCommercialPresentation,commercialPresentationText} from '../../..
 import {assembleFixedRepaymentSchedule} from '../../../supabase/functions/_shared/sales-collections/model';
 import type {AgreementDocumentView,AgreementDocumentCommand,AgreementCommercialReview} from './agreementDocumentApi';
 import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
+import {projectPreparedSignatureReview} from '../../../supabase/functions/_shared/agreements/prepared-signature-review-contract';
 import type {AssignedField} from './agreementDocumentModel';
 import {useSalesDraftExit} from '../sales-dialog';
-const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),sources:vi.fn(),review:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
+const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),sources:vi.fn(),review:vi.fn(),signing:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{}}));
-vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history,readAgreementCommercialSources:ports.sources,readAgreementCommercialReview:ports.review}));
+vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history,readAgreementCommercialSources:ports.sources,readAgreementCommercialReview:ports.review,readAgreementSigningReview:ports.signing}));
 vi.mock('./AgreementDocumentFields',()=>({AgreementDocumentFields:(props:{canEdit:boolean;source:unknown;document:unknown;bytes:Uint8Array;fields:AssignedField[];savedPreparationSha:string;onChange:(fields:AssignedField[])=>void;onSave:(value:Awaited<ReturnType<typeof prepareAgreementFields>>)=>void})=><div data-field-inspector data-editable={props.canEdit} data-saved-fields-sha={props.savedPreparationSha}>
   <span data-displayed-byte-length>{props.bytes.length}</span><span>{props.fields.length} proposed fields</span><button disabled={!props.canEdit} onClick={()=>props.onChange([...props.fields,{id:'f1111111-0000-4000-8000-000000000001',signer_id:fixture.signers[0].id,kind:'signature',page:1,x:20,y:20,width:120,height:40,required:true,label:'Signature'}])}>Place controlled field</button>
   <button disabled={!props.canEdit} onClick={()=>{ports.fieldWork=prepareAgreementFields(props.source,props.document,props.fields).then(props.onSave);}}>Save controlled fields</button></div>}));
@@ -140,4 +141,39 @@ it('an earlier history read cannot republish stale selection after a new prepara
   let release!:(value:unknown)=>void;ports.read.mockResolvedValue(good(record));ports.history.mockReturnValue(new Promise(done=>{release=done;}));ports.save.mockImplementation((_ctx,command)=>writeReply(command));await mount();await click('Place controlled field');await click('Inspect preparation history');await act(async()=>{button('Save controlled fields').click();await ports.fieldWork;expect(ports.save).toHaveBeenCalledOnce();await ports.save.mock.results[0].value;});expect(host.textContent).toContain('Preparation 2');
   const p=record.preparation;await act(async()=>release({ok:true,value:{items:[{id:p.id,revision_no:p.revision_no,source_version:p.source_version,created_at:p.created_at,is_selected:true,document_sha256:p.document_sha256,preparation_sha256:p.preparation_sha256,event_id:p.event_id,actor_user_id:p.actor_user_id}],has_more:false}}));
   expect(host.querySelector('select[aria-label="Retained document version"]')).toBeNull();
+});
+
+async function savedReview(){const s=record.source,p=record.preparation;return projectPreparedSignatureReview({tenant_id:s.tenant_id,agreement_id:s.agreement_id,preparation_id:p.id,preparation_sha256:p.preparation_sha256,
+  expected_source:{client_id:s.client_id,version:s.version,updated_at:s.updated_at}},record);}
+it('reviews the saved source in the original pane, reports missing fields and returns focus without an approval or send',async()=>{
+  ports.read.mockResolvedValue(good(record));ports.signing.mockResolvedValue({ok:true,value:await savedReview()});await mount();await click('Review saved signing request');
+  expect(ports.signing).toHaveBeenCalledOnce();expect(ports.signing.mock.calls[0][1]).toEqual(record);expect(host.textContent).toContain('Field corrections needed');
+  expect(host.textContent).toContain('Controlled Client needs a required signature field');expect(host.textContent).toContain('Approval and sending are not connected');
+  expect(host.querySelector('[data-field-inspector]')?.getAttribute('data-editable')).toBe('false');expect(document.activeElement?.textContent).toBe('Review signing request');
+  expect(ports.save).not.toHaveBeenCalled();await click('Back to document');expect(document.activeElement).toBe(button('Review saved signing request'));expect(host.querySelector('[data-field-inspector]')?.getAttribute('data-editable')).toBe('true');
+});
+it('requires unsaved field edits to be saved before reviewing the old saved map',async()=>{
+  ports.read.mockResolvedValue(good(record));await mount();await click('Place controlled field');expect(button('Review saved signing request').disabled).toBe(true);expect(host.textContent).toContain('Save your field changes');
+  await click('Review saved signing request');expect(ports.signing).not.toHaveBeenCalled();expect(ports.save).not.toHaveBeenCalled();
+});
+it('does not offer signing review while the original save outcome is uncertain',async()=>{
+  ports.read.mockResolvedValue(good(record));ports.save.mockResolvedValue(absent());await mount();await click('Place controlled field');await act(async()=>{button('Save controlled fields').click();await ports.fieldWork;});
+  expect(host.textContent).toContain('Check the same preparation');expect(host.textContent).not.toContain('Review saved signing request');expect(ports.signing).not.toHaveBeenCalled();
+});
+it('retries an unknown read against the same saved source without executing a preparation',async()=>{
+  ports.read.mockResolvedValue(good(record));ports.signing.mockResolvedValueOnce({ok:false,reason:'unconfirmed',message:'The saved review could not be confirmed.'}).mockResolvedValueOnce({ok:true,value:await savedReview()});
+  await mount();await click('Review saved signing request');expect(host.textContent).toContain('Review unavailable');await click('Retry saved review');
+  expect(ports.signing).toHaveBeenCalledTimes(2);expect(ports.signing.mock.calls[0][1]).toEqual(ports.signing.mock.calls[1][1]);expect(host.textContent).toContain('Field corrections needed');expect(ports.save).not.toHaveBeenCalled();
+});
+it('requires explicit source read after source change instead of silently approving different saved work',async()=>{
+  ports.read.mockResolvedValue(good(record));ports.signing.mockResolvedValue({ok:false,reason:'source_changed',message:'The saved source changed.'});await mount();await click('Review saved signing request');
+  expect(ports.read).toHaveBeenCalledOnce();expect(host.textContent).toContain('Read current document source');await click('Read current document source');expect(ports.read).toHaveBeenCalledTimes(2);expect(host.querySelector('[aria-label="Saved signing request review"]')).toBeNull();expect(ports.save).not.toHaveBeenCalled();
+});
+it('retires private document and review data through the original parent when review authority is refused',async()=>{
+  ports.read.mockResolvedValue(good(record));ports.signing.mockResolvedValue({ok:false,reason:'access_unverified',message:'Access unavailable.'});await mount();await click('Review saved signing request');
+  expect(ports.refused).toHaveBeenCalledOnce();expect(host.querySelector('[data-field-inspector]')).toBeNull();expect(host.querySelector('[aria-label="Saved signing request review"]')).toBeNull();expect(host.textContent).not.toContain('Controlled Client');
+});
+it('does not reopen a canceled read when its late source response arrives',async()=>{
+  let release!:(value:unknown)=>void;ports.read.mockResolvedValue(good(record));ports.signing.mockReturnValue(new Promise(done=>{release=done;}));await mount();await click('Review saved signing request');
+  expect(host.textContent).toContain('Checking the saved document');await click('Back to document');await act(async()=>release({ok:true,value:await savedReview()}));expect(host.querySelector('[aria-label="Saved signing request review"]')).toBeNull();expect(document.activeElement).toBe(button('Review saved signing request'));expect(ports.save).not.toHaveBeenCalled();
 });

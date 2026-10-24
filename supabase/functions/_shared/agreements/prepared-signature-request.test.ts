@@ -452,6 +452,8 @@ async function requestSeed() {
     preSend: { proceed: true, outcome: "proceed" },
     preSendCalls: [] as Array<Record<string, unknown>>,
     onPreSend: null as (() => void) | null,
+    onIdentity: null as ((read: number) => void) | null, identityReads: 0,
+    onConnectorRead: null as ((read: number) => void) | null, connectorReads: 0,
     reads: [] as Array<{ table: string; filters: Record<string, unknown> }>,
   };
   const emailPorts = {
@@ -462,6 +464,7 @@ async function requestSeed() {
           const query = {
             eq(key: string, value: unknown) { filters[key] = value; return query; },
             async maybeSingle() {
+              if (table === "channel_connectors") { state.connectorReads++; state.onConnectorRead?.(state.connectorReads); }
               state.reads.push({ table, filters: { ...filters } });
               return { data: structuredClone(table === "channel_connectors"
                 ? state.connector : table === "tenant_email_domains" ? state.domain : null),
@@ -474,6 +477,7 @@ async function requestSeed() {
       async rpc(name: string, args: Record<string, unknown>) {
         assert.equal(name, "tenant_sender_identity", "No approval or message RPC in a review");
         assert.deepEqual(args, { _tenant_id: tenant });
+        state.identityReads++; state.onIdentity?.(state.identityReads);
         return { data: structuredClone(state.identity), error: null };
       },
     },
@@ -542,6 +546,8 @@ for (const [label, change] of Object.entries({
   "unretained Unicode": { body_text: "\ud800" + signingLinkMarker },
   "live signing secret": { body_text: "https://paigeagent.ai/sign/" + "a".repeat(64) + "\n" + signingLinkMarker },
   "recipient override": { to: "another@example.test" },
+  "live secret in subject": { subject: "https://paigeagent.ai/sign/" + "a".repeat(64) },
+  "encoded live secret": { body_text: "https://paigeagent.ai/%73ign/" + "%61".repeat(64) + "\n" + signingLinkMarker },
 })) {
   Deno.test("request review refuses " + label + " before private reads", async () => {
     const x = await requestSeed(), before = { ...x.f.calls };
@@ -623,4 +629,31 @@ Deno.test("every approved sender or message value changes the original canonical
     (changed.messages as Array<Record<string, unknown>>)[0][key] = "changed";
     assert.notEqual(await confirmFingerprint("agreement_send", changed), fingerprint);
   }
+});
+
+
+Deno.test("request review rechecks authority after the LAST private sender read", async () => {
+  const x = await requestSeed(), before = effects(x.f);
+  x.state.onIdentity = n => { if (n === 2) x.f.state.actor = operation; };
+  await assert.rejects(x.run, e => e instanceof Error &&
+    e.message === "PREPARED_SIGNATURE_REVIEW_ACCESS_UNVERIFIED");
+  assert.deepEqual(effects(x.f), before);
+});
+Deno.test("request review cannot adopt a newly private mailbox between canonical facts and exact identity reads", async () => {
+  const x = await requestSeed(), before = effects(x.f);
+  x.state.onConnectorRead = n => {
+    if (n === 4) {
+      x.state.connector.mailbox_class = "personal";
+      x.state.connector.mailbox_owner_user_id = operation;
+    }
+  };
+  await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+  assert.deepEqual(effects(x.f), before);
+});
+Deno.test("request review retains valid Unicode including an initial BOM without replacement", async () => {
+  const x = await requestSeed();
+  x.input.messages[0].body_text = "\ufeffHello \u{1f44b}\n" + signingLinkMarker;
+  const result = await x.run();
+  assert.equal((result.args.messages as Array<Record<string, unknown>>)[0].body_text,
+    x.input.messages[0].body_text);
 });

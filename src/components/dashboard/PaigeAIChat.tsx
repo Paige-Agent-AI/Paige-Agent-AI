@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 import { mergeIntoDraft, subscribePaigePromptHandoff } from "@/lib/paigePromptHandoff";
 import { StepTimeline, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
 import { Card } from "@/components/ui/card";
@@ -69,6 +70,7 @@ import {
   outcomeFromRecord,
   readPaigeStreamWithRaw,
   readTurnRecord,
+  readRecoveryReadOnlyRefusal,
   readTurnTrace,
   settleOpenSteps,
   settleTurnRows,
@@ -113,13 +115,6 @@ import {
 // server budget. The durable-work envelope remains the real disconnect/retry fix.
 const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 const RESEARCH_HISTORY_READ_BUDGET_MS = 8_000;
-
-// Client feedback only. The separately governed server/reload recovery change
-// replaces this local value with its shared constant when that flow is released.
-const RECOVERY_READ_ONLY_REFUSAL = {
-  code: "INTERACTIVE_RECOVERY_READ_ONLY",
-  message: "An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. You can still ask questions about existing records.",
-} as const;
 
 type ResearchHistoryReference = { messageId: string; run_id: string | null; question: string; saved: boolean };
 
@@ -1212,6 +1207,7 @@ const PaigeAIChatInner = ({
           endCause: null,
           source: "reload",
           hasContent: t.content.trim() !== "",
+          ...(readRecoveryReadOnlyRefusal(b.interactive_refusal, record) ? { recoveryReadOnlyRefusal: true as const } : {}),
           // C4a — only an APPROVAL carried forward draws the two answers as one (a3/a4). An answer
           // carried forward (C4c) is the person speaking between them, so the two stay two (c3).
           ...(record.resumed?.kind === "approval" ? { resumed: true } : {}),

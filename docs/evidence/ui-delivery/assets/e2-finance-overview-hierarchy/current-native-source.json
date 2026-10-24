@@ -1,0 +1,44 @@
+{
+  "syntheticOnly": true,
+  "observedHead": "55edea4de90623aa425f981d6e308311b06dfc70",
+  "finalTypographyNative": "UNVERIFIED",
+  "frames": [
+    {
+      "file": "native-red-1366-open.jpg",
+      "sha256": "6226c11c19c6ac76ed5ab10d5bda00b159087845cd9c8394908cf5705d6fa405",
+      "status": "FAIL: source55 monetary decimals wrap with Chat open"
+    },
+    {
+      "file": "native-red-320.jpg",
+      "sha256": "3087c64257830cd671210a267bd79ce5ca388c30709db2d26ee08cab605e3b4c",
+      "status": "FAIL: source55 monetary decimals wrap on narrow screen"
+    },
+    {
+      "file": "native-390-evidence-before-type-fix.jpg",
+      "sha256": "16fa52e1b9c61f7efe061378f5256a134d4552faf0642d342d4e88fdb46b29f6",
+      "status": "Supporting: original source55 Sheet, before final typography correction"
+    }
+  ],
+  "sources": [
+    {
+      "file": "src/solo/finance/FinanceWorkspace.tsx",
+      "observed55Sha256": "50adf2ff6ddb02f21c5d6009d059d51f9b7de6f3e121e66eabe0616f69f23adf",
+      "correctiveSha256": "be49106ac68df9cc27914795557f15439fd160eaac3c3780d77aa0c960c0003f"
+    },
+    {
+      "file": "src/solo/finance/finance.css",
+      "observed55Sha256": "0634033c78d1f1e5789c87e082af913d3bc080315da2840211bd6a636088d0a4",
+      "correctiveSha256": "d52e131c4eaa0ac3ab2b54755ff67c51ce28c15d8a113a0fe1b79834af4771ec"
+    },
+    {
+      "file": "scripts/live-drive/harness/finance-review-mount/main.tsx",
+      "observed55Sha256": "d85f4bc9c206d0b843ac32b6f847192fa65397a5a8a008b69729544306d6b55e",
+      "correctiveSha256": "d85f4bc9c206d0b843ac32b6f847192fa65397a5a8a008b69729544306d6b55e"
+    },
+    {
+      "file": "scripts/live-drive/harness/finance-review-mount/stubs.tsx",
+      "observed55Sha256": "010568c02f6c4b12c1821b4648c194f33ecaa3021cb4ac1526de934d9c8330f5",
+      "correctiveSha256": "010568c02f6c4b12c1821b4648c194f33ecaa3021cb4ac1526de934d9c8330f5"
+    }
+  ]
+}

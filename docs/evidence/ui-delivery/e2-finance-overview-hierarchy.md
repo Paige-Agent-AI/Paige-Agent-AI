@@ -95,3 +95,29 @@ scan. No ignores or baseline were changed. Exact-head hosted install/build/type,
 native confirmation, final review and normal release/readback remain due.
 The present PR remains a draft/release hold; no claim of finished Finance or full
 19-outcome acceptance. No algorithm/catalogue/authorization/provider promotion.
+
+## October24 current-source native correction
+
+Composed maina2d9b3e5 in55edea4de; original product/fixture bytes were unchanged.
+Actual original-component native proof verifies the bare Finance redirect with
+query/fragment, Schibsted Grotesk,44px VERA control, original Sheet forward/reverse
+focus trap and exact metric focus after Escape on desktop and390px. Home/End
+reaches the original first/last department. Eight desktop/panel states and320/390
+observations were captured with synthetic inputs only; no backend/customer proof.
+The existing63140 server still served5243: attempted duplicate startup was refused,
+not a successful restoration. Page control recovered, then failed/staled/reset;
+no different account or browser-control workaround was substituted.
+
+Rendered review found a genuine defect on55edea4de:1366px/Chat-open and320px amounts
+split decimals across lines. Untouched red frames and exact source hashes are
+retained in the adjacent current-native source record. The bounded correction
+wraps only the original formatted amount and uses the documented21px step in
+compact Overview containers; unusually wide values remain intact in their own
+horizontal scroll region. No rounding, value/currency/source/reader/workflow change.
+Original four Finance suites54PASS in58.86s, scoped lint0. Initial sandboxed SWC
+cache failure occurred before collection and is not a product failure. Native
+confirmation of this final type correction is UNVERIFIED after page-control
+deadlines/kernel reset; release stays held without promoting pre-correction images.
+Original raw tsc was stopped after composition changed: INCOMPLETE, not still
+running or a type PASS. Current hosted exact-head install/type/build and review
+are separately mandatory. No new provider, capability or acceptance promotion.

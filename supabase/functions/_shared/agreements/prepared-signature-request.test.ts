@@ -672,16 +672,28 @@ Deno.test("original agreement-send mounts private request review before legacy p
     Object.fromEntries((url.searchParams.get("select") ?? "").split(",").map(k => [k, row[k]]));
   try {
     Deno.serve = ((fn: typeof handler) => { handler = fn; return {} as never; }) as unknown as typeof Deno.serve;
-    Deno.env.get = name => name === "SUPABASE_URL" ? "https://request-review.invalid"
-      : ["SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SENDGRID_MAIL_SEND_API_KEY"].includes(name)
-      ? "synthetic-not-a-credential" : undefined;
+    Deno.env.get = name => ({
+      SUPABASE_URL: "https://request-review.invalid",
+      SUPABASE_ANON_KEY: "synthetic-anon-key",
+      SUPABASE_SERVICE_ROLE_KEY: "synthetic-service-key",
+      SENDGRID_MAIL_SEND_API_KEY: "synthetic-sendgrid-key",
+    } as Record<string, string>)[name];
     globalThis.fetch = async (input, init) => {
       const req = new Request(input, init), url = new URL(req.url);
       assert.equal(url.origin, "https://request-review.invalid", "No external provider or customer request");
-      if (url.pathname === "/auth/v1/user") return json((await x.f.caller.auth.getUser()).data.user);
+      if (url.pathname === "/auth/v1/user") {
+        assert.equal(req.headers.get("apikey"), "synthetic-anon-key");
+        assert.equal(req.headers.get("authorization"), "Bearer synthetic-owner");
+        return json((await x.f.caller.auth.getUser()).data.user);
+      }
       if (url.pathname.startsWith("/rest/v1/rpc/")) {
         const name = url.pathname.slice("/rest/v1/rpc/".length);
         const args = await req.json() as Record<string, unknown>;
+        const native = ["check_public_rate_limit", "tenant_sender_identity",
+          "_read_agreement_document_preparation"].includes(name);
+        assert.equal(req.headers.get("apikey"), native ? "synthetic-service-key" : "synthetic-anon-key");
+        assert.equal(req.headers.get("authorization"), native
+          ? "Bearer synthetic-service-key" : "Bearer synthetic-owner");
         if (name === "check_public_rate_limit") return json(!limited);
         if (name === "tenant_sender_identity") return json((await x.emailPorts.admin.rpc(name, args)).data);
         if (name === "_read_agreement_document_preparation") {
@@ -693,6 +705,8 @@ Deno.test("original agreement-send mounts private request review before legacy p
           return json(r.error ?? r.data, r.error ? 403 : 200);
         }
       }
+      assert.equal(req.headers.get("apikey"), "synthetic-service-key");
+      assert.equal(req.headers.get("authorization"), "Bearer synthetic-service-key");
       if (req.method === "GET" && url.pathname === "/rest/v1/tenants") {
         assert.equal(url.searchParams.get("id"), "eq." + tenant);
         return json({ name: "Controlled Studio", account_type: "solo", parent_tenant_id: null });

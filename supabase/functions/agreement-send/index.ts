@@ -1,3 +1,11 @@
+import { object } from "../_shared/sales-collections/primitives.ts";
+import { prepareSignatureRequestReview, PreparedSignatureRequestUnavailable,
+  type PreparedSignatureEmailPorts } from "../_shared/agreements/prepared-signature-request.ts";
+import { PreparedSignatureReviewUnavailable } from "../_shared/agreements/prepared-signature-review.ts";
+import { OwnerPreparationUnavailable, type OwnerPreparationService,
+  type OwnerPreparationCaller } from "../_shared/agreements/owner-preparation.ts";
+import { readBoundedOwnerPreparationJson } from "../_shared/agreements/owner-preparation-http.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // agreement-send — freeze, hash, mint and send (INT-163). Authenticated; `verify_jwt` default true.
 //
 // ORDER MATTERS MORE THAN ANYTHING ELSE IN THIS FILE. `draft -> sent` is one-way, so every step that
@@ -83,6 +91,93 @@ Deno.serve(async (req: Request): Promise<Response> => {
       ok: false,
       error: "Agreements are sent from the account that holds the client relationship. Switch into the sub-account whose client this is and send it from there.",
     }, 403);
+  }
+
+
+  // The exact prepared-request REVIEW is an ordinary private read, not a send.
+  // Keep it before legacy Resend readiness, document freezing, token creation,
+  // message/provider work and the consequential send rate bucket.
+  const reviewUrl = new URL(req.url);
+  if (reviewUrl.searchParams.has("review")) {
+    const reply = (value: unknown, status = 200) => {
+      const result = json(value, status);
+      result.headers.set("Cache-Control", "no-store, private");
+      result.headers.set("Vary", "Authorization");
+      result.headers.set("X-Content-Type-Options", "nosniff");
+      return result;
+    };
+    if (reviewUrl.searchParams.get("review") !== "prepared-request" ||
+      reviewUrl.searchParams.getAll("review").length !== 1 ||
+      [...reviewUrl.searchParams.keys()].some(key => key !== "review")) {
+      return reply({ ok: false, code: "invalid_request",
+        error: "Choose the original saved agreement request to review." }, 400);
+    }
+    if (userData?.user?.is_anonymous === true) {
+      return reply({ ok: false, code: "access_unverified",
+        error: "Agreement access could not be verified. Sign in to your business." }, 403);
+    }
+    if (await overRateLimit(admin, `agreement-review:${tenantId}:${actorId}`, 120, 3600, true)) {
+      return reply({ ok: false, code: "rate_limited",
+        error: "Too many review attempts. Keep your draft and try the review again later." }, 429);
+    }
+    try {
+      const input = await readBoundedOwnerPreparationJson(req);
+      if (!object(input) || !object(input.review)) {
+        return reply({ ok: false, code: "invalid_request",
+          error: "Choose the exact saved document and recipient messages to review." }, 400);
+      }
+      if (input.review.tenant_id !== tenantId) {
+        return reply({ ok: false, code: "access_unverified",
+          error: "Reopen this agreement in its intended business." }, 403);
+      }
+      const service: OwnerPreparationService = {
+        rpc: (name, args) => admin.rpc(name, args),
+        storage: admin.storage,
+        originalUploadPath: async (tenant, agreement) => {
+          const { data, error } = await admin.from("paige_agreements").select("document_path")
+            .eq("id", agreement).eq("tenant_id", tenant).maybeSingle();
+          return !error && data && typeof data.document_path === "string" ? data.document_path : null;
+        },
+      };
+      const review = await prepareSignatureRequestReview(input,
+        caller as unknown as OwnerPreparationCaller, service, actorId, {
+          admin: admin as unknown as PreparedSignatureEmailPorts["admin"],
+          environment: () => ({ resendConfigured: false, googleConfigured: false,
+            sendgridConfigured: !!Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") }),
+          preSend: input => runPreSend(admin as never, input),
+        });
+      return reply({ ok: true, review });
+    } catch (error) {
+      if (error instanceof PreparedSignatureRequestUnavailable) {
+        const response = {
+          INVALID_REQUEST: { status: 400, code: "invalid_request", error: "Choose the original saved agreement and request." },
+          REVIEW_CHANGED: { status: 409, code: "source_changed", error: "The saved document or recipients changed. Review the current preparation." },
+          FIELD_CORRECTIONS_REQUIRED: { status: 422, code: "fields_incomplete", error: "Complete the required signer fields before preparing this request." },
+          MESSAGE_INVALID: { status: 400, code: "message_invalid", error: "Review each signer's subject and message. Keep the secure signing link included, and remove private signing links pasted from earlier requests." },
+          SENDER_UNVERIFIED: { status: 422, code: "sender_unverified", error: "Email sending could not be verified for this request. Check your email connection or try the review again later." },
+          SENDER_CHANGED: { status: 409, code: "sender_changed", error: "The sending identity changed. Review the current sender before continuing." },
+          RECIPIENT_HELD: { status: 409, code: "recipient_held", error: "This request could not be cleared for every recipient. Check their communication preferences and try the review again." },
+        }[error.code];
+        return reply({ ok: false, code: response.code, error: response.error }, response.status);
+      }
+      if (error instanceof PreparedSignatureReviewUnavailable) {
+        const response = {
+          INVALID_REQUEST: { status: 400, code: "invalid_request" },
+          ACCESS_UNVERIFIED: { status: 403, code: "access_unverified" },
+          SOURCE_CHANGED: { status: 409, code: "source_changed" },
+          DOCUMENT_UNVERIFIED: { status: 422, code: "document_unverified" },
+          UNCONFIRMED: { status: 503, code: "review_unverified" },
+        }[error.code];
+        return reply({ ok: false, code: response.code,
+          error: "This saved agreement request could not be verified. Reopen its original document and review it again." }, response.status);
+      }
+      if (error instanceof OwnerPreparationUnavailable && error.code === "INVALID_REQUEST") {
+        return reply({ ok: false, code: "invalid_request",
+          error: "This request could not be read. Return to the saved agreement and review it again." }, 400);
+      }
+      return reply({ ok: false, code: "review_unverified",
+        error: "This request review could not be verified. Keep your draft and try the review again." }, 503);
+    }
   }
 
   let body: Record<string, unknown> = {};

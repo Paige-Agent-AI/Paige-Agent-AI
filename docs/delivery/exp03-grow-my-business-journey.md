@@ -1,7 +1,16 @@
 # Experience 03 — Grow My Business: journey inventory, flow map and delivery plan
 
-Date: 2026-10-12 · Journey Lead: Claude Code (one accountable lead) · Linear: ANT-51 (canonical journey record),
-ANT-147 (integration), ANT-15 (Marketing), ANT-45 (Ads), ANT-21 (PC-1 QA) · Shell: SOLO
+Date: 2026-10-12 · Journey Lead at authoring: Claude Code (one accountable lead) · Linear: ANT-51 (canonical journey
+record at authoring; now with active EXP04 — historical EXP03 references preserved, not taken over), ANT-147
+(integration), ANT-15 (Marketing), ANT-45 (Ads), ANT-21 (historical PC-1 QA) · Shell: SOLO
+
+**Current state — 2026-10-23: ONE zCod EXP03 resumption owner-authorized; old staffing/PC-1 snapshots historical;
+full roadmap/mapped matrix retained; ACK/start/source/customer release separately evidenced.** The sections below
+are the original 2026-10-12/13 record, preserved as history with two superseded facts named: the INT-346 typed-chat
+blocker (production `paige_chat_interactive_protocol()` is active v2 as of 2026-10-23) and PC-1 (retired; the
+owner's designated ordinary SOLO account is the engineering testing account). S3's backend merged as #2126
+(f2e2a0af6) — §12's "not merged" lines are historical. Receiving ACK: ANT-161 comment 25d0cb99 (2026-10-23).
+Current leases coordinate in ANT-161 (E03 #2172 preserved).
 
 **Status: CHECKPOINT 1 — inventory and plan. Slice 1 implementation started on branch
 `claude/stoic-archimedes-pv4r8u`.** Nothing here is owner-accepted. Every claim below names its evidence; absence

@@ -130,3 +130,27 @@ capability status, approval or execution is inferred from these build checks.
 UI delivery verifier correctly reports no recognized UI source changed.
 The original INT-336 CI block adds this actual handler proof without changing
 its permissions, timeout, conditions, thresholds or any preceding test.
+
+## Existing Chat loader integration
+
+The same coherent status increment now extends original usePaigeThreads
+loadOriginalHistory with an explicit specialist projection and one closed
+response parser. Reminder/CURA envelopes are unchanged; all three readers share
+the original physical abort, generation/scope identity and native429 backoff.
+No new timer, polling loop, table reader, approval, invalidation or writer.
+Stored bundles and other approval/result containers cannot hydrate this result.
+The parser copies bounded original fields and refuses expanded/private fields,
+foreign identities, duplicate observations and contradictory completion claims.
+
+Initial parser contract stub had four behavioral failures; implementation
+passes23 cases. The first combined hook worker did not start: INVALID hook
+coverage, not passed tests. An unchanged isolated rerun then causally failed
+the seven new hook cases on its missing loader while all48 original cases pass.
+After integration, both actual owning files pass78/78 with one local threads
+worker. Scoped ESLint passes all four affected client files. Original source/
+server pins are unchanged by this client-only addition.
+
+The native Chat renderer is still not mounted by this increment. No screenshot,
+browser recovery, customer execution, capability Live status or Experience
+acceptance is inferred from a passing loader/parser. The separate presentation
+slice must consume this same abort/scope owner and verify actual rendered states.

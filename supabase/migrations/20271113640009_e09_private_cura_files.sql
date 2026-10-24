@@ -41,14 +41,23 @@ ALTER TABLE public.client_files ADD COLUMN customer_chat_thread_id uuid;
 COMMENT ON COLUMN public.client_files.customer_chat_thread_id IS
  'Private customer CURA attachment origin. NULL preserves the original business document contract. Immutable once bound; not business-approved Knowledge or a business-shared file.';
 ALTER TABLE public.client_files ADD CONSTRAINT client_files_private_chat_purpose
- CHECK (customer_chat_thread_id IS NULL OR visibility = 'client_upload');
+ CHECK (customer_chat_thread_id IS NULL OR visibility IS NOT DISTINCT FROM 'client_upload');
+
+-- Same native account-class fields as the canonical SOLO provisioning contract.
+-- This narrow feature-scope predicate neither provisions nor repairs a business.
+CREATE FUNCTION public._client_portal_chat_files_solo_scope(p_client_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $function$
+ SELECT EXISTS(SELECT 1 FROM public.clients c JOIN public.tenants t ON t.id=c.tenant_id
+  WHERE c.id=p_client_id AND t.account_type='standalone' AND t.parent_tenant_id IS NULL);
+$function$;
+REVOKE ALL ON FUNCTION public._client_portal_chat_files_solo_scope(uuid) FROM PUBLIC,anon,authenticated,service_role;
 
 CREATE FUNCTION public._client_portal_chat_files_authorize(p_thread_id uuid, p_tenant_id uuid)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $function$
 DECLARE v_contact uuid; v_frame jsonb; v_assistant jsonb;
 BEGIN
  v_contact := public._client_portal_lock_relationship(p_tenant_id, 'share');
- IF v_contact IS NULL OR p_thread_id IS NULL
+ IF v_contact IS NULL OR p_thread_id IS NULL OR NOT public._client_portal_chat_files_solo_scope(v_contact)
     OR NOT public.paige_chat_customer_thread_authorized(p_thread_id) THEN
   RAISE EXCEPTION 'Private chat files unavailable in this customer relationship.' USING ERRCODE = '42501';
  END IF;
@@ -80,7 +89,7 @@ BEGIN
   -- Only an original own, pending reservation created in this transaction can
   -- acquire a private purpose. A saved business document cannot be reclassified.
   IF NEW.uploaded_by_user_id IS DISTINCT FROM auth.uid()
-     OR NEW.upload_state <> 'pending' OR NEW.visibility <> 'client_upload'
+     OR NEW.upload_state IS DISTINCT FROM 'pending' OR NEW.visibility IS DISTINCT FROM 'client_upload'
      OR NEW.created_at IS DISTINCT FROM transaction_timestamp()
      OR NEW.contact_id IS DISTINCT FROM public._client_portal_chat_files_authorize(NEW.customer_chat_thread_id,NEW.tenant_id) THEN
    RAISE EXCEPTION 'PRIVATE_CHAT_FILE_ORIGIN_INVALID' USING ERRCODE = '42501';
@@ -314,6 +323,9 @@ BEGIN
   AND f.tenant_id=_client.tenant_id AND f.uploaded_by_user_id=_uid AND f.visibility='client_upload'
   AND f.storage_path=f.tenant_id::text||'/'||f.contact_id::text||'/client_upload/'||_uid::text||'/'||f.id::text FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'file upload unavailable' USING ERRCODE='42501'; END IF;
+ IF _file.customer_chat_thread_id IS NOT NULL AND NOT public._client_portal_chat_files_solo_scope(_contact) THEN
+  RAISE EXCEPTION 'file upload unavailable' USING ERRCODE='42501';
+ END IF;
  IF NOT EXISTS(SELECT 1 FROM storage.objects o WHERE o.bucket_id='client-files' AND o.name=_file.storage_path
   AND o.owner_id=_uid::text AND CASE WHEN o.metadata->>'size' ~ '^[0-9]{1,10}$' THEN (o.metadata->>'size')::bigint END=_file.size_bytes
   AND o.metadata->>'mimetype'=_file.mime_type) THEN

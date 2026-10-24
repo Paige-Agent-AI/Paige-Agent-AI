@@ -16,7 +16,7 @@
 -- writer and their own upload, and before and after every write no customer can read or open an
 -- upload made by another login.
 BEGIN;
-SELECT plan(293);
+SELECT plan(305);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0941000-0000-4000-8000-000000000001','authenticated','authenticated','documents-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0941000-0000-4000-8000-000000000002','authenticated','authenticated','documents-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -940,6 +940,35 @@ SELECT is(pg_temp.cura_begin('e0947500-0000-4000-8000-000000000003')->>'sqlstate
 SELECT is(jsonb_array_length(pg_temp.as_user('e0947100-0000-4000-8000-000000000001',$q$SELECT public.client_file_owner_list('e0947100-0000-4000-8000-000000000001','e0947200-0000-4000-8000-000000000001','e0947300-0000-4000-8000-000000000001')$q$)->'files'),1,'owner still reads the original ordinary business document');
 SELECT is(jsonb_array_length(pg_temp.cura($q$SELECT public.client_portal_documents()$q$)->'files'),1,'ordinary customer Documents library keeps the business upload');
 SELECT is((pg_temp.as_user('e0947100-0000-4000-8000-000000000001',$q$SELECT public.handle_data_subject_request('e0947200-0000-4000-8000-000000000001','e0947300-0000-4000-8000-000000000001','export')$q$)->'data'->'files'->0) ? 'customer_chat_thread_id',false,'business export keeps its original file shape without the new nullable private field');
+
+-- Existing native customer relationships are not permission to activate held
+-- Agency/Subaccount features. These are rollback fixtures, not real businesses.
+INSERT INTO public.tenants(id,slug,name,status,account_type,parent_tenant_id,account_number_prefix,account_number,features) VALUES
+ ('e0947200-0000-4000-8000-000000000003','test-tenant-private-files-agency','Test held agency','active','agency',NULL,'PFAG',9497103,'{}'),
+ ('e0947200-0000-4000-8000-000000000004','test-tenant-private-files-sub','Test held subaccount','active','sub_account','e0947200-0000-4000-8000-000000000003','PFSUB',9497104,'{}');
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
+ ('e0947300-0000-4000-8000-000000000004','e0947200-0000-4000-8000-000000000003','e0947100-0000-4000-8000-000000000002','e0947100-0000-4000-8000-000000000001','Test','Held agency customer','active'),
+ ('e0947300-0000-4000-8000-000000000005','e0947200-0000-4000-8000-000000000004','e0947100-0000-4000-8000-000000000002','e0947100-0000-4000-8000-000000000001','Test','Held subaccount customer','active');
+INSERT INTO public.paige_chat_threads(id,tenant_id,contact_id,caller_user_id,audience,lens,title,auto_delete_at) VALUES
+ ('e0947400-0000-4000-8000-000000000005','e0947200-0000-4000-8000-000000000003','e0947300-0000-4000-8000-000000000004','e0947100-0000-4000-8000-000000000002','customer_private','client','Held agency fixture',now()+interval '30 days'),
+ ('e0947400-0000-4000-8000-000000000006','e0947200-0000-4000-8000-000000000004','e0947300-0000-4000-8000-000000000005','e0947100-0000-4000-8000-000000000002','customer_private','client','Held subaccount fixture',now()+interval '30 days');
+SELECT is(pg_temp.cura_as('e0947100-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000003',$q$SELECT to_jsonb(public.client_portal_relationship_id())$q$),'"e0947300-0000-4000-8000-000000000004"'::jsonb,'held agency still has its original verified relationship; this feature does not rewrite identity');
+SELECT is(pg_temp.cura_as('e0947100-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000004',$q$SELECT to_jsonb(public.client_portal_relationship_id())$q$),'"e0947300-0000-4000-8000-000000000005"'::jsonb,'held subaccount still has its original verified relationship');
+SELECT is(pg_temp.cura_as('e0947100-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000003',$q$SELECT to_jsonb(public.paige_chat_customer_thread_authorized('e0947400-0000-4000-8000-000000000005'))$q$),'true'::jsonb,'held agency thread passes original membership, not the new feature scope');
+SELECT is(pg_temp.cura_as('e0947100-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000004',$q$SELECT to_jsonb(public.paige_chat_customer_thread_authorized('e0947400-0000-4000-8000-000000000006'))$q$),'true'::jsonb,'held subaccount thread also passes original membership');
+SELECT is(pg_temp.cura_as('e0947100-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000003',$q$SELECT public.client_portal_begin_chat_file_upload('e0947500-0000-4000-8000-000000000004','e0947300-0000-4000-8000-000000000004','e0947400-0000-4000-8000-000000000005','Held.pdf','application/pdf',4)$q$)->>'sqlstate','42501','new private attachments do not activate held agency accounts');
+SELECT is(pg_temp.cura_as('e0947100-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000004',$q$SELECT public.client_portal_begin_chat_file_upload('e0947500-0000-4000-8000-000000000005','e0947300-0000-4000-8000-000000000005','e0947400-0000-4000-8000-000000000006','Held.pdf','application/pdf',4)$q$)->>'sqlstate','42501','new private attachments do not activate held subaccounts');
+SELECT is(pg_temp.cura_as('e0947100-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000003',$q$SELECT public.client_portal_chat_files('e0947400-0000-4000-8000-000000000005')$q$)->>'sqlstate','42501','new private file listing remains unavailable for held agency');
+SELECT is(pg_temp.cura_as('e0947100-0000-4000-8000-000000000002','e0947200-0000-4000-8000-000000000004',$q$SELECT public.client_portal_chat_files('e0947400-0000-4000-8000-000000000006')$q$)->>'sqlstate','42501','new private file listing remains unavailable for held subaccount');
+SELECT is((SELECT count(*) FROM public.client_files WHERE id IN('e0947500-0000-4000-8000-000000000004','e0947500-0000-4000-8000-000000000005')),0::bigint,'held-class refusals leave no upload reservation');
+SELECT is(has_function_privilege('authenticated','public._client_portal_chat_files_solo_scope(uuid)','EXECUTE'),false,'private feature scope predicate is not another public permission API');
+-- Withhold the existing class predicate in a rollback-only dependency control:
+-- no impossible account conversion or disabled tenant/identity guard is needed.
+CREATE TEMP TABLE private_scope_definition AS SELECT pg_get_functiondef('public._client_portal_chat_files_solo_scope(uuid)'::regprocedure) AS definition;
+CREATE OR REPLACE FUNCTION public._client_portal_chat_files_solo_scope(p_client_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$ SELECT false $$;
+SELECT is(pg_temp.cura($q$SELECT public.client_portal_finish_file_upload('e0947500-0000-4000-8000-000000000001')$q$)->>'sqlstate','42501','private completion rechecks current feature scope before returning ready');
+SELECT is(pg_temp.cura($q$SELECT public.client_portal_finish_file_upload('e0947500-0000-4000-8000-000000000003')$q$)->>'upload_state','ready','withheld new feature does not change ordinary business upload completion');
+DO $$ BEGIN EXECUTE (SELECT definition FROM private_scope_definition); END $$;
 
 SELECT * FROM finish();
 ROLLBACK;

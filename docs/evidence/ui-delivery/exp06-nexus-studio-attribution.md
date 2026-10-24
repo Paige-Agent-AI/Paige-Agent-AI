@@ -25,12 +25,12 @@ MUST_PRESERVE: owner-locked layout C and keyboard/focus/escape wrap; one Publish
 ACCEPTANCE_CRITERIA: an eligible owner sees the truthful department line at Studio home and the prepared publish panel on desktop/narrow widths; clicking either control closes the Studio and opens the existing PAIGE chat with the addressed prompt editable in the composer (not sent); without a chat-capable shell the affordances are absent; nothing else in the Studio changes.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: affected — none structurally; chat transcript/identity seam untouched (the handoff uses the existing paigePromptHandoff seam, proven by its own tests + the new cases). Not affected: tenant/workspace isolation, auth/account choice, entitlement/billing, approval/autonomy rules (the publish door's one-approval gate unchanged — Review never approaches it), Spine execution, canonical writes/readback, Rail/receipts, Live state, Secure Browser/Vault, provider status, durable jobs, shell geometry (re-verified at 4 viewports + zoom), accessibility (verified), privacy/secrets.
-INTERNAL_BUILD_IDENTITY: PENDING_MERGE; deployment=preview-of-PR; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + assets/exp06-nexus-studio/
-RELEASE_CHANNEL: none: internal specialist-attribution increment; no staged rollout, no external eligibility.
-RELEASE_CLASSIFICATION: internal product increment within EXP06; not a customer release event.
+INTERNAL_BUILD_IDENTITY: a2eef4881971d2cb2a0b7e704467e44a9c8c000f; deployment=3LtM2wQtWTtxxwJPQGQPgRE6AUFv; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp06-nexus-studio-attribution.md + assets/exp06-nexus-studio/ (implementation head; post-merge identity recorded in the Master §4.0 row)
+RELEASE_CHANNEL: preview: ordinary PR preview of the Solo shell (Vercel 3LtM2wQtWTtxxwJPQGQPgRE6AUFv); no staged rollout, no external eligibility.
+RELEASE_CLASSIFICATION: internal-only: specialist-attribution increment within EXP06; not a customer release event.
 CUSTOMER_RELEASE_IDENTITY: none: coherent owner-visible EXP06 evaluation has not occurred.
 RELEASE_NOTE_REQUIRED: no: attribution increment; the owner's one EXP06 evaluation covers it.
-RELEASE_TRUTH_BOUNDARY: PARTIAL — the affordances, prompts and absence behavior are proven at the structural-harness and jsdom levels; authenticated runtime handoff and device/AT proof remain PROOF OWED.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: the affordances, prompts and absence behavior are proven at the structural-harness and jsdom levels; authenticated runtime handoff and device/AT proof remain PROOF OWED.
 RELEASE_RECOVERY: position=forward-fix; reference=revert of this PR restores the prior Studio exactly (additive line/control + optional prop threading only; no data, migration or provider state).
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/exp06-nexus-studio/solo-1536x770-paige-closed.png — structural harness (labelled "harness render · not live"): department line + Plan control visible, docOverflowX 0.
 SOLO_1536X770_PAIGE_OPEN: PASS: assets/exp06-nexus-studio/solo-1536x770-paige-open.png — structural harness: Studio is a full-screen overlay; same frame geometry.

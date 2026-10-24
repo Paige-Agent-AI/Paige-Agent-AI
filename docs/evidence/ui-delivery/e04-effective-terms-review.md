@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: accepted economics and original versions lead. A su
 SOLO_UI: YES: shared eligible SOLO implementation, original department/invoice context, canonical theme and responsive local Dialog. No account allowlist or tenant-specific implementation. Full signed-in SOLO shell/PAIGE-open and closed role/cohort acceptance remains owed.
 UNVERIFIED: source merge, release/deployment, real owner/staff/external-client operation, current physical signed-file availability, provider effects, full shell/zoom/AT, CentralQA and founder acceptance. Parent2681/2689/2705 must release/read back first. All O1–O12 and the professional preparation/signing/invoice/payment/delivery destination remain mandatory.
 
-INTERNAL_BUILD_IDENTITY: source=6df23f4a9f94f49bd58c74b1f65099e83c034f3f; final exact head/review in the C21 PR; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(parent631004 and640004 ordinary production readback); edge=PROOF_OWED(parent2705 sales-collection-command production readback); evidence=docs/evidence/ui-delivery/assets/e04-effective-terms-review/current-screenshot-manifest.json,29 frozen source hashes and three actual compiled assets.
+INTERNAL_BUILD_IDENTITY: source=6df23f4a9f94f49bd58c74b1f65099e83c034f3f; final exact head/review in the C21 PR; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(parent810004 and820004 ordinary production readback); edge=PROOF_OWED(parent2705 sales-collection-command production readback); evidence=docs/evidence/ui-delivery/assets/e04-effective-terms-review/current-screenshot-manifest.json,29 frozen source hashes and three actual compiled assets.
 RELEASE_CHANNEL: development: actual compiled component proof, required exact-head checks and ordinary production readback remain separate.
 RELEASE_CLASSIFICATION: internal-only: bounded source integration inside the incomplete full E04 Experience, without a completed customer release claim.
 CUSTOMER_RELEASE_IDENTITY: none: integrated all12 Experience and one founder evaluation remain incomplete.
@@ -71,3 +71,8 @@ remain unchanged. This is source/filename equivalence, not new rendering or
 authenticated acceptance. Fresh exact source review/CI, ordered native/API/web
 release and actual role/reload/customer/founder proof remain separate. No pin
 renewal, screenshot reencoding, provider/Chat/Live or consequential activation.
+
+
+### Corrected current main / production800000 continuation
+
+Exact parent a565ca718 consumes original EXP10 correction2732/main79171c824 and unchanged native810004/820004/830004. Entire incoming Master/Brain preserved. All29 captured inputs remain Git-byte-identical and actual working bytes restored to their original LF where needed, without any source-content change.17 native PNG hashes/dimensions and3 compiled assets remain original. Only native filename metadata710004→810004 changes; previous manifest is retained byte-for-byte in current-screenshot-manifest-before-third-native-filename.json. This is source continuity, not a new render or authenticated acceptance. Fresh exact review/CI/native/API/web readback and actual owner/client/reload/CentralQA/founder proof remain separate. Existing minor narrow refresh-label finding remains open, not silently fixed under old screenshots.

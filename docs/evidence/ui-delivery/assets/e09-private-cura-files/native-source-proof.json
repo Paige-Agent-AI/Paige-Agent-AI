@@ -1,0 +1,588 @@
+{
+  "kind": "native-original-source-with-reduced-dependencies",
+  "observedAt": "2026-10-24T02:15:43.073Z",
+  "migration": "20271113640009_e09_private_cura_files.sql",
+  "migrationSha256": "7e60d73847526285825721a35f792f800e9d0b994873c549873c27b0516caeca",
+  "lease": "ANT-161/bbc58c1e-0481-4eaa-8132-1757bd3ac55b",
+  "incumbentContracts": [
+    {
+      "acl": [
+        "postgres:EXECUTE:false"
+      ],
+      "args": "p_tenant_id uuid, p_lock text",
+      "hash": "416002c40cb71ed54cc4c3387c37563f",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "uuid",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "_client_portal_lock_relationship(uuid,text)",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_contact_id uuid, p_limit integer, p_before timestamp with time zone, p_before_id uuid",
+      "hash": "ba894e10e42b7df2dca9b3fb23dc8357",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_file_owner_list(uuid,uuid,uuid,integer,timestamp with time zone,uuid)",
+      "volatility": "s",
+      "full_args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_contact_id uuid, p_limit integer DEFAULT 100, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone, p_before_id uuid DEFAULT NULL::uuid"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_file_id uuid, p_shared boolean, p_expected_updated_at timestamp with time zone",
+      "hash": "828069e76ecdaa43002982ecd668fa9e",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_file_set_client_share(uuid,uuid,uuid,boolean,timestamp with time zone)",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_file_id uuid, p_expected_client_id uuid, p_filename text, p_mime_type text, p_size_bytes bigint, p_tenant_id uuid",
+      "hash": "1af390453141672cf84ab10627fd87b9",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, storage, pg_temp"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_begin_file_upload(uuid,uuid,text,text,bigint,uuid)",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_name text",
+      "hash": "1d14e8a769796be9b674c63699db22ff",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, storage, pg_temp"
+      ],
+      "result": "boolean",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_can_upload_file_object(text)",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_tenant_id uuid, p_limit integer, p_before timestamp with time zone, p_before_id uuid",
+      "hash": "ba6f905836508b0822031031bd285e2c",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_documents(uuid,integer,timestamp with time zone,uuid)",
+      "volatility": "s",
+      "full_args": "p_tenant_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone, p_before_id uuid DEFAULT NULL::uuid"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_file_id uuid, p_tenant_id uuid",
+      "hash": "c3eaa683f9606580842ec10e2648822b",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, storage, pg_temp"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_file_upload_status(uuid,uuid)",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_file_id uuid, p_tenant_id uuid",
+      "hash": "eea1846e5280e6948b8cae077cc00987",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, storage, pg_temp"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_finish_file_upload(uuid,uuid)",
+      "volatility": "v",
+      "full_args": "p_file_id uuid, p_tenant_id uuid DEFAULT NULL::uuid"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "b3826e6b52ba34cd40348112b8145883",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_frame()",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "p_thread uuid",
+      "hash": "1f736ad4206faf196290c13939edca35",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "boolean",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "paige_chat_customer_thread_authorized(uuid)",
+      "volatility": "s"
+    },
+    {
+      "signature": "handle_data_subject_request(uuid,uuid,text,jsonb,text,uuid)",
+      "hash": "632d5be94ec9fa601074b5bdd430b1a8",
+      "owner": "postgres",
+      "language": "plpgsql",
+      "definer": true,
+      "volatility": "v",
+      "args": "_tenant_id uuid, _contact_id uuid, _request_type text, _corrections jsonb, _reason text, _actor_user_id uuid",
+      "result": "jsonb",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "full_args": "_tenant_id uuid, _contact_id uuid, _request_type text, _corrections jsonb DEFAULT NULL::jsonb, _reason text DEFAULT NULL::text, _actor_user_id uuid DEFAULT NULL::uuid"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_tenant_id uuid",
+      "hash": "ff84ba24689e5043d7d15ed3d9150268",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "uuid",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_relationship_id(uuid)",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "postgres:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "72efd408dc26f9672088f10eea9ebea1",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "uuid",
+      "definer": false,
+      "language": "plpgsql",
+      "signature": "_client_portal_request_business()",
+      "volatility": "s"
+    }
+  ],
+  "changedSources": [
+    {
+      "name": "client_file_owner_list",
+      "original": "ba894e10e42b7df2dca9b3fb23dc8357",
+      "candidate": "d58f23f107ad5348f97591258e0618af"
+    },
+    {
+      "name": "client_portal_documents",
+      "original": "ba6f905836508b0822031031bd285e2c",
+      "candidate": "0baf145ea8e773c96132217c5a7d05c9"
+    },
+    {
+      "name": "client_portal_finish_file_upload",
+      "original": "eea1846e5280e6948b8cae077cc00987",
+      "candidate": "29661c4ca8d138cce739cff6f1a40efe"
+    },
+    {
+      "name": "handle_data_subject_request",
+      "original": "632d5be94ec9fa601074b5bdd430b1a8",
+      "candidate": "8a50eda76529adb4c5dcfa3a9bd785eb"
+    }
+  ],
+  "results": [
+    {
+      "mode": "repaired",
+      "environment": "isolated PostgreSQL16, actual protected function bodies, actual private purpose/RLS, original request parser/relationship resolver, private thread and relationship lock. Reduced Auth/frame/config, permissive base policies, Storage/Rail/DSR dependency tables. Full hosted schema and authenticated production not implied.",
+      "cases": [
+        "PASS private attachment reserves through the original upload writer",
+        "PASS same reservation recovers its exact immutable private origin",
+        "PASS a repeated preparation does not create another file",
+        "PASS another customer private thread cannot authorize a reservation",
+        "PASS an owner workspace thread cannot authorize private customer files",
+        "PASS own thread from the other business cannot cross the selected relationship",
+        "PASS pending file does not claim a saved object",
+        "PASS private upload cannot finish without the original verified object",
+        "PASS original Storage writer admits the own exact reserved private object",
+        "PASS status recovers the actual exact stored object",
+        "PASS original finish saves the private attachment",
+        "PASS lost finish response replays ready without a new upload",
+        "PASS one caller-scoped private audit receipt survives repeated finish",
+        "PASS private attachment never writes a business document audit action",
+        "PASS own current customer can read the private file under RLS",
+        "PASS business owner cannot read the private attachment row",
+        "PASS ordinary platform UI role cannot use the file table to bypass private purpose",
+        "PASS another client of the same business cannot read private metadata",
+        "PASS business owner cannot open the private Storage object",
+        "PASS owner native SECURITY DEFINER file list also excludes private metadata",
+        "PASS business Documents library does not silently present a private CURA attachment as shared",
+        "PASS business-admin DSR export excludes private Chat files",
+        "PASS business-admin portability also excludes private Chat files",
+        "PASS returning private Chat reads the saved canonical file",
+        "PASS same customer other business has a separate empty private file list",
+        "PASS partial cursor is refused rather than skipping saved files",
+        "PASS customer cannot remove the private origin and expose the file to the business",
+        "PASS expired Chat thread cannot admit a private file request",
+        "PASS archived thread cannot authorize a fresh reservation",
+        "PASS business-disabled CURA cannot admit a fresh private attachment",
+        "PASS restored permitted CURA recovers the original file",
+        "PASS anonymous cannot reserve private Chat files",
+        "PASS private upload wrapper is not a service impersonation door",
+        "PASS internal private scope helper is not a public tool",
+        "PASS business owner credentials cannot enter the customer private file API",
+        "PASS selected business B cannot directly read the same customer private file from A",
+        "PASS paused relationship refuses private file recovery",
+        "PASS paused customer loses direct private file metadata",
+        "PASS paused customer cannot open the private stored object",
+        "PASS pause also refuses the original upload finish door",
+        "PASS ended relationship refuses returning private file access",
+        "PASS original restored relationship returns the same saved private file",
+        "PASS ordinary business Documents reservation remains available",
+        "PASS ordinary business upload still uses the same Storage writer",
+        "PASS ordinary business document still finishes",
+        "PASS saved business document cannot be silently converted to private Chat purpose",
+        "PASS owner still reads the original ordinary business document",
+        "PASS ordinary customer Documents library keeps the business upload",
+        "PASS business export keeps its original file shape without the new nullable private field",
+        "PASS private file produces no business-visible Rail event"
+      ],
+      "passed": 50,
+      "failed": 0
+    },
+    {
+      "mode": "fault-no-private-rls",
+      "environment": "isolated PostgreSQL16, actual protected function bodies, actual private purpose/RLS, original request parser/relationship resolver, private thread and relationship lock. Reduced Auth/frame/config, permissive base policies, Storage/Rail/DSR dependency tables. Full hosted schema and authenticated production not implied.",
+      "cases": [
+        "PASS private attachment reserves through the original upload writer",
+        "PASS same reservation recovers its exact immutable private origin",
+        "PASS a repeated preparation does not create another file",
+        "PASS another customer private thread cannot authorize a reservation",
+        "PASS an owner workspace thread cannot authorize private customer files",
+        "PASS own thread from the other business cannot cross the selected relationship",
+        "PASS pending file does not claim a saved object",
+        "PASS private upload cannot finish without the original verified object",
+        "PASS original Storage writer admits the own exact reserved private object",
+        "PASS status recovers the actual exact stored object",
+        "PASS original finish saves the private attachment",
+        "PASS lost finish response replays ready without a new upload",
+        "PASS one caller-scoped private audit receipt survives repeated finish",
+        "PASS private attachment never writes a business document audit action",
+        "PASS own current customer can read the private file under RLS",
+        "FAIL business owner cannot read the private attachment row: got 1 expected 0",
+        "FAIL ordinary platform UI role cannot use the file table to bypass private purpose: got 1 expected 0",
+        "FAIL another client of the same business cannot read private metadata: got 1 expected 0",
+        "FAIL business owner cannot open the private Storage object: got 1 expected 0",
+        "PASS owner native SECURITY DEFINER file list also excludes private metadata",
+        "PASS business Documents library does not silently present a private CURA attachment as shared",
+        "PASS business-admin DSR export excludes private Chat files",
+        "PASS business-admin portability also excludes private Chat files",
+        "PASS returning private Chat reads the saved canonical file",
+        "PASS same customer other business has a separate empty private file list",
+        "PASS partial cursor is refused rather than skipping saved files",
+        "PASS customer cannot remove the private origin and expose the file to the business",
+        "PASS expired Chat thread cannot admit a private file request",
+        "PASS archived thread cannot authorize a fresh reservation",
+        "PASS business-disabled CURA cannot admit a fresh private attachment",
+        "PASS restored permitted CURA recovers the original file",
+        "PASS anonymous cannot reserve private Chat files",
+        "PASS private upload wrapper is not a service impersonation door",
+        "PASS internal private scope helper is not a public tool",
+        "PASS business owner credentials cannot enter the customer private file API",
+        "FAIL selected business B cannot directly read the same customer private file from A: got 1 expected 0",
+        "PASS paused relationship refuses private file recovery",
+        "FAIL paused customer loses direct private file metadata: got 1 expected 0",
+        "FAIL paused customer cannot open the private stored object: got 1 expected 0",
+        "PASS pause also refuses the original upload finish door",
+        "PASS ended relationship refuses returning private file access",
+        "PASS original restored relationship returns the same saved private file",
+        "PASS ordinary business Documents reservation remains available",
+        "PASS ordinary business upload still uses the same Storage writer",
+        "PASS ordinary business document still finishes",
+        "PASS saved business document cannot be silently converted to private Chat purpose",
+        "PASS owner still reads the original ordinary business document",
+        "PASS ordinary customer Documents library keeps the business upload",
+        "PASS business export keeps its original file shape without the new nullable private field",
+        "PASS private file produces no business-visible Rail event"
+      ],
+      "passed": 43,
+      "failed": 7
+    },
+    {
+      "mode": "fault-owner-list",
+      "environment": "isolated PostgreSQL16, actual protected function bodies, actual private purpose/RLS, original request parser/relationship resolver, private thread and relationship lock. Reduced Auth/frame/config, permissive base policies, Storage/Rail/DSR dependency tables. Full hosted schema and authenticated production not implied.",
+      "cases": [
+        "PASS private attachment reserves through the original upload writer",
+        "PASS same reservation recovers its exact immutable private origin",
+        "PASS a repeated preparation does not create another file",
+        "PASS another customer private thread cannot authorize a reservation",
+        "PASS an owner workspace thread cannot authorize private customer files",
+        "PASS own thread from the other business cannot cross the selected relationship",
+        "PASS pending file does not claim a saved object",
+        "PASS private upload cannot finish without the original verified object",
+        "PASS original Storage writer admits the own exact reserved private object",
+        "PASS status recovers the actual exact stored object",
+        "PASS original finish saves the private attachment",
+        "PASS lost finish response replays ready without a new upload",
+        "PASS one caller-scoped private audit receipt survives repeated finish",
+        "PASS private attachment never writes a business document audit action",
+        "PASS own current customer can read the private file under RLS",
+        "PASS business owner cannot read the private attachment row",
+        "PASS ordinary platform UI role cannot use the file table to bypass private purpose",
+        "PASS another client of the same business cannot read private metadata",
+        "PASS business owner cannot open the private Storage object",
+        "FAIL owner native SECURITY DEFINER file list also excludes private metadata: got 1 expected 0",
+        "PASS business Documents library does not silently present a private CURA attachment as shared",
+        "PASS business-admin DSR export excludes private Chat files",
+        "PASS business-admin portability also excludes private Chat files",
+        "PASS returning private Chat reads the saved canonical file",
+        "PASS same customer other business has a separate empty private file list",
+        "PASS partial cursor is refused rather than skipping saved files",
+        "PASS customer cannot remove the private origin and expose the file to the business",
+        "PASS expired Chat thread cannot admit a private file request",
+        "PASS archived thread cannot authorize a fresh reservation",
+        "PASS business-disabled CURA cannot admit a fresh private attachment",
+        "PASS restored permitted CURA recovers the original file",
+        "PASS anonymous cannot reserve private Chat files",
+        "PASS private upload wrapper is not a service impersonation door",
+        "PASS internal private scope helper is not a public tool",
+        "PASS business owner credentials cannot enter the customer private file API",
+        "PASS selected business B cannot directly read the same customer private file from A",
+        "PASS paused relationship refuses private file recovery",
+        "PASS paused customer loses direct private file metadata",
+        "PASS paused customer cannot open the private stored object",
+        "PASS pause also refuses the original upload finish door",
+        "PASS ended relationship refuses returning private file access",
+        "PASS original restored relationship returns the same saved private file",
+        "PASS ordinary business Documents reservation remains available",
+        "PASS ordinary business upload still uses the same Storage writer",
+        "PASS ordinary business document still finishes",
+        "PASS saved business document cannot be silently converted to private Chat purpose",
+        "FAIL owner still reads the original ordinary business document: got 2 expected 1",
+        "PASS ordinary customer Documents library keeps the business upload",
+        "PASS business export keeps its original file shape without the new nullable private field",
+        "PASS private file produces no business-visible Rail event"
+      ],
+      "passed": 48,
+      "failed": 2
+    },
+    {
+      "mode": "fault-business-export",
+      "environment": "isolated PostgreSQL16, actual protected function bodies, actual private purpose/RLS, original request parser/relationship resolver, private thread and relationship lock. Reduced Auth/frame/config, permissive base policies, Storage/Rail/DSR dependency tables. Full hosted schema and authenticated production not implied.",
+      "cases": [
+        "PASS private attachment reserves through the original upload writer",
+        "PASS same reservation recovers its exact immutable private origin",
+        "PASS a repeated preparation does not create another file",
+        "PASS another customer private thread cannot authorize a reservation",
+        "PASS an owner workspace thread cannot authorize private customer files",
+        "PASS own thread from the other business cannot cross the selected relationship",
+        "PASS pending file does not claim a saved object",
+        "PASS private upload cannot finish without the original verified object",
+        "PASS original Storage writer admits the own exact reserved private object",
+        "PASS status recovers the actual exact stored object",
+        "PASS original finish saves the private attachment",
+        "PASS lost finish response replays ready without a new upload",
+        "PASS one caller-scoped private audit receipt survives repeated finish",
+        "PASS private attachment never writes a business document audit action",
+        "PASS own current customer can read the private file under RLS",
+        "PASS business owner cannot read the private attachment row",
+        "PASS ordinary platform UI role cannot use the file table to bypass private purpose",
+        "PASS another client of the same business cannot read private metadata",
+        "PASS business owner cannot open the private Storage object",
+        "PASS owner native SECURITY DEFINER file list also excludes private metadata",
+        "PASS business Documents library does not silently present a private CURA attachment as shared",
+        "FAIL business-admin DSR export excludes private Chat files: got 1 expected 0",
+        "FAIL business-admin portability also excludes private Chat files: got 1 expected 0",
+        "PASS returning private Chat reads the saved canonical file",
+        "PASS same customer other business has a separate empty private file list",
+        "PASS partial cursor is refused rather than skipping saved files",
+        "PASS customer cannot remove the private origin and expose the file to the business",
+        "PASS expired Chat thread cannot admit a private file request",
+        "PASS archived thread cannot authorize a fresh reservation",
+        "PASS business-disabled CURA cannot admit a fresh private attachment",
+        "PASS restored permitted CURA recovers the original file",
+        "PASS anonymous cannot reserve private Chat files",
+        "PASS private upload wrapper is not a service impersonation door",
+        "PASS internal private scope helper is not a public tool",
+        "PASS business owner credentials cannot enter the customer private file API",
+        "PASS selected business B cannot directly read the same customer private file from A",
+        "PASS paused relationship refuses private file recovery",
+        "PASS paused customer loses direct private file metadata",
+        "PASS paused customer cannot open the private stored object",
+        "PASS pause also refuses the original upload finish door",
+        "PASS ended relationship refuses returning private file access",
+        "PASS original restored relationship returns the same saved private file",
+        "PASS ordinary business Documents reservation remains available",
+        "PASS ordinary business upload still uses the same Storage writer",
+        "PASS ordinary business document still finishes",
+        "PASS saved business document cannot be silently converted to private Chat purpose",
+        "PASS owner still reads the original ordinary business document",
+        "PASS ordinary customer Documents library keeps the business upload",
+        "FAIL business export keeps its original file shape without the new nullable private field: got true expected false",
+        "PASS private file produces no business-visible Rail event"
+      ],
+      "passed": 47,
+      "failed": 3
+    },
+    {
+      "mode": "fault-business-receipt",
+      "environment": "isolated PostgreSQL16, actual protected function bodies, actual private purpose/RLS, original request parser/relationship resolver, private thread and relationship lock. Reduced Auth/frame/config, permissive base policies, Storage/Rail/DSR dependency tables. Full hosted schema and authenticated production not implied.",
+      "cases": [
+        "PASS private attachment reserves through the original upload writer",
+        "PASS same reservation recovers its exact immutable private origin",
+        "PASS a repeated preparation does not create another file",
+        "PASS another customer private thread cannot authorize a reservation",
+        "PASS an owner workspace thread cannot authorize private customer files",
+        "PASS own thread from the other business cannot cross the selected relationship",
+        "PASS pending file does not claim a saved object",
+        "PASS private upload cannot finish without the original verified object",
+        "PASS original Storage writer admits the own exact reserved private object",
+        "PASS status recovers the actual exact stored object",
+        "PASS original finish saves the private attachment",
+        "PASS lost finish response replays ready without a new upload",
+        "FAIL one caller-scoped private audit receipt survives repeated finish: got 0 expected 1",
+        "FAIL private attachment never writes a business document audit action: got 1 expected 0",
+        "PASS own current customer can read the private file under RLS",
+        "PASS business owner cannot read the private attachment row",
+        "PASS ordinary platform UI role cannot use the file table to bypass private purpose",
+        "PASS another client of the same business cannot read private metadata",
+        "PASS business owner cannot open the private Storage object",
+        "PASS owner native SECURITY DEFINER file list also excludes private metadata",
+        "PASS business Documents library does not silently present a private CURA attachment as shared",
+        "PASS business-admin DSR export excludes private Chat files",
+        "PASS business-admin portability also excludes private Chat files",
+        "PASS returning private Chat reads the saved canonical file",
+        "PASS same customer other business has a separate empty private file list",
+        "PASS partial cursor is refused rather than skipping saved files",
+        "PASS customer cannot remove the private origin and expose the file to the business",
+        "PASS expired Chat thread cannot admit a private file request",
+        "PASS archived thread cannot authorize a fresh reservation",
+        "PASS business-disabled CURA cannot admit a fresh private attachment",
+        "PASS restored permitted CURA recovers the original file",
+        "PASS anonymous cannot reserve private Chat files",
+        "PASS private upload wrapper is not a service impersonation door",
+        "PASS internal private scope helper is not a public tool",
+        "PASS business owner credentials cannot enter the customer private file API",
+        "PASS selected business B cannot directly read the same customer private file from A",
+        "PASS paused relationship refuses private file recovery",
+        "PASS paused customer loses direct private file metadata",
+        "PASS paused customer cannot open the private stored object",
+        "PASS pause also refuses the original upload finish door",
+        "PASS ended relationship refuses returning private file access",
+        "PASS original restored relationship returns the same saved private file",
+        "PASS ordinary business Documents reservation remains available",
+        "PASS ordinary business upload still uses the same Storage writer",
+        "PASS ordinary business document still finishes",
+        "PASS saved business document cannot be silently converted to private Chat purpose",
+        "PASS owner still reads the original ordinary business document",
+        "PASS ordinary customer Documents library keeps the business upload",
+        "PASS business export keeps its original file shape without the new nullable private field",
+        "FAIL private file produces no business-visible Rail event: got 1 expected 0"
+      ],
+      "passed": 47,
+      "failed": 3
+    },
+    {
+      "mode": "guard-acl",
+      "refused": true,
+      "new_column": false,
+      "finish_unchanged": true
+    },
+    {
+      "mode": "guard-default",
+      "refused": true,
+      "new_column": false,
+      "finish_unchanged": true
+    },
+    {
+      "mode": "guard-source",
+      "refused": true,
+      "new_column": false,
+      "finish_unchanged": true
+    }
+  ],
+  "hostedDocumentsTests": {
+    "incumbent": 244,
+    "added": 49,
+    "total": 293,
+    "status": "UNVERIFIED until exact-head hosted run"
+  },
+  "limits": [
+    "Auth/frame/config and auxiliary Storage/Rail/DSR dependencies are reduced; actual original request resolver, thread gate, relationship lock and protected writer bodies execute.",
+    "The repaired complete source/default/ACL-guarded migration executes locally. Mutation variants intentionally incomplete; they must fail.",
+    "RLS/list/export/receipt variants were exercised before the final full source-guard runner composition, with identical product delta bytes.",
+    "Initial sandbox socket denial was INVALID before assertions. A reduced optional-argument fixture mistake caused seven dependent assertions to fail; explicit incumbent tenant argument corrected it. Neither is a claimed product RED.",
+    "No ordinary production customer upload, extraction, mobile UI, paste/bulk or authenticated reload proven. No provider/Knowledge/business action performed."
+  ],
+  "functional": "LOCAL_NATIVE_VERIFIED; NOT_DEPLOYED",
+  "visual": "NOT_APPLICABLE backend increment; no finished upload interface claim",
+  "experiential": "complete private Chat attachment journey and all seven pillars still in progress",
+  "founderAcceptance": "NOT_REQUESTED"
+}

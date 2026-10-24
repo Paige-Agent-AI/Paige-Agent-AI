@@ -232,7 +232,7 @@ SELECT ok((SELECT portal_access_state='open' AND linked_user_id=(SELECT actor_id
 SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000001','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_a::text FROM e09_multi_fixture),'returning re-invited A enters the original customer face');
 SELECT is(pg_temp.e09_multi_read((SELECT actor_id FROM e09_multi_fixture),'e0901000-0000-0000-0000-000000000002','SELECT public.client_portal_frame()')#>>'{profile,id}',(SELECT contact_b::text FROM e09_multi_fixture),'re-inviting A does not change B');
 SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='consumer_invite_accepted' AND entity_id=(SELECT return_invite FROM e09_multi_fixture)),1::bigint,'recovered acceptance has one real original receipt');
-SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT return_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'returning restored invitation cannot be replayed','42501:portal invitation has already been accepted');
+SELECT * FROM pg_temp.e09_call('test-multi-'||(SELECT return_invite FROM e09_multi_fixture),(SELECT actor_id FROM e09_multi_fixture),false,'returning restored invitation cannot be replayed','P0001:invite has reached its usage limit');
 -- End Native63 original reader/lifecycle integration controls.
 
 -- E09 additive owner invitation-history reader: actual full schema and caller roles.

@@ -623,7 +623,18 @@
       "volatility": "s"
     }
   ],
-  "full_schema_joined_acceptance_lifecycle": "UNVERIFIED; extended original consumer_invite_acceptance and all incumbent native pillar suites await required hosted CI",
+  "full_schema_joined_acceptance_lifecycle": {
+    "historical_statement": "UNVERIFIED; extended original consumer_invite_acceptance and all incumbent native pillar suites await required hosted CI",
+    "latest_attempt": {
+      "job": 120712788727,
+      "head": "c34d55584ee8cf02dd27db0d7bc24c80067b208d",
+      "assertions": 453,
+      "passed": 452,
+      "failed": 1,
+      "status": "FAIL; exact new-head full rerun required",
+      "note": "All joined two-business frames, choices, pause/restore/end/re-invitation, receipt recovery and interrupted-audit assertions reached; one new finite-use error expectation corrected. No release gate waived."
+    }
+  },
   "production_customer_device_and_founder": "UNVERIFIED",
   "limits": [
     "Windows local initdb timed out before assertions; permitted retry used a larger initialization deadline and stopped its own cluster",
@@ -843,5 +854,70 @@
     "main_sync": "normal clean ort merge; original EXP01 evidence repairs, EXP02/EXP03/EXP05/EXP07 records and source preserved",
     "actual_released_row": "2691/main3b8f973 and receipt6376896655 only; no anticipated2695/2701 row",
     "production_prerequisite": "610009/a6e37 actually applied and read back;620009/ac743 remains required before630009"
+  },
+  "native_finite_replay_fixture_repair": {
+    "failed_head": "c34d55584ee8cf02dd27db0d7bc24c80067b208d",
+    "failed_native_job": 120712788727,
+    "assertions": 453,
+    "passed": 452,
+    "failed": 1,
+    "case": 171,
+    "failure": "Only the added final re-invitation replay assertion expected the later accepted-token guard. The original unchanged Stage0 max_uses guard runs first for this max_uses=1 token and correctly raises P0001:invite has reached its usage limit.",
+    "correction": "Update only this new assertion to the exact existing finite-use error. Original acceptor, token ordering, recipient checks, CRM uniqueness, lifecycle guards, migration and all375 incumbent assertions remain unchanged.",
+    "local_supplement": {
+      "mode": "replay-finite",
+      "environment": "isolated PostgreSQL16 reduced dependencies, actual original/fixed acceptor and original access guard, actual database roles and same canonical core assertions; Auth identity/contact normalization/profile setup are doubles, full schema and production proof not implied",
+      "cases": [
+        "PASS same-business duplicate test uses two distinct canonical CRM addresses",
+        "PASS first legitimate business invitation: actual caller role",
+        "PASS first legitimate business invitation: expected acceptance or refusal",
+        "PASS first legitimate business invitation: invited tenant only",
+        "PASS another customer cannot redeem the second business invitation: actual caller role",
+        "PASS another customer cannot redeem the second business invitation: expected acceptance or refusal",
+        "PASS another customer cannot redeem the second business invitation: intended guard caused refusal",
+        "PASS another customer cannot redeem the second business invitation: zero durable acceptance effects",
+        "PASS a token cannot bind the second contact to the first business: actual caller role",
+        "PASS a token cannot bind the second contact to the first business: expected acceptance or refusal",
+        "PASS a token cannot bind the second contact to the first business: intended guard caused refusal",
+        "PASS a token cannot bind the second contact to the first business: zero durable acceptance effects",
+        "PASS second-business expired invitation: actual caller role",
+        "PASS second-business expired invitation: expected acceptance or refusal",
+        "PASS second-business expired invitation: zero durable acceptance effects",
+        "PASS second-business revoked invitation: actual caller role",
+        "PASS second-business revoked invitation: expected acceptance or refusal",
+        "PASS second-business revoked invitation: zero durable acceptance effects",
+        "PASS a duplicate contact inside the SAME business remains refused: actual caller role",
+        "PASS a duplicate contact inside the SAME business remains refused: expected acceptance or refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: intended guard caused refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: zero durable acceptance effects",
+        "PASS the original verified recipient is restored before second-business acceptance",
+        "PASS second legitimate business invitation: actual caller role",
+        "PASS second legitimate business invitation: expected acceptance or refusal",
+        "PASS second legitimate business invitation: invited tenant only",
+        "PASS two genuine invitations produce two separate canonical relationships",
+        "PASS the original exact contacts are reused without a duplicate CRM",
+        "PASS refused same-business duplicate remains unlinked",
+        "PASS the original client role is idempotent across two businesses",
+        "PASS two customer invitations never create a business staff seat",
+        "PASS customer invitations never change owner or staff workspace",
+        "PASS each accepted business retains its own original durable receipt",
+        "PASS second acceptance receipt binds original actor business and contact",
+        "PASS returning second-business token cannot grant twice: actual caller role",
+        "PASS returning second-business token cannot grant twice: expected acceptance or refusal",
+        "PASS returning second-business token cannot grant twice: intended guard caused refusal",
+        "PASS returning second-business token cannot grant twice: zero durable acceptance effects",
+        "PASS the database itself refuses a duplicate login within one business",
+        "PASS finite-use original A invitation accepted: actual caller role",
+        "PASS finite-use original A invitation accepted: expected acceptance or refusal",
+        "PASS finite-use original A invitation accepted: invited tenant only",
+        "PASS returning restored invitation cannot be replayed: actual caller role",
+        "PASS returning restored invitation cannot be replayed: expected acceptance or refusal",
+        "PASS returning restored invitation cannot be replayed: intended guard caused refusal",
+        "PASS returning restored invitation cannot be replayed: zero durable acceptance effects"
+      ],
+      "passed": 46,
+      "failed": 0
+    },
+    "proof_boundary": "Supplement checks the exact finite-token original function path under isolated roles after the corrected39 core. Hosted run already reached all joined frame, lifecycle, atomic audit and recovery controls but is FAIL452/453, not PASS. Full453 exact-new-head hosted rerun remains required."
   }
 }

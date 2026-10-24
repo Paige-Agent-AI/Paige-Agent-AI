@@ -21,41 +21,53 @@ export class AudioRecorder {
   async start() {
     this.stopRequested = false;
     try {
+      // Prime Web Audio synchronously in the original tap, before microphone
+      // permission awaits. Mobile browsers may lose gesture activation after it.
+      let context: AudioContext;
+      try {
+        context = new AudioContext({ sampleRate: this.targetSampleRate });
+      } catch (error) {
+        if (!(error instanceof DOMException) || error.name !== "NotSupportedError") throw error;
+        // The original frame resampler below handles the device's native rate.
+        context = new AudioContext();
+      }
+      this.audioContext = context;
+      // Observe rejection immediately; a permission prompt may remain open.
+      const resumed = context.state === "running"
+        ? Promise.resolve<unknown>(null)
+        : context.resume().then(() => null, (error: unknown) => error);
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: this.targetSampleRate,
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
-        }
+          autoGainControl: true,
+        },
       });
-      if (this.stopRequested) {
+      if (this.stopRequested || this.audioContext !== context) {
         stream.getTracks().forEach(track => track.stop());
         return;
       }
       this.stream = stream;
-
-      this.audioContext = new AudioContext({
-        sampleRate: this.targetSampleRate,
-      });
-
-      // iOS Safari (and some Chrome states) start a fresh AudioContext
-      // "suspended". Because start() is invoked inside the user gesture that
-      // acquired the mic, resuming here unlocks capture so onaudioprocess
-      // actually fires (lifted from the primeMicAndAudio unlock this replaces).
-      if (this.audioContext.state === "suspended") {
-        try { await this.audioContext.resume(); } catch { /* best-effort */ }
+      const resumeError = await resumed;
+      if (this.stopRequested || this.audioContext !== context) return;
+      if (resumeError && context.state !== "running") {
+        // The existing relay can start after an asynchronous ready event. A
+        // granted active capture may then permit Web Audio; keep that path.
+        if (resumeError instanceof DOMException && resumeError.name === "NotAllowedError") {
+          await context.resume();
+        } else {
+          throw resumeError;
+        }
       }
-      if (this.stopRequested || !this.stream || !this.audioContext) {
-        this.stop();
-        return;
-      }
+      if (context.state !== "running") throw new Error("Audio capture could not start");
 
       this.source = this.audioContext.createMediaStreamSource(this.stream);
       this.processor = this.audioContext.createScriptProcessor(this.frameSamples, 1, 1);
 
       this.processor.onaudioprocess = (e) => {
+        if (this.stopRequested || this.audioContext !== context) return;
         const inputData = e.inputBuffer.getChannelData(0);
         const rate = this.targetSampleRate;
         const sourceRate = this.audioContext?.sampleRate || rate;
@@ -81,6 +93,7 @@ export class AudioRecorder {
       this.source.connect(this.processor);
       this.processor.connect(this.audioContext.destination);
     } catch (error) {
+      this.stop();
       console.error('Error accessing microphone:', error);
       throw error;
     }
@@ -101,7 +114,7 @@ export class AudioRecorder {
       this.stream = null;
     }
     if (this.audioContext) {
-      this.audioContext.close();
+      void this.audioContext.close().catch(() => { /* already closed or interrupted */ });
       this.audioContext = null;
     }
   }

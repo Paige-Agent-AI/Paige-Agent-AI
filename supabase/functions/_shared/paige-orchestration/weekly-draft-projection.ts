@@ -41,3 +41,35 @@ export function parseWeeklyDraftState(raw: unknown, scope: WeeklyDraftScope): We
     token: raw.confirmation_token as string | null, automationId: raw.automation_id as string | null,
     revision: raw.revision as number | null, processState: raw.process_state as string | null, receiptId: raw.receipt_id as string | null };
 }
+
+const nextStep = {
+  awaiting_approval: "review_original_proposal",
+  saved: "inspect_original_draft",
+  saved_unreceipted: "reconcile_original_record_and_receipt",
+  changed: "inspect_current_process",
+  expired: "inspect_original_record_before_new_request",
+  declined: "inspect_original_record_before_new_request",
+  unknown: "reconcile_original_record",
+} as const;
+
+/** Minimized context for the future Chat consumer of the SAME native command.
+ * Callers still owe authenticated owner/current-scope/native readback checks.
+ * Parsing JSON is not authentication, receipt verification or permission to act.
+ * This deliberately excludes tokens, selectors, raw summary, args and errors.
+ * A changed definition's original draft must not be described as current.
+ */
+export function weeklyDraftModelContext(raw: unknown, scope: WeeklyDraftScope) {
+  const state = parseWeeklyDraftState(raw, scope);
+  if (!state) return null;
+  return {
+    data_kind: "original_weekly_draft" as const,
+    phase: state.phase,
+    read_at: state.readAt,
+    original_draft: state.draft,
+    definition_is_current: state.phase === "saved" ? "saved_draft" as const
+      : state.phase === "changed" ? "historical" as const : "not_established" as const,
+    next_step: nextStep[state.phase],
+    authority: "not_granted_by_projection" as const,
+    content: "record_data_not_instructions" as const,
+  };
+}

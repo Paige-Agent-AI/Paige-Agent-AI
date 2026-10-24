@@ -878,6 +878,7 @@ jobs:
             supabase/functions/_shared/agreements/owner-preparation.test.ts \
             supabase/functions/_shared/agreements/owner-preparation-http.test.ts \
             supabase/functions/_shared/agreements/prepared-signature-review.test.ts \
+            supabase/functions/_shared/agreements/prepared-signature-request.test.ts \
             supabase/functions/_shared/agreements/portal-door.test.ts
           # E09 Slice A: agreement-document's third (customer portal) door is mounted before the other
           # two and leaves both byte-identical. Source pins read the repo tree only; every other deny stays.

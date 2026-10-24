@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ConfirmItem } from "@/components/chat/confirmPreview";
 import { readOriginalReminderHistory } from "@/components/chat/reminderHistory";
 import { readOriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
+import { readOriginalSpecialistHistory } from "@/components/chat/specialistHistory";
 import { CHAT_CONTROL_HEADER, chatControlRetryDelay } from "../../supabase/functions/_shared/paige-turn/control-transport";
 
 /**
@@ -166,7 +167,7 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
   const loadOriginalHistory = useCallback(async <T>(
     threadId: string, turnId: string, intentId: string, signal: AbortSignal,
     project: (data: Record<string, unknown> | null, scope: OriginalPreparationScope) => T | null,
-    includeCuraPreparationHistory = false,
+    projection?: "cura" | "specialist",
   ): Promise<T | null> => {
     const generation = ++originalReminderReadGeneration.current;
     if (platform || !callerUserId || !tenantId || !signal || signal.aborted) return null;
@@ -177,7 +178,8 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
         signal, headers: { [CHAT_CONTROL_HEADER]: "status" }, body: {
           messages: [{ role: "user", content: "Read pending approval status." }], threadId, requestIntentId: intentId,
           interactive: { kind: "status", approvalTurnId: turnId,
-            ...(includeCuraPreparationHistory ? { includeCuraPreparationHistory: true } : {}) },
+            ...(projection === "cura" ? { includeCuraPreparationHistory: true } : {}),
+            ...(projection === "specialist" ? { includeSpecialistHistory: true } : {}) },
         },
       });
       if (signal.aborted || approvalScopeRef.current !== scope || generation !== originalReminderReadGeneration.current) return null;
@@ -197,7 +199,11 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
   const loadOriginalCuraPreparationHistory = useCallback((
     threadId: string, turnId: string, intentId: string, signal: AbortSignal,
   ) => loadOriginalHistory(threadId, turnId, intentId, signal,
-    (data, scope) => readOriginalCuraPreparationHistory(data?.cura_preparation_history, scope), true), [loadOriginalHistory]);
+    (data, scope) => readOriginalCuraPreparationHistory(data?.cura_preparation_history, scope), "cura"), [loadOriginalHistory]);
+  const loadOriginalSpecialistHistory = useCallback((
+    threadId: string, turnId: string, intentId: string, signal: AbortSignal,
+  ) => loadOriginalHistory(threadId, turnId, intentId, signal,
+    (data, scope) => readOriginalSpecialistHistory(data?.specialist_history, scope), "specialist"), [loadOriginalHistory]);
 
   /** Create a thread lazily on first send. Title is a placeholder the server
    *  refines from the first message. */
@@ -278,6 +284,7 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
     loadApprovalRecovery,
     loadOriginalReminderHistory,
     loadOriginalCuraPreparationHistory,
+    loadOriginalSpecialistHistory,
     ensureThread,
     renameThread: (id: string, title: string) => renameThread.mutate({ id, title }),
     archiveThread: (id: string) => archiveThread.mutate(id),

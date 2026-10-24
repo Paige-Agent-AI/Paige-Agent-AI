@@ -13,7 +13,7 @@ const source = JSON.parse(readFileSync("src/__tests__/fixtures/exp04-client-stat
 const TENANT = source.tenant_id as string, CLIENT = source.contact_id as string;
 const rpc = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...a: unknown[]) => rpc(...a) } }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: TENANT, accountContextLoading: false }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: TENANT, activeUserId: "e0400000-0000-4000-8000-000000000001", accountContextStatus: "ready", accountContextLoading: false }) }));
 import { ClientStanding } from "./ClientStanding";
 
 const reply = (patch: Record<string, unknown> = {}) => ({ data: { ...structuredClone(source), receipt_id: undefined, ...patch }, error: null });

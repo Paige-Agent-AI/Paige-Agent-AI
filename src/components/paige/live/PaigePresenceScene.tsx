@@ -55,6 +55,16 @@ const SUBDIVISION = 24;
 /** Base radius in world units. The camera and the fit are derived from this. */
 const RADIUS = 1.0;
 
+/* THE ROOM SHE STANDS IN. The body was alone on the stage's flat ground, which read as a box with
+ * a ball in it. Two dust fields at different depths give the frame parallax — the far cloud drifts
+ * one way, the near cloud the other, and the body sits between them so the eye places it in a
+ * space rather than on a panel. Both clouds are ENVIRONMENT, in the same sense the resting breath
+ * is: ambient, slow, and carrying no claim about anything being heard (§13 untouched — only the
+ * body's own pulse and the halo's rise are keyed to real energy). Counts are held to what a
+ * low-power context (the Canvas asks for one) fills in a single draw call each. */
+const DUST_FAR = 620;
+const DUST_NEAR = 240;
+
 const SETTLED: ReadonlySet<PresenceState> = new Set(["held", "disconnected", "interrupted", "unavailable"]);
 
 /**
@@ -262,6 +272,45 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
   // opens and closes repeatedly and three.js frees no GPU memory on unmount.
   useEffect(() => () => { geometry.dispose(); material.dispose(); }, [geometry, material]);
 
+  // THE HALO. A soft additive field behind the body, so her light lands on the room instead of
+  // stopping at her silhouette. A SPRITE, not a plane: §30 stripped the flat waveform ribbon and
+  // the smoke forbids PlaneGeometry in this file on purpose, and a camera-always-facing radial
+  // glow is exactly what a sprite is. It rides the SAME eased energy as the body's pulse and the
+  // SAME gold-only-on-speech rule (§11): at rest and while listening it is a dim indigo breath of
+  // light; it warms and lifts only with her own voice. The opacity never rises on silence,
+  // because it is fed from the same `hers` value the body pulses on.
+  const haloMaterial = useMemo(() => {
+    const styles = getComputedStyle(document.documentElement);
+    const canvas = document.createElement("canvas");
+    canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+      grad.addColorStop(0, "rgba(255,255,255,1)");
+      grad.addColorStop(0.4, "rgba(255,255,255,0.42)");
+      grad.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 256, 256);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.SpriteMaterial({
+      map: texture,
+      color: token(styles, "--primary", "#6c5ce0"),
+      transparent: true,
+      opacity: 0.16,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+  }, []);
+  const haloGold = useMemo(() => token(getComputedStyle(document.documentElement), "--accent", "#ebb94c"), []);
+  const haloBase = useMemo(() => token(getComputedStyle(document.documentElement), "--primary", "#6c5ce0"), []);
+  useEffect(() => {
+    const material = haloMaterial;
+    const map = material.map;
+    return () => { map?.dispose(); material.dispose(); };
+  }, [haloMaterial]);
+
   // FILL THE FRAME. The body is the presence, so it takes the room it is given rather than sitting
   // small in the middle of it — the previous build was called slim and slender, and a corner with a
   // thin thing in it does not read as someone in the room with you.
@@ -281,9 +330,12 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
     u.uTime.value = 0; u.uEnergy.value = 0; u.uDetail.value = 0;
     u.uSpeak.value = 0; u.uBusy.value = 0; u.uPulse.value = 0; u.uFlash.value = 0;
     u.uLight.value = still.light;
+    // The halo settles with the body: its resting dim indigo, nothing more.
+    haloMaterial.opacity = 0.16;
+    haloMaterial.color.copy(haloBase);
     if (mesh.current) mesh.current.rotation.set(0, 0, 0);
     invalidate();
-  }, [reduced, state, material, invalidate]);
+  }, [reduced, state, material, haloMaterial, haloBase, invalidate]);
 
   useFrame(({ clock }, delta) => {
     if (reduced || crashed.current || !mesh.current) return;
@@ -324,6 +376,11 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
       u.uFlash.value = Math.max(u.uFlash.value * Math.max(0, 1 - delta * 7), Math.min(1, rise * 6));
       u.uLight.value = frame.light;
 
+      // The halo breathes with the same values the body does — eased on the SAME curve as uSpeak
+      // so light and rim can never disagree about whether she is talking.
+      haloMaterial.opacity += (0.16 + u.uEnergy.value * 0.5 - haloMaterial.opacity) * Math.min(1, delta * 5);
+      haloMaterial.color.copy(haloBase).lerp(haloGold, Math.min(1, u.uSpeak.value));
+
       // Integrated, never an absolute angle from elapsed time: multiplying elapsed time by a rate
       // that changes makes the body jump the moment the rate does.
       mesh.current.rotation.y += delta * (settled ? 0.02 : state === "thinking" || state === "working" ? 0.2 : 0.07);
@@ -337,9 +394,90 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
 
   return (
     <group ref={group}>
+      {/* Behind the body, additive and depth-blind, so it can only ever ADD light. */}
+      <sprite material={haloMaterial} position={[0, 0, -0.9]} scale={[RADIUS * 4.4, RADIUS * 4.4, 1]} renderOrder={-1} />
       <mesh ref={mesh} geometry={geometry} material={material} />
     </group>
   );
+}
+
+/** One dust field: a cloud of points in a spherical shell, drifting as a whole. Reduced motion
+ *  stops it cold (a demand-rendered frame with an unclamped delta would otherwise JUMP the cloud
+ *  by seconds' worth of drift on every state change), and a throw inside the frame loop reaches
+ *  no boundary — so the body is guarded here the same way it guards itself. */
+function Dust({ count, inner, outer, size, tint, drift, opacity, reduced, normal, onCrash }: {
+  count: number; inner: number; outer: number; size: number; tint: THREE.Color; drift: number; opacity: number;
+  reduced: boolean; normal?: boolean; onCrash: () => void;
+}) {
+  const cloud = useRef<THREE.Points>(null);
+  const crashed = useRef(false);
+  const geometry = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      // Uniform direction on the sphere, then a radius spread across the shell. Points behind the
+      // body are hidden by depth; points in front are the near-field parallax.
+      const theta = Math.random() * Math.PI * 2;
+      const z = Math.random() * 2 - 1;
+      const r = inner + Math.random() * (outer - inner);
+      const s = Math.sqrt(1 - z * z);
+      positions[i * 3] = Math.cos(theta) * s * r;
+      positions[i * 3 + 1] = Math.sin(theta) * s * r;
+      positions[i * 3 + 2] = z * r;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    return g;
+  }, [count, inner, outer]);
+  const material = useMemo(() => new THREE.PointsMaterial({
+    color: tint, size, sizeAttenuation: true, transparent: true, opacity,
+    // ADDITIVE on a dark ground makes the motes read as light. On a LIGHT ground additive white
+    // is invisible (§23 asks for two legible rooms, not one room and an absence) — so the light
+    // room gets normal-blend motes in a deeper primary instead.
+    blending: normal ? THREE.NormalBlending : THREE.AdditiveBlending,
+    depthWrite: false,
+  }), [tint, size, opacity, normal]);
+  useEffect(() => () => { geometry.dispose(); material.dispose(); }, [geometry, material]);
+
+  useFrame(({ clock }, delta) => {
+    if (reduced || crashed.current || !cloud.current) return;
+    try {
+      // Integrated rotation only — changing a rate never jumps the cloud (same rule as the body).
+      cloud.current.rotation.y += delta * drift;
+      cloud.current.rotation.x = Math.sin(clock.elapsedTime * 0.07) * 0.04;
+    } catch (error) {
+      crashed.current = true;
+      console.error("[PaigePresenceScene] a dust field's loop threw — standing down. Cause:", error);
+      onCrash();
+    }
+  });
+  return <points ref={cloud} geometry={geometry} material={material} />;
+}
+
+/** The camera drifts like a held breath: slow, small, always looking at her. It is environment —
+ *  it runs even while she is silent (a room does not freeze when nobody speaks) and stops ticking
+ *  entirely under reduced motion, where a demand frame's unclamped delta would otherwise snap the
+ *  camera fully to its drift target. */
+function CameraDrift({ reduced, onCrash }: { reduced: boolean; onCrash: () => void }) {
+  const camera = useThree((three) => three.camera);
+  const crashed = useRef(false);
+  useFrame(({ clock }, delta) => {
+    if (reduced || crashed.current) return;
+    try {
+      const t = clock.elapsedTime;
+      const x = Math.sin(t * 0.11) * 0.09;
+      const y = Math.cos(t * 0.085) * 0.06;
+      const z = 4.2 + Math.sin(t * 0.05) * 0.06;
+      camera.position.x += (x - camera.position.x) * Math.min(1, delta * 1.5);
+      camera.position.y += (y - camera.position.y) * Math.min(1, delta * 1.5);
+      camera.position.z += (z - camera.position.z) * Math.min(1, delta * 1.5);
+      camera.lookAt(0, 0, 0);
+    } catch (error) {
+      crashed.current = true;
+      console.error("[PaigePresenceScene] the camera drift loop threw — standing down. Cause:", error);
+      onCrash();
+    }
+  });
+  return null;
 }
 
 export default function PaigePresenceScene({ state, reduced, readEnergy = () => SILENT_ENERGY, onCrash = () => {} }: {
@@ -349,6 +487,31 @@ export default function PaigePresenceScene({ state, reduced, readEnergy = () => 
   /** Called once if the animation loop throws — a boundary cannot see inside requestAnimationFrame. */
   onCrash?: () => void;
 }) {
+  // The dust tints resolve from the SAME tokens the body uses, so the room and its occupant are
+  // one palette in both themes (§23). A dark room gets additive light motes. A LIGHT room cannot
+  // show additive light (adding to a bright ground is a no-op) — and it cannot show deep-dark
+  // motes either, which washed to invisibility on the bright canvas in review round 2's captures;
+  // what a bright room actually has is dust CATCHING the light: soft pale-violet motes, painted
+  // (normal blend) at enough depth to differ from the ground. The capture guard enforces this
+  // objectively — a flat presence region fails the run.
+  const { farTint, nearTint, lightRoom } = useMemo(() => {
+    const styles = getComputedStyle(document.documentElement);
+    const primary = token(styles, "--primary", "#6c5ce0");
+    const background = token(styles, "--background", "#14151c");
+    const lightRoom = background.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
+    if (lightRoom) {
+      return {
+        farTint: primary.clone().lerp(new THREE.Color("#ffffff"), 0.52),
+        nearTint: primary.clone().lerp(new THREE.Color("#ffffff"), 0.36),
+        lightRoom,
+      };
+    }
+    return {
+      farTint: primary.clone().lerp(new THREE.Color("#ffffff"), 0.55),
+      nearTint: new THREE.Color("#ffffff"),
+      lightRoom,
+    };
+  }, []);
   return (
     <Canvas
       // PERSPECTIVE, not orthographic. An orthographic orb is a disc with a gradient on it; the
@@ -363,6 +526,10 @@ export default function PaigePresenceScene({ state, reduced, readEnergy = () => 
       style={{ width: "100%", height: "100%" }}
     >
       <Orb state={state} reduced={reduced} readEnergy={readEnergy} onCrash={onCrash} />
+      {/* The room: far field inside her orbit, near field outside it, drifting opposite ways. */}
+      <Dust count={DUST_FAR} inner={2.6} outer={4.6} size={0.02} tint={farTint} drift={0.011} opacity={lightRoom ? 0.85 : 0.7} reduced={reduced} normal={lightRoom} onCrash={onCrash} />
+      <Dust count={DUST_NEAR} inner={3.4} outer={5.4} size={0.032} tint={nearTint} drift={-0.006} opacity={lightRoom ? 0.8 : 0.5} reduced={reduced} normal={lightRoom} onCrash={onCrash} />
+      <CameraDrift reduced={reduced} onCrash={onCrash} />
     </Canvas>
   );
 }

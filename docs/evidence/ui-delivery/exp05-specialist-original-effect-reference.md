@@ -11,7 +11,7 @@ AUTOMATED_EVIDENCE: PASS: scripts/int336-interactive-check.mjs causally failed w
 STATIC_EVIDENCE: PASS: scoped ESLint/diff checks; before renewal the actual validator refused exactly the changed helper. Sequential source reviewa7961d9d recorded inf07a6b682 precedes the one-literal renewal. Final original validator verifies123 sources/all29 dispatches; full six-file C0b family227PASS/0FAIL/0SKIP and normal original registry228PASS. No validator, extractor, metadata, other pin or dispatch is weakened.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no UI component or visual state is modified; local metadata tests cannot establish rendered or authenticated execution.
 BEHAVIORAL_EVIDENCE: PASS: actual original projection retains invocation UUID for delegate_to_subagent only; wrong-tool, malformed and contradictory-read cases are excluded. Existing Task identity remains. No execution, retry or hold reset occurs in these assertions.
-AUTHENTICATED_RUNTIME: UNVERIFIED: local candidate only; no original customer invocation/result/reload or held-thread recovery claim is closed.
+AUTHENTICATED_RUNTIME: UNVERIFIED: affected_scope=ordinary SOLO original invocation/reload; blocker=PROOF_NOT_EXECUTED; excluded_claim=authenticated original-result and held-thread recovery. Production source readback does not close this customer job.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no customer control or focus change.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout change.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
@@ -24,12 +24,12 @@ MUST_PRESERVE: original actor/tenant/seat checks, Spine/Harness/Trust, native ex
 ACCEPTANCE_CRITERIA: original ID survives both metadata projections; invalid/wrong-tool references are excluded; unknown is unchanged; exact source review, restrictive pin renewal, required CI/release and authenticated proof remain distinct.
 PROTECTED_SEAMS: affected only original interactiveEffect/interactiveReceiptContext. Orchestrator dispatch and receipt writer, Chat admission/read allowlist, control schema/status, E09 customer scope, E04 action-risk policy and all business-domain writers are unchanged.
 MOTION_PURPOSE: NONE: no motion change.
-INTERNAL_BUILD_IDENTITY: ed3f3a8eedebfbdb9e29d44ea9728d6b29f7731b; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original Chat deployment after reviewed source pin and required CI); evidence=docs/evidence/ui-delivery/exp05-specialist-original-effect-reference.md
-RELEASE_CHANNEL: development: local source correction, not customer reachable.
+INTERNAL_BUILD_IDENTITY: source=07b45b57ea749e27d6e21437cfe4f9e423595bd6; deployment=600ce5f48448c622eb7f17e8434c02248511e45e; environment=production; migrations=NOT_APPLICABLE; edge=APPLIED(paige-ai-chat@v523,paige-orchestrator@v124); evidence=docs/evidence/ui-delivery/exp05-specialist-original-effect-reference.md
+RELEASE_CHANNEL: production: reviewed original-reference source and actual393-file package readback verified; ordinary customer recovery remains separate.
 RELEASE_CLASSIFICATION: internal-only: bounded original-reference repair within EXP05 recovery.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement, launch or founder acceptance.
 RELEASE_NOTE_REQUIRED: no: ongoing internal Experience increment and proof boundary.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: final composed review/exact-head hosted CI, deployment and ordinary authenticated original-reference/status recovery. Shared-pin coordination and before-renewal source review are recorded. Local causal/recording-port proof is not customer acceptance. Full ten outcomes/E5-CV1-CV9 remain open.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: all11 exact checks, accurate LOWER review, normal merge/deployment and393-file readback verified. PROOF OWED: original authenticated reference/status/reload, native consumer and ten-outcome/E5-CV1–CV9 Experience. Before-renewal review retained; no activation.
 RELEASE_RECOVERY: position=withhold for any failed required gate, including the new shared dependency audit; reference=existing source validator, immutable parent and canonical turn receipt. No reset/replay/activation workaround.
 UNVERIFIED: existing denied-network Deno tests pass locally and remain required in normal exact-head CI. Restrictive source binding now passes after its separately reviewed one-scalar renewal; this grants no runtime authority. No new native status consumer, full delegation lifecycle, ZION instructions, recurring execution, Live or complete Experience acceptance.
 
@@ -115,3 +115,7 @@ separately reviewed29 handler literals. No new source renewal is inferred.
 Parent2697 release/readback, fresh composed-head review/CI and original native
 held-thread consumer remain required. This metadata slice is a prerequisite,
 not complete original-result recovery, ZION execution or capability acceptance.
+
+## October24 — observed production source release
+
+Original2719 reviewed07b/all11/two statuses/LOWER5636410212 -> main600ce/tree5aa3. Normal Edge40056453430 SUCCESS and actual393-file read03:07:05Z verifies Chat523/268 and orchestrator124/125/JWTtrue/import_mapfalse, including imported interactive source. Exact web7RVQ READY600ce; expected600ce public assertion refused newer containing E01 public04edecb0. No src product file changed, and no public600ce-asset PASS is invented. [Exact production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2719#issuecomment-6379133934). Native status2722/UI2725, authenticated recovery and full ZION/weekly/automation remain unfinished.

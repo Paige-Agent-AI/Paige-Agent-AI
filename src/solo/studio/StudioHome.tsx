@@ -5,7 +5,8 @@ import React from "react";
 import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles, Images } from "lucide-react";
 import { Ic, Logo } from "../_shared";
 import { VsStars } from "./VsStars";
-import { createSession, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
+import { createSession, listTemplates, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
+import { BRIEF_FIELDS, EMPTY_BRIEF_DETAILS, composeBrief, hasBriefDetails, type BriefDetails } from "./brief-fields";
 import { loadArtifact, type Brand, type LoadedArtifact } from "./artifact-state";
 import { nexusDepartmentRemit, nexusDisplayName, planWithNexusPrompt } from "./nexus";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
@@ -125,19 +126,39 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
 }) {
   const [brand, setBrand] = React.useState<Brand>({ floor: buildGrowthBrandFloor(null), name: null, logoUrl: null });
   React.useEffect(() => { void loadBrand(tenantSlug).then(setBrand); }, [tenantSlug]);
+  // EXP07 row 6 — the workspace's templates. Empty (and the section hidden) until someone saves one.
+  const [templates, setTemplates] = React.useState<StudioSession[] | null>(null);
+  React.useEffect(() => { void listTemplates().then(setTemplates).catch(() => setTemplates([])); }, []);
   const [brief, setBrief] = React.useState("");
+  const [details, setDetails] = React.useState<BriefDetails>(EMPTY_BRIEF_DETAILS);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const ref = React.useRef<HTMLTextAreaElement | null>(null);
   React.useEffect(() => { ref.current?.focus(); }, []);
 
   const start = async (text: string) => {
-    const t = text.trim();
-    if (t.length < 4 || creating) return;
+    // The owner's own words are the brief; details only add to them (the Build button gates the same way).
+    if (text.trim().length < 4 || creating) return;
+    const composed = composeBrief(text, details);
     setCreating(true); setError(null);
     try {
-      const s = await createSession(t);
-      onOpen(s.id, t);
+      const s = await createSession(composed);
+      onOpen(s.id, composed);
+    } catch (e) {
+      setError(plainError(e, "The project couldn't be started. Try again."));
+      setCreating(false);
+    }
+  };
+
+  // A template starts a NEW project seeded from its brief — the template itself never changes.
+  const startFromTemplate = async (t: StudioSession) => {
+    const brief = (t.seedBrief ?? sessionName(t)).trim();
+    if (brief.length < 4 || creating) return;
+    setCreating(true); setError(null);
+    try {
+      const s = await createSession(brief);
+      onOpen(s.id, brief);
     } catch (e) {
       setError(plainError(e, "The project couldn't be started. Try again."));
       setCreating(false);
@@ -160,8 +181,29 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
               onChange={(e) => setBrief(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void start(brief); } }}
             />
+            {detailsOpen && (
+              <div className="vs-brief-fields" aria-label="Brief details">
+                {BRIEF_FIELDS.map(({ key, label, placeholder }) => (
+                  <div className="vs-brief-field" key={key}>
+                    <label htmlFor={`vs-brief-${key}`}>{label}</label>
+                    <input
+                      id={`vs-brief-${key}`}
+                      type="text"
+                      value={details[key]}
+                      placeholder={placeholder}
+                      disabled={creating}
+                      onChange={(e) => setDetails((d) => ({ ...d, [key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+                <p className="vs-brief-note">Optional. Whatever you add here is saved with the brief and Paige works from it — you can add the rest in chat.</p>
+              </div>
+            )}
             <div className="vs-composer-foot">
               <span>Paige works from <b>your brand</b> and your business details.</span>
+              <button type="button" className="vs-link vs-brief-toggle" aria-expanded={detailsOpen} disabled={creating} onClick={() => setDetailsOpen((o) => !o)}>
+                {detailsOpen ? "Hide details" : hasBriefDetails(details) ? "Details · added" : "Add details"}
+              </button>
               <button type="button" className="vs-btn vs-btn-violet" style={{ marginLeft: "auto" }} disabled={brief.trim().length < 4 || creating} onClick={() => void start(brief)}>
                 {creating ? "Starting…" : "Build it"} <ArrowUp size={14} aria-hidden="true" />
               </button>
@@ -180,6 +222,19 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
           </div>
         </div>
       </div>
+      {templates !== null && templates.length > 0 && (
+        <section className="vs-section" aria-label="Start from a template">
+          <h2>Start from a template</h2>
+          <div className="vs-cards">
+            {templates.slice(0, 8).map((t) => (
+              <button key={t.id} type="button" className="vs-card" disabled={creating} onClick={() => void startFromTemplate(t)}>
+                <CardPreview s={t} brand={brand} />
+                <div className="vs-card-body"><b className="vs-trunc">{sessionName(t)}</b><span>Starts a new project from this brief</span></div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="vs-section" aria-label="Pick up where you left off">
         <h2>Pick up where you left off</h2>
         {sessionsError ? <p className="vs-alert" role="alert">{sessionsError}</p>

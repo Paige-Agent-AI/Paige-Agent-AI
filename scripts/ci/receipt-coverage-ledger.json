@@ -1131,7 +1131,7 @@
       "tool": "sales_effectuate_commercial_terms",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "_execute_sales_effectuation in supabase/migrations/20271113640004_e04_exact_signed_terms.sql atomically calls canonical record_capability_run and stores the original Collections operation with exact accepted-source provenance. scripts/agreements/effective-commercial-proof.mjs proves receipt-failure rollback, concurrent exactly-once execution and historical replay without reactivation."
+      "evidence": "_execute_sales_effectuation in supabase/migrations/20271113820004_e04_exact_signed_terms.sql atomically calls canonical record_capability_run and stores the original Collections operation with exact accepted-source provenance. scripts/agreements/effective-commercial-proof.mjs proves receipt-failure rollback, concurrent exactly-once execution and historical replay without reactivation."
     },
     {
       "tool": "sales_save_collection_terms",

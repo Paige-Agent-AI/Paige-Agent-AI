@@ -8,7 +8,7 @@ import { Logo } from "../_shared";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { useMediaJobs } from "../useMediaJobs";
 import { MediaApprovalCard } from "./MediaApprovalCard";
-import { formFromRow, isUnnamed, sessionName, loadBrand, openSession, pageFromRow, plainError, renameSession, type ArtifactRef, type StudioSession as Session, type StudioVersion } from "./studio-data";
+import { formFromRow, isUnnamed, sessionName, loadBrand, openSession, pageFromRow, plainError, renameSession, setSessionTemplate, type ArtifactRef, type StudioSession as Session, type StudioVersion } from "./studio-data";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { useStudioChat, type Choices } from "./useStudioChat";
 import { StudioStage } from "./StudioStage";
@@ -63,6 +63,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [chatOpen, setChatOpen] = React.useState(false);
+  const [briefOpen, setBriefOpen] = React.useState(true);
+  const [templating, setTemplating] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [previewing, setPreviewing] = React.useState<StudioVersion | null>(null);
@@ -111,6 +113,25 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
 
   React.useEffect(() => { void reloadSession(); }, [reloadSession]);
   React.useEffect(() => { void loadBrand(tenantSlug).then(setBrand); }, [tenantSlug]);
+
+  // EXP07 row 6 — flag this project as a workspace template (or bring it back to drafts). The
+  // governed setter answers; the returned row is what changed. A refusal (not owner/admin) is a
+  // sentence, never a silent no-op.
+  const toggleTemplate = async () => {
+    if (!session || templating) return;
+    setTemplating(true);
+    try {
+      const next = await setSessionTemplate(sessionId, !session.isTemplate);
+      setSession((s) => (s ? { ...s, isTemplate: next.isTemplate } : s));
+      setNotice(next.isTemplate
+        ? "Saved as a workspace template — it moved out of your drafts and now appears under “Start from a template”."
+        : "Back in your drafts. It no longer appears as a template.");
+    } catch (e) {
+      setNotice(plainError(e, "The template change didn't save. Try again."));
+    } finally {
+      setTemplating(false);
+    }
+  };
 
   React.useEffect(() => {
     let live = true;
@@ -231,6 +252,18 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           <span className="vs-status" data-tone={saveState.tone} role="status" aria-live="polite" style={{ marginLeft: 8 }}>{saveState.text}</span>
         </nav>
         <div className="vs-top-actions">
+          {session && (
+            <button
+              type="button"
+              className="vs-btn"
+              aria-pressed={session.isTemplate}
+              disabled={templating}
+              title={session.isTemplate ? "This project is a workspace template. Click to bring it back to your drafts." : "Save this project as a template your whole workspace can start from."}
+              onClick={() => void toggleTemplate()}
+            >
+              {templating ? "Saving…" : session.isTemplate ? "Saved as template" : "Save as template"}
+            </button>
+          )}
           {artifact?.kind === "form" && (
             <button type="button" className="vs-btn" aria-pressed={settingsOpen} onClick={() => setSettingsOpen((o) => !o)}><SlidersHorizontal size={14} />Form settings</button>
           )}
@@ -265,6 +298,15 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
 
       <div className="vs-body">
         <section className="vs-chat" aria-label="Chat with Paige" data-open={chatOpen}>
+          {/* The brief the project started from, pinned above the conversation so it survives reopen
+              (EXP07 row 1): the chat's first message already carries it, but nothing showed it after
+              that. Open when the project opens; the owner's own toggle always wins. */}
+          {session?.seedBrief && (
+            <details className="vs-brief-card" open={briefOpen} onToggle={(e) => setBriefOpen(e.currentTarget.open)}>
+              <summary>The brief</summary>
+              <MarkdownMessage content={session.seedBrief} className="vs-md" />
+            </details>
+          )}
           <div className="vs-chat-log" ref={logRef}>
             {chat.loadError && <p className="vs-alert" role="alert">{chat.loadError}</p>}
             {!chat.ready && !chat.loadError && <p className="vs-inspector-note" role="status">Opening the conversation…</p>}

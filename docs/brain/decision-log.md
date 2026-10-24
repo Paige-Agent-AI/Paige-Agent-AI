@@ -2,6 +2,20 @@
 
 ## October24 — EXP08 Team Hub owner decisions
 
+- **EXP08 Team Hub increment 3, attachments (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
+  - **Storage: APPROVED. Reuse the existing private `comms-attachments` bucket, with access locked down.**
+    - Files live under a Team Hub path.
+    - One additive EXP08 file-record table.
+    - Restrictive `storage.objects` policies, so only current members of the conversation can upload or read.
+    - Signed links last 60 seconds.
+    - The Team Hub prefix is added to account-retirement purge.
+    - No new bucket. The server-only (edge function) variant was not chosen.
+  - **Scanning: ship WITHOUT malware scanning.** The platform has no scanner. Mitigations:
+    - safe file types only (PDF, images, Office documents, text and CSV);
+    - up to 10 MB each and 5 per message;
+    - the server checks each file's real type against its stored object metadata;
+    - downloads open as attachments, not inline.
+  - Both the screen and the docs say plainly that files are not scanned.
 - **EXP08 Team Hub increment 2 (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
   - **Link storage: APPROVED.** Add one additive EXP08 table, `team_hub_work_refs`, so that one Team Hub message references one EXP05 Work record. It copies no status, title, assignee or due date. Tasks are created only through Operations' existing `plan_assign_task_scoped`.
   - **PAIGE chat link-back: SKIPPED for now.** `/PAIGE` specialist, approval and meeting requests pre-fill PAIGE, and the person sends from there. Automatic link-back from PAIGE chat waits for a separate EXP05/Chat change. Team Hub never calls the delegation endpoint directly.

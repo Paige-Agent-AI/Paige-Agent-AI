@@ -2,6 +2,13 @@
 
 ## October23 — Overview visual refinement, development only
 
+October24 checkpoint: current-source native Sheet focus return now works on
+desktop/390px. Rendered1366px-with-Chat and320px exposed split monetary decimals;
+the same candidate corrects amount grouping and compact type without changing
+values or sources.54 original cases/four suites and scoped lint pass. Final
+typography native confirmation, exact-head CI and release remain owed after Edge
+control again staled/reset; pre-correction frames are not a finished-UI claim.
+
 Owner requires Overview entry and clearer visual presentation across all seven
 Finance subpages. First bounded consumer slice canonicalizes bare Finance to its
 same-account Overview with query/fragment and replacement history, places original

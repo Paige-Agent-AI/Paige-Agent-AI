@@ -1,5 +1,71 @@
 # Surface card — Team (Solo)
 
+## Current source and ownership — EXP08 receiving lead, 2026-10-23
+
+**Owner-authorized:** one Claude Code lead owns EXP08 *Manage My Team / Team Hub*, with ZION as the
+supervised product specialist. EXP05 keeps the canonical Work, tasks, assignments, Planning, Calendar
+execution, ZION runtime, delegation lifecycle and receipts. A team request in Team Hub references
+one EXP05 Work record and never becomes a second task. Its status comes from the original
+Work, run or approval record, never from a chat message. The receiving acknowledgment is in ANT-161. Neither the
+staffing nor this note is runtime proof, customer acceptance or a release.
+
+What the code says today. These dated corrections supersede the matching historical statements
+below. The originals stay where they are as history (§58).
+
+- **Spine registry.** The "Team is NOT declared" paragraph below is superseded. `registry.ts`
+  now spreads 11 `team.*` capability keys from `domains/team.ts`, `team_reads.ts`,
+  `team_invitations.ts` and `c0b_existing_writes.ts`, plus the `team.authority_fact` signal kind.
+  None of them declares a Rail outcome, so the reason this card is `PARTIAL` still stands.
+- **High-risk tools.** Six access-changing tools are `high` (decision 1 below). The
+  "propose or perform" table and the "four `high` tools" line further down predate
+  `member_grant_role` and `member_revoke_role` and undercount them.
+- **Activity feed.** It reads the tenant-wide `get_solo_rail_activity`, not `paige_client_events`
+  (Master §5 records the correction).
+- **Rail projection.** The workspace-level outcome record (SCR-2026-09-05, `capability_run`)
+  exists, but Team actions are not wired to it. Decision 2 is therefore unbuilt for Team, not
+  unbuilt platform-wide.
+- **Live source.**
+  - Settings → Team is the only live Team screen: `src/solo/settings.tsx` mounts
+    `src/solo/team-workspace.tsx`.
+  - `src/solo/team.tsx` is unmounted demo-data source.
+  - `src/pages/admin/TeamHub.tsx` has no route.
+  - Neither counts as evidence for Team Hub, and neither is revived.
+  - `/solo/{n}/team` redirects to Settings → Team, so Team Hub needs its own path.
+- **Recipient binding.** `20261200000300_solo_team_recipient_binding.sql` is on main. Its production
+  persistence and a fresh-account acceptance drive were not re-read for this note, so they stay
+  `UNVERIFIED` here.
+- **Team Hub collaboration substrate (channels, DMs, threads, mentions, read markers).** It does
+  not exist.
+  - Searched `supabase/migrations` and `supabase/functions` for `team_chat`, `staff_chat`,
+    `team_channel`, `team_message`, `internal_message`, `channel_members`,
+    `conversation_participants`, `direct_message`, `team_thread`, `message_mentions` and
+    `team_hub`: zero hits.
+  - The only `channel*` table is the provider `channel_connectors`.
+  - `messages`/`threads` are the customer inbox and have no participant ACL.
+  - `paige_chat_threads` is single-owner PAIGE chat.
+  - Adding the substrate is a backend change (§00). The owner approved it on 2026-10-24 (below).
+- **Owner decisions, 2026-10-24.** Answered by the owner in the EXP08 Claude Code session and
+  logged in `docs/brain/decision-log.md`. They are approvals to build, not proof that anything
+  works.
+  - **Design and behavior: APPROVED.** The Team Hub interactive prototype v2 (private artifact,
+    sample data, nothing saved or sent) is approved for production, and it is approved-frozen
+    under §28.
+    - Placement: its own SOLO menu item directly below Operations.
+    - Layout: conversations, then the conversation, then Team work.
+    - Collaboration: channels with public/private membership, DMs and threads.
+    - Mentions: active people in the conversation plus the six specialists. Ambiguous or removed
+      names are refused.
+    - Commands: `/PAIGE` commands preview their scope and risk first.
+    - Records: Operations-linked task, request and approval cards read their status from the
+      original record.
+    - Recovery: offline and send-failure handling never re-dispatches.
+    - Access: a removed teammate loses Team Hub and PAIGE team answers.
+  - **Collaboration storage: APPROVED.** Team channels, channel members, messages, threads,
+    mentions and read markers may be added as reviewed, additive migrations with tenant and
+    channel-membership enforcement. Isolation must be proven before release, and no Slack or Teams
+    connection is involved.
+  - Neither approval authorizes ownership transfer, an external send, or a provider connection.
+
 **Truth label: `PARTIAL`.** The capability runs correctly and is governed correctly; the owner
 cannot see what Paige did. See *Rail outcome* below — that is the whole reason this is not `LIVE`.
 

@@ -1,0 +1,544 @@
+{
+  "recordedAt": "2026-10-24T11:30:44.198Z",
+  "scope": "Original native source release only; actual customer file/model outcome remains unverified",
+  "reviewedHead": "1919c4e4d12d8e724a5ed6c0b9a773a99ee515c0",
+  "review": "5637979787",
+  "merge": "65699d36369c88412e3e7e370b7c14e893272773",
+  "tree": "351627f7886f5a8dd24e0e29cfc9885503f06c4e",
+  "parents": [
+    "8d867d8337fc8ba3a1f8da916fa9dcfed7442656",
+    "1919c4e4d12d8e724a5ed6c0b9a773a99ee515c0"
+  ],
+  "gates": [
+    {
+      "name": "Supabase Preview",
+      "id": 120853738187,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Vercel Preview Comments",
+      "id": 120853607458,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "comms-provider-boundary",
+      "id": 120853579668,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "verify",
+      "id": 120853579593,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "web-fetch-hardening-smoke",
+      "id": 120853579491,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "contract",
+      "id": 120853334286,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "channel-sql",
+      "id": 120853334280,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "database-contract",
+      "id": 120853334154,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Validate UI delivery evidence",
+      "id": 120853334143,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "lint",
+      "id": 120853334102,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "postgres-authority",
+      "id": 120853334072,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "collections-sql",
+      "id": 120853333943,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "audit",
+      "id": 120853333880,
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "statuses": [
+    {
+      "context": "Vercel",
+      "state": "success"
+    },
+    {
+      "context": "Vercel Deployments – MMA",
+      "state": "success"
+    }
+  ],
+  "nativeJob": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/40087507335/job/120853334154",
+  "production": {
+    "frontier": "20271113810109",
+    "functions": [
+      {
+        "anon": false,
+        "name": "_client_chat_file_ids_valid",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "boolean",
+        "definer": false,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_ids"
+        ],
+        "body_md5": "f3474d8b4f7d00c55775ef566f9a77a7",
+        "defaults": 0,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_ids jsonb",
+        "signature": "_client_chat_file_ids_valid(jsonb)",
+        "volatility": "i",
+        "authenticated": false
+      },
+      {
+        "anon": false,
+        "name": "_client_chat_files_projection",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "jsonb",
+        "definer": true,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_actor",
+          "p_tenant",
+          "p_contact",
+          "p_thread",
+          "p_ids"
+        ],
+        "body_md5": "8ef469d757cc912e41e3e643e66d37c7",
+        "defaults": 0,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_actor uuid, p_tenant uuid, p_contact uuid, p_thread uuid, p_ids jsonb",
+        "signature": "_client_chat_files_projection(uuid,uuid,uuid,uuid,jsonb)",
+        "volatility": "s",
+        "authenticated": false
+      },
+      {
+        "anon": false,
+        "name": "_client_chat_files_publication_current",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "boolean",
+        "definer": true,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_thread",
+          "p_intent"
+        ],
+        "body_md5": "10fc95b128b4d84ce178ac795151b748",
+        "defaults": 0,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_thread uuid, p_intent uuid",
+        "signature": "_client_chat_files_publication_current(uuid,uuid)",
+        "volatility": "s",
+        "authenticated": false
+      },
+      {
+        "anon": false,
+        "name": "_client_chat_files_snapshot_current",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "boolean",
+        "definer": true,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_actor",
+          "p_tenant",
+          "p_contact",
+          "p_thread",
+          "p_snapshot"
+        ],
+        "body_md5": "d039d2c1d18735ed651a5489b754ca7a",
+        "defaults": 0,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_actor uuid, p_tenant uuid, p_contact uuid, p_thread uuid, p_snapshot jsonb",
+        "signature": "_client_chat_files_snapshot_current(uuid,uuid,uuid,uuid,jsonb)",
+        "volatility": "s",
+        "authenticated": false
+      },
+      {
+        "anon": false,
+        "name": "_client_chat_files_snapshot_lock",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "boolean",
+        "definer": true,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_actor",
+          "p_tenant",
+          "p_contact",
+          "p_thread",
+          "p_snapshot"
+        ],
+        "body_md5": "dbd1cff69c9266d28ed8712ed127caf9",
+        "defaults": 0,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_actor uuid, p_tenant uuid, p_contact uuid, p_thread uuid, p_snapshot jsonb",
+        "signature": "_client_chat_files_snapshot_lock(uuid,uuid,uuid,uuid,jsonb)",
+        "volatility": "v",
+        "authenticated": false
+      },
+      {
+        "anon": false,
+        "name": "_client_chat_files_snapshot_valid",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "boolean",
+        "definer": false,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_snapshot"
+        ],
+        "body_md5": "16290dd2330f01dfdb57b1fca4990f30",
+        "defaults": 0,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_snapshot jsonb",
+        "signature": "_client_chat_files_snapshot_valid(jsonb)",
+        "volatility": "i",
+        "authenticated": false
+      },
+      {
+        "anon": false,
+        "name": "_client_chat_files_terminal_guard",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "trigger",
+        "definer": false,
+        "service": false,
+        "argmodes": null,
+        "argnames": null,
+        "body_md5": "e751ae339f586ae405b93aec9bcd2f61",
+        "defaults": 0,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "",
+        "signature": "_client_chat_files_terminal_guard()",
+        "volatility": "v",
+        "authenticated": false
+      },
+      {
+        "anon": false,
+        "name": "client_portal_assistant_begin_files",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "jsonb",
+        "definer": true,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_thread",
+          "p_intent",
+          "p_supersedes",
+          "p_content",
+          "p_bound_answer",
+          "p_stop",
+          "p_effectful",
+          "p_query_embedding",
+          "p_file_ids"
+        ],
+        "body_md5": "34daa034fc23a2e17f7cdf9d55348b8d",
+        "defaults": 0,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_thread uuid, p_intent uuid, p_supersedes uuid, p_content text, p_bound_answer boolean, p_stop boolean, p_effectful boolean, p_query_embedding vector, p_file_ids jsonb",
+        "signature": "client_portal_assistant_begin_files(uuid,uuid,uuid,text,boolean,boolean,boolean,vector,jsonb)",
+        "volatility": "v",
+        "authenticated": true
+      },
+      {
+        "anon": false,
+        "name": "client_portal_assistant_context_v2",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "jsonb",
+        "definer": true,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_thread",
+          "p_intent",
+          "p_query_embedding"
+        ],
+        "body_md5": "79f72092a1742329d597bf9783781d71",
+        "defaults": 1,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_thread uuid, p_intent uuid, p_query_embedding vector DEFAULT NULL::vector",
+        "signature": "client_portal_assistant_context_v2(uuid,uuid,vector)",
+        "volatility": "s",
+        "authenticated": true
+      },
+      {
+        "anon": false,
+        "name": "client_portal_assistant_files_context",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "jsonb",
+        "definer": true,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_thread",
+          "p_intent",
+          "p_file_ids"
+        ],
+        "body_md5": "4902b28e207a193c6807a46f24333c36",
+        "defaults": 1,
+        "language": "plpgsql",
+        "parallel": "u",
+        "arguments": "p_thread uuid, p_intent uuid, p_file_ids jsonb DEFAULT NULL::jsonb",
+        "signature": "client_portal_assistant_files_context(uuid,uuid,jsonb)",
+        "volatility": "v",
+        "authenticated": true
+      },
+      {
+        "anon": false,
+        "name": "paige_chat_interactive_publication_context_v2",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "boolean",
+        "definer": true,
+        "service": false,
+        "argmodes": null,
+        "argnames": [
+          "p_thread",
+          "p_intent"
+        ],
+        "body_md5": "daee74f9b160e0dcb1bf4da318f3056b",
+        "defaults": 0,
+        "language": "sql",
+        "parallel": "u",
+        "arguments": "p_thread uuid, p_intent uuid",
+        "signature": "paige_chat_interactive_publication_context_v2(uuid,uuid)",
+        "volatility": "s",
+        "authenticated": true
+      }
+    ],
+    "unchanged": [
+      {
+        "acl": [
+          "postgres=X/postgres"
+        ],
+        "name": "_client_portal_chat_files_authorize",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": true,
+        "body_md5": "18ff71ce490f6ee182c97e7be3898491",
+        "defaults": 0
+      },
+      {
+        "acl": [
+          "postgres=X/postgres"
+        ],
+        "name": "_client_portal_chat_files_solo_scope",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": true,
+        "body_md5": "1fca45c01f2ed32608a9c1fcb0a92562",
+        "defaults": 0
+      },
+      {
+        "acl": [
+          "postgres=X/postgres"
+        ],
+        "name": "_client_progress_scope_current",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": true,
+        "body_md5": "cef5bd234d501bce4268cb572b013a78",
+        "defaults": 0
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "authenticated=X/postgres"
+        ],
+        "name": "client_portal_assistant_begin_sessions",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "definer": true,
+        "body_md5": "cbf566b34dd050eb611b509c6718d547",
+        "defaults": 0
+      }
+    ],
+    "migrations": [
+      {
+        "name": "e09_private_cura_files",
+        "version": "20271113810009"
+      },
+      {
+        "name": "e09_private_cura_message_files",
+        "version": "20271113810109"
+      }
+    ],
+    "terminal_trigger": [
+      {
+        "name": "e09_customer_files_terminal",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER e09_customer_files_terminal BEFORE INSERT ON public.paige_chat_turns FOR EACH ROW EXECUTE FUNCTION _client_chat_files_terminal_guard()"
+      }
+    ]
+  },
+  "web": {
+    "url": "https://paigeagent.ai/version.json",
+    "buildId": "65699d36369c88412e3e7e370b7c14e893272773-mvmb61so",
+    "customerUpdate": null
+  },
+  "migration": {
+    "version": "20271113810109",
+    "name": "e09_private_cura_message_files",
+    "sha256": "899de48aa2a4d0187e51c78fc345b6379fff13e202fe34944cd69a179d2892d0",
+    "run": 40089541033,
+    "lintJob": 120859223369,
+    "deployJob": 120859317009,
+    "status": "SUCCESS",
+    "persisted": true
+  },
+  "sourceChecks": {
+    "functionCount": 11,
+    "bodyAndAccessMatchesCapturedPreview": true,
+    "fullHeadersMatchExactSqlOrCapturedOriginal": true,
+    "fullHeaderComparisons": [
+      {
+        "name": "_client_chat_file_ids_valid",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "_client_chat_files_projection",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "_client_chat_files_publication_current",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "_client_chat_files_snapshot_current",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "_client_chat_files_snapshot_lock",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "_client_chat_files_snapshot_valid",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "_client_chat_files_terminal_guard",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "client_portal_assistant_begin_files",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "client_portal_assistant_context_v2",
+        "match": "original captured full ABI/default/result preserved"
+      },
+      {
+        "name": "client_portal_assistant_files_context",
+        "match": "exact new SQL arguments/names/defaults/result/modes/language/volatility/parallel"
+      },
+      {
+        "name": "paige_chat_interactive_publication_context_v2",
+        "match": "original captured full ABI/default/result preserved"
+      }
+    ],
+    "untouchedOriginals": 4,
+    "terminalTriggerEnabled": true
+  },
+  "webDeployment": {
+    "id": "dpl_9fgi9tfSxFuAzQyRdBNG8armtjWi",
+    "state": "READY",
+    "environment": "production",
+    "sha": "65699d36369c88412e3e7e370b7c14e893272773"
+  },
+  "preview": {
+    "finalHeadStatus": "SUCCESS",
+    "check": 120853738187,
+    "capturedBodyAbiAccessMatches": 11,
+    "postMergeOwnedBranchAbsent": true,
+    "postMergeFullHeaderComparison": "NOT_CREDITED; branch unavailable. Full production headers compared with exact new SQL and captured original definitions."
+  },
+  "releaseReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2755#issuecomment-6383622816",
+  "edge": "NOT_APPLICABLE; no runtime endpoint source changed",
+  "activation": "No own provider/Live/Research/Knowledge/business/processing activation",
+  "customerFileModelReturn": "UNVERIFIED; original composer/extraction/history integration remains unfinished",
+  "all42AndSevenPillars": "UNFINISHED; no capability or algorithm maturity promotion",
+  "founderAcceptance": "NOT_REQUESTED; one complete integrated Experience"
+}

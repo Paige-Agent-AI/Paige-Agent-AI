@@ -2930,6 +2930,74 @@ and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, regist
 authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
 All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.
 
+
+
+Original dated EXP04 text below is retained verbatim from October23. Its pending-reader filename630004 snapshot is historical: current source-only continuation is631004 after actual E09 630009; see the existing EXP04 journey and PR2681. Earlier source releases do not establish complete Experience acceptance.
+
+## EXP04 recipient signing repair — October23 source released
+
+Existing Dependabot2688 is SOURCE RELEASE VERIFIED: non-author APPROVE5634889972,
+latest11 exact-head contexts/two statuses SUCCESS, merge689c589ba34344d6775320306b49f02e3167d16b/
+actual union treec9741cab. Productiondpl_7iXp4bLKzxyVhLBDTagBXe7PkWuo READY/exact689;
+both aliases exact689-mvlihye1/null22:03:39UTC. Actual production Bun resolves patched
+zod4.6.7; npm lock4.6.6, no lock-parity or all-Edge assertion. Earlier bot nativeFAIL
+remains; original exact-ref native/full baseline genuinely SUCCESS. Master4.0/
+receipt6375657717 preserve release and five separate moderate audit findings.
+Downstream agreement drafts still require their fresh composed-head gates.
+
+Bounded CI repair2683 is SOURCE RELEASE VERIFIED: reviewed5984, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5634002789, all11 applicable exact-head gates/
+both verify runs/two statuses SUCCESS. Maina9bd855c14e824e6cb2c905876d45418c452ae57,
+actual union treee68e5630, all seven original workflow/OPS files exact. Normal
+webdpl_G71UsMyQXpXqgzcVgj7XozWarxJn READY/exact merge; both public domains
+serve a9bd855-mvlgdzr6/null21:02UTC. Master4.0/receipt6374662174 retain details.
+Original jobs/permissions/baselines remain; no customer/algorithm Live promotion.
+
+Original2670 reviewed1758c3d73e498f814effca8a5e4c5935900b4959, LOWER5632547825,
+all11 exact-head checks/full normal Preview/two statuses SUCCESS, merged
+024ac8f677be0fd9bdb650283aa9119e6ce7be95. Actual1b304+1758 union tree372e27f3
+verified. Normal Edge40007394701/120598675278 source/config verification SUCCESS;
+document82/send16/sign34. Separately observed sign35 retains all21 canonical
+source files/JWT; version/archive advance cause remains UNVERIFIED. Exact web
+dpl_P9VKBwNnSRKrGsHPTNj6UJvgxxBB READY; actual public containing52091 on both
+domains19:02UTC and served app64347/signing bundle19:10UTC verified without
+claiming an exact024 alias sample. Master4.0 and
+[release6372818143](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2670#issuecomment-6372818143)
+retain exact hashes and evidence boundaries. Original native53 is now consumed;
+one atomic signature/consent/events receipt and inspect-only recovery replace
+the legacy direct write fallback. No real signer/send/payment/provider act or
+ordinary-role/cohort/CentralQA/founder acceptance. Prepared-map/send/input,
+effective terms, delivery and all12 remain incomplete; no Live promotion.
+
+C18 continues original2190 accepted-source inspection, schema1/2 and exact
+native audit identity, with canonical owner actor/package/Rail and unchanged
+closed package DTO.75 local cases pass, including account-epoch/owner-access
+retirement. Current composed native406 PASS retains all323 original cases and
+adds83 accepted-evidence cases,27 owner reads, replay2 and real overlapping
+authority retirement. The original disposable cluster is empty/stopped.
+Earlier rendered frames remain pinned to their prior source; a development-server
+timeout/blank capture stays INVALID. Separate compiled current-source proof now
+has14 native JPEGs/21 critical inputs/three compiled assets, actual five required
+widths in light/dark, account/access clearing, cancel focus and late-result guard.
+No full authenticated shell/role/cohort/zoom/AT proof is implied. Type/hosted/release/acceptance remain owed.
+Reserved630004 replaces never-production-applied570004 after current600000;
+original SQL bytes are unchanged. Original UI captures have an explicit
+byte-identical SQL filename continuation, not a new render. This read does not activate terms.
+
+
+## EXP04 C18 current-main source continuation — October24
+
+Actual incoming mainc9ab5325ae318b0602eab2883a5d25269f569aaf is preserved in full,
+including E03/E05/E07/E10 releases. The sole Brain append conflict retains BOTH
+contributions. Original C18 SQL810004/SHA221b0365, all21 captured critical
+inputs and36 retained assets/14 frames are unchanged; no fresh rendering.
+The older October23 filename/status paragraphs above are historical snapshots.
+Current production800005 satisfies the earlier EXP05 reservation; the reader
+remains NOT_MERGED/NOT_DEPLOYED until its reconciled exact-head review/CI and
+normal release/readback. Original f7 all14 greens are dated, not new-head proof.
+E09 proposed810009 receiving ACK/actual release still precedes higher820004/830004.
+No activation, provider act, new agent, algorithm/catalogue Live or full12/QA/
+founder acceptance. Existing EXP04 journey and original2681 retain the evidence.
 ## EXP05 original ZION planning instructions — local source, October23
 
 The existing global soft ZION version2 is enabled but has no system prompt or

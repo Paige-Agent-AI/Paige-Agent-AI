@@ -80,6 +80,8 @@ vi.mock("@/solo/useMediaJobs", () => ({
 vi.mock("@/solo/studio/studio-data", async (original) => ({
   ...(await original<typeof import("@/solo/studio/studio-data")>()),
   listSessions: async () => [],
+  // EXP07 row 6: Studio home also lists workspace templates on mount — none in this harness.
+  listTemplates: async () => [],
   loadBrand: async () => ({
     floor: (await import("@/components/growth/growth-theme")).buildGrowthBrandFloor(null),
     name: null, logoUrl: null,

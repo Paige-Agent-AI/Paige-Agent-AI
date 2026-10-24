@@ -60,6 +60,12 @@ export interface StreamState {
   olderFailed: boolean;
   /** The message the "new" divider sits above, fixed when the conversation was opened. */
   dividerBefore: string | null;
+  /**
+   * The newest message a listed page returned. A refresh is joined to this, not to the newest
+   * held message: a message just sent is appended locally and says nothing about what was read
+   * between the last page and it.
+   */
+  listedNewest?: TeamHubMessage | null;
 }
 
 export interface ThreadState {
@@ -72,6 +78,8 @@ export interface ThreadState {
   hasMore: boolean;
   loadingOlder: boolean;
   olderFailed: boolean;
+  /** As on StreamState: the newest reply a listed page returned, never a locally appended one. */
+  listedNewest?: TeamHubMessage | null;
 }
 
 export interface PendingMessage {
@@ -135,7 +143,9 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const live = useRef({ activeId, stream, thread, overview, status });
   live.current = { activeId, stream, thread, overview, status };
   const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  // Set on every setup, not only at creation: React StrictMode runs setup, cleanup, setup in
+  // development, and a ref left false after that first cleanup would drop every response.
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const tenantRefresh = useRef(options.onTenantRefresh);
   tenantRefresh.current = options.onTenantRefresh;
   const onIncoming = useRef(options.onIncoming);
@@ -201,7 +211,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (result.kind === "ok") {
       const held = mode === "open" || live.current.stream?.channelId !== channelId ? [] : live.current.stream.messages;
       const heldIds = new Set(held.map((message) => message.id));
-      report.gap = mode === "refresh" && refreshLeavesGap(held, top, result.value.has_more);
+      const anchor = mode === "open" ? null : live.current.stream?.listedNewest ?? null;
+      report.gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, result.value.has_more);
       report.incoming = mode === "refresh" ? top.filter((message) => !heldIds.has(message.id) && message.author_user_id !== meId).length : 0;
       report.newestId = newestOf(report.gap ? top : [...held, ...top])?.id ?? null;
     }
@@ -212,10 +223,12 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         const held = mode === "open" ? [] : base?.messages ?? [];
         // A refresh that can't be joined to what is held replaces it (keeping anything newer than
         // the page, such as a message just sent) and offers the earlier messages instead.
-        const gap = mode === "refresh" && refreshLeavesGap(held, top, page.has_more);
+        const anchor = mode === "open" ? null : base?.listedNewest ?? null;
+        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, page.has_more);
         const pageNewest = newestOf(top);
         const kept = gap && pageNewest ? held.filter((message) => compareMessages(message, pageNewest) > 0) : held;
         const messages = mergeMessages(kept, top);
+        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? null : newestOf([...(anchor ? [anchor] : []), ...top]) ?? null;
         return {
           channelId,
           status: "ready",
@@ -227,6 +240,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
           loadingOlder: false,
           olderFailed: false,
           dividerBefore: mode === "open" ? newDividerBefore(messages, unreadAtOpen, meId) : base?.dividerBefore ?? null,
+          listedNewest,
         };
       }
       if (result.kind === "refused" && result.code === "not_found") {
@@ -271,13 +285,15 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         const page = result.value;
         const held = mode === "open" ? [] : current.replies;
         // Same rule as the stream: a newest page that can't be joined to the held replies replaces them.
-        const gap = mode === "refresh" && refreshLeavesGap(held, page.replies, page.has_more);
+        const anchor = mode === "open" ? null : current.listedNewest ?? null;
+        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], page.replies, page.has_more);
         const pageNewest = newestOf(page.replies);
         const kept = gap && pageNewest ? held.filter((reply) => compareMessages(reply, pageNewest) > 0) : held;
         // Newest-first from the server; mergeMessages keeps them oldest → newest for reading.
         const replies = mergeMessages(kept, page.replies);
+        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? null : newestOf([...(anchor ? [anchor] : []), ...page.replies]) ?? null;
         return {
-          channelId, rootId, status: "ready", root: page.root, replies,
+          channelId, rootId, status: "ready", root: page.root, replies, listedNewest,
           // A refresh that joins the held replies decides nothing about what lies above them.
           hasMore: gap ? true : mode === "refresh" ? current.hasMore : page.has_more,
           loadingOlder: false, olderFailed: false,

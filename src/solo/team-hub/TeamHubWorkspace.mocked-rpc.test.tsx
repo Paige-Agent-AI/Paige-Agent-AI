@@ -7,7 +7,7 @@
  * goes. They prove nothing about the database: the SQL isolation proof is a separate suite, and
  * authenticated runtime stays UNVERIFIED until the owner-designated drive.
  */
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
@@ -125,12 +125,13 @@ async function flush() {
   }
 }
 
-async function mount(props: { onOpenTeamSettings?: () => void } = {}) {
+async function mount(props: { onOpenTeamSettings?: () => void } = {}, options: { strict?: boolean } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
   mounted.push(root);
-  await act(async () => root.render(<TeamHubWorkspace {...props} />));
+  const view = <TeamHubWorkspace {...props} />;
+  await act(async () => root.render(options.strict ? <StrictMode>{view}</StrictMode> : view));
   await flush();
   return { host, root };
 }
@@ -275,6 +276,33 @@ describe("sending (mocked RPC)", () => {
     expect(posts()[1].params.p_client_request_id).toBe(firstId);
     expect(host.textContent).not.toContain("Not sent.");
     expect(host.querySelectorAll("article").length).toBe(2);
+  });
+
+  it("puts a retry the server refuses back in the composer, so the text is never lost", async () => {
+    let attempt = 0;
+    db.override.team_hub_post_message = () => {
+      attempt += 1;
+      if (attempt === 1) throw new Error("network down");
+      return { ok: false, code: "invalid" };
+    };
+    mocks.rpc.mockImplementation(async (name: string, params: Record<string, unknown>) => {
+      try { return { data: backend(name, params), error: null }; } catch (error) { return { data: null, error }; }
+    });
+    const { host } = await mount();
+    await type(composer(host), "Sam, can you check this?");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(composer(host).value).toBe("");
+    await act(async () => button(host, "Retry")!.click());
+    await flush();
+    expect(host.textContent).not.toContain("Not sent. Your message is kept here.");
+    expect(composer(host).value).toBe("Sam, can you check this?");
+    expect(host.querySelector(".th-composer-wrap .th-error")?.textContent).toContain("Not sent");
+  });
+
+  it("loads under React StrictMode, whose development double mount must not leave the hub on its skeleton", async () => {
+    const { host } = await mount({}, { strict: true });
+    expect(host.textContent).toContain("Kickoff is Thursday.");
   });
 
   it("Shift+Enter keeps writing instead of sending", async () => {
@@ -545,6 +573,45 @@ describe("paging (mocked RPC)", () => {
 });
 
 describe("threads (mocked RPC)", () => {
+  it("puts a refused reply back only into its own thread, even when another thread was opened meanwhile", async () => {
+    db.messages["c-general"] = [
+      msg({ id: "m-a", body: "First root", reply_count: 1, created_at: at(20) }),
+      msg({ id: "m-b", body: "Second root", reply_count: 2, created_at: at(10) }),
+    ];
+    db.replies["m-a"] = [msg({ id: "r-a", parent_message_id: "m-a", body: "A reply", created_at: at(19) })];
+    db.replies["m-b"] = [msg({ id: "r-b1", parent_message_id: "m-b", body: "B one", created_at: at(9) }), msg({ id: "r-b2", parent_message_id: "m-b", body: "B two", created_at: at(8) })];
+    let attempt = 0;
+    let refuse: (value: unknown) => void = () => {};
+    mocks.rpc.mockImplementation(async (name: string, params: Record<string, unknown>) => {
+      if (name === "team_hub_post_message") {
+        calls.push({ name, params });
+        attempt += 1;
+        if (attempt === 1) return { data: null, error: new Error("network down") };
+        return new Promise((resolve) => { refuse = resolve; });
+      }
+      return { data: backend(name, params), error: null };
+    });
+    const { host } = await mount();
+    const replyBox = () => host.querySelector<HTMLTextAreaElement>("aside.th-thread textarea")!;
+    await act(async () => button(host, /1 reply/)!.click());
+    await flush();
+    await type(replyBox(), "Only for the first thread");
+    await press(replyBox(), "Enter");
+    await flush();
+    await act(async () => { button(host, "Retry")!.click(); });
+    // Another thread opens before the retry's answer arrives.
+    await act(async () => button(host, /2 replies/)!.click());
+    await flush();
+    await act(async () => refuse({ data: { ok: false, code: "invalid" }, error: null }));
+    await flush();
+    expect(host.querySelector("aside.th-thread")!.textContent).toContain("B two");
+    expect(replyBox().value).toBe("");
+    // Back in the first thread, the refused text is waiting in its reply box.
+    await act(async () => button(host, /1 reply/)!.click());
+    await flush();
+    expect(replyBox().value).toBe("Only for the first thread");
+  });
+
   it("moves focus to the reply box once the thread has loaded, and back to its trigger on Esc", async () => {
     db.messages["c-general"] = [msg({ id: "m-root", body: "Root post", reply_count: 1, created_at: at(10) })];
     db.replies["m-root"] = [msg({ id: "r-1", parent_message_id: "m-root", body: "A reply", created_at: at(5) })];
@@ -646,6 +713,23 @@ describe("refresh merging and announcements (mocked RPC)", () => {
     expect(older.params).toMatchObject({ p_before_id: "m-n10" });
     expect(host.textContent).toContain("Away 0");
     expect(host.textContent).toContain("Held before the absence");
+  });
+
+  it("still sees the gap when a message was sent between the absence and the refresh", async () => {
+    db.messages["c-general"] = [msg({ id: "m-old", body: "Held before the absence", created_at: at(600) })];
+    const { host } = await mount();
+    db.messages["c-general"].push(...Array.from({ length: 60 }, (_, index) => msg({ id: `m-n${String(index).padStart(2, "0")}`, body: `Away ${index}`, created_at: at(100 - index) })));
+    // Sent before the next refresh: appended locally, newer than everything that arrived.
+    await type(composer(host), "Back now");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(host.textContent).toContain("Back now");
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    await flush();
+    expect(host.textContent).not.toContain("Held before the absence");
+    expect(host.textContent).toContain("Away 59");
+    expect(host.textContent).toContain("Back now");
+    expect(button(host, "Load earlier messages")).toBeDefined();
   });
 
   it("joins a refresh page that overlaps the held stream without offering earlier messages", async () => {

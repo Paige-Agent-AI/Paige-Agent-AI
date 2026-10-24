@@ -1,0 +1,51 @@
+{
+  "result": "PASS",
+  "at": "2026-10-24T09:41:20.340Z",
+  "pr": 2752,
+  "reviewedHead": "5514a4ee7f4ce79012f4a66643bff21c7de8f4b1",
+  "merge": "58416369d2de317c7c6e9301248e0ea36e2d0989",
+  "tree": "307084990f418b799e4bb9b3d4e05a3e050e0ff5",
+  "deployment": "dpl_4VtW9LhKrc7x5J5ptKmob7KNCaJh",
+  "versions": [
+    {
+      "url": "https://paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "58416369d2de317c7c6e9301248e0ea36e2d0989-mvm7cya3",
+        "customerUpdate": null
+      }
+    },
+    {
+      "url": "https://app.paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "58416369d2de317c7c6e9301248e0ea36e2d0989-mvm7cya3",
+        "customerUpdate": null
+      }
+    }
+  ],
+  "capturedLFSourcePins": 20,
+  "reviewedGitBlobsUnchanged": true,
+  "actualServedModule": {
+    "url": "https://app.paigeagent.ai/assets/LiveTranscriptPanel-C-vRaFUJ.js",
+    "sha256": "82764bfeb745ffee1574e5ff1ea7c122cdcda417d23f497041295d2d0e324236",
+    "markers": [
+      "Try again before changing what you share.",
+      "plan_item_set_client_share",
+      "p_expected_actor_id",
+      "p_expected_updated_at"
+    ]
+  },
+  "actualStylesheet": {
+    "url": "https://app.paigeagent.ai/assets/LiveTranscriptPanel-CGo8TF41.css",
+    "sha256": "1140c27008733cca49f09729b8d4221fbb37c88aee413bf06cb0f4c3e55e2cb2",
+    "rules": {
+      "meta": "display:flex;flex-wrap:wrap;min-width:0;max-width:100%;align-items:center;gap:2px 6px;color:var(--pg-muted);font-size:12px;font-variant-numeric:tabular-nums",
+      "add": "display:inline-flex;width:-moz-max-content;width:max-content;max-width:100%;min-height:44px;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--pg-line);border-radius:var(--pg-r-chip);color:var(--pg-ink);background:var(--pg-surface);font-size:12px;font-weight:600;white-space:normal;text-align:left;overflow-wrap:anywhere;cursor:pointer",
+      "empty": "display:grid;grid-template-columns:minmax(0,1fr);min-width:0;justify-items:start;gap:6px;margin:0;padding:16px 14px;color:var(--pg-ink-2);font-size:12.5px"
+    }
+  },
+  "native": "No changed migration or Edge source/importer; no native apply/new Edge version claimed",
+  "boundary": "Public static production source/version/CSS verification only. Not authenticated owner/staff/client, actual sharing, role revocation, reload, provider/payment/signature/service/CentralQA/full12/founder acceptance.",
+  "releaseReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2752#issuecomment-6382675131"
+}

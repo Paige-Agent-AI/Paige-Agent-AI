@@ -203,5 +203,36 @@
   "verifiedTargetFunctions": 13,
   "untouchedAdditionalOverload": "_workspace_event_display(text,text), separately listed; not a new E04 function",
   "sqlSHA256": "57d7f2b1c4445605641e2484a8476ad44189ca003216ef834ed9ea844b05bfbf",
-  "boundary": "Cold normal nonpersistent with_datafalse Preview metadata only. No customer/role/action/payment/signature/provider acceptance. E09reserved810009 production release/readback remains required before820004."
+  "boundary": "Cold normal nonpersistent with_datafalse Preview metadata only. No customer/role/action/payment/signature/provider acceptance. E09reserved810009 production release/readback remains required before820004.",
+  "productionRelease": {
+    "receipt": 6384139888,
+    "merge": "5a4837d357f9c9a75d85e158143170a9e4255ff8",
+    "migration": "20271113820004",
+    "frontier": "20271113820004",
+    "at": "2026-10-24T12:19:50.479621+00:00",
+    "normalRun": 40092583130,
+    "retryDeployJob": 120870101892,
+    "priorFailureRetained": true,
+    "fullDefinitionsAndSecurityAndSchemaExact": true,
+    "functions": 14,
+    "web": {
+      "deployment": "dpl_4twLBNNdLF9KCjYepVAeSaMgkqUh",
+      "state": "READY",
+      "at": "2026-10-24T12:14:53.101Z",
+      "bothAliasesHTTP200": true,
+      "buildId": "5a4837d357f9c9a75d85e158143170a9e4255ff8-mvmcswf5",
+      "customerUpdate": null
+    },
+    "edge": {
+      "run": 40092583159,
+      "job": 120868132921,
+      "conclusion": "SUCCESS",
+      "selectedEntries": 0,
+      "deployAndSourceReadback": "SKIPPED",
+      "newCallerOrVersion": "NONE"
+    },
+    "artifact": "e04-exact-terms-production-readback.json",
+    "customerAcceptance": "UNVERIFIED",
+    "boundary": "Historical Preview fields above remain dated support; only this actual release metadata establishes source/native/web deployment, no business act or Live outcome"
+  }
 }

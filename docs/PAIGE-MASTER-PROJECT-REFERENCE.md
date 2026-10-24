@@ -7315,13 +7315,19 @@ A Team Hub request references one original EXP05 Work record, and its status is 
 record.
 
 Current gaps:
-- No team channel, message, membership or mention substrate exists.
-- `/solo/{n}/team` already redirects to Settings → Team.
+- Increment 1 (PR #2764, 2026-10-24) adds the collaboration substrate: channels, private
+  channels, DMs, threads, @people mentions and read markers (migration `20271113850008`), and the
+  TEAM HUB destination at `/solo/{n}/team-hub`. It is `PROOF_OWED` until the §32 persisted-apply
+  check and an authenticated drive on the owner-designated existing SOLO account. Contract:
+  [Team Hub collaboration contract](delivery/exp08-team-hub-collaboration-contract.md).
+- Still not built: specialist and `/PAIGE` requests through EXP05 Work, the Team work panel,
+  attachments, Knowledge and Chat/Live continuity (increments 2–4).
+- `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 
 On 2026-10-24 the owner approved the design (prototype v2, frozen under §28) and the
 collaboration storage, as additive migrations with isolation proven before release. These are
-approvals to build; production Team Hub is not built yet. Current source: [Team surface card](doctrine/surface-cards/team.md). Staffing is not a
+approvals to build; increment 1 is the first build against them. Current source: [Team surface card](doctrine/surface-cards/team.md). Staffing is not a
 release, so §4.0 is unchanged.
 
 **E09 CURA identity — tracked follow-ups (2026-10-19; CURA merged #2378 and live; recorded, not fixed there).** (a) **Action-item kind mapping.** `advance_action` (`20271110220000`) builds the portal action item with `action_type` = the action kind (`client.portal_recommendation`, `client.portal_welcome`, `owner.onboarding_nudge`, `owner.schedule_meeting`), but `paige_customer_actions_action_type_check` allows only `task`, `message`, `recommendation`, `nudge`. Every action item the owner's PAIGE chat files through `action_file` / `action_advance` therefore ends `blocked` with `client_surface_failed: … action_type_check` (proved in a rolled-back transaction on the round-4 pgTAP fixtures with the synthetic customer Jordan Rivera). Consequence today: the customer's data-sharing switch (CURA-D1) has no practical effect, because neither route that it gates delivers anything (the staff `ContactPaigePanel` is unmounted). (b) **PAIGE in AI-drafted action-item text.** The chat's model-written title and draft reach `paige_customer_actions` unfiltered, so nothing stops one that names PAIGE; the owner ruled PAIGE is never in the Customer Portal. **(b) must be fixed before (a)**, or fixing the mapping starts delivering PAIGE-named items to customers. Neither is changed on this branch.

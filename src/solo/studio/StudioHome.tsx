@@ -6,6 +6,7 @@ import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles
 import { Ic, Logo } from "../_shared";
 import { VsStars } from "./VsStars";
 import { createSession, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
+import { BRIEF_FIELDS, EMPTY_BRIEF_DETAILS, composeBrief, hasBriefDetails, type BriefDetails } from "./brief-fields";
 import { loadArtifact, type Brand, type LoadedArtifact } from "./artifact-state";
 import { nexusDepartmentRemit, nexusDisplayName, planWithNexusPrompt } from "./nexus";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
@@ -126,18 +127,21 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
   const [brand, setBrand] = React.useState<Brand>({ floor: buildGrowthBrandFloor(null), name: null, logoUrl: null });
   React.useEffect(() => { void loadBrand(tenantSlug).then(setBrand); }, [tenantSlug]);
   const [brief, setBrief] = React.useState("");
+  const [details, setDetails] = React.useState<BriefDetails>(EMPTY_BRIEF_DETAILS);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const ref = React.useRef<HTMLTextAreaElement | null>(null);
   React.useEffect(() => { ref.current?.focus(); }, []);
 
   const start = async (text: string) => {
-    const t = text.trim();
-    if (t.length < 4 || creating) return;
+    // The owner's own words are the brief; details only add to them (the Build button gates the same way).
+    if (text.trim().length < 4 || creating) return;
+    const composed = composeBrief(text, details);
     setCreating(true); setError(null);
     try {
-      const s = await createSession(t);
-      onOpen(s.id, t);
+      const s = await createSession(composed);
+      onOpen(s.id, composed);
     } catch (e) {
       setError(plainError(e, "The project couldn't be started. Try again."));
       setCreating(false);
@@ -160,8 +164,29 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onNexusHandoff
               onChange={(e) => setBrief(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void start(brief); } }}
             />
+            {detailsOpen && (
+              <div className="vs-brief-fields" aria-label="Brief details">
+                {BRIEF_FIELDS.map(({ key, label, placeholder }) => (
+                  <div className="vs-brief-field" key={key}>
+                    <label htmlFor={`vs-brief-${key}`}>{label}</label>
+                    <input
+                      id={`vs-brief-${key}`}
+                      type="text"
+                      value={details[key]}
+                      placeholder={placeholder}
+                      disabled={creating}
+                      onChange={(e) => setDetails((d) => ({ ...d, [key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+                <p className="vs-brief-note">Optional. Whatever you add here is saved with the brief and Paige works from it — you can add the rest in chat.</p>
+              </div>
+            )}
             <div className="vs-composer-foot">
               <span>Paige works from <b>your brand</b> and your business details.</span>
+              <button type="button" className="vs-link vs-brief-toggle" aria-expanded={detailsOpen} disabled={creating} onClick={() => setDetailsOpen((o) => !o)}>
+                {detailsOpen ? "Hide details" : hasBriefDetails(details) ? "Details · added" : "Add details"}
+              </button>
               <button type="button" className="vs-btn vs-btn-violet" style={{ marginLeft: "auto" }} disabled={brief.trim().length < 4 || creating} onClick={() => void start(brief)}>
                 {creating ? "Starting…" : "Build it"} <ArrowUp size={14} aria-hidden="true" />
               </button>

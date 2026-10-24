@@ -64,7 +64,9 @@ describe("weekly observation evidence and recovery", () => {
     const receipt = await stableRunId(actReceiptRunSeed("event", "act"));
     const i = input(async (fn, args) => {
       calls.push({ fn, args });
-      return { data: { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation", receipt_id: receipt } }, error: null };
+      return { data: { outcome: "executed", receipt_id: receipt, error: null,
+        detail: { confirmed_via: "weekly_commitment_observation", receipt_id: receipt,
+          automation_id: "process", event_id: "event", act_id: "act" } }, error: null };
     });
     expect((await adapter.dispatch!(i)).outcome).toBe("executed");
     expect(calls).toEqual([{ fn: "execute_weekly_commitment_check", args: {
@@ -72,16 +74,23 @@ describe("weekly observation evidence and recovery", () => {
     } }]);
   });
   it("a 200 or observation without a durable receipt cannot claim completion", async () => {
-    for (const data of [{}, { outcome: "executed" }, { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation" } }]) {
-      expect((await adapter.dispatch!(input(async () => ({ data, error: null })))).outcome).toBe("ambiguous");
+    const receipt = await stableRunId(actReceiptRunSeed("event", "act"));
+    for (const data of [{}, { outcome: "executed" }, { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation" } },
+      { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation", receipt_id: receipt } }]) {
+      const result = await adapter.dispatch!(input(async () => ({ data, error: null })));
+      expect(result.outcome).toBe("ambiguous");
+      expect(result.detail?.proven_absent).toBe(false);
     }
   });
   it("reconciles a lost response through the read RPC without dispatching", async () => {
     const calls: string[] = [];
+    const receipt = await stableRunId(actReceiptRunSeed("event", "act"));
     const i = input(async (fn) => {
       calls.push(fn);
       if (fn === "execute_weekly_commitment_check") throw new Error("response lost after commit");
-      return { data: { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation", receipt_id: "durable" } }, error: null };
+      return { data: { outcome: "executed", receipt_id: receipt, error: null,
+        detail: { confirmed_via: "weekly_commitment_observation", receipt_id: receipt,
+          automation_id: "process", event_id: "event", act_id: "act" } }, error: null };
     });
     expect((await adapter.dispatch!(i)).outcome).toBe("ambiguous");
     expect((await adapter.readback!(null, i)).outcome).toBe("executed");
@@ -96,7 +105,7 @@ describe("weekly observation evidence and recovery", () => {
     expect((await adapter.readback!(null, rejection)).outcome).toBe("ambiguous");
   });
   it("accepted recovery requires explicit canonical absence proof", async () => {
-    const safe = input(async () => ({ data: { outcome: "ambiguous", detail: { proven_absent: true } }, error: null }));
+    const safe = input(async () => ({ data: { outcome: "ambiguous", detail: { proven_absent: true }, error: "weekly_check_not_observed" }, error: null }));
     expect((await adapter.readback!(null, safe)).detail?.proven_absent).toBe(true);
     const uncertain = input(async () => ({ data: { outcome: "ambiguous", detail: {} }, error: null }));
     expect((await adapter.readback!(null, uncertain)).detail?.proven_absent).toBe(false);

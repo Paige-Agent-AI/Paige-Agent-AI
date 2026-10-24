@@ -990,6 +990,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/operations-task-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/planning-reminder-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/planning-reminder-history-status.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/operations-specialist-history-status.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/e09-cura-history-status.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/e09-cura-teach-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs

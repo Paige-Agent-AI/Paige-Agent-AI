@@ -1,0 +1,21 @@
+{
+  "file": "320-dark-refusal.png",
+  "width": 320,
+  "height": 800,
+  "scrollWidth": 320,
+  "theme": "dark",
+  "phase": "denied",
+  "reference": "",
+  "port": "Read state: denied · Issued: 11 · Resolved: 110\nOriginal reference: none visible\nActual existing presenter and repaired hook; synthetic RPC/Auth ports. Full authenticated shell, Finance, Chat and customer acceptance are not established.",
+  "active": "Refuse original references",
+  "headings": [
+    "Sales performance access is restricted"
+  ],
+  "scripts": [
+    "./assets/index-q5Syh8Tx.js"
+  ],
+  "nativePngWidth": 320,
+  "nativePngHeight": 800,
+  "capturedAt": "2026-10-24T03:03:25.452Z",
+  "boundary": "Synthetic ports; no actual account/provider/customer acceptance"
+}

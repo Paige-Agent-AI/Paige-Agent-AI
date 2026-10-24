@@ -35,14 +35,27 @@ function Screen() {
   return (params["*"] || "").split("/")[0] === "ads" ? <AdsWorkspace tenantId="tenant-review"/> : <GrowthHub />;
 }
 const legacy = params.get("legacy");
-const entry = legacy !== null ? `/solo/review/growth/ads${legacy ? `?view=${legacy}` : ""}` : tab === "ads" ? "/solo/review/ads" : `/solo/review/growth/${tab}`;
+// EXP07: `piece=`/`kind=` pass through to the Content tab's preview/filter (the real app keeps
+// them in the address). `paige=open` docks the PAIGE column the way the real shell does
+// (TenantCommandCenterShell: main + `minmax(440px,34vw)` dock) — the campaigns drawer is
+// position:fixed and overlays it, which is the geometry the captures must show (review fix for
+// the PR4 finding: the earlier 380px flex-aside simulated a reflow the real app never does).
+// Defaults keep every existing drive intact.
+const piece = params.get("piece");
+const kind = params.get("kind");
+const query = [piece ? `piece=${piece}` : "", kind ? `kind=${kind}` : ""].filter(Boolean).join("&");
+const entry = legacy !== null ? `/solo/review/growth/ads${legacy ? `?view=${legacy}` : ""}` : tab === "ads" ? "/solo/review/ads" : `/solo/review/growth/${tab}${query ? `?${query}` : ""}`;
+const paigeOpen = params.get("paige") === "open";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode><HarnessBoundary>
-    <main className="paige-solo" data-theme={theme} style={{ height: "100vh", minHeight: 0, minWidth: 0, overflow: "hidden" }}>
-      <MemoryRouter initialEntries={[entry]}>
-        <Routes><Route path="/solo/:account/*" element={<Screen />} /></Routes>
-      </MemoryRouter>
-    </main>
+    <div style={{ display: "grid", gridTemplateColumns: `minmax(0,1fr) ${paigeOpen ? "minmax(440px,34vw)" : "0px"}`, height: "100vh", minWidth: 0, overflow: "hidden" }}>
+      <main className="paige-solo" data-theme={theme} style={{ minWidth: 0, overflow: "hidden" }}>
+        <MemoryRouter initialEntries={[entry]}>
+          <Routes><Route path="/solo/:account/*" element={<Screen />} /></Routes>
+        </MemoryRouter>
+      </main>
+      {paigeOpen && <aside aria-label="PAIGE dock (harness placeholder)" style={{ borderLeft: "1px solid rgba(127,127,127,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(127,127,127,0.8)", fontSize: 13 }}>PAIGE dock · the fixed campaigns drawer overlays this</aside>}
+    </div>
   </HarnessBoundary></StrictMode>,
 );

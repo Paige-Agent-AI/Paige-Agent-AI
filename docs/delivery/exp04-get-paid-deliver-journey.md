@@ -3456,3 +3456,80 @@ one leave guard, exact-map approval/Communications/send/consent/seal/effective
 economics and all twelve outcomes remain mandatory. Chat/Live exact fields
 UNAVAILABLE; no LayerC/algorithm/readiness promotion or new engine/store. See
 [bounded evidence](../evidence/ui-delivery/e04-agreement-document-fields.md).
+
+## EXP04 Sales evidence continuity — October24 local repair
+
+Original ANT81 reference-revocation debt is repaired in the existing Sales hook:
+automatic60s/foreground reads resolve the same valid original reference through
+the canonical native resolver. No cached values, metric engine, database grant,
+Finance/Chat/Memory writer or provider action. Refusal/unknown never silently
+issues replacement evidence; original expiry/identity change and explicit retry
+retain the native issuer authority. Final parallel-barrier expiry clears figures.
+
+Untouched13 original controls plus11 causal REDs precede27 hook/52 original
+consumer cases PASS and scoped lint0. Actual original-component build1652 modules
+and15 native light/dark frames at1536/1366/1024/900/320 preserve frozen22 input
+and three asset hashes. Automatic refresh preserves issuance11/reference/as-of;
+refusal hides figures, explicit product Refresh issues a new authorized read in
+synthetic ports, unresolved scope is unavailable, Sheet Tab/Escape restores focus.
+Existing narrow inner-scroll/link-fit findings are retained. No actual business,
+provider, Finance/VERA/Chat, authenticated role or durable reload acceptance.
+
+LOCAL/UNRELEASED; exact final review/CI/deployment/readback remain required.
+E02 retains grounded Finance/VERA acceptance, E04 owns this originating hook.
+Canonical ALG01 bounded reconciliation PARTIAL, ALG02 progression incomplete,
+ALG12 bounded refusal PARTIAL/monitoring unverified and ALG13 usefulness unverified;
+no algorithm/capability Live promotion. All O1–O12, original consultant/SOLO
+scenario, held Agency/Subaccounts and final one integrated founder evaluation
+remain unchanged. [Source and rendered evidence](../evidence/ui-delivery/e04-sales-metric-continuity.md).
+
+
+## EXP04 Sales evidence continuity — October24 production source closeout
+
+The preceding local checkpoint is retained as dated evidence. Original2728 is now
+SOURCE RELEASE VERIFIED: reviewedd4eb35aa56af2df30f01f6b6c879a1d627217f7a, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5636851529; ten applicable exact-head checks
+SUCCESS including full native/general/audit, normal UI-only PreviewSKIP/two web
+SUCCESS. Actual main02a901fd4946759b6bddab71b03d1d590e387106/tree4413f66112f8a46c0b3c8f676fa55042e4d841ab
+equals inspected885ec367+d4eb35aa union; all22 captured critical source bytes and
+incoming Master/Brain preserved. Normal production dpl_9bFXtRwfjha5obPfUSm9gUDKexoT
+READY, both public HTTP200 exact02a901fd4-mvly2y80/null and original served
+SoloEntry f82bcc99/allfour repair markers verified05:19:37UTC. Migration/Edge N/A.
+[Receipt6380313655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2728#issuecomment-6380313655); sole Master4.0 preceding-delivery row.
+Initial filename probes selected no source module; actual observed loader/import
+graph completed the unchanged-marker verification. No product/check modified to
+obtain readback. This is public static source proof, not actual signed-in behavior.
+
+Existing read-only Sales hook, native issuer/resolver, 11 identities/versions,
+business-calendar overdue and original authorization remain. No cached figures,
+sender, ledger, financial calculation engine, Chat/Mind/Memory writer or provider
+action. Local52consumer/27hook and15 original native frames remain bounded
+synthetic evidence; original minor narrow inner-scroll/crowded-link findings stay
+open. Actual Sales→Finance/VERA/Chat same-reference read, native role revocation,
+later-session reload and two legitimate cohorts/CentralQA are still UNVERIFIED.
+Original EXP02 acceptance handoff remains. All O1–O12, professional prepared
+signing, real payment truth, Work/client service acceptance, Portal and one final
+integrated founder evaluation remain required. No algorithm/capability Live
+promotion, customer name/version/announcement or restricted activation. Ordinary
+reviewed forward fix or bounded hook revert preserves original native records.
+
+
+## C18 same-branch mainc9ab reconciliation — October24
+
+SOURCE RELEASE VERIFIED, October24 07:46:46UTC: original2681 reviewed2a24465b/LOWER5637255408/all14 exact checks+two webSUCCESS → mainba97335e016b9fea741da5005d1e8dedd7baa696/tree85622aed, actual e328+2a parents equal inspected union. Normal production dpl_5N4vqtooBsZC9sDQ7qkJzJSgiKeK READY/both public200exactba-mvm39n7q/customerUpdate:null; actual served SoloEntry-DA7JaV92.js/1524cbcd9/allthree owning markers. Normal deploy-migrations40075012907 SUCCESS, actual native810004/owner readerffc779/private validators5347818+235026/original13 signature3a2fa340 ABI/ACL/config preserved. All21 reviewed Git blobs unchanged:20 historical raw frame pins exact, one accepted-commercial-read.ts pin exactly its WindowsCRLF checkout. The failed raw-only assertion and original manifest/images remain; no new rendered/authenticated claim. No changed Edge entrypoint or Edge importer of the new isomorphic browser read SDK; normal workflow40075012882 succeeded, no fresh Edge-version claim. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2681#issuecomment-6381631848). Ordinary owner/staff/linked-client private records/file availability/roles/reload/revocation/CentralQA/fullO1–O12/founder acceptance remain UNVERIFIED. Higher820004 waits E09 proposed810009 actual receiving/release. No charge/send/signing/service-completion or Algorithm/Capabilities activation.
+
+Earlier pre-merge source checkpoint follows unchanged.
+
+The original reader branch consumes actual mainc9ab5325ae318b0602eab2883a5d25269f569aaf.
+A real shared Brain append conflict was resolved by retaining the ENTIRE incoming
+file and the EXACT original owned append, not choosing one owner. Complete
+Master/Brain/journey original-own-insertion inverses and every other incoming/own
+blob were verified. All21 critical captured sources and36 old assets/14 frames
+remain exact;810004 SQLSHA221b0365 unchanged. Additional notes are source
+continuity only: no screenshot or authenticated proof was regenerated.
+Original f7 all14 required gates/two statuses remain dated. Reconciled-head review
+and genuine new-head CI/normal ordered native/API/web readback remain owed.
+Production800005 now satisfies the lower EXP05 reservation; E09 proposed810009
+receiving ACK/release still precedes exact820004/catalogue830004. Preserve all12
+outcomes, the consultant-first SOLO scenario, no activation/new agent and one
+complete integrated founder evaluation. Protected acceptance remains unverified.

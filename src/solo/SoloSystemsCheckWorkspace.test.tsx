@@ -83,8 +83,8 @@ afterEach(() => {
   host.remove();
 });
 
-function render(entry = "/") {
-  const workspace = <SoloSystemsCheckWorkspace accountContext={{ accountName: "First Sterling Capital", accountType: "standalone" }} openPaige={openPaige} />;
+function render(entry = "/", accountName = "First Sterling Capital") {
+  const workspace = <SoloSystemsCheckWorkspace accountContext={{ accountName, accountType: "standalone" }} openPaige={openPaige} />;
   act(() => root.render(<MemoryRouter initialEntries={[entry]}><Routes>
     <Route path="/solo/:account/*" element={workspace} /><Route path="*" element={workspace} />
   </Routes></MemoryRouter>));
@@ -95,6 +95,48 @@ function button(name: string) {
 }
 
 describe("Solo Systems Check workspace", () => {
+  function openAlert(kind: "proposal" | "decision") {
+    render("/", "Example Services");
+    if (kind === "proposal") act(() => button("What was checked")!.click());
+    const trigger = button(kind === "proposal" ? "Put PAIGE to work" : "Review approval")!;
+    act(() => { trigger.focus(); trigger.click(); });
+    return { trigger, locked: host.querySelector<HTMLElement>(kind === "proposal" ? ".sc-drawer" : ".sc-scroll-owner")! };
+  }
+
+  it.each(["proposal", "decision"] as const)("returns %s alertdialog cancellation focus after native inert clears", kind => {
+    const { trigger, locked } = openAlert(kind);
+    expect(locked.inert).toBe(true);
+    // JSDOM does not implement native inert focus refusal. Model only that browser
+    // port on the original trigger. Native proof is tracked in the delivery record.
+    const focus = trigger.focus.bind(trigger);
+    const port = vi.spyOn(trigger, "focus").mockImplementation(options => { if (!locked.inert) focus(options); });
+    try {
+      act(() => button("Cancel")!.click());
+      expect(host.querySelector('[role="alertdialog"]')).toBeNull();
+      expect(locked.inert).toBe(false);
+      expect(document.activeElement).toBe(trigger);
+      expect(baseCommand.approve).not.toHaveBeenCalled();
+      expect(baseCommand.decline).not.toHaveBeenCalled();
+      expect(openPaige).not.toHaveBeenCalled();
+    } finally { port.mockRestore(); }
+  });
+
+  it.each(["proposal", "decision"] as const)("consumes %s alertdialog Escape before global workspace shortcuts", kind => {
+    openAlert(kind);
+    const globalShortcut = vi.fn();
+    window.addEventListener("keydown", globalShortcut);
+    try {
+      const event = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+      act(() => button("Cancel")!.dispatchEvent(event));
+      expect(event.defaultPrevented).toBe(true);
+      expect(globalShortcut).not.toHaveBeenCalled();
+      expect(host.querySelector('[role="alertdialog"]')).toBeNull();
+      expect(openPaige).not.toHaveBeenCalled();
+      expect(baseCommand.approve).not.toHaveBeenCalled();
+      expect(baseCommand.decline).not.toHaveBeenCalled();
+    } finally { window.removeEventListener("keydown", globalShortcut); }
+  });
+
   const sourceId = "e2000000-0000-4000-8000-000000000001";
   const sourceEntry = `/solo/7100001/command-center/systems-check?keep=1&finding=${sourceId}#evidence`;
   it("offers explicit source inspection in the original drawer and returns keyboard focus", () => {
@@ -811,10 +853,45 @@ describe("Solo Systems Check workspace", () => {
     act(() => { confirm.click(); confirm.click(); });
     expect(baseCommand.approve).toHaveBeenCalledTimes(1);
     expect(confirm.disabled).toBe(true);
+    const globalShortcut = vi.fn();
+    window.addEventListener("keydown", globalShortcut);
+    try {
+      const escape = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+      act(() => confirm.dispatchEvent(escape));
+      expect(escape.defaultPrevented).toBe(true);
+      expect(globalShortcut).not.toHaveBeenCalled();
+      expect(host.querySelector('[aria-labelledby="decision-title"]')).not.toBeNull();
+      expect(baseCommand.approve).toHaveBeenCalledTimes(1);
+    } finally { window.removeEventListener("keydown", globalShortcut); }
     await act(async () => { resolveApproval({ ok: true }); await pending; });
     expect(host.querySelector('[aria-labelledby="decision-title"]')).toBeNull();
     expect(host.textContent).toContain("Approve payment reminder was approved.");
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it.each([{ ok: true, returnToOriginal: false }, { ok: false, returnToOriginal: false },
+    { ok: true, returnToOriginal: true }, { ok: false, returnToOriginal: true }])("retires a pending decision's late result after the account changes: %j", async ({ ok, returnToOriginal }) => {
+    let finish!: (value: { ok: boolean; error?: string }) => void;
+    const pending = new Promise<{ ok: boolean; error?: string }>(resolve => { finish = resolve; });
+    baseCommand.approve.mockReturnValueOnce(pending);
+    harness.command.mockReturnValue({ ...baseCommand, accountEpoch: "test-tenant-a" });
+    const { trigger } = openAlert("decision");
+    const restore = vi.spyOn(trigger, "focus");
+    act(() => button("Confirm approval")!.click());
+    harness.command.mockReturnValue({ ...baseCommand, accountEpoch: "test-tenant-b", approvals: [] });
+    render("/", "Example Studio");
+    if (returnToOriginal) {
+      harness.command.mockReturnValue({ ...baseCommand, accountEpoch: "test-tenant-a", approvals: [] });
+      render("/", "Example Services");
+    }
+    restore.mockClear();
+    expect(host.querySelector('[role="alertdialog"]')).toBeNull();
+    await act(async () => { finish({ ok, error: "Prior workspace decision failed" }); await pending; });
+    expect(host.textContent).not.toContain("Approve payment reminder was approved.");
+    expect(host.textContent).not.toContain("Prior workspace decision failed");
+    expect(restore).not.toHaveBeenCalled();
+    expect(baseCommand.approve).toHaveBeenCalledTimes(1);
+    restore.mockRestore();
   });
 
   it("keeps failed decisions open and announces the returned error", async () => {

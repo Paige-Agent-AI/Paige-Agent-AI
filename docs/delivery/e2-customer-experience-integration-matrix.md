@@ -1,5 +1,37 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## EXP02 Systems Check dialog return — October23 source candidate
+
+Original review dialogs now consume Escape before shared shell shortcuts and
+restore their original control after inert clears. A per-account decision generation
+retires late success/refusal/focus, including A→B→A and unmount, without cancelling
+or settling the original domain operation. Four causal keyboard/inert failures,
+then two late-result scope failures are retained; final106 cases/four original suites
+pass, scoped lint0/current-main build112seconds. Detector0 findings. Native Cancel/
+Escape returns to the original control after inert clears; focus trap, unchanged
+synthetic draft/scroll are verified. Eight DOM geometries have no page overflow,
+but lagging compositor frames are INVALID; complete matching renders/zoom/scope
+and released ordinary proof remain owed. Exact origin access was authorized;
+intermittent browser stalls/reset and read-only synthetic-confirm refusal retained.
+[Evidence](../evidence/ui-delivery/e2-systems-dialog-return.md).
+Functional local / Visual candidate UNVERIFIED / Experiential original defect and
+bounded native return, released proof owed / Founder NOT_ACCEPTED. No shell, runner, approval writer,
+provider, registry, LayerC, Rail or permission change. Native recorded-check UI is
+partial; canonical Systems Check Mind-context stays UNAVAILABLE (SCR-2/SCR-3).
+All19/nine remain mandatory.
+
+Preceding Finance2684 is source-releasedd780fd85e3cfd0c73256847c79f2692a5a399d1a,
+LOWER5634377259/all10 applicable checks/two statuses. Normal2M5h READY/exactmeta;
+public containinga9bd855c-mvlgdzr6/null and unchanged source/six served markers
+verified, exactd780 public intermediate not sampled (receipt6374834566). Same-ref/
+date-range ordinary read/reload is still owed. Original monthly CPU failure and
+unknown claim are preserved; EXP05 recovery ACK ANT11/96c5091a, no retry/reset.
+Earlier candidate sections remain dated historical evidence; historical9/0 and
+12/0/4, algorithms, nine catalogue/access labels, role/cohort/Live and full founder
+acceptance are unchanged.
+
+
+
 ## October24 — source-request report foundation, not customer settlement
 
 All original19 outcome rows and CAP009–017 remain required. O01/O18/CAP014/015

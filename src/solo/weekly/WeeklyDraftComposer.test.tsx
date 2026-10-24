@@ -17,6 +17,35 @@ afterEach(()=>{act(()=>root.unmount());container.remove();});
 const render=()=>act(async()=>{root.render(<WeeklyDraftComposer businessZone="America/New_York" onSaved={saved}/>);});
 const button=(text:string)=>Array.from(container.querySelectorAll('button')).find(v=>v.textContent===text);
 const click=async(text:string)=>{expect(button(text)).toBeTruthy();await act(async()=>button(text)!.click());};
+it('places keyboard focus in the unsaved responsibility without preparing a server proposal',async()=>{
+  await render();
+  button('Prepare a weekly responsibility')!.focus();
+  await click('Prepare a weekly responsibility');
+  expect(document.activeElement).toBe(container.querySelector('.e5-weekly-planning input'));
+  expect(f.request.mock.calls.map(v=>v[3])).toEqual([{action:'pending'}]);
+  expect(saved).not.toHaveBeenCalled();
+});
+it.each([false,true])('returns cancellation to its original prepare button with existing proposal=%s',async(existing)=>{
+  if(existing)f.request.mockResolvedValueOnce({kind:'pending',requests:[state()],hasMore:false});
+  await render();
+  const opener=existing?'Prepare another responsibility':'Prepare a weekly responsibility';
+  await click(opener);
+  button('Close proposal')!.focus();
+  await click('Close proposal');
+  expect(document.activeElement).toBe(button(opener));
+  expect(container.querySelector('.e5-weekly-planning')).toBeNull();
+  expect(f.request.mock.calls.map(v=>v[3])).toEqual([{action:'pending'}]);
+  expect(saved).not.toHaveBeenCalled();
+  if(existing)expect(button('Approve')).toBeTruthy();
+});
+it('does not focus the disabled preparation control if owner authority disappears during cancellation',async()=>{
+  await render();await click('Prepare a weekly responsibility');
+  await act(async()=>{button('Close proposal')!.click();f.auth?.('SIGNED_OUT');});
+  expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);
+  expect(document.activeElement).not.toBe(button('Prepare a weekly responsibility'));
+  expect(f.request.mock.calls.map(v=>v[3])).toEqual([{action:'pending'}]);
+  expect(saved).not.toHaveBeenCalled();
+});
 it("retrieves pending canonical review on entry without submitting an approval",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state()],hasMore:false});await render();expect(container.textContent).toContain("Needs your OK");expect(f.request).toHaveBeenCalledTimes(1);expect(f.request.mock.calls[0][3]).toEqual({action:"pending"});expect(saved).not.toHaveBeenCalled();});
 it("only explicit surface approval invokes save, then exposes the actual receipt and refreshes Calendar",async()=>{f.request.mockResolvedValueOnce({kind:"pending",requests:[state()],hasMore:false}).mockResolvedValueOnce({kind:"state",state:state('saved')});await render();await click('Approve');expect(f.request.mock.calls[1][3]).toEqual({action:"commit",confirmation_id:"confirmation",approvedConfirmations:[state().token]});expect(container.textContent).toContain("No executable next run");expect(container.textContent).toContain("canonical-receipt");expect(button('Approve')).toBeUndefined();expect(saved).toHaveBeenCalledTimes(1);});
 it("lost save response hides approval and further-draft actions until readback verifies the same request",async()=>{f.request.mockResolvedValueOnce({kind:"pending",requests:[state()],hasMore:false}).mockResolvedValueOnce({kind:"unconfirmed"}).mockResolvedValueOnce({kind:"unavailable"}).mockResolvedValueOnce({kind:"state",state:state('saved')});await render();await click('Approve');expect(button('Approve')).toBeUndefined();expect(button('Prepare another responsibility')?.disabled).toBe(true);await click('Read saved status');expect(button('Prepare another responsibility')?.disabled).toBe(true);await click('Read saved status');expect(f.request.mock.calls.slice(2).map(v=>v[3])).toEqual([{action:"status",confirmation_id:"confirmation"},{action:"status",confirmation_id:"confirmation"}]);expect(container.textContent).toContain("canonical-receipt");});

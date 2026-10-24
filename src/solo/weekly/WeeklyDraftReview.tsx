@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PaigeConfirmCard } from "@/components/chat/PaigeConfirmCard";
 import { WEEKDAYS, weeklyInstantLabel } from "./weekly-responsibility";
 import type { WeeklyDraftIntent, WeeklyDraftState } from "./weekly-draft-command";
@@ -37,9 +37,11 @@ export function WeeklyDraftForm({ businessZone, busy, onPrepare, onCancel }: {
 }) {
   const [name, setName] = useState("Weekly commitment check"), [weekday, setWeekday] = useState(1);
   const [time, setTime] = useState("09:00"), [zone, setZone] = useState<string | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { nameRef.current?.focus(); }, []);
   return <form className="e5-weekly-planning" onSubmit={e => { e.preventDefault(); onPrepare({ name: name.trim(), weekday, local_time: time, timezone: zone ?? businessZone ?? "" }); }}>
     <h3>Organize the week with PAIGE</h3><p>Review your schedule and save an unapproved responsibility. Recurring execution remains unavailable.</p>
-    <div className="e5-weekly-fields"><label>Responsibility<input required maxLength={120} value={name} disabled={busy} onChange={e => setName(e.target.value)} /></label>
+    <div className="e5-weekly-fields"><label>Responsibility<input ref={nameRef} required maxLength={120} value={name} disabled={busy} onChange={e => setName(e.target.value)} /></label>
       <label>Day<select value={weekday} disabled={busy} onChange={e => setWeekday(Number(e.target.value))}>{WEEKDAYS.map((day, i) => <option key={day} value={i + 1}>{day}</option>)}</select></label>
       <label>Time<input type="time" required value={time} disabled={busy} onChange={e => setTime(e.target.value)} /></label>
       <label>Business time zone<input required value={zone ?? businessZone ?? ""} disabled={busy} onChange={e => setZone(e.target.value)} placeholder="America/New_York" /></label></div>

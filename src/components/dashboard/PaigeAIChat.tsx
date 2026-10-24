@@ -1708,6 +1708,8 @@ const PaigeAIChatInner = ({
   // every streamed setMessages so the bubble never remounts mid-stream (copy/retry/
   // feedback stay stable).
   const streamTurn = async (
+    // The send's submission generation — see the D1 note at the preflight clear in the finally.
+    sendSubmissionGeneration: number,
     base: Message[],
     rollback: Message[],
     userText: string,
@@ -2408,8 +2410,16 @@ const PaigeAIChatInner = ({
         if (interactiveRequestRef.current?.threadId) refreshInteractiveAuthority();
         else if (!typedRequestDispatched || typedRequestRejected) setInteractiveAuthorityPending(false);
       }
-      if (ticketAccepted(requestTicket)) submissionPreflightRef.current = false;
-      if (doc && ticketAccepted(requestTicket)) documentRequestActiveRef.current = false;
+      // D1 (panel wedge): the preflight/document latches gate EVERY later send, so a
+      // superseded request must never leave them set. ticketAccepted() is false the moment a
+      // concurrent fence.begin() (auto-resume's selectThread, a second send) bumps the fence —
+      // but fence.begin() does NOT bump submissionGeneration, so gating on the submission
+      // generation clears OUR latch while a genuinely newer send's latch (set only after its
+      // own submissionCurrent() check) survives untouched.
+      if (submissionGenerationRef.current === sendSubmissionGeneration) {
+        submissionPreflightRef.current = false;
+        if (doc) documentRequestActiveRef.current = false;
+      }
       // C2 — the no-stuck-working safety net: the fence release is idempotent (it checks
       // the ticket first), so calling it here catches any exit path that missed it. Without
       // this, an unexpected exception between the specific handlers leaves the working
@@ -2777,6 +2787,7 @@ const PaigeAIChatInner = ({
     // never falsely assert nothing happened).
     const effectiveRollback = executedOutcomes.length ? shown : rollback;
     await streamTurn(
+      submissionGeneration,
       base,
       effectiveRollback,
       userContent,
@@ -2809,7 +2820,7 @@ const PaigeAIChatInner = ({
     const rollback = messages;
     const base = messages.slice(0, uIdx + 1);
     setMessages(base);
-    void streamTurn(base, rollback, messages[uIdx].content, null, null);
+    void streamTurn(submissionGenerationRef.current, base, rollback, messages[uIdx].content, null, null);
   };
 
   const handleConnectionRetry = () => {
@@ -2822,6 +2833,7 @@ const PaigeAIChatInner = ({
       || !composerDraftHandlesMatch(retry.draftHandle, composerScope.writableHandle)
     ) return;
     void streamTurn(
+      submissionGenerationRef.current,
       retry.base,
       retry.rollback,
       retry.userText,

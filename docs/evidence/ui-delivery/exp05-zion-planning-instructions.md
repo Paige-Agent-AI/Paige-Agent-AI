@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: existing agents.delegate / delegate_to_subagent → registered ZION → original Harness invocation → existing plan/Fabric call → original draft outcome/Rail. Restore missing factory instructions; no second runtime or action system.
-PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md and docs/doctrine/paige-ui-delivery-standard.md applied to the original Operations/Chat draft, refusal and unknown-result contracts; unchanged frontend source and truthful draft language retained.
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md and docs/doctrine/paige-ui-delivery-standard.md applied to the original Operations/Chat draft, refusal and uncertain-result contracts; unchanged frontend source and truthful draft language retained.
 MATERIAL_FLOW_CHANGE: NO: repair the existing internal planning contract, without a new customer step, control, approval or business-effect transition.
 FLOW_PROTOTYPE: NOT_REQUIRED: no new or materially changed interface flow; this is original registration data and its actual-route regression proof.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible existing and future SOLO owners can request a bounded Operations planning draft from the same original specialist, subject to current server authority and provider/budget readiness.

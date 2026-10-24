@@ -67,7 +67,11 @@ async function openPreview(page, { piece, paige = "closed", theme = "light" }) {
 const factsOf = (page) => page.evaluate(() => ({
   crashed: Boolean(document.querySelector("[data-harness-error]")),
   line: document.querySelector('[role="dialog"] .mct-facts')?.textContent ?? null,
-  overflowX: (() => { const s = document.querySelector(".campaigns-scroll"); return s ? s.scrollWidth - s.clientWidth : null; })(),
+  // The campaigns drawer is position:fixed (min(960px,96vw) wide), so the DOCUMENT can't show its
+  // overflow — the drawer's own body is the scroll owner (review fix for the PR4 finding; the
+  // earlier run measured .campaigns-scroll, the library page behind the drawer).
+  drawerOverflowX: (() => { const b = document.querySelector(".campaigns-drawer .campaigns-drawer-body"); return b ? b.scrollWidth - b.clientWidth : null; })(),
+  drawerFitsViewport: (() => { const r = document.querySelector(".campaigns-drawer")?.getBoundingClientRect(); return r ? r.right <= innerWidth + 1 && r.left >= -1 && r.width > 0 : null; })(),
   sideways: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
 }));
 
@@ -95,7 +99,7 @@ async function main() {
         frames.push({ frame: name, ...facts, pageErrors: errors });
         check(!facts.crashed && errors.length === 0, `${name} renders without error`, errors.join("; "));
         check(typeof facts.line === "string" && facts.line.includes("SVG") && facts.line.includes("1440×960") && facts.line.includes("made by fal-ai/flux-pro") && facts.line.includes("provider & model terms"), `${name} facts line carries the recorded fragments`, facts.line ?? "");
-        check((facts.overflowX ?? 1) <= 0 && !facts.sideways, `${name} no horizontal overflow`, `overflowX=${facts.overflowX}`);
+        check((facts.drawerOverflowX ?? 1) <= 0 && facts.drawerFitsViewport === true && !facts.sideways, `${name} no horizontal overflow in the drawer (fixed; its body is the scroll owner)`, `drawerOverflowX=${facts.drawerOverflowX} fitsViewport=${facts.drawerFitsViewport}`);
       }
     }
 

@@ -2866,3 +2866,24 @@ Functional local / Visual synthetic / Experiential corrected same-reference read
 and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, registry,
 authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
 All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.
+
+## EXP05 — original refusal and invocation source releases, October24
+
+Original2697/main4dc2 and2719/main600ce passed all11 exact checks/two statuses
+and accurate sequential LOWER review. Actual393-file production reads and normal
+release identities are retained in the sole Master4.0 E05 table and original
+[refusal](../evidence/ui-delivery/exp05-refusal-original-reload.md)/
+[invocation](../evidence/ui-delivery/exp05-specialist-original-effect-reference.md)
+evidence. Receipts6379034477/6379133934 retain failed checkpoint/public-version
+attempts and their proper recovery; no historical failure is relabeled PASS.
+Status reader2722, native UI2725, weekly exact-receipt2700, authenticated recovery,
+actual ZION/automation execution and full Operations/founder acceptance remain
+unfinished. Catalogue and algorithms retain their actual maturity; no activation.
+
+Original proof-only2727 reviewed3f/LOWER5636492569 is merged9d4a/treeb739 and
+recorded in that same Master4.0 E05 table; exact native/full CI passed with all19
+assertions/180s retained. No product SQL/Edge/cron changes. Web metadata is READY
+9d4a; strict public9d4a check refused newer containinge35/null. The inherited
+main duplicate-version failures remain recorded; originating E10 correction2732
+now records800000 and is consumed with main79171c82. This closes only the
+test-source release record, not original customer recovery or an Experience.

@@ -139,3 +139,21 @@ remains one later complete-Experience evaluation.
 Recovery position: stop future admission and reconcile original records.
 No down migration, applied-history rewrite, replay of uncertain work, or
 rollback that removes canonical history is proposed.
+
+## Current-main composition — October24
+
+Original candidate `c0f9d22be1bb052784085d6529c214d4429f7f29` passed all13
+named hosted checks, including verify120857144628 and database-contract120857144279.
+Those checks are dated evidence for that head, not the subsequent composition.
+Actual main `e1a6a6bcc508d42ce058643ca64fb06e710f5263`, including the original
+E04/E09 Work, Delivery, native and shared-root source, composes normally at
+`88e754c4710ca11531b91982a17ee7ffe8f99241`. All five owning paths are unchanged;
+the migration's normalized SHA256 and original implementation/ABI inverse still pass.
+The existing local draft iteration reran43 cases, including170 scoped Chat
+assertions, with original service-role posture restored and zero provider effects.
+Private transcript: `work/weekly-chat-draft-current-main.txt`; original result:
+`../test-temp/paige-weekly-proof-cmbKUY/result.json`. This is local fixture proof,
+not authenticated customer acceptance; full exact-head hosted CI runs separately.
+Fresh production readback has830004 present and no840002/850004/860005.
+The original E02→E04→E05 native release order remains a hold; no migration,
+Chat admission, delegated assignment, recurring run or provider action occurred.

@@ -12,12 +12,12 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 26,
+        "regionByteVariety": 32,
         "foldOverflowPx": 72,
         "actionsBottomPx": 680.375,
         "viewportH": 770
       },
-      "sha256": "56f01d67dc1c6b522e9ceef77a55661b9b5b11c07f5a570da2ee35f186c1281a",
+      "sha256": "834280c807433b98eb0052f1d50aa5f7b57f243d7222b89bfb0ce6bba54aae1f",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-dark-denied.png": {
@@ -29,9 +29,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 45
+        "regionByteVariety": 48
       },
-      "sha256": "bbcf477831cc58f1835bb903ec913bf14a2bf44d16f8277a44a2f4ea942c4c52",
+      "sha256": "d4a504a11aa4b09cad948a29d968a871fbee4fc7f43c4327a4ebe267801d6c29",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-dark-listening.png": {
@@ -43,9 +43,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "listening",
-        "regionByteVariety": 61
+        "regionByteVariety": 69
       },
-      "sha256": "fc2afd571ca900cacbf80594646ed74c211e052b593d5b0085ee5fd243ce19fd",
+      "sha256": "df2bc719a72fed5779dbb3372399906a65f95d8fd8bfe58cb7e10d93021c956f",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-light-terms.png": {
@@ -57,12 +57,12 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 25,
+        "regionByteVariety": 24,
         "foldOverflowPx": 72,
         "actionsBottomPx": 680.375,
         "viewportH": 770
       },
-      "sha256": "6bf33380c8c51b3a7683a365ad9a9b14ab346489dfeab9b9f506d4bfacd2e6e2",
+      "sha256": "7ff99aaba9120b23c1e6b4ab85f246174165ab79fdde1c14c804305a61746671",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-light-denied.png": {
@@ -74,9 +74,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 38
+        "regionByteVariety": 39
       },
-      "sha256": "c9f53439a07836e2bc63caaaf0ef9629e102161de5c628e783ce4e91f2b097ef",
+      "sha256": "63d341d1171544cabc03abac706a934b0b4854117e4db3058cfb10e123760810",
       "ihdr": "1536x770"
     },
     "immersive-1536x770-light-listening.png": {
@@ -88,9 +88,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "listening",
-        "regionByteVariety": 58
+        "regionByteVariety": 61
       },
-      "sha256": "2af791e60d629af45d740c8a37ad5f54f03c625c25af21a56a51415ad9ae2545",
+      "sha256": "6b78992d152a6cb1bad9cd617a7243605c74e400a37ff643099c1f4f7e6108d7",
       "ihdr": "1536x770"
     },
     "immersive-900x1000-dark-terms.png": {
@@ -102,12 +102,12 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 39,
+        "regionByteVariety": 42,
         "foldOverflowPx": 138,
         "actionsBottomPx": 833.421875,
         "viewportH": 1000
       },
-      "sha256": "0c5abbc7d2e5e9fb4421a6c2981ca8d910a2c67f61d61043e32c3a7de8f02d4b",
+      "sha256": "73c6b8bee82619e5e9e06ef9211cd6c93c84c27707c97c23554bfc9d8f156967",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-dark-denied.png": {
@@ -119,9 +119,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 78
+        "regionByteVariety": 81
       },
-      "sha256": "52b023d99ae992ad32ad4b5ff53be53f503d9e806a5e37595dc5f75d0d146dd9",
+      "sha256": "6ba0f2734a7441652b7c5cf324fc98931bd4b45e88f71736bcca83c56254f94e",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-dark-listening.png": {
@@ -133,9 +133,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "listening",
-        "regionByteVariety": 87
+        "regionByteVariety": 96
       },
-      "sha256": "b9b8bbd8cca2dd1e36e3cba9d5fe4cd26c76ef1f12e936e7c81ba9e50db382af",
+      "sha256": "27e3806dede48fe7edb07045ea6c4d5cbf2ae3fe069ff0344e61e35483eedc25",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-light-terms.png": {
@@ -147,12 +147,12 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 38,
+        "regionByteVariety": 36,
         "foldOverflowPx": 138,
         "actionsBottomPx": 833.421875,
         "viewportH": 1000
       },
-      "sha256": "0891b4aaf8f37fc938f69047e45e55eeb54b29c18e4e76cd2ba050462d1acde3",
+      "sha256": "43963795339549a24e879ffb8f3c2a25b5c6416aa7e6f2c76a25d52b9bf0be25",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-light-denied.png": {
@@ -164,9 +164,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "unavailable",
-        "regionByteVariety": 77
+        "regionByteVariety": 75
       },
-      "sha256": "d40d6eb49c5848eae0441256ee3c84e09305e1276f2aac65dd90233c503ddf62",
+      "sha256": "dc1e17efa6cdace17fb73c0bffe60a2f55d6616eacbfd764ee1402ebb866bda0",
       "ihdr": "900x1000"
     },
     "immersive-900x1000-light-listening.png": {
@@ -178,9 +178,9 @@
         "scene3dMounted": true,
         "motionMode": "reduced",
         "presenceState": "listening",
-        "regionByteVariety": 86
+        "regionByteVariety": 89
       },
-      "sha256": "662ced6b59e780eb81fa49af78cea7361dae4097d75cb90561203cea67fd806f",
+      "sha256": "c5107206d4e66132e87237041573a87725bca398b72f5198dbce64b42b9fbbb2",
       "ihdr": "900x1000"
     }
   }

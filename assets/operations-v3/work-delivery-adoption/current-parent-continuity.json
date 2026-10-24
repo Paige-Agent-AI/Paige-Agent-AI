@@ -577,5 +577,15 @@
       "comparator": "Original tsc-ratchet.mjs line/column normalization and signature multiset; no compiler rerun or baseline modification",
       "limitations": "Local installed Zod4.5.4 differs from locked4.6.6; required hosted npm-ci/audit/typecheck remain authoritative. First incomplete dependency attempt is INVALID_SETUP, retained."
     }
+  },
+  "productionRelease": {
+    "pr": 2161,
+    "head": "8daf227617fe627310210bf3fe3cb6423b413419",
+    "merge": "6c0cc01e4c8ea6e55e2a161e302462f320cd53d7",
+    "receipt": 6384446832,
+    "at": "2026-10-24T12:50:48.942Z",
+    "artifact": "docs/evidence/e04-staff-work-production-readback.json",
+    "sourceOnly": true,
+    "customerAcceptance": "UNVERIFIED"
   }
 }

@@ -161,3 +161,9 @@ Fresh exact-head required CI and parent release/readback remain mandatory.
 The originating EXP10 duplicate700000 correction is a separate current-main
 release hold; no peer migration, history or guard is modified here.
 
+Originating E10 correction2732 is now merged/read back at800000 and consumed
+with main79171c82 plus E03 closeout2729. The earlier duplicate-version hold is
+resolved on this composition. Renderer, parser and owning test source are
+unchanged from reviewed900f; fresh exact-head CI and native parent production
+readback remain required. No customer verification is inferred from composition.
+

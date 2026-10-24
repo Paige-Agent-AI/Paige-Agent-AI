@@ -35,6 +35,16 @@ import {
   taskTitleProblem,
   withoutSpecialists,
   TEAM_HUB_COMMANDS,
+  beginRefusalReason,
+  filePrecheck,
+  fileRefusalMessage,
+  fileSizeLabel,
+  fileTypeFor,
+  parseBegunFile,
+  parseFile,
+  parseFinished,
+  TEAM_HUB_FILE_ACCEPT,
+  TEAM_HUB_FILE_MAX_BYTES,
   type TeamHubConversation,
   type TeamHubMessage,
   type TeamHubPerson,
@@ -50,7 +60,7 @@ const conversation = (over: Partial<TeamHubConversation> = {}): TeamHubConversat
 });
 const message = (over: Partial<TeamHubMessage> = {}): TeamHubMessage => ({
   id: "m-1", author_user_id: "u-dana", body: "Hello", created_at: "2026-10-24T10:00:00.000Z",
-  parent_message_id: null, reply_count: 0, last_reply_at: null, mentions: [], work_ref: null, ...over,
+  parent_message_id: null, reply_count: 0, last_reply_at: null, mentions: [], work_ref: null, files: [], ...over,
 });
 const list = (over: Record<string, unknown> = {}) => ({
   ok: true, tenant_id: TENANT, me: { user_id: "u-me" },
@@ -406,5 +416,104 @@ describe("task draft checks (increment 2)", () => {
     expect(refusalMessage("failed", "task")).toContain("Nothing was saved");
     expect(refusalMessage("invalid", "task")).toContain("due date");
     expect(refusalMessage("unavailable", "task")).toContain("Nothing was created");
+  });
+});
+
+describe("attachments (increment 3 contract)", () => {
+  const TENANT = "0b4b1c55-6c1d-4c7e-9f1a-111111111111";
+  const FILE = "8d0f7e2a-5b3c-4d1e-a6f7-222222222222";
+  const file = (over: Record<string, unknown> = {}) => ({
+    id: FILE, name: "Brief.pdf", mime: "application/pdf", size: 2048, path: `${TENANT}/team-hub/${FILE}`, ...over,
+  });
+
+  it("reads a message's files strictly: every field by the table's own rules, or the whole message is unreadable", () => {
+    const page = (files: unknown) => ({ ok: true, channel: { id: "c-general", kind: "channel", name: "general", visibility: "team", joined: true }, messages: [{ ...message(), files }], has_more: false });
+    const ok = parseMessagePage(page([file()]), null, "c-general");
+    expect(ok.kind === "ok" && ok.value.messages[0].files).toEqual([file()]);
+    // Absent only on an answer from before increment 3.
+    const legacy = parseMessagePage({ ...page([]), messages: [{ ...message(), files: undefined }] }, null, "c-general");
+    expect(legacy.kind === "ok" && legacy.value.messages[0].files).toEqual([]);
+    for (const bad of [
+      "not a list",
+      [file({ mime: "application/msword" })],
+      [file({ mime: "application/vnd.ms-powerpoint" })],
+      [file({ size: 0 })],
+      [file({ size: TEAM_HUB_FILE_MAX_BYTES + 1 })],
+      [file({ size: 1.5 })],
+      [file({ name: "" })],
+      [file({ name: "a/b.pdf" })],
+      [file({ name: "a\\b.pdf" })],
+      [file({ name: "bad\u0007.pdf" })],
+      [file({ path: `${TENANT}/other/${FILE}` })],
+      [file({ path: `${TENANT}/team-hub/someone-else` })],
+      [file({ path: `${TENANT}/team-hub/${FILE}/extra` })],
+      [file({ path: `${TENANT.toUpperCase()}/team-hub/${FILE}` })],
+      [{ ...file(), id: undefined }],
+    ]) {
+      expect(parseMessagePage(page(bad), null, "c-general").kind, JSON.stringify(bad)).toBe("unavailable");
+    }
+    expect(parseFile(file())).toEqual(file());
+    // A file listed twice is shown once.
+    const twice = parseMessagePage(page([file(), file()]), null, "c-general");
+    expect(twice.kind === "ok" && twice.value.messages[0].files).toHaveLength(1);
+  });
+
+  it("checks type by extension and the browser's report, size and the 5-per-message count before any upload", () => {
+    expect(filePrecheck({ name: "Brief.PDF", size: 10, type: "application/pdf" }, 0)).toBeNull();
+    expect(filePrecheck({ name: "notes.csv", size: 10, type: "application/vnd.ms-excel" }, 0)).toBeNull();
+    expect(filePrecheck({ name: "photo.jpeg", size: 10, type: "" }, 0)).toBeNull();
+    expect(filePrecheck({ name: "old.doc", size: 10, type: "application/msword" }, 0)).toBe("type");
+    expect(filePrecheck({ name: "old.xls", size: 10 }, 0)).toBe("type");
+    expect(filePrecheck({ name: "deck.pptx", size: 10 }, 0)).toBe("type");
+    expect(filePrecheck({ name: "tool.exe", size: 10 }, 0)).toBe("type");
+    expect(filePrecheck({ name: "pdf", size: 10 }, 0)).toBe("type");
+    // An allowed extension the browser says is something else entirely.
+    expect(filePrecheck({ name: "invoice.pdf", size: 10, type: "application/x-msdownload" }, 0)).toBe("type");
+    expect(filePrecheck({ name: "Brief.pdf", size: TEAM_HUB_FILE_MAX_BYTES, type: "application/pdf" }, 0)).toBeNull();
+    expect(filePrecheck({ name: "Brief.pdf", size: TEAM_HUB_FILE_MAX_BYTES + 1, type: "application/pdf" }, 0)).toBe("too_large");
+    expect(filePrecheck({ name: "Brief.pdf", size: 0, type: "application/pdf" }, 0)).toBe("empty");
+    expect(filePrecheck({ name: `${"a".repeat(252)}.pdf`, size: 1 }, 0)).toBe("name");
+    expect(filePrecheck({ name: "Brief.pdf", size: 1 }, 4)).toBeNull();
+    expect(filePrecheck({ name: "Brief.pdf", size: 1 }, 5)).toBe("count");
+    expect(fileTypeFor("sheet.XLSX")?.mime).toBe("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    expect(TEAM_HUB_FILE_ACCEPT).toBe(".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv");
+  });
+
+  it("says each refusal in the contract's words", () => {
+    expect(fileRefusalMessage("type")).toBe("That file type isn't allowed");
+    expect(fileRefusalMessage("too_large")).toBe("Over 10 MB");
+    expect(fileRefusalMessage("rejected")).toBe("Its contents don't match its type");
+    expect(fileRefusalMessage("count")).toBe("5 files per message");
+    expect(beginRefusalReason("too_large")).toBe("too_large");
+    expect(beginRefusalReason("limit_reached")).toBe("limit");
+    expect(beginRefusalReason("invalid")).toBe("type");
+    expect(beginRefusalReason("not_found")).toBe("gone");
+    expect(fileSizeLabel(900)).toBe("900 B");
+    expect(fileSizeLabel(2048)).toBe("2 KB");
+    expect(fileSizeLabel(1.5 * 1024 * 1024)).toBe("1.5 MB");
+  });
+
+  it("uploads only to the server-built path for this workspace and this file", () => {
+    const begun = (over: Record<string, unknown> = {}) => ({ ok: true, file: { ...file(), state: "pending", ...over } });
+    const expected = { name: "Brief.pdf", mime: "application/pdf", size: 2048 };
+    expect(parseBegunFile(begun(), null, TENANT, expected)).toEqual({ kind: "ok", value: { ...file(), state: "pending" } });
+    expect(parseBegunFile(begun({ path: `other-tenant/team-hub/${FILE}` }), null, TENANT, expected).kind).toBe("unavailable");
+    expect(parseBegunFile(begun({ path: `${TENANT}/team-hub/${FILE}x` }), null, TENANT, expected).kind).toBe("unavailable");
+    expect(parseBegunFile(begun({ size: 9 }), null, TENANT, expected).kind).toBe("unavailable");
+    expect(parseBegunFile(begun({ mime: "image/png" }), null, TENANT, expected).kind).toBe("unavailable");
+    expect(parseBegunFile(begun({ state: "weird" }), null, TENANT, expected).kind).toBe("unavailable");
+    expect(parseBegunFile({ ok: false, code: "too_large" }, null, TENANT, expected)).toEqual({ kind: "refused", code: "too_large" });
+    expect(parseBegunFile({ ok: false, code: "limit_reached" }, null, TENANT, expected)).toEqual({ kind: "refused", code: "limit_reached" });
+    expect(parseBegunFile(null, { message: "down" }, TENANT, expected).kind).toBe("unavailable");
+  });
+
+  it("calls a file ready only when the finish step says so for this file", () => {
+    expect(parseFinished({ ok: true, file: { id: FILE, state: "ready" } }, null, FILE)).toEqual({ kind: "ready" });
+    expect(parseFinished({ ok: true, file: { id: "other", state: "ready" } }, null, FILE)).toEqual({ kind: "failed" });
+    expect(parseFinished({ ok: true, file: { id: FILE, state: "pending" } }, null, FILE)).toEqual({ kind: "failed" });
+    expect(parseFinished({ ok: false, code: "rejected", reason: "type_mismatch" }, null, FILE)).toEqual({ kind: "rejected" });
+    expect(parseFinished({ ok: false, code: "not_uploaded" }, null, FILE)).toEqual({ kind: "failed" });
+    expect(parseFinished({ ok: false, code: "not_found" }, null, FILE)).toEqual({ kind: "refused", code: "not_found" });
+    expect(parseFinished(null, { name: "FunctionsHttpError" }, FILE)).toEqual({ kind: "failed" });
   });
 });

@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  beginRefusalReason,
   compareMessages,
+  filePrecheck,
+  fileRefusalMessage,
+  fileTypeFor,
   incomingAnnouncement,
   mergeMessages,
   newDividerBefore,
   parseAcknowledged,
   parseAdded,
+  parseBegunFile,
   parseChannelId,
   parseConversationList,
+  parseFinished,
   parseMessagePage,
   parsePosted,
   parseTaskReads,
@@ -19,6 +25,8 @@ import {
   refusalMessage,
   TASK_COMMAND_TEXT,
   type TeamHubChannelSummary,
+  type TeamHubFileMime,
+  type TeamHubFileRefusal,
   type TeamHubMessage,
   type TeamHubMessagePage,
   type TeamHubOverview,
@@ -53,6 +61,14 @@ import {
  * (one client request id per attempt, reused by Retry, so Operations never gets a second task).
  * Status is never stored here: `readTaskStatuses` reads the original `plan_items` rows by id through
  * the caller's own RLS, and an id the read doesn't return is `unreadable` — never guessed.
+ *
+ * Increment 3 (docs/delivery/exp08-team-hub-increment3-attachments-contract.md §7): each attached
+ * file is a chip held per composer (`attachmentScope`). It is checked here first with the server's
+ * own rules, then `team_hub_begin_file` → an upload to the server-built path → the `team-hub-file`
+ * finish step, which checks the real type. Only a chip in the ready state is ever posted, by id, in
+ * `p_file_ids`. A chip keeps one client request id for every Retry, so a retry never makes a second
+ * record; removing a chip discards its record (best-effort). Downloads mint a fresh 60-second URL on
+ * every click and are never cached here.
  */
 
 export const REFRESH_INTERVAL_MS = 15_000;
@@ -113,7 +129,37 @@ export interface PendingMessage {
   parentId: string | null;
   body: string;
   mentionIds: string[];
+  /** Increment 3: the ready files this message posts, by record id, in the order they were attached. */
+  files: AttachmentChip[];
   status: "sending" | "failed";
+}
+
+export const TEAM_HUB_FILE_BUCKET = "comms-attachments";
+export const SIGNED_URL_SECONDS = 60;
+
+/** The browser leaves for a signed download URL through here, so a test can see where it went. */
+export const teamHubNavigation = { assign: (url: string) => window.location.assign(url) };
+
+/** One composer's files: the conversation, or one thread inside it. */
+export function attachmentScope(channelId: string, parentId: string | null): string {
+  return parentId ? `${channelId}:${parentId}` : channelId;
+}
+
+export interface AttachmentChip {
+  localId: string;
+  /** Generated once per chip; every Retry reuses it, so the server keeps one record. */
+  clientRequestId: string;
+  channelId: string;
+  name: string;
+  size: number;
+  mime: TeamHubFileMime | null;
+  state: "uploading" | "checking" | "ready" | "refused" | "failed";
+  reason: TeamHubFileRefusal | null;
+  /** The server's record, once `team_hub_begin_file` made it. */
+  fileId: string | null;
+  path: string | null;
+  /** Kept for Retry; never sent anywhere but the record's own path. */
+  file: File | null;
 }
 
 export type SendOutcome =
@@ -138,6 +184,13 @@ interface LoadReport<T> {
   newestId: string | null;
 }
 
+/** Storage's answer when the object is already there (409 / "already exists"). */
+function alreadyStored(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const failure = error as { statusCode?: unknown; status?: unknown; message?: unknown; error?: unknown };
+  return String(failure.statusCode ?? failure.status ?? "") === "409" || /already exists|duplicate/i.test(`${failure.message ?? ""} ${failure.error ?? ""}`);
+}
+
 function newRequestId(): string {
   return crypto.randomUUID();
 }
@@ -156,7 +209,7 @@ const ENDS_HUB = new Set<TeamHubRefusal>(["not_member", "unavailable", "scope_ch
 
 const newestOf = (messages: TeamHubMessage[]) => messages.length ? [...messages].sort(compareMessages)[messages.length - 1] : undefined;
 
-export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => unknown; onIncoming?: (announcement: string) => void } = {}) {
+export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => unknown; onIncoming?: (announcement: string) => void; onAttachment?: (announcement: string) => void } = {}) {
   const [status, setStatus] = useState<HubStatus>("loading");
   const [overview, setOverview] = useState<TeamHubOverview | null>(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
@@ -167,11 +220,12 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine !== false);
   const [work, setWork] = useState<WorkState>({ status: "idle", items: [] });
   const [taskReads, setTaskReads] = useState<Record<string, TeamHubTaskRead>>({});
+  const [attachments, setAttachments] = useState<Record<string, AttachmentChip[]>>({});
 
   // Latest values for async continuations; a response for a conversation that is no
   // longer open is dropped instead of painted over the one that is.
-  const live = useRef({ activeId, stream, thread, overview, status, work, taskReads });
-  live.current = { activeId, stream, thread, overview, status, work, taskReads };
+  const live = useRef({ activeId, stream, thread, overview, status, work, taskReads, attachments });
+  live.current = { activeId, stream, thread, overview, status, work, taskReads, attachments };
   const alive = useRef(true);
   // Set on every setup, not only at creation: React StrictMode runs setup, cleanup, setup in
   // development, and a ref left false after that first cleanup would drop every response.
@@ -180,6 +234,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   tenantRefresh.current = options.onTenantRefresh;
   const onIncoming = useRef(options.onIncoming);
   onIncoming.current = options.onIncoming;
+  const onAttachment = useRef(options.onAttachment);
+  onAttachment.current = options.onAttachment;
   const scopeRetried = useRef(false);
   const unavailableRetried = useRef(false);
   const inFlight = useRef<Promise<void> | null>(null);
@@ -201,7 +257,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   /** Refusals that end the whole hub are handled here, for every call alike. */
   const settle = useCallback(<T,>(result: TeamHubResult<T>): TeamHubResult<T> => {
     if (!alive.current || result.kind !== "refused") return result;
-    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); };
+    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); setAttachments({}); };
     if (result.code === "unavailable" && !unavailableRetried.current) {
       // The account type may have been read from a stale workspace context. Re-read it once and ask
       // again before settling on "not available for this account type".
@@ -516,6 +572,162 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
 
   const closeThread = useCallback(() => { setThread(null); live.current.thread = null; }, []);
 
+  // ── Attachments (increment 3) ──
+  const removedChips = useRef(new Set<string>());
+
+  /** The `team-hub-file` edge function, always for this workspace; its own JWT check comes first there. */
+  const invokeFile = useCallback(async (action: "finish" | "discard", fileId: string): Promise<RpcAnswer> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("team-hub-file", { body: { action, expected_tenant: tenantId, file_id: fileId } });
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  }, [tenantId]);
+
+  /**
+   * Best-effort: an unposted record is discarded and its bytes removed. A posted file is refused there.
+   * Asked once per record, whether Remove or an upload still in flight gets there first.
+   */
+  const discarded = useRef(new Set<string>());
+  const discardFile = useCallback((fileId: string) => {
+    if (discarded.current.has(fileId)) return;
+    discarded.current.add(fileId);
+    void invokeFile("discard", fileId);
+  }, [invokeFile]);
+
+  const setScopeChips = useCallback((scope: string, update: (chips: AttachmentChip[]) => AttachmentChip[]) => {
+    const apply = (current: Record<string, AttachmentChip[]>) => {
+      const next = update(current[scope] ?? []);
+      const copy = { ...current };
+      if (next.length) copy[scope] = next; else delete copy[scope];
+      return copy;
+    };
+    // Kept current for a second pick made before React renders, so the 5-per-message count holds.
+    live.current.attachments = apply(live.current.attachments);
+    setAttachments(apply);
+  }, []);
+
+  /** begin → upload to the server-built path → finish. Every step re-checks that the chip still exists. */
+  const runChip = useCallback(async (scope: string, chip: AttachmentChip) => {
+    const removed = () => removedChips.current.has(chip.localId);
+    const patch = (next: Partial<AttachmentChip>) => setScopeChips(scope, (chips) => chips.map((item) => item.localId === chip.localId ? { ...item, ...next } : item));
+    const refuse = (reason: TeamHubFileRefusal) => {
+      patch({ state: "refused", reason, file: null });
+      onAttachment.current?.(`File refused: ${fileRefusalMessage(reason)}`);
+    };
+    const fail = () => {
+      patch({ state: "failed" });
+      onAttachment.current?.("Upload didn't finish. Retry is available.");
+    };
+    const mime = chip.mime;
+    if (!mime || !chip.file) { refuse("type"); return; }
+    patch({ state: "uploading", reason: null });
+    const begun = await call("team_hub_begin_file", {
+      p_channel_id: chip.channelId,
+      p_name: chip.name,
+      p_mime: mime,
+      p_size: chip.size,
+      p_client_request_id: chip.clientRequestId,
+    });
+    const record = settle(parseBegunFile(begun.data, begun.error, tenantId, { name: chip.name, mime, size: chip.size }));
+    if (!alive.current) return;
+    if (record.kind === "refused") { if (!ENDS_HUB.has(record.code)) refuse(beginRefusalReason(record.code)); return; }
+    if (record.kind === "unavailable") { fail(); return; }
+    const { id, path, state } = record.value;
+    if (removed()) { discardFile(id); return; }
+    patch({ fileId: id, path });
+    // A retry can find the record already decided.
+    if (state === "ready") { patch({ state: "ready", file: null }); onAttachment.current?.("File ready"); return; }
+    if (state === "rejected") { refuse("rejected"); return; }
+    if (state === "discarded") { refuse("gone"); return; }
+    let uploaded = false;
+    try {
+      const { error } = await supabase.storage.from(TEAM_HUB_FILE_BUCKET).upload(path, chip.file, { contentType: mime, upsert: false });
+      // A retry after a lost answer finds its own bytes already there (no overwrite is allowed): go on to the check.
+      uploaded = !error || alreadyStored(error);
+    } catch {
+      uploaded = false;
+    }
+    if (!alive.current) return;
+    if (removed()) { discardFile(id); return; }
+    if (!uploaded) { fail(); return; }
+    patch({ state: "checking" });
+    const check = await invokeFile("finish", id);
+    const finished = parseFinished(check.data, check.error, id);
+    if (!alive.current) return;
+    if (removed()) { discardFile(id); return; }
+    if (finished.kind === "ready") { patch({ state: "ready", file: null }); onAttachment.current?.("File ready"); return; }
+    if (finished.kind === "rejected") { refuse("rejected"); return; }
+    if (finished.kind === "refused") {
+      if (ENDS_HUB.has(finished.code)) { settle({ kind: "refused", code: finished.code }); return; }
+      refuse(finished.code === "invalid" ? "gone" : beginRefusalReason(finished.code));
+      return;
+    }
+    fail();
+  }, [call, settle, tenantId, discardFile, invokeFile, setScopeChips]);
+
+  /**
+   * Attach picked or dropped files to one composer. Each is checked first with the server's rules; a
+   * file that fails is a refused chip at once and is never uploaded. Refused chips don't count toward five.
+   */
+  const attach = useCallback((channelId: string, parentId: string | null, files: File[]) => {
+    if (!files.length) return;
+    const scope = attachmentScope(channelId, parentId);
+    let held = (live.current.attachments[scope] ?? []).filter((chip) => chip.state !== "refused").length;
+    const chips = files.map<AttachmentChip>((file) => {
+      const reason = filePrecheck({ name: file.name, size: file.size, type: file.type }, held);
+      if (!reason) held += 1;
+      return {
+        localId: newRequestId(), clientRequestId: newRequestId(), channelId, name: file.name, size: file.size,
+        mime: fileTypeFor(file.name, file.type)?.mime ?? null, state: reason ? "refused" : "uploading", reason,
+        fileId: null, path: null, file: reason ? null : file,
+      };
+    });
+    setScopeChips(scope, (current) => [...current, ...chips]);
+    const starting = chips.filter((chip) => chip.state === "uploading");
+    const refused = chips.filter((chip) => chip.reason);
+    const parts = [
+      starting.length ? `Uploading ${starting.length === 1 ? "1 file" : `${starting.length} files`}` : null,
+      ...refused.map((chip) => `File refused: ${fileRefusalMessage(chip.reason!)}`),
+    ].filter(Boolean);
+    if (parts.length) onAttachment.current?.(parts.join(". "));
+    for (const chip of starting) void runChip(scope, chip);
+  }, [runChip, setScopeChips]);
+
+  /** Retry a chip whose upload didn't finish: the same client request id, so the same record. */
+  const retryAttachment = useCallback((scope: string, localId: string) => {
+    const chip = live.current.attachments[scope]?.find((item) => item.localId === localId);
+    if (!chip || chip.state !== "failed") return;
+    onAttachment.current?.("Uploading 1 file");
+    void runChip(scope, chip);
+  }, [runChip]);
+
+  /** Remove a chip before sending. Its record, if one was made, is discarded best-effort. */
+  const removeAttachment = useCallback((scope: string, localId: string) => {
+    const chip = live.current.attachments[scope]?.find((item) => item.localId === localId);
+    removedChips.current.add(localId);
+    setScopeChips(scope, (chips) => chips.filter((item) => item.localId !== localId));
+    if (chip?.fileId) discardFile(chip.fileId);
+  }, [discardFile, setScopeChips]);
+
+  /**
+   * A fresh 60-second signed URL for one Team Hub file of this workspace, minted on every call and
+   * never cached. With `download`, it is served as an attachment under the file's own name.
+   */
+  const fileUrl = useCallback(async (path: string, download?: string): Promise<string | null> => {
+    if (!path.startsWith(`${tenantId.toLowerCase()}/team-hub/`)) return null;
+    try {
+      const bucket = supabase.storage.from(TEAM_HUB_FILE_BUCKET);
+      const { data, error } = download
+        ? await bucket.createSignedUrl(path, SIGNED_URL_SECONDS, { download })
+        : await bucket.createSignedUrl(path, SIGNED_URL_SECONDS);
+      return !error && data && typeof data.signedUrl === "string" && data.signedUrl ? data.signedUrl : null;
+    } catch {
+      return null;
+    }
+  }, [tenantId]);
+
   const deliver = useCallback(async (attempt: PendingMessage): Promise<SendOutcome> => {
     setPending((current) => current.map((item) => item.localId === attempt.localId ? { ...item, status: "sending" } : item));
     const isTask = attempt.kind === "task" && attempt.task;
@@ -534,6 +746,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         p_client_request_id: attempt.clientRequestId,
         p_parent_message_id: attempt.parentId,
         p_mention_ids: attempt.mentionIds,
+        p_file_ids: attempt.files.map((file) => file.fileId),
       });
     const parsed = isTask ? parseTaskRequested(answer.data, answer.error) : parsePosted(answer.data, answer.error);
     // For a task, the server's `unavailable` also means Operations refused (PLAN_FORBIDDEN, contract
@@ -569,6 +782,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     }
     if (result.kind === "refused") {
       setPending((current) => current.filter((item) => item.localId !== attempt.localId));
+      // Nothing was stored: the files go back to the composer they came from, still ready.
+      if (attempt.files.length) setScopeChips(attachmentScope(attempt.channelId, attempt.parentId), (chips) => [...attempt.files, ...chips]);
       if (result.code === "not_found") {
         if (attempt.parentId) setThread((current) => current && current.rootId === attempt.parentId ? { ...current, status: "not_found" } : current);
         else setStream((current) => current && current.channelId === attempt.channelId ? { ...current, status: "not_found", messages: [], channel: null } : current);
@@ -577,9 +792,13 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     }
     setPending((current) => current.map((item) => item.localId === attempt.localId ? { ...item, status: "failed" } : item));
     return { kind: "failed" };
-  }, [call, settle, readTaskStatuses]);
+  }, [call, settle, readTaskStatuses, setScopeChips]);
 
-  const send = useCallback((input: { channelId: string; parentId: string | null; body: string; mentionIds: string[] }) => {
+  /** With `withFiles`, the composer's ready files leave it and travel with the message (and its Retry). */
+  const send = useCallback((input: { channelId: string; parentId: string | null; body: string; mentionIds: string[]; withFiles?: boolean }) => {
+    const scope = attachmentScope(input.channelId, input.parentId);
+    const files = input.withFiles ? (live.current.attachments[scope] ?? []).filter((chip) => chip.state === "ready" && chip.fileId) : [];
+    if (files.length) setScopeChips(scope, (chips) => chips.filter((chip) => !files.some((file) => file.localId === chip.localId)));
     const attempt: PendingMessage = {
       kind: "message",
       localId: newRequestId(),
@@ -588,11 +807,12 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       parentId: input.parentId,
       body: input.body.trim(),
       mentionIds: input.mentionIds,
+      files,
       status: "sending",
     };
     setPending((current) => [...current, attempt]);
     return deliver(attempt);
-  }, [deliver]);
+  }, [deliver, setScopeChips]);
 
   /**
    * Create one task in Operations from this conversation. Like a post, the attempt keeps one client
@@ -608,6 +828,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       parentId: input.parentId,
       body: TASK_COMMAND_TEXT,
       mentionIds: [],
+      files: [],
       status: "sending",
     };
     setPending((current) => [...current, attempt]);
@@ -633,8 +854,10 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [deliver]);
 
   const discard = useCallback((localId: string) => {
+    // An unsent message's files are discarded with it (a file that did post is refused there, so kept).
+    for (const file of pendingRef.current.find((item) => item.localId === localId)?.files ?? []) if (file.fileId) discardFile(file.fileId);
     setPending((current) => current.filter((item) => item.localId !== localId));
-  }, []);
+  }, [discardFile]);
 
   const createChannel = useCallback(async (input: { name: string; visibility: "team" | "private"; memberIds: string[]; clientRequestId: string }): Promise<ActionOutcome<string>> => {
     const answer = await call("team_hub_create_channel", {
@@ -736,6 +959,11 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     readTaskStatuses,
     retry,
     discard,
+    attachments,
+    attach,
+    retryAttachment,
+    removeAttachment,
+    fileUrl,
     createChannel,
     openDm,
     joinChannel,

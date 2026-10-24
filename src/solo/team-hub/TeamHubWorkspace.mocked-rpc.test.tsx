@@ -11,7 +11,7 @@ import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
-import { REFRESH_INTERVAL_MS } from "./useTeamHub";
+import { REFRESH_INTERVAL_MS, teamHubNavigation } from "./useTeamHub";
 
 const TENANT = "tenant-a";
 const ME = "u-me";
@@ -21,14 +21,16 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   from: vi.fn(),
   invoke: vi.fn(),
+  storageFrom: vi.fn(),
   handoff: vi.fn(),
   tenantRefresh: vi.fn(),
   tenant: { id: "tenant-a" as string | null },
 }));
 
-// `functions.invoke` exists only so a test can prove Team Hub never calls an edge function (no
-// orchestrator, no delegation); `from` serves the plan_items status reads (increment 2).
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mocks.rpc, from: mocks.from, functions: { invoke: mocks.invoke } } }));
+// `functions.invoke` proves the PAIGE handoffs never call an edge function (no orchestrator, no
+// delegation); its only Team Hub use is the increment-3 `team-hub-file` step. `from` serves the
+// plan_items status reads (increment 2); `storage` the increment-3 uploads and signed URLs.
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mocks.rpc, from: mocks.from, functions: { invoke: mocks.invoke }, storage: { from: mocks.storageFrom } } }));
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: mocks.handoff }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({
@@ -1528,5 +1530,387 @@ describe("increment 2 review findings (mocked RPC)", () => {
     await flush();
     expect(calls.filter((call) => call.name === "team_hub_post_message")).toHaveLength(0);
     expect(composer(host).value).toBe("/PAIGE draft a task\nsecond line");
+  });
+});
+
+// ── Increment 3: attachments (mocked RPC, storage and edge function) ──
+
+type FileRow = { id: string; client_request_id: string; channel_id: string; name: string; mime: string; size: number; path: string; state: string };
+let files: Record<string, FileRow>;
+type Deferred = { resolve: () => void; promise: Promise<void> };
+let gates: { upload?: Deferred; finish?: Deferred };
+let finishAnswer: (id: string) => unknown;
+let signAnswer: (path: string) => { data: { signedUrl: string } | null; error: unknown };
+let uploads: Array<{ path: string; contentType?: string; upsert?: boolean }>;
+let signs: Array<{ bucket: string; path: string; seconds: number; options?: unknown }>;
+let invokes: Array<{ name: string; body: Record<string, unknown> }>;
+
+const deferred = (): Deferred => { let resolve!: () => void; const promise = new Promise<void>((done) => { resolve = done; }); return { resolve, promise }; };
+const fileFor = (name: string, type: string, size = 2048) => {
+  const made = new File(["x"], name, { type });
+  Object.defineProperty(made, "size", { value: size });
+  return made;
+};
+
+function fileBackend(name: string, params: Record<string, unknown>) {
+  if (name === "team_hub_begin_file") {
+    const held = Object.values(files).find((row) => row.client_request_id === params.p_client_request_id);
+    if (held) return { ok: true, file: { id: held.id, path: held.path, name: held.name, mime: held.mime, size: held.size, state: held.state }, duplicate: true };
+    const id = `f-${Object.keys(files).length + 1}`;
+    const row: FileRow = { id, client_request_id: String(params.p_client_request_id), channel_id: String(params.p_channel_id), name: String(params.p_name),
+      mime: String(params.p_mime), size: Number(params.p_size), path: `${TENANT}/team-hub/${id}`, state: "pending" };
+    files[id] = row;
+    return { ok: true, file: { id, path: row.path, name: row.name, mime: row.mime, size: row.size, state: row.state } };
+  }
+  if (name === "team_hub_post_message") {
+    const ids = (params.p_file_ids as string[] | undefined) ?? [];
+    const posted = ids.map((id) => files[id]).map((row) => ({ id: row.id, name: row.name, mime: row.mime, size: row.size, path: row.path }));
+    const message = msg({ id: `m-${calls.length}`, author_user_id: ME, body: String(params.p_body).trim(), mentions: params.p_mention_ids, files: posted });
+    (db.messages[String(params.p_channel_id)] ??= []).push(message);
+    return { ok: true, duplicate: false, message };
+  }
+  return undefined;
+}
+
+beforeEach(() => {
+  files = {};
+  gates = {};
+  uploads = [];
+  signs = [];
+  invokes = [];
+  finishAnswer = (id) => { files[id].state = "ready"; return { ok: true, file: { id, path: files[id].path, mime: files[id].mime, size: files[id].size, state: "ready" } }; };
+  signAnswer = (path) => ({ data: { signedUrl: `https://storage.test/signed/${path}?n=${signs.length}` }, error: null });
+  mocks.rpc.mockImplementation(async (name: string, params: Record<string, unknown>) => {
+    calls.push({ name, params });
+    const answer = db.override[name] ? db.override[name](params) : fileBackend(name, params);
+    if (answer !== undefined) return { data: answer, error: null };
+    calls.pop();
+    return { data: backend(name, params), error: null };
+  });
+  mocks.storageFrom.mockImplementation((bucket: string) => ({
+    async upload(path: string, _file: File, options: { contentType?: string; upsert?: boolean }) {
+      uploads.push({ path, contentType: options.contentType, upsert: options.upsert });
+      if (gates.upload) await gates.upload.promise;
+      return { data: { path }, error: null };
+    },
+    async createSignedUrl(path: string, seconds: number, options?: unknown) {
+      signs.push({ bucket, path, seconds, options });
+      return signAnswer(path);
+    },
+  }));
+  mocks.invoke.mockImplementation(async (name: string, options: { body: Record<string, unknown> }) => {
+    invokes.push({ name, body: options.body });
+    if (options.body.action === "discard") return { data: { ok: true, removed: true }, error: null };
+    if (gates.finish) await gates.finish.promise;
+    return { data: finishAnswer(String(options.body.file_id)), error: null };
+  });
+});
+
+const fileInput = (host: HTMLElement, within = ".th-conv") => host.querySelector<HTMLInputElement>(`${within} input[type=file]`)!;
+async function pick(input: HTMLInputElement, picked: File[]) {
+  await act(async () => {
+    Object.defineProperty(input, "files", { configurable: true, value: picked });
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+const chips = (host: HTMLElement, within = ".th-conv") => Array.from(host.querySelectorAll<HTMLElement>(`${within} .th-att`));
+const sendButton = (host: HTMLElement) => host.querySelector<HTMLButtonElement>(".th-conv button[aria-label=Send]")!;
+const begins = () => calls.filter((call) => call.name === "team_hub_begin_file");
+const posts = () => calls.filter((call) => call.name === "team_hub_post_message");
+
+describe("attachments: the composer (increment 3, mocked RPC)", () => {
+  it("puts the paperclip between @ and /, with the contract's name, tooltip and accepted extensions", async () => {
+    const { host } = await mount();
+    const row = Array.from(host.querySelectorAll<HTMLButtonElement>(".th-conv .th-composer-row button")).map((item) => item.getAttribute("aria-label"));
+    expect(row.slice(0, 3)).toEqual(["Mention someone", "Attach files (not scanned)", "PAIGE commands"]);
+    const clip = button(host, "Attach files (not scanned)")!;
+    expect(clip.getAttribute("title")).toBe("Attach files (not scanned)");
+    expect(clip.className).not.toContain("th-btn--act");
+    expect(fileInput(host).accept).toBe(".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv");
+    expect(fileInput(host).multiple).toBe(true);
+  });
+
+  it("walks a chip through Uploading…, Checking… and ready, through begin → upload → finish, announcing each step once", async () => {
+    gates.upload = deferred();
+    gates.finish = deferred();
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf")]);
+    await flush();
+    expect(chips(host)[0].textContent).toContain("Uploading…");
+    expect(liveRegion(host).textContent).toBe("Uploading 1 file");
+    expect(begins()).toHaveLength(1);
+    expect(begins()[0].params).toMatchObject({ p_expected_tenant: TENANT, p_channel_id: "c-general", p_name: "Brief.pdf", p_mime: "application/pdf", p_size: 2048 });
+    expect(typeof begins()[0].params.p_client_request_id).toBe("string");
+    expect(uploads).toEqual([{ path: `${TENANT}/team-hub/f-1`, contentType: "application/pdf", upsert: false }]);
+    expect(mocks.storageFrom).toHaveBeenCalledWith("comms-attachments");
+    expect(sendButton(host).disabled).toBe(true);
+    await act(async () => gates.upload!.resolve());
+    await flush();
+    expect(chips(host)[0].textContent).toContain("Checking…");
+    expect(invokes).toEqual([{ name: "team-hub-file", body: { action: "finish", expected_tenant: TENANT, file_id: "f-1" } }]);
+    expect(sendButton(host).disabled).toBe(true);
+    // Enter while a file is checking sends nothing.
+    await type(composer(host), "Here it is");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(posts()).toHaveLength(0);
+    await act(async () => gates.finish!.resolve());
+    await flush();
+    expect(chips(host)[0].textContent).toContain("2 KB · Ready");
+    expect(liveRegion(host).textContent).toBe("File ready");
+    expect(sendButton(host).disabled).toBe(false);
+    expect(host.querySelector(".th-conv .th-atts")!.textContent).toContain("Files aren't scanned for viruses. Only open files from people you trust.");
+  });
+
+  it("says why a chip is refused, in the contract's words: type, size, contents, count", async () => {
+    finishAnswer = () => ({ ok: false, code: "rejected", reason: "type_mismatch" });
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Fake.png", "image/png")]);
+    await flush();
+    expect(chips(host)[0].textContent).toContain("Its contents don't match its type");
+    expect(liveRegion(host).textContent).toBe("File refused: Its contents don't match its type");
+    expect(chips(host)[0].dataset.state).toBe("refused");
+
+    await pick(fileInput(host), [fileFor("Old.doc", "application/msword")]);
+    await flush();
+    expect(chips(host)[1].textContent).toContain("That file type isn't allowed");
+    expect(host.querySelector(".th-conv .th-atts")!.textContent).toContain("Older .doc and .xls files and PowerPoint can't be attached.");
+
+    db.override.team_hub_begin_file = () => ({ ok: false, code: "too_large" });
+    await pick(fileInput(host), [fileFor("Scan.pdf", "application/pdf", 9_000_000)]);
+    await flush();
+    expect(chips(host)[2].textContent).toContain("Over 10 MB");
+    // A refused chip keeps Send off until it is removed.
+    expect(sendButton(host).disabled).toBe(true);
+  });
+
+  it("refuses the 6th file, a file over 10 MB and a .doc before any upload starts", async () => {
+    gates.upload = deferred();
+    const { host } = await mount();
+    await pick(fileInput(host), [
+      fileFor("1.pdf", "application/pdf"), fileFor("2.png", "image/png"), fileFor("3.jpg", "image/jpeg"),
+      fileFor("4.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+      fileFor("5.csv", "text/csv"), fileFor("6.txt", "text/plain"),
+      fileFor("big.pdf", "application/pdf", 10_485_761), fileFor("legacy.doc", "application/msword"),
+    ]);
+    await flush();
+    const shown = chips(host);
+    expect(shown).toHaveLength(8);
+    expect(shown[5].textContent).toContain("5 files per message");
+    expect(shown[6].textContent).toContain("5 files per message");
+    expect(shown[7].textContent).toContain("5 files per message");
+    expect(begins().map((call) => call.params.p_name)).toEqual(["1.pdf", "2.png", "3.jpg", "4.docx", "5.csv"]);
+    expect(liveRegion(host).textContent).toContain("Uploading 5 files");
+    expect(liveRegion(host).textContent).toContain("File refused: 5 files per message");
+    await act(async () => gates.upload!.resolve());
+    await flush();
+    // Room again after removing files: the size and type rules then refuse on their own.
+    for (const name of ["1.pdf", "2.png", "3.jpg", "6.txt", "big.pdf", "legacy.doc"]) {
+      await act(async () => button(host, `Remove ${name}`)!.click());
+    }
+    await pick(fileInput(host), [fileFor("big.pdf", "application/pdf", 10_485_761), fileFor("legacy.doc", "application/msword"), fileFor("edge.pdf", "application/pdf", 10_485_760)]);
+    await flush();
+    const after = chips(host).map((chip) => chip.textContent);
+    expect(after.find((text) => text?.includes("big.pdf"))).toContain("Over 10 MB");
+    expect(after.find((text) => text?.includes("legacy.doc"))).toContain("That file type isn't allowed");
+    expect(after.find((text) => text?.includes("edge.pdf"))).toContain("Ready");
+    expect(begins().map((call) => call.params.p_name)).not.toContain("big.pdf");
+    expect(begins().map((call) => call.params.p_name)).not.toContain("legacy.doc");
+  });
+
+  it("sends a files-only message with p_file_ids, then shows the file on the message", async () => {
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf"), fileFor("Budget.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]);
+    await flush();
+    expect(composer(host).value).toBe("");
+    expect(sendButton(host).dataset.ready).toBe("true");
+    await act(async () => sendButton(host).click());
+    await flush();
+    expect(posts()).toHaveLength(1);
+    expect(posts()[0].params).toMatchObject({ p_body: "", p_file_ids: ["f-1", "f-2"], p_channel_id: "c-general" });
+    expect(chips(host)).toHaveLength(0);
+    const rows = Array.from(host.querySelectorAll<HTMLElement>(".th-stream .th-file"));
+    expect(rows.map((row) => row.getAttribute("aria-label"))).toEqual(["Brief.pdf, PDF, 2 KB", "Budget.xlsx, Excel workbook, 2 KB"]);
+    expect(liveRegion(host).textContent).toBe("Message sent");
+  });
+
+  it("keeps the same client request id when a failed upload is retried, so the server keeps one record", async () => {
+    let attempt = 0;
+    db.override.team_hub_begin_file = (params) => { attempt += 1; return attempt === 1 ? undefined : fileBackend("team_hub_begin_file", params); };
+    const realRpc = mocks.rpc.getMockImplementation()!;
+    mocks.rpc.mockImplementation(async (name: string, params: Record<string, unknown>) => {
+      if (name === "team_hub_begin_file" && attempt === 0) { attempt += 1; calls.push({ name, params }); return { data: null, error: { message: "network down" } }; }
+      return realRpc(name, params);
+    });
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf")]);
+    await flush();
+    expect(chips(host)[0].textContent).toContain("Upload didn't finish");
+    expect(liveRegion(host).textContent).toBe("Upload didn't finish. Retry is available.");
+    await act(async () => button(host, "Retry Brief.pdf")!.click());
+    await flush();
+    expect(begins()).toHaveLength(2);
+    expect(begins()[1].params.p_client_request_id).toBe(begins()[0].params.p_client_request_id);
+    expect(chips(host)[0].textContent).toContain("Ready");
+  });
+
+  it("Remove discards the record best-effort and drops the chip; Esc in the composer keeps chips", async () => {
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf"), fileFor("Notes.txt", "text/plain")]);
+    await flush();
+    await type(composer(host), "draft");
+    await press(composer(host), "Escape");
+    expect(chips(host)).toHaveLength(2);
+    await act(async () => button(host, "Remove Brief.pdf")!.click());
+    await flush();
+    expect(chips(host).map((chip) => chip.textContent)).toEqual([expect.stringContaining("Notes.txt")]);
+    expect(invokes.filter((item) => item.body.action === "discard")).toEqual([{ name: "team-hub-file", body: { action: "discard", expected_tenant: TENANT, file_id: "f-1" } }]);
+    expect(liveRegion(host).textContent).toBe("File removed");
+    expect(document.activeElement).toBe(composer(host));
+  });
+
+  it("discards a file whose chip was removed while it was still uploading", async () => {
+    gates.upload = deferred();
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf")]);
+    await flush();
+    await act(async () => button(host, "Remove Brief.pdf")!.click());
+    await act(async () => gates.upload!.resolve());
+    await flush();
+    expect(chips(host)).toHaveLength(0);
+    expect(invokes.some((item) => item.body.action === "finish")).toBe(false);
+    expect(invokes.filter((item) => item.body.action === "discard").map((item) => item.body.file_id)).toEqual(["f-1"]);
+  });
+
+  it("takes files dropped onto the composer, and refuses a drop while offline", async () => {
+    const { host } = await mount();
+    const box = host.querySelector<HTMLElement>(".th-conv .th-composer")!;
+    const drop = async (type: string, picked: File[]) => act(async () => {
+      const event = new Event(type, { bubbles: true, cancelable: true }) as Event & { dataTransfer: unknown };
+      event.dataTransfer = { types: ["Files"], files: picked, dropEffect: "none" };
+      box.dispatchEvent(event);
+    });
+    await drop("dragover", []);
+    expect(box.hasAttribute("data-drop")).toBe(true);
+    await drop("drop", [fileFor("Photo.webp", "image/webp")]);
+    await flush();
+    expect(box.hasAttribute("data-drop")).toBe(false);
+    expect(chips(host)[0].textContent).toContain("Photo.webp");
+    expect(begins()[0].params.p_mime).toBe("image/webp");
+  });
+
+  it("puts the files back, still ready, when the server refuses the message", async () => {
+    db.override.team_hub_post_message = () => ({ ok: false, code: "invalid" });
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf")]);
+    await flush();
+    await type(composer(host), "See attached");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(posts()[0].params.p_file_ids).toEqual(["f-1"]);
+    expect(composer(host).value).toBe("See attached");
+    expect(chips(host)[0].textContent).toContain("Ready");
+  });
+
+  it("retries a lost send with the same request id and the same files", async () => {
+    let attempt = 0;
+    db.override.team_hub_post_message = (params) => { attempt += 1; return attempt === 1 ? { broken: true } : fileBackend("team_hub_post_message", params); };
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf")]);
+    await flush();
+    await act(async () => sendButton(host).click());
+    await flush();
+    expect(host.querySelector(".th-msg--pending .th-file")?.textContent).toContain("Brief.pdf");
+    await act(async () => button(host, "Retry")!.click());
+    await flush();
+    expect(posts()).toHaveLength(2);
+    expect(posts()[1].params.p_client_request_id).toBe(posts()[0].params.p_client_request_id);
+    expect(posts()[1].params.p_file_ids).toEqual(["f-1"]);
+  });
+
+  it("attaches to a thread reply through the thread's own paperclip, and posts it with the reply", async () => {
+    db.messages["c-general"] = [msg({ reply_count: 1 })];
+    db.replies["m-1"] = [msg({ id: "r-1", parent_message_id: "m-1", body: "On it" })];
+    const { host } = await mount();
+    await act(async () => button(host, /1 reply/)!.click());
+    await flush();
+    const thread = "aside[aria-label=Thread]";
+    expect(host.querySelector(`${thread} button[aria-label='Attach files (not scanned)']`)).not.toBeNull();
+    await pick(fileInput(host, thread), [fileFor("Plan.pdf", "application/pdf")]);
+    await flush();
+    expect(chips(host, thread)[0].textContent).toContain("Ready");
+    expect(chips(host)).toHaveLength(0);
+    await act(async () => host.querySelector<HTMLButtonElement>(`${thread} button[aria-label='Send reply']`)!.click());
+    await flush();
+    expect(posts()[0].params).toMatchObject({ p_parent_message_id: "m-1", p_file_ids: ["f-1"], p_body: "" });
+  });
+});
+
+describe("attachments: files on messages (increment 3, mocked RPC)", () => {
+  const posted = (over: Record<string, unknown> = {}) => ({ id: "f-9", name: "Brief.pdf", mime: "application/pdf", size: 4096, path: `${TENANT}/team-hub/f-9`, ...over });
+
+  it("mints a fresh 60-second attachment URL on every Download click, then goes to it", async () => {
+    db.messages["c-general"] = [msg({ files: [posted()] })];
+    const assign = vi.spyOn(teamHubNavigation, "assign").mockImplementation(() => undefined);
+    const { host } = await mount();
+    const download = button(host, "Download Brief.pdf")!;
+    expect(download.className).not.toContain("th-btn--act");
+    expect(download.textContent).toContain("Download");
+    await act(async () => download.click());
+    await flush();
+    await act(async () => download.click());
+    await flush();
+    expect(signs).toEqual([
+      { bucket: "comms-attachments", path: `${TENANT}/team-hub/f-9`, seconds: 60, options: { download: "Brief.pdf" } },
+      { bucket: "comms-attachments", path: `${TENANT}/team-hub/f-9`, seconds: 60, options: { download: "Brief.pdf" } },
+    ]);
+    expect(assign.mock.calls.map((call) => call[0])).toEqual([
+      `https://storage.test/signed/${TENANT}/team-hub/f-9?n=1`, `https://storage.test/signed/${TENANT}/team-hub/f-9?n=2`,
+    ]);
+  });
+
+  it("says Couldn't get the file. Try again. when a URL can't be minted, and goes nowhere", async () => {
+    db.messages["c-general"] = [msg({ files: [posted()] })];
+    signAnswer = () => ({ data: null, error: { message: "Object not found" } });
+    const assign = vi.spyOn(teamHubNavigation, "assign").mockImplementation(() => undefined);
+    const { host } = await mount();
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    await flush();
+    expect(assign).not.toHaveBeenCalled();
+    expect(host.querySelector(".th-file-error")?.textContent).toBe("Couldn't get the file. Try again.");
+    expect(liveRegion(host).textContent).toBe("Couldn't get the file. Try again.");
+    expect(button(host, "Download Brief.pdf")!.getAttribute("aria-describedby")).toContain(host.querySelector(".th-file-error")!.id);
+  });
+
+  it("describes every file row with the disclosure, and a files-only message has no empty text line", async () => {
+    db.messages["c-general"] = [msg({ body: "", files: [posted()] })];
+    const { host } = await mount();
+    const row = host.querySelector<HTMLElement>(".th-stream .th-file")!;
+    const description = document.getElementById(row.getAttribute("aria-describedby")!)!;
+    expect(description.textContent).toBe("Files aren't scanned for viruses. Only open files from people you trust.");
+    expect(host.querySelector(".th-stream .th-text")).toBeNull();
+  });
+
+  it("gives images a thumbnail from its own 60-second URL, and falls back to the glyph when it fails", async () => {
+    db.messages["c-general"] = [msg({ files: [posted({ id: "f-img", name: "Photo.png", mime: "image/png", path: `${TENANT}/team-hub/f-img` })] })];
+    const { host } = await mount();
+    expect(signs).toEqual([{ bucket: "comms-attachments", path: `${TENANT}/team-hub/f-img`, seconds: 60, options: undefined }]);
+    const img = host.querySelector<HTMLImageElement>(".th-file-thumb img")!;
+    expect(img.getAttribute("src")).toBe(`https://storage.test/signed/${TENANT}/team-hub/f-img?n=1`);
+    expect(img.getAttribute("alt")).toBe("");
+    await act(async () => { img.dispatchEvent(new Event("error")); });
+    expect(host.querySelector(".th-file-thumb img")).toBeNull();
+    expect(host.querySelector(".th-file-thumb svg")).not.toBeNull();
+  });
+
+  it("never signs a path outside this workspace's Team Hub prefix", async () => {
+    db.messages["c-general"] = [msg({ files: [posted({ path: "tenant-b/team-hub/f-9" })] })];
+    const assign = vi.spyOn(teamHubNavigation, "assign").mockImplementation(() => undefined);
+    const { host } = await mount();
+    await act(async () => button(host, "Download Brief.pdf")!.click());
+    await flush();
+    expect(signs).toEqual([]);
+    expect(assign).not.toHaveBeenCalled();
+    expect(host.querySelector(".th-file-error")?.textContent).toBe("Couldn't get the file. Try again.");
   });
 });

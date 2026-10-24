@@ -1,5 +1,5 @@
 /**
- * EXP08 Team Hub, increments 1 and 2 — the response contract the workspace trusts.
+ * EXP08 Team Hub, increments 1 to 3 — the response contract the workspace trusts.
  *
  * Every `team_hub_*` function answers `{ ok: true, … }` or `{ ok: false, code }`
  * (docs/delivery/exp08-team-hub-collaboration-contract.md §4). Anything else — a
@@ -22,6 +22,11 @@ export const TEAM_HUB_REFUSALS = [
   "too_long",
   // Increment 2: Operations refused the task for a reason without its own code. Nothing was stored.
   "failed",
+  // Increment 3 (attachments contract §4): over 10 MB; more than 20 unposted files in a day; the
+  // real type didn't match (the `team-hub-file` finish step).
+  "too_large",
+  "limit_reached",
+  "rejected",
 ] as const;
 export type TeamHubRefusal = typeof TEAM_HUB_REFUSALS[number];
 
@@ -75,6 +80,20 @@ export interface TeamHubMessage {
   mentions: string[];
   /** Increment 2: the one Operations record this message started, or null (unknown kinds too). */
   work_ref: TeamHubWorkRef | null;
+  /** Increment 3: the files posted with it, in posting order. `[]` when there are none. */
+  files: TeamHubFile[];
+}
+
+/**
+ * One file on a message (attachments contract §4, `_team_hub_message_json`). The path is what a
+ * signed URL is minted for; reading the object still needs the storage read policy.
+ */
+export interface TeamHubFile {
+  id: string;
+  name: string;
+  mime: TeamHubFileMime;
+  size: number;
+  path: string;
 }
 
 /** The only source increment 2 links to: an EXP05 Operations (`plan_items`) record. */
@@ -216,7 +235,11 @@ function parseMessage(value: unknown): TeamHubMessage | null {
   if (!isNullableText(value.parent_message_id) || !isCount(value.reply_count)) return null;
   if (!isNullableInstant(value.last_reply_at)) return null;
   if (!Array.isArray(value.mentions) || !value.mentions.every(isText)) return null;
+  // Absent only on an answer from before increment 3; present, it must be a list of whole files.
+  const files = value.files === undefined ? [] : parseAll(value.files, parseFile);
+  if (!files) return null;
   return {
+    files: files.filter((file, index) => files.findIndex((other) => other.id === file.id) === index),
     work_ref: parseWorkRef(value.work_ref),
     id: value.id,
     author_user_id: value.author_user_id,
@@ -233,6 +256,18 @@ function parseMessage(value: unknown): TeamHubMessage | null {
 export function parseWorkRef(value: unknown): TeamHubWorkRef | null {
   if (!isRow(value) || value.source !== "planning" || !isText(value.id)) return null;
   return { source: "planning", id: value.id };
+}
+
+/**
+ * A file as a message carries it. Every field is checked against the table's own rules (§3): one of
+ * the nine types, 1 byte to 10 MB, a safe name, and the server-built `<tenant>/team-hub/<id>` path.
+ * One file that fails makes the whole message unreadable, as a bad mention does.
+ */
+export function parseFile(value: unknown): TeamHubFile | null {
+  if (!isRow(value) || !isText(value.id) || !isFileMime(value.mime) || !isFileName(value.name)) return null;
+  if (!isCount(value.size) || value.size < 1 || value.size > TEAM_HUB_FILE_MAX_BYTES) return null;
+  if (!isText(value.path) || !isTeamHubPath(value.path, value.id)) return null;
+  return { id: value.id, name: value.name, mime: value.mime, size: value.size, path: value.path };
 }
 
 function parseChannelSummary(value: unknown): TeamHubChannelSummary | null {
@@ -718,4 +753,170 @@ export function refusalMessage(code: TeamHubRefusal | "no_answer", action: "send
     default:
       return action === "send" ? "Not sent. Your message is kept here." : action === "work" ? "Team work couldn't load. Try again." : "Team Hub couldn't complete that. Try again.";
   }
+}
+
+// ── Increment 3: attachments (docs/delivery/exp08-team-hub-increment3-attachments-contract.md) ──
+
+/** The nine types the server accepts (§1), by declared MIME, with the extensions that name each. */
+export const TEAM_HUB_FILE_TYPES = [
+  { mime: "application/pdf", extensions: ["pdf"], kind: "document", label: "PDF" },
+  { mime: "image/png", extensions: ["png"], kind: "image", label: "PNG image" },
+  { mime: "image/jpeg", extensions: ["jpg", "jpeg"], kind: "image", label: "JPEG image" },
+  { mime: "image/webp", extensions: ["webp"], kind: "image", label: "WEBP image" },
+  { mime: "image/gif", extensions: ["gif"], kind: "image", label: "GIF image" },
+  { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", extensions: ["docx"], kind: "document", label: "Word document" },
+  { mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", extensions: ["xlsx"], kind: "sheet", label: "Excel workbook" },
+  { mime: "text/plain", extensions: ["txt"], kind: "document", label: "Text file" },
+  { mime: "text/csv", extensions: ["csv"], kind: "sheet", label: "CSV file" },
+] as const;
+export type TeamHubFileMime = typeof TEAM_HUB_FILE_TYPES[number]["mime"];
+export type TeamHubFileKind = typeof TEAM_HUB_FILE_TYPES[number]["kind"];
+
+/** The hidden file input's `accept`: the allowed extensions, nothing else. */
+export const TEAM_HUB_FILE_ACCEPT = TEAM_HUB_FILE_TYPES.flatMap((type) => type.extensions.map((ext) => `.${ext}`)).join(",");
+export const TEAM_HUB_FILE_MAX_BYTES = 10_485_760;
+export const TEAM_HUB_FILES_PER_MESSAGE = 5;
+export const TEAM_HUB_FILE_DISCLOSURE = "Files aren't scanned for viruses. Only open files from people you trust.";
+export const TEAM_HUB_ATTACH_LABEL = "Attach files (not scanned)";
+export const TEAM_HUB_DOWNLOAD_FAILED = "Couldn't get the file. Try again.";
+/** What can't be attached, said where a type is refused (§1, "Not allowed, stated in the UI"). */
+export const TEAM_HUB_FILE_TYPES_NOTE = "You can attach PDFs, images (PNG, JPEG, WEBP, GIF), Word .docx, Excel .xlsx, text and CSV files. Older .doc and .xls files and PowerPoint can't be attached.";
+
+const FILE_MIMES = new Set<string>(TEAM_HUB_FILE_TYPES.map((type) => type.mime));
+const isFileMime = (value: unknown): value is TeamHubFileMime => typeof value === "string" && FILE_MIMES.has(value);
+
+/** The server's name rule (§3): 1–255 characters, no slash, backslash or control character. */
+// eslint-disable-next-line no-control-regex -- the control range is exactly what is refused
+const UNSAFE_NAME = /[\u0000-\u001f\u007f/\\]/;
+function isFileName(value: unknown): value is string {
+  return typeof value === "string" && [...value].length >= 1 && [...value].length <= 255 && !UNSAFE_NAME.test(value);
+}
+
+/** `<tenant>/team-hub/<file_id>`: exactly three segments, all lowercase, ending in this file's id. */
+function isTeamHubPath(path: string, fileId: string, tenantId?: string): boolean {
+  const parts = path.split("/");
+  return parts.length === 3 && path === path.toLowerCase() && parts[0].length > 0 && parts[1] === "team-hub"
+    && parts[2] === fileId.toLowerCase() && (tenantId === undefined || parts[0] === tenantId.toLowerCase());
+}
+
+export function fileExtension(name: string): string {
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(dot + 1).toLowerCase() : "";
+}
+
+/**
+ * What a browser may report for an allowed extension. The declared MIME always comes from the
+ * extension (it is what the server checks the name and the bytes against); the browser's own
+ * report is only allowed to agree, be blank, or be a well-known alias (Windows calls CSV Excel).
+ */
+const BROWSER_ALIASES: Record<string, string[]> = {
+  "text/csv": ["application/vnd.ms-excel", "application/csv", "text/x-csv", "text/comma-separated-values", "text/plain"],
+  "image/jpeg": ["image/pjpeg", "image/jpg"],
+  "text/plain": [],
+};
+
+export function fileTypeFor(name: string, browserMime = ""): typeof TEAM_HUB_FILE_TYPES[number] | null {
+  const ext = fileExtension(name);
+  const type = TEAM_HUB_FILE_TYPES.find((item) => (item.extensions as readonly string[]).includes(ext));
+  if (!type) return null;
+  const reported = browserMime.trim().toLowerCase();
+  if (!reported || reported === type.mime || (BROWSER_ALIASES[type.mime] ?? []).includes(reported)) return type;
+  return null;
+}
+
+export function fileKind(mime: TeamHubFileMime): TeamHubFileKind {
+  return TEAM_HUB_FILE_TYPES.find((type) => type.mime === mime)?.kind ?? "document";
+}
+export const isImageMime = (mime: string) => mime.startsWith("image/");
+
+/** Why a chip can't be attached. Each maps to one plain sentence (§7). */
+export type TeamHubFileRefusal = "type" | "too_large" | "count" | "rejected" | "empty" | "name" | "limit" | "gone";
+
+export function fileRefusalMessage(reason: TeamHubFileRefusal): string {
+  switch (reason) {
+    case "type": return "That file type isn't allowed";
+    case "too_large": return "Over 10 MB";
+    case "count": return `${TEAM_HUB_FILES_PER_MESSAGE} files per message`;
+    case "rejected": return "Its contents don't match its type";
+    case "empty": return "That file is empty";
+    case "name": return "That file name can't be used";
+    case "limit": return "Too many unsent files. Send or remove some first";
+    case "gone": return "It can't be attached here any more";
+  }
+}
+
+/**
+ * The checks the server makes at `team_hub_begin_file`, made first so a file that can't be attached
+ * never starts an upload. `held` is how many files this message already holds (refused ones excluded).
+ */
+export function filePrecheck(file: { name: string; size: number; type?: string }, held: number): TeamHubFileRefusal | null {
+  if (held >= TEAM_HUB_FILES_PER_MESSAGE) return "count";
+  if (!fileTypeFor(file.name, file.type ?? "")) return "type";
+  if (!isFileName(file.name)) return "name";
+  if (file.size < 1) return "empty";
+  if (file.size > TEAM_HUB_FILE_MAX_BYTES) return "too_large";
+  return null;
+}
+
+/** The chip's reason for a refusal `team_hub_begin_file` returned. */
+export function beginRefusalReason(code: TeamHubRefusal): TeamHubFileRefusal {
+  switch (code) {
+    case "too_large": return "too_large";
+    case "limit_reached": return "limit";
+    case "rejected": return "rejected";
+    case "invalid": return "type";
+    default: return "gone";
+  }
+}
+
+export interface TeamHubFileRecord {
+  id: string;
+  path: string;
+  name: string;
+  mime: TeamHubFileMime;
+  size: number;
+  state: "pending" | "ready" | "rejected" | "discarded";
+}
+
+const FILE_STATES = new Set(["pending", "ready", "rejected", "discarded"]);
+
+/**
+ * `team_hub_begin_file`: the record the server made (or, on a retry, the one it already had). The
+ * path must be the server-built one for THIS workspace and file; anything else is never uploaded to.
+ */
+export function parseBegunFile(data: unknown, error: unknown, expectedTenant: string, expected: { name: string; mime: string; size: number }): TeamHubResult<TeamHubFileRecord> {
+  const answer = envelope(data, error);
+  if (answer.kind !== "ok") return answer;
+  const file = answer.value.file;
+  if (!isRow(file) || !isText(file.id) || !isText(file.path) || !isTeamHubPath(file.path, file.id, expectedTenant)) return { kind: "unavailable" };
+  if (!isFileMime(file.mime) || file.mime !== expected.mime || file.size !== expected.size || file.name !== expected.name) return { kind: "unavailable" };
+  if (typeof file.state !== "string" || !FILE_STATES.has(file.state)) return { kind: "unavailable" };
+  return { kind: "ok", value: { id: file.id, path: file.path, name: file.name, mime: file.mime, size: file.size, state: file.state as TeamHubFileRecord["state"] } };
+}
+
+export type TeamHubFinish =
+  | { kind: "ready" }
+  | { kind: "rejected" }
+  | { kind: "refused"; code: TeamHubRefusal }
+  /** No usable answer, or the bytes weren't there yet (`not_uploaded`): Retry may still succeed. */
+  | { kind: "failed" };
+
+/** The `team-hub-file` finish answer: ready only for this file, in the ready state. */
+export function parseFinished(data: unknown, error: unknown, fileId: string): TeamHubFinish {
+  if (error || !isRow(data)) return { kind: "failed" };
+  if (data.ok === true) {
+    const file = data.file;
+    return isRow(file) && file.id === fileId && file.state === "ready" ? { kind: "ready" } : { kind: "failed" };
+  }
+  if (data.ok === false && data.code === "rejected") return { kind: "rejected" };
+  if (data.ok === false && isRefusal(data.code)) return { kind: "refused", code: data.code };
+  return { kind: "failed" };
+}
+
+/** Sizes as people read them: bytes, then KB, then MB with one decimal. */
+export function fileSizeLabel(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const mb = bytes / (1024 * 1024);
+  return `${mb < 10 ? mb.toFixed(1) : Math.round(mb)} MB`;
 }

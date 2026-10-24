@@ -222,6 +222,11 @@ function attachmentValidationError(
         attachment.url.includes("\\") || /^https?:\/\//i.test(attachment.url)) {
       return "attachment_not_tenant_owned";
     }
+    // EXP08 Team Hub files share this bucket under <tenant>/team-hub/. Only the conversation's
+    // members may read them (restrictive storage policy); an email attachment is read with the
+    // service role, which would bypass that, so a Team Hub file is never attachable by path.
+    const firstFolder = attachment.url.slice(prefix.length).split("/").find((part) => part !== "" && part !== ".");
+    if (firstFolder?.toLowerCase() === "team-hub") return "attachment_not_allowed";
     if (attachment.name !== undefined && (typeof attachment.name !== "string" || attachment.name.length > 255)) return "invalid_attachment_name";
     if (attachment.mime !== undefined && (typeof attachment.mime !== "string" || attachment.mime.length > 255)) return "invalid_attachment_mime";
     if (attachment.size !== undefined &&

@@ -2,6 +2,10 @@
 
 ## October24 — EXP08 Team Hub owner decisions
 
+- **EXP08 Team Hub increment 2 (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
+  - **Link storage: APPROVED.** Add one additive EXP08 table, `team_hub_work_refs`, so that one Team Hub message references one EXP05 Work record. It copies no status, title, assignee or due date. Tasks are created only through Operations' existing `plan_assign_task_scoped`.
+  - **PAIGE chat link-back: SKIPPED for now.** `/PAIGE` specialist, approval and meeting requests pre-fill PAIGE, and the person sends from there. Automatic link-back from PAIGE chat waits for a separate EXP05/Chat change. Team Hub never calls the delegation endpoint directly.
+  - Contract: [increment 2](../delivery/exp08-team-hub-increment2-work-contract.md).
 - **EXP08 Team Hub design and storage approved (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
   - **Design and behavior: APPROVED.** Interactive prototype v2 is approved for production and frozen under §28.
   - **Collaboration storage: APPROVED.** Team channels, members, messages, threads, mentions and read markers may be added as reviewed, additive migrations with tenant and channel-membership enforcement. Isolation must be proven before release.

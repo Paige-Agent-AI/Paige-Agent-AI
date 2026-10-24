@@ -18,6 +18,7 @@ import {
   resolveMentions,
   timeLabel,
   MESSAGE_MAX_LENGTH,
+  messageLength,
   TEAM_HUB_UNAVAILABLE_TITLE,
   type PickedMention,
   type TeamHubConversation,
@@ -358,7 +359,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings }: {
           onBack={() => { setMobileView("list"); window.requestAnimationFrame(() => document.getElementById(`th-conv-${hub.activeId}`)?.focus()); }}
           onOpenThread={openThread} announce={announce} pending={pendingTop} onRetry={retry}
           onMembershipDone={(left) => { if (left) window.requestAnimationFrame(() => searchRef.current?.focus()); else focusComposer(); }}
-          onDiscard={(item) => { hub.discard(item.localId); announce("Unsent message deleted"); focusComposer(); }}
+          onDiscard={(item) => { hub.discard(item.localId); announce("Removed from this screen"); focusComposer(); }}
           composer={active && hub.stream?.status === "ready" ? <Composer key={active.id} inputRef={composerRef} conversation={active} people={people} meId={meId}
             online={hub.online} value={draft} onChange={(value) => { setDraft(value); setComposerError(null); }}
             picked={pickedHere} onPick={(mention) => hub.activeId && setPicked((current) => ({ ...current, [hub.activeId!]: [...(current[hub.activeId!] ?? []), mention] }))}
@@ -785,7 +786,7 @@ function PendingRow({ item, me, online, onRetry, onDiscard }: {
       {/* Announced once by the live region when the send fails; shown here with its recovery. */}
       {item.status === "failed" && <div className="th-fail">Not sent. Your message is kept here.
         <button type="button" disabled={!online} onClick={onRetry}>Retry</button>
-        <button type="button" onClick={onDiscard}>Delete</button></div>}
+        <button type="button" onClick={onDiscard}>Remove</button></div>}
     </div>
   </article>;
 }
@@ -897,7 +898,7 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     {mention && !options.length && <p className="th-pop th-pop--note" role="status">No active teammate in this conversation matches.</p>}
     {/* Refusals are announced once, by the hub's live region; here they are shown and tied to the field. */}
     {error && <p id={`${listId}-error`} className="th-error">{error}</p>}
-    {problem === "too_long" && !error && <p id={`${listId}-length`} className="th-error">{value.trim().length.toLocaleString()} of {MESSAGE_MAX_LENGTH.toLocaleString()} characters.</p>}
+    {problem === "too_long" && !error && <p id={`${listId}-length`} className="th-error">{messageLength(value).toLocaleString()} of {MESSAGE_MAX_LENGTH.toLocaleString()} characters.</p>}
     <div className="th-composer">
       <label htmlFor={`th-composer-${conversation.id}`} className="th-sr">{label}</label>
       <textarea id={`th-composer-${conversation.id}`} ref={setRefs} rows={1} value={value} placeholder={label}

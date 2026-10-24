@@ -20,14 +20,18 @@ can:
 4. Open a direct message with any active teammate.
 5. Read the conversation, page back through older messages, and post a message.
 6. Reply in a thread one level deep, and see each thread's reply count.
-7. @mention active people who can see the conversation. Ambiguous names are told apart by title,
-   and removed people can't be picked.
+7. @mention active people who can see the conversation, from the message composer. Ambiguous names
+   are told apart by title, and removed people can't be picked. Thread replies carry no mentions in
+   increment 1: the reply box has no @ picker yet.
 8. Search their own conversations by name.
 9. Have messages survive reload. Offline and send-failure recovery never duplicates a message
    (every post carries a client request id).
 
 **Not in increment 1.** Each is an explicit, honest later increment, not a hidden control:
 
+- @mentions inside thread replies (the server accepts them; the reply box gains the picker later);
+- a mention count for team channels the mentioned person hasn't joined (today a mention is visible
+  in the conversation, and counts as unread only where the person is a member);
 - specialist mentions and `/PAIGE` commands (they need the EXP05 Work seam, increment 2);
 - the Team work side panel (increment 2);
 - attachments (increment 3);
@@ -63,8 +67,9 @@ channel. **Exception (amendment A9):** operator account archive (`status='archiv
 `operator_archive_account`) is a lifecycle hold, not a removal. It keeps memberships so that
 `operator_restore_archived_account` restores Team Hub intact. Archived seats are already refused
 `not_member` by every function. Every function that inserts a membership locks the target's seat
-row (`FOR SHARE`) first, so the trigger can't race it. Reopening a DM with them recreates their membership, and the DM's earlier messages are
-visible to both people again; this is the stated behavior. Every function takes `p_expected_tenant uuid`. If it differs from
+row (`FOR SHARE`) first, so the trigger can't race it. Reopening a DM with them, or writing in it, recreates their membership, and the DM's earlier
+messages are visible to both people again; this is the stated behavior. A private channel the
+trigger leaves with no members is archived (A5). Every function takes `p_expected_tenant uuid`. If it differs from
 the resolved workspace, the function refuses with `scope_changed`. That fences a workspace switch
 mid-request; it never selects the workspace.
 
@@ -119,11 +124,11 @@ its existence is never confirmed) · `invalid` · `name_taken` · `not_allowed` 
 | `team_hub_list_conversations(p_expected_tenant uuid)` | `{ok, tenant_id, me:{user_id}, people:[{user_id, display_name, title, permission}], conversations:[…]}`. **people** is the active roster only. **conversations** has one entry per visible channel: `{id, kind, name, visibility, joined, member_count, member_ids, dm_user_id, unread, last_message_at}`. `member_count` and `member_ids` (amendment A4: the caller is a member, so it may see who else is) are for private channels and DMs only, and list only members still active in the workspace; `dm_user_id` is the other person in a DM; `unread` counts top-level messages by others after `last_read_at` (null means none read), and only for joined conversations. `display_name` comes from `profiles.full_name`, falling back to `"Teammate"`; never an email. Agency, operator and removed people are never listed |
 | `team_hub_create_channel(p_expected_tenant uuid, p_name text, p_visibility text, p_member_ids uuid[], p_client_request_id uuid)` | Name normalized with lower/trim. `invalid` if it doesn't match, or if visibility is not `team`/`private`. `name_taken` only if an unarchived **team-visible** channel has the name and the new channel is team-visible (A3). For `private`, every `p_member_ids` entry must be an active member of the workspace, otherwise `invalid`. The creator is always a member. Returns `{ok, channel_id}`. Idempotent: a retry with the same creator and name within 60 seconds returns the same channel |
 | `team_hub_open_dm(p_expected_tenant uuid, p_user_id uuid)` | The target must be an active member and not the caller, otherwise `invalid`. Creates the DM and both member rows, or returns the existing one. `{ok, channel_id}` |
-| `team_hub_join_channel(p_expected_tenant uuid, p_channel_id uuid)` | Only `visibility='team'` channels can be joined (`not_found` otherwise). Idempotent |
-| `team_hub_leave_channel(p_expected_tenant uuid, p_channel_id uuid)` | Removes the caller's row. A DM can't be left (`not_allowed`). Leaving a private channel removes access. When the last member leaves a private channel, the channel is archived in the same transaction (amendment A5) |
+| `team_hub_join_channel(p_expected_tenant uuid, p_channel_id uuid)` | Only `visibility='team'` channels can be joined (`not_found` otherwise). Idempotent. Joining reads the history: `last_read_at` starts at the join, so only later messages count as unread (review finding, 2026-10-24) |
+| `team_hub_leave_channel(p_expected_tenant uuid, p_channel_id uuid)` | Removes the caller's row. A DM can't be left (`not_allowed`). Leaving a private channel removes access. When the last member leaves a private channel, the channel is archived in the same transaction (amendment A5). The A2 trigger applies the same rule when an ended seat empties a private channel; DMs are never archived this way |
 | `team_hub_add_members(p_expected_tenant uuid, p_channel_id uuid, p_user_ids uuid[])` | Private channels only, and only by a current member of the channel. Every id must be an active member of the workspace. Idempotent. `{ok, added:int}` |
 | `team_hub_list_messages(p_expected_tenant uuid, p_channel_id uuid, p_thread_root uuid default null, p_before timestamptz default null, p_before_id uuid default null, p_limit int default 50)` | Requires `see`. `p_limit` is clamped to 1–100. The cursor is the compound `(created_at, id) < (p_before, p_before_id)` (amendment A6); `p_before` without `p_before_id` is `invalid`. With no `p_thread_root`, returns top-level messages newest-first. With one, returns `{root, messages}`, where `messages` are that root's replies newest-first under the same cursor, and `has_more` means older replies exist (amendment A7). The client reverses for display and offers "Show earlier replies". Each message is `{id, author_user_id, body, created_at, parent_message_id, reply_count, last_reply_at, mentions:[user_id]}`. The result also carries `{ok, channel:{id, kind, name, visibility, joined}, has_more}` |
-| `team_hub_post_message(p_expected_tenant uuid, p_channel_id uuid, p_body text, p_client_request_id uuid, p_parent_message_id uuid default null, p_mention_ids uuid[] default '{}')` | Requires `see`. The body is trimmed and must be 1–8000 characters (`invalid` or `too_long`). Posting to a `team` channel joins the caller automatically. Each mention must be an active member who can see the channel (the channel's members for private channels and DMs), otherwise `invalid` and nothing is stored. Idempotent on `(author, client_request_id)`: a retry returns the original message, `{ok, message, duplicate:true}`. Returns `{ok, message}` |
+| `team_hub_post_message(p_expected_tenant uuid, p_channel_id uuid, p_body text, p_client_request_id uuid, p_parent_message_id uuid default null, p_mention_ids uuid[] default '{}')` | Requires `see`. The body is trimmed of the same whitespace JavaScript's `String.prototype.trim` removes (Unicode spaces included), and must be 1–8000 characters counted as code points, as the composer counts them (`invalid` or `too_long`). Posting to a `team` channel joins the caller automatically, with the history read. Posting in a DM restores the other person's membership when their seat is active again, as reopening the DM does, so a re-invited teammate keeps receiving it (review finding, 2026-10-24). Each mention must be an active member who can see the channel (the channel's members for private channels and DMs), otherwise `invalid` and nothing is stored. Idempotent on `(author, client_request_id)`: a retry returns the original message, `{ok, message, duplicate:true}`. Returns `{ok, message}` |
 | `team_hub_mark_read(p_expected_tenant uuid, p_channel_id uuid, p_through_message_id uuid)` | Requires a member row (`not_allowed` otherwise). The message must be a top-level message in this channel (`invalid` otherwise). Sets `last_read_at = greatest(coalesce(last_read_at,'-infinity'), that message's created_at)`, so a message the client never displayed is never marked read (amendment A8). `{ok}` |
 
 ### Ratified build choices (2026-10-24)
@@ -172,7 +177,7 @@ its existence is never confirmed) · `invalid` · `name_taken` · `not_allowed` 
     admin sees a link to Settings → Team to invite people. Nobody is invented.
   - Empty conversation; not found or no access (one message that never says why).
   - Offline: draft kept, Send disabled, no queue.
-  - Send failed: Retry reuses the same client request id, plus a Delete option.
+  - Send failed: Retry reuses the same client request id, plus a Remove option. Remove takes the row off this screen only: when a response was lost after the server stored the message, the message stays posted, so the control never says it deleted anything.
   - `not_member`: the whole hub shows "You're no longer on this team".
   - `scope_changed`: reload for the current workspace.
 - **Unread integrity.** A conversation is marked read only while its stream is actually on screen:
@@ -182,7 +187,7 @@ its existence is never confirmed) · `invalid` · `name_taken` · `not_allowed` 
   view, so they can be reached.
 - **Accessibility.** The composer is a `role=combobox` with `aria-activedescendant` over the
   mention listbox. Arrow keys, Enter and Esc work. Focus is restored after every action, and the
-  live region announces sends and refusals. Reduced motion is honored. Targets are at least 40 px, including Retry, Delete, "N replies" and notice buttons. A refusal
+  live region announces sends and refusals. Reduced motion is honored. Targets are at least 40 px, including Retry, Remove, "N replies" and notice buttons. A refusal
   is announced once (either `role=alert` or the live region, never both). Unread counts are visible
   digits plus screen-reader text, not `aria-label` on a span.
 - **Data hook.** `src/solo/team-hub/useTeamHub.ts`. Every call passes `p_expected_tenant` from

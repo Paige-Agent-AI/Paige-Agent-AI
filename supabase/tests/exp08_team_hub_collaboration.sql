@@ -180,10 +180,10 @@ FROM pg_proc p WHERE p.oid='public.operator_retirement_disposition(text)'::regpr
 \ir ../migrations/20271113850008_exp08_team_hub_collaboration.sql
 \o
 DO $$ BEGIN
- IF (SELECT count(*) FROM replay_before WHERE k LIKE 'rel:%')<>4 OR (SELECT count(*) FROM replay_before WHERE k LIKE 'fn:%')<>18
+ IF (SELECT count(*) FROM replay_before WHERE k LIKE 'rel:%')<>4 OR (SELECT count(*) FROM replay_before WHERE k LIKE 'fn:%')<>19
    OR (SELECT count(*) FROM replay_before WHERE k LIKE 'trg:tenant_members:%')<>1
    OR (SELECT count(*) FROM replay_before WHERE k LIKE 'policy:%')<>1 THEN
-  RAISE EXCEPTION 'FAIL: migration did not create its four tables, eighteen functions and one tenant_members trigger'; END IF;
+  RAISE EXCEPTION 'FAIL: migration did not create its four tables, nineteen functions and one tenant_members trigger'; END IF;
  IF EXISTS(SELECT k,v FROM replay_before EXCEPT (
   SELECT 'rel:'||c.relname, concat_ws('|', c.relacl::text, c.relrowsecurity::text,
    (SELECT count(*) FROM pg_policy p WHERE p.polrelid=c.oid)::text,
@@ -427,9 +427,27 @@ SELECT pg_temp.check((SELECT e->>'joined' FROM jsonb_array_elements(public.team_
 SELECT pg_temp.check(public.team_hub_post_message(:'ta',:'general','Joining in','30000000-0000-4000-8000-000000000006')->>'ok'='true', 'post: a non-joined teammate posts');
 SELECT pg_temp.check((SELECT e->>'joined' FROM jsonb_array_elements(public.team_hub_list_conversations(:'ta')->'conversations') e
   WHERE e->>'id'=:'general')='true', 'post: posting to a team channel joins the poster');
+SELECT pg_temp.check((SELECT (e->>'unread')::int FROM jsonb_array_elements(public.team_hub_list_conversations(:'ta')->'conversations') e
+  WHERE e->>'id'=:'general')=0, 'post: joining by posting reads the history; nothing earlier counts as unread');
+-- Joining reads the history too. Rolled back so the rest of the proof keeps its memberships.
+BEGIN;
+SELECT pg_temp.act(:'u4');
+SELECT pg_temp.check(public.team_hub_join_channel(:'ta',:'general')->>'ok'='true', 'join: a new member joins');
+-- A separate statement, so the read cannot run before the join.
+SELECT pg_temp.check((SELECT e->>'joined'='true' AND (e->>'unread')::int=0
+  FROM jsonb_array_elements(public.team_hub_list_conversations(:'ta')->'conversations') e
+  WHERE e->>'id'=:'general'), 'join: existing messages do not count as unread for a new member');
+ROLLBACK;
+SELECT pg_temp.act(:'u3');
 SELECT pg_temp.check(public.team_hub_post_message(:'ta',:'general',E' \n\t ',gen_random_uuid())->>'code'='invalid', 'post: blank body is invalid'),
  pg_temp.check(public.team_hub_post_message(:'ta',:'general',repeat('x',8001),gen_random_uuid())->>'code'='too_long', 'post: 8001 characters is too_long'),
  pg_temp.check(public.team_hub_post_message(:'ta',:'general',repeat('x',8000),'30000000-0000-4000-8000-000000000007')->>'ok'='true', 'post: 8000 characters is stored'),
+ pg_temp.check(public.team_hub_post_message(:'ta',:'general',E'\u00A0\u3000\uFEFF',gen_random_uuid())->>'code'='invalid',
+  'post: a body of only non-breaking and other Unicode spaces is invalid, as the composer says'),
+ pg_temp.check(public.team_hub_post_message(:'ta',:'general',E'\u00A0 Spaced out \u2003',gen_random_uuid())#>>'{message,body}'='Spaced out',
+  'post: leading and trailing Unicode spaces are trimmed the way the composer trims them'),
+ pg_temp.check(public.team_hub_post_message(:'ta',:'general',repeat(E'\U0001F600',8001),gen_random_uuid())->>'code'='too_long',
+  'post: length counts characters, not UTF-16 units: 8001 emoji is too_long'),
  pg_temp.check(public.team_hub_post_message(:'ta',:'general','No id',NULL)->>'code'='invalid', 'post: no client request id is invalid');
 \echo 'PASS: active member creates, joins, posts, reads with paging, replies, mentions, counts unread and marks read'
 
@@ -635,6 +653,8 @@ SELECT public.team_hub_open_dm(:'ta',:'u4')->>'channel_id' AS dm24 \gset
 SELECT pg_temp.check(public.team_hub_post_message(:'ta',:'dm24','Before you left','30000000-0000-4000-8000-0000000000b1')->>'ok'='true', 'seat ended: a DM with history');
 SELECT pg_temp.act(:'u7');
 SELECT public.team_hub_create_channel(:'tb','b-private','private',ARRAY[:'u8']::uuid[],gen_random_uuid())->>'channel_id' AS bprivate \gset
+SELECT pg_temp.act(:'u4');
+SELECT public.team_hub_create_channel(:'ta','u4-only','private','{}',gen_random_uuid())->>'channel_id' AS u4only \gset
 RESET ROLE;
 SELECT count(*) AS u2_private_before FROM public.team_hub_channel_members m JOIN public.team_hub_channels c ON c.id=m.channel_id
  WHERE m.user_id=:'u2' AND c.visibility='private' \gset
@@ -648,7 +668,11 @@ DELETE FROM public.tenant_members WHERE user_id=:'u8' AND tenant_id=:'ta';
 SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM public.team_hub_channel_members WHERE user_id=:'u4' AND channel_id=:'dm24'),
   'seat ended (delete): the DM membership goes with the seat'),
  pg_temp.check(EXISTS(SELECT 1 FROM public.team_hub_channel_members WHERE user_id=:'u8' AND channel_id=:'bprivate'),
-  'seat ended: a private channel in another workspace is untouched');
+  'seat ended: a private channel in another workspace is untouched'),
+ pg_temp.check((SELECT archived_at IS NOT NULL FROM public.team_hub_channels WHERE id=:'u4only'),
+  'seat ended (A5): a private channel left with no members is archived'),
+ pg_temp.check((SELECT archived_at IS NULL FROM public.team_hub_channels WHERE id=:'dm24'),
+  'seat ended: the DM is not archived, so the other person can still reopen it');
 SELECT pg_temp.check((SELECT count(*) FROM public.tenant_members WHERE user_id IN (:'u4',:'u8') AND tenant_id=:'ta')=0
   AND (SELECT status FROM public.tenant_members WHERE user_id=:'u2' AND tenant_id=:'ta')='active'
   AND (SELECT job_title FROM public.tenant_members WHERE user_id=:'u2' AND tenant_id=:'ta')='Lead Designer',
@@ -681,7 +705,21 @@ FROM (SELECT public.team_hub_list_messages(:'ta',:'dm24') AS r) x;
 SELECT pg_temp.act(:'u2');
 SELECT pg_temp.check((SELECT (e->>'member_count')::int FROM jsonb_array_elements(public.team_hub_list_conversations(:'ta')->'conversations') e
   WHERE e->>'id'=:'leads')=2, 'reactivated: the private member count did not grow back');
-\echo 'PASS: a seat that stops being active loses its private channels and DMs in that workspace only; re-inviting restores none'
+-- Removed and re-invited again, this time with the other person simply writing in the DM they
+-- still see: their message reaches the re-invited teammate, who can be mentioned again.
+RESET ROLE;
+UPDATE public.tenant_members SET status='removed' WHERE user_id=:'u4' AND tenant_id=:'ta';
+UPDATE public.tenant_members SET status='active' WHERE user_id=:'u4' AND tenant_id=:'ta';
+SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM public.team_hub_channel_members WHERE user_id=:'u4' AND channel_id=:'dm24'),
+  'reinvited: the DM membership went with the seat');
+SELECT pg_temp.act(:'u2'); SET ROLE authenticated;
+SELECT pg_temp.check(public.team_hub_post_message(:'ta',:'dm24','Welcome back',gen_random_uuid(),NULL,ARRAY[:'u4']::uuid[])->>'ok'='true',
+  'reinvited: writing in the DM restores the other person, who can be mentioned');
+SELECT pg_temp.act(:'u4');
+SELECT pg_temp.check((SELECT (e->>'unread')::int>=1 FROM jsonb_array_elements(public.team_hub_list_conversations(:'ta')->'conversations') e
+  WHERE e->>'id'=:'dm24'), 'reinvited: the DM is back in their list, unread');
+SELECT pg_temp.act(:'u2');
+\echo 'PASS: a seat that stops being active loses its private channels and DMs in that workspace only; re-inviting restores none; a DM post brings the other person back'
 
 ---------------------------------------------------------------------------------------------
 -- 5c. A9: an operator archive is a hold, not an ending. Memberships stay while every door

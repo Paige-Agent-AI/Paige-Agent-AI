@@ -279,10 +279,14 @@ export function channelNameProblem(name: string): string | null {
     : "Use 2–30 lowercase letters, numbers or dashes, starting with a letter or number.";
 }
 
+// Characters as the server counts them (code points), so an emoji is one, not two.
+export function messageLength(body: string): number {
+  return [...body.trim()].length;
+}
+
 export function bodyProblem(body: string): "empty" | "too_long" | null {
-  const trimmed = body.trim();
-  if (!trimmed) return "empty";
-  return trimmed.length > MESSAGE_MAX_LENGTH ? "too_long" : null;
+  if (!body.trim()) return "empty";
+  return messageLength(body) > MESSAGE_MAX_LENGTH ? "too_long" : null;
 }
 
 export function initials(name: string): string {

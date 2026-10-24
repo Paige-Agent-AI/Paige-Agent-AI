@@ -293,7 +293,7 @@ describe("sending (mocked RPC)", () => {
     await type(composer(host), "Draft that fails");
     await press(composer(host), "Enter");
     await flush();
-    await act(async () => button(host, "Delete")!.click());
+    await act(async () => button(host, "Remove")!.click());
     await flush();
     expect(host.textContent).not.toContain("Draft that fails");
   });

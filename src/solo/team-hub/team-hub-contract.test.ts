@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  bodyProblem,
+  messageLength,
   channelNameProblem,
   incomingAnnouncement,
   mentionCandidates,
@@ -217,5 +219,18 @@ describe("refresh joining (A6 order)", () => {
     expect(incomingAnnouncement(1, 0)).toBe("1 new message");
     expect(incomingAnnouncement(2, 1)).toBe("2 new messages, 1 new reply in the thread");
     expect(incomingAnnouncement(50, 0, true)).toBe("50 or more new messages");
+  });
+});
+
+describe("message length and blank bodies, matching the server", () => {
+  it("counts characters as code points, so an emoji is one", () => {
+    expect(messageLength("  héllo 😀  ")).toBe(7);
+    expect(bodyProblem("😀".repeat(8000))).toBeNull();
+    expect(bodyProblem("😀".repeat(8001))).toBe("too_long");
+  });
+
+  it("treats a body of Unicode spaces as empty", () => {
+    expect(bodyProblem("\u00a0\u3000\ufeff")).toBe("empty");
+    expect(bodyProblem(" \n\t ")).toBe("empty");
   });
 });

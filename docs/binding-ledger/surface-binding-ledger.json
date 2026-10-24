@@ -1066,7 +1066,7 @@
         "auto": "Within the caller's own seat and visible conversations only: post, reply, mention, create or join channels and mark read, as the caller, bounded to their workspace and never crossing to another workspace or a private channel they are not in.",
         "confirm": "Leaving a private channel confirms its consequence first; consequential requests (tasks, approvals, specialist work) route through the one approval gate in later increments.",
         "prohibited": "Never reveal a private channel's existence, name, members, counts or text to a non-member, including workspace owners; never grant agency, operator or removed people access; never send anything outside the business.",
-        "completion_criterion": "A teammate sends a message in a channel or DM; it is delivered to the mentioned teammate with an unread count, survives reload, and private-channel isolation is verified on a real authenticated SOLO account."
+        "completion_criterion": "A teammate sends a message in a channel or DM; it is delivered to the conversation's members with an unread count, a mention is shown to the mentioned teammate in that conversation, the message survives reload, and private-channel isolation is verified on a real authenticated SOLO account."
       },
       "surface": "Team Hub (main menu, below Operations)",
       "group": "main",

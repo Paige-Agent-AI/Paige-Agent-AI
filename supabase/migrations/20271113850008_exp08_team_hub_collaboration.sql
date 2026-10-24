@@ -137,6 +137,11 @@ BEGIN
    AND (TG_OP='DELETE' OR coalesce(NEW.status,'') NOT IN ('active','archived')) THEN
   DELETE FROM public.team_hub_channel_members m USING public.team_hub_channels c
    WHERE m.channel_id=c.id AND m.tenant_id=OLD.tenant_id AND m.user_id=OLD.user_id AND c.visibility='private';
+  -- A5 holds here too: a private channel this emptied is archived, as if its last member left.
+  -- DMs are not archived: the other person can still reopen one.
+  UPDATE public.team_hub_channels c SET archived_at=now()
+   WHERE c.tenant_id=OLD.tenant_id AND c.kind='channel' AND c.visibility='private' AND c.archived_at IS NULL
+    AND NOT EXISTS(SELECT 1 FROM public.team_hub_channel_members m WHERE m.channel_id=c.id);
  END IF;
  RETURN NULL;
 END $$;
@@ -145,6 +150,16 @@ CREATE OR REPLACE TRIGGER team_hub_seat_ended AFTER UPDATE OF status OR DELETE
  ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._team_hub_seat_ended();
 
 -- Internal helpers. Callable only from the doors below, which run as their owner.
+-- The whitespace String.prototype.trim removes, so the server and the composer agree on what an
+-- empty message is. The storage CHECK trims less, so every body this returns satisfies it.
+CREATE OR REPLACE FUNCTION public._team_hub_trim(p_text text)
+RETURNS text LANGUAGE sql IMMUTABLE SET search_path='' AS $$
+ SELECT regexp_replace(p_text,
+  '^[\u0009-\u000d\u0020\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+|[\u0009-\u000d\u0020\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+$',
+  '', 'g')
+$$;
+REVOKE ALL ON FUNCTION public._team_hub_trim(text) FROM PUBLIC, anon, authenticated, service_role;
+
 CREATE OR REPLACE FUNCTION public._team_hub_is_active(p_tenant uuid, p_user uuid)
 RETURNS boolean LANGUAGE sql STABLE SET search_path='' AS $$
  SELECT EXISTS(SELECT 1 FROM public.tenant_members m
@@ -326,8 +341,9 @@ BEGIN
  SELECT * INTO ch FROM public._team_hub_visible(p_expected_tenant,actor,p_channel_id);
  IF NOT FOUND OR ch.kind<>'channel' OR ch.visibility<>'team' THEN RETURN jsonb_build_object('ok',false,'code','not_found'); END IF;
  IF NOT public._team_hub_hold_seats(p_expected_tenant,ARRAY[actor]) THEN RETURN jsonb_build_object('ok',false,'code','not_member'); END IF;
- INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by)
-  VALUES (ch.id,p_expected_tenant,actor,actor) ON CONFLICT (channel_id,user_id) DO NOTHING;
+ -- Joining reads the history: only what arrives after this counts as unread.
+ INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by,last_read_at)
+  VALUES (ch.id,p_expected_tenant,actor,actor,now()) ON CONFLICT (channel_id,user_id) DO NOTHING;
  RETURN jsonb_build_object('ok',true);
 END $$;
 REVOKE ALL ON FUNCTION public.team_hub_join_channel(uuid,uuid) FROM PUBLIC, anon;
@@ -419,7 +435,7 @@ CREATE OR REPLACE FUNCTION public.team_hub_post_message(p_expected_tenant uuid, 
  p_client_request_id uuid, p_parent_message_id uuid DEFAULT NULL, p_mention_ids uuid[] DEFAULT '{}')
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE actor uuid:=auth.uid(); refusal text:=public._team_hub_refusal(p_expected_tenant); ch public.team_hub_channels;
- body text:=btrim(p_body, E' \t\r\n'); mentions uuid[]; msg public.team_hub_messages;
+ body text:=public._team_hub_trim(p_body); mentions uuid[]; msg public.team_hub_messages; other uuid;
 BEGIN
  IF refusal IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code',refusal); END IF;
  SELECT * INTO ch FROM public._team_hub_visible(p_expected_tenant,actor,p_channel_id);
@@ -436,6 +452,18 @@ BEGIN
  IF p_parent_message_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.team_hub_messages p
    WHERE p.id=p_parent_message_id AND p.channel_id=ch.id AND p.parent_message_id IS NULL AND p.deleted_at IS NULL) THEN
   RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ -- A DM keeps reaching the other person. If their seat ended and they were re-invited, the seat
+ -- trigger removed their membership; posting restores it, as reopening the DM does. A person
+ -- whose seat is not active stays out. This comes before the mention check so the restored person
+ -- can be mentioned; an active DM party belongs in the DM even if this post is then refused.
+ IF ch.kind='dm' THEN
+  other:=CASE split_part(ch.dm_key,':',1) WHEN actor::text THEN split_part(ch.dm_key,':',2)
+   ELSE split_part(ch.dm_key,':',1) END::uuid;
+  IF other IS NOT NULL AND public._team_hub_hold_seats(p_expected_tenant,ARRAY[other]) THEN
+   INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by)
+    VALUES (ch.id,p_expected_tenant,other,actor) ON CONFLICT (channel_id,user_id) DO NOTHING;
+  END IF;
+ END IF;
  -- A mention must be an active member who can see this conversation: anyone active for a team
  -- channel, the channel's members for a private channel or DM.
  IF EXISTS(SELECT 1 FROM unnest(coalesce(p_mention_ids,'{}'::uuid[])) x(id)
@@ -446,8 +474,8 @@ BEGIN
  mentions:=ARRAY(SELECT DISTINCT x.id FROM unnest(coalesce(p_mention_ids,'{}'::uuid[])) x(id));
  IF ch.visibility='team' THEN
   IF NOT public._team_hub_hold_seats(p_expected_tenant,ARRAY[actor]) THEN RETURN jsonb_build_object('ok',false,'code','not_member'); END IF;
-  INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by)
-   VALUES (ch.id,p_expected_tenant,actor,actor) ON CONFLICT (channel_id,user_id) DO NOTHING;
+  INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by,last_read_at)
+   VALUES (ch.id,p_expected_tenant,actor,actor,now()) ON CONFLICT (channel_id,user_id) DO NOTHING;
  END IF;
  INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,parent_message_id,client_request_id)
   VALUES (p_expected_tenant,ch.id,actor,body,p_parent_message_id,p_client_request_id)

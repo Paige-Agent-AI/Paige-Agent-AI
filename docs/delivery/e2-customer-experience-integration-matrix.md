@@ -1,5 +1,23 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October24 — source-request report foundation, not customer settlement
+
+All original19 outcome rows and CAP009–017 remain required. O01/O18/CAP014/015
+source progress extends the same native document_generate admission with closed
+metric selectors and explicit month/quarter period. Original issuer/resolver,
+immutable capture, worker, private artifact/turn/Rail and current role/tenant gates
+are reused. References and nine legacy document types remain compatible; no
+foreground Chat advertisement or separate runtime/store/queue is added.
+[Evidence](../evidence/ui-delivery/e2-report-source-requests.md):116 owning local
+tests/scoped lint and isolated native controls; real-issuer full-schema CI and
+normal source release/readback remain owed. Original collision2732 is resolved; current main6667393a/native820004 verified.
+Never-applied840002 follows pending E04catalogue830004. Current composed gates
+and normal release remain owed. CAP014/015 remain
+Unverified; no source test proves CPU recovery, actual customer settlement or Live.
+Original uncertain monthly request stays unretried with EXP05. Full source-backed
+artifact/retrieval/reload/recovery/permission/cohort/customer and single integrated
+founder acceptance remain outstanding. ALG03/06/11/12 Partial;13 impact Unverified.
+
 ## EXP02 original Finance Metric context repair — October23 local
 
 Original Finance→VERA exact-reference handoff REPAIR is local: copy original

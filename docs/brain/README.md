@@ -1,3 +1,21 @@
+## EXP02 original report source requests — October24 source candidate
+
+The original document_generate report path now has a local closed source-request
+alternative to reference-based admission: canonical Metric issuer/resolver facts
+are captured once under the original work lock, retaining the existing worker,
+private artifact, completion turn and Rail. Exact replay never reissues facts;
+legacy references/nine document types and current authority remain intact.
+[Bounded evidence](../evidence/ui-delivery/e2-report-source-requests.md):116 owning
+tests, isolated native proof and scoped lint; genuine full-schema issuer suite,
+exact-head review/CI, ordered migration/Edge readback and actual customer settlement
+remain owed. Original E03/E10 migration700000 collision is resolved by2732/e35bb7f9.
+Current main6667393a and actual native820004 are verified; never-applied840002
+follows original E04catalogue830004. Current composed review/CI/Preview remain owed.
+No shared Chat entry edit, new engine/store, provider or action activation.
+CAP014/015 remain Unverified, full19/nine and the consultant SOLO launch scenario
+remain required. Original CPU-failed uncertain monthly request stays unretried
+with EXP05; this source foundation is not root-cause or recovery evidence.
+
 ## EXP09 private CURA files — native source released, October24 UTC
 
 Original2723/5391 → maina2db/tree0c858 is actually deployed through containing28622/normal40081233729/deploy120837432245. Production records810009;13 incumbent source/ABI/default/ACL bindings,6 helper/wrapper bodies/permissions, restrictiveALLprivacy/purposeCHECK/enabledorigintrigger and original private20MBbucket match tested source. Native305/453/294/61/allseven/Knowledge208/grantordering and all13 exactchecks/two statusesPASS; lower5637529215. [Sole Master4.0 shipped row](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log), [receipt6382571591](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2723#issuecomment-6382571591), [actual sanitized readback](../evidence/ui-delivery/assets/e09-private-cura-files/production-readback.json). First lock refusal and concurrent originating Studio migration reconciliation are historical, not waived. No ownEdge/provider/business/Live activation. This is a native foundation: actual paste/bulk/private message/model/customer return and all42/seven/Teach/full founder acceptance remain in the original E09 packet and PROOF OWED. No customer version or algorithm/capability promotion.

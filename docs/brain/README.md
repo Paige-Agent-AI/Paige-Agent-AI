@@ -2,13 +2,13 @@
 
 Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc0b5dad per-business original invitation admission are actually released and read back. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records exact heads/parents/trees, accurate lower-assurance sequential reviews, all required checks, normal migrations620009/630009, all16 original ABI/ACL/source pins, unchanged S7 and actual READY web/public versions. Receipts6377892283/6378046694/6378167524. First630009 deployment57014 is retained; precisely bounded read-only administrative-session cleanup (later identified as including a legitimate CI snapshot; affected microphone verification must rerun) and unchanged normal retry succeeded, with no customer/data/role/history/DDL workaround. Native453/294/61/all seven/grant proof is engineering evidence, not ordinary customer acceptance. Private CURA history remains separate from shared Conversations; current microphone2718/attachments/permitted research work stays in the original relationship packet. Full42/seven-pillar authenticated owner/client/reload/revoke/device and Founder Acceptance remain unfinished; one complete integrated evaluation, no per-slice owner request. This mechanical cross-reference changes no capability/algorithm maturity and has no recursive release row.
 
-## EXP05 original specialist status — local source, release and presentation owed
+## EXP05 original specialist status — source released; customer recovery owed
 
 The original native status channel can project only the exact assignment named
 by a server-issued terminal and the existing caller-JWT inspector. Current seat,
 tenant, original turn and receipt are rechecked; unknown is not replay authority.
 [Bounded source and proof](../evidence/ui-delivery/exp05-specialist-original-status.md)
-retain missing UI mounting, exact-head release and authenticated recovery evidence.
+retain historical source failures and current release/authenticated proof boundaries.
 Full Operations/weekly/automation/ZION outcomes remain open; no activation.
 
 Later October24 source closeout: original2722 reviewed56b/LOWER5636877937
@@ -18,6 +18,14 @@ reads are recorded in the original evidence and sole Master4.0 row; Chat524 is
 newly deployed, original orchestrator124 is verified unchanged. Receipt6380356415.
 Native UI2725 and authenticated original customer recovery remain owed; no new
 invocation, authority, activation or full Experience/founder acceptance claim.
+
+Later October24: original UI2725 is actually served at84a1703/READY, with six
+consumer assertions/receipt6380889677. Dependent original factory2735 then passed
+all13 checks, merged2e6872e1 and normal migration800005 succeeded; actual ZION
+v3/plan/2793-byte prompt digest matches reviewed source, READY/public2e verified.
+Receipt6380934945 and sole Master4.0 rows retain exact evidence. Ordinary QA is
+waiting at the original owner approval gate; no specialist invocation/result is
+claimed. Complete weekly/automation/ZION/Live/founder acceptance remains owed.
 
 ## EXP05 original weekly receipt validation — source development, October23
 

@@ -6,7 +6,7 @@
 // with no registered runner as an 'error' finding (fail-loud, §32) — so if a registry row's runner_key is
 // ever mistyped or a module is missing here, it surfaces loudly, never as a silent pass.
 //
-// §13: REGISTERED_RUNNER_KEYS is exported so a smoke test / the edge fns can assert the 10 seeded catalog
+// §13: REGISTERED_RUNNER_KEYS is exported so a smoke test / the edge fns can assert the 11 catalog
 // keys are all covered before a scan runs.
 
 import { registerRunner } from "../systems-check-runner.ts";

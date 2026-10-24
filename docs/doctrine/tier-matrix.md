@@ -359,6 +359,29 @@ Team Hub is a new SOLO main-menu destination directly below Operations, with slu
 
 Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
+### EXP08 Team Hub increment 2: team work (migration `20271113860008`, 2026-10-24; not yet merged)
+
+Inside Team Hub, a teammate types `/` for four commands. *Draft a task* creates one real task in Operations through the existing `plan_assign_task_scoped`, as the caller, with an exactly-once link in `team_hub_work_refs`. *Ask a specialist*, *Request approval* and *Schedule a meeting* only prefill a PAIGE draft. A Team work panel lists the tasks started from conversations the caller can see, with status read from `plan_items` through the caller's own RLS.
+- Storage: one new link table, `team_hub_work_refs`. RLS is on, there are no policies, and there are no browser grants. It stores no status, title, assignee or due date.
+- Access: `team_hub_request_task` and `team_hub_list_work` re-run increment 1's door checks (seat, canonical SOLO, fence, conversation visibility). The assignee rule is Operations' own: anyone for an owner or admin, otherwise only the caller.
+
+§61 exception, unchanged from increment 1: only SOLO gets Team Hub; Agency, Enterprise and Sub-account stay held. The contract is `docs/delivery/exp08-team-hub-increment2-work-contract.md`.
+
+| Tier | Team work (commands, task, panel) |
+|---|---|
+| God / Operator | ✗ no menu item; no seat means `not_member` |
+| Agency / Enterprise | ✗ held (`unavailable`) |
+| Standalone (Solo) | ✓ for active seats, own workspace and visible conversations only |
+| Sub-account | ✗ held (`unavailable`) |
+| Client | ✗ (no seat) |
+| Anonymous | ✗ (no grant) |
+
+**Evidence:**
+- A disposable-PostgreSQL proof, `supabase/tests/exp08_team_hub_team_work.sql`. It loads the real `plan_assign_task_scoped` over fixture doubles of what it stands on.
+- Mocked-RPC Vitest suites.
+
+Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
+
 ### E09 C1 — announcements to customers through the one campaign system (branch `e09-c1`, migration `20271111060000`, 2026-10-19; not yet merged)
 
 The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) gains a "Customer portal" chip; the database gains the `portal` audience key, rule-key checks, and owner Q1 (Updates turned on, for promotions/announcements/newsletters to current or former portal-linked contacts, at plan and at send). Availability follows the existing campaign seams unchanged (`_email_caller_tenant`: owner/admin of the active business; `_email_paige_tenant` refuses agency accounts; Growth is not offered to Agency, §61 exception). §61 default: no new exception — the portal audience is part of campaigns, wherever campaigns already are.

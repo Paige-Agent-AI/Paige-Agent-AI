@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: the approved original-result/recovery flow and its
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owners retain the exact original specialist identity as evidence for subsequent inspection; an identity grants no completion, authority or retry.
 VISUAL_DIRECTION: NOT_APPLICABLE: metadata-only correction in the existing shared turn contract.
 AUTOMATED_EVIDENCE: PASS: scripts/int336-interactive-check.mjs causally failed with a dropped invocation UUID; repaired actual module passes the positive and fail-closed projections, original Task preservation and minimized-context assertions. Original denied-network Deno11, unchanged actual-registry27 and original-handler75 recording-port cases PASS. No real provider or customer operation.
-STATIC_EVIDENCE: PASS: scoped ESLint/diff checks; actual canonical validator refuses exactly the changed interactive.ts dependency while its review pin remains deliberately unrenewed. This refusal is a release hold, not a passing source-binding proof.
+STATIC_EVIDENCE: PASS: scoped ESLint/diff checks; before renewal the actual validator refused exactly the changed helper. Sequential source reviewa7961d9d recorded inf07a6b682 precedes the one-literal renewal. Final original validator verifies123 sources/all29 dispatches; full six-file C0b family227PASS/0FAIL/0SKIP and normal original registry228PASS. No validator, extractor, metadata, other pin or dispatch is weakened.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no UI component or visual state is modified; local metadata tests cannot establish rendered or authenticated execution.
 BEHAVIORAL_EVIDENCE: PASS: actual original projection retains invocation UUID for delegate_to_subagent only; wrong-tool, malformed and contradictory-read cases are excluded. Existing Task identity remains. No execution, retry or hold reset occurs in these assertions.
 AUTHENTICATED_RUNTIME: UNVERIFIED: local candidate only; no original customer invocation/result/reload or held-thread recovery claim is closed.
@@ -29,9 +29,9 @@ RELEASE_CHANNEL: development: local source correction, not customer reachable.
 RELEASE_CLASSIFICATION: internal-only: bounded original-reference repair within EXP05 recovery.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement, launch or founder acceptance.
 RELEASE_NOTE_REQUIRED: no: ongoing internal Experience increment and proof boundary.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: shared-pin coordination/review, exact-head hosted CI, deployment and ordinary authenticated original-reference/status recovery. Local causal/recording-port proof is not customer acceptance. Full ten outcomes/E5-CV1-CV9 remain open.
-RELEASE_RECOVERY: position=withhold while the original binding gate refuses; reference=existing source validator, immutable parent and canonical turn receipt. No reset/replay/activation workaround.
-UNVERIFIED: existing denied-network Deno tests pass locally and remain required in normal exact-head CI. Source binding deliberately fails pending reviewed one-scalar renewal. No new native status consumer, full delegation lifecycle, ZION instructions, recurring execution, Live or complete Experience acceptance.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: final composed review/exact-head hosted CI, deployment and ordinary authenticated original-reference/status recovery. Shared-pin coordination and before-renewal source review are recorded. Local causal/recording-port proof is not customer acceptance. Full ten outcomes/E5-CV1-CV9 remain open.
+RELEASE_RECOVERY: position=withhold for any failed required gate, including the new shared dependency audit; reference=existing source validator, immutable parent and canonical turn receipt. No reset/replay/activation workaround.
+UNVERIFIED: existing denied-network Deno tests pass locally and remain required in normal exact-head CI. Restrictive source binding now passes after its separately reviewed one-scalar renewal; this grants no runtime authority. No new native status consumer, full delegation lifecycle, ZION instructions, recurring execution, Live or complete Experience acceptance.
 
 ## Exact boundary and collision evidence
 
@@ -39,18 +39,18 @@ Original parentec46639aac0fb0b80c6607d89f14cf47e841302f has canonical interactiv
 digestc11ff1572df36f4efdc5534e6fa19177748acd551e56e2c147b88b421a256432.
 The existing canonical printer reproduced it exactly before computing candidate
 2917df7c8f03806e63b5f38f4aa386d6df0a1ca6892028cf8384cf98646c74ff.
-No pin was generated into source or automatically accepted. The actual unchanged
-validator checks123 source paths and returns exactly one changed-source finding;
+Before the reviewed renewal, no pin was generated or automatically accepted. The
+unchanged validator checked123 source paths and returned exactly one changed-source finding;
 its diagnostic tool map stops early and does not establish29 admitted dispatches.
 Original Chat and the29 literal dispatch identities are unchanged in the diff.
 An in-memory diagnostic control restoring only the immutable parent interactive.ts
 body reproduces zero findings/all29 original dispatches. Restoring that source is
-not shipped; the actual candidate still refuses the stale pin. Every other122
+not shipped; that initial candidate refused the stale pin. Every other122
 source path is unchanged. This is an inverse source control, not a runtime grant.
 
 ANT-11/ANT-161 current scope and main33bb85dcc883d1b31631fc0c954babafda9eeea9
 were read before editing. Lease/pre-edit packetc4eecd95 and coordinationb494d3d3
-preserve EXP04's separate action-risk scalar write; that shared file is not edited.
+preserved EXP04's separate action-risk scalar write before its explicit release.
 Existing2697/ec466,2700/a8c574 and2709/b68 remain frozen separate releases.
 No other lead, agent, registry, scheduler, provider, platform execution runtime or business record is created.
 

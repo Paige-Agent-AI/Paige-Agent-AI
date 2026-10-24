@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: explicit owner can inspect the exact accepted source, compa
 MOTION_PURPOSE: NONE: no authored animation or haptic; immediate named feedback and focus preserve causality.
 PROTECTED_SEAMS: new owner read uses original _sales_invoice_actor and read_sales_commercial_package with current authority checked after waits; private validators are not callable by ordinary/service roles. No Portal UI, client-access grant, shared Chat admission, approval/runtime/provider/ledger/scheduler or core shell rewrite.
 
-INTERNAL_BUILD_IDENTITY: source=84d2634dfcdc60db7833d30b7dee927b56d43b4f; exact final head/review in PR2681; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113710004_e04_accepted_commercial_evidence normal full-schema release); edge=NOT_APPLICABLE; prerequisite=original530004; evidence=this record, original fenced native406 proof and prior source-pinned component frames.
+INTERNAL_BUILD_IDENTITY: source=84d2634dfcdc60db7833d30b7dee927b56d43b4f; exact final head/review in PR2681; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113810004_e04_accepted_commercial_evidence normal full-schema release); edge=NOT_APPLICABLE; prerequisite=original530004; evidence=this record, original fenced native406 proof and prior source-pinned component frames.
 RELEASE_CHANNEL: development: current full native proof passed; final exact-head gates and production source readback still owed.
 RELEASE_CLASSIFICATION: internal-only: bounded original accepted-record integration within incomplete EXP04.
 CUSTOMER_RELEASE_IDENTITY: none: full integrated Experience and founder evaluation remain incomplete.
@@ -100,3 +100,8 @@ synthetic proof; no new render/runtime acceptance claimed. Current main source,
 original owners and all12 remain intact. Fresh exact review/CI, cold normal Preview
 and ordinary deployment/readback required; no include-all, history patch or
 session termination. Reservation is original ANT16163c71847 continuation.
+
+
+### Corrected main79171c824 / actual production800000 continuation
+
+Originating EXP10 correction2732 resolved the duplicate; the earlier collision is historical. Production records800000. Only our never-applied reader710004 moves to810004, preserving SQL SHA221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb and all original assertions/timeouts. The three proof path replacements and full current-manifest metadata have exact inverses; prior710004 manifest is retained in compiled-result-before-fourth-native-filename.json. All21 captured critical source inputs remain byte-identical except that same SQL filename. Original14 frames and3 assets retain pixels/times/bytes. This is continuity, not newly rendered/authenticated proof. Entire incoming Master/Brain preserved by original-own-delta inverse. Exact-head review/CI and ordinary native release/readback remain owed; no manual SQL/history/include-all/session workaround. Original ANT16163c71847 now reserves810004→E09-proposed810009→820004→830004; E09 receiving confirmation remains separate.

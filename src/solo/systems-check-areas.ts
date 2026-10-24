@@ -47,7 +47,7 @@
  * a real finding invisible.
  */
 
-/** The ten tenant check ids, as seeded. */
+/** The tenant check ids, as seeded (L1 ten + connections_healthy, EXP10 ALG-12). */
 export type SystemsCheckId =
   | "comms_configured"
   | "website_connected"
@@ -58,7 +58,8 @@ export type SystemsCheckId =
   | "sales_pipeline_configured"
   | "revenue_tracking_configured"
   | "payment_processor_connected"
-  | "payment_method_options";
+  | "payment_method_options"
+  | "connections_healthy";
 
 export interface AreaDefinition {
   id: string;
@@ -128,7 +129,7 @@ export const SYSTEMS_CHECK_AREAS: AreaDefinition[] = [
     name: "Integrations and automations",
     scope: "Registered workflows and connections; execution is not tested.",
     briefLabel: "Your automations",
-    coveredBy: ["automation_wired"],
+    coveredBy: ["automation_wired", "connections_healthy"],
   },
   {
     // NOT CHECKED — no check grades this yet. Wiring this area? See the header block
@@ -288,6 +289,12 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
     area: "integrations",
     label: "Settings › Integrations › Automations",
     path: (a) => `/solo/${acct(a)}/settings/integrations/automations`,
+  },
+  connections_healthy: {
+    title: "Connected apps health",
+    area: "integrations",
+    label: "Settings › Integrations",
+    path: (a) => `/solo/${acct(a)}/settings/integrations`,
   },
 };
 

@@ -9,7 +9,7 @@ export async function proveAcceptedCommercial({sql,read,quote,tenant,actor,clien
  const refused=(statement,pattern)=>{assert.throws(()=>sql(statement),pattern);checks++;};
  if(!process.argv.includes('--accepted-commercial-baseline')){
   sql(read('supabase/migrations/20271113530004_e04_atomic_original_signature.sql'));
-  const migration=read('supabase/migrations/20271113631004_e04_accepted_commercial_evidence.sql');sql(migration);sql(migration);
+  const migration=read('supabase/migrations/20271113710004_e04_accepted_commercial_evidence.sql');sql(migration);sql(migration);
  }
  check(sql("SELECT to_regprocedure('public._paige_retained_commercial_payload(public.paige_agreements)') IS NOT NULL;")==='t',
   'Original retained commercial validator must be available before accepted economics can be claimed');
@@ -57,13 +57,13 @@ export async function proveAcceptedCommercial({sql,read,quote,tenant,actor,clien
   }
   const identity=`public.${name}(public.paige_agreements)`,definition=sql(`SELECT pg_get_functiondef('${identity}'::regprocedure);`);
   sql(definition.replace('BEGIN','BEGIN\n -- Disposable fixture only: simulate a later independently changed validator.'));
-  refused(read('supabase/migrations/20271113631004_e04_accepted_commercial_evidence.sql'),/Existing accepted commercial validator changed; reconcile before applying/);
+  refused(read('supabase/migrations/20271113710004_e04_accepted_commercial_evidence.sql'),/Existing accepted commercial validator changed; reconcile before applying/);
   sql(definition);
  }
  const nativeIdentity='public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)';
  const native=sql(`SELECT pg_get_functiondef('${nativeIdentity}'::regprocedure);`);
  sql(native.replace('BEGIN','BEGIN\n -- Disposable fixture only: source drift must refuse migration.'));
- refused(read('supabase/migrations/20271113631004_e04_accepted_commercial_evidence.sql'),/Original native signature writer changed; reconcile accepted evidence before applying/);
+ refused(read('supabase/migrations/20271113710004_e04_accepted_commercial_evidence.sql'),/Original native signature writer changed; reconcile accepted evidence before applying/);
  sql(native);
  const capsule=json(`SELECT commercial_presentation FROM paige_agreements WHERE id='${id}';`);
  for(const change of [v=>delete v.schema_version,v=>v.schema_version='1',v=>v.extra=true,v=>v.payload=null,

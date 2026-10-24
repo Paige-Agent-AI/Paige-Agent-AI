@@ -213,7 +213,7 @@
     "scripts/proof/e04-accepted-commercial-ui/source.tsx": "99ca79f543d1794ea21cce0d7dabb234c8745b1ae0681027691a299ef46d784d",
     "scripts/proof/e04-accepted-commercial-ui/index.html": "2f69a396c12a84a023221c98fbc5a6218f266d194617a34349b64602b8b63863",
     "src/solo/sales/SalesBillingWorkspace.tsx": "9d861d46989f982657c1f8c0b7c9abc7d918b69d00dd9250aff6b8deaff7ecdc",
-    "supabase/migrations/20271113631004_e04_accepted_commercial_evidence.sql": "221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb"
+    "supabase/migrations/20271113710004_e04_accepted_commercial_evidence.sql": "221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb"
   },
   "compiledAssets": {
     "assets/index-BTocz013.js": "bed71f3454c764f8eb0ae0be4665e96ea22bcd2273dbbf54da4dfcf57285412e",
@@ -222,16 +222,16 @@
   },
   "boundary": "Current compiled original components only; no authenticated shell, customer, provider or whole-Experience acceptance",
   "recovery": "Earlier development-server timeout/blank frame remains INVALID; viewport API initially left actual1280, renamed from actual DOM; per-tab documented CDP set measured required breakpoints, then cleared",
-  "sourceContinuity": "Product source unchanged from84d2634; fixture config gained only a compiled-preview input before this build. Prior result.json remains separate and unchanged. Never-applied native filename570004→630004 only; source bytes match the captured SQL exactly. Original capture receipt preserved separately; no new frame or current UI behavior claim. Production later applied original E09 630009 before this unmerged reader. Never-applied 630004→631004 follows that actual frontier with identical SQL; the immediately preceding receipt is separately preserved. No new rendering or runtime acceptance claim.",
+  "sourceContinuity": "Product source unchanged from84d2634; fixture config gained only a compiled-preview input before this build. Prior result.json remains separate and unchanged. Never-applied native filename570004→630004 only; source bytes match the captured SQL exactly. Original capture receipt preserved separately; no new frame or current UI behavior claim. Production later applied original E09 630009 before this unmerged reader. Never-applied 630004→631004 follows that actual frontier with identical SQL; the immediately preceding receipt is separately preserved. No new rendering or runtime acceptance claim. Actual main04edecb0 includes original E03 migration700000 before release. Never-applied631004 moves to710004 with identical SQL and exact three proof-path inverse; the immediately preceding631004 receipt is separately preserved. This is source/filename equivalence only, not new rendered or authenticated acceptance.",
   "nativeSourceFilenameContinuation": {
     "capturedSourcePath": "supabase/migrations/20271113570004_e04_accepted_commercial_evidence.sql",
-    "currentSourcePath": "supabase/migrations/20271113631004_e04_accepted_commercial_evidence.sql",
+    "currentSourcePath": "supabase/migrations/20271113710004_e04_accepted_commercial_evidence.sql",
     "sourceSHA256": "221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb",
     "originalReceipt": "compiled-result-before-native-filename.json",
     "originalReceiptSHA256": "862a71d487c4c4d7489ad65a79dd860f1f9c84cf96dccda3d9d320ad8e45fda8",
     "boundary": "Filename-only equivalence; original captured images, times and source bytes retained. Full authenticated acceptance remains unverified.",
-    "previousSourcePath": "supabase/migrations/20271113630004_e04_accepted_commercial_evidence.sql",
-    "previousReceipt": "compiled-result-before-second-native-filename.json",
-    "previousReceiptSHA256": "7f30fa30cb46b1257d27ab699edf20503e77ab4b73bbb8cfd09497caadf63a58"
+    "previousSourcePath": "supabase/migrations/20271113631004_e04_accepted_commercial_evidence.sql",
+    "previousReceipt": "compiled-result-before-third-native-filename.json",
+    "previousReceiptSHA256": "0c52089d41b0987a6b544e5b1d397d27768301d016d48042ef9211c378f1e2f2"
   }
 }

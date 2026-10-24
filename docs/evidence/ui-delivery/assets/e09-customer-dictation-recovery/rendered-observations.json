@@ -1,0 +1,217 @@
+{
+  "kind": "isolated actual-component render, synthetic transport/media/Auth only",
+  "observedAt": "2026-10-24T00:55:24.492Z",
+  "physicalDevice": false,
+  "founderAcceptance": false,
+  "cases": [
+    {
+      "case": "390-mineral-editable-draft",
+      "kind": "cura-mic-dom",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "scrollWidth": 390,
+      "mic": "Start voice typing",
+      "micSize": [
+        44,
+        44
+      ],
+      "micBounds": [
+        287.6000061035156,
+        792,
+        44,
+        44
+      ],
+      "draft": "Please help me find my shared documents",
+      "composerWidth": 273.6000061035156,
+      "focus": "Start voice typing",
+      "statusFont": null,
+      "sendDisabled": false,
+      "statusText": ""
+    },
+    {
+      "case": "320-obsidian-provider-error",
+      "kind": "cura-mic-dom",
+      "viewport": [
+        320,
+        740
+      ],
+      "documentWidth": 320,
+      "scrollWidth": 320,
+      "mic": "Voice typing unavailable — tap to retry",
+      "micSize": [
+        44,
+        44
+      ],
+      "micBounds": [
+        217.1999969482422,
+        661,
+        44,
+        44
+      ],
+      "draft": "",
+      "composerWidth": 203.1999969482422,
+      "focus": "Voice typing unavailable — tap to retry",
+      "statusFont": "14px",
+      "sendDisabled": true,
+      "statusText": "Voice typing unavailable"
+    },
+    {
+      "case": "mineral-editable-draft",
+      "kind": "cura-mic-dom",
+      "viewport": [
+        1536,
+        770
+      ],
+      "documentWidth": 1536,
+      "scrollWidth": 1536,
+      "mic": "Start voice typing",
+      "micSize": [
+        36,
+        36
+      ],
+      "micBounds": [
+        1439.2000732421875,
+        718.4000244140625,
+        36,
+        36
+      ],
+      "draft": "Please help me find my shared documents",
+      "composerWidth": 1419.2000732421875,
+      "focus": "Message Cura",
+      "statusFont": null,
+      "sendDisabled": false,
+      "statusText": ""
+    },
+    {
+      "case": "mineral-editable-draft",
+      "kind": "cura-mic-dom",
+      "viewport": [
+        1366,
+        768
+      ],
+      "documentWidth": 1366,
+      "scrollWidth": 1366,
+      "mic": "Start voice typing",
+      "micSize": [
+        36,
+        36
+      ],
+      "micBounds": [
+        1269.5999755859375,
+        716,
+        36,
+        36
+      ],
+      "draft": "Please help me find my shared documents",
+      "composerWidth": 1249.5999755859375,
+      "focus": "Message Cura",
+      "statusFont": null,
+      "sendDisabled": false,
+      "statusText": ""
+    },
+    {
+      "case": "mineral-editable-draft",
+      "kind": "cura-mic-dom",
+      "viewport": [
+        1024,
+        768
+      ],
+      "documentWidth": 1024,
+      "scrollWidth": 1024,
+      "mic": "Start voice typing",
+      "micSize": [
+        36,
+        36
+      ],
+      "micBounds": [
+        927.2000122070312,
+        716,
+        36,
+        36
+      ],
+      "draft": "Please help me find my shared documents",
+      "composerWidth": 907.2000122070312,
+      "focus": "Message Cura",
+      "statusFont": null,
+      "sendDisabled": false,
+      "statusText": ""
+    },
+    {
+      "case": "mineral-editable-draft",
+      "kind": "cura-mic-dom",
+      "viewport": [
+        900,
+        1000
+      ],
+      "documentWidth": 900,
+      "scrollWidth": 900,
+      "mic": "Start voice typing",
+      "micSize": [
+        36,
+        36
+      ],
+      "micBounds": [
+        803.2000122070312,
+        948,
+        36,
+        36
+      ],
+      "draft": "Please help me find my shared documents",
+      "composerWidth": 783.2000122070312,
+      "focus": "Message Cura",
+      "statusFont": null,
+      "sendDisabled": false,
+      "statusText": ""
+    },
+    {
+      "case": "390-obsidian-permission-error",
+      "kind": "cura-mic-dom",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "scrollWidth": 390,
+      "mic": "Microphone permission off",
+      "micSize": [
+        44,
+        44
+      ],
+      "micBounds": [
+        287.6000061035156,
+        765,
+        44,
+        44
+      ],
+      "draft": "",
+      "composerWidth": 273.6000061035156,
+      "focus": "Microphone permission off",
+      "statusFont": "14px",
+      "sendDisabled": true,
+      "statusText": "Mic permission off"
+    }
+  ],
+  "keyboard": "Return stopped active dictation into editable draft; Shift+Tab returned to Message Cura; Send not pressed",
+  "sourcePins": {
+    "src/utils/VoiceAudio.ts": "abbbb8ad6dfb0e82f2fca93809357bffd755ac84807be920aa0197d249683cda",
+    "src/utils/VoiceAudio.test.ts": "81d33f6f835971fb624c6ca32e299d590f8d0e59704b9c2394163492cfc21d5d",
+    "src/components/app/PaigeChat.tsx": "b45bf0d77510b8a88544f348d2633a9656ccc44dacac3bde54ef42b6bf4c74dd",
+    "src/components/voice/DictationMicButton.tsx": "a15fb96fe7af40cb59064fdf287ccaf0bda8c2c820fe92065d8b5859658bf9ce",
+    "src/components/voice/DictationMicButton.test.tsx": "720d3ae5bde886d65c659785d5328398c8b327ee90702d3248c020f658389fc3",
+    "src/components/voice/DictationComposer.contract.test.ts": "7cbbfaada56bc46a707123b7022c2e6a97bf0ad0c41a8e8d8ed7ac168aa5b5bd"
+  },
+  "composedMain": "bc0b5dad56f1683336668615d2a06195f0d9adfd",
+  "tests": {
+    "focused": 151,
+    "files": 6,
+    "result": "PASS",
+    "lastNewTestChange": "formatting only; final recorder rerun10PASS,0FAIL after composing current main"
+  },
+  "requiredCI": {
+    "originalNative120735190849": "FAIL: our cleanup interrupted readonly CI snapshot; no local stack/test success credited",
+    "recovery": "current main composed; new exact-head gates required; microphone source pins unchanged"
+  }
+}

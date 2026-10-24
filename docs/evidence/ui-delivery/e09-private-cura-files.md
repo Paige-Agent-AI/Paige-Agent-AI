@@ -28,3 +28,7 @@ Full-schema initial head9e12768ed/job120751273390 passed all244 original Documen
 ## Current-main and Preview compatibility
 
 Compose actual main a2d9b3e5, preserving EXP05 original recovery/refusal/reload (#2697), EXP07 image/CI work (#2716), EXP10 evidence (#2708) and microphone #2718. No protected Chat/Spine/model runtime changes occur here. The owned nonpersistent Preview already holds an earlier unshipped640009 source. Read-only verification found zero Auth users, clients, client_files and Chat turns, so normal owned empty Preview recreation is required before crediting current source. No production/history reset, broad replay or ad hoc source replacement. Twelve new hosted rollback controls preserve held Agency/Subaccount identities, refuse private reservation/listing, verify private completion scope and retain ordinary business completion.
+
+## Migration order continuation
+
+Actual current main04edecb0 includes original E03#2172 form-inquiry Conversations, E05#2719 original effect identity and E01#2721 consent fold; all preserved in a clean merge. Production frontier700000 is real, and640009/private column are absent. Under pre-edit reservation ANT161/39038385-f0cf-47c9-9eff-9f7f99ce7dc9, rename only the unshipped migration to20271113710009. SQL SHA256 b634388b77b3e5220f5c8fc67c449336870ca74860c1802661dc4904c377780b is byte-identical. Prior empty640009 Preview source/ACL/policy/trigger proof passed, but new-head normal empty Preview and all exact required gates remain mandatory. No production reset, include-all or history rewrite.

@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: Only owner desktop sessions are available. No
 KEYBOARD_FOCUS: PASS: Actual keyboard removal returns focus to the next file; 44px file controls and mobile Send; selected list and original transcript have independent keyboard scroll access. Final Resume focus repair receives a targeted regression.
 ZOOM_REFLOW: PASS: Actual 320 CSS-pixel reflow has documentWidth=320, composer/send bottom=472 within 480px height; native browser 200-percent zoom is UNVERIFIED.
 REDUCED_MOTION: PASS: Actual reduced-motion media preference active, no animation in the mounted idle file controls; the original upload spinner is motion-safe. Temporary emulation and viewport overrides restored.
-STATE_COVERAGE: PASS: Loading/empty/populated, selection validation, save pending/saved/unknown, check/resume/stop, native refusal, exact receipt, unavailable file, source withdrawal, scope/session change and returning history covered by proportional source/controller/component tests and bounded renders.
+STATE_COVERAGE: PASS: Loading/empty/populated, selection validation, saving/saved/uncertain, check/resume/stop, native refusal, exact receipt, unavailable file, source withdrawal, scope/session change and returning history covered by proportional source/controller/component tests and bounded renders.
 TRUTHFUL_STATE_LABELS: PASS: Saved privately is distinct from sent and read. Word is saved/openable but unread; PDF/image reading retains the original 15 MB/page limits. No fabricated delivery, provider or financial status.
 SOLO_UI: NO: This is the external customer /app interface; owner Chat regression coverage is retained, with no owner dashboard/navigation redesign.
 UNVERIFIED: Final exact-head review, CI, production web/Edge readback and authenticated external-customer/physical-phone evidence. CURA web, Word reading and the complete seven-pillar founder acceptance are not claimed by this increment.
@@ -47,3 +47,15 @@ No customer release name, version, What's New publication or founder acceptance 
 React quality review: no new library/runtime, direct shared-component imports, fixed five-file list bound, derived synchronous gating, stable scoped lifecycle and cancellation, original listeners/unsaved-work registry reused, no new persistent browser product store, and native request authority checked across each async boundary. Metadata queries are bounded25-ID chunks and keep final native/Auth checks. The render harness uses an explicitly synthetic local fixture; it is excluded from the product build.
 
 [Rendered integration evidence](assets/e09-private-cura-composer/connected-render-proof.json) includes phone/desktop geometry, recovery, keyboard, measured minimum new-control text contrast5.43:1, reduced motion and corrected non-overlapping long rows. [Protected source review](assets/e09-private-cura-composer/connected-source-binding.json) identifies the exact committed Chat body and preserves original metadata/extractor/hostile controls. Final PR head review is still required.
+
+## Release governance
+
+INTERNAL_BUILD_IDENTITY: d2a0f87282dc990a4b5eae34475f7b5812391a1b; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat production deployment and exact source readback after merge); evidence=docs/evidence/ui-delivery/e09-private-cura-chat-attachments.md
+RELEASE_CHANNEL: development: exact implemented source and local/rendered evidence; hosted Preview and production deployment are separate gates.
+RELEASE_CLASSIFICATION: internal-only: bounded EXP09 implementation increment, with no named customer release or announcement before authenticated outcome and complete Experience gates.
+CUSTOMER_RELEASE_IDENTITY: none: no complete authenticated customer outcome or founder acceptance is claimed.
+RELEASE_NOTE_REQUIRED: NO: this implementation checkpoint has not passed the customer-announcement gate and assigns no customer release identity.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source-backed private file Chat integration with local and rendered proof; PROOF OWED: exact-head hosted checks, production web/Edge readback, authenticated external-client/model/reload/isolation and complete Experience acceptance.
+RELEASE_RECOVERY: position=guarded source revert or forward-fix retaining original native private files and turns; reference=docs/evidence/ui-delivery/e09-private-cura-chat-attachments.md
+
+First hosted UI-evidence check120917103250 correctly failed for seven missing structured release fields and ambiguous state-description wording. The record is repaired; the original validator/workflow is unchanged and new exact-head checks are required.

@@ -55,7 +55,7 @@ Independent agent review of the code diff (round 1): REQUEST-CHANGES with two P2
 
 Review provenance: the reviewer was an independent agent (read-only Explore instance) examining the diff with file:line evidence and the installed three/R3F sources; it is recorded here as agent review, not human approval. Limitations: captures prove the settled (reduced-motion) pose on SwiftShader; the animated pose is source-proven (uniforms fed only by presenceFrame's real energy; integrated rotations that cannot jump); the speaking under-glow is live CSS proven by selector review, not by a speaking frame (no truthful synthetic speaking frame exists — synthesizing one would manufacture the very speech claim this surface forbids). Mobile portrait captures belong to the pass after the founder sees the desktop room. AUTHENTICATED_RUNTIME remains the only unproven class.
 
-INTERNAL_BUILD_IDENTITY: PENDING_SHA; deployment=undeployed (deploys with the next web build); environment=local harness + CI; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + immersive-frames.json
+INTERNAL_BUILD_IDENTITY: e8d5791d725b8644d26892dcf83303464b12df8e; deployment=undeployed (deploys with the next web build); environment=local harness + CI; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + immersive-frames.json
 RELEASE_CHANNEL: development: visual upgrade merged through the normal PR gate ahead of the founder evaluation; no rollout concept applies to this pilot surface yet.
 RELEASE_CLASSIFICATION: internal-only: pre-evaluation immersion upgrade of the EXP01 Live surface.
 CUSTOMER_RELEASE_IDENTITY: none: Solo Live pilot surface, not yet in the founder evaluation window.

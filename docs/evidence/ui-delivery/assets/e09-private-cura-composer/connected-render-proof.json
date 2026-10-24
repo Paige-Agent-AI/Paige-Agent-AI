@@ -1,0 +1,450 @@
+{
+  "evidenceClass": "Rendered synthetic native/provider boundary; actual customer components/controller/history. Not authenticated production.",
+  "phone320": {
+    "composer": [
+      {
+        "label": "Message Cura",
+        "rect": {
+          "bottom": 472,
+          "height": 44,
+          "left": 8,
+          "right": 211.1999969482422,
+          "top": 428,
+          "width": 203.1999969482422,
+          "x": 8,
+          "y": 428
+        }
+      },
+      {
+        "label": "Send message",
+        "rect": {
+          "bottom": 472,
+          "height": 44,
+          "left": 267.20001220703125,
+          "right": 311.20001220703125,
+          "top": 428,
+          "width": 44,
+          "x": 267.20001220703125,
+          "y": 428
+        }
+      }
+    ],
+    "documentWidth": 320,
+    "height": 480,
+    "scroll": [
+      {
+        "height": 126,
+        "overflow": "auto",
+        "scroll": 228
+      },
+      {
+        "height": 64,
+        "overflow": "auto",
+        "scroll": 473
+      }
+    ],
+    "selected": [
+      {
+        "height": 126,
+        "overflow": "auto",
+        "scroll": 263
+      }
+    ],
+    "width": 320
+  },
+  "desktop": [
+    {
+      "documentWidth": 1366,
+      "input": {
+        "bottom": 756,
+        "height": 44,
+        "left": 12,
+        "right": 441.3625183105469,
+        "top": 712,
+        "width": 429.3625183105469,
+        "x": 12,
+        "y": 712
+      },
+      "selected": {
+        "bottom": 682,
+        "height": 128,
+        "left": 12,
+        "right": 533.3624877929688,
+        "top": 554,
+        "width": 521.3624877929688,
+        "x": 12,
+        "y": 554
+      },
+      "send": {
+        "bottom": 754,
+        "height": 40,
+        "left": 493.3625183105469,
+        "right": 533.3625183105469,
+        "top": 714,
+        "width": 40,
+        "x": 493.3625183105469,
+        "y": 714
+      },
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "documentWidth": 1024,
+      "input": {
+        "bottom": 756,
+        "height": 44,
+        "left": 12,
+        "right": 304.3999938964844,
+        "top": 712,
+        "width": 292.3999938964844,
+        "x": 12,
+        "y": 712
+      },
+      "selected": {
+        "bottom": 682,
+        "height": 128,
+        "left": 12,
+        "right": 396.3999938964844,
+        "top": 554,
+        "width": 384.3999938964844,
+        "x": 12,
+        "y": 554
+      },
+      "send": {
+        "bottom": 754,
+        "height": 40,
+        "left": 356.3999938964844,
+        "right": 396.3999938964844,
+        "top": 714,
+        "width": 40,
+        "x": 356.3999938964844,
+        "y": 714
+      },
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "documentWidth": 900,
+      "input": {
+        "bottom": 988,
+        "height": 44,
+        "left": 12,
+        "right": 254.8000030517578,
+        "top": 944,
+        "width": 242.8000030517578,
+        "x": 12,
+        "y": 944
+      },
+      "selected": {
+        "bottom": 914,
+        "height": 128,
+        "left": 12,
+        "right": 346.8000183105469,
+        "top": 786,
+        "width": 334.8000183105469,
+        "x": 12,
+        "y": 786
+      },
+      "send": {
+        "bottom": 986,
+        "height": 40,
+        "left": 306.8000183105469,
+        "right": 346.8000183105469,
+        "top": 946,
+        "width": 40,
+        "x": 306.8000183105469,
+        "y": 946
+      },
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    }
+  ],
+  "light": {
+    "animations": [],
+    "documentWidth": 900,
+    "reducedMotion": true,
+    "send": {
+      "bottom": 986,
+      "height": 40,
+      "left": 306.8000183105469,
+      "right": 346.8000183105469,
+      "top": 946,
+      "width": 40,
+      "x": 306.8000183105469,
+      "y": 946
+    },
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    }
+  },
+  "longFileRows": {
+    "documentWidth": 900,
+    "groups": [
+      {
+        "overlap": false,
+        "rows": [
+          {
+            "bottom": -259.8999938964844,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": -335.8999938964844
+          },
+          {
+            "bottom": -183.8999938964844,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": -259.8999938964844
+          },
+          {
+            "bottom": -107.90000915527344,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": -183.90000915527344
+          },
+          {
+            "bottom": -31.900001525878903,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": -107.9000015258789
+          },
+          {
+            "bottom": 44.10000038146973,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": -31.899999618530273
+          }
+        ]
+      },
+      {
+        "overlap": false,
+        "rows": []
+      },
+      {
+        "overlap": false,
+        "rows": [
+          {
+            "bottom": 293.6999969482422,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": 217.6999969482422
+          },
+          {
+            "bottom": 369.7000122070313,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": 293.70001220703125
+          },
+          {
+            "bottom": 445.7000122070313,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": 369.7000122070313
+          },
+          {
+            "bottom": 521.7000122070312,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": 445.7000122070313
+          },
+          {
+            "bottom": 597.7000122070312,
+            "height": 76,
+            "scrollHeight": 76,
+            "top": 521.7000122070312
+          }
+        ]
+      },
+      {
+        "overlap": false,
+        "rows": []
+      }
+    ],
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    }
+  },
+  "contrast": [
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 1.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 2.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 3.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 4.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 5.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 1.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 2.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 3.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 4.pdf"
+    },
+    {
+      "background": [
+        237,
+        185,
+        74
+      ],
+      "contrast": 10.36660088261388,
+      "foreground": [
+        22,
+        9,
+        52
+      ],
+      "text": "Consulting engagement notes for the next customer session 5.pdf"
+    },
+    {
+      "background": [
+        255,
+        255,
+        255
+      ],
+      "contrast": 18.03649124477918,
+      "foreground": [
+        4,
+        20,
+        57
+      ],
+      "text": "Add files"
+    },
+    {
+      "background": [
+        255,
+        255,
+        255
+      ],
+      "contrast": 5.4299809257398515,
+      "foreground": [
+        112,
+        101,
+        129
+      ],
+      "text": "PDF, JPG, PNG or Word · up to 5 files, 20 MB total"
+    }
+  ],
+  "keyboardRemoval": "Actual Enter removal restored focus to next original file action.",
+  "uploadRecovery": "Original prepare stopped at lost finish acknowledgement, kept draft/rest, Check upload exposed same-file Resume, recovered explicit Send saved second original message.",
+  "limitations": [
+    "Physical iPhone and production client session unverified.",
+    "Native browser200percent zoom unverified;320 CSSpx reflow verified."
+  ]
+}

@@ -1,0 +1,388 @@
+{
+  "scope": "LOCAL ONLY; unmounted original-service consumer and new component, not a production customer workflow.",
+  "sourceHashes": {
+    "src/hooks/useCustomerChatAttachments.ts": "23e03acc81627a89a4abdef32b5db4df2c6e29ce920c346ccc32087dadede8e2",
+    "src/hooks/useCustomerChatAttachments.test.tsx": "96d78d8ebb13c5b96f9c07eabe1ce915a29eaa960caea029da135ae3f1caaab5",
+    "src/components/chat/CustomerChatAttachments.tsx": "aaa573c9bc09bc4b09b1ba286fdec57806e3c970e91dba041c6dad6f4d44beaf",
+    "src/components/chat/CustomerChatAttachments.test.tsx": "4f784c533e83bf7d980756cdaeeb427ddc99a2fcd824390e90f0c4ffdb5e0eaf",
+    "supabase/functions/_shared/client-portal-files-context.ts": "dff84b7ccd63e15f9a93286c74f11e0eda91446841e59b47ab5ab2c28b8d4b19",
+    "src/lib/customer-files-context.test.ts": "aef2b16b05b39fbcff5f19a4135d8af10ce03e877abea268e1a34554fca90569"
+  },
+  "focusedTests": {
+    "suites": 10,
+    "tests": 174,
+    "result": "PASS",
+    "runner": "Vitest actual local threads pool one worker;59.75s"
+  },
+  "lint": "PASS for six owned new controller/component/native context files",
+  "types": "PASS focused standalone native context + owning tests only; no full app PASS implied",
+  "render": {
+    "boundary": "Actual unmounted production component rendered in isolated local props harness; synthetic files, no send, file transfer, model, full shell, physical phone or authenticated customer proof.",
+    "dark": {
+      "contrast": [
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 7.563034328987565,
+          "text": "Files stay private. Saving a file d"
+        }
+      ],
+      "controls": [
+        {
+          "height": 44,
+          "name": "Add files",
+          "width": 95.7375030517578
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 2.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 3.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 4.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 5.pdf from message",
+          "width": 44
+        }
+      ],
+      "frame": {
+        "height": 480,
+        "width": 320,
+        "x": 16,
+        "y": 48
+      },
+      "overflow": false,
+      "transcript": 144.8000030517578,
+      "url": "http://127.0.0.1:5294/?state=selected&w=320&h=480"
+    },
+    "light": {
+      "contrast": [
+        {
+          "ratio": 16.719017435231088,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 5.033348478834265,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 16.719017435231088,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 5.033348478834265,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 16.719017435231088,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 5.033348478834265,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 16.719017435231088,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 5.033348478834265,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 16.719017435231088,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 5.033348478834265,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 5.19602559009322,
+          "text": "Files stay private. Saving a file d"
+        }
+      ],
+      "controls": [
+        {
+          "height": 44,
+          "name": "Add files",
+          "width": 95.7375030517578
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 1.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 2.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 3.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 4.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 5.pdf from message",
+          "width": 44
+        }
+      ],
+      "frame": {
+        "height": 650,
+        "width": 900,
+        "x": 16,
+        "y": 48
+      },
+      "overflow": false,
+      "transcript": 330.8000183105469,
+      "url": "http://127.0.0.1:5294/?state=selected&w=900&h=650&theme=light"
+    },
+    "recovery": {
+      "contrast": [
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Needs a status check"
+        },
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 17.426665618984345,
+          "text": "Project notes and authorized coachi"
+        },
+        {
+          "ratio": 7.217099012937646,
+          "text": "1 KB · Ready to attach"
+        },
+        {
+          "ratio": 7.563034328987565,
+          "text": "Files stay private. Saving a file d"
+        },
+        {
+          "ratio": 18.26197341617442,
+          "text": "Local recovery example only; no sav"
+        }
+      ],
+      "controls": [
+        {
+          "height": 44,
+          "name": "Add files",
+          "width": 95.7375030517578
+        },
+        {
+          "height": 44,
+          "name": "Check upload of Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 1.pdf",
+          "width": 103.875
+        },
+        {
+          "height": 44,
+          "name": "Resume upload of Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 1.pdf",
+          "width": 65.8375015258789
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 2.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 3.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 4.pdf from message",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Remove Project notes and authorized coaching questions Project notes and authorized coaching questions Project notes and authorized coaching questions 5.pdf from message",
+          "width": 44
+        }
+      ],
+      "frame": {
+        "height": 480,
+        "width": 320,
+        "x": 16,
+        "y": 48
+      },
+      "overflow": false,
+      "transcript": 98.8000030517578,
+      "url": "http://127.0.0.1:5294/?state=unknown&w=320&h=480"
+    },
+    "keyboard": "Tab to file list/remove; Enter removes one selected file and focus moves to the next file remove control. Recovery Check retains focus and exposes Resume for the same local row; harness callbacks are mocks."
+  },
+  "nativeDecoder": {
+    "boundary": "Genuine own empty Preview native caller-role projection, intentional rollback; offline actual decoder. No provider/model/storage bytes/authenticated human or production proof.",
+    "preview": "lmxctraayeyqxsrezhgl",
+    "migration": "20271113810109",
+    "native": {
+      "readback": {
+        "result": {
+          "context": {
+            "mode": "bound",
+            "files": [
+              {
+                "file": {
+                  "id": "e0995400-0000-4000-8000-000000000001",
+                  "mime_type": "application/pdf",
+                  "tenant_id": "e0995200-0000-4000-8000-000000000001",
+                  "contact_id": "e0995300-0000-4000-8000-000000000001",
+                  "created_at": "2026-10-24T10:38:07.759756+00:00",
+                  "size_bytes": 4,
+                  "updated_at": "2026-10-24T10:38:07.759756+00:00",
+                  "visibility": "client_upload",
+                  "storage_path": "e0995200-0000-4000-8000-000000000001/e0995300-0000-4000-8000-000000000001/client_upload/e0995100-0000-4000-8000-000000000002/e0995400-0000-4000-8000-000000000001",
+                  "upload_state": "ready",
+                  "original_filename": "Private notes.pdf",
+                  "uploaded_by_user_id": "e0995100-0000-4000-8000-000000000002",
+                  "customer_chat_thread_id": "0554480a-7107-4f03-9ca0-851c71eb7b67"
+                },
+                "object": {
+                  "id": "dadc01b2-441f-4d03-adf1-0038c69ec7b8",
+                  "version": null,
+                  "metadata": {
+                    "eTag": "isolated-native-proof",
+                    "size": 4,
+                    "mimetype": "application/pdf"
+                  },
+                  "updated_at": "2026-10-24T10:38:07.759756+00:00"
+                }
+              }
+            ],
+            "snapshot": {
+              "kind": "customer_private_files",
+              "version": 1,
+              "file_ids": [
+                "e0995400-0000-4000-8000-000000000001"
+              ],
+              "tenant_id": "e0995200-0000-4000-8000-000000000001",
+              "thread_id": "0554480a-7107-4f03-9ca0-851c71eb7b67",
+              "contact_id": "e0995300-0000-4000-8000-000000000001",
+              "source_fingerprint": "c3766cdd72e0e2659f12c79e51a56086b7f96d4c234427a4a465871c7fd3daa0"
+            },
+            "intent_id": "e0995500-0000-4000-8000-000000000001",
+            "thread_id": "0554480a-7107-4f03-9ca0-851c71eb7b67"
+          },
+          "acceptance": {
+            "status": "accepted",
+            "turn_id": "0e2d0a0a-438c-4e4e-8ff3-c4f346872db4"
+          }
+        },
+        "files_after": 0,
+        "turns_after": 0,
+        "users_after": 0,
+        "clients_after": 0,
+        "protocol_active_after": false
+      }
+    },
+    "decoded": {
+      "status": "available",
+      "data": {
+        "threadId": "0554480a-7107-4f03-9ca0-851c71eb7b67",
+        "intentId": "e0995500-0000-4000-8000-000000000001",
+        "mode": "bound",
+        "snapshot": {
+          "version": 1,
+          "kind": "customer_private_files",
+          "tenant_id": "e0995200-0000-4000-8000-000000000001",
+          "contact_id": "e0995300-0000-4000-8000-000000000001",
+          "thread_id": "0554480a-7107-4f03-9ca0-851c71eb7b67",
+          "file_ids": [
+            "e0995400-0000-4000-8000-000000000001"
+          ],
+          "source_fingerprint": "c3766cdd72e0e2659f12c79e51a56086b7f96d4c234427a4a465871c7fd3daa0"
+        },
+        "files": [
+          {
+            "id": "e0995400-0000-4000-8000-000000000001",
+            "filename": "Private notes.pdf",
+            "mime": "application/pdf",
+            "bytes": 4,
+            "path": "e0995200-0000-4000-8000-000000000001/e0995300-0000-4000-8000-000000000001/client_upload/e0995100-0000-4000-8000-000000000002/e0995400-0000-4000-8000-000000000001",
+            "originThreadId": "0554480a-7107-4f03-9ca0-851c71eb7b67"
+          }
+        ]
+      }
+    },
+    "assertions": "PASS"
+  },
+  "unfinished": [
+    "actual original customer composer mount",
+    "governed stored-byte extraction/model reading",
+    "immutable private file references in returning native browser history",
+    "ordinary external-customer desktop/phone/revoke/relationship/reload proof"
+  ],
+  "founderAcceptance": "NOT_REQUESTED; one complete integrated Experience"
+}

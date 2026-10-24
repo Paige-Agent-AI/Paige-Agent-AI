@@ -1,0 +1,137 @@
+/* Extracted verbatim from src/index.css ([data-pg] roots) for the harness only. */
+  [data-pg] {
+    --pg-font-display: "Schibsted Grotesk", "Segoe UI Variable Display", "SF Pro Display", system-ui, sans-serif;
+    --pg-font-ui: "Schibsted Grotesk", "Segoe UI Variable Text", "SF Pro Text", system-ui, sans-serif;
+    --pg-font-editorial: "Gambetta", "Newsreader", "Iowan Old Style", Baskerville, serif;
+    --pg-font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+    /* THE TYPE LADDER — four sizes, and only four. Owner ruling 2026-08-23, restated in
+       Claude Design's v8 port doc §2: `11 / 13 / 16 / 21`, body `400 14px/1.55`, tracking
+       -.002em — "drop the 10. It's below the readable floor anyway."
+
+       It lives HERE, beside the faces, because that is what makes it a ladder rather than a
+       convention: a change to the scale is these four lines, not a sweep of every call site.
+       Surfaces read them as `text-[length:var(--pg-t-body)]`; the `length:` hint is required,
+       or Tailwind cannot type the arbitrary value and emits no rule at all.
+
+       (That port doc is not in the repo — the pack directories carry v1/agency/v3, no v8 — so
+       the ruling above, not a file, is the authority these four values are held to.)
+
+       HONEST DISCREPANCY, recorded rather than quietly resolved (§13): CD's own v3 pack markup
+       does not hold this ladder — `PAIGE Super Admin Shell v3.dc.html` sets font sizes at
+       9.5 / 10 / 10.5 / 11 / 11.5 / 12 / 12.5px, so its floor is 9.5px, below the owner's
+       stated 11px readable floor. The owner's ruling wins; the pack's smaller steps are
+       collapsed onto `--pg-t-label`. If the pack is later re-ported, this note is why the
+       sizes will not match it line for line. */
+    --pg-t-label: 11px;   /* micro-labels, chips, column headers, units */
+    --pg-t-body:  13px;   /* the default reading size on a working surface */
+    --pg-t-lead:  16px;   /* section leads, emphasised figures */
+    --pg-t-title: 21px;   /* the surface title, one per view */
+    font-synthesis-weight: none;
+
+    /* TABULAR FIGURES ARE **NOT** SET HERE, and the reason is the most visible defect this
+       console has shipped.
+       -----------------------------------------------------------------------------------
+       This rule used to read `font-variant-numeric: tabular-nums` on the console ROOT, so it
+       inherited into every element — including all prose. In Schibsted Grotesk, as in most
+       grotesks, the tabular set gives the COMMA and the PERIOD a full digit-width advance so
+       that `1,234.56` aligns down a column. In a sentence that renders as a visible gap in
+       front of every comma and every period:
+
+           One check failed , one of them blocking . Five of ten passed .
+
+       It reached every string on every surface, authored or composed, and the DOM text was
+       clean throughout — which is why a `textContent` assertion passed while the screen was
+       obviously wrong, and why reading the source found nothing. The tell that separates it
+       from a join bug: the gap appears before `,` and `.` and NEVER before `·`, because the
+       middle dot is not in the numeric set.
+
+       Tabular figures are still wanted — a table whose figures do not align reads as sloppy
+       typesetting. They just belong on FIGURES, which is what `.tabular-nums` below does, and
+       what the surfaces already ask for at every figure site. */
+
+    /* The console's face, set HERE rather than in tailwind.config. That config's `sans`
+       (Inter) and `display` (Bricolage Grotesque) are PLATFORM-WIDE — changing them would
+       repaint the landing page and every tenant shell, including owner-approved frozen
+       surfaces. Neither face appears in this pack and Inter is on its avoid list, so the
+       console overrides by inheritance on its own root and the rest of the platform is
+       untouched. Body is the pack's own `400 14px/1.55`, tracking -.002em. */
+    font-family: var(--pg-font-ui);
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: -0.002em;
+    color: var(--pg-ink);
+  }
+  [data-pg="dark"] {
+    color-scheme: dark;
+    --pg-env: #08070b; --pg-nav: #0d0b11; --pg-canvas: #100e14; --pg-spine: #121017;
+    --pg-workspace: #16131a; --pg-surface: #19161e; --pg-raised: #211d27;
+    --pg-artifact: #e9e4da;
+    --pg-line-soft: rgba(244,237,222,.115); --pg-line: rgba(244,237,222,.195);
+    --pg-line-strong: rgba(244,237,222,.30); --pg-line-authority: rgba(234,213,170,.40);
+    --pg-ink: #f6f2ea; --pg-ink-2: #d6d0c9; --pg-muted: #aca69d; --pg-faint: #969089;
+    --pg-gold-core: #fff0cf; --pg-gold: #ead5aa; --pg-gold-deep: #c7a978;
+    --pg-gold-fill: #d4a752; --pg-gold-bloom: rgba(240,200,106,.28);
+    --pg-graphite: #2a2730; --pg-lift: rgba(255,255,255,.018);
+    --pg-violet: #9b8de0; --pg-positive: #8fd1ae; --pg-warning: #edc17f; --pg-negative: #eda093;
+    --pg-e1: inset 0 1px rgba(255,255,255,.025);
+    --pg-e2: 0 1px 2px rgba(0,0,0,.45);
+    --pg-e3: -20px 0 60px rgba(0,0,0,.22);
+    --pg-e4: 0 28px 70px rgba(0,0,0,.42);
+    --pg-rim: inset 0 1px 0 rgba(255,255,255,.07), inset 0 -1px 0 rgba(0,0,0,.5);
+    --pg-lift-1: inset 0 1px 0 rgba(255,255,255,.055), 0 1px 1px rgba(0,0,0,.3), 0 4px 12px -4px rgba(0,0,0,.42);
+    --pg-lift-2: inset 0 1px 0 rgba(255,255,255,.07), 0 2px 4px rgba(0,0,0,.32), 0 16px 34px -12px rgba(0,0,0,.52);
+    --pg-lift-3: inset 0 1px 0 rgba(255,255,255,.085), 0 6px 12px rgba(0,0,0,.36), 0 36px 72px -20px rgba(0,0,0,.62);
+    --pg-inset: inset 0 1px 2px rgba(0,0,0,.42), inset 0 -1px 0 rgba(255,255,255,.035);
+    --pg-r-plate: 13px; --pg-r-chip: 9px; --pg-r-seal: 11px; --pg-r-pill: 999px;
+    --k-skill: #c7a978; --k-automation: #8fa9c4; --k-integration: #8fb9a4;
+    --k-template: #c2a3b8; --k-agent: #a99ad6;
+  }
+  [data-pg="light"] {
+    /* DO NOT "FIX" --pg-artifact AND --pg-raised BEING THE SAME HEX IN LIGHT.
+       It is #fffdf8 for both here, and far apart in dark (#e9e4da vs #211d27). That is
+       correct, and Claude Design ruled on it 2026-08-23 precisely so a later session does not
+       separate them by inventing a value.
+
+       In LIGHT, paper and a raised surface are both the lightest thing on a warm ground — the
+       collision is honest, and paper being the brightest thing on paper is the one property
+       that must not break. In DARK they are opposites: --pg-artifact is a document on a
+       near-black shell, --pg-raised is a menu.
+
+       CONSEQUENCE, and it is a real rule rather than a caveat: in light, FILL CANNOT CARRY THE
+       PAPER/POPOVER DISTINCTION — elevation and edge must.
+           a document -> --pg-lift-2 + a hairline
+           a popover  -> --pg-lift-3
+       Same fill, different height. The pack already renders both that way, which is why the
+       identity never surfaced as a problem.
+
+       Changing either value breaks pg-token-parity (44/44 against the pack) AND breaks the
+       thing that is correct about it. Reach for elevation, never for a new hex. */
+
+    color-scheme: light;
+    --pg-env: #e8e5df; --pg-nav: #f4f1eb; --pg-canvas: #fbf9f5; --pg-spine: #f1eee8;
+    --pg-workspace: #f7f4ee; --pg-surface: #f5f2ec; --pg-raised: #fffdf8;
+    --pg-artifact: #fffdf8;
+    --pg-line-soft: rgba(45,40,50,.105); --pg-line: rgba(45,40,50,.185);
+    --pg-line-strong: rgba(45,40,50,.28); --pg-line-authority: rgba(155,120,60,.44);
+    --pg-ink: #201e23; --pg-ink-2: #3d3941; --pg-muted: #67616b; --pg-faint: #6a646e;
+    --pg-gold-core: #6f5636; --pg-gold: #8b7049; --pg-gold-deep: #7a5c2e;
+    --pg-gold-fill: #c9a96a; --pg-gold-bloom: rgba(201,169,106,.30);
+    --pg-graphite: #b9b2a6; --pg-lift: rgba(45,40,50,.03);
+    --pg-violet: #655a96; --pg-positive: #327458; --pg-warning: #986322; --pg-negative: #a5483d;
+    --pg-e1: inset 0 1px rgba(255,255,255,.7);
+    --pg-e2: 0 1px 2px rgba(45,40,50,.10);
+    --pg-e3: -20px 0 60px rgba(45,40,50,.08);
+    --pg-e4: 0 24px 60px rgba(45,40,50,.16);
+    --pg-rim: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(45,40,50,.07);
+    --pg-lift-1: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 1px rgba(45,40,50,.055), 0 4px 10px -4px rgba(45,40,50,.12);
+    --pg-lift-2: inset 0 1px 0 rgba(255,255,255,.95), 0 2px 4px rgba(45,40,50,.07), 0 14px 30px -12px rgba(45,40,50,.17);
+    --pg-lift-3: inset 0 1px 0 #fff, 0 6px 12px rgba(45,40,50,.09), 0 32px 64px -20px rgba(45,40,50,.22);
+    --pg-inset: inset 0 1px 2px rgba(45,40,50,.1), inset 0 -1px 0 rgba(255,255,255,.85);
+    --pg-r-plate: 13px; --pg-r-chip: 9px; --pg-r-seal: 11px; --pg-r-pill: 999px;
+    --k-skill: #9a7638; --k-automation: #4d6f92; --k-integration: #3f7a5f;
+    --k-template: #8d5f7c; --k-agent: #6f5eb0;
+  }
+  [data-pg] ::-webkit-scrollbar { width: 10px; height: 10px; }
+  [data-pg] ::-webkit-scrollbar-track { background: transparent; }
+  [data-pg] ::-webkit-scrollbar-thumb { background: var(--pg-line-strong); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }

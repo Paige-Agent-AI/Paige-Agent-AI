@@ -185,3 +185,25 @@ Chat assertions, with original service-role posture restored and zero provider
 effects. Transcript `work/weekly-chat-draft-840003-native.txt` and original result
 `../test-temp/paige-weekly-proof-G4Iznp/result.json` retain this bounded proof;
 required hosted CI still runs the unchanged complete native suite.
+
+## Production source release — October24 UTC
+
+Final reviewedadf6 (LOWER6386231227/6386546848), all13 exact checks/genuine new
+Preview and two web statuses SUCCESS, merged actualebbd603cd981ea50aba9ed5b34c7fad2cb7491bb.
+Parents1b4a4a73+adf6 and tree41081036589734f1df0008e60a9523b61ad847fe equal the
+inspected union; all five owning source blobs remain exact. Normal native run
+40110935353/deploy120922420221 succeeded and verified persistence/db-liveebbd.
+Production840003 exists once; retired never-production860005 is absent. All15
+full function definitions/ABI/security/effective grants and four reused canonical
+references equal fresh managed Preview19/19. Exact productionGFAi READY and both
+publicebbd-mvmlsk52/null observed16:20:38UTC. No Edge source belongs to this slice.
+
+[Actual readback](exp05-weekly-chat-source-production-readback.json) and
+[original release6386588301](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2758#issuecomment-6386588301)
+record only source release. The temporary Preview closure/reopen completed through
+the normal empty-environment process. No production history was rewritten.
+The later E04 release of its never-applied840004 reservation is retained in ANT161;
+receiving higher native owners keep their own release gates. Actual governed Chat
+admission/approval/definition/Rail/reload, recurring execution, ZION, Live and all
+ten/E5-CV1–9 remain unverified. Catalogue/algorithm maturity and founder acceptance
+do not advance from these source records.

@@ -2,7 +2,7 @@ import {afterEach,beforeEach,expect,it,vi} from "vitest";
 import {readCustomerChat,readCustomerChatOutcome} from "./customer-chat";
 import {readClientPortalFrame} from "./client-portal-frame";
 const f=vi.hoisted(()=>({getUser:vi.fn(),getSession:vi.fn(),rpc:vi.fn(),from:vi.fn(),thread:null as unknown,turns:[] as unknown[],
- error:null as unknown,reads:[] as string[],filters:[] as unknown[][],headers:[] as unknown[][],signals:[] as AbortSignal[]}));
+ files:[] as unknown[],columns:[] as string[],error:null as unknown,reads:[] as string[],filters:[] as unknown[][],headers:[] as unknown[][],signals:[] as AbortSignal[]}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{
  auth:{getUser:(...a:unknown[])=>f.getUser(...a),getSession:(...a:unknown[])=>f.getSession(...a)},rpc:(...a:unknown[])=>f.rpc(...a),
  from:(name:string)=>{f.reads.push(name);return f.from(name);},
@@ -17,19 +17,20 @@ const value=()=>({actor_id:actor,profile:{id:client,tenant_id:tenant,linked_user
 const frame=()=>readClientPortalFrame(value(),actor)!;
 const request=(data:unknown,error:unknown=null,name="rpc")=>{
  const q=Object.assign(Promise.resolve({data,error}),{
+  returns:()=>q,
   setHeader:(key:string,v:string)=>{f.headers.push([name,key,v]);return q;},
   abortSignal:(signal:AbortSignal)=>{f.signals.push(signal);return q;},
  });return q;
 };
 beforeEach(()=>{
- vi.clearAllMocks();f.reads=[];f.filters=[];f.headers=[];f.signals=[];f.error=null;
+ vi.clearAllMocks();f.files=[];f.columns=[];f.reads=[];f.filters=[];f.headers=[];f.signals=[];f.error=null;
  f.thread={id:thread,caller_user_id:actor,contact_id:client,tenant_id:tenant,lens:"client",interactive_latest_intent:null};
  f.turns=[{id:"e0957000-0000-4000-8000-000000000002",role:"assistant",content:"Saved answer"},
   {id:"e0957000-0000-4000-8000-000000000001",role:"user",content:"Saved question"}];
  f.getUser.mockResolvedValue({data:{user:{id:actor}},error:null});
  f.getSession.mockResolvedValue({data:{session:{user:{id:actor},access_token:"synthetic-captured-history"}},error:null});
  f.rpc.mockImplementation((name:string)=>request(name==="client_portal_frame"?value():thread,null,name));
- f.from.mockImplementation((name:string)=>{const q={select:()=>q,returns:()=>q,eq:(...args:unknown[])=>{f.filters.push([name,...args]);return q;},is:()=>q,order:()=>q,
+ f.from.mockImplementation((name:string)=>{const q={select:(columns:string)=>{f.columns.push(columns);return q;},returns:()=>q,in:(...args:unknown[])=>{f.filters.push([name,...args]);return q;},then:(resolve:(v:unknown)=>unknown)=>Promise.resolve({data:f.files,error:null}).then(resolve),eq:(...args:unknown[])=>{f.filters.push([name,...args]);return q;},is:()=>q,order:()=>q,
    setHeader:(key:string,business:string)=>{f.headers.push([name,key,business]);return q;},
    abortSignal:(signal:AbortSignal)=>{f.signals.push(signal);return q;},
    filter:(...args:unknown[])=>{f.filters.push(args);return q;},
@@ -209,4 +210,37 @@ it("returns the latest intent observed after the private history read rather tha
 it("refuses missing native latest-intent evidence instead of treating it as no original request",async()=>{
  const projection={...(f.thread as Record<string,unknown>)};delete projection.interactive_latest_intent;f.thread=projection;
  await expect(readCustomerChat(frame())).rejects.toThrow("Customer conversation changed");
+});
+
+const fileId=(n:number)=>"e0997000-0000-4000-8000-"+String(n).padStart(12,"0");
+const storedFile=(n:number)=>({id:fileId(n),tenant_id:tenant,contact_id:client,uploaded_by_user_id:actor,
+ storage_path:tenant+"/"+client+"/client_upload/"+actor+"/"+fileId(n),original_filename:"Private "+n+".pdf",
+ mime_type:"application/pdf",size_bytes:4,visibility:"client_upload",upload_state:"ready",
+ created_at:"2026-10-24T10:00:00Z",updated_at:"2026-10-24T10:00:00Z",customer_chat_thread_id:fileId(99)});
+function fileHistory(ids:unknown=[fileId(1),fileId(2)]){
+ f.turns=[{id:fileId(80),role:"user",content:"Read these",customer_file_ids:ids,request_intent_id:fileId(81)}];
+ f.files=[storedFile(2),storedFile(1)];
+ f.rpc.mockImplementation((name:string)=>request(name==="client_portal_frame"?value():name==="client_portal_chat_files"
+  ?{tenant_id:tenant,client_id:client,files:[],has_more:false}:thread,null,name));
+}
+it("restores the original ordered private attachments, including an older own origin, without fetching the internal bundle",async()=>{
+ fileHistory();const result=await readCustomerChat(frame());
+ expect(result.messages[0].files?.map(file=>file.filename)).toEqual(["Private 1.pdf","Private 2.pdf"]);
+ expect(result.messages[0].requestIntentId).toBe(fileId(81));
+ expect(f.columns.find(c=>c.includes("customer_file_ids"))).toBe("id,role,content,customer_file_ids:bundle_ref->customer_files->file_ids,request_intent_id:bundle_ref->interactive->>request_intent_id");
+ expect(f.columns).not.toContain("bundle_ref");expect(f.filters).toContainEqual(["client_files","uploaded_by_user_id",actor]);
+});
+for(const key of ["tenant_id","contact_id","uploaded_by_user_id","storage_path"])it("withholds saved attachments with foreign "+key,async()=>{
+ fileHistory();f.files=[{...storedFile(1),[key]:fileId(101)}];
+ await expect(readCustomerChat(frame())).rejects.toThrow();
+});
+for(const ids of [[fileId(1),fileId(1)],[],["foreign"],Array.from({length:6},(_,n)=>fileId(n+1))])it("rejects an invalid original file manifest before metadata reads "+JSON.stringify(ids),async()=>{
+ fileHistory(ids);await expect(readCustomerChat(frame())).rejects.toThrow("Saved attachments could not be verified");expect(f.reads).not.toContain("client_files");
+});
+it("keeps missing private objects visibly unavailable rather than replacing them with other files",async()=>{
+ fileHistory();f.files=[storedFile(2)];const result=await readCustomerChat(frame());expect(result.messages[0].unavailableFiles).toBe(1);expect(result.messages[0].files?.map(file=>file.id)).toEqual([fileId(2)]);
+});
+it("refuses a lost native private-file gate instead of returning cached names",async()=>{
+ fileHistory();f.rpc.mockImplementation((name:string)=>request(name==="client_portal_frame"?value():name==="client_portal_chat_files"?null:thread,null,name));
+ await expect(readCustomerChat(frame())).rejects.toThrow("Saved attachments could not be verified");expect(f.reads).not.toContain("client_files");
 });

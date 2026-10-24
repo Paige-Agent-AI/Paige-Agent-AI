@@ -1,0 +1,944 @@
+{
+  "date": "2026-10-23",
+  "classification": "NOT_DEPLOYED; one original native invitation mechanism, not a new identity/sender system",
+  "lease": "ANT161/0548ba61-ca74-4fba-a559-d2db231815f1",
+  "source_parent": "2695/8ea10710148688bf7f500540953f902bc1f1a149",
+  "observed_main": "33bb85dcc883d1b31631fc0c954babafda9eeea9",
+  "migration": "20271113630009",
+  "migration_sha256": "6c3b14d19783f817666e5c26bdfb6bab45afa8ec2c9388e34ff0052293cb73b3",
+  "original_invitation_md5": "10316cc79166fbcc24825cbbacf34e89",
+  "candidate_invitation_md5": "543bb36574e23f05c20838b7ee56413f",
+  "exact_inverse": true,
+  "baseline": {
+    "mode": "baseline",
+    "environment": "isolated PostgreSQL16 reduced dependencies, actual original/fixed acceptor and original access guard, actual database roles and same canonical core assertions; Auth identity/contact normalization/profile setup are doubles, full schema and production proof not implied",
+    "cases": [
+      "PASS same-business duplicate test uses two distinct canonical CRM addresses",
+      "PASS first legitimate business invitation: actual caller role",
+      "PASS first legitimate business invitation: expected acceptance or refusal",
+      "PASS first legitimate business invitation: invited tenant only",
+      "PASS another customer cannot redeem the second business invitation: actual caller role",
+      "PASS another customer cannot redeem the second business invitation: expected acceptance or refusal",
+      "PASS another customer cannot redeem the second business invitation: intended guard caused refusal",
+      "PASS another customer cannot redeem the second business invitation: zero durable acceptance effects",
+      "PASS a token cannot bind the second contact to the first business: actual caller role",
+      "PASS a token cannot bind the second contact to the first business: expected acceptance or refusal",
+      "PASS a token cannot bind the second contact to the first business: intended guard caused refusal",
+      "PASS a token cannot bind the second contact to the first business: zero durable acceptance effects",
+      "PASS second-business expired invitation: actual caller role",
+      "PASS second-business expired invitation: expected acceptance or refusal",
+      "PASS second-business expired invitation: zero durable acceptance effects",
+      "PASS second-business revoked invitation: actual caller role",
+      "PASS second-business revoked invitation: expected acceptance or refusal",
+      "PASS second-business revoked invitation: zero durable acceptance effects",
+      "PASS a duplicate contact inside the SAME business remains refused: actual caller role",
+      "PASS a duplicate contact inside the SAME business remains refused: expected acceptance or refusal",
+      "PASS a duplicate contact inside the SAME business remains refused: intended guard caused refusal",
+      "PASS a duplicate contact inside the SAME business remains refused: zero durable acceptance effects",
+      "PASS the original verified recipient is restored before second-business acceptance",
+      "PASS second legitimate business invitation: actual caller role",
+      "FAIL second legitimate business invitation: expected acceptance or refusal",
+      "FAIL second legitimate business invitation: invited tenant only",
+      "FAIL two genuine invitations produce two separate canonical relationships",
+      "FAIL the original exact contacts are reused without a duplicate CRM",
+      "PASS refused same-business duplicate remains unlinked",
+      "PASS the original client role is idempotent across two businesses",
+      "PASS two customer invitations never create a business staff seat",
+      "PASS customer invitations never change owner or staff workspace",
+      "FAIL each accepted business retains its own original durable receipt",
+      "FAIL second acceptance receipt binds original actor business and contact",
+      "PASS returning second-business token cannot grant twice: actual caller role",
+      "PASS returning second-business token cannot grant twice: expected acceptance or refusal",
+      "FAIL returning second-business token cannot grant twice: intended guard caused refusal",
+      "PASS returning second-business token cannot grant twice: zero durable acceptance effects",
+      "PASS the database itself refuses a duplicate login within one business"
+    ],
+    "passed": 32,
+    "failed": 7
+  },
+  "repaired": {
+    "mode": "repaired",
+    "environment": "isolated PostgreSQL16 reduced dependencies, actual original/fixed acceptor and original access guard, actual database roles and same canonical core assertions; Auth identity/contact normalization/profile setup are doubles, full schema and production proof not implied",
+    "cases": [
+      "PASS same-business duplicate test uses two distinct canonical CRM addresses",
+      "PASS first legitimate business invitation: actual caller role",
+      "PASS first legitimate business invitation: expected acceptance or refusal",
+      "PASS first legitimate business invitation: invited tenant only",
+      "PASS another customer cannot redeem the second business invitation: actual caller role",
+      "PASS another customer cannot redeem the second business invitation: expected acceptance or refusal",
+      "PASS another customer cannot redeem the second business invitation: intended guard caused refusal",
+      "PASS another customer cannot redeem the second business invitation: zero durable acceptance effects",
+      "PASS a token cannot bind the second contact to the first business: actual caller role",
+      "PASS a token cannot bind the second contact to the first business: expected acceptance or refusal",
+      "PASS a token cannot bind the second contact to the first business: intended guard caused refusal",
+      "PASS a token cannot bind the second contact to the first business: zero durable acceptance effects",
+      "PASS second-business expired invitation: actual caller role",
+      "PASS second-business expired invitation: expected acceptance or refusal",
+      "PASS second-business expired invitation: zero durable acceptance effects",
+      "PASS second-business revoked invitation: actual caller role",
+      "PASS second-business revoked invitation: expected acceptance or refusal",
+      "PASS second-business revoked invitation: zero durable acceptance effects",
+      "PASS a duplicate contact inside the SAME business remains refused: actual caller role",
+      "PASS a duplicate contact inside the SAME business remains refused: expected acceptance or refusal",
+      "PASS a duplicate contact inside the SAME business remains refused: intended guard caused refusal",
+      "PASS a duplicate contact inside the SAME business remains refused: zero durable acceptance effects",
+      "PASS the original verified recipient is restored before second-business acceptance",
+      "PASS second legitimate business invitation: actual caller role",
+      "PASS second legitimate business invitation: expected acceptance or refusal",
+      "PASS second legitimate business invitation: invited tenant only",
+      "PASS two genuine invitations produce two separate canonical relationships",
+      "PASS the original exact contacts are reused without a duplicate CRM",
+      "PASS refused same-business duplicate remains unlinked",
+      "PASS the original client role is idempotent across two businesses",
+      "PASS two customer invitations never create a business staff seat",
+      "PASS customer invitations never change owner or staff workspace",
+      "PASS each accepted business retains its own original durable receipt",
+      "PASS second acceptance receipt binds original actor business and contact",
+      "PASS returning second-business token cannot grant twice: actual caller role",
+      "PASS returning second-business token cannot grant twice: expected acceptance or refusal",
+      "PASS returning second-business token cannot grant twice: intended guard caused refusal",
+      "PASS returning second-business token cannot grant twice: zero durable acceptance effects",
+      "PASS the database itself refuses a duplicate login within one business"
+    ],
+    "passed": 39,
+    "failed": 0
+  },
+  "incorrect_global_index_only": {
+    "mode": "fault-global-only",
+    "environment": "isolated PostgreSQL16 reduced dependencies, actual original/fixed acceptor and original access guard, actual database roles and same canonical core assertions; Auth identity/contact normalization/profile setup are doubles, full schema and production proof not implied",
+    "cases": [
+      "PASS same-business duplicate test uses two distinct canonical CRM addresses",
+      "PASS first legitimate business invitation: actual caller role",
+      "PASS first legitimate business invitation: expected acceptance or refusal",
+      "PASS first legitimate business invitation: invited tenant only",
+      "PASS another customer cannot redeem the second business invitation: actual caller role",
+      "PASS another customer cannot redeem the second business invitation: expected acceptance or refusal",
+      "PASS another customer cannot redeem the second business invitation: intended guard caused refusal",
+      "PASS another customer cannot redeem the second business invitation: zero durable acceptance effects",
+      "PASS a token cannot bind the second contact to the first business: actual caller role",
+      "PASS a token cannot bind the second contact to the first business: expected acceptance or refusal",
+      "PASS a token cannot bind the second contact to the first business: intended guard caused refusal",
+      "PASS a token cannot bind the second contact to the first business: zero durable acceptance effects",
+      "PASS second-business expired invitation: actual caller role",
+      "PASS second-business expired invitation: expected acceptance or refusal",
+      "PASS second-business expired invitation: zero durable acceptance effects",
+      "PASS second-business revoked invitation: actual caller role",
+      "PASS second-business revoked invitation: expected acceptance or refusal",
+      "PASS second-business revoked invitation: zero durable acceptance effects",
+      "PASS a duplicate contact inside the SAME business remains refused: actual caller role",
+      "PASS a duplicate contact inside the SAME business remains refused: expected acceptance or refusal",
+      "PASS a duplicate contact inside the SAME business remains refused: intended guard caused refusal",
+      "PASS a duplicate contact inside the SAME business remains refused: zero durable acceptance effects",
+      "PASS the original verified recipient is restored before second-business acceptance",
+      "PASS second legitimate business invitation: actual caller role",
+      "FAIL second legitimate business invitation: expected acceptance or refusal",
+      "FAIL second legitimate business invitation: invited tenant only",
+      "FAIL two genuine invitations produce two separate canonical relationships",
+      "FAIL the original exact contacts are reused without a duplicate CRM",
+      "PASS refused same-business duplicate remains unlinked",
+      "PASS the original client role is idempotent across two businesses",
+      "PASS two customer invitations never create a business staff seat",
+      "PASS customer invitations never change owner or staff workspace",
+      "FAIL each accepted business retains its own original durable receipt",
+      "FAIL second acceptance receipt binds original actor business and contact",
+      "PASS returning second-business token cannot grant twice: actual caller role",
+      "PASS returning second-business token cannot grant twice: expected acceptance or refusal",
+      "FAIL returning second-business token cannot grant twice: intended guard caused refusal",
+      "PASS returning second-business token cannot grant twice: zero durable acceptance effects",
+      "PASS the database itself refuses a duplicate login within one business"
+    ],
+    "passed": 32,
+    "failed": 7
+  },
+  "complete_migration_guards_production_acl": {
+    "mode": "production-acl",
+    "environment": "isolated PostgreSQL16 reduced dependency tables; all16 genuine original function definitions/ABI/owner/ACL contracts and actual complete migration, no managed/customer/provider proof",
+    "controls": [
+      {
+        "name": "unknown invitation source",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "broadened private identity permission",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "changed original customer frame binding",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "missing per-business unique guard",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "missing original global guard",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "disabled original access lifecycle trigger",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "conflicting lookup index",
+        "refused": true,
+        "preserved": true
+      }
+    ],
+    "acceptedOriginal": true,
+    "actual": {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_hash": "543bb36574e23f05c20838b7ee56413f",
+      "lookup_valid": true,
+      "old_global_absent": true,
+      "per_business_valid": true
+    }
+  },
+  "complete_migration_guards_preview_acl": {
+    "mode": "preview-acl",
+    "environment": "isolated PostgreSQL16 reduced dependency tables; all16 genuine original function definitions/ABI/owner/ACL contracts and actual complete migration, no managed/customer/provider proof",
+    "controls": [
+      {
+        "name": "unknown invitation source",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "broadened private identity permission",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "changed original customer frame binding",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "missing per-business unique guard",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "missing original global guard",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "disabled original access lifecycle trigger",
+        "refused": true,
+        "preserved": true
+      },
+      {
+        "name": "conflicting lookup index",
+        "refused": true,
+        "preserved": true
+      }
+    ],
+    "acceptedOriginal": true,
+    "actual": {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_hash": "543bb36574e23f05c20838b7ee56413f",
+      "lookup_valid": true,
+      "old_global_absent": true,
+      "per_business_valid": true
+    }
+  },
+  "concurrency": {
+    "environment": "isolated PostgreSQL16 reduced dependency tables, full actual migration and original native acceptor/lifecycle guard; two actual authenticated-role connections, synthetic independently confirmed email-change fixture for competing same-business contacts; real canonical email-unique index retained; not full-schema or customer production proof",
+    "results": [
+      {
+        "scenario": "distinct original businesses",
+        "realOverlappingTransactions": true,
+        "pass": true,
+        "state": {
+          "links": 2,
+          "roles": 1,
+          "first_uses": 1,
+          "second_link": true,
+          "second_uses": 1,
+          "first_receipts": 1,
+          "second_receipts": 1
+        }
+      },
+      {
+        "scenario": "same business duplicate contacts",
+        "realOverlappingTransactions": true,
+        "pass": true,
+        "state": {
+          "links": 1,
+          "roles": 1,
+          "first_uses": 1,
+          "second_link": false,
+          "second_uses": 0,
+          "first_receipts": 1,
+          "second_receipts": 0
+        }
+      }
+    ]
+  },
+  "native_fixture_plan_preservation": [
+    {
+      "file": "client_portal_self_projection.sql",
+      "indexAssertions": 2
+    },
+    {
+      "file": "customer_portal_access.sql",
+      "indexAssertions": 0,
+      "oldPlan": "215",
+      "newPlan": "215"
+    },
+    {
+      "file": "customer_portal_agreements.sql",
+      "indexAssertions": 1,
+      "oldPlan": "255",
+      "newPlan": "255"
+    },
+    {
+      "file": "customer_portal_documents.sql",
+      "indexAssertions": 0,
+      "oldPlan": "244",
+      "newPlan": "244"
+    },
+    {
+      "file": "customer_portal_menu.sql",
+      "indexAssertions": 0,
+      "oldPlan": "104",
+      "newPlan": "104"
+    },
+    {
+      "file": "customer_portal_payments.sql",
+      "indexAssertions": 2,
+      "oldPlan": "171",
+      "newPlan": "171"
+    },
+    {
+      "file": "customer_portal_progress.sql",
+      "indexAssertions": 0,
+      "oldPlan": "129",
+      "newPlan": "129"
+    },
+    {
+      "file": "customer_portal_sessions.sql",
+      "indexAssertions": 0,
+      "oldPlan": "113",
+      "newPlan": "113"
+    },
+    {
+      "file": "e09_customer_request_scope.sql",
+      "indexAssertions": 2,
+      "oldPlan": "294",
+      "newPlan": "294"
+    },
+    {
+      "file": "e09_customer_relationship_choices.sql",
+      "indexAssertions": 2,
+      "oldPlan": "61",
+      "newPlan": "61"
+    },
+    {
+      "file": "e09_owner_context_boundary.sql",
+      "indexAssertions": 1,
+      "oldPlan": "22",
+      "newPlan": "22"
+    }
+  ],
+  "guarded_original_bindings": [
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "_token text",
+      "hash": "10316cc79166fbcc24825cbbacf34e89",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "uuid",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "accept_tenant_invite(text)",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "a6e37b8e7881c142be52d3b65e1c6f8c",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "trigger",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "auto_advance_journey_on_tier()",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "7a1f9bd8eda9eb23ffde44552190b404",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "TABLE(healed boolean, onboarding_stage text, client_id uuid)",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "ensure_client_role_self_heal()",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "cd959462bca734f717e6911e4773d5f2",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "jsonb",
+      "definer": false,
+      "language": "plpgsql",
+      "signature": "load_self_context()",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "39cb7d0fc5b50f669c3cc049e98971f9",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "TABLE(tenant_id uuid, tenant_name text, playbook_config jsonb, playbook_slug text, funding_enabled boolean, brand jsonb)",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "get_paige_persona_context()",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "_actor uuid",
+      "hash": "ac743fec2458ecf43c25db8fc0c80ad6",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "get_actor_access(uuid)",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_tenant_id uuid",
+      "hash": "ff84ba24689e5043d7d15ed3d9150268",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "uuid",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_relationship_id(uuid)",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_tenant_id uuid",
+      "hash": "090fd2f8ef6f29ddf8091be7cbd6db7d",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_self_profile(uuid)",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false",
+        "service_role:EXECUTE:false"
+      ],
+      "args": "p_token text",
+      "hash": "bc5463b7136b57352f8c854729570140",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_invite_status(text)",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "b3826e6b52ba34cd40348112b8145883",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_frame()",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "postgres:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "c1dceae767c0b94a7e465f678a72d648",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "trigger",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "_clients_portal_access_guard()",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_contact_id uuid, p_action text, p_reason text, p_note text, p_expected_changed_at timestamp with time zone",
+      "hash": "c56f93bbcf4c17b216975e97a4ec8a1f",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "set_client_portal_access(uuid,uuid,uuid,text,text,text,timestamp with time zone)",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "postgres:EXECUTE:false"
+      ],
+      "args": "p_tenant_id uuid, p_lock text",
+      "hash": "416002c40cb71ed54cc4c3387c37563f",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "uuid",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "_client_portal_lock_relationship(uuid,text)",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "p_limit integer, p_after uuid",
+      "hash": "3fe81a22912dd6292462b69a155a25f0",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_relationship_choices(integer,uuid)",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "postgres:EXECUTE:false"
+      ],
+      "args": "",
+      "hash": "72efd408dc26f9672088f10eea9ebea1",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "uuid",
+      "definer": false,
+      "language": "plpgsql",
+      "signature": "_client_portal_request_business()",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "authenticated:EXECUTE:false",
+        "postgres:EXECUTE:false"
+      ],
+      "args": "p_slug text",
+      "hash": "ca744991908d2e8239b84bb76033dc03",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "definer": true,
+      "language": "plpgsql",
+      "signature": "client_portal_entry_for_slug(text)",
+      "volatility": "s"
+    }
+  ],
+  "full_schema_joined_acceptance_lifecycle": {
+    "historical_statement": "UNVERIFIED; extended original consumer_invite_acceptance and all incumbent native pillar suites await required hosted CI",
+    "latest_attempt": {
+      "job": 120712788727,
+      "head": "c34d55584ee8cf02dd27db0d7bc24c80067b208d",
+      "assertions": 453,
+      "passed": 452,
+      "failed": 1,
+      "status": "FAIL; exact new-head full rerun required",
+      "note": "All joined two-business frames, choices, pause/restore/end/re-invitation, receipt recovery and interrupted-audit assertions reached; one new finite-use error expectation corrected. No release gate waived."
+    },
+    "clean_supporting_run": {
+      "head": "ffc137913fb9cd66167884668d6dce1147523711",
+      "job": 120721723331,
+      "run": 40044107745,
+      "status": "SUCCESS",
+      "consumer": 453,
+      "scope": 294,
+      "business_choices": 61,
+      "all_seven_pillar_suites": "SUCCESS",
+      "full_grant_ordering": "SUCCESS",
+      "boundary": "Actual complete isolated native original schema with synthetic rollback Auth fixtures, not production/customer/provider/founder proof. Final composed head must rerun all required gates."
+    }
+  },
+  "production_customer_device_and_founder": "UNVERIFIED",
+  "limits": [
+    "Windows local initdb timed out before assertions; permitted retry used a larger initialization deadline and stopped its own cluster",
+    "First local actual migration guard exposed invalid embedded JSON quoting before PR; corrected and all seven refusal/state-preservation controls pass for both observed closed ACL variants",
+    "Source definitions were transferred in bounded chunks after an oversized tooling payload was rejected; no product permission bypass",
+    "No managed Auth fixtures, provider communication, charge, signature, booking, upload, Knowledge publish, impersonation or new business",
+    "First default-sandbox local rerun could not connect to loopback (10013); authorized isolated localhost rerun passed. This was no application assertion failure and no managed database was contacted."
+  ],
+  "inherited_workspace_fixture_repair": {
+    "native_plan": 294,
+    "new_identity_cases": 29,
+    "actual_workspace_guard_retained": true,
+    "repaired_local_passed": 29,
+    "full_schema_and_current_head_ci": "REQUIRED"
+  },
+  "historical_reduced_fixture": {
+    "baseline": {
+      "mode": "baseline",
+      "environment": "isolated PostgreSQL16 reduced dependencies, actual original/fixed acceptor and original access guard, actual database roles and same canonical core assertions; Auth identity/contact normalization/profile setup are doubles, full schema and production proof not implied",
+      "cases": [
+        "PASS first legitimate business invitation: actual caller role",
+        "PASS first legitimate business invitation: expected acceptance or refusal",
+        "PASS first legitimate business invitation: invited tenant only",
+        "PASS another customer cannot redeem the second business invitation: actual caller role",
+        "PASS another customer cannot redeem the second business invitation: expected acceptance or refusal",
+        "PASS another customer cannot redeem the second business invitation: intended guard caused refusal",
+        "PASS another customer cannot redeem the second business invitation: zero durable acceptance effects",
+        "PASS a token cannot bind the second contact to the first business: actual caller role",
+        "PASS a token cannot bind the second contact to the first business: expected acceptance or refusal",
+        "PASS a token cannot bind the second contact to the first business: intended guard caused refusal",
+        "PASS a token cannot bind the second contact to the first business: zero durable acceptance effects",
+        "PASS second-business expired invitation: actual caller role",
+        "PASS second-business expired invitation: expected acceptance or refusal",
+        "PASS second-business expired invitation: zero durable acceptance effects",
+        "PASS second-business revoked invitation: actual caller role",
+        "PASS second-business revoked invitation: expected acceptance or refusal",
+        "PASS second-business revoked invitation: zero durable acceptance effects",
+        "PASS a duplicate contact inside the SAME business remains refused: actual caller role",
+        "PASS a duplicate contact inside the SAME business remains refused: expected acceptance or refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: intended guard caused refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: zero durable acceptance effects",
+        "PASS second legitimate business invitation: actual caller role",
+        "FAIL second legitimate business invitation: expected acceptance or refusal",
+        "FAIL second legitimate business invitation: invited tenant only",
+        "FAIL two genuine invitations produce two separate canonical relationships",
+        "FAIL the original exact contacts are reused without a duplicate CRM",
+        "PASS refused same-business duplicate remains unlinked",
+        "PASS the original client role is idempotent across two businesses",
+        "PASS two customer invitations never create a business staff seat",
+        "PASS customer invitations never change owner or staff workspace",
+        "FAIL each accepted business retains its own original durable receipt",
+        "FAIL second acceptance receipt binds original actor business and contact",
+        "PASS returning second-business token cannot grant twice: actual caller role",
+        "PASS returning second-business token cannot grant twice: expected acceptance or refusal",
+        "FAIL returning second-business token cannot grant twice: intended guard caused refusal",
+        "PASS returning second-business token cannot grant twice: zero durable acceptance effects",
+        "PASS the database itself refuses a duplicate login within one business"
+      ],
+      "passed": 30,
+      "failed": 7
+    },
+    "repaired": {
+      "mode": "repaired",
+      "environment": "isolated PostgreSQL16 reduced dependencies, actual original/fixed acceptor and original access guard, actual database roles and same canonical core assertions; Auth identity/contact normalization/profile setup are doubles, full schema and production proof not implied",
+      "cases": [
+        "PASS first legitimate business invitation: actual caller role",
+        "PASS first legitimate business invitation: expected acceptance or refusal",
+        "PASS first legitimate business invitation: invited tenant only",
+        "PASS another customer cannot redeem the second business invitation: actual caller role",
+        "PASS another customer cannot redeem the second business invitation: expected acceptance or refusal",
+        "PASS another customer cannot redeem the second business invitation: intended guard caused refusal",
+        "PASS another customer cannot redeem the second business invitation: zero durable acceptance effects",
+        "PASS a token cannot bind the second contact to the first business: actual caller role",
+        "PASS a token cannot bind the second contact to the first business: expected acceptance or refusal",
+        "PASS a token cannot bind the second contact to the first business: intended guard caused refusal",
+        "PASS a token cannot bind the second contact to the first business: zero durable acceptance effects",
+        "PASS second-business expired invitation: actual caller role",
+        "PASS second-business expired invitation: expected acceptance or refusal",
+        "PASS second-business expired invitation: zero durable acceptance effects",
+        "PASS second-business revoked invitation: actual caller role",
+        "PASS second-business revoked invitation: expected acceptance or refusal",
+        "PASS second-business revoked invitation: zero durable acceptance effects",
+        "PASS a duplicate contact inside the SAME business remains refused: actual caller role",
+        "PASS a duplicate contact inside the SAME business remains refused: expected acceptance or refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: intended guard caused refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: zero durable acceptance effects",
+        "PASS second legitimate business invitation: actual caller role",
+        "PASS second legitimate business invitation: expected acceptance or refusal",
+        "PASS second legitimate business invitation: invited tenant only",
+        "PASS two genuine invitations produce two separate canonical relationships",
+        "PASS the original exact contacts are reused without a duplicate CRM",
+        "PASS refused same-business duplicate remains unlinked",
+        "PASS the original client role is idempotent across two businesses",
+        "PASS two customer invitations never create a business staff seat",
+        "PASS customer invitations never change owner or staff workspace",
+        "PASS each accepted business retains its own original durable receipt",
+        "PASS second acceptance receipt binds original actor business and contact",
+        "PASS returning second-business token cannot grant twice: actual caller role",
+        "PASS returning second-business token cannot grant twice: expected acceptance or refusal",
+        "PASS returning second-business token cannot grant twice: intended guard caused refusal",
+        "PASS returning second-business token cannot grant twice: zero durable acceptance effects",
+        "PASS the database itself refuses a duplicate login within one business"
+      ],
+      "passed": 37,
+      "failed": 0
+    },
+    "incorrect_global_index_only": {
+      "mode": "fault-global-only",
+      "environment": "isolated PostgreSQL16 reduced dependencies, actual original/fixed acceptor and original access guard, actual database roles and same canonical core assertions; Auth identity/contact normalization/profile setup are doubles, full schema and production proof not implied",
+      "cases": [
+        "PASS first legitimate business invitation: actual caller role",
+        "PASS first legitimate business invitation: expected acceptance or refusal",
+        "PASS first legitimate business invitation: invited tenant only",
+        "PASS another customer cannot redeem the second business invitation: actual caller role",
+        "PASS another customer cannot redeem the second business invitation: expected acceptance or refusal",
+        "PASS another customer cannot redeem the second business invitation: intended guard caused refusal",
+        "PASS another customer cannot redeem the second business invitation: zero durable acceptance effects",
+        "PASS a token cannot bind the second contact to the first business: actual caller role",
+        "PASS a token cannot bind the second contact to the first business: expected acceptance or refusal",
+        "PASS a token cannot bind the second contact to the first business: intended guard caused refusal",
+        "PASS a token cannot bind the second contact to the first business: zero durable acceptance effects",
+        "PASS second-business expired invitation: actual caller role",
+        "PASS second-business expired invitation: expected acceptance or refusal",
+        "PASS second-business expired invitation: zero durable acceptance effects",
+        "PASS second-business revoked invitation: actual caller role",
+        "PASS second-business revoked invitation: expected acceptance or refusal",
+        "PASS second-business revoked invitation: zero durable acceptance effects",
+        "PASS a duplicate contact inside the SAME business remains refused: actual caller role",
+        "PASS a duplicate contact inside the SAME business remains refused: expected acceptance or refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: intended guard caused refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: zero durable acceptance effects",
+        "PASS second legitimate business invitation: actual caller role",
+        "FAIL second legitimate business invitation: expected acceptance or refusal",
+        "FAIL second legitimate business invitation: invited tenant only",
+        "FAIL two genuine invitations produce two separate canonical relationships",
+        "FAIL the original exact contacts are reused without a duplicate CRM",
+        "PASS refused same-business duplicate remains unlinked",
+        "PASS the original client role is idempotent across two businesses",
+        "PASS two customer invitations never create a business staff seat",
+        "PASS customer invitations never change owner or staff workspace",
+        "FAIL each accepted business retains its own original durable receipt",
+        "FAIL second acceptance receipt binds original actor business and contact",
+        "PASS returning second-business token cannot grant twice: actual caller role",
+        "PASS returning second-business token cannot grant twice: expected acceptance or refusal",
+        "FAIL returning second-business token cannot grant twice: intended guard caused refusal",
+        "PASS returning second-business token cannot grant twice: zero durable acceptance effects",
+        "PASS the database itself refuses a duplicate login within one business"
+      ],
+      "passed": 30,
+      "failed": 7
+    },
+    "concurrency": {
+      "environment": "isolated PostgreSQL16 reduced dependency tables, full actual migration and original native acceptor/lifecycle guard; two actual authenticated-role connections, synthetic controlled recipients; not full-schema or customer production proof",
+      "results": [
+        {
+          "scenario": "distinct original businesses",
+          "realOverlappingTransactions": true,
+          "pass": true,
+          "state": {
+            "links": 2,
+            "roles": 1,
+            "first_uses": 1,
+            "second_link": true,
+            "second_uses": 1,
+            "first_receipts": 1,
+            "second_receipts": 1
+          }
+        },
+        {
+          "scenario": "same business duplicate contacts",
+          "realOverlappingTransactions": true,
+          "pass": true,
+          "state": {
+            "links": 1,
+            "roles": 1,
+            "first_uses": 1,
+            "second_link": false,
+            "second_uses": 0,
+            "first_receipts": 1,
+            "second_receipts": 0
+          }
+        }
+      ]
+    },
+    "boundary": "Original reduced dependency fixture omitted the real CRM per-business email-unique guard. These historical37 controls and same-business race are superseded by the repaired39 controls and actual email-unique-compatible concurrency below; they were never full-schema/customer proof."
+  },
+  "native_crm_fixture_repair": {
+    "failed_hosted_head": "60cd21f405e38fa22698c64c96a5688ba3ae9cfe",
+    "failed_job": 120693631235,
+    "original_98_assertions_passed": true,
+    "failure": "The synthetic duplicate contact claimed a per-business email already held by original A; actual client_contact_methods_tenant_email_key correctly refused setup before the new controls. The job was not waived.",
+    "correction": "Distinct canonical email per same-business contact. Only the synthetic rollback Auth fixture models an independently confirmed email change to reach the original duplicate-link guard, then restores its original confirmed email before B acceptance. Actual original CRM unique index retained in hosted proof and added to reduced local dependency fixture. No guard disabled, role manufactured or production source/ACL changed.",
+    "new_core_assertions": 39,
+    "repaired_pass": 39,
+    "baseline_pass": 32,
+    "baseline_fail": 7,
+    "index_only_pass": 32,
+    "index_only_fail": 7,
+    "concurrent_cases": 2,
+    "full_hosted_retest": "REQUIRED on new exact reviewed head; no source/Preview/customer acceptance promotion"
+  },
+  "native_auth_type_fixture_repair": {
+    "failed_head": "7cbecd133298188c809e2462d59eef1a200c44d2",
+    "failed_native_job": 120706513119,
+    "passed_before_stop": 120,
+    "failed_assertions": 0,
+    "error": "pgTAP is(character varying,text,unknown) has no matching overload at the new restored-recipient assertion; remaining new lifecycle controls were not reached, complete job FAIL retained.",
+    "fix": "Cast only the observed Auth email assertion result to text. Local dependency now uses actual Auth character varying(255), retaining the real canonical CRM email-unique guard. The uncast fault reproduces the identical real PostgreSQL error; corrected39 core assertions pass, original32/7 and incomplete32/7 controls retained. No product/migration/authorization/token/recipient behavior changes.",
+    "local_uncast_fault": "same PostgreSQL signature error reproduced, expected nonzero",
+    "local_corrected39": "PASS",
+    "hosted_full_retest": "REQUIRED at new reviewed head; all original seven pillar suites and scope294 passed in failed job, but that does not waive failed consumer suite."
+  },
+  "main_composition": {
+    "main": "33bb85dcc883d1b31631fc0c954babafda9eeea9",
+    "parent": "8ea10710148688bf7f500540953f902bc1f1a149",
+    "parent_sync": "only a virtual-base Brain insertion conflicted; exact existing2691 note retained, other side empty, no runtime change",
+    "main_sync": "normal clean ort merge; original EXP01 evidence repairs, EXP02/EXP03/EXP05/EXP07 records and source preserved",
+    "actual_released_row": "2691/main3b8f973 and receipt6376896655 only; no anticipated2695/2701 row",
+    "production_prerequisite": "610009/a6e37 actually applied and read back;620009/ac743 remains required before630009",
+    "parent_final_composition": "Normal clean main33bb merge on parent2695; actual result8cc1f031c5a02b6ce37b96fe7ea853254ff55603 equals pre-reviewed merge tree. Child normal merge is tree-identical to its corrected e676 state; no runtime/SQL/test drift."
+  },
+  "native_finite_replay_fixture_repair": {
+    "failed_head": "c34d55584ee8cf02dd27db0d7bc24c80067b208d",
+    "failed_native_job": 120712788727,
+    "assertions": 453,
+    "passed": 452,
+    "failed": 1,
+    "case": 171,
+    "failure": "Only the added final re-invitation replay assertion expected the later accepted-token guard. The original unchanged Stage0 max_uses guard runs first for this max_uses=1 token and correctly raises P0001:invite has reached its usage limit.",
+    "correction": "Update only this new assertion to the exact existing finite-use error. Original acceptor, token ordering, recipient checks, CRM uniqueness, lifecycle guards, migration and all375 incumbent assertions remain unchanged.",
+    "local_supplement": {
+      "mode": "replay-finite",
+      "environment": "isolated PostgreSQL16 reduced dependencies, actual original/fixed acceptor and original access guard, actual database roles and same canonical core assertions; Auth identity/contact normalization/profile setup are doubles, full schema and production proof not implied",
+      "cases": [
+        "PASS same-business duplicate test uses two distinct canonical CRM addresses",
+        "PASS first legitimate business invitation: actual caller role",
+        "PASS first legitimate business invitation: expected acceptance or refusal",
+        "PASS first legitimate business invitation: invited tenant only",
+        "PASS another customer cannot redeem the second business invitation: actual caller role",
+        "PASS another customer cannot redeem the second business invitation: expected acceptance or refusal",
+        "PASS another customer cannot redeem the second business invitation: intended guard caused refusal",
+        "PASS another customer cannot redeem the second business invitation: zero durable acceptance effects",
+        "PASS a token cannot bind the second contact to the first business: actual caller role",
+        "PASS a token cannot bind the second contact to the first business: expected acceptance or refusal",
+        "PASS a token cannot bind the second contact to the first business: intended guard caused refusal",
+        "PASS a token cannot bind the second contact to the first business: zero durable acceptance effects",
+        "PASS second-business expired invitation: actual caller role",
+        "PASS second-business expired invitation: expected acceptance or refusal",
+        "PASS second-business expired invitation: zero durable acceptance effects",
+        "PASS second-business revoked invitation: actual caller role",
+        "PASS second-business revoked invitation: expected acceptance or refusal",
+        "PASS second-business revoked invitation: zero durable acceptance effects",
+        "PASS a duplicate contact inside the SAME business remains refused: actual caller role",
+        "PASS a duplicate contact inside the SAME business remains refused: expected acceptance or refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: intended guard caused refusal",
+        "PASS a duplicate contact inside the SAME business remains refused: zero durable acceptance effects",
+        "PASS the original verified recipient is restored before second-business acceptance",
+        "PASS second legitimate business invitation: actual caller role",
+        "PASS second legitimate business invitation: expected acceptance or refusal",
+        "PASS second legitimate business invitation: invited tenant only",
+        "PASS two genuine invitations produce two separate canonical relationships",
+        "PASS the original exact contacts are reused without a duplicate CRM",
+        "PASS refused same-business duplicate remains unlinked",
+        "PASS the original client role is idempotent across two businesses",
+        "PASS two customer invitations never create a business staff seat",
+        "PASS customer invitations never change owner or staff workspace",
+        "PASS each accepted business retains its own original durable receipt",
+        "PASS second acceptance receipt binds original actor business and contact",
+        "PASS returning second-business token cannot grant twice: actual caller role",
+        "PASS returning second-business token cannot grant twice: expected acceptance or refusal",
+        "PASS returning second-business token cannot grant twice: intended guard caused refusal",
+        "PASS returning second-business token cannot grant twice: zero durable acceptance effects",
+        "PASS the database itself refuses a duplicate login within one business",
+        "PASS finite-use original A invitation accepted: actual caller role",
+        "PASS finite-use original A invitation accepted: expected acceptance or refusal",
+        "PASS finite-use original A invitation accepted: invited tenant only",
+        "PASS returning restored invitation cannot be replayed: actual caller role",
+        "PASS returning restored invitation cannot be replayed: expected acceptance or refusal",
+        "PASS returning restored invitation cannot be replayed: intended guard caused refusal",
+        "PASS returning restored invitation cannot be replayed: zero durable acceptance effects"
+      ],
+      "passed": 46,
+      "failed": 0
+    },
+    "proof_boundary": "Supplement checks the exact finite-token original function path under isolated roles after the corrected39 core. Hosted run already reached all joined frame, lifecycle, atomic audit and recovery controls but is FAIL452/453, not PASS. Full453 exact-new-head hosted rerun remains required."
+  },
+  "compatible_locked_audit_prerequisite": {
+    "pr": 2713,
+    "head": "ebbb5b06cb594bd4521ef42da02f69d3a09ded47",
+    "original_failed_audit": 120721490032,
+    "changes": "Only original undici lock version/resolved/integrity7.30.0→7.30.1 and bounded original delivery note; main9512 EXP06 source inventory preserved.",
+    "local_locked_audit": "PASS0high0critical5moderate",
+    "release": "MUST reach main/required gates before this release"
+  }
+}

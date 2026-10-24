@@ -48,6 +48,7 @@ Reserved630004 replaces never-production-applied570004 after current600000;
 original SQL bytes are unchanged. Original UI captures have an explicit
 byte-identical SQL filename continuation, not a new render. This read does not activate terms.
 
+<<<<<<< HEAD
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
 The bounded original#2401 successor preserves a known pre-processing refusal on
@@ -59,6 +60,18 @@ pass; review, exact-head CI, production and ordinary authenticated proof remain 
 retains all outstanding Operations/ZION/weekly/automation acceptance. EXP13's full
 Knowledge upload experience and attachment restoration remain separate, incomplete
 obligations. No new tracker, engine, registry, privilege or activation.
+=======
+## EXP09 original exact-customer tier journey — source released, October23
+
+Original2691/main3b8f9736621cf5763a0a398c7ab98ff5a5094ff0 passed all13 reviewed-head checks/two statuses and actual Native265/61/seven-pillar/full-grant proof. Normal610009 deployment and productiona6e37/private ACL/original tier_state trigger/SET NULL FKs/two unique guards verified. Exact READY webHE4 and actual containing public33bb85/customerUpdate:null verified; [receipt6376896655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2691#issuecomment-6376896655), sole Master4.0 exact row. Original tier/payment semantics preserved; actual customer actions/full Experience/founder acceptance remain UNVERIFIED and global multi-business admission NOT_ACTIVATED. No new runtime, sender, financial writer, permission or provider activation.
+
+## EXP09 original saved-business Gateway — source release verified, October23
+
+**EXP09 ordinary customer sign-in source release, 2026-10-23 — #2687/main907a73784f4f84e49b48b34056a422352083ba02.** Exact34a682/accurate LOWER ASSURANCE5634929569/5635225236, ten checks/two statuses SUCCESS plus schema-free Preview SKIP, actual merge union and original shared EXP01 preserved. Exact READY dpl_CndfEBCVQpqfhM8vcoFYFNSgtk8q/public907-mvlka5t2/null; served applicationfe8c383293d52bdbac5ae90883e222fd5b635096e0b3e9866880561087fe47f5 confirms exact native ambiguity guard and two actual verified choices before original gate. Own SQL/Edge N/A; [receipt6376334526](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2687#issuecomment-6376334526), original Master4.0 row is the shipped ledger. Global multi-business invitation/index transition NOT_ACTIVATED; full real owner/client/new-existing/revoked/returning/seven/device/founder proof remains UNVERIFIED. No new sender, identity registry, runtime, provider/privilege/INT346 activation or customer announcement.
+
+
+PR2680 reviewedb0300921744d37f0a12f574f2a2c664b22b19516 mergedcb1d891d7b20e09d3d09263d3d9e4a6b690a8241/tree9c920fad; normal productionDQZE/publiccb1 and actual served Gateway/entry/landing source verified. Original receipt6374536491 and sole [Master4.0 log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) retain review/ten passing checks+PreviewSKIP/two statuses/145 focused and actual Native61+243/full grant proof. Original Auth/role priorities/native gate/unsaved work/domain sources remain; no workspace/identity writer/provider effect. Bounded raw render/keyboard proof is not customer acceptance; invalid foreign frame excluded. Global multiple-membership, complete owner/client/new-account/revoked/returning/all7/device/AT journey and one founder evaluation remain unfinished. Source candidates stay in the original [relationship packet](../delivery/e09-customer-relationships.md), not another ledger or Live promotion.
+>>>>>>> codex/e04-signed-terms-effectuation
 
 ## EXP02 Finance metric context — October23 source released, proof bounded
 

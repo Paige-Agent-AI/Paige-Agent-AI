@@ -23,6 +23,9 @@ export interface StudioSession {
   /** A real image of the work, when one exists (a page's share image or a made image). */
   thumbnailUrl: string | null;
   updatedAt: string;
+  /** A workspace template (list_studio_sessions' p_filter='templates'); templates leave the drafts
+   *  list and live behind "Start from a template" (EXP07 row 6). */
+  isTemplate: boolean;
 }
 
 export interface StudioVersion {
@@ -82,6 +85,7 @@ function toSession(row: Record<string, unknown>): StudioSession {
     artifacts: parseRefs(row.artifact_refs),
     thumbnailUrl: typeof row.thumbnail_url === "string" && row.thumbnail_url ? row.thumbnail_url : null,
     updatedAt: String(row.updated_at ?? row.created_at ?? ""),
+    isTemplate: row.is_template === true,
   };
 }
 
@@ -89,6 +93,24 @@ export async function listSessions(): Promise<StudioSession[]> {
   const { data, error } = await rpc("list_studio_sessions", { p_filter: "recent", p_tenant_id: null, p_limit: 40 });
   if (error) throw error;
   return ((data as Record<string, unknown>[] | null) ?? []).map(toSession);
+}
+
+/** Workspace templates (EXP07 row 6): projects flagged as templates. Empty until one is saved. */
+export async function listTemplates(): Promise<StudioSession[]> {
+  const { data, error } = await rpc("list_studio_sessions", { p_filter: "templates", p_tenant_id: null, p_limit: 40 });
+  if (error) throw error;
+  return ((data as Record<string, unknown>[] | null) ?? []).map(toSession);
+}
+
+/** Flags or unflags a project as a workspace template (the governed setter, migration
+ *  20271113800010): the creator or a workspace admin, inside this workspace only. The returned
+ *  row is what changed — the caller re-reads nothing it didn't get back. */
+export async function setSessionTemplate(id: string, isTemplate: boolean): Promise<StudioSession> {
+  const { data, error } = await rpc("set_studio_session_template", { p_id: id, p_is_template: isTemplate, p_tenant_id: null });
+  if (error) throw error;
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
+  if (!row?.id) throw new Said("The template change didn't save.");
+  return toSession(row);
 }
 
 export async function createSession(brief: string): Promise<StudioSession> {

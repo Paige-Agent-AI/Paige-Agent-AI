@@ -1,3 +1,7 @@
+## EXP09 customer microphone — source release verified, October24 UTC
+
+Original#2718/5868 → maina2d9b3e5/treedf941330 is deployed, exact productionFLfGdD READY/publica2d-mvlt2i7h/null. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records actual parents, unchanged six reviewed source/test blobs, lower5636374775, all exact-head checks and fresh native/full-pillar/grant proof; [release receipt6379127602](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2718#issuecomment-6379127602). Original paige-dictate and newer EXP05#2697 recovery remain; no migration, Edge, provider or Live activation. Actual physical iPhone capture/transcription, ordinary customer reload and full Experience/founder acceptance remain UNVERIFIED. Private file storage, Chat integration, all42/seven outcomes and source-owned dependencies continue in the original [EXP09 packet](../delivery/e09-customer-relationships.md). No recursive documentation-release row or algorithm maturity promotion.
+
 ## EXP09 access and invitation source releases — October24 UTC
 
 Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc0b5dad per-business original invitation admission are actually released and read back. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records exact heads/parents/trees, accurate lower-assurance sequential reviews, all required checks, normal migrations620009/630009, all16 original ABI/ACL/source pins, unchanged S7 and actual READY web/public versions. Receipts6377892283/6378046694/6378167524. First630009 deployment57014 is retained; precisely bounded read-only administrative-session cleanup (later identified as including a legitimate CI snapshot; affected microphone verification must rerun) and unchanged normal retry succeeded, with no customer/data/role/history/DDL workaround. Native453/294/61/all seven/grant proof is engineering evidence, not ordinary customer acceptance. Private CURA history remains separate from shared Conversations; current microphone2718/attachments/permitted research work stays in the original relationship packet. Full42/seven-pillar authenticated owner/client/reload/revoke/device and Founder Acceptance remain unfinished; one complete integrated evaluation, no per-slice owner request. This mechanical cross-reference changes no capability/algorithm maturity and has no recursive release row.
@@ -58,15 +62,17 @@ settled original-focus return. Original receipt6380668920 and sole Master4.0 row
 retain the exact review/CI/source identities. Populated weekly execution/Rail,
 cohorts/Live and complete Operations/founder acceptance remain unfinished.
 
-October24 original weekly proposal keyboard correction is locally verified:
-ordinary no-write owner inspection reproduced lost entry/cancel focus. Three
-causal failures are corrected; original63 Composer/Panel/Entry cases pass.
-Explicit cancellation returns its own enabled opener and owner/session loss cannot
-focus a disabled control. The same weekly Sheet root now respects reduced motion;
-default motion/layout/authority remain unchanged. [Source and native proof](../evidence/ui-delivery/exp05-weekly-proposal-keyboard.md)
-retain final responsive frames, synthetic/no-effect boundaries and remaining
-review/CI/web/authenticated obligations. No weekly save/activation, catalogue or
-algorithm maturity, full Experience or founder acceptance is inferred.
+October24 original weekly proposal keyboard correction2748 is source-released at
+mainfdb681682037ff57e5a4b9295a56dad3866e49f7, actual READY/public readback.
+Original63 cases and native desktop/narrow keyboard/motion proof remain intact.
+Ordinary owner no-write entry focuses Responsibility, explicit cancel returns
+Prepare, outer exit returns the original entry; reload and root reduced motion
+were verified. [Original receipt6382070456](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2748#issuecomment-6382070456)
+and sole Master4.0 row preserve exact lower review/CI/web identities.
+[Owning evidence](../evidence/ui-delivery/exp05-weekly-proposal-keyboard.md) excludes
+weekly preparation/save/approval/activation/execution and all provider effects.
+Full ten outcomes/E5-CV1–9, weekly/automation/ZION/Rail/recovery, cohorts/eligible
+Live and founder acceptance remain unfinished. No catalogue/algorithm promotion.
 
 ## EXP05 original refusal/reload — source verified, release owed, October23
 

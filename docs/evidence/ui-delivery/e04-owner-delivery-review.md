@@ -7,15 +7,15 @@ MATERIAL_FLOW_CHANGE: YES: A canonical active business owner may explicitly revi
 FLOW_PROTOTYPE: PASS: Local outputs/e04-owner-review-prototype.html; owner explicitly authorized owner-reviewed release. Actual synthetic v1 revision, distinct v2, separate submission/review/release, lost-response reload and original-operation inspection, then separate client approval traversed. This is prototype-only proof.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An eligible standalone SOLO owner prepares exact saved work, reviews it explicitly and releases it for the client's separate approval or revisions.
 VISUAL_DIRECTION: PASS: Preserve original Operations work-item inspection and shared controls; one editable consumer of the original recovery identity at a time. No new navigation, component system or ornamental dashboard.
-AUTOMATED_EVIDENCE: PASS: At exactb1c6e134826380425c4ebf311516ae8b50bfdfd1, unchanged original adapters reproduced15 behavioral failures with6 original negative controls passing (21cases/37.89s); actual transcript outputs/e04-owner-review-red-b1c6e134.log. Current adapter/UI correction and ten added original-component cases require fresh verification; no current GREEN claim. Historical native28/fullscope295 remains dated45f proof.
-STATIC_EVIDENCE: UNVERIFIED: Native ABI/ACL policy and original UI/adapters grounded; current candidate lint/type/build and source inverse are required before release. Local command connection recovered through CMD after PowerShell/sandbox execution stalls; no flags/baselines changed. Current hosted required checks remain mandatory.
-RENDERED_EVIDENCE: UNVERIFIED: Prior synthetic prototype capture outputs/e04-owner-prototype-v2-client-accepted.png is a scrolled desktop prototype, not rendered production components or narrow evidence.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: Prototype only; actual original components and required role/recovery interactions remain to be driven after integration.
+AUTOMATED_EVIDENCE: PASS: Behavioral-first exactb1c6e134 reproduced15RED/6negativePASS (21cases/37.89s). Corrected implementationf805ba5752a2be5e56bccade58c63d3409308ee7, retained unchanged through7cd3cf1a, passed162cases/nine original adapter, recovery and component suites27.98s; outputs/e04-owner-review-integrated-f805ba57.log. Current7cd required database-contract120994125797 SUCCESS includes owner28 and all original delivery/reviewer/source-change/client-decision controls. These are source/native fixture proofs, not ordinary-role acceptance.
+STATIC_EVIDENCE: PARTIAL: Actual scoped ESLint11files exit0; hosted7cd type-ratchet/build, original Agreements, anti-pattern and native suites SUCCESS. Current composition retains all15 non-evidence owning blobs and both incoming CI additions; fresh final-head CI/review remains mandatory. No flags, assertions, grants or baselines weakened.
+RENDERED_EVIDENCE: UNVERIFIED: Actual original OperationsWorkspace/components/tokens compiled from7cd source,37.81s/1825modules/147captured inputs/two output assets; private manifests outputs/e04-c33-before-render-v1.json and e04-c33-built-assets-v1.json. Loopback synthetic preview52994 blocks all network actions with connect-src none. Browser kernel continues to time out after restart, including targeted new-tab recovery; no component screenshot, rendered PASS or narrow/focus proof is inferred from compilation. Prior desktop prototype is supporting prototype-only proof.
+BEHAVIORAL_EVIDENCE: PARTIAL: Actual162 source/component tests verify explicit owner nomination, separate internal decision, role-loss refusal, recorded review method and same-original uncertainty recovery. Interactive rendered component navigation and genuine owner/staff/client workflows remain UNVERIFIED.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Ordinary canonical owner, staff/admin self-refusal, linked external client, actual persistence/reload/revocation and equivalent existing/future eligible SOLO behavior remain proof owed.
 KEYBOARD_FOCUS: UNVERIFIED: Preserve existing shared focus/cancel/close-guard behavior; actual changed-component keyboard, Escape and return-focus inspection remains owed.
 ZOOM_REFLOW: UNVERIFIED: Changed original-component zoom and narrow reflow remain owed; prototype screenshot is not proof.
 REDUCED_MOTION: UNVERIFIED: No new animation proposed; actual changed-component reduced-motion inspection remains owed.
-STATE_COVERAGE: UNVERIFIED: Required loading, empty, saved draft, pending submission, explicit internal review, separate release, client revision/approval, native refusal, role loss, stale source, offline/unknown and same-original recovery remain to be verified on integrated source.
+STATE_COVERAGE: PARTIAL: Automated original-component and adapter cases cover owner nomination, separate decision, canonical role loss, stale/foreign source, malformed or unverified acknowledgments, uncertainty and original-record recovery. Actual rendered loading/empty/error/permission/review/release/client-decision/close/reload states remain to be driven.
 TRUTHFUL_STATE_LABELS: PASS: Submission means in_review only; internal approval, release and separate client decision remain distinct. No task/payment or completed-service inference.
 SOLO_UI: YES: Original Operations work-item delivery inspection and nominated-review entry.
 UNVERIFIED: Current rendered desktop/narrow, keyboard/zoom/motion, actual role/source/recovery and authenticated owner/staff/client proof remain owed; no completed premium Experience or founder acceptance is claimed.
@@ -25,12 +25,12 @@ MUST_PRESERVE: Original canonical Operations writers, exact artifact/version/dig
 ACCEPTANCE_CRITERIA: Actual eligible owner submits their exact version, explicitly reviews, separately releases, genuine client requests revision/accepts, and later sessions recover the same records without changing payment truth.
 MOTION_PURPOSE: NONE: No new motion.
 PROTECTED_SEAMS: Native is_tenant_owner remains authoritative; original release/client-decision bodies unchanged. Shared Work/Planning, root Chat/C0b/pins, E09 Portal UI and provider paths untouched.
-INTERNAL_BUILD_IDENTITY: 45f427c8f821fb2cf13679410b76a53358bc3d40; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20271113860004_e04_owner_delivery_review native release and authoritative readback); edge=NOT_APPLICABLE; evidence=operations-client-review-packet.md and current PR head before review
-RELEASE_CHANNEL: development: original native source and behavioral-first continuation only, no production customer action
+INTERNAL_BUILD_IDENTITY: implementation=f805ba5752a2be5e56bccade58c63d3409308ee7; source-assembly=7cd3cf1a8763d883233b49f8d8fc099fb569cb44; exact final assembly in originalPR2775; deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(860004 only after actual850009 production/readback); edge=NOT_APPLICABLE; evidence=operations-client-review-packet.md
+RELEASE_CHANNEL: development: implemented original owner policy/adapters/components with bounded local and hosted proof; rendered and production gates remain
 RELEASE_CLASSIFICATION: internal-only: source preparation for the owner-authorized delivery workflow
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated EXP04 and founder acceptance remain owed
 RELEASE_NOTE_REQUIRED: no: no customer publication authorized for this increment
-RELEASE_TRUTH_BOUNDARY: PARTIAL: historical native/prototype proof only; PROOF OWED: current source/release and authenticated full customer result; Chat/Live delivery admission not promoted
+RELEASE_TRUTH_BOUNDARY: PARTIAL: implemented source,162 local cases and current native28/full database contract verified; PROOF OWED: final-head release, actual component rendering and authenticated full customer result; Chat/Live admission and algorithm maturity unchanged
 RELEASE_RECOVERY: position=forward-fix original scoped readers/writers and retain exact uncertain operation; reference=operations-client-review-packet.md
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: actual changed original component and shell inspection owed
@@ -44,7 +44,7 @@ SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: actual changed original component and shel
 
 ## Scope and collisions
 
-This is the original EXP04 owner-delivery branch, composed over original2745's exact prepared-seal source so never-applied850009 precedes owner860004. Main's original scope295 fixture is reused unchanged. Only the one additive native-proof CI step is preserved; all incoming CI is retained. Shared root/C0b, Finance, Planning, Portal UI and canonical client-decision source are not edited. No new account, role, provider, message, payment, release or client decision is performed by these tests.
+This is the original EXP04 owner-delivery branch. Original2745 is now actually merged216768d8e1eccbaacc39717cd1858bae6087449f, native850009 production/readback still separately required before owner860004. Normal main composition preserves whole released2776 packaging/CI and all incoming source; the backend-only prerequisite record is no longer an owning UI diff. Main's original scope295 fixture is reused unchanged. Only the one additive native-proof CI step is preserved; all incoming CI is retained. Shared root/C0b, Finance, Planning, Portal UI and canonical client-decision source are not edited. No new account, role, provider, message, payment, release or client decision is performed by these tests.
 
 ## User job and state map
 
@@ -52,7 +52,7 @@ Choose an existing immutable Studio version and active reviewer. The owner may c
 
 ## Evidence index
 
-Original native source/proof:45f427c8f821fb2cf13679410b76a53358bc3d40, full native40112148788 SUCCESS, owner28 and original E09 scope295. Behavioral-first b1c6e134 actual15RED/6PASS, no implementation changed during that run; current exact source/local/hosted checks required. Prior synthetic prototype is local-only and does not establish production rendering or customer acceptance.
+Original native source/proof:45f427c8f821fb2cf13679410b76a53358bc3d40, full native40112148788 SUCCESS, owner28 and original E09 scope295. Behavioral-first b1c6e134 actual15RED/6PASS, no implementation changed during that run. Corrected f805 actual162/nine PASS and scoped ESLint0; current7cd native database-contract/owner28 SUCCESS. Final composed head requires fresh required CI and separate review. Prior synthetic prototype is local-only and does not establish production rendering or customer acceptance.
 
 ## Review and limitations
 

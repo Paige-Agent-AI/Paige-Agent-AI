@@ -131,6 +131,9 @@ jobs:
         with:
           fetch-depth: 0 # need base-sha history for changed-files diffs + the tsc ratchet
 
+      - name: Edge release source and bounded deployment recovery
+        run: python3 -B -m unittest discover -s .github/scripts -p test_edge_source_readback.py -v
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20

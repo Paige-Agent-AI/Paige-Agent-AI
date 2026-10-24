@@ -16,11 +16,11 @@ BEGIN
   IF NOT FOUND OR md5(p.prosrc) IS DISTINCT FROM e.body_md5
    OR pg_catalog.pg_get_userbyid(p.proowner)<>'postgres' OR NOT p.prosecdef
    OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
-   OR p.pronargdefaults<>CASE WHEN e.signature LIKE 'public.client_portal_assistant_context_v2(%' THEN 1 ELSE 0 END
-   OR p.proacl IS DISTINCT FROM CASE WHEN e.signature LIKE 'public.client_portal_assistant_%'
+   OR p.pronargdefaults<>(CASE WHEN e.signature LIKE 'public.client_portal_assistant_context_v2(%' THEN 1 ELSE 0 END)
+   OR p.proacl IS DISTINCT FROM (CASE WHEN e.signature LIKE 'public.client_portal_assistant_%'
      OR e.signature LIKE 'public.paige_chat_interactive_publication_%'
     THEN ARRAY['postgres=X/postgres','authenticated=X/postgres']::aclitem[]
-    ELSE ARRAY['postgres=X/postgres']::aclitem[] END THEN
+    ELSE ARRAY['postgres=X/postgres']::aclitem[] END) THEN
    RAISE EXCEPTION 'Original private file/Chat contract changed: %',e.signature USING ERRCODE='42501';
   END IF;
  END LOOP;

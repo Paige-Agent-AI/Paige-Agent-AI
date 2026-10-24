@@ -6,6 +6,12 @@ Status: canonical repository delivery doctrine for visible interface work.
 
 This standard applies to any agent designing, redesigning, or materially changing a visible Paige interface: product pages, settings, modals, drawers, forms, onboarding, funnels, landing pages, dashboards, tabs, empty states, responsive/mobile layouts, interaction states, animation, and styling.
 
+## Prelaunch owner acceptance follows live deployment (2026-10-15 supersession)
+
+For PAIGE's current prelaunch phase, the owner has explicitly replaced routine **prototype/design signoff before production** with **live, hands-on product testing after technically verified deployment**. Follow Flow-by-Flow, Paige UI Design, Impeccable and the applicable Flow Prototype skill as engineering activities; they do not create an extra owner signature, screenshot approval, aesthetic meeting, or per-PR permission request ahead of an otherwise safe merge. The accountable agent finishes the functional path, completes risk-proportionate tests, corrects material findings, records truthful evidence and unverified claims, and performs the usual approved merge-to-main and production readback. Then the owner reviews the live experience and the team iterates promptly.
+
+This does **not** permit knowingly broken primary functions, loss of existing approved behaviors, unsafe tenant/identity boundaries, unauthorized external effects, hidden defects, falsified QA or failed required CI. The exact status of any untested real-device/browser and authenticated owner experience is `UNVERIFIED`, **not** automatically a prelaunch production hold where no material safety issue is involved. Source-authoring checks and UI-quality standards still apply. See `../../AGENTS.md` for the governing release sequence. Production deployment is not the same as owner's final acceptance or a public/customer marketing announcement.
+
 ## Mandatory skill order
 
 1. Start every software assignment with the installed Flow-by-Flow skill.

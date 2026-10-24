@@ -10,6 +10,14 @@
 
 **Applies to:** every agent, pull request, merge, migration, edge deployment, web deployment, staged rollout, release decision, customer update, and Paige-authored answer about what changed.
 
+## Prelaunch release timing — owner tests live (superseding 2026-10-15)
+
+During the owner's explicitly designated **PRELAUNCH / no-paying-customer** period, technical deployment and the owner's final product acceptance are **two different stages**. A reviewed, green, safely scoped source PR is ordinarily merged into `main` and deployed without waiting for a hands-on owner design/UX walkthrough, full customer-journey QA, or a public customer-release version. The owner then tests the real live experience and approves the product or requests revisions. Agents do the routine troubleshooting, evidence and release themselves; approval loops are not a substitute for building a working feature. The release remains an **internal production build** until the existing customer-announcement and named-release rules below are met.
+
+Required security and technical gates still apply: actual material authorization/privacy/tenant defects, unapproved real external sends or financial effects, destructive changes, required exact-head CI and sound non-bypassing migration/deployment procedures. A newly deployed change may have authenticated product acceptance `UNVERIFIED` while the owner tests it; **never** mislabel that as fully accepted, announced or externally verified. Do not demand unrelated provider activation or all-journey/browser acceptance as a precondition of an otherwise safe, independently useful prelaunch release.
+
+When paying-customer onboarding begins, the owner will explicitly replace this prelaunch policy with the higher-assurance customer-release process. The policy transition is an owner decision, not something agents infer from a test account, draft billing flow or potential buyer.
+
 ## 1. One truthful release system
 
 This policy is the canonical rule for how Paige Agent AI identifies, proves, names, and explains releases. It does not replace the Master Project Reference, Second Brain, Surface Binding Ledger, Integration Capability Registry, tier matrix, or evidence records. Those remain the authoritative stores for their own facts. This policy tells every delivery path how to use them consistently.

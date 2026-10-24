@@ -1,5 +1,22 @@
 ## C19 current-main7b continuation — October24, not released
 
+Current normal cold Preview692a3b05/fymtisosylqfmzgwwlhg is nonpersistent/
+with_datafalse; actual09:15:13UTC metadata confirms lower800005 and frontier820004,
+zero Auth users/clients/agreements/files, all13 expected commercial/signature
+function bodies/definer/search-path/ACLs exact. The unrelated original two-argument
+display overload is listed separately, not counted as a new E04 function. Actual
+E09reserved810009 remains absent here and release-order held in production.
+[Native Preview metadata](../evidence/e04-exact-terms-preview.json) is not customer
+or financial execution proof.
+
+The first a6b source check120834124422 FAILED on an unchanged E05 record because
+the closed-push event still used former parent2a24465b before main retarget.
+Primary job log40080920279 proves that exact old base. Actual correct main7b
+guard is NOT_REQUIRED, no UI source changed; the E05 file is byte-exact incoming.
+No peer record/validator is edited or failure waived. This factual checkpoint
+receives fresh normal open-PR/main-context gates and final review, not a blind
+rerun of the stale event. Initial not-associated PreviewSKIP also remains history.
+
 Original2689 now composes actual main7b2ac52074e1697e961f31a28490d0e22bd2ebbb
 as3de2ef2c19dc12b257f0c4150ef38e569852947f/tree8c6672e6e434cba78225d2fea038096052cd2351.
 All six owning runtime/native/proof/test files remain byte-identical to6eaa93b2;

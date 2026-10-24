@@ -308,5 +308,19 @@
   "CI": "OWED on final exact commit",
   "merge": "NOT_MERGED",
   "deployment": "NOT_DEPLOYED",
-  "acceptance": "UNVERIFIED ordinary roles/real backend/CentralQA/full12/founder"
+  "acceptance": "UNVERIFIED ordinary roles/real backend/CentralQA/full12/founder",
+  "currentReleasedParentComposition": {
+    "at": "2026-10-24T12:19:25.795Z",
+    "sourceHead": "4ff7a4e2d74c970a6bf194c7ae218f037a26a24a",
+    "parent": "c30323d5f561275a397b10e59c2d0adb6fe173d1",
+    "all29ActualGitAndLocalLFInputsExact": true,
+    "allNineOriginalUIRuntimeProofFilesExact": true,
+    "noNewRenderOrBehaviorOrAuthenticatedProof": true,
+    "originalFramesAndManifestPreserved": true,
+    "currentCIReview": "OWED",
+    "actualParentNative820004": "SOURCE_NATIVE_WEB_RELEASE_VERIFIED: actual5a/820004/count1,14 full function definitions/ABI/defaults/returns/owner/ACL/security plus columns/constraints/guard/unique index match fresh Preview; receipt6384139888, original lock failure retained",
+    "parentNative830004": "NOT_DEPLOYED; current2705 fresh CI/Preview required",
+    "acceptance": "UNVERIFIED actual owner/staff/linked-client/private PDFs/receipts/reload/whole12/CentralQA/founder",
+    "currentSourceUnit": "55/55 cases/six suites PASS9.99s on4ff current parent"
+  }
 }

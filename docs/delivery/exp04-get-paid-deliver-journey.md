@@ -4042,3 +4042,14 @@ final prepared seal remains unfinished. Activation, ordinary owner/staff/linked
 client/cohorts/revoke/reload/provider/CentralQA and Founder Acceptance UNVERIFIED.
 ALG01 bounded source reconciliation PARTIAL,02 progression incomplete,12 bounded
 refusal/recovery PARTIAL and13 usefulness UNVERIFIED; no catalogue Live promotion.
+
+
+### C34 — Sales metric initialization continuity — October24
+
+Same EXP04 lead retains full O1–O12. Protected original-reference acceptance reported through ANT138 remains FAIL/owed; no customer reference was copied, replayed or reforged. Source on actual main77b shows BOTH the original metric hook and Performance wrapper invalidating every auth callback. The initial subscription observation therefore issues another eleven references and can supersede the selected original without any real actor change.
+
+REPAIR the two incumbent Sales callbacks to retain initialization; preserve all material auth invalidation, original native issuer/resolver, exact reference/revision/as-of/expiry checks, business-calendar overdue1.1.0, refusal without issuance fallback, original Finance/Chat/pins and all rendered markup/styles. No new evidence or authority cache, registry, provider, executor, scheduler or receipt. Scope is ANT161/6eec2b43, extended before the first source edit to include the parent wrapper and its own tests.
+
+Failing-first tests: unchanged code produced three causal failures with36 original controls passing. After correction,39/2 owning tests PASS5.83s and162/7 adjacent Sales/Analytics tests PASS13.58s. Scoped ESLint, whole-source inverse and the unchanged UI-record validator PASS. This is synthetic/static source evidence. The first local build failed dependency realpath EPERM; actual machine free RAM later fell to144MiB and a shell failed initialization out-of-memory. The local type check and unchanged build retry were stopped to recover memory; neither is green. Required hosted exact-head checks, fresh final review, rendered browser lifecycle, release/readback and protected independent ordinary-role original-reference acceptance remain incomplete.
+
+The original customer interface and every noninitial auth invalidation remain intact. The owner October24 clarification makes small PRs a review-efficiency preference, not a size cap: keep these two inseparable duplicate-issuance causes and their negative controls together. No peer implementation assignment. ALG01/12 remain bounded PARTIAL; no capability maturity or founder acceptance is promoted. Shipped Log N/A while this source increment has not reached main. Evidence: docs/evidence/ui-delivery/e04-sales-metric-initial-session.md.

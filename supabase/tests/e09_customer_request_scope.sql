@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(294);
+SELECT plan(295);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -429,6 +429,15 @@ SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand
 SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_workspace_brand() b')->>'tenant_name','Northwind Studio','get_workspace_brand() original single-business no-header behavior retained');
 SELECT ok(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b','e0970200-0000-4000-8000-000000000002') IS NULL,'get_client_service_agreement() revoked B cannot return A');
 SELECT is(pg_temp.scope_read('SELECT to_jsonb(b) FROM public.get_client_service_agreement() b')->>'tenant_name','Northwind Studio','get_client_service_agreement() original single-business no-header behavior retained');
+-- These original INVOKER/RLS cases require the actual staff workspace A. The
+-- three memberships above share now(); the canonical joined_at fallback does
+-- not promise which tied membership is first. Select the authorized fixture
+-- workspace explicitly, just as the existing cases later switch to B.
+UPDATE public.profiles SET active_tenant_id='e0970200-0000-4000-8000-000000000001'
+ WHERE user_id='e0970100-0000-4000-8000-000000000001';
+SELECT ok((SELECT active_tenant_id='e0970200-0000-4000-8000-000000000001'::uuid FROM public.profiles WHERE user_id='e0970100-0000-4000-8000-000000000001') IS TRUE
+ AND pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT to_jsonb(public.current_user_tenant_id())')=to_jsonb('e0970200-0000-4000-8000-000000000001'::text),
+ 'synthetic owner explicitly enters actual workspace A before original INVOKER checks');
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES ('e0970300-0000-4000-8000-000000000011','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','Owner','Selflinked A','active'),('e0970300-0000-4000-8000-000000000012','e0970200-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','Owner','Selflinked B','active');
 INSERT INTO public.paige_context_loads(tenant_id,contact_id,caller_user_id,scope,consent_state) VALUES ('e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000011','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','granted'),('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000012','e0970100-0000-4000-8000-000000000001','contact','denied');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}')->>'count','1','original INVOKER activity sees selected A only');

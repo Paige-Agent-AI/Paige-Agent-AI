@@ -1,5 +1,60 @@
 # Finance department — current source and full operating target
 
+## October24 — current Finance verification and release boundary
+
+All applicable exact-head checks for parent #2694 at
+`ce6818e620fa8e7b6a58f330ce711ab911eaefc4`, child #2696 at
+`970517f34a957b8360b3df2259f6630c3dba7d83`, and Systems #2690 at
+`61ebfb7f493a933601fe09518a7c80a01fd40eaf` completed successfully;
+their source-only Supabase Preview checks were skipped. Both observed Vercel
+statuses for the Finance parent succeeded. These results belong to those exact
+heads; current-main composition requires new CI and a separate review. No merge,
+candidate deployment or customer acceptance follows from these checks.
+
+Native synthetic Finance verification additionally exercised actual browser
+200percent zoom: unchanged complete monetary strings, the original scroll owner,
+source Sheet reading, Escape focus return to the same metric, and Home/End
+department navigation. Browser zoom was restored to100percent. The native
+environment reported Reduced Motion enabled; existing reduced-motion CSS and
+Sheet/rail/navigation interactions were inspected, without a frame-duration claim.
+The six original zoom captures remain private; publishing and hash-binding those
+assets is still owed while local file/command tools stall. The already committed
+eight required viewport/rail states and320 focus evidence remain valid. The
+subsequent error-fixture load was stopped before inspection and is UNVERIFIED.
+No alternate browser control was used to bypass the physical-Escape stop.
+
+Separate released-customer read/navigation verification traversed all seven
+Finance pages, confirmed VERA attribution and truthful unavailable bank,
+accounting, costs and forecast states, and reloaded Budgeting in the same
+authorized workspace. This proves that bounded released journey, not this
+undeployed presentation or complete Finance acceptance.
+
+One new, explicitly read-only original-reference VERA request settled to
+`metric_read_refused` within35seconds after the first post-send observation;
+the saved refusal survived reload. Original context was not broadened or
+substituted. Positive original-reference review is **FAIL / proof owed**.
+Metadata-only inspection found a later same-series issuance revoking the selected
+reference14ms after issuance, before expiry;22references for11Sales keys were
+issued within94ms, and the source revision differed. Overlapping initial-auth
+issuance is an investigated hypothesis, not a proven root cause or unchanged-data
+claim. EXP04 accepted its original Sales hook/wrapper repair in #2768
+(`2d722bc6633377232b89dc59107377de294d7d1f`, open at this checkpoint).
+EXP02 retains integration and authenticated reacceptance responsibility; canonical
+issuer/revocation/actor/tenant/bounds remain intact. Public receipts:
+[original negative](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6386721064),
+ANT138/db508082, ANT52/8f744841 and ANT161/fa1baeb8.
+
+Functional: presentation source and bounded released reads, positive review FAIL.
+Visual: named synthetic states/zoom/focus only; remaining asset and state proof owed.
+Experiential: negative/refusal/reload verified; positive review and complete
+Chat/Live/cohort/permission/recovery proof incomplete.
+Founder Acceptance: NOT_ACCEPTED; one complete integrated evaluation remains.
+Algorithm Support: ALG03/06/11/12 Partial; ALG13 usefulness/impact Unverified.
+Orchestration Contract: read-only evidence and original conversation only; no
+business action, new approval, provider activation or Rail execution claim.
+CAP009–017 and all19 required outcomes retain their existing evidence states.
+The original CPU-failed monthly operation remains unknown and unretried.
+
 ## October24 — resumed final-source visual confirmation
 
 All eight required desktop/panel states now have actual native Responsive

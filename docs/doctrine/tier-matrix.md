@@ -334,6 +334,31 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### EXP08 Team Hub increment 1: team channels, DMs and threads (migration `20271113850008`, 2026-10-24; not yet merged)
+
+Team Hub is a new SOLO main-menu destination directly below Operations, with slug `team-hub`. The existing `/solo/{n}/team` address still redirects to Settings → Team.
+- Storage: four new tables. RLS is on, there are no policies, and there are no browser grants.
+- Access: nine `team_hub_*` SECURITY DEFINER functions resolve `current_user_tenant_id()` plus an active seat.
+- Refusals: anything other than a canonical SOLO workspace is refused with `unavailable` (amendment A1).
+
+§61 exception (owner-held tiers): Agency, Enterprise and Sub-account don't get Team Hub yet, so Agency has no resell either. The contract is `docs/delivery/exp08-team-hub-collaboration-contract.md`.
+
+| Tier | Team Hub menu item | Team Hub functions |
+|---|---|---|
+| God / Operator | ✗ no menu item (SOLO shell only) | ✗ no blanket access; an operator with no active seat in the workspace is refused `not_member` |
+| Agency / Enterprise | ✗ held | ✗ `unavailable` (not standalone) |
+| Standalone (Solo) | ✓ for active seats | ✓ own workspace only. Private channels and DMs are visible only to their members, including to owners |
+| Sub-account | ✗ held | ✗ `unavailable`; an agency manager's seat in the child is refused too |
+| Client | ✗ | ✗ (no seat) |
+| Anonymous | ✗ | ✗ (no grant) |
+
+**Evidence:**
+- A disposable-PostgreSQL proof, `supabase/tests/exp08_team_hub_collaboration.sql`, with reinstated defects that each fail it.
+- Mocked-RPC Vitest suites.
+- Harness renders at the four SOLO viewports, PAIGE closed and open (structural, not live).
+
+Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
+
 ### E09 C1 — announcements to customers through the one campaign system (branch `e09-c1`, migration `20271111060000`, 2026-10-19; not yet merged)
 
 The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) gains a "Customer portal" chip; the database gains the `portal` audience key, rule-key checks, and owner Q1 (Updates turned on, for promotions/announcements/newsletters to current or former portal-linked contacts, at plan and at send). Availability follows the existing campaign seams unchanged (`_email_caller_tenant`: owner/admin of the active business; `_email_paige_tenant` refuses agency accounts; Growth is not offered to Agency, §61 exception). §61 default: no new exception — the portal audience is part of campaigns, wherever campaigns already are.

@@ -1,3 +1,14 @@
+## EXP02 Finance — October24 current checkpoint
+
+Parent2694, child2696 and Systems2690 applicable exact-head CI is green at the
+dated heads recorded in the [Finance brain](finance-department.md#october24--current-finance-verification-and-release-boundary).
+Native synthetic zoom/focus proof and all-seven released read/navigation evidence
+are separate. The latest original-reference VERA review is FAIL with a persisted
+truthful refusal; EXP04's original Sales lifecycle repair2768 is open.
+Candidate release, positive review/reload and complete19/nine acceptance remain
+owed. Historical superseded pending statements below retain their dated scope.
+No runtime, provider, catalogue or algorithm activation is inferred.
+
 ## EXP02 Finance Overview refinement — October23, development only
 
 Owner requests Overview landing and clearer visuals across all seven Finance
@@ -215,9 +226,15 @@ Team index. Read these before any Team or Team Hub work:
 - 11 `team.*` Spine capabilities.
 - Presence RPCs.
 
-**Not built:** a Team Hub main-menu item, channels, DMs, threads, mentions, a team `/PAIGE`
-palette, and the messaging tables behind them. Searching the migrations for `team_message`,
-`team_channel`, `channel_members`, `direct_message` and `message_mentions` returned zero hits.
+**Increment 1 (PR #2764, 2026-10-24, `PROOF_OWED`):** the TEAM HUB main-menu item below
+Operations (`/solo/{n}/team-hub`), channels, private channels, DMs, threads, @people mentions,
+search and read markers, on the `team_hub_*` tables and functions (migration `20271113850008`).
+Contract: [Team Hub collaboration contract](../delivery/exp08-team-hub-collaboration-contract.md).
+Evidence: [increment 1 record](../evidence/ui-delivery/exp08-team-hub-increment1.md). Owed: the
+§32 persisted-apply check and an authenticated drive on the owner-designated SOLO account.
+
+**Not built:** a team `/PAIGE` palette, specialist requests through EXP05 Work, the Team work
+panel, attachments, Knowledge and Chat/Live continuity (increments 2–4).
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

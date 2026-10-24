@@ -1,0 +1,67 @@
+{
+  "recordedAt": "2026-10-24T11:45:34.617Z",
+  "scope": "Local existing-extractor adapter only; no mounted or live model outcome",
+  "base": "4621c4f1b73523485a9d1168a3ae70839b5c9bf4",
+  "sourceHashes": {
+    "supabase/functions/_shared/client-portal-file-read.ts": "ac8e8046a31cf8806005fab84f018ec837eb985f618eff027e597deca91048d8",
+    "src/lib/customer-file-read.test.ts": "ad1b4841eb5c977c04f98c3e62ea4bb38ae6fe4f3dfc455efbb3ae30c7da0198"
+  },
+  "beforeImplementation": {
+    "sandbox": "EPERM temporary worker rename; no suite ran",
+    "normalPermissions": "missing new adapter import, no tests; implementation absent"
+  },
+  "focused": {
+    "tests": 8,
+    "suites": 1,
+    "result": "PASS",
+    "durationSeconds": 1.3
+  },
+  "readerRegression": {
+    "tests": 26,
+    "suites": 3,
+    "result": "PASS",
+    "durationSeconds": 1.91
+  },
+  "currentMainComposition": {
+    "head": "4621c4f1b73523485a9d1168a3ae70839b5c9bf4",
+    "includesSourceRelease": "dea2db4a7865ccf379815e5b10b2e54103337879",
+    "tests": 177,
+    "suites": 12,
+    "result": "PASS",
+    "durationSeconds": 7.02,
+    "boundary": "Original Documents/private consumer/scope/controller/unmounted component and three readers; no native or actual customer/model proof"
+  },
+  "originalExtractorSmoke": {
+    "definition": "scripts/attachment-extract-smoke.mts",
+    "result": "PASS",
+    "model": "MOCKED"
+  },
+  "lint": "PASS",
+  "focusedStrictTypes": "PASS; original and new three reader modules/tests only, no whole-app or Deno claim",
+  "authority": "Original accepted native intent; current processing/source before and after reads/preflight/model; no new permission or budget",
+  "safety": [
+    "exact original downloaded bytes",
+    "original PDF/image extractor/injected admitted ModelInvoker",
+    "shared uploaded-file untrusted fence",
+    "explicit unsupported/empty/limit unread",
+    "source withdrawal withholds all results",
+    "interrupt/deadline retires late output/no next model",
+    "no provider error detail exposure"
+  ],
+  "unchanged": [
+    "paige-ai-chat/index.ts",
+    "C0b binding literals",
+    "attachment-extract.ts",
+    "untrusted-fence.ts"
+  ],
+  "unfinished": [
+    "Original handler/composer mount",
+    "Existing processor limit callback",
+    "Original Model Fabric actual admission/invocation",
+    "Safe bounded DOCX reader",
+    "Private browser file-reference projection/retrieval",
+    "Ordinary customer return/phone/full42/seven/Teach acceptance"
+  ],
+  "activation": "NONE",
+  "founder": "NOT_REQUESTED; one integrated evaluation"
+}

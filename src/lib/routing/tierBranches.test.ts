@@ -192,14 +192,30 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     }
   });
 
-  it("every Solo branch now carries sub-tabs — Trust Compass became Command Center's third", () => {
+  it("only Team Hub is a bare Solo branch — Trust Compass became Command Center's third", () => {
     // Trust Compass moved INTO Command Center as its third sub-tab (owner-ruled 2026-09-05), so it is
-    // no longer a bare top-level branch and no Solo branch lacks a sub-tab. The legacy address
-    // redirects into the Command Center path. Vault is an owner-locked Settings destination.
+    // no longer a bare top-level branch. The legacy address redirects into the Command Center path.
+    // Vault is an owner-locked Settings destination. Team Hub (EXP08) is one conversation workspace
+    // with no sub-tabs by contract.
     const noSub = SOLO_BRANCHES.filter((b) => !b.subtabs).map((b) => b.slug).sort();
-    expect(noSub).toEqual([]);
+    expect(noSub).toEqual(["team-hub"]);
     expect(SOLO_BRANCHES.filter((b) => b.subtabs).length).toBe(12);
     expect(branchBySlug("solo", "trust-compass")).toBeFalsy(); // no longer a top-level branch
+  });
+
+  it("places Team Hub directly after Operations as its own main branch (EXP08)", () => {
+    const order = SOLO_BRANCHES.map((b) => b.slug);
+    expect(order.indexOf("team-hub")).toBe(order.indexOf("operations") + 1);
+    expect(branchBySlug("solo", "team-hub")).toEqual({ slug: "team-hub", key: "teamhub", label: "Team Hub", group: "main" });
+    expect(branchByKey("solo", "teamhub")?.slug).toBe("team-hub");
+    expect(defaultSubtabSlug("solo", "team-hub")).toBeNull();
+    expect(branchPath("solo", "42", "team-hub")).toBe("/solo/42/team-hub");
+    // The legacy /team address is Settings → Team's, never Team Hub's.
+    expect(branchBySlug("solo", "team")).toBeNull();
+    // The Sub-account compatibility tree is the AgencyApp tree; Agency and Sub-account are held.
+    expect(branchBySlug("agency", "team-hub")).toBeNull();
+    expect(branchBySlug("sub_account", "team-hub")).toBeNull();
+    expect(branchBySlug("enterprise", "team-hub")).toBeNull();
   });
 
   it("verified Solo counts + first-is-default per the live-screen audit", () => {
@@ -217,6 +233,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("analytics")).toBe(0);
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(8);
+    expect(count("team-hub")).toBe(0);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
     expect(total).toBe(73); // Executive extends Command Center; existing departmental destinations remain.
     // First sub-tab is the screen's default; the bare Command Center opens Executive.

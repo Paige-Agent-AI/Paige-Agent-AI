@@ -75,7 +75,7 @@ export interface ChatDocumentUploadOptions {
   enabled?: boolean;
 }
 
-function transferFiles(data: DataTransfer): File[] {
+export function transferFiles(data: DataTransfer): File[] {
   // Browsers can expose one payload in both lists. Prefer files, then fall back to real items.
   const files = Array.from(data.files ?? []);
   if (files.length) return files;
@@ -83,7 +83,7 @@ function transferFiles(data: DataTransfer): File[] {
     .map(item => item.getAsFile()).filter((file): file is File => file !== null);
 }
 
-function hasFileDrag(data: DataTransfer): boolean {
+export function hasFileDrag(data: DataTransfer): boolean {
   return Array.from(data.types ?? []).includes("Files")
     || Array.from(data.items ?? []).some(item => item.kind === "file");
 }

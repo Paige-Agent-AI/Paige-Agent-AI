@@ -11,6 +11,7 @@ import {
   PublishUnverified, type Prepared, type PublishAction, type PublishCheck, type PublishForbiddenReason,
 } from "./studio-data";
 import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
+import { nexusDisplayName, reviewWithNexusPrompt } from "./nexus";
 import { EmbedCode } from "./EmbedCode";
 
 // "error": nothing armed. The message says why; the button re-prepares ("Try again" when the door
@@ -60,8 +61,10 @@ function Checking({ text }: { text: string }) {
   );
 }
 
-export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
+export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefresh }: {
   artifact: LoadedArtifact;
+  /** "Review with NEXUS" pre-approval handoff to the global PAIGE chat; absent ⇒ no affordance. */
+  onNexusHandoff?: (prompt: string) => void;
   onClose: () => void;
   onDone: (message: string) => void;
   /** Re-read the artifact without announcing success (an unverified publish). */
@@ -324,6 +327,12 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
           )}
           {blocked && <p>Fix what's marked, or ask Paige to, then publish.</p>}
           {address && <p className="vs-pop-address">Goes live at <b>{address}</b></p>}
+          {onNexusHandoff && ready && !notPublishable && (
+            <p className="vs-pop-note">
+              Marketing review is {nexusDisplayName()}'s department.
+              <button type="button" className="vs-link" style={{ marginLeft: 6 }} onClick={() => onNexusHandoff(reviewWithNexusPrompt(kind, pub.preview.title, address))}>Review with {nexusDisplayName()}</button>
+            </p>
+          )}
           {(pub?.state === "refused" || pub?.state === "error") && <p className="vs-alert" role="alert">{pub.message}</p>}
         </>
       )}

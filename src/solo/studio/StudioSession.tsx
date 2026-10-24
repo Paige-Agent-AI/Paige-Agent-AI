@@ -47,8 +47,11 @@ function AskCard({ choices, disabled, onAnswer }: { choices: Choices; disabled: 
   );
 }
 
-export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBack }: {
-  tenantId: string; tenantSlug: string; sessionId: string; seedBrief: string | null; onBack: () => void;
+export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNexusHandoff, onBack }: {
+  tenantId: string; tenantSlug: string; sessionId: string; seedBrief: string | null;
+  /** "Review with NEXUS" pre-approval handoff to the global PAIGE chat; absent ⇒ no affordance. */
+  onNexusHandoff?: (prompt: string) => void;
+  onBack: () => void;
 }) {
   const [session, setSession] = React.useState<Session | null>(null);
   const [sessionError, setSessionError] = React.useState<string | null>(null);
@@ -252,6 +255,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
             // A different piece is a different door preparation: never carry a fingerprint across.
             key={`${artifact.kind}:${artifactId(artifact)}`}
             artifact={artifact}
+            onNexusHandoff={onNexusHandoff}
             onClose={() => { setPublishOpen(false); publishBtnRef.current?.focus(); }}
             onDone={(m) => { setNotice(m); setRefreshKey((k) => k + 1); }}
             onRefresh={() => setRefreshKey((k) => k + 1)}

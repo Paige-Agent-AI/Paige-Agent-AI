@@ -962,6 +962,7 @@ const evidence = (tenantId, contactId, ledgerId) => ({
 
 let savedCompass = null;
 let canaryRunId = null;
+let savedReconcileJob = null;
 let servedLogs = () => "";
 const results = [];
 const step = (name, fn) => results.push({ name, fn });
@@ -972,6 +973,32 @@ async function main() {
   const drainer = await serve("paige-native-event-dispatch", 8791);
   const approver = await serve("execute-approval", 8792);
   servedLogs = () => `── drainer log ──\n${drainer.log().slice(-4000)}\n── execute-approval log ──\n${approver.log().slice(-4000)}`;
+
+  // This proof ages committed crash fixtures and invokes the ORIGINAL reconciler
+  // itself. Its five-minute cron must not consume those fixtures between the
+  // held-response assertion and the explicit recovery assertion. Only this
+  // loopback disposable stack's existing job is paused; cleanup restores it.
+  assert.equal(dbUrl.hostname, '127.0.0.1', 'cron isolation is confined to the loopback disposable stack');
+  assert.equal(one('show cron.log_run;'), 'on', 'native cron completion evidence is required');
+  const jobs = JSON.parse(one(`select coalesce(json_agg(row_to_json(j)), '[]'::json) from
+    (select jobid, active, command from cron.job where jobname = 'paige-orchestration-act-reconciler') j;`));
+  assert.equal(jobs.length, 1, 'exactly one canonical reconciler job is required');
+  assert.match(String(jobs[0].jobid), /^\d+$/);
+  assert.match(jobs[0].command, /^\s*select public\.paige_reconcile_orchestration_acts\(\);\s*$/i);
+  assert.equal(typeof jobs[0].active, 'boolean');
+  savedReconcileJob = jobs[0];
+  sql(`select cron.alter_job(${savedReconcileJob.jobid}, active := false);`);
+  assert.equal(one(`select active::text from cron.job where jobid = ${savedReconcileJob.jobid};`), 'false');
+  // Do not terminate an already running pass. Wait for its recorded end before
+  // introducing synthetic stale claims; a failure remains a failed proof.
+  let running = 1;
+  for (let attempt = 0; attempt < 50 && running; attempt++) {
+    running = count(`select count(*) from cron.job_run_details where jobid = ${savedReconcileJob.jobid}
+      and status in ('starting', 'running', 'connecting', 'sending');`);
+    if (running) await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  assert.equal(running, 0, 'the existing reconciler pass must finish before crash fixtures');
+  console.log('ok   - disposable reconciler cron isolated; original manual recovery assertions unchanged');
 
   // The trust compass is platform-wide. Rung 2 (auto) needs a fresh attestation and a passing operator
   // cross-tenant canary (§68); a plain replay has neither, so the default effective lane is confirm.
@@ -1398,6 +1425,12 @@ function cleanup() {
     });
   }
   for (const u of users) attempt(`user ${u}`, () => sql(`delete from auth.users where id = ${q(u)};`));
+  if (savedReconcileJob) {
+    attempt('restore original reconciler cron', () => {
+      sql(`select cron.alter_job(${savedReconcileJob.jobid}, active := ${savedReconcileJob.active});`);
+      assert.equal(one(`select active::text from cron.job where jobid = ${savedReconcileJob.jobid};`), String(savedReconcileJob.active));
+    });
+  }
   cleanupResult = ok;
   return ok;
 }

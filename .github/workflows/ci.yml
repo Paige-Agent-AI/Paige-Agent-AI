@@ -850,6 +850,9 @@ jobs:
           # the flag the step fails on errors this PR did not introduce and cannot fix here — which
           # is why the sibling `_business-context-readiness.test.ts` was written and never wired in.
           deno test --no-check --allow-import=esm.sh,deno.land --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys supabase/functions/_shared/systems-check-runners/revenue_tracking_configured.test.ts
+          # EXP10 ALG-12: the connections_healthy runner — same --no-check rationale as the line above
+          # (the shared runner graph carries prompt-forge's baselined type errors; the ratchet owns those).
+          deno test --no-check --allow-import=esm.sh,deno.land --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys supabase/functions/_shared/systems-check-runners/connections_healthy.test.ts
 
       - name: Agreements engine — token contract, PDF seal, and database integrity (INT-163)
         if: ${{ !cancelled() }}

@@ -1,0 +1,214 @@
+/* EXP08 Team Hub — approved prototype v2, increment-1 subset. Obsidian / Mineral through the
+   --pg-* theme root only. Gold is spent on two act buttons (Create channel, Add people); Send is
+   ink. The hub owns its scroll regions: the conversation list, the stream and the thread each
+   scroll on their own inside the full-height screen host.
+
+   Layout follows the HUB's own width, never the viewport: `.th-hub` is the size container and
+   every breakpoint below is a container query, because the PAIGE panel narrows the hub at any
+   viewport size. The script mirrors one threshold (760px, ONE_COLUMN_BELOW) to know which pane
+   is on screen. */
+.th-hub{container:th-hub / inline-size;position:relative;height:100%;min-height:0;min-width:0;
+  color:var(--pg-ink);background:var(--pg-canvas);font:13px/1.5 var(--pg-font-ui);letter-spacing:-.002em}
+.th-grid{position:relative;display:grid;grid-template-columns:232px minmax(0,1fr);height:100%;min-height:0;min-width:0}
+.th-grid[data-thread="open"]{grid-template-columns:232px minmax(0,1fr) 340px}
+.th-hub--state{display:grid;place-items:center}
+.th-hub ::selection{background:color-mix(in srgb,var(--pg-violet) 38%,transparent)}
+/* Zero-specificity reset: it must never out-rank a component's own colour (.th-btn--act,
+   .th-replies, .th-conv-item…), which a plain `.th-hub button` would. */
+:where(.th-hub) :where(button,input,textarea){font:inherit;color:inherit}
+.th-hub :focus-visible{outline:2px solid var(--pg-violet);outline-offset:2px}
+.th-hub svg{width:16px;height:16px;flex:none;stroke-width:1.75}
+.th-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Conversations column */
+.th-list{display:flex;flex-direction:column;min-height:0;min-width:0;border-right:1px solid var(--pg-line-soft);background:var(--pg-workspace)}
+.th-list-head{padding:12px 12px 8px}
+.th-search{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 10px;border:1px solid var(--pg-line);border-radius:var(--pg-r-chip);background:var(--pg-canvas);color:var(--pg-muted)}
+.th-search:focus-within{border-color:var(--pg-line-strong)}
+.th-search input{flex:1;min-width:0;width:100%;border:0;background:transparent;outline:0;color:var(--pg-ink)}
+.th-search input::placeholder{color:var(--pg-faint)}
+.th-list-body{flex:1;min-height:0;overflow-y:auto;padding:4px 8px 16px;display:grid;gap:16px;align-content:start;scrollbar-gutter:stable}
+.th-group{display:grid;gap:2px}
+.th-group h2{display:flex;align-items:center;justify-content:space-between;margin:0 2px 2px 6px;font-size:11px;font-weight:600;color:var(--pg-faint)}
+.th-conv-item{display:flex;align-items:center;gap:9px;width:100%;min-height:40px;padding:0 8px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--pg-muted);text-align:left;cursor:pointer}
+.th-conv-item:hover{background:var(--pg-lift);color:var(--pg-ink)}
+.th-conv-item[aria-current="page"]{background:var(--pg-surface);border-color:var(--pg-line);color:var(--pg-ink)}
+.th-conv-item[data-unread] .th-conv-name{color:var(--pg-ink);font-weight:600}
+.th-conv-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th-badge{flex:none;min-width:20px;height:20px;padding:0 6px;border-radius:var(--pg-r-pill);background:var(--pg-graphite);color:var(--pg-ink);font:600 11px/20px var(--pg-font-data);text-align:center;font-variant-numeric:tabular-nums}
+.th-avatar{width:22px;height:22px;flex:none;display:grid;place-items:center;border-radius:7px;background:var(--pg-graphite);color:var(--pg-ink-2);font-size:10px;font-weight:700}
+.th-avatar--lg{width:32px;height:32px;border-radius:9px;font-size:11px}
+.th-note{margin:0 6px;color:var(--pg-faint);font-size:12px}
+.th-note--pad{margin:12px}
+
+/* Buttons. Gold only on the act; Send is ink. */
+.th-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 14px;border:1px solid var(--pg-line);border-radius:8px;background:var(--pg-raised);color:var(--pg-ink);font-size:13px;font-weight:500;cursor:pointer;transition:border-color .15s ease-out,background-color .15s ease-out}
+.th-btn:hover{border-color:var(--pg-line-strong)}
+.th-btn:disabled{opacity:.55;cursor:not-allowed}
+.th-btn--ghost{background:transparent}
+.th-btn--act{background:var(--pg-gold-fill);border-color:transparent;color:var(--pg-env);font-weight:600;box-shadow:var(--pg-e2)}
+/* Light gold fill is a mid tone: --pg-env (a light warm grey) fails on it, ink passes (7.4:1),
+   exactly as client-portal-access.css pairs it. */
+[data-pg="light"] .th-btn--act{color:var(--pg-ink)}
+.th-btn--act:hover{border-color:transparent;filter:brightness(1.05)}
+.th-btn--act:disabled{opacity:1;filter:none;box-shadow:none;background:var(--pg-raised);border-color:var(--pg-line);color:var(--pg-muted)}
+.th-icon-btn{display:inline-grid;place-items:center;width:40px;height:40px;flex:none;border:0;border-radius:8px;background:transparent;color:var(--pg-muted);cursor:pointer}
+.th-icon-btn:hover{background:var(--pg-lift);color:var(--pg-ink)}
+.th-icon-btn:disabled{opacity:.5;cursor:not-allowed}
+.th-link{min-height:40px;border:0;padding:0 4px;background:transparent;color:var(--pg-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.th-send{display:inline-grid;place-items:center;width:40px;height:40px;margin-left:auto;border:1px solid var(--pg-line);border-radius:8px;background:transparent;color:var(--pg-muted);cursor:pointer;transition:background-color .15s ease-out,color .15s ease-out}
+.th-send[data-ready]{background:var(--pg-ink);border-color:transparent;color:var(--pg-canvas)}
+.th-send:disabled{opacity:.45;cursor:not-allowed}
+
+/* Inline forms (create channel, message a teammate, add people) */
+.th-inline-form{container:th-form / inline-size;display:grid;gap:8px;margin:2px 2px 6px;padding:10px;border:1px solid var(--pg-line);border-radius:10px;background:var(--pg-surface)}
+.th-inline-form--wide{margin:8px 16px 0}
+.th-field{display:grid;gap:4px;font-size:12px;color:var(--pg-muted)}
+.th-field input{min-height:40px;padding:0 10px;border:1px solid var(--pg-line);border-radius:7px;background:var(--pg-canvas);color:var(--pg-ink);width:100%;min-width:0}
+.th-field input[aria-invalid="true"]{border-color:color-mix(in srgb,var(--pg-negative) 60%,transparent)}
+.th-seg{display:grid;gap:4px}
+.th-seg button[aria-pressed="true"] svg{color:var(--pg-violet)}
+.th-seg button,.th-chip{display:flex;align-items:center;gap:7px;min-height:40px;padding:4px 10px;border:1px solid var(--pg-line);border-radius:8px;background:transparent;color:var(--pg-muted);font-size:12px;text-align:left;cursor:pointer}
+.th-seg button[aria-pressed="true"],.th-chip[aria-pressed="true"]{border-color:var(--pg-line-strong);background:var(--pg-raised);color:var(--pg-ink)}
+/* One selection mark for both: a violet dot, not colour alone. The visibility toggles carry an
+   icon first, so theirs sits at the end of the row and the label never shifts. */
+.th-chip[aria-pressed="true"]::before,.th-seg button[aria-pressed="true"]::after{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:var(--pg-violet)}
+.th-seg button::after{margin-left:auto}
+.th-chips{display:flex;flex-wrap:wrap;gap:6px}
+.th-form-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:6px}
+.th-inline-form--wide .th-form-actions{display:flex;justify-content:flex-end}
+/* In the conversations column the form is too narrow for two buttons side by side: stack them,
+   the act first. */
+@container th-form (max-width:279.98px){
+  .th-form-actions{grid-template-columns:minmax(0,1fr)}
+  .th-form-actions .th-btn--act{order:-1}
+}
+.th-option{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:6px 8px;border:0;border-radius:8px;background:transparent;text-align:left;color:var(--pg-ink);cursor:pointer}
+.th-option:hover,.th-option[aria-selected="true"]{background:var(--pg-raised)}
+.th-option:disabled{opacity:.55;cursor:not-allowed}
+.th-option-meta{display:grid;min-width:0;flex:1}
+.th-option-meta small{color:var(--pg-muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th-error{display:flex;align-items:center;gap:6px;margin:0;color:var(--pg-negative);font-size:12px}
+.th-error--pad{padding:8px 16px 0}
+.th-confirm-text{margin:0;max-width:65ch;color:var(--pg-ink-2);font-size:12.5px}
+.th-confirm-text b{color:var(--pg-ink);font-weight:600}
+
+/* Conversation */
+.th-conv{display:flex;flex-direction:column;min-width:0;min-height:0}
+.th-conv-main{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
+.th-conv-head{display:flex;align-items:center;gap:10px;min-height:56px;padding:6px 16px;border-bottom:1px solid var(--pg-line-soft)}
+.th-conv-head h2{display:flex;align-items:center;gap:6px;min-width:0;max-width:55%;margin:0;font-size:15px;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
+.th-conv-title{overflow:hidden;text-overflow:ellipsis}
+.th-conv-head p{flex:1;min-width:0;margin:0;color:var(--pg-muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th-head-actions{display:flex;gap:6px;margin-left:auto}
+.th-back{display:none}
+.th-notice{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 16px 0;padding:8px 11px;border:1px solid var(--pg-line);border-radius:10px;background:var(--pg-raised);font-size:12.5px;color:var(--pg-ink-2)}
+.th-notice--warn{border-color:color-mix(in srgb,var(--pg-warning) 45%,transparent)}
+.th-notice button{min-height:40px;border:0;padding:0 2px;background:transparent;color:var(--pg-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.th-stream{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 8px;display:flex;flex-direction:column;gap:2px;scrollbar-gutter:stable;outline:0}
+.th-stream > div{display:flex;flex-direction:column;gap:2px}
+.th-older{align-items:center;padding:4px 0 10px}
+.th-new{display:flex;align-items:center;gap:10px;margin:8px 0;color:var(--pg-violet);font-size:11px;font-weight:600}
+.th-new::after{content:"";flex:1;height:1px;background:color-mix(in srgb,var(--pg-violet) 45%,transparent)}
+.th-day{display:flex;align-items:center;gap:10px;margin:10px 0 6px;color:var(--pg-faint);font-size:11px}
+.th-day::before,.th-day::after{content:"";flex:1;height:1px;background:var(--pg-line-soft)}
+.th-msg{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;padding:8px;border-radius:10px}
+.th-msg:hover,.th-msg:focus-within{background:var(--pg-lift)}
+.th-msg--pending .th-text{color:var(--pg-muted)}
+.th-msg-body{min-width:0}
+.th-who{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding-right:40px}
+.th-who b{font-weight:600}
+.th-who time{color:var(--pg-faint);font:11px var(--pg-font-data);font-variant-numeric:tabular-nums}
+.th-role{color:var(--pg-muted);font-size:11px}
+.th-text{margin:2px 0 0;color:var(--pg-ink-2);overflow-wrap:anywhere;white-space:pre-wrap;max-width:75ch}
+.th-mention{padding:0 3px;border-radius:5px;background:color-mix(in srgb,var(--pg-violet) 20%,transparent);color:var(--pg-ink);font-weight:500}
+.th-replies{display:inline-flex;align-items:center;gap:6px;min-height:40px;margin-top:6px;padding:0 11px;border:1px solid var(--pg-line-soft);border-radius:7px;background:transparent;color:var(--pg-violet);font-size:12px;cursor:pointer}
+.th-replies:hover{border-color:var(--pg-line)}
+.th-replies span{color:var(--pg-muted)}
+.th-reply-action{position:absolute;top:2px;right:2px;opacity:0;transition:opacity .15s ease-out}
+.th-msg:hover .th-reply-action,.th-msg:focus-within .th-reply-action{opacity:1}
+@media (hover:none){.th-reply-action{opacity:1}}
+.th-fail{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:4px;color:var(--pg-negative);font-size:12px}
+.th-fail button{min-height:40px;min-width:40px;border:0;padding:0 8px;border-radius:8px;background:transparent;color:var(--pg-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.th-fail button:hover:not(:disabled){background:var(--pg-lift)}
+.th-fail button:disabled{opacity:.5;cursor:not-allowed}
+.th-empty{display:grid;gap:4px;margin:auto 0 8px;padding:8px;color:var(--pg-muted)}
+.th-empty p{margin:0}
+.th-empty-title{color:var(--pg-ink);font-weight:600}
+
+/* Composer and the @ list anchored above it */
+.th-composer-wrap{position:relative;display:grid;gap:6px;padding:8px 16px 14px}
+.th-composer{border:1px solid var(--pg-line);border-radius:12px;background:var(--pg-surface);box-shadow:var(--pg-rim)}
+.th-composer:focus-within{border-color:var(--pg-line-strong)}
+/* The ring belongs to the whole composer box, not a square cut across the textarea inside it. */
+.th-composer textarea:focus-visible{outline:none}
+.th-composer:has(textarea:focus-visible){outline:2px solid var(--pg-violet);outline-offset:2px}
+.th-composer textarea{display:block;width:100%;min-height:44px;max-height:160px;resize:none;padding:11px 12px 4px;border:0;background:transparent;outline:0;color:var(--pg-ink);line-height:1.45;field-sizing:content}
+.th-composer textarea::placeholder{color:var(--pg-faint)}
+.th-composer-row{display:flex;align-items:center;gap:4px;padding:2px 6px 6px}
+.th-hint{min-width:0;margin-left:6px;color:var(--pg-faint);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th-pop{position:absolute;left:16px;right:16px;bottom:calc(100% - 6px);max-width:460px;max-height:320px;overflow-y:auto;margin:0;padding:6px;border:1px solid var(--pg-line);border-radius:12px;background:var(--pg-raised);box-shadow:var(--pg-lift-2);z-index:5;animation:th-pop .16s cubic-bezier(.16,1,.3,1)}
+.th-pop .th-option:hover,.th-pop .th-option[aria-selected="true"]{background:var(--pg-surface)}
+.th-pop--note{padding:10px 12px;color:var(--pg-muted);font-size:12px}
+@keyframes th-pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* Thread drawer */
+.th-thread{display:flex;flex-direction:column;min-height:0;min-width:0;border-left:1px solid var(--pg-line-soft);background:var(--pg-workspace)}
+.th-thread-head{display:flex;align-items:center;gap:8px;min-height:56px;padding:0 8px 0 14px;border-bottom:1px solid var(--pg-line-soft)}
+.th-thread-head h2{flex:1;min-width:0;margin:0;font-size:13px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th-thread-head h2 span{color:var(--pg-muted);font-weight:500}
+.th-thread-body{flex:1;min-height:0;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.th-thread .th-composer-wrap{padding:8px 12px 12px}
+
+/* Whole-hub and empty states */
+.th-center{display:grid;place-content:center;justify-items:center;gap:12px;max-width:480px;margin:auto;padding:40px 24px;text-align:center}
+.th-center h2{margin:0;font-size:19px;font-weight:650;letter-spacing:-.015em;text-wrap:balance}
+.th-center p{margin:0;color:var(--pg-muted);max-width:60ch}
+.th-center-mark{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--pg-graphite);color:var(--pg-ink-2);box-shadow:var(--pg-rim)}
+.th-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+/* First use inside the one-column list: the same words and actions, set as a block in the list. */
+.th-center--compact{justify-items:start;gap:10px;max-width:none;margin:0;padding:14px 8px 4px;text-align:left}
+.th-center--compact h2{font-size:15px}
+.th-center--compact .th-actions{justify-content:flex-start}
+
+/* Skeleton */
+.th-sk{display:block;height:12px;border-radius:8px;background:var(--pg-surface)}
+.th-sk--avatar{width:32px;height:32px;border-radius:9px}
+.th-sk--row{height:28px}
+.th-sk-list{padding-top:16px;gap:10px}
+.th-sk-lines{display:grid;gap:8px;align-content:start;padding-top:2px}
+.th-stream--skeleton{gap:16px;overflow:hidden}
+@media (prefers-reduced-motion:no-preference){.th-sk{animation:th-pulse 1.4s ease-in-out infinite}}
+@keyframes th-pulse{50%{opacity:.55}}
+
+/* A hub narrower than 1150px (1366 minus the 216px rail, or any viewport with PAIGE open): the
+   thread drawer overlays the conversation. */
+@container th-hub (max-width:1149.98px){
+  .th-grid,.th-grid[data-thread="open"]{grid-template-columns:212px minmax(0,1fr)}
+  /* --pg-e3 is the shell's own side-panel elevation: a soft shadow cast leftward over the stream. */
+  .th-thread{position:absolute;top:0;right:0;bottom:0;width:min(360px,92%);z-index:6;box-shadow:var(--pg-e3)}
+}
+@media (prefers-reduced-motion:no-preference){
+  @container th-hub (max-width:1149.98px){.th-thread{animation:th-slide .2s cubic-bezier(.16,1,.3,1)}}
+}
+@keyframes th-slide{from{transform:translateX(16px);opacity:.4}to{transform:none;opacity:1}}
+
+/* A hub narrower than 760px: one column at a time, with a back button. */
+@container th-hub (max-width:759.98px){
+  .th-grid,.th-grid[data-thread="open"]{grid-template-columns:minmax(0,1fr)}
+  .th-grid[data-view="list"] .th-conv,.th-grid[data-view="conv"] .th-list{display:none}
+  .th-grid--loading .th-conv{display:none}
+  .th-back{display:inline-grid}
+  .th-conv-head{padding:6px 8px}
+  .th-conv-head h2{max-width:none;flex:1}
+  .th-conv-head p{display:none}
+  .th-stream{padding-inline:8px}
+  .th-composer-wrap{padding:8px 8px 12px}
+  .th-thread{width:100%}
+  .th-inline-form--wide{margin:8px 8px 0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .th-pop,.th-thread{animation:none}
+  .th-btn,.th-send,.th-reply-action{transition:none}
+}

@@ -113,6 +113,9 @@ $$ SELECT
     OR EXISTS (SELECT 1 FROM public.agency_team_members atm
       JOIN public.tenants child ON child.id = atm.scoped_subaccounts[1]
       WHERE atm.agency_tenant_id = _child AND atm.user_id = _actor AND atm.status = 'active') $$;
+CREATE OR REPLACE FUNCTION public.agency_can_manage_child(_child uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS
+$$ SELECT public.agency_can_manage_child(_child, auth.uid()); $$;
+
 CREATE OR REPLACE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS
 $$ SELECT COALESCE(
     (SELECT p.active_tenant_id FROM public.profiles p

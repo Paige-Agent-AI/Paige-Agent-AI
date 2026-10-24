@@ -9080,13 +9080,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
     const recordConfirmation = async (
       fp: string, tool: string, args: Record<string, unknown>, summary: string,
-    ): Promise<{ state: "created" | "exists" | "failed"; fingerprint?: string; summary?: string }> => {
+    ): Promise<{ state: "created" | "exists" | "failed"; fingerprint?: string; summary?: string; expires_at?: string | null }> => {
       try {
         if (!(await revalidateProposalScope())) return { state: "failed" };
         const storedArgs = confirmationArgs(args);
-        const findReusable = async (): Promise<Array<{ fingerprint: string; summary: string }>> => {
+        const findReusable = async (): Promise<Array<{ fingerprint: string; summary: string; expires_at: string | null }>> => {
           let existing = supabase.from("paige_pending_confirmations")
-            .select("fingerprint,args,issued_in_request,summary").eq("user_id", user.id).eq("tool_name", tool)
+            .select("fingerprint,args,issued_in_request,summary,expires_at").eq("user_id", user.id).eq("tool_name", tool)
             .is("consumed_at", null)
             .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
             .gt("expires_at", new Date().toISOString());
@@ -9097,12 +9097,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (pendingError || (pending?.length ?? 0) > 64) {
             throw new Error("confirmation preparation unavailable");
           }
-          const reusable: Array<{ fingerprint: string; summary: string }> = [];
+          const reusable: Array<{ fingerprint: string; summary: string; expires_at: string | null }> = [];
           for (const row of pending ?? []) {
             if (!row?.args || typeof row.args !== "object" || Array.isArray(row.args)
               || await confirmFingerprint(tool, row.args) !== fp) continue;
             const token = await confirmationToken(row, tool);
-            if (token) reusable.push({ fingerprint: token, summary: typeof row.summary === "string" ? row.summary : summary });
+            if (token) reusable.push({ fingerprint: token, summary: typeof row.summary === "string" ? row.summary : summary,
+              expires_at: typeof row.expires_at === "string" ? row.expires_at : null });
           }
           return reusable;
         };
@@ -9122,7 +9123,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         const { error: expiryError } = await expired;
         if (expiryError) return { state: "failed" };
         await requireRecoveryPermission(true);
-        const { error } = await supabase.from("paige_pending_confirmations").insert({
+        const { data: recorded, error } = await supabase.from("paige_pending_confirmations").insert({
           user_id: user.id,
           tenant_id: personaCtx?.tenant_id ?? null,
           thread_id: payloadThreadId ?? null,
@@ -9133,7 +9134,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           server_issued_at: new Date().toISOString(),
           args: storedArgs,
           summary,
-        });
+        }).select("expires_at").single();
         if (error) {
           if (error.code === "23505") {
             const winner = await findReusable();
@@ -9142,7 +9143,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           console.error("[paige] confirm proposal NOT recorded", JSON.stringify({ tool, code: error.code ?? null }));
           return { state: "failed" };
         }
-        return { state: "created", fingerprint: `${fingerprint}:${requestNonce}`, summary };
+        return { state: "created", fingerprint: `${fingerprint}:${requestNonce}`, summary,
+          expires_at: typeof recorded?.expires_at === "string" ? recorded.expires_at : null };
       } catch {
         console.error("[paige] confirmation preparation failed");
         return { state: "failed" };
@@ -12579,7 +12581,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 success: false,
                 needs_confirm: recorded.state !== "failed",
                 ...(recorded.state !== "failed" ? { confirm_fingerprint: recorded.fingerprint,
-                  requires_operator_approval: true, confirm_summary: recorded.summary ?? summary } : {}),
+                  requires_operator_approval: true, confirm_summary: recorded.summary ?? summary,
+                  confirm_expires_at: recorded.expires_at ?? null } : {}),
                 ...(recorded.state === "failed" ? { error: "confirmation_unavailable" } : {}),
                 note: recorded.state === "failed"
                   ? "The approval could not be recorded. Nothing ran and there is no approval card to use yet. Explain the failure and retry only after the operator asks."
@@ -18622,7 +18625,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // render an Approve/Deny card instead of Paige asking in prose.
       // Carries the FINGERPRINT alongside the summary, because the surface that shows the card has
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
-      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
+      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; expires_at?: unknown; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
       // A native proposal already supplies the exact approval. Do not spend another
       // model round before recording that pause, or publish a card before its receipt.
       let durableApprovalPause = false;
@@ -19321,7 +19324,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   ok = parsed?.success !== false;
                   // Capture a pending confirmation so the client renders an approve card.
                   if (parsed?.needs_confirm && parsed?.confirm_summary) {
-                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}), ...(parsed.confirm_preview && typeof parsed.confirm_preview === "object" && !Array.isArray(parsed.confirm_preview) ? { preview: parsed.confirm_preview as Record<string, unknown> } : {}) });
+                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(Object.prototype.hasOwnProperty.call(parsed, "confirm_expires_at") ? { expires_at: parsed.confirm_expires_at } : {}), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}), ...(parsed.confirm_preview && typeof parsed.confirm_preview === "object" && !Array.isArray(parsed.confirm_preview) ? { preview: parsed.confirm_preview as Record<string, unknown> } : {}) });
                   }
                   if (tc.function?.name === "deep_research" && parsed && typeof parsed === "object" && Array.isArray(parsed.findings)) {
                     researchTrace.push({

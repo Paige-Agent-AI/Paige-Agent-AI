@@ -1,3 +1,41 @@
+## C20 actual released approval-source composition — October24
+
+Original2705 resumes after actual E05#2753/129f source release to
+main2b14cedd546eb285e3db0c24fecf374d2a986659, normal Chat527/all269 source files
+and web readback under receipt6382984309, explicit lease release ANT161/aa794e53.
+The earlier uncommitted collision was aborted and retained; no protected code or
+literal was resolved while that lease was active. Current local composition keeps
+originala565, actual2689/ae383 and released2b14 history and every incoming source.
+Removing ONE original E04 static WRITE_TARGET attribution row restores the ENTIRE
+released Chat source, including metadata/display/deadline/recovery controls.
+
+Original extractor reproduced all29 released baseline scalars/all124 source paths.
+Separate pre-renewal AUTHOR-REVIEW / LOWER ASSURANCE6383068164 inspected exact
+Chat2983e097 versus releasedcc8290fa: only enclosing-handler identity[15] changes;
+all branches, dominating controls, other identities, helpers and imports remain
+exact. Only29 reviewed literals and their provenance were then renewed, with
+complete own-edit and released-producer inverses. Existing reviewed E04 HIGH risk
+source is unchanged; all other123 dependency digests, original extractor, metadata,
+validator and hostile controls remain. Original recovery-union JSON fields remain
+historical; additive releasedExpiryUnion records this actual124-path composition.
+
+Current62 cases in five owning/hostile suites PASS, original Spine self-test and
+full229-capability check PASS, risk195 actions/zero unclassified writes PASS.
+Only E04's existing receipt row's stale unused13640004 filename is corrected to
+actual820004; every other row remains. Actual receipt check195 declarations
+(64 emits/131 seeded-undeclared) and original10-case self-test PASS; initial empty
+Windows CLI invocations were no-ops and are not credited. The original CLI guard
+was invoked with its correct file URL locally; no source/test/CI rule was weakened.
+Native830004 body remains62f1f423eee91f54a3c5dd5848a69b8c448357eaa4f3671a6ececf587771bbdd.
+
+Original2689/ae383 now has required database120842424482 SUCCESS and fresh empty
+normal Preview source/security proof, but remaining generalCI/release and newly
+reserved lower E09/810109 remain separate gates. This C20 source is not native
+deployment, Chat/Live admission, provider execution, a send/payment, ordinary-role
+QA or completed customer outcome. Final exact-head review/CI/native order/normal
+deployment/readback/all12/CentralQA/founder acceptance are still required.
+All earlier pending-producer and collision paragraphs below are dated history.
+
 ## C19 actual predecessor and released Clients composition — October24
 
 Actual main58416369d2de317c7c6e9301248e0ea36e2d0989 is composed as

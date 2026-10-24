@@ -1,0 +1,140 @@
+{
+  "results": [
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed first chat message is the composed brief",
+      "detail": "\"A landing page for my spring referral workshop\\n\\nBrief details:\\nAudience: Solo consultants planning a referral engine\\nOutcome: Twenty bo"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed brief card shows the recorded details",
+      "detail": "The brief ·  · A landing page for my spring referral workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · "
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open first chat message is the composed brief",
+      "detail": "\"A landing page for my spring referral workshop\\n\\nBrief details:\\nAudience: Solo consultants planning a referral engine\\nOutcome: Twenty bo"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open brief card shows the recorded details",
+      "detail": "The brief ·  · A landing page for my spring referral workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · "
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed first chat message is the composed brief",
+      "detail": "\"A landing page for my spring referral workshop\\n\\nBrief details:\\nAudience: Solo consultants planning a referral engine\\nOutcome: Twenty bo"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed brief card shows the recorded details",
+      "detail": "The brief ·  · A landing page for my spring referral workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · "
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open first chat message is the composed brief",
+      "detail": "\"A landing page for my spring referral workshop\\n\\nBrief details:\\nAudience: Solo consultants planning a referral engine\\nOutcome: Twenty bo"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open brief card shows the recorded details",
+      "detail": "The brief ·  · A landing page for my spring referral workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · "
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed first chat message is the composed brief",
+      "detail": "\"A landing page for my spring referral workshop\\n\\nBrief details:\\nAudience: Solo consultants planning a referral engine\\nOutcome: Twenty bo"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed brief card shows the recorded details",
+      "detail": "The brief ·  · A landing page for my spring referral workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · "
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open first chat message is the composed brief",
+      "detail": "\"A landing page for my spring referral workshop\\n\\nBrief details:\\nAudience: Solo consultants planning a referral engine\\nOutcome: Twenty bo"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open brief card shows the recorded details",
+      "detail": "The brief ·  · A landing page for my spring referral workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · "
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed first chat message is the composed brief",
+      "detail": "\"A landing page for my spring referral workshop\\n\\nBrief details:\\nAudience: Solo consultants planning a referral engine\\nOutcome: Twenty bo"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed brief card shows the recorded details",
+      "detail": "The brief ·  · A landing page for my spring referral workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · "
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open first chat message is the composed brief",
+      "detail": "\"A landing page for my spring referral workshop\\n\\nBrief details:\\nAudience: Solo consultants planning a referral engine\\nOutcome: Twenty bo"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open brief card shows the recorded details",
+      "detail": "The brief ·  · A landing page for my spring referral workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · "
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "home composer no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "collapsed toggle says details were added",
+      "detail": "Details · added"
+    },
+    {
+      "ok": true,
+      "name": "reopening an existing project shows its stored brief",
+      "detail": "The brief ·  · A landing page for my November workshop ·  · Brief details: · Audience: Solo consultants planning a referral engine · Outcome"
+    }
+  ],
+  "pageErrors": []
+}

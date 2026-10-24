@@ -1,0 +1,22 @@
+{
+  "file": "1366-dark-layout.png",
+  "width": 1366,
+  "height": 768,
+  "scrollWidth": 1366,
+  "theme": "dark",
+  "phase": "ready",
+  "reference": "aneb_v1_0000000000000000000000000000000000000000000000000000000000000001",
+  "port": "Read state: ready · Issued: 11 · Resolved: 33\nOriginal reference: aneb_v1_0000000000000000000000000000000000000000000000000000000000000001\nActual existing presenter and repaired hook; synthetic RPC/Auth ports. Full authenticated shell, Finance, Chat and customer acceptance are not established.",
+  "active": "Use light theme",
+  "headings": [
+    "Open pipeline",
+    "Requires attention"
+  ],
+  "scripts": [
+    "./assets/index-q5Syh8Tx.js"
+  ],
+  "nativePngWidth": 1366,
+  "nativePngHeight": 768,
+  "capturedAt": "2026-10-24T02:57:26.882Z",
+  "boundary": "Synthetic ports; no actual account/provider/customer acceptance"
+}

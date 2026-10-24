@@ -22,7 +22,9 @@ const PAGE_BLOCKS = [
 ];
 const sessions: Record<string, unknown>[] = [
   { id: "s-form", title: "New client intake", seed_brief: "An intake form for new clients", artifact_refs: [{ kind: "form", id: "f-1", title: "New client intake" }], updated_at: ago(8) },
-  { id: "s-page", title: "Referral workshop page", seed_brief: "A landing page for my November workshop", artifact_refs: [{ kind: "page", id: "p-1", title: "Referral workshop" }], updated_at: ago(90) },
+  // EXP07 row 1: s-page's brief carries the structured details block the composer now composes, so
+  // the session's brief card shows a brief with details (the others stay plain, as older projects are).
+  { id: "s-page", title: "Referral workshop page", seed_brief: "A landing page for my November workshop\n\nBrief details:\nAudience: Solo consultants planning a referral engine\nOutcome: Twenty bookings for the November 14 session\nChannel: Email and LinkedIn\nDeliverables: One page and three posts", artifact_refs: [{ kind: "page", id: "p-1", title: "Referral workshop" }], updated_at: ago(90) },
   { id: "s-blank", title: "Untitled project", seed_brief: "Design me a landing page for my referral workshop", artifact_refs: [], updated_at: ago(30) },
   { id: "s-funnel", title: "Free strategy call", seed_brief: "A funnel for a free consultation", artifact_refs: [], updated_at: ago(60 * 26) },
 ];

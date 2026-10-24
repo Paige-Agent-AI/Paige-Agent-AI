@@ -1,0 +1,56 @@
+{
+  "result": "PASS",
+  "at": "2026-10-24T05:19:37.289Z",
+  "pr": 2728,
+  "reviewedHead": "d4eb35aa56af2df30f01f6b6c879a1d627217f7a",
+  "merge": "02a901fd4946759b6bddab71b03d1d590e387106",
+  "tree": "4413f66112f8a46c0b3c8f676fa55042e4d841ab",
+  "parents": [
+    "885ec3675bceda0a79d1ad5d0ace3d83d4346ce8",
+    "d4eb35aa56af2df30f01f6b6c879a1d627217f7a"
+  ],
+  "deployment": "dpl_9bFXtRwfjha5obPfUSm9gUDKexoT",
+  "channel": "production",
+  "versions": [
+    {
+      "url": "https://paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "02a901fd4946759b6bddab71b03d1d590e387106-mvly2y80",
+        "customerUpdate": null
+      }
+    },
+    {
+      "url": "https://app.paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "02a901fd4946759b6bddab71b03d1d590e387106-mvly2y80",
+        "customerUpdate": null
+      }
+    }
+  ],
+  "html": {
+    "url": "https://app.paigeagent.ai/",
+    "status": 200,
+    "sha256": "d0adb5c7d736a702a7bbccf145afa0d38a68136b5a3a92bb516e5b252d255c3b"
+  },
+  "applicationEntry": {
+    "url": "https://app.paigeagent.ai/assets/main-Cbo34L8f.js",
+    "sha256": "18a59cd7b4ec943938ca1fce888b3aee32a9eac82881fd6dd22e7a8fb058a6c9"
+  },
+  "salesModule": {
+    "url": "https://app.paigeagent.ai/assets/SoloEntry-BfzE9R0x.js",
+    "status": 200,
+    "sha256": "f82bcc99efdd42cbf51715b79e3bf76b22165f28bf00c3a7e14f40d3e907abf3",
+    "repairMarkers": [
+      "Unexpected metric reference identity",
+      "The verified metric expired while checking. Refresh to try again.",
+      "resolve_analytics_evidence_reference",
+      "issue_analytics_evidence_bundle"
+    ]
+  },
+  "all22CriticalMergedSourcesExact": true,
+  "migrations": "NOT_APPLICABLE",
+  "edge": "NOT_APPLICABLE",
+  "boundary": "Public static version and compiled source readback only; not signed-in Sales/Finance/VERA/Chat, database/customer operation, later-session reload, Central QA, all12 or founder acceptance. No provider/business/admission action invoked."
+}

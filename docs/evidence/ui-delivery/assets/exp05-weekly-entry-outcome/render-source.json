@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "base": "885ec3675bceda0a79d1ad5d0ace3d83d4346ce8",
+  "tree": "edb1f0e293f26367d6a3a4ca8ab857bec206d529",
+  "bundleSha256": "bdf708ca1c6c24878533d9a204669b15dd72ac6ad3e848a013272f06efe502bf",
+  "htmlSha256": "3655d5b4af3c6dbee073ac82d2f4ad154bcb84fa7e268c19d486fb480630c6ee",
+  "cssSha256": "1e7e807d595fe92a29038fba006cef2884f9220b9c40ecee1d688ecc961bebb7",
+  "fontSha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+  "verifiedProductInputs": 350,
+  "productInputSetSha256": "3b3b29fe26a708b5011018bd69f7a00638ba97b7dfa2f82457aaae63f959ae33",
+  "candidateProductInputs": [
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "sha256": "d37dbee9348aa4115e569cb41a8c2906815a26996dc03e97b0eb41e696017566",
+      "gitBlob": "29156f74a7d644545296c643c81cbed9296a46e1",
+      "acceptedBlob": "48a0345bdf0d7bc68d16f1d8bdd4eaf505278f9b",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityEntry.tsx",
+      "sha256": "8975693256a6fccb98acc6322e98ab67d95477adda9cb21092941c98e5965d1a",
+      "gitBlob": "fb6c8b85348c28526be40da03789e454e780caee",
+      "acceptedBlob": "55f774a8ea8c8e6fd040df53b346c81b378502b6",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsOverview.tsx",
+      "sha256": "072e888309d545066059bdd1717905890e48dcff8d939fd8698708e541fc81fa",
+      "gitBlob": "96085ed17899b29f3e872495e0c5c76c1d28d69d",
+      "acceptedBlob": "303178e31fbd2b6115caec83ea707b0aa650bdb6",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    }
+  ],
+  "syntheticPortCount": 178,
+  "syntheticPortSetSha256": "09c8375ed99f3a8a0acfc925651a28e10f65901219cbd11e604e79461419942a",
+  "transforms": [],
+  "boundary": "ACTUAL CURRENT WEEKLY OWNER CONSUMER, THREE DECLARED CANDIDATE PRODUCT FILES; ZERO PRODUCT TRANSFORMS; SYNTHETIC AUTH/PROCESS/KNOWLEDGE/PAIGE PORTS; NO LIVE I/O/WRITE/PROVIDER; NOT AUTHENTICATED OR PRODUCTION PROOF"
+}

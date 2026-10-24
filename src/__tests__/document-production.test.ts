@@ -22,6 +22,29 @@ const review={version:1,doc_type:'business_review',title:'Monthly operating revi
   report_period:{key:'month',start:'2026-09-01T00:00:00Z',end:'2026-10-01T00:00:00Z'},evidence_refs:[`aneb_v1_${'b'.repeat(64)}`]};
 
 describe('source-bound business review request preflight',()=>{
+  const {evidence_refs: _references, ...reviewWithoutReferences}=review;
+  const planned={...reviewWithoutReferences,metric_requests:[{metric_key:'sales.cash.recorded_received',metric_version:'1.0.0'}]};
+  it('accepts a closed canonical source request without caller-authored facts',()=>{
+    expect(validateBusinessReviewBrief(planned)).toEqual({ok:true,value:planned});
+    expect(validateDocumentBrief(planned).ok).toBe(false);
+  });
+  it('keeps the canonical revised overdue version and the original request order',()=>{
+    const input={...planned,metric_requests:[{metric_key:'sales.receivables.overdue_current',metric_version:'1.1.0'},...planned.metric_requests]};
+    const result=validateBusinessReviewBrief(input);expect(result).toEqual({ok:true,value:input});
+    if(result.ok){input.metric_requests.reverse();expect(result.value).not.toEqual(input);}
+  });
+  it.each([[],null,[null],[{metric_key:'invented',metric_version:'1.0.0'}],
+    [{metric_key:'sales.receivables.overdue_current',metric_version:'1.0.0'}],
+    [{...planned.metric_requests[0],values:{amount_minor:'999999'}}],
+    [{...planned.metric_requests[0],tenant_id:'foreign'}],
+    [{...planned.metric_requests[0],dimensions:{owner:'foreign'}}],
+    [planned.metric_requests[0],planned.metric_requests[0]],Array(13).fill(planned.metric_requests[0])
+  ])('refuses malformed, duplicate, unknown or caller-authored source selectors %#',metric_requests=>{
+    expect(validateBusinessReviewBrief({...planned,metric_requests}).ok).toBe(false);
+  });
+  it.each([review.evidence_refs,null,undefined])('refuses mixed source modes even for an empty reference property %#',evidence_refs=>{
+    expect(validateBusinessReviewBrief({...planned,evidence_refs}).ok).toBe(false);
+  });
   it.each(['month','quarter'])('accepts only a reference-based %s request without changing legacy nine-type admission',key=>{
     const input={...review,report_period:{...review.report_period,key}};
     expect(validateBusinessReviewBrief(input)).toEqual({ok:true,value:input});

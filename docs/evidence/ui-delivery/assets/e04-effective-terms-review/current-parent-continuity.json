@@ -322,5 +322,15 @@
     "parentNative830004": "NOT_DEPLOYED; current2705 fresh CI/Preview required",
     "acceptance": "UNVERIFIED actual owner/staff/linked-client/private PDFs/receipts/reload/whole12/CentralQA/founder",
     "currentSourceUnit": "55/55 cases/six suites PASS9.99s on4ff current parent"
+  },
+  "productionRelease": {
+    "pr": 2714,
+    "head": "79d7a72a2000ed50b685dde32173757669bcb58a",
+    "merge": "e1a6a6bcc508d42ce058643ca64fb06e710f5263",
+    "receipt": 6384844122,
+    "at": "2026-10-24T13:33:00.226Z",
+    "artifact": "docs/evidence/e04-effective-terms-review-production-readback.json",
+    "sourceOnly": true,
+    "customerAcceptance": "UNVERIFIED"
   }
 }

@@ -17,6 +17,7 @@ const ME = "44444444-4444-4444-8444-444444444444";
 const CLIENT = "55555555-5555-4555-8555-555555555555";
 
 const h = vi.hoisted(() => ({
+  customer: null as unknown,
   active: { data: null as string | null, error: null as unknown },
   reads: [] as Array<{ table: string; filters: unknown[][] }>,
   rpcs: [] as string[],
@@ -66,6 +67,7 @@ vi.mock("@/integrations/supabase/client", () => {
       from: (t: string) => builder(t),
       rpc: async (name: string, args?: Record<string, unknown>) => {
         h.rpcs.push(name);
+        if (name === "client_portal_self_profile") return { data: h.customer, error: null };
         if (name === "current_user_tenant_id" && h.hold) await h.hold;
         if (name === "current_user_tenant_id") return h.active;
         // S5: the governed owner-memory read (JWT caller; no ids passed). Rows are the
@@ -122,6 +124,7 @@ const has = (filters: unknown[][], op: string, col: string, val: unknown) =>
   filters.some((f) => f[0] === op && f[1] === col && f[2] === val);
 
 beforeEach(() => {
+  h.customer = null;
   h.reads.length = 0;
   h.rpcs.length = 0;
   h.active = { data: WS_A, error: null };
@@ -139,6 +142,23 @@ beforeEach(() => {
 });
 
 describe("useClientChatContext — own memory is read in the active workspace only (INT-326)", () => {
+  it("uses the closed customer projection without reading internal CRM or legacy memory",async()=>{
+    h.customer={id:CLIENT,tenant_id:WS_A,linked_user_id:ME,first_name:"Test",last_name:"Customer",entity_name:null,
+      street_address:null,city:null,state:null,zip_code:null,onboarding_stage:"invited",is_signup_contact:false,
+      paige_shared_context_consent:false,paige_shared_context_consent_updated_at:null,updated_at:null,
+      email:"recipient@tests.invalid",phone:null,contact_methods:[]};
+    const {result}=renderHook(null,ME);
+    await waitFor(()=>expect(result.current.isLoading).toBe(false));
+    expect(result.current.contextBlock).toContain("CUSTOMER CONTEXT — Test Customer");
+    expect(h.reads).toHaveLength(0);expect(h.rpcs).toEqual(["client_portal_self_profile"]);
+  });
+  it("refuses a widened private customer DTO rather than falling back to legacy context",async()=>{
+    h.customer={id:CLIENT,tenant_id:WS_A,linked_user_id:ME,current_notes:"PRIVATE COACH NOTES"};
+    const {result}=renderHook(null,ME);
+    await waitFor(()=>expect(result.current.isLoading).toBe(false));
+    expect(result.current.contextBlock).toBe("");expect(h.reads).toHaveLength(0);
+    expect(h.rpcs).toEqual(["client_portal_self_profile"]);
+  });
   it("in workspace A, the governed owner read is called and shows only A's own rows", async () => {
     h.ownerRows = [h.ownerRows[0]];
     const { result } = renderHook(null, ME);

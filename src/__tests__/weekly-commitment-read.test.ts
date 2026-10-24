@@ -1,12 +1,31 @@
 import { describe, it, expect, vi } from "vitest";
 import { readWeeklyCommitmentProjection, prepareWeeklyCommitmentChatResponse } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
-import { projectWeeklyCalendar } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
+import { projectWeeklyCalendar, parseWeeklyCommitmentSnapshot, parseWeeklySourceItems, projectWeeklyCommitmentChat, reviewWeeklyScheduleChange } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 
 const actor = "11111111-1111-4111-8111-111111111111", tenant = "22222222-2222-4222-8222-222222222222";
 const process = "33333333-3333-4333-8333-333333333333", event = "44444444-4444-4444-8444-444444444444";
 const act = "55555555-5555-4555-8555-555555555555", receipt = "66666666-6666-4666-8666-666666666666";
 const identity: ContextIdentity = { actorId: actor, tenantId: tenant, workspaceId: tenant, role: "owner", actAsClientId: null, accountShape: "solo", scopeEpoch: 1 };
+describe("saved schedule review uses the canonical zone contract", () => {
+  const saved = { weekday: 1, local_time: "09:00", timezone: "UTC" };
+  it("preserves the original server zone even if this consumer's ICU cannot recognize it", () => {
+    const format = vi.spyOn(Intl, "DateTimeFormat").mockImplementation(() => { throw new RangeError("older ICU"); });
+    try {
+      const original = { ...saved, timezone: "America/Coyhaique" }, proposed = { ...original, weekday: 5 };
+      expect(reviewWeeklyScheduleChange(original, proposed)).toEqual(proposed);
+      expect(reviewWeeklyScheduleChange(saved, proposed)).toBeNull();
+    } finally { format.mockRestore(); }
+  });
+  it.each(["invalid", "posix/US/Eastern", "right/UTC", "bad zone", "", "x".repeat(129)])("refuses unsupported new zone %s", timezone => {
+    expect(reviewWeeklyScheduleChange(saved, { ...saved, timezone, weekday: 5 })).toBeNull();
+  });
+  it("preserves new recognized zones and copies the reviewed arguments", () => {
+    const proposed = { weekday: 7, local_time: "23:59", timezone: "GMT" };
+    const reviewed = reviewWeeklyScheduleChange(saved, proposed);
+    expect(reviewed).toEqual(proposed); expect(reviewed).not.toBe(proposed);
+  });
+});
 function canonical() {
   const observation = { tenant_id: tenant, authorized_by: actor, automation_id: process, event_id: event, act_id: act,
     correlation_ref: "occurrence:act", receipt_id: receipt, source: "public.plan_items", observed_at: "2026-10-12T13:00:00Z",
@@ -27,6 +46,136 @@ function fixture(data: unknown = canonical(), mutate?: (name: string) => void) {
   return { caller, calls, currentIdentity: () => current, switchIdentity: (next: ContextIdentity) => { current = next; } };
 }
 describe("prepared owner-only weekly read — not conversationally admitted", () => {
+  it("preserves the original cutoff for human review without publishing it into model context", () => {
+    const raw = canonical(), cutoff = "2026-10-23T15:20:10.123456+00:00";
+    const data = { ...raw, checks: raw.checks.map(c => ({ ...c, schedule: { ...c.schedule, future_control_at: cutoff } })) };
+    const parsed = parseWeeklyCommitmentSnapshot(data, tenant, actor)!;
+    expect(parsed.checks[0].future_control_at).toBe(cutoff);
+    expect(projectWeeklyCalendar(parsed).definitions[0].future_control_at).toBe(cutoff);
+    expect(projectWeeklyCommitmentChat(parsed)).not.toContain("future_control_at");
+  });
+  it.each([42, "invalid", "2026-99-99T00:00:00Z"])("refuses a malformed original cutoff %s", future_control_at => {
+    const raw = canonical();
+    expect(parseWeeklyCommitmentSnapshot({ ...raw, checks: raw.checks.map(c => ({ ...c,
+      schedule: { ...c.schedule, future_control_at } })) }, tenant, actor)).toBeNull();
+  });
+  it("refuses an already cancelled inspection before any RPC", async () => {
+    const f = fixture(), stop = new AbortController(); stop.abort();
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });
+    expect(result.data).toBeNull(); expect(f.calls).toEqual([]);
+  });
+  it("never starts a queued RPC after cancellation at the first stage boundary", async () => {
+    const f = fixture(), stop = new AbortController(), startedCancelled: boolean[] = [], rpc = f.caller.rpc;
+    f.caller.rpc = async name => { startedCancelled.push(stop.signal.aborted); return rpc(name); };
+    const read = readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });
+    queueMicrotask(() => stop.abort());
+    expect((await read).data).toBeNull();
+    expect(startedCancelled).toEqual([false]); expect(f.calls).toEqual(["current_user_tenant_id"]);
+  });
+  it("retires a constructed lazy PostgREST RPC when queued cancellation wins", async () => {
+    const f = fixture(), stop = new AbortController(), startedCancelled: boolean[] = [], constructed: string[] = [];
+    const caller = { rpc: (name: string) => { constructed.push(name); return { then: <T = { data: unknown; error: unknown }, U = never>(
+      resolve?: ((value: { data: unknown; error: unknown }) => T | PromiseLike<T>) | null,
+      reject?: ((reason: unknown) => U | PromiseLike<U>) | null,
+    ) => { startedCancelled.push(stop.signal.aborted); return f.caller.rpc(name).then(resolve, reject); } }; } };
+    const read = readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal });
+    queueMicrotask(() => stop.abort());
+    expect((await read).data).toBeNull();
+    expect(constructed).toEqual(["current_user_tenant_id"]);
+    expect(startedCancelled).toEqual([]); expect(f.calls).toEqual([]);
+  });
+  it("does not subscribe when lazy query construction exhausts the original budget", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fixture(), consume = vi.fn(), construct = vi.fn(() => {
+        vi.advanceTimersByTime(8001); return { then: consume };
+      });
+      expect((await readWeeklyCommitmentProjection(identity, { ...f, caller: { rpc: construct } })).data).toBeNull();
+      expect(construct).toHaveBeenCalledTimes(1); expect(consume).not.toHaveBeenCalled();
+    } finally { vi.useRealTimers(); }
+  });
+  it("does not consume a lazy query whose construction retired the scope", async () => {
+    const f = fixture(), stop = new AbortController(), consume = vi.fn();
+    const caller = { rpc: () => { stop.abort(); return { then: consume }; } };
+    expect((await readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal })).data).toBeNull();
+    expect(consume).not.toHaveBeenCalled(); expect(f.calls).toEqual([]);
+  });
+  it("fences the private status helper's lazy RPC, not only tenant preflight", async () => {
+    const f = fixture(), stop = new AbortController(), consumed: string[] = [];
+    const caller = { rpc: (name: string) => {
+      if (name === "get_weekly_commitment_checks") queueMicrotask(() => stop.abort());
+      return { then: <T = { data: unknown; error: unknown }, U = never>(
+        resolve?: ((value: { data: unknown; error: unknown }) => T | PromiseLike<T>) | null,
+        reject?: ((reason: unknown) => U | PromiseLike<U>) | null,
+      ) => { consumed.push(name); return f.caller.rpc(name).then(resolve, reject); } };
+    } };
+    expect((await readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal })).data).toBeNull();
+    expect(consumed).toEqual(["current_user_tenant_id", "weekly_commitment_owner"]);
+  });
+  it("does not read private status after current server-context revalidation refuses", async () => {
+    const f = fixture();
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, revalidateScope: async () => false });
+    expect(result.data).toBeNull(); expect(f.calls).toEqual([]);
+  });
+  it("withholds a private result cancelled while its original read is pending", async () => {
+    const f = fixture(), stop = new AbortController(), rpc = f.caller.rpc;
+    f.caller.rpc = async name => { const result = await rpc(name); if (name === "get_weekly_commitment_checks") stop.abort(); return result; };
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });
+    expect(result.data).toBeNull(); expect(f.calls).toEqual(["current_user_tenant_id", "weekly_commitment_owner", "get_weekly_commitment_checks"]);
+  });
+  it("does not let successive slow reads extend the original eight-second inspection", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fixture(), rpc = f.caller.rpc;
+      f.caller.rpc = name => new Promise(resolve => { setTimeout(() => { void rpc(name).then(resolve); }, 1900); });
+      let result: Awaited<ReturnType<typeof readWeeklyCommitmentProjection>> | undefined;
+      const read = readWeeklyCommitmentProjection(identity, f).then(value => { result = value; });
+      await vi.advanceTimersByTimeAsync(8001);
+      expect(result).toMatchObject({ status: "degraded", data: null });
+      await vi.advanceTimersByTimeAsync(3000); await read;
+    } finally { vi.useRealTimers(); }
+  });
+  it("withholds completed native data when the final incumbent context check refuses", async () => {
+    const f = fixture(), revalidateScope = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, revalidateScope });
+    expect(revalidateScope).toHaveBeenCalledTimes(2); expect(result.data).toBeNull();
+    expect(f.calls.filter(name => name === "get_weekly_commitment_checks")).toHaveLength(1);
+  });
+  it("a failing current-context callback produces an unavailable result without reading", async () => {
+    const f = fixture();
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, currentIdentity: () => { throw new Error("retired context"); } });
+    expect(result.data).toBeNull(); expect(f.calls).toEqual([]);
+  });
+  it("retains legacy receipt totals with an explicit legacy semantics marker", () => {
+    const raw = canonical();
+    Object.assign(raw.checks[0].last_verified_run.observation, { version: 1 });
+    const parsed = parseWeeklyCommitmentSnapshot(raw, tenant, actor)!;
+    expect(parsed.checks[0].last_verified_run).toMatchObject({ observation_version: 1, counts: { overdue: 2 } });
+    expect(parsed.checks[0].last_run?.status).toBe("unknown");
+    expect(projectWeeklyCommitmentChat(parsed)).toContain('"deadline_scope":"legacy_mixed"');
+  });
+  it("carries corrected semantics and genuine reminder time privately while keeping model context minimized", () => {
+    const raw = canonical();
+    Object.assign(raw.checks[0].last_verified_run.observation, { version: 2, overdue_count: 1,
+      items: [{ id: receipt, kind: "reminder", title: "PRIVATE future reminder", status: "open", priority: "normal", due_at: null, remind_at: "2099-11-03T15:00:00Z" }] });
+    const parsed = parseWeeklyCommitmentSnapshot(raw, tenant, actor)!;
+    expect(parsed.checks[0].last_verified_run).toMatchObject({ observation_version: 2, counts: { overdue: 1 },
+      source_items: [{ due_at: null, remind_at: "2099-11-03T15:00:00Z" }] });
+    const context = projectWeeklyCommitmentChat(parsed);
+    expect(context).toContain('"observation_version":2');
+    expect(context).toContain('"deadline_scope":"work_only"');
+    for (const privateValue of ["PRIVATE", "source_items", "remind_at", "2099-11-03"]) expect(context).not.toContain(privateValue);
+  });
+  it("refuses unsupported result formats and malformed corrected reminder dates", () => {
+    const raw = canonical(); Object.assign(raw.checks[0].last_verified_run.observation, { version: 3 });
+    expect(parseWeeklyCommitmentSnapshot(raw, tenant, actor)).toBeNull();
+    const reminder = { id: receipt, kind: "reminder", title: "Reminder", status: "open", priority: "normal", due_at: null, remind_at: "2099-11-03T15:00:00Z" };
+    expect(parseWeeklySourceItems([reminder], 2)).toHaveLength(1);
+    for (const mutation of [{ remind_at: undefined }, { remind_at: null }, { remind_at: "not a date" }, { due_at: "2020-01-01T00:00:00Z" }]) {
+      expect(parseWeeklySourceItems([{ ...reminder, ...mutation }], 2)).toBeNull();
+    }
+    expect(parseWeeklySourceItems([{ id: receipt, kind: "reminder", title: "Historical reminder", status: "open", priority: "normal", due_at: null }], 1)?.[0]).not.toHaveProperty("remind_at");
+  });
   it("re-reads the same canonical process in a later conversation without another store or receipt", async () => {
     const f = fixture();
     for (let i = 0; i < 2; i++) {

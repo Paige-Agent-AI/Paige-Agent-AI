@@ -24,8 +24,9 @@ describe("VP_ROSTER", () => {
     }
   });
 
-  it("has no finance/credit wording in any default remit (§2)", () => {
-    const banned = /credit|funding|lend|loan|financ|fico|lender/i;
+  it("allows the owner's business-finance remit while keeping funding/credit opt-in (§2)", () => {
+    expect(VP_ROSTER.VERA.remit).toBe("Intelligence, finance & risk");
+    const banned = /credit|funding|lend|loan|fico|lender/i;
     for (const v of Object.values(VP_ROSTER)) {
       expect(banned.test(v.remit)).toBe(false);
     }
@@ -90,8 +91,8 @@ describe("<PaigeAttribution> variants + gold discipline (§11)", () => {
     // markup HTML-escapes "&"; assert on unambiguous substrings of each remit.
     expect(out).toContain("Sales");
     expect(out).toContain("revenue");
-    expect(out).toContain("Quality");
-    expect(out).toContain("standards");
+    expect(out).toContain("Intelligence, finance");
+    expect(out).toContain("risk");
     expect(out).toContain(" · ");
   });
 

@@ -24,7 +24,9 @@ async function enterTitle(value = "Review scope") {
   await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value); input.dispatchEvent(new Event("input", { bubbles: true })); });
 }
 async function click(text: string) {
-  const button = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(item => item.textContent === text)!;
+  // An open review dialog owns the click: its "Create task" is the act, the sheet's opens the review.
+  const scope = document.querySelector('[role="alertdialog"]') ?? document;
+  const button = Array.from(scope.querySelectorAll<HTMLButtonElement>("button")).find(item => item.textContent === text)!;
   expect(button).toBeTruthy(); await act(async () => button.click());
 }
 async function review() { await act(async () => document.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))); }
@@ -78,4 +80,41 @@ it("offers current-work recovery when identity is unknown and retains the lock o
   expect(document.body.textContent).toContain("do not recreate the task yet");
   expect(document.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
   expect(mock.create).toHaveBeenCalledOnce();
+});
+// E09 Slice 3: opened from a client's record, the task is created for that client, shown as a fixed chip.
+it("with a client, the task carries contactId and the client is fixed, not choosable", async () => {
+  mock.create.mockResolvedValue({ kind: "verified", itemId: "test-item-a" });
+  await act(async () => root.render(<OperationsWorkCreator actorId="test-actor-a" tenantId="test-tenant-a" members={members} plans={[]}
+    theme="dark" onClose={vi.fn()} onCreated={vi.fn().mockResolvedValue(undefined)} onRecover={vi.fn()} contact={{ id: "test-contact-a", name: "Jordan Rivera" }} />));
+  const chip = document.querySelector(".ops-create-client");
+  expect(chip?.textContent).toBe("For clientJordan Rivera");
+  expect(chip?.querySelector("input, select, button")).toBeNull();
+  await enterTitle(); await review();
+  expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("For Jordan Rivera");
+  await click("Create task");
+  expect(mock.create).toHaveBeenCalledWith({ actorId: "test-actor-a", tenantId: "test-tenant-a" }, expect.objectContaining({ contactId: "test-contact-a", title: "Review scope" }));
+  expect(document.body.textContent).toContain("It stays private to your team until you share it with Jordan Rivera.");
+});
+it("with a client, says before anything is typed that the task stays private until shared", async () => {
+  await act(async () => root.render(<OperationsWorkCreator actorId="test-actor-a" tenantId="test-tenant-a" members={members} plans={[]}
+    theme="dark" onClose={vi.fn()} onCreated={vi.fn()} onRecover={vi.fn()} contact={{ id: "test-contact-a", name: "Jordan Rivera", firstName: "Jordan" }} />));
+  const description = document.querySelector('[role="dialog"] p')?.textContent ?? "";
+  expect(description).toBe("Create a task with a clear responsibility and deadline. It stays private until you share it with Jordan.");
+});
+it("names the submit for what it does — Create task — and its disabled state is a neutral surface, not a gold slab", async () => {
+  await render();
+  const submit = document.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  expect(submit.textContent).toBe("Create task"); expect(submit.disabled).toBe(true);
+  const css = (await import("node:fs")).readFileSync("src/solo/operations/operations-workspace.css", "utf8");
+  const rule = css.match(/\.ops-work-editor :is\(button\[type=submit\],button\.ops-action-primary\):disabled\{([^}]*)\}/)?.[1] ?? "";
+  expect(rule).toContain("background:var(--pg-surface)"); expect(rule).toContain("opacity:1");
+  expect(rule).not.toMatch(/gold/);
+});
+it("without a client, nothing changes: no chip and no contactId on the call (§58)", async () => {
+  mock.create.mockResolvedValue({ kind: "verified", itemId: "test-item-a" });
+  await render(); await enterTitle(); await review(); await click("Create task");
+  expect(document.querySelector(".ops-create-client")).toBeNull();
+  expect(Object.keys(mock.create.mock.calls[0][1])).not.toContain("contactId");
+  expect(document.body.textContent).not.toContain("share it with");
+  expect(document.body.textContent).not.toContain("stays private");
 });

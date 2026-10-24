@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  addDays, bookingWriteMessage, classifyBookingWriteError, findConflicts, foldClassSeats,
-  rangeFor, rangeLabel, startOfWeek,
-  type SoloBooking,
+  UNASSIGNED_CALENDAR, addDays, bookingWriteMessage, buildCreateBookingArgs, classifyBookingWriteError,
+  defaultCalendarForClient,
+  findConflicts, foldClassSeats, rangeFor, rangeLabel, startOfWeek,
+  type CreateBookingInput, type SoloBooking,
 } from "./useSoloCalendar";
 
 function booking(over: Partial<SoloBooking> & { id: string; start_at: string; end_at: string }): SoloBooking {
@@ -295,5 +296,78 @@ describe("classifyBookingWriteError", () => {
     expect(classifyBookingWriteError({ code: "40001", message: "serialization failure" }, "add")).toEqual({
       category: "unknown", message: "serialization failure",
     });
+  });
+});
+
+describe("buildCreateBookingArgs — a session the business books for a client", () => {
+  const ctx = { uid: "host-user", tenantId: "tenant-northwind", timezone: "America/Chicago" };
+  const base: CreateBookingInput = {
+    title: "Strategy session", startAt: new Date("2026-11-03T15:00:00Z"), durationMinutes: 45,
+    calendarId: "cal-1", guestName: "Jordan Rivera", blocked: false,
+  };
+
+  it("links the chosen client as _contact_id, so that client can see the session in their portal", () => {
+    const args = buildCreateBookingArgs({ ...base, contactId: "client-jordan" }, ctx);
+    expect(args._contact_id).toBe("client-jordan");
+    expect(args._guest_name).toBe("Jordan Rivera");
+    expect(args._tenant_id).toBe("tenant-northwind");
+    expect(args._status).toBe("scheduled");
+  });
+
+  it("sends no _contact_id for a guest who is not a client — the payload is what it always was", () => {
+    expect(buildCreateBookingArgs({ ...base, contactId: null }, ctx)).toEqual({
+      _title: "Strategy session",
+      _start_at: "2026-11-03T15:00:00.000Z",
+      _end_at: "2026-11-03T15:45:00.000Z",
+      _timezone: "America/Chicago",
+      _host_user_id: "host-user",
+      _guest_name: "Jordan Rivera",
+      _tenant_id: "tenant-northwind",
+      _calendar_id: "cal-1",
+      _status: "scheduled",
+      _source: "manual",
+    });
+    expect("_contact_id" in buildCreateBookingArgs(base, ctx)).toBe(false);
+  });
+
+  it("never attaches a client to blocked time, and leaves the blocked payload unchanged", () => {
+    const args = buildCreateBookingArgs(
+      { ...base, title: "", guestName: null, blocked: true, calendarId: UNASSIGNED_CALENDAR, contactId: "client-jordan" },
+      ctx,
+    );
+    expect("_contact_id" in args).toBe(false);
+    expect(args).toMatchObject({ _title: "Blocked", _status: "blocked", _calendar_id: null, _guest_name: null });
+  });
+
+  it("treats a blank client id as no client", () => {
+    expect("_contact_id" in buildCreateBookingArgs({ ...base, contactId: "  " }, ctx)).toBe(false);
+  });
+});
+
+describe("classifyBookingWriteError — a client from another workspace", () => {
+  it("names the client refusal instead of calling it a bad time", () => {
+    const r = classifyBookingWriteError({ code: "22023", message: "BOOKING_BAD_CONTACT: contact not in this tenant" }, "add");
+    expect(r.category).toBe("invalid");
+    expect(r.message).toMatch(/client isn’t in this workspace/);
+    expect(r.message).not.toMatch(/time could not be used/);
+  });
+});
+
+describe("defaultCalendarForClient — a client session must land somewhere the portal can change it", () => {
+  it("offers the first calendar when none is paused", () => {
+    expect(defaultCalendarForClient([{ id: "cal-intro", enabled: true }, { id: "cal-review", enabled: true }])).toBe("cal-intro");
+  });
+
+  it("treats a calendar whose open state was never recorded as open", () => {
+    expect(defaultCalendarForClient([{ id: "cal-intro", enabled: null }])).toBe("cal-intro");
+  });
+
+  it("skips a paused calendar, because the portal refuses to reschedule on one", () => {
+    expect(defaultCalendarForClient([{ id: "cal-paused", enabled: false }, { id: "cal-open", enabled: true }])).toBe("cal-open");
+  });
+
+  it("returns nothing when there is no calendar to offer", () => {
+    expect(defaultCalendarForClient([])).toBeNull();
+    expect(defaultCalendarForClient([{ id: "cal-paused", enabled: false }])).toBeNull();
   });
 });

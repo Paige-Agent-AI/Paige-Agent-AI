@@ -15,7 +15,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useLocation, useSearchParams, Link } from "react-router-dom";
 import {
   MessageCircle, Inbox, Send, Pencil, Loader2, Sparkles, AlertTriangle, Paperclip,
-  PanelRight, Bell, Plus, PlugZap, Trash2,
+  PanelRight, Bell, Plus, PlugZap, Trash2, CircleHelp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -34,18 +34,26 @@ import {
   MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb, CHANNEL_ICON, CHANNEL_LABEL,
   partyLabel, bodyPreview, msgTime, contactNameFromClient,
   INBOX_VIEWS, endOfTodayMs, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
-  useCommsAttachments, requestScheduledCancellation, CANCELLATION_UNCONFIRMED_COPY,
+  useCommsAttachments,
 } from "./conversations/inbox-shared";
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { ComposeThreadDialog } from "./conversations/ComposeThreadDialog";
+import { LeadReplyDrafts } from "./conversations/LeadReplyDrafts";
+import { useLeadReplyReview, canReplaceFollowupDraft, parseFollowupLocator } from "./conversations/useLeadReplyReview";
 import { FirstRunOnboarding } from "./conversations/FirstRunOnboarding";
 import { ThreadRow } from "./conversations/ThreadRow";
 import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
 import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
 // INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
-import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, governedEmailReceiptLabel, isApprovableDraft } from "./conversations/governedSend";
+import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, isApprovableDraft } from "./conversations/governedSend";
+// E09 — the portal channel: recognise portal rows and reply through comms_portal_reply (no provider).
+import {
+  PORTAL_BODY_MAX, PORTAL_IDENTITY_ID, createPortalRequestIds, isPortalHelpRequest, isPortalMessage, portalBodyError,
+  portalBodyLength as countPortalBody, portalReplyErrorCopy, portalRequestScope, portalSenderName,
+  sendPortalReply,
+} from "./conversations/portalReply";
 // Shared conversation atoms (§18 one home) — the SAME bubble the operator Fleet inbox renders.
 import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBubble";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
@@ -65,8 +73,7 @@ import type {
   ConversationsContactPanelModel, ShellThread, DraftTone,
 } from "./conversations/shell/conversationsAdapter";
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { LeadReplyDrafts } from "./conversations/LeadReplyDrafts";
-import { useLeadReplyReview } from "./conversations/useLeadReplyReview";
+import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import type { SoloCommsReadinessEvidence } from "./conversations/solo/soloConversationModel";
 import { useAgentPresence } from "@/components/ui/paige";
 import {
@@ -83,6 +90,7 @@ import {
   getSoloChannelTruth,
   type AccountEpochToken,
 } from "./conversations/solo/soloConversationModel";
+import { missingPortalAccessColumns, withoutPortalAccessColumns } from "@/lib/client-portal-access";
 
 // ── Connector (channel_connectors row — kept local, not in shared) ─────────────────
 interface Connector {
@@ -133,8 +141,6 @@ function messageStatusPill(m: MessageRow) {
   // 'blocked'. Without a pill it read as an ordinary sent bubble.
   if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
   if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
-  const receipt = governedEmailReceiptLabel(m);
-  if (receipt) return <StatePill state="success">{receipt}</StatePill>;
   if (m.status === "sent" || m.status === "delivered" || m.status === "read")
     return <StatePill state="success">Sent</StatePill>;
   if (m.status === "queued") return <StatePill state="pending">Queued</StatePill>;
@@ -226,12 +232,34 @@ function MessageBubble({
   // §49 — a voice-call row renders INLINE as the shared call bubble (direction/duration/recording/
   // transcript, each only when present, §13). Gold-free; the header Call button owns the act (§11).
   const isCall = m.channel_type === "voice";
+  // E09 — a portal message is named as one, so it reads apart from email/SMS in the same thread.
+  const isPortal = isPortalMessage(m);
+  const PortalIcon = CHANNEL_ICON.portal;
+  // A customer's "Contact your team" request is a help request, not an email: the server's
+  // "Help request" subject becomes a small chip in the meta line instead of a subject line.
+  const isHelpRequest = isPortalHelpRequest(m);
   return (
     <SharedMessageBubble
       direction={m.direction}
       body={body}
       timestamp={m.sent_at ?? m.created_at}
-      senderLabel={m.direction === "outbound" ? "You" : partyLabel(m.sender) || "Client"}
+      channelIcon={isPortal ? <PortalIcon className="h-3 w-3" aria-hidden /> : undefined}
+      badge={
+        isHelpRequest ? (
+          <span
+            data-portal-help-request
+            className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-background px-1.5 py-0.5 text-[11px] font-medium leading-none text-foreground"
+          >
+            <CircleHelp className="h-3 w-3 text-primary" aria-hidden />
+            Help request
+          </span>
+        ) : undefined
+      }
+      senderLabel={
+        isPortal
+          ? `Portal · ${m.direction === "outbound" ? "You" : portalSenderName(m)}`
+          : m.direction === "outbound" ? "You" : partyLabel(m.sender) || "Client"
+      }
       status={
         isCall ? voiceStatusPill(m)
         : governed === "sending" ? <StatePill state="pending">{GOVERNED_SEND_COPY.sending.pill}</StatePill>
@@ -252,7 +280,7 @@ function MessageBubble({
         : messageStatusPill(m)
       }
       error={m.status === "failed" && !governedOpen ? m.error : null}
-      subject={isCall ? undefined : (m.subject ?? undefined)}
+      subject={isCall || isHelpRequest ? undefined : (m.subject ?? undefined)}
       foldable={!isCall && shouldFoldEmail(m.channel_type, body)}
       call={
         isCall
@@ -319,7 +347,8 @@ function SoloConversationOperatingBarWithPaige(
 export default function ClientsConversations() {
   const reduce = useReducedMotion();
   const location = useLocation();
-  const { activeTenantId } = useTenantContext();
+  const tenantContext = useTenantContext();
+  const { activeTenantId, activeUserId } = tenantContext;
   const soloRoute = /^\/solo\/([^/]+)\/clients\/conversations(?:\/|$)/.exec(location.pathname);
   const isSolo = !!soloRoute;
   const soloAccountAddress = soloRoute?.[1] ?? "";
@@ -363,6 +392,10 @@ export default function ClientsConversations() {
   const [composeOpen, setComposeOpen] = useState(false);
   // When the composer is opened from a Client-360 "Message {name}" deep-link, pre-address it.
   const [composeContact, setComposeContact] = useState<{ id: string; name?: string } | null>(null);
+  const [composeApprovalId,setComposeApprovalId]=useState<string|undefined>(undefined);
+  const [leadReplyApprovalId,setLeadReplyApprovalId]=useState<string|null>(null);
+  const followupHoldRef=useRef(false);
+  const dialogFollowupHoldRef=useRef(false);
   // Gate the ?contact deep-link on a real first threads pull, so an empty (not-yet-loaded)
   // dbThreads never gets read as "no thread exists" (which would wrongly open the composer).
   const [threadsReady, setThreadsReady] = useState(false);
@@ -381,14 +414,10 @@ export default function ClientsConversations() {
   // Synchronous, epoch-scoped lock: repeated keyboard/click submits cannot enqueue the same
   // reply before React paints `sending`, and an old account's completion cannot unlock a new one.
   const sendInFlightRef = useRef<AccountEpochToken | null>(null);
+  // E09 — one request id per portal message, reused when the same text is retried (idempotent).
+  const portalRequestIdsRef = useRef(createPortalRequestIds());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
-  const [leadReplyApprovalId, setLeadReplyApprovalId] = useState<string | null>(null);
-  const composerThreadRef = useRef<string | null>(null);
-  const draftScopeKey = JSON.stringify([activeTenantId, selectedKey]);
-  const draftScopeRef = useRef({ key: draftScopeKey });
-  if (draftScopeRef.current.key !== draftScopeKey) draftScopeRef.current = { key: draftScopeKey };
-  const draftRequestRef = useRef<object | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Composer depth state. Attachments run through the ONE shared upload seam (§18) — the
@@ -426,8 +455,7 @@ export default function ClientsConversations() {
   // still carries an explicit epoch. A late response from account A can therefore never paint
   // into account B even if it resolves during the remount/route transition gap.
   useEffect(() => {
-    const guard = accountEpochRef.current;
-    guard.advance(activeTenantId);
+    accountEpochRef.current.advance(activeTenantId);
     tenantIdRef.current = null;
     setRows([]); setConnectors([]); setLoading(true); setRetrying(false); setMessageLoadFailure(null); setThreadLoadFailure(null); setConnectorReadReported(true); setSelectedKey(null);
     pendingSelectRef.current = null; contactSeekHandledRef.current = null;
@@ -437,13 +465,14 @@ export default function ClientsConversations() {
     setComposeChannel(""); setComposeConnectorId(""); setSubject(""); setBody("");
     setScheduledFor(null); resetAttachments(); setSnippets([]); setSignatures([]); setTemplates([]);
     setAppendSignature(true); setDragOver(false); setUndo(null);
-    setHandlingMode("human"); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
-    setDraftFlags([]); setSending(false); sendInFlightRef.current = null; setApprovingId(null); setEditingDraftId(null); setLeadReplyApprovalId(null); suppReqRef.current += 1;
-    return () => { guard.advance(null); };
+    setHandlingMode("human"); setLeadReplyApprovalId(null); setComposeApprovalId(undefined); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
+    setDraftFlags([]); setSending(false); sendInFlightRef.current = null; setApprovingId(null); setEditingDraftId(null); suppReqRef.current += 1;
+    portalRequestIdsRef.current.clear();
   }, [activeTenantId, resetAttachments]);
 
   // ── Deep-link: read ?filter=<view> once; unknown slug → keep default (never blank). ─
-  const [searchParams] = useSearchParams();
+  const [searchParams,setSearchParams] = useSearchParams();
+  const followupLocator=useMemo(()=>parseFollowupLocator(searchParams),[searchParams]);
   useEffect(() => {
     const v = searchParams.get("filter");
     if (v && (INBOX_VIEWS as string[]).includes(v) && (v !== "attention" || isSolo)) setView(v as InboxView);
@@ -508,13 +537,18 @@ export default function ClientsConversations() {
     const nowIso = new Date().toISOString();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
-    let q = sb.from("threads").select(THREAD_COLS)
-      .order("last_message_at", { ascending: false, nullsFirst: false }).limit(500);
-    if (baseFilter === "active")        q = q.is("archived_at", null).or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`);
-    else if (baseFilter === "snoozed")  q = q.is("archived_at", null).gt("snoozed_until", nowIso);
-    else if (baseFilter === "archived") q = q.not("archived_at", "is", null);
-    // "all" → no state predicate
-    const { data, error } = await q;
+    const pull = (cols: string) => {
+      let q = sb.from("threads").select(cols)
+        .order("last_message_at", { ascending: false, nullsFirst: false }).limit(500);
+      if (baseFilter === "active")        q = q.is("archived_at", null).or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`);
+      else if (baseFilter === "snoozed")  q = q.is("archived_at", null).gt("snoozed_until", nowIso);
+      else if (baseFilter === "archived") q = q.not("archived_at", "is", null);
+      // "all" → no state predicate
+      return q;
+    };
+    let { data, error } = await pull(THREAD_COLS);
+    // Web ahead of migration 20271111010000 (E09 Slice 7): the inbox still loads, every client reads open.
+    if (missingPortalAccessColumns(error)) ({ data, error } = await pull(withoutPortalAccessColumns(THREAD_COLS)));
     if (!accountEpochRef.current.accept(epoch)) return;
     if (error) {
       toast.error("Couldn't load the inbox.");
@@ -561,10 +595,11 @@ export default function ClientsConversations() {
   // don't re-fire it (mirrors the ?filter= pattern above). ─────────────────────────────────────
   useEffect(() => {
     const cid = searchParams.get("contact");
-    if (!cid || !cid.trim()) return;
+    if (!cid || !cid.trim() || followupLocator.kind === "invalid" || followupHoldRef.current) return;
     if (!threadsReady) return;                          // wait for a real first threads pull
-    if (contactSeekHandledRef.current === cid) return;  // act on each contact-param exactly once
-    contactSeekHandledRef.current = cid;
+    const contactIntent = JSON.stringify([cid,followupLocator]);
+    if (contactSeekHandledRef.current === contactIntent) return;  // act on each contact-param exactly once
+    contactSeekHandledRef.current = contactIntent;
     const match = dbThreads.find((t) => t.contact_id === cid);
     if (match) {
       pendingSelectRef.current = match.thread_key;
@@ -579,21 +614,23 @@ export default function ClientsConversations() {
     void (async () => {
       const epoch = accountEpochRef.current.capture();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any).from("threads")
+      const { data, error: contactThreadError } = await (supabase as any).from("threads")
         .select("thread_key").eq("contact_id", cid)
         .order("last_message_at", { ascending: false, nullsFirst: false }).limit(1);
       if (!accountEpochRef.current.accept(epoch)) return;
+      if(followupLocator.kind === "bound" && (contactThreadError || !Array.isArray(data))) { toast.error("The original conversation could not be verified. No replacement was opened."); return; }
       const key = (data as { thread_key: string }[] | null)?.[0]?.thread_key ?? null;
       if (key) {
         pendingSelectRef.current = key;
         setView("all"); setLabelFilter(null); setSearch("");
         void loadThreads();
       } else {
+        setComposeApprovalId(followupLocator.kind === "bound" ? followupLocator.approvalId : undefined);
         setComposeContact({ id: cid });
         setComposeOpen(true);
       }
     })();
-  }, [searchParams, threadsReady, dbThreads, loadThreads]);
+  }, [searchParams, followupLocator, threadsReady, dbThreads, loadThreads]);
 
   // ── realtime: messages + threads (§7 two-way, live unread/snooze/archive) ───────────
   useEffect(() => {
@@ -764,6 +801,7 @@ export default function ClientsConversations() {
   useEffect(() => {
     // Hold a just-composed selection until its thread arrives in dbThreads — don't clobber it
     // to visibleThreads[0] in the gap (compose selection race). Honor it the moment it lands.
+    if (followupHoldRef.current && selectedKey) return;
     if (pendingSelectRef.current) {
       if (dbThreads.some((t) => t.thread_key === pendingSelectRef.current)) {
         const key = pendingSelectRef.current;
@@ -790,8 +828,11 @@ export default function ClientsConversations() {
     if (!selectedThread) return null;
     const msgs = messagesByKey.get(selectedThread.thread_key) ?? [];
     const preview = msgs[msgs.length - 1] ?? null;
-    const lastInbound = [...msgs].reverse().find((m) => m.direction === "inbound");
-    const lastOutbound = [...msgs].reverse().find((m) => m.direction === "outbound");
+    // E09 — a portal row carries a name, never an address, so it can't tell us where to email or
+    // text. Only email/SMS rows feed the address: a later portal message never erases one we know.
+    const addressRows = [...msgs].reverse().filter((m) => !isPortalMessage(m));
+    const lastInbound = addressRows.find((m) => m.direction === "inbound");
+    const lastOutbound = addressRows.find((m) => m.direction === "outbound");
     const channel: ChannelType = preview?.channel_type ?? "email";
     const toAddress =
       selectedThread.clients?.email?.trim() ||
@@ -829,14 +870,35 @@ export default function ClientsConversations() {
     [loadSuppressionsFor, selectedThread?.contact_id],
   );
 
+  // E09 — the portal is offered as a send channel when the thread's contact is a client who has
+  // portal messages here or a linked portal login. Only a client who has JOINED the portal (a
+  // linked login) can receive a portal post — comms_portal_reply answers PORTAL_NOT_CONNECTED for
+  // anyone else — so Portal is never the default for an unlinked client, and if the owner picks it
+  // anyway the composer explains why it can't post and holds Send. The server stays authoritative.
+  // E09 Slice 7: "joined" now means linked AND open. A paused client keeps their link, but a portal
+  // post would reach them (and notify them) while their access is withheld, so it is held here and
+  // refused by the server (PORTAL_ACCESS_PAUSED).
+  const portalPaused = !!selectedThread?.clients?.linked_user_id && selectedThread?.clients?.portal_access_state === "paused";
+  const portalLinked = !!selectedThread?.clients?.linked_user_id && !portalPaused;
+  const portalOffered = !!selected?.contactId
+    && (!!selectedThread?.clients?.linked_user_id || (selected?.messages.some(isPortalMessage) ?? false));
+  const portalMode = composeChannel === "portal";
+  const portalUnreachable = portalMode && !portalLinked;
+  // Which thread the composer was last set up for, and the channel it is on now — read by the
+  // default-channel effect without re-running it on every channel pick.
+  const composerThreadRef = useRef<string | null>(null);
+  const composeChannelRef = useRef<ChannelType | "">("");
+  useEffect(() => { composeChannelRef.current = composeChannel; }, [composeChannel]);
+
   // Default the composer channel to the thread's channel when a connector supports it.
   useEffect(() => {
-    if (!selected) { composerThreadRef.current = null; return; }
-    const threadScope = `${activeTenantId ?? ""}:${selected.key}`;
-    const changedThread = composerThreadRef.current !== threadScope;
-    // Realtime/readback refreshes rebuild `selected`; they must not erase an owner's
-    // unsent words or lead-approval link while the same contact thread remains open.
-    if (!changedThread && composerConnectors.some((c) => c.id === composeConnectorId)) return;
+    if (!selected) return;
+    // The same thread's messages reloading (a new message arriving, a send landing) is not a new
+    // conversation: a Portal reply the owner is writing keeps its channel and its text.
+    const composerThread = `${activeTenantId ?? ""}|${selected.key}`;
+    const sameThread = composerThreadRef.current === composerThread;
+    composerThreadRef.current = composerThread;
+    if (sameThread) return;
     const threadConnector = composerConnectors.find(
       (c) => c.id === selected.connectorId && c.channel_type === selected.channel,
     );
@@ -844,16 +906,19 @@ export default function ClientsConversations() {
       ?? composerConnectors[0]
       ?? null;
     const chosenConnector = threadConnector ?? fallbackConnector;
-    setComposeConnectorId(chosenConnector?.id ?? "");
-    setComposeChannel(chosenConnector?.channel_type ?? "");
-    if (!changedThread) return; // Changed readiness/identity invalidates review, keeps the draft.
-    composerThreadRef.current = threadScope;
-    setDrafting(false); setDraftReadingDoc(false); setDraftFlags([]);
-    setEditingDraftId(null);
-    setLeadReplyApprovalId(null);
+    // A portal conversation is answered in the portal; with no sending address at all, the portal
+    // is the only way to reply, so it is the default too.
+    if (portalOffered && portalLinked && (selected.channel === "portal" || !chosenConnector)) {
+      setComposeConnectorId(PORTAL_IDENTITY_ID);
+      setComposeChannel("portal");
+    } else {
+      setComposeConnectorId(chosenConnector?.id ?? "");
+      setComposeChannel(chosenConnector?.channel_type ?? "");
+    }
+    setEditingDraftId(null); setLeadReplyApprovalId(null);
     setSubject("");
     setBody("");
-  }, [activeTenantId, selectedKey, selected, composerConnectors, composeConnectorId]);
+  }, [selectedKey, selected, composerConnectors, portalOffered, portalLinked, activeTenantId]);
   useEffect(() => {
     if (isSolo && handlingMode === "draft" && composeChannel !== "email") setHandlingMode("human");
   }, [composeChannel, handlingMode, isSolo]);
@@ -937,6 +1002,7 @@ export default function ClientsConversations() {
   };
 
   const selectThread = (key: string) => {
+    if (followupHoldRef.current && key !== selectedKey) { toast.error("Finish or cancel the original reply before changing conversation."); return; }
     setSelectedKey(key);
     // The Gmail-style keyboard cursor lives in ConversationsThreadList and follows the open
     // thread there; multi-select, bulk, and keyboard nav are all list-internal now (§18).
@@ -947,15 +1013,15 @@ export default function ClientsConversations() {
   // Cancel a queued scheduled send (R3) — routed through the any handle (typed-RPC ratchet).
   const cancelScheduled = async (id: string) => {
     const epoch = accountEpochRef.current.capture();
-    const confirmed = await requestScheduledCancellation(id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("cancel_scheduled_message", { _id: id });
     if (!accountEpochRef.current.accept(epoch)) return;
-    if (!confirmed) { toast.error(CANCELLATION_UNCONFIRMED_COPY); return; }
+    if (error || data === false) { toast.error("Too late — Paige already sent it."); return; }
     toast.success("Canceled — back to your draft."); void load(); void loadThreads();
   };
 
   // ── One-click approve: send the existing draft row via the single outbound seam ──
   const approveDraft = async (m: MessageRow) => {
-    if (leadReplyReview.blocksSending) return;
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, m.channel_type)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (!selected.toAddress) {
@@ -996,8 +1062,6 @@ export default function ClientsConversations() {
   };
 
   const editDraft = (m: MessageRow) => {
-    if (leadReplyReview.blocksSending) return;
-    setLeadReplyApprovalId(null);
     setEditingDraftId(m.id);
     setComposeChannel(m.channel_type);
     setSubject(m.subject ?? "");
@@ -1040,16 +1104,24 @@ export default function ClientsConversations() {
   const resetComposer = useCallback(() => {
     setBody(""); setSubject(""); resetAttachments();
     setScheduledFor(null); setEditingDraftId(null);
-    setLeadReplyApprovalId(null);
   }, [resetAttachments]);
 
-  const leadReplyReview = useLeadReplyReview({
-    tenantId: activeTenantId, contactId: selected?.contactId ?? null, threadKey: selected?.key ?? null,
-    approvalId: leadReplyApprovalId, connectorId: composeConnectorId, channel: composeChannel,
-    subject, body, attachmentCount: attachments.length, uploading, scheduledFor,
-    signatureEnabled: hasSignature && appendSignature,
-    disabled: drafting || (isSolo && !canSendInSolo(handlingMode, composeChannel)),
-  }, () => { resetComposer(); void load(); void loadThreads(); });
+  const followupEpoch=accountEpochRef.current.capture();
+  const followupLocatorConflict=followupLocator.kind==="invalid"||!!leadReplyApprovalId&&(followupLocator.kind!=="bound"
+    ||followupLocator.approvalId!==leadReplyApprovalId||followupLocator.contactId!==selected?.contactId);
+  const restoreFollowupOrigin=(contactId:string,approvalId:string)=>setSearchParams(params=>{const next=new URLSearchParams(params);next.set("contact",contactId);next.set("approval",approvalId);return next;},{replace:true});
+  const leadReplyReview=useLeadReplyReview({actorId:activeUserId,tenantId:activeTenantId,contactId:selected?.contactId??null,
+    threadKey:selected?.key??null,approvalId:leadReplyApprovalId,connectorId:composeConnectorId,channel:composeChannel,subject,body,
+    attachmentCount:attachments.length,uploading,scheduledFor,signatureEnabled:hasSignature&&appendSignature,
+    disabled:followupLocatorConflict||tenantContext.loading||tenantContext.accountContextLoading||tenantContext.accountContextStatus!=="ready"||(isSolo&&handlingMode==="governed"),
+    current:()=>accountEpochRef.current.accept(followupEpoch)},()=>{void load();void loadThreads();});
+  followupHoldRef.current=!!leadReplyApprovalId||dialogFollowupHoldRef.current;
+  useBeforeUnloadGuard(!!leadReplyApprovalId && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing));
+  const cancelLeadReply=()=>{
+    if(!leadReplyReview.reset())return;
+    resetComposer();setLeadReplyApprovalId(null);
+    setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("approval");return next;},{replace:true});
+  };
 
   // ── Insert a saved email template (ported from the retired ContactCommsPanel, §31) — resolves
   //    {{merge}} vars against the selected thread's contact and lands subject+body for review/edit.
@@ -1102,9 +1174,11 @@ export default function ClientsConversations() {
 
   const cancelUndo = useCallback(async (messageId: string) => {
     const epoch = accountEpochRef.current.capture();
-    const confirmed = await requestScheduledCancellation(messageId);
+    // R4: cancel through the any handle so the typed-RPC ratchet doesn't break tsc.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("cancel_scheduled_message", { _id: messageId });
     if (!accountEpochRef.current.accept(epoch)) return;
-    if (!confirmed) { toast.error(CANCELLATION_UNCONFIRMED_COPY); return; }
+    if (error || data === false) { toast.error("Too late — Paige already sent it."); return; }
     toast.success("Undone — back to your draft.");
     setUndo(null); void load();
   }, [load]);
@@ -1121,13 +1195,6 @@ export default function ClientsConversations() {
     }
     setDrafting(true);
     const epoch = accountEpochRef.current.capture();
-    const draftScope = draftScopeRef.current;
-    const request = {};
-    draftRequestRef.current = request;
-    // An account can keep the same identity while its selected conversation changes.
-    // The object incarnation also retires an old A response after an A-B-A switch.
-    const currentDraft = () => accountEpochRef.current.accept(epoch)
-      && draftScopeRef.current === draftScope && draftRequestRef.current === request;
     setDraftFlags([]);
     // #176 — the document(s) the coach wants Paige to consider are the attachments STAGED
     // into this composer (guaranteed comms-attachments object paths `${tenantId}/…`, so the
@@ -1158,7 +1225,7 @@ export default function ClientsConversations() {
           context: { contact_id: selected.contactId ?? undefined },
         },
       });
-      if (!currentDraft()) return;
+      if (!accountEpochRef.current.accept(epoch)) return;
       // §13/§36 honest error: a non-2xx (compliance_blocked 422, reviewer_unavailable/timeout 503)
       // returns FunctionsHttpError whose `.message` is the generic "non-2xx status code" — the REAL
       // reason (summary/error) is in `.context`. Surface that so the coach knows to revise, never a
@@ -1200,23 +1267,70 @@ export default function ClientsConversations() {
         toast.success("Paige drafted a reply — review before you send.");
       }
     } catch (e) {
-      if (!currentDraft()) return;
+      if (!accountEpochRef.current.accept(epoch)) return;
       toast.error(e instanceof Error ? e.message : "Paige couldn't draft that — try again.");
     } finally {
-      if (currentDraft()) {
+      if (accountEpochRef.current.accept(epoch)) {
         setDrafting(false);
         setDraftReadingDoc(false);
       }
     }
   }, [selected, body, subject, attachments]);
 
+  // ── E09 portal reply: comms_portal_reply only — never send-message, a provider, or governed send.
+  //    Sends immediately (no schedule/undo: the RPC has none), text only, one request id per
+  //    message reused on retry so a lost answer can be re-sent without posting twice. ─────────────
+  const sendPortal = async () => {
+    if (!selected) return;
+    const contactId = selected.contactId;
+    if (!contactId) { toast.error("Associate this participant with a client before sending."); return; }
+    // Nothing to post to: the client hasn't joined the portal. The composer already says so inline.
+    if (!portalLinked) { toast.error(portalReplyErrorCopy(portalPaused ? "PORTAL_ACCESS_PAUSED" : "PORTAL_NOT_CONNECTED", selected.name)); return; }
+    const text = body.trim();
+    const bodyError = portalBodyError(text);
+    if (bodyError) { toast.error(bodyError); return; }
+    if (attachments.length) { toast.error("Portal messages are text only — remove the attachments first."); return; }
+    const tenantId = tenantIdRef.current;
+    if (!tenantId) { toast.error("Couldn't resolve your workspace — refresh and retry."); return; }
+
+    const activeSend = sendInFlightRef.current;
+    if (activeSend && accountEpochRef.current.accept(activeSend)) return;
+    const epoch = accountEpochRef.current.capture();
+    sendInFlightRef.current = epoch;
+    setSending(true);
+    const scope = portalRequestScope(tenantId, contactId, text);
+    try {
+      const r = await sendPortalReply({
+        tenantId, contactId, body: text, requestId: portalRequestIdsRef.current.idFor(scope),
+      });
+      if (!accountEpochRef.current.accept(epoch)) return;
+      if (!("code" in r)) {
+        portalRequestIdsRef.current.settle(scope);
+        // Posted to the portal — not "read". The client gets an in-app notice; no email or text.
+        toast.success(`Posted to ${selected.name}'s client portal.`);
+        resetComposer();
+        void load(); void loadThreads();
+        return;
+      }
+      // A clashing id is spent; everything else keeps it so a retry of the same text is a replay.
+      if (r.code === "REQUEST_ID_CONFLICT") portalRequestIdsRef.current.settle(scope);
+      toast.error(portalReplyErrorCopy(r.code, selected.name));
+    } finally {
+      if (sendInFlightRef.current?.account === epoch.account && sendInFlightRef.current?.epoch === epoch.epoch) {
+        sendInFlightRef.current = null;
+      }
+      if (accountEpochRef.current.accept(epoch)) setSending(false);
+    }
+  };
+
   // ── Send a fresh reply (or an edited draft) into the selected thread ──────────────
   const send = async () => {
-    if (leadReplyReview.blocksSending) return;
-    if (leadReplyApprovalId) { await leadReplyReview.prepare(); return; }
+    if (leadReplyApprovalId) { if(followupLocatorConflict){toast.error("Return to the original reply before approving it.");return;}await leadReplyReview.prepare(); return; }
+    if (followupLocator.kind !== "none") { toast.error("Open the selected original reply before sending. No replacement was selected."); return; }
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, composeChannel)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (isSolo && !selected.contactId) { toast.error("Associate this participant with a client before sending."); return; }
+    if (composeChannel === "portal") { await sendPortal(); return; }
     if (!composeChannel) { toast.error("Connect a channel first — Paige needs a way to send."); return; }
     if (!selected.toAddress) { toast.error("No client address on this thread to send to."); return; }
     if (!body.trim()) { toast.error("Write a reply first."); return; }
@@ -1279,7 +1393,9 @@ export default function ClientsConversations() {
     }
   };
 
-  const noChannel = composerConnectors.length === 0;
+  // A portal-connected client can be answered in the portal even with no email/SMS connected. A
+  // client who hasn't joined the portal can't, so with no email/SMS either this is the connect CTA.
+  const noChannel = composerConnectors.length === 0 && !(portalOffered && portalLinked);
   // send-message only handles email|sms today, so "New conversation" needs a SENDABLE channel.
   // A whatsapp-only tenant HAS a connector (noChannel=false) but the compose modal would be a
   // dead-end — gate the CTA on a real sendable channel, not merely any channel (§13/§43).
@@ -1451,37 +1567,70 @@ export default function ClientsConversations() {
     void uploadFiles(files);
   };
 
+  // E09 — the portal is a pseudo-identity beside the real sending addresses (it has no connector).
+  const portalBodyLength = countPortalBody(body);
+  const portalNote = selected
+    ? `Posts in ${selected.name}'s client portal — no email or text goes out.`
+      + (portalBodyLength > PORTAL_BODY_MAX - 500
+        ? ` ${portalBodyLength.toLocaleString()} / ${PORTAL_BODY_MAX.toLocaleString()} characters.`
+        : "")
+    : "";
   const composerModel: ConversationsComposerModel | null = selected ? {
-    capabilities: { ...capabilities, canSchedule: capabilities.canSchedule && !(isSolo && handlingMode === "governed") },
+    capabilities: {
+      ...capabilities,
+      // The portal reply posts immediately and carries text only — no schedule/undo, no files.
+      canSchedule: capabilities.canSchedule && !(isSolo && handlingMode === "governed") && !portalMode,
+      hasAttachments: capabilities.hasAttachments && !portalMode,
+    },
     value: body,
     onChange: handleBodyChange,
     onSend: send,
-    sending: sending || leadReplyReview.busy,
-    disabled: drafting || uploading || leadReplyReview.busy || (isSolo && handlingMode === "governed"),
-    sendDisabled: leadReplyReview.blocksSending || (isSolo && (
+    sending,
+    disabled: drafting || uploading || leadReplyReview.blocksEditing || (isSolo && handlingMode === "governed"),
+    // A client who hasn't joined the portal can't receive a portal post — Send is held for both
+    // inboxes (the trailing `|| portalUnreachable`), and the inline notice above the composer says why.
+    sendDisabled: isSolo && (
       !canSendInSolo(handlingMode, composeChannel)
       || !composeChannel
       || !selected.contactId
-      || !selected.toAddress
+      || (!portalMode && !selected.toAddress)
       || !body.trim()
+      || (portalMode && portalBodyLength > PORTAL_BODY_MAX)
       || (composeChannel === "email" && !subject.trim())
       || attachments.length > 10
       || suppressions.some((suppression) => suppression.channel === composeChannel)
-    )),
+    ) || portalUnreachable || leadReplyReview.blocksSending || followupLocator.kind === "invalid" || (followupLocator.kind === "bound" && !leadReplyApprovalId),
     sendOnEnter: isSolo,
-    placeholder: `Reply to ${selected.name}…  (drop a file to attach)`,
+    placeholder: portalMode
+      ? `Message ${selected.name} in their client portal…`
+      : `Reply to ${selected.name}…  (drop a file to attach)`,
     rows: 2,
-    sendLabel: leadReplyApprovalId ? "Review reply" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
-    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksSending} onClick={resetComposer}>Cancel reply edit</button></> : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
+    sendLabel: leadReplyApprovalId ? "Review reply" : portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
+    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
     textareaClassName: "h-24 min-h-24 max-h-24",
-    identities: composerConnectors.map((c) => ({
-      id: c.id,
-      label: c.display_name?.trim() || CHANNEL_LABEL[c.channel_type],
-      sublabel: c.from_address,
-      channel: c.channel_type,
-    })),
+    identities: [
+      ...composerConnectors.map((c) => ({
+        id: c.id,
+        label: c.display_name?.trim() || CHANNEL_LABEL[c.channel_type],
+        sublabel: c.from_address,
+        channel: c.channel_type,
+      })),
+      ...(portalOffered
+        ? [{ id: PORTAL_IDENTITY_ID, label: CHANNEL_LABEL.portal, sublabel: "Client portal", channel: "portal" as const }]
+        : []),
+    ],
     identityId: composeConnectorId,
     onIdentityChange: (id) => {
+      if (id === PORTAL_IDENTITY_ID) {
+        // Never drop staged files out of sight: the portal carries text only.
+        if (attachments.length) { toast.error("Portal messages are text only — remove the attachments first."); return; }
+        setComposeConnectorId(PORTAL_IDENTITY_ID);
+        setComposeChannel("portal");
+        // A portal message is a fresh post: it can't be scheduled or replace an email/SMS draft.
+        setScheduledFor(null);
+        setEditingDraftId(null);
+        return;
+      }
       const connector = composerConnectors.find((c) => c.id === id);
       setComposeConnectorId(id);
       setComposeChannel(connector?.channel_type ?? "");
@@ -1504,11 +1653,12 @@ export default function ClientsConversations() {
     snippets: isSolo ? snippets : [],
     onApplySnippet: applySnippet,
     showCombinedInsert: isSolo,
-    signatureAvailable: hasSignature,
+    // Email only — a portal post never carries a signature, so the toggle never shows there.
+    signatureAvailable: hasSignature && !portalMode,
     appendSignature,
     onToggleSignature: () => setAppendSignature((s) => !s),
     scheduledFor,
-    onSchedule: isSolo && handlingMode === "governed" ? undefined : setScheduledFor,
+    onSchedule: (isSolo && handlingMode === "governed") || portalMode ? undefined : setScheduledFor,
     showDictation: true,
     dictationScopeEpoch: `${activeTenantId ?? "resolving"}|${selected.key}|${editingDraftId ?? "new-reply"}`,
     onDictate: (seg) => handleBodyChange(appendDictation(bodyRef.current, seg)),
@@ -1610,7 +1760,7 @@ export default function ClientsConversations() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-foreground">{selected.name}</p>
               <p className="truncate text-[11px] text-muted-foreground select-text">
-                {CHANNEL_LABEL[selected.channel]}{selected.toAddress ? ` · ${selected.toAddress}` : ""}
+                {CHANNEL_LABEL[selected.channel]}{selected.toAddress && selected.channel !== "portal" ? ` · ${selected.toAddress}` : ""}
               </p>
             </div>
             {/* #482 Phase-2 — thread-level quick actions promoted to the open-thread header
@@ -1715,7 +1865,9 @@ export default function ClientsConversations() {
               canDraftWithPaige={composeChannel === "email" && !!selected.toAddress && sendableConnectors.some((connector) => connector.id === composeConnectorId && connector.channel_type === "email")}
               connectionsHref={connectionsHref}
               selectedClientName={selected.name}
-              selectedThreadLabel={`${CHANNEL_LABEL[selected.channel]} · ${selected.toAddress || "recipient not reported"}`}
+              selectedThreadLabel={`${CHANNEL_LABEL[selected.channel]} · ${
+                // A portal thread has no address of its own; an earlier email/SMS one is not its handle.
+                selected.channel === "portal" ? "client portal" : selected.toAddress || "recipient not reported"}`}
             />
           )}
 
@@ -1730,7 +1882,7 @@ export default function ClientsConversations() {
                   onEdit={editDraft}
                   onCancelScheduled={cancelScheduled}
                   approving={approvingId === m.id}
-                  sendDisabled={leadReplyReview.blocksSending || (isSolo && handlingMode === "governed")}
+                  sendDisabled={isSolo && handlingMode === "governed"}
                 />
               ) : (
                 <motion.div
@@ -1745,25 +1897,33 @@ export default function ClientsConversations() {
                     onEdit={editDraft}
                     onCancelScheduled={cancelScheduled}
                     approving={approvingId === m.id}
-                    sendDisabled={leadReplyReview.blocksSending || (isSolo && handlingMode === "governed")}
+                    sendDisabled={isSolo && handlingMode === "governed"}
                   />
                 </motion.div>
               ),
             )}
-            {activeTenantId && selected.contactId ? <LeadReplyDrafts
-              key={`${activeTenantId}:${selected.contactId}`}
-              tenantId={activeTenantId} contactId={selected.contactId}
-              focusApprovalId={searchParams.get("approval")}
-              disabled={sending || leadReplyReview.blocksSending || (isSolo && handlingMode === "governed")}
-              onEdit={(approval, draft) => {
-                if (body.trim() || attachments.length || scheduledFor || editingDraftId || leadReplyApprovalId) { toast.error("Finish or clear the current draft before opening another reply."); return; }
-                if (approval.tenant_id !== activeTenantId || approval.contact_id !== selected.contactId) return;
-                setLeadReplyApprovalId(approval.id); setComposeChannel("email");
-                const connector = composerConnectors.find((c) => c.id === composeConnectorId && c.channel_type === "email") ?? composerConnectors.find((c) => c.channel_type === "email");
-                setComposeConnectorId(connector?.id ?? ""); setSubject(draft.subject); setBody(draft.body);
-                bottomRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "end" });
-              }}
-            /> : null}
+            {followupLocatorConflict&&leadReplyApprovalId&&selected.contactId?<p role="status" className="text-sm text-muted-foreground">The original reply is still open. <button type="button" className="underline" onClick={()=>restoreFollowupOrigin(selected.contactId!,leadReplyApprovalId)}>Return to original reply</button></p>
+              :followupLocator.kind==="invalid"?<p role="alert" className="text-sm text-destructive">The selected reply link is invalid. No replacement was selected.</p>:null}
+            {activeTenantId&&selected.contactId&&followupLocator.kind!=="invalid"?<LeadReplyDrafts
+              key={`${activeUserId}:${activeTenantId}:${selected.contactId}`}
+              actorId={activeUserId} tenantId={activeTenantId} contactId={selected.contactId}
+              approvalId={followupLocator.kind==="bound"?followupLocator.approvalId:undefined}
+              threadKey={isSolo?selected.key:null}
+              current={()=>accountEpochRef.current.accept(followupEpoch)}
+              disabled={sending||leadReplyReview.blocksSending||(isSolo&&handlingMode==="governed")}
+              recordDisabled={sending||leadReplyReview.blocksSending||followupLocatorConflict||tenantContext.loading||tenantContext.accountContextLoading||tenantContext.accountContextStatus!=="ready"}
+              onEdit={(approval,draft)=>{
+                if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending})){
+                  toast.error("Finish or cancel the current draft before opening another reply.");return;
+                }
+                if(approval.tenant_id!==activeTenantId||approval.contact_id!==selected.contactId
+                  ||followupLocator.kind==="bound"&&(followupLocator.contactId!==selected.contactId||followupLocator.approvalId!==approval.id))return;
+                setLeadReplyApprovalId(approval.id);setComposeChannel("email");setAppendSignature(false);
+                restoreFollowupOrigin(selected.contactId!,approval.id);
+                const connector=composerConnectors.find(c=>c.id===composeConnectorId&&c.channel_type==="email")??composerConnectors.find(c=>c.channel_type==="email");
+                setComposeConnectorId(connector?.id??"");setSubject(draft.subject);setBody(draft.body);
+                bottomRef.current?.scrollIntoView({behavior:reduce?"auto":"smooth",block:"end"});
+              }}/>:null}
             {leadReplyReview.panel}
             <div ref={bottomRef} />
           </div>
@@ -1793,7 +1953,21 @@ export default function ClientsConversations() {
                 </div>
               </div>
             ) : composerModel ? (
-              <ConversationsRichComposer {...composerModel} />
+              <>
+                {portalUnreachable && (
+                  <div className="border-t border-border/60 bg-muted/30 px-3 pt-2">
+                    <p
+                      role="status"
+                      data-portal-not-connected
+                      className="flex items-start gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground"
+                    >
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--warning))]" aria-hidden />
+                      <span>{portalReplyErrorCopy(portalPaused ? "PORTAL_ACCESS_PAUSED" : "PORTAL_NOT_CONNECTED", selected.name)}</span>
+                    </p>
+                  </div>
+                )}
+                <ConversationsRichComposer {...composerModel} />
+              </>
             ) : null}
           </div>
         </>
@@ -1852,10 +2026,17 @@ export default function ClientsConversations() {
       {/* §43 — compose a NEW outbound thread (reuses the send-message seam + canonical
           thread key so it merges cleanly with any later inbound reply). */}
       <ComposeThreadDialog
+        isSolo={isSolo}
+        recordDisabled={tenantContext.loading||tenantContext.accountContextLoading||tenantContext.accountContextStatus!=="ready"}
         open={composeOpen}
-        onOpenChange={(v) => { setComposeOpen(v); if (!v) setComposeContact(null); }}
+        onOpenChange={(v) => { setComposeOpen(v); if (!v) { setComposeContact(null); setComposeApprovalId(undefined); if(followupLocator.kind!=="none")setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("approval");return next;},{replace:true}); } }}
         activeConnectors={composerConnectors}
         tenantId={tenantIdRef.current}
+        actorId={activeUserId}
+        approvalId={composeApprovalId}
+        locatorConflicted={composeApprovalId!==undefined&&(followupLocator.kind!=="bound"||followupLocator.approvalId!==composeApprovalId||followupLocator.contactId!==composeContact?.id)}
+        onRestoreOrigin={()=>{if(composeContact&&composeApprovalId)restoreFollowupOrigin(composeContact.id,composeApprovalId);}}
+        onHoldChange={held=>{dialogFollowupHoldRef.current=held;followupHoldRef.current=!!leadReplyApprovalId||held;}}
         initialContact={composeContact ?? undefined}
         emailTemplates={templates}
         onSent={(key) => {

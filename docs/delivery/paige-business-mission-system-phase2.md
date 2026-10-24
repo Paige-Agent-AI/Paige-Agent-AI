@@ -1,5 +1,18 @@
 # Paige Business Mission System — Phase 2 foundation
 
+**October19 EXP02 continuation:** historical foundation/release statements below
+remain dated records. Native target #2174 is merged and source-released; #2181's
+Executive/briefing consumer is being composed with main
+`d676e3301aac7d284451187fd3370ea87ed4b855`. Only its production-unapplied owner-read migration
+is renumbered20271104102000→20271112100000 with identical SQL bytes, past observed
+production20271111050000 and current E09/EXP00 reservations. Incoming exact Deal/Task
+links are preserved beside Play focus. Fresh364 local/64 source-control/61 isolated
+SQL assertions pass; current-head review/CI/deployment and target customer acceptance
+remain owed. This slice adds no VERA, provider, authority or conversational execution
+activation. All19 required outcomes and final owner evaluation remain incomplete.
+The earlier04102000 identity had been applied in this PR's older Preview; that
+environment's history must be reconciled separately. Production history is unchanged.
+
 Status: infrastructure-only draft release candidate; not merged, migrated, deployed, or production-proven.
 
 ## Owner-intended outcome
@@ -162,3 +175,199 @@ and issuer in Executive and governed Chat/Live; authenticated SOLO positive/nega
 evidence; owner acceptance. Storage approval grants no privileged production activation,
 provider effects, protected fixture creation or INT-346 exception. Shipped-log status N/A:
 this foundation has not merged. Master/Brain and the existing E02 matrix remain canonical.
+
+### Native consumer continuation — pre-edit contract
+
+The next bounded slice EXTENDS the existing `business-mission-action` owner door and
+Game Plan Strategic Play detail. It REUSES the canonical target/RPC/issuer/receipt/Rail
+foundation and existing scoped browser recovery pattern; it does not replace a shared
+capability. Intended outcome: the Solo owner sets or revises a measured Play target,
+sees compatible actuals and exact variance, inspects its immutable history and receipt,
+and safely returns after interruption. Complete conversational integration remains required.
+
+The existing Harness caller/authority and Rail layers are used as currently implemented,
+with their incomplete acceptance unchanged. `business_mission.targets` remains a read
+registration; no mutating Chat admission or INT-346 activation occurs in this native slice.
+No external provider, expense, job or event is needed. Native mutation is an explicit
+owner control through the incumbent owner RPC authority, with no second approval channel.
+Unknown response retains its exact original intent/CAS/request key before any writer;
+scope/role loss hides private state and forbids replay into another workspace. Recovery
+storage is tab-local UI intent only, never business truth, authority or a receipt store.
+
+The `command-center.business-game-plan` Binding Ledger row remains PARTIAL. Existing
+Mission, approvals, current-account navigation, one shell, Chat/Live history, Mind/Memory,
+provider and security boundaries must be preserved. Source tests and the deterministic
+`e2-target-flow-prototype.html` do not prove customer writes, native pixels or acceptance.
+The owner authorizes implementation/release without intermediate design approvals and
+reserves human review for the complete deployed experience. Use the prototype's compact
+target rows, existing detail context, inline field validation and recoverable editor; no
+new top-level route or dashboard. Native browser/capture holds remain explicit.
+
+Local implementation now mounts measured target rows/editor in the existing Play detail.
+SDK reads canonical target/history and issued/resolved actuals, revalidates actor/workspace/
+Play before and after calls, and retires A-B-A lifetimes. Exact decimal/currency inputs and
+saved IANA calendar periods reuse existing utilities. Unknown requests are retained before
+dispatch as scoped tab-local UI intent and reconciled under the same args/key/CAS. Saved
+revision, activity gap and uncertain outcome stay separate. No new approval/metric/receipt store.
+
+The existing owner Edge door uses the shared target adapter. Native-only owner capability
+keys are attributed through the incumbent Rail display chain; unrelated families delegate
+unchanged. A forward extension of the existing owner history RPC projects matching canonical
+receipt references for each immutable revision on later reads. Private hashes/bearer references
+remain excluded; current owner, foreign/member/revoked denial and service restrictions survive.
+The unchanged issuer metric-key list moves to a dependency-free shared module, re-exported by
+its existing server reader, so browser imports cannot include the Node-only capability kit.
+
+Native source proof: SDK/recovery/form/hook/actual HTTP49 tests, historical SDK6,
+actual-panel4 and actual-drawer3; local target SQL50 and display8 assertions PASS.
+An initial drawer worker initialization timeout executed no drawer tests; a bounded
+single-worker rerun passed3. First type/build checks found a callback return-type mismatch
+and server-module import; both are repaired. Composed3796f52f passes all62 focused
+tests in7 files, scoped ESLint without warnings, unchanged type ratchet10/10,
+production browser build and binding/migration/attribution/definer/evidence guards.
+Follow-up editor2/malformed-request4 regressions pass;68 aggregate tests in8 files.
+Prospective currency goals are allowed without an existing source bucket, while actuals
+remain unavailable until that currency is reported. The existing approved schema is unchanged.
+These synthetic source checks are not authenticated customer acceptance or fullO10 delivery.
+Evidence: docs/evidence/ui-delivery/e2-f7-native-targets.md. Executive/Chat/Live consumption,
+rendered/native coverage, production release, protected acceptance and owner review remain owed.
+
+Native corrective review contract: serialize each overlapping same-series issue/resolve
+cycle inside the existing SDK reader, without caching values or changing Analytics issuer
+semantics. A pending attempt keeps its mounted editor/draft locked until its outcome is
+known. Revision conflicts retain draft inputs, require an explicit latest-record inspection
+and never silently substitute newer target/Play CAS or the original request identity.
+All changes remain in the native consumer boundary; protected acceptance stays owed.
+
+## F7 Executive / conversation read integration — pre-edit contract
+
+The preceding foundation candidate text is historical: #2167 merged892b1bdfe with
+verified production source. Native consumer#2174 has since released as3fa8b501619782f533ac80d778fb309bf21b53b0
+from reviewed7a898a10d, with eight exact-head workflow groups and production web/database/Edge
+source readback verified. Authenticated target acceptance remains owed. This following
+slice#2181 is read integration, not consequential activation.
+
+1. Intended outcome: an owner asks about goals, sees the same saved target/compatible
+   actual in PAIGE and Executive, opens the owning Play and returns to the same record.
+2. Domain: existing Business Mission/Fabric/Analytics; E02 remains sole implementing
+   lead. Current BUG Chat/admission and E04/E05 runtime leases remain protected.
+3. Shared Harness: reuse the currently admitted read-only business snapshot, canonical
+   owner context, current-caller metric issuer/resolver and existing turn persistence.
+4. Spine: extend business.operating_snapshot's existing game_plan domain using canonical
+   business_mission.targets records. No new direct Chat tool/admission. A standalone
+   target Chat binding stays unavailable unless actually integrated/authorized.
+5. Provider: none for this projection. Existing model/Live provider contracts and their
+   readiness/expense gates are unchanged; no provider is activated or newly purchased.
+6. Authorization: current Mission owner context and issuer permission checks. Owner
+   counts/definitions cannot leak to an admin/member through aggregate snapshot access.
+   Read-only action-risk lane, no second confirmation or model-supplied authority.
+7. Durable execution: no new job/event/scheduler. Reading a target starts no business work.
+8. Truth/receipts: canonical saved versions and existing receipts remain authoritative;
+   actuals require existing verified issued evidence and the shared target evaluator.
+   Never fabricate an ACT/Rail receipt for viewing or an actual from an absent currency.
+9. UI: extend existing Executive and owning Play detail plus shared current-account record
+   links; Business Game Plan/Executive Binding Ledger states remain PARTIAL. Reuse the
+   native target flow prototype for the evidence -> owning record -> return interaction.
+10. Proof: scoped owner/refused/foreign/revoked reads, bounded exact totals, decimal and
+    calendar consistency, safe model projection, same Chat/Executive values, reload and
+    record navigation. Native/capture, protected customer fixtures, final customer/owner
+    acceptance and any held Live provider proof remain separate and owed.
+
+REUSE: existing target/version/Mission/receipt relations, metric issuer, target evaluator,
+Fabric composer, turn records and E04 semantic reference resolver. EXTEND: game_plan
+projection/closed snapshot schema and existing Executive/navigation consumers. REPAIR:
+current generic Game Plan surface-only references gain validated owning-Play context.
+NEW: only a bounded owner-authorized domain projection over existing target/Mission
+records if global enumeration needs it; no new authoritative store, goal engine or ledger.
+Any new projection must retain current authority and exact counts; capped samples never
+become full totals or a whole-business success claim. Source changes await the interactive
+read-flow extension before production UI work; ordinary source/release work remains authorized.
+
+The interactive read-flow extension is now source/DOM exercised in the owner conversation's
+e2-executive-target-flow-prototype.html: Executive, the owning Play, read-only briefing,
+partial/unavailable/expired/denied states, account switching and320px reflow. Deterministic
+mock evidence only; no native pixel/capture or authenticated product acceptance.
+
+Read integration may generalize the incumbent Analytics reader in place with a verified
+internal evidence result for the existing target evaluator. Its existing model-facing
+projection must still remove account/epoch identifiers, refuse old references without
+replacement issuance, revalidate scope and expiry and return no raw producer extras.
+Same-series concurrent consumers must sequence issuance/resolution in that one reader;
+no metric cache, store, second issuer or competing Fabric composer is permitted. The
+global owner review is a bounded read projection over canonical Missions/targets/versions,
+with exact counts independent of its sample and no new authoritative data.
+
+### Implemented source and remaining proof
+
+The existing Fabric composer now mounts an owner-only Game Plan adapter over the new
+bounded `get_business_mission_review` read. It reports exact Play/target counts and at
+most six canonical target definitions with owning Play context. No numeric target does
+not mean no business direction. All target actuals use the incumbent Analytics reader's
+issue/resolve cycle and the shared exact target evaluator; no actual is stored here.
+Same-series operations sequence on that caller without value caching. The internal
+verified-evidence port preserves actual issuer epochs; the model-facing projection still
+excludes them. Existing reference refusal never causes replacement issuance.
+
+The closed shared presentation validates current tenant, definition, decimal/currency,
+period, partial/expiry and historical-snapshot semantics at composer and browser boundaries.
+Executive rows share the exact formatter and observations; existing PAIGE handoff drafts a
+read-only target briefing. Game Plan references extend E04's existing six-link frame and
+current-account resolver with a UUID Play locator. The destination re-reads the canonical
+Play, survives a fresh mount, and retires late reads on account, record or route removal.
+Other department link ordering/caps and the three original Mission tools are preserved.
+
+Local verification:292 tests across15 focused files,61 rollback-only SQL assertions,
+scoped ESLint, type baseline10/current10, production build and Spine self-test PASS.
+Source review renewed only two fixed fingerprints: existing canonical route map plus
+existing metric reader. All29 incumbent dispatch fingerprints and original authority,
+source-substitution and effect negative controls remain unchanged. No auto-accept path.
+The canonical Sales producer accepts timestamp cohorts for recorded cash; its won/lost
+date cohorts separately require UTC-midnight bounds. Incompatible target periods stay
+unavailable; this consumer never changes the source calendar or silently narrows a target.
+
+Finish/source review is AUTHOR SELF-REVIEW under the standing owner exception, lower
+assurance. See docs/evidence/ui-delivery/e2-f7-executive-target-context.md. Hosted exact-head
+CI, forward migration, affected web/Edge source readback, authenticated target/briefing/
+reload/isolation, native/accessibility/Live parity and final owner full-product acceptance
+remain owed. The capture hold and historical9/0 plus supplement12/0/4 are unchanged.
+
+Final source hardening rechecks the canonical owner read after issued metrics, because
+its owner-only definitions do not inherit Analytics' broader owner/admin permission.
+A synthetic late-owner-refusal control failed before repair;294 cases across the same
+15-file bounded suite now pass, including this case and absent currency precision.
+The private authority helper remains ungranted; no new RPC or database change is added.
+
+### October20 pre-edit routing — shared evidence priority baseline
+
+O08/O01/O02 need the same explainable ordering in Executive and PAIGE. Extend the
+existing Operating Fabric snapshot projection, and reuse that pure policy in the
+Executive presentation. This is the deterministic severity baseline for ALG-03/13,
+not a numeric business-health score, a forecast, a recommendation database or
+evidence of measured customer improvement. ALG-12's originating risk detectors and
+ALG-06/11's Finance/Model Fabric owners retain their calculations and boundaries.
+
+1. Owner outcome: inspect one to three source-backed act/watch priorities and their
+   evidence without disagreement between the two review representations.
+2. Domain/scope: existing EXP02 lead; universal eligible SOLO/L2, never company/L1.
+3. Harness: existing caller-authorized context composition and bounded projection;
+   no new shared layer or execution path.
+4. Spine: existing business.operating_snapshot/get_business_snapshot and its same
+   composeBusinessReview result, not a separately registered capability.
+5. Providers: none added or invoked; originating domain readiness stays unchanged.
+6. Authority: read/read_only, no approval or mutation verb; no consequential action
+   or activation. Source severity does not grant execution permission.
+7. Durable work: none; transient interpretation of an already-authorized snapshot.
+8. Evidence: preserve source/domain/as-of/coverage and exact finding wording.
+   A priority is not an executed outcome or a new Rail receipt.
+9. Surface: command-center.executive stays PARTIAL in the existing binding ledger.
+   Existing ordering is reused; no layout, controls or navigation redesign.
+10. Proof: deterministic ordering/ties, nonmutation, missing/degraded and omitted
+    source negatives, quoted-data injection and projection-budget controls, same UI
+    order, existing nine-point and nineteen-outcome preservation. Native/authenticated
+    Chat/Live, production source and comparative improvement remain separately owed.
+
+Classification: REUSE adapter risk evidence and the existing Executive order;
+EXTEND the canonical bounded model projection; REPAIR duplicated interpretation;
+NEW only a pure shared function and proportional regression controls. Insufficient
+evidence remains unknown. No role/tenant override, synthetic production claim,
+health probability, provider spend or new authoritative store is authorized.

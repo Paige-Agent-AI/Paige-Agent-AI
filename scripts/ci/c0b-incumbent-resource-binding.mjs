@@ -1,3 +1,31 @@
+// EXP05 original specialist reentry, October23: AUTHOR-REVIEW / LOWER ASSURANCE.
+// Reviewed Chat blob eb15ecc1fb62232589979d1ea69a2f0f5afdc0e8 and orchestrator
+// blob 406d289092a45381c0a6d4583c43557714d0aae7 against main77a1c400c.
+// Original extractor decomposition: 27 adapters change only enclosing-handler
+// identity[15]; list/delegate also change their shared transport branch. Every
+// other branch/control/identity/helper/import is exact. All122 old dependency
+// digests reproduced; only the reviewed orchestrator dependency changes.
+// Renew these30 literals only, with extractor, metadata and hostile controls
+// preserved. Original caller-JWT private read never invokes or settles work.
+// EXP02 composed report Chat consumer, October23: AUTHOR-REVIEW / LOWER ASSURANCE.
+// Exact reviewed dependency 993420e79807cf61bc1eeca1d2afde9cc6f4a9b8.
+// Combined Chat blobc82273249f6ec7507e634e318b3124d3542c2ffb; all29 baseline scalars/122
+// dependencies reproduced. Only enclosing-handler identity[15] changes relative
+// to that dependency; all dispatch/control/other identity/helper/import pieces
+// remain exact. Preserve every incoming recovery producer/dependency/metadata
+// and original extractor/hostile control. Renew29 literal scalars only. This
+// supersedes the initial E2 scalar witness below; historical commit3e846 retained.
+// docs/evidence/ui-delivery/assets/e2-report-chat/source-binding.json.
+// EXP02 original report Chat consumer, October23: sequential AUTHOR-REVIEW /
+// LOWER ASSURANCE against released main ee77807f9c65f4846d3b3ba5ca2aa12ce1f6e2e1.
+// Chat blob18956a426d4e75bdd91e7467a24d87b40a1ce308 changes only the original
+// document tool/schema/closed review validator and unknown-result hold. Private
+// read-only AST decomposition reproduced all29 baseline scalars/122 dependency
+// sources. Each dispatch, dominating control, other identity, helper and import
+// remains identical; only enclosing-handler identity[15] reflects the reviewed
+// document branch. Renew these29 literal scalars only, preserving the original
+// extractor, metadata, dependency pins and all hostile controls. Reproduction:
+// docs/evidence/ui-delivery/assets/e2-report-chat/source-binding.json.
 // Restrictive reviewed source contracts. These are build-time AST fingerprints,
 // not runtime permission, provider availability or authenticated execution proof.
 // A changed branch/helper/endpoint requires renewed source review; CI has no
@@ -86,8 +114,293 @@ export function inspectIncumbentSource(chatText,tool) {
  roots.forEach(visit);
  return {fingerprint:hash([...candidates.map(n=>canonical(n.expression)+canonical(n.thenStatement)),...controls,...identity,...helpers.sort()].join('\n')),imports:[...imports].sort()};
 }
+// EXP05 read-only continuation (2026-10-21), sequential AUTHOR-REVIEW /
+// LOWER ASSURANCE; source blob56ef6154a491fc12e805b38c75f354128340b860,
+// maina04637af9468a6e6e1f3a65e508eb07e56cba326, ANT-161/49f7ce1d.
+// Five actual gate regressions RED ->86 focused PASS. The9-line heuristic-only
+// repair excludes forbidden comma-list verbs from action continuation; original
+// client/accepted-offer precedence and all execution/approval controls remain.
+// All29 frozen main dispatches/116 dependencies reproduced. Independent AST
+// decomposition changes only enclosing-handler identity[15],91f18301... ->
+// f041e518...; dispatches, dominating controls, other identities, helpers and
+// imports remain identical. Renew these29 reviewed literal dispatch scalars only.
+// Extractor, metadata and dependency digests are unchanged. Preserve EXP09's
+// separately coordinated canonical-app-url dependency renewal (ANT-161/4a182318).
+// EXP09 K2 continuation (2026-10-21): NON-AUTHOR source review against main
+// 46c6514f917ec00d423fd83e36e6bd9714ba915b. Independent decomposition reproduced
+// all 29 existing/candidate scalars: only enclosing-handler identity[15] changes;
+// dispatches, dominating controls, other identities, helpers and imports stay equal.
+// The customer-only v2 retrieval/eligibility envelope and guarded ranking preserve
+// stable context equality and owner/operator controls. Review also reproduced
+// 115/116 dependency digests; renew only client-portal-assistant-context ancestry.
+// Reviewed raw core c69403b2cdacd14e76f1966b0b0f087eb1dc8ba61e86e34973070fdc2bc56c20;
+// context 0aca33229b6d6180c13ea3cf2fff9da8f65edb69a854f43c3229d11049534cd2.
+// Only these 30 reviewed literals change; no extractor, metadata or other pin renewal.
 // Explicit frozen metadata + reviewed source digests are filled only by the
 // initial source review, never computed from the capability being validated.
+// ANT-21 bounded renewal (2026-10-16): non-author candidate review traced the
+// Task timestamps/status read reviewed at a294aa4e; unchanged full-handler ancestry
+// captures this bounded read-only correction beside the prior CRM scope pin.
+// Only reviewed digest scalars change. Extractor, metadata and refusal mutants stay.
+// The subsequent CRM outcome composition was separately reviewed at 178e7adb,
+// 64d9310b, 665ff5ed, 8688aee5 and c1b2759c. Its whole-handler ancestry changes
+// renew only the 29 dispatch scalars; every dependency and metadata pin remains.
+// E09 bounded review (2026-10-17), immutable product989a83ae7150e758ede981540046bc178a5f33f5.
+// The customer-only context/terminal change alters captured whole-handler ancestry.
+// All29 exact dispatch branches, controls, local helpers and other identity inputs
+// remain equal. Freeze the separately reviewed digest literals; no auto acceptance.
+// Source evidence: docs/evidence/customer-knowledge-consumer-2026-10-17/source-lease-proposal.json.
+// E09 UUID-format correction separately reviewed at c7cc4f38adea6f705525a4c6f2ae0b0d2a05bd08.
+// Same native UUID identities, canonical input and receipt spelling; no permission change.
+// Existing dispatcher/control/helper/authority components and verifier logic remain unchanged.
+// E09 Slice 3 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author)
+// of plan_item_set_client_share on main b54d7c8d (after #2339/#2340). Per-part comparison:
+// all 29 exact dispatch branches, dominating controls and local helpers equal; the one changed
+// identity input is the whole-handler try, whose only deltas are the additive offer, label,
+// confirm summary, final pre-Unknown dispatch branch, WRITE_TARGET and locator entries. The
+// action-risk.ts canonical delta is one added `high` row. Renew those 30 scalars only.
+// E09 Slice M bounded renewal (2026-10-18), integrating-crew source review (NOT non-author)
+// of portal_menu_read/portal_menu_update on main 04b53739 (after #2344/#2345; #2344 hunks
+// intact, branch diff vs main is insertion-only). Per-part comparison: all 29 exact dispatch
+// branches, dominating controls and local helpers equal; the one changed identity input is
+// the whole-handler try, whose only deltas are the additive offer, labels, confirm summary,
+// final pre-Unknown dispatch branch, WRITE_TARGET and locator entries. The action-risk.ts
+// canonical delta is one added `high` row. Renew those 30 scalars only.
+// E09 Slice M read-tool rename renewal (2026-10-18), integrating-crew source review (NOT
+// non-author) on branch 3c9c6f8d -> rename, main 21c6dc81 an ancestor. The chat tool
+// portal_menu_read is renamed read_tenant_portal_menu (its public.read_* executor) so the
+// capability kit admits it as a declared read. Per-part comparison: all 29 exact dispatch
+// branches, dominating controls and local helpers equal; the one changed identity input is
+// the whole-handler try, whose only deltas are four string literals of this slice's own
+// lines (label key, two dispatch selectors, one refusal text) - rename-only. Branch diff vs
+// main stays insertion-only; action-risk.ts is byte-identical (its pin is unchanged).
+// Renew those 29 dispatch scalars only.
+// E09 Slice 4 (Documents) bounded renewal on current main (2026-10-18), integrating-crew source
+// review (NOT non-author): slice4-documents rebased onto main 9939a6b7 (after #2342, #2344,
+// #2345, #2347, #2348, #2349, #2350, #2351, #2353, #2354; every main hunk intact). The branch
+// diff vs main for paige-ai-chat/index.ts carries exactly the +/- lines of the reviewed Slice 4
+// diff (one import; crm_list_documents adds updated_at/shared_at; crm_file_document routes a
+// same-client visibility change to public.client_file_set_client_share and a re-file through
+// refileClientDocument in _shared/crm/client-file-share.ts, never writing visibility directly).
+// Per-part comparison of all 29 pinned tools, main vs branch: every dominating control and local
+// helper equal; the one changed identity input is the whole-handler try (identity[15]);
+// crm_file_document's own dispatch branch changes as described. action-risk.ts is byte-identical
+// (pin unchanged; crm_file_document stays `high`). Renew those 29 dispatch scalars only.
+// E09 Slice 6 (Profile & Consent) bounded renewal on current main (2026-10-18), integrating-crew source
+// review (NOT non-author): slice6-consent rebased onto main e660dca7 (Documents #2358 and every earlier
+// main hunk intact). The branch diff vs main for paige-ai-chat/index.ts is ONE replaced string literal: the
+// `do_not_contact` property description inside the update_client tool definition, which claimed
+// "suppresses outbound email and SMS" although runPreSend never reads do_not_contact (§13); it now says
+// what the flag does (marketing email only) and where a 1:1 pause lives. Proof: with that one literal
+// reverted, all 29 fingerprints equal main's pins exactly; with it, all 29 change (the whole-handler try,
+// identity[15]). No dispatch branch, control, helper, authority or verifier logic changed. action-risk.ts
+// is byte-identical (pin unchanged). Renew those 29 dispatch scalars only.
+// E09 Slice 7 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author)
+// of read_client_portal_access/client_portal_access_set on main 1cc4e995. Per-part comparison
+// (fingerprint decomposed into dispatch branch, dominating controls, identity inputs, local
+// helpers, imports): all 29 exact dispatch branches, dominating controls, local helpers and
+// imports equal; the one changed identity input is the whole-handler try (index 15), whose
+// canonical delta is insertion-only (0 removed / 85 added lines: the additive offer, two labels,
+// the confirm summary case, the final pre-Unknown dispatch branch, WRITE_TARGET and locator
+// entries). The action-risk.ts canonical delta is one added `high` row. Renew those 30 scalars only.
+// E09 Slice 7 round-2 renewal (2026-10-18), integrating-crew source review (NOT non-author): the
+// approval card for client_portal_access_set now names the client and the reason. The whole paige-ai-chat
+// diff is two lines: `portalAccessClientName` added to the existing client-portal-access import, and the
+// describeConfirm case `client_portal_access_set` now returns portalAccessConfirmSummary(a, await
+// portalAccessClientName(supabaseClient, personaCtx?.tenant_id ?? null, a?.contact_id)) — a read-only name
+// lookup on the caller's own session (RLS), no write, no effect. describeConfirm lives inside the
+// whole-handler try (identity input index 15) and precedes the comms_setup_calling branch (a dominating
+// control there), so all 29 scalars move; no dispatch branch, control, helper or import set of any
+// contract changed otherwise. Renew those 29 scalars only.
+// E09 Slice 7 round-3 renewal (2026-10-18), integrating-crew source review (NOT non-author): the
+// approval card for client_portal_access_set is now bound to the version it was built from. The
+// paige-ai-chat delta is confined to this slice's own final pre-Unknown dispatch branch plus its
+// import: `accessVersionToken` added to the existing client-portal-access import, and two read-only
+// result fields — `access_version: accessVersionToken(r.view.since)` on the read result and on the
+// set result — plus one sentence appended to the read result's note. No write, authority, tenant,
+// actor or confirmation path changed. Decomposed per contract (dispatch branches, dominating
+// controls, local helpers, imports, identity inputs): all equal for all 29 except identity input 15
+// (the whole-handler try), whose canonical delta is 2 lines replaced and 1 added, all inside that
+// branch. Renew those 29 scalars only; no SOURCES/ANCESTRY digest changes.
+// E09 Slice 7 integration renewal (2026-10-19), integrating-crew source review (NOT non-author): the
+// Slice 7 branch (e88971a26, whose three notes above were reviewed against 1cc4e995) squash-merged onto
+// s7-integrate b6d3bdf75 (main d44ad08 + Agreements #2367 + Payments). The three round notes above are
+// superseded by this one: their scalars were never pinned on this base. Additive-only check against the
+// composed bytes: the paige-ai-chat delta base -> integrated head is exactly Slice 7's own delta
+// (1cc4e995 -> e88971a26), line for line, 84 lines added and 0 removed (the client-portal-access import,
+// the two Spine tools on the offer, two labels, the confirm summary case, the final pre-Unknown dispatch
+// branch, WRITE_TARGET and locator entries). Decomposed per contract (dispatch branches, dominating
+// controls, local helpers, imports, identity inputs) for all 29: every part equal except identity input
+// 15 (the whole-handler try), which holds those insertions. action-risk.ts is base plus Slice 7's one added
+// `high` row; its canonical digest a7c03694... equals the digest Slice 7 reviewed, so that SOURCES pin is
+// the reviewed one. Renew those 29 dispatch scalars only.
+// E09 Slice 7 integration round-2 renewal (2026-10-19), integrating-crew source review (NOT non-author):
+// the compliance review found Paige's share confirmations told the owner a PAUSED client "can now open it
+// in their portal" (the share writers reported the login link alone). The paige-ai-chat delta is three
+// confirmation notes plus one name added to the existing client-portal-access import: crm_file_document's
+// same-client share note and its re-file note, and plan_item_set_client_share's note, each now say "can
+// open it now" only on the branch where the writer's portal_connected is not false, and otherwise append
+// portalUnseenNote(...) (a pure sentence from _shared/client-portal-access.ts naming paused / ended / not
+// joined); each result also carries the writer's portal_access. No write, authority, tenant, actor,
+// confirmation or verifier path changed. Decomposed per contract (dispatch branches, dominating controls,
+// local helpers, imports, identity inputs): all equal for all 29 except identity input 15 (the
+// whole-handler try: 6 canonical lines replaced by 14, all inside those three notes and the import name)
+// and crm_file_document's own dispatch branch (its two notes) and import set (client-portal-access.ts is
+// now referenced from that branch, for portalUnseenNote). action-risk.ts is byte-identical. Renew those 29
+// dispatch scalars only; no SOURCES/ANCESTRY digest changes.
+// E09 Slice 7 integration round-3 renewal (2026-10-19), integrating-crew source review (NOT non-author):
+// the Slice 7 branch rebased from s7-integrate b6d3bdf75 onto main a26efbcc9 (Agreements #2367 renumbered
+// 225000, Payments #2371, Slice H #2373, and main's own chat changes, e.g. the ANT-21 stream bound). The two notes above
+// pinned scalars on b6d3bdf75, never on this base, and are superseded here. Additive check against the
+// composed bytes: the paige-ai-chat delta main -> head equals the round-2-reviewed delta b6d3bdf75 ->
+// round-2 head line for line, except the round-3 security-2 change: the three share-confirmation guards
+// (crm_file_document's same-client share note and re-file note, plan_item_set_client_share's note) test
+// `portalConnected !== true` instead of `=== false`, so an answer with no portal_connected (null, e.g. a
+// replay) takes the unseen branch and never claims visibility; the re-file call passes
+// `refiled.share ?? { portalConnected: null }`; one comment line added. Decomposed per contract against
+// main's pins (dispatch branches, dominating controls, local helpers, imports, identity inputs): main's
+// own fingerprints equal main's pins for all 29; at head every part is equal except identity input 15
+// (the whole-handler try, holding Slice 7's insertions and these guards) for all 29, and, for
+// crm_file_document only, its dispatch branch (the two share notes above) and its import set (+
+// ../_shared/client-portal-access.ts for portalUnseenNote, a pure sentence function). No write,
+// authority, tenant, actor, confirmation or verifier path changed. Renew those 29 dispatch scalars only.
+// E09 CURA identity bounded renewal (2026-10-19), AUTHOR source review (NOT non-author; the independent
+// round-3 reviewers must confirm): branch e09-portal-cura rebased onto main a26efbcc9 (Slice H #2373 and every
+// earlier main hunk intact). The branch diff vs main for paige-ai-chat/index.ts is two hunks: one added import
+// line (readClientPortalPersonaInput, customerAgentName, customerSeatIdentity) and one added
+// `else if (callerTier === "client")` branch after the native Customer Portal persona branch, which re-voices
+// the owner's prompt blocks with the business's agent name read from client_portal_frame under the caller's
+// JWT (best effort, presentation only; vouched client-seat text untouched). No dispatch branch, control,
+// helper, authority or verifier logic changed; the whole-handler try (identity[15]) is what moves all 29.
+// Proof: paige-ai-chat/index.ts at main gives all 29 of main's pins exactly (scratchpad r3/pins.mjs, zero
+// mismatches); the branch's gives the 29 below. send-message/index.ts: the client email's sender fallback
+// reads the business name through _shared/email/sender-display-name.ts instead of "Paige Agent" (one import,
+// one widened row type, one replaced assignment). client-portal-identity.ts: the customer agent-name rule
+// (accent/symbol folding, "Paiget" only as a standalone word) and literal replacer functions. action-risk.ts
+// is byte-identical (pin unchanged). Renew those 29 dispatch scalars and those 2 source digests only.
+// E09 CURA round-6 renewal (2026-10-19), AUTHOR source review (NOT non-author; a non-author reviewer must
+// confirm): branch e09-portal-cura rebased from main a26efbcc9 onto main 7d3964564 (Slice 7 #2376, the mentor remap,
+// H0 #2375). At 7d3964564 main's own paige-ai-chat gives all 29 of main's pins exactly (scratchpad r3/pins.mjs,
+// zero mismatches). The branch delta main -> head for paige-ai-chat/index.ts is the same 18 changed lines, line for
+// line, as the delta reviewed in round 3 (a26efbcc9 -> round-5 head): one added import line and the added
+// `else if (callerTier === "client")` re-voicing branch. Slice 7's insertions are main's and unchanged. Those lines
+// sit in the whole-handler try (identity input 15), which is what moves all 29; no dispatch branch, control,
+// helper, import set, authority or verifier logic changed. SOURCES/ANCESTRY digests are unchanged (no mismatch).
+// Renew those 29 dispatch scalars only.
+// E09 F2 bounded renewal (2026-10-19), owner-approved; AUTHOR source review (NOT non-author; a non-author reviewer
+// must confirm): branch e09-funding-f2 on main 8f232ff98 (F1b #2387). At 8f232ff98 main's own paige-ai-chat gives all 29
+// of main's pins exactly (zero mismatches). The F2 delta in paige-ai-chat/index.ts: (1) the existing `callerTier`
+// resolution (same getActorTier call, same fail-closed "client" default, same customerPortal skip) moves earlier, ahead of
+// the attachment branch, and the URL-fetch site reuses it exactly as before; (2) the credit-report read-check is skipped
+// for a client-tier caller (their PDF takes the general-document path); (3) personaCtx.funding_enabled is forced false for
+// a client-tier caller; (4) one added case label ("not_entitled" -> capability_refused) in the portal-menu outcome map.
+// All four sit in the whole-handler try (identity input 15), which is what moves all 29; import sets are equal for all 29.
+// No write, authority, tenant, actor, confirmation or verifier path widened. Renew those 29 dispatch scalars only.
+// EXP00 O-3 renewal (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer must
+// confirm): the operator-console chat fix (zcod/exp00-o3-chat-company-tools) changes
+// paige-ai-chat/index.ts in FIVE additive places — the request schema gains the operator-console
+// surface literal; a hard-gated persona force (is_platform_operator on the verified JWT) makes the
+// operator console ask tenant-lessly as PAIGE Inc; a steering system line names the company data
+// sources; two platform read tools (platform_customer_overview / platform_commercial_summary) are
+// conditionally defined and dispatched to the platform-admin-gated SQL RPCs through the caller-JWT
+// client. No existing dispatch branch, guard, refusal, adapter or verifier changed; the whole-handler
+// shape moves all 29 fingerprints together. Old fingerprints reproduced from main before renewing
+// (scratchpad renew-pins2.mjs over base vs branch chat source). Renew these 29 dispatch scalars only.
+// Round-2 renewal (same day, review P1): the force block was initially nested inside the
+// customerPersona branch (dead on real operator turns) and was moved to a sibling position; the
+// crm_search_contacts anchor indent restored. Fingerprints renewed again (scratchpad renew-pins3.mjs).
+// Round-3 renewal: the sanctioned kit registration moved the tool mount to the canonical
+// toolDefs.push(...PLATFORM_OPERATOR_READ_TOOLS) form with the spine-domain import; fingerprints
+// renewed once more against origin/main's chat source (round-3 scratchpad).
+// Round-4 renewal: the knowledge-scope revalidation now honors the operator console's pinned
+// platform scope (live probe caught the membership-fallback row reading as a mid-turn scope
+// change); fingerprints recomputed against origin/main's chat source (round-4 scratchpad); round-5: the owner-ops dispatch entry condition now
+// admits the operator console's two platform reads (gated on operatorConsolePersona, never the
+// frozen workspace set — live probe #2 caught them falling through to 'Unknown tool').
+// Fingerprints recomputed against origin/main's chat source (round-5 scratchpad); round-6: the workspace-authority admission now
+// admits the operator console's platform reads on the verified persona (live probe #3 caught
+// 'workspace owner or admin required'). Fingerprints recomputed vs origin/main (round-6 scratchpad); round-7: authority admission now uses a module-level
+// PLATFORM_READ_TOOL_NAMES set (no tc.function.name === near the authorityAdmits gate — the
+// declaration lint's window heuristic correctly caught the inline pattern). Fingerprints
+// recomputed vs origin/main (round-7 scratchpad).
+// E02 bounded renewal: AUTHOR-REVIEW / LOWER ASSURANCE of 9e23831942f778b5cd89638c409ead7753a9e394.
+// The existing snapshot call now uses the caller-JWT transport released in #2451.
+// Restoring only that imported/called name makes the whole Chat AST identical to
+// reviewed main 1eb4d1e66; all 29 original fingerprints pass on that baseline.
+// Each new scalar below includes that same preceding read-only branch. All
+// incumbent bodies, controls, identity inputs, dependency pins and metadata stay
+// unchanged. No extractor or negative-control waiver; final CI/review still apply.
+// E02 O17 AUTHOR-REVIEW / LOWER ASSURANCE, immutable Chat b772485f versus95d61084:
+// all29 exact branches, dominating controls, local helpers and imports are equal.
+// Only identity input15 (the same whole-handler try) changes: the existing inbox
+// envelope dispatcher/reference wiring and trusted per-call Map collector condition.
+// Freeze only these reviewed29 scalars. Extractor, metadata, SOURCES/ANCESTRY,
+// admission/authority/recovery/effects and all prior refusal mutants stay intact.
+// EXP09 original approval-status observation (2026-10-21): all29 original
+// scalar fingerprints reproduce against main5b03e903. Isolated AST decomposition
+// changes only enclosing-handler identity[15] f041e518... -> d21ac092...;
+// branches, dominating controls, other identities, helpers/imports are identical.
+// No tool, execution, approval or hold authority changed. New read-only original
+// CURA history/observer source is pinned below; no extractor/metadata waiver.
+// P2 ordinary-profile repair: all29 d1a800ec scalars reproduce exactly.
+// Only enclosing-handler identity[15] changes d21ac092... -> 1f1b9249...
+// for the canonical profiles.user_id lookup; branch/control/helper/import
+// identities and all116 incumbent plus two CURA dependency pins stay intact.
+// Explicit CURA status projection: all29 9088bd7b pins reproduce; only
+// enclosing identity[15] changes 1f1b9249... -> 038e9116... . Dispatch
+// branches/controls/other identities/helpers/imports are identical. The one
+// control-transport source pin changes cabcb7db... -> fb73799d... for a
+// literal-true status-only read selector requiring its original approval origin.
+// All other117 dependency pins, extractor and metadata stay unchanged.
+// EXP05 bounded Operations review, AUTHOR-REVIEW / LOWER ASSURANCE, Oct21/22.
+// Immutable base d873a1b7b9937c5cacd7a1228665e08bdc99919e reproduces all29 pins.
+// Restoring only the operator prompt prose/import makes the Chat AST identical.
+// Separate decomposition: all29 branches, controls, helpers, imports and all
+// other identity inputs are equal; only whole-handler identity[15] changes.
+// Core source sha256 3068f564e2633614f1ffec914de96cc2c5c2b06c3c4f11c7f3579972c05568c2
+// -> 79d9a4d2bf1904a62a216208f311e3ffabf5864a588574bb55f7efd596e4ca27 (LF).
+// All120 dependency pins, metadata, extractor and hostile refusal tests remain.
+// Instructions grant no authority; required exact-head CI and runtime proof stay.
+// EXP05 owner-private weekly status, AUTHOR-REVIEW / LOWER ASSURANCE, Oct22.
+// Immutable base dda459c23f966f7c3e0112d998ab32c110bde25b reproduces all29 pins.
+// Scoped inverse removes only two imports, one read-set name, trace case,
+// domain offer and final read dispatch; the entire restored Chat AST equals base.
+// All29 incumbent branches/controls/helpers/imports and every other identity
+// are identical. Only whole-handler identity[15] changes for this additive read.
+// Core LF sha256 eea17cc1e4dfec21673e1a5bf6387145f5186ae1848ef3dd4940b5210db8f3de.
+// All120 dependency pins, extractor, metadata and hostile refusal tests stay exact.
+// Native caller-JWT owner/scope checks remain; no schedule or effect authority.
+// EXP09 customer-only CURA request scope, AUTHOR-REVIEW / LOWER ASSURANCE.
+// Base4008a1390 reproduces all29 original scalar bindings/120 source pins.
+// Exact inverse of11 customer-native request/CORS patches restores the entire
+// baseline handler byte-for-byte. Original owner/service factories are untouched;
+// all8 strict CRM read bindings pass without changing their verifier.
+// Customer-scoped instance is the same SDK/verified bearer/anon key/native store,
+// not an execution/permission system. Action metadata, extractor, dependencies
+// and refusal expectations remain unchanged; renew reviewed ancestry scalars only.
+// Candidate handler SHA2561de19b80b5fb4944c8dbb7888fb550f859071259c72fb2b8d8df8421df7853e8.
+// EXP09 original shared Progress context, Oct22, AUTHOR-REVIEW / LOWER ASSURANCE.
+// Base4bdca8486 reproduces every29 dispatch scalar and all120 original source pins.
+// Recorded12 inverse operations (20 sites) restore the complete original handler;
+// original dispatches, controls, helpers, imports, factories and metadata are exact.
+// Independent source decomposition changes only enclosing-handler identity[15].
+// Native accepts the original intent before a bounded source read; error recovery
+// preserves the issued receipt, original cleanup and owner messages. No new tool.
+// Renew these reviewed29 scalars and explicitly pin the new closed context helper;
+// retain every original120 dependency, extractor and hostile refusal control.
+// Native source/ABI/ACL, exact CI and actual client/model proof remain separate.
+// EXP05 98326a6bf4908d4a02c675deeaebf97bc8e57e69, sequential AUTHOR-REVIEW / LOWER ASSURANCE.
+// Five actual Chat-branch/next-mutator regressions corrected. All29 main pins reproduced.
+// AST decomposition: common enclosing-handler identity[15] only for27 adapters;
+// list/delegate also change their shared branch and existing approval-outcome import.
+// All other controls/identity/helpers/imports and121 dependency sources preserved.
+// Renew only these reviewed literal scalars; no verifier, metadata or mutation waiver.
+// EXP05 98326a6bf4908d4a02c675deeaebf97bc8e57e69, sequential AUTHOR-REVIEW / LOWER ASSURANCE.
+// Five actual Chat-branch/next-mutator regressions corrected. All29 main pins reproduced.
+// AST decomposition: common enclosing-handler identity[15] only for27 adapters;
+// list/delegate also change their shared branch and existing approval-outcome import.
+// All other controls/identity/helpers/imports and121 dependency sources preserved.
+// Renew only these reviewed literal scalars; no verifier, metadata or mutation waiver.
 const CONTRACTS = {
   "comms_setup_calling": {
     "key": "communications.comms_setup_calling",
@@ -99,7 +412,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "fbd3781ca6985116730b22ec93f0e553bd596603d1a013fba15f006f4d3bf02c"
+    "fingerprint": "2b10eb8acbef463177d4855f484a9c5443ac0362275cf5ba5a9cc7efa68abb09"
   },
   "calendar_book_meeting": {
     "key": "calendar.book_meeting",
@@ -111,7 +424,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "9b9116b51abcfecd2fa6efa3a80866ee728b87c605504b530a3f467dcf623f78"
+    "fingerprint": "c862fcaa52074fa3c7bd9fb8581693ccd5456a2debb247a320a4633c74f3d787"
   },
   "calendar_link_send": {
     "key": "calendar.link_send",
@@ -123,7 +436,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "cc3223743be61015e7330ef6eb2bf334b0a5e4f16c54a1e6fa78191fccb58513"
+    "fingerprint": "bd30b83cfd3805ee060ec597706ee6888436d8eacf76f3281e4d4fb91a6db6c9"
   },
   "propose_business_brief_update": {
     "key": "business_profile.propose_brief_update",
@@ -135,7 +448,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "d18ca4d8e26c200d15ecf554d70bc4abb49613abfcf35e04e09c2dc9c1cd8d89"
+    "fingerprint": "0ec85d8f9e8f2860793354eebabd9b194b7278e621e5bd127033cf5df1e7c7b4"
   },
   "update_business_profile": {
     "key": "business_profile.update_legacy",
@@ -147,7 +460,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "deab33d59c05da9dbf9ac40d6351d09a634dc6b7c82497ccb358074271175469"
+    "fingerprint": "13a004cb3f5510bb1179c659bdc5ee0f882a68ddbd5c3318e494a96ac73b09d5"
   },
   "capability_status": {
     "key": "platform_meta.capability_status",
@@ -159,7 +472,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "c06bcf4354d026550833790a5cb4b52c68c346a0b43b62f705b69f82259e3a54"
+    "fingerprint": "d06c9ee40503810647605e3ccbb31ca09243543f52c411e3b37a8097dc6579ac"
   },
   "improvement_propose": {
     "key": "platform_meta.improvement_propose",
@@ -171,7 +484,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "2abb156ca68391e84a6fb9ea1382690f6e127b301dad7ba25afbfad372785261"
+    "fingerprint": "e09fb5f1575a05b79abb7631003cf27eecb56e16678523d1fe9182904bf19f0e"
   },
   "improvement_decide": {
     "key": "platform_meta.improvement_decide",
@@ -183,7 +496,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "493a64b63047019aba7b7b854c4c5b8778d4fe3b6cd419a505d9b681049c090a"
+    "fingerprint": "6634669978257654c73b67e15032997ee28dd1c77507f18bebfd9689d949f53b"
   },
   "list_subagents": {
     "key": "agents.list",
@@ -195,7 +508,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "a7c43191fa7f823f0b06940d5f428d5142c0d7ed24a88dfc9291cefe3d637e12"
+    "fingerprint": "6d5299ec791dc8a47fcd3f26b880fedc0670eae80cca0f7dccac34dc2666f5a1"
   },
   "delegate_to_subagent": {
     "key": "agents.delegate",
@@ -207,7 +520,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "a7c43191fa7f823f0b06940d5f428d5142c0d7ed24a88dfc9291cefe3d637e12"
+    "fingerprint": "6d5299ec791dc8a47fcd3f26b880fedc0670eae80cca0f7dccac34dc2666f5a1"
   },
   "forge_subagent": {
     "key": "agents.forge",
@@ -219,7 +532,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "b1bd46dba1b241c9f6fd6f06ba54b6f193c78ea64329b688626f4864aa2337ce"
+    "fingerprint": "c999858c7c9e026f46c3ab583b49108560bf6010e44be96b74d4741810c877e5"
   },
   "author_event_kind": {
     "key": "crm_clients.author_event_kind",
@@ -231,7 +544,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "b82c11901ab9fe50dadb2933a22c378d9a8c44a29f01f2eca204db8a00b949bd"
+    "fingerprint": "4382fd75eb9aaa694eac6b6d28214a677a1afa7582d383cae79baa3463fb13eb"
   },
   "crm_add_note": {
     "key": "crm_clients.add_note",
@@ -243,7 +556,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "d5835ba7447f216ad052617bcd74c270297c19a31f4238034daf7063a936dfac"
+    "fingerprint": "b3f620fa9f1dd5086e42108fa88672b2a29790602f02588a1ff717e4137f6cdd"
   },
   "crm_file_document": {
     "key": "crm_clients.file_document",
@@ -255,7 +568,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "66195e4a2d65a530373f403553b7843b9169309be66b3e58132e093d41deee9d"
+    "fingerprint": "2a4f405470f2547d6da8582c03fd24e05637e744309144867db8a2f2496b8ee0"
   },
   "update_client_data": {
     "key": "crm_clients.update_client_data",
@@ -267,7 +580,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "19c740a9702b068696ac2f4d1c1f843f42cb2965733eb0eb0b07f9eb82c6b15f"
+    "fingerprint": "318d48d54e617bc42472be92ccea25667eb175bcd7bf53e5f68c0d2746e6309d"
   },
   "pipeline_configure": {
     "key": "sales.pipeline_configure",
@@ -279,7 +592,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "fbcccd60f5a13748648f6356bbd68d9e71bbd38ec637eab9837c20dba91c7a82"
+    "fingerprint": "7674eae3b1b5f0fa2753b76d7afb13f485186f5c5db13fd2a279f60446069203"
   },
   "deep_research": {
     "key": "research_knowledge.deep_research",
@@ -291,7 +604,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "d1f141a947ce196a241443f1dafe4b995a65fb32919b04b3b2ac1e3c85d6fb8b"
+    "fingerprint": "0927297b137c90264e8b6020aa2b17afb38a48010bee289db3d76d14a02c58cc"
   },
   "web_search": {
     "key": "research_knowledge.web_search",
@@ -303,7 +616,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "6a3f70352d35277df2f6074ad97bb371bafc1501ec43fcfdfe2c623592b4832b"
+    "fingerprint": "24b21a771a4161c9272da5cd01ee97a9f65e9cb94fbe243b8259b42c4b545acb"
   },
   "web_fetch": {
     "key": "research_knowledge.web_fetch",
@@ -315,7 +628,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "871b646994a1bb20617b44939ec7666202303d10dfe297c06ec7c5c56d297efb"
+    "fingerprint": "3fb75608e016df9dad1d4274713137740f19ad50363106e2f87a865eb0b7c94e"
   },
   "save_to_knowledge_base": {
     "key": "research_knowledge.save_to_knowledge_base",
@@ -327,7 +640,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "f869da8f17ef44834e1a86589f8ad4ac3fef91fbbce6544f20dd1772b603869e"
+    "fingerprint": "ddb901a60e55e8f1e73ecbe51f7a511bf8cfd3d8227d7099d2a62296ed09543c"
   },
   "automation_draft": {
     "key": "automations.automation_draft",
@@ -339,7 +652,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "853642da66bd61970d26a0b62793b8fedc4d191b5fdca0f5d88dbd9b86aa1f1b"
+    "fingerprint": "e4f6662ba6d77e49de92c76e42a9e53b2a376989f9dbe7d5723bb3d60a449982"
   },
   "comms_connection_summary": {
     "key": "communications.comms_connection_summary",
@@ -351,7 +664,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "52b3226ba8b852cf884ec108e60dd64a41c43b6bb3a5d1b2fe3b3ad09eae172e"
+    "fingerprint": "4aaf377f4404f580674d823bcd257a6103c04a42116ed417c05608e1563dc373"
   },
   "comms_registration_status": {
     "key": "communications.comms_registration_status",
@@ -363,7 +676,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "f3897b3d3f7e5671c1a4f032d4acce4c07ee0ff8264eebbc4cf3478fd43958fc"
+    "fingerprint": "57af7084c118d6c143638e5b56d95fac98ac4093e25728052b5066a45434981c"
   },
   "comms_list_numbers": {
     "key": "communications.comms_list_numbers",
@@ -375,7 +688,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "26520b6feeb8f7560384012d51d0e731d0fb25115af7c25bbd7c4194aa4b399b"
+    "fingerprint": "7f0b6a44fef4d125e197ea4a7cefee59494ad35ffe413ff1e677f24ecd3bd5b2"
   },
   "comms_search_numbers": {
     "key": "communications.comms_search_numbers",
@@ -387,7 +700,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "364cadbb1ef3410763e78463caca1c0ab72bacafeb2e4ebed5d34b2e51cf12c9"
+    "fingerprint": "a74711a2b548741fe05f7706d6cd096356c79db280b0af7920e9ea840dc200bf"
   },
   "comms_buy_number": {
     "key": "communications.comms_buy_number",
@@ -399,7 +712,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "7c2e90541b589d1220ad46583d2cd299ea51af26639da828e524a5b8d94909b4"
+    "fingerprint": "134ac6f43d9c3e81f8fa22074226ef22cfc5cdea7285ab73373154afb20e1b0f"
   },
   "comms_draft_registration": {
     "key": "communications.comms_draft_registration",
@@ -411,7 +724,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "edfe5263956e7ebb0c57d0995d90b68151549458c4a4774383169ae4fb019806"
+    "fingerprint": "e2d6a302cfb287f0f8c991354f38c43808b52a00bcab1621c835c46370711e48"
   },
   "comms_name_number": {
     "key": "communications.comms_name_number",
@@ -423,7 +736,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "86962fce03abc5a1a76c2a4111ec8c100c4efd7ebe15204ac930c16dd32ef1e4"
+    "fingerprint": "3b3ed7fd23b5cd84db79bfaacc77d1f771214a4a2e460e498bb8eb6a860165e5"
   },
   "comms_set_primary_number": {
     "key": "communications.comms_set_primary_number",
@@ -435,7 +748,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "2c955709365aadb9ef2e3b84b44419dde308b2883275cf327e00aa6516435178"
+    "fingerprint": "60ce6098063208278d3453099673be2fc4335f753399e7d3ba77a2ded20e13d0"
   }
 };
 const SOURCES = {
@@ -443,38 +756,63 @@ const SOURCES = {
   "supabase/functions/_shared/calendar-link-tenant-brain.ts": "28748e315a12caa855ec906192743cdad5298d37ccbd35ad83539949124800f4",
   "supabase/functions/_shared/client-seat-reply.ts": "6b2ed9c2342da886f8dff44a46bc9dadd4bcd3b079839f62b470ea363564b44d",
   "supabase/functions/_shared/outbound-draft-check.ts": "eda79597ac86a489f916075844f535fcf228518d953b48c55b2e9901920ee961",
-  "supabase/functions/_shared/action-risk.ts": "4286ebbf49192920713f840eb56bc524f31f146fd4431357c99336f40c137260",
+  "supabase/functions/_shared/action-risk.ts": "8b21a6cd7166a9d382ef832bb31afda27625a3c675923dbec943a6bd189c049f",
   "supabase/functions/_shared/finance-gate.ts": "dfa7fbec065d346ca72199313294a4418aa8be66f3dbb68cfe991a93aef0cf40",
   "supabase/functions/_shared/paige-capability-status/projection.ts": "280c36a53ed5d553f6e6467f7177d049a2c612078cdb8d8139878cec3463922f",
   "supabase/functions/_shared/paige-capability-status/readiness.ts": "56b0a8da8b1a76414a147d15bffb9b589b9bcf9e130c797290b846759e1da65e",
   "supabase/functions/_shared/paige-capability-status/render.ts": "63a15351e4f7af98544082c421c35af5d9eba2002d54150b2756b255bd131c58",
   "supabase/functions/_shared/checked-write.ts": "455d00e06fc6e84479ff8d0d5782288d21e4570d63d8e2e0acf770a5a8d5e95c",
   "supabase/functions/_shared/untrusted-fence.ts": "fc0ed34f9c564e4669b187a106756e860383ede74ae2bbb60f4b0a3944c7bf12",
-  "supabase/functions/paige-deep-research/index.ts": "d03ca42ebd2da2ec293319167840d9750182308c7307bdcc991abf436f954023",
-  "supabase/functions/paige-web-search/index.ts": "4a48df53d16d5b2a618df453c3d41fbbf4a6f43dc0830578a3cf0678333c3794",
+  "supabase/functions/paige-deep-research/index.ts": "a96323d61924dba10329189fd98c56d2638c0fdc79e9a83a28ad352b0043bbd6",
+  "supabase/functions/paige-web-search/index.ts": "2606664401bb71708fe798afab7f1166648083131d1ccfa06f9123d1629b0dd2",
+  "supabase/functions/_shared/research-source-policy.ts": "df0ca1d9f4ee256051ff51927500b25b5fd071a057a6d868c6448f6f852e144b",
   "supabase/functions/fetch-url-content/index.ts": "4e10fe5cd2e189ced5c0cf929586626297b7c9653b34f8a109eede4b88d2926b",
-  "supabase/functions/kb-ingest-doc/index.ts": "640c91d2dcd4742bb1b12ed37b7bc9b606fa73f2881a825e9c45be011e75aeaf",
+  "supabase/functions/kb-ingest-doc/index.ts": "09c54913f8c844a0e7bb2826947cb002496fb800c34d2e46ae0f6a3f5a0ea7a7",
   "supabase/functions/comms-search-numbers/index.ts": "828ac020a9c984a808e3c9375748f1762a8667bd5a9da1c81d1fac902782d4f8",
   "supabase/functions/comms-purchase-number/index.ts": "23f479730d2b658fe231dcbe33e3fcd864ec07e9f87ce116742f83e84c8e9237",
   "supabase/functions/comms-a2p-draft/index.ts": "49bd8acc5ed4ec7d60ba79b917438ae5eba0ce2ffcbf862baa9caa56293ada29",
   "supabase/functions/paige-write-back/index.ts": "5ff11463820b7c38e69f683cbcd8542359d5a72c37724c06846bf3dcc6d41de8",
-  "supabase/functions/paige-orchestrator/index.ts": "84e1bb410fb5e01242d4a34401ece2c4dbad515be51e3e4cbe337420e5245243",
+  // EXP05 durable-outcome review a5f5e38ce, AUTHOR-REVIEW / LOWER ASSURANCE.
+  // Registration must precede dispatch; exact saved outcome/receipt acknowledgment
+  // gates actor-bound completion; original actorless ActionBus drafts retain their
+  // receipt exclusion without an invented identity. Same-ID uncertainty, no replay.
+  // Original a8d0324d digest reproduced; only this source changed/held. All peer
+  // pins, actual authority, adapters, registry, providers and verifier rules retained.
+  // EXP05 separate AUTHOR-REVIEW / LOWER ASSURANCE, October23: ZION's
+  // original soft draft uses Model Fabric with fresh context/registry checks on
+  // each leg. Exact-service actorless ActionBus drafts retain their original
+  // identity/receipt exclusion. Original f319 digest and all122/29 reproduced;
+  // only this reviewed producer changes, no extractor/dispatch/peer-pin waiver.
+  "supabase/functions/paige-orchestrator/index.ts": "837d77bc04d622c63e2b9269326f6c234cdaacd5a1555ae2e8c2167ca029d723",
   "supabase/functions/subagent-forge/index.ts": "1acb5488f11bd93a2d6b36638fddcd73323f4363eacbd58b284d1fa648b3d906",
-  "supabase/functions/send-message/index.ts": "512d6f070b435a52385eb28ff3e58861ac0c138e220473bf657335484a08bf76",
+  // EXP00 comms-door renewal (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer
+  // must confirm): branch zcod/exp00-comms-door-content-order changes send-message/index.ts in ONE hunk —
+  // the SendGrid arm's content array reorders text/plain before text/html (one comment line added, one
+  // spread line moved). SendGrid rejects html-first with a live 400 ("If present, text/plain must be first,
+  // followed by text/html, followed by any other content"), captured on the welcome delivery 2026-10-18;
+  // same fix class as send-transactional-email #2369. Provider payload construction only: no dispatch
+  // branch, authority, verifier, adapter selection or recipient logic changed; paige-ai-chat untouched,
+  // so all dispatch fingerprints are unchanged. Old canonical digest 29306707… reproduced from main
+  // before renewing (scratchpad /tmp/renew-digest.mjs, printer {removeComments:true}). Renew this digest only.
+  "supabase/functions/send-message/index.ts": "08ec0fe3db7aacb9ccc608aa71b10a607792dab06a3f0e74f24b620d738c8b87",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
   // recorded on PR #1897; no other incumbent snapshot is regenerated or accepted.
   "supabase/functions/_shared/twilio.ts": "afe6b57d9ed91c00e6517856f7b17c36f147fee5b88afb3450586c4393d6565a",
-  "supabase/functions/_shared/channel-adapters.ts": "6ca080080233039c808d79af0a659ab3f93adb818b59573a99083b1cee015e2c",
-  "supabase/functions/_shared/pre-send-pipeline.ts": "f44dff1b639511729fff60f48b90041d1ece27e7cccbdca3b5d455b045685f12",
+  "supabase/functions/_shared/channel-adapters.ts": "f29fe7502ceb961ad886863c570970d48c4c19969ce2b6fce203a04867deef41",
+  // E09 Slice 6 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author):
+  // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
+  // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel
+  // list and the normalizers are byte-identical. Renew this one scalar only.
+  "supabase/functions/_shared/pre-send-pipeline.ts": "dd7193c8f9663462f045de0eb937c6cf728a1c0ce0dce6451f4fa4cc9fd545b6",
   "supabase/functions/_shared/contact-methods.ts": "cea64c7f9ac201150bfd28834eaac88a6ebe0333c2c0a42dc9b9a8476840eef6",
   "supabase/functions/_shared/internal-vocabulary.ts": "9074425cc61d1a678e3a4ca03595fe8c4d1eac4572a4bd2daf31aff77f39d37a",
   "supabase/functions/_shared/paige-capability-status/resolver.ts": "ec8a5dad7df3426f30203aa1c8014372a60f51ed0decc829fc8541fba62a4142",
-  "supabase/functions/paige-deep-research/fabric.ts": "c79dbb46a0245429912079b93b047db413afdcd9d7be3e6e2e6befa60a0da2d9",
-  "supabase/functions/_shared/reasoning/strategize.ts": "23f4ca3254da1ff6d3bceb16c7332f3d2d222b88bacbfb14e76891705f68c808",
+  "supabase/functions/paige-deep-research/fabric.ts": "23fd093b20d6f721ff07619aa5a4e34892d5346fd6b4934e0ae73fffb0b609bb",
+  "supabase/functions/_shared/reasoning/strategize.ts": "ace59eadcd60f18c8fa673002626a5fe869099acdc8dd704c71c9b7aa9b3b46a",
   "supabase/functions/_shared/ssrfGuard.ts": "ab192431c1d51594a551184bc0e029a2a47a96a408f9f5935e0e13c8bbfe4db8",
-  "supabase/functions/_shared/kb-ingest-core.ts": "690bcf6b6f4bff44ed4e964a60c3799dc62f41ea8e317d414d61acfac489eaa3",
+  "supabase/functions/_shared/kb-ingest-core.ts": "7001d69379463479e816922b58e911effa3ce0bf0d6f4377ce5b71b21aad070a",
   "supabase/functions/_shared/knowledge-ingest-scope.ts": "d7d21c4f3f76bdab286c3ef89132584358d3b5f5d05c087d0c27c1117c75904c",
   "supabase/functions/_shared/twilio-webhook-auth.ts": "70015f70ca2250b4a991d7c15d54f27bc7fb17d937c386d48621af749f48bf05",
   "supabase/functions/_shared/model-router.ts": "0bf6bb2a81fa9fea8f93dc9f5d98760f61472e9c18aff9e865aeca5890f8664b",
@@ -488,21 +826,65 @@ const SOURCES = {
   "supabase/functions/_shared/subagent-authority.ts": "633143a287651772f3c78810397d7a1e753d1d9924c3668693783422be6c8494",
   "supabase/functions/_shared/systems-check-http.ts": "fd5713b29f5127fa0d10e501bd20cd869aa860b816eed500eb19e21e522fcfa6",
   "supabase/functions/_shared/sales-invoice-ledger.ts": "dab806f8decf8682d311a0eeaff90a2c9e7687f6043ff1d85d27a56d66b1515e",
-  "supabase/functions/_shared/sales-invoice-document.ts": "baf7933a648ca9752ff43b2c5cd654b84267f3573f7eaa0fa6670be2fc22d844",
+  // E09 Payments round 3 (2026-10-18, pin ec72c112…466b): presentation only. A projection carrying the
+  // portal-only test_provider_cents / provider_environment keys tells a TEST receipt as a test that moved
+  // no money and does not name the processor; it refuses a test total that contradicts the evidence.
+  // Owner and bearer projections carry neither key: 225 rendered fixtures compared byte-identical
+  // before/after. NON-AUTHOR REVIEWED: the round-3 verifier (not the author) reviewed this change and
+  // found it presentation-only and portal-keyed (only client_portal_invoice_ledger produces those keys;
+  // sales_provider_receipt_shape makes every provider receipt a 'receipt' with environment test|live),
+  // with nothing to block; 60,000 random owner/bearer projections byte-identical to base dbb8a8842.
+  // E09 Payments round 4 (2026-10-18, pin 3288d97e…e4c8): presentation only, portal-keyed. On a portal
+  // projection a voided invoice shows "Nothing owed: this invoice was voided." in place of the outstanding
+  // figure, the outstanding equation and the Outstanding column, and the payment notes name only the money
+  // present. NON-AUTHOR REVIEWED: the round-4 verifier (not the author) reviewed this change and found it
+  // wording-only and gated on isPortalProjection (owner/bearer output unchanged in its own 60,000-case
+  // fuzz against base dbb8a8842, two control mutants biting), with nothing to block beyond its finding 1
+  // (a fully corrected payment read "No payments recorded."), which round 5 fixes.
+  // E09 Payments round 5 (2026-10-18), reviewed by a non-author verifier, round 5 (nothing to block):
+  // presentation only, portal-keyed (paymentEvidenceCopy's
+  // isPortalProjection branch). "No payments recorded." only when the ledger shows no receipt; without a
+  // ledger "No payments count toward this invoice."; a fully corrected payment says "Recorded payments
+  // were corrected; nothing counts toward this invoice."; business-recorded money has one name
+  // ("Business-recorded payments") and the box says when its totals are after corrections. Owner and
+  // bearer output unchanged: 240 fixtures byte-identical to the round-2 renderer and 60,000 random
+  // projections (24,489 rendered, 10,829 of them void) byte-identical to base dbb8a8842.
+  "supabase/functions/_shared/sales-invoice-document.ts": "5ae255569a861722b09868da12dac1e43c104a593d3f3cb0c16f29e47eb55649",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
-  "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "cb4236ff9fec37be4043a7b2fa6a91e68b63c1c049f351f3d7f7ed51b8366c11",
+  "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "8ea30924c24b27244d413ee167e43f08b18a0589df53e2d2b65fde4998ca2ba2",
   // E04 exact invoice navigation: independently compared incumbent route outputs; authority unchanged.
-  "supabase/functions/_shared/canonical-app-url.ts": "f84b0e18b08ad71e4bb88140b6fda50273c56a123f16dcbb7c0e700a768827c7",
+  // E02 AUTHOR-REVIEW / LOWER ASSURANCE: add UUID-only Play focus beside current
+  // invoice/Deal/Task routes; all existing route entries and authority remain unchanged.
+ // E02 #2467 AUTHOR-REVIEW / LOWER ASSURANCE: only an additive SOLO Conversations
+ // destination/type entry; resolver, account/actor gates and exact-focus map unchanged.
+ // Renew this helper alone; keep all dispatch pins and the route-mutation refusal.
+ // E02 #2481 AUTHOR-REVIEW / LOWER ASSURANCE: additive SOLO Marketing type/route
+ // only; current-account/actor gates, prior routes and focus map unchanged. Old
+ // 492e6c96 digest reproduced from main; all29 dispatches and other115 sources match.
+ // Renew only this inspected helper; extractor/metadata/route refusal stay exact.
+ // EXP09 #2492 bounded renewal: source1c88645ce / composedbe57dd5fc
+ // NON-AUTHOR source review5604204248: additive current-SOLO Portal Knowledge
+ // route and UUID source focus only; original routes/account/actor gates unchanged.
+ // Prior f3336677 digest reproduced from main2a799. All29 dispatch pins and
+ // other115 dependency sources pass unchanged; renew this inspected helper only.
+ // Extractor, metadata and route-mutation refusals remain restrictive.
+ // EXP02 mounted finding review, AUTHOR-REVIEW / LOWER ASSURANCE:
+ // only the existing SOLO systems_check destination gains UUID finding focus.
+ // Original actor/tier/account/path validation and all other routes stay exact.
+ // Restoring main8e97's route helper reproduces old636e digest, all120 sources
+ // and all29 dispatches. Renew this reviewed helper only; extractor, metadata,
+ // dispatch scalars and other119 accepted dependency pins remain unchanged.
+ "supabase/functions/_shared/canonical-app-url.ts": "1234eb3d9e2b345741bc33009ea1ad0f07fe22c67a1ce12224c12a0a48032640",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
   "supabase/functions/_shared/agreements/token.ts": "793e1c0a521fc0ea3b39e5761f87cdad7fee67a73b2110ac1f2963992b20eeea",
-  "supabase/functions/_shared/model-fabric.ts": "6c442b661864089c33ac4f8db953e21f4ba3f7a847a5f0e5de418e971dde0ac4",
-  "supabase/functions/_shared/llm-trace.ts": "af062627f61ec1bf2702f69b234c9cee8ce0bcb5010fb3faafcfc2ebbdfc4a13",
+  "supabase/functions/_shared/model-fabric.ts": "f4ac35c621fa233f287f897d86dfc289f7c1b7f9235bfe411832c35a9c1c4224",
+  "supabase/functions/_shared/llm-trace.ts": "d8da0ed275f3c533afe35b92f7f182238443a9e93834ea885041a85f87629dd9",
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
-  "supabase/functions/_shared/claude.ts": "986bde68849ef1bb1697ea7d4a4974936ae3a90432f08efb3fc87323907316e5",
+  "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
   "supabase/functions/_shared/router-budget/mod.ts": "d77811a61d1833990e2c1e65c62d476112fd7a0e6326552582e7949a1cc6c008",
   "supabase/functions/_shared/model-router-gates.ts": "551cf84756d3a5b56a82c645c96ce51f0318f065b5969d19885ba591a506a566",
   "supabase/functions/_shared/model-allowlist.ts": "3b1e162f042a34357eb4ba6fb2e9bd7cafeb9725f07df655ac43f3233d215377",
@@ -521,9 +903,9 @@ const SOURCES = {
   "supabase/functions/_shared/paige-orchestration/subject-tenant.ts": "79bfca5cada98f8226a533684556c2b6035ec8aaf0855c06846b035ef4d778bd",
   "supabase/functions/_shared/sales-payments/balance-projection.ts": "089be3509f1a784659f86ceaa8e21238a765b744ebc5f75ecdb870be58070a92",
   "supabase/functions/_shared/sales-invoice-delivery/readiness.ts": "951b29afbdab2ad6480fdaadde38ae6f927bf5686f7bbf5518109128c91bb140",
-  "supabase/functions/_shared/comms-email/readiness.ts": "aa87ebeb806a5a08392d3aed0b8759e7af9bf5e8d82718f7c46ed364d11cab99",
+  "supabase/functions/_shared/comms-email/readiness.ts": "920b5bf24d44385ded3bd1b72840c1f1ebd3689524cd88472e6bc6337c043cfc",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
-  "supabase/functions/_shared/openai-responses.ts": "83935ed55145bf1380d32fc809b52c73eadfb22ec5818c5e3e8548b616660c95",
+  "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",
   "supabase/functions/_shared/paige-turn/route.ts": "657f0c9ee1d3724a5eca72f661718d560e090cd7ee36707cadbbf94f1f463d6e",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
@@ -540,13 +922,83 @@ const SOURCES = {
 // Original-effect discovery and status projection are reviewed read-only context.
 // Pin both so a changed helper cannot introduce effects or fabricate settlement.
 const ANCESTRY_SOURCES = {
- "supabase/functions/_shared/analytics-metrics/read.ts": "de8bb66bb6c759e7f39d347cb2b9e45a1b2a89e6ded73bf35829100adb0c90ec",
+ // Distinct NONAUTHOR037b review: bounded control transport parsing/classification only.
+ "supabase/functions/_shared/paige-turn/control-transport.ts": "fb73799d9a9fd3d2c9167a8ef96fcdbdf0f47e66860fa0febc41f1e2b2dcffbd",
+ "supabase/functions/_shared/operations-task-read.ts": "97dea16d6415e8114342904f2270e8257f4e5ea31431192a2e6f7f3e5fa05c4b",
+ "supabase/functions/_shared/inbox-intelligence/policy.ts": "12b8711f7ba6bc1acf3c41f8221be74c3ac92699584a48dc36d1e5c2311b21b2",
+ "supabase/functions/_shared/calendar-booking-read.ts": "22fd2716f66c9bd87fb3c91cdd7a9f0d8a3586396a1e47374182fe2a3e553c2f",
+ "supabase/functions/_shared/solo-classification.ts": "a4a7b91f4c8d36d56548f3096bd6e0ef70cafca12036bd6fb81444f8294e845a",
+ "supabase/functions/_shared/paige-spine/domains/calendar_booking.ts": "69f388de84dd13b73d0951531bcee85a9ff7e37dc59524bb24d3ce3d657bb755",
+ "supabase/functions/_shared/paige-spine/domains/teamAuthorityChatEvidence.ts": "2e513de67adec189f65b7a29df2d8e1943ff3a4366f3833ec3a1534d6300262f",
+ // Independently reviewed pure contact receipt reference; presentation only, no authority.
+ "supabase/functions/_shared/paige-turn/crm-result-reference.ts": "9ed77f5d7459746d13d570ad8a627f3ab8c875ee2744edbc2a7626f0a7426427",
+ "supabase/functions/_shared/client-portal-assistant-context.ts": "807be6a423b0b8e3925da34a19a473e93873973f54a60d50fb49d66c724bfc96",
+ "supabase/functions/_shared/client-portal-progress-context.ts": "cbccd38b41cbd80d279cd3ce8227f73a3896a1a85fcd7ead5da897bfb2d4d596",
+ // EXP09 Sessions exact customer-only review: all prior121 source pins and29 dispatch bodies/controls/helpers/imports preserved.
+ "supabase/functions/_shared/client-portal-sessions-context.ts": "73ff54b458db614ab464f3d12f052eb33b39e3b78d7a7daccb4a359e05229ad0",
+ "supabase/functions/_shared/client-portal-chat-scope.ts": "f9f0cc67e17097d3e3f3c817793550acd6d35ecf436965c04851c90254555433",
+ // Cura identity review at36fd1031470aaaa1e0c0b364ecd57468b473bd2f:
+ // only the customer name resolver/import and role wording change. Native
+ // binding/policy/Knowledge/private-history guards are unchanged. Pin the pure
+ // identity dependency too; no dispatch scalar or verifier logic is renewed.
+ "supabase/functions/_shared/client-portal-persona.ts": "e6d4017abf1f50cfbb1da55cec4430f9d64465c8664220fd1013612c91f5c833",
+ // E09 CURA round 4 (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer must confirm):
+ // client-portal-identity.ts only. namesPaige sets aside a literal typed "Paiget" on the raw name before folding
+ // (a superscript or look-alike t no longer borrows the exemption); the look-alike map gains lowercase keys
+ // (Latin and APL alpha, Cyrillic ie and palochka, turned i, small capitals, Cherokee small letters) and drops uppercase keys
+ // that never matched after lowercasing; a pure exported agentNameAsTyped (invisible-stripped, trimmed, 80 chars)
+ // is factored out of customerAgentName unchanged. Presentation only: no import, dispatch, authority or verifier
+ // change; paige-ai-chat is byte-identical, so the 29 dispatch fingerprints are unchanged. Old canonical digest
+ // 55a91574… reproduced from HEAD f272b28ca before renewing (scratchpad r4-digest.mjs). Renew this digest only.
+ // E09 CURA round 5 (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer must confirm):
+ // client-portal-identity.ts only. INVISIBLE gains U+FFA0 (halfwidth Hangul filler) and readAs strips INVISIBLE
+ // again after NFKC (U+FFA0 folds into U+1160); the look-alike map gains Cherokee small ꭺ ꮐ ꭼ, Lisu, Coptic,
+ // Cyrillic ԍ ҽ, Latin ǀ ɛ ɨ ɩ ᵽ ƥ ꝑ ꞡ ɠ and a pure generated table of negative circled/squared letters. Header
+ // comment narrowed to the listed look-alikes. Presentation only: no import, dispatch, authority or verifier change;
+ // paige-ai-chat untouched, so the 29 dispatch fingerprints are unchanged. Round-4 digest b673eaf5… reproduced
+ // from HEAD 270973a56 before renewing (scratchpad v4probe/c0b/dig.mjs). Renew this digest only.
+ "supabase/functions/_shared/client-portal-identity.ts": "c04232c4e0967ee8e313da48387e481c57d92c8d67ae686d2792a99c7f658a67",
+ "supabase/functions/_shared/paige-spine/domains/soloBusinessInterviewContext.ts": "ae869d9dbc131f0e6d48d3f34e6a5edc81fd22a095946fa06cf8b7393528b053",
+ // E02 source review: the33-key literal moved unchanged into a pure dependency.
+ // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.
+ // Pin BOTH reviewed files; no generated digest acceptance or effect guard waiver.
+ // E02 AUTHOR-REVIEW / LOWER ASSURANCE: existing issuer cycle serialized; internal
+ // evidence retains verified epochs, model projection still strips identity. No authority change.
+ // E02 internal Marketing foundation: original33 public keys/schema/refusal retained;
+ // existing11 originating producer keys only in verified internal evidence, with owner/kind/unit/period checks.
+ // Renew only these two inspected dependency digests; Chat/29 dispatch scalars, extractor and metadata unchanged.
+ "supabase/functions/_shared/analytics-metrics/read.ts": "8b423b4ceb27da109c88e4901512c98298f17a099a510f6b8add3fe68dbfc25d",
+ "supabase/functions/_shared/analytics-metrics/keys.ts": "2334724562df2138494c0dbe28076840b81145a258d65c78667a5d3b86bf2400",
  "supabase/functions/_shared/analytics-metrics/metric-contract.ts": "8bbc6b91d259e2ab80643dd37667d88736043066e14d725bbca5344874d0c2a5",
  "supabase/functions/_shared/pipeline-original-discovery.ts": "4c55fee76bc2622a0b57b33282276f36aa3a8552725168c45ab1b2774b7e7fa9",
- "supabase/functions/_shared/paige-turn/outcome-status.ts": "2efe3c91386d47e475cfc38e69b97a542a9286f3d09ec853d4c6a126e64075f8",
+ "supabase/functions/_shared/paige-turn/outcome-status.ts": "1cfab94676e27a705b620e0a4401ed7712cab25b597bc233aaddcd4d638a1942",
  // Historical Research context and its pure status-result constructors.
  "supabase/functions/_shared/research-history-context.ts": "fa64f9d267b6f2196ae7ff754ef2660a918bcd6da79698700acbfc05222685b2",
  "supabase/functions/_shared/paige-context/mod.ts": "56fb44fcb3c78d6cf3a221290550b57694be6eb99e8eda608e610ddfc65dd6a8",
+ // Independently reviewed completed-lifecycle publication reader; no effect authority.
+ "supabase/functions/_shared/paige-turn/interactive.ts": "c11ff1572df36f4efdc5534e6fa19177748acd551e56e2c147b88b421a256432",
+ // Independently reviewed canonical approval-status projection; no effect authority.
+ "supabase/functions/_shared/paige-turn/interactive-approval.ts": "1fbe20d09c91d4082932a75cb8e52ecb6eaf11a0c516d3f2e0342469a3c9a870",
+ "supabase/functions/_shared/planning/approved-reminder.ts": "2aa731c9f9c116955fb6a7a99a8c814ca0676464ee1fcfbe1b7780b373b68196",
+ "supabase/functions/_shared/planning/original-reminder-outcome.ts": "f7ba277de16f284d0699fc4f9ab103f48bf8ea42cddf6f10c67102c2e9ffd0ce",
+ "supabase/functions/_shared/paige-turn/interactive-reminder-history.ts": "84e35fd73307cf8172951fc1dcbf0b1064dd988cfb596ea95bc3ea7e244b4415",
+ // Original record references remain URL-free, bounded and reauthorized at destination.
+ // EXP02 source review, AUTHOR-REVIEW / LOWER ASSURANCE (ANT161/a22186d8):
+ // only the two existing UUID-reference branches admit systems_check. Original
+ // six-link cap, UUID guard, contact-only labels and URL/account/authority stripping
+ // stay exact. Restoring main8e97's helper reproduces old8465 digest, all120 source
+ // pins and all29 dispatches. Renew this inspected helper only; no extractor,
+ // metadata, dispatch scalar or other dependency changes. Hostile controls retained.
+ "supabase/functions/_shared/paige-turn/record-links.ts": "10dedf3b503c7db57ec2a5ac3195bb4129b8694399c9e7ba9ea15dbcb6e17ac8",
+ // Original extraction input/acknowledgment validation remains authoritative.
+ "supabase/functions/_shared/knowledge-extraction.ts": "458e778114b65959f35c5a65f1b371992faf199f6828d2928df8cb0c5435578d",
+ // Original CURA history and strict native preparation adapter; native authority unchanged.
+ "supabase/functions/_shared/paige-turn/interactive-cura-history.ts": "46578149462437bb3e1e5243277af11b5f7d251a345e75aece2efb020bf7ef88",
+ "supabase/functions/_shared/cura-knowledge-teaching.ts": "b421c4302a7772d7b376a7ff99cd96691991593eb3ab1db31d1ac82a9825df87",
+ // Exact non-author-reviewed generic-email C4b ancestry at a9de011b6;
+ // proposal b4ebdf9d / review 8b83d5c5. Existing114 pins and verifier unchanged.
+ "supabase/functions/_shared/paige-turn/resume.ts": "dbcdf4de1ca3d1e36d4841650fcb42a43d3d747ddc0c88488e80bb3859cbaff6",
+ "supabase/functions/_shared/comms-email/chat.ts": "b2c63f538935839cbafa9642b2d0ca83b8c24b1fc61be8200bda2efc19e9044e",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

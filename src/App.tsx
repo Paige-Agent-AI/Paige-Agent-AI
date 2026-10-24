@@ -44,6 +44,7 @@ import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { DashboardModeProvider } from "./contexts/DashboardModeContext";
 import { BusinessProvider } from "./contexts/BusinessContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
+import { ComposerDraftSessionBinding } from "./components/paige/ComposerDraftSessionBinding";
 import { ClientOnlyRouteGuard } from "./components/auth/ClientOnlyRouteGuard";
 import { useHostRouting } from "./lib/hostRouting";
 import { useReferralTracking } from "./hooks/useReferralTracking";
@@ -131,15 +132,23 @@ const AcceptInvite = lazyWithReload(() => import("./pages/AcceptInvite"));
 
 // Lazy-load existing dashboard sections for /app/* routes
 const RepositioningNotice = lazyWithReload(() => import("./components/dashboard/RepositioningNotice").then(m => ({ default: m.RepositioningNotice })));
-const LearningVault = lazyWithReload(() => import("./components/dashboard/LearningVault").then(m => ({ default: m.LearningVault })));
+const LearningVault = lazyWithReload(() => import("./pages/app/Resources"));
 const CourseViewer = lazyWithReload(() => import("./pages/CourseViewer"));
 const BusinessInfrastructureAssessment = lazyWithReload(() => import("./components/dashboard/business-profile/BusinessInfrastructureAssessment").then(m => ({ default: m.BusinessInfrastructureAssessment })));
 const ProfileSettings = lazyWithReload(() => import("./components/dashboard/ProfileSettings").then(m => ({ default: m.ProfileSettings })));
 const AffiliateTracking = lazyWithReload(() => import("./components/dashboard/AffiliateTracking").then(m => ({ default: m.AffiliateTracking })));
 const Support = lazyWithReload(() => import("./pages/Support"));
 const MyAgreements = lazyWithReload(() => import("./pages/MyAgreements"));
+// E09 Slice A — a customer's Sales Agreements; everyone else still gets MyAgreements there, unchanged (§58).
+const ClientAgreements = lazyWithReload(() => import("./pages/app/Agreements"));
 const ClientApprovals = lazyWithReload(() => import("./pages/ClientApprovals"));
 const ActionItems = lazyWithReload(() => import("./pages/app/ActionItems"));
+const ClientDocuments = lazyWithReload(() => import("./pages/app/ClientDocuments"));
+const ClientMessages = lazyWithReload(() => import("./pages/app/Messages"));
+const ClientSessions = lazyWithReload(() => import("./pages/app/Sessions"));
+const ClientProgress = lazyWithReload(() => import("./pages/app/Progress"));
+const ClientPayments = lazyWithReload(() => import("./pages/app/Billing"));
+const ClientPaymentsInvoice = lazyWithReload(() => import("./pages/app/BillingInvoice"));
 const Planning = lazyWithReload(() => import("./pages/app/Planning"));
 // #244 — the canonical "About Your Paige Team" directory. ONE component, scope prop
 // per route (tenant here; operator in Admin.tsx; agency in AgencyLayout.tsx).
@@ -150,6 +159,8 @@ const GmailCallback = lazyWithReload(() => import("./pages/GmailCallback"));
 // Bounces a signed-in-but-incomplete signup (no lane/agreement/workspace yet) to
 // the /onboarding gate. Not lazy — it's a thin wrapper around the app shells.
 import { RequireCompleteSignup } from "@/components/auth/RequireCompleteSignup";
+import { RequirePortalStaff } from "@/components/auth/RequirePortalStaff";
+import { CustomerFinanceRoute } from "@/components/admin/FundingRoute";
 import { RequireSoloBetaEntitlement } from "@/components/auth/RequireSoloBetaEntitlement";
 import { RequireSetupComplete } from "@/components/auth/RequireSetupComplete";
 
@@ -223,6 +234,7 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
         <BusinessProvider>
         <DashboardModeProvider>
         <ImpersonationProvider>
+        <ComposerDraftSessionBinding />
         <Toaster />
         <Sonner />
         {/* Global platform auto-update banner (#177) — outside <Routes> so it
@@ -277,27 +289,45 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
             {/* New agent-first dashboard */}
             <Route path="/app" element={<RequireCompleteSignup><PageSuspense><AppShell /></PageSuspense></RequireCompleteSignup>}>
               <Route index element={null} />
-              <Route path="credit" element={<PageSuspense><CreditIntelligence /></PageSuspense>} />
-              <Route path="funding" element={<PageSuspense><FundingMatches /></PageSuspense>} />
-              <Route path="funding-journey" element={<PageSuspense><FundingJourney /></PageSuspense>} />
+              {/* E09 F2: funding and credit pages open only for a finance-entitled business (CustomerFinanceRoute,
+                  the one home beside FundingRoute); any other direct URL returns to /app. */}
+              <Route path="credit" element={<CustomerFinanceRoute><PageSuspense><CreditIntelligence /></PageSuspense></CustomerFinanceRoute>} />
+              <Route path="funding" element={<CustomerFinanceRoute><PageSuspense><FundingMatches /></PageSuspense></CustomerFinanceRoute>} />
+              <Route path="funding-journey" element={<CustomerFinanceRoute><PageSuspense><FundingJourney /></PageSuspense></CustomerFinanceRoute>} />
               {/* Legacy dispute routes — repositioned to a notice + CFPB redirect + CSV export */}
-              <Route path="disputes" element={<PageSuspense><RepositioningNotice /></PageSuspense>} />
+              <Route path="disputes" element={<CustomerFinanceRoute><PageSuspense><RepositioningNotice /></PageSuspense></CustomerFinanceRoute>} />
               <Route path="learn" element={<PageSuspense><LearningVault /></PageSuspense>} />
               <Route path="learn/:courseId" element={<PageSuspense><CourseViewer /></PageSuspense>} />
-              <Route path="business" element={<PageSuspense><BusinessInfrastructureAssessment /></PageSuspense>} />
-              <Route path="business-profile" element={<PageSuspense><BusinessInfrastructureAssessment /></PageSuspense>} />
-              <Route path="financial-profile" element={<PageSuspense><FinancialProfile /></PageSuspense>} />
+              <Route path="business" element={<CustomerFinanceRoute><PageSuspense><BusinessInfrastructureAssessment /></PageSuspense></CustomerFinanceRoute>} />
+              <Route path="business-profile" element={<CustomerFinanceRoute><PageSuspense><BusinessInfrastructureAssessment /></PageSuspense></CustomerFinanceRoute>} />
+              <Route path="financial-profile" element={<CustomerFinanceRoute><PageSuspense><FinancialProfile /></PageSuspense></CustomerFinanceRoute>} />
               <Route path="support" element={<PageSuspense><Support /></PageSuspense>} />
               <Route path="settings" element={<PageSuspense><ProfileSettings /></PageSuspense>} />
-              <Route path="agreements" element={<PageSuspense><MyAgreements /></PageSuspense>} />
+              {/* E09 Slice A — a customer's own agreements (sign through /sign/:token, download the sealed copy);
+                  anyone who is not a customer of a business still gets MyAgreements here, unchanged. */}
+              <Route path="agreements" element={<PageSuspense><ClientAgreements /></PageSuspense>} />
+              {/* The PaigeAgent terms the signed-in user accepted, for customers too (§58). */}
+              <Route path="agreements/platform" element={<PageSuspense><MyAgreements /></PageSuspense>} />
               <Route path="affiliate" element={<PageSuspense><AffiliateTracking /></PageSuspense>} />
               <Route path="approvals" element={<PageSuspense><ClientApprovals /></PageSuspense>} />
               <Route path="actions" element={<PageSuspense><ActionItems /></PageSuspense>} />
+              <Route path="documents" element={<PageSuspense><ClientDocuments /></PageSuspense>} />
+              {/* E09 — the customer's portal conversation with their business; ?topic=help is "Contact your team". */}
+              <Route path="messages" element={<PageSuspense><ClientMessages /></PageSuspense>} />
+              {/* E09 Slice 2 — the customer's own sessions; in-window reschedule/cancel through booking-manage. */}
+              <Route path="sessions" element={<PageSuspense><ClientSessions /></PageSuspense>} />
+              {/* E09 Slice 3 — the work the business shared with the customer; read-only. */}
+              <Route path="progress" element={<PageSuspense><ClientProgress /></PageSuspense>} />
+              {/* E09 Slice 5 — "Payments": invoices the business issued to the customer, and each one's own page with
+                  the document and, when the business sent one, its payment link. Read-only; no charge starts here. */}
+              <Route path="billing" element={<PageSuspense><ClientPayments /></PageSuspense>} />
+              <Route path="billing/:invoiceId" element={<PageSuspense><ClientPaymentsInvoice /></PageSuspense>} />
               <Route path="planning" element={<PageSuspense><Planning /></PageSuspense>} />
-              {/* #244 — learn about your Paige team (tenant scope). Read-only; inherits
-                  /app's RequireCompleteSignup, no extra gate. NOT /team — that would break
-                  the /app/* tenant convention (§18); this is the non-colliding home. */}
-              <Route path="paige-team" element={<PageSuspense><PaigeTeamDirectory scope="tenant" /></PageSuspense>} />
+              {/* #244 — learn about your Paige team (tenant scope). Read-only. NOT /team — that would break
+                  the /app/* tenant convention (§18); this is the non-colliding home. Staff only (E09 round 2):
+                  PAIGE is the owner's COO, never in the Customer Portal; a customer gets the portal's
+                  not-available state. lint:customer-identity requires this gate (STAFF_ONLY_ROUTES). */}
+              <Route path="paige-team" element={<RequirePortalStaff><PageSuspense><PaigeTeamDirectory scope="tenant" /></PageSuspense></RequirePortalStaff>} />
             </Route>
 
             {/* Backward compat redirect */}

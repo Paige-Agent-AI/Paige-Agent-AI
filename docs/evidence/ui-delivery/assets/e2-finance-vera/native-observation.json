@@ -1,0 +1,225 @@
+{
+  "kind": "synthetic original component + existing shell, explicit no-backend ports",
+  "frames": [
+    {
+      "file": "before-1536-closed.jpg",
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "stage": "before-44px-repair"
+    },
+    {
+      "file": "before-1536-open.jpg",
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "stage": "before-44px-repair"
+    },
+    {
+      "file": "1536-closed.jpg",
+      "css": [
+        1536,
+        770
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "1536-open.jpg",
+      "css": [
+        1536,
+        770
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "1366-closed.jpg",
+      "css": [
+        1366,
+        768
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "1366-open.jpg",
+      "css": [
+        1366,
+        768
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "1024-closed.jpg",
+      "css": [
+        1024,
+        768
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "1024-open.jpg",
+      "css": [
+        1024,
+        768
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "900-closed.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "900-open.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "390-closed.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "390-keyboard-focus.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "390-open.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "320-closed.jpg",
+      "css": [
+        320,
+        800
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "390-debt-unavailable.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "final-44px"
+    },
+    {
+      "file": "390-banking-loading.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "synthetic-loading"
+    },
+    {
+      "file": "390-banking-error.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "synthetic-error"
+    },
+    {
+      "file": "390-banking-member.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "synthetic-member"
+    },
+    {
+      "file": "390-second-workspace-dark.jpg",
+      "css": [
+        390,
+        844
+      ],
+      "stage": "synthetic-workspace-b"
+    }
+  ],
+  "requiredGeometry": [
+    {
+      "cta": [
+        {
+          "height": 44,
+          "minHeight": "44px"
+        }
+      ],
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    {
+      "cta": [
+        {
+          "height": 44,
+          "minHeight": "44px"
+        }
+      ],
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "cta": [
+        {
+          "height": 44,
+          "minHeight": "44px"
+        }
+      ],
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 768,
+      "scrollWidth": 1024,
+      "width": 1024
+    },
+    {
+      "cta": [
+        {
+          "height": 44,
+          "minHeight": "44px"
+        }
+      ],
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 1000,
+      "scrollWidth": 900,
+      "width": 900
+    }
+  ],
+  "phoneReflow": {
+    "width320": true,
+    "width390": true,
+    "horizontalDocumentOverflow": false
+  },
+  "keyboard": {
+    "financeButtonFocusVisible": true,
+    "tabReachesOriginalPeriodControl": true,
+    "enterDispatchUnverifiedInHarness": true
+  },
+  "handoffBoundary": "Original harness has no paige:open listener. Original component tests cover event payload; Direct PAIGE covers shell geometry only. Actual conversation handoff awaits released ordinary SOLO QA.",
+  "reducedMotionObserved": true,
+  "unverified": [
+    "native browser zoom",
+    "screen reader AT",
+    "authenticated report/specialist analysis",
+    "cross-account permission acceptance"
+  ]
+}

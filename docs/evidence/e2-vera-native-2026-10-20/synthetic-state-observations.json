@@ -1,0 +1,46 @@
+[
+  {
+    "scenario": "loading",
+    "figures": 0,
+    "stateText": [
+      "Reading your business review…"
+    ],
+    "veraButton": true
+  },
+  {
+    "scenario": "error",
+    "figures": 0,
+    "stateText": [
+      "Your business review could not be read right now. Nothing was changed.Try again"
+    ],
+    "veraButton": true
+  },
+  {
+    "scenario": "empty",
+    "figures": 0,
+    "stateText": [],
+    "veraButton": true
+  },
+  {
+    "scenario": "unavailable",
+    "figures": 0,
+    "stateText": [
+      "No business figures could be read. The source gaps are listed below; they are not zero results."
+    ],
+    "veraButton": true
+  },
+  {
+    "scenario": "member",
+    "figures": 0,
+    "stateText": [
+      "This business review is not authorized for this role.Try again"
+    ],
+    "veraButton": true
+  },
+  {
+    "scenario": "ready",
+    "figures": 1,
+    "stateText": [],
+    "veraButton": true
+  }
+]

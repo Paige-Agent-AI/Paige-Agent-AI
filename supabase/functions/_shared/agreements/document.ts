@@ -25,8 +25,26 @@
 
 import { normaliseFormatting, renderDoc, sanitizeWinAnsi } from "../doc-render.ts";
 import { sha256Hex } from "./token.ts";
+import {prepareAgreementFieldInput,type AgreementFieldInput,type AgreementFieldPreparation,type CommercialAgreementFieldPreparation} from './field-preparation.ts';
+import {canonicalPresentationJson} from './preparation-json.ts';
+import {checkSignatureImage,type SignatureImageCheck} from './signing-guard.ts';
 
 const PDFLIB_SPEC = "npm:pdf-lib@1.17.1";
+
+/** Use the SAME original PNG policy and actual stamp decoder before recording
+ * an irreversible mark. Legacy completed-copy fallback is not permission to
+ * accept a new corrupt image. No PDF/file/effect is retained by this preflight. */
+export async function prepareSignatureImage(raw:unknown):Promise<SignatureImageCheck>{
+  const image=checkSignatureImage(raw);
+  if(image.ok===false||image.base64===null)return image;
+  try{
+    const {PDFDocument}=await import(PDFLIB_SPEC);
+    const pdf=await PDFDocument.create();await pdf.embedPng(image.base64);
+    return image;
+  }catch{
+    return {ok:false,reason:'That drawn signature cannot be retained. Draw it again, or type your name instead.'};
+  }
+}
 
 /**
  * A name this engine cannot faithfully put on paper.
@@ -235,6 +253,8 @@ export function assertDocumentIsRenderable(title: string, bodyMarkdown: string |
 }
 
 export interface AgreementPartyLine {
+  /** Original native signer reference; required only for prepared-field sealing. */
+  signerId?: string;
   fullName: string;
   email: string;
   role: string;
@@ -257,6 +277,47 @@ export interface AgreementEventLine {
   actorKind: string;
   actorLabel: string | null;
   ip: string | null;
+}
+
+type PreparedSealFields={
+  preparation_id:string;
+  preparation:AgreementFieldPreparation|CommercialAgreementFieldPreparation;
+  inputs:readonly AgreementFieldInput[];
+};
+const invalidPreparedSeal=():never=>{throw new TypeError('AGREEMENT_PREPARED_SEAL_INVALID');};
+
+/** Pure reproduction of trusted native records, not authorization or a signing
+ * act. The eventual original caller must resolve the selected immutable map,
+ * actual recorded answers and signed/consented parties before calling this. */
+async function checkedPreparedSeal(input:{presentedBytes:Uint8Array;presentedSha256:string;presentedKind:'file'|'text';agreementId:string;parties:AgreementPartyLine[];preparedFields:PreparedSealFields}){
+  try{
+    const prepared=input.preparedFields,manifest=prepared.preparation.manifest,source=manifest.source;
+    if(input.presentedKind!=='file'||input.agreementId!==source.agreement_id||input.presentedSha256!==manifest.document.sha256
+      ||!Array.isArray(prepared.inputs)||prepared.inputs.length!==manifest.signers.length||input.parties.length!==manifest.signers.length)return invalidPreparedSeal();
+    // Same native inspector/loader and geometry as the reviewed preparation. No
+    // re-render of its body and no second crop/rotation interpretation.
+    const {inspectAgreementPreparationPdf}=await import('./document-preparation.ts');
+    const actual=await inspectAgreementPreparationPdf(input.presentedBytes,input.presentedSha256);
+    if(canonicalPresentationJson(actual)!==canonicalPresentationJson(manifest.document))return invalidPreparedSeal();
+    const seen=new Set<string>(),answers=new Map<string,AgreementFieldInput>();
+    for(const party of input.parties){
+      const signer=manifest.signers.find(signer=>signer.id===party.signerId);
+      if(!signer||seen.has(signer.id)||party.status!=='signed'||!party.typedName?.trim()||!party.signedAt||!party.consentAt
+        ||!Number.isFinite(Date.parse(party.consentAt))||Date.parse(party.consentAt)>Date.parse(party.signedAt)
+        ||!party.consentSlug?.trim()||!Number.isSafeInteger(party.consentVersion)||Number(party.consentVersion)<1)return invalidPreparedSeal();
+      seen.add(signer.id);
+      const identity={id:signer.id,full_name:party.fullName,email:party.email,signer_role:party.role,signing_order:party.signingOrder};
+      if(await sha256Hex(canonicalPresentationJson(identity))!==signer.identity_sha256)return invalidPreparedSeal();
+      const recorded:readonly AgreementFieldInput[]=prepared.inputs.filter((row:AgreementFieldInput)=>row.signer_id===signer.id);
+      if(recorded.length!==1||recorded[0].signed_at!==party.signedAt)return invalidPreparedSeal();
+      const values=recorded[0].values.filter(field=>field.kind!=='signed_date').map(field=>({field_id:field.field_id,value:field.value}));
+      const checked=await prepareAgreementFieldInput(prepared.preparation,{tenant_id:source.tenant_id,agreement_id:source.agreement_id,client_id:source.client_id,
+        preparation_id:prepared.preparation_id,preparation_sha256:prepared.preparation.preparation_sha256,signer_id:signer.id,signed_at:party.signedAt},values);
+      if(canonicalPresentationJson(checked)!==canonicalPresentationJson(recorded[0]))return invalidPreparedSeal();
+      answers.set(signer.id,checked);
+    }
+    return {manifest,answers};
+  }catch{return invalidPreparedSeal();}
 }
 
 /**
@@ -317,10 +378,17 @@ export async function sealAgreementPdf(input: {
   parties: AgreementPartyLine[];
   events: AgreementEventLine[];
   sealedAtIso: string;
+  /** Unmounted until original native signing/consent/input/approval is wired. */
+  preparedFields?: PreparedSealFields;
 }): Promise<Uint8Array> {
+  // Preserve one snapshot across hashing/import/PDF awaits. Legacy callers keep
+  // their original path; no existing caller supplies this optional contract.
+  if(input.preparedFields!==undefined){try{input=structuredClone(input);}catch{return invalidPreparedSeal();}}
   // Backstop. The send path already refused these, so reaching here means a name changed after
   // send or a caller skipped the check — either way, stamping `?` onto the record is not the answer.
   assertNamesAreStampable(input.parties.flatMap((p) => [p.fullName, p.typedName]));
+
+  const prepared=input.preparedFields===undefined?null:await checkedPreparedSeal({...input,preparedFields:input.preparedFields});
 
   const { PDFDocument, StandardFonts, rgb } = await import(PDFLIB_SPEC);
 
@@ -328,6 +396,63 @@ export async function sealAgreementPdf(input: {
   const pdf = await PDFDocument.load(input.presentedBytes);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  if(prepared){
+    const checked=prepared,parties=input.parties;
+    try{
+      const {pushGraphicsState,popGraphicsState,concatTransformationMatrix}=await import(PDFLIB_SPEC),ink=rgb(0.09,0.09,0.11);
+      const images=new Map<string,Awaited<ReturnType<typeof pdf.embedPng>>>();
+      for(const descriptor of checked.manifest.document.pages){
+        const page=pdf.getPage(descriptor.page-1),{crop_x:x,crop_y:y,crop_width:w,crop_height:h,rotation}=descriptor;
+        // Convert upright visible-crop coordinates to the ORIGINAL PDF page once.
+        const matrix:[number,number,number,number,number,number]=rotation===0?[1,0,0,1,x,y]:rotation===90?[0,1,-1,0,x+w,y]:rotation===180?[-1,0,0,-1,x+w,y+h]:[0,-1,1,0,x,y+h];
+        page.pushOperators(pushGraphicsState(),concatTransformationMatrix(...matrix));
+        for(const field of checked.manifest.fields.filter(field=>field.page===descriptor.page)){
+          const answer=checked.answers.get(field.signer_id)?.values.find(answer=>answer.field_id===field.id);
+          if(!answer)continue; // An omitted optional answer is not invented.
+          const bottom=descriptor.height-field.y-field.height;
+          if(field.kind==='checkbox'){
+            const side=Math.min(14,field.width-4,field.height-4);if(side<6)return invalidPreparedSeal();
+            const left=field.x+2,base=bottom+(field.height-side)/2;
+            page.drawRectangle({x:left,y:base,width:side,height:side,borderWidth:0.8,borderColor:ink});
+            if(answer.value===true){
+              page.drawLine({start:{x:left+2,y:base+2},end:{x:left+side-2,y:base+side-2},thickness:1,color:ink});
+              page.drawLine({start:{x:left+2,y:base+side-2},end:{x:left+side-2,y:base+2},thickness:1,color:ink});
+            }
+            continue;
+          }
+          const party=parties.find(party=>party.signerId===field.signer_id)!;
+          if(field.kind==='signature'&&party.signatureImagePng){
+            let image=images.get(field.signer_id);
+            if(!image){image=await pdf.embedPng(party.signatureImagePng);images.set(field.signer_id,image);}
+            const scale=Math.min((field.width-4)/image.width,(field.height-4)/image.height);
+            if(!Number.isFinite(scale)||scale<=0)return invalidPreparedSeal();
+            const width=image.width*scale,height=image.height*scale;
+            page.drawImage(image,{x:field.x+(field.width-width)/2,y:bottom+(field.height-height)/2,width,height});continue;
+          }
+          const value=field.kind==='signature'?`/s/ ${party.typedName}`:String(answer.value);
+          if(wouldLoseCharacters(value))return invalidPreparedSeal();
+          const normalized=normaliseFormatting(value).replace(/\r\n?/g,'\n').replace(/\t/g,'    '),face=field.kind==='signature'||field.kind==='initials'?bold:font;
+          let fitted:{size:number;lines:string[]}|undefined;
+          // Wrap every character without truncation; never shrink below6pt or
+          // stamp outside the reviewed field. Preflight must run before signing.
+          for(let size=12;size>=6&&!fitted;size-=0.5){
+            const lines:string[]=[];let tooWide=false;
+            for(const paragraph of normalized.split('\n')){
+              let line='',width=0;
+              for(const char of paragraph){const glyphWidth=face.widthOfTextAtSize(char,size);if(glyphWidth>field.width-4){tooWide=true;break;}
+                if(width+glyphWidth>field.width-4){lines.push(line);line='';width=0;}line+=char;width+=glyphWidth;}
+              if(tooWide)break;lines.push(line);
+            }
+            if(!tooWide&&lines.length*size*1.25<=field.height-4)fitted={size,lines};
+          }
+          if(!fitted)return invalidPreparedSeal();
+          const fittedText=fitted;
+          fittedText.lines.forEach((line,index)=>{if(line)page.drawText(line,{x:field.x+2,y:descriptor.height-field.y-2-fittedText.size-index*fittedText.size*1.25,size:fittedText.size,font:face,color:ink});});
+        }
+        page.pushOperators(popGraphicsState());
+      }
+    }catch{return invalidPreparedSeal();}
+  }
 
   const PAGE_W = 612, PAGE_H = 792, MARGIN = 54;
   const ink = rgb(0.09, 0.09, 0.11);

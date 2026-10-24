@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-17T02:55:32.9126787Z",
+  "role": "impeccable-documenter",
+  "projectRoot": "C:\\Users\\tonig\\Documents\\Codex\\2026-10-14\\paige-engineering-2-0-solo-to\\work\\automation-human-control",
+  "frozenHead": "eabe1cbc15e9f4104c4b6f395a4902511dba5bb4",
+  "scope": "Ordinary incumbent extension comparison only; finished local source and existing native evidence packet",
+  "verdict": "DOCUMENT_COMPLETE_BOUNDED_LOCAL_ARTIFACT_SCOPE",
+  "systemDisposition": "KEEP",
+  "designAndSidecarAction": "No changes",
+  "writeBoundary": "work/impeccable-restoration-documenter-20261017.json",
+  "operatingSpec": "C:/Users/tonig/.agents/skills/impeccable/reference/document.md",
+  "context": "Installed Impeccable 4.3.1 context loaded once; new-work existing-surface extension rule preserves world/composition; no durable system change authorized",
+  "inspectedFiles": [
+    {
+      "sha256": "fb5b1d84e1c5e092db2f89d2f46059ed894c01355f4dc5594366ae0b1f46c500",
+      "path": "DESIGN.md"
+    },
+    {
+      "sha256": "10749d235989f091c898f6099b359a48a1f2aa5388c5f12a8d3729923a46d2b0",
+      "path": ".impeccable/design.json"
+    },
+    {
+      "sha256": "2d52b884108536d6b0dc3695ef9f6b670e832f38394531d79066a9758bae1aae",
+      "path": ".impeccable/config.json"
+    },
+    {
+      "sha256": "e548cc7f875b4f61911f02270bcf1b32299015c1a6c45dcf722ba42118f68263",
+      "path": "PRODUCT.md"
+    },
+    {
+      "sha256": "a22b6404c25239c2b4c80e46bd149a1aed8e8bf44f7d0d1366e2b5f85fa85cfd",
+      "path": "AGENTS.md"
+    },
+    {
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "path": "src/index.css"
+    },
+    {
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+      "path": "src/solo/solo-tokens.css"
+    },
+    {
+      "sha256": "5a1e7fb1342b078025825c085656eaabd174402a45e55df9eb7b959a3cf958ec",
+      "path": "src/solo/settings-integrations.css"
+    },
+    {
+      "sha256": "1f011f895dac0fa65e2db5bd7a92ea56a0c834b47272d0b30869ab94af950fcb",
+      "path": "src/solo/owner-task-automations.tsx"
+    },
+    {
+      "sha256": "dcc067d81ba502b2c31598c83ceacf85c99b8ff446a1a99b0d23d7d7ab3eb3b8",
+      "path": "src/solo/settings-automations.tsx"
+    },
+    {
+      "sha256": "018e903d0eeacf66858a718a9d1875a36d4a263aa6aab94d7e5cd3357594c8df",
+      "path": "src/components/paige/ApprovalRow.tsx"
+    },
+    {
+      "sha256": "eab98710cf3febd0e930141119c87fcbcc6aee225fc59414c8aaa44a525f4acd",
+      "path": "src/solo/GamePlanApprovals.tsx"
+    },
+    {
+      "sha256": "0e795d178633cd3a12bba06d6e891cba3ab16b17e2f36005514941668dc56618",
+      "path": "src/solo/SoloGamePlanWorkspace.tsx"
+    },
+    {
+      "sha256": "a00e3a9aa0aa7fa3b18b16631ad4328b78d72b10e81ff765394eaa9f9fc6e9be",
+      "path": "src/solo/solo-game-plan-workspace.css"
+    },
+    {
+      "sha256": "df20f846db266b1f1231086452d35fd7262d392bbc738dbb52175e999f7aefa4",
+      "path": "src/solo/__render__/owner-task-automations.render.test.tsx"
+    },
+    {
+      "sha256": "5248ec947f7d345d5fe245e60090d931251ea6d02f79ec6f8dca9b9a1776b5c8",
+      "path": "docs/evidence/ui-delivery/ant21-automation-human-control.md"
+    },
+    {
+      "sha256": "d6b8e8bc485afb550c0c8b49a5e6aa89588e8f84b75993ffdfc3fcdff5a92d7c",
+      "path": "docs/evidence/ui-delivery/ant21-approval-outcome-ui.md"
+    },
+    {
+      "sha256": "4269957a718a3cbce403c0c0a30347d011d14331af9a92b776d275e211c34866",
+      "path": "docs/evidence/ui-delivery/owner-task-correct-frame/render-manifest.json"
+    },
+    {
+      "sha256": "43ece1278e6abb2de15d59bb5fd2d913daf048d5e37e280a002b9dc341306257",
+      "path": "docs/evidence/ui-delivery/owner-task-correct-frame/native-summary.json"
+    },
+    {
+      "sha256": "7d500c0ef9d2d6cc7941cdfc550131b218bf2fa7adff2224d1604ce0db5205e3",
+      "path": "docs/evidence/ui-delivery/owner-task-correct-frame/native-frame-results.json"
+    },
+    {
+      "sha256": "fcb46a27a3a0ec97fcba2cc8e86ee3a28d38604f376ee73ed581333e02a1fbc2",
+      "path": "docs/evidence/ui-delivery/approval-outcomes/render-manifest.json"
+    },
+    {
+      "sha256": "ec86bf7f69c65e364a0c5d302ed693d22dd558fb209c5953b4bd391c7ee1d796",
+      "path": "docs/evidence/ui-delivery/approval-outcomes/native-summary.json"
+    }
+  ],
+  "campaignFingerprintChecks": [
+    {
+      "sourceFingerprints": [
+        {
+          "expectedSha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0",
+          "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+          "matches": true,
+          "currentSha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "24cfda4660a7b500ddf2b821e7225e2972cec564bc594e5bcc981595d13bd1e8",
+          "path": "src/solo/SoloApp.tsx",
+          "matches": true,
+          "currentSha256": "24cfda4660a7b500ddf2b821e7225e2972cec564bc594e5bcc981595d13bd1e8",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "a0006545a4502aaa5db2c2531ad62c5f2c7c71bfe6abb9e525aa2fa0566e5350",
+          "path": "src/solo/SoloScreenBoundary.tsx",
+          "matches": true,
+          "currentSha256": "a0006545a4502aaa5db2c2531ad62c5f2c7c71bfe6abb9e525aa2fa0566e5350",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+          "path": "src/solo/solo-tokens.css",
+          "matches": true,
+          "currentSha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0",
+          "path": "src/solo/SoloPaigeWorkspace.tsx",
+          "matches": true,
+          "currentSha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "5f82e4ae13f0ecc31c10035c16f924cb68614903c9e5021f72242d7e903d1d0d",
+          "path": "src/solo/settings.tsx",
+          "matches": true,
+          "currentSha256": "5f82e4ae13f0ecc31c10035c16f924cb68614903c9e5021f72242d7e903d1d0d",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "a94181b0a395a662b18b017610b3b18f36868b52c920986b94fd180f03923180",
+          "path": "src/solo/settings-integrations.tsx",
+          "matches": true,
+          "currentSha256": "a94181b0a395a662b18b017610b3b18f36868b52c920986b94fd180f03923180",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "dcc067d81ba502b2c31598c83ceacf85c99b8ff446a1a99b0d23d7d7ab3eb3b8",
+          "path": "src/solo/settings-automations.tsx",
+          "matches": true,
+          "currentSha256": "dcc067d81ba502b2c31598c83ceacf85c99b8ff446a1a99b0d23d7d7ab3eb3b8",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "1f011f895dac0fa65e2db5bd7a92ea56a0c834b47272d0b30869ab94af950fcb",
+          "path": "src/solo/owner-task-automations.tsx",
+          "matches": true,
+          "currentSha256": "1f011f895dac0fa65e2db5bd7a92ea56a0c834b47272d0b30869ab94af950fcb",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "8f10e4bff70e99b76ee359a4fcc7535525b1f19056a3348807f33a06031c0aff",
+          "path": "src/solo/data/useOwnerTaskAutomations.ts",
+          "matches": true,
+          "currentSha256": "8f10e4bff70e99b76ee359a4fcc7535525b1f19056a3348807f33a06031c0aff",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "4cb95fed7190a8b16af1cf915bafcd27a5a724c9ecc37f0859a2aa06db4c46a2",
+          "path": "src/solo/data/ownerTaskAutomation.ts",
+          "matches": true,
+          "currentSha256": "4cb95fed7190a8b16af1cf915bafcd27a5a724c9ecc37f0859a2aa06db4c46a2",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+          "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+          "matches": true,
+          "currentSha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "2903be5f091da16ae4c9045ef991bbd3d6416d50b3e92f3f9eaa7d25ff5a1e8e",
+          "path": "src/solo/solo-paige-workspace.css",
+          "matches": true,
+          "currentSha256": "2903be5f091da16ae4c9045ef991bbd3d6416d50b3e92f3f9eaa7d25ff5a1e8e",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "d3f5bd257c442ebe2fb4386ed4242b51cf3ca4809905f47e3e24544b03e64112",
+          "path": "src/solo/settings.css",
+          "matches": true,
+          "currentSha256": "d3f5bd257c442ebe2fb4386ed4242b51cf3ca4809905f47e3e24544b03e64112",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "5a1e7fb1342b078025825c085656eaabd174402a45e55df9eb7b959a3cf958ec",
+          "path": "src/solo/settings-integrations.css",
+          "matches": true,
+          "currentSha256": "5a1e7fb1342b078025825c085656eaabd174402a45e55df9eb7b959a3cf958ec",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "df20f846db266b1f1231086452d35fd7262d392bbc738dbb52175e999f7aefa4",
+          "path": "src/solo/__render__/owner-task-automations.render.test.tsx",
+          "matches": true,
+          "currentSha256": "df20f846db266b1f1231086452d35fd7262d392bbc738dbb52175e999f7aefa4",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+          "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+          "matches": true,
+          "currentSha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        }
+      ],
+      "name": "owner-task-correct-frame",
+      "sourceCount": 17,
+      "manifestPath": "docs/evidence/ui-delivery/owner-task-correct-frame/render-manifest.json",
+      "allMatch": true,
+      "manifestSha256": "4269957a718a3cbce403c0c0a30347d011d14331af9a92b776d275e211c34866"
+    },
+    {
+      "sourceFingerprints": [
+        {
+          "expectedSha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0",
+          "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+          "matches": true,
+          "currentSha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0",
+          "path": "src/solo/SoloPaigeWorkspace.tsx",
+          "matches": true,
+          "currentSha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61",
+          "path": "src/solo/CommandCenter.tsx",
+          "matches": true,
+          "currentSha256": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "0e795d178633cd3a12bba06d6e891cba3ab16b17e2f36005514941668dc56618",
+          "path": "src/solo/SoloGamePlanWorkspace.tsx",
+          "matches": true,
+          "currentSha256": "0e795d178633cd3a12bba06d6e891cba3ab16b17e2f36005514941668dc56618",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "eab98710cf3febd0e930141119c87fcbcc6aee225fc59414c8aaa44a525f4acd",
+          "path": "src/solo/GamePlanApprovals.tsx",
+          "matches": true,
+          "currentSha256": "eab98710cf3febd0e930141119c87fcbcc6aee225fc59414c8aaa44a525f4acd",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "018e903d0eeacf66858a718a9d1875a36d4a263aa6aab94d7e5cd3357594c8df",
+          "path": "src/components/paige/ApprovalRow.tsx",
+          "matches": true,
+          "currentSha256": "018e903d0eeacf66858a718a9d1875a36d4a263aa6aab94d7e5cd3357594c8df",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "c4e48cc09a4234807bbbf9dcfa0296c62656a190bd3726aca16aef3da7a2af89",
+          "path": "src/hooks/usePendingApprovals.ts",
+          "matches": true,
+          "currentSha256": "c4e48cc09a4234807bbbf9dcfa0296c62656a190bd3726aca16aef3da7a2af89",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+          "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+          "matches": true,
+          "currentSha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "24cfda4660a7b500ddf2b821e7225e2972cec564bc594e5bcc981595d13bd1e8",
+          "path": "src/solo/SoloApp.tsx",
+          "matches": true,
+          "currentSha256": "24cfda4660a7b500ddf2b821e7225e2972cec564bc594e5bcc981595d13bd1e8",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+          "path": "src/solo/solo-tokens.css",
+          "matches": true,
+          "currentSha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "2903be5f091da16ae4c9045ef991bbd3d6416d50b3e92f3f9eaa7d25ff5a1e8e",
+          "path": "src/solo/solo-paige-workspace.css",
+          "matches": true,
+          "currentSha256": "2903be5f091da16ae4c9045ef991bbd3d6416d50b3e92f3f9eaa7d25ff5a1e8e",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "a00e3a9aa0aa7fa3b18b16631ad4328b78d72b10e81ff765394eaa9f9fc6e9be",
+          "path": "src/solo/solo-game-plan-workspace.css",
+          "matches": true,
+          "currentSha256": "a00e3a9aa0aa7fa3b18b16631ad4328b78d72b10e81ff765394eaa9f9fc6e9be",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        },
+        {
+          "expectedSha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+          "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+          "matches": true,
+          "currentSha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+          "inspection": "Campaign fingerprint comparison; content sampling separately enumerated"
+        }
+      ],
+      "name": "approval-outcomes",
+      "sourceCount": 13,
+      "manifestPath": "docs/evidence/ui-delivery/approval-outcomes/render-manifest.json",
+      "allMatch": true,
+      "manifestSha256": "fcb46a27a3a0ec97fcba2cc8e86ee3a28d38604f376ee73ed581333e02a1fbc2"
+    }
+  ],
+  "systemSummary": [
+    "Palette: preserve authored --pg-* Obsidian/Mineral warm layers, ink, violet and champagne/bronze; scoped legacy SOLO aliases coexist and are not new canonical tokens.",
+    "Type: preserve Schibsted pg title21/lead16/body14/compact13/label11 and data mono; observed Settings local13.8/13.2/12.4/12.2 and Game Plan18-23 heading/14 body remain scoped.",
+    "Theme Root Rule: Settings uses incumbent --pg-* controls and theme root; Game Plan continues its existing scoped palette rather than introducing replacement tokens.",
+    "Prose Figures Rule: retain figures-only intent; existing root-wide tabular drift remains excluded from future reusable guidance.",
+    "Existing Depth Rule: existing line edges, raised fills, local shapes, native row primitives and bounded scroll owners are retained; no new world, seed, comp or raster asset."
+  ],
+  "currentIncrement": [
+    "OwnerTaskAutomations joins the existing Settings Automations view ahead of pipeline rules; reuses sa-panel/sa-rule/sa-ctl/sa-action/sa-editor; wrapping full title/description, readable state words, Cancel/Escape focus return and manual Refresh remain scoped behavior.",
+    "ApprovalRow retains Button/Badge/Textarea primitives and inline View/Close/Decline; full safe task and explicit executed/scheduled/queued/acknowledged/unknown outcomes use wrapping prose, status text and visible recovery rather than new visual vocabulary.",
+    "Responsive Game Plan fix preserves the 1050px stacked composition and inner scroll ownership using natural content rows; 620px header stacks. No body-scroll policy or theme token replacement.",
+    "Settings local controls30/36px and Game Plan compact controls34/29px are incumbent component dimensions, not the sampled weekly40/44px system rules. No universal dimension is inferred."
+  ],
+  "preexistingDriftNotCanonized": [
+    "DESIGN.md explicitly covers sampled Chat/Calendar/Operations/weekly UI, not an exhaustive Settings/Game Plan system. Sidecar weekly examples and breakpoints do not describe every native component; ordinary extension does not authorize expanding that record.",
+    "solo-tokens.css retains scoped Geist/Geist Mono and legacy palette aliases alongside pg-root Schibsted tokens; native corrected-frame data reports dark scoped canvas #0C0A1B, whereas DESIGN.md pg obsidian-canvas is #100e14. Preserve the authored coexistence and report coverage drift; do not falsely record one uniform palette or type ladder.",
+    "Settings sa-ctl/sa-action retain gold focus, while sampled system describes violet shared focus and a scoped weekly ink exception. This inherited local treatment is not promoted to a new universal focus rule.",
+    "Existing sd-kicker/sd-eyebrow and GamePlanApprovals sd-eyebrow remain craft-floor defects carried by the incumbent build; not new reusable rules and not repaired in this documentation-only pass.",
+    "Previously recorded Calendar gold focus, root-wide tabular numerals and10px note text remain not canonized. No repair to unseen surfaces or existing sidecar preview ramps."
+  ],
+  "evidenceBoundary": {
+    "newBrowserOrTestRun": "NONE; static source/system comparison and fingerprint readback only",
+    "approval": "Existing packet:88 matrix PNGs plus6 keyboard/readability PNGs;13 fingerprints freshly compared;24 intentional PAIGE-covered cases excluded",
+    "nativeResultsSha256": "7d500c0ef9d2d6cc7941cdfc550131b218bf2fa7adff2224d1604ce0db5205e3",
+    "rendererSha256": "df20f846db266b1f1231086452d35fd7262d392bbc738dbb52175e999f7aefa4",
+    "settings": "Existing corrected-frame packet:64 matrix PNGs plus8 keyboard PNGs;17 fingerprints freshly compared;18 intentional PAIGE-covered cases excluded from unobscured claims",
+    "authenticatedRuntime": "UNVERIFIED",
+    "ci": "UNVERIFIED",
+    "deployment": "UNVERIFIED",
+    "actualEffects": "UNVERIFIED",
+    "Live": "UNVERIFIED",
+    "finishReviews": "Existing distinct ship/no-material-finding reviews accepted as supplied; not reopened or rerun",
+    "ownerAcceptance": "UNVERIFIED"
+  },
+  "preservation": {
+    "sidecarSha256Before": "10749d235989f091c898f6099b359a48a1f2aa5388c5f12a8d3729923a46d2b0",
+    "designTokenWrites": "NONE",
+    "designSha256Before": "fb5b1d84e1c5e092db2f89d2f46059ed894c01355f4dc5594366ae0b1f46c500",
+    "productionWrites": "NONE",
+    "evidenceDocWrites": "NONE"
+  }
+}

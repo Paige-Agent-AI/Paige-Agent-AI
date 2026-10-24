@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { useSeparationAudit } from "@/hooks/useSeparationAudit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,8 @@ const statusBadge = (r: SeparationResult) => {
 };
 
 export function SeparationAuditCard({ userId, businessId, variant = "full", onFix }: Props) {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const navigate = useNavigate();
   const { data: result, isLoading } = useSeparationAudit(userId, businessId);
 
@@ -75,7 +78,7 @@ export function SeparationAuditCard({ userId, businessId, variant = "full", onFi
               Personal / Business Separation Audit
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-              Funders, LexisNexis, and the business bureaus penalize files where your personal and business identities overlap. Paige checks every field that should be different.
+              Funders, LexisNexis, and the business bureaus penalize files where your personal and business identities overlap. {agentName} checks every field that should be different.
             </p>
           </div>
           <Badge variant="outline" className={badge.cls}>{badge.label}</Badge>

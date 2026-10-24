@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const errors: Array<{ step: string; error: string }> = [];
-    const track = async (step: string, p: Promise<any>) => {
+    const track = async (step: string, p: PromiseLike<any>) => {
       try {
         const { error } = await p;
         if (error) errors.push({ step, error: error.message });
@@ -109,6 +109,11 @@ const handler = async (req: Request): Promise<Response> => {
     for (const t of owned) {
       await track(`delete ${t}`, admin.from(t).delete().eq(columnByTable[t] ?? "user_id", user_id));
     }
+    // Private customer AI history is authored by this Auth subject. Its existing
+    // caller FK is RESTRICT, so the canonical account-deletion path removes only
+    // this audience before Auth deletion. Business/staff history is unaffected.
+    await track("delete private customer conversations", admin.from("paige_chat_threads")
+      .delete().eq("caller_user_id", user_id).eq("audience", "customer_private"));
 
     // Delete auth user
     const { error: deleteErr } = await admin.auth.admin.deleteUser(user_id);

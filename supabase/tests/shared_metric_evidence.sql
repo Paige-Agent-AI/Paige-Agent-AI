@@ -55,16 +55,96 @@ INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
  ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=EXCLUDED.active_tenant_id;
 CREATE TEMP TABLE seam_result(bundle jsonb);
 GRANT SELECT,INSERT,UPDATE ON seam_result TO authenticated;
+-- EXP02 delayed work must reuse the original Metric actor predicate, never
+-- broaden it to generic document roles. All mutations below are rolled back.
+SELECT pg_temp.require_true(NOT EXISTS (
+ SELECT 1 FROM (VALUES ('anon'),('authenticated'),('service_role')) roles(name)
+ WHERE has_function_privilege(name,'public._analytics_metric_actor_authorized(uuid,uuid)','EXECUTE')
+),'Metric actor predicate is private to native callers');
+SELECT pg_temp.require_true(NOT EXISTS (
+ SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
+ WHERE p.oid='public._analytics_metric_actor_authorized(uuid,uuid)'::regprocedure AND a.grantee=0
+),'Metric actor predicate has no PUBLIC grant');
+DO $metric_actor$ DECLARE
+ actor uuid := 'a3450000-0000-4000-8000-000000000001';
+ workspace uuid := 'a3450000-0000-4000-8000-000000000011';
+ other_workspace uuid := 'a3450000-0000-4000-8000-000000000012';
+ seat_role text;
+ denied_constraint text;
+BEGIN
+ PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace),'original admin with current profile');
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,other_workspace),'even a real seat in another active workspace is insufficient');
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(NULL,workspace)
+  AND NOT public._analytics_metric_actor_authorized(actor,NULL),'missing stored work context');
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized('a3450000-0000-4000-8000-000000000003',workspace),'platform role alone is not Metric authority');
+ -- Current provisioning forbids retired title roles. Prove that real constraint
+ -- instead of weakening it to manufacture a coach seat for this fixture.
+ BEGIN
+  UPDATE public.tenant_members SET role='coach' WHERE user_id=actor AND tenant_id=workspace;
+  RAISE EXCEPTION 'FAIL: retired title role fixture must be refused';
+ EXCEPTION WHEN check_violation THEN
+  GET STACKED DIAGNOSTICS denied_constraint = CONSTRAINT_NAME;
+  PERFORM pg_temp.require_true(denied_constraint='tenant_members_role_not_retired_title_role','original retired-role guard remains enforced');
+ END;
+ FOREACH seat_role IN ARRAY ARRAY['member','admin'] LOOP
+  UPDATE public.tenant_members SET role=seat_role::public.tenant_role WHERE user_id=actor AND tenant_id=workspace;
+  PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace) IS NOT DISTINCT FROM (seat_role='admin'),'original exact Metric seat role');
+ END LOOP;
+ UPDATE public.tenant_members SET status='suspended' WHERE user_id=actor AND tenant_id=workspace;
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,workspace),'suspended initiating seat');
+ UPDATE public.tenant_members SET status='active' WHERE user_id=actor AND tenant_id=workspace;
+ UPDATE public.profiles SET active_tenant_id=other_workspace WHERE user_id=actor;
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,workspace),'initiating actor switched active workspace');
+ UPDATE public.profiles SET active_tenant_id=workspace WHERE user_id=actor;
+ UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id=actor;
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,workspace),'currently banned initiating identity');
+ UPDATE auth.users SET banned_until=now()-interval '1 day' WHERE id=actor;
+ PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace),'expired ban does not become permanent denial');
+ UPDATE auth.users SET banned_until=NULL,deleted_at=now() WHERE id=actor;
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,workspace),'deleted initiating identity');
+ UPDATE auth.users SET deleted_at=NULL WHERE id=actor;
+ PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace),'restored original fixture remains eligible');
+END $metric_actor$;
+SET LOCAL ROLE anon;
+SELECT pg_temp.require_denied($q$SELECT public._analytics_metric_actor_authorized(NULL,NULL)$q$,'anonymous cannot supply an actor');
+RESET ROLE;
+SET LOCAL ROLE service_role;
+SELECT pg_temp.require_denied($q$SELECT public._analytics_metric_actor_authorized(NULL,NULL)$q$,'service role has no actor override RPC');
+RESET ROLE;
 SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_denied($q$SELECT public._analytics_metric_actor_authorized(NULL,NULL)$q$,'authenticated cannot supply an actor');
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 INSERT INTO seam_result SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011');
 SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='UNAVAILABLE' AND bundle->'values'='null'::jsonb AND bundle#>>'{range,key}'='week' FROM seam_result),'flat unavailable contract');
 SELECT pg_temp.require_true((SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref')=bundle FROM seam_result),'same asof reference readback');
+-- EXP02 private document consumer: the temporary bridge models the existing
+-- SECURITY DEFINER native writer. It is rolled back, never an application grant.
+RESET ROLE;
+CREATE FUNCTION pg_temp.capture_document_metrics(refs jsonb) RETURNS jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path='' AS $$
+ SELECT public._paige_document_capture_metric_evidence(refs)
+$$;
+SELECT pg_temp.require_true(NOT EXISTS (
+ SELECT 1 FROM (VALUES ('anon'),('authenticated'),('service_role')) roles(name)
+ WHERE has_function_privilege(name,'public._paige_document_capture_metric_evidence(jsonb)','EXECUTE')
+),'report capture has no application-role execute grant');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_denied($q$SELECT public._paige_document_capture_metric_evidence(jsonb_build_array(bundle->>'evidence_ref')) FROM seam_result$q$,'private report capture is not a public RPC');
+SELECT pg_temp.require_true((SELECT
+ (capture->'measurements'->0)=(bundle-'account_epoch'-'account_epoch_ref')
+ AND capture->>'version'='1'
+ AND (capture->>'captured_at')::timestamptz >= (bundle->>'as_of')::timestamptz
+ FROM seam_result CROSS JOIN LATERAL (SELECT pg_temp.capture_document_metrics(jsonb_build_array(bundle->>'evidence_ref')) capture) proof),
+ 'report preserves exact unavailable/null, range, asof, definition, coverage and original provenance');
+SELECT pg_temp.require_invalid($q$SELECT pg_temp.capture_document_metrics('[]')$q$,'empty report references');
+SELECT pg_temp.require_invalid($q$SELECT pg_temp.capture_document_metrics(jsonb_build_array(bundle->>'evidence_ref',bundle->>'evidence_ref')) FROM seam_result$q$,'duplicate report references');
+SELECT pg_temp.require_invalid($q$SELECT pg_temp.capture_document_metrics(jsonb_build_array(jsonb_build_object('evidence_ref',bundle->>'evidence_ref','values',9000))) FROM seam_result$q$,'caller values cannot become report evidence');
 SELECT pg_temp.require_invalid($q$SELECT public.issue_analytics_evidence_bundle('business.fabricated','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011')$q$,'unknown metric');
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000012')$q$,'epoch mismatch');
 SELECT pg_temp.require_denied($q$SELECT public._resolve_legacy_analytics_evidence_reference('aneb_v1_'||repeat('a',64))$q$,'private legacy seam');
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000002',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000002","role":"authenticated"}',true);
 SELECT pg_temp.require_denied($q$SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref') FROM seam_result$q$,'cross actor reference');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.capture_document_metrics(jsonb_build_array(bundle->>'evidence_ref')) FROM seam_result$q$,'cross actor report capture');
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011')$q$,'ordinary member denied');
 SELECT pg_temp.require_denied(format('SELECT public.issue_analytics_evidence_bundle(%L,%L,%L::jsonb,%L,now()-interval %L,now(),%L::uuid)',
  metric,'1.0.0','{}','week','7 days','a3450000-0000-4000-8000-000000000011'),'ordinary member cannot issue diagnostics')
@@ -76,6 +156,7 @@ SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001'
 UPDATE public.analytics_evidence_reference SET expires_at=clock_timestamp()-interval '1 second',issued_at=clock_timestamp()-interval '1 hour' WHERE token_digest=encode(extensions.digest(convert_to((SELECT bundle->>'evidence_ref' FROM seam_result),'UTF8'),'sha256'),'hex');
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.require_denied($q$SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref') FROM seam_result$q$,'expired reference');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.capture_document_metrics(jsonb_build_array(bundle->>'evidence_ref')) FROM seam_result$q$,'expired report capture');
 RESET ROLE;
 -- Stateful proofs use the same actual actor seated in two real fixture tenants.
 SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
@@ -144,5 +225,176 @@ SELECT pg_temp.require_denied(format('SELECT public.issue_analytics_evidence_bun
  metric,'1.0.0','{}','week','7 days','a3450000-0000-4000-8000-000000000012'),'removed seat cannot issue diagnostics')
  FROM (VALUES ('operations.recorded_workflow_activity'),('operations.current_system_exceptions')) approved(metric);
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('team.active_members_current','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000012')$q$,'removed seat cannot issue');
+RESET ROLE;
+-- Reserved report artifact privacy only, not report submission or Harness proof.
+-- Reuse this rollback-only fixture's real actors/tenants and original table/RLS.
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner) VALUES
+ ('a3450000-0000-4000-8000-000000000012','a3450000-0000-4000-8000-000000000001','admin','active',false)
+ ON CONFLICT(tenant_id,user_id) DO UPDATE SET role='admin',status='active';
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000011' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+-- Privileged isolated source fixture: no public report type is admitted yet.
+INSERT INTO public.paige_durable_work(id,tenant_id,initiating_user_id,intent_id,capability_key,work_kind,
+ authority_context,scope_epoch,idempotency_key,lease_until,request_payload) VALUES
+ ('a3450000-0000-4000-8000-000000000071','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001',
+  'a3450000-0000-4000-8000-000000000072','document_generate','document_authoring','{}',
+  'isolated-report-privacy','isolated-report-privacy-key',now()+interval '5 minutes',
+  '{"doc_type":"business_review","report_evidence":{"fixture":true}}');
+SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SELECT pg_temp.require_denied($q$INSERT INTO public.marketing_content(id,tenant_id,created_by,kind,title,body,meta,work_id) VALUES
+ ('a3450000-0000-4000-8000-000000000071','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001',
+  'document','Isolated report privacy','Fixture only; no business figures','{"document_purpose":"metric_business_review"}',
+  'a3450000-0000-4000-8000-000000000071')$q$,'caller cannot manufacture reserved report class through a definer writer');
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+INSERT INTO public.marketing_content(id,tenant_id,created_by,kind,title,body,meta,work_id) VALUES
+ ('a3450000-0000-4000-8000-000000000071','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001',
+  'document','Isolated report privacy','Fixture only; no business figures','{"document_purpose":"metric_business_review"}',
+  'a3450000-0000-4000-8000-000000000071');
+INSERT INTO public.marketing_content(id,tenant_id,created_by,kind,title,body) VALUES
+ ('a3450000-0000-4000-8000-000000000073','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001',
+  'document','Original library fixture','Original library behavior');
+SELECT pg_temp.require_true((SELECT NOT polpermissive FROM pg_policy WHERE polname='marketing_content_metric_report_scope'
+ AND polrelid='public.marketing_content'::regclass),'report policy is restrictive');
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SELECT pg_temp.require_true((SELECT count(*)=2 FROM public.marketing_content WHERE id IN
+ ('a3450000-0000-4000-8000-000000000071','a3450000-0000-4000-8000-000000000073')),'current Metric admin reads report and original library');
+RESET ROLE;
+SELECT pg_temp.require_invalid($q$UPDATE public.marketing_content SET body='Changed facts' WHERE id='a3450000-0000-4000-8000-000000000071'$q$,'captured report facts immutable even through a definer writer');
+SELECT pg_temp.require_invalid($q$UPDATE public.marketing_content SET meta='{}' WHERE id='a3450000-0000-4000-8000-000000000071'$q$,'report cannot be retagged into broader access');
+SELECT pg_temp.require_invalid($q$UPDATE public.marketing_content SET work_id=NULL WHERE id='a3450000-0000-4000-8000-000000000071'$q$,'live work identity cannot be caller-retired');
+UPDATE public.marketing_content SET status='archived' WHERE id='a3450000-0000-4000-8000-000000000071';
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000012' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SELECT pg_temp.require_true((SELECT count(*)=0 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000071'),'other active workspace with a real admin seat cannot read prior report');
+SELECT pg_temp.require_true((SELECT count(*)=1 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000073'),'original admin library policy is preserved for nonreports');
+RESET ROLE;
+-- Actual original work FK retirement must not rewrite facts or widen visibility.
+DELETE FROM public.paige_durable_work WHERE id='a3450000-0000-4000-8000-000000000071';
+SELECT pg_temp.require_true((SELECT work_id IS NULL AND body='Fixture only; no business figures'
+ AND meta->>'document_purpose'='metric_business_review' FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000071'),'original FK cleanup retains report facts/privacy');
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000011' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='a3450000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SELECT pg_temp.require_true((SELECT count(*)=0 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000071'),'banned identity cannot reopen a stored report');
+RESET ROLE;
+UPDATE auth.users SET banned_until=NULL,deleted_at=now() WHERE id='a3450000-0000-4000-8000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_true((SELECT count(*)=0 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000071'),'deleted identity cannot reopen a stored report');
+RESET ROLE;
+SELECT pg_temp.require_true(NOT has_function_privilege('anon','public._paige_metric_report_readable(uuid)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public._paige_metric_report_readable(uuid)','EXECUTE')
+ AND has_function_privilege('authenticated','public._paige_metric_report_readable(uuid)','EXECUTE'),'caller-bound boolean grants no privileged actor override');
+-- Original producer over REAL issuer/capture/work/artifact/turn/Rail tables.
+-- Still an isolated rollback-only native fixture, not public admission or QA.
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+UPDATE auth.users SET banned_until=NULL,deleted_at=NULL WHERE id='a3450000-0000-4000-8000-000000000001';
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000011' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),
+ set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+INSERT INTO settings_results(key,bundle) SELECT 'native-report-bundle',public.issue_analytics_evidence_bundle(
+ 'team.active_members_current','1.0.0','{}','month',now()-interval '30 days',now(),'a3450000-0000-4000-8000-000000000011');
+RESET ROLE;
+INSERT INTO settings_results(key,bundle) SELECT 'native-report-capture',public._paige_document_capture_metric_evidence(
+ jsonb_build_array(bundle->>'evidence_ref')) FROM settings_results WHERE key='native-report-bundle';
+-- Native execution uses stored actor authority without retaining or inventing JWT identity.
+SELECT set_config('request.jwt.claim.role','service_role',true),set_config('request.jwt.claims','{"role":"service_role"}',true),set_config('request.jwt.claim.sub','',true);
+INSERT INTO public.paige_chat_threads(id,caller_user_id,tenant_id,lens,title) VALUES
+ ('a3450000-0000-4000-8000-000000000082','a3450000-0000-4000-8000-000000000001','a3450000-0000-4000-8000-000000000011','coach','Isolated native report');
+INSERT INTO public.paige_durable_work(id,tenant_id,initiating_user_id,intent_id,thread_id,capability_key,work_kind,
+ authority_context,scope_epoch,idempotency_key,lease_until,request_payload)
+ SELECT 'a3450000-0000-4000-8000-000000000081','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001',
+ 'a3450000-0000-4000-8000-000000000083','a3450000-0000-4000-8000-000000000082','document_generate','document_authoring',
+ '{}','isolated-native-report','isolated-native-report-key',now()+interval '5 minutes',
+ jsonb_build_object('version',1,'doc_type','business_review','title','Isolated native report','brief','Original source-backed native fixture',
+ 'report_evidence',bundle,'report_period',jsonb_build_object('key','month','start',bundle->'measurements'->0->'range'->'start',
+ 'end',bundle->'measurements'->0->'range'->'end')) FROM settings_results WHERE key='native-report-capture';
+GRANT SELECT ON settings_results TO service_role; -- temporary fixture DTO only, no business-table grant
+SET LOCAL ROLE service_role;
+SELECT pg_temp.require_true((SELECT work_status='claimed' FROM public.start_paige_document_work_execution('a3450000-0000-4000-8000-000000000081')),'original native report claim');
+SELECT pg_temp.require_true((SELECT content_id='a3450000-0000-4000-8000-000000000081' AND work_status='succeeded' AND receipt_recorded
+ FROM public.complete_paige_document_work('a3450000-0000-4000-8000-000000000081','isolated-native-report-key','business_review','Isolated native report',
+ jsonb_build_array(jsonb_build_object('type','stat','label',bundle->'measurements'->0->>'label',
+ 'value',coalesce(bundle->'measurements'->0->'values'->>'count','Unavailable'))),NULL,NULL,0,0)),'original report artifact/turn/Rail completion')
+ FROM settings_results WHERE key='native-report-capture';
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT m.body::jsonb->>'docType'='business_review' AND m.meta->>'document_purpose'='metric_business_review'
+ AND m.meta->'metric_provenance'->0->>'source_revision_ref'=s.bundle->'measurements'->0->>'source_revision_ref'
+ AND m.meta::text NOT LIKE '%aneb_v1_%' AND m.meta::text NOT LIKE '%account_epoch%'
+ FROM public.marketing_content m CROSS JOIN settings_results s WHERE m.id='a3450000-0000-4000-8000-000000000081' AND s.key='native-report-capture'),'persisted source lineage excludes bearer/private identity');
+SELECT pg_temp.require_true((SELECT count(*)=1 FROM public.paige_chat_turns WHERE work_id='a3450000-0000-4000-8000-000000000081'),'original completion turn');
+SELECT pg_temp.require_true((SELECT count(*)=1 FROM public.paige_workspace_events WHERE source_kind='capability_run'
+ AND source_id='a3450000-0000-4000-8000-000000000081' AND actor_id='a3450000-0000-4000-8000-000000000001'
+ AND outcome='capability_succeeded' AND detail->>'document_purpose'='metric_business_review'),'original attributable Rail receipt');
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_true((SELECT count(*)=1 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000081'),'current original customer-scope report read');
+RESET ROLE;
+SELECT pg_temp.require_invalid($q$UPDATE public.marketing_content SET meta='{}' WHERE id='a3450000-0000-4000-8000-000000000081'$q$,'native report cannot lose source privacy');
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000012' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_true((SELECT count(*)=0 FROM public.marketing_content WHERE id='a3450000-0000-4000-8000-000000000081'),'native report withheld after active workspace switch');
+RESET ROLE;
+-- Original PUBLIC submit over the REAL issuer, private capture and native writer.
+-- This entire file rolls back: pg_net wakes are queued only, never committed or sent.
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000011' WHERE user_id='a3450000-0000-4000-8000-000000000001';
+INSERT INTO public.paige_chat_threads(id,caller_user_id,tenant_id,lens,title) VALUES
+ ('a3450000-0000-4000-8000-000000000091','a3450000-0000-4000-8000-000000000001','a3450000-0000-4000-8000-000000000011','coach','Original public report fixture');
+INSERT INTO settings_results(key,bundle) SELECT 'public-report-request',jsonb_build_object('version',1,
+ 'doc_type','business_review','title','Original source-backed review','brief','Review original permitted historical evidence.',
+ 'report_period',jsonb_build_object('key','month','start',bundle->'range'->'start','end',bundle->'range'->'end'),
+ 'evidence_refs',jsonb_build_array(bundle->>'evidence_ref')) FROM settings_results WHERE key='native-report-bundle';
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),
+ set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+INSERT INTO settings_results(key,bundle) SELECT 'public-report-submitted',to_jsonb(r) FROM settings_results s
+ CROSS JOIN LATERAL public.submit_paige_document_work('a3450000-0000-4000-8000-000000000092',
+ 'a3450000-0000-4000-8000-000000000091',s.bundle) r WHERE s.key='public-report-request';
+SELECT pg_temp.require_true((SELECT bundle->>'work_status'='claimed' AND bundle->>'resumed_existing'='false'
+ FROM settings_results WHERE key='public-report-submitted'),'original authenticated report admission');
+SELECT pg_temp.require_invalid($q$SELECT * FROM public.submit_paige_document_work('a3450000-0000-4000-8000-000000000093',
+ 'a3450000-0000-4000-8000-000000000091',(SELECT bundle||'{"report_evidence":{}}' FROM settings_results WHERE key='public-report-request'))$q$,
+ 'public report refuses a caller-authored capture');
+RESET ROLE;
+INSERT INTO settings_results(key,bundle) SELECT 'public-report-stored',w.request_payload FROM public.paige_durable_work w
+ JOIN settings_results s ON s.key='public-report-submitted' AND w.id=(s.bundle->>'work_id')::uuid;
+SELECT pg_temp.require_true((SELECT c.bundle->'report_evidence'->'measurements'->0->>'source_revision_ref'=e.bundle->>'source_revision_ref'
+ AND NOT (c.bundle ? 'evidence_refs') AND c.bundle->'report_evidence'->'measurements'->0->'values'=e.bundle->'values'
+ AND c.bundle::text NOT LIKE '%account_epoch%' FROM settings_results c CROSS JOIN settings_results e
+ WHERE c.key='public-report-stored' AND e.key='native-report-bundle'),'public submit captures original issuer values and lineage only');
+SELECT set_config('request.jwt.claim.role','service_role',true),set_config('request.jwt.claims','{"role":"service_role"}',true),set_config('request.jwt.claim.sub','',true);
+SET LOCAL ROLE service_role;
+-- Use the original service-only claim DTO, never a fixture business-table grant.
+SELECT pg_temp.require_true(r.work_status='claimed' AND d.work_status='succeeded' AND d.receipt_recorded AND d.content_id=r.work_id,
+ 'public report original claim and atomic artifact/turn/Rail') FROM settings_results s
+ CROSS JOIN LATERAL public.start_paige_document_work_execution((s.bundle->>'work_id')::uuid) r
+ CROSS JOIN LATERAL public.complete_paige_document_work(r.work_id,r.server_idempotency_key,'business_review','Original source-backed review',
+ jsonb_build_array(jsonb_build_object('type','stat','label',r.request_payload->'report_evidence'->'measurements'->0->>'label',
+ 'value',coalesce(r.request_payload->'report_evidence'->'measurements'->0->'values'->>'count','Unavailable'))),NULL,NULL,0,0) d
+ WHERE s.key='public-report-submitted';
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT w.request_payload=c.bundle
+ AND (SELECT count(*) FROM public.marketing_content m WHERE m.work_id=w.id AND m.meta->>'document_purpose'='metric_business_review'
+  AND m.meta::text NOT LIKE '%aneb_v1_%')=1
+ AND (SELECT count(*) FROM public.paige_chat_turns t WHERE t.work_id=w.id)=1
+ AND (SELECT count(*) FROM public.paige_workspace_events e WHERE e.source_kind='capability_run' AND e.source_id=w.id
+  AND e.actor_id=w.initiating_user_id AND e.outcome='capability_succeeded')=1
+ FROM settings_results s JOIN public.paige_durable_work w ON w.id=(s.bundle->>'work_id')::uuid
+ CROSS JOIN settings_results c WHERE s.key='public-report-submitted' AND c.key='public-report-stored'),
+ 'real issued evidence reaches one original private artifact/turn/attributable Rail without rewriting capture');
+SELECT set_config('request.jwt.claim.role','authenticated',true),set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000002',true),
+ set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_denied($q$SELECT * FROM public.submit_paige_document_work('a3450000-0000-4000-8000-000000000093',
+ 'a3450000-0000-4000-8000-000000000091',(SELECT bundle FROM settings_results WHERE key='public-report-request'))$q$,
+ 'another original actor cannot submit into the owner thread');
 RESET ROLE;
 ROLLBACK;

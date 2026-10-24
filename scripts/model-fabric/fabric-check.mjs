@@ -813,5 +813,63 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
   setScenario({});
 }
+// Trusted in-process authority must be current after budget reads and before
+// every provider leg. Refusal/throw is not a provider failure or fallback reason.
+{
+  setScenario({}); openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
+  const request = { cognitive_class: "operational", job: "thread_summary_fold", max_tokens: 2048, messages: [{ role: "user", content: "fold" }] };
+  for (const [name, gate] of [["false", async () => false], ["throw", () => { throw new Error("synthetic authority unavailable"); }], ["rejection", async () => { throw new Error("synthetic rejected authority"); }]]) {
+    calls.length = 0;
+    const trace = { agent_id: "fabric-scope-check" };
+    const r = await fabric.fabricCompletion(request, { ...ON, openaiFetch, trace, beforeProviderAttempt: gate });
+    ok(!r.ok && r.error?.failure === "caller_refused" && calls.length === 0 && r.route.served === null,
+      `H1 authority ${name} prevents every provider leg, never falls back`);
+    ok(trace.fabric_route === null && r.route.reason === "failed", `H1 authority ${name} clears stale route projection`);
+  }
+  let gates = 0; calls.length = 0; openaiPlan = { status: 429, type: "rate_limit_error" };
+  const refusedFallback = await fabric.fabricCompletion(request, { ...ON, openaiFetch, beforeProviderAttempt: async () => ++gates === 1 });
+  ok(!refusedFallback.ok && refusedFallback.error?.failure === "caller_refused" && gates === 2
+    && calls.length === 1 && calls[0].provider === "openai", "H2 changed authority after primary failure prevents the fallback leg");
+  gates = 0; calls.length = 0;
+  const allowedFallback = await fabric.fabricCompletion(request, { ...ON, openaiFetch, beforeProviderAttempt: async () => { gates++; return true; } });
+  ok(allowedFallback.ok && gates === 2 && calls.length === 2 && allowedFallback.route.served?.provider === "anthropic",
+    "H2 unchanged authority allows existing health fallback with one check per provider leg");
+  openaiPlan = { status: 200 };
+}
+// The streamed seam must revalidate after its OWN OpenAI budget and after the
+// incumbent Anthropic gateway's internal budget, including a health fallback.
+{
+  setScenario({}); openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
+  for (const primary of ['openai','anthropic']) for (const [name, gate] of [
+    ['false', async () => false], ['throw', () => { throw new Error('synthetic authority unavailable'); }],
+    ['rejection', async () => { throw new Error('synthetic rejected authority'); }],
+  ]) {
+    const trace = { agent_id:'stream-authority-check' };
+    const r = await run('operational', { enabled:{openai:primary==='openai'}, trace, beforeProviderAttempt:gate });
+    ok(!r.s.ok && r.s.served===null && r.calls.length===0 && r.s.attempts.at(-1)?.failure==='caller_refused',
+      `I1 ${primary} ${name} refuses before transport and never falls back`);
+    ok(trace.fabric_route===null, `I1 ${primary} ${name} clears projected route without provider fault`);
+  }
+  let gates=0;
+  let r=await run('operational',{...ON,beforeProviderAttempt:async()=>{gates++;return true;}});
+  ok(r.s.ok && gates===1 && r.calls.length===1 && r.calls[0].provider==='openai', 'I2 unchanged authority admits primary once');
+  openaiPlan={status:429,type:'rate_limit_error'};gates=0;
+  r=await run('operational',{...ON,beforeProviderAttempt:async()=>++gates===1});
+  ok(!r.s.ok && gates===2 && r.calls.length===1 && r.calls[0].provider==='openai' && r.s.attempts.at(-1)?.failure==='caller_refused',
+    'I2 changed fallback authority is terminal caller_refused, not provider failure');
+  gates=0;
+  r=await run('operational',{...ON,beforeProviderAttempt:async()=>{gates++;return true;}});
+  ok(r.s.ok && gates===2 && r.calls.length===2 && r.s.served?.provider==='anthropic', 'I2 unchanged authority preserves proven health fallback');
+  for(const fallback of [false,true]){
+    let current=true;const trace={tenant_id:fallback?'7e5a0000-0000-4000-8000-0000000000f2':'7e5a0000-0000-4000-8000-0000000000f1',agent_id:'stream-budget-authority'};
+    setScenario({serviceTables:{paige_llm_trace:filters=>{if(filters.some(([op,column])=>op==='select'&&column==='cost_estimate_usd')&&(!fallback||calls.some(call=>call.provider==='openai')))current=false;return [];}}});
+    openaiPlan=fallback?{status:429,type:'rate_limit_error'}:{status:200};
+    r=await run('operational',{...ON,trace,beforeProviderAttempt:async()=>current});
+    ok(!r.s.ok && r.s.attempts.at(-1)?.failure==='caller_refused' && trace.fabric_route===null
+      && r.calls.length===(fallback?1:0) && r.calls.every(call=>call.provider==='openai'),
+      `I3 scope flip in ${fallback?'Anthropic fallback internal':'OpenAI primary'} budget refuses next actual transport`);
+  }
+  setScenario({});openaiPlan={status:200};
+}
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

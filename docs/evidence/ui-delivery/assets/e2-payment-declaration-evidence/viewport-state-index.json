@@ -1,0 +1,246 @@
+{
+  "evidenceClass": "SYNTHETIC_ACTUAL_COMPONENT_AND_ADAPTER",
+  "customerAcceptance": "UNVERIFIED",
+  "sourceBase": "4e7767f399d8c7a255e55d69fa0b03cc21429f66",
+  "sources": {
+    "operations": "2d98a72efc1d6cbdffae909f9fb0f1648db60a3d1d626ff7ba538a63ae3911bc",
+    "owningTest": "23a650828f102f0cde849753580b17d528a51e1a5a1848cd0d3331d089fda9bb"
+  },
+  "snapshotSha256": "dcaecc946ae3753efbda0339cd7fa3c41c7e29d9684bea9a975ed05753a475dc",
+  "capture": "Original native JPEG pixels; exact CSS viewport; no resizing or composition",
+  "ports": "Actual corrected adapter emits snapshot through existing fake issuer; native Executive and shell unchanged; synthetic identity/data ports deny backend/model/actions",
+  "navigation": "Focused original narrow Systems Check link, visible solid outline, Enter to actual owning component, Back/reload retains corrected evidence; destination authorization not proved by this harness",
+  "limitations": [
+    "Real authenticated semantics and isolation owed",
+    "Native zoom not exercised",
+    "Original narrow PAIGE header remains cramped; full premium completion not claimed",
+    "Initial proof config module resolution/timeout/nonfocusable-heading press and one capture failure are setup diagnostics; subsequent settled capture only"
+  ],
+  "frames": [
+    {
+      "file": "1536-closed.jpg",
+      "css": [
+        1536,
+        770
+      ],
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "15574f33d2ddb772be153fb5ae67a262d3e073607947ae271f29f8552971d519",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "1536-open.jpg",
+      "css": [
+        1536,
+        770
+      ],
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "6994e6f6c760195ea3340d82572be008cd2545943425b331c89ac1c5b258663b",
+      "paige": "open",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "1366-closed.jpg",
+      "css": [
+        1366,
+        768
+      ],
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "dbf0266d1e9e260b6a3167865636b9466cb1a41d6949a12917b85d23828bdb80",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "1366-open.jpg",
+      "css": [
+        1366,
+        768
+      ],
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "9ae5a7bc26495c3fbf780d1ce0afc03f2c8a01bc6af770552ae37c51433daefa",
+      "paige": "open",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "1024-closed.jpg",
+      "css": [
+        1024,
+        768
+      ],
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "f867c9a4a6339b1407a0ec439560642b7b18a7c30b1d7bf63cafd74c1f5e5521",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "1024-open.jpg",
+      "css": [
+        1024,
+        768
+      ],
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "ae74c6aa66188668c645b9a44f584732bced04986c6d3e3d60e5e2e7e8654674",
+      "paige": "open",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "900-closed.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "604d639bf838fed830b2cedd20a498efde58f56d40116bace9d58644abd6f1ac",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "900-open.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "d51c4763be5a45a085896ca51049c118b01afebc8f6e8f8c7486bf07ac90c60a",
+      "paige": "open",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "320-keyboard.jpg",
+      "css": [
+        320,
+        740
+      ],
+      "raster": {
+        "height": 740,
+        "width": 320
+      },
+      "sha256": "ec20b882dcd27caebba3cbdbfee38fdeb06b8d6f5497c885379e73d3efbaab2a",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "320-closed.jpg",
+      "css": [
+        320,
+        740
+      ],
+      "raster": {
+        "height": 740,
+        "width": 320
+      },
+      "sha256": "e3149420da77bf3c0076c9f7fd2bea3e1e65fb7a7e8fd7e182c628a3e9f70e3a",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "320-open.jpg",
+      "css": [
+        320,
+        740
+      ],
+      "raster": {
+        "height": 740,
+        "width": 320
+      },
+      "sha256": "32ed1036fa2fe8753a0c75b45121c33d759d1a5b6d3955e4eab566c10786633d",
+      "paige": "open",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "900-declaration-error.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "262d561788d80ae995ef2f9936c5f0f5c45a0797c3ffb944079356844c84ad37",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "900-source-refused.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "89fe235c44a1b40b6021b17961b6fb48a2b7919f66b0136d8f59e580c9330853",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "900-loading.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "a67471ec409db73c4b55252486b7753b519c9f8c18e76895d7fe0c97cd0abec7",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    },
+    {
+      "file": "900-declaration-error-focus.jpg",
+      "css": [
+        900,
+        1000
+      ],
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "b0d2827456ce1853c45aaf47c84eeb373788d11b713ae59827a974279178855e",
+      "paige": "closed",
+      "noHorizontalOverflow": true,
+      "fontLoaded": true
+    }
+  ]
+}

@@ -42,11 +42,16 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   business_time_zone: "Open business time zone setting",
   executive: "Open Executive",
   finance: "Open Finance",
+  marketing: "Open Marketing",
   sales_pipeline: "Open Sales pipeline",
   systems_check: "Open Systems Check",
   business_game_plan: "Open Business Game Plan",
   trust_compass: "Open Trust Compass",
   mind: "Open Mind",
+  portal_knowledge: "Open CURA Knowledge",
+  calendar: "Open Calendar",
+  pipeline: "Open pipeline",
+  conversations: "Open Conversations",
 });
 
 export type WorkspaceLinkTarget = { label: string; to: string; status: "exact" | "surface_only" };
@@ -72,11 +77,21 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
     recordId: link.record_id,
   });
   if (!resolved) return null;
-  const label = resolved.status === "exact" && link.destination === "contacts"
+  const label = resolved.status === "exact" && link.destination === "systems_check"
+    ? "Open recorded finding"
+    : resolved.status === "exact" && link.destination === "contacts"
     ? (link.subject ? `Open ${link.subject}` : "Open client record")
     : resolved.status === "exact" && link.destination === "sales_invoices"
       ? "Open invoice"
-      : DESTINATION_LABEL[link.destination];
+      : resolved.status === "exact" && link.destination === "pipeline"
+        ? "Open deal"
+        : resolved.status === "exact" && link.destination === "operations_work"
+          ? "Open task"
+          : resolved.status === "exact" && link.destination === "business_game_plan"
+            ? "Open Strategic Play"
+            : resolved.status === "exact" && link.destination === "portal_knowledge"
+              ? "Review CURA source"
+            : DESTINATION_LABEL[link.destination];
   return { label, to: resolved.path, status: resolved.status };
 }
 

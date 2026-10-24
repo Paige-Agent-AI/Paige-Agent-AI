@@ -1,0 +1,39 @@
+{
+  "base": "6a2c4258033c6438deab211f56d5188f1b32c9ec",
+  "channel": "development",
+  "files": [
+    {
+      "path": "scripts/paige-live-relay-bridge-smoke.mts",
+      "sha256": "05767fcc1ffd5df4082824af247902df4d3745c35939dd3a95ca9ed4ef8ed66c"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-live-relay-bridge.ts",
+      "sha256": "cbd098528f3933ec6403ee938bcde0648a37e66fa412a5342c26471aee5c6df4"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-live-relay-contract.ts",
+      "sha256": "0375f0242050bf78fc68f09dfdbbd5eeb4ac217f870d61441b7c7b176db3b0f0"
+    },
+    {
+      "path": "supabase/functions/paige-live-relay/index.ts",
+      "sha256": "548c67f3e40f19203206596678267199649ce3424384b2df24894a5defc259de"
+    }
+  ],
+  "proof": {
+    "bridgeSmoke": "123 PASS, network/provider calls0",
+    "relaySmoke": "34 PASS, virtual time959ms/network0",
+    "existingRegressions": "author-attested 92 PASS/4 files (file set not recorded; not independently reproduced - independent 2026-10-17 review reproduced bridgeSmoke/relaySmoke exactly and 106 PASS across its own live/reducer selection; see PR 2277 review note)",
+    "denoGraph": "PASS, Deno2.9.6",
+    "eslint": "PASS for3 function files; .mts ignored by existing configuration",
+    "authenticatedRuntime": "UNVERIFIED",
+    "providerLatency": "UNVERIFIED",
+    "deployment": "NOT_RELEASED"
+  },
+  "exclusions": [
+    "No new websocket frame or protocol",
+    "No customer record or billable usage write",
+    "No voice/profile/pricing/cost/pilot activation",
+    "No UI geometry or state change"
+  ],
+  "normalization": "SHA256 of committed git blob bytes (LF), not worktree CRLF"
+}

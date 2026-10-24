@@ -1,0 +1,72 @@
+Browser tab: 170269643, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:62499/?theme=light&context=b&draft=unknown".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:62499/?theme=light&context=b&draft=unknown
+	2 container
+		3 container
+			4 text PAIGE workspace ready
+		5 container Weekly responsibility, ID: radix-:r0:
+			6 heading Weekly responsibility, Value: 2, ID: radix-:r1:
+				7 text Weekly responsibility
+			8 text Current owner scope, canonical schedules and verified results.
+			9 container
+				10 heading Weekly commitment check, Value: 2
+					11 text Weekly commitment check
+				12 text Review the week. Keep the original work in Operations.
+				13 button Refresh weekly responsibility
+			56 container
+				57 text Read  Tue, Oct 20, 9:22 AM EDT
+			58 container
+				59 heading Review pending service commitments, Value: 3
+					60 text Review pending service commitments
+				61 text Awaiting approval Every  Wednesday  at  09:00
+				62 text America/New_York
+				63 definition list
+					64 container Next execution
+						65 text Next execution
+					66 text No executable next run is available
+					67 container Scope
+						68 text Scope
+					69 text Your open, in-progress and blocked Planning work assigned to you or created by you.
+					70 container Permission
+						71 text Permission
+					72 text Exact recurring configuration awaits authorization.
+				73 text Execution is held. The requested time is not a promise of a run. No booking reserves this slot. No receipt-backed completed check has been verified.
+				74 button (collapsed) Future executions, Secondary Actions: Expand
+					75 text Future executions
+			19 container Prepare and retrieve weekly drafts
+				28 container Weekly responsibility draft
+					29 heading Review pending service commitments, Value: 3
+						30 text Review pending service commitments
+					31 container
+						32 text Every  Wednesday  at  09:00
+						33 text America/New_York
+					34 text Your outstanding personal Planning work. The original commitments stay in Operations → Work.
+					53 container Done
+						54 text Done
+						55 content list
+							76 text Weekly responsibility saved as an unapproved draft.
+					77 text No executable next run. Recurring authorization and activation are still required. No business task was completed or changed.
+					78 container
+						79 button (expanded) Draft save receipt, Secondary Actions: Collapse
+							80 text Draft save receipt
+						81 definition list
+							82 container Responsibility
+								83 text Responsibility
+							84 text 40000000-0000-4000-8000-000000000008
+							85 container Revision
+								86 text Revision
+							87 text 1
+							88 container Rail receipt
+								89 text Rail receipt
+							90 text 40000000-0000-4000-8000-000000000009
+					48 button Read saved status
+					49 container
+						50 text Last read  Tue, Oct 20, 9:22 AM EDT
+				51 button Prepare another responsibility
+			22 container Weekly responsibility records
+				23 link Description: Clients → Calendar, Value: 127.0.0.1:62499/solo/1702/clients/calendar
+				24 link Description: Operations → Work, Value: 127.0.0.1:62499/solo/1702/operations/work
+			25 button Close
+				26 image
+				27 text Close
+
+The focused UI element is 79 button (expanded) Draft save receipt, Secondary Actions: Collapse

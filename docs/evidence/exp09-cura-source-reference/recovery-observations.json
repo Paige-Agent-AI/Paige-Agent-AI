@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-21T18:06:44.694Z",
+  "scope": "LOCAL_SYNTHETIC_ORIGINAL_COMPONENTS_NO_LIVE_EFFECTS",
+  "temporaryError": {
+    "back": [
+      true
+    ],
+    "cancel": [
+      {
+        "disabled": false,
+        "height": 44,
+        "visible": true
+      }
+    ],
+    "main": {
+      "clientWidth": 1208,
+      "scrollWidth": 1208
+    },
+    "notice": true,
+    "width": 1280
+  },
+  "permissionLoss": {
+    "back": [
+      {
+        "disabled": false,
+        "height": 44
+      }
+    ],
+    "focus": "Knowledge sharing could not be checked. Check your account and connection, then reload.",
+    "main": {
+      "clientWidth": 1208,
+      "scrollWidth": 1208
+    },
+    "privateTitleVisible": false,
+    "sourceTermsVisible": false,
+    "width": 1280
+  }
+}

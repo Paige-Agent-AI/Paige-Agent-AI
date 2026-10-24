@@ -89,6 +89,7 @@ export function StepTimeline({ steps, loading }: { steps: PaigeStep[]; loading?:
     );
   }
   if (steps.length === 0) {
+    // customer-identity-exempt: owner chat only — StepTimeline is mounted by PaigeAIChat; the customer chat uses PaigeReasoningStrip
     return <EmptyState icon={ListChecks} title="Nothing to show yet" description="When Paige works through a task, the steps appear here." />;
   }
   const lastRunningIdx = steps.map((s) => s.status).lastIndexOf("running");
@@ -153,7 +154,7 @@ export function PaigeReasoningStrip({
   personaName?: string;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
-  const name = personaName || "Paige";
+  const name = personaName?.trim() || "Your assistant";
 
   // At rest, the strip stays present as an "on watch" pill — never blanks (so the mobile
   // reasoning surface is always there, matching the desktop persistent deck).
@@ -286,7 +287,7 @@ export function ReasoningDeck({
   trace: { steps: PaigeStep[]; loading?: boolean };
   personaName?: string;
 }) {
-  const name = personaName || "Paige";
+  const name = personaName?.trim() || "Your assistant";
   const steps = trace.steps;
   const working = trace.loading || steps.some((s) => s.status === "running");
   const finished = !working && steps.length > 0;

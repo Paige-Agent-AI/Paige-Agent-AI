@@ -91,6 +91,8 @@ const SMTP_COPY: Record<string, string> = {
 // filled in its business profile, so without it the commonest outcome of pressing
 // "Draft with Paige" was an instruction to try again, forever.
 const COMMS_COPY: Record<string, string> = {
+  domain_operation_unconfirmed:
+    "That sending-domain change may have started. Don’t repeat it. Open the workspace where you started, refresh the current sending-domain state, and confirm the original outcome before continuing.",
   number_unavailable:
     "That number was taken while you were looking at it. Search again and pick another — this one won’t come back.",
   twilio_subaccount_not_provisioned:

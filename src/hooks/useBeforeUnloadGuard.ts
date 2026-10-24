@@ -8,11 +8,14 @@ export function hasUnsavedWork(): boolean {
 }
 
 /** Register recoverable in-memory work with both native navigation and explicit update reloads. */
-export function useBeforeUnloadGuard(active: boolean) {
+export function useBeforeUnloadGuard(active: boolean, explicitExit?: { readonly current: boolean }) {
   useEffect(() => {
     if (!active) return;
     activeUnsavedWorkGuards += 1;
     const prevent = (event: BeforeUnloadEvent | Event) => {
+      // A visible leave decision applies only to this editor. Other registered
+      // work retains its own independent warning and update-reload protection.
+      if (explicitExit?.current) return;
       event.preventDefault();
       if ("returnValue" in event) event.returnValue = "";
     };
@@ -21,5 +24,5 @@ export function useBeforeUnloadGuard(active: boolean) {
       activeUnsavedWorkGuards = Math.max(0, activeUnsavedWorkGuards - 1);
       window.removeEventListener("beforeunload", prevent);
     };
-  }, [active]);
+  }, [active, explicitExit]);
 }

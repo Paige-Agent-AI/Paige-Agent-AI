@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
@@ -132,10 +133,16 @@ const text = () => host.textContent ?? "";
 const panel = () => Array.from(host.querySelectorAll("section.sc-side-panel"))
   .find((node) => node.textContent?.includes("Recent activity")) ?? null;
 
+// The real workspace now reads its canonical finding URL. Keep the original
+// Rail reader, authority and every-frame assertions inside its actual Router context.
+const renderWorkspace = (tree: React.ReactNode) => root.render(
+  <MemoryRouter initialEntries={["/solo/1234567/command-center/systems-check"]}>{tree}</MemoryRouter>,
+);
+
 const settle = async (workspaceId?: string | null, recorder = false) => {
   const tree = <SoloSystemsCheckWorkspace accountContext={null} workspaceId={workspaceId} />;
   await act(async () => {
-    root.render(recorder ? <FrameRecorder>{tree}</FrameRecorder> : tree);
+    renderWorkspace(recorder ? <FrameRecorder>{tree}</FrameRecorder> : tree);
     await Promise.resolve();
   });
 };
@@ -207,7 +214,7 @@ describe("the five answers are kept apart", () => {
   it("LOADING says it is reading, and claims nothing about what exists", async () => {
     harness.queue = [{ answer: { data: [railRow()], error: null }, delayTicks: 8 }];
     // Render synchronously: the read has been issued and has not resolved.
-    act(() => { root.render(<SoloSystemsCheckWorkspace accountContext={null} workspaceId="workspace-one" />); });
+    act(() => { renderWorkspace(<SoloSystemsCheckWorkspace accountContext={null} workspaceId="workspace-one" />); });
     expect(text()).toContain("Reading this workspace");
     expect(text()).not.toContain(EMPTY_LINE);
     expect(text()).not.toContain("could not be loaded");
@@ -266,7 +273,7 @@ describe("a workspace switch leaves nothing of the previous workspace behind", (
     // heading and only then clears them. The settled end state is identical either way, so every
     // committed frame is inspected — that is the only thing that tells the two apart.
     act(() => {
-      root.render(<FrameRecorder><SoloSystemsCheckWorkspace accountContext={null} workspaceId="workspace-two" /></FrameRecorder>);
+      renderWorkspace(<FrameRecorder><SoloSystemsCheckWorkspace accountContext={null} workspaceId="workspace-two" /></FrameRecorder>);
     });
     const during = frames.slice(before);
     expect(during.length).toBeGreaterThan(0);
@@ -289,8 +296,8 @@ describe("a workspace switch leaves nothing of the previous workspace behind", (
       { answer: { data: [railRow({ title: "LEFT-WORKSPACE-EVENT" })], error: null }, delayTicks: 8 },
       { answer: { data: [railRow({ id: "second", title: "CURRENT-WORKSPACE-EVENT" })], error: null }, delayTicks: 0 },
     ];
-    await act(async () => { root.render(<SoloSystemsCheckWorkspace accountContext={null} workspaceId="workspace-one" />); });
-    await act(async () => { root.render(<SoloSystemsCheckWorkspace accountContext={null} workspaceId="workspace-two" />); });
+    await act(async () => { renderWorkspace(<SoloSystemsCheckWorkspace accountContext={null} workspaceId="workspace-one" />); });
+    await act(async () => { renderWorkspace(<SoloSystemsCheckWorkspace accountContext={null} workspaceId="workspace-two" />); });
     await act(async () => { for (let i = 0; i < 20; i += 1) await tick(); });
 
     expect(harness.calls).toEqual(["get_solo_rail_activity", "get_solo_rail_activity"]);

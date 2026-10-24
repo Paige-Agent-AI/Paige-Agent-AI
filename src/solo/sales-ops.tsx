@@ -48,6 +48,9 @@ import { SalesDialogPortal, useSalesDraftExit } from "./sales-dialog";
 import { useLocation, useNavigate } from "react-router-dom";
 import { deriveSalesCommand } from "./sales/deriveSalesCommand";
 import { deriveScenario } from "./sales/salesScenario";
+import { agreementPdfIntakeProblem } from "./sales/agreementPdfIntake";
+const AgreementPreparationWorkspace = React.lazy(() => import("./sales/AgreementPreparationWorkspace").then(module => ({ default: module.AgreementPreparationWorkspace })));
+const AgreementTemplateWorkspace = React.lazy(() => import("./sales/AgreementTemplateWorkspace").then(module => ({ default: module.AgreementTemplateWorkspace })));
 
 /**
  * The five shapes a Solo business can sell on. Deliberately not narrower: the owner's instruction
@@ -557,7 +560,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
   const [source, setSource] = React.useState("none");
   const [file, setFile] = React.useState(null);
   const [docTitle, setDocTitle] = React.useState("");
-  const [docBody, setDocBody] = React.useState("");
+  const uploadHelpId = React.useId();
   const [pickerSearch, setPickerSearch] = React.useState("");
   const [pickerPage, setPickerPage] = React.useState(0);
   const picker = useCatalogOffers({ search: pickerSearch, page: pickerPage, pageSize: 5, referenceIds: offerId ? [offerId] : [] });
@@ -614,20 +617,24 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
   const termsReady = offerId !== "" && (Boolean(existing) || (picker.phase === "ready" && Boolean(chosenOffer)))
     && (quoting ? term === "custom_quote" : (basis === "catalog" ? (Boolean(existing) || planId !== "") : priced));
   const uploading = source === "tenant_upload";
-  // The wording is not optional on an uploaded document, and the reason is the counterparty's page
-  // rather than this one: the signer reads the TEXT and the countersigned PDF is built from it, so
-  // a file with no wording produces a page that tells them to ask for it again. Shipping a control
-  // whose successful path dead-ends on somebody else's screen is the §70 failure, not a shortcut.
-  const docReady = uploading && Boolean(file) && docTitle.trim() !== "" && docBody.trim() !== "";
+  // Native tenant_upload stores the file reference and NULL body_markdown. Do
+  // not require or claim a second pasted contract that the writer discards.
+  // Native parsing/hashing and retained-document review still precede signing.
+  const docReady = uploading && Boolean(file) && docTitle.trim() !== "" && !agreementPdfIntakeProblem(file);
   const ready = contactId !== ""
     && (offerId ? termsReady : true)
     && (uploading ? docReady : true)
     // Something has to be recorded. With no offer and no document there is nothing to save, and a
     // Save that could only ever be a no-op is the control this guard refuses to enable.
     && (offerId !== "" || docReady);
-  const { close, request, confirmation, alive } = useSalesDraftExit({ contactId, offerId, source, docTitle, docBody, fileName: file?.name ?? "", term, basis, planId, amount, currency, cadence, instalments, startsOn, renewsOn, endsOn, notes }, busy, onClose);
+  const { close, request, confirmation, alive } = useSalesDraftExit({ contactId, offerId, source, docTitle, fileName: file?.name ?? "", term, basis, planId, amount, currency, cadence, instalments, startsOn, renewsOn, endsOn, notes }, busy, onClose);
 
   const save = async () => {
+    // Refuse unsupported selection before the FIRST write, including terms.
+    if (uploading) {
+      const selectionProblem = agreementPdfIntakeProblem(file);
+      if (selectionProblem) { setNotice(selectionProblem); return; }
+    }
     setBusy(true);
     setNotice("");
     const digits = minorUnitDigits(currency);
@@ -672,7 +679,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
         agreementId,
         documentTitle: docTitle.trim(),
         documentSource: "tenant_upload",
-        documentBody: docBody.trim(),
+        documentBody: "",
         documentPath: uploaded.path,
       });
       if (!alive.current) return;
@@ -782,7 +789,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
               <button className="btn btn-s" onClick={signings.retry}><Ic.arrow size={13} />Retry documents</button>
             </p>
           ) : (<>
-            <div className="so-src" role="radiogroup" aria-label="The document">
+            <div className="so-document-sources" role="radiogroup" aria-label="The document">
               {/* The APPROVED order (§28 screen 2): the contract you already have, then Paige
                 * writing one, then no document at all — which the prototype's own note calls
                 * "today's behaviour preserved", and which stays the DEFAULT so nobody has to opt
@@ -828,7 +835,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
               <label className="so-field">
                 <span>The contract file</span>
                 <input type="file" aria-label="The contract file"
-                       accept=".pdf,.doc,.docx,.rtf,.txt,.md,application/pdf,text/plain"
+                       accept=".pdf,application/pdf" aria-describedby={uploadHelpId}
                        onChange={(e) => {
                          const picked = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                          setFile(picked);
@@ -840,15 +847,12 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
                 <input value={docTitle} onChange={(e) => setDocTitle(e.target.value)}
                        placeholder="Coaching agreement" />
               </label>
-              <label className="so-field">
-                <span>The wording they sign</span>
-                <textarea rows={7} value={docBody} onChange={(e) => setDocBody(e.target.value)}
-                          placeholder="Paste the text of your contract here." />
-              </label>
-              <p className="so-absent">
-                The person signing reads this wording on the page and the countersigned PDF is built
-                from it, so it is what they are agreeing to. Your file is kept on the record beside it.
+              <p className="so-absent" id={uploadHelpId}>
+                PDF only, up to 25 MB. The uploaded document is the source for signing;
+                no separate pasted wording is recorded. PAIGE checks the actual PDF before
+                requesting signatures. Saving here does not send it.
               </p>
+              {file && agreementPdfIntakeProblem(file) && <p className="so-absent" role="alert">{agreementPdfIntakeProblem(file)}</p>}
             </>)}
           </>)}
 
@@ -1103,7 +1107,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
               : contactId === ""
                 ? "Pick the client this is for."
                 : uploading && !docReady
-                  ? "A document needs a file, a name, and the wording they sign."
+                  ? agreementPdfIntakeProblem(file) || "Name this PDF agreement before continuing."
                   : offerId === ""
                     ? "Choose one of your offers, or upload a document to record instead."
                     : "Say what they agreed to pay.")}
@@ -1132,7 +1136,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
  * §38: issuing this charges nobody and authorises no payment. The figure travels with the document
  * because it is what was agreed; it is a sentence, not an instrument.
  */
-function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId, onClose, onVoided }) {
+export function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId, onClose, onVoided }) {
   const panelRef = useModalDialog();
   const firstRef = React.useRef(null);
   const [days, setDays] = React.useState(14);
@@ -1141,55 +1145,81 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
   const [link, setLink] = React.useState(null);
   const [copied, setCopied] = React.useState(false);
   const [sent, setSent] = React.useState(null);
+  const [unconfirmed, setUnconfirmed] = React.useState(false);
   const [showLink, setShowLink] = React.useState(false);
+  const resultRef = React.useRef(null);
+  // Interaction fence only. Durable duplicate prevention belongs to the original sender.
+  const working = React.useRef(false);
   const alive = React.useRef(true);
   React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   React.useEffect(() => { firstRef.current?.focus(); }, []);
+  React.useEffect(() => { if (sent || unconfirmed) resultRef.current?.focus(); }, [sent, unconfirmed]);
 
   // The approved act names the person. A single-word first name where there is one, the whole
   // label where there is not, and never an empty string in the middle of a button.
   const firstName = (clientName || "").trim().split(/\s+/)[0] || "your client";
   const state = signing.displayState || signing.signatureState || "draft";
   const reissue = state === "sent" || state === "viewed" || state === "expired";
+  // These are the original sender's three fixed failure sentences. Its legacy
+  // delivery wording is not delivery evidence. Raw details remain in its result.
+  const sendIssueExplanation = (reason) => {
+    if (reason === "the email could not be delivered") return "The sender did not confirm provider acceptance. Delivery has not been verified.";
+    if (reason === "the email went out but its link could not be activated — resend it") return "The provider accepted the request, but its signing link could not be activated. Inspect the original record before requesting a replacement.";
+    if (reason === "this address is on the suppression list (a previous email bounced or was reported), so nothing was sent") return "The sender reported this address as suppressed. Inspect its original message history before another request.";
+    return "The sender reported an issue. Inspect the original agreement and message history before another request.";
+  };
   // The public route this build actually registers. Derived from the running origin rather than a
   // configured base, so a preview deployment hands out a preview link instead of a dead one.
   const url = link ? `${window.location.origin}/sign/${link.token}` : "";
 
   /** The approved act. A real email to the counterparty, not a link for the owner to paste. */
   const send = async () => {
+    if (working.current || unconfirmed || sent || link) return;
+    working.current = true;
     setBusy(true);
     setNotice("");
     const outcome = await signings.sendForSignature(signing.id, tenantId, reissue)
-      .catch(() => ({ ok: false, message: "That could not be confirmed, so nothing is being reported as sent." }));
+      .catch(() => ({ ok: false, state: "unconfirmed", message: "The request may have completed. Inspect this agreement before sending again." }));
+    working.current = false;
     if (!alive.current) return;
     setBusy(false);
-    if (!outcome.ok) { setNotice(outcome.message); return; }
+    if (!outcome.ok || !Array.isArray(outcome.sent) || !outcome.sent.length) {
+      setUnconfirmed(outcome.state !== "refused");
+      setNotice(outcome.message || "The signing request could not be verified. Inspect the original agreement before sending again.");
+      return;
+    }
     setSent(outcome);
   };
 
   const issue = async () => {
+    if (working.current || unconfirmed || sent || link) return;
+    working.current = true;
     setBusy(true);
     setNotice("");
     const outcome = await signings.issueLink(signing.id, days, tenantId)
       .catch(() => ({ ok: false, message: "That could not be confirmed, so no link is being shown." }));
+    working.current = false;
     if (!alive.current) return;
     setBusy(false);
     // §13 — a link exists because the server handed one back, never because a promise resolved.
     if (!outcome.ok || !outcome.token) {
-      setNotice(outcome.message || "No link was issued, so nothing has been sent.");
+      setNotice(outcome.message || "The link could not be verified. Inspect the original agreement before making another link.");
       return;
     }
     setLink({ token: outcome.token, expiresAt: outcome.expiresAt ?? null });
   };
 
   const stop = async () => {
+    if (working.current || unconfirmed || sent || link) return;
+    working.current = true;
     setBusy(true);
     setNotice("");
     const outcome = await signings.voidSigning(signing.id, tenantId)
       .catch(() => ({ ok: false, message: "That could not be confirmed. Check the record before trying again." }));
+    working.current = false;
     if (!alive.current) return;
     setBusy(false);
-    if (!outcome.ok) { setNotice(outcome.message || "The link was not stopped. Nothing was changed."); return; }
+    if (!outcome.ok) { setNotice(outcome.message || "The stop could not be verified. Inspect the original agreement before trying again."); return; }
     onVoided?.();
     onClose();
   };
@@ -1209,13 +1239,15 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
   return (
     <SalesDialogPortal>
       <button className="so-editor-scrim" tabIndex={-1} aria-label="Close" onClick={onClose} />
-      <aside ref={panelRef} className="so-editor" role="dialog" aria-modal="true" aria-labelledby="so-send-title">
+      <aside ref={panelRef} className="so-editor so-signature-request" role="dialog" aria-modal="true" aria-labelledby="so-send-title" onKeyDown={event => {
+        if (event.key === "Escape" && !event.defaultPrevented) { event.preventDefault(); event.stopPropagation(); onClose(); }
+      }}>
         <header className="so-editor-head">
           <div style={{ flex: 1 }}>
             <h2 id="so-send-title">Send for signature</h2>
-            <p>{sent ? "This has been sent." : "Nothing has been sent yet."}</p>
+            <p>{busy ? "Checking the request. Leaving does not cancel it." : sent ? "Provider response received." : unconfirmed ? "Inspect the original agreement before another request." : "Review who receives the document before continuing."}</p>
           </div>
-          <button className="btn btn-s btn-q" onClick={onClose} disabled={busy}>{sent ? "Done" : "Back"}</button>
+          <button className="btn btn-s btn-q" onClick={onClose}>{sent || unconfirmed ? "Done" : "Back"}</button>
         </header>
 
         <div className="so-editor-body" inert={busy ? "" : undefined}>
@@ -1231,21 +1263,25 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
             <div className="so-rrow"><span>Link expires</span><span>{SEND_TTL_DAYS} days after it is sent</span></div>
           </div>
 
-          {sent ? (<>
-            {/* §13 — a 200 is not a delivery, so this reports who was actually reached and, just
-              * as plainly, who was not. A suppressed address is a real outcome, not a rounding. */}
+          {unconfirmed ? (<>
+            <h3 ref={resultRef} tabIndex={-1}>Signing request not verified</h3>
+            <p className="so-banner so-banner-warn"><Ic.shield size={15} /><span>
+              The request may have completed. Return to this agreement and inspect its status and history before sending, replacing or stopping a link.
+            </span></p>
+          </>) : sent ? (<>
+            <h3 ref={resultRef} tabIndex={-1}>Accepted for sending</h3>
             <p className="so-banner"><Ic.shield size={15} /><span>
-              {sent.sent.length
-                ? <><b>Sent.</b> {clientName || "Your client"} has a private link to this exact document{sent.sent.length > 1 ? `, as do ${sent.sent.length - 1} other signer(s)` : ""}. You will see it move to Opened and then Completed on Commercial Terms.</>
-                : <><b>Nothing went out.</b> No message reached anybody, so this document is unchanged.</>}
+              The provider accepted the request for {sent.sent.join(", ")}. Delivery, document opening and completed signatures require their own recorded evidence.
             </span></p>
             {sent.notDelivered.length > 0 && (
               <p className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span>
-                <b>{sent.notDelivered.length} address did not receive it.</b> That address is
-                suppressed or was refused by the mail provider, so no link reached it. Fixing the
-                address and sending again is what puts that right.
+                <b>Existing links were skipped:</b> {sent.notDelivered.join(", ")}. Inspect their original signing status before requesting replacements.
               </span></p>
             )}
+            {sent.failed?.map((failure, index) => (
+              <p key={`${failure.email}-${index}`} className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span><b>{failure.email}</b>: {sendIssueExplanation(failure.reason)}</span></p>
+            ))}
+            {sent.warning && <p className="so-banner so-banner-warn" role="alert"><Ic.shield size={15} /><span>{sent.warning}</span></p>}
           </>) : !link ? (<>
             {/* The gold statement the approved screen carries, in the approved words: what the
               * counterparty gets, what is sealed, and that no money moves (§38). */}
@@ -1257,8 +1293,7 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
             </span></p>
             {reissue && (
               <p className="so-absent">
-                Sending again replaces the link already out there — the old one stops working the
-                moment the new message goes out, and the deadline starts over.
+                A successful replacement retires the earlier signing link. Check the result before relying on the new link or its deadline.
               </p>
             )}
             {/* §58 — the copy-a-link route is a SHIPPED capability and survives the approved
@@ -1304,30 +1339,29 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
               {link.expiresAt ? ` It stops working on ${when(link.expiresAt)}.` : ""}
             </span></p>
             <p className="so-absent">
-              You will see it move to Opened and then Completed on Commercial Terms as they read and
-              sign it. Nothing is charged at any point.
+              Link creation does not send a message or collect a payment. Inspect the original agreement for recorded signing progress.
             </p>
           </>)}
         </div>
 
         <footer className="so-editor-foot">
           <span role={notice ? "alert" : "status"} className="so-editor-note" data-tone={notice ? "bad" : "plain"}>
-            {notice || (sent
-              ? "The record now shows this document as sent."
+            {notice || (busy ? "Checking the original request…" : unconfirmed ? "Return to the original agreement to verify the outcome." : sent
+              ? "Inspect the agreement and its history for the recorded result."
               : link
-                ? "The record now shows this document as sent."
-                : "Nothing leaves the building until you send it.")}
+                ? "A signing link was created. Message delivery is separate."
+                : "Reviewing this panel does not request a new send.")}
           </span>
           <span style={{ flex: 1 }} />
-          {reissue && !link && !sent && (
+          {reissue && !link && !sent && !unconfirmed && (
             <button className="btn btn-s" onClick={stop} disabled={busy}>Stop the current link</button>
           )}
-          <button className="btn btn-s" onClick={onClose} disabled={busy}>{link || sent ? "Done" : "Not yet"}</button>
+          <button className="btn btn-s" onClick={onClose}>{unconfirmed ? "Return to agreement" : link || sent ? "Done" : "Not yet"}</button>
           {/* GOLD, and only here. This is one of exactly two acts on this whole flow that COMMIT —
             * sending it, and signing it — which is the entire gold budget the approved pack spends
             * (§11). Naming the person is the approved wording and is also the honest one: it says
             * who is about to receive a legal document. */}
-          {!link && !sent && (
+          {!link && !sent && !unconfirmed && (
             <button className="btn btn-s btn-g" onClick={send} disabled={busy}>
               {busy ? "Sending…" : `Send it to ${firstName}`}
             </button>
@@ -1704,6 +1738,67 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const [success, setSuccess] = React.useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const selectedAgreement = new URLSearchParams(location.search).get("agreement");
+  const agreementRequest = new URLSearchParams(location.search).get("agreement_request");
+  const agreementBusiness = new URLSearchParams(location.search).get("agreement_business");
+  const agreementSignerRequest = new URLSearchParams(location.search).get("agreement_signer_request");
+  const agreementDocumentRequest = new URLSearchParams(location.search).get("agreement_document_request");
+  const templateSelection = new URLSearchParams(location.search).get("agreement_templates");
+  const templateRequest = new URLSearchParams(location.search).get("template_request");
+  const templateBusiness = new URLSearchParams(location.search).get("template_business");
+  const templateSource = new URLSearchParams(location.search).get("template_source");
+  const agreementTemplateVersion = new URLSearchParams(location.search).get("agreement_template");
+  const freshTemplateRequests = React.useRef(new Set());
+  const clearTemplateNavigation = (query) => { for (const key of ["agreement_templates", "template_request", "template_business", "template_source"]) query.delete(key); };
+  const openTemplateVersion = (id) => {
+    const query = new URLSearchParams(location.search); clearTemplateNavigation(query);
+    for (const key of ["agreement", "agreement_request", "agreement_business", "agreement_template", "agreement_signer_request", "agreement_document_request"]) query.delete(key);
+    query.set("agreement_templates", id);
+    navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash }, { replace: templateSelection === "new" });
+  };
+  const closeTemplateWorkspace = () => {
+    const query = new URLSearchParams(location.search); clearTemplateNavigation(query);
+    freshTemplateRequests.current.delete(templateRequest);
+    navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
+  };
+  const startTemplateVersion = (sourceId) => {
+    if (!canStartAgreement) return;
+    const request = crypto.randomUUID(); freshTemplateRequests.current.add(request);
+    const query = new URLSearchParams(location.search); clearTemplateNavigation(query);
+    for (const key of ["agreement", "agreement_request", "agreement_business", "agreement_template", "agreement_signer_request", "agreement_document_request"]) query.delete(key);
+    query.set("agreement_templates", "new"); query.set("template_request", request); query.set("template_business", signings.tenantId);
+    if (sourceId) query.set("template_source", sourceId);
+    navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash });
+  };
+  const canStartAgreement = Boolean(signings.tenantId && signings.phase === "ready" && signings.canManage && !signings.authorityUnknown && agreements.tenantId === signings.tenantId);
+  // Only ephemeral entry metadata; private agreement wording stays in the author
+  // component until its native canonical save. The opaque request URL survives reload.
+  const freshAgreementRequests = React.useRef(new Set());
+  const openAgreementDocument = (id) => {
+    setDetail(null);
+    const query = new URLSearchParams(location.search);
+    clearTemplateNavigation(query); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request");
+    query.set("agreement", id); query.delete("agreement_request"); query.delete("agreement_business");
+    signings.retry();
+    navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash }, { replace: selectedAgreement === "new" });
+  };
+  const startAgreementDocument = (templateVersionId = null) => {
+    if (!canStartAgreement) return;
+    const request = crypto.randomUUID();
+    freshAgreementRequests.current.add(request);
+    setDetail(null); setEditor(null); setEditing(null);
+    const query = new URLSearchParams(location.search);
+    clearTemplateNavigation(query); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request");
+    if (templateVersionId) query.set("agreement_template", templateVersionId);
+    query.set("agreement", "new"); query.set("agreement_request", request); query.set("agreement_business", signings.tenantId);
+    navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash });
+  };
+  const closeAgreementDocument = () => {
+    const query = new URLSearchParams(location.search);
+    freshAgreementRequests.current.delete(agreementRequest);
+    query.delete("agreement"); query.delete("agreement_request"); query.delete("agreement_business"); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request");
+    navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
+  };
   // The Sales-internal view lives in a Sales-local `?view=` param — deep-linkable and testable,
   // and it never touches the shell's `useSubtabRoute` growth-subtab registry. Overview is the bare
   // default; existing command/revenue/scenarios deep links remain supported.
@@ -1802,6 +1897,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   // a re-issued or replaced one is the later row and wins, which is what somebody reading the
   // Signature column expects to see.
   const signingsReadable = signings.phase === "ready" && signings.readable;
+  const visibleTermStatus = termStatus === "none" && !signingsReadable ? "unrecognised" : termStatus;
   const signingFor = (agreementId) =>
     signings.signings.find((row) => row.agreementId === agreementId) || null;
 
@@ -1819,12 +1915,13 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   ];
   const matchingTerms = termRows.filter((row) => {
     const client = agreements.clients.find((c) => c.id === row.contactId);
-    // The filter names the ENGAGEMENT's state, so a document with no engagement matches only
-    // "All". Sweeping it into "Draft" would put it under a word its record does not hold.
-    // Signature, per the approved filter — `row.signing.displayState` rather than the engagement's
-    // own `agreement.status`. A row with no document at all answers only "any".
-    return (termStatus === "all" || row.signing?.displayState === termStatus)
-      && (client?.name || "").toLowerCase().includes(termSearch.trim().toLowerCase());
+    // Use the same truthful reading as the Signature cell. A failed document read is unknown,
+    // while a successful read with no document is "none"; neither is an engagement state.
+    const signatureState = row.signing?.displayState || (signingsReadable ? "none" : "unrecognised");
+    const query = termSearch.trim().toLowerCase();
+    const matchesText = [client?.name, row.signing?.documentTitle, row.signing?.signerName]
+      .some((value) => (value || "").toLowerCase().includes(query));
+    return (visibleTermStatus === "all" || signatureState === visibleTermStatus) && matchesText;
   });
   const shownTerms = matchingTerms.slice(termPage * 5, termPage * 5 + 5);
   const processorState = sales.processorUnrecognised ? "unknown" : sales.processor === null ? "none" : sales.processor === "not_yet" ? "warn" : "ok";
@@ -1896,7 +1993,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
    * A declined or unrecognised document still offers nothing, because there genuinely is nothing
    * to do to it — and a control that pretends otherwise is the dead end §70 refuses.
    */
-  const signingAction = (signing, contactId, agreement) => {
+  const legacySigningAction = (signing, contactId, agreement) => {
     if (!canSign || !signing) return null;
     const state = signing.displayState;
     if (state === "completed") {
@@ -1919,6 +2016,10 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
       </button>
     );
   };
+  const signingAction = (signing, contactId, agreement) => <>
+    {signing && signings.canManage ? <button className="btn btn-p" onClick={() => openAgreementDocument(signing.id)}><Ic.doc size={13} />Open agreement document</button> : null}
+    {legacySigningAction(signing, contactId, agreement)}
+  </>;
 
   /** A document that stands on its own — no offer, no price (owner ruling 3). It gets the same
    * drawer, minus the commercial rows it genuinely does not have. */
@@ -2215,7 +2316,38 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
         : <ScenarioLab offers={offers} deals={deals} stages={stages} onAskPaige={askPaige} />
       )}
 
-      {view === "terms" && (<>
+      {view === "terms" && selectedAgreement && !templateSelection && <React.Suspense fallback={<div className="so-absent" role="status">Opening the agreement workspace…</div>}>
+        <AgreementPreparationWorkspace tenantId={signings.tenantId} canManage={signings.canManage} authorityUnknown={signings.authorityUnknown}
+          authorizationReady={signings.phase === "ready"} clients={agreements.clients}
+          clientsReady={agreements.phase === "ready" && agreements.tenantId === signings.tenantId} clientsReadable={agreements.clientsReadable}
+          agreementId={selectedAgreement} requestId={agreementRequest} requestTenantId={agreementBusiness} freshlyOpened={freshAgreementRequests.current.has(agreementRequest)} templateVersionId={agreementTemplateVersion}
+          onDraftAttempted={(request) => freshAgreementRequests.current.delete(request)}
+          signerRequestId={agreementSignerRequest} onSignerRequestRetained={(id) => {
+            const query = new URLSearchParams(location.search);
+            if (id) { query.set("agreement_signer_request", id); query.set("agreement_business", signings.tenantId); }
+            else { query.delete("agreement_signer_request"); query.delete("agreement_document_request"); query.delete("agreement_business"); }
+            const target = { pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash };
+            return { url: `${target.pathname}${target.search}${target.hash}`, replace: () => navigate(target, { replace: true }) };
+          }}
+          documentRequestId={agreementDocumentRequest} onDocumentRequestRetained={(id) => {
+            const query = new URLSearchParams(location.search);
+            if (id) { query.set("agreement_document_request", id); query.set("agreement_business", signings.tenantId); }
+            else { query.delete("agreement_document_request"); query.delete("agreement_business"); }
+            const target = { pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash };
+            return { url: `${target.pathname}${target.search}${target.hash}`, replace: () => navigate(target, { replace: true }) };
+          }}
+          onOpenRecord={openAgreementDocument} onClose={closeAgreementDocument} onOpenClients={onOpenClients} onOpenTemplate={openTemplateVersion}
+          signings={signings} onRefresh={() => { signings.retry(); agreements.retry(); }} />
+      </React.Suspense>}
+      {view === "terms" && templateSelection && <React.Suspense fallback={<div className="so-absent" role="status">Opening business templates…</div>}>
+        <AgreementTemplateWorkspace tenantId={signings.tenantId} canManage={signings.canManage} authorityUnknown={signings.authorityUnknown}
+          authorizationReady={signings.phase === "ready"} selection={templateSelection} requestId={templateRequest} requestTenantId={templateBusiness}
+          sourceId={templateSource} freshlyOpened={freshTemplateRequests.current.has(templateRequest)}
+          onAttempted={(request) => freshTemplateRequests.current.delete(request)} onClose={closeTemplateWorkspace}
+          onOpenVersion={openTemplateVersion} onNewVersion={startTemplateVersion} onUseVersion={startAgreementDocument}
+          onRefresh={() => { signings.retry(); agreements.retry(); }} />
+      </React.Suspense>}
+      {view === "terms" && !selectedAgreement && !templateSelection && (<>
       {/* ── ONE BAND: what each client agreed, and the document they signed to agree it ─────
         * There were two bands here. The second browsed the Catalog beside a table that had
         * nothing to do with browsing, and the owner removed it (2026-09-22). Its capabilities did
@@ -2242,7 +2374,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
             <button className="btn btn-s btn-q" onClick={() => onOpenCatalog()}>Open Catalog</button>
           ) : null}
           {agreements.canManage
-            ? <button className="btn btn-s btn-p" onClick={() => { setEditing(null); setEditor("agreement"); }}>New agreement</button>
+            ? <><button className="btn btn-s" onClick={() => openTemplateVersion("list")} disabled={!canStartAgreement}>Business templates</button><button className="btn btn-s" onClick={() => { setEditing(null); setEditor("agreement"); }}>Record terms or upload</button><button className="btn btn-s btn-p" onClick={() => startAgreementDocument()} disabled={!canStartAgreement}>New agreement</button>{!canStartAgreement && <span className="so-quiet">Agreement author access must be confirmed.</span>}</>
             : agreements.phase === "ready" && agreements.agreementsReadable
               // A reader who cannot write is told WHO may — never a silently missing button (§36/§70).
               ? <span className="so-quiet">An owner or admin records this.</span>
@@ -2260,9 +2392,9 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
         </div>
 
         {agreements.agreementsReadable && termRows.length > 0 && <div className="so-filters">
-          <label className="so-search"><span>Find a client</span><input type="search" value={termSearch} placeholder="Search client name…" onChange={(e) => { setTermSearch(e.target.value); setTermPage(0); }} /></label>
-          <label className="so-search"><span>Signature</span><select aria-label="Signature state" value={termStatus} onChange={(e) => { setTermStatus(e.target.value); setTermPage(0); }}><option value="all">Any signature state</option>{Object.entries(SIGNATURE_STATE).filter(([key]) => key !== "none" && key !== "unrecognised").map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</select></label>
-          <small className="so-filters-note">Searches the latest {termRows.length} loaded records (up to 200).</small>
+          <label className="so-search"><span>Find an agreement</span><input type="search" value={termSearch} placeholder="Client, document or signer…" onChange={(e) => { setTermSearch(e.target.value); setTermPage(0); }} /></label>
+          <label className="so-search"><span>Signature</span><select aria-label="Signature state" value={visibleTermStatus} onChange={(e) => { setTermStatus(e.target.value); setTermPage(0); }}><option value="all">Any signature state</option>{Object.entries(SIGNATURE_STATE).filter(([key]) => key !== "none" || signingsReadable).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</select></label>
+          <small className="so-filters-note">Searches {termRows.length} loaded records only. Each source loads up to 200 records.</small>
         </div>}
         {["loading", "resolving"].includes(agreements.phase) ? <p role="status">Loading commercial terms…</p> : agreements.phase === "error" ? (
           <p className="so-absent">
@@ -2310,11 +2442,13 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
               ? (onOpenClients ? <div className="so-blank-acts"><button className="btn btn-p" onClick={() => onOpenClients()}>Go to Clients <Ic.arrow size={13} /></button></div> : null)
               : agreements.canManage ? (
                 <div className="so-blank-acts">
-                  <button className="btn btn-p" onClick={() => { setEditing(null); setEditor("agreement"); }}>New agreement</button>
+                  <button className="btn btn-p" onClick={() => startAgreementDocument()} disabled={!canStartAgreement}>New agreement</button>
                   {onOpenCatalog ? <button className="btn btn-s" onClick={() => onOpenCatalog()}>Open Catalog <Ic.arrow size={12} /></button> : null}
                 </div>
               ) : null}
           </div>
+        ) : matchingTerms.length === 0 ? (
+          <p className="so-absent" role="status">No agreements match these filters in the loaded records. Change the search or signature state to see them.</p>
         ) : (
           <div className="so-table" role="table" aria-label="Agreements and terms">
             <div className="so-tr so-th so-tr-5" role="row">

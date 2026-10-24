@@ -1,0 +1,26 @@
+{
+  "source": "cb2d89c8b4e1226482add343987884e5e2fcdb91",
+  "frames": [
+    {
+      "file": "320-800-light-closed.png",
+      "width": 320,
+      "height": 800,
+      "theme": "light",
+      "pane": "closed",
+      "entry": "Operations Overview",
+      "source": "cb2d89c8b4e1226482add343987884e5e2fcdb91",
+      "dialogOverflow": false,
+      "focus": "Not now",
+      "focusVisible": true,
+      "fonts": "loaded",
+      "pageOverflow": false
+    }
+  ],
+  "escape": {
+    "focus": "Review authorization",
+    "overflow": false,
+    "review": false,
+    "sheet": true
+  },
+  "boundary": "Synthetic Auth/RPC; actual native component and keyboard; 320px reflow is not native200% zoom or AT proof"
+}

@@ -29,14 +29,17 @@ export type CanonicalDestination =
   | "tasks"
   | "calendar"
   | "contacts"
+  | "conversations"
   | "pipeline"
   | "executive"
   | "finance"
+  | "marketing"
   | "sales_pipeline"
   | "systems_check"
   | "business_game_plan"
   | "trust_compass"
   | "mind"
+  | "portal_knowledge"
   | "marketplace"
   | "marketplace_submissions"
   // Experience 04 E4-S3: where a read PAIGE answered from can be checked. Solo only — the other
@@ -75,19 +78,22 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     home: "/solo/{account}/command-center/executive",
     executive: "/solo/{account}/command-center/executive",
     finance: "/solo/{account}/finance",
+    marketing: "/solo/{account}/growth/overview",
     sales_pipeline: "/solo/{account}/sales/opportunities?view=board",
     systems_check: "/solo/{account}/command-center/systems-check",
     business_game_plan: "/solo/{account}/command-center/business-game-plan",
     trust_compass: "/solo/{account}/command-center/trust-compass",
     mind: "/solo/{account}/command-center/mind",
+    portal_knowledge: "/solo/{account}/clients/portal?view=knowledge",
     billing: "/solo/{account}/settings/billing",
     security: "/solo/{account}/settings/security-data",
     settings: "/solo/{account}/settings/setup",
     connections: "/solo/{account}/settings/connections",
     integrations: "/solo/{account}/settings/integrations",
-    tasks: "/solo/{account}/calendar/tasks",
+    tasks: "/solo/{account}/operations/work",
     calendar: "/solo/{account}/calendar/week",
     contacts: "/solo/{account}/clients/people",
+    conversations: "/solo/{account}/clients/conversations",
     pipeline: "/solo/{account}/growth/pipeline",
     marketplace: "/solo/{account}/marketplace/browse",
     sales_agreements: "/solo/{account}/sales/agreements",
@@ -167,7 +173,7 @@ export type CanonicalRecordLink = { path: string; status: "exact" | "surface_onl
 /** The focus parameters the mounted surfaces already read (UUIDs only). */
 const RECORD_FOCUS: Record<MountedTier, Partial<Record<CanonicalDestination, string>>> = {
   operator: {},
-  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice" },
+  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice", tasks: "task", operations_work: "task", business_game_plan: "play", portal_knowledge: "source", systems_check: "finding" },
   sub_account: {},
   agency: {},
 };

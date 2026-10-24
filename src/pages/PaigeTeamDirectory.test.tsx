@@ -99,9 +99,10 @@ describe("<PaigeTeamDirectory> — §-clean", () => {
     expect(out).toContain("ring-[hsl(var(--primary-light)/0.7)]");
   });
 
-  it("has no finance/credit wording (§2)", () => {
-    const banned = /credit|funding|lend|loan|financ|fico|lender/i;
+  it("has no opt-in funding/credit wording (§2)", () => {
+    const banned = /credit|funding|lend|loan|fico|lender/i;
     for (const scope of SCOPES) {
+      expect(html(scope)).toContain("financial evidence and risks");
       expect(banned.test(html(scope))).toBe(false);
     }
   });

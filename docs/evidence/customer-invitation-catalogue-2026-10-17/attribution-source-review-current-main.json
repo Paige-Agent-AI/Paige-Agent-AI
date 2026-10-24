@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "sourceCommit": "2a93bd24cea26aa57b68e0707a88afadd68e9e57",
+  "mainCommit": "4def6ce77ed1cbaa3d20f49c64775ae1e4ce827f",
+  "reviewer": "AUTHOR-REVIEW / LOWER ASSURANCE",
+  "exactDelta": "Two additive invitation attribution lines only; removal restores current main core byte-for-byte.",
+  "canonicalRecord": "tenant_invite_tokens, actual returned invitation_id only",
+  "preserved": "Current main owner controls and Cura identity/Knowledge/private-history source. All 29 incumbent dispatch bodies, caller/auth/scope/policy/provider/execution bodies, metadata, extractor and refusal mutants unchanged. Dependency source differs only by the one separately reviewed invitation high-risk row documented below.",
+  "scope": "Explicit reviewed renewal of 29 frozen dispatch ancestry scalar fields plus one action-risk dependency AST scalar for the already reviewed invitation high-risk row; shared aliases retain exact shared fingerprints. No algorithm or future auto-acceptance.",
+  "fingerprints": [
+    {
+      "tool": "comms_setup_calling",
+      "old": "8fc9122bf9e2cb47e63bc507d58394392e1e2a2cd90b4a52a53d3064056cf37e",
+      "new": "082d8aed7e67e674c250dabc8b7fc933efef8e42cf79527d82560700d4e44a53"
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "old": "4384f0fc6999d920946a60e64b3079edae32ad75ae8e5b441545f8936ce91625",
+      "new": "c49459b48c5058aa749e04a1fc767a3cd0a1f7dff49205f7399f599fd93ab743"
+    },
+    {
+      "tool": "calendar_link_send",
+      "old": "f66fb536891df5b2bd06ee1c3de994616f90280cb0f5de74d26bdef43f25aa48",
+      "new": "8275d93e6e7eee79912ddf02347c352ec808f01d7bc3a960f73e477564eb0753"
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "old": "358abe6c2f6a8133a2606d4cd17967c61a90d0e3646be3df47409006ab7968f9",
+      "new": "4bce2ca6c669c6db8fa78c468b686cbba82a6b840058195909afc4b1dd4011ea"
+    },
+    {
+      "tool": "update_business_profile",
+      "old": "1e4227ce657f84653a02686f282f0af16a17aa3f9ef8e80e94744ee79530b0e7",
+      "new": "72ee0e0fc70af8c6d3b096680bc0751a7e04fbf9389fe4fe09b6a4f542560e2f"
+    },
+    {
+      "tool": "capability_status",
+      "old": "bff15cd61ae0e9a4492aaca3bf50989bdf7a5e9f9b8210a1b8ebe5e6f1a13e8e",
+      "new": "48b679c37b5649143e4b04ce717f6c4f25b3bd896f14dd7ffb7dfda98c151963"
+    },
+    {
+      "tool": "improvement_propose",
+      "old": "16d4f63ecc6108dca33ac72a8b44c772d47adb2e76433bfc0f4301e1f4e4d199",
+      "new": "195fbe74ab5272e179f9a30b49efaa9a636d48049dbdd3b227480c31562bc018"
+    },
+    {
+      "tool": "improvement_decide",
+      "old": "7a262f44e0dd587dbc14751cf7a00f74d7b40f9647df85fac84796ed6f3954c6",
+      "new": "52da036c2f544a8be23316a4cb96462a504d86798701f50e7e657221303095e8"
+    },
+    {
+      "tool": "list_subagents",
+      "old": "63422e5535b680f4c9a17247be802cdb8bf42bad6b8832a986410c17fbf71929",
+      "new": "7390fdceaf642a37d0d996312adbc47c47e903112e15fbd6e1096b25c93f1e29"
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "old": "63422e5535b680f4c9a17247be802cdb8bf42bad6b8832a986410c17fbf71929",
+      "new": "7390fdceaf642a37d0d996312adbc47c47e903112e15fbd6e1096b25c93f1e29"
+    },
+    {
+      "tool": "forge_subagent",
+      "old": "c1c5a1a9f9e901944c939cce2a8ce3f1a3a55d3f1059eb3cb35086eeebade896",
+      "new": "be631c36e86390ba0e3c409ebb6ba589451c67a0590212a74498d796df40b9c3"
+    },
+    {
+      "tool": "author_event_kind",
+      "old": "c0828a8a13037d320faa520c691d7906d3d8f22cff7a9007e7033fb0691fa890",
+      "new": "98be4af98af6217050797c5bd53d6b4d619bf27c4540eb0ce423d07574fad21a"
+    },
+    {
+      "tool": "crm_add_note",
+      "old": "536ac65ff62800a44d1893ce2873be631faf3468512859854d8373462aeaa030",
+      "new": "b25e0cfd17338bdb16dd688770c805174cf40e1fa77d448a6fecc9ba0332c0ab"
+    },
+    {
+      "tool": "crm_file_document",
+      "old": "f71447cff8455e7a94c6a96e3bf9f3fb6e8495c4dac2d5e4e0031923463cabe1",
+      "new": "ddf8d874b5c13a59aca52d7de59e6e199d7b3a88ce01c1a4adb83138697c8bf2"
+    },
+    {
+      "tool": "update_client_data",
+      "old": "f964e295572ac030257b018b816c3966f1f960bf92da10efe7b42c0a1022064b",
+      "new": "6fedfc7d6128972f004bd468388ea121d0f28f54ba455c9505a1f5eff306b40f"
+    },
+    {
+      "tool": "pipeline_configure",
+      "old": "b63874a564c9f1af977f57e9c867864cf90b11276c6f68092acdf7d58c45f20a",
+      "new": "84fa40a313e472346dfa908ec62290e42c6361c1ca025888d149513381b3166b"
+    },
+    {
+      "tool": "deep_research",
+      "old": "486a9e5c86684e1aeda88fa450deb9d287c1a901a422cf99167696ca3774543c",
+      "new": "b33f8c38956f6e690c173c3689e3ae3b5b3ab506530b4d53e52b6925978fd1cd"
+    },
+    {
+      "tool": "web_search",
+      "old": "624b9b079d750b31de2b815efd56478efbf7f95b57f8b6d3810e4a966decad65",
+      "new": "a5085f8991c9d2664da3fd380b74f9e6b3a1fee55c62b6000777c99df075b872"
+    },
+    {
+      "tool": "web_fetch",
+      "old": "b4bc0bda40a12f9fe69ce899b26db8184ad8b3736afe4da0ecab7b69f5f2c4a0",
+      "new": "6a30b7f8c4e2db47f9ad400657049ab88f23110f792762175fbb8dc811bdd823"
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "old": "0a47a4b6cbf4bb21ae05105124912847100293c956f0a3631ba1b39b7a78d01c",
+      "new": "a5db0071051ea6395f7b91ce763627c6f6b21610b779d48fd972abb96f1a7321"
+    },
+    {
+      "tool": "automation_draft",
+      "old": "6069edd419d48a01b99fa2a14598d96ffd33f7b404fdfb320fe13a41fdcd51c1",
+      "new": "c407c8f76be7e11e3761083966c9469b50e8dafce766e6d4cac0ff5fab24aed0"
+    },
+    {
+      "tool": "comms_connection_summary",
+      "old": "5b5a80c3e8705313d09d054da9ebd9471762fd604dfadb956813e37156e9b6c4",
+      "new": "80050a26c4e99618e2e364c923dca528593b0a2fb013902819f9a2a3567fec42"
+    },
+    {
+      "tool": "comms_registration_status",
+      "old": "835ad4e1b6175f58222532f278ed450775d22cf020b80242957d8c1cc994ba9b",
+      "new": "28f90f7c06fe1431e4c57598da08ea3cabb5e845208b48e11afb14e724527216"
+    },
+    {
+      "tool": "comms_list_numbers",
+      "old": "4f43520dfa57d96daa3e2cdc8f906b93c57c10ca141ed392c58c5d3d34231e2d",
+      "new": "3f8b94526dcb892f3fb87627384a3fa8e998fbc950d19b6ab7ae28dee5e74537"
+    },
+    {
+      "tool": "comms_search_numbers",
+      "old": "7775efcda9c9099997b0e9d8abbf4a8e149e7be25f3958cb956c9cf7281ce14d",
+      "new": "f58d18c7ab478f04f63265af3872775bf4709616b7f6bad13c29613fc190a4dd"
+    },
+    {
+      "tool": "comms_buy_number",
+      "old": "f8f34418c87bba3ec9ff74b4dc697b8a6b7974ca478037d662bfd237f7c46325",
+      "new": "5e7495c43f1eef1ca322f080add5c6ff53f3a7f16a2e65c23e6da9c5026a673f"
+    },
+    {
+      "tool": "comms_draft_registration",
+      "old": "b7b7713f15a0c28cc03036946244499906168e1b9219c9638828a78c65b24c25",
+      "new": "f6d899aacd6f542b65581ebcf14d2624ff0cc734c267608e24d940c03b3dcfd7"
+    },
+    {
+      "tool": "comms_name_number",
+      "old": "9194d747cc6a9c23f04320087cd477f3adfbf89c466173a59129d95bfd9410e6",
+      "new": "582b1951699a9ce9036efc8dd2951864f371900d0d2b440197d35e2f8fefd50a"
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "old": "c4ad3889d371fffa7f4ccdaa08148df259e62a8dd3e5662236e954400d7ae556",
+      "new": "7176a827213d75f6650f6af58dae68d723d5fe9c461085321e5782ff73f3a409"
+    }
+  ],
+  "reviewedDependencyRenewal": {
+    "path": "supabase/functions/_shared/action-risk.ts",
+    "oldAstSha256": "4286ebbf49192920713f840eb56bc524f31f146fd4431357c99336f40c137260",
+    "newAstSha256": "110bcb6fd9ffb7364cedec7f063a484b8881ccc3f7e636de4e65f2732768d9cf",
+    "delta": "One exact client_portal_invitation_send high-risk classification beside comms_send_email. All incumbent rows, classifier code and authority gates unchanged. This same invitation row was already reviewed at b3fffa6d2a384ca319706c89ccef368bbb90f45a; composing current main restored the baseline dependency pin, so this explicitly reviewed scalar is renewed.",
+    "encoding": "TypeScript createPrinter({removeComments:true}) canonical AST SHA-256",
+    "verification": "Source delta inspected against main 4def6ce77ed1cbaa3d20f49c64775ae1e4ce827f; no pin extraction or acceptance algorithm changed."
+  }
+}

@@ -149,6 +149,16 @@ describe("Ask Paige again", () => {
 });
 
 describe("where to check", () => {
+  it("opens native Operations work for an uncertain CRM task without inventing record focus", () => {
+    const task = pendingApprovalOutcome([{ role: "assistant", confirm: [
+      { tool: "crm_create_task", summary: "Create a task", fingerprint: FP_A },
+    ] }], [FP_A]);
+    const uncertain = applyServerOutcome(task, { actions: [{ fingerprint: FP_A, outcome: "unconfirmed" }] });
+    expect(checkLinks(uncertain, outcomeCardView(uncertain, false), 101)).toEqual([
+      { label: "Open your tasks", to: "/solo/101/operations/work" },
+    ]);
+  });
+
   const unconfirmed = applyServerOutcome(pending(), {
     actions: [{ fingerprint: FP_A, outcome: "unconfirmed" }, { fingerprint: FP_B, outcome: "unconfirmed" }],
   });

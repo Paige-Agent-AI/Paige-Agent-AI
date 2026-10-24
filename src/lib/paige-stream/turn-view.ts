@@ -116,6 +116,7 @@ export interface LiveTurnInput {
   ask?: AskStanding;
 }
 
+// customer-identity-exempt: owner chat only — the turn views are derived by PaigeAIChat; the customer chat (PaigeChat) never calls them
 const nameOf = (personaName?: string) => (personaName && personaName.trim()) || "PAIGE";
 const stepsWord = (n: number) => `${n} ${n === 1 ? "step" : "steps"}`;
 

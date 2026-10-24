@@ -1,0 +1,154 @@
+[
+  {
+    "name": "inventory-1536-closed",
+    "dock": "closed",
+    "documentWidth": 1536,
+    "heading": "Teach CURA",
+    "main": [
+      {
+        "h": 704,
+        "overflow": "auto",
+        "sh": 995,
+        "sw": 1454,
+        "w": 1454
+      }
+    ],
+    "viewport": [
+      1536,
+      770
+    ]
+  },
+  {
+    "name": "inventory-1536-open",
+    "dock": "open",
+    "documentWidth": 1536,
+    "heading": "Teach CURA",
+    "main": [
+      {
+        "h": 704,
+        "overflow": "auto",
+        "sh": 995,
+        "sw": 1055,
+        "w": 1055
+      }
+    ],
+    "viewport": [
+      1536,
+      770
+    ]
+  },
+  {
+    "name": "inventory-1366-closed",
+    "dock": "closed",
+    "documentWidth": 1366,
+    "heading": "Teach CURA",
+    "main": [
+      {
+        "h": 702,
+        "overflow": "auto",
+        "sh": 995,
+        "sw": 1285,
+        "w": 1285
+      }
+    ],
+    "viewport": [
+      1366,
+      768
+    ]
+  },
+  {
+    "name": "inventory-1366-open",
+    "dock": "open",
+    "documentWidth": 1366,
+    "heading": "Teach CURA",
+    "main": [
+      {
+        "h": 702,
+        "overflow": "auto",
+        "sh": 995,
+        "sw": 930,
+        "w": 930
+      }
+    ],
+    "viewport": [
+      1366,
+      768
+    ]
+  },
+  {
+    "name": "inventory-1024-closed",
+    "dock": "closed",
+    "documentWidth": 1024,
+    "heading": "Teach CURA",
+    "main": [
+      {
+        "h": 702,
+        "overflow": "auto",
+        "sh": 995,
+        "sw": 942,
+        "w": 942
+      }
+    ],
+    "viewport": [
+      1024,
+      768
+    ]
+  },
+  {
+    "name": "inventory-1024-open",
+    "dock": "open",
+    "documentWidth": 1024,
+    "heading": "Teach CURA",
+    "main": [
+      {
+        "h": 702,
+        "overflow": "auto",
+        "sh": 995,
+        "sw": 942,
+        "w": 942
+      }
+    ],
+    "viewport": [
+      1024,
+      768
+    ]
+  },
+  {
+    "name": "inventory-900-closed",
+    "dock": "closed",
+    "documentWidth": 900,
+    "heading": "Teach CURA",
+    "main": [
+      {
+        "h": 934,
+        "overflow": "auto",
+        "sh": 995,
+        "sw": 818,
+        "w": 818
+      }
+    ],
+    "viewport": [
+      900,
+      1000
+    ]
+  },
+  {
+    "name": "inventory-900-open",
+    "dock": "open",
+    "documentWidth": 900,
+    "heading": "Teach CURA",
+    "main": [
+      {
+        "h": 934,
+        "overflow": "auto",
+        "sh": 995,
+        "sw": 818,
+        "w": 818
+      }
+    ],
+    "viewport": [
+      900,
+      1000
+    ]
+  }
+]

@@ -212,21 +212,11 @@
   position: relative;
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 12px; align-items: center;
-  padding: 10px 0 10px 11px; border-bottom: 1px solid var(--violet-line);
+  padding: 10px 0; border-bottom: 1px solid var(--violet-line);
   transition: background .14s;
 }
-/* A state-keyed accent down the left edge. The pill already names the state in words; this makes
- * the whole column readable at a glance without adding a row of its own. Colour is set from the
- * pill's tone by the rules below, so the bar and the word can never disagree. */
-.so-ready-row::before {
-  content: ""; position: absolute; left: 0; top: 9px; bottom: 9px;
-  width: 3px; border-radius: 2px; background: var(--line);
-}
-.so-ready-row:has(.pill-v)::before    { background: var(--violet); }
-.so-ready-row:has(.pill-ok)::before   { background: var(--ok); }
-.so-ready-row:has(.pill-warn)::before { background: var(--warn); }
-.so-ready-row:has(.pill-n)::before    { background: var(--ink-3); }
-.so-ready-row:hover { background: var(--violet-tint); border-radius: 0 var(--r-s) var(--r-s) 0; }
+/* The existing status pill carries the actual state in words and color. */
+.so-ready-row:hover { background: var(--violet-tint); border-radius: var(--r-s); }
 .so-ready-row:last-of-type { border-bottom: 0; }
 .so-ready-text { display: block; min-width: 0; }
 .so-ready-text b { display: block; font: 500 12.5px/1.35 var(--font); color: var(--ink); }
@@ -443,6 +433,12 @@ button.so-row:focus-visible { outline: 2px solid var(--violet); outline-offset: 
   box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent), var(--sh-3);
   animation: so-sheet 220ms cubic-bezier(.22,.61,.36,1);
 }
+/* The original portal is outside .so: inherit shared surfaces even when its
+   desk-only --sd-panel is absent. Other Sales dialogs keep their existing scope. */
+.so-signature-request { background: var(--sd-panel, var(--surface)); }
+.so-signature-request .so-editor-body { grid-auto-rows: max-content; }
+.so-signature-request .btn { min-height: 44px; }
+.so-signature-request .so-banner > span { flex: 1; overflow-wrap: anywhere; }
 /* The sheet's own accent: violet running into gold, the two colours this flow spends — the second
  * of which is the act at the END of it. A hairline, never a bar. */
 .so-editor::after {
@@ -978,7 +974,7 @@ button.so-row:focus-visible { outline: 2px solid var(--violet); outline-offset: 
   margin: 4px 0 -4px; font: 600 10.5px/1 var(--font); letter-spacing: .1em; text-transform: uppercase;
   color: var(--violet);
 }
-.so-src { display: grid; gap: 8px; }
+.so-document-sources { display: grid; gap: 8px; min-width: 0; }
 .so-src-card {
   position: relative; overflow: hidden; display: grid; gap: 3px;
   grid-template-columns: 26px minmax(0, 1fr); align-items: start;
@@ -1089,7 +1085,7 @@ button.so-row:focus-visible { outline: 2px solid var(--violet); outline-offset: 
  * rather than pulses — a pulse reads as live traffic, and this document is finished. */
 .so-orb {
   position: relative; width: 76px; height: 76px; flex: none; display: grid; place-items: center;
-  animation: so-pop .55s cubic-bezier(.34,1.56,.64,1) both;
+  animation: so-pop .55s cubic-bezier(.22,1,.36,1) both;
 }
 .so-orb i { position: absolute; inset: 0; border-radius: 50%; }
 .so-orb .so-orb-halo {

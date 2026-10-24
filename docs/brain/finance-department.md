@@ -1,5 +1,105 @@
 # Finance department — current source and full operating target
 
+## October21 17:35 UTC — Banking receiver released, bounded customer proof
+
+Original #2414 merged `950d1dac0f355050eb46e6ce5f39850eefc59620`, exact reviewed
+tree744715d84f25e4205692c957fc14b2964b7fffae and required CI PASS. Exact production
+webdpl_uzk6FuLF3foxBVRubz1ykJu25xAq/public950d1dac-mvidsevg and actual served source
+verify. Ordinary authorized customer no-source class PASS: native Finance link,
+Banking & Cash read with unavailable-not-zero disclosure, Refresh, existing Integrations
+exit/Back and full reload; saved conversation/empty composer preserved. ANT-52
+f9b5b986-e844-4e18-ae4c-837f3a299365; Master§4.0 holds exact review/release identities.
+No source/provider connection, fixture or financial action. Populated company/account/
+currency/provider, role/isolation/cohort, zoom/Live/full Finance/all19/founder acceptance
+remain owed. Earlier development records below remain historical evidence.
+
+## EXP02 receiver checkpoint — October21, development only
+
+Original #2414 Banking & Cash consumer is recovered on current main; no replacement Finance read or originating records.49 actual workspace/shared-hook/presenter cases support its existing canonical Finance contract, correct product fonts, source disclosure, loading/refusal/empty states, keyboard, refresh and integrations return. Native raster audit leaves two1536 frames unverified (actual1535x770);14 other view/state frames plus keyboard match their dimensions. Full native finish, final review/required CI, safe release/readback and actual authorized receiver/provider/permission/reload proof remain owed. Source observations are not bank-wide totals or action receipts. Existing nine analytics catalogue states remain bounded; no Live promotion or capability/provider/algorithm activation. See [receiver evidence](../evidence/ui-delivery/e2-finance-department-sources.md). Historical source checkpoints below remain dated evidence.
+
+
+## October 20 observed EXP02 Finance consumer release
+
+Original #2402 reviewed d0aafc53ed81273868b4160684677ed02175454b merged
+ddf12b6bbda085cdb9f66587f9e803e11fc3cc18 with exact reviewed union tree 1472c481.
+All 11 checks/Preview and two Vercel contexts passed; AUTHOR-REVIEW / LOWER
+ASSURANCE 6303545504. Web dpl_6qkA2AUtNSxr9ntZt9EMn21Gpcrm READY/exact and
+public ddf12b6…mvha1pjq observed. Normal guarded recovery 39511759880 verified
+five of five importers' complete source/configuration; actual edge-live ddf12b6
+independently confirmed. Artifact 12306466169 SHA256
+c4d9267ee8bbb068337ade9efdaefff5d8d7f9a0cb7f4f6a0970147215e7eb74.
+No own migration or new provider/permission/action activation.
+
+The same caller-JWT Finance contracts now feed the canonical Business Review
+composer, Executive and admitted read-only briefing. Decimal source facts retain
+currency, basis, period, company/source scope, revocation and null-versus-zero
+boundaries. Provenance remains separate from execution receipts. Original #2021
+statement helpers still remain UNMOUNTED; this release does not activate ingestion.
+
+Actual authorized SOLO no-source/provenance/navigation/return/reload passed.
+Populated amounts, connected-provider readiness, tenant/permission negatives,
+new Chat/Live behavior and full financial acceptance remain owed. Stored facts
+are not an ALG-06 cash-flow forecast or a backtest. Master §4.0 and ANT-52
+hold sanitized release/customer receipts; private captures remain local.
+This observed release supersedes the dated candidate checkpoint below.
+
+
+## October20 EXP02 integration checkpoint
+
+Original statement helper#2021 is source-released at mained305fb25 with exact
+reviewed tree737b577a, required CI and productionweb readback; it stays UNMOUNTED.
+Paired actual release closeout is in#2430, whose required CI remains pending.
+The Finance/Executive consumer candidate composes currentmain/VERA atbaceaaa8:
+262/262 focused cases, type ratchet10/6, productionbuild5603modules and scoped
+lint0errors PASS. Nineteen source-bound native synthetic PNGs preserve product
+fonts, corrected contrast, desktop/phone states, keyboard disclosure and truthful
+source/zero/unavailable/provenance labels. See the existing UI delivery record
+and e2-finance-native-2026-10-20 manifest. A development-only hook helper was
+renamed without changing expressions/fixtures/rendering; exact equivalence is
+recorded separately from the frozen captures. Actual zoom, deployed Finance
+behavior/provider readiness, Chat/Live, account isolation/reload and full19/founder
+acceptance remain owed. No new issuer, ledger, provider, approval or action activation.
+
+## EXP02 consumer continuation v2026-10-20.1 — local, not released
+
+EXP02 extends the approved Banking & Cash destination using the same
+`useBusinessReview`/`paige-business-review`/Operating Fabric Finance source contract
+as Executive and the same `ExecutiveFinanceEvidence` presenter. #2402 remains the
+source prerequisite; branch `codex/e2-finance-department-sources` adds no metric,
+provider, store, calculation or capability registration. Read only while Banking
+is selected and department access is not refused; existing toolbar refresh reuses
+that reader, while tab/workspace changes discard the prior display. Preserve exact
+company/account/currency amounts, null versus zero, source observations and existing
+Reconciliation limitations. Do not describe a source receipt as executed work.
+
+Thirty component/shared-hook/parser assertions pass, including refresh/refusal and
+workspace change; the pre-change100a component fails the new consumer regression.
+This is source proof only. Native Finance/keyboard/zoom, final review/CI, production
+and authorized SOLO/reload/provider/full19/founder acceptance remain owed. Existing
+native target/VERA packets prove their own synthetic surfaces only. See
+[consumer contract and evidence](../evidence/ui-delivery/e2-finance-department-sources.md).
+EXP01/05/09/11 may reuse the canonical domain contract; do not create another reader
+or infer company-wide cash, profit or forecast from recorded account observations.
+
+## October 20 observed statement-source release — #2021
+
+Original #2021 reviewedab3f8243ce0795127eb274e2eb0e3995fd6adc5c merged
+`ed305fb25cba16877684955092fb1d0f58976dd3`, exact reviewed composition
+tree737b577af762f5ab71ebaa95edf7e0e3981c6f64. Documented AUTHOR-REVIEW / LOWER
+ASSURANCE6296540246/6297250084, all11 applicable exact-head checks/Preview and both
+Vercel contexts SUCCESS. Four original statement/test leaves unchanged;
+108 controlled cases/strict ES2020/lint/Registry PASS. Production
+webdpl_3viZpseuJYT4Fh9cRESQnRW4LpiH READY/exact; public HTTP200 build
+`ed305fb25cba16877684955092fb1d0f58976dd3-mvgz1u7z` verified.
+Edge39468474106/job118785988601 succeeded with deployment/readback/tag SKIPPED:
+no production function imports these helpers. This supersedes candidate-only
+source status below, without changing **UNMOUNTED / customer proof owed**.
+Preserve canonical company/unfiltered request, currency, basis, period, source
+observation and Metric/Evidence authority before consumption. No provider call,
+new ledger, financial effect, customer announcement or authenticated acceptance.
+Full financial intelligence and all19 EXP02 outcomes remain incomplete.
+
+
 Grounded on 2026-10-09 against main `794a38263e2d1d565ccab20253751593ed9c8f5b`.
 Owner-approved design and subsequent “live merge on green” authorize normal delivery. They do not authorize a real provider connection or financial effects.
 
@@ -233,3 +333,59 @@ Legacy OAuth initiation/callback, refresh and disconnect lack the adopted compan
 Finance-owned `domains/finance_reads.ts` consumes the released company/source, account, liability, Bill/Purchase, budget and scenario RPCs through the existing caller-JWT client. Six read declarations remain **unregistered**, with Chat/Mind/maturity **UNAVAILABLE** and self-description disabled. Original labels, nullable exact values, currencies, source snapshots and owner-entered assumptions retain their meaning; no company-wide debt, bank settlement or actual opening cash is invented. Current actor/workspace are resolved on the server, selectors are frozen before awaits, and current owner/admin, company and binding revision/lifecycle are revalidated after the read. Final actor/workspace changes discard facts. Permission refusal stays distinct from transport failure; private error details and unknown raw fields are withheld.
 
 Controlled source tests: **54 PASS**, including eleven failing-first authority/refusal controls. Strict ES2020 compilation and focused lint also PASS. Underlying released PostgreSQL contracts retain tenant/company/role, optimistic revisions and canonical receipt rules. This source slice changes no shared registry, protected Chat/Live executor, composer, model router, provider transport, mutation or UI. Registration ownership overlaps #1615; the Finance contribution is coordinated without competing edits. Operating Fabric F2a #2022 preserves Sales-owned receipt/AR adapters; a distinct Finance domain contribution remains to be reconciled with its standing owner. Canonical Metric/Evidence issuance/freshness and actual UI/Spine/Fabric/Chat/Live/authenticated/provider acceptance remain PROOF OWED. Dynamic financial facts never become durable Memory. Full Finance stays PARTIAL.
+
+### Historical statement measures — controlled source candidate
+
+Finance derives exact gross/operating/net profit and rounded margins only from supported native statement components/subtotals with company, source version, classification version, currency, reporting basis and period metadata. Conflicting subtotals refuse the statement; partial coverage withholds conclusions and missing detail remains unknown. Native report group/column keys carry semantics, while localized labels remain unchanged. Recognized filter dimensions are refused for company-wide summary interpretation; an unfiltered request and legitimate company-source scope still require canonical producer evidence. No bank cash, financial effect, provider call, ledger, model route or UI/Spine/Fabric binding is introduced. This source candidate remains unmounted and owes independent review, CI and release proof.
+
+### QuickBooks lifecycle production safety closeout — #2016
+
+**2026-10-11 — Finance QuickBooks lifecycle safety source — PR [#2016](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2016) → main `de699f0984194391c5c5fd10bea36491c4c8ecbc`; reviewed head `962a278ab0cfd6dc93a0f729de5d468aa5c97bb6`.** Independent non-author review COMPLETE/SHIP with limitations dispositioned; all latest required exact-head CI PASS. 57 controlled actual-handler/helper tests and focused ESLint/strict TypeScript/registry lint PASS. Normal Edge workflow `38195625528` and both Vercel production statuses SUCCESS; migration NOT_APPLICABLE. Production four ACTIVE v1/JWT-enabled endpoint bodies and shared refusal helper match merged source; four anonymous GETs returned gateway401. These are deployed-source and anonymous-refusal proofs, not authenticated or native provider acceptance. Stored connections/tokens untouched; unavailable disconnect is not revocation. Working company-bound consent/token lifecycle, ingestion and source-backed UI/Spine/Fabric/Chat/Live acceptance remain PROOF OWED; full Finance PARTIAL. Own preview absent; foreign previews preserved. No real OAuth, provider calls, customer financial effects or customer announcement. Recovery uses a reviewed company-authorized forward replacement. [Observed closeout](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2016#issuecomment-6116707364).
+
+### October20 EXP02 statement-source reuse checkpoint
+
+Existing #2021 sourcee1e1a9f2 is composed with main519da233 at supporting
+source freeze1acc3bc5fca988d3efff74fce3b8fcb6c6c66060. Four statement/test
+leaves are unchanged. Fresh108/108 statement/provider tests, strict ES2020 and
+scoped lint pass; the existing registry validates33 providers/120 anchors.
+No statement ingestion, persistence, mounted UI/Spine/Chat/Live or provider
+activation follows from these checks. EXP02 O04 must bind the canonical company,
+unfiltered source request, basis/period and immutable evidence before consuming
+these exact helpers. Missing/filtered/partial facts stay unknown; cash-basis
+statement income is not bank cash. See the existing statement delivery contract
+and E02 nineteen-outcome matrix; do not build a duplicate calculation engine.
+
+## October23 — original Finance metric review context source released
+
+Original #2684 reviewed `f9ab42ca6e1078d4273e2e377ba9234ec3b5e1fa`, with
+AUTHOR-REVIEW / LOWER ASSURANCE5634041255+5634377259. All 10 applicable exact-head
+checks and two statuses passed; source-only Preview was skipped. Actual main
+`d780fd85e3cfd0c73256847c79f2692a5a399d1a` matches the inspected clean union.
+Normal production deployment `dpl_2M5hrABiskEKvmj5DeHnUiVaRVnu` was READY with
+exact commit metadata. The observed public build contained the change at
+`a9bd855c-mvlgdzr6`, with no customer announcement. Ancestry, unchanged Finance
+source and six served markers were verified. The exact intermediate d780 public
+build was not sampled. Own SQL/Edge: N/A. Master4.0 and
+[source receipt6374834566](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6374834566)
+retain the full parents, trees, deployment and served-source identities.
+
+Additive ordinary QA confirms VERA/editable no-autosend handoff includes the exact
+original custom range/key/bounds/reference, then a truthful refusal without a
+replacement or wider identity. Request/reply persist after reload. Original stored
+assistant turn is FINAL with no linked work, about 30.3 seconds after its user turn;
+the native observation bound was 46 seconds, not a latency guarantee. This confirms
+safe refusal and continuity; it does not confirm successful reading of the original
+evidence. Metadata shows later same-series issuance revoked it about 60 seconds
+after issuance, before expiry. The existing Sales hook refresh/resolver contract is
+coordinated in ANT81/758eaeae+f8424858 and ANT51/d14c0d6b; no authority/revocation
+weakening or replacement of a refused Chat reference.
+[QA6375398254](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6375398254).
+
+Functional: original source released; reliable original-reference handoff incomplete.
+Visual: unchanged layout supported by 12 original synthetic frames, not customer
+acceptance. Overview/Banking refinements #2694/#2696 remain drafts requiring native proof.
+Experiential: bounded refusal/reload verified; populated sources, roles/tenant/
+cohorts/Live/full Finance remain owed. Founder NOT_ACCEPTED; all 19/nine and
+historical 9PASS/0FAIL plus 12PASS/0FAIL/4BLOCKED remain unchanged. The original monthly
+CPU-failed request stays unknown/unretried; this was an independent Finance read.
+No algorithm/catalogue/provider/permission/INT346 or consequential activation.

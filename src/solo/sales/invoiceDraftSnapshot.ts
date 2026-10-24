@@ -1,4 +1,5 @@
 /** Invoice-only persisted facts. Processor/method/channel values are intent, never eligibility or dispatch authority. */
+import {aggregateInvoiceItems} from '../../../supabase/functions/_shared/sales-commercial/invoice-amounts.ts';
 import {parseCommercialConditions,validateCommercialConditionLines,type CommercialConditions} from '../../../supabase/functions/_shared/sales-commercial/conditions.ts';
 import {parseCommercialTermsReference,type CommercialTermsReference} from '../../../supabase/functions/_shared/sales-commercial/terms-reference.ts';
 export type InvoiceAddress = { line1: string | null; line2: string | null; city: string | null; region: string | null; postal_code: string | null; country: string | null };
@@ -29,22 +30,7 @@ const only = (value: Record<string, unknown>, keys: readonly string[]) => Object
 const addressKeys = ['line1', 'line2', 'city', 'region', 'postal_code', 'country'] as const;
 const inputKeys = ['schema_version', 'client_id', 'items', 'kind', 'deposit_basis_points', 'currency', 'cadence', 'recipient_email', 'recipient_phone', 'email_source_method_id', 'phone_source_method_id', 'billing_address', 'agreement_id', 'processor_intent', 'payment_method_intents', 'delivery_channel_intents', 'due_date', 'memo'];
 
-/** PostgreSQL amount_total_cents is int4. BigInt also prevents unsafe intermediate products. */
-export function aggregateInvoiceItems(items: readonly Pick<InvoiceItemSnapshot, 'unit_minor' | 'quantity'>[], depositBasisPoints?: number, depositMinor?: number) {
-  if (items.length < 1 || items.length > 50) throw new Error('Add between one and 50 items.');
-  let total = 0n;
-  for (const line of items) {
-    if (!integer(line.unit_minor) || line.unit_minor < 1 || line.unit_minor > 2147483647
-      || !integer(line.quantity) || line.quantity < 1 || line.quantity > 1000) throw new Error('Check item amounts and quantities.');
-    total += BigInt(line.unit_minor) * BigInt(line.quantity);
-    if (total > 2147483647n) throw new Error('The invoice amount exceeds the supported range.');
-  }
-  if (depositBasisPoints !== undefined && (!integer(depositBasisPoints) || depositBasisPoints < 1 || depositBasisPoints > 9999)) throw new Error('Check the deposit percentage.');
-  if (depositMinor !== undefined && (depositBasisPoints !== undefined || !integer(depositMinor) || depositMinor < 1 || BigInt(depositMinor) >= total)) throw new Error('Check the deposit amount. It must leave a positive balance.');
-  const due = depositMinor !== undefined ? BigInt(depositMinor) : depositBasisPoints === undefined ? total : (total * BigInt(depositBasisPoints) + 5000n) / 10000n;
-  if (due < 1n || ((depositBasisPoints !== undefined || depositMinor !== undefined) && due >= total)) throw new Error('A deposit must leave a positive balance.');
-  return { totalMinor: Number(total), dueNowMinor: Number(due), remainderMinor: Number(total - due) };
-}
+export {aggregateInvoiceItems};
 
 function readVersioned(value: Record<string, unknown>, expectedTotal: number): InvoiceSnapshot | null {
   const exact=value.schema_version===3;

@@ -1,0 +1,162 @@
+[
+  {
+    "size": {
+      "width": 1536,
+      "height": 770
+    },
+    "state": "recorded",
+    "button": {
+      "bottom": -26.450000762939453,
+      "height": 31.5,
+      "left": 846.1500244140625,
+      "right": 983.675033569336,
+      "top": -57.95000076293945,
+      "width": 137.52500915527344,
+      "x": 846.1500244140625,
+      "y": -57.95000076293945
+    },
+    "focus": "Check original status",
+    "mainOverflow": false,
+    "overflow": false
+  },
+  {
+    "size": {
+      "width": 1536,
+      "height": 770
+    },
+    "state": "unverified",
+    "button": {
+      "bottom": 99.95000457763672,
+      "height": 31.5,
+      "left": 846.1500244140625,
+      "right": 983.675033569336,
+      "top": 68.45000457763672,
+      "width": 137.52500915527344,
+      "x": 846.1500244140625,
+      "y": 68.45000457763672
+    },
+    "focus": "Check original status",
+    "mainOverflow": false,
+    "overflow": false
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 768
+    },
+    "state": "recorded",
+    "button": {
+      "bottom": -28.85000228881836,
+      "height": 31.5,
+      "left": 761.3500366210938,
+      "right": 898.8750457763672,
+      "top": -60.35000228881836,
+      "width": 137.52500915527344,
+      "x": 761.3500366210938,
+      "y": -60.35000228881836
+    },
+    "focus": "Check original status",
+    "mainOverflow": false,
+    "overflow": false
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 768
+    },
+    "state": "unverified",
+    "button": {
+      "bottom": 97.5500030517578,
+      "height": 31.5,
+      "left": 761.3500366210938,
+      "right": 898.8750457763672,
+      "top": 66.05000305175781,
+      "width": 137.52500915527344,
+      "x": 761.3500366210938,
+      "y": 66.05000305175781
+    },
+    "focus": "Check original status",
+    "mainOverflow": false,
+    "overflow": false
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 768
+    },
+    "state": "recorded",
+    "button": {
+      "bottom": -28.85000228881836,
+      "height": 31.5,
+      "left": 590.1500244140625,
+      "right": 727.6750335693359,
+      "top": -60.35000228881836,
+      "width": 137.52500915527344,
+      "x": 590.1500244140625,
+      "y": -60.35000228881836
+    },
+    "focus": "Check original status",
+    "mainOverflow": false,
+    "overflow": false
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 768
+    },
+    "state": "unverified",
+    "button": {
+      "bottom": 97.5500030517578,
+      "height": 31.5,
+      "left": 590.1500244140625,
+      "right": 727.6750335693359,
+      "top": 66.05000305175781,
+      "width": 137.52500915527344,
+      "x": 590.1500244140625,
+      "y": 66.05000305175781
+    },
+    "focus": "Check original status",
+    "mainOverflow": false,
+    "overflow": false
+  },
+  {
+    "size": {
+      "width": 900,
+      "height": 1000
+    },
+    "state": "recorded",
+    "button": {
+      "bottom": 203.15000915527344,
+      "height": 31.5,
+      "left": 536.1500244140625,
+      "right": 673.6750335693359,
+      "top": 171.65000915527344,
+      "width": 137.52500915527344,
+      "x": 536.1500244140625,
+      "y": 171.65000915527344
+    },
+    "focus": "Check original status",
+    "mainOverflow": false,
+    "overflow": false
+  },
+  {
+    "size": {
+      "width": 900,
+      "height": 1000
+    },
+    "state": "unverified",
+    "button": {
+      "bottom": 329.5500183105469,
+      "height": 31.5,
+      "left": 536.1500244140625,
+      "right": 673.6750335693359,
+      "top": 298.0500183105469,
+      "width": 137.52500915527344,
+      "x": 536.1500244140625,
+      "y": 298.0500183105469
+    },
+    "focus": "Check original status",
+    "mainOverflow": false,
+    "overflow": false
+  }
+]

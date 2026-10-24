@@ -1,0 +1,74 @@
+{
+  "dialog": {
+    "buttons": [
+      {
+        "name": "Refresh weekly responsibility",
+        "rect": {
+          "bottom": 140,
+          "height": 40,
+          "left": 332.8000183105469,
+          "right": 374.4000205993652,
+          "top": 100,
+          "width": 41.60000228881836,
+          "x": 332.8000183105469,
+          "y": 100
+        }
+      },
+      {
+        "name": "Prepare a weekly responsibility",
+        "rect": {
+          "bottom": 389.2000122070313,
+          "height": 40,
+          "left": 16.80000114440918,
+          "right": 231.3625011444092,
+          "top": 349.20001220703125,
+          "width": 214.5625,
+          "x": 16.80000114440918,
+          "y": 349.20001220703125
+        }
+      },
+      {
+        "name": "Close",
+        "rect": {
+          "bottom": 48,
+          "height": 44,
+          "left": 342.3999938964844,
+          "right": 386.3999938964844,
+          "top": 4,
+          "width": 44,
+          "x": 342.3999938964844,
+          "y": 4
+        }
+      }
+    ],
+    "dialog": {
+      "bottom": 844,
+      "height": 844,
+      "left": 0,
+      "right": 390.3999938964844,
+      "top": 0,
+      "width": 390.3999938964844,
+      "x": 0,
+      "y": 0
+    },
+    "focused": "Close",
+    "links": [
+      "/solo/1702/clients/calendar",
+      "/solo/1702/operations/work"
+    ],
+    "overflow": false,
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  "exitImmediate": {
+    "dialogs": 1,
+    "focused": "Close"
+  },
+  "exitSettled": {
+    "dialogs": 0,
+    "focused": "Weekly responsibility"
+  },
+  "note": "Immediate Escape measurement overlaps incumbent close animation; only settled exit is acceptance evidence. Original inner panel controls retain incumbent sizing; new header controls are 44px."
+}

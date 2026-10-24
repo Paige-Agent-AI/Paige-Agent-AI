@@ -41,7 +41,7 @@ export const EMAIL_CAMPAIGN_DRAFT_CAPABILITY = defineCapability({
     campaign_id:{anyOf:[uuid,{type:'null'}]},
     name:words(200),kind:{type:'string',enum:EMAIL_CAMPAIGN_KINDS},
     subject:words(300),preview_text:words(300),body:words(20000),
-    audience:{type:'object',additionalProperties:false,properties:{stages:list,sources:list,tags:list,inactive_days:{anyOf:[{type:'integer',minimum:1,maximum:3650},{type:'null'}]}}},
+    audience:{type:'object',additionalProperties:false,properties:{stages:list,sources:list,tags:list,inactive_days:{anyOf:[{type:'integer',minimum:1,maximum:3650},{type:'null'}]},portal:{anyOf:[{type:'string',enum:['active']},{type:'null'}]}}},
     segment_id:{anyOf:[uuid,{type:'null'}]},send_at:{anyOf:[{type:'string',maxLength:40},{type:'null'}]},
     goal:{type:'string',enum:EMAIL_CAMPAIGN_GOALS},
   },required:[]}),

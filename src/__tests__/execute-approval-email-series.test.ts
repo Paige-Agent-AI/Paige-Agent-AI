@@ -22,7 +22,12 @@ describe("execute-approval: email series", () => {
   it("runs before every generic path that would flip the row", () => {
     const at = src.indexOf("const sequenceVersionId");
     expect(at).toBeGreaterThan(src.indexOf("const releaseClaim"));
-    expect(at).toBeLessThan(src.indexOf('(metaLc as any).source === "paige_orchestration"'));
+    expect(at).toBeLessThan(src.indexOf("if (canonicalLayerC) {", at));
     expect(at).toBeLessThan(src.indexOf('status: "approved"', src.indexOf("const releaseClaim")));
+  });
+
+  it("does not route a validated native companion into legacy series or campaign approval", () => {
+    expect(src).toMatch(/const campaignVersionId = !canonicalLayerC && approval\.type === "campaign_send"/);
+    expect(branch).toMatch(/const sequenceVersionId = !canonicalLayerC && approval\.type === "campaign_send"/);
   });
 });

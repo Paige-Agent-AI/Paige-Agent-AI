@@ -1,0 +1,67 @@
+Browser tab: 170270628, Title: "Offline Operations findings flow prototype", URL: "http://127.0.0.1:63673/solo/1701/operations/overview".
+0 AXWebArea Offline Operations findings flow prototype, URL: 127.0.0.1:63673/solo/1701/operations/overview
+	1 container root
+		176 button (collapsed) Native integration controls · offline, Secondary Actions: Expand
+			177 text Native integration controls · offline
+		4 container
+			5 text PAIGE folded; your conversation is preserved
+			6 link Description: Skip to content, Value: 127.0.0.1:63673/solo/1701/operations/overview#tenant-shell-main
+			7 container Tenant workspace
+				8 link Description: PAIGE Solo home, Value: 127.0.0.1:63673/solo/1701/command-center
+				9 button Expand navigation
+					10 image
+				11 link Description: Command Center, Value: 127.0.0.1:63673/solo/1701/command-center
+				12 link Description: Operations, Value: 127.0.0.1:63673/solo/1701/operations
+				13 link Description: Clients, Value: 127.0.0.1:63673/solo/1701/clients
+				14 link Description: Marketing, Value: 127.0.0.1:63673/solo/1701/growth
+				15 link Description: Ads, Value: 127.0.0.1:63673/solo/1701/ads
+				16 link Description: Sales, Value: 127.0.0.1:63673/solo/1701/sales
+				17 link Description: Finance, Value: 127.0.0.1:63673/solo/1701/finance
+				18 link Description: Marketplace, Value: 127.0.0.1:63673/solo/1701/marketplace
+				19 link Description: Settings, Value: 127.0.0.1:63673/solo/1701/settings
+				20 button Description: Use Obsidian theme, Help: Obsidian theme
+				21 button Sign out
+				22 text TE
+			23 container
+				24 text TEST STUDIO A Operations Solo
+				25 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+					26 image PAIGE
+					27 text Direct PAIGE, or press ⌘\
+					28 text ⌘\
+			29 container Operations department
+				30 container
+					31 container Department views
+						32 button Overview
+						33 button Work
+						34 button Projects
+						35 button Delivery
+						36 button Playbooks
+						37 button Capacity
+					38 button Refresh work and team profiles
+						39 image
+				151 container
+					152 text Project work is unavailable. 
+					153 button Retry planning work
+				154 container
+					155 text CRM tasks couldn’t be verified for this workspace. 
+					156 button Retry CRM tasks
+				157 container Overview
+					158 container
+						159 heading Your operating week, Value: 1
+							160 text Your operating week
+						161 text Current commitments, responsible people and the next decisions.
+						162 button Weekly responsibility
+						163 button Plan with PAIGE
+					164 container Recorded Operations findings
+						165 container
+							166 heading Recorded Operations findings, Value: 2, ID: recorded-findings-heading
+								167 text Recorded Operations findings
+							168 text Separate from blocked or overdue Work.
+							169 button Refresh recorded Operations findings
+						178 container
+							179 text The review could not be verified for this workspace. Refresh to read it again.
+							180 button Try reading again
+					174 text Current Work could not be read. Retry a source above to inspect its records.
+				175 text Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.
+
+The focused UI element is 169 button Refresh recorded Operations findings

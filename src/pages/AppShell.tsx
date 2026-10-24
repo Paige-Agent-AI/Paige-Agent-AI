@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -9,12 +9,13 @@ import { AppNav } from "@/components/app/AppNav";
 import { QuickStatsBar } from "@/components/app/QuickStatsBar";
 import { useCreditFactors } from "@/hooks/useCreditFactors";
 import { useTenantFeature } from "@/hooks/useTenantFeature";
+import { useFinancePortal } from "@/hooks/useFinanceEntitlement";
 import { AdminViewBanner } from "@/components/admin/AdminViewBanner";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { SessionTimeoutWarning } from "@/components/auth/SessionTimeoutWarning";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { OnboardingFlow } from "@/components/dashboard/OnboardingFlow";
-import { PushNotificationPrompt } from "@/components/notifications/PushNotificationPrompt";
+import { PushNotificationPrompt, pushTopicsSentence } from "@/components/notifications/PushNotificationPrompt";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -30,9 +31,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ClientHomeTiles } from "@/components/client/ClientHomeTiles";
 import { ClientActivityFeed } from "@/components/app/ClientActivityFeed";
 import { UpcomingWidget } from "@/components/planning/UpcomingWidget";
-import { usePlaybook } from "@/lib/playbook";
-import { useClientPortalConfig } from "@/hooks/useClientPortalConfig";
+import { useClientPortalConfig, type ClientPortalConfig } from "@/hooks/useClientPortalConfig";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
+import { useClientViewportHeight } from "@/hooks/useClientViewportHeight";
+import { useSharedClientPortalFrame } from "@/hooks/useClientPortalFrame";
+import { CustomerAccessGate } from "@/components/app/CustomerAccessGate";
+import { CustomerIdentityProvider, useCustomerIdentity } from "@/lib/portal/customerIdentity";
+import {clientPortalEntry} from "@/lib/client-portal-entry";
+import { usePortalStaffStanding } from "@/lib/portal/portalStaffStanding";
+import { usePlaybook } from "@/lib/playbook";
+import { EmptyState } from "@/components/ui/page";
+import { Inbox } from "lucide-react";
 
 // Map /app sub-routes to canonical feature names emitted as `feature_visit`.
 function routeToFeatureName(pathname: string): string | null {
@@ -62,19 +71,23 @@ function routeToFeatureName(pathname: string): string | null {
 const DEV_MODE = false; // Require authentication
 
 const AppShell = () => {
+  const viewportHeight = useClientViewportHeight();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(!DEV_MODE);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // The required-consents wall reports whether it is up (or still checking). While it is, no other dialog
+  // opens over it — not the funding onboarding, not the notifications prompt (D-QA2, live QA 2026-10-19).
+  const [consentsBlocking, setConsentsBlocking] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { target: impersonationTarget, isImpersonating } = useImpersonation();
   const effectiveUserId = impersonationTarget?.targetUserId ?? user?.id;
-  const { factors } = useCreditFactors(effectiveUserId ?? null, { enabled: !!effectiveUserId });
   // Credit/funding client chrome (the QuickStatsBar → /app/credit and the
   // credit-first OnboardingFlow) is opt-in per tenant (§2/§9). Fail-closed:
   // hidden for every coaching-generic tenant until they turn on the funding
   // preset. Coaching clients keep the neutral /onboard + portal experience.
+  // E09 F2: these also need the business's finance entitlement (AppShellBody).
   const { enabled: fundingEnabled } = useTenantFeature("funding_readiness");
   const { showWarning, staySignedIn } = useSessionTimeout();
   // Publish live presence while signed in (#148). The heartbeat always stamps
@@ -112,6 +125,9 @@ const AppShell = () => {
     if (DEV_MODE) return;
 
     let settled = false;
+    let disposed = false;
+    let receivedAuthEvent = false;
+    let hydrationTimeoutId: number | undefined;
     const markSettled = () => {
       settled = true;
       setIsLoading(false);
@@ -119,6 +135,9 @@ const AppShell = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
+        if (disposed) return;
+        // A fresh SDK event supersedes the initial cached-session read.
+        receivedAuthEvent = true;
         setSession(nextSession);
         setUser(nextSession?.user ?? null);
         markSettled();
@@ -131,10 +150,10 @@ const AppShell = () => {
 
     Promise.race<Awaited<ReturnType<typeof supabase.auth.getSession>> | null>([
       supabase.auth.getSession(),
-      new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 5000)),
+      new Promise<null>((resolve) => { hydrationTimeoutId = window.setTimeout(() => resolve(null), 5000); }),
     ])
       .then((result) => {
-        if (!result) return;
+        if (disposed || receivedAuthEvent || !result) return;
         const currentSession = result.data.session;
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -145,6 +164,7 @@ const AppShell = () => {
         }
       })
       .catch((err) => {
+        if (disposed || receivedAuthEvent) return;
         console.error("[AppShell] getSession failed:", err);
         markSettled();
       });
@@ -153,7 +173,7 @@ const AppShell = () => {
     // in 5s (network stall, paused tab, stale lock), clear the loading gate
     // so the user can act instead of staring at "Loading..." forever.
     const timeoutId = window.setTimeout(() => {
-      if (!settled) {
+      if (!disposed && !settled) {
         console.warn("[AppShell] auth hydration timed out after 5s — releasing loading gate");
         setIsLoading(false);
         navigate("/auth", { replace: true });
@@ -161,7 +181,9 @@ const AppShell = () => {
     }, 5000);
 
     return () => {
+      disposed = true;
       subscription.unsubscribe();
+      window.clearTimeout(hydrationTimeoutId);
       window.clearTimeout(timeoutId);
     };
   }, [navigate]);
@@ -186,25 +208,8 @@ const AppShell = () => {
     return () => { setScopedUserId(null); };
   }, [isImpersonating, effectiveUserId, queryClient]);
 
-  // Realtime: a client should see staff-driven onboarding stage advances
-  // (or rollbacks) without refreshing. Listens only on the signed-in user's
-  // own row and only invalidates client-scoped queries to avoid nuking the
-  // entire cache on every row update.
-  useEffect(() => {
-    if (!user?.id) return;
-    const channel = supabase
-      .channel(`clients-self-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "clients", filter: `linked_user_id=eq.${user.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["clients"] });
-          queryClient.invalidateQueries({ queryKey: ["onboarding"] });
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user?.id, queryClient]);
+  // Customer refresh must use canonical client projections/events. Never
+  // subscribe this shell to full CRM rows for query-cache invalidation.
 
   // Role-based landing redirect: admins/coaches → /admin, brokers → /broker/app,
   // BTF workspace clients → /app. Honors ?stay=1 (or the (Sprint 211.b: BTF surface retired; routing preserved)
@@ -215,6 +220,8 @@ const AppShell = () => {
     if (!user) return;
     if (location.pathname !== "/app") return;
     if (isImpersonating) return; // staff actively viewing as a client
+    // Navigation intent only: the existing customer gate still checks actual Auth/relationship.
+    if (clientPortalEntry(user.id, location.search).intentional) {setRedirectingStaff(false); return;}
     const params = new URLSearchParams(location.search);
     if (params.get("stay") === "1") return;
     try {
@@ -229,7 +236,7 @@ const AppShell = () => {
     (async () => {
       try {
         const target = await Promise.race<string>([
-          resolveLandingRoute(user.id),
+          resolveLandingRoute(user.id, { customerPortal: true }),
           new Promise<string>((resolve) => setTimeout(() => resolve("/app"), 4000)),
         ]);
         if (cancelled) return;
@@ -274,69 +281,158 @@ const AppShell = () => {
     ? ({ ...activeUser, id: effectiveUserId } as User)
     : activeUser;
 
+  // E09 Slice 7: a customer whose business paused or ended their access sees that business's own
+  // page in place of the whole shell (no menu, no Support desk, no platform persona). Staff viewing
+  // as a client are not customers, so the gate stands aside for them.
+  return (
+    <CustomerAccessGate userId={activeUser.id} enabled={!isImpersonating && !DEV_MODE} search={location.search}>
+    <CustomerIdentityRoot userId={activeUser.id} enabled={!isImpersonating} viewingAsClient={isImpersonating}>
+      <AppShellBody activeUser={activeUser} scopedUser={scopedUser} session={session} effectiveUserId={effectiveUserId ?? null}
+        isImpersonating={isImpersonating} impersonationContactId={impersonationTarget?.contactId}
+        fundingReadiness={fundingEnabled} showOnboarding={showOnboarding} onOnboardingDone={() => setShowOnboarding(false)}
+        consentsBlocking={consentsBlocking} onConsentsBlockingChange={setConsentsBlocking}
+        showTimeoutWarning={showWarning} staySignedIn={staySignedIn} viewportHeight={viewportHeight} pathname={location.pathname} />
+    </CustomerIdentityRoot>
+    </CustomerAccessGate>
+  );
+};
+
+/**
+ * The shell inside the customer identity, so every funding/credit decision reads ONE answer (E09 F2): `financePortal`
+ * is useFinancePortal — the customer's business is finance-entitled (or the viewer is staff, who keep what they had,
+ * Q5). Surfaces that were already behind `funding_readiness` (OnboardingFlow, QuickStatsBar, the credit-first
+ * checklist) now need BOTH, so nothing dark becomes visible; surfaces with no gate before (the credit factor grid, the
+ * Credit and Funding tiles, the bell, the routes) need the entitlement alone.
+ */
+function AppShellBody({ activeUser, scopedUser, session, effectiveUserId, isImpersonating, impersonationContactId,
+  fundingReadiness, showOnboarding, onOnboardingDone, consentsBlocking, onConsentsBlockingChange, showTimeoutWarning,
+  staySignedIn, viewportHeight, pathname }: {
+  activeUser: User; scopedUser: User; session: Session | null; effectiveUserId: string | null; isImpersonating: boolean;
+  impersonationContactId?: string; fundingReadiness: boolean; showOnboarding: boolean; onOnboardingDone: () => void;
+  consentsBlocking: boolean; onConsentsBlockingChange: (blocking: boolean) => void; showTimeoutWarning: boolean;
+  staySignedIn: () => void; viewportHeight: number | null | undefined; pathname: string;
+}) {
+  const { open: financePortal } = useFinancePortal();
+  const fundingSurfaces = fundingReadiness && financePortal;
+  const { factors } = useCreditFactors(effectiveUserId, { enabled: financePortal && !!effectiveUserId });
   return (
     <>
-      {!isImpersonating && <RequiredConsentsGate userId={activeUser.id} />}
-      {!isImpersonating && fundingEnabled && <OnboardingFlow open={showOnboarding} onComplete={() => setShowOnboarding(false)} />}
+      {!isImpersonating && <RequiredConsentsGate userId={activeUser.id} onBlockingChange={onConsentsBlockingChange} />}
+      {!isImpersonating && fundingSurfaces && <OnboardingFlow open={showOnboarding && !consentsBlocking} onComplete={onOnboardingDone} />}
       <AdminViewBanner />
-      <SessionTimeoutWarning open={showWarning} onStaySignedIn={staySignedIn} />
-      <PushNotificationPrompt />
-      <div className="h-dvh flex flex-col bg-background overflow-x-hidden">
+      <SessionTimeoutWarning open={showTimeoutWarning} onStaySignedIn={staySignedIn} />
+      {/* Names only what this person is actually notified about, and never opens over the consents wall or
+          onboarding (D-QA1/D-QA2, live QA 2026-10-19). */}
+      <PushNotificationPrompt description={pushTopicsSentence({ creditAlerts: fundingSurfaces })}
+        suppressed={(!isImpersonating && consentsBlocking) || (!isImpersonating && fundingSurfaces && showOnboarding)} />
+      <div style={viewportHeight ? {height: viewportHeight} : undefined} className="h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden">
         <AppNav user={activeUser} />
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
           <ResizablePanel
             defaultSize={40}
             minSize={30}
             maxSize={60}
-            className={location.pathname === "/app" ? "max-md:!flex-[1_1_100%]" : "max-md:hidden"}
+            className={`min-h-0 ${pathname === "/app" ? "max-md:!flex-[1_1_100%]" : "max-md:hidden"}`}
           >
-            <PaigeChat user={scopedUser} session={session} />
+            <PaigeChat user={activeUser} session={session}
+              clientId={isImpersonating ? impersonationContactId : undefined} />
           </ResizablePanel>
           <ResizableHandle withHandle className="max-md:hidden" />
           <ResizablePanel
             defaultSize={60}
-            className={location.pathname === "/app" ? "max-md:hidden" : "max-md:!flex-[1_1_100%]"}
+            className={`min-h-0 ${pathname === "/app" ? "max-md:hidden" : "max-md:!flex-[1_1_100%]"}`}
           >
             <div className="h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6">
-              {location.pathname === "/app" ? (
-                <AppDashboardHome factors={factors} userId={scopedUser.id} />
+              {pathname === "/app" ? (
+                <AppDashboardHome factors={financePortal ? factors : null} userId={scopedUser.id}
+                  financePortal={financePortal} />
               ) : (
                 <Outlet context={{ user: scopedUser, session }} />
               )}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
-        {fundingEnabled && <QuickStatsBar factors={factors} />}
+        {fundingSurfaces && <QuickStatsBar factors={factors} />}
       </div>
     </>
   );
-};
+}
+
+/**
+ * Reads the customer frame once for the whole portal, so every customer surface names the same
+ * agent (Cura, or the business's own name for it) and the same business. Never PAIGE: PAIGE is the
+ * owner's COO (owner ruling, 2026-10-19). The browser tab names the business's portal too; the
+ * platform's own title is the marketing site's.
+ */
+function CustomerIdentityRoot({ userId, enabled, viewingAsClient, children }: { userId: string; enabled: boolean; viewingAsClient: boolean; children: ReactNode }) {
+  // The access gate above already read the frame; this reads that same answer (one reader per page).
+  const customer = useSharedClientPortalFrame(userId, enabled);
+  // Staff standing is asked only when there is no customer frame (or staff are viewing as a client): a staff
+  // viewer keeps the owner's assistant beside the owner's chat; anyone else's access is simply not active.
+  // A frame that ended this session ("unavailable": access revoked, or refused) is resolved the same way, so a
+  // revoked customer gets the no-access home rather than a home still "checking" their access (round 4). These are
+  // the same two phases customerIdentityFrom resolves by staff standing.
+  const standing = usePortalStaffStanding(userId, !viewingAsClient && (customer.phase === "not-client" || customer.phase === "unavailable"));
+  const staff = viewingAsClient ? true : standing.staff;
+  const ownerPlaybook = usePlaybook(staff === true);
+  const business = customer.frame?.brand.tenant_name?.trim();
+  useEffect(() => {
+    // A staff viewer is not in a client's portal; only a customer (or someone whose access ended) is.
+    if (staff === true && !customer.frame) return;
+    const previous = document.title;
+    document.title = business ? `${business} — Client Portal` : "Client Portal";
+    // Leaving /app (View-as-Client ends, sign-out, a staff surface) restores the title it found.
+    return () => { document.title = previous; };
+  }, [business, staff, customer.frame]);
+  const state = { frame: customer.frame, phase: viewingAsClient ? "not-client" as const : customer.phase, staff,
+    staffAssistantName: staff === true ? ownerPlaybook.persona.name : null, staffChecking: !viewingAsClient && standing.loading };
+  return <CustomerIdentityProvider state={state}>{children}</CustomerIdentityProvider>;
+}
 
 // Default home content when on /app
 type CreditFactorScores = Database["public"]["Tables"]["credit_factor_scores"]["Row"];
 
-function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | null | undefined; userId?: string }) {
-  const pb = usePlaybook();
+export function AppDashboardHome({ factors, userId, financePortal = false }: {
+  factors: CreditFactorScores | null | undefined; userId?: string;
+  /** E09 F2 (AppShellBody): the business is finance-entitled, or the viewer is staff (Q5). */
+  financePortal?: boolean;
+}) {
+  const customer = useCustomerIdentity();
   // Tenant-authored portal greeting (Portal Studio → portal_config.welcome).
   // Fail-open: an unset/empty overlay falls back to the current defaults, so
   // every existing portal is byte-for-byte unchanged until a tenant sets one.
-  const portalConfig = useClientPortalConfig();
+  const savedConfig = useClientPortalConfig();
+  const portalConfig: ClientPortalConfig = customer.frame?.config ?? (customer.phase === "not-client" ? savedConfig : {});
+  // The customer's agent, never the owner's PAIGE persona (owner ruling, 2026-10-19). A staff viewer with no
+  // customer frame sits beside the owner's own chat, so the home names the owner's assistant and greets as
+  // the owner's Playbook does (§58: staff keep what they had); a viewer whose access is not active is told so.
+  const agentName = customer.agentName;
+  const staffPlaybook = usePlaybook(customer.viewer === "staff");
+  // A customer's chat sits beside this home and greets them itself, so the home does not repeat that greeting
+  // word for word (round 3, verifier 7); the welcome line already points to the agent. Staff, and a viewer whose
+  // access is still being checked, keep the card they had (§58).
+  const intro = customer.frame ? null
+    : customer.viewer === "staff" ? { title: `${agentName} is here to help`, body: staffPlaybook.persona.greeting }
+      : { title: `${agentName} is here to help`, body: "Your conversation is available once your customer access is checked." };
   const welcomeHeadline = portalConfig.welcome?.headline?.trim() || "Welcome Back";
-  const welcomeSubhead =
-    portalConfig.welcome?.subhead?.trim() ||
-    `Ask ${pb.persona.name} anything — she's here to keep you moving toward your goals.`;
+  const welcomeSubhead = portalConfig.welcome?.subhead?.trim() || `Ask ${agentName} about your next steps.`;
   // `factors` is a real credit_factor_scores row — it only exists for a
   // credit-enabled tenant/client. It doubles as the "hasCreditData" signal, so
   // the credit-only factor grid below stays gated behind it. Coaching clients
   // (the neutral default) never have this row and see the neutral welcome area.
-  const hasCreditData = !!factors;
+  const hasCreditData = financePortal && !!factors;
+
+  // A person whose access is not active has nothing here: no chat to finish a checklist step in, no tiles, no
+  // business to welcome them back to. The chat column beside this says their access isn't active, once, with
+  // Contact support; the home says what will appear here instead of a bare "Welcome" over an empty pane (round 3).
+  if (customer.viewer === "inactive") return <NoAccessHome />;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {userId && <OnboardingChecklist userId={userId} />}
+      {userId && <OnboardingChecklist userId={userId} financePortal={financePortal} />}
       <div>
         <h1 className="text-3xl font-bold text-foreground">{welcomeHeadline}</h1>
-        <p className="text-muted-foreground mt-1">{welcomeSubhead}</p>
+        {welcomeSubhead && <p className="text-muted-foreground mt-1">{welcomeSubhead}</p>}
       </div>
 
       <UpcomingWidget />
@@ -358,23 +454,38 @@ function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | n
                 {f.score ?? "—"}
               </div>
               <div className="text-xs text-muted-foreground mt-1">{f.label}</div>
-              <div className="text-[10px] text-muted-foreground/60">{f.weight}</div>
+              <div className="text-xs text-muted-foreground">{f.weight}</div>
             </div>
           ))}
         </div>
-      ) : (
+      ) : intro ? (
         <div className="bg-card border border-border rounded-lg p-6">
           <h2 className="text-lg font-semibold text-foreground">
-            {pb.persona.name} is here to help
+            {intro.title}
           </h2>
-          <p className="text-muted-foreground mt-2">{pb.persona.greeting}</p>
+          <p className="text-muted-foreground mt-2">{intro.body}</p>
         </div>
-      )}
+      ) : null}
 
-      {userId && <ClientHomeTiles userId={userId} />}
+      {userId && <ClientHomeTiles userId={userId} financePortal={financePortal} />}
 
       <ClientActivityFeed />
 
+    </div>
+  );
+}
+
+/** Home for a person whose portal access is not active: what will appear here, not an empty "Welcome". It fills the
+ * pane and centres, so on desktop it sits level with the chat column's status beside it. */
+function NoAccessHome() {
+  return (
+    <div className="mx-auto flex h-full max-w-4xl flex-col items-center justify-center" data-testid="no-access-home">
+      <h1 className="sr-only">Home</h1>
+      <EmptyState
+        icon={Inbox}
+        title="Nothing is shared with you right now"
+        description="When a business gives you portal access, the documents, sessions and messages it shares with you appear here."
+      />
     </div>
   );
 }

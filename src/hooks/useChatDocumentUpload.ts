@@ -140,7 +140,7 @@ export function useChatDocumentUpload({ scopeKey = "unscoped", enabled = true }:
       if (!kind) {
         toast({
           title: "Unsupported file type",
-          description: "Paige can read PDF, JPG, PNG, WEBP, and DOCX files.",
+          description: "Use a PDF, JPG, PNG, WEBP or DOCX file.",
           variant: "destructive",
         });
         return;

@@ -157,6 +157,28 @@ describe("Paige Live Conversation owner surface", () => {
     expect(getUserMedia).not.toHaveBeenCalled();
   });
 
+  it("opens the stage from the first-run voice-entry request and ANSWERS a blocked request", async () => {
+    // Disabled (composer busy / dictation / authority pending): the request must not start
+    // anything — but it is never silently dropped (review #2611 P2-2): the onboarding stage
+    // cannot see the composer's blocked states, so the person hears why nothing opened.
+    await render(null, "tenant-a||", false, null, true);
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige-live-open-request")); });
+    await flush();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(control.start).not.toHaveBeenCalled();
+    expect(getUserMedia).not.toHaveBeenCalled();
+    const announced = [...document.querySelectorAll("span")].find(node => node.className.includes("sr-only") && node.getAttribute("aria-live"));
+    expect(announced?.textContent).toContain("Live can’t start right now");
+    // Enabled: the request goes through the SAME begin() path as the trigger — one session
+    // request, no microphone before readiness, same immersive stage.
+    await render(null, "tenant-a||", false, null, false);
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige-live-open-request")); });
+    await flush();
+    expect(control.start).toHaveBeenCalledWith(expect.objectContaining({ threadId: "11111111-1111-4111-8111-111111111111", contextEpoch: "tenant-a||", entryMode: "embedded" }));
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Live Conversation with Paige");
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
   it("uses the one-use ticket only for the first-party relay and keeps capture off until ready", async () => {
     control.start.mockResolvedValueOnce({
       ok: true, sessionId: "22222222-2222-4222-8222-222222222222",

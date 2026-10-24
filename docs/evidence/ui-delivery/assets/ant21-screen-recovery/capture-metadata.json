@@ -1,0 +1,615 @@
+{
+  "rows": [
+    {
+      "file": "a-dark-1024-768-closed-full.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-dark-1024-768-open-full.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-dark-1366-768-closed-full.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-dark-1366-768-open-full.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-dark-1536-770-closed-full.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "raster": [
+        693,
+        770
+      ],
+      "format": "JPEG",
+      "exactRaster": false,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native raster differs from requested viewport; Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-dark-1536-770-open-full.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "exactRaster": false,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native raster differs from requested viewport; Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-dark-900-1000-closed-full.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-dark-900-1000-open-full.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-light-1024-768-closed-full.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-light-1024-768-open-full.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-light-1366-768-closed.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-light-1366-768-open.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-light-1536-770-closed.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "exactRaster": false,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native raster differs from requested viewport",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-light-1536-770-open.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "exactRaster": false,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native raster differs from requested viewport",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-light-900-1000-closed-full.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "a-light-900-1000-open-full.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-dark-1024-768-closed-full.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-dark-1024-768-open-full.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-dark-1366-768-closed-full.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-dark-1366-768-open-full.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-dark-1536-770-closed-full.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "exactRaster": false,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native raster differs from requested viewport; Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-dark-1536-770-open-full.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "exactRaster": false,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native raster differs from requested viewport; Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-dark-900-1000-closed-full.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-dark-900-1000-open-full.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Fixture omitted incumbent data-theme attribute; corrected fixture needs fresh captures",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-light-1024-768-closed-full.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-light-1024-768-open-full.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-light-1366-768-closed-full.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-light-1366-768-open-full.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-light-1536-770-closed-full.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "raster": [
+        693,
+        770
+      ],
+      "format": "JPEG",
+      "exactRaster": false,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native raster differs from requested viewport",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-light-1536-770-open-full.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "exactRaster": false,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native raster differs from requested viewport",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-light-900-1000-closed-full.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    },
+    {
+      "file": "b-light-900-1000-open-full.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "exactRaster": true,
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "boundary": "Isolated actual source with synthetic identity, presence, department and version; no authenticated business proof",
+      "themeFixtureValid": true,
+      "disposition": "PASS_BOUNDED_LIGHT_RENDER",
+      "reason": "Exact raster; inspected actual-source light rendering only",
+      "fixtureSourceFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640"
+    }
+  ],
+  "note": "Requested viewport from case names; raster measured from actual files. Twenty-eight full-AX captures passed; four initial AX diff snapshots were inconclusive, not proof of missing navigation. Runtime capture assertion rejected missing alert, overflow and missing nine native links; those checks passed for all32. Full browser reset lost the in-memory DOM record array; do not fabricate per-case DOM coordinates.",
+  "finishReview": "HOLD: accepted fixture-theme finding corrected in source; missing1536 exact-raster/dark recaptures, native keyboard/zoom and authenticated release proof remain owed. Browser service now times out; no alternate-control bypass.",
+  "strictLightPasses": 12
+}

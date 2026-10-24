@@ -1,0 +1,15 @@
+{
+  "sourceLogSha256": "23d4e9b60746c243fed76d31495c519f0785e3fe997148240e1d5043c0f72bd1",
+  "resultLineSha256": "f74d55e879a74decde1229571a298b906cf2a0565e83e26a4997d83c114858eb",
+  "intermediatePosture": {
+    "simulated_incumbent_role": true,
+    "restoration_verified": false,
+    "original_exists": true,
+    "original_bypass_rls": false,
+    "effective_bypass_rls": true,
+    "non_bypass_failure_reproduced": true
+  },
+  "finalTeardownVerified": true,
+  "evidence": "Fixture service_role original posture restored and verified",
+  "boundary": "Original result emitted before finally; raw intermediate restoration_verified=false preserved. Separate final teardown line verifies restoration; original temporary result file was cleaned by that fixture."
+}

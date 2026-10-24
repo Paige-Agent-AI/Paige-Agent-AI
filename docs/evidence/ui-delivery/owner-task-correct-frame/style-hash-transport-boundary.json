@@ -1,0 +1,12 @@
+{
+  "status": "INVALID_INITIAL_HASH_PROOF_NOT_PRODUCT_DEFECT",
+  "returnedStringLength": 200011,
+  "actualStringLength": 1192261,
+  "sourceLength": 1192261,
+  "initialTruncatedHash": "742f069f593f66dea591b3f012c94f0b28e172578a182f31fbf469182af41ae5",
+  "sourceAndNativeFullHash": "0cb70a641a01a8227505a1cec8151ff2835307848e5e626cd71af3b60b845c6a",
+  "nativeProbe": {
+    "length": 1192261,
+    "sha256": "0cb70a641a01a8227505a1cec8151ff2835307848e5e626cd71af3b60b845c6a"
+  }
+}

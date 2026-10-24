@@ -1,0 +1,31 @@
+Round 6 function-body comparison. One rolled-back local transaction: pre.sql + 20271110200000..20271111010000 (Slice 7) applied, bodies snapshot (BEFORE = newest on main), then 20271111020000 applied (AFTER). ACLs equal for all three.
+== client_portal_consent_disclosure(text): 14 -> 18 lines, 4 diff lines; Slice 7 gate "_client_portal_lock_relationship(p_tenant_id, 'none')" before=0 after=0
+   every BEFORE line kept verbatim in AFTER: True; added only: ["WHEN 'email-pref:v3'", "WHEN 'updates-optin:v3'", "WHEN 'sms-pref:v3'", "WHEN 'data-sharing:v2'"]
+   +  WHEN 'email-pref:v3' THEN 'Email from {business}. When email is off, {business} won''t email you, except booking confirmations and agreements you''re asked to sign. Turning email off also unsubscri
+   +  WHEN 'updates-optin:v3' THEN 'Newsletters and automated marketing emails from {business}. You can unsubscribe anytime.'
+   +  WHEN 'sms-pref:v3' THEN 'Texts from {business}. When texts are off, {business} can''t text you. To get texts, reply START to a text from {business} if you have one, or ask them.'
+   +  WHEN 'data-sharing:v2' THEN 'Lets {business}’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you. It doesn’t change 
+== client_portal_set_communication_preference(text,text,boolean,uuid): 168 -> 168 lines, 16 diff lines; Slice 7 gate "_client_portal_lock_relationship(p_tenant_id, 'none')" before=1 after=1
+   AFTER with only the disclosure-id literals swapped back is byte-identical to BEFORE: True
+   -    _disclosure := 'email-pref:v2';
+   +    _disclosure := 'email-pref:v3';
+   -        VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v2'), NULL, clock_timestamp());
+   +        VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v3'), NULL, clock_timestamp());
+   -    _disclosure := 'email-pref:v2';
+   +    _disclosure := 'email-pref:v3';
+   -          VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v2'), NULL, _at + interval '1 microsecond');
+   +          VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v3'), NULL, _at + interval '1 microsecond');
+   -    _disclosure := 'updates-optin:v2';
+   +    _disclosure := 'updates-optin:v3';
+   -    _disclosure := 'updates-optin:v2';
+   +    _disclosure := 'updates-optin:v3';
+   -    _disclosure := 'sms-pref:v2';
+   +    _disclosure := 'sms-pref:v3';
+   -    _disclosure := 'sms-pref:v2';
+   +    _disclosure := 'sms-pref:v3';
+== client_portal_set_shared_context_consent(boolean,uuid): 62 -> 62 lines, 4 diff lines; Slice 7 gate "_client_portal_lock_relationship(p_tenant_id, 'none')" before=1 after=1
+   AFTER with only the disclosure-id literals swapped back is byte-identical to BEFORE: True
+   -        'allowed', p_allow, 'disclosure', 'data-sharing:v1',
+   -        'disclosure_md5', left(md5(public.client_portal_consent_disclosure('data-sharing:v1')), 12),
+   +        'allowed', p_allow, 'disclosure', 'data-sharing:v2',
+   +        'disclosure_md5', left(md5(public.client_portal_consent_disclosure('data-sharing:v2')), 12),

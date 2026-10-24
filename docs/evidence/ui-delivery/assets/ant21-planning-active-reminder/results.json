@@ -1,0 +1,199 @@
+{
+  "proof": "LOCAL SYNTHETIC REAL COMPONENT/SHELL; NOT AUTHENTICATED OR DATABASE ACCEPTANCE",
+  "results": [
+    {
+      "name": "active-1536x770-light-closed",
+      "activeRescheduled": true,
+      "mixedEditRefused": true,
+      "exactNativeWrapper": true,
+      "independentReadback": true,
+      "activeReminderTime": "2/1/2099, 9:30:00 AM",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "reminderTime": "1/1/2099, 8:00:00 AM",
+      "dateFits": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "active-1536x770-light-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "active-1536x770-dark-closed",
+      "activeRescheduled": true,
+      "mixedEditRefused": true,
+      "exactNativeWrapper": true,
+      "independentReadback": true,
+      "activeReminderTime": "2/1/2099, 9:30:00 AM",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "reminderTime": "1/1/2099, 8:00:00 AM",
+      "dateFits": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "active-1536x770-dark-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "active-1366x768-light-closed",
+      "activeRescheduled": true,
+      "mixedEditRefused": true,
+      "exactNativeWrapper": true,
+      "independentReadback": true,
+      "activeReminderTime": "2/1/2099, 9:30:00 AM",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "reminderTime": "1/1/2099, 8:00:00 AM",
+      "dateFits": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "active-1366x768-light-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "active-1366x768-dark-closed",
+      "activeRescheduled": true,
+      "mixedEditRefused": true,
+      "exactNativeWrapper": true,
+      "independentReadback": true,
+      "activeReminderTime": "2/1/2099, 9:30:00 AM",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "reminderTime": "1/1/2099, 8:00:00 AM",
+      "dateFits": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "active-1366x768-dark-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "active-1024x768-light-closed",
+      "activeRescheduled": true,
+      "mixedEditRefused": true,
+      "exactNativeWrapper": true,
+      "independentReadback": true,
+      "activeReminderTime": "2/1/2099, 9:30:00 AM",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "reminderTime": "1/1/2099, 8:00:00 AM",
+      "dateFits": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "active-1024x768-light-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "active-1024x768-dark-closed",
+      "activeRescheduled": true,
+      "mixedEditRefused": true,
+      "exactNativeWrapper": true,
+      "independentReadback": true,
+      "activeReminderTime": "2/1/2099, 9:30:00 AM",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "reminderTime": "1/1/2099, 8:00:00 AM",
+      "dateFits": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "active-1024x768-dark-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "active-900x1000-light-closed",
+      "activeRescheduled": true,
+      "mixedEditRefused": true,
+      "exactNativeWrapper": true,
+      "independentReadback": true,
+      "activeReminderTime": "2/1/2099, 9:30:00 AM",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "reminderTime": "1/1/2099, 8:00:00 AM",
+      "dateFits": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "active-900x1000-light-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "active-900x1000-dark-closed",
+      "activeRescheduled": true,
+      "mixedEditRefused": true,
+      "exactNativeWrapper": true,
+      "independentReadback": true,
+      "activeReminderTime": "2/1/2099, 9:30:00 AM",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "reminderTime": "1/1/2099, 8:00:00 AM",
+      "dateFits": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "active-900x1000-dark-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "second-context-refusal-retry",
+      "reads": 4,
+      "scopeBound": true,
+      "lostAcknowledgementHeld": true,
+      "readOnlyRecovery": true,
+      "noRetry": true,
+      "reminderTimeLocalToBrowser": true,
+      "timezone": "Pacific/Auckland"
+    }
+  ]
+}

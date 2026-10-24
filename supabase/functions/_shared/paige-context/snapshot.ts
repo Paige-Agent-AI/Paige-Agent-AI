@@ -38,6 +38,8 @@ import {
   type ContextSourceResult,
   type DegradationEntry,
 } from "./mod.ts";
+import { formatFinanceSourceAmount, validateFinanceReviewEvidence, type FinanceReviewEvidence } from '../finance/business-review-evidence.ts';
+import { formatMissionTargetValue, validateMissionTargetSnapshot, type MissionTargetSnapshot } from "../business-mission-targets/presentation.ts";
 
 export const OPERATING_SNAPSHOT_VERSION = 1 as const;
 
@@ -404,6 +406,7 @@ export function periodIsRollingDays(period: SnapshotPeriod): boolean {
 
 export const SNAPSHOT_DOMAINS = [
   "revenue",
+  "finance",
   "sales_pipeline",
   "clients",
   "payments",
@@ -500,6 +503,10 @@ export type DomainSnapshot = {
     readonly mission_id: string;
     readonly relation: (typeof SNAPSHOT_GOAL_RELATIONS)[number];
   }[];
+  /** Canonical Play target definitions plus issued observations; game_plan only. */
+  readonly mission_targets?: readonly MissionTargetSnapshot[];
+  /** Source-specific exact decimal facts from existing Finance readers; finance only. */
+  readonly finance_evidence?: FinanceReviewEvidence;
   /** Provenance; at least one. */
   readonly sources: readonly { readonly system: string; readonly adapter: string; readonly reference?: string }[];
 };
@@ -656,12 +663,12 @@ export const SNAPSHOT_AS_OF_FUTURE_TOLERANCE_MS = 5 * 60_000;
  */
 export function validateDomainSnapshot(
   value: unknown,
-  expected: { readonly domain: SnapshotDomain; readonly period: SnapshotPeriod; readonly notAfter?: Date },
+  expected: { readonly domain: SnapshotDomain; readonly period: SnapshotPeriod; readonly notAfter?: Date; readonly tenantId?: string | null },
 ): ValidateDomainSnapshotResult {
   try {
     const s = record(value, "snapshot", [
       "domain", "owner", "period", "as_of", "freshness", "coverage", "coverage_note",
-      "headline", "changes", "outcomes", "risks", "upcoming", "goal_links", "sources",
+      "headline", "changes", "outcomes", "risks", "upcoming", "goal_links", "sources", "mission_targets", "finance_evidence",
     ]);
     if (s.domain !== expected.domain) fail("domain_mismatch");
     const domain = expected.domain;
@@ -750,6 +757,24 @@ export function validateDomainSnapshot(
       };
     });
 
+    let mission_targets: MissionTargetSnapshot[] | undefined;
+    if (s.mission_targets !== undefined) {
+      if (domain !== 'game_plan') fail('target_domain_mismatch');
+      const targets = list(s, 'mission_targets', 'snapshot', 6).map(row => validateMissionTargetSnapshot(row, expected.tenantId,
+        Number.isFinite(notAfterMs) ? notAfterMs : Date.now()));
+      if (targets.some(row => row === null)) fail('target_projection_invalid');
+      mission_targets = targets as MissionTargetSnapshot[];
+      if (new Set(mission_targets.map(row => row.target.id)).size !== mission_targets.length) fail('duplicate_target');
+    }
+
+    let finance_evidence: FinanceReviewEvidence | undefined;
+    if (s.finance_evidence !== undefined) {
+      if (domain !== 'finance') fail('finance_domain_mismatch');
+      const checked = validateFinanceReviewEvidence(s.finance_evidence, expected.tenantId, Number.isFinite(notAfterMs) ? notAfterMs : Date.now());
+      if (!checked) fail('finance_projection_invalid');
+      finance_evidence = checked;
+    }
+
     const sourcesRaw = list(s, "sources", "snapshot", SNAPSHOT_BOUNDS.sources);
     if (sourcesRaw.length === 0) fail("sources_required");
     const sources = sourcesRaw.map((c, i) => {
@@ -776,6 +801,8 @@ export function validateDomainSnapshot(
       risks,
       upcoming,
       goal_links,
+      mission_targets,
+      finance_evidence,
       sources,
     });
     return { ok: true, snapshot };
@@ -866,7 +893,7 @@ export type ComposeOperatingSnapshotInput = {
 };
 
 export const SNAPSHOT_DEFAULT_TIMEOUT_MS = 4000;
-export const SNAPSHOT_DEFAULT_MAX_DOMAINS = 12;
+export const SNAPSHOT_DEFAULT_MAX_DOMAINS = 13;
 
 /**
  * Composer-issued reason codes. An adapter's own code passes through unchanged, EXCEPT one that collides
@@ -1016,6 +1043,7 @@ function settle(
   domain: SnapshotDomain,
   period: SnapshotPeriod,
   now: Date,
+  tenantId: string | null,
 ): ContextSourceResult<DomainSnapshot> {
   if (outcome.kind === "timeout") return contextDegraded(SNAPSHOT_REASON.timeout);
   if (outcome.kind === "error") return contextDegraded(errorReason(outcome.error));
@@ -1025,7 +1053,7 @@ function settle(
     const r = result as { status?: unknown; reason?: unknown; data?: unknown };
     const status = r.status;
     if (status === "available") {
-      const checked = validateDomainSnapshot(r.data, { domain, period, notAfter: now });
+      const checked = validateDomainSnapshot(r.data, { domain, period, notAfter: now, tenantId });
       // `in` narrows under both strict and the app tsconfig (strict:false), where a boolean
       // discriminant alone does not.
       return "snapshot" in checked
@@ -1137,13 +1165,14 @@ export async function composeOperatingSnapshot(
     }
     const outcome = byDomain.get(domain) as AdapterOutcome;
     if (outcome.kind === "timeout") timedOut.push(domain);
-    domains[domain] = scopeHeld ? settle(outcome, domain, period, now) : scopeChanged();
+    domains[domain] = scopeHeld ? settle(outcome, domain, period, now, identity.tenantId) : scopeChanged();
   }
   return finish();
 }
 
 export const DEFAULT_REVIEW_DOMAINS: readonly SnapshotDomain[] = Object.freeze([
   "revenue",
+  "finance",
   "sales_pipeline",
   "clients",
   "payments",
@@ -1159,6 +1188,8 @@ export const DEFAULT_REVIEW_DOMAINS: readonly SnapshotDomain[] = Object.freeze([
 
 /** Plain-language names people use for a domain. Keys are lower case. */
 export const SNAPSHOT_DOMAIN_ALIASES: Readonly<Record<string, SnapshotDomain>> = Object.freeze({
+  finances: "finance",
+  banking: "finance",
   sales: "sales_pipeline",
   pipeline: "sales_pipeline",
   money: "revenue",
@@ -1203,6 +1234,7 @@ export function selectSnapshotDomains(request: { readonly focus?: readonly strin
 
 export const SNAPSHOT_DOMAIN_LABELS: Readonly<Record<SnapshotDomain, string>> = Object.freeze({
   revenue: "Revenue",
+  finance: "Financial source evidence",
   sales_pipeline: "Sales pipeline",
   clients: "Clients",
   payments: "Payments and collections",
@@ -1383,6 +1415,30 @@ function domainSection(domain: SnapshotDomain, result: ContextSourceResult<Domai
   for (const r of s.risks) lines.push(`- Risk (${t(r.severity)}): ${q(r.summary)}`);
   for (const u of s.upcoming) lines.push(`- Upcoming ${t(u.at)}: ${q(u.summary)}`);
   for (const g of s.goal_links) lines.push(`- Game plan link: ${t(g.relation)} mission ${q(g.mission_id)}`);
+  for (const row of s.mission_targets ?? []) {
+    const target = row.target, o = row.observation;
+    const value = (v: string) => formatMissionTargetValue(v, target.metric.value_kind, target.metric.currency);
+    const desired = target.comparison === 'within_range' ? `${value(target.desired_value)} to ${value(target.upper_value!)}` : value(target.desired_value);
+    lines.push(`- Target ${q(target.title)} on Play ${q(row.mission.title)}: ${t(target.comparison.replace(/_/g, ' '))} ${q(desired)}; ${t(target.state)} revision ${target.revision}; period ${t(target.period.start)} to ${t(target.period.end)} (${q(target.period.time_zone)}).`);
+    if (o.state === 'unavailable') lines.push(`  Actual unavailable: ${q(o.reason.replace(/_/g, ' '))}. No attainment inferred.`);
+    else {
+      const attainment = o.attainment === 'unknown' ? 'unverified' : o.attainment === 'met' ? o.period_complete ? 'target met' : 'at target now'
+        : target.comparison === 'at_most' ? 'above limit' : target.comparison === 'within_range' ? 'outside target range' : 'below target';
+      lines.push(`  Actual ${q(value(o.actual))}; variance ${o.variance === null ? 'unverified' : q(value(o.variance))}; attainment ${t(attainment)}; ${t(o.state)} as of ${t(o.as_of)}. This is performance evidence, not execution.`);
+      for (const caveat of o.caveats) lines.push(`  Measurement caveat: ${q(caveat)}`);
+    }
+  }
+  if (s.finance_evidence) {
+    const finance = s.finance_evidence;
+    lines.push(`- Finance: ${finance.sources.length} of ${finance.eligible_sources} eligible production sources sampled. Stored source snapshots, not live bank-wide cash, profit or a forecast. Test/unverified sources excluded; credit is not cash.`);
+    if (!finance.sources.length) lines.push('- Financial figures unavailable: no eligible verified production source returned. This is not a zero balance.');
+    for (const source of finance.sources) {
+      lines.push(`- Financial source for ${q(source.company_label)}: ${q(source.provider)}; company revision ${source.company_version}, binding revision ${source.binding_revision}.`);
+      if (source.state === 'unavailable') { lines.push('  Source snapshot unavailable; no financial figure inferred.'); continue; }
+      lines.push(`  ${t(source.coverage)} snapshot revision ${source.snapshot_version}; observed ${t(source.source_observed_at)}, synchronized ${t(source.synchronized_at)}. Institution freshness is unverified; amounts are decimal major units. Showing ${Math.min(2, source.accounts.length)} of ${source.accounts_count} source accounts.`);
+      for (const account of source.accounts.slice(0, 2)) lines.push(`  ${q(account.label)}: source balance ${q(formatFinanceSourceAmount(account.current_balance, account.currency))}; available cash ${q(formatFinanceSourceAmount(account.available_cash, account.currency))}; available credit ${q(formatFinanceSourceAmount(account.available_credit, account.currency))}; credit limit ${q(formatFinanceSourceAmount(account.credit_limit, account.currency))}.`);
+    }
+  }
   lines.push(`- Source: ${s.sources.map((x) => `${q(x.system)}/${q(x.adapter)}`).join(", ")}`);
   return lines;
 }
@@ -1396,9 +1452,27 @@ export const SNAPSHOT_PROJECTION_INSTRUCTION =
 
 const SNAPSHOT_DEFAULT_MAX_CHARS = 6000;
 
+/** Deterministic ALG-03/13 baseline over already-authorized domain evidence. */
+export const SNAPSHOT_PRIORITY_POLICY = 'severity_order.v1';
+export type SnapshotPriority = DomainSnapshot['risks'][number] & {
+  readonly domain: SnapshotDomain;
+};
+
+/** No score, new evidence, source mutation or action authority. Stable ties retain source order. */
+export function rankOperatingSnapshotRisks(s: Pick<BusinessOperatingSnapshot, 'requested' | 'domains'>): SnapshotPriority[] {
+  const order = { act: 0, watch: 1, info: 2 };
+  return s.requested.flatMap(domain => {
+    const entry = s.domains[domain];
+    if (entry?.status !== 'available' || !entry.data) return [];
+    return entry.data.risks.filter(risk => risk.severity === 'act' || risk.severity === 'watch')
+      .map(risk => ({ ...risk, domain }));
+  }).sort((a, b) => order[a.severity] - order[b.severity]);
+}
+
 /**
  * Plain-text projection for the model, built from the structured snapshot. `maxChars` (default 6000) is
- * the budget for DOMAIN SECTIONS: when over, whole sections are dropped from the end and a line names
+ * the budget for DOMAIN SECTIONS: source act/watch domains use the existing priority order before
+ * the remaining requested domains. When over, whole sections drop from the end and a line names
  * every dropped area — never a mid-line cut, never a silent omission. The header, that "left out" line and
  * the closing instruction are never dropped, so a `maxChars` smaller than those three returns them anyway
  * (the honesty lines outrank the budget). A finite `maxChars` below 1 therefore means "fixed lines only"
@@ -1417,7 +1491,9 @@ export function projectOperatingSnapshot(
   const header = oneLine(
     `Business read for ${p.label} (${p.start} to ${p.end}, ${p.timezone}; composed ${s.composed_at}).`,
   );
-  const sections = s.requested.map((d) => ({ domain: d, text: domainSection(d, s.domains[d]).join("\n") }));
+  const ranked = rankOperatingSnapshotRisks(s);
+  const ordered = new Set([...ranked.map(risk => risk.domain), ...s.requested]);
+  const sections = [...ordered].map((d) => ({ domain: d, text: domainSection(d, s.domains[d]).join("\n") }));
 
   const render = (kept: number): string => {
     const parts = [header, ...sections.slice(0, kept).map((x) => x.text)];
@@ -1428,7 +1504,16 @@ export function projectOperatingSnapshot(
       );
     }
     parts.push(SNAPSHOT_PROJECTION_INSTRUCTION);
-    return parts.join("\n");
+    const plain = parts.join("\n");
+    // Never recover a priority from a domain excluded by this summary's budget.
+    const keptDomains = new Set(sections.slice(0, kept).map(section => section.domain));
+    const priorities = ranked.filter(risk => keptDomains.has(risk.domain)).slice(0, 3);
+    if (!priorities.length) return plain;
+    const order = ['Priority order: Only source-reported risks are ranked; act before watch, source order breaks ties; unreadable areas remain unknown.',
+      ...priorities.map((risk, index) => `- Priority ${index + 1} (${risk.severity}) from ${SNAPSHOT_DOMAIN_LABELS[risk.domain]}: ${quoted(risk.summary)}`)];
+    const prioritized = [header, ...order, ...parts.slice(1)].join('\n');
+    // Prefer complete original evidence to an extra interpretation when space is tight.
+    return prioritized.length <= maxChars ? prioritized : plain;
   };
 
   for (let kept = sections.length; kept > 0; kept -= 1) {

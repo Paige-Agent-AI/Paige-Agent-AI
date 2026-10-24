@@ -1,0 +1,2524 @@
+{
+  "numTotalTestSuites": 28,
+  "numPassedTestSuites": 28,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 201,
+  "numPassedTests": 201,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791924946806,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone lets the owner set it: pick, confirm the exact zone, save, then read back",
+          "status": "passed",
+          "title": "lets the owner set it: pick, confirm the exact zone, save, then read back",
+          "duration": 1395.6220999999969,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone carries the light theme onto the portaled picker",
+          "status": "passed",
+          "title": "carries the light theme onto the portaled picker",
+          "duration": 646.5823000000019,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone carries the dark theme onto the portaled picker",
+          "status": "passed",
+          "title": "carries the dark theme onto the portaled picker",
+          "duration": 575.7897000000012,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone never reports a save the database does not read back",
+          "status": "passed",
+          "title": "never reports a save the database does not read back",
+          "duration": 616.148000000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone never reports a save when the read back shows a different zone",
+          "status": "passed",
+          "title": "never reports a save when the read back shows a different zone",
+          "duration": 627.1652000000031,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone says nothing in the new workspace about a save that answered after the switch",
+          "status": "passed",
+          "title": "says nothing in the new workspace about a save that answered after the switch",
+          "duration": 695.7524000000012,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone asks for the workspace instead of flashing a refusal when there is none",
+          "status": "passed",
+          "title": "asks for the workspace instead of flashing a refusal when there is none",
+          "duration": 9.91820000000007,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone tells the owner when the server refuses, without relaying its text",
+          "status": "passed",
+          "title": "tells the owner when the server refuses, without relaying its text",
+          "duration": 742.5289000000012,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone cancel discards the choice and writes nothing",
+          "status": "passed",
+          "title": "cancel discards the choice and writes nothing",
+          "duration": 779.0030000000042,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone shows an admin the business zone read-only",
+          "status": "passed",
+          "title": "shows an admin the business zone read-only",
+          "duration": 6.592600000003586,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone says plainly when a stored zone is not recognised",
+          "status": "passed",
+          "title": "says plainly when a stored zone is not recognised",
+          "duration": 8.843199999995704,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone explains a refused read, and offers retry on a failed one",
+          "status": "passed",
+          "title": "explains a refused read, and offers retry on a failed one",
+          "duration": 12.39589999999589,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone drops a half-made choice and re-reads when the workspace changes",
+          "status": "passed",
+          "title": "drops a half-made choice and re-reads when the workspace changes",
+          "duration": 672.4670999999944,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone matches whole words, so typing a city never highlights an unrelated zone",
+          "status": "passed",
+          "title": "matches whole words, so typing a city never highlights an unrelated zone",
+          "duration": 1.6649000000033993,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Setup › Business time zone"
+          ],
+          "fullName": "Setup › Business time zone names places the way people say them",
+          "status": "passed",
+          "title": "names places the way people say them",
+          "duration": 1.8358999999982188,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791924985146,
+      "endTime": 1791924991938.836,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/solo/setup-business-time-zone.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context mounts the business time zone on Business profile, and only there (E4-S2)",
+          "status": "passed",
+          "title": "mounts the business time zone on Business profile, and only there (E4-S2)",
+          "duration": 353.32710000000225,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context opens the requested child URL and supplies real sibling links",
+          "status": "passed",
+          "title": "opens the requested child URL and supplies real sibling links",
+          "duration": 79.53839999999764,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context restores direct entry to business-profile",
+          "status": "passed",
+          "title": "restores direct entry to business-profile",
+          "duration": 48.50089999999909,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context restores direct entry to public-presence",
+          "status": "passed",
+          "title": "restores direct entry to public-presence",
+          "duration": 21.184699999997974,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context restores direct entry to people-email",
+          "status": "passed",
+          "title": "restores direct entry to people-email",
+          "duration": 27.984599999996135,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context restores direct entry to knowledge-bucket",
+          "status": "passed",
+          "title": "restores direct entry to knowledge-bucket",
+          "duration": 27.61989999999787,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context restores direct entry to direction",
+          "status": "passed",
+          "title": "restores direct entry to direction",
+          "duration": 13.337899999998626,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context restores direct entry to paige-brief",
+          "status": "passed",
+          "title": "restores direct entry to paige-brief",
+          "duration": 18.42280000000028,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context canonicalizes index with replace and keeps the entry query",
+          "status": "passed",
+          "title": "canonicalizes index with replace and keeps the entry query",
+          "duration": 44.04149999999936,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context shows an invalid child recovery without pretending to be Business profile",
+          "status": "passed",
+          "title": "shows an invalid child recovery without pretending to be Business profile",
+          "duration": 29.407799999993586,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps drafts across sibling links and Back/Forward without asking to discard",
+          "status": "passed",
+          "title": "keeps drafts across sibling links and Back/Forward without asking to discard",
+          "duration": 232.42779999999766,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context navigates to the invalid field's child URL without dropping its draft",
+          "status": "passed",
+          "title": "navigates to the invalid field's child URL without dropping its draft",
+          "duration": 142.45160000000033,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps a dirty drawer through sibling history and returns to its originating URL on close",
+          "status": "passed",
+          "title": "keeps a dirty drawer through sibling history and returns to its originating URL on close",
+          "duration": 168.3998000000065,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context gives the body-portaled managed-email drawer its own light theme scope",
+          "status": "passed",
+          "title": "gives the body-portaled managed-email drawer its own light theme scope",
+          "duration": 68.28369999999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context gives the body-portaled managed-email drawer its own dark theme scope",
+          "status": "passed",
+          "title": "gives the body-portaled managed-email drawer its own dark theme scope",
+          "duration": 80.99980000000505,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context renders exactly the approved six accessible subtabs in order",
+          "status": "passed",
+          "title": "renders exactly the approved six accessible subtabs in order",
+          "duration": 29.622199999997974,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context selects a NAICS search result from read mode into a saveable draft",
+          "status": "passed",
+          "title": "selects a NAICS search result from read mode into a saveable draft",
+          "duration": 82.2934000000023,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context lets an owner start adding knowledge without finding the global edit button",
+          "status": "passed",
+          "title": "lets an owner start adding knowledge without finding the global edit button",
+          "duration": 47.98769999999786,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context captures browser-populated address values at save even without an input event",
+          "status": "passed",
+          "title": "captures browser-populated address values at save even without an input event",
+          "duration": 88.81550000000425,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context offers country and US state dropdowns without rewriting stored facts",
+          "status": "passed",
+          "title": "offers country and US state dropdowns without rewriting stored facts",
+          "duration": 55.7722999999969,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context preserves several DOM-only autofilled fields and authorized email across click tab navigation",
+          "status": "passed",
+          "title": "preserves several DOM-only autofilled fields and authorized email across click tab navigation",
+          "duration": 85.82229999999981,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context preserves several DOM-only autofilled fields and authorized email across keyboard tab navigation",
+          "status": "passed",
+          "title": "preserves several DOM-only autofilled fields and authorized email across keyboard tab navigation",
+          "duration": 122.29420000000391,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context does not grant NAICS selection or Knowledge editing to admin_operational",
+          "status": "passed",
+          "title": "does not grant NAICS selection or Knowledge editing to admin_operational",
+          "duration": 39.94270000000688,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context does not grant NAICS selection or Knowledge editing to read_only",
+          "status": "passed",
+          "title": "does not grant NAICS selection or Knowledge editing to read_only",
+          "duration": 42.41769999999815,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context preserves browser-filled siblings when NAICS search rerenders the profile",
+          "status": "passed",
+          "title": "preserves browser-filled siblings when NAICS search rerenders the profile",
+          "duration": 94.13329999999405,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context asks before discarding DOM-only autofill and retains it when cancelled",
+          "status": "passed",
+          "title": "asks before discarding DOM-only autofill and retains it when cancelled",
+          "duration": 92.22529999999824,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context searches while typing and ignores an older NAICS response",
+          "status": "passed",
+          "title": "searches while typing and ignores an older NAICS response",
+          "duration": 40.977200000001176,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context requires explicit approval before selecting a connected NAICS replacement",
+          "status": "passed",
+          "title": "requires explicit approval before selecting a connected NAICS replacement",
+          "duration": 81.26460000000225,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context does not adopt protected autofilled facts without an explicit source decision",
+          "status": "passed",
+          "title": "does not adopt protected autofilled facts without an explicit source decision",
+          "duration": 94.57889999999315,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context finds a ZIP suggestion, applies it to the draft and sends it through save",
+          "status": "passed",
+          "title": "finds a ZIP suggestion, applies it to the draft and sends it through save",
+          "duration": 92.13730000000214,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context ignores a ZIP lookup after switching the country",
+          "status": "passed",
+          "title": "ignores a ZIP lookup after switching the country",
+          "duration": 100.1475999999966,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps a new knowledge link through save failure and retry without duplicate records",
+          "status": "passed",
+          "title": "keeps a new knowledge link through save failure and retry without duplicate records",
+          "duration": 80.24020000000019,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context uses the same canonical template for unrelated Solo account route values",
+          "status": "passed",
+          "title": "uses the same canonical template for unrelated Solo account route values",
+          "duration": 42.11329999999725,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps one draft across tabs and writes it through the combined durable save",
+          "status": "passed",
+          "title": "keeps one draft across tabs and writes it through the combined durable save",
+          "duration": 95.31650000000081,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context starts a guided brief directly and saves through the durable action",
+          "status": "passed",
+          "title": "starts a guided brief directly and saves through the durable action",
+          "duration": 130.33540000000357,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context adds an example from read mode and retains it after a failed save",
+          "status": "passed",
+          "title": "adds an example from read mode and retains it after a failed save",
+          "duration": 54.77610000000277,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps rich brief editing refused for admin_operational",
+          "status": "passed",
+          "title": "keeps rich brief editing refused for admin_operational",
+          "duration": 17.89639999999781,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps rich brief editing refused for read_only",
+          "status": "passed",
+          "title": "keeps rich brief editing refused for read_only",
+          "duration": 16.17059999999765,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context edits a stored example in place and can discard the whole unsaved change",
+          "status": "passed",
+          "title": "edits a stored example in place and can discard the whole unsaved change",
+          "duration": 73.82469999999739,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps oversized rich text in the drawer for correction",
+          "status": "passed",
+          "title": "keeps oversized rich text in the drawer for correction",
+          "duration": 63.26440000000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context clears a dirty Teach Paige drawer when the tenant changes",
+          "status": "passed",
+          "title": "clears a dirty Teach Paige drawer when the tenant changes",
+          "duration": 79.97230000000127,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context clears a dirty Add an example drawer when the tenant changes",
+          "status": "passed",
+          "title": "clears a dirty Add an example drawer when the tenant changes",
+          "duration": 66.88650000000052,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context opens the existing Knowledge area without losing the brief draft",
+          "status": "passed",
+          "title": "opens the existing Knowledge area without losing the brief draft",
+          "duration": 51.773300000000745,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context exposes the rich Paige profile and labels its live conversation adapter honestly",
+          "status": "passed",
+          "title": "exposes the rich Paige profile and labels its live conversation adapter honestly",
+          "duration": 24.943399999996473,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context preserves legacy fields and representative controls",
+          "status": "passed",
+          "title": "preserves legacy fields and representative controls",
+          "duration": 99.5702999999994,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context cancels unfinished knowledge without keeping an invalid record",
+          "status": "passed",
+          "title": "cancels unfinished knowledge without keeping an invalid record",
+          "duration": 85.8472000000038,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context loads stored conflict data outside edit mode",
+          "status": "passed",
+          "title": "loads stored conflict data outside edit mode",
+          "duration": 135.33950000000186,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context removes a dependent authorized representative without trapping the next save",
+          "status": "passed",
+          "title": "removes a dependent authorized representative without trapping the next save",
+          "duration": 120.53420000000187,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context does not carry one representative's phone across to the next person chosen",
+          "status": "passed",
+          "title": "does not carry one representative's phone across to the next person chosen",
+          "duration": 85.85829999999987,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps drawer edits isolated until confirmed and restores focus on discard",
+          "status": "passed",
+          "title": "keeps drawer edits isolated until confirmed and restores focus on discard",
+          "duration": 99.46220000000176,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context freezes every tab action while a durable save is pending",
+          "status": "passed",
+          "title": "freezes every tab action while a durable save is pending",
+          "duration": 61.358500000002095,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context shows ownership validation instead of failing without a repair path",
+          "status": "passed",
+          "title": "shows ownership validation instead of failing without a repair path",
+          "duration": 77.22200000000157,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context does not advertise managed-email registration without its lifecycle contract",
+          "status": "passed",
+          "title": "does not advertise managed-email registration without its lifecycle contract",
+          "duration": 37.15310000000318,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context requires a fresh availability result for the exact edited managed-email name",
+          "status": "passed",
+          "title": "requires a fresh availability result for the exact edited managed-email name",
+          "duration": 39.9036999999953,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context does not accept availability for a different returned address",
+          "status": "passed",
+          "title": "does not accept availability for a different returned address",
+          "duration": 37.34750000000349,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context keeps a dirty brief intact across managed-email failure and successful retry",
+          "status": "passed",
+          "title": "keeps a dirty brief intact across managed-email failure and successful retry",
+          "duration": 150.05450000000565,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context freezes managed-email input and prevents drawer close during registration",
+          "status": "passed",
+          "title": "freezes managed-email input and prevents drawer close during registration",
+          "duration": 43.18609999999899,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "canonical Solo Setup business context"
+          ],
+          "fullName": "canonical Solo Setup business context enforces read-only controls for a member",
+          "status": "passed",
+          "title": "enforces read-only controls for a member",
+          "duration": 26.04160000000411,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791924990793,
+      "endTime": 1791924995237.0415,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/solo/SoloBusinessContextSetup.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup restores correction focus only after a delayed checkpoint releases the controls",
+          "status": "passed",
+          "title": "restores correction focus only after a delayed checkpoint releases the controls",
+          "duration": 90.74850000000151,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup requires explicit review/save, preserves unrelated records, then supports correction in the same thread",
+          "status": "passed",
+          "title": "requires explicit review/save, preserves unrelated records, then supports correction in the same thread",
+          "duration": 97.97920000000158,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup blocks a stale review rather than overwrite a newer Setup snapshot",
+          "status": "passed",
+          "title": "blocks a stale review rather than overwrite a newer Setup snapshot",
+          "duration": 37.079900000000634,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup adopts an unchanged connection-sourced fact after explicit review",
+          "status": "passed",
+          "title": "adopts an unchanged connection-sourced fact after explicit review",
+          "duration": 17.948599999999715,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup ignores an earlier checkpoint read after the owner records newer navigation",
+          "status": "passed",
+          "title": "ignores an earlier checkpoint read after the owner records newer navigation",
+          "duration": 19.71150000000125,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup does not claim success after a failed writer",
+          "status": "passed",
+          "title": "does not claim success after a failed writer",
+          "duration": 17.80290000000241,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup retains successful Setup evidence when checkpoint recording fails",
+          "status": "passed",
+          "title": "retains successful Setup evidence when checkpoint recording fails",
+          "duration": 16.650300000001153,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup routes a mixed/private proposal to complete Setup without consuming it",
+          "status": "passed",
+          "title": "routes a mixed/private proposal to complete Setup without consuming it",
+          "duration": 6.132999999997992,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup resumes navigation but does not treat the checkpoint as confirmed business facts",
+          "status": "passed",
+          "title": "resumes navigation but does not treat the checkpoint as confirmed business facts",
+          "duration": 7.201499999999214,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "owner interview review over canonical Setup"
+          ],
+          "fullName": "owner interview review over canonical Setup fences owner controls on account switch and while Chat is busy",
+          "status": "passed",
+          "title": "fences owner controls on account switch and while Chat is busy",
+          "duration": 13.439800000000105,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791924983431,
+      "endTime": 1791924983756.4397,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/solo/SoloBusinessInterview.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "E2-1 registration"
+          ],
+          "fullName": "E2-1 registration pushes exactly one chat tool named get_business_snapshot whose parameters are the registered capability's input",
+          "status": "passed",
+          "title": "pushes exactly one chat tool named get_business_snapshot whose parameters are the registered capability's input",
+          "duration": 7.375,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 registration"
+          ],
+          "fullName": "E2-1 registration registers business.operating_snapshot as a read-only, workspace-admin-seat spine capability",
+          "status": "passed",
+          "title": "registers business.operating_snapshot as a read-only, workspace-admin-seat spine capability",
+          "duration": 0.6009000000003653,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 registration"
+          ],
+          "fullName": "E2-1 registration binds the spine executor to the INT-340 issuer seam, not a chat-only path",
+          "status": "passed",
+          "title": "binds the spine executor to the INT-340 issuer seam, not a chat-only path",
+          "duration": 0.2033000000001266,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3a briefing narrative contract"
+          ],
+          "fullName": "E2-3a briefing narrative contract #2102 narrates Sales' last completed UTC day cutoff without replacing current balance freshness",
+          "status": "passed",
+          "title": "#2102 narrates Sales' last completed UTC day cutoff without replacing current balance freshness",
+          "duration": 51.703799999999774,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3a briefing narrative contract"
+          ],
+          "fullName": "E2-3a briefing narrative contract the tool description promises the briefing structure: picture, attention (act before watch), supported next steps, unmeasured named",
+          "status": "passed",
+          "title": "the tool description promises the briefing structure: picture, attention (act before watch), supported next steps, unmeasured named",
+          "duration": 0.9994999999998981,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3a briefing narrative contract"
+          ],
+          "fullName": "E2-3a briefing narrative contract the result guidance carries the full narration order and every honesty rule",
+          "status": "passed",
+          "title": "the result guidance carries the full narration order and every honesty rule",
+          "duration": 4.632599999999911,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 dispatch behavior"
+          ],
+          "fullName": "E2-1 dispatch behavior returns the composer's bounded projection as an available read with no-action-authority guidance",
+          "status": "passed",
+          "title": "returns the composer's bounded projection as an available read with no-action-authority guidance",
+          "duration": 2.658300000000054,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 dispatch behavior"
+          ],
+          "fullName": "E2-1 dispatch behavior refuses an unknown period as needs_input with a fix, and reads nothing",
+          "status": "passed",
+          "title": "refuses an unknown period as needs_input with a fix, and reads nothing",
+          "duration": 0.8438999999998487,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 dispatch behavior"
+          ],
+          "fullName": "E2-1 dispatch behavior refuses an unknown caller timezone as needs_input rather than silently substituting UTC",
+          "status": "passed",
+          "title": "refuses an unknown caller timezone as needs_input rather than silently substituting UTC",
+          "duration": 1.257600000000366,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 dispatch behavior"
+          ],
+          "fullName": "E2-1 dispatch behavior requires custom bounds together and rejects unknown argument keys",
+          "status": "passed",
+          "title": "requires custom bounds together and rejects unknown argument keys",
+          "duration": 1.3281999999999243,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 dispatch behavior"
+          ],
+          "fullName": "E2-1 dispatch behavior computes the period in the caller's timezone, not the model's (America/New_York midnight ≠ UTC midnight)",
+          "status": "passed",
+          "title": "computes the period in the caller's timezone, not the model's (America/New_York midnight ≠ UTC midnight)",
+          "duration": 5.932499999999891,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 dispatch behavior"
+          ],
+          "fullName": "E2-1 dispatch behavior degrades honestly when the caller's reads throw: an available review whose reads refused, no crash, no error text",
+          "status": "passed",
+          "title": "degrades honestly when the caller's reads throw: an available review whose reads refused, no crash, no error text",
+          "duration": 7.177299999999832,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 wiring pins (source contracts)"
+          ],
+          "fullName": "E2-1 wiring pins (source contracts) offers the tool only inside the tenant-lens push, beside the metric read",
+          "status": "passed",
+          "title": "offers the tool only inside the tenant-lens push, beside the metric read",
+          "duration": 1.3930999999997766,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 wiring pins (source contracts)"
+          ],
+          "fullName": "E2-1 wiring pins (source contracts) dispatches through the shared module on the caller's own session with the turn's timezone",
+          "status": "passed",
+          "title": "dispatches through the shared module on the caller's own session with the turn's timezone",
+          "duration": 3.05600000000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 wiring pins (source contracts)"
+          ],
+          "fullName": "E2-1 wiring pins (source contracts) keeps the non-tenant refusal honest (Solo workspace lens only, pending a widening ruling)",
+          "status": "passed",
+          "title": "keeps the non-tenant refusal honest (Solo workspace lens only, pending a widening ruling)",
+          "duration": 1.3079000000002452,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 wiring pins (source contracts)"
+          ],
+          "fullName": "E2-1 wiring pins (source contracts) announces the read at START (label present, 'no dispatch' entry gone)",
+          "status": "passed",
+          "title": "announces the read at START (label present, 'no dispatch' entry gone)",
+          "duration": 0.3731999999999971,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-1 wiring pins (source contracts)"
+          ],
+          "fullName": "E2-1 wiring pins (source contracts) describeStep carries an honest failed variant for the snapshot",
+          "status": "passed",
+          "title": "describeStep carries an honest failed variant for the snapshot",
+          "duration": 0.2869999999998072,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791924960193,
+      "endTime": 1791924960285.3733,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/__tests__/business-review-chat.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "E2-3b point 8 — the conversational action-refusal defect"
+          ],
+          "fullName": "E2-3b point 8 — the conversational action-refusal defect the action-intent exhaustion branch authors the truthful CONVERSATIONAL refusal, not the generic capability copy",
+          "status": "passed",
+          "title": "the action-intent exhaustion branch authors the truthful CONVERSATIONAL refusal, not the generic capability copy",
+          "duration": 3.4169999999999163,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3b point 8 — the conversational action-refusal defect"
+          ],
+          "fullName": "E2-3b point 8 — the conversational action-refusal defect a conversational exhaustion is a COMPLETED answer, not a limit stop (no budgetStop, so the UI never says 'Reached the limit')",
+          "status": "passed",
+          "title": "a conversational exhaustion is a COMPLETED answer, not a limit stop (no budgetStop, so the UI never says 'Reached the limit')",
+          "duration": 1.1750999999999294,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3b point 8 — the conversational action-refusal defect"
+          ],
+          "fullName": "E2-3b point 8 — the conversational action-refusal defect every budgetStop in the post-loop exhaustion region is gated off conversational turns (the same LIMIT_REACHED misdescription cannot return by a side branch)",
+          "status": "passed",
+          "title": "every budgetStop in the post-loop exhaustion region is gated off conversational turns (the same LIMIT_REACHED misdescription cannot return by a side branch)",
+          "duration": 2.899900000000116,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3b point 8 — the conversational action-refusal defect"
+          ],
+          "fullName": "E2-3b point 8 — the conversational action-refusal defect the per-call conversational refusal teaches recovery in words",
+          "status": "passed",
+          "title": "the per-call conversational refusal teaches recovery in words",
+          "duration": 0.8300999999999021,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3b point 5 — the Sales reporting cutoff"
+          ],
+          "fullName": "E2-3b point 5 — the Sales reporting cutoff the cutoff note is truthful to the second: it fires whenever the end was pulled back to now (end>now AND the end==now rolling default); a past-ended window carries no note",
+          "status": "passed",
+          "title": "the cutoff note is truthful to the second: it fires whenever the end was pulled back to now (end>now AND the end==now rolling default); a past-ended window carries no note",
+          "duration": 6.078600000000051,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3b point 5 — the Sales reporting cutoff"
+          ],
+          "fullName": "E2-3b point 5 — the Sales reporting cutoff the briefing contract communicates the actual completed-day cutoff while keeping current sources separate",
+          "status": "passed",
+          "title": "the briefing contract communicates the actual completed-day cutoff while keeping current sources separate",
+          "duration": 30.041999999999916,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3b triage — duplicate user-row persistence"
+          ],
+          "fullName": "E2-3b triage — duplicate user-row persistence the legacy user-append excludes conversational turns (whose user row begin_v2 already appends)",
+          "status": "passed",
+          "title": "the legacy user-append excludes conversational turns (whose user row begin_v2 already appends)",
+          "duration": 0.5321999999998752,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "E2-3b triage — workspace pre-check scope correction (documented, no code)"
+          ],
+          "fullName": "E2-3b triage — workspace pre-check scope correction (documented, no code) the acceptance package records the corrected evidence classes for the designated workspace",
+          "status": "passed",
+          "title": "the acceptance package records the corrected evidence classes for the designated workspace",
+          "duration": 3.881700000000137,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791924959101,
+      "endTime": 1791924959150.8816,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/__tests__/e2-3b-corrective-release.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "the client-standing projection never invents money"
+          ],
+          "fullName": "the client-standing projection never invents money keeps provider-verified, owner-recorded and test money apart, with real amounts",
+          "status": "passed",
+          "title": "keeps provider-verified, owner-recorded and test money apart, with real amounts",
+          "duration": 131.88979999999992,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the client-standing projection never invents money"
+          ],
+          "fullName": "the client-standing projection never invents money reports agreement, installments, delivery and what needs attention",
+          "status": "passed",
+          "title": "reports agreement, installments, delivery and what needs attention",
+          "duration": 12.056800000000294,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the client-standing projection never invents money"
+          ],
+          "fullName": "the client-standing projection never invents money withholds every due and overdue judgement when the business zone is missing",
+          "status": "passed",
+          "title": "withholds every due and overdue judgement when the business zone is missing",
+          "duration": 5.982300000000123,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the client-standing projection never invents money"
+          ],
+          "fullName": "the client-standing projection never invents money withholds every due and overdue judgement when the business zone is invalid",
+          "status": "passed",
+          "title": "withholds every due and overdue judgement when the business zone is invalid",
+          "duration": 6.048800000000028,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the client-standing projection never invents money"
+          ],
+          "fullName": "the client-standing projection never invents money never prints a missing amount as zero",
+          "status": "passed",
+          "title": "never prints a missing amount as zero",
+          "duration": 7.063200000000052,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain withholds the due judgement on every installment and invoice line when the zone is not set",
+          "status": "passed",
+          "title": "withholds the due judgement on every installment and invoice line when the zone is not set",
+          "duration": 10.389799999999923,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain prints each invoice in its own currency when the business total is mixed",
+          "status": "passed",
+          "title": "prints each invoice in its own currency when the business total is mixed",
+          "duration": 6.287800000000061,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain keeps record text on one quoted line, so a name cannot forge a figure",
+          "status": "passed",
+          "title": "keeps record text on one quoted line, so a name cannot forge a figure",
+          "duration": 8.927700000000186,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain gives dates in the business zone, and no bare UTC date when the zone is not set",
+          "status": "passed",
+          "title": "gives dates in the business zone, and no bare UTC date when the zone is not set",
+          "duration": 11.969000000000051,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain says \"ahead\" instead of a negative amount behind, and counts unknown outcomes",
+          "status": "passed",
+          "title": "says \"ahead\" instead of a negative amount behind, and counts unknown outcomes",
+          "duration": 22.671800000000076,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain says how many invoices it did not list",
+          "status": "passed",
+          "title": "says how many invoices it did not list",
+          "duration": 13.421499999999924,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain drops bidirectional overrides and quote look-alikes, and never cuts a character in half",
+          "status": "passed",
+          "title": "drops bidirectional overrides and quote look-alikes, and never cuts a character in half",
+          "duration": 0.8333000000002357,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain gives the reason a withheld total is withheld",
+          "status": "passed",
+          "title": "gives the reason a withheld total is withheld",
+          "duration": 6.98090000000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the projection holds up against what the records can contain"
+          ],
+          "fullName": "the projection holds up against what the records can contain formats an amount with no recorded currency as minor units, never as a guessed major amount",
+          "status": "passed",
+          "title": "formats an amount with no recorded currency as minor units, never as a guessed major amount",
+          "duration": 0.30780000000004293,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals resolves one exact match, then reads status for THIS workspace only",
+          "status": "passed",
+          "title": "resolves one exact match, then reads status for THIS workspace only",
+          "duration": 10.562999999999647,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals asks which client when several match, listing names and ids, and reads no status",
+          "status": "passed",
+          "title": "asks which client when several match, listing names and ids, and reads no status",
+          "duration": 0.8936000000003332,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals never picks between two clients with the same exact name",
+          "status": "passed",
+          "title": "never picks between two clients with the same exact name",
+          "duration": 0.49699999999984357,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals a single non-exact match with more beyond it is still ambiguous",
+          "status": "passed",
+          "title": "a single non-exact match with more beyond it is still ambiguous",
+          "duration": 0.2760000000002947,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals says plainly when no client matches",
+          "status": "passed",
+          "title": "says plainly when no client matches",
+          "duration": 1.3434000000002015,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals reads directly by client_id from an earlier answer, skipping the lookup",
+          "status": "passed",
+          "title": "reads directly by client_id from an earlier answer, skipping the lookup",
+          "duration": 8.413800000000265,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals refuses without reading when the request is malformed or names a workspace",
+          "status": "passed",
+          "title": "refuses without reading when the request is malformed or names a workspace",
+          "duration": 2.443399999999656,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals refuses outside an authorized Solo workspace without calling the database",
+          "status": "passed",
+          "title": "refuses outside an authorized Solo workspace without calling the database",
+          "duration": 1.0524000000000342,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals maps database refusals without relaying their text, and fails closed on a bad shape",
+          "status": "passed",
+          "title": "maps database refusals without relaying their text, and fails closed on a bad shape",
+          "duration": 1.3685999999997875,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "get the client: lookup, disambiguation and refusals"
+          ],
+          "fullName": "get the client: lookup, disambiguation and refusals tells the model to separate evidence classes and never claim an action",
+          "status": "passed",
+          "title": "tells the model to separate evidence classes and never claim an action",
+          "duration": 6.936400000000049,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save reports a configured zone and that the owner may change it in Setup",
+          "status": "passed",
+          "title": "reports a configured zone and that the owner may change it in Setup",
+          "duration": 1.076799999999821,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save says not set, and that a non-owner cannot change it",
+          "status": "passed",
+          "title": "says not set, and that a non-owner cannot change it",
+          "duration": 0.3056000000001404,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save checks a proposed zone and reports the local time there, marked NOT saved",
+          "status": "passed",
+          "title": "checks a proposed zone and reports the local time there, marked NOT saved",
+          "duration": 2.3108000000001994,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save notes when the proposed zone is already the saved one",
+          "status": "passed",
+          "title": "notes when the proposed zone is already the saved one",
+          "duration": 1.8481999999999061,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save rejects EST as a proposed business zone",
+          "status": "passed",
+          "title": "rejects EST as a proposed business zone",
+          "duration": 0.654700000000048,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save rejects EST5EDT as a proposed business zone",
+          "status": "passed",
+          "title": "rejects EST5EDT as a proposed business zone",
+          "duration": 0.17099999999982174,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save rejects Etc/GMT+5 as a proposed business zone",
+          "status": "passed",
+          "title": "rejects Etc/GMT+5 as a proposed business zone",
+          "duration": 0.0967000000000553,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save rejects US/Eastern as a proposed business zone",
+          "status": "passed",
+          "title": "rejects US/Eastern as a proposed business zone",
+          "duration": 0.07529999999997017,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save rejects Mars/Olympus_Mons as a proposed business zone",
+          "status": "passed",
+          "title": "rejects Mars/Olympus_Mons as a proposed business zone",
+          "duration": 0.8981999999996333,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save rejects +05:30 as a proposed business zone",
+          "status": "passed",
+          "title": "rejects +05:30 as a proposed business zone",
+          "duration": 0.32129999999961,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save rejects america/chicago as a proposed business zone",
+          "status": "passed",
+          "title": "rejects america/chicago as a proposed business zone",
+          "duration": 0.2298000000000684,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "the business time zone: read and check, never save"
+          ],
+          "fullName": "the business time zone: read and check, never save fails closed on an unknown state and maps refusals",
+          "status": "passed",
+          "title": "fails closed on an unknown state and maps refusals",
+          "duration": 2.108799999999974,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "registration"
+          ],
+          "fullName": "registration each tool is declared by its Spine capability, named for its executor, read-only",
+          "status": "passed",
+          "title": "each tool is declared by its Spine capability, named for its executor, read-only",
+          "duration": 3.5971000000004096,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791924960173,
+      "endTime": 1791924960467.5972,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/__tests__/exp04-client-standing-chat.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted re-reads the same canonical process in a later conversation without another store or receipt",
+          "status": "passed",
+          "title": "re-reads the same canonical process in a later conversation without another store or receipt",
+          "duration": 31.270299999996496,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted refuses a member context before private reads",
+          "status": "passed",
+          "title": "refuses a member context before private reads",
+          "duration": 0.7160000000003492,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted refuses a admin context before private reads",
+          "status": "passed",
+          "title": "refuses a admin context before private reads",
+          "duration": 0.2682999999997264,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted refuses a platform_operator context before private reads",
+          "status": "passed",
+          "title": "refuses a platform_operator context before private reads",
+          "duration": 0.8044000000008964,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted refuses a null context before private reads",
+          "status": "passed",
+          "title": "refuses a null context before private reads",
+          "duration": 0.27039999999760767,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted refuses client impersonation and unresolved workspace",
+          "status": "passed",
+          "title": "refuses client impersonation and unresolved workspace",
+          "duration": 0.6026999999994587,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted does not trust an owner role label when the canonical owner predicate refuses",
+          "status": "passed",
+          "title": "does not trust an owner role label when the canonical owner predicate refuses",
+          "duration": 0.501299999999901,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted voids data when the workspace or actor changes during the read",
+          "status": "passed",
+          "title": "voids data when the workspace or actor changes during the read",
+          "duration": 0.7887000000009721,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted revalidates current owner authority after reading",
+          "status": "passed",
+          "title": "revalidates current owner authority after reading",
+          "duration": 0.8227000000006228,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted rejects a mismatched canonical tenant_id",
+          "status": "passed",
+          "title": "rejects a mismatched canonical tenant_id",
+          "duration": 0.29609999999956926,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted rejects a mismatched canonical actor_id",
+          "status": "passed",
+          "title": "rejects a mismatched canonical actor_id",
+          "duration": 0.15350000000034925,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted never turns a failed read or old contract into an empty schedule",
+          "status": "passed",
+          "title": "never turns a failed read or old contract into an empty schedule",
+          "duration": 1.9709000000002561,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted returns a verified empty read distinctly from an unavailable read",
+          "status": "passed",
+          "title": "returns a verified empty read distinctly from an unavailable read",
+          "duration": 0.5315000000009604,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted preserves the process scheduler's ISO Sunday 7, rather than Calendar's Sunday 0",
+          "status": "passed",
+          "title": "preserves the process scheduler's ISO Sunday 7, rather than Calendar's Sunday 0",
+          "duration": 1.361400000001595,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted holds unknown latest outcomes while retaining the older fully verified result",
+          "status": "passed",
+          "title": "holds unknown latest outcomes while retaining the older fully verified result",
+          "duration": 0.779499999996915,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted preserves canonical approved schedule zone CET without calculating recurrence in ICU",
+          "status": "passed",
+          "title": "preserves canonical approved schedule zone CET without calculating recurrence in ICU",
+          "duration": 0.6749999999992724,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted preserves canonical approved schedule zone GMT without calculating recurrence in ICU",
+          "status": "passed",
+          "title": "preserves canonical approved schedule zone GMT without calculating recurrence in ICU",
+          "duration": 0.41849999999976717,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted preserves canonical approved schedule zone EST without calculating recurrence in ICU",
+          "status": "passed",
+          "title": "preserves canonical approved schedule zone EST without calculating recurrence in ICU",
+          "duration": 0.484599999999773,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted preserves canonical approved schedule zone Etc/GMT+3 without calculating recurrence in ICU",
+          "status": "passed",
+          "title": "preserves canonical approved schedule zone Etc/GMT+3 without calculating recurrence in ICU",
+          "duration": 0.4782999999988533,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted preserves canonical approved schedule zone America/Future_Canonical_Zone without calculating recurrence in ICU",
+          "status": "passed",
+          "title": "preserves canonical approved schedule zone America/Future_Canonical_Zone without calculating recurrence in ICU",
+          "duration": 1.2414000000026135,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted a completed label with mismatched observation cannot become a verified result",
+          "status": "passed",
+          "title": "a completed label with mismatched observation cannot become a verified result",
+          "duration": 0.6625000000021828,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted Calendar gets instant markers only from actual next_run_at, not booking records or guessed duration",
+          "status": "passed",
+          "title": "Calendar gets instant markers only from actual next_run_at, not booking records or guessed duration",
+          "duration": 7.613499999999476,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted business zone changes display time, never approved schedule zone or execution UTC",
+          "status": "passed",
+          "title": "business zone changes display time, never approved schedule zone or execution UTC",
+          "duration": 9.002300000000105,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted both DST offsets retain canonical owner-local wall time without client recurrence expansion",
+          "status": "passed",
+          "title": "both DST offsets retain canonical owner-local wall time without client recurrence expansion",
+          "duration": 3.5367000000005646,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted does not infer the business zone when missing",
+          "status": "passed",
+          "title": "does not infer the business zone when missing",
+          "duration": 2.6002000000007683,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted does not infer the business zone when invalid",
+          "status": "passed",
+          "title": "does not infer the business zone when invalid",
+          "duration": 0.44719999999870197,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted bounds model data, excludes source titles/raw errors and reports truncation",
+          "status": "passed",
+          "title": "bounds model data, excludes source titles/raw errors and reports truncation",
+          "duration": 1.0872000000017579,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted model arguments cannot provide scope, schedule or approval authority",
+          "status": "passed",
+          "title": "model arguments cannot provide scope, schedule or approval authority",
+          "duration": 0.4614999999976135,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "prepared owner-only weekly read — not conversationally admitted"
+          ],
+          "fullName": "prepared owner-only weekly read — not conversationally admitted times out without later private reads or provider effects",
+          "status": "passed",
+          "title": "times out without later private reads or provider effects",
+          "duration": 3.4975999999987835,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791924982081,
+      "endTime": 1791924982155.4976,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/__tests__/weekly-commitment-read.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary returns the canonical saved brief and revision instead of treating the interview draft as readback",
+          "status": "passed",
+          "title": "returns the canonical saved brief and revision instead of treating the interview draft as readback",
+          "duration": 30.166000000001077,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary does not return a foreign workspace's save payload as interview readback",
+          "status": "passed",
+          "title": "does not return a foreign workspace's save payload as interview readback",
+          "duration": 5.465199999998731,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary keeps an absent saved revision unknown rather than inventing a verified revision",
+          "status": "passed",
+          "title": "keeps an absent saved revision unknown rather than inventing a verified revision",
+          "duration": 3.0688999999983935,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary shows a safe retryable load failure instead of spinning forever or leaking database detail",
+          "status": "passed",
+          "title": "shows a safe retryable load failure instead of spinning forever or leaking database detail",
+          "duration": 2.5829000000012456,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary refuses an unresolved session without an infinite loading state",
+          "status": "passed",
+          "title": "refuses an unresolved session without an infinite loading state",
+          "duration": 3.158800000001065,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary keeps unresolved snapshots stable so the edit-form reset effect cannot loop",
+          "status": "passed",
+          "title": "keeps unresolved snapshots stable so the edit-form reset effect cannot loop",
+          "duration": 2.322100000001228,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary drops a late response after switching tenants",
+          "status": "passed",
+          "title": "drops a late response after switching tenants",
+          "duration": 2.4209999999984575,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary sends expected workspace/revision/email and rejects duplicate save synchronously",
+          "status": "passed",
+          "title": "sends expected workspace/revision/email and rejects duplicate save synchronously",
+          "duration": 2.728399999999965,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary uses null unchanged supplemental fields for an Admin operational save",
+          "status": "passed",
+          "title": "uses null unchanged supplemental fields for an Admin operational save",
+          "duration": 2.574899999999616,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary preserves draft failure for retry without exposing provider error text",
+          "status": "passed",
+          "title": "preserves draft failure for retry without exposing provider error text",
+          "duration": 6.6283000000003085,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary does not accept a held save or stale callback after account switch",
+          "status": "passed",
+          "title": "does not accept a held save or stale callback after account switch",
+          "duration": 3.4686000000001513,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary guards managed registration and proposal dismissal with expected workspace",
+          "status": "passed",
+          "title": "guards managed registration and proposal dismissal with expected workspace",
+          "duration": 3.1702000000004773,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary rejects an unverified or mismatched registration response 0",
+          "status": "passed",
+          "title": "rejects an unverified or mismatched registration response 0",
+          "duration": 3.01929999999993,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary rejects an unverified or mismatched registration response 1",
+          "status": "passed",
+          "title": "rejects an unverified or mismatched registration response 1",
+          "duration": 1.5810999999994237,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary rejects an unverified or mismatched registration response 2",
+          "status": "passed",
+          "title": "rejects an unverified or mismatched registration response 2",
+          "duration": 1.7867000000005646,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary reads back the registered sender without replacing the brief or its conflict revision",
+          "status": "passed",
+          "title": "reads back the registered sender without replacing the brief or its conflict revision",
+          "duration": 3.2867999999980384,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary does not call registration successful when durable readback still resolves the old sender",
+          "status": "passed",
+          "title": "does not call registration successful when durable readback still resolves the old sender",
+          "duration": 1.8817999999992026,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary releases failed registration for retry and refuses duplicate concurrent mutations",
+          "status": "passed",
+          "title": "releases failed registration for retry and refuses duplicate concurrent mutations",
+          "duration": 5.340500000002066,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary rejects delayed managed-email availability after an account switch",
+          "status": "passed",
+          "title": "rejects delayed managed-email availability after an account switch",
+          "duration": 2.2832999999991443,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary drops a delayed managed registration and stale callback after account switch",
+          "status": "passed",
+          "title": "drops a delayed managed registration and stale callback after account switch",
+          "duration": 2.3083000000005995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary supports first-use registration when no sender address has been assigned yet",
+          "status": "passed",
+          "title": "supports first-use registration when no sender address has been assigned yet",
+          "duration": 2.2082999999984168,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary does not apply verified readback after the owner switches accounts during verification",
+          "status": "passed",
+          "title": "does not apply verified readback after the owner switches accounts during verification",
+          "duration": 2.0610000000015134,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "Solo business context data boundary"
+          ],
+          "fullName": "Solo business context data boundary refuses Member mutations without making a write request",
+          "status": "passed",
+          "title": "refuses Member mutations without making a write request",
+          "duration": 1.6202999999986787,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791924982651,
+      "endTime": 1791924982746.6204,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/solo/data/useSoloBusinessContext.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "server-resolved SOLO interview projection"
+          ],
+          "fullName": "server-resolved SOLO interview projection reads the owned checkpoint then current Setup, excludes private/unconfirmed values and grants no effects",
+          "status": "passed",
+          "title": "reads the owned checkpoint then current Setup, excludes private/unconfirmed values and grants no effects",
+          "duration": 6.428699999999935,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "server-resolved SOLO interview projection"
+          ],
+          "fullName": "server-resolved SOLO interview projection does not read Setup if caller-thread authority is refused",
+          "status": "passed",
+          "title": "does not read Setup if caller-thread authority is refused",
+          "duration": 0.9124000000001615,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "server-resolved SOLO interview projection"
+          ],
+          "fullName": "server-resolved SOLO interview projection refuses foreign tenant readback and forged checkpoint shape",
+          "status": "passed",
+          "title": "refuses foreign tenant readback and forged checkpoint shape",
+          "duration": 0.3390999999999167,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "server-resolved SOLO interview projection"
+          ],
+          "fullName": "server-resolved SOLO interview projection refuses absent thread and sanitized transport exceptions",
+          "status": "passed",
+          "title": "refuses absent thread and sanitized transport exceptions",
+          "duration": 0.4981999999999971,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791925023882,
+      "endTime": 1791925023889.4983,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-01/work/repo/src/__tests__/solo-business-interview-context.test.ts"
+    }
+  ]
+}

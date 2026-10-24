@@ -1,0 +1,3 @@
+Browser tab: 1738568084, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:62910/index.html?view=capacity&context=a&theme=dark".
+There has been no change in the accessibility tree.
+The focused UI element is 26 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand

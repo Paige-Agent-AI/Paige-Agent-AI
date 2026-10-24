@@ -11,9 +11,22 @@ beforeEach(()=>{vi.clearAllMocks();mocks.getUser.mockResolvedValue({data:{user:{
 it("preserves the raw native version and refuses unsupported stages or foreign scope",()=>{
  expect(operation().command).toEqual({action:"task.complete",task_id:task.id,expected_updated_at:task.updated_at});
  expect(buildCrmWorkStageOperation(task,"blocked","actor","workspace","key")).toBeNull();
- expect(buildCrmWorkStageOperation(task,"in_progress","actor","workspace","key")).toBeNull();
+ expect(buildCrmWorkStageOperation(task,"in_progress","actor","workspace","key")?.command).toEqual({action:"task.update",task_id:task.id,expected_updated_at:task.updated_at,patch:{status:"in_progress"}});
+ expect(buildCrmWorkStageOperation({...task,status:"completed"},"in_progress","actor","workspace","key")).toBeNull();
+ expect(buildCrmWorkStageOperation({...task,status:"cancelled"},"in_progress","actor","workspace","key")).toBeNull();
  expect(buildCrmWorkStageOperation(task,"done","actor","other-workspace","key")).toBeNull();
  expect(Object.isFrozen(operation().command)).toBe(true);
+ const progress=buildCrmWorkStageOperation(task,"in_progress","actor","workspace","progress-key")!;
+ expect(Object.isFrozen(progress.command)).toBe(true);expect("patch" in progress.command&&Object.isFrozen(progress.command.patch)).toBe(true);
+});
+it("submits progress through the same scoped exact-key Trust door and requires progress readback",async()=>{
+ const progress=buildCrmWorkStageOperation(task,"in_progress","actor","workspace","progress-key")!;
+ mocks.invoke.mockResolvedValueOnce({data:{outcome:"approval_required",fingerprint:"progress-fingerprint",summary:"Start work"},error:null});
+ expect((await submitCrmWorkStageOperation(progress)).kind).toBe("approval");
+ const response=ack();response.data.readback.status="in_progress";mocks.invoke.mockResolvedValue(response);
+ expect(await submitCrmWorkStageOperation(progress,"progress-fingerprint")).toEqual({kind:"acknowledged"});
+ expect(mocks.invoke.mock.calls[1]).toEqual(["crm-command",{body:{expected_tenant_id:"workspace",command:progress.command,idempotency_key:"progress-key",approved_fingerprint:"progress-fingerprint"}}]);
+ for(const status of ["pending","completed","cancelled"]){response.data.readback.status=status;expect((await submitCrmWorkStageOperation(progress)).kind).toBe("uncertain");}
 });
 it("uses the existing Trust fingerprint for the exact command and idempotency key",async()=>{
  const original=operation();
@@ -51,7 +64,11 @@ it("restores only an exact same-scope supported task stage command",()=>{
  expect(restoreCrmWorkStageOperation({...original,command:{...original.command,action:"task.delete"}},"actor","workspace")).toBeNull();
  expect(restoreCrmWorkStageOperation({...original,targetStatus:"pending"},"actor","workspace")).toBeNull();
  expect(restoreCrmWorkStageOperation({...original,command:{...original.command,patch:{user_id:"other"}}},"actor","workspace")).toBeNull();
- expect(restoreCrmWorkStageOperation({...original,targetStatus:"in_progress",command:{...original.command,action:"task.update",patch:{status:"in_progress"}}},"actor","workspace")).toBeNull();
+ const progress={...original,targetStatus:"in_progress",command:{...original.command,action:"task.update",patch:{status:"in_progress"}}};
+ expect(restoreCrmWorkStageOperation(progress,"actor","workspace")).toEqual(progress);
+ for(const patch of [{status:"completed"},{status:"cancelled"},{status:"pending"},{status:"blocked"},{status:null},[],null,{status:"in_progress",user_id:"other"}])
+  expect(restoreCrmWorkStageOperation({...progress,command:{...progress.command,patch}},"actor","workspace")).toBeNull();
+ expect(restoreCrmWorkStageOperation({...progress,command:{...progress.command,receipt_action:"task.complete"}},"actor","workspace")).toBeNull();
 });
 it("acknowledges only the changed assignment or date field through the same executor",async()=>{
  const scope={actorId:"actor",tenantId:"workspace",key:"original-edit-key"};

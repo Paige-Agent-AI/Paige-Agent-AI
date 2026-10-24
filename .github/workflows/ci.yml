@@ -41,9 +41,9 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        # Docker Official PostgreSQL 16, immutable linux/amd64 manifest from ECR Public.
-        # Avoid shared-runner Docker Hub anonymous pull throttling before proof starts.
-        image: public.ecr.aws/docker/library/postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
+        # Docker Official PostgreSQL 16, immutable linux/amd64 manifest.
+        # Same bytes verified at Docker Hub; ECR Public refused runner pulls before tests.
+        image: docker.io/library/postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
@@ -65,14 +65,23 @@ jobs:
           node --test
           supabase/functions/_shared/comms-provider-boundary.test.ts
           supabase/functions/_shared/tenant-consent.test.ts
+          supabase/functions/_shared/pre-send-pipeline.test.ts
+          supabase/functions/_shared/consent-parity.test.ts
+          supabase/functions/_shared/paige-skill/email-approval.test.ts
+          supabase/functions/dispatch-stage-automation/gate.test.ts
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
           supabase/functions/_shared/booking-provider-boundary.test.mjs
+          supabase/functions/send-portal-invite/canonical-delivery.test.mjs
           supabase/functions/_shared/operator-retirement-handler.test.mjs
       - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
+      - name: EXP02 analytics catalogue guards, replay and read-only permissions in isolated database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/e2_analytics_catalogue.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
+      - name: Gmail native connection authority, private credential isolation and concurrent rollback
+        run: node scripts/proof/gmail-connection-postgres.mjs 5432
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
       - name: Operator provider retirement SQL proof
@@ -87,14 +96,32 @@ jobs:
         run: node scripts/proof/operator-intelligence-eval.mjs --postgres
       - name: INT-280 canonical durable trajectory history in disposable PostgreSQL
         run: node scripts/proof/int280-trajectory-history.mjs --postgres
+      - name: Canonical durable thread deletion and immutable identity in disposable PostgreSQL
+        env:
+          DURABLE_THREAD_PROOF_PORT: '5432'
+        run: node scripts/proof/paige-durable-thread-detach.mjs
+      - name: Canonical exact reminder approval, native receipts and recovery controls in disposable PostgreSQL
+        env:
+          REMINDER_APPROVAL_PROOF_PORT: '5432'
+        run: node scripts/proof/paige-reminder-approved-intent.mjs
       - name: INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL
         run: node scripts/proof/int280-trajectory-projection.mjs --postgres
       - name: Operator generated-media retirement, shared-reference refusal and partial recovery proof
         run: node scripts/proof/operator-generated-media-retirement.mjs --postgres 5432
       - name: Install locked source-contract parser dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Canonical Portal command through the actual dispatcher and dependency graph
+        run: node --test supabase/functions/send-portal-invite/command.test.mjs
       - name: Weekly internal commitment check authority, receipt and recovery proof in disposable PostgreSQL
         run: node scripts/proof/weekly-commitment-check.mjs --postgres
+      - name: Native approved internal task authority, exact approval, receipt and recovery in disposable PostgreSQL
+        run: node scripts/proof/layer-c-native-vertical.mjs --owner-task-human-control --postgres
+      - name: Native ordinary owner approval visibility and exact decline in disposable PostgreSQL
+        run: node scripts/proof/layer-c-native-vertical.mjs --owner-task-approval-visibility --postgres
+      - name: Native event enqueue, internal cron authentication, rollback and replay in disposable PostgreSQL
+        run: node scripts/proof/native-event-enqueue.mjs --postgres
+      - name: Exact Calendar booking caller authority and 100k selective native read
+        run: node scripts/proof/calendar-booking-read.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:
@@ -282,6 +309,14 @@ jobs:
       - name: Tier-feature guard (§60 — render gates must not hardcode a tier; use useTierFeatures)
         if: ${{ !cancelled() }}
         run: npm run lint:tier-features
+
+      - name: Customer-portal identity guard (owner ruling 2026-10-19 — PAIGE is the owner's COO; customers talk to Cura)
+        if: ${{ !cancelled() }}
+        run: npm run lint:customer-identity
+
+      - name: Customer-portal identity guard self-test
+        if: ${{ !cancelled() }}
+        run: npm run lint:customer-identity:test
 
       - name: Legacy-mark guard (2026-09-06 — retired orbital PaigeMark must not return; use PaigeCommandMark)
         if: ${{ !cancelled() }}
@@ -730,10 +765,14 @@ jobs:
       # uploaded as evidence so a reviewer can read what each actually produced.
       - name: Webhook signature suites (Svix + SendGrid ES256)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/webhookSig.test.ts
+      - name: Solo Beta Stripe shape + failure-code contract
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/solo-beta-stripe-shapes.test.ts
       - name: SendGrid webhook-admin broker (mocked provider IO)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
       - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
         run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
+      - name: Customer email footer names the business, never the platform's COO (E09 CURA)
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/transactional-email-templates/email-footer.test.ts
       - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)
         run: node scripts/ci/forbid-sendgrid-admin-key-refs.mjs
       - name: Deno ratchet (affected edge functions — fails on NEW or increased diagnostics)
@@ -827,7 +866,18 @@ jobs:
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
-            supabase/functions/_shared/agreements/signing-guard.test.ts
+            supabase/functions/_shared/agreements/retained-document.test.ts \
+            supabase/functions/_shared/agreements/seal-readback.test.ts \
+            supabase/functions/_shared/agreements/signing-guard.test.ts \
+            supabase/functions/sign-agreement/preflight.test.ts \
+            supabase/functions/_shared/agreements/preparation-artifact.test.ts \
+            supabase/functions/_shared/agreements/owner-preparation.test.ts \
+            supabase/functions/_shared/agreements/owner-preparation-http.test.ts \
+            supabase/functions/_shared/agreements/portal-door.test.ts
+          # E09 Slice A: agreement-document's third (customer portal) door is mounted before the other
+          # two and leaves both byte-identical. Source pins read the repo tree only; every other deny stays.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/agreements/portal-door-wiring.test.ts
           # Inbox Intelligence (#1140 two-mailbox pilot): the pure policy/classify/sync/organize
           # contracts. Same deny-all sandbox; the modules under test are pure by design.
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
@@ -838,6 +888,23 @@ jobs:
           # Owner addendum 6088460092: source-level boundary tests read the door's real
           # source, so this one line grants read (repo tree only); every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys             supabase/functions/_shared/inbox-intelligence/door-boundary.test.ts
+          # E09 Slice M: the customer portal menu executor (merge by key, server tenant, readback) and its
+          # drift against the frontend registry it mirrors. Read grants the repo tree only; every other deny stays.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-menu.test.ts
+          # E09 Slice 7: the client portal access executor (server tenant and actor, no model note, readback),
+          # its Spine declarations, and the two MCP doors that read the link directly. Read grants the repo tree only.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-access.test.ts
+          # E09 CURA: the customer agent's name from the native frame (never PAIGE, in any spelling) and the
+          # customer persona's fail-closed reads. Pure module under test; read grants the repo tree only.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-persona.test.ts
+          # E09 K2: the customer context decoder (v1 and v2 bindings, passages, the read's own report) and the
+          # question-embedding guard (voyage-3 only, 4s abort, 1024 finite values, any failure -> recency).
+          # Pure module under test; read grants the repo tree only, every other deny stays (no network).
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-assistant-context.test.ts
           # The two-mailbox pilot's edge functions must at least TYPE-check.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/gmail-mailbox-sync/index.ts \
@@ -879,7 +946,14 @@ jobs:
           "$PGBIN/initdb" -D "$WORK/d" -U p --auth=trust >/dev/null
           "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
           for _ in $(seq 1 20); do "$PGBIN/pg_isready" -h 127.0.0.1 -p "$PORT" >/dev/null 2>&1 && break; sleep 0.5; done
-          node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d"
+          node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d" --personal-sender
+          node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d" --origin-admission
+
+      - name: Original document lifecycle and future-report Metric authority in isolated PostgreSQL
+        run: |
+          PGBIN="$(pg_config --bindir)"
+          [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries are required."; exit 2; }
+          PG_PROOF_BIN="$PGBIN" node scripts/proof/paige-durable-document-work.mjs
 
       - name: C0b — incumbent adapter authority bindings
         run: |
@@ -892,16 +966,69 @@ jobs:
       - name: INT-336 — typed supersession and canonical settlement
         if: ${{ !cancelled() }}
         run: |
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/crm-contact-work-summary-check.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/thread-summary-fabric-check.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/chat-turn-model-metadata-check.mjs
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/interactive.test.ts \
             supabase/functions/_shared/paige-turn/interactive-approval.test.ts
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/chat-control-rate.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-acquire-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-runtime-recovery-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-runtime-recovery-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/calendar-booking-chat.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/operations-task-chat.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/planning-reminder-chat.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/planning-reminder-history-status.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/e09-cura-history-status.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/e09-cura-teach-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          # Actual handler/native-door pause, abrupt termination, and receipt failure controls.
+          for mode in normal kill prior-success following-unknown protected-flip settle-fails commit-lost-ack disconnect settle-superseded settle-stopped settle-scope-flip release-superseded release-scope-flip commit-lost-ack-superseded publication-scope-flip publication-superseded publication-error publication-malformed; do
+            CRM_APPROVAL_PAUSE_TEST="$mode" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          done
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-crm-task-read-check.mjs
+          PLANNING_RECOVERY=lost node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          PLANNING_RECOVERY=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          PLANNING_RECOVERY=missing-readback node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          PLANNING_RECOVERY=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=uncertain node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=partial node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=unrecorded node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          AUTOMATION_DRAFT_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          AUTOMATION_DRAFT_TEST=uncertain node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          AUTOMATION_DRAFT_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          RESEARCH_READBACK_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          RESEARCH_READBACK_TEST=partial-library node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          RESEARCH_READBACK_TEST=unconfirmed node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_ACK_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_ACK_TEST=malformed node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_ACK_TEST=contradictory node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_ACK_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=normal-flip node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=pinned-flip node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=normal-same node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=pinned-same node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=null-scope node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=member-refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=native-no-tenant node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          BOOKING_READBACK_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          BOOKING_READBACK_TEST=missing-id node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          BOOKING_READBACK_TEST=missing-row node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          BOOKING_READBACK_TEST=foreign-row node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          BOOKING_READBACK_TEST=transport node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          BOOKING_READBACK_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          BOOKING_READBACK_TEST=no-approval node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          BOOKING_READBACK_TEST=role-denied node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/crm-approval-summary-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs
           INT336_ERROR_KIND=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs
           INT336_UNKNOWN_TOOL=plan_create node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
@@ -917,21 +1044,36 @@ jobs:
           WORK="$(mktemp -d)"; PORT=55462
           trap '"$PGBIN/pg_ctl" -D "$WORK/d" stop -m immediate >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
           "$PGBIN/initdb" -D "$WORK/d" -U postgres --auth=trust >/dev/null
-          "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
+          "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1 -c max_prepared_transactions=5" -l "$WORK/log" start >/dev/null
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int336-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-conversational-db-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-rollout-check.mjs
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_isolation
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation" node scripts/int346-isolation-db-check.mjs
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_isolation_race
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation_race" node scripts/int346-isolation-db-check.mjs --real-window-race
+          OPERATOR_PROOF_PSQL="$PGBIN/psql" node scripts/int346-runtime-recovery-db-check.mjs "$PORT"
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_answer_admission
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_answer_admission" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs --native-db
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_publication
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_publication" node scripts/int336-publication-context-db-check.mjs
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_approval_recovery
+          PSQL_BIN="$PGBIN/psql" APPROVAL_RECOVERY_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_approval_recovery" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
+          OPERATOR_PROOF_PSQL="$PGBIN/psql" PLANNING_PROOF_PORT="$PORT" node scripts/planning-native/check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-non-application-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/c4e-research-preparation-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int304-durable-observation-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int304-continuation-read-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/e01-interview-resume-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/e01-live-consent-check.mjs
           python3 scripts/knowledge-service/check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/delete-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/catalogue-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
+          python3 scripts/knowledge-service/publication-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres --expected-data-directory "$WORK/d" --publication-recovery
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
 
@@ -998,6 +1140,22 @@ jobs:
             supabase/functions/schedule-automated-tasks/index.ts \
             supabase/functions/voice-command-processor/index.ts
 
+      - name: E09 Documents — Paige files and shares a client document only through the one share writer
+        if: ${{ !cancelled() }}
+        run: |
+          # crm_file_document (supabase/functions/_shared/crm/client-file-share.ts): a same-client
+          # visibility change goes to public.client_file_set_client_share at the version read; a move or
+          # description change never writes visibility, a shared file is withdrawn through the share
+          # writer before it moves to another client, and anything that ends shared goes through the
+          # share writer at the version the move produced. Success only on a verified
+          # readback; an unanswered reply is unknown, never "not applied". Reads the chat source only.
+          deno test --allow-read=supabase/functions --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/crm/client-file-share.test.ts
+
+      - name: E09 original client game-plan draft and saved-receipt proof
+        if: ${{ !cancelled() }}
+        run: node --import ./scripts/knowledge-scope/register.mjs scripts/proof/e09-client-game-plan.mjs
+
       - name: The platform email sender is not an open relay (who may send, and to whom)
         if: ${{ !cancelled() }}
         run: |
@@ -1013,6 +1171,36 @@ jobs:
             supabase/functions/agreement-send/index.ts \
             supabase/functions/send-beta-launch-email/index.ts \
             supabase/functions/send-admin-invitation/index.ts
+
+      - name: E09 H0 — credit alerts only from the service role, for staff of a finance-entitled business
+        if: ${{ !cancelled() }}
+        run: |
+          # detect-credit-alerts trusted any bearer verify_jwt accepts (the anon key included) and the
+          # body's client_id. The real handler, against a recording client: anything but the service-role
+          # key is 401 with no client built; a subject with zero or several businesses, a non-entitled
+          # business, or a portal-customer subject writes, pushes and emails nothing. The drift test holds
+          # the entitlement to the SQL persona expression and the one TS reader.
+          deno test --allow-import=deno.land --allow-read=supabase/functions,supabase/migrations --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/detect-credit-alerts/handler.test.ts \
+            supabase/functions/detect-credit-alerts/authority.test.ts
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/detect-credit-alerts/index.ts \
+            supabase/functions/sync-credit-report-data/index.ts
+
+      - name: E09 F1b — one finance-entitlement reader; credit paths refuse customers and other businesses
+        if: ${{ !cancelled() }}
+        run: |
+          # The edge reads the per-business entitlement ONLY by calling _tenant_finance_entitled
+          # (_shared/finance-entitlement.ts). The drift test pins the TS helper to the SQL predicate and
+          # the persona expression, and fails if any edge source reads finance_in_scope / is_finance
+          # itself. The push gate refuses credit/funding categories for a non-entitled business or a
+          # recipient with no seat there. Behaviour of the credit writers is driven in
+          # test:sync-credit-report-data and test:apply-extraction.
+          deno test --allow-import=deno.land --allow-read=supabase/functions,supabase/migrations --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/finance-entitlement.test.ts \
+            supabase/functions/_shared/finance-entitlement.drift.test.ts \
+            supabase/functions/_shared/credit-paths.contract.test.ts \
+            supabase/functions/send-push-notification/finance-categories.test.ts
 
       - name: Test
         if: ${{ !cancelled() }}
@@ -1114,7 +1302,10 @@ jobs:
 
       - name: Smoke — OpenAI Responses adapter (governed function tools only, chat-shaped SSE, truthful trace)
         if: ${{ !cancelled() }}
-        run: npm run test:openai-responses
+        run: |
+          npm run test:openai-responses
+          node --import ./scripts/client-memory-authz/register.mjs scripts/proof/chat-openai-stream-batching.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/proof/business-review-chat-transport.mjs
 
       - name: Smoke — active-account Knowledge scope (§9 tenant KB fail-closed)
         if: ${{ !cancelled() }}

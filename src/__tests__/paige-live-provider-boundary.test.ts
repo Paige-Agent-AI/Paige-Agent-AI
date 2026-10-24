@@ -27,19 +27,19 @@ describe("Paige voice provider boundary", () => {
 
   it("cannot route a caller-selected voice from the shared model router", () => {
     const voiceCell = router.slice(router.indexOf("const voiceCell"), router.indexOf("const docRenderCell"));
-    expect(voiceCell).not.toMatch(/voiceId|voice_id|elevenlabsTts|ELEVENLABS_API_KEY/);
+    expect(voiceCell).not.toMatch(/voiceId|voice_id|elevenlabsMessageStream|ELEVENLABS_API_KEY/);
     expect(voiceCell).toContain("paige_voice_profile:studio_adapter");
   });
 
   it("resolves the server profile before the only Paige TTS provider adapter call", () => {
     expect(tts.indexOf('rpc("resolve_paige_voice_profile_internal"')).toBeGreaterThan(-1);
-    expect(tts.indexOf('rpc("resolve_paige_voice_profile_internal"')).toBeLessThan(tts.indexOf("elevenlabsTts({"));
+    expect(tts.indexOf('rpc("resolve_paige_voice_profile_internal"')).toBeLessThan(tts.indexOf("elevenlabsMessageStream({"));
     expect(tts).toContain("voice_override_not_allowed");
   });
 
   it("reserves before provider entry, releases only typed pre-dispatch failures, and keeps ambiguous failures counted", () => {
     const reserve = tts.indexOf('rpc("reserve_paige_voice_cost_internal"');
-    const provider = tts.indexOf("elevenlabsTts({");
+    const provider = tts.indexOf("elevenlabsMessageStream({");
     // INT-324: OpenAI message playback reserves through the same seam before its provider call.
     const openaiProvider = tts.indexOf("synthesizeSpeechStream(");
     const providerBranch = tts.indexOf('if (attempt.provider === "elevenlabs")');
@@ -95,7 +95,7 @@ describe("Paige voice provider boundary", () => {
     expect((operator.match(/admin\.rpc\("set_paige_live_pilot_internal"/g) ?? [])).toHaveLength(2);
     expect(operator).not.toContain('rpc("set_paige_voice_readiness_internal")');
     expect(operator).not.toContain('rpc("set_paige_voice_profile_internal")');
-    expect(operator).not.toMatch(/elevenlabsTts|api\.elevenlabs|fetch\(/);
+    expect(operator).not.toMatch(/elevenlabsMessageStream|api\.elevenlabs|fetch\(/);
     expect(operator).not.toMatch(/console\.(log|error).*provider_voice_ref/);
   });
 

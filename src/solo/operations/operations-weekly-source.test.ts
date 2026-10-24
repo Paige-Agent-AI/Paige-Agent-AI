@@ -43,9 +43,17 @@ it("reads the exact personal Planning row and preserves the raw canonical versio
   expect(result).toEqual({ kind: "verified", item });
   expect(mock.from).toHaveBeenCalledWith("plan_items");
   expect(mock.eq).toHaveBeenCalledWith("tenant_id", tenantId); expect(mock.eq).toHaveBeenCalledWith("id", itemId);
-  expect(mock.or).toHaveBeenCalledWith(`created_by.eq.${actorId},assigned_to_user_id.eq.${actorId}`);
+  expect(mock.or).not.toHaveBeenCalled();
   expect(mock.rpc.mock.calls).toEqual([["current_user_tenant_id"], ["is_tenant_member", { _tenant: tenantId }], ["current_user_tenant_id"], ["is_tenant_member", { _tenant: tenantId }]]);
   expect(result.kind === "verified" && result.item.updated_at).toBe("2026-10-10T12:00:00.123456Z");
+});
+
+it("lets current caller RLS authorize a historical source after reassignment", async () => {
+  const reassigned = { ...item, created_by: "40000000-0000-4000-8000-000000000001",
+    assigned_to_user_id: "50000000-0000-4000-8000-000000000001" };
+  mock.read.mockResolvedValue({ data: reassigned, error: null });
+  expect(await readWeeklyPlanningSource(scope, () => true)).toEqual({ kind: "verified", item: reassigned });
+  expect(mock.or).not.toHaveBeenCalled();
 });
 it("makes no row read for a malformed scope, changed actor or changed canonical tenant", async () => {
   expect((await readWeeklyPlanningSource({ ...scope, itemId: "bad" }, () => true)).kind).toBe("unavailable");

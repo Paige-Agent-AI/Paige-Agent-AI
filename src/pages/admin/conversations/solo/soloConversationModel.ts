@@ -39,8 +39,10 @@ export function conversationNeedsAttention(
   return thread.unread_count > 0 || hasDraft || overdueReply;
 }
 
+// 'portal' is a proven send seam too: comms_portal_reply writes into the client portal with no
+// provider in the path (E09). Governed handling still fails every channel closed.
 export function canSendInSolo(mode: "human" | "draft" | "governed", channel: string): boolean {
-  return mode !== "governed" && (channel === "email" || channel === "sms");
+  return mode !== "governed" && (channel === "email" || channel === "sms" || channel === "portal");
 }
 
 export function buildSoloConversationLinks(account: string, contactId: string | null) {
@@ -148,10 +150,12 @@ export function getSoloChannelTruth(
     {
       ...truth("portal", "Portal", undefined, "PARTIAL"),
       identity: "Not applicable",
-      providerConnection: "Not a proven message transport",
+      // E09: the portal now carries messages, but through no provider — say what it is, and keep
+      // availability PARTIAL until an authenticated runtime proves it end to end.
+      providerConnection: "No provider — messages stay inside the client portal",
       providerSource: "Portal access",
-      sendPermission: "Not proven",
-      inbound: "Not proven",
+      sendPermission: "Business admins, to clients who joined the portal",
+      inbound: "Client messages and help requests land in this inbox",
       webhookHealth: "Not applicable",
       setupOwner: "Clients → Portal",
     },

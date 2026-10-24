@@ -28,7 +28,7 @@ import "./paige-command-mark.css";
 export function PaigeCommandMark({
   className = "",
   animated = false,
-  label = "Paige",
+  label = "Paige", // customer-identity-exempt: the platform mark's default label; customer chrome shows the business brand (AppNav PortalLogo) and no customer page passes PageHeader mark
   plated = true,
 }: {
   className?: string;

@@ -1,0 +1,15 @@
+{
+  "context": "final local synthetic input ports; original product components",
+  "browser": "in-app browser; not authenticated customer QA",
+  "observation": {
+    "nameColor": "rgb(246, 242, 234)",
+    "reduced": true,
+    "rootColor": "rgb(246, 242, 234)",
+    "transition": "1e-05s"
+  },
+  "drawerEscape": {
+    "dialog": false,
+    "focus": "Social account records"
+  },
+  "temporaryEmulation": "cleared; viewport reset after remaining responsive check"
+}

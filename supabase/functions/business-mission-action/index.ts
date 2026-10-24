@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { executeVerifiedMissionMutation, type MissionToolName } from "../_shared/business-mission-tenant-brain.ts";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
+import { executeVerifiedMissionTargetMutation, type MissionTargetTool } from "../_shared/business-mission-targets/native.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +9,7 @@ const corsHeaders = {
 };
 const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
 const allowedTools = new Set<MissionToolName>(["mission_create", "mission_revise", "mission_transition"]);
+const targetTools = new Set<MissionTargetTool>(["mission_target_save", "mission_target_transition"]);
 
 const response = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: jsonHeaders });
@@ -30,13 +32,17 @@ Deno.serve(async (req: Request) => {
 
   let body: Record<string, unknown>;
   try {
-    body = await req.json() as Record<string, unknown>;
+    const parsed: unknown = await req.json();
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return response(400, { success: false, verified: false, code: "BAD_JSON" });
+    }
+    body = parsed as Record<string, unknown>;
   } catch {
     return response(400, { success: false, verified: false, code: "BAD_JSON" });
   }
   const tool = body.tool;
   const args = body.args;
-  if (typeof tool !== "string" || !allowedTools.has(tool as MissionToolName) || !args || typeof args !== "object" || Array.isArray(args)) {
+  if (typeof tool !== "string" || !(allowedTools.has(tool as MissionToolName) || targetTools.has(tool as MissionTargetTool)) || !args || typeof args !== "object" || Array.isArray(args)) {
     return response(400, { success: false, verified: false, code: "MISSION_ACTION_INVALID" });
   }
 
@@ -57,7 +63,16 @@ Deno.serve(async (req: Request) => {
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const result = await executeVerifiedMissionMutation({
+  const result = targetTools.has(tool as MissionTargetTool) ? await executeVerifiedMissionTargetMutation({
+    caller,
+    expectedTenantId: tenantId,
+    actorId: user.id,
+    tool: tool as MissionTargetTool,
+    args: args as Record<string, unknown>,
+    // This owner-UI door is distinct from any future Chat executor. The existing
+    // Rail display uses these private native keys to credit the actual person.
+    recordRun: (run) => recordCapabilityRun(admin, { ...run, capabilityKey: "owner_" + run.capabilityKey }),
+  }) : await executeVerifiedMissionMutation({
     caller,
     expectedTenantId: tenantId,
     actorId: user.id,

@@ -1,0 +1,43 @@
+Browser tab: 1738568133, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:51805/?context=b&theme=light&scene=loading".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=b&theme=light&scene=loading
+	2 container
+		3 text PAIGE workspace ready
+		4 link Description: Skip to content, Value: 127.0.0.1:51805/?context=b&theme=light&scene=loading#tenant-shell-main
+		5 container Tenant workspace
+			6 link Description: PAIGE Solo home, Value: 127.0.0.1:51805/solo/1702/command-center
+			7 button Expand navigation
+				8 image
+			9 link Description: Command Center, Value: 127.0.0.1:51805/solo/1702/command-center
+			10 link Description: Operations, Value: 127.0.0.1:51805/solo/1702/operations
+			11 link Description: Clients, Value: 127.0.0.1:51805/solo/1702/clients
+			12 link Description: Marketing, Value: 127.0.0.1:51805/solo/1702/growth
+			13 link Description: Ads, Value: 127.0.0.1:51805/solo/1702/ads
+			14 link Description: Sales, Value: 127.0.0.1:51805/solo/1702/sales
+			15 link Description: Finance, Value: 127.0.0.1:51805/solo/1702/finance
+			16 link Description: Marketplace, Value: 127.0.0.1:51805/solo/1702/marketplace
+			17 link Description: Settings, Value: 127.0.0.1:51805/solo/1702/settings
+			18 button Description: Use Obsidian theme, Help: Obsidian theme
+			19 button Sign out
+			20 text SY
+		21 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+			22 image PAIGE
+			23 text Direct PAIGE, or press ⌘\
+			24 text ⌘\
+		25 container Operations department
+			26 container
+				27 container Department views
+					28 button Overview
+					29 button Work
+					30 button Projects
+					31 button Delivery
+					32 button Playbooks
+					33 button Capacity
+				34 button (disabled) Refresh work and team profiles
+					35 image
+			36 text Reading project work…
+			37 text Reading CRM tasks…
+			38 heading Loading your work, Value: 1
+				39 text Loading your work
+			40 text Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.
+
+The focused UI element is 1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=b&theme=light&scene=loading

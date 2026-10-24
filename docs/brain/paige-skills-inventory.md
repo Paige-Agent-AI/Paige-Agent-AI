@@ -1,5 +1,18 @@
 # Paige Skills Inventory (v1.3) — what Paige DOES at professional level
 
+**EXP02 analytics copy/readback,2026-10-20:** canonical CAP009–017 remain the same
+nine `paige_skills` definitions, not nine independently accepted production engines.
+Guarded description correction#2440/a0389c3f and migration13010000 are released;
+exact source/CI/web/migration and ordinary read/reload evidence is in Master§4.0,
+ANT138 and ANT52/053be67a. Available source-backed weekly reviews, current pipeline
+and compatible recorded-receipt comparisons retain their bounded meaning. Churn,
+cohorts, engagement/attribution and full revenue series cannot be inferred from
+counts or listed providers. Monthly/quarterly discussion is not a filed approved
+document. The observed panel is Listed/Unverified; active registry rows do not
+prove actual actor access or provider readiness. NO VERIFIED ALGORITHM added by
+copy. Existing Metric/Evidence, Spine/Harness/Trust/Rail and PAIGE/VERA/originating
+Experience contracts remain canonical. All19/9 and founder acceptance remain owed.
+
 The Paige Skills Inventory documents what Paige DOES at professional level — the atomic capabilities that
 make her the AI-COO for client-based service businesses (coaches, consultants, agencies, thought leaders,
 advisors). It complements the GOAT Anchor Registry (§14 — whose thinking anchors her methodology). **This is
@@ -21,6 +34,8 @@ web-browser install) begins. The professional-skills library is the operating in
 browsing intelligence — the library comes first, the browser comes after.
 
 ---
+
+**EXP09 CAP018 development repair,2026-10-21:** the original `build_game_plan` bespoke recipe is being corrected to produce a private service-appropriate draft on its original `paige_skill_runs.outputs`, with native business/CRM/Memory authorization, original Model Fabric budget/metadata-only tracing and checked save acknowledgement. Generated text is not automatically confirmed Memory or an executed client program. See `docs/delivery/e09-client-game-plan-draft.md` for exact proof and the preserved high/confirm/service-principal restrictions. All seven assigned platform recipes exist active in the catalogue; that inventory does not prove owner Chat/Live execution, connected providers or customer acceptance. This note claims development evidence only; normal CI, merge, deployment and authenticated proof remain separate.
 
 ## 1. Vision & Strategy
 - Vision interpretation — unpack owner's vague language into concrete definition
@@ -211,6 +226,17 @@ Skills never own tenant context, authority, provider access, memory, or a user
 identity. A specialist job pins an approved skill version and registered tools;
 the Spine separately resolves every action. Tool or provider unavailability
 must remain visible rather than being substituted or fabricated.
+
+EXP09's bounded result-read prerequisite reuses original `paige_skill_runs`,
+contact relationships and native actor/staff authority. Its service-only read
+does not execute or activate CAP018–024. Ordinary contactless historical results
+lack business provenance and stay unavailable; an invoker UUID is not authority.
+The original assigned company-operator permission stays scoped to the exact
+selected company/contact; it grants no ordinary-business global read. The legacy
+MCP door cannot resolve seatless company operators and remains UNAVAILABLE for
+that upstream path; this native repair does not change Platform Operator routing.
+MCP consumer deployment and actual authenticated skill/customer results remain
+PROOF OWED. See [original readback contract](../delivery/e09-skill-run-readback.md).
 
 ### Vibe Studio Creative Production Team skill families
 

@@ -1,5 +1,16 @@
 # Roles & Permissions — domain brain
 
+**2026-10-14 E09 customer self-profile writer candidate, NOT RELEASED:**
+`client_portal_update_self_profile(timestamptz,jsonb,uuid)` resolves and locks the
+authenticated subject's eligible canonical relationship, compares the loaded version,
+and accepts only own name/postal/primary-phone changes. Existing checked contact-method
+helpers preserve other addresses; existing audit_logs records actor/tenant/client and
+submitted field names without personal values. Safe explicit profile readback is required
+before success; late errors roll back the entire call. No email/linkage/staff/consent/stage
+change, raw policy reopening or external-entry activation. Caller adoption, full-schema
+and actual customer acceptance remain owed. See
+`../evidence/ui-delivery/e09-client-self-profile-write.md`. Full Portal stays PARTIAL.
+
 **2026-10-14 E09 additive customer-safe read candidate, NOT RELEASED:**
 `client_portal_relationship_id(uuid)` resolves only the authenticated subject's active,
 unmerged canonical client relationship in an active business. A tenant argument narrows

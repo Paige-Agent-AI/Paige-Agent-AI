@@ -4,6 +4,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { routedChatCompletion, pickRoute, isJobKind, JOB_KINDS, DEFAULT_SUBAGENT_JOB_KIND, type JobKind } from "../_shared/model-router.ts";
+import { fabricCompletion } from "../_shared/model-fabric.ts";
+import { authorityAdmits, resolveWorkspaceAuthorityAs } from "../_shared/workspace-authority.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
@@ -137,6 +139,8 @@ type Action = "tool_search" | "tool_invoke" | "list_subagents" | "inspect" | "se
 
 interface OrchestratorRequest {
   action: Action;
+  invocation_id?: string; // Optional original assignment inspection, never a dispatch/replay key.
+  recent_assignments?: boolean; // Bounded own-identity discovery, never complete history.
   query?: string;
   domain?: string;
   slug?: string;
@@ -163,6 +167,144 @@ function fail(error: string, status = 400, details?: unknown) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status,
   });
+}
+
+// Read one ORIGINAL assignment; it never invokes, settles or retries a worker.
+// Private response reads use the person's JWT and existing RLS. Receipt verification
+// reads only closed server metadata after the same actor/workspace/seat is proven.
+async function inspectOriginalInvocation(req: Request, payload: OrchestratorRequest, scope: TenantScope): Promise<Response> {
+  const id = payload.invocation_id;
+  const recent = payload.recent_assignments === true;
+  if ((recent && id !== undefined) || (!recent && (typeof id !== "string" || !UUID_RE.test(id)))) {
+    return fail("Choose recent assignments or one valid original assignment reference.", 400);
+  }
+  const actor = scope.callerId, tenant = scope.tenantId;
+  const refused = () => fail("Current workspace owner or admin authority is required to read this assignment.", 403);
+  const unavailable = () => fail("The original specialist assignment is unavailable in this workspace.", 404);
+  if (scope.isService || !actor || !tenant || (payload as { tenant_id?: unknown }).tenant_id !== tenant) return refused();
+  const current = async () => {
+    const fresh = await resolveTenantScope(req, payload);
+    if ("error" in fresh || fresh.isService || fresh.callerId !== actor || fresh.tenantId !== tenant
+      || fresh.fundingEnabled !== scope.fundingEnabled) return false;
+    const permission = await resolveWorkspaceAuthorityAs(supabase, actor, tenant);
+    if (!permission.ok || !permission.authority.seat
+      || !authorityAdmits("list_subagents", permission.authority, new Set())) return false;
+    const after = await resolveTenantScope(req, payload);
+    return !("error" in after) && !after.isService && after.callerId === actor
+      && after.tenantId === tenant && after.fundingEnabled === scope.fundingEnabled;
+  };
+  try {
+    if (!await current()) return refused();
+    const caller = createClient(SUPABASE_URL, ANON_KEY, {
+      global: { headers: { Authorization: req.headers.get("Authorization")! } },
+      auth: { persistSession: false },
+    });
+    const registration = async (slug: string) => {
+      const registered = await supabase.from("paige_subagents")
+        .select("slug,runtime,tenant_id,domain,name,description,system_prompt")
+        .eq("slug", slug).or(`tenant_id.is.null,tenant_id.eq.${tenant}`).maybeSingle();
+      if (registered.error) throw new Error("registration_read_unavailable");
+      const agent = registered.data;
+      return !agent || (agent.tenant_id !== null && agent.tenant_id !== tenant)
+        || (!scope.fundingEnabled && looksLikeFinanceAgent(agent)) ? null : agent;
+    };
+    const recordedStatus = (status: string) => ["pending", "succeeded", "failed", "dispatched"].includes(status) ? status : "unknown";
+    if (recent) {
+      const history = await caller.from("paige_subagent_invocations")
+        .select("id,invoked_by,tenant_id,subagent_slug,status,created_at,contact_id")
+        .eq("tenant_id", tenant).eq("invoked_by", actor)
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(6);
+      if (!await current()) return refused();
+      if (history.error || !Array.isArray(history.data)) throw new Error("assignment_history_unavailable");
+      const entries = [];
+      for (const row of history.data.slice(0, 5)) {
+        if (typeof row.id !== "string" || !UUID_RE.test(row.id) || row.tenant_id !== tenant
+          || row.invoked_by !== actor || typeof row.subagent_slug !== "string") continue;
+        const agent = await registration(row.subagent_slug);
+        if (!await current()) return refused();
+        if (!agent) continue;
+        if (row.contact_id !== null) {
+          const bound = await bindContactToTenant(supabase, tenant, { contact_id: row.contact_id }, {});
+          if (!await current()) return refused();
+          if (!bound.ok) continue;
+        }
+        entries.push({ id: row.id, specialist: row.subagent_slug, recorded_status: recordedStatus(row.status),
+          created_at: typeof row.created_at === "string" && Number.isFinite(Date.parse(row.created_at)) ? row.created_at : null });
+      }
+      if (!await current()) return refused();
+      return ok({ ok: true, matches: [], recent_invocations: entries, sample_only: true, limit: 5,
+        note: "Only a recent permitted sample is shown. Read a returned original assignment to inspect its response and receipt. This is not complete history or proof that business work completed." });
+    }
+    if (typeof id !== "string") return fail("A valid original assignment reference is required.", 400);
+    const read = await caller.from("paige_subagent_invocations")
+      .select("id,invoked_by,tenant_id,subagent_slug,status,output,created_at,contact_id")
+      .eq("id", id).eq("tenant_id", tenant).eq("invoked_by", actor).maybeSingle();
+    if (!await current()) return refused();
+    if (read.error) throw new Error("assignment_read_unavailable");
+    const row = read.data;
+    if (!row || row.id?.toLowerCase() !== id.toLowerCase() || row.tenant_id !== tenant
+      || row.invoked_by !== actor || typeof row.subagent_slug !== "string") return unavailable();
+    const agent = await registration(row.subagent_slug);
+    if (!await current()) return refused();
+    if (!agent) return unavailable();
+    if (row.contact_id !== null) {
+      const bound = await bindContactToTenant(supabase, tenant, { contact_id: row.contact_id }, {});
+      if (!await current()) return refused();
+      if (!bound.ok) return unavailable();
+    }
+    let receiptState = "unavailable", receiptId: string | null = null, receiptAt: string | null = null;
+    try {
+      const receipt = await supabase.from("paige_workspace_events")
+        .select("id,outcome,job_attempt_id,actor_agent_slug,occurred_at")
+        .eq("tenant_id", tenant).eq("actor_id", actor).eq("source_kind", "capability_run")
+        .eq("source_id", row.id).eq("source_revision", 0).eq("capability_key", "subagent_invoke").limit(3);
+      if (!receipt.error && Array.isArray(receipt.data)) {
+        const expected = row.status === "succeeded" ? "capability_succeeded"
+          : row.status === "failed" ? "capability_failed" : null;
+        receiptState = receipt.data.length === 0 ? "missing" : "unverified";
+        const event = receipt.data[0];
+        if (receipt.data.length === 1 && expected && event.outcome === expected
+          && event.actor_agent_slug === row.subagent_slug
+          && event.job_attempt_id === idempotencyKey("subagent-invocation", row.id, "run")
+          && typeof event.id === "string" && UUID_RE.test(event.id)
+          && typeof event.occurred_at === "string" && Number.isFinite(Date.parse(event.occurred_at))) {
+          receiptState = "verified"; receiptId = event.id; receiptAt = event.occurred_at;
+        } else if (receipt.data.length > 1) receiptState = "conflicting";
+      }
+    } catch { /* The stored response survives an unavailable receipt, never a fabricated receipt. */ }
+    if (!await current()) return refused();
+    const confirmed = await caller.from("paige_subagent_invocations")
+      .select("id,invoked_by,tenant_id,subagent_slug,status,output,created_at,contact_id")
+      .eq("id", row.id).eq("tenant_id", tenant).eq("invoked_by", actor).maybeSingle();
+    if (!await current()) return refused();
+    if (confirmed.error) throw new Error("assignment_readback_unavailable");
+    if (!confirmed.data || confirmed.data.id !== row.id || confirmed.data.tenant_id !== tenant
+      || confirmed.data.invoked_by !== actor) return unavailable();
+    const beforeOutput = row.output as { ok?: unknown; agent?: unknown; answer?: unknown } | null;
+    const afterOutput = confirmed.data.output as typeof beforeOutput;
+    if (confirmed.data.status !== row.status || confirmed.data.subagent_slug !== row.subagent_slug
+      || confirmed.data.created_at !== row.created_at || confirmed.data.contact_id !== row.contact_id
+      || beforeOutput?.ok !== afterOutput?.ok
+      || beforeOutput?.agent !== afterOutput?.agent || beforeOutput?.answer !== afterOutput?.answer) {
+      return fail("The original assignment changed while being read. Read it again before drawing a conclusion.", 409);
+    }
+    const status = recordedStatus(row.status);
+    // Only the existing soft-response shape is exposed; never raw local/provider
+    // payloads, errors, input, prompts, config or asynchronous completion claims.
+    const output = row.output as { ok?: unknown; agent?: unknown; answer?: unknown } | null;
+    const answer = status === "succeeded" && agent.runtime === "soft" && output?.ok === true
+      && output.agent === row.subagent_slug && typeof output.answer === "string" ? output.answer : null;
+    return ok({ ok: true, matches: [], invocation: {
+      id: row.id, specialist: row.subagent_slug, recorded_status: status,
+      created_at: typeof row.created_at === "string" && Number.isFinite(Date.parse(row.created_at)) ? row.created_at : null,
+      observed_at: new Date().toISOString(), receipt_state: receiptState, receipt_id: receiptId, receipt_at: receiptAt,
+      response_text: answer?.slice(0, 8000) ?? null, response_truncated: (answer?.length ?? 0) > 8000,
+      completion_scope: "specialist_response_only",
+      note: "This reads the original specialist response only. It does not prove a task, booking, send or other business action completed. Do not repeat uncertain work.",
+    } });
+  } catch {
+    return fail("The original specialist assignment could not be read. Inspect it again before repeating any work.", 503);
+  }
 }
 
 async function searchSubagents(query?: string, domain?: string, tenantId?: string | null, fundingEnabled = false) {
@@ -229,24 +371,29 @@ interface AgentHealth {
   last_error: string | null;
 }
 
-// Aggregate per-slug health from paige_subagent_invocations. The invocations table carries NO
-// tenant_id column, so we scope by the REQUESTING USER (invoked_by = callerId): a user belongs to
-// exactly one tenant, so this is strictly WITHIN-tenant and can never leak another tenant's activity
-// volume for a shared platform-default agent (§9). No caller id (or no slugs) → honest empty health.
-async function rosterHealthMap(slugs: string[], callerId: string | null): Promise<Record<string, AgentHealth>> {
+// Aggregate original rows for BOTH the verified requester and selected workspace.
+// One person may use multiple businesses. Shared platform-default agent identity
+// must never merge their tenant histories; null scope includes only unattributed rows.
+async function rosterHealthMap(slugs: string[], callerId: string | null, tenantId: string | null): Promise<Record<string, AgentHealth>> {
   const map: Record<string, AgentHealth> = {};
   for (const s of slugs) map[s] = { invocations: 0, success_rate: null, dispatched: 0, last_error: null };
   if (!callerId || slugs.length === 0) return map;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("paige_subagent_invocations")
     .select("subagent_slug,status,error,created_at")
     .in("subagent_slug", slugs)
-    .eq("invoked_by", callerId)
-    .order("created_at", { ascending: false });
-  if (error) {
-    console.error("[orchestrator] inspect health query failed:", error.message);
-    return map; // honest degrade to empty health, never a fabricated aggregate
+    .eq("invoked_by", callerId);
+  query = tenantId ? query.eq("tenant_id", tenantId) : query.is("tenant_id", null);
+  let data: unknown[];
+  try {
+    const result = await query.order("created_at", { ascending: false });
+    if (result.error || !Array.isArray(result.data)) throw new Error("activity_read_unavailable");
+    data = result.data;
+  } catch {
+    // An unavailable source is never evidence of zero work or a healthy agent.
+    // Keep database/transport details out of the existing customer error envelope.
+    throw new Error("Specialist activity is temporarily unavailable. Try reading it again.");
   }
 
   const agg: Record<string, { total: number; succeeded: number; failed: number; dispatched: number; lastError: string | null; sawFailed: boolean }> = {};
@@ -301,7 +448,7 @@ async function inspectRoster(
   // the SAME gate search/invoke apply, so inspect can't become a side channel that discloses them.
   const raw = data ?? [];
   const visible = fundingEnabled ? raw : raw.filter((r) => !looksLikeFinanceAgent(r));
-  const healthMap = await rosterHealthMap(visible.map((r) => r.slug as string), callerId);
+  const healthMap = await rosterHealthMap(visible.map((r) => r.slug as string), callerId, tenantId);
 
   return visible.map((r) => {
     const cfg = (r.config ?? {}) as Record<string, unknown>;
@@ -447,11 +594,13 @@ async function logInvocation(row: Record<string, unknown>) {
     .select("id")
     .single();
   if (error) console.error("[orchestrator] log insert failed:", error.message);
-  return data?.id as string | undefined;
+  return !error && typeof data?.id === "string" && UUID_RE.test(data.id) ? data.id : undefined;
 }
 
 async function updateInvocation(id: string, patch: Record<string, unknown>) {
-  await supabase.from("paige_subagent_invocations").update(patch).eq("id", id);
+  const { data, error } = await supabase.from("paige_subagent_invocations")
+    .update(patch).eq("id", id).select("id,status").single();
+  return !error && data?.id === id && data.status === patch.status;
 }
 
 /**
@@ -461,27 +610,27 @@ async function updateInvocation(id: string, patch: Record<string, unknown>) {
  * (job_attempt_id = subagent-invocation:<id>). Envelope-only detail: no input/output
  * content rides the receipt (the invocation row already stores those under its own
  * access rules). Honest outcomes: langgraph DISPATCH is capability_outcome_unknown —
- * a dispatch is not a completion. Actor: the tenant's active owner (the business the
- * specialist served); null tenant → the helper declines visibly.
+ * a dispatch is not a completion. Actor: the original trusted requester. A missing
+ * tenant/actor declines recording; a failed receipt never proves completion.
  */
 async function recordInvocationReceipt(opts: {
   invocationId: string | undefined;
   slug: string;
   runtime: string;
   tenantId: string | null;
+  actorId: string | null;
   success: boolean;
   dispatched: boolean;
   latencyMs: number;
-}): Promise<void> {
-  if (!opts.invocationId || !opts.tenantId) return;
+}): Promise<boolean> {
+  if (!opts.invocationId || !opts.tenantId || !opts.actorId) return false;
   try {
-    const { data: m } = await supabase.from("tenant_members")
-      .select("user_id").eq("tenant_id", opts.tenantId).eq("status", "active")
-      .in("role", ["owner", "admin"]).limit(1);
-    const actor = m?.[0]?.user_id ?? null;
-    await recordCapabilityRun(supabase, {
+    // Keep the original verified requester and invocation. Never borrow another
+    // owner's identity or mint a new receipt identity after an uncertain write.
+    return await recordCapabilityRun(supabase, {
       tenantId: opts.tenantId,
-      actorId: actor,
+      actorId: opts.actorId,
+      runId: opts.invocationId,
       capabilityKey: "subagent_invoke",
       outcome: opts.dispatched
         ? "capability_outcome_unknown"
@@ -497,6 +646,7 @@ async function recordInvocationReceipt(opts: {
     });
   } catch (e) {
     console.error("[orchestrator] invocation receipt failed:", (e as Error)?.message);
+    return false;
   }
 }
 
@@ -555,39 +705,95 @@ async function dispatchLangGraph(
   return { status: resp.status, body };
 }
 
-// Soft sub-agent runtime — prompt-only, executed against the Lovable AI Gateway.
-// No new edge function required; Paige can spin these up on her own.
-async function invokeSoft(
-  agent: { slug: string; name: string; system_prompt: string | null; config: Record<string, unknown> | null },
-  input: Record<string, unknown>,
-  _context: OrchestratorRequest["context"],
+type RegisteredSoftAgent = {
+  id?: string; version?: number; slug: string; name: string;
+  system_prompt: string | null; config: Record<string, unknown> | null;
+};
+
+// A planning model call grants no tools or business authority. Reuse the original
+// workspace resolver and registered identity after EACH Fabric budget await.
+async function zionProviderAuthority(
+  agent: RegisteredSoftAgent,
+  context: OrchestratorRequest["context"],
   tenantId: string | null,
+  currentScope: () => Promise<boolean>,
+  actorlessService = false,
+): Promise<boolean> {
+  try {
+    const actor = context?.user_id;
+    if ((!actor && !actorlessService) || (actor && !UUID_RE.test(actor)) || !tenantId || !UUID_RE.test(tenantId)
+      || !agent.id || !UUID_RE.test(agent.id) || !Number.isInteger(agent.version)
+      || (agent.version ?? 0) < 1 || !await currentScope()) return false;
+    if (actor) {
+      const permission = await resolveWorkspaceAuthorityAs(supabase, actor, tenantId);
+      if (!permission.ok || !authorityAdmits("delegate_to_subagent", permission.authority, new Set())) return false;
+    }
+    const { data, error } = await supabase.from("paige_subagents")
+      .select("id,slug,version,tenant_id,runtime,enabled,system_prompt,config")
+      .eq("id", agent.id).eq("version", agent.version)
+      .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`).maybeSingle();
+    return !error && data?.slug === agent.slug && data.enabled === true && data.runtime === "soft"
+      && (data.tenant_id === null || data.tenant_id === tenantId)
+      && data.system_prompt === agent.system_prompt
+      && JSON.stringify(data.config ?? {}) === JSON.stringify(agent.config ?? {})
+      && await currentScope();
+  } catch { return false; }
+}
+
+// Original soft runtime. ZION's existing cheap drafts and plan job consume Model
+// Fabric. Protected/unknown and other unported jobs retain their original route
+// and budget contract. No prompt, global routing policy or activation change.
+async function invokeSoft(
+  agent: RegisteredSoftAgent,
+  input: Record<string, unknown>,
+  context: OrchestratorRequest["context"],
+  tenantId: string | null,
+  currentScope?: () => Promise<boolean>,
+  actorlessService = false,
 ) {
   if (!agent.system_prompt) return { status: 500, body: { ok: false, error: `Soft agent ${agent.slug} missing system_prompt` } };
   const cfg = (agent.config ?? {}) as Record<string, unknown>;
   // §14 model routing: every agent picks the cheapest-capable model per its job tier.
   // Default 'internal_first_draft' (open-model-eligible) — a sub-agent's output is an
-  // internal draft Paige integrates/reviews; an agent can override job_kind in its config
-  // (e.g. a client-facing final → 'client_copy_final', which routes to Claude reasoning).
+  // internal draft Paige integrates/reviews; the registered job_kind supplies the
+  // original capability band. ZION maps that band to the shared cognitive class.
   const jobKind = (typeof cfg.job_kind === "string" ? cfg.job_kind : "internal_first_draft") as JobKind;
   const userPayload = typeof input === "string" ? input : JSON.stringify(input);
   try {
     // §34-L5 attribution: thread the trace ctx so this routed call lands in paige_llm_trace tagged with
     // WHICH agent ran it (agent_id is a TEXT column → the stable slug) and the caller's tenant — without
-    // it these rows were writing agent_id=null. A null/absent tenant_id degrades gracefully in the L1
-    // writer (#146/#355), so we never throw on a platform/anon caller. Attribution only — routing unchanged.
-    const data = await routedChatCompletion(jobKind, {
+    // it these rows were writing agent_id=null. Existing other specialists retain
+    // their original legacy route; ZION uses metadata-only Fabric attribution.
+    const body = {
       messages: [
-        { role: "system", content: agent.system_prompt },
-        { role: "user", content: userPayload },
+        { role: "system" as const, content: agent.system_prompt },
+        { role: "user" as const, content: userPayload },
       ],
       max_tokens: 2048,
-    }, { agent_id: agent.slug, tenant_id: tenantId });
+    };
+    let data: unknown;
+    if (agent.slug === "zion" && (jobKind === "plan" || pickRoute(jobKind).tier === "classification")) {
+      if (!tenantId || !UUID_RE.test(tenantId) || (!context?.user_id && !actorlessService)
+        || (context?.user_id && !UUID_RE.test(context.user_id)) || !currentScope) {
+        return { status: 403, body: { ok: false, error: "Current workspace authority is required for ZION planning." } };
+      }
+      const completion = await fabricCompletion({ ...body,
+        cognitive_class: pickRoute(jobKind).tier === "classification" ? "cheap" : "operational",
+        job: "zion_operations_draft",
+      }, { trace: { agent_id: agent.slug, tenant_id: tenantId, content_policy: "metadata_only" },
+        beforeProviderAttempt: () => zionProviderAuthority(agent, context, tenantId, currentScope, actorlessService),
+      });
+      if (!completion.ok) return { status: 503, body: { ok: false,
+        error: "ZION could not verify current permission or model readiness. No planning result was confirmed." } };
+      data = completion.response;
+    } else data = await routedChatCompletion(jobKind, body, { agent_id: agent.slug, tenant_id: tenantId });
     const answer = (data as { choices?: Array<{ message?: { content?: string } }> })?.choices?.[0]?.message?.content ?? "";
     if (!answer) return { status: 502, body: { ok: false, error: "Model returned no content" } };
     return { status: 200, body: { ok: true, agent: agent.slug, answer } };
   } catch (e) {
-    return { status: 502, body: { ok: false, error: e instanceof Error ? e.message : "model_error" } };
+    return { status: 502, body: { ok: false, error: agent.slug === "zion"
+      ? "ZION could not finish the planning request. Inspect the original work before trying again."
+      : e instanceof Error ? e.message : "model_error" } };
   }
 }
 
@@ -624,6 +830,7 @@ Deno.serve(async (req) => {
 
   try {
     if (payload.action === "list_subagents" || payload.action === "tool_search") {
+      if (payload.invocation_id !== undefined || payload.recent_assignments === true) return await inspectOriginalInvocation(req, payload, scope);
       const matches = await searchSubagents(payload.query, payload.domain, tenantId, fundingEnabled);
       return ok({ ok: true, matches });
     }
@@ -667,7 +874,7 @@ Deno.serve(async (req) => {
 
     let invQ = supabase
       .from("paige_subagents")
-      .select("slug,name,domain,description,runtime,edge_function,langgraph_graph,enabled,system_prompt,config,tenant_id")
+      .select("id,version,slug,name,domain,description,runtime,edge_function,langgraph_graph,enabled,system_prompt,config,tenant_id")
       .eq("slug", payload.slug);
     // §9 isolation: only a platform default or THIS tenant's own agent is invocable. Parameterized, and
     // tenantId is a trusted uuid-or-null from resolveTenantScope (no request-body injection).
@@ -701,32 +908,48 @@ Deno.serve(async (req) => {
       status: "pending",
       tenant_id: tenantId, // §9 attribution: the resolved request tenant, never caller-supplied
     });
+    // No runtime/provider may start without its original durable work identity.
+    // A failed insert is not a completed or retryable specialist assignment.
+    if (!invocationId) return ok({ ok: false, not_applied: true,
+      error: "Specialist work could not start because its original work record was not confirmed." }, 503);
+    const unconfirmed = () => ok({ ok: false, outcome_unknown: true, invocation_id: invocationId,
+      error: "The specialist result could not be verified. Inspect the original work before repeating it." }, 202);
 
-    let result: { status: number; body: unknown };
-    // §34-L5 / §13 SCOPE NOTE: per-agent model routing (config.job_kind → pickRoute) is wired for SOFT
-    // agents ONLY today — a `local` target hardcodes its model inside its own edge function (unreachable
-    // per-agent from here) and `langgraph` has no live agent. Extending per-agent routing to those runtimes
-    // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
-    if (agent.runtime === "local") {
-      result = await invokeLocal(agent.edge_function, boundInput, ctx);
-    } else if (agent.runtime === "soft") {
-      result = await invokeSoft(
-        { slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
-        boundInput,
-        ctx,
-        tenantId,
-      );
-    } else {
-      if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);
-      result = await dispatchLangGraph(agent.langgraph_graph, boundInput, ctx);
-    }
+    try {
+      let result: { status: number; body: unknown };
+      // §34-L5 / §13 SCOPE NOTE: per-agent model routing (config.job_kind → pickRoute) is wired for SOFT
+      // agents ONLY today — a `local` target hardcodes its model inside its own edge function (unreachable
+      // per-agent from here) and `langgraph` has no live agent. Extending per-agent routing to those runtimes
+      // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
+      if (agent.runtime === "local") {
+        result = await invokeLocal(agent.edge_function, boundInput, ctx);
+      } else if (agent.runtime === "soft") {
+        result = await invokeSoft(
+          { id: agent.id, version: agent.version, slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
+          boundInput,
+          ctx,
+          tenantId,
+          async () => {
+            const fresh = await resolveTenantScope(req, payload);
+            if ("error" in fresh || fresh.tenantId !== tenantId || fresh.callerId !== callerId || fresh.isService !== isService) return false;
+            const trusted = await buildTrustedContext(payload, fresh);
+            return !("error" in trusted) && trusted.ctx.user_id === ctx.user_id;
+          },
+          // The ORIGINAL exact-service-key path permits actorless internal drafts
+          // (including ActionBus). Rechecked by currentScope; never request JSON,
+          // an invented human, or authority to perform a business effect.
+          isService && !ctx.user_id,
+        );
+      } else {
+        if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);
+        result = await dispatchLangGraph(agent.langgraph_graph, boundInput, ctx);
+      }
 
-    const latency = Date.now() - startedAt;
-    const success = result.status >= 200 && result.status < 300;
-    const isDispatch = agent.runtime === "langgraph" && success;
+      const latency = Date.now() - startedAt;
+      const success = result.status >= 200 && result.status < 300;
+      const isDispatch = agent.runtime === "langgraph" && success;
 
-    if (invocationId) {
-      await updateInvocation(invocationId, {
+      const outcomeRecorded = await updateInvocation(invocationId, {
         status: success ? (isDispatch ? "dispatched" : "succeeded") : "failed",
         latency_ms: latency,
         output: result.body,
@@ -740,31 +963,45 @@ Deno.serve(async (req) => {
             ? (result.body as Record<string, unknown>).run_id as string | undefined ?? null
             : null,
       });
-    }
+      if (!outcomeRecorded) return unconfirmed();
 
-    await recordInvocationReceipt({
-      invocationId,
-      slug: agent.slug,
-      runtime: agent.runtime,
-      tenantId,
-      success,
-      dispatched: isDispatch,
-      latencyMs: latency,
-    });
-
-    return ok(
-      {
-        ok: success,
-        subagent: agent.slug,
+      const receiptRecorded = await recordInvocationReceipt({
+        invocationId,
+        slug: agent.slug,
         runtime: agent.runtime,
-        latency_ms: latency,
-        // §13/§14: surface the invocation id so a caller (e.g. the action-bus drainer) can attach it to
-        // the artifact it produced — proving "her TEAM did this", auditable, not Paige acting alone.
-        invocation_id: invocationId,
-        result: result.body,
-      },
-      success ? 200 : result.status,
-    );
+        tenantId,
+        actorId: ctx.user_id ?? null,
+        success,
+        dispatched: isDispatch,
+        latencyMs: latency,
+      });
+      // The original ActionBus draft worker has no human actor and owns its own
+      // work/receipt transition. Preserve that path without inventing an actor.
+      // A JWT caller cannot select this exclusion: ctx.user_id is server-verified.
+      if (tenantId && ctx.user_id && !receiptRecorded) return ok({ ok: false, outcome_unknown: true,
+        invocation_id: invocationId, outcome_recorded: true, receipt_unverified: true,
+        error: "The original specialist outcome is saved, but its receipt could not be confirmed. Inspect the original work before repeating it." }, 202);
+
+      return ok(
+        {
+          ok: success,
+          subagent: agent.slug,
+          runtime: agent.runtime,
+          latency_ms: latency,
+          // §13/§14: surface the invocation id so a caller (e.g. the action-bus drainer) can attach it to
+          // the artifact it produced — proving "her TEAM did this", auditable, not Paige acting alone.
+          invocation_id: invocationId,
+          receipt_recorded: receiptRecorded,
+          result: result.body,
+        },
+        success ? 200 : result.status,
+      );
+    } catch (error) {
+      // A transport/storage exception after registration can hide committed work.
+      // Keep its original identity and inspect-only result; never re-dispatch here.
+      console.error("[orchestrator] invocation outcome unconfirmed:", (error as Error)?.message);
+      return unconfirmed();
+    }
   } catch (e) {
     console.error("[orchestrator] error", e);
     return fail((e as Error).message ?? "Internal error", 500);

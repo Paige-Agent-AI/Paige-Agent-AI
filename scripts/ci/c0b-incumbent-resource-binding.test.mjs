@@ -13,7 +13,7 @@ const mutations=[
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],
  ['verified actor removed',s=>s.replace('await supabaseClient.auth.getUser()','({data:{user:{id:"counterfeit"}},error:null})')],
  ['verified actor refusal removed',s=>s.replace('if (authError || !user)', 'if (false)')],
- ['Research actor substituted',s=>s.replace(/user_id: user.id,\r?\n                caller: "chat",/,'user_id: args.user_id,\n                caller: "chat",')],
+ ['Research actor substituted',s=>s.replace(/user_id: user\.id,(\r?\n                expected_tenant_id: tenantId,\r?\n                caller: "chat",)/,'user_id: args.user_id,$1')],
  ['Research persistence changed',s=>s.replace('persist: true,','persist: false,')],
  ['automation grant broadened',s=>s.replace('granted_lane: "confirm",','granted_lane: "auto",')],
  ['number tenant filter removed',s=>s.replace(/\.eq\("tenant_id", crmTenantId\)\r?\n                \.order\("is_primary"/, '.eq("tenant_id", args.tenant_id)\n                .order("is_primary"')],
@@ -27,12 +27,55 @@ const mutations=[
  ['server persona substituted',s=>s.replace('await supabaseClient.rpc("get_paige_persona_context")','({data:{tenant_id:payload.tenant_id},error:null})')],
  ['focused subject isolation removed',s=>s.replace('rowTenant !== callerTenantId','false')],
  ['authentication implementation replaced before verification',s=>s.replace('const { data: { user }, error: authError } = await supabaseClient.auth.getUser();','supabaseClient.auth.getUser = async () => ({data:{user:{id:"forged"}},error:null});\n    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();')],
+ ['native recovery hold observation removed',s=>s.replace('interactiveRecoveryReadOnly ||= row.interactive_recovery_hold !== null;','interactiveRecoveryReadOnly ||= false;')],
+ ['held recovery tool restriction removed',s=>s.replace('if (!name || !interactiveRecoveryReadAllowed(name, CONVERSATIONAL_ADMITTED_READ_TOOLS, PAIGE_SPINE_CAPABILITIES)) toolDefs.splice(i, 1);','if (false) toolDefs.splice(i, 1);')],
+ ['recovery recheck before dispatch removed',s=>s.replace(/try \{ await requireRecoveryPermission\(\); \}\r?\n        catch \(error\) \{ return \{ toolResults/,'try { /* reviewed boundary removed */ }\n        catch (error) { return { toolResults')],
 ];
 for(const [label,mutate]of mutations)test(`rejects ${label}`,()=>{const changed=mutate(chat);assert.ok(changed!==chat,'fixture must mutate actual source');assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
+for(const [label,mutate]of [
+ ['booking readback uses service client',s=>s.replace('let read = supabaseClient.from("internal_bookings")','let read = supabase.from("internal_bookings")')],
+ ['booking readback workspace replaced by model',s=>s.replace('read.eq("tenant_id", bookingReceiptTenant)','read.eq("tenant_id", args.tenant_id)')],
+ ['booking success skips record verification',s=>s.replace('result = verified ? { success: true, booking_id: bid, readback_verified: true }','result = true ? { success: true, booking_id: bid, readback_verified: true }')],
+ ['booking receipt attributed to unrelated default',s=>s.replace('? bookingReceiptTenant : await resolveActorTenant()','? await resolveActorTenant() : await resolveActorTenant()')],
+])test(`rejects reviewed booking binding: ${label}`,()=>{
+ const changed=mutate(chat);assert.notEqual(changed,chat,'fixture must change the actual booking binding');
+ assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);
+});
 test('missing or modified endpoint/helper cannot be accepted',()=>{
  assert.ok(incumbentSourcePaths.length>10);
  const path=incumbentSourcePaths[0];const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);
  const changed=new Map(sources);changed.set(path,sources.get(path)+'\nconst counterfeitEffect = () => fetch("https://counterfeit.invalid");');assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
+});
+test('canonical Conversations reference cannot be redirected to Operator by changing its reviewed helper',()=>{
+ const path='supabase/functions/_shared/canonical-app-url.ts',raw=sources.get(path);
+ const changed=raw.replace('conversations: "/solo/{account}/clients/conversations"','conversations: "/operator/fleet/systems-check"');
+ assert.notEqual(changed,raw,'fixture must alter the actual SOLO route');
+ const modified=new Map(sources);modified.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
+});
+test('canonical Marketing reference cannot bypass the reviewed current-account destination',()=>{
+ const path='supabase/functions/_shared/canonical-app-url.ts',raw=sources.get(path);
+ const changed=raw.replace('marketing: "/solo/{account}/growth/overview"','marketing: "/operator/fleet/systems-check"');
+ assert.notEqual(changed,raw,'fixture must alter the actual Marketing destination');
+ const modified=new Map(sources);modified.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
+});
+for(const [label,before,after]of [
+ ['inbox read caller substituted','caller: { rpc: async (name, readArgs) => await supabaseClient.rpc(name, readArgs) }','caller: { rpc: async (name, readArgs) => await supabase.rpc(name, readArgs) }'],
+ ['inbox verification references supplied by a result','const links = readRecordLinkSource.get(tc);','const links = parsed.paige_record_links;'],
+])test(`rejects reviewed Conversations binding: ${label}`,()=>{
+ const changed=chat.replace(before,after);assert.notEqual(changed,chat,'fixture must alter the actual reviewed reader');
+ assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);
+});
+for(const [label,before,after]of [
+ ['activation authority lowered','["automation_set_state", "owner_only",','["automation_set_state", "ordinary",'],
+ ['unapproved draft policy changed','["weekly_commitment_draft", "ordinary",','["weekly_commitment_draft", "high",'],
+ ['unknown actions become ordinary','RISK_BY_TOOL.get(tool) ?? "unclassified"','RISK_BY_TOOL.get(tool) ?? "ordinary"'],
+])test(`policy fingerprint still refuses ${label}`,()=>{
+ const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=raw.replace(before,after);
+ assert.notEqual(changed,raw,'fixture must alter the canonical policy');
+ const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.some(f=>f.includes(path)));
 });
 test('malformed source is refused',()=>assert.ok(validateIncumbentResourceBindings('const broken = ;',sources).findings.length));
 for(const [label,mutate]of [
@@ -47,9 +90,17 @@ test('rejects reviewed metric adapter effect substitution',()=>{
  assert.ok(changed.get(path)!==raw);assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
 });
 test('rejects missing reviewed metric ancestry adapter or validator',()=>{
- for(const path of ['supabase/functions/_shared/analytics-metrics/read.ts','supabase/functions/_shared/analytics-metrics/metric-contract.ts']){
+ for(const path of ['supabase/functions/_shared/analytics-metrics/read.ts','supabase/functions/_shared/analytics-metrics/keys.ts','supabase/functions/_shared/analytics-metrics/metric-contract.ts']){
   const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);
  }
+});
+for(const [label,mutate]of [
+ ['a metric key changes',s=>s.replace('business.active_clients_current','business.counterfeit_metric')],
+ ['an effect is added to the pure key dependency',s=>s+'\nfetch("https://counterfeit.invalid");'],
+])test(`rejects reviewed metric-key extraction: ${label}`,()=>{
+ const path='supabase/functions/_shared/analytics-metrics/keys.ts',raw=sources.get(path),changed=mutate(raw);
+ assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.some(f=>f.includes(path)));
 });
 for(const [label,mutate]of [
  ['discovery caller replaced by service client',s=>s.replace('await findPipelineOriginalEffect(originalScope, supabaseClient);','await findPipelineOriginalEffect(originalScope, supabase);')],
@@ -115,3 +166,30 @@ for(const [label,from,to]of [
  ['owner refusal removed','if (risk === "owner_only") {','if (false) {'],
 ])test(`rejects retired owner automation ${label}`,()=>{const changed=chat.replace(from,to);assert.notEqual(changed,chat);assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
 test('rejects retired automation owner-only classification downgrade',()=>{const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=raw.replace('["automation_set_grant", "owner_only"','["automation_set_grant", "ordinary"');assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);});
+
+test('rejects missing customer source-context ancestry',()=>{
+ const altered=new Map(sources);altered.delete('supabase/functions/_shared/client-portal-assistant-context.ts');
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);
+});
+test('rejects customer source-context authority widening',()=>{
+ const path='supabase/functions/_shared/client-portal-assistant-context.ts',raw=sources.get(path);
+ const changed=raw.replace('if(sources.length!==(snapshot?.retrieval_refs.length??0))','if(false)');
+ assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);
+});
+
+test('canonical CURA source reference cannot escape the current SOLO Portal',()=>{
+ const path='supabase/functions/_shared/canonical-app-url.ts',raw=sources.get(path);
+ const changed=raw.replace('portal_knowledge: "/solo/{account}/clients/portal?view=knowledge"','portal_knowledge: "/operator/fleet/systems-check"');
+ assert.notEqual(changed,raw,'fixture must alter the actual Portal destination');
+ const modified=new Map(sources);modified.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
+});
+
+for(const [label,path,from,to] of [
+ ['CURA original extraction acknowledgment guard removed','supabase/functions/_shared/knowledge-extraction.ts','if(acknowledgement?.error){','if(false){'],
+ ['CURA source reference UUID guard removed','supabase/functions/_shared/paige-turn/record-links.ts','UUID.test(v.record_id)','true'],
+ ['original CURA approval fingerprint removed','supabase/functions/_shared/paige-turn/interactive-cura-history.ts','fingerprint!==parsed.fingerprint','false'],
+ ['CURA status replaced by writer','supabase/functions/_shared/cura-knowledge-teaching.ts',"caller.rpc('read_cura_knowledge_preparation'","caller.rpc('submit_cura_knowledge_preparation'"],
+ ['CURA status selector loses original approval requirement','supabase/functions/_shared/paige-turn/control-transport.ts','typeof control.approvalTurnId !== "string"','false'],
+])test(label,()=>{const raw=sources.get(path);assert.equal(typeof raw,'string');const changed=raw.replace(from,to);assert.notEqual(changed,raw);const modified=new Map(sources);modified.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));});

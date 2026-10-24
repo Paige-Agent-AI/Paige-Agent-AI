@@ -144,7 +144,7 @@ describe("R3 dossier wiring — bounded shape + canonical persistence", () => {
   });
 
   it("the dossier persists on the canonical record — all three persistRun sites carry it", () => {
-    expect(core.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier\)/g)?.length).toBe(4); // R4: 3 original + the all-units-failed early return (the dead !synth block was removed)
+    expect(core.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope\)/g)?.length).toBe(4); // All four canonical dossier persistence paths retain the current actor/tenant checkpoint.
     expect(core).toContain("dossier: (dossier ?? null) as never,");
   });
 

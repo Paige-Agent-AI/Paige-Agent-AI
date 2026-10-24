@@ -1,10 +1,96 @@
 # The Paige C-Suite — Named-Agent Roster
 
+## Specialist identity and department attribution
+
+**Binding owner standard, October23,2026.** This current presentation requirement
+supersedes older draft/remit wording below where it conflicts. PAIGE remains the
+principal conversational COO and coordinating intelligence across departments.
+
+| Specialist | Approved responsibility |
+| --- | --- |
+| VERA | Finance, financial intelligence, executive business analysis and performance insights |
+| NEXUS | Marketing, advertising, growth, campaigns and connected marketing intelligence |
+| MERIT | Sales, commercial relationships, proposals, agreements and collections |
+| ZION | Operations, projects, workflows, tasks, team coordination and execution |
+| CURA | Customers, client service, customer success and Customer Portal |
+| MENTOR | Onboarding, business discovery, education, strategic guidance and first-value coaching |
+
+Reuse `VP_ROSTER` in `src/components/ui/page/PaigeAttribution.tsx` for display names
+and remits and the typed existing department edges in `src/lib/paige/vpDepartments.ts`.
+Its presentation resolver combines those existing sources; unknown/global context
+retains PAIGE. Persistent specialist identities remain the existing Agent Registry.
+None of these presentation records is another permission or capability registry.
+
+A departmental entry names its responsible specialist with a contextual verb:
+Finance **Review with VERA**, Marketing **Plan with NEXUS**, Sales **Review with MERIT**,
+Operations **Plan with ZION**, Customers **Ask CURA**, Onboarding **Continue with MENTOR**.
+These are examples, not a mechanical renaming rule. Global/cross-department PAIGE
+controls remain PAIGE. Responsibility is not historical authorship; bylines still
+credit only actual contributors. Avoid banners, new chats, agent pickers and fake
+specialist work. The existing editable conversation retains original source context.
+
+Identity resolves independently from actual Spine/capability availability, provider
+readiness, original destination, eligible Chat/Live and current actor/tenant authority.
+Preserve Trust, Harness/LayerC where applicable, original domain writers and Rail
+receipts. An attributed invitation is neither approval nor execution/completion.
+Missing financial sources stay unavailable; recorded receipts are not bank deposits.
+
+Adoption owners: EXP01 MENTOR; EXP02 VERA; EXP03/06/07 NEXUS when activated;
+EXP04 MERIT; EXP05/08 ZION; EXP09 CURA; EXP10 NEXUS primary with contextual domain
+support. Each existing owner changes only its own source after current-main/lease
+reconciliation. Dormant/future SOLO and Platform Operator Experiences adopt this
+standard at legitimate activation. Agency/subaccounts remain owner-held.
+
+Mandatory delivery reporting: **Owning Experience → Responsible PAIGE Specialist →
+Customer-facing attribution → Actual capability → Orchestration contract → Algorithm
+support → Evidence status.** Separate Functional, Visual, Experiential and Founder
+Acceptance; identity/branding alone promotes no algorithm, capability or acceptance.
+Track handoffs/incorporation in original Experience issues and ANT161, with links
+from the existing North Star/Strategy/Bootstrap/roadmap and Delivery Evidence Register.
+
+> **Owner remap — October18–21, ZION:** ZION is the existing **Operations and
+> Automation** specialist leading EXP05 — Keep My Business Running / Run My Week.
+> He coordinates weekly commitments, tasks, reminders, Calendar responsibilities,
+> governed workflow preparation, monitoring and recovery through PAIGE's existing
+> runtime. This supersedes his Strategy & Vision remit in the historical draft
+> below. PAIGE remains principal COO; MENTOR and VERA keep their current remaps.
+> Approved Operations UI uses contextual **Plan with ZION / Review with ZION** actions into
+> the original editable conversation, never another assistant or planning subtab.
+> Remit metadata does not authorize a delegated run, expand tools/tenant data,
+> change approval or budget policy, or activate the legacy soft executor. An
+> addressed reply, registered identity, enabled row and completed assignment are
+> different states. Original Work/domain records and Rail receipts prove results.
+> Source: owner Oct18 EXP05/ZION assignments and Oct21 design approval, ANT-11.
+> Forward seed correction: `20271113080000_exp05_zion_operations_role.sql`;
+> preserve custom/tenant rows, original identity and all runtime/authority fields.
+> Actual deployed identity, contextual UI and authenticated specialist outcomes
+> require their own release evidence; this remit ruling does not assert them.
+
+> **Owner remap — October19, VERA:** VERA is the existing **Intelligence, Finance
+> and Risk** specialist for EXP02/11/12. This supersedes her Trust-only remit below;
+> PAIGE remains principal COO. Existing Chat addressing uses the same scoped
+> capabilities and Model Fabric. Department ownership is not historical authorship.
+> Registry correction is forward-only, seed-guarded and preserves identity, custom
+> configuration, permissions, runtime/enabled state and specialist parents. It adds
+> no soft-delegate prompt or provider activation. Source/deployment/real analysis and
+> final Experience acceptance are separate; see the existing E02 matrix and
+> [VERA evidence](../evidence/ui-delivery/e2-vera-intelligence.md).
+
 **Owner:** Antonio Cook
 **Date:** 2026-07-27
 **Status:** Doctrine draft — § section below is ready to paste into `CLAUDE.md` (recommended slot: §42, following the §39/§40/§41 amendments)
 **Numbering note (updated 2026-08-04):** the original §42 recommendation predates the §39 peer-gate amendment that merged 2026-08-04 (commit `1e87894e`). Actual § assignment when this roster is filed to `CLAUDE.md` defers to Task #93 doctrine paste slice — the roster takes whatever number is next-available at that time (likely §43 given §39 = peer-gate, §40 = Integrity Governance from Trilogy doc, §41 = Platform Spine amendment per Task #239).
 **Purpose:** Formalize the named executive-team presentation and capability-ownership pattern for Paige — the operational concretization of §14 (Paige runs a team) with PAIGE + 6 VP domains addressable in code, UI, and marketing.
+
+> **Owner remap — 2026-10-19 (MENTOR only):** the current Coordinator instructions reassign
+> **MENTOR** to **Business Discovery, Education, Knowledge and Strategy** (serving EXP01, EXP13,
+> EXP15), superseding MENTOR's VP Operations row below. The remaining roster rows are unchanged by
+> this remap. Names stay doctrine-locked; this is a remit reassignment, not a roster amendment.
+> Source: owner directive + updated North Star / EXP00–19 roadmap. Forward record:
+> `supabase/migrations/20271111000000_mentor_role_remap.sql` (display metadata only — no authority,
+> routing, or privilege change; the operational child `scheduling-coordinator` re-parents to ZION
+> per the code-layer canonical map in `src/lib/paige/vpDepartments.ts`). The historical text below
+> is preserved as-is for integrity.
 
 > **Current owner correction — 2026-09-08:** this proposed roster describes capability domains,
 > presentation identities, and bounded specialist roles inside **one Paige Runtime Harness**. It does

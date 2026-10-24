@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { metricReadContext, readBusinessMetric } from '../../../supabase/functions/_shared/analytics-metrics/read.ts';
+import { metricReadContext, readBusinessMetric, readBusinessMetricEvidence, BUSINESS_METRIC_KEYS, BUSINESS_METRIC_READ } from '../../../supabase/functions/_shared/analytics-metrics/read.ts';
 
 const tenant = 'a3400000-0000-4000-8000-000000000011';
 const now = Date.parse('2026-10-08T12:00:00Z');
@@ -23,9 +23,44 @@ function harness(change: (result: Fixture) => void = () => {}, denied = false, s
     if (name === 'resolve_analytics_evidence_reference' && returned) resolve(returned);
     return { data: returned, error: null };
   } };
-  return { calls, run: (input: unknown = args) => readBusinessMetric(caller, { tenantId: tenant }, input, () => now) };
+  return { calls, caller, run: (input: unknown = args) => readBusinessMetric(caller, { tenantId: tenant }, input, () => now) };
 }
 describe('governed conversational metric read', () => {
+  it('supplies actual verified epoch evidence internally while keeping raw producer extras out', async () => {
+    const h = harness(r => { r.values = { kind: 'count', count: 4, private_customer: 'NEVER_PROJECT' }; });
+    const result = await readBusinessMetricEvidence(h.caller, { tenantId: tenant }, args, () => now);
+    expect(result.status).toBe('available');
+    if (result.status !== 'available') throw Error('Expected verified domain evidence');
+    expect(result.metric.account_epoch).toBe(tenant);
+    expect(result.metric.account_epoch_ref).toBe('ae_v1_' + 'b'.repeat(64));
+    expect(result.request.accountEpoch).toBe(tenant);
+    expect(JSON.stringify(result)).not.toContain('NEVER_PROJECT');
+    expect(JSON.stringify(result)).not.toContain('private_payload');
+    expect(JSON.stringify(await h.run())).not.toContain(tenant);
+  });
+  it('coordinates overlapping Fabric and target evidence reads through the incumbent issuer', async () => {
+    const h = harness(), original = h.caller.rpc;
+    let active: Fixture | null = null, issued = 0;
+    h.caller.rpc = async (name, input) => {
+      const result = await original(name, input);
+      if (name === 'issue_analytics_evidence_bundle') {
+        active = { ...result.data!, evidence_ref: 'aneb_v1_' + String(++issued).padStart(64, '0') };
+        return { data: active, error: null };
+      }
+      if (name === 'resolve_analytics_evidence_reference') return input?.p_evidence_ref === active?.evidence_ref
+        ? { data: active!, error: null } : { data: null, error: { code: '42501', message: 'Reference revoked' } };
+      return result;
+    };
+    const results = await Promise.all([
+      readBusinessMetricEvidence(h.caller, { tenantId: tenant }, args, () => now),
+      h.run({ metric_key: args.metric_key, period: 'custom', range_key: 'week', range_start: '2026-10-02T12:00:00.000Z', range_end: new Date(now).toISOString() }),
+    ]);
+    expect(results.map(result => result.status)).toEqual(['available', 'available']);
+    expect(h.calls.filter(c => /analytics_evidence/.test(c.name)).map(c => c.name)).toEqual([
+      'issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference',
+      'issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference',
+    ]);
+  });
   const overdue = { metric_key: 'sales.receivables.overdue_current', period: 'last_7_days' };
   const calendar = { state: 'configured', zone: 'America/New_York', set_at: '2026-10-01T00:00:00Z', as_of_date: '2026-10-08' };
   function overdueFixture(r: Fixture) {
@@ -129,5 +164,79 @@ describe('governed conversational metric read', () => {
     expect(result.metric?.range.start).toBe('2026-10-01T00:00:00.000Z'); expect(result.metric?.range.end).toBe('2026-10-08T00:00:00.000Z');
     const prior = await h.run({ metric_key: 'sales.invoices.issued_count', period: 'last_month' });
     expect(prior.metric?.range.start).toBe('2026-09-01T00:00:00.000Z'); expect(prior.metric?.range.end).toBe('2026-10-01T00:00:00.000Z');
+  });
+});
+
+// Existing Marketing producer contract, not new metric definitions or public Chat admission.
+const marketingKeys = [
+  'marketing.leads.received', 'marketing.leads.daily', 'marketing.leads.by_utm_source',
+  'marketing.leads.by_campaign_tag', 'marketing.leads.converted_to_opportunity',
+  'marketing.capture_points.published_current', 'marketing.forms.unrouted_current',
+  'marketing.submissions.failed_current', 'marketing.email.sent', 'marketing.email.opened', 'marketing.email.clicked',
+] as const;
+function marketingFixture(key: string) {
+  return (r: Fixture) => {
+    r.owner_department = 'marketing'; r.label = 'Recorded Marketing evidence';
+    r.source_refs = ['public.growth_form_submissions'];
+    r.range = { ...(r.range as Record<string, unknown>), semantics: key.endsWith('_current') ? 'current_snapshot' : 'event_timestamp_cohort' };
+    r.unit = key.endsWith('.daily') ? 'count_per_day' : 'count';
+    if (key.endsWith('.daily')) r.values = { kind: 'series', points: [{ at: '2026-10-07T00:00:00Z', value: 4 }] };
+    else if (/by_utm_source|by_campaign_tag|failed_current/.test(key)) r.values = { kind: 'distribution', items: [{ key: 'recorded', label: 'Recorded source', count: 4 }] };
+  };
+}
+describe('existing Marketing issuer evidence, internal domain consumer only', () => {
+  it('keeps the declared public metric vocabulary at the original33 keys', () => {
+    expect(BUSINESS_METRIC_KEYS).toHaveLength(33);
+    expect(BUSINESS_METRIC_READ.input).toHaveProperty('properties.metric_key.enum', BUSINESS_METRIC_KEYS);
+    for (const key of marketingKeys) expect(BUSINESS_METRIC_KEYS).not.toContain(key);
+  });
+  it.each(marketingKeys)('verifies existing %s through the same caller issuer and resolver', async key => {
+    const h = harness(marketingFixture(key));
+    const result = await readBusinessMetricEvidence(h.caller, { tenantId: tenant }, { metric_key: key, period: 'last_7_days' }, () => now);
+    expect(result.status).toBe('available');
+    if (result.status !== 'available') throw Error('Expected existing canonical Marketing evidence');
+    expect(result.metric.owner_department).toBe('marketing');
+    expect(result.metric.metric_key).toBe(key);
+    expect(result.metric.account_epoch).toBe(tenant);
+    expect(JSON.stringify(result)).not.toContain('private_payload');
+    expect(h.calls.map(call => call.name)).toEqual(['current_user_tenant_id', 'issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference', 'current_user_tenant_id']);
+  });
+  it.each(marketingKeys)('keeps %s outside the existing public Chat read', async key => {
+    const h = harness(marketingFixture(key));
+    expect((await h.run({ metric_key: key, period: 'last_7_days' })).status).toBe('needs_input');
+    expect(h.calls).toHaveLength(0);
+  });
+  it.each(['marketing.roas', 'marketing.ad_spend', 'marketing.funnel_visits', 'business.retention_rate'])('refuses unsupported internal %s without reading', async key => {
+    const h = harness();
+    expect((await readBusinessMetricEvidence(h.caller, { tenantId: tenant }, { metric_key: key }, () => now)).status).toBe('needs_input');
+    expect(h.calls).toHaveLength(0);
+  });
+  it.each(['owner', 'kind', 'unit', 'semantics'])('rejects inconsistent Marketing %s instead of projecting values', async mismatch => {
+    const key = 'marketing.leads.received';
+    const h = harness(r => {
+      marketingFixture(key)(r);
+      if (mismatch === 'owner') r.owner_department = 'sales';
+      if (mismatch === 'kind') r.values = { kind: 'decimal', value: '4' };
+      if (mismatch === 'unit') r.unit = 'currency_minor';
+      if (mismatch === 'semantics') (r.range as Record<string, unknown>).semantics = 'current_snapshot';
+    });
+    const result = await readBusinessMetricEvidence(h.caller, { tenantId: tenant }, { metric_key: key }, () => now);
+    expect(result.status).toBe('unavailable'); expect(result).not.toHaveProperty('metric');
+  });
+  it('retains the source unavailable/null distinction for internal Marketing', async () => {
+    const key = 'marketing.leads.received';
+    const h = harness(r => { marketingFixture(key)(r); r.truth_state = 'UNAVAILABLE'; r.values = null;
+      r.coverage = { state: 'unavailable', candidate_count: 0, contributing_count: 0, excluded_count: 0 }; });
+    const result = await readBusinessMetricEvidence(h.caller, { tenantId: tenant }, { metric_key: key }, () => now);
+    expect(result.status).toBe('available');
+    if (result.status !== 'available') throw Error('Expected verified unavailable source');
+    expect(result.metric.values).toBeNull(); expect(result.metric.truth_state).toBe('UNAVAILABLE');
+  });
+  it('retains caller membership refusal and late scope retirement for Marketing', async () => {
+    const key = 'marketing.leads.received';
+    for (const h of [harness(marketingFixture(key), true), harness(marketingFixture(key), false, true)]) {
+      const result = await readBusinessMetricEvidence(h.caller, { tenantId: tenant }, { metric_key: key }, () => now);
+      expect(result.status).toBe('refused'); expect(result).not.toHaveProperty('metric');
+    }
   });
 });

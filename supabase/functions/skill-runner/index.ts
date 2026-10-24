@@ -28,11 +28,13 @@ import {
 // fingerprint-bound approval — reusing the canonical paige_pending_confirmations table + the
 // confirm-fingerprint pattern (§18), never a parallel approval system.
 import {
+  emailPreSend,
   governedDraftAndEmail,
   type EmailProposalArgs,
 } from "../_shared/paige-skill/email-approval.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { classifyBusinessVerifyResponse } from "../_shared/business-verify-outcome.ts";
+import { gamePlanContext, readGamePlanCompletion, recordedGamePlan } from "../_shared/paige-skill/client-game-plan.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -256,7 +258,8 @@ async function resolveSkillCaller(
     return {
       authenticated: true,
       principal: "service",
-      userId: body.invoker_user_id ?? null,
+      // A body label cannot become the authenticated actor on the governed decision/audit.
+      userId: null,
       tenantId: body.tenant_id ?? null,
       access: { allowed: true },
       isApprovingAuthority: false,
@@ -267,8 +270,8 @@ async function resolveSkillCaller(
   // A real JWT. Derive the acting identity + tenant SERVER-SIDE. Never the body, never the contact.
   let actorUserId: string | null = null;
   try {
-    const { data } = await admin.auth.getUser(presented);
-    actorUserId = data?.user?.id ?? null;
+    const { data, error } = presented ? await admin.auth.getUser(presented) : { data: null, error: null };
+    actorUserId = error ? null : data?.user?.id ?? null;
   } catch { actorUserId = null; }
   if (!actorUserId) {
     return {
@@ -282,13 +285,13 @@ async function resolveSkillCaller(
   // with no active tenant falls back to the operator workspace, exactly as the browser path does.
   let tenantId: string | null = null;
   try {
-    const { data: prof } = await admin.from("profiles").select("active_tenant_id").eq("user_id", actorUserId).maybeSingle();
-    tenantId = prof?.active_tenant_id ? String(prof.active_tenant_id) : null;
+    const { data: prof, error } = await admin.from("profiles").select("active_tenant_id").eq("user_id", actorUserId).maybeSingle();
+    tenantId = !error && prof?.active_tenant_id ? String(prof.active_tenant_id) : null;
   } catch { /* resolved below / left null */ }
   let platformOwner = false;
   try {
-    const { data } = await admin.rpc("is_platform_owner", { _user_id: actorUserId });
-    platformOwner = data === true;
+    const { data, error } = await admin.rpc("is_platform_owner", { _user_id: actorUserId });
+    platformOwner = !error && data === true;
   } catch { platformOwner = false; }
   if (!tenantId && platformOwner) tenantId = await platformOperatorTenantId(admin);
   if (!tenantId) {
@@ -308,8 +311,8 @@ async function resolveSkillCaller(
       admin.rpc("is_tenant_admin_as", { _actor: actorUserId, _tenant: tenantId }),
       admin.rpc("agency_can_manage_child", { _child: tenantId, _actor: actorUserId }),
     ]);
-    tenantAdmin = a?.data === true;
-    agencyManager = b?.data === true;
+    tenantAdmin = !a?.error && a?.data === true;
+    agencyManager = !b?.error && b?.data === true;
   } catch { /* default false — a failed authority check never grants authority */ }
   const isApprovingAuthority = platformOwner || tenantAdmin || agencyManager;
   return {
@@ -482,6 +485,8 @@ async function runDraftAndEmailDocument(
           return null;
         }
       },
+      // The same runPreSend every client send passes (E09 Slice 6): an opted-out recipient never reaches send.
+      preSend: emailPreSend(admin as unknown as Parameters<typeof emailPreSend>[0], callerTenantId),
       send: async ({ fromHeader, to, subject, html }) => {
         const resendKey = Deno.env.get("RESEND_API_KEY");
         if (!resendKey) return { ok: false, id: null };
@@ -589,6 +594,17 @@ async function runDraftAndEmailDocument(
     });
   }
 
+  if (outcome.kind === "send_failed" && outcome.held_reason) {
+    // Held by the pre-send gate: nothing reached the provider; the failed run receipt is recorded.
+    return json(409, {
+      run_id: sentRunId,
+      status: "failed",
+      code: receiptPersisted ? "send_held" : "send_held_unrecorded",
+      error: `Not sent: ${outcome.held_reason} The one-time approval has been used — re-draft once that changes.`,
+      outputs: { resend_id: null, recipient: outcome.recipient },
+    });
+  }
+
   if (outcome.kind === "send_failed") {
     // §13 — the approval was consumed but the email did NOT go out. Never a 200/"succeeded": the
     // durable paige_skill_runs row was written `failed` and no communication_log outbound record was
@@ -636,35 +652,15 @@ Deno.serve(async (req) => {
     const body: RunRequest = await req.json();
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    const { data: skill, error: skillErr } = await admin
-      .from("paige_skills")
-      .select("*")
-      .eq("slug", body.skill_slug)
-      .maybeSingle();
-    if (skillErr || !skill) {
-      return new Response(JSON.stringify({ error: `Unknown skill: ${body.skill_slug}` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    if (skill.status !== "active") {
-      return new Response(JSON.stringify({ error: `Skill is ${skill.status}` }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const hasBrowserStep = browserToolAllowed(skill as SkillRow);
-    // Resolve and authorize before any run/activity row is written. A refused browser request leaves
-    // no fabricated or caller-attributed execution trace.
-    const browserAuthority = hasBrowserStep
-      ? await resolveBrowserAuthority(req, body, admin)
-      : null;
-
     // ── THE GOVERNED GATE (§9/§59) — the direct Edge route enforces the governed truth ITSELF. ──
     // Resolve the caller SERVER-SIDE (JWT actor + tenant + authority, or a trusted internal service
-    // credential). Then run the ONE governed pathway. A refusal (unauthenticated, request-supplied
-    // tenant, access-denied, service principal acting alone, owner-only) leaves NO run row and NO
-    // side effect — the attempt is recorded only on paige_audit_log.
-    const skillCaller = await resolveSkillCaller(req, body, admin, browserAuthority);
-    const callerTenantId = skillCaller.tenantId;
+    // credential) BEFORE the privileged skill lookup, including browser-enabled skills. The slug is
+    // an audit label only: decideSkillRun always uses the canonical skill_run mutation contract.
+    // An internal credential never borrows a body-named human's browser authority.
+    let skillCaller = await resolveSkillCaller(req, body, admin, null);
     const requestNonce = crypto.randomUUID();
     const governed = decideSkillRun({
-      skillSlug: skill.slug,
+      skillSlug: body.skill_slug,
       authenticated: skillCaller.authenticated,
       userId: skillCaller.userId,
       principal: skillCaller.principal,
@@ -679,9 +675,44 @@ Deno.serve(async (req) => {
       await writeGovernedSkillAudit(admin, skillCaller, governed.audit);
       return new Response(
         JSON.stringify({ status: "refused", code: governed.outcome.code, error: governed.outcome.message }),
-        { status: governed.outcome.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: governed.outcome.code === "unauthenticated" ? 401 : governed.outcome.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    const { data: skill, error: skillErr } = await admin
+      .from("paige_skills")
+      .select("*")
+      .eq("slug", body.skill_slug)
+      .maybeSingle();
+    if (skillErr || !skill) {
+      return new Response(JSON.stringify({ error: `Unknown skill: ${body.skill_slug}` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (skill.status !== "active") {
+      return new Response(JSON.stringify({ error: `Skill is ${skill.status}` }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Browser authority is an ADDITIONAL current-session/workspace/role check, never a substitute for
+    // the governed caller gate above. Known denials are 401/403, not generic server failures.
+    const hasBrowserStep = browserToolAllowed(skill as SkillRow);
+    let browserAuthority: SecureBrowserAuthority | null = null;
+    if (hasBrowserStep) {
+      try {
+        browserAuthority = await resolveBrowserAuthority(req, body, admin);
+      } catch (err) {
+        const code = err instanceof Error ? err.message : "";
+        if (!["browser_session_invalid", "browser_human_actor_required", "browser_active_workspace_required",
+          "browser_actor_not_authorized", "browser_contact_not_available", "browser_authority_unresolved"].includes(code)) throw err;
+        return new Response(JSON.stringify({ status: "refused", code, error: "Browser access is not authorized for the current session and workspace." }),
+          { status: code === "browser_session_invalid" ? 401 : 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (browserAuthority.actorUserId !== skillCaller.userId || browserAuthority.tenantId !== skillCaller.tenantId) {
+        return new Response(JSON.stringify({ status: "refused", code: "browser_workspace_changed", error: "The active session or workspace changed. Refresh before starting a new run." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      skillCaller = await resolveSkillCaller(req, body, admin, browserAuthority);
+    }
+    const callerTenantId = skillCaller.tenantId;
 
     // ── EXTERNAL SEND — draft_and_email_document requires a durable, single-use, fingerprint-bound
     // approval (reusing paige_pending_confirmations + confirm-fingerprint, §18). Its flow is two-phase,
@@ -739,8 +770,8 @@ Deno.serve(async (req) => {
 
     try {
       // Dispatch. Non-bespoke slugs (and force_interpreter) flow through the generic S1b interpreter;
-      // the 4 shipped slugs stay on their bespoke handlers below — byte-identical (§58 by construction),
-      // since force_interpreter defaults false and only NON-bespoke slugs otherwise take this path.
+      // the 4 shipped slugs stay on their own bespoke handlers below (§58, no interpreter replacement).
+      // force_interpreter defaults false; only NON-bespoke slugs otherwise take this path.
       if (shouldUseInterpreter(skill.slug, body.force_interpreter)) {
         // §9/§59 — the acting tenant is the CALLER's, resolved server-side above, NEVER the contact's
         // tenant and NEVER body.tenant_id. interpretSkill already scopes its OWN contact lookup to this
@@ -863,41 +894,77 @@ Deno.serve(async (req) => {
         }
         case "build_game_plan": {
           const contact_id = body.contact_id;
-          if (!contact_id) throw new Error("contact_id required");
-          // §9 — scope the contact to the CALLER's resolved tenant. A cross-tenant contact_id returns
-          // nothing and is refused BEFORE any memory is read or written under another tenant's client.
-          // The contact's PRIMARY email and phone ride along as `email` / `phone`, read from its
-          // contact methods (the clients row holds no address).
-          const { data: contactRow } = await admin.from("clients").select(`*, ${CLIENT_CONTACT_METHODS_EMBED}`).eq("id", contact_id).eq("tenant_id", callerTenantId).maybeSingle();
-          const contact = withPrimaryAddresses(contactRow);
-          if (!contact) throw new Error("contact not found in your workspace");
-          // client_memory carries no tenant_id; the contact above is already proven to be the caller's,
-          // so its memory (keyed by client_id) is in-tenant by construction.
-          const { data: memory } = await admin.from("client_memory").select("*").eq("client_id", contact_id).order("created_at", { ascending: false }).limit(10);
-          stepsLog.push({ step: "context", memory_count: memory?.length ?? 0 });
-          {
-            const ai = await gatewayCompat("anthropic", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "google/gemini-2.5-flash",
-                messages: [
-                  { role: "system", content: "You are Paige. Produce a personalized step-by-step game plan for this client. Use ACCEL/BUILD/FUND frameworks. Numbered steps, with owner + timeline per step. End with a 'next 7 days' checklist." },
-                  { role: "user", content: `Client: ${JSON.stringify(contact)}\n\nRecent memory:\n${JSON.stringify(memory)}` },
-                ],
-              }),
-            });
-            const aiData = await ai.json();
-            const plan = aiData?.choices?.[0]?.message?.content ?? "";
-            outputs = { game_plan: plan };
-            await admin.from("client_memory").insert({
-              client_id: contact_id,
-              memory_type: "game_plan",
-              content: plan,
-              metadata: { source: "skill:build_game_plan", run_id: run.id },
-            });
-            stepsLog.push({ step: "save_memory", ok: true });
+          if (!contact_id) throw new Error("Select the existing customer before preparing a game plan.");
+          // Original server-resolved business + CRM relationship, never a body tenant or email match.
+          // Do not send unrelated contact/financial/address fields to a service draft.
+          // Reuse authenticated PostgREST/RLS as the actual caller for private context.
+          // The service client remains the existing original-run recorder, not a read grant.
+          if (skillCaller.principal !== "person" || !skillCaller.userId) throw new Error("The customer draft needs an authorized signed-in business user.");
+          const caller = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+            global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
+          const businessAccess = async () => {
+            try {
+              const { data, error } = await caller.rpc("get_my_access");
+              return !error && !!data && (data.tier === "god" ? skillCaller.isApprovingAuthority
+                : ["tenant", "subaccount", "agency"].includes(data.tier) && data.account_id === callerTenantId);
+            } catch { return false; }
+          };
+          if (!await businessAccess()) throw new Error("This private business draft is not available to this account.");
+          const readClient = () => caller.from("clients").select("id,tenant_id,linked_user_id,first_name,last_name")
+            .eq("id", contact_id).eq("tenant_id", callerTenantId).maybeSingle();
+          let clientRead;
+          try { clientRead = await readClient(); } catch { throw new Error("The selected customer could not be verified in this workspace."); }
+          const { data: contact, error: contactError } = clientRead;
+          if (contactError || !contact) throw new Error("The selected customer could not be verified in this workspace.");
+          gamePlanContext({ tenantId: callerTenantId!, contactId: contact_id, client: contact, memory: [], inputs: {}, memoryAvailable: false });
+          const stillAuthorized = async () => {
+            if (req.signal.aborted) return false;
+            try {
+              const [scope, current, access] = await Promise.all([caller.rpc("current_user_tenant_id"), readClient(), businessAccess()]);
+              return access && !scope.error && scope.data === callerTenantId && !current.error && !!current.data
+                && current.data.id === contact_id && current.data.tenant_id === callerTenantId
+                && current.data.linked_user_id === contact.linked_user_id && !req.signal.aborted;
+            } catch { return false; }
+          };
+          let memory: unknown[] = [], memoryAvailable = !!contact.linked_user_id;
+          // No user is invented for an unlinked CRM contact. Existing linked-person Memory is
+          // read-only context; only active, confirmed facts in this exact business/relationship.
+          if (contact.linked_user_id) {
+            let read;
+            try { read = await caller.from("client_memory")
+              .select("id,client_id,tenant_id,client_user_id,memory_type,content,created_at,is_active,metadata")
+              .eq("client_id", contact_id).eq("tenant_id", callerTenantId)
+              .eq("client_user_id", contact.linked_user_id).eq("is_active", true)
+              .contains("metadata", { confirmation_state: "confirmed" })
+              .order("created_at", { ascending: false }).limit(10); }
+            catch { read = { data: null, error: true }; }
+            memoryAvailable = !read.error;
+            if (memoryAvailable && Array.isArray(read.data)) memory = read.data;
           }
+          const draft = gamePlanContext({ tenantId: callerTenantId!, contactId: contact_id,
+            client: contact, memory, inputs: body.inputs, memoryAvailable });
+          stepsLog.push({ step: "context", memory_count: draft.memoryCount, memory_available: memoryAvailable });
+          if (req.signal.aborted) throw new Error("The game-plan request was interrupted. No draft was saved.");
+          let ai: Awaited<ReturnType<typeof gatewayCompat>>;
+          try { ai = await gatewayCompat("anthropic", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model: "google/gemini-2.5-flash", messages: draft.messages }),
+          }, { tenant_id: callerTenantId, working_context_tenant_id: callerTenantId,
+            agent_id: "skill-runner", job_kind: "client_game_plan", content_policy: "metadata_only" },
+          stillAuthorized); } catch { throw new Error("The game plan could not be prepared. No draft was saved."); }
+          if (!ai.ok) throw new Error("The game plan could not be prepared. No draft was saved.");
+          let result: unknown;
+          try { result = await ai.json(); } catch { throw new Error("The game plan could not be prepared. No draft was saved."); }
+          const plan = readGamePlanCompletion(result);
+          if (req.signal.aborted) throw new Error("The game-plan request was interrupted. No draft was saved.");
+          if (!await stillAuthorized()) throw new Error("Customer access changed or the request was interrupted. No draft was saved.");
+          outputs = { game_plan: plan };
+          // The original run below is the draft's durable home. Generating a recommendation
+          // does not silently publish/share it or turn it into a confirmed Memory fact.
+          stepsLog.push({ step: "prepare_draft", ok: true, memory_changed: false });
           break;
         }
         // NOTE: `draft_and_email_document` is NOT dispatched here. As the one EXTERNAL-SEND skill it is
@@ -916,7 +983,7 @@ Deno.serve(async (req) => {
     }
 
     const duration_ms = Date.now() - start;
-    await admin.from("paige_skill_runs")
+    const completion = admin.from("paige_skill_runs")
       .update({
         status: runStatus,
         steps_log: stepsLog,
@@ -926,6 +993,14 @@ Deno.serve(async (req) => {
         completed_at: new Date().toISOString(),
       })
       .eq("id", run.id);
+    if (skill.slug === "build_game_plan" && !shouldUseInterpreter(skill.slug, body.force_interpreter)) {
+      let acknowledged = false;
+      try { acknowledged = recordedGamePlan(await completion.select("id,status,outputs").maybeSingle(), { runId: run.id, status: runStatus, outputs }); }
+      catch { /* Lost acknowledgement is unknown, never a reason to repeat generation. */ }
+      if (!acknowledged) return new Response(JSON.stringify({ run_id: run.id, status: "outcome_unknown", outcome_unknown: true,
+        error: "The saved result could not be verified. Check this original run before starting another." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    } else await completion;
 
     await admin.from("paige_skills")
       .update({

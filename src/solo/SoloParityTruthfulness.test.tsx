@@ -2,13 +2,17 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SoloSkill } from "./data/useSoloSkills";
+import type { SoloSkill, SoloSkillsData } from "./data/useSoloSkills";
 import type { ResearchRunDetail, ResearchRunRow } from "./data/deepResearch";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
 import { ResearchView } from "./paige-research";
 
 const harness = vi.hoisted(() => ({
+  rpc: vi.fn(async () => ({ data: { state: "not_acknowledged" } as { state: string; acknowledgedAt?: string; revokedAt?: string; expiresAt?: string }, error: null as unknown })),
   tenantId: "test-tenant-a",
+  actorId: "test-actor-a",
+  skillsEntitled: true,
+  from: vi.fn(),
   skills: [] as SoloSkill[],
   loading: false,
   error: null as string | null,
@@ -23,8 +27,9 @@ const harness = vi.hoisted(() => ({
   start: vi.fn(),
 }));
 
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: harness.tenantId, activeTenant: { account_number: "42" } }) }));
-vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => true, loading: false }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUserId: harness.actorId, activeTenantId: harness.tenantId, activeTenant: { account_number: "42" } }) }));
+vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => harness.skillsEntitled, tierKey: "solo", loading: false }) }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: harness.from, rpc: harness.rpc, functions: { invoke: vi.fn() } } }));
 vi.mock("@/components/dashboard/PaigeAIChat", () => ({ PaigeAIChat: () => <div>Existing Chat</div> }));
 vi.mock("@/components/dashboard/paige/PaigeComposerAutonomyChip", () => ({ PaigeComposerAutonomyChip: () => null }));
 vi.mock("./weekly/WeeklyResponsibilityEntry", () => ({ WeeklyResponsibilityEntry: () => null }));
@@ -55,7 +60,9 @@ const rowFor = (name: string) => Array.from(host.querySelectorAll<HTMLElement>("
 
 beforeEach(() => {
   vi.clearAllMocks();
-  Object.assign(harness, { tenantId: "test-tenant-a", skills: [], loading: false, error: null, rows: [], detail: null, listError: null, detailError: null });
+  harness.rpc.mockReset(); harness.rpc.mockResolvedValue({ data: { state: "not_acknowledged" }, error: null });
+  harness.from.mockReset();
+  Object.assign(harness, { tenantId: "test-tenant-a", actorId: "test-actor-a", skillsEntitled: true, skills: [], loading: false, error: null, rows: [], detail: null, listError: null, detailError: null });
   host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
@@ -63,6 +70,36 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
 
 describe("SOLO catalogue truthfulness", () => {
+  it.each([
+    ["limited", "Limited"], ["coming_soon", "Coming Soon"], ["unverified", "Unverified"],
+  ])("shows declared %s coverage while keeping runtime access unverified", async (state, label) => {
+    harness.skills = [skill({ catalogueCoverage: { version: 1, state } })];
+    await renderCapabilities();
+    const row = rowFor("Registered public browse");
+    expect(row.querySelector(".spw-truth")?.textContent).toBe(label);
+    expect(row.lastElementChild?.textContent).toBe("Unverified");
+    expect(row.querySelector(".spw-truth-live")).toBeNull();
+    expect(host.textContent).toContain("PAIGE checks permissions and connections when you ask");
+  });
+
+  it("does not convert metadata Live, provider flags or inactive rows into access", async () => {
+    harness.skills = [skill({ catalogueCoverage: { version: 1, state: "live", providerReady: true } })];
+    await renderCapabilities();
+    expect(rowFor("Registered public browse").textContent).toContain("Listed");
+    harness.skills = [skill({ on: false, catalogueCoverage: { version: 1, state: "limited" } })];
+    await renderCapabilities();
+    expect(rowFor("Registered public browse").textContent).toContain("Inactive");
+    expect(rowFor("Registered public browse").lastElementChild?.textContent).toBe("Unverified");
+  });
+
+  it("remounts catalogue state when the authenticated subject changes within one workspace", async () => {
+    await renderCapabilities();
+    const before = host.querySelector(".spw-management-view");
+    harness.actorId = "test-actor-b";
+    await renderCapabilities();
+    expect(host.querySelector(".spw-management-view")).not.toBe(before);
+  });
+
   it("shows an active read skill as listed with unverified access, without claiming it can run", async () => {
     harness.skills = [skill()];
     await renderCapabilities();
@@ -120,6 +157,63 @@ describe("SOLO catalogue truthfulness", () => {
     // Known composer/unsupported-substrate rows retain their distinct existing facts.
     expect(rowFor("Voice input").textContent).toContain("Available");
     expect(rowFor("Code or sandbox execution").textContent).toContain("Unavailable");
+    // Dictation stays distinguishable from two-way Live (capabilities directive): Live audio is
+    // OFF until its own terms are accepted in the Live surface, so its honest access state is
+    // consent-required — never Active — and the onboarding row may not claim voice works before
+    // that consent exists.
+    expect(rowFor("Live Conversation").textContent).toContain("Consent required");
+    expect(rowFor("Live Conversation").textContent).toContain("Not activated yet");
+    expect(rowFor("Live Conversation").textContent).toContain("Two-way voice");
+    expect(rowFor("Onboarding & business discovery").textContent).toContain("Available");
+    expect(rowFor("Onboarding & business discovery").textContent).toContain("needs Live Conversation turned on");
+    // The row derives THIS account's truth from the canonical status read (#2611 P2-3):
+    // default not_acknowledged keeps the consent copy; acknowledged flips to turned-on
+    // truth WITHOUT claiming audio verified; revoked/expired/errors stay honest.
+    expect(rowFor("Live Conversation").textContent).toContain("Consent required");
+    expect(rowFor("Live Conversation").textContent).toContain("Not activated yet");
+    const remount = async () => { await act(async () => { root.unmount(); }); host.remove(); host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host); await act(async () => { root.render(<MemoryRouter><SoloPaigeWorkspace dockedTab="capabilities" /></MemoryRouter>); }); };
+    harness.rpc.mockResolvedValue({ data: { state: "acknowledged", acknowledgedAt: "2026-10-23T00:00:00Z", expiresAt: "2027-10-23T00:00:00Z" }, error: null });
+    await remount();
+    expect(rowFor("Live Conversation").textContent).toContain("Turned on for this account");
+    expect(rowFor("Live Conversation").textContent).not.toContain("audio verified");
+    harness.rpc.mockResolvedValue({ data: { state: "revoked", revokedAt: "2026-10-22T00:00:00Z" }, error: null });
+    await remount();
+    expect(rowFor("Live Conversation").textContent).toContain("Revoked");
+    harness.rpc.mockResolvedValue({ data: null, error: { code: "X" } });
+    await remount();
+    expect(rowFor("Live Conversation").textContent).toContain("Unverified");
+    harness.rpc.mockResolvedValue({ data: { state: "expired" }, error: null });
+    await remount();
+    expect(rowFor("Live Conversation").textContent).toContain("Consent expired");
+  });
+});
+
+describe("actual registry adapter coverage projection", () => {
+  it("selects only public coverage metadata and preserves the active-row and tier gates", async () => {
+    const query = { select: vi.fn(), eq: vi.fn(), order: vi.fn(), limit: vi.fn() };
+    query.select.mockReturnValue(query); query.eq.mockReturnValue(query); query.order.mockReturnValue(query);
+    query.limit.mockResolvedValue({ data: [{ slug: "test-skill", name: "Test skill", description: "Test description", category: "analytics_interpretation", risk_level: "read_only", status: "active", run_count: 0, success_count: 0, trigger_phrases: [], tier_availability: { solo: "yes" }, catalogue_coverage: { version: 1, state: "limited" } }], error: null });
+    harness.from.mockReturnValue(query);
+    const { useSoloSkills: useActualSkills } = await vi.importActual<typeof import("./data/useSoloSkills")>("./data/useSoloSkills");
+    let latest: SoloSkillsData | null = null;
+    function Probe() { latest = useActualSkills(); return null; }
+    await act(async () => { root.render(<Probe />); });
+    expect(harness.from).toHaveBeenCalledWith("paige_skills");
+    const columns = query.select.mock.calls[0][0].split(",");
+    expect(columns).toContain("catalogue_coverage:metadata->catalogue_coverage");
+    expect(columns).not.toContain("metadata");
+    expect(query.eq).toHaveBeenCalledWith("status", "active");
+    expect(latest!.skills[0].catalogueCoverage).toEqual({ version: 1, state: "limited" });
+  });
+
+  it("does not query the registry for a tier without self-use entitlement", async () => {
+    harness.skillsEntitled = false;
+    const { useSoloSkills: useActualSkills } = await vi.importActual<typeof import("./data/useSoloSkills")>("./data/useSoloSkills");
+    let latest: SoloSkillsData | null = null;
+    function Probe() { latest = useActualSkills(); return null; }
+    await act(async () => { root.render(<Probe />); });
+    expect(harness.from).not.toHaveBeenCalled();
+    expect(latest!.skills).toEqual([]);
   });
 });
 
@@ -140,7 +234,7 @@ describe("SOLO Research library guidance and existing read paths", () => {
     await renderResearch();
     await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Open research: Saved investigation"]')!.click());
     expect(harness.open).toHaveBeenCalledWith("test-run-a");
-    harness.detail = { ...harness.rows[0], findings: [{ text: "Persisted cited finding", citations: [1], confidence: "high" }], coverage: {}, entity_profile: null, sources: [{ index: 1, url: "https://example.org/source", title: "Saved source", snippet: null, reliability_score: null, tier: null, reliability: null, published_at: null, fetched_at: null, excluded: false }] };
+    harness.detail = { ...harness.rows[0], evidenceComplete: true, findings: [{ text: "Persisted cited finding", citations: [1], confidence: "high" }], coverage: {}, entity_profile: null, sources: [{ index: 1, url: "https://example.org/source", title: "Saved source", snippet: null, reliability_score: null, tier: null, reliability: null, published_at: null, fetched_at: null, excluded: false }] };
     await renderResearch();
     expect(host.querySelector('[aria-label="Findings"]')?.textContent).toContain("Persisted cited finding");
     expect(host.querySelector('a[href="https://example.org/source"]')?.getAttribute("rel")).toContain("noopener");

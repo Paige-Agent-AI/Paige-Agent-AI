@@ -59,11 +59,15 @@ const choices = {
   stages: [{ key: "new_lead", count: 312 }, { key: "client_active", count: 428 }, { key: "qualified", count: 96 }, { key: "nurturing", count: 71 }, { key: "client_alumni", count: 58 }],
   sources: [{ key: "paige_form", count: 340 }, { key: "manual", count: 211 }, { key: "referral", count: 44 }, { key: "import", count: 402 }],
   tags: [{ key: "newsletter", count: 391 }, { key: "spring-webinar", count: 161 }, { key: "vip", count: 37 }, { key: "podcast", count: 22 }],
+  // E09 C1: customers whose portal access is open today.
+  portal: { open: 37 },
 };
 const body = "Hi there,\n\nThanks for joining us. Here is what happens next:\n\n- A short intro call to learn what you need\n- A plan for your first month\n- A check-in after two weeks\n\n[[Book your intro call|https://northfield.example/book]]\n\nTalk soon,\nDana";
 const encoded = btoa(String.fromCharCode(...new TextEncoder().encode(body)));
+// E09 C1: `?campaign=c-announce` opens a draft announcement addressed to customers with portal access.
+const announce = { ...campaigns[4], id: "c-announce", name: "Spring hours", kind: "announcement", version_id: "v-announce" };
 const versionFor = (id: string) => {
-  const c = campaigns.find((x) => x.id === id) ?? campaigns[4];
+  const c = id === "c-announce" ? announce : campaigns.find((x) => x.id === id) ?? campaigns[4];
   const locked = c.status !== "draft";
   return {
     campaign: { id: c.id, name: c.name, kind: c.kind, status: c.status, blocked_reason: c.blocked_reason, updated_at: c.updated_at },
@@ -71,7 +75,7 @@ const versionFor = (id: string) => {
       subject: c.subject || "Welcome — here is what happens next", preheader: "Your first steps with Northfield",
       body_html: `<!--paige-src:${encoded}-->\n<p>${body}</p>`,
       sender: { mode: "connector", connector_id: "conn-1" }, sender_snapshot: locked ? { mode: "connector", from_address: "dana@northfield.example", from_name: "Dana at Northfield", ok: true } : null,
-      audience: c.id === "c-draft" ? { stages: ["new_lead"] } : { tags: ["spring-webinar"] }, segment_id: null, scheduled_for: null,
+      audience: c.id === "c-announce" ? { portal: "active" } : c.id === "c-draft" ? { stages: ["new_lead"] } : { tags: ["spring-webinar"] }, segment_id: null, scheduled_for: null,
       conversion_goal: c.conversion_goal, expected_recipients: c.recipients, cost_bound_usd: null, approval_id: locked ? "a-1" : null, approved_at: null },
     approval: c.status === "pending_approval" ? { status: "pending", source: "owner" } : null,
     last_declined: c.id === "c-draft" ? { reason: "Make the opening warmer and add the call link.", at: iso(0, 6), version_no: 1 } : null,
@@ -151,7 +155,9 @@ function rpc(name: string, args: Record<string, unknown> = {}): Promise<Answer> 
     case "read_email_marketing_dashboard": return answer(mode === "first" ? EMPTY : dashboard(Number(args.p_days) || 30));
     case "read_email_campaign": return answer(versionFor(String(args.p_campaign_id)));
     case "read_email_rule_choices": return answer(choices);
-    case "email_audience_preview": return answer({ matched: 161, eligible: 148, no_address: 9, opted_out: 3, suppressed: 1, no_consent: 0, daily_cap: 500, remaining_today: 352, postal_address_set: true });
+    case "email_audience_preview": return answer((args.p_rule as { portal?: string } | undefined)?.portal
+      ? { matched: 37, eligible: 33, no_address: 0, opted_out: 0, suppressed: 0, no_consent: 4, daily_cap: 500, remaining_today: 352, postal_address_set: true }
+      : { matched: 161, eligible: 148, no_address: 9, opted_out: 3, suppressed: 1, no_consent: 0, daily_cap: 500, remaining_today: 352, postal_address_set: true });
     case "email_campaign_update_draft": return Promise.resolve({ data: "v-draft", error: null });
     case "read_email_sequences": return answer({ sequences: mode === "first" ? [] : seriesRows });
     case "read_email_sequence": return answer(seriesFor(String(args.p_sequence_id)));

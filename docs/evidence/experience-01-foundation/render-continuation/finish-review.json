@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/render_evidence_review",
+  "nonAuthor": true,
+  "verdict": "SHIP",
+  "scope": "Bounded actual component/Card/Solo shell with synthetic providers and reserved transcript/composer; no authenticated Chat",
+  "sourceParent": "180817d2a28edff4a462a0002c5ea8d386091367",
+  "componentSha256": "5713f051b2c1d111ad11013bf61dd13d327deac13005069b48e4aadf6fac7145",
+  "cssSha256": "78ef156374ac6a320118df45d7905099e638b1f50adfd45b9d57972f84e6d178",
+  "matrix": "matrix.json",
+  "frames": 32,
+  "materialFixes": [],
+  "limits": [
+    "First-use guidance/long content itself below mounting screenshots",
+    "Reduced-motion activation supported by browser drive, not a still image",
+    "Native200%zoom, screen reader, current rendered checkpoint-write failure, production persistence and real Chat remain UNVERIFIED"
+  ],
+  "contrast": [
+    {
+      "theme": "light",
+      "frame": "light-primary-1366x768-open",
+      "foreground": "rgb(33, 30, 36)",
+      "background": "rgb(251, 248, 244)",
+      "secondary": "rgb(103, 97, 107)",
+      "bodyContrast": 15.55,
+      "secondaryContrast": 5.67,
+      "assurance": "Computed rendered token colors, not every pixel or a complete accessibility audit"
+    },
+    {
+      "theme": "dark",
+      "frame": "dark-primary-1366x768-open",
+      "foreground": "rgb(246, 242, 234)",
+      "background": "rgb(17, 15, 21)",
+      "secondary": "rgb(173, 167, 159)",
+      "bodyContrast": 17.05,
+      "secondaryContrast": 7.98,
+      "assurance": "Computed rendered token colors, not every pixel or a complete accessibility audit"
+    }
+  ]
+}

@@ -16,8 +16,10 @@
  */
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import ts from "typescript";
+import * as nodeUtil from "node:util";
+import { draftClaimedAction } from "../../supabase/functions/paige-action-worker/draft.ts";
 
 const root = join(__dirname, "..", "..");
 const fnDir = join(root, "supabase/functions");
@@ -81,14 +83,20 @@ function fakeSupabase(h: Harness, cronValid: boolean) {
   };
 }
 
+// Cache only compilation TEXT, never modules, authority, fixtures or results. Every
+// original/mutated source has its own key; each load still constructs fresh modules
+// and injected ports. Bound repeated compilation of the shared Fabric/registry
+// graph without caching any runtime or authorization decision.
+const compiledSource = new Map<string, string>();
+
 /** Load an edge function's REAL source (transpiled) with Deno + npm/URL imports stubbed and every
  *  relative import loaded for real, unless named in `stubs`. `mutate` rewrites one file's source. */
 function loadEdge(
   fn: string,
-  opts: { cronValid?: boolean; stubs?: Record<string, unknown>; mutate?: Record<string, (s: string) => string> } = {},
+  opts: { cronValid?: boolean; stubs?: Record<string, unknown>; mutate?: Record<string, (s: string) => string>; database?: () => unknown } = {},
 ): Harness {
   const h = { from: [], writes: [], rpc: [] } as unknown as Harness;
-  const supa = fakeSupabase(h, opts.cronValid ?? false);
+  const supa = opts.database ? { createClient: opts.database } : fakeSupabase(h, opts.cronValid ?? false);
   const env: Record<string, string> = {
     SUPABASE_URL: "https://example.supabase.co",
     SUPABASE_SERVICE_ROLE_KEY: SERVICE,
@@ -99,23 +107,28 @@ function loadEdge(
   const load = (abs: string): unknown => {
     if (cache.has(abs)) return cache.get(abs);
     let src = readFileSync(abs, "utf8");
-    const rel = abs.slice(fnDir.length + 1);
+    // Fixture dictionaries use portable paths. Windows separators previously
+    // skipped the requested mutations/stubs and tested the original handler.
+    const rel = abs.slice(fnDir.length + 1).replace(/\\/g, "/");
     if (opts.mutate?.[rel]) {
       const before = src;
       src = opts.mutate[rel](src);
       if (src === before) throw new Error(`mutation for ${rel} matched nothing`);
     }
-    const out = ts.transpileModule(src, {
+    const compileKey = `${abs}\0${src}`;
+    const out = compiledSource.get(compileKey) ?? ts.transpileModule(src, {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
+    compiledSource.set(compileKey, out);
     const mod = { exports: {} as Record<string, unknown> };
     cache.set(abs, mod.exports);
     const req = (spec: string): unknown => {
+      if (spec === "node:util") return nodeUtil;
       if (spec.endsWith("/cors")) return { corsHeaders: {} };
       if (spec.startsWith("npm:@supabase/supabase-js") || spec.includes("esm.sh/@supabase/supabase-js")) return supa;
       if (spec.startsWith(".")) {
         const target = resolve(dirname(abs), spec);
-        const key = target.slice(fnDir.length + 1);
+        const key = target.slice(fnDir.length + 1).replace(/\\/g, "/");
         if (opts.stubs && key in opts.stubs) return opts.stubs[key];
         return load(target);
       }
@@ -251,12 +264,111 @@ const ORCH_STUBS = {
 // No contact selector: C0 asserts WHO may invoke; contact binding is C1's suite (int310-c1-resource-binder).
 const invoke = { action: "tool_invoke", slug: "email-composer", input: { intent: "x" } };
 
+// Exercise the REAL whole handler and canonical capability recorder. Only the
+// database/model transports are synthetic; no provider or production record.
+function durableSpecialist(options: { insert?: "error" | "invalid"; update?: "error" | "missing" | "mismatch" | "wrong-id" | "throw"; receipt?: "error" | "throw"; runtimeThrows?: boolean; actorlessWorker?: boolean } = {}) {
+  const id = "cccccccc-2222-4222-8222-222222222222";
+  const rows: Record<string, unknown>[] = [];
+  const rpc = vi.fn(async (_name: string, ..._args: unknown[]) => {
+    if (options.receipt === "throw") throw new Error("synthetic receipt disconnect");
+    return { data: true, error: options.receipt === "error" ? { message: "synthetic receipt refusal" } : null };
+  });
+  const model = vi.fn(async () => {
+    if (options.runtimeThrows) throw new Error("synthetic model interruption");
+    return { choices: [{ message: { content: "Synthetic planning draft" } }] };
+  });
+  const database = () => ({
+    auth: { getUser: async () => ({ data: { user: { id: USER_A } }, error: null }) },
+    rpc: async (name: string, ...args: unknown[]) => name === "get_paige_persona_context"
+      ? { data: [{ tenant_id: TENANT_A, funding_enabled: false }], error: null }
+      : name === "is_tenant_admin_as" ? { data: true, error: null }
+      : name === "agency_can_manage_child" ? { data: false, error: null } : rpc(name, ...args),
+    from(table: string) {
+      let mode = "read", patch: Record<string, unknown> = {};
+      const result = () => {
+        if (table === "paige_subagents") return { data: { id: CONTACT, version: 1, slug: "zion", name: "ZION", runtime: "soft", domain: "operations", enabled: true, system_prompt: "Synthetic registered instructions", config: {}, tenant_id: null }, error: null };
+        if (table === "user_roles") return { data: [], error: null };
+        if (table === "tenant_members") return { data: { role: "owner" }, error: null };
+        if (mode === "insert") return { data: options.insert === "error" ? null : { id: options.insert === "invalid" ? "not-a-work-identity" : id }, error: options.insert === "error" ? { message: "synthetic insert failure" } : null };
+        if (options.update === "throw") throw new Error("synthetic lost update response");
+        return { data: options.update === "missing" ? null : { id: options.update === "wrong-id" ? CONTACT : id, status: options.update === "mismatch" ? "pending" : patch.status }, error: options.update === "error" ? { message: "synthetic update failure" } : null };
+      };
+      const chain = {
+        select: () => chain, eq: () => chain, or: () => chain, is: () => chain, limit: () => chain,
+        insert: (row: Record<string, unknown>) => { mode = "insert"; rows.push(row); return chain; },
+        update: (row: Record<string, unknown>) => { mode = "update"; patch = row; return chain; },
+        single: async () => result(), maybeSingle: async () => result(),
+        then: (resolve: (value: unknown) => void) => Promise.resolve(result()).then(resolve),
+      };
+      return chain;
+    },
+  });
+  const h = loadEdge("paige-orchestrator", { database, stubs: { ...ORCH_STUBS,
+    "_shared/model-router.ts": { ...ORCH_STUBS["_shared/model-router.ts"], pickRoute: () => ({ tier: "classification" }), routedChatCompletion: model },
+    "_shared/model-fabric.ts": { fabricCompletion: async (_request: unknown, options: { beforeProviderAttempt: () => Promise<boolean> }) => {
+      if (!await options.beforeProviderAttempt()) return { ok: false, error: { failure: "caller_refused" } };
+      return { ok: true, response: await model() };
+    } },
+  } });
+  const run = (body: unknown = { action: "tool_invoke", slug: "zion", input: { request: "Synthetic read-only plan" }, context: { user_id: "forged-actor" } }) => h.handler(post(body, bearer(options.actorlessWorker ? SERVICE : USER_JWT)));
+  return { id, rows, rpc, model, run };
+}
+
+describe("EXP05 original specialist durable outcome", () => {
+  it.each(["error", "invalid"] as const)("cannot dispatch when original invocation insert is %s", async insert => {
+    const h = durableSpecialist({ insert }); const r = await h.run();
+    expect(r.status).toBe(503); expect(await r.json()).toMatchObject({ ok: false, not_applied: true });
+    expect(h.model).not.toHaveBeenCalled(); expect(h.rpc).not.toHaveBeenCalled();
+  });
+  it.each(["error", "missing", "mismatch", "wrong-id", "throw"] as const)("a %s original outcome acknowledgment is unknown, never completed or retried", async update => {
+    const h = durableSpecialist({ update }); const r = await h.run(); const body = await r.json();
+    expect(body).toMatchObject({ ok: false, outcome_unknown: true, invocation_id: h.id });
+    expect(body).not.toHaveProperty("result"); expect(h.model).toHaveBeenCalledOnce(); expect(h.rpc).not.toHaveBeenCalled();
+  });
+  it.each(["error", "throw"] as const)("a %s at the canonical receipt does not become verified completion", async receipt => {
+    const h = durableSpecialist({ receipt }); const r = await h.run();
+    expect(await r.json()).toMatchObject({ ok: false, outcome_unknown: true, invocation_id: h.id, outcome_recorded: true, receipt_unverified: true });
+    expect(h.model).toHaveBeenCalledOnce(); expect(h.rpc).toHaveBeenCalledOnce();
+  });
+  it("verified completion retains the original actor, invocation and canonical receipt", async () => {
+    const h = durableSpecialist(); const r = await h.run();
+    expect(r.status).toBe(200); expect(await r.json()).toMatchObject({ ok: true, invocation_id: h.id, receipt_recorded: true });
+    expect(h.rows[0]).toMatchObject({ invoked_by: USER_A, tenant_id: TENANT_A, subagent_slug: "zion" });
+    expect(h.model).toHaveBeenCalledOnce(); expect(h.rpc).toHaveBeenCalledOnce();
+  });
+  it("a confirmed runtime refusal retains its failed outcome and original receipt", async () => {
+    const h = durableSpecialist({ runtimeThrows: true }); const r = await h.run();
+    expect(r.status).toBe(502); expect(await r.json()).toMatchObject({ ok: false, receipt_recorded: true, invocation_id: h.id });
+    expect(h.rpc.mock.calls[0][1]).toMatchObject({ _run_id: h.id, _actor_id: USER_A, _tenant_id: TENANT_A, _outcome: "capability_failed" });
+    expect(h.model).toHaveBeenCalledOnce();
+  });
+  it("the original actorless ActionBus draft remains usable without an invented actor or receipt", async () => {
+    const h = durableSpecialist({ actorlessWorker: true }), advance = vi.fn(async () => ({ error: null }));
+    const result = await draftClaimedAction({ rpc: advance, invoke: async request => {
+      const response = await h.run(request), body = await response.json();
+      expect(body).toMatchObject({ ok: true, invocation_id: h.id, receipt_recorded: false });
+      return { httpOk: response.ok, status: response.status, body };
+    } }, { id: CONTACT, tenant_id: TENANT_A, action_kind: "owner.synthetic_plan", contact_id: null,
+      conversation_id: null, title: "Synthetic bounded draft", summary: null, payload: {}, draft_subagent_slug: "zion" });
+    expect(result).toMatchObject({ kind: "drafted", invocationId: h.id });
+    expect(h.rows[0]).toMatchObject({ invoked_by: null, tenant_id: TENANT_A });
+    expect(h.rpc).not.toHaveBeenCalled(); expect(h.model).toHaveBeenCalledOnce();
+    expect(advance).toHaveBeenCalledWith("advance_action", expect.objectContaining({ p_invocation_id: h.id, p_tenant_id: TENANT_A }));
+  });
+});
+
 describe("INT-310 C0 — paige-orchestrator tool_invoke needs a real actor", () => {
   it("anon-role JWT (no verified person) → 401 before any sub-agent is resolved", async () => {
     const h = loadEdge("paige-orchestrator", { stubs: ORCH_STUBS });
     const res = await h.handler(post(invoke, bearer(ANON)));
     expect(res.status).toBe(401);
     expect(h.from).not.toContain("paige_subagents");
+    expect(h.from).not.toContain("paige_subagent_invocations");
+  });
+  it("a body claiming actorless-service authority cannot promote an anonymous caller", async () => {
+    const h = loadEdge("paige-orchestrator", { stubs: ORCH_STUBS });
+    const res = await h.handler(post({ ...invoke, slug: "zion", actorlessService: true, isService: true, tenant_id: TENANT_A }, bearer(ANON)));
+    expect(res.status).toBe(401); expect(h.from).not.toContain("paige_subagents");
     expect(h.from).not.toContain("paige_subagent_invocations");
   });
   it("a verified signed-in person still proceeds to sub-agent resolution", async () => {
@@ -335,5 +447,178 @@ describe("INT-313 — subagent-forge: X-Orchestrator-Call is a signal, never aut
     const res = await h.handler(post(victimPropose, { ...bearer(USER_JWT), "X-Orchestrator-Call": "1" }));
     expect(res.status).not.toBe(403);
     expect(h.from.length).toBeGreaterThan(0);
+  });
+});
+
+// Original-assignment reentry exercises the SAME full handler/authority loader.
+function specialistReentry(options: {
+  actor?: string; tenant?: string; member?: boolean; admin?: boolean; globalOnly?: boolean;
+  state?: string; source?: "missing" | "error"; receipt?: "missing" | "error" | "conflict" | "wrong-attempt" | "foreign" | "wrong-source" | "wrong-key";
+  revokeAfter?: "invocation" | "receipt"; runtime?: string; legacyOutput?: boolean; many?: boolean;
+  registration?: "foreign" | "funding"; changeAfterRead?: boolean; changeContactAfterRead?: boolean; bigResponse?: boolean;
+} = {}) {
+  const id = "dddddddd-3333-4333-8333-333333333333";
+  let switched = false, invocationReads = 0;
+  const reads: Array<{ table: string; key: unknown; selected: string }> = [];
+  const writes: string[] = [];
+  const model = vi.fn(() => { throw Error("A read must never dispatch a model"); });
+  const database = (...clientArgs: unknown[]) => ({
+    auth: { getUser: async () => ({ data: { user: { id: USER_A } }, error: null }) },
+    rpc: async (name: string) => {
+      if (name === "get_paige_persona_context") return { data: [{ tenant_id: switched ? CONTACT : TENANT_A, funding_enabled: false }], error: null };
+      if (name === "is_tenant_admin_as") return { data: options.member !== true && !options.globalOnly, error: null };
+      if (name === "agency_can_manage_child") return { data: false, error: null };
+      throw Error("Unexpected RPC " + name);
+    },
+    from(table: string) {
+      const entry = { table, key: clientArgs[1], selected: "" }; reads.push(entry);
+      let data: Array<Record<string, unknown>> = table === "tenant_members"
+        ? options.globalOnly ? [] : [{ role: options.member ? "member" : options.admin ? "admin" : "owner", status: "active", tenant_id: TENANT_A, user_id: USER_A }]
+        : table === "user_roles" ? options.globalOnly ? [{ role: "super_admin", user_id: USER_A }] : []
+        : table === "paige_subagents" ? [{ id: CONTACT, version: 2, slug: "zion", name: "ZION", domain: options.registration === "funding" ? "funding" : "operations", description: "", runtime: options.runtime ?? "soft", tenant_id: options.registration === "foreign" ? CONTACT : null, enabled: true, system_prompt: "PRIVATE_INSTRUCTIONS", config: {} }]
+        : table === "paige_subagent_invocations" ? options.source === "missing" ? [] : [{
+          id, invoked_by: options.actor ?? USER_A, tenant_id: options.tenant ?? TENANT_A,
+          subagent_slug: "zion", status: options.state ?? "succeeded", contact_id: null,
+          output: options.legacyOutput ? { raw: "PRIVATE_LEGACY" } : { ok: true, agent: "zion", answer: options.bigResponse ? "x".repeat(9000) : "Original planning response" },
+          created_at: "2026-10-23T12:00:00Z", input: { secret: "PRIVATE_INPUT" }, error: "PRIVATE_PROVIDER_ERROR",
+        }]
+        : table === "paige_workspace_events" ? options.receipt === "missing" ? [] : [
+          { id: CONTACT, tenant_id: TENANT_A, actor_id: options.receipt === "foreign" ? CONTACT : USER_A, source_kind: "capability_run", source_id: options.receipt === "wrong-source" ? CONTACT : id,
+            source_revision: 0, capability_key: options.receipt === "wrong-key" ? "OTHER_CAPABILITY" : "subagent_invoke", actor_agent_slug: "zion",
+            outcome: options.state === "failed" ? "capability_failed" : "capability_succeeded",
+            job_attempt_id: options.receipt === "wrong-attempt" ? "OTHER_ATTEMPT" : `subagent-invocation:${id}:run`, occurred_at: "2026-10-23T12:00:01Z" },
+          ...(options.receipt === "conflict" ? [{ id: TENANT_A, tenant_id: TENANT_A, actor_id: USER_A, source_kind: "capability_run", source_id: id, source_revision: 0, capability_key: "subagent_invoke", actor_agent_slug: "zion", outcome: "capability_failed", job_attempt_id: `subagent-invocation:${id}:run` }] : []),
+        ] : (() => { throw Error("Unexpected read " + table); })();
+      if (table === "paige_subagent_invocations" && options.many && data.length) data = Array.from({ length: 9 }, (_, index) => ({
+        ...data[0], id: `dddddddd-3333-4333-8333-${String(index + 1).padStart(12, "0")}`,
+      }));
+      const result = (single = false) => {
+        if (table === "paige_subagent_invocations" && ++invocationReads > 1) {
+          if (options.changeAfterRead) data = data.map(row => ({ ...row, status: "failed" }));
+          if (options.changeContactAfterRead) data = data.map(row => ({ ...row, contact_id: CONTACT }));
+        }
+        if (options.revokeAfter === "invocation" && table === "paige_subagent_invocations"
+          || options.revokeAfter === "receipt" && table === "paige_workspace_events") switched = true;
+        if (table === "paige_subagent_invocations" && options.source === "error"
+          || table === "paige_workspace_events" && options.receipt === "error") return { data: null, error: { message: "PRIVATE_TRANSPORT_DETAIL" } };
+        const keys = entry.selected.split(",");
+        const projected = data.map(row => Object.fromEntries(keys.map(key => [key, row[key]])));
+        return { data: single ? projected[0] ?? null : projected, error: null };
+      };
+      const chain = {
+        select: (keys: string) => { entry.selected = keys; return chain; },
+        eq: (key: string, value: unknown) => { data = data.filter(row => row[key] === value); return chain; },
+        is: (key: string, value: unknown) => { data = data.filter(row => row[key] === value); return chain; },
+        or: () => chain, limit: (count: number) => { data = data.slice(0, count); return chain; },
+        order: () => chain, maybeSingle: async () => result(true),
+        then: (resolve: (value: unknown) => void) => Promise.resolve(result()).then(resolve),
+        insert: () => { writes.push(table); throw Error("No write on reentry"); },
+        update: () => { writes.push(table); throw Error("No update on reentry"); },
+      };
+      return chain;
+    },
+  });
+  const h = loadEdge("paige-orchestrator", { database, stubs: {
+    ...ORCH_STUBS, "_shared/model-router.ts": { ...ORCH_STUBS["_shared/model-router.ts"], routedChatCompletion: model },
+    "_shared/model-fabric.ts": { fabricCompletion: model },
+  } });
+  return { id, reads, writes, model, run: async (extra = {}, token = USER_JWT) => {
+    const response = await h.handler(post({ action: "tool_search", invocation_id: id, tenant_id: TENANT_A, ...extra }, bearer(token)));
+    return { status: response.status, body: await response.json() };
+  } };
+}
+
+describe("EXP05 original specialist assignment discovery", () => {
+  it("finds an original own identity without returning private response text or inventing receipts", async () => {
+    const h = specialistReentry(), r = await h.run({ invocation_id: undefined, recent_assignments: true });
+    expect(r.status).toBe(200); expect(r.body.recent_invocations).toMatchObject([{ id: h.id, specialist: "zion", recorded_status: "succeeded" }]);
+    expect(r.body.sample_only).toBe(true); expect(JSON.stringify(r.body)).not.toMatch(/PRIVATE_|Original planning response|receipt_state/);
+    expect(h.reads.some(x => x.table === "paige_workspace_events")).toBe(false); expect(h.writes).toEqual([]); expect(h.model).not.toHaveBeenCalled();
+  });
+  it.each([{ actor: CONTACT }, { tenant: CONTACT }])("cannot discover another person's or business's identities: %j", async options => {
+    const r = await specialistReentry(options).run({ invocation_id: undefined, recent_assignments: true });
+    expect(r.status).toBe(200); expect(r.body.recent_invocations).toEqual([]);
+  });
+  it("returns at most five identities and labels the bounded sample instead of all history", async () => {
+    const r = await specialistReentry({ many: true }).run({ invocation_id: undefined, recent_assignments: true });
+    expect(r.body.recent_invocations).toHaveLength(5); expect(r.body.sample_only).toBe(true); expect(r.body.limit).toBe(5);
+  });
+  it("discards discovered identities after a workspace switch", async () => {
+    const r = await specialistReentry({ revokeAfter: "invocation" }).run({ invocation_id: undefined, recent_assignments: true });
+    expect(r.status).toBe(403); expect(r.body.recent_invocations).toBeUndefined();
+  });
+});
+describe("EXP05 original specialist assignment reentry, never re-dispatch", () => {
+  it("returns the same stored response and independently correlated original receipt", async () => {
+    const h = specialistReentry(), r = await h.run();
+    expect(r.status).toBe(200);
+    expect(r.body.invocation).toMatchObject({ id: h.id, recorded_status: "succeeded", receipt_state: "verified", response_text: "Original planning response", completion_scope: "specialist_response_only" });
+    expect(h.reads.find(x => x.table === "paige_subagent_invocations")?.key).toBe(ANON);
+    expect(JSON.stringify(r.body)).not.toMatch(/PRIVATE_|system_prompt|input|config/);
+    expect(h.writes).toEqual([]); expect(h.model).not.toHaveBeenCalled();
+  });
+  it.each([{ actor: CONTACT }, { tenant: CONTACT }, { source: "missing" as const }])("refuses absent or foreign original work identically: %j", async options => {
+    const r = await specialistReentry(options).run(); expect(r.status).toBe(404);
+    expect(r.body.error).toBe("The original specialist assignment is unavailable in this workspace.");
+  });
+  it.each([{ member: true }, { globalOnly: true }])("private response needs the original owner/admin seat: %j", async options => {
+    const h = specialistReentry(options); expect((await h.run()).status).toBe(403);
+    expect(h.reads.some(x => x.table === "paige_subagent_invocations")).toBe(false);
+  });
+  it("an exact internal service call cannot substitute for the person's read", async () => {
+    const h = specialistReentry(); expect((await h.run({}, SERVICE)).status).toBe(403);
+    expect(h.reads.some(x => x.table === "paige_subagent_invocations")).toBe(false);
+  });
+  it("rejects malformed identifiers before reading private work", async () => {
+    const h = specialistReentry(); expect((await h.run({ invocation_id: "not-an-id" })).status).toBe(400);
+    expect(h.reads.some(x => x.table === "paige_subagent_invocations")).toBe(false);
+  });
+  it.each(["invocation", "receipt"] as const)("a workspace change after %s discards the original response", async revokeAfter => {
+    const r = await specialistReentry({ revokeAfter }).run(); expect(r.status).toBe(403);
+    expect(JSON.stringify(r.body)).not.toContain("Original planning response");
+  });
+  it.each(["missing", "error", "conflict", "wrong-attempt", "foreign", "wrong-source", "wrong-key"] as const)("a %s receipt cannot certify the assignment", async receipt => {
+    const r = await specialistReentry({ receipt }).run(); expect(r.status).toBe(200);
+    expect(r.body.invocation.receipt_state).not.toBe("verified");
+    expect(JSON.stringify(r.body)).not.toContain("PRIVATE_TRANSPORT_DETAIL");
+  });
+  it.each(["pending", "dispatched", "unexpected"] as const)("%s is inspect-only and never a completed business effect", async state => {
+    const h = specialistReentry({ state }), r = await h.run();
+    expect(r.body.invocation.receipt_state).not.toBe("verified");
+    expect(r.body.invocation.response_text).toBeNull(); expect(h.writes).toEqual([]); expect(h.model).not.toHaveBeenCalled();
+  });
+  it("legacy output and local-provider payloads are not exposed as a soft response", async () => {
+    for (const options of [{ legacyOutput: true }, { runtime: "local" }]) {
+      const r = await specialistReentry(options).run(); expect(r.body.invocation.response_text).toBeNull();
+      expect(JSON.stringify(r.body)).not.toMatch(/PRIVATE_|Original planning response/);
+    }
+  });
+  it("two reads recover one identity without creating an invocation or new receipt", async () => {
+    const h = specialistReentry(), a = await h.run(), b = await h.run();
+    expect(a.body.invocation.id).toBe(h.id); expect(b.body.invocation.id).toBe(h.id);
+    expect(h.writes).toEqual([]); expect(h.model).not.toHaveBeenCalled();
+  });
+  it("source failure is unavailable, with no private transport detail or fake empty result", async () => {
+    const r = await specialistReentry({ source: "error" }).run(); expect(r.status).toBe(503);
+    expect(JSON.stringify(r.body)).not.toMatch(/PRIVATE_|matches/);
+  });
+  it("a current admin can read their own original assignment through the same authority", async () => {
+    expect((await specialistReentry({ admin: true }).run()).body.invocation.receipt_state).toBe("verified");
+  });
+  it.each(["foreign", "funding"] as const)("a %s registration cannot expose an old private response", async registration => {
+    const r = await specialistReentry({ registration }).run(); expect(r.status).toBe(404);
+    expect(JSON.stringify(r.body)).not.toContain("Original planning response");
+  });
+  it("bounds a stored response and explicitly labels truncation", async () => {
+    const r = await specialistReentry({ bigResponse: true }).run();
+    expect(r.body.invocation.response_text).toHaveLength(8000); expect(r.body.invocation.response_truncated).toBe(true);
+  });
+  it("a changed original outcome cannot be certified by an earlier matching receipt", async () => {
+    const r = await specialistReentry({ changeAfterRead: true }).run();
+    expect(r.status).toBe(409); expect(r.body.invocation).toBeUndefined();
+  });
+  it("a changed contact relationship cannot reuse the earlier assignment admission", async () => {
+    const r = await specialistReentry({ changeContactAfterRead: true }).run();
+    expect(r.status).toBe(409); expect(r.body.invocation).toBeUndefined();
   });
 });

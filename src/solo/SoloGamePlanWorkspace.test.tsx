@@ -3,13 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { StrategicPlay } from "./data/useBusinessGamePlanMissions";
 
 const harness = vi.hoisted(() => ({
   openPaige: vi.fn(),
   save: vi.fn(async () => ({ ok: true })),
   refresh: vi.fn(),
+  prepared: false,
+  preparedState: "ready" as "ready" | "loading" | "error" | "empty",
+  reviewScope: "test-review-scope",
   mission: {
     items: [] as StrategicPlay[],
     status: "ready" as "loading" | "ready" | "forbidden" | "error",
@@ -42,9 +45,14 @@ vi.mock("./data/useSoloGamePlan", () => ({
       provenance: {}, pendingProposal: null, proposalPlanOnly: true,
       save: harness.save, applyProposal: vi.fn(), dismissProposal: vi.fn(),
     },
-    decisions: [], decisionsStatus: "ready",
+    decisions: harness.prepared && harness.preparedState === "ready" ? [{ id: "decision:drafts", title: "Review 37 prepared items", detail: "Original prepared work", destination: "paige" }] : [], decisionsStatus: harness.preparedState === "loading" ? "loading" : harness.preparedState === "error" ? "unavailable" : "ready",
+    reviewScope: harness.reviewScope,
+    preparedReview: { total: harness.preparedState === "ready" ? 37 : null, loading: harness.preparedState === "loading", error: harness.preparedState === "error" ? "Read unavailable" : null, refresh: harness.refresh, items: harness.preparedState === "ready" ? [{ id: "test-work", title: "Inspect original scope", department: "Operations", draftContent: "Recorded draft text", summary: null, rationale: null, createdAt: "" }] : [] },
   }),
 }));
+vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => ({ activeUserId: "test-owner",
+  activeTenantId: "11111111-1111-4111-8111-111111111111", accountContextStatus: "ready", loading: false }) }));
+vi.mock("./MissionTargetsPanel", () => ({ MissionTargetsPanel: () => <div>Canonical measured targets</div> }));
 vi.mock("./data/useBusinessGamePlanMissions", async () => {
   const actual = await vi.importActual<typeof import("./data/useBusinessGamePlanMissions")>("./data/useBusinessGamePlanMissions");
   return { ...actual, useBusinessGamePlanMissions: () => harness.mission };
@@ -64,6 +72,7 @@ import { getPaigeBusinessPlanScope, clearPaigeSurfaceScope } from "./paigeClient
 let host: HTMLDivElement;
 let root: Root;
 beforeEach(() => {
+  harness.prepared = false; harness.preparedState = "ready"; harness.reviewScope = "test-review-scope";
   harness.openPaige.mockClear(); harness.save.mockClear(); harness.refresh.mockClear();
   harness.mission.refresh.mockReset(); harness.mission.getDetail.mockReset(); harness.mission.mutate.mockReset();
   harness.mission.items = []; harness.mission.status = "ready";
@@ -72,8 +81,9 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
-function render() {
-  act(() => { root.render(<MemoryRouter initialEntries={["/solo/42/command-center/business-game-plan"]}><Routes><Route path="/solo/:account/*" element={<SoloGamePlanWorkspace workspaceId="11111111-1111-4111-8111-111111111111" accountContext={{ accountName: "Clearpath", accountType: "standalone", parentTenantId: null }} openPaige={harness.openPaige} />} /></Routes></MemoryRouter>); });
+function LocationProbe() { const location = useLocation(); return <output data-location={location.pathname + location.search + location.hash} />; }
+function render(entry = "/solo/42/command-center/business-game-plan") {
+  act(() => { root.render(<MemoryRouter initialEntries={[entry]}><LocationProbe /><Routes><Route path="/solo/:account/*" element={<SoloGamePlanWorkspace workspaceId="11111111-1111-4111-8111-111111111111" accountContext={{ accountName: "Clearpath", accountType: "standalone", parentTenantId: null }} openPaige={harness.openPaige} />} /></Routes></MemoryRouter>); });
 }
 function click(label: string) {
   const buttons = [...host.querySelectorAll("button")];
@@ -83,6 +93,34 @@ function click(label: string) {
 }
 
 describe("Business Game Plan owner-complete vertical", () => {
+  it("retires the reader across scope changes without automatically reopening it on an A-B-A return", () => {
+    harness.prepared = true; render(); click("Review 37 prepared items");
+    harness.reviewScope = "test-review-other"; render();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    harness.reviewScope = "test-review-scope"; render();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+  it("keeps the open reader through loading, failed and empty rereads after its source row retires", async () => {
+    harness.prepared = true; render(); click("Review 37 prepared items");
+    harness.preparedState = "loading"; render();
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Checking this workspace");
+    expect(document.body.textContent).not.toContain("Recorded draft text");
+    harness.preparedState = "error"; render();
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Previous details and counts are withheld");
+    harness.preparedState = "empty"; render();
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("No prepared items returned");
+    act(() => [...document.querySelectorAll<HTMLButtonElement>('.pwr button')].find(button => button.textContent?.trim() === "Close")!.click());
+    await act(async () => { await new Promise<void>(resolve => requestAnimationFrame(() => resolve())); });
+    expect(document.activeElement).toBe(host.querySelector('[data-prepared-review-desk]'));
+  });
+  it("opens original prepared work in the spacious Decision Desk without opening or sending Chat", () => {
+    harness.prepared = true; render(); click("Review 37 prepared items");
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Recorded draft text");
+    expect(harness.openPaige).not.toHaveBeenCalled();
+    expect(harness.save).not.toHaveBeenCalled();
+    expect(harness.mission.mutate).not.toHaveBeenCalled();
+    harness.prepared = false;
+  });
   it("preserves Set your plan and replaces generic system/activity material with Plan in Motion", () => {
     render();
     expect(host.querySelector('.sd-rail [data-testid="game-plan-approvals"]')).toBeTruthy();
@@ -173,6 +211,24 @@ describe("Business Game Plan owner-complete vertical", () => {
     render();
     await act(async () => { click("Protect renewal quality"); await Promise.resolve(); });
   };
+  it("rehydrates an exact Play locator after a fresh mount and clears only that locator on close", async () => {
+    const entry = `/solo/42/command-center/business-game-plan?view=quarter&play=${missionId}#direction`;
+    harness.mission.getDetail.mockResolvedValue(detail());
+    await act(async () => render(entry));
+    expect(harness.mission.getDetail).toHaveBeenLastCalledWith(missionId);
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain("Protect renewal quality");
+    act(() => root.unmount()); root = createRoot(host);
+    await act(async () => render(entry));
+    expect(harness.mission.getDetail).toHaveBeenCalledTimes(2);
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click());
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(host.querySelector('output')?.getAttribute('data-location')).toBe('/solo/42/command-center/business-game-plan?view=quarter#direction');
+    expect(harness.mission.mutate).not.toHaveBeenCalled();
+  });
+  it("does not pass a malformed URL locator to the record reader", async () => {
+    await act(async () => render('/solo/42/command-center/business-game-plan?play=..%2Fforeign'));
+    expect(harness.mission.getDetail).not.toHaveBeenCalled(); expect(host.querySelector('[role="dialog"]')).toBeNull();
+  });
   const setField = (label: string, value: string) => {
     const field = [...host.querySelectorAll("label")].find((node) => node.textContent?.includes(label))?.querySelector("input,textarea,select") as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
     expect(field, label).toBeTruthy();

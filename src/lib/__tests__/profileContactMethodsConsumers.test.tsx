@@ -51,7 +51,11 @@ vi.mock("@/integrations/supabase/client", () => {
   const channel = { on: () => channel, subscribe: () => channel };
   return {
     supabase: {
-      auth: { getUser: async () => ({ data: { user: { id: "u1", email: "dana@signin.example", identities: [] } } }) },
+      auth: {
+        getUser: async () => ({ data: { user: { id: "u1", email: "dana@signin.example", identities: [] } }, error: null }),
+        getSession: async () => ({data: {session: {user: {id: "u1"}, access_token: "synthetic-contact-method-customer"}}, error: null}),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => undefined } } }),
+      },
       from: (table: string) => ({
         select: (columns: string) => { db.selects.push({ table, columns }); return builder(table); },
         update: (patch: Record<string, unknown>) => {
@@ -66,7 +70,13 @@ vi.mock("@/integrations/supabase/client", () => {
         },
         insert: async () => { db.writes.push(`insert:${table}`); return { error: null }; },
       }),
-      rpc: (...args: unknown[]) => db.rpc(...args),
+      rpc: (...args: unknown[]) => {
+        const request = {
+          setHeader: () => request,
+          then: (resolve: (value: unknown) => unknown, reject?: (error: unknown) => unknown) => Promise.resolve(db.rpc(...args)).then(resolve, reject),
+        };
+        return request;
+      },
       channel: () => channel,
       removeChannel: () => undefined,
       functions: { invoke: async () => ({ data: null, error: null }) },
@@ -227,6 +237,17 @@ const click = async (text: string) => {
 };
 
 describe("ProfileSettings › Personal (a person's own phone)", () => {
+  it.each(["missing", "refused"])("explicit customer Account view never mounts legacy loaders when relationship is %s", async kind => {
+    db.rpc.mockResolvedValue({ data: null, error: kind === "refused" ? { code: "42501" } : null });
+    act(() => root.render(<MemoryRouter initialEntries={["/app/settings?view=client-account"]}><ProfileSettings /></MemoryRouter>));
+    await flush();
+    expect(host.textContent).toContain("Your account");
+    expect(db.selects).toEqual([]); expect(db.updates).toEqual([]); expect(db.upserts).toEqual([]);
+    expect(db.rpc).toHaveBeenCalledWith("client_portal_self_profile");
+    await flush();
+    expect(host.textContent).toContain("Your information is unavailable for this business");
+    expect(host.querySelector("form")).toBeNull();
+  });
   const renderSettings = async () => {
     act(() => root.render(<MemoryRouter><ProfileSettings /></MemoryRouter>));
     await flush();

@@ -19,8 +19,9 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import ts from "typescript";
+import { recordCapabilityRun } from "../../supabase/functions/_shared/capability-record.ts";
 
 const root = join(__dirname, "..", "..");
 const orchPath = join(root, "supabase/functions/paige-orchestrator/index.ts");
@@ -58,7 +59,7 @@ const TENANT_B = "bbbbbbbb-1111-4000-8000-0000000000bb";
 const makeSupabase = (rows: unknown[] = [], err: unknown = null) => {
   const q: Record<string, unknown> = { data: rows, error: err, eqCalls: [] as unknown[][] };
   const chain: Record<string, unknown> = {};
-  for (const m of ["select", "limit", "or", "is", "maybeSingle"]) {
+  for (const m of ["select", "limit", "or", "is", "in", "maybeSingle"]) {
     q[m] = (..._args: unknown[]) => chain;
   }
   q["eq"] = (...args: unknown[]) => { (q.eqCalls as unknown[][]).push(args); return chain; };
@@ -79,6 +80,69 @@ const build = async (fnText: string, payloadCtx: Ctx, scope: Scope, memberRows: 
 };
 
 const realFn = extractFn(source, "buildTrustedContext");
+const receiptFn = extractFn(source, "recordInvocationReceipt");
+const invocationId = "cccccccc-2222-4222-8222-222222222222";
+async function receiptProof(actorId: string | null, options: { success?: boolean; dispatched?: boolean; invocationId?: string; tenantId?: string | null; body?: string } = {}) {
+  const client = makeSupabase([{ user_id: B }]), record = vi.fn(async (_client: unknown, _options: Record<string, unknown>) => true);
+  const outer = new Function("supabase", "recordCapabilityRun", "idempotencyKey", "console", js(`return (${options.body ?? receiptFn});`));
+  await outer(client, record, (...parts: string[]) => parts.join(":"), { error() {} })({
+    invocationId: options.invocationId ?? invocationId, tenantId: options.tenantId === undefined ? TENANT_A : options.tenantId,
+    actorId, slug: "zion", runtime: "soft", latencyMs: 12, success: options.success ?? true, dispatched: options.dispatched ?? false,
+  });
+  return { record, client };
+}
+
+describe("EXP05 original specialist receipt identity", () => {
+  it("the original invoke call passes the same trusted actor used by invoked_by", async () => {
+    const trusted = await build(realFn, { user_id: B }, { tenantId: TENANT_A, callerId: A, isService: false });
+    expect("ctx" in trusted).toBe(true);
+    const f = await receiptProof("ctx" in trusted ? trusted.ctx.user_id ?? null : null);
+    expect(f.record.mock.calls[0][1].actorId).toBe(A);
+    expect(source).toMatch(/await recordInvocationReceipt\(\{[\s\S]{0,250}actorId: ctx\.user_id \?\? null/);
+  });
+  it("retains the verified requester rather than the first different owner/admin", async () => {
+    const f = await receiptProof(A);
+    expect(f.record).toHaveBeenCalledOnce();
+    expect(f.record.mock.calls[0][1]).toMatchObject({ actorId: A, tenantId: TENANT_A, agentSlug: "zion", runId: invocationId });
+  });
+  it("never invents an actor for an actorless internal dispatch", async () => {
+    const f = await receiptProof(null); expect(f.record).not.toHaveBeenCalled();
+  });
+  it.each([
+    { success: true, dispatched: false, outcome: "capability_succeeded" },
+    { success: false, dispatched: false, outcome: "capability_failed" },
+    { success: true, dispatched: true, outcome: "capability_outcome_unknown" },
+  ])("preserves original outcome $outcome and original invocation receipt identity", async options => {
+    const f = await receiptProof(A, options), again = await receiptProof(A, options);
+    for (const original of [f, again]) expect(original.record.mock.calls[0][1]).toMatchObject({
+      actorId: A, runId: invocationId, outcome: options.outcome,
+      correlation: { jobAttemptId: `subagent-invocation:${invocationId}:run` },
+    });
+  });
+  it("does not create tenant receipts for platform-only work", async () => {
+    const f = await receiptProof(A, { tenantId: null }); expect(f.record).not.toHaveBeenCalled();
+  });
+  it("an actor-substitution mutation restores the measured attribution defect", async () => {
+    const body = receiptFn.replace("actorId: opts.actorId", `actorId: "${B}"`);
+    expect(body).not.toBe(receiptFn);
+    const f = await receiptProof(A, { body });
+    expect(f.record.mock.calls[0][1].actorId).toBe(B);
+  });
+  it("composes with the original canonical recorder without changing requester or original receipt ID", async () => {
+    const rpc = vi.fn(async (_name: string, _args: Record<string, unknown>) => ({ error: null }));
+    const outer = new Function("supabase", "recordCapabilityRun", "idempotencyKey", "console", js(`return (${receiptFn});`));
+    const invoke = outer({ rpc }, recordCapabilityRun, (...parts: string[]) => parts.join(":"), { error() {} });
+    const original = { invocationId, tenantId: TENANT_A, actorId: A, slug: "zion", runtime: "soft", latencyMs: 12, success: true, dispatched: false };
+    await invoke(original); await invoke(original);
+    expect(rpc).toHaveBeenCalledTimes(2);
+    for (const [name, args] of rpc.mock.calls) {
+      expect(name).toBe("record_capability_run");
+      expect(args).toMatchObject({ _actor_id: A, _tenant_id: TENANT_A, _run_id: invocationId, _agent_slug: "zion", _outcome: "capability_succeeded" });
+    }
+    // Same identity at the existing SQL unique seam; not proof of exactly-once dispatch.
+    expect(rpc.mock.calls[0][1]).toEqual(rpc.mock.calls[1][1]);
+  });
+});
 
 describe("INT-308 §6 — the negative matrix (JWT callers cannot forge identity)", () => {
   const jwt = (callerId: string | null) => ({ tenantId: TENANT_A, callerId, isService: false });
@@ -123,10 +187,13 @@ describe("INT-308 §6 — the negative matrix (JWT callers cannot forge identity
     expect(source).not.toContain("user_id: payload.context?.user_id ?? callerId");
   });
 
-  it("H: soft-agent invocations receive (and deliberately ignore) the SAME trusted context — nothing to forge", () => {
-    // invokeSoft's context param is unused by design (matrix H: identity reaches the seam
-    // verified; the soft runtime does not consume it today). Pin the seam exists:
-    expect(source).toMatch(/async function invokeSoft\([\s\S]{0,200}_context: OrchestratorRequest\["context"\]/);
+  it("H: soft-agent invocations receive the SAME verified context for current authority", () => {
+    const soft = extractFn(source, "invokeSoft");
+    expect(soft).toMatch(/context: OrchestratorRequest\["context"\]/);
+    expect(soft).toContain("zionProviderAuthority(agent, context, tenantId, currentScope, actorlessService)");
+    expect(source).toContain("isService && !ctx.user_id");
+    expect(source).not.toContain("payload.actorlessService");
+    expect(source).not.toContain("user_id: payload.context?.user_id ?? callerId");
   });
 
   it("I: langgraph dispatch forwards the trusted context (same object, no re-derivation)", () => {

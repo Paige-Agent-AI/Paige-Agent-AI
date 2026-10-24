@@ -1,0 +1,263 @@
+{
+  "evidenceClass": "native-rendered-original-components-with-synthetic-read-ports",
+  "backend": "REFUSED; no model/provider/approval/execution/database calls",
+  "captureMethod": "Native tab screenshot; untouched JPEG, no resizing/cropping/processing",
+  "sourceHead": "321ae6a8ddf64e7005a072998b0d01bee1ef43c6",
+  "sourceTree": "c9da61116df6cb73f6d62a3bfdae55d20c1f8d15",
+  "sourcePins": [
+    {
+      "path": "src/solo/PreparedWorkReview.tsx",
+      "sha256": "7907d9f5efef57000f27cfda8e17a764661e4482cce14fc45d93e5c760276222"
+    },
+    {
+      "path": "src/solo/prepared-work-review.css",
+      "sha256": "9b0e3f9a45a867cdac653406c919a295440f67d5dd68d50245d1871b42868468"
+    },
+    {
+      "path": "src/solo/SoloPlanningSuggestion.tsx",
+      "sha256": "5dd7df9f09abb54c38cf439e8cc153333d6de22970dd45fd02cfe0db18c3b7a5"
+    },
+    {
+      "path": "src/solo/solo-planning-suggestion.css",
+      "sha256": "ed02b3eb71206e1bf21c977eaa4463873b093839fc9721eb4a600848597d5ee0"
+    },
+    {
+      "path": "src/solo/data/useSoloPendingActions.ts",
+      "sha256": "906e947cc03f8a6a21dec9ea88bd7dc196fd5f65c80fc53fd37271a3e732ed44"
+    },
+    {
+      "path": "src/solo/SoloSystemsCheckWorkspace.tsx",
+      "sha256": "5586b2689982284acf15daabaa6102d636516c2198dcf7812190a2566e935467"
+    },
+    {
+      "path": "src/solo/solo-systems-check-workspace.css",
+      "sha256": "78a7d8ad1a891cc5c3978700e7a3ff05f9bf94161d1bc887e85f1d8e9a392773"
+    },
+    {
+      "path": "src/solo/systems-check-areas.ts",
+      "sha256": "ec8986c7113db65fe866b700c95f386c31f0e8b1c387b6c1b0c314188ab2225b"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "5299b1ef17b7b5b816f23ed1830291d9be04689fde8b827b0f709703cfb9ed62"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3"
+    },
+    {
+      "path": "src/components/chat/ContextualSuggestion.tsx",
+      "sha256": "36511578d369ce324b1bc4f4fabd299511d2b99e5663d8a79bb5c752c1a3b952"
+    },
+    {
+      "path": "src/components/chat/contextual-suggestion.css",
+      "sha256": "a3768c2ccea13465c7bd794e51316737deb57bae6fb0c02adc7a96eebf9c5fc1"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "90c5fe9045cd3a1ce15e78f8f953bc41903e0ffaa1ad744f61f14561d19105d5"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "2cb7bfefe50b65c47efd63f6a35741f1b42697bd1edfe590288a7cbcb1a1e643"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "00ffe94484ba9dbdf39daa7efbb0a2e85665473dca3ae19968cdd71b4bd85e47"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/systems-check-fixtures.ts",
+      "sha256": "02790c30b70b606266baeb275b813683f55d1caa6370230af6581abc3352b07d"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05"
+    }
+  ],
+  "changedFromHistoricalPins": [
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c"
+    }
+  ],
+  "frames": [
+    {
+      "name": "composed-1536-770-closed.jpg",
+      "state": {
+        "dialog": true,
+        "draft": "",
+        "focus": "Refresh",
+        "fonts": "loaded",
+        "height": 770,
+        "link": "/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006",
+        "overflow": false,
+        "paige": "closed",
+        "width": 1536
+      },
+      "raster": [
+        1535,
+        770
+      ],
+      "bytes": 70368,
+      "sha256": "ba558b06027ba638fcc2077294ed4401e7eb97c899e830f59add37441f8cb8b5"
+    },
+    {
+      "name": "composed-1536-770-open.jpg",
+      "state": {
+        "dialog": true,
+        "draft": "Compare the prepared priorities — unsent synthetic check.",
+        "focus": "Refresh",
+        "fonts": "loaded",
+        "height": 770,
+        "link": "/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006",
+        "overflow": false,
+        "paige": "open",
+        "width": 1536
+      },
+      "raster": [
+        1535,
+        770
+      ],
+      "bytes": 72277,
+      "sha256": "be179e39bc880e2d9129f238ef5ac8167c265b5750b865b04143e28af3da4ca2"
+    },
+    {
+      "name": "composed-320-source-focus.jpg",
+      "state": {
+        "dialog": true,
+        "draft": "Compare the prepared priorities — unsent synthetic check.",
+        "focus": "Open recorded findingnew tab",
+        "fonts": "loaded",
+        "height": 760,
+        "link": "/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006",
+        "overflow": false,
+        "paige": "open",
+        "width": 320
+      },
+      "raster": [
+        320,
+        760
+      ],
+      "bytes": 33355,
+      "sha256": "a8a5285d0aeaefe5c53d3ed76e1860658cabad85ee38a8a7b0f0bd685cd7a89d"
+    },
+    {
+      "name": "composed-320-return.jpg",
+      "state": {
+        "dialog": true,
+        "draft": "Compare the prepared priorities — unsent synthetic check.",
+        "focus": "Open recorded findingnew tab",
+        "fonts": "loaded",
+        "height": 760,
+        "link": "/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006",
+        "overflow": false,
+        "paige": "open",
+        "width": 320
+      },
+      "raster": [
+        320,
+        760
+      ],
+      "bytes": 33355,
+      "sha256": "a8a5285d0aeaefe5c53d3ed76e1860658cabad85ee38a8a7b0f0bd685cd7a89d"
+    },
+    {
+      "name": "composed-320-chat-return.jpg",
+      "state": {
+        "dialog": false,
+        "draft": "Compare the prepared priorities — unsent synthetic check.",
+        "focus": "37 items to review",
+        "fonts": "loaded",
+        "height": 760,
+        "overflow": false,
+        "paige": "open",
+        "width": 320
+      },
+      "raster": [
+        320,
+        760
+      ],
+      "bytes": 27935,
+      "sha256": "e2d3c1fbb68a8a860ad698aefb6a717f1e2c77615677e867805d82d406ecb4e0"
+    },
+    {
+      "name": "composed-original-source-drawer.jpg",
+      "raster": [
+        1536,
+        735
+      ],
+      "bytes": 108664,
+      "sha256": "b5c372bea9709c28f316d564e912ec3b8d73940e1c440d321685abcdd3d3b167",
+      "originalFindingDrawerObserved": true,
+      "consequentialActionInvoked": false
+    }
+  ],
+  "sourceReturn": {
+    "before": {
+      "draft": "Compare the prepared priorities — unsent synthetic check.",
+      "focus": "Open recorded findingnew tab",
+      "scrolls": [
+        {
+          "class": "pwr-workspace",
+          "left": 0,
+          "role": null,
+          "top": 304.79998779296875
+        },
+        {
+          "class": "sr-only",
+          "left": 0,
+          "role": null,
+          "top": 0
+        }
+      ]
+    },
+    "after": {
+      "draft": "Compare the prepared priorities — unsent synthetic check.",
+      "focus": "Open recorded findingnew tab",
+      "scrolls": [
+        {
+          "class": "pwr-workspace",
+          "left": 0,
+          "role": null,
+          "top": 304.79998779296875
+        },
+        {
+          "class": "sr-only",
+          "left": 0,
+          "role": null,
+          "top": 0
+        }
+      ]
+    },
+    "sourceOpenedBy": "native Enter on original new-tab anchor; exact current finding/drawer inspected; child closed",
+    "deskExit": "Escape returned focus to existing suggestion; unsent draft retained"
+  },
+  "limitations": [
+    "Synthetic evidence is not authenticated customer acceptance or full Business Game Plan proof.",
+    "Original22 historical frames remain unchanged and are not repinned. Only shared E05 shell source changed.",
+    "Desktop1536 CSS viewport produced1535-wide native raster; disclosed, never resized.320 raster exact.",
+    "Native source-window return preserves scroll/focus/draft; no new proof of natural production async reread or action execution.",
+    "Original mandatory width/theme/loading/error/empty tests remain dated supporting evidence."
+  ],
+  "viewportReset": true
+}

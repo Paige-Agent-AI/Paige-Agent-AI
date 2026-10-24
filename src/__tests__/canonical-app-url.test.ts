@@ -10,6 +10,58 @@ import { SOLO_BRANCHES } from "@/lib/routing/tierBranches";
 import { SOLO_SETUP_TABS } from "@/solo/settings-business-context-contract";
 
 describe("canonical externally emitted app destinations", () => {
+  it("focuses only a valid Systems Check UUID on its existing SOLO destination", () => {
+    const input = { actor: "account", tier: "solo", account: "1971670", destination: "systems_check" } as const;
+    const id = "e2000000-0000-4000-8000-000000000001";
+    expect(resolveCanonicalRecordLink({ ...input, recordId: id })).toEqual({
+      path: `/solo/1971670/command-center/systems-check?finding=${id}`, status: "exact",
+    });
+    expect(resolveCanonicalRecordLink({ ...input, recordId: "../foreign" })?.status).toBe("surface_only");
+    for (const tier of ["sub_account", "agency", "enterprise", "operator"] as const) {
+      expect(resolveCanonicalRecordLink({ ...input, tier, recordId: id })).toBeNull();
+    }
+  });
+  it('uses the existing Portal for owner Knowledge references and refuses unmounted tiers',()=>{
+    const input={actor:'account',tier:'solo',account:'1234567',destination:'portal_knowledge'} as const,id='b3b60300-0000-4000-8000-000000000001';
+    expect(resolveCanonicalRecordLink({...input,recordId:id})).toEqual({path:'/solo/1234567/clients/portal?view=knowledge&source='+id,status:'exact'});
+    expect(resolveCanonicalRecordLink({...input,recordId:'not-an-id'})).toEqual({path:'/solo/1234567/clients/portal?view=knowledge',status:'surface_only'});
+    for(const tier of ['sub_account','agency','enterprise','operator'] as const)expect(resolveCanonicalAppPath({...input,tier})).toBeNull();
+  });
+  it.each(["solo", "standalone"] as const)("routes %s Marketing to its existing native Overview without invented record focus", tier => {
+    const input = { actor: "account" as const, tier, account: "1971670", destination: "marketing" as const };
+    const path = "/solo/1971670/growth/overview";
+    expect(resolveCanonicalAppPath(input)).toBe(path);
+    expect(resolveCanonicalRecordLink({ ...input, recordId: "00000000-0000-4000-8000-000000000001" }))
+      .toEqual({ path, status: "surface_only" });
+    const mounted = SOLO_BRANCHES.find(branch => branch.slug === "growth");
+    expect(mounted?.subtabs.some(tab => tab.slug === "overview" && !tab.hidden)).toBe(true);
+  });
+  it.each([
+    { actor: "operator", tier: "operator", account: null },
+    { actor: "operator", tier: "solo", account: "1971670" },
+    { actor: "account", tier: "sub_account", account: "1971670" },
+    { actor: "account", tier: "agency", account: "1971670" },
+    { actor: "account", tier: "enterprise", account: "1971670" },
+    { actor: "account", tier: "solo", account: null },
+    { actor: "account", tier: "solo", account: "1971670/../../other" },
+  ] as const)("withholds the Marketing destination for unsupported identity %#", input => {
+    expect(resolveCanonicalAppPath({ ...input, destination: "marketing" })).toBeNull();
+  });
+
+  it.each([
+    ["account", "solo", "101", "/solo/101/operations/work"],
+    ["account", "standalone", "202", "/solo/202/operations/work"],
+    ["account", "sub_account", "303", "/business/303/calendar/tasks"],
+    ["account", "agency", "404", "/agency/404/calendar/tasks"],
+    ["operator", "operator", null, "/operator/calendar/tasks"],
+  ] as const)("keeps task destinations on the native %s/%s owner", (actor, tier, account, path) => {
+    expect(resolveCanonicalAppPath({ actor, tier, account, destination: "tasks" })).toBe(path);
+    expect(resolveCanonicalRecordLink({ actor, tier, account, destination: "tasks", recordId: "00000000-0000-4000-8000-000000000001" }))
+      .toEqual(tier === "solo" || tier === "standalone"
+        ? { path: `${path}?task=00000000-0000-4000-8000-000000000001`, status: "exact" }
+        : { path, status: "surface_only" });
+  });
+
   it.each([
     ["operator", "operator", null, "home", "/operator/fleet/systems-check"],
     ["account", "solo", "1971670", "home", "/solo/1971670/command-center/executive"],
@@ -86,6 +138,15 @@ describe("resolveCanonicalRecordLink", () => {
     expect(resolveCanonicalRecordLink({ ...solo, destination: "contacts", recordId: UUID }))
       .toEqual({ path: `/solo/1971670/clients/people?person=${UUID}`, status: "exact" });
   });
+  it("opens only a UUID Play locator through the mounted owner Game Plan surface", () => {
+    expect(resolveCanonicalRecordLink({ ...solo, destination: "business_game_plan", recordId: UUID }))
+      .toEqual({ path: `/solo/1971670/command-center/business-game-plan?play=${UUID}`, status: "exact" });
+    for (const recordId of ["../foreign", `${UUID}#x`, "", null]) {
+      expect(resolveCanonicalRecordLink({ ...solo, destination: "business_game_plan", recordId }))
+        .toEqual({ path: "/solo/1971670/command-center/business-game-plan", status: "surface_only" });
+    }
+    expect(resolveCanonicalRecordLink({ ...solo, tier: "sub_account", destination: "business_game_plan", recordId: UUID })).toBeNull();
+  });
 
   it.each([
     ["sales_agreements", "/solo/1971670/sales/agreements"],
@@ -93,11 +154,13 @@ describe("resolveCanonicalRecordLink", () => {
     ["sales_collections", "/solo/1971670/sales/payments?view=collections"],
     ["operations_work", "/solo/1971670/operations/work"],
     ["business_time_zone", "/solo/1971670/settings/setup/business-profile#business-time-zone"],
+    ["conversations", "/solo/1971670/clients/conversations"],
   ] as const)("maps %s to its Solo surface, surface-only", (destination, path) => {
     expect(resolveCanonicalRecordLink({ ...solo, destination })).toEqual({ path, status: "surface_only" });
-    // The invoice destination supports exact focus; other department destinations remain lists.
+    // Only the mounted invoice and Task consumers support exact UUID focus.
     expect(resolveCanonicalRecordLink({ ...solo, destination, recordId: UUID })).toEqual(destination === 'sales_invoices'
       ? { path: `${path}&invoice=${UUID}`, status: "exact" }
+      : destination === 'operations_work' ? { path: `${path}?task=${UUID}`, status: "exact" }
       : { path, status: "surface_only" });
   });
 
@@ -105,6 +168,17 @@ describe("resolveCanonicalRecordLink", () => {
     for (const recordId of ['x" onload="alert(1)', "../../admin", "", null, undefined, `${UUID}#x`]) {
       expect(resolveCanonicalRecordLink({ ...solo, destination: "contacts", recordId }))
         .toEqual({ path: "/solo/1971670/clients/people", status: "surface_only" });
+    }
+  });
+
+  it("never mints a Conversations address outside the mounted SOLO owner surface", () => {
+    for (const tier of ["sub_account", "agency", "enterprise"] as const) {
+      expect(resolveCanonicalRecordLink({ ...solo, tier, destination: "conversations", recordId: UUID })).toBeNull();
+    }
+    expect(resolveCanonicalRecordLink({ actor: "operator", tier: "operator", destination: "conversations", recordId: UUID })).toBeNull();
+    expect(resolveCanonicalRecordLink({ ...solo, actor: "operator", destination: "conversations" })).toBeNull();
+    for (const account of [null, "", "../1", "https://foreign.invalid"]) {
+      expect(resolveCanonicalRecordLink({ ...solo, account, destination: "conversations" })).toBeNull();
     }
   });
 
@@ -127,7 +201,7 @@ describe("resolveCanonicalRecordLink", () => {
     const sub = { actor: "account", tier: "sub_account", account: "1971670" } as const;
     expect(resolveCanonicalRecordLink({ ...sub, destination: "contacts", recordId: UUID }))
       .toEqual({ path: "/business/1971670/clients/people", status: "surface_only" });
-    for (const destination of ["sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone"] as const) {
+    for (const destination of ["sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone", "conversations"] as const) {
       expect(resolveCanonicalRecordLink({ ...sub, destination })).toBeNull();
     }
   });
@@ -146,6 +220,7 @@ describe("resolveCanonicalRecordLink", () => {
     expect(hasSub("sales", "payments")).toBe(true);
     expect(hasSub("operations", "work")).toBe(true);
     expect(hasSub("clients", "people")).toBe(true);
+    expect(hasSub("clients", "conversations")).toBe(true);
     expect(SOLO_SETUP_TABS).toContain("business-profile");
   });
 

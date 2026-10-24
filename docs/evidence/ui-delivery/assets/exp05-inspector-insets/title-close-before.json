@@ -1,0 +1,29 @@
+{
+  "close": {
+    "bottom": 48,
+    "height": 44,
+    "left": 256.8000183105469,
+    "right": 300.8000183105469,
+    "top": 4,
+    "width": 44,
+    "x": 256.8000183105469,
+    "y": 4
+  },
+  "collidesWithCloseOrRing": true,
+  "focusOutline": "rgba(0, 0, 0, 0) solid 1.6px",
+  "found": true,
+  "role": "dialog",
+  "title": "Confirm the project handoff",
+  "titleRects": [
+    {
+      "bottom": 56.79999923706055,
+      "height": 22.39999771118164,
+      "left": 38.775001525878906,
+      "right": 266.81250762939453,
+      "top": 34.400001525878906,
+      "width": 228.0375061035156,
+      "x": 38.775001525878906,
+      "y": 34.400001525878906
+    }
+  ]
+}

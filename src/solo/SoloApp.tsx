@@ -9,6 +9,7 @@ import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SoloSetupReadinessNotice } from "./SoloSetupReadinessNotice";
+import { SoloScreenBoundary } from "./SoloScreenBoundary";
 import { soloShellRole } from "./shell-role";
 import { isSoloSetupComplete } from "@/components/auth/RequireSetupComplete";
 import { branchBySlug, branchByKey, branchPath, defaultBranchSlug } from "@/lib/routing/tierBranches";
@@ -36,7 +37,7 @@ import { canShowVaultNavigation, useVaultAccess } from "./vault/useBusinessVault
 import { VibeStudio } from "./vibe";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
 import { resolveTenantAccountContext, tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
-import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
+import { cleanPaigePrompt, handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { AgentPresenceProvider, useAgentPresence } from "@/components/ui/paige";
 import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
@@ -145,13 +146,16 @@ const SoloAppContent=()=>{
 const urlParams = useParams();
 const navigate = useNavigate();
 const location = useLocation();
-const { expandRail } = useAgentPresence();
+const { expandRail, railExpanded } = useAgentPresence();
 const { resolvedTheme } = useTheme();
 const urlAccount = urlParams.account || null;
 const urlDriven = !!urlAccount;
 const urlBranchSlug = urlDriven ? ((urlParams["*"] || "").split("/")[0] || defaultBranchSlug("solo")) : null;
 const[stateRoute,setStateRoute]=React.useState('home');
 const[paigeDockedTab,setPaigeDockedTab]=React.useState('chat');
+const shellPaigeOpener=React.useRef<(()=>void)|null>(null);
+const registerPaigeOpener=React.useCallback((opener:(()=>void)|null)=>{shellPaigeOpener.current=opener},[]);
+const revealPaige=React.useCallback(()=>{if(shellPaigeOpener.current)shellPaigeOpener.current();else expandRail()},[expandRail]);
 const legacySettingsDestination=LEGACY_SETTINGS[urlBranchSlug]||null;
 const route = urlDriven ? (legacySettingsDestination?'settings':branchBySlug("solo", urlBranchSlug)?.key ?? "home") : stateRoute;
 // Real approvals count for the rail's Command Center badge (§13 — hidden when 0).
@@ -174,6 +178,18 @@ const go = (k) => {
 // Acts ONLY once the caller's own account_number is known, so a mid-load null never
 // bounces.
 const { activeTenant, activeTenantId, activeUserId, isPlatformStaff } = useTenantContext();
+// Keep only the mounted Operations guard, never its draft or record. A scope
+// change creates a new holder during render, before old layout cleanup runs.
+const operationsGuard = React.useMemo(() => ({ actor: activeUserId, tenant: activeTenantId, read: null as (() => string | null) | null, held: false }), [activeUserId, activeTenantId]);
+const [, refreshOperationsHold] = React.useReducer(value => value + 1, 0);
+const registerOperationsGuard = React.useCallback((read: (() => string | null) | null) => {
+  operationsGuard.read = read;
+  const held = Boolean(read?.());
+  if (held !== operationsGuard.held) { operationsGuard.held = held; refreshOperationsHold(); }
+}, [operationsGuard]);
+// The existing OperationsRoute restores accepted history. Keep its host alive
+// until it does so (or explicit Close clears an unindexed held departure).
+const screenRoute = route !== 'operations' && operationsGuard.read?.() ? 'operations' : route;
 // Setup readiness reminder (owner adjudication: Setup is NOT an access gate).
 // The SHELL holds the dismissal so it survives route remounts; the reminder
 // itself renders INSIDE the height-owned paige-solo column below — the shell
@@ -243,6 +259,19 @@ React.useEffect(() => {
   return () => { alive = false; };
 }, [probeTenant, probeUser]);
 const canFinishSetup = isPrimaryOwner || isMembershipEditor;
+// Optional first meeting, never an access gate. The same canonical readiness
+// and current-owner facts already feed the shell; no first-run store is added.
+const onboardingOwner = showSetupReminder && !setupReminderDismissed &&
+  (isPrimaryOwner || (roleProbe?.tenant === activeTenantId && roleProbe?.user === activeUserId && roleProbe.owner));
+const firstMeeting = React.useRef<string | null>(null);
+React.useEffect(() => {
+  if (!onboardingOwner || !activeTenantId || !activeUserId || route !== 'home') return;
+  const scope = `${activeTenantId}:${activeUserId}`;
+  if (firstMeeting.current === scope) return;
+  firstMeeting.current = scope;
+  setPaigeDockedTab('chat');
+  expandRail();
+}, [onboardingOwner, activeTenantId, activeUserId, route, expandRail]);
 const soloSetupHref = showSetupReminder && canFinishSetup
   ? `/solo/${activeTenant!.account_number}/settings/setup`
   : null;
@@ -317,7 +346,7 @@ const theme=resolvedTheme==='light'?'light':'dark';
 // Owner directive (2026-08-18) — the slide-in panel pops out from THIS launcher ONLY
 // (the TopBar spark / ⌘K). EVERY rail item, "Paige" included, navigates to its own URL
 // and nothing more; the rail is navigation, never a panel trigger.
-const openPaige=()=>expandRail();
+const openPaige=()=>{setPaigeDockedTab('chat');revealPaige()};
 // `paige:open` had three dispatchers in this app and NO listener, so every "Ask PAIGE"
 // on Pipeline dispatched into nothing. This is that listener. It does three separable
 // things and none depends on another: it opens the fold, it hands the surface's drafted
@@ -330,10 +359,11 @@ React.useEffect(()=>{const h=(event:Event)=>{
   const detail=(event as CustomEvent)?.detail;
   const scope=readPaigeOpenScope(detail,activeTenantId);
   if(scope){clearPaigePublicPresenceScope();setPaigeClientScope(scope);}
+  if(scope||cleanPaigePrompt(detail?.prompt))setPaigeDockedTab('chat');
   // The question a surface drafted goes into PAIGE's composer for the owner to send (prefill only).
   handOffPaigePrompt(detail?.prompt);
-  expandRail();
-};window.addEventListener('paige:open',h);return()=>window.removeEventListener('paige:open',h)},[activeTenantId,expandRail]);
+  revealPaige();
+};window.addEventListener('paige:open',h);return()=>window.removeEventListener('paige:open',h)},[activeTenantId,revealPaige]);
 // An account switch invalidates a client scope outright: the client belonged to the
 // account being left. `getPaigeClientScope` already refuses to hand out a scope stamped
 // with another account, so this is the durable half of the same rule, not the guard.
@@ -350,12 +380,12 @@ React.useEffect(()=>{clearPaigeClientScope();clearPaigePublicPresenceScope()},[a
 // is short enough to fit. Off this list the screen host is `overflow:auto` and
 // becomes the one deliberate vertical scroll owner, which is what every other
 // document-flow route in this shell already does.
-const full=route==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';
+const full=screenRoute==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';
 const accountContext=resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id});
 const accountEpochKey=activeTenantId??'resolving';
 // Ads (its own department below Marketing) reads the active workspace like every Marketing screen.
 const adsScreen=<AdsWorkspace key={accountEpochKey} tenantId={activeTenantId??null} businessName={accountContext.accountName}/>;
-const screens={operations:<OperationsRoute key={accountEpochKey} openPaige={openPaige}/>,finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,ads:adsScreen,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
+const screens={operations:<OperationsRoute key={accountEpochKey} openPaige={openPaige} onNavigationGuardChange={registerOperationsGuard}/>,finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,ads:adsScreen,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
 const settingsActive=urlBranchSlug==='settings'?(urlSplat.split('/')[1]||'setup'):(legacySettingsDestination||'setup');
 const contextualNavigation=route==='settings'&&urlDriven?{
   label:'Settings',
@@ -379,8 +409,9 @@ accountType={accountContext.accountType}
 userRole={shellRole}
 accountControls={<WorkspaceExitControl />}
 contextualNavigation={contextualNavigation}
-soloPaigeWorkspace={<SoloPaigeWorkspace key={accountEpochKey} full={route==='paige'} dockedTab={paigeDockedTab} onDockedTabChange={setPaigeDockedTab}/>}
-paigeFull={route==='paige'}
+soloPaigeWorkspace={<SoloPaigeWorkspace key={accountEpochKey} full={screenRoute==='paige'} dockedTab={paigeDockedTab} onDockedTabChange={setPaigeDockedTab} onboarding={Boolean(onboardingOwner)} visible={screenRoute === 'paige' || railExpanded}/>}
+onPaigeOpenerChange={registerPaigeOpener}
+paigeFull={screenRoute==='paige'}
 paigeFullHref={urlDriven?`${branchPath('solo',urlAccount,'paige')}/${paigeDockedTab}`:undefined}
 paigeReturnHref={urlDriven?branchPath('solo',urlAccount,'command-center'):undefined}
 brandHomeHref={activeTenant?.account_number!=null?branchPath('solo',String(activeTenant.account_number),'command-center'):undefined}
@@ -388,7 +419,7 @@ onSignOut={()=>void performSignOut({redirectTo:'/'})}>
 <div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>
-<main key={route} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}>{route==='paige'?null:screens[route]}</main>
+<main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'?'operations':location.pathname}`} resetKey={location.pathname}>{screenRoute==='paige'?null:screens[screenRoute]}</SoloScreenBoundary></main>
 {studio&&<VibeStudio onBack={closeStudio}/>}</div></div>
 </TenantCommandCenterShell>};
 

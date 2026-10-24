@@ -1,0 +1,23 @@
+{
+  "selectedAt": "2026-10-20T10:56:51.977Z",
+  "decision": "SELECTED_BY_ENGINEERING_UNDER_OWNER_DELEGATION",
+  "ownerAuthority": "October18–20 full EXP05/prelaunch continuation; no intermediate founder acceptance",
+  "flow": "Original WeeklyResponsibilityEntry in existing Operations Overview header; original reader, Sheet, local proposal and all execution holds unchanged",
+  "prototype": "work/operations-weekly-prototype",
+  "firstBatch": [
+    "prototype-desktop.jpg",
+    "prototype-phone-before.jpg",
+    "prototype-desktop-dialog.jpg",
+    "prototype-phone-dialog.jpg"
+  ],
+  "oneFixBatch": "Narrow header retains both labels in a compact row, no added card/tab/service.",
+  "confirmation": "prototype-phone-confirm.jpg",
+  "settledExit": {
+    "dialogs": 0,
+    "focused": "Weekly responsibility"
+  },
+  "proofClass": "SYNTHETIC_ACTUAL_COMPONENT_INTERACTION",
+  "productionSource": "UNCHANGED_AT_SELECTION",
+  "authenticatedQa": "UNVERIFIED",
+  "recurringActivation": "NOT_AUTHORIZED_BY_THIS_SELECTION"
+}

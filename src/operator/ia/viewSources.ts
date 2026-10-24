@@ -65,6 +65,12 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
    * untouched (§58). Their keys stay in `carries`.
    */
   "relationships/people": { bespoke: "PeopleSurface", carries: [] },
+  /**
+   * EXP00 O-1 (owner directive 2026-10-19): the company's real commercial book — one row per
+   * SOLO enrollment, live records only, $0.00 collected until Stripe says otherwise. Added
+   * beside People; the Layer 3a People surface and its pinned contract are untouched.
+   */
+  "relationships/customers": { bespoke: "CustomersDesk", carries: [] },
   "relationships/conversations": {
     bespoke: "ConversationsSurface",
     carries: ["comms/outbound", "comms/templates", "comms/sent-log", "support/inbox", "support/escalations", "support/response-policy"],
@@ -75,6 +81,17 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
     carries: ["calendar/month", "calendar/booking-links", "calendar/settings", "calendar/tasks"],
   },
   "relationships/segments": { bespoke: "SegmentsSurface", carries: [] },
+
+  // ── Sales ─────────────────────────────────────────────────────────────────────────────────
+  /**
+   * EXP00: PAIGE Inc's own Sales department — leads, opportunities, pipelines
+   * and governed stage transitions through the canonical pipeline tables
+   * (tenant_id IS NULL = company L1 scope). The operator_sales_* RPCs are
+   * platform-admin-gated reads/writes; no parallel engine.
+   */
+  "sales/pipeline": { bespoke: "SalesDept", carries: [] },
+  "sales/leads": { bespoke: "SalesDept", carries: [] },
+  "sales/activity": { bespoke: "SalesDept", carries: [] },
 
   // ── Campaigns ──────────────────────────────────────────────────────────────────────────────
   /**

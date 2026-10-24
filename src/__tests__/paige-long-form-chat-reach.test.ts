@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { validateDocumentBrief, validateBusinessReviewBrief, classifyDocumentSubmissionError } from '../../supabase/functions/_shared/document-production.ts';
 import { getSpineCapability, PAIGE_SPINE_CAPABILITIES, validateSpineRegistry } from "../../supabase/functions/_shared/paige-spine/registry.ts";
 import { classifyAction } from '../../supabase/functions/_shared/action-risk.ts';
 import { LEGACY_CAPABILITIES } from '../../supabase/functions/_shared/paige-capability-status/legacy-capabilities.ts';
@@ -31,7 +32,76 @@ function sourceBinding(text:string):boolean {
  return !walk(body,n=>(ts.isVariableDeclaration(n)||ts.isParameter(n))&&ts.isIdentifier(n.name)&&['supabaseClient','documentIntentId','payloadThreadId','validatedBrief'].includes(n.name.text)&&n.name.text!=='documentIntentId'&&n.name.text!=='validatedBrief').length;
 }
 
+// Execute the ORIGINAL document branch with explicit persistence/receipt ports.
+// Outer Spine/permission admission and the real native writer are separate proofs.
+async function runOriginalDocumentBranch(args:Record<string,unknown>,overrides:Record<string,unknown>={}) {
+ const source=ts.createSourceFile('chat.ts',chat,ts.ScriptTarget.Latest,true);
+ const branch=(walk(source,n=>ts.isIfStatement(n)&&print(n.expression)==='tc.function.name==="document_generate"') as ts.IfStatement[])[0];
+ const rpc=vi.fn(async()=>({data:[{work_id:'original-work',work_status:'claimed',resumed_existing:false}],error:null}));
+ const deps={args,documentCallOrdinal:0,payloadRequestIntentId:'original-intent',payloadThreadId:'original-thread',
+  stableRunId:async()=> 'original-stable-intent',personaCtx:{tenant_id:'original-tenant'},user:{id:'original-actor'},
+  tc:{id:'original-call'},recordCapabilityRun:vi.fn(async()=>({})),supabase:{},supabaseClient:{rpc},
+  studioSessionId:null,canvasArtifact:null,result:null,requestExecutionState:{needsReview:false},
+  validateDocumentBrief,validateBusinessReviewBrief,classifyDocumentSubmissionError,...overrides};
+ const code=ts.transpileModule(branch.thenStatement.getText(source),{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
+ const run=new Function(...Object.keys(deps),`return (async()=>{${code};return {result,hold:requestExecutionState.needsReview};})()`);
+ return {...await run(...Object.values(deps)),rpc};
+}
+
+const reportRequest={version:1,doc_type:'business_review',title:'Monthly operating review',brief:'Review the original source-backed business evidence.',
+ report_period:{key:'month',start:'2026-09-01T00:00:00Z',end:'2026-10-01T00:00:00Z'},evidence_refs:[`aneb_v1_${'b'.repeat(64)}`]};
+
 describe("durable long-form Chat reach", () => {
+  it('offers source-bound reviews through the original document tool',()=>{
+    const tool=chat.slice(chat.indexOf('name: "document_generate"'),chat.indexOf('name: "growth_list"'));
+    expect(tool).toContain('"business_review"');
+    expect(tool).toContain('report_period');expect(tool).toContain('evidence_refs');
+  });
+  it('hands the exact original report references and period to caller-JWT submit without claiming completion',async()=>{
+    const {result,rpc}=await runOriginalDocumentBranch(reportRequest);
+    expect(rpc).toHaveBeenCalledExactlyOnceWith('submit_paige_document_work',{
+      _intent_id:'original-stable-intent',_thread_id:'original-thread',_request_payload:reportRequest});
+    expect(result).toMatchObject({accepted:true,work_id:'original-work',work_status:'claimed'});
+    expect(result.completed).toBeUndefined();
+  });
+  it.each([{required_facts:{revenue:999}}, {report_evidence:{}}, {tenant_id:'foreign'},
+    {target_content_id:'foreign'}, {evidence_refs:[]}, {report_period:{...reportRequest.report_period,key:'week'}}])('refuses unsafe report input before original persistence %#',async change=>{
+    const {result,rpc}=await runOriginalDocumentBranch({...reportRequest,...change});
+    expect(rpc).not.toHaveBeenCalled();expect(result).toMatchObject({success:false,code:'document_report_brief_invalid'});
+  });
+  it.each([{studioSessionId:'studio'}, {payloadRequestIntentId:null}, {payloadThreadId:null}])('keeps the original Studio and stable conversation gates %#',async overrides=>{
+    const {result,rpc}=await runOriginalDocumentBranch(reportRequest,overrides);
+    expect(rpc).not.toHaveBeenCalled();expect(result.success).toBe(false);
+  });
+  it('retains ordinary legacy authoring through the same caller path',async()=>{
+    const legacy={version:1,doc_type:'guide',title:'Existing guide',brief:'Explain the existing process.'};
+    const {result,rpc}=await runOriginalDocumentBranch(legacy);
+    expect(rpc).toHaveBeenCalledExactlyOnceWith('submit_paige_document_work',{
+      _intent_id:'original-stable-intent',_thread_id:'original-thread',_request_payload:legacy});
+    expect(result.accepted).toBe(true);
+  });
+  it.each([{data:null,error:{code:'08006'}}, {data:[],error:null},
+    {data:[{work_id:'original-work',work_status:'outcome_unknown'}],error:null},
+    {data:[{work_id:'original-work',work_status:'expired'}],error:null}])('holds later mutations when original report work needs reconciliation %#',async reply=>{
+    const rpc=vi.fn(async()=>reply);
+    const {result,hold}=await runOriginalDocumentBranch(reportRequest,{supabaseClient:{rpc}});
+    expect(rpc).toHaveBeenCalledTimes(1);expect(hold).toBe(true);
+    expect(result).toMatchObject({success:false,outcome_unknown:true});
+    expect(result.completed).toBeUndefined();
+  });
+  it('reports a confirmed authorization refusal without inventing accepted work or an uncertain outcome',async()=>{
+    const rpc=vi.fn(async()=>({data:null,error:{code:'42501'}}));
+    const {result,hold}=await runOriginalDocumentBranch(reportRequest,{supabaseClient:{rpc}});
+    expect(rpc).toHaveBeenCalledTimes(1);expect(hold).toBe(false);
+    expect(result).toMatchObject({success:false,code:'DURABLE_DOCUMENT_SUBMIT_FAILED'});
+    expect(result.outcome_unknown).not.toBe(true);
+  });
+  it('keeps a rejected transport acknowledgement unknown under the same original request',async()=>{
+    const rpc=vi.fn(async()=>{throw new Error('Isolated lost acknowledgement');});
+    const {result,hold}=await runOriginalDocumentBranch(reportRequest,{supabaseClient:{rpc}});
+    expect(rpc).toHaveBeenCalledTimes(1);expect(hold).toBe(true);
+    expect(result).toMatchObject({success:false,outcome_unknown:true,code:'DURABLE_DOCUMENT_SUBMIT_FAILED'});
+  });
   it("preserves the canonical outcome separately from the incumbent Chat submission declaration", () => {
     expect(validateSpineRegistry(PAIGE_SPINE_CAPABILITIES)).toEqual([]);
     const capability = getSpineCapability("long_form.document_authoring");

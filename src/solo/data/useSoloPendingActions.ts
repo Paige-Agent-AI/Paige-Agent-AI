@@ -41,6 +41,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
 import { departmentLabel } from "./useSoloActivityFeed";
 
 /** How many waiting items a modal needs. It shows one; a few are read so "next" is possible. */
@@ -58,6 +59,8 @@ export interface SoloPendingAction {
   rationale: string | null;
   /** The desk it came from, named from the seeded §16 slugs. */
   department: string;
+  /** Original recorded source pointer only; the destination must reauthorize its read. */
+  sourceLink?: ReadRecordLink;
   createdAt: string;
 }
 
@@ -82,6 +85,10 @@ export function toPendingAction(raw: unknown): SoloPendingAction | null {
   // draft body; an object is real data but not prose, and stringifying it would put a JSON blob in
   // front of an operator as though Paige had written it.
   const draft = typeof r.draft_content === "string" && r.draft_content.trim() ? r.draft_content : null;
+  // Only the original Systems Check remediator files this source shape. Do not infer a source
+  // from its title/department or render arbitrary payload fields, addresses or approval claims.
+  const [source] = r.action_kind === "systems.remediate"
+    ? readRecordLinks([{ destination: "systems_check", record_id: r.source_finding_id }]) : [];
   return {
     id: r.id,
     title: r.title,
@@ -91,26 +98,32 @@ export function toPendingAction(raw: unknown): SoloPendingAction | null {
     department: departmentLabel(
       typeof r.from_department === "string" && r.from_department ? r.from_department : null,
     ),
-    createdAt: typeof r.created_at === "string" ? r.created_at : new Date().toISOString(),
+    createdAt: typeof r.created_at === "string" ? r.created_at : "",
+    ...(source?.record_id ? { sourceLink: source } : {}),
   };
 }
 
-export function useSoloPendingActions(tenantId: string | null): SoloPendingActionsData {
+/** Optional actor binding is a UI read assertion, never backend identity or authority. */
+export function useSoloPendingActions(tenantId: string | null, actorId?: string | null): SoloPendingActionsData {
   const [items, setItems] = useState<SoloPendingAction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState<number | null>(null);
   const [tick, setTick] = useState(0);
   const mounted = useRef(false);
-  const scope = typeof tenantId === "string" && tenantId ? tenantId : null;
-  const [settledScope, setSettledScope] = useState(scope);
+  const actorScope = actorId === undefined ? undefined : actorId?.trim() || null;
+  const scope = typeof tenantId === "string" && tenantId && actorScope !== null ? tenantId : null;
+  // Existing callers are unasserted; an explicit unresolved actor must not read.
+  // Compare the complete identity during render, before effects can retire old data.
+  const readKey = JSON.stringify([scope, actorId !== undefined, actorScope ?? null]);
+  const [settledReadKey, setSettledReadKey] = useState(readKey);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     mounted.current = true;
     let cancelled = false;
-    setSettledScope(scope);
+    setSettledReadKey(readKey);
     setItems([]);
     setTotal(null);
 
@@ -129,7 +142,9 @@ export function useSoloPendingActions(tenantId: string | null): SoloPendingActio
       try {
         const { data, error: readError, count } = await supabase
           .from("paige_actions")
-          .select("id,title,summary,draft_content,decision_rationale,from_department,created_at", { count: "exact" })
+          // Rows cross the existing unknown→toPendingAction boundary. Avoid recursively
+          // instantiating the SDK's JSON-path parser; the actual projection is unchanged.
+          .select<string>("id,title,summary,draft_content,decision_rationale,from_department,created_at,action_kind,source_finding_id:payload->>finding_id", { count: "exact" })
           .eq("tenant_id", scope) // §9 — bind to the VIEWED workspace, not the operator's whole book
           .eq("status", "filed")
           .eq("autonomy_lane", "confirm")
@@ -155,9 +170,9 @@ export function useSoloPendingActions(tenantId: string | null): SoloPendingActio
     })();
 
     return () => { cancelled = true; mounted.current = false; };
-  }, [tick, scope]);
+  }, [tick, scope, readKey]);
 
-  return useMemo(() => settledScope === scope
+  return useMemo(() => settledReadKey === readKey
     ? { items, total, loading, error, refresh }
-    : { items: [], total: null, loading: true, error: null, refresh }, [items, total, loading, error, refresh, settledScope, scope]);
+    : { items: [], total: null, loading: true, error: null, refresh }, [items, total, loading, error, refresh, settledReadKey, readKey]);
 }

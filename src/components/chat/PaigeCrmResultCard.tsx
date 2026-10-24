@@ -1,11 +1,10 @@
 import { CheckCircle2, ExternalLink } from "lucide-react";
+import { workspaceLinkTarget, workspaceLinkTier, type WorkspaceLinkTenant } from "@/lib/links/workspaceLinks";
+import { crmResultRecordReference, type CrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
 
-export type PaigeCrmResult = {
-  action: string;
-  outcome: string;
-  readback: Record<string, unknown> | null;
-  receipt_recorded: boolean;
-  record_locator: {
+export type PaigeCrmResult = CrmResultMetadata & {
+  readback?: Record<string, unknown> | null;
+  record_locator?: {
     record_id?: string | null;
     surface_url?: string | null;
     deep_link?: string | null;
@@ -14,7 +13,7 @@ export type PaigeCrmResult = {
   external_effect?: boolean;
 };
 
-export function PaigeCrmResultCard({ result }: { result: PaigeCrmResult }) {
+export function PaigeCrmResultCard({ result, account }: { result: PaigeCrmResult; account?: WorkspaceLinkTenant | null }) {
   const absent = result.readback?.absent === true;
   // A create is a new record, so it reads "Added" — "Updated: contact create" described an edit
   // that never happened (owner ruling, 2026-09-26). Every *.create the executor runs inserts a new
@@ -22,9 +21,18 @@ export function PaigeCrmResultCard({ result }: { result: PaigeCrmResult }) {
   // whenever the receipt is shown.
   const created = !absent && result.action.endsWith(".create");
   const label = result.action.replace(/\./g, " ");
-  const href = result.record_locator?.deep_link || result.record_locator?.surface_url || null;
-  const exact = result.record_locator?.deep_link_status === "exact";
-  const record = String(result.readback?.client_ref || result.readback?.title || result.record_locator?.record_id || "CRM record");
+  const soloTaskOrDeal = workspaceLinkTier(account) === "solo" && /^(task|deal)\./.test(result.action);
+  const projected = crmResultRecordReference(result);
+  // New Task/Deal history recovery is Solo-only; other live tiers keep their
+  // incumbent native locator contract, without adopting a new Work reference.
+  const reference = result.action.startsWith("contact.") || soloTaskOrDeal ? projected : null;
+  const target = reference ? workspaceLinkTarget(reference, account) : null;
+  // The history reader never hydrates locators. Managed Solo references always
+  // rebuild addresses from the current workspace, never a stored/live URL.
+  const liveLocator = !result.action.startsWith("contact.") && !soloTaskOrDeal ? result.record_locator : null;
+  const href = target?.to || liveLocator?.deep_link || liveLocator?.surface_url || null;
+  const exact = target?.status === "exact" || (!target && liveLocator?.deep_link_status === "exact");
+  const record = String(reference?.subject || result.readback?.client_ref || result.readback?.title || result.record_locator?.record_id || "CRM record");
   return (
     <div className="mt-2 rounded-md border border-border bg-muted/30 p-3" data-paige-crm-result>
       <div className="flex items-start gap-2">
@@ -38,7 +46,8 @@ export function PaigeCrmResultCard({ result }: { result: PaigeCrmResult }) {
           </p>
           {href && (
             <a className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-2 hover:underline" href={href}>
-              {exact ? "Open exact record" : "Open CRM surface"}<ExternalLink className="h-3 w-3" aria-hidden />
+              {target && soloTaskOrDeal ? (reference?.destination === "operations_work" && !exact ? "Open Work" : target.label)
+                : exact ? "Open exact record" : "Open CRM surface"}<ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           )}
         </div>

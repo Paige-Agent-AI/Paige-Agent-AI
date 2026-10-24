@@ -4,11 +4,18 @@ import {
   DEPT_VP,
   VP_DEPARTMENTS,
   resolveVpForDept,
+  resolveDepartmentSpecialist,
   resolveVpForActionKind,
   type DeptSlug,
 } from "@/lib/paige/vpDepartments";
 
 describe("vpDepartments — VP↔department map integrity (§12/§16)", () => {
+  it.each([['finance','VERA'],['marketing','NEXUS'],['sales','MERIT'],['operations_pmo','ZION'],['client_experience','CURA'],['product_curriculum','MENTOR']] as const)('resolves approved %s presentation from the existing ownership and roster', (department,id)=>{
+    expect(resolveDepartmentSpecialist(department)).toEqual({id,...VP_ROSTER[id]});
+  });
+  it.each([undefined,null,'unknown-department','executive_office'])('preserves PAIGE for global or unknown context %#',department=>{
+    expect(resolveDepartmentSpecialist(department)).toEqual({id:'PAIGE',...VP_ROSTER.PAIGE});
+  });
   it("every department names an owning VP that exists in VP_ROSTER (§243)", () => {
     for (const [slug, vp] of Object.entries(DEPT_VP)) {
       expect(VP_ROSTER[vp as VP], `dept ${slug} → ${vp}`).toBeDefined();
@@ -68,7 +75,7 @@ describe("resolveVpForActionKind — draft credit is null unless real (§13)", (
   it("resolves namespaced §16 kinds via their namespace", () => {
     expect(resolveVpForActionKind("marketing.draft_campaign")).toBe("NEXUS");
     expect(resolveVpForActionKind("sales.work_followup")).toBe("MERIT");
-    expect(resolveVpForActionKind("finance.retainer_reminder")).toBe("MERIT");
+    expect(resolveVpForActionKind("finance.retainer_reminder")).toBe("VERA");
     expect(resolveVpForActionKind("curriculum.suggest_resource")).toBe("MENTOR");
     expect(resolveVpForActionKind("tech.propose_automation")).toBe("ZION");
     expect(resolveVpForActionKind("ops.record_status")).toBe("ZION");

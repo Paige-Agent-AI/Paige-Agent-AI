@@ -33,10 +33,24 @@ describe('a saved invoice reference remains verifiable after a turn reload', () 
   });
 
   it('does not invent record focus on other department links or unsupported tiers', () => {
-    for (const destination of ['sales_agreements', 'sales_collections', 'operations_work', 'business_time_zone'] as const) {
+    for (const destination of ['sales_agreements', 'sales_collections', 'business_time_zone'] as const) {
       expect(readRecordLinks([{ destination, record_id: INVOICE }])).toEqual([{ destination, record_id: null }]);
     }
     const links = readRecordLinks([{ destination: 'sales_invoices', record_id: INVOICE }]);
+    for (const account_type of ['sub_account', 'agency', 'enterprise']) {
+      expect(workspaceLinkTargets(links, { ...tenant, account_type })).toEqual([]);
+    }
+  });
+
+  it('preserves supported Task focus without changing invoice or account boundaries', () => {
+    const task = 'e4000000-0000-4000-8000-0000000a0003';
+    const links = readRecordLinks([{ destination: 'operations_work', record_id: task }]);
+    expect(links).toEqual([{ destination: 'operations_work', record_id: task }]);
+    expect(workspaceLinkTargets(links, tenant)).toEqual([{
+      label: 'Open task', status: 'exact', to: `/solo/3123/operations/work?task=${task}`,
+    }]);
+    expect(workspaceLinkTargets(readRecordLinks([{ destination: 'operations_work', record_id: null }]), tenant))
+      .toEqual([{ label: 'Open delivery work', status: 'surface_only', to: '/solo/3123/operations/work' }]);
     for (const account_type of ['sub_account', 'agency', 'enterprise']) {
       expect(workspaceLinkTargets(links, { ...tenant, account_type })).toEqual([]);
     }

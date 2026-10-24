@@ -2,17 +2,27 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { BookOpen, Bot, Brain, MessageSquarePlus, MessagesSquare, RotateCw, Search, Sparkles, Telescope, Wrench, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PaigeAIChat, type ChatRailApi } from "@/components/dashboard/PaigeAIChat";
+import { SoloPlanningSuggestion } from "./SoloPlanningSuggestion";
+import { planningWorkRelevant } from "./planning-suggestion-context";
 import { PaigeComposerAutonomyChip } from "@/components/dashboard/paige/PaigeComposerAutonomyChip";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { isSoloSetupComplete } from "@/components/auth/RequireSetupComplete";
 import { ResearchView } from "@/solo/paige-research";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { useSoloKnowledge } from "./data/useSoloKnowledge";
 import { useSoloSkills } from "./data/useSoloSkills";
+import { usePaigeLiveStatus } from "./usePaigeLiveStatus";
+import { presentCatalogueCoverage } from "./catalogue-coverage";
 import { clearPaigeSurfaceScope, getPaigeBusinessPlanScope, getPaigeClientScope, subscribePaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import "./solo-paige-workspace.css";
 import { WeeklyResponsibilityEntry } from "./weekly/WeeklyResponsibilityEntry";
+import { SoloBusinessInterview } from "./SoloBusinessInterview";
+import { supabase } from "@/integrations/supabase/client";
+import { interviewThreadFromSearch } from "./solo-interview-navigation";
+import { cleanInterviewCheckpoint, INTERVIEW_NEXT_PROMPTS } from "./solo-business-interview-contract";
+import { SoloOnboardingStage, type OnboardingProfileStatus } from "./SoloOnboardingStage";
 
 // Approved design lineage: 51D7A6F680DB83AEF6BFE1147E9FC1651E39206EFAED17963F2FC16EC294F117
 type SoloPaigeTab = "chat" | "knowledge" | "research" | "helpers" | "capabilities";
@@ -233,27 +243,49 @@ function SoloHistoryRail({ api }: { api: ChatRailApi }) {
 function CapabilitiesView() {
   const capability = useSoloSkills();
   const rows = useMemo(() => capability.skills, [capability.skills]);
+  // The Live row's access state is THIS account's canonical acknowledgement truth
+  // (review #2611 P2-3: a permanent hard-coded label is not an account-state
+  // implementation). "Acknowledged" means the person turned Live on for this
+  // account — it is never a claim that audio was verified.
+  const live = usePaigeLiveStatus();
+  const liveRow = live.state === "acknowledged"
+    ? { tone: "live" as const, pill: "Available", access: "Turned on for this account" }
+    : live.state === "revoked"
+      ? { tone: "unavailable" as const, pill: "Revoked", access: "Off for this account" }
+      : live.state === "expired"
+        ? { tone: "partial" as const, pill: "Consent expired", access: "Renew in chat to listen" }
+        : live.state === "loading"
+          ? { tone: "neutral" as const, pill: "Checking this account", access: "Checking…" }
+          : live.state === "unknown" || live.state === "unauthenticated"
+            // "unauthenticated" is practically unreachable behind this view's auth, but
+            // if it ever surfaces the honest answer is Unverified — never a guessed
+            // consent state (review #2657 P3-2).
+            ? { tone: "neutral" as const, pill: "Unverified", access: "Could not check" }
+            : { tone: "partial" as const, pill: "Consent required", access: "Not activated yet" };
   return (
     <div className="spw-management-view">
       <PanelHeader
         eyebrow="Skill catalogue"
         title="Workspace capabilities"
-        description="Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them."
+        description="Coverage shows released functionality. PAIGE checks permissions and connections when you ask."
         state={<TruthPill>Catalogue</TruthPill>}
       />
       <div className="spw-scroll">
         <section className="spw-capabilities" aria-label="Capabilities">
-          <div className="spw-cap-head"><span>Capability</span><span>Status</span><span>Access</span></div>
+          <div className="spw-cap-head"><span>Capability</span><span>Coverage</span><span>Access</span></div>
           {capability.loading && <div className="spw-state" role="status">Loading this workspace’s skill catalogue…</div>}
           {capability.error && <div className="spw-state spw-state-error" role="alert"><strong>Capabilities could not be loaded.</strong><span>{capability.error}</span><button type="button" onClick={capability.refresh}><RotateCw aria-hidden size={14} /> Retry</button></div>}
           {capability.empty && <div className="spw-state"><Wrench aria-hidden size={24} /><strong>No skills are listed</strong><span>This workspace’s skill catalogue is empty.</span></div>}
-          {rows.map((skill) => (
+          {rows.map((skill) => {
+            const coverage = presentCatalogueCoverage(skill);
+            return (
             <div className="spw-cap-row" key={skill.slug}>
               <div><strong>{skill.n}</strong><small>{skill.d || skill.cat || "Registry description unavailable"}</small></div>
-              <TruthPill>{skill.on ? "Listed" : "Inactive"}</TruthPill>
+              <TruthPill tone={coverage?.tone}>{coverage?.label ?? (skill.on ? "Listed" : "Inactive")}</TruthPill>
               <span>Unverified</span>
             </div>
-          ))}
+            );
+          })}
           {/* §13 — THIS ROW CONTRADICTED THE SURFACE IT DESCRIBES. It read "Partial / Not
               activated" while the hold-to-dictate mic sits live in the composer one tab away, in
               this same workspace, wired to `paige-dictate`. A capability panel that tells a person
@@ -262,6 +294,15 @@ function CapabilitiesView() {
               The pill and copy are CD's (§00). What is asserted about whether the thing WORKS is
               a fact, and the fact was wrong. */}
           <div className="spw-cap-row"><div><strong>Voice input</strong><small>Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.</small></div><TruthPill tone="live">Available</TruthPill><span>Active</span></div>
+          {/* Dictation is one-way input; this row is the two-way surface, and the two must stay
+              distinguishable (owner capabilities directive: never conflate voice dictation with
+              bidirectional Live Conversation). Live audio is off for an account until the owner of
+              the voice accepts the speech-provider terms in the Live surface — so the honest access
+              state is consent-required, never Active, until a person has actually turned it on.
+              The label is this account's current fact, derived per-account when Live state is
+              verified end-to-end (EXP01 PR5). */}
+          <div className="spw-cap-row"><div><strong>Live Conversation</strong><small>Two-way voice with Paige inside your chat — she listens and speaks in the same conversation. {liveRow.access === "Turned on for this account" ? "You turned this on; it stays yours to pause or end at any time." : "Off for your account until you turn it on from the chat composer: your browser asks for microphone permission, and Paige explains what the speech provider keeps before anything starts."}</small></div><TruthPill tone={liveRow.tone}>{liveRow.pill}</TruthPill><span>{liveRow.access}</span></div>
+          <div className="spw-cap-row"><div><strong>Onboarding & business discovery</strong><small>Paige interviews your business in chat, tracks every confirmed detail into Setup, and you review, skip or correct each one. Speak or type — speaking needs Live Conversation turned on.</small></div><TruthPill tone="live">Available</TruthPill><span>Active</span></div>
           <div className="spw-cap-row"><div><strong>Code or sandbox execution</strong><small>Contextual previews may be shown, but no execution substrate is available.</small></div><TruthPill tone="unavailable">Unavailable</TruthPill><span>Off</span></div>
         </section>
       </div>
@@ -273,12 +314,16 @@ export function SoloPaigeWorkspace({
   full = false,
   dockedTab,
   onDockedTabChange,
+  onboarding = false,
+  visible = true,
 }: {
   full?: boolean;
   dockedTab?: SoloPaigeTab;
   onDockedTabChange?: (tab: SoloPaigeTab) => void;
+  onboarding?: boolean;
+  visible?: boolean;
 } = {}) {
-  const { activeTenantId } = useTenantContext();
+  const { activeTenantId, activeUserId, activeTenant, isPlatformStaff } = useTenantContext();
   // §60 — does this account type carry Live Conversation? Answered in the one home
   // (src/lib/tier/tierFeatures.ts), never by an inline account_type compare. While the tenant is
   // still resolving the classification defaults to the permissive solo tier, so stay optimistic
@@ -288,6 +333,14 @@ export function SoloPaigeWorkspace({
   const liveConversationAvailable = tierLoading || hasTierFeature("live_conversation");
   const location = useLocation();
   const navigate = useNavigate();
+  // Completion retirement: the canonical setup journey's completion marker
+  // (features.solo_setup_complete, written by the first successful Setup save)
+  // ends first-run presentation EVEN IF the URL still carries ?onboarding=1 —
+  // a completed owner must never re-encounter interview chrome through a
+  // stale link (§2F). The tenant context refreshes after a save, so this
+  // retires in-session, not just on the next reload.
+  const setupComplete = isSoloSetupComplete(activeTenant?.features);
+  const firstRun = !isPlatformStaff && !setupComplete && (onboarding || new URLSearchParams(location.search).get("onboarding") === "1");
   // The client a Solo surface pointed PAIGE at, read for THIS account only. The store
   // refuses a scope stamped with another account, so an account switch cannot surface
   // the previous account's client even for one frame.
@@ -303,6 +356,119 @@ export function SoloPaigeWorkspace({
   const releaseScope = useCallback(() => { clearPaigeSurfaceScope(); clearPaigePublicPresenceScope(); }, []);
   const [routedTab, setRoutedTab] = useSubtabRoute("solo", "paige", "chat");
   const [localTab, setLocalTab] = useState<SoloPaigeTab>(dockedTab ?? "chat");
+  const [interviewOpen, setInterviewOpen] = useState(firstRun);
+  const [interviewThreadId, setInterviewThreadId] = useState<string | null>(null);
+  const [chatBusy, setChatBusy] = useState(false);
+  const [interviewRefresh, setInterviewRefresh] = useState(0);
+  const wasChatBusy = useRef(false);
+  const observedThread = useRef<string | null>(null);
+  const requestedInterview = interviewThreadFromSearch(location.search);
+  const [resumeAttempt, setResumeAttempt] = useState(0);
+  const resumeScope = `${activeTenantId}:${requestedInterview}`;
+  const liveResumeScope = useRef(resumeScope); liveResumeScope.current = resumeScope;
+  const [verifiedResume, setVerifiedResume] = useState<{ scope: string; state: "ready" | "failed" } | null>(null);
+  const [profileStatus, setProfileStatus] = useState<OnboardingProfileStatus | null>(null);
+  const observeProfile = useCallback((status: OnboardingProfileStatus) => {
+    setProfileStatus(previous => previous?.tenantId === status.tenantId && previous.state === status.state && previous.confirmedCount === status.confirmedCount && previous.hasConfirmedPriority === status.hasConfirmedPriority ? previous : status);
+  }, []);
+  const observeChat = useCallback((_steps: unknown, loading: boolean) => {
+    setChatBusy(loading);
+    if (wasChatBusy.current && !loading) setInterviewRefresh(epoch => epoch + 1);
+    wasChatBusy.current = loading;
+  }, []);
+  const observeThread = useCallback((id: string | null) => {
+    if (!firstRun && observedThread.current && observedThread.current !== id) setInterviewOpen(false);
+    observedThread.current = id; setInterviewThreadId(id);
+    if (requestedInterview && id !== requestedInterview) {
+      const search = new URLSearchParams(location.search);
+      if (id) search.set("interviewThread", id); else search.delete("interviewThread");
+      navigate(`${location.pathname}${search.size ? `?${search}` : ""}`, { replace: true });
+    }
+  }, [firstRun, requestedInterview, location.pathname, location.search, navigate]);
+  useEffect(() => { setInterviewOpen(false); setInterviewThreadId(null); observedThread.current = null; setChatBusy(false); wasChatBusy.current = false; }, [activeTenantId]);
+  useEffect(() => { if (firstRun) setInterviewOpen(true); }, [firstRun, activeTenantId]);
+  useEffect(() => {
+    if (!activeTenantId || !requestedInterview || clientScope || planScope || presenceScope) return;
+    let current = true;
+    const deadline = setTimeout(() => {
+      if (current && liveResumeScope.current === resumeScope) {
+        current = false;
+        setVerifiedResume({ scope: resumeScope, state: "failed" });
+      }
+    }, 30000);
+    setVerifiedResume(null);
+    setInterviewOpen(false);
+    void (async () => {
+      try {
+        const rpc = supabase.rpc as unknown as (name: string, args?: object) => Promise<{ data: unknown; error: unknown }>;
+        // Before selecting any transcript, use the incumbent caller-JWT check:
+        // current Owner, active membership and the exact private coach thread.
+        const checkpoint = await rpc("get_solo_business_interview_checkpoint", { _thread_id: requestedInterview });
+        if (!current || liveResumeScope.current !== resumeScope) return;
+        if (checkpoint.error || (checkpoint.data !== null && !cleanInterviewCheckpoint(checkpoint.data, activeTenantId, requestedInterview))) throw new Error("unavailable");
+        const context = await rpc("get_solo_business_context");
+        const row = context.data as { tenantId?: string; accessScope?: string } | null;
+        if (context.error || row?.tenantId !== activeTenantId || row.accessScope !== "owner_full") throw new Error("unavailable");
+        if (!current || liveResumeScope.current !== resumeScope) return;
+        setVerifiedResume({ scope: resumeScope, state: "ready" });
+        setInterviewOpen(true);
+      } catch {
+        if (current && liveResumeScope.current === resumeScope) setVerifiedResume({ scope: resumeScope, state: "failed" });
+      } finally {
+        clearTimeout(deadline);
+      }
+    })();
+    return () => { current = false; clearTimeout(deadline); };
+  }, [activeTenantId, requestedInterview, resumeScope, resumeAttempt, clientScope, planScope, presenceScope]);
+  // Reliable resume: an owner re-entering an UNFINISHED onboarding lands back
+  // in their own unfinished interview conversation, not a blank one. One
+  // lookup per resolved tenant on first-run entry (only while no thread is
+  // active and no deep link was given); a hit adopts the SAME verified
+  // deep-link path — the checkpoint/authority verification above then runs
+  // unchanged. A failed or empty lookup never blocks the fresh interview, and
+  // a resolve that lands after the user started or chose a conversation is
+  // discarded (the same cancellation guard the verification effect uses).
+  const resumeLookupRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!firstRun || requestedInterview || clientScope || planScope || presenceScope) return;
+    if (!activeTenantId || observedThread.current) return;
+    const scope = activeTenantId;
+    if (resumeLookupRef.current === scope) return;
+    resumeLookupRef.current = scope;
+    let current = true;
+    void (async () => {
+      try {
+        const rpc = supabase.rpc as unknown as (name: string, args?: object) => Promise<{ data: unknown; error: unknown }>;
+        const lookup = await rpc("latest_solo_business_interview_thread");
+        if (!current || resumeLookupRef.current !== scope || observedThread.current) return;
+        const row = lookup.data as { threadId?: string } | null;
+        if (lookup.error || !row?.threadId) return;
+        const search = new URLSearchParams(location.search);
+        search.set("interviewThread", row.threadId);
+        navigate(`${location.pathname}?${search}`, { replace: true });
+      } catch { /* a failed lookup never blocks the fresh interview */ }
+    })();
+    return () => { current = false; };
+  }, [firstRun, requestedInterview, activeTenantId, clientScope, planScope, presenceScope, location.pathname, location.search, navigate]);
+  // Completion retirement of the URL itself: once setup is complete, a stale
+  // ?onboarding=1 (bookmarked or hand-typed) is stripped so the address stops
+  // claiming a first-run state the workspace has outgrown.
+  useEffect(() => {
+    if (!setupComplete) return;
+    const search = new URLSearchParams(location.search);
+    if (search.get("onboarding") !== "1") return;
+    search.delete("onboarding");
+    navigate(`${location.pathname}${search.size ? `?${search}` : ""}`, { replace: true });
+  }, [setupComplete, location.pathname, location.search, navigate]);
+  const leaveReturnVerification = () => {
+    const search = new URLSearchParams(location.search);
+    search.delete("interviewThread");
+    navigate(`${location.pathname}${search.size ? `?${search}` : ""}`, { replace: true });
+  };
+  const interviewFocused = interviewOpen && !clientScope && !planScope && !presenceScope;
+  const resumeEligible = Boolean(requestedInterview) && !clientScope && !planScope && !presenceScope;
+  const resumePending = resumeEligible && verifiedResume?.scope !== resumeScope;
+  const resumedThread = resumeEligible && verifiedResume?.scope === resumeScope && verifiedResume.state === "ready" ? requestedInterview! : undefined;
   const acceptedRoutedTab = (TABS.some((item) => item.id === routedTab) ? routedTab : "chat") as SoloPaigeTab;
   const acceptedDockedTab = dockedTab && TABS.some((item) => item.id === dockedTab) ? dockedTab : localTab;
   const tab = full ? acceptedRoutedTab : acceptedDockedTab;
@@ -340,7 +506,7 @@ export function SoloPaigeWorkspace({
   };
 
   return (
-    <div className="spw-root" data-account-epoch={activeTenantId ?? "resolving"} style={{ containerType: "inline-size" }}>
+    <div className={`spw-root${firstRun ? " spw-root--onboarding" : ""}`} data-account-epoch={activeTenantId ?? "resolving"} style={{ containerType: "inline-size" }}>
       <style>{`@container (max-width: 650px){[data-solo-thread-rail="true"]{display:none!important}[data-solo-mobile-history="true"]{display:flex!important}.spw-tabs button{padding-inline:6px;font-size:11px;gap:4px}}`}</style>
       <div className="spw-tabs" role="tablist" aria-label="Solo PAIGE workspace">
         {TABS.map((item, index) => {
@@ -349,17 +515,29 @@ export function SoloPaigeWorkspace({
         })}
       </div>
       <section id="spw-panel-chat" role="tabpanel" aria-labelledby="spw-tab-chat" hidden={tab !== "chat"} className="spw-panel spw-chat-panel">
-        <PaigeAIChat
+        {resumePending ? <div className="spw-state"><p role="status">Opening the owned interview…</p><button type="button" onClick={leaveReturnVerification}>Back to conversation history</button></div> : <PaigeAIChat
           hideHeader
           fill
           enableHistory
           soloTenantSafety
           liveConversation={liveConversationAvailable}
           composerAutonomyControl={<PaigeComposerAutonomyChip accountEpoch={activeTenantId} />}
+          renderComposerContext={api => <SoloPlanningSuggestion
+            key={JSON.stringify([activeTenantId, activeUserId, planScope?.businessMissionId, Boolean(planScope)])}
+            api={api} tenantId={isPlatformStaff ? null : activeTenantId} actorId={activeUserId ?? null}
+            active={visible && tab === "chat"} plan={planScope} onClearContext={releaseScope} sidePanel={!full}
+            relevant={!isPlatformStaff && planningWorkRelevant({ otherScope: Boolean(firstRun || interviewFocused || clientScope || presenceScope || requestedInterview || resumePending), plan: planScope,
+              onPlanPage: location.pathname.endsWith("/command-center/business-game-plan"), threadId: api.threadId, hasOwnerMessages: api.hasOwnerMessages })}
+          />}
           renderRail={(api) => <SoloHistoryRail api={api} />}
-          greeting="What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."
+          onActiveThreadIdChange={observeThread}
+          activeThreadId={resumedThread}
+          onTrace={observeChat}
+          greeting={interviewFocused && firstRun ? "I'm PAIGE. What does your business do, and what would you most like to improve?" : interviewFocused ? "I'm PAIGE. Tell me what your business does and what you'd most like to improve. We'll take it one question at a time; you can review, skip or correct each detail." : "What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."}
+          chips={interviewFocused && profileStatus?.tenantId === activeTenantId && profileStatus.state === "ready" && profileStatus.hasConfirmedPriority
+            ? [...INTERVIEW_NEXT_PROMPTS] : undefined}
           clientId={clientScope?.clientId ?? null}
-          surfaceContext={!clientScope && !planScope && presenceScope ? { kind: presenceScope.kind, step: presenceScope.step, intendedAction: presenceScope.intendedAction } : undefined}
+          surfaceContext={interviewFocused ? { kind: "solo_business_interview" } : !clientScope && !planScope && presenceScope ? { kind: presenceScope.kind, step: presenceScope.step, intendedAction: presenceScope.intendedAction } : undefined}
           businessMissionId={!clientScope ? planScope?.businessMissionId ?? null : null}
           onFocusRelease={releaseScope}
           focusBanner={clientScope ? (
@@ -368,26 +546,20 @@ export function SoloPaigeWorkspace({
               <div><strong>{clientScope.label}</strong><span>Recorded outcomes for this client only. PAIGE reads them; she cannot change them.</span></div>
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
-          ) : planScope ? (
-            <div className="spw-chat-head" data-solo-paige-focus>
-              <TruthPill tone="partial">PLAN IN CONTEXT</TruthPill>
-              <div><strong>{planScope.label}</strong><span>Resolved from the active workspace. Changes still require authority, canonical readback, and Rail evidence.</span></div>
-              <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
-            </div>
-          ) : presenceScope ? (
+          ) : !planScope && presenceScope ? (
             <div className="spw-chat-head" data-solo-paige-focus>
               <TruthPill tone="partial">PUBLIC PRESENCE</TruthPill>
               <div><strong>Safe public-business context</strong><span>PAIGE re-resolves approved facts and provider availability on the server for each turn.</span></div>
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
           ) : undefined}
-          conversationHeader={<div className="spw-chat-head"><div><strong>PAIGE</strong><span>Active Solo account · tenant-scoped</span></div>{!clientScope && !planScope && !presenceScope && <WeeklyResponsibilityEntry hideEmpty={new URLSearchParams(location.search).get("onboarding") === "1"} />}</div>}
-        />
+          conversationHeader={<div className={firstRun ? "spw-onboarding-header" : undefined}>{visible && tab === "chat" && firstRun && !clientScope && !planScope && !presenceScope && <SoloOnboardingStage thinking={chatBusy} profile={profileStatus?.tenantId === activeTenantId ? profileStatus : null} onResumeProfile={() => setInterviewOpen(true)} profileOpen={interviewOpen} onTalkLive={liveConversationAvailable ? () => { window.dispatchEvent(new CustomEvent("paige-live-open-request")); } : undefined} />}{resumeEligible && verifiedResume?.scope === resumeScope && verifiedResume.state === "failed" && <div className="spw-state"><p role="alert">That interview could not be verified for this workspace. Try again or choose a conversation from history.</p><button type="button" onClick={() => { setVerifiedResume(null); setResumeAttempt(attempt => attempt + 1); }}>Retry interview verification</button><button type="button" onClick={leaveReturnVerification}>Back to conversation history</button></div>}<div className={`spw-chat-head${firstRun && interviewFocused ? " spw-chat-head--onboarding-open" : ""}`}><div><strong>PAIGE</strong><span>{firstRun ? "Your business interview" : "Active Solo account · tenant-scoped"}</span></div>{!clientScope && !planScope && !presenceScope && <WeeklyResponsibilityEntry hideEmpty={firstRun} />}</div>{interviewFocused && <SoloBusinessInterview key={activeTenantId ?? "unresolved"} threadId={interviewThreadId} busy={chatBusy} refreshEpoch={interviewRefresh} onPause={() => setInterviewOpen(false)} onboarding={firstRun} onProfileStatus={observeProfile} />}</div>}
+        />}
       </section>
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>
       <section id="spw-panel-research" role="tabpanel" aria-labelledby="spw-tab-research" hidden={tab !== "research"} className="spw-panel">{tab === "research" && <ResearchView activeTenantId={activeTenantId} />}</section>
       <section id="spw-panel-helpers" role="tabpanel" aria-labelledby="spw-tab-helpers" hidden={tab !== "helpers"} className="spw-panel">{tab === "helpers" && <HelpersView />}</section>
-      <section id="spw-panel-capabilities" role="tabpanel" aria-labelledby="spw-tab-capabilities" hidden={tab !== "capabilities"} className="spw-panel">{tab === "capabilities" && <CapabilitiesView />}</section>
+      <section id="spw-panel-capabilities" role="tabpanel" aria-labelledby="spw-tab-capabilities" hidden={tab !== "capabilities"} className="spw-panel">{tab === "capabilities" && <CapabilitiesView key={`${activeUserId ?? "resolving"}:${activeTenantId ?? "resolving"}`} />}</section>
       <span className="spw-sr" aria-live="polite">{TABS.find((item) => item.id === tab)?.label} view open</span>
     </div>
   );

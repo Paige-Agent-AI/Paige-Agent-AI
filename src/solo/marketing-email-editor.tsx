@@ -2,7 +2,8 @@
 //
 // Reads:  read_email_campaign (the campaign as sent: footer facts, senders, approval, progress)
 //         email_audience_preview (who a rule reaches today, and why anyone is left out)
-//         read_email_rule_choices (stages, sources and tags the business's contacts carry)
+//         read_email_rule_choices (stages, sources and tags the business's contacts carry, and how many
+//         customers have open portal access)
 //         email_campaigns (the full list; RLS: owner or admin of the business)
 // Acts:   email_campaign_update_draft · email_campaign_request_approval · email_campaign_approve
 //         email_campaign_decline · email_campaign_new_version · email_campaign_cancel · email_campaign_resume
@@ -21,9 +22,10 @@ const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?:
 type Rpc = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string; details?: string; code?: string } | null }>;
 const rpc = (supabase as unknown as { rpc: Rpc }).rpc.bind(supabase);
 
-export type Rule = { stages?: string[]; sources?: string[]; tags?: string[]; inactive_days?: number };
+// portal: "active" = only customers whose portal access is open (E09 C1; the database checks the key).
+export type Rule = { stages?: string[]; sources?: string[]; tags?: string[]; inactive_days?: number; portal?: "active" | null };
 type Choice = { key: string; count: number };
-export type Choices = { stages: Choice[]; sources: Choice[]; tags: Choice[] };
+export type Choices = { stages: Choice[]; sources: Choice[]; tags: Choice[]; portal?: { open: number } };
 type Sender = { mode: "managed" | "connector"; connector_id?: string; provider?: string; from_address?: string | null; from_name?: string | null; healthy?: boolean; ok?: boolean; reason?: string };
 type CampaignRead = {
   campaign: { id: string; name: string; kind: string; status: string; blocked_reason: string | null; updated_at: string };
@@ -61,6 +63,7 @@ export function errorWords(error: { message?: string; details?: string } | null)
     nothing_to_cancel: "There is nothing to stop.",
     business_inactive: "This business is not active, so nothing can send.",
     segment_not_found: "That segment no longer exists.",
+    rule_invalid: "That audience can’t be used. Choose stages, sources, tags, when they were last contacted, or customers with portal access.",
     campaign_not_found: "That campaign no longer exists.",
     segment_in_use: "A campaign uses this segment. Choose another audience for that campaign first, or keep the segment.",
     sender_changed: "The sender changed since this was approved. Make changes to approve it with the new sender.",
@@ -83,6 +86,7 @@ const sourceLabel = (k: string) => SOURCE_LABEL[k] ?? words(k);
 
 export function ruleSummary(rule: Rule): string {
   const parts: string[] = [];
+  if (rule.portal) parts.push("Customers with portal access");
   if (rule.stages?.length) parts.push(rule.stages.map(stageLabel).join(" or "));
   if (rule.sources?.length) parts.push(`from ${rule.sources.map(sourceLabel).join(" or ")}`);
   if (rule.tags?.length) parts.push(`tagged ${rule.tags.join(" or ")}`);
@@ -114,7 +118,9 @@ function Chips({ label, options, chosen, onToggle, render }: { label: string; op
   </div></fieldset>;
 }
 
-export function RuleBuilder({ rule, onChange, choices, disabled }: { rule: Rule; onChange: (rule: Rule) => void; choices: Choices | null; disabled?: boolean }) {
+/** Campaign and segment audiences may narrow to customers with open portal access; a series may not
+ *  (its sends are not re-checked against portal access), so it leaves `portal` off. */
+export function RuleBuilder({ rule, onChange, choices, disabled, portal = false }: { rule: Rule; onChange: (rule: Rule) => void; choices: Choices | null; disabled?: boolean; portal?: boolean }) {
   const toggle = (field: "stages" | "sources" | "tags", key: string) => {
     const list = rule[field] ?? [];
     const next = list.includes(key) ? list.filter((k) => k !== key) : [...list, key];
@@ -124,6 +130,10 @@ export function RuleBuilder({ rule, onChange, choices, disabled }: { rule: Rule;
   return <fieldset className="me-rule" disabled={disabled}>
     <legend className="campaigns-sr-only">Who receives it</legend>
     <p className="me-hint">Choose any mix. Nothing chosen means every contact.</p>
+    {portal && choices.portal && <fieldset className="me-field"><legend>Customer portal</legend><div className="me-chips" role="group">
+      <button type="button" className="me-chip" aria-pressed={!rule.portal} onClick={() => onChange({ ...rule, portal: undefined })}>Any contact</button>
+      <button type="button" className="me-chip" aria-pressed={rule.portal === "active"} onClick={() => onChange({ ...rule, portal: "active" })}>Customers with portal access<small>{choices.portal.open}</small></button>
+    </div></fieldset>}
     <Chips label="Stage" options={choices.stages} chosen={rule.stages ?? []} onToggle={(k) => toggle("stages", k)} render={stageLabel}/>
     <Chips label="Source" options={choices.sources} chosen={rule.sources ?? []} onToggle={(k) => toggle("sources", k)} render={sourceLabel}/>
     <Chips label="Tag" options={choices.tags} chosen={rule.tags ?? []} onToggle={(k) => toggle("tags", k)} render={(k) => k}/>
@@ -133,7 +143,8 @@ export function RuleBuilder({ rule, onChange, choices, disabled }: { rule: Rule;
   </fieldset>;
 }
 
-export function Reach({ preview, newsletter }: { preview: { phase: Phase; data: Preview | null }; newsletter: boolean }) {
+/** `updates`: a promotion or announcement, which a current or former portal customer receives only after turning Updates and offers on. */
+export function Reach({ preview, newsletter, updates = false }: { preview: { phase: Phase; data: Preview | null }; newsletter: boolean; updates?: boolean }) {
   const p = preview.data;
   if (!p) return <p className="me-reach" aria-live="polite">{preview.phase === "error" ? "The count could not load." : "Counting…"}</p>;
   const out = [
@@ -141,6 +152,7 @@ export function Reach({ preview, newsletter }: { preview: { phase: Phase; data: 
     p.opted_out && `${p.opted_out} opted out`,
     p.suppressed && `${p.suppressed} unsubscribed or bounced`,
     newsletter && p.no_consent && `${p.no_consent} not subscribed to your newsletter`,
+    !newsletter && updates && p.no_consent && `${p.no_consent} portal ${p.no_consent === 1 ? "customer who hasn’t" : "customers who haven’t"} turned on updates and offers`,
   ].filter(Boolean);
   return <div className="me-reach" aria-live="polite" aria-busy={preview.phase === "loading"}>
     <strong>{p.eligible.toLocaleString()}</strong><span> {p.eligible === 1 ? "person" : "people"} can receive it</span>
@@ -306,6 +318,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
 
   const c = data.campaign, v = data.version, p = data.progress;
   const newsletter = draft.kind === "newsletter";
+  const updates = draft.kind === "promotion" || draft.kind === "announcement";
   const sentEmail = renderCampaignEmail({ bodyHtml, preheader: draft.preheader, businessName: data.business_name, postalAddress: data.postal_address ?? "" });
   const from = editable ? (draft.sender.mode === "connector" ? data.senders.find((s) => s.connector_id === draft.sender.connector_id) : data.managed_sender) : (v.sender_snapshot ?? data.resolves);
   const fromLine = from?.from_address ? `${from.from_name ? `${from.from_name} <${from.from_address}>` : from.from_address}` : "No sender set up";
@@ -389,15 +402,15 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
     <div className="me-compose">
       <div className="me-compose-form">
         <section className="campaigns-surface mo-panel" aria-labelledby="me-to">
-          <div className="mo-panel-head"><div><h2 id="me-to">To</h2><p>{newsletter ? "A newsletter goes only to contacts who opted in to it." : "Contacts who opted out, unsubscribed or bounced are always left out."}</p></div></div>
+          <div className="mo-panel-head"><div><h2 id="me-to">To</h2><p>{newsletter ? "A newsletter goes only to contacts who opted in to it." : updates ? "Contacts who opted out, unsubscribed or bounced are left out, and so are portal customers who haven’t turned on updates and offers." : "Contacts who opted out, unsubscribed or bounced are always left out."}</p></div></div>
           {editable ? <>
             {data.segments.length > 0 && <div className="campaigns-segmented me-seg" role="group" aria-label="Audience">
               <button type="button" aria-pressed={!draft.segment_id} onClick={() => change({ segment_id: null })}>Choose contacts</button>
               <button type="button" aria-pressed={Boolean(draft.segment_id)} onClick={() => change({ segment_id: data.segments[0].id })}>A saved segment</button>
             </div>}
             {draft.segment_id ? <div className="me-chips" role="group" aria-label="Segment">{data.segments.map((s) => <button type="button" key={s.id} className="me-chip" aria-pressed={draft.segment_id === s.id} onClick={() => change({ segment_id: s.id })}>{s.name}</button>)}</div>
-              : <RuleBuilder rule={draft.audience} onChange={(audience) => change({ audience })} choices={data.choices}/>}
-            <Reach preview={preview} newsletter={newsletter}/>
+              : <RuleBuilder rule={draft.audience} onChange={(audience) => change({ audience })} choices={data.choices} portal/>}
+            <Reach preview={preview} newsletter={newsletter} updates={updates}/>
           </> : <p className="me-reach"><strong>{(v.expected_recipients ?? p.total).toLocaleString()}</strong><span> {ruleSummary(v.audience ?? {})}</span></p>}
         </section>
 
@@ -530,7 +543,7 @@ export function SegmentDialog({ segmentId, segment, onClose, onEmail }: { segmen
     <section ref={panel} className="me-drawer" role="dialog" aria-modal="true" aria-labelledby="me-seg-title">
       <div className="me-drawer-head"><h2 id="me-seg-title">{segmentId ? "Segment" : "New segment"}</h2><button type="button" className="me-x" aria-label="Close" onClick={() => onClose(false)}><Ic.x size={16}/></button></div>
       <label className="me-input"><span>Name</span><input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="e.g. Leads from my website"/></label>
-      <RuleBuilder rule={rule} onChange={setRule} choices={choices}/>
+      <RuleBuilder rule={rule} onChange={setRule} choices={choices} portal/>
       <Reach preview={preview} newsletter={false}/>
       <p className="me-hint">A segment is a rule, so it keeps up as contacts change. A campaign takes a fixed list from it at the moment you send it for approval.</p>
       {error && <p className="me-notice is-bad" role="alert">{error}</p>}

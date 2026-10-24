@@ -7,11 +7,13 @@ export type WeeklyRunStatus = "scheduled" | "running" | "completed" | "failed" |
 export type WeeklySourceItem = {
   id: string; kind: "task" | "milestone" | "reminder"; title: string;
   status: "open" | "in_progress" | "blocked"; priority: "low" | "normal" | "high" | "urgent"; due_at: string | null;
+  remind_at?: string | null;
 };
 export type VerifiedWeeklyRun = {
   event_id: string; act_id: string; receipt_id: string; observed_at: string; scheduled_for: string;
   schedule_revision: number; status: "completed"; truncated: boolean;
   counts: { open: number; blocked: number; overdue: number; due_next_week: number; undated: number };
+  observation_version?: 1 | 2;
   source_items?: WeeklySourceItem[] | null;
 };
 export type WeeklyRun = { event_id: string; act_id: string | null; scheduled_for: string; status: WeeklyRunStatus };
@@ -19,6 +21,8 @@ export type WeeklyCheck = {
   automation_id: string; name: string; revision: number; schedule_status: "requested" | "scheduled" | "paused" | "cancelled";
   schedule: WeeklySchedule; execution_availability: "ready" | "held"; execution_hold_reason: string | null;
   next_run_at: string | null; intended_next_run_at: string | null;
+  /** Original native future-control cutoff, never a client-created version. */
+  future_control_at?: string | null;
   last_run: WeeklyRun | null; last_verified_run: VerifiedWeeklyRun | null;
 };
 export type WeeklyCommitmentSnapshot = {
@@ -31,17 +35,20 @@ const uuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}
 const instant = (v: unknown): v is string => typeof v === "string" && v.length <= 40 &&
   /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(v) && Number.isFinite(Date.parse(v));
 const integer = (v: unknown): v is number => typeof v === "number" && Number.isSafeInteger(v) && v >= 0;
-export function parseWeeklySourceItems(raw: unknown): WeeklySourceItem[] | null {
+export function parseWeeklySourceItems(raw: unknown, version: 1 | 2 = 1): WeeklySourceItem[] | null {
   if (!Array.isArray(raw) || raw.length > 50) return null;
   const items: WeeklySourceItem[] = [], ids = new Set<string>();
   for (const value of raw) {
     const item = record(value);
     if (!item || !uuid(item.id) || ids.has(item.id) || !["task", "milestone", "reminder"].includes(String(item.kind)) ||
       typeof item.title !== "string" || item.title.length > 320 || Array.from(item.title).length > 160 || !["open", "in_progress", "blocked"].includes(String(item.status)) ||
-      !["low", "normal", "high", "urgent"].includes(String(item.priority)) || (item.due_at !== null && !instant(item.due_at))) return null;
+      !["low", "normal", "high", "urgent"].includes(String(item.priority)) || (item.due_at !== null && !instant(item.due_at)) ||
+      (item.remind_at !== undefined && item.remind_at !== null && !instant(item.remind_at)) ||
+      (version === 2 && (item.remind_at === undefined || (item.kind === "reminder" && (item.due_at !== null || !instant(item.remind_at)))))) return null;
     ids.add(item.id);
     items.push({ id: item.id, kind: item.kind as WeeklySourceItem["kind"], title: item.title,
-      status: item.status as WeeklySourceItem["status"], priority: item.priority as WeeklySourceItem["priority"], due_at: item.due_at as string | null });
+      status: item.status as WeeklySourceItem["status"], priority: item.priority as WeeklySourceItem["priority"], due_at: item.due_at as string | null,
+      ...(item.remind_at === undefined ? {} : { remind_at: item.remind_at as string | null }) });
   }
   return items;
 }
@@ -54,10 +61,20 @@ function zone(v: unknown): v is string {
 // Calendar formats the separately configured business zone and never computes recurrence.
 const scheduleZone = (v: unknown): v is string => typeof v === "string" && v.length > 0 && v.length <= 128 &&
   /^[A-Za-z0-9_+./:-]+$/.test(v) && !/^(posix|right)\//.test(v);
+/** Review only. Preserve a server-validated saved zone even when local ICU is older.
+ * A new zone must be locally recognized; PostgreSQL remains the write authority. */
+export function reviewWeeklyScheduleChange(saved: WeeklySchedule, proposed: WeeklySchedule): WeeklySchedule | null {
+  if (!Number.isInteger(proposed.weekday) || proposed.weekday < 1 || proposed.weekday > 7 ||
+    typeof proposed.local_time !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(proposed.local_time) || !scheduleZone(proposed.timezone)) return null;
+  if (proposed.timezone !== saved.timezone) {
+    try { new Intl.DateTimeFormat("en", { timeZone: proposed.timezone }).format(0); } catch { return null; }
+  }
+  return { weekday: proposed.weekday, local_time: proposed.local_time, timezone: proposed.timezone };
+}
 const STATUSES = new Set<unknown>(["scheduled", "running", "completed", "failed", "unknown", "cancelled", "needs_approval", "held", "refused", "skipped"]);
 function verified(raw: unknown, process: string, tenant: string, actor: string): VerifiedWeeklyRun | null {
   const run = record(raw), o = record(run?.observation);
-  if (!run || run.status !== "completed" || !o || !uuid(run.event_id) || !uuid(run.act_id) ||
+  if (!run || run.status !== "completed" || !o || (o.version !== undefined && o.version !== 1 && o.version !== 2) || !uuid(run.event_id) || !uuid(run.act_id) ||
     o.tenant_id !== tenant || o.authorized_by !== actor || o.automation_id !== process ||
     o.event_id !== run.event_id || o.act_id !== run.act_id || typeof run.correlation_ref !== "string" ||
     run.correlation_ref.length === 0 || o.correlation_ref !== run.correlation_ref || !uuid(o.receipt_id) ||
@@ -69,7 +86,8 @@ function verified(raw: unknown, process: string, tenant: string, actor: string):
     scheduled_for: run.scheduled_for, schedule_revision: o.schedule_revision, status: "completed", truncated: o.truncated,
     counts: { open: Number(o.open_count), blocked: Number(o.blocked_count), overdue: Number(o.overdue_count),
       due_next_week: Number(o.due_next_week_count), undated: Number(o.undated_count) },
-    source_items: parseWeeklySourceItems(o.items),
+    observation_version: o.version === 2 ? 2 : 1,
+    source_items: parseWeeklySourceItems(o.items, o.version === 2 ? 2 : 1),
   };
 }
 /** Only called after the current caller/workspace/owner fences. Never exposes raw observations or errors. */
@@ -92,6 +110,7 @@ export function parseWeeklyCommitmentSnapshot(raw: unknown, tenant: string, acto
       (c.intended_next_run_at !== null && !instant(c.intended_next_run_at)) ||
       (c.execution_availability === "held" && c.next_run_at !== null) ||
       (c.schedule_status !== "scheduled" && c.next_run_at !== null)) return null;
+    if (s.future_control_at !== undefined && s.future_control_at !== null && !instant(s.future_control_at)) return null;
     ids.add(c.automation_id);
     let last: WeeklyRun | null = null;
     if (c.last_run !== null) {
@@ -110,6 +129,7 @@ export function parseWeeklyCommitmentSnapshot(raw: unknown, tenant: string, acto
       execution_availability: c.execution_availability as WeeklyCheck["execution_availability"],
       execution_hold_reason: typeof c.execution_hold_reason === "string" ? c.execution_hold_reason.slice(0, 160) : null,
       next_run_at: c.next_run_at as string | null, intended_next_run_at: c.intended_next_run_at as string | null,
+      future_control_at: (s.future_control_at as string | null | undefined) ?? null,
       last_run: last, last_verified_run: past,
     });
   }
@@ -140,10 +160,12 @@ export function projectWeeklyCommitmentChat(snapshot: WeeklyCommitmentSnapshot):
   for (;;) {
     const result = JSON.stringify({ source: snapshot.source, read_at: snapshot.read_at, business_time_zone: snapshot.business_time_zone,
       included_checks: included, has_more: snapshot.has_more || included < snapshot.checks.length,
-      checks: snapshot.checks.slice(0, included).map(c => ({ ...c, last_verified_run: c.last_verified_run ? {
+      checks: snapshot.checks.slice(0, included).map(c => ({ ...c, future_control_at: undefined, last_verified_run: c.last_verified_run ? {
         event_id: c.last_verified_run.event_id, act_id: c.last_verified_run.act_id, receipt_id: c.last_verified_run.receipt_id,
         observed_at: c.last_verified_run.observed_at, scheduled_for: c.last_verified_run.scheduled_for,
         schedule_revision: c.last_verified_run.schedule_revision, status: c.last_verified_run.status,
+        observation_version: c.last_verified_run.observation_version ?? 1,
+        deadline_scope: c.last_verified_run.observation_version === 2 ? "work_only" : "legacy_mixed",
         truncated: c.last_verified_run.truncated, counts: c.last_verified_run.counts,
       } : null })) });
     if (result.length <= 12000 || included === 0) return result;

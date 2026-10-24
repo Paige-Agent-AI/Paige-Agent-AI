@@ -1,4 +1,16 @@
-# E04 shared agreement revision contract — source candidate
+# E04 shared agreement revision contract
+
+## Verified production source checkpoint — 2026-10-14 America/New_York
+
+This checkpoint supersedes the pre-release state retained below. PR2143 final head `c5cf98bd063821ae5c4a52eb0643c146174703a4` merged normally as `72545987da697a0504fdbdb206ef6be5fe203fa0`; tested/merged tree `8862a440e48c25beb336c9624bd4cd5c43c8afb2` is identical. Nine actual-source/approved-handler checks pass; all eight behavioral mutants are detected;53 incumbent binding mutants and Spine self-test pass. Product/guard/test bytes remain identical to reviewed source freeze20975f222. Final author recheck6183011504 records the owner's bounded sequential review exception, explicitly lower assurance and not independent non-author security approval.
+
+All13 applicable final-head checks and both Vercel statuses succeeded. Full CI38669243119/verify116208259855, database-contract116208170468 and Finance authority116208170716 PASS. The two earlier ECR quota failures stopped before tests and are retained; the successful job uses the same immutable Postgres image at official Docker Hub. Normal Edge38671267441/job116214708213 succeeded. Complete archived source matches reviewed main: Chat410/223 files/package `a462bb6ed07cd3a60ec12b65a8571f847ef95d718d060b2d0655787d2089550c`; execute-approval131/104 files/package `74e24330b8f45907584aa4b927e6e5d02a3664b338074282d87a5ef193ff883f`; native-event-dispatch142/102 files/package `4ddc5ca8e3171c74336bb3846529dd94c4a085fcf310bec6a07241832678a264`. JWT settings are unchanged. Migration NOT_APPLICABLE; the native Sales prerequisite already landed. Vercel `dpl_5mpA6cTm6mT1DiMYsZiaE1Lthnbv` READY/production/exact merge.
+
+GitHub's cached PR base initially lagged the actual main ref. Authoritative Git refs and merge-tree checks against both reported and actual bases independently produced the same tested tree8862a440. The guarded merge preserved it; no retarget, force push or bypass was used. The final main-relative delta is the bounded agreement composition and the one-job identical-image registry-origin correction.
+
+**Release channel: production; classification: internal-only source release under inactive admission; customer identity: none; announcement: none.** Fresh control metadata2026-10-15 02:41UTC remains inactive with activation head/digest absent. SU-508602 provider cessation/admission closure, governed activation, genuine Academy/Antonio positive/negative agreement and recovery/receipt/isolation QA and owner acceptance remain PROOF OWED. No signing, send, payment or activation occurred. Shipped Delivery Log: Section4.0 records this exact release. Recovery is a reviewed forward correction; inspect the canonical native record before retrying any uncertain effect. All18 historical capability entries and50 SOLO parity rows remain in scope.
+
+## Retained pre-release composition and review
 
 ## Current SOLO restoration composition — 2026-10-15
 

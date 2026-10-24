@@ -4,9 +4,11 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
+import { PaigeAIChat, type ChatComposerContextApi } from "@/components/dashboard/PaigeAIChat";
 import { createComposerRequestFence } from "@/lib/paigeComposerScopeState";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
+import type { SoloKnowledgeDoc } from "./data/useSoloKnowledge";
+import { setPaigeBusinessPlanScope, getPaigeBusinessPlanScope, clearPaigeSurfaceScope } from "./paigeClientScope";
 
 function visibleTranscriptGeometry(transcript: HTMLDivElement) {
   transcript.getBoundingClientRect = () => ({ top: 0, bottom: 300, left: 0, right: 600, width: 600, height: 300, x: 0, y: 0, toJSON: () => ({}) });
@@ -20,13 +22,21 @@ function visibleTranscriptGeometry(transcript: HTMLDivElement) {
 
 const chatHarness = vi.hoisted(() => ({
   tenantId: "account-a" as string | null,
+  actorId: null as string | null,
+  pendingReads: vi.fn(),
+  pendingRefresh: vi.fn(),
   loadTurns: vi.fn(),
   ensureThread: vi.fn(),
   dictationOnText: null as null | ((segment: string) => void),
+  knowledgeDocs: [] as SoloKnowledgeDoc[],
 }));
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: chatHarness.tenantId, activeTenant: chatHarness.tenantId ? { account_number: "42" } : null }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: chatHarness.tenantId, activeUserId: chatHarness.actorId, activeTenant: chatHarness.tenantId ? { account_number: "42" } : null }) }));
+vi.mock("./data/useSoloPendingActions", () => ({ useSoloPendingActions: (tenant: string | null, actor: string | null) => {
+  chatHarness.pendingReads(tenant, actor);
+  return { items: tenant && actor ? [{ id: "test-prepared-parent", title: "Inspect original handoff", department: "Operations", summary: null, draftContent: null, rationale: null, createdAt: "" }] : [], total: tenant && actor ? 7 : null, loading: false, error: null, refresh: chatHarness.pendingRefresh };
+} }));
 vi.mock("@/hooks/useScopedUserId", () => ({ useScopedUserId: () => "owner-1" }));
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "PAIGE" } }) }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
@@ -44,7 +54,7 @@ vi.mock("@/hooks/useChatDocumentUpload", () => ({
   }),
 }));
 vi.mock("./data/useSoloKnowledge", () => ({
-  useSoloKnowledge: () => ({ loading: false, error: null, empty: true, docs: [], refresh: vi.fn() }),
+  useSoloKnowledge: () => ({ loading: false, error: null, empty: chatHarness.knowledgeDocs.length === 0, docs: chatHarness.knowledgeDocs, refresh: vi.fn() }),
 }));
 vi.mock("./data/useSoloSkills", () => ({
   useSoloSkills: () => ({ loading: false, error: null, empty: true, skills: [], refresh: vi.fn() }),
@@ -86,6 +96,57 @@ const RouteProbe = () => {
 };
 
 describe("Solo PAIGE workspace contract", () => {
+  it("moves selected planning scope into the source overview and clears it without replacing the native Chat draft", async () => {
+    chatHarness.tenantId = "test-tenant-plan-parent"; chatHarness.actorId = "test-actor-plan-parent"; chatHarness.loadTurns.mockResolvedValue([]);
+    const host = document.createElement("div"); document.body.appendChild(host); const root = createRoot(host);
+    setPaigeBusinessPlanScope({ tenantId: chatHarness.tenantId, surface: "business_game_plan", businessMissionId: null, label: "Business Game Plan" });
+    try {
+      await act(async () => { root.render(<MemoryRouter initialEntries={["/solo/1234567/command-center/business-game-plan"]}><SoloPaigeWorkspace /></MemoryRouter>); await Promise.resolve(); await Promise.resolve(); });
+      expect(host.textContent).not.toContain("PLAN IN CONTEXT");
+      expect(host.querySelector('.e2ps-scope')).toBeNull();
+      expect(host.querySelector('.e2ps-chip')?.textContent).toContain("7 items to review");
+      expect(chatHarness.pendingReads).toHaveBeenLastCalledWith("test-tenant-plan-parent", "test-actor-plan-parent");
+      const composer = host.querySelector('textarea')!;
+      act(() => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(composer, "Keep this unsent planning question."); composer.dispatchEvent(new Event("input", { bubbles: true })); });
+      act(() => (host.querySelector('.e2ps-chip') as HTMLButtonElement).click());
+      expect(document.querySelector('.e2ps-context')?.textContent).toContain("Business Game Plan");
+      act(() => (document.querySelector('.e2ps-context button') as HTMLButtonElement).click());
+      await act(async () => { await new Promise<void>(resolve => requestAnimationFrame(() => resolve())); });
+      expect(getPaigeBusinessPlanScope(chatHarness.tenantId)).toBeNull();
+      expect(composer.value).toBe("Keep this unsent planning question.");
+      expect(document.activeElement).toBe(composer);
+    } finally {
+      act(() => clearPaigeSurfaceScope()); await act(async () => root.unmount()); host.remove(); chatHarness.actorId = null; chatHarness.tenantId = "account-a";
+    }
+  });
+  it("keeps the optional composer context out of non-SOLO mounts", async () => {
+    const renderContext = vi.fn(() => <button type="button">Original source review</button>);
+    const host = document.createElement("div"); document.body.appendChild(host); const root = createRoot(host);
+    await act(async () => { root.render(<PaigeAIChat hideHeader fill renderComposerContext={renderContext} />); await Promise.resolve(); });
+    expect(renderContext).not.toHaveBeenCalled();
+    expect(host.querySelector('[data-solo-contextual-suggestion]')).toBeNull();
+    await act(async () => root.unmount()); host.remove();
+  });
+
+  it("lets a context return focus the same SOLO composer without sending or clearing its draft", async () => {
+    chatHarness.tenantId = "test-context-slot"; chatHarness.loadTurns.mockResolvedValue([]); chatHarness.ensureThread.mockClear();
+    const host = document.createElement("div"); document.body.appendChild(host); const root = createRoot(host);
+    let api: ChatComposerContextApi | undefined;
+    await act(async () => { root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety renderComposerContext={current => {
+      api = current; return <button type="button" data-context-return onClick={current.focusComposer}>Return to conversation</button>;
+    }} />); await Promise.resolve(); await Promise.resolve(); });
+    expect(api?.ready).toBe(true); expect(api?.busy).toBe(false); expect(api?.hasOwnerMessages).toBe(false);
+    const composer = host.querySelector('textarea')!;
+    act(() => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(composer, "Keep this unsent source-review draft."); composer.dispatchEvent(new Event("input", { bubbles: true })); });
+    act(() => (host.querySelector('[data-context-return]') as HTMLButtonElement).click());
+    expect(document.activeElement).toBe(composer);
+    expect(composer.value).toBe("Keep this unsent source-review draft.");
+    expect(chatHarness.ensureThread).not.toHaveBeenCalled();
+    expect(host.querySelectorAll('[data-solo-contextual-suggestion]')).toHaveLength(1);
+    act(() => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(composer, ""); composer.dispatchEvent(new Event("input", { bubbles: true })); });
+    await act(async () => root.unmount()); host.remove(); chatHarness.tenantId = "account-a";
+  });
+
   it("ships the approved taxonomy without a second Memory or Code workspace", () => {
     const workspace = source("src/solo/SoloPaigeWorkspace.tsx");
     expect(workspace).toContain('label: "Chat"');
@@ -199,6 +260,45 @@ describe("Solo PAIGE workspace contract", () => {
     expect(host.querySelector("[data-route]")?.textContent).toBe("/solo/42/command-center/mind");
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it("keeps source provenance and native Mind navigation operable in the Knowledge layout", async () => {
+    chatHarness.tenantId = "account-a";
+    chatHarness.knowledgeDocs = [{ id: "test-document", title: "Example operating knowledge for a customer onboarding process",
+      summary: "Synthetic source summary", domain: "Process", tags: [], source: "chat-saved-note", chunkCount: 1,
+      createdAt: "2026-10-16T00:00:00Z", when: "just now", color: "currentColor" }];
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(
+        <MemoryRouter initialEntries={["/solo/42/paige/knowledge"]}>
+          <Routes><Route path="/solo/:account/*" element={<><SoloPaigeWorkspace full /><RouteProbe /></>} /></Routes>
+        </MemoryRouter>,
+      ));
+      const layout = host.querySelector(".spw-knowledge-layout")!;
+      expect(layout.firstElementChild?.getAttribute("aria-label")).toBe("Knowledge sources");
+      expect(layout.lastElementChild?.tagName).toBe("ASIDE");
+      const card = layout.querySelector(".spw-source-card")!;
+      expect(card.textContent).toContain("1 indexed section");
+      const review = card.querySelector<HTMLButtonElement>("button[aria-expanded]")!;
+      expect(review.getAttribute("aria-expanded")).toBe("false");
+      await act(async () => review.click());
+      expect(review.getAttribute("aria-expanded")).toBe("true");
+      expect(card.querySelector(".spw-provenance")?.textContent).toContain("chat-saved-note");
+      expect(card.querySelector(".spw-provenance")?.textContent).toContain("Active Solo account only");
+      expect(card.querySelector(".spw-provenance")?.textContent).toContain("PAIGE may retrieve; mutation is not enabled here");
+      expect(Array.from(card.querySelectorAll("button")).find(button => button.textContent?.includes("Disconnect"))?.disabled).toBe(true);
+      await act(async () => review.click());
+      expect(card.querySelector(".spw-provenance")).toBeNull();
+      const mind = Array.from(card.querySelectorAll("button")).find(button => button.textContent?.includes("Open in Mind"))!;
+      await act(async () => mind.click());
+      expect(host.querySelector("[data-route]")?.textContent).toBe("/solo/42/command-center/mind");
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+      chatHarness.knowledgeDocs = [];
+    }
   });
 
   it("keeps the shared async safety additive and Solo-only", () => {
@@ -344,7 +444,11 @@ describe("Solo PAIGE workspace contract", () => {
     // unbounded `[\s\S]*` version could not fail: inverting the accept/abort order left the
     // whole 507-test suite green.
     expect(chat).toMatch(/acceptedEpochRef\.current = scopeEpoch;(?:[^\n]*\n){0,16}\s*abortActiveRequest\(\);/);
-    expect(chat).toMatch(/const abortActiveRequest = useCallback\(\(\) => \{(?:[^\n]*\n){0,6}\s*if \(requestFenceRef\.current\.invalidate\(\)\) setIsLoading\(false\);/);
+    // Bind this check to the callback body: additional owned-read cleanup must not
+    // make it depend on line count or let a later handler satisfy invalidation.
+    const abortBody = /const abortActiveRequest = useCallback\(\(\) => \{([\s\S]*?)\n {2}\}, \[\]\);/.exec(chat)?.[1];
+    expect(abortBody).toBeDefined();
+    expect(abortBody).toContain("if (requestFenceRef.current.invalidate()) setIsLoading(false);");
     // §13 — THIS ASSERTION HAD GONE VACUOUS. The reset now seeds `scopeNotice ?? openingGreeting`,
     // so the old literal no longer matched the reset at all — it was satisfied by the unrelated
     // `startNewChat` and controlled-sync sites, and deleting the reset's `setMessages` entirely

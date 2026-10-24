@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic source/native proof only; no Auth, model, provider, business write or customer acceptance",
+  "renderedSourceHead": "1a18c6447bfa9e11ca3a8390054eed22e84ff2d4",
+  "harnessSourceHead": "8804bafd660bee01741295853bbde9081f720cf7",
+  "capture": "Native foreground PNG, exact IHDR/hash; no clipping/resampling or alternate account. Browser runtime reset restored the same selected browser after stale-tab timeouts.",
+  "sourceInputsSha256": {
+    "src/solo/ExecutiveOverview.tsx": "7dd8bd4c8aee1b86d54eec6cd632a113d1685481c246b55723d0a956e8381ba2",
+    "src/solo/executive-overview.css": "866af2e411ee73fbbfe6d3097d6d2954cc5a987c4378d1eb4802426146d879ff",
+    "src/solo/CommandCenter.tsx": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61",
+    "src/components/tenant-shell/TenantCommandCenterShell.tsx": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+  },
+  "harnessInputsSha256": {
+    "scripts/live-drive/harness/executive-mount/index.html": "d651d00f4c738700ae0783efe127fdbe67b28272d6df33f561f3a8871c2a8513",
+    "scripts/live-drive/harness/executive-mount/main.tsx": "b6c0569960565056cd375a8b6603e0e861f27966bc61ab46a97fd327354bc56d",
+    "scripts/live-drive/harness/executive-mount/stubs.tsx": "540270cca63ea4f1189aa4a7e366819562cd029029614813d0dfd6c810621f28",
+    "scripts/live-drive/harness/executive-mount/slice-fixtures.ts": "8841c283f1cd99ac0de6ac84221d624b69fa92dbee5e6c47a0b9a39a602fe740",
+    "scripts/live-drive/harness/executive-mount/vite.config.ts": "5cfc71cf2cc8d60f5496d309ff49a9279b6d20539c2e9d2137dc9f7de3175856"
+  },
+  "bundleSha256": {
+    "index.html": "21f989a17c96294ba2d98418f3e998395945a4bb5ef9e64134189979212eda74",
+    "assets/index-CCJxSM2I.js": "e7cbac576dff7440dca1863f5ef8c1183b024b06c2d09166485ffa08bfcdc34f",
+    "assets/index-SywQk7ni.css": "a2679ebe69cc8dcaeebe2c6a245196d4692c6eb1b8016ec81036a4b8e7118a5c"
+  },
+  "frames": [
+    {
+      "name": "vera-1536x770-closed-light",
+      "file": "vera-1536x770-closed-light.png",
+      "expected": {
+        "width": 1536,
+        "height": 770
+      },
+      "actual": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "documentWidth": 1536,
+        "executive": {
+          "scrollWidth": 1449,
+          "width": 1449
+        },
+        "height": 770,
+        "reducedMotion": true,
+        "theme": "light",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 1536
+      },
+      "sha256": "1184d404068d385d5ddb1bb020c2b06e7bdda1ac2a9f0637241dee5067b5d0c6"
+    },
+    {
+      "name": "vera-1536x770-open-dark",
+      "file": "vera-1536x770-open-dark.png",
+      "expected": {
+        "width": 1536,
+        "height": 770
+      },
+      "actual": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "documentWidth": 1536,
+        "executive": {
+          "scrollWidth": 927,
+          "width": 927
+        },
+        "height": 770,
+        "reducedMotion": true,
+        "theme": "dark",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 1536
+      },
+      "sha256": "78acbda80ba30443c2d6136f6bce78c94311417e591872d88f57aa41274a3f9c"
+    },
+    {
+      "name": "vera-1366x768-open-dark",
+      "file": "vera-1366x768-open-dark.png",
+      "expected": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "width": 1366,
+        "height": 768
+      },
+      "geometry": {
+        "documentWidth": 1366,
+        "executive": {
+          "scrollWidth": 815,
+          "width": 815
+        },
+        "height": 768,
+        "reducedMotion": true,
+        "theme": "dark",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 1366
+      },
+      "sha256": "e6ffe54c7a6c806010883093898259d01763b843f29412387cc745fa8159d0f4"
+    },
+    {
+      "name": "vera-1366x768-closed-light",
+      "file": "vera-1366x768-closed-light.png",
+      "expected": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "width": 1366,
+        "height": 768
+      },
+      "geometry": {
+        "documentWidth": 1366,
+        "executive": {
+          "scrollWidth": 1279,
+          "width": 1279
+        },
+        "height": 768,
+        "reducedMotion": true,
+        "theme": "light",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 1366
+      },
+      "sha256": "2002f97400c97aa7195858b8755a1205c07335c7322bc0a89f6a469c418035de"
+    },
+    {
+      "name": "vera-1024x768-closed-light",
+      "file": "vera-1024x768-closed-light.png",
+      "expected": {
+        "width": 1024,
+        "height": 768
+      },
+      "actual": {
+        "width": 1024,
+        "height": 768
+      },
+      "geometry": {
+        "documentWidth": 1024,
+        "executive": {
+          "scrollWidth": 937,
+          "width": 937
+        },
+        "height": 768,
+        "reducedMotion": true,
+        "theme": "light",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 1024
+      },
+      "sha256": "a9abfb248e151d614358ad06da0c43f56a47b7de6ae21bb35899b977d00d2002"
+    },
+    {
+      "name": "vera-1024x768-open-dark",
+      "file": "vera-1024x768-open-dark.png",
+      "expected": {
+        "width": 1024,
+        "height": 768
+      },
+      "actual": {
+        "width": 1024,
+        "height": 768
+      },
+      "geometry": {
+        "documentWidth": 1024,
+        "executive": {
+          "scrollWidth": 937,
+          "width": 937
+        },
+        "height": 768,
+        "reducedMotion": true,
+        "theme": "dark",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 1024
+      },
+      "sha256": "212bda24c8267e59a976af238ef77dc56398e552676f1bc6d25c5f0f3b05e269"
+    },
+    {
+      "name": "vera-900x1000-open-dark",
+      "file": "vera-900x1000-open-dark.png",
+      "expected": {
+        "width": 900,
+        "height": 1000
+      },
+      "actual": {
+        "width": 900,
+        "height": 1000
+      },
+      "geometry": {
+        "documentWidth": 900,
+        "executive": {
+          "scrollWidth": 813,
+          "width": 813
+        },
+        "height": 1000,
+        "reducedMotion": true,
+        "theme": "dark",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 900
+      },
+      "sha256": "08796238c338cbedcde679c90dd74811223dc7201b6995b5eb8d94217ebd0a7a"
+    },
+    {
+      "name": "vera-900x1000-closed-light",
+      "file": "vera-900x1000-closed-light.png",
+      "expected": {
+        "width": 900,
+        "height": 1000
+      },
+      "actual": {
+        "width": 900,
+        "height": 1000
+      },
+      "geometry": {
+        "documentWidth": 900,
+        "executive": {
+          "scrollWidth": 813,
+          "width": 813
+        },
+        "height": 1000,
+        "reducedMotion": true,
+        "theme": "light",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 900
+      },
+      "sha256": "2f1475c9380a9f7aafe1ffc7e72413e88490152c7deb3c54f6c68cffe40cc243"
+    },
+    {
+      "name": "vera-390x844-closed-light",
+      "file": "vera-390x844-closed-light.png",
+      "expected": {
+        "width": 390,
+        "height": 844
+      },
+      "actual": {
+        "width": 390,
+        "height": 844
+      },
+      "geometry": {
+        "documentWidth": 390,
+        "executive": {
+          "scrollWidth": 303,
+          "width": 303
+        },
+        "height": 844,
+        "reducedMotion": true,
+        "theme": "light",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 390
+      },
+      "sha256": "a5fe8c45d9d6efaf9232fbb4e2b50a3359d52825f8fcbb40e8cf4ce81b82f6c6"
+    },
+    {
+      "name": "vera-390x844-unsent-invitation",
+      "file": "vera-390x844-unsent-invitation.png",
+      "expected": {
+        "width": 390,
+        "height": 844
+      },
+      "actual": {
+        "width": 390,
+        "height": 844
+      },
+      "geometry": {
+        "documentWidth": 390,
+        "executive": {
+          "scrollWidth": 303,
+          "width": 303
+        },
+        "height": 844,
+        "reducedMotion": true,
+        "theme": "light",
+        "vera": [
+          {
+            "height": 44,
+            "width": 217.58750915527344
+          }
+        ],
+        "width": 390
+      },
+      "sha256": "e5a8c2b52b95a0382035a7d1e5a7974ab18e38688f2528b36a9f516fab81447d"
+    },
+    {
+      "name": "vera-320x844-narrow-light",
+      "file": "vera-320x844-narrow-light.png",
+      "expected": {
+        "width": 320,
+        "height": 844
+      },
+      "actual": {
+        "width": 320,
+        "height": 844
+      },
+      "geometry": {
+        "documentWidth": 320,
+        "executive": {
+          "scrollWidth": 233,
+          "width": 233
+        },
+        "height": 844,
+        "reducedMotion": true,
+        "theme": "light",
+        "vera": [
+          {
+            "height": 45.70000076293945,
+            "width": 168.8000030517578
+          }
+        ],
+        "width": 320
+      },
+      "sha256": "eb4c2cfe27d7d9c9be6d810b6806cd39eeae0f68838660cf515afae311f8a29d"
+    }
+  ],
+  "remaining": [
+    "Actual browser zoom and assistive technology",
+    "Deployed registry/Edge/web parity",
+    "Authorized SOLO addressed reply, original evidence, department navigation/reload, permissions and tenant isolation",
+    "Actual Chat/Live and full19/founder acceptance"
+  ]
+}

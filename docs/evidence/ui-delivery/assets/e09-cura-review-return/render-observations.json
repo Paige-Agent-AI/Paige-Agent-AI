@@ -1,0 +1,96 @@
+{
+  "scope": "actual original components and services with synthetic transport and shell/dock boundaries",
+  "observations": [
+    {
+      "currentRevision": true,
+      "focus": "Review or correct Getting started: coaching FAQ",
+      "height": 844,
+      "overflow": false,
+      "width": 390
+    },
+    {
+      "currentRevision": true,
+      "dock": "closed",
+      "focus": "Review or correct Getting started: coaching FAQ",
+      "height": 770,
+      "overflow": false,
+      "width": 1536
+    },
+    {
+      "dock": "open",
+      "height": 770,
+      "overflow": false,
+      "sourceVisible": true,
+      "width": 1536
+    },
+    {
+      "dock": "closed",
+      "height": 768,
+      "overflow": false,
+      "sourceVisible": true,
+      "width": 1366
+    },
+    {
+      "dock": "open",
+      "height": 768,
+      "overflow": false,
+      "sourceVisible": true,
+      "width": 1366
+    },
+    {
+      "dock": "closed",
+      "height": 768,
+      "overflow": false,
+      "sourceVisible": true,
+      "width": 1024
+    },
+    {
+      "dock": "open",
+      "height": 768,
+      "overflow": false,
+      "sourceVisible": true,
+      "width": 1024
+    },
+    {
+      "dock": "closed",
+      "height": 1000,
+      "overflow": false,
+      "sourceVisible": true,
+      "width": 900
+    },
+    {
+      "dock": "open",
+      "height": 1000,
+      "overflow": false,
+      "sourceVisible": true,
+      "width": 900
+    },
+    {
+      "dock": "closed",
+      "height": 740,
+      "overflow": false,
+      "sourceVisible": true,
+      "width": 320
+    },
+    {
+      "error": "Knowledge sharing could not be checked. Check your account and connection, then reload.Reload Knowledge",
+      "focus": null,
+      "overflow": false,
+      "staleSourceExposed": false,
+      "unexpectedSuccess": false,
+      "width": 320
+    },
+    {
+      "connected": true,
+      "state": "failed-return-focus",
+      "tag": "H2",
+      "text": "Teach CURA"
+    },
+    {
+      "oldErrorVisible": false,
+      "oldSourceVisible": false,
+      "overflow": false,
+      "state": "synthetic-business-switch"
+    }
+  ]
+}

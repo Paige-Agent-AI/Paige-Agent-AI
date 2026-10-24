@@ -57,3 +57,34 @@ Affected seams: workspace isolation, current-account navigation, canonical reads
 Repair failing baseline assertions; complete the Executive and shared reference bindings; run focused regression and static/build gates; development-only state walkthrough and rendered/interactive verification; independent specification/security and Impeccable finish review; exact-head CI + completed repository auto review; merge/deploy/readback; supplemental protected customer QA; paired Second Brain/Master closeout. Repository review-round stop rules remain mandatory. No owner design pause is introduced: the owner explicitly approved direction and delegated these improvements, reserving final product review.
 
 Codex covers planning, implementation, tool operation, research, supervision and presentation. Independent nonauthor review and central authenticated QA remain distinct assurance roles. Any source, review, CI, deployment, authenticated or acceptance limitation is reported separately in owner chat and ANT-138/ANT-147.
+
+## 2026-10-20 release repair — pre-edit routing
+
+The usable outcome is the reviewed E02 business evidence reaching production with
+its actual configured source, so a successful upload cannot masquerade as release
+completion. **REPAIR**, automation/release, R3: existing EXP02 lead owns this bounded
+packaging correction in the canonical Edge workflow; other Experiences' source is
+preserved. No new runtime, build service or release ledger is introduced.
+
+- **Harness/Spine:** existing deployed-source verification supports the existing
+  `business.operating_snapshot` path; no capability registration or execution change.
+- **Provider:** existing Supabase project, pinned CLI and configured function options.
+  The vendor-supported API builder replaces the default Docker builder only.
+  No new connection, credentials, scopes, provider activation or spend authority.
+- **Authority:** standing routine engineering release authority; no product mutation
+  verb, Trust approval change, consequential action or INT-346 activation.
+- **Jobs:** reuse serialized `deploy-edge-functions`; preserve selection, retirement,
+  credential preflight, strict source/config readback and certified-tag recovery hold.
+  Do not broaden this repair to the unrelated global recovery set.
+- **Receipt/surface:** existing workflow artifacts, exact source/release receipts,
+  Master and Second Brain; no customer UI or Binding Ledger state changes.
+- **Proof:** protect missing configured compiler-file rejection with a local fixture;
+  sequential AUTHOR-REVIEW / LOWER ASSURANCE and exact-head CI before merge. Actual
+  production metadata and complete package readback remain required afterward.
+  Neither fixtures nor package parity establishes authenticated SOLO acceptance.
+
+Observed baseline: main `2d93594b69ec084ff770402eede09465ca9d179e`.
+Run39360132655 retry verified22/23 packages, but the default deploy again removed
+`business-mission-action`'s configured import map after an explicit10/10 package
+readback. The verifier correctly failed. The prior certified-source gap remains
+separately held; do not move `edge-live`, relax hashing or repeat unchanged uploads.

@@ -1,0 +1,22 @@
+# E09 CURA round 3 — each new or changed assertion, run against the defect reinstated (§71.4). Every row was
+# mutated in the working tree, run, and restored with `git checkout -- <file>`; the tree was clean afterwards.
+BITES name rule reverted to round 2 (/paige(?!t)/ after spaces stripped) :: client-portal-identity.ts :: customerAgentName.test.ts 1 failed
+BITES accent folding removed (NFKD + \p{M}) :: client-portal-identity.ts :: customerAgentName.test.ts 1 failed
+BITES symbol-as-break removed (™ folds to "tm") :: client-portal-identity.ts :: customerAgentName.test.ts 1 failed
+BITES "Paiget" exception removed :: client-portal-identity.ts :: customerAgentName.test.ts 2 failed
+BITES edge persona test, round 2 rule :: client-portal-identity.ts :: client-portal-persona.test.ts (deno 2.9.6) 3 failed
+BITES MENTION replacer -> string ($' expands) :: client-portal-identity.ts :: customerAgentName.test.ts 1 failed
+BITES NAME_HERE replacer -> string :: client-portal-identity.ts :: customerAgentName.test.ts 1 failed
+BITES older chat path drops the agent name (customerSeatIdentity(m.content)) :: paige-ai-chat/index.ts :: client-seat-agent-name.test.ts 1 failed
+BITES older chat path reads with the service client :: paige-ai-chat/index.ts :: client-seat-agent-name.test.ts 1 failed
+BITES older chat path falls back to "Paige" :: paige-ai-chat/index.ts :: client-seat-agent-name.test.ts 1 failed
+BITES data-sharing:v2 round-2 sentence (lib) :: client-portal-preferences.ts :: client-portal-preferences.test.ts 3 failed
+BITES data-sharing row label round 2 :: ClientPreferences.tsx :: ClientPreferences.test.tsx 1 failed
+BITES data-sharing detail line round 2 :: ClientPreferences.tsx :: ClientPreferences.test.tsx 1 failed
+BITES data-sharing:v2 round-2 sentence (server) :: 20271110250000 (r2 copy) :: customer_portal_profile_consent.sql not ok 228 (pin) + not ok 230 (party)
+BITES customer home repeats the chat greeting :: AppShell.tsx :: AppShell.home-identity.test.tsx 1 failed
+BITES inactive home empty state removed :: AppShell.tsx :: AppShell.home-identity.test.tsx 1 failed
+BITES Home-only menu removed :: useCustomerPortalNav.ts :: AppNav.no-access.test.tsx 1 failed
+BITES menu stops waiting for the shell's viewer :: useCustomerPortalNav.ts :: AppNav.no-access.test.tsx 1 failed
+BITES staff guard back to bare "Loading…" :: RequirePortalStaff.tsx :: RequirePortalStaff.test.tsx 1 failed
+NO TEST checklist progress track on muted :: OnboardingChecklist.tsx :: render-verified only (0/3 read as a full bar in light before)

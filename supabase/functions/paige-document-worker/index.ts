@@ -9,6 +9,7 @@ import {
   containsDocumentPlaceholder,
   parseDocumentModelOutput,
   validateDocumentBrief,
+  validBusinessReviewMetricRequests,
 } from "../_shared/document-production.ts";
 import { adminClient, isAuthorizedInternalCaller, json } from "../_shared/systems-check-http.ts";
 
@@ -57,7 +58,7 @@ async function runMetricReview(admin: SupabaseClient, work: StartedWork): Promis
   try {
     const payload = work.request_payload as Record<string, unknown>;
     if (payload.version !== 1 || payload.doc_type !== "business_review"
-      || Object.keys(payload).some(key => !["version", "doc_type", "title", "brief", "report_evidence", "report_period"].includes(key))
+      || Object.keys(payload).some(key => !["version", "doc_type", "title", "brief", "report_evidence", "report_period", "metric_requests"].includes(key))
       || typeof payload.title !== "string" || !payload.title.trim() || payload.title.length > 200
       || typeof payload.brief !== "string" || !payload.brief.trim() || payload.brief.length > 12_000
       || containsDocumentPlaceholder(payload.title) || containsDocumentPlaceholder(payload.brief)
@@ -66,6 +67,15 @@ async function runMetricReview(admin: SupabaseClient, work: StartedWork): Promis
     }
     const period = payload.report_period as { key: "month" | "quarter"; start: string; end: string };
     const { blocks } = await buildBusinessReviewEvidenceBlocks(payload.report_evidence, { tenantId: work.tenant_id, period });
+    if ('metric_requests' in payload) {
+      const requests = payload.metric_requests;
+      const measurements = (payload.report_evidence as { measurements: Array<{ metric_key: string; metric_version: string }> }).measurements;
+      if (!validBusinessReviewMetricRequests(requests) || requests.length !== measurements.length
+        || requests.some((request, index) => request.metric_key !== measurements[index].metric_key
+          || request.metric_version !== measurements[index].metric_version)) {
+        throw new Error("DOCUMENT_OUTPUT_EVIDENCE_INVALID");
+      }
+    }
     completionAttempted = true;
     const { data, error } = await admin.rpc("complete_paige_document_work", {
       _work_id: work.work_id, _server_idempotency_key: work.server_idempotency_key,

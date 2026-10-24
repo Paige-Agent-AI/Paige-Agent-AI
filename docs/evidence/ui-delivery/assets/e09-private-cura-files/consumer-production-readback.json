@@ -1,0 +1,120 @@
+{
+  "recordedAt": "2026-10-24T11:43:15.000Z",
+  "scope": "Private file consumer source release only; no mounted customer file/model proof",
+  "reviewedHead": "cc2f3db29bdabf8d7499ef244d141621add334d5",
+  "review": {
+    "id": 5638005838,
+    "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE"
+  },
+  "merge": "dea2db4a7865ccf379815e5b10b2e54103337879",
+  "tree": "49b9b75fe501c70644a399896550535b5d5d6876",
+  "parents": [
+    "65699d36369c88412e3e7e370b7c14e893272773",
+    "cc2f3db29bdabf8d7499ef244d141621add334d5"
+  ],
+  "checks": [
+    {
+      "name": "Vercel Preview Comments",
+      "id": 120855537071,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "comms-provider-boundary",
+      "id": 120855257925,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "web-fetch-hardening-smoke",
+      "id": 120855257923,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Validate UI delivery evidence",
+      "id": 120855257915,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "verify",
+      "id": 120855257804,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "postgres-authority",
+      "id": 120855257772,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "audit",
+      "id": 120855257766,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "lint",
+      "id": 120855257535,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "database-contract",
+      "id": 120855257488,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "contract",
+      "id": 120855257368,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Supabase Preview",
+      "id": 120855241954,
+      "status": "completed",
+      "conclusion": "skipped"
+    }
+  ],
+  "statuses": [
+    {
+      "context": "Vercel",
+      "state": "success"
+    },
+    {
+      "context": "Vercel Deployments – MMA",
+      "state": "success"
+    }
+  ],
+  "fiveSourceBlobsUnchanged": true,
+  "web": {
+    "id": "dpl_Haji2kKFVK3ZFg5Gb5eUqKyAMFwy",
+    "state": "READY",
+    "commit": "dea2db4a7865ccf379815e5b10b2e54103337879",
+    "public": {
+      "buildId": "dea2db4a7865ccf379815e5b10b2e54103337879-mvmbr1y2",
+      "customerUpdate": null
+    },
+    "servedConsumer": {
+      "path": "/assets/ClientDocuments-46JWZ2iQ.js",
+      "sha256": "5b0bbb2c99d0389c22eb4a26f3ef96b18910940fb4234bf4c335b5656d01f219",
+      "characters": 44046,
+      "markers": [
+        "client_portal_chat_files",
+        "customer_private"
+      ],
+      "boundary": "Unused private upload callsites are not claimed mounted or invoked"
+    }
+  },
+  "migrations": "NOT_APPLICABLE; original810009/810109 retain separate source evidence",
+  "edge": "NOT_APPLICABLE",
+  "activation": "NONE",
+  "releaseReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2733#issuecomment-6383779107",
+  "customerFileModelReturn": "PROOF OWED; composer/paste/bulk/admitted bytes/Word/model/private references/customer return unfinished",
+  "all42SevenTeach": "UNFINISHED",
+  "founder": "NOT_REQUESTED; one integrated evaluation"
+}

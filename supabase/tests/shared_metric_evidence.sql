@@ -370,6 +370,32 @@ SELECT pg_temp.require_true((SELECT c.bundle->'report_evidence'->'measurements'-
  AND NOT (c.bundle ? 'evidence_refs') AND c.bundle->'report_evidence'->'measurements'->0->'values'=e.bundle->'values'
  AND c.bundle::text NOT LIKE '%account_epoch%' FROM settings_results c CROSS JOIN settings_results e
  WHERE c.key='public-report-stored' AND e.key='native-report-bundle'),'public submit captures original issuer values and lineage only');
+-- Planned selectors invoke the REAL original issuer inside the SAME submit.
+-- The prior reference request above remains supported and its capture immutable.
+SET LOCAL ROLE authenticated;
+INSERT INTO settings_results(key,bundle) SELECT 'planned-report-request',
+ (r.bundle-'evidence_refs')||jsonb_build_object('metric_requests',jsonb_build_array(
+ jsonb_build_object('metric_key',m.bundle->>'metric_key','metric_version',m.bundle->>'metric_version')))
+ FROM settings_results r CROSS JOIN settings_results m WHERE r.key='public-report-request' AND m.key='native-report-bundle';
+INSERT INTO settings_results(key,bundle) SELECT 'planned-report-submitted',to_jsonb(w) FROM settings_results r
+ CROSS JOIN LATERAL public.submit_paige_document_work('a3450000-0000-4000-8000-000000000094',
+ 'a3450000-0000-4000-8000-000000000091',r.bundle) w WHERE r.key='planned-report-request';
+SELECT pg_temp.require_true((SELECT w.work_id=(s.bundle->>'work_id')::uuid AND w.resumed_existing
+ FROM settings_results r CROSS JOIN settings_results s CROSS JOIN LATERAL public.submit_paige_document_work(
+ 'a3450000-0000-4000-8000-000000000094','a3450000-0000-4000-8000-000000000091',r.bundle) w
+ WHERE r.key='planned-report-request' AND s.key='planned-report-submitted'),'planned source same-intent replay');
+SELECT pg_temp.require_invalid($q$SELECT * FROM public.submit_paige_document_work('a3450000-0000-4000-8000-000000000095',
+ 'a3450000-0000-4000-8000-000000000091',(SELECT bundle||'{"metric_requests":[{"metric_key":"invented","metric_version":"1.0.0"}]}'
+ FROM settings_results WHERE key='planned-report-request'))$q$,'real original issuer refuses unknown planned metric');
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT w.request_payload->'report_evidence'->'measurements'->0->'values'=m.bundle->'values'
+ AND w.request_payload->'report_evidence'->'measurements'->0->'source_refs'=m.bundle->'source_refs'
+ AND w.request_payload->'metric_requests'=r.bundle->'metric_requests'
+ AND NOT (w.request_payload ? 'evidence_refs') AND w.request_payload::text NOT LIKE '%account_epoch%'
+ FROM settings_results s JOIN public.paige_durable_work w ON w.id=(s.bundle->>'work_id')::uuid
+ CROSS JOIN settings_results m CROSS JOIN settings_results r
+ WHERE s.key='planned-report-submitted' AND m.key='native-report-bundle' AND r.key='planned-report-request'),
+ 'planned capture preserves real producer facts and original source while excluding tenant identity');
 SELECT set_config('request.jwt.claim.role','service_role',true),set_config('request.jwt.claims','{"role":"service_role"}',true),set_config('request.jwt.claim.sub','',true);
 SET LOCAL ROLE service_role;
 -- Use the original service-only claim DTO, never a fixture business-table grant.
@@ -396,5 +422,8 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.require_denied($q$SELECT * FROM public.submit_paige_document_work('a3450000-0000-4000-8000-000000000093',
  'a3450000-0000-4000-8000-000000000091',(SELECT bundle FROM settings_results WHERE key='public-report-request'))$q$,
  'another original actor cannot submit into the owner thread');
+SELECT pg_temp.require_denied($q$SELECT * FROM public.submit_paige_document_work('a3450000-0000-4000-8000-000000000096',
+ 'a3450000-0000-4000-8000-000000000091',(SELECT bundle FROM settings_results WHERE key='planned-report-request'))$q$,
+ 'another original actor cannot use planned sources in the owner thread');
 RESET ROLE;
 ROLLBACK;

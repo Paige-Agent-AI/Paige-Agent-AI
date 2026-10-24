@@ -1,5 +1,12 @@
 # Decision Log — chronological one-liners
 
+## October24 — EXP08 Team Hub owner decisions
+
+- **EXP08 Team Hub design and storage approved (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
+  - **Design and behavior: APPROVED.** Interactive prototype v2 is approved for production and frozen under §28.
+  - **Collaboration storage: APPROVED.** Team channels, members, messages, threads, mentions and read markers may be added as reviewed, additive migrations with tenant and channel-membership enforcement. Isolation must be proven before release.
+  - These are approvals to build, not runtime proof. Neither authorizes ownership transfer, an external send or a provider connection. Source: [Team surface card](../doctrine/surface-cards/team.md).
+
 ## October20 — current-main composition preparation; NOT RELEASED
 
 Original2163/36ab and2189/9f sources/acceptance are preserved, with bounded successor b27e95 corrections independently reviewed. This own composition retains currentmain40c1 authority, source, Task recovery/navigation and all later Experience work. The inherited dated sections below remain historical; old deployment observations and ownership statements are not current proof or a formal Coordinator handoff. The draft writer/Edge and old090500 migration are absent/unapplied in current production; forward migration/schema proof, current source-pin derivation/review, final exact-head CI/deployment and ordinary authenticated acceptance remain owed. No recurrence, provider, Chat/Live activation or18/25/50 closure. Current owner EXP-only doctrine and the ten-outcome/E5-CV1–9 contract control.

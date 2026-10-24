@@ -1,0 +1,267 @@
+{
+  "result": "PASS_ACTUAL_C20_RELEASE_SOURCE_CONFIG_WEB_IDENTITY",
+  "at": "2026-10-24T13:27:19.775Z",
+  "pr": 2705,
+  "head": "c30323d5f561275a397b10e59c2d0adb6fe173d1",
+  "merge": "f6d82e0c45d27a8bd39485c116f3ef3ffd18f908",
+  "tree": "60d295c31d61c97ee98a606d20f454a72e7cf396",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE5638204725",
+  "premerge": 6384508118,
+  "CI": "All13 named exact-head checks and two web statuses SUCCESS",
+  "native": {
+    "version": "20271113830004",
+    "SQLSHA256": "62f1f423eee91f54a3c5dd5848a69b8c448357eaa4f3671a6ececf587771bbdd",
+    "sourceHeaderACL": "Original public catalogue wrapper and private retained predecessor exactly match cold Preview; all six recorded statements exact",
+    "originalFailure": "40096226787/120879067553 23505 at history insertion, writer attribution UNVERIFIED",
+    "retry": "Same unchanged failed-job retry; recorded version skipped and original persisted/tag checks SUCCESS120879984409/120880012714",
+    "historyCount": 1
+  },
+  "edge": {
+    "firstRun": 40096226768,
+    "firstJob": 120878957067,
+    "firstDeployAndSourceReadback": "SUCCESS",
+    "firstFinalMarker": "FAIL: edge-live9e did not certify sole unused C19 helper in push-before6c",
+    "originalRecoveryRun": 40097432236,
+    "originalRecoveryJob": 120882510825,
+    "recovery": "SUCCESS all existing baseline source/config/marker checks",
+    "artifact": 12561482400,
+    "artifactZipSHA256": "e8a67761b4528cc072d1a977a84383f7839daf421a1dbcfcdd77418f9b30b6bf",
+    "selected": 26,
+    "sourceInputComparisons": 1094,
+    "allImmutableSourceHashesExact": true,
+    "functions": [
+      {
+        "name": "agreement-document",
+        "version": 88,
+        "verify_jwt": false,
+        "files": 26,
+        "archiveSHA256": "d647d628b6d439217df1e285dac0fb4743f74a961f1936b8a215c98c6fd6d2e1",
+        "manifestSHA256": "0b040f02ca2c5512843589715f3e107ce20cb1be12ac52ced86fedafe781a8b2"
+      },
+      {
+        "name": "agreement-send",
+        "version": 18,
+        "verify_jwt": true,
+        "files": 20,
+        "archiveSHA256": "80e6822e0bedd961f0eecb854994f6b59f1e63abf3044c92b1f86b062141a2ac",
+        "manifestSHA256": "ca0189e9a6867470b658318b09245bd84e3248406b43b4412ab548adc6ca8e12"
+      },
+      {
+        "name": "business-verifier",
+        "version": 53,
+        "verify_jwt": true,
+        "files": 14,
+        "archiveSHA256": "e5ab20f89b5540ef360bf3ec69ca0b0cc7480db911d9d2ba00c73737282976ff",
+        "manifestSHA256": "070df94f18db3769285f29a767f11255391ed7e876dca387eb014bdb8b651518"
+      },
+      {
+        "name": "comms-email-command",
+        "version": 28,
+        "verify_jwt": true,
+        "files": 22,
+        "archiveSHA256": "88717d4603c7da4765a955f9d3ed85081d7a35dc16e385ba939e9c0726eb8fb1",
+        "manifestSHA256": "82e637e479e06f632555c41af99dad4d3c501b0b0f2b1c50206782ea4eb3916b"
+      },
+      {
+        "name": "comms-mailbox-command",
+        "version": 17,
+        "verify_jwt": true,
+        "files": 18,
+        "archiveSHA256": "b7519229dd6555b719fb4cb5314654d0f136376ddeee68ce9b1e45652e0071fc",
+        "manifestSHA256": "d1ac83d2f5dbfedff9eeae168707e0c01a02cc40faf7d546fcb48d847bdfadd2"
+      },
+      {
+        "name": "crm-command",
+        "version": 170,
+        "verify_jwt": true,
+        "files": 13,
+        "archiveSHA256": "c68e64954e9e69953ddbac72a9ac8d07b40534e353f16d485a0f2fc39a5b85ac",
+        "manifestSHA256": "2df2ef8730ae5d50f973fe463e43707ce1bfff82e247b13500d44689e3196971"
+      },
+      {
+        "name": "execute-approval",
+        "version": 176,
+        "verify_jwt": true,
+        "files": 119,
+        "archiveSHA256": "5b7cb49758463b72aa86cb4c00e5d63ab610498fdc6d550be5c91d12bf956fb1",
+        "manifestSHA256": "8b2722820f698e475080ea7755f573e4f21f0f72da8989e72b10fa6b45227cd5"
+      },
+      {
+        "name": "growth-publish-command",
+        "version": 28,
+        "verify_jwt": true,
+        "files": 24,
+        "archiveSHA256": "922241998669bc6d839c039b50cb7e6eabba2a335a1a0995e4e4d86e63a1c20c",
+        "manifestSHA256": "de8352f6c49296d781709e154d49723345f54482c42e2f196e44871ed1438dcc"
+      },
+      {
+        "name": "mcp-gateway",
+        "version": 112,
+        "verify_jwt": true,
+        "files": 21,
+        "archiveSHA256": "24f8371b2e2de548fb1078315aecac7078b6322212949bfcbd4aa62adae41cdb",
+        "manifestSHA256": "4862670ba886aaeae1802902d7c0b030d0bbf5ca24305889c70812bfd4e59c90"
+      },
+      {
+        "name": "nav-pull-profile",
+        "version": 52,
+        "verify_jwt": true,
+        "files": 7,
+        "archiveSHA256": "37037dce1d04107b60841f15aeab4ff2221f0d251c9ea87da64980d16f7fe9a0",
+        "manifestSHA256": "f38bd2a886a30ebc15dac004d46edc20f1982e4a14ca6de1bd0fcfff3b871d19"
+      },
+      {
+        "name": "paige-ai-chat",
+        "version": 529,
+        "verify_jwt": true,
+        "files": 271,
+        "archiveSHA256": "1a8f992558add62171e86bdbfe722b8c7c40cb2c84ada83df994ca55aea2a4ff",
+        "manifestSHA256": "45656cbcd007b3f48fb43207f7588592ac00370c611f7f6e01809d44cda6ac3d"
+      },
+      {
+        "name": "paige-business-review",
+        "version": 75,
+        "verify_jwt": true,
+        "files": 32,
+        "archiveSHA256": "be9ea04f6cde306fd4707bcc0606582dd73958ae10a2174375a6dc2b72e7cb7a",
+        "manifestSHA256": "eed27bc2ec2489071e91eac76a4f4fdf7ae3bd092965b8e5896370db33387c02"
+      },
+      {
+        "name": "paige-mcp",
+        "version": 769,
+        "verify_jwt": false,
+        "files": 19,
+        "archiveSHA256": "7667fdde15eb4993f82368ee89bea1d203e4510a27381729528b1b737925782c",
+        "manifestSHA256": "1c949b1748ab6b309a615258dff3ab2076f266addc1472394d17d222f7342071"
+      },
+      {
+        "name": "paige-native-event-dispatch",
+        "version": 254,
+        "verify_jwt": false,
+        "files": 116,
+        "archiveSHA256": "df297cb51a0af0c7117bbdbf240475f983bf90e37b5c4af62883f4d508883699",
+        "manifestSHA256": "b0669e67dd20cd905cfd37dcfde2ada8c3446c2b640b608cc6474395b14acb18"
+      },
+      {
+        "name": "paige-orchestrator",
+        "version": 126,
+        "verify_jwt": true,
+        "files": 127,
+        "archiveSHA256": "d4ae664d85c2601131b812c4b9caaf2010eadde622294f4c6ab54d8d141e229e",
+        "manifestSHA256": "042ee98fec684578a9fbb165e71f55254de9b8fb51aff84c30dac9de49f291bc"
+      },
+      {
+        "name": "paige-social",
+        "version": 135,
+        "verify_jwt": true,
+        "files": 12,
+        "archiveSHA256": "b52eee8e7560bf492e94f09921cfcc76451397efc8ceb44df30a2d3b062023f5",
+        "manifestSHA256": "cbfa25748a1c7e56629ae9e9d4f7ae9d9d248c502a2c04e3c567942ab37178dd"
+      },
+      {
+        "name": "paige-write-back",
+        "version": 155,
+        "verify_jwt": true,
+        "files": 7,
+        "archiveSHA256": "07fe75e19c63f6ff7b5e72ce640c8c06054607f623ab3b56fd03baa4e79a0600",
+        "manifestSHA256": "b7bf225bc3691bcb0a0455d5507346977449e55804a233cd44559484814ddfd2"
+      },
+      {
+        "name": "sales-collection-command",
+        "version": 70,
+        "verify_jwt": true,
+        "files": 21,
+        "archiveSHA256": "10292711b8d6e4f2938df6e10233b3959fa507c462debc65b0a03be46d08cdb9",
+        "manifestSHA256": "18abff0a65aa96f2f212425cffa0f8bd9903b79260b52dd83d9cd347f4450fde"
+      },
+      {
+        "name": "sales-invoice-command",
+        "version": 143,
+        "verify_jwt": true,
+        "files": 48,
+        "archiveSHA256": "f3d976191cd96619759f39fb8d531794a0f68f5686051339dbdf80dcf00f6523",
+        "manifestSHA256": "56b1b81174d462cf8cd45ba2d72130cbe429fb7ff3d48645d636b73f92b5f559"
+      },
+      {
+        "name": "sales-invoice-draft-command",
+        "version": 67,
+        "verify_jwt": true,
+        "files": 29,
+        "archiveSHA256": "68602ca8db5210339234fc28faca096dfdf6cf808274f1f1f9cdb9ef43f27ed5",
+        "manifestSHA256": "04dec2c55edac8fe0747d2f1682756c3a2d5dab7241143fd32e72fe36ad15bcd"
+      },
+      {
+        "name": "send-portal-invite",
+        "version": 2219,
+        "verify_jwt": false,
+        "files": 21,
+        "archiveSHA256": "f4c3f908fcc9b94877eb8129d0815298ef22c2f4e5eb69d66992d9f8cd1adc51",
+        "manifestSHA256": "c9f45b84a936e3ef9566cac19be57681125439e77864e96e0766d20a5fdb941a"
+      },
+      {
+        "name": "sign-agreement",
+        "version": 38,
+        "verify_jwt": false,
+        "files": 22,
+        "archiveSHA256": "4cf2d6e47e38542e05558a479bd2ab62c09fad1760919dcc2832a16cd2721590",
+        "manifestSHA256": "5c9a9bbe129ebad8bb2ee7b531a046f08f2e142167534505de0c27e80a36b22b"
+      },
+      {
+        "name": "skill-runner",
+        "version": 189,
+        "verify_jwt": false,
+        "files": 39,
+        "archiveSHA256": "b6144d11a87dfd4b13118be5fa801906217078f874c77bdc9ed3305ffdc0f726",
+        "manifestSHA256": "5313dee555736758703b80538cd67b5f504bc525133b14d4027294f913423982"
+      },
+      {
+        "name": "smartcredit-pull-snapshot",
+        "version": 46,
+        "verify_jwt": true,
+        "files": 8,
+        "archiveSHA256": "93f3659960759e469bb13ca3ecb7206adf71bcb58e8f8e18014a2c25d3d20f4e",
+        "manifestSHA256": "03bb08e0c1a29324472e635b562309ff71668382f0784cf77dc005b7ffa22a54"
+      },
+      {
+        "name": "tenant-stripe-connect",
+        "version": 22,
+        "verify_jwt": true,
+        "files": 20,
+        "archiveSHA256": "216d01812a732b9baf9bf6af2d895c6812fc0d0d525f22f9122570a91eb14309",
+        "manifestSHA256": "c35455cb2f90abe9f7a7e9ba8d81cf3bf493ff5f075d758879ddce6b12939a70"
+      },
+      {
+        "name": "weekly-commitment-command",
+        "version": 15,
+        "verify_jwt": true,
+        "files": 18,
+        "archiveSHA256": "1c541f5ecf09b6d0cfaa9333f238fdb1b892817905826703bafff3a50fc580b6",
+        "manifestSHA256": "97378e6d498ca145c36368eda392caa995553fb452c8c99538e4d4b72465d0bf"
+      }
+    ]
+  },
+  "web": {
+    "deployment": "dpl_3LbaoiSWTwx5cm3LhopoC9qxw5Hi READY",
+    "versions": [
+      {
+        "url": "https://paigeagent.ai/version.json",
+        "status": 200,
+        "version": {
+          "buildId": "f6d82e0c45d27a8bd39485c116f3ef3ffd18f908-mvmep25c",
+          "customerUpdate": null
+        }
+      },
+      {
+        "url": "https://app.paigeagent.ai/version.json",
+        "status": 200,
+        "version": {
+          "buildId": "f6d82e0c45d27a8bd39485c116f3ef3ffd18f908-mvmep25c",
+          "customerUpdate": null
+        }
+      }
+    ]
+  },
+  "markers": "Actual remote main, db-live and edge-live=f6 independently read13:26UTC",
+  "activation": "No Chat/Live admission, auto grant, provider/send/payment or capability maturity activation",
+  "boundary": "Source/config/native/web release only. Owner UI2714 not yet released; actual ordinary owner/staff/client commands, permissions, actual agreements/payments, receipts/reload/CentralQA/full12/founder acceptance UNVERIFIED"
+}

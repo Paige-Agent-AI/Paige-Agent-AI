@@ -54,6 +54,23 @@ const run = async () => {
 };
 const names = () => state.rpc.mock.calls.map(([name]) => name);
 describe('original document handler consumes native captured business reviews', () => {
+  it('formats native planned-source captures through the same artifact and receipt writer',async()=>{
+    Object.assign(stored,{metric_requests:[{metric_key:'sales.cash.recorded_received',metric_version:'1.0.0'}]});
+    expect((await run()).body).toMatchObject({ok:true,status:'succeeded',receipt_recorded:true});
+    expect(names()).toEqual(['start_paige_document_work_execution','complete_paige_document_work']);
+    expect(state.model).not.toHaveBeenCalled();
+  });
+  it.each([
+    [{metric_key:'sales.invoices.issued_count',metric_version:'1.0.0'}],
+    [{metric_key:'sales.cash.recorded_received',metric_version:'1.1.0'}],
+    [{metric_key:'sales.cash.recorded_received',metric_version:'1.0.0',values:{count:42}}],
+    [],null,
+  ])('refuses source-plan/capture mismatch or injected facts %#',async metric_requests=>{
+    Object.assign(stored,{metric_requests});
+    expect((await run()).body).toMatchObject({ok:false,status:'failed',settlement_verified:true});
+    expect(names()).toEqual(['start_paige_document_work_execution','settle_paige_document_work_failure']);
+    expect(state.model).not.toHaveBeenCalled();
+  });
   it.each(['month', 'quarter'] as const)('persists %s facts without a model or caller-supplied evidence', async cadence => {
     stored = payload(cadence);
     expect((await run()).body).toMatchObject({ ok: true, status: 'succeeded', content_id: workId, receipt_recorded: true, verified_readback: true });

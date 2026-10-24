@@ -34,14 +34,14 @@ RELEASE_NOTE_REQUIRED: no: sanitized engineering evidence only.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: candidate visual/navigation behavior; full Finance remains incomplete. Source tests and synthetic fixtures do not establish ordinary authenticated customer acceptance.
 RELEASE_RECOVERY: position=forward-fix original consumer or revert bounded presentation; reference=ANT138/099b587d and ANT161/b4d05902.
 
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: candidate local-origin browser access held by automatic approval review.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: candidate local-origin browser access held by automatic approval review.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: candidate local-origin browser access held by automatic approval review.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: candidate local-origin browser access held by automatic approval review.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: candidate local-origin browser access held by automatic approval review.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: candidate local-origin browser access held by automatic approval review.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: candidate local-origin browser access held by automatic approval review.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: candidate local-origin browser access held by automatic approval review.
+SOLO_1536X770_PAIGE_CLOSED: PASS: October24 actual native Responsive1536x770 toolbar/fit-to-window capture, final unchanged Finance source4fd24ea2. Closed rail/synthetic inputs only; exact source hashes/original window pixels in oct24-native-confirmation.json.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
 
 ## Capability routing before source edits
 
@@ -121,3 +121,21 @@ deadlines/kernel reset; release stays held without promoting pre-correction imag
 Original raw tsc was stopped after composition changed: INCOMPLETE, not still
 running or a type PASS. Current hosted exact-head install/type/build and review
 are separately mandatory. No new provider, capability or acceptance promotion.
+
+## October24 final amount correction — bounded native confirmation
+
+[Three original native captures/source hashes](assets/e2-finance-overview-hierarchy/oct24-native-confirmation.json)
+record final4fd source, retained byte-identical through main5caa composition.
+At320px the original amount keeps its decimals; source Sheet opens and Escape
+visibly returns focus to the same metric. Observed Responsive1536x770 closed-rail
+geometry retains all amounts and original receipt comparison. Actual window pixels
+are recorded separately: fit-to-window is not a1536-pixel bitmap claim. Bare
+Finance→Overview retains the theme query. Original capture bytes are JPEG; private
+misleading.png names were corrected to.jpg without altering or resampling bytes.
+
+This confirms the final correction only in these named states. Final1366/open,
+remaining panel/viewport, zoom/reduced-motion/current-role/all-seven-subpage and
+actual VERA/reference/reload proof remain owed. Latest physical-Escape stop ended
+browser input; no alternate control used. UI release remains held for material
+final proof/current exact review/required CI. No customer/synthetic, algorithm,
+Capabilities or provider promotion; full19/nine and Founder Acceptance unchanged.

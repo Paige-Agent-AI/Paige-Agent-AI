@@ -142,3 +142,38 @@ Catalogue: `automations.weekly_commitment_draft` Chat binding remains UNAVAILABL
 no owner-visible status, visual, algorithm or acceptance maturity is promoted.
 ALG-01 gains bounded source preparation only; ALG-12/13 and full ten/E5-CV1–9
 acceptance remain open. No customer announcement or founder slice test.
+
+## Original native decline consumer - October24 preparation
+
+The next UNADMITTED consumer calls only the already-deployed
+public.decline_weekly_commitment_chat_draft on the caller JWT and the exact original
+proposal/token/thread/current normal runtime. It records the existing native refusal,
+not another approval service or grant. No autonomy approval is added to declining.
+A native saved result winning the race remains an observation, never a claimed decline.
+The original native audit/locks are authoritative; UUIDs and parsed shapes authenticate nobody.
+
+One decline is permitted. A lost acknowledgment allows at most one original proposal
+read within the SAME remaining elapsed budget, capped at12seconds. Unknown, expired,
+changed and saved observations grant no replay or generic consumed_at fallback.
+A still-pending read cannot be presented as a successful refusal or fresh decision.
+Stop, abort, deadline and retired-scope replies are suppressed without further calls.
+Tokens, raw summary/errors and record selectors are excluded from model context.
+
+Actual failure-first run failed import resolution for the absent module (one failed
+suite, zero executed cases), not a claim of behavioral assertion failures. Implemented
+source then passed27 cases; added original-identity mutation and expired-write-budget
+negatives yield29 owning cases and146/5 combined claim/commit/read/projection cases,
+all exit0. Scoped ES2020 compilation and owning ESLint exit0. Native transport doubles
+and these tests are not authenticated production execution, concurrency or UI evidence.
+Existing native840003 permission/concurrency proofs remain with original2758.
+The original provider changelog and current database-function/RPC docs were inspected;
+no SDK, native function, schema, grants, connection or provider config is changed.
+
+Dependency: original2772 commit/recovery preparation at02fac985, whose hosted full
+verify was still running at this checkpoint. This child takes no protected root,
+registry, Kit, C0b, native or rendered UI lease. E02->E05->E03 shared integration remains
+coordinated. Functional: prepared source only. Visual: no mounted change. Experiential:
+complete natural request/approval-or-decline/original record/Rail/reload proof owed.
+ALG-01 bounded source preparation; ALG-12/13 unchanged. Catalogue mutation remains
+Chat UNAVAILABLE; full ten outcomes/E5-CV1-9, universal SOLO and one founder acceptance
+remain open. No recurring, provider, Live or expired ZION authorization is consumed.

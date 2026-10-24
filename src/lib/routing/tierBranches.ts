@@ -217,6 +217,9 @@ export const SOLO_BRANCHES: Branch[] = [
       // saved piece (owner ruling 2026-10-10); then it retires the same way.
       { slug: "audience", key: "audience", label: "Audience" },
       { slug: "content", key: "content", label: "Content" },
+      // EXP07 row 8 — the content-calendar PLAN (planning only; scheduling stays with EXP05's
+      // consequential-execution world when it is authorized). Sits beside Content, its source.
+      { slug: "calendar", key: "calendar", label: "Calendar" },
       { slug: "social", key: "social", label: "Social" },
       { slug: "email", key: "email", label: "Email" },
       // Ads left this strip for its own department (owner, 2026-10-10, INT-342). The old

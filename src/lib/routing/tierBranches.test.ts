@@ -131,7 +131,7 @@ describe("Sub-tab tree (§65 3-level, agency verified 2026-08-17)", () => {
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(7);
     expect(count("calendar")).toBe(6);
-    expect(count("growth")).toBe(7);
+    expect(count("growth")).toBe(8)  // EXP07 row 8 added the calendar planning subtab;
     expect(count("analytics")).toBe(6);
     expect(count("marketplace")).toBe(6);
     expect(count("team")).toBe(6);

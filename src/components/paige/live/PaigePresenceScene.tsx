@@ -273,47 +273,43 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
   useEffect(() => () => { geometry.dispose(); material.dispose(); }, [geometry, material]);
 
   // THE HALO. A soft additive field behind the body, so her light lands on the room instead of
-  // stopping at her silhouette. It rides the SAME eased energy as the body's pulse and the SAME
-  // gold-only-on-speech rule (§11): at rest and while listening it is a dim indigo breath of
-  // light; it warms and lifts only with her own voice. uGlow never rises on silence, because it
-  // is fed from the same `hers` value the body pulses on.
+  // stopping at her silhouette. A SPRITE, not a plane: §30 stripped the flat waveform ribbon and
+  // the smoke forbids PlaneGeometry in this file on purpose, and a camera-always-facing radial
+  // glow is exactly what a sprite is. It rides the SAME eased energy as the body's pulse and the
+  // SAME gold-only-on-speech rule (§11): at rest and while listening it is a dim indigo breath of
+  // light; it warms and lifts only with her own voice. The opacity never rises on silence,
+  // because it is fed from the same `hers` value the body pulses on.
   const haloMaterial = useMemo(() => {
     const styles = getComputedStyle(document.documentElement);
-    const primary = token(styles, "--primary", "#6c5ce0");
-    const gold = token(styles, "--accent", "#ebb94c");
-    return new THREE.ShaderMaterial({
+    const canvas = document.createElement("canvas");
+    canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+      grad.addColorStop(0, "rgba(255,255,255,1)");
+      grad.addColorStop(0.4, "rgba(255,255,255,0.42)");
+      grad.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 256, 256);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.SpriteMaterial({
+      map: texture,
+      color: token(styles, "--primary", "#6c5ce0"),
       transparent: true,
-      depthWrite: false,
+      opacity: 0.16,
       blending: THREE.AdditiveBlending,
-      uniforms: {
-        uColour: { value: primary.clone() },
-        uGold: { value: gold },
-        uSpeak: { value: 0 },
-        uGlow: { value: 0.16 },
-      },
-      vertexShader: /* glsl */ `
-        varying vec2 vUv;
-        void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-      `,
-      fragmentShader: /* glsl */ `
-        // highp, like the body: a long smooth falloff at mediump is the classic banding setup,
-        // and the halo is additive over the dark theme where banding is most visible.
-        precision highp float;
-        uniform vec3 uColour, uGold;
-        uniform float uSpeak, uGlow;
-        varying vec2 vUv;
-        void main(){
-          float d = length(vUv - 0.5) * 2.0;
-          float a = pow(smoothstep(1.0, 0.0, d), 2.3);
-          vec3 colour = mix(uColour, uGold, clamp(uSpeak, 0.0, 1.0));
-          gl_FragColor = vec4(colour * a * uGlow, a * uGlow);
-          #include <colorspace_fragment>
-        }
-      `,
+      depthWrite: false,
     });
   }, []);
-  const haloGeometry = useMemo(() => new THREE.PlaneGeometry(RADIUS * 4.4, RADIUS * 4.4), []);
-  useEffect(() => () => { haloGeometry.dispose(); haloMaterial.dispose(); }, [haloGeometry, haloMaterial]);
+  const haloGold = useMemo(() => token(getComputedStyle(document.documentElement), "--accent", "#ebb94c"), []);
+  const haloBase = useMemo(() => token(getComputedStyle(document.documentElement), "--primary", "#6c5ce0"), []);
+  useEffect(() => {
+    const material = haloMaterial;
+    const map = material.map;
+    return () => { map?.dispose(); material.dispose(); };
+  }, [haloMaterial]);
 
   // FILL THE FRAME. The body is the presence, so it takes the room it is given rather than sitting
   // small in the middle of it — the previous build was called slim and slender, and a corner with a
@@ -335,11 +331,11 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
     u.uSpeak.value = 0; u.uBusy.value = 0; u.uPulse.value = 0; u.uFlash.value = 0;
     u.uLight.value = still.light;
     // The halo settles with the body: its resting dim indigo, nothing more.
-    const h = haloMaterial.uniforms;
-    h.uSpeak.value = 0; h.uGlow.value = 0.16;
+    haloMaterial.opacity = 0.16;
+    haloMaterial.color.copy(haloBase);
     if (mesh.current) mesh.current.rotation.set(0, 0, 0);
     invalidate();
-  }, [reduced, state, material, haloMaterial, invalidate]);
+  }, [reduced, state, material, haloMaterial, haloBase, invalidate]);
 
   useFrame(({ clock }, delta) => {
     if (reduced || crashed.current || !mesh.current) return;
@@ -382,9 +378,8 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
 
       // The halo breathes with the same values the body does — eased on the SAME curve as uSpeak
       // so light and rim can never disagree about whether she is talking.
-      const h = haloMaterial.uniforms;
-      h.uSpeak.value = u.uSpeak.value;
-      h.uGlow.value += (0.16 + u.uEnergy.value * 0.5 - h.uGlow.value) * Math.min(1, delta * 5);
+      haloMaterial.opacity += (0.16 + u.uEnergy.value * 0.5 - haloMaterial.opacity) * Math.min(1, delta * 5);
+      haloMaterial.color.copy(haloBase).lerp(haloGold, Math.min(1, u.uSpeak.value));
 
       // Integrated, never an absolute angle from elapsed time: multiplying elapsed time by a rate
       // that changes makes the body jump the moment the rate does.
@@ -400,7 +395,7 @@ function Orb({ state, reduced, readEnergy, onCrash }: {
   return (
     <group ref={group}>
       {/* Behind the body, additive and depth-blind, so it can only ever ADD light. */}
-      <mesh geometry={haloGeometry} material={haloMaterial} position={[0, 0, -0.9]} renderOrder={-1} />
+      <sprite material={haloMaterial} position={[0, 0, -0.9]} scale={[RADIUS * 4.4, RADIUS * 4.4, 1]} renderOrder={-1} />
       <mesh ref={mesh} geometry={geometry} material={material} />
     </group>
   );

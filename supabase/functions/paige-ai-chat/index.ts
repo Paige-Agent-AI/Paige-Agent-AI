@@ -292,7 +292,7 @@ import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
 import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
-import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
+import { specialistStepLabel, specialistAssignmentSummary, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
 import { crmResultReferenceMetadata } from "../_shared/paige-turn/crm-result-reference.ts";
@@ -10063,7 +10063,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Save ${paths.length ? paths.length : "these"} detail${paths.length === 1 ? "" : "s"} to the client's file${paths.length ? ` (${paths.join(", ")})` : ""}.`;
         }
         case "delegate_to_subagent":
-          return `Hand this to your ${a?.subagent_slug || a?.slug || "specialist"} and let them run it${a?.task ? `: "${String(a.task).slice(0, 120)}"` : ""}.`;
+          return specialistAssignmentSummary(a, specialistStepRoster);
         case "automation_draft": {
           const n = typeof a?.name === "string" ? a.name : "a new process";
           const count = Array.isArray(a?.steps) ? a.steps.length : 0;

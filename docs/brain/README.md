@@ -2,13 +2,13 @@
 
 Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc0b5dad per-business original invitation admission are actually released and read back. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records exact heads/parents/trees, accurate lower-assurance sequential reviews, all required checks, normal migrations620009/630009, all16 original ABI/ACL/source pins, unchanged S7 and actual READY web/public versions. Receipts6377892283/6378046694/6378167524. First630009 deployment57014 is retained; precisely bounded read-only administrative-session cleanup (later identified as including a legitimate CI snapshot; affected microphone verification must rerun) and unchanged normal retry succeeded, with no customer/data/role/history/DDL workaround. Native453/294/61/all seven/grant proof is engineering evidence, not ordinary customer acceptance. Private CURA history remains separate from shared Conversations; current microphone2718/attachments/permitted research work stays in the original relationship packet. Full42/seven-pillar authenticated owner/client/reload/revoke/device and Founder Acceptance remain unfinished; one complete integrated evaluation, no per-slice owner request. This mechanical cross-reference changes no capability/algorithm maturity and has no recursive release row.
 
-## EXP05 original specialist status — local source, release and presentation owed
+## EXP05 original specialist status — source released; customer recovery owed
 
 The original native status channel can project only the exact assignment named
 by a server-issued terminal and the existing caller-JWT inspector. Current seat,
 tenant, original turn and receipt are rechecked; unknown is not replay authority.
 [Bounded source and proof](../evidence/ui-delivery/exp05-specialist-original-status.md)
-retain missing UI mounting, exact-head release and authenticated recovery evidence.
+retain historical source failures and current release/authenticated proof boundaries.
 Full Operations/weekly/automation/ZION outcomes remain open; no activation.
 
 Later October24 source closeout: original2722 reviewed56b/LOWER5636877937
@@ -18,6 +18,14 @@ reads are recorded in the original evidence and sole Master4.0 row; Chat524 is
 newly deployed, original orchestrator124 is verified unchanged. Receipt6380356415.
 Native UI2725 and authenticated original customer recovery remain owed; no new
 invocation, authority, activation or full Experience/founder acceptance claim.
+
+Later October24: original UI2725 is actually served at84a1703/READY, with six
+consumer assertions/receipt6380889677. Dependent original factory2735 then passed
+all13 checks, merged2e6872e1 and normal migration800005 succeeded; actual ZION
+v3/plan/2793-byte prompt digest matches reviewed source, READY/public2e verified.
+Receipt6380934945 and sole Master4.0 rows retain exact evidence. Ordinary QA is
+waiting at the original owner approval gate; no specialist invocation/result is
+claimed. Complete weekly/automation/ZION/Live/founder acceptance remains owed.
 
 ## EXP05 original weekly receipt validation — source development, October23
 
@@ -49,6 +57,16 @@ and served-component readback, plus one ordinary-owner empty-read/reload and
 settled original-focus return. Original receipt6380668920 and sole Master4.0 row
 retain the exact review/CI/source identities. Populated weekly execution/Rail,
 cohorts/Live and complete Operations/founder acceptance remain unfinished.
+
+October24 original weekly proposal keyboard correction is locally verified:
+ordinary no-write owner inspection reproduced lost entry/cancel focus. Three
+causal failures are corrected; original63 Composer/Panel/Entry cases pass.
+Explicit cancellation returns its own enabled opener and owner/session loss cannot
+focus a disabled control. The same weekly Sheet root now respects reduced motion;
+default motion/layout/authority remain unchanged. [Source and native proof](../evidence/ui-delivery/exp05-weekly-proposal-keyboard.md)
+retain final responsive frames, synthetic/no-effect boundaries and remaining
+review/CI/web/authenticated obligations. No weekly save/activation, catalogue or
+algorithm maturity, full Experience or founder acceptance is inferred.
 
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
@@ -2922,6 +2940,78 @@ and reload owed / Founder NOT_ACCEPTED. No schema, provider, shared Chat, regist
 authority, LayerC or domain-writer change; catalogue and algorithms unchanged.
 All19/nine and original9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED retained.
 
+
+
+Original dated EXP04 text below is retained verbatim from October23. Its pending-reader filename630004 snapshot is historical: current source-only continuation is631004 after actual E09 630009; see the existing EXP04 journey and PR2681. Earlier source releases do not establish complete Experience acceptance.
+
+## EXP04 recipient signing repair — October23 source released
+
+Existing Dependabot2688 is SOURCE RELEASE VERIFIED: non-author APPROVE5634889972,
+latest11 exact-head contexts/two statuses SUCCESS, merge689c589ba34344d6775320306b49f02e3167d16b/
+actual union treec9741cab. Productiondpl_7iXp4bLKzxyVhLBDTagBXe7PkWuo READY/exact689;
+both aliases exact689-mvlihye1/null22:03:39UTC. Actual production Bun resolves patched
+zod4.6.7; npm lock4.6.6, no lock-parity or all-Edge assertion. Earlier bot nativeFAIL
+remains; original exact-ref native/full baseline genuinely SUCCESS. Master4.0/
+receipt6375657717 preserve release and five separate moderate audit findings.
+Downstream agreement drafts still require their fresh composed-head gates.
+
+Bounded CI repair2683 is SOURCE RELEASE VERIFIED: reviewed5984, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5634002789, all11 applicable exact-head gates/
+both verify runs/two statuses SUCCESS. Maina9bd855c14e824e6cb2c905876d45418c452ae57,
+actual union treee68e5630, all seven original workflow/OPS files exact. Normal
+webdpl_G71UsMyQXpXqgzcVgj7XozWarxJn READY/exact merge; both public domains
+serve a9bd855-mvlgdzr6/null21:02UTC. Master4.0/receipt6374662174 retain details.
+Original jobs/permissions/baselines remain; no customer/algorithm Live promotion.
+
+Original2670 reviewed1758c3d73e498f814effca8a5e4c5935900b4959, LOWER5632547825,
+all11 exact-head checks/full normal Preview/two statuses SUCCESS, merged
+024ac8f677be0fd9bdb650283aa9119e6ce7be95. Actual1b304+1758 union tree372e27f3
+verified. Normal Edge40007394701/120598675278 source/config verification SUCCESS;
+document82/send16/sign34. Separately observed sign35 retains all21 canonical
+source files/JWT; version/archive advance cause remains UNVERIFIED. Exact web
+dpl_P9VKBwNnSRKrGsHPTNj6UJvgxxBB READY; actual public containing52091 on both
+domains19:02UTC and served app64347/signing bundle19:10UTC verified without
+claiming an exact024 alias sample. Master4.0 and
+[release6372818143](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2670#issuecomment-6372818143)
+retain exact hashes and evidence boundaries. Original native53 is now consumed;
+one atomic signature/consent/events receipt and inspect-only recovery replace
+the legacy direct write fallback. No real signer/send/payment/provider act or
+ordinary-role/cohort/CentralQA/founder acceptance. Prepared-map/send/input,
+effective terms, delivery and all12 remain incomplete; no Live promotion.
+
+C18 continues original2190 accepted-source inspection, schema1/2 and exact
+native audit identity, with canonical owner actor/package/Rail and unchanged
+closed package DTO.75 local cases pass, including account-epoch/owner-access
+retirement. Current composed native406 PASS retains all323 original cases and
+adds83 accepted-evidence cases,27 owner reads, replay2 and real overlapping
+authority retirement. The original disposable cluster is empty/stopped.
+Earlier rendered frames remain pinned to their prior source; a development-server
+timeout/blank capture stays INVALID. Separate compiled current-source proof now
+has14 native JPEGs/21 critical inputs/three compiled assets, actual five required
+widths in light/dark, account/access clearing, cancel focus and late-result guard.
+No full authenticated shell/role/cohort/zoom/AT proof is implied. Type/hosted/release/acceptance remain owed.
+Reserved630004 replaces never-production-applied570004 after current600000;
+original SQL bytes are unchanged. Original UI captures have an explicit
+byte-identical SQL filename continuation, not a new render. This read does not activate terms.
+
+
+## EXP04 C18 current-main source continuation — October24
+
+SOURCE RELEASE VERIFIED, October24 07:46:46UTC: original2681 reviewed2a24465b/LOWER5637255408/all14 exact checks+two webSUCCESS → mainba97335e016b9fea741da5005d1e8dedd7baa696/tree85622aed, actual e328+2a parents equal inspected union. Normal production dpl_5N4vqtooBsZC9sDQ7qkJzJSgiKeK READY/both public200exactba-mvm39n7q/customerUpdate:null; actual served SoloEntry-DA7JaV92.js/1524cbcd9/allthree owning markers. Normal deploy-migrations40075012907 SUCCESS, actual native810004/owner readerffc779/private validators5347818+235026/original13 signature3a2fa340 ABI/ACL/config preserved. All21 reviewed Git blobs unchanged:20 historical raw frame pins exact, one accepted-commercial-read.ts pin exactly its WindowsCRLF checkout. The failed raw-only assertion and original manifest/images remain; no new rendered/authenticated claim. No changed Edge entrypoint or Edge importer of the new isomorphic browser read SDK; normal workflow40075012882 succeeded, no fresh Edge-version claim. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2681#issuecomment-6381631848). Ordinary owner/staff/linked-client private records/file availability/roles/reload/revocation/CentralQA/fullO1–O12/founder acceptance remain UNVERIFIED. Higher820004 waits E09 proposed810009 actual receiving/release. No charge/send/signing/service-completion or Algorithm/Capabilities activation.
+
+Earlier pre-merge source checkpoint follows unchanged.
+
+Actual incoming mainc9ab5325ae318b0602eab2883a5d25269f569aaf is preserved in full,
+including E03/E05/E07/E10 releases. The sole Brain append conflict retains BOTH
+contributions. Original C18 SQL810004/SHA221b0365, all21 captured critical
+inputs and36 retained assets/14 frames are unchanged; no fresh rendering.
+The older October23 filename/status paragraphs above are historical snapshots.
+Current production800005 satisfies the earlier EXP05 reservation; the reader
+remains NOT_MERGED/NOT_DEPLOYED until its reconciled exact-head review/CI and
+normal release/readback. Original f7 all14 greens are dated, not new-head proof.
+E09 proposed810009 receiving ACK/actual release still precedes higher820004/830004.
+No activation, provider act, new agent, algorithm/catalogue Live or full12/QA/
+founder acceptance. Existing EXP04 journey and original2681 retain the evidence.
 ## EXP05 original ZION planning instructions — local source, October23
 
 The existing global soft ZION version2 is enabled but has no system prompt or
@@ -2974,3 +3064,23 @@ assertions/180s retained. No product SQL/Edge/cron changes. Web metadata is READ
 main duplicate-version failures remain recorded; originating E10 correction2732
 now records800000 and is consumed with main79171c82. This closes only the
 test-source release record, not original customer recovery or an Experience.
+
+## EXP05 original specialist proposal brief — source released, October24
+
+The original confirmation branch used legacy `task`, omitting current stored
+`input.request`. Bounded summary repair uses the actual purpose and server-scoped
+roster, preserves legacy input and never infers authority or completion.90 focused
+and original-confirmation cases pass, with both causal failures retained; unchanged
+native confirmation renders cover required sizes/themes and320px reflow.
+[Exact source and proof boundary](../evidence/ui-delivery/exp05-specialist-confirmation-brief.md).
+Trust risk, confirmation fingerprints, stored arguments/Harness/executor/Rail
+remain unchanged; the reviewed29 source-binding literal renewals are recorded in
+the original source audit. All11 exact checks/two statuses and LOWER5637311646/
+5637407558 precede actual main48054028e819fba4f11d1728a8559b241bb52c74.
+Normal first Edge run correctly failed its prior-baseline record guard after
+selected deployment/readback; existing recovery40076295305 succeeded without a
+workflow/tag bypass. ActualChat526/JWTtrue/import_mapfalse/all269 reviewed files
+and exact READY/public web verified08:01UTC. Master4.0 and original receipt6381759625
+retain complete source identities. Repaired ordinary display and actual specialist
+result/receipt/reload remain owed. The protected proposal expired unconsumed; no assignment,
+replay, catalogue promotion or complete weekly/ZION/automation acceptance is claimed.

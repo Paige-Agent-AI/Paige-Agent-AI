@@ -1,0 +1,18 @@
+{
+  "active": " Not now",
+  "button": [
+    {
+      "bottom": 724.2000122070312,
+      "height": 44,
+      "text": "Approve"
+    },
+    {
+      "bottom": 776.2000122070312,
+      "height": 44,
+      "text": "Not now"
+    }
+  ],
+  "docWidth": 320,
+  "error": "",
+  "summary": "Needs your OKRequest an assignment from Operations desk: “Prepare a weekly planning draft from the original commitments. Do not change work or send communications.”Approve Not nowLocal decline callback only. Nothing was executed."
+}

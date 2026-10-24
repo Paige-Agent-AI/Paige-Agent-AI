@@ -11,26 +11,26 @@ AUTOMATED_EVIDENCE: PASS: actual invokeSoft/Fabric route34 cases, including the 
 STATIC_EVIDENCE: PASS: existing registry seed/remit, real original invokeSoft and zionProviderAuthority, shared Fabric route, native SQL and CI entry inspected; scoped ESLint/diff checks pass. No dispatch source/pin, grant, registry key or provider flag changes.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no visual source or new customer control; existing rendered Operations/Chat evidence is not evidence that this registration is deployed or model-verified.
 BEHAVIORAL_EVIDENCE: PASS: actual function with closed synthetic Auth/database/Fabric ports and real disposable PostgreSQL migration/replay/protection tests. No real model, provider or customer record used.
-AUTHENTICATED_RUNTIME: UNVERIFIED: candidate migration is not applied to production; original delegated planning, persistence, exact receipt, reload, refusal and two-cohort proof have not been executed for this candidate.
+AUTHENTICATED_RUNTIME: UNVERIFIED: actual production factory version3/plan/prompt is verified; one ordinary QA request reached the original Trust approval gate, with no ZION invocation at06:36UTC. Original delegated response/Rail/reload and two-cohort proof remain owed.
 KEYBOARD_FOCUS: NOT_APPLICABLE: unchanged controls and focus lifecycle.
 ZOOM_REFLOW: NOT_APPLICABLE: unchanged layout and dimensions.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
 STATE_COVERAGE: PASS: missing-prompt causal refusal, planning draft, original authority refusal, registry drift, customized/disabled/tenant/later-version rows, exact replay and unchanged other registrations/ACL/RLS.
 TRUTHFUL_STATE_LABELS: PASS: this restores draft-planning callability of the already-enabled factory registration; it does not prove an executed task, saved workflow, enabled schedule, business result or Live conversation. Catalogue coverage/access is not promoted.
 SOLO_UI: NO: tenant-neutral registry-data repair and existing route tests; no frontend change.
-UNVERIFIED: full migrated CI and current-main collision correction; reviewed merge/production migration/readback; real model quality/cost and authorized provider readiness; original delegated outcome/Rail/reload; equivalent customer cohorts; full EXP05 ten outcomes and E5-CV1–9; founder acceptance.
+UNVERIFIED: real model quality/cost and authorized provider readiness; original approved delegated outcome/Rail/reload; equivalent customer cohorts; full EXP05 ten outcomes and E5-CV1–9; founder acceptance. Reviewed exact-head CI, merge and factory migration/readback are verified in the dated supplement.
 OWNER_INTENT: consultants, coaches and fractional professionals first, creative/marketing SOLO firms second: PAIGE and ZION organize actual commitments and prepare explainable work through existing governed systems. Full EXP05 scope remains intact.
 MUST_NOT_HAPPEN: overwrite customized or tenant registrations; enable a disabled agent; add triggers/tools/grants; silently select another provider; fabricate work or authorize a business action from prompt text; replay an uncertain effect.
 MUST_PRESERVE: original specialist identity/remit, actor/tenant/seat and registry-version rechecks, trusted internal-service boundary, Fabric/budget/trace policy, invocation/outcome/Rail, current domain writers, approvals and original recovery.
 ACCEPTANCE_CRITERIA: untouched global version2 factory receives nonempty instructions and job_kind=plan atomically at version3; reapplication and protected variations are exact no-ops; real existing route uses that exact prompt with no tools/provider override and refuses changed current registry/authority.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original paige_subagents identity and row version; existing Harness/authority/Fabric checks and original receipts; no Chat/Spine/C0b/TeamHub/provider source edit.
-INTERNAL_BUILD_IDENTITY: base=79171c8243adbe5b5d56f196fae0758cb1bdd89a; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113800005 not applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-zion-planning-instructions.md
-RELEASE_CHANNEL: development: local protected fixtures only; no production row, provider/key/budget/flag or trigger mutation.
+INTERNAL_BUILD_IDENTITY: reviewed-head=802ca623cf2d0dc881398e2fa1c414bee8afc832; main=2e6872e1a82889edeee330b1b160e8446d67d49a; deployment=dpl_AeLphZpp1hWUojVraB5o5w5XAceo; environment=production; migrations=APPLIED(20271113800005); edge=NOT_APPLICABLE; evidence=original PR2735 receipt6380934945.
+RELEASE_CHANNEL: production: exact original factory planning instructions applied and read back; no provider/key/budget/flag, role, tool or trigger expansion.
 RELEASE_CLASSIFICATION: internal-only: existing specialist planning prerequisite, not complete ZION/Operations customer acceptance.
 CUSTOMER_RELEASE_IDENTITY: NONE: no earned customer version or announcement.
 RELEASE_NOTE_REQUIRED: NO: bounded restoration prerequisite; no customer launch claimed.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: local implementation and bounded synthetic/native tests only; NOT_DEPLOYED, AUTHENTICATED_UNVERIFIED and OWNER_ACCEPTANCE_PENDING.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: reviewed exact-head/native/Preview and production source/factory readback verified; AUTHENTICATED_UNVERIFIED for actual specialist outcome, OWNER_ACCEPTANCE_PENDING for the complete Experience.
 RELEASE_RECOVERY: position=reviewed conditional forward correction preserving original invocation/version and no-repeat recovery; reference=original Harness, exact original-result status2722 and consumer2725.
 
 ## Root cause and exact repair
@@ -182,3 +182,22 @@ Independent Review, required CI and genuine Preview remain mandatory; prior gree
 is dated evidence only. Production remains original soft/enabled v2 with no prompt
 or job_kind at actual05:37:05.573807UTC; source is not application or customer proof.
 No new permission, provider, specialist, recurrence or execution authority.
+
+## October24 released factory instructions (additive; outcome proof owed)
+
+Exact802/LOWER5637065648 passed all13 checks including genuine Preview and both
+web statuses. Recovery UI2725 production readback preceded normal merge2e6872e1;
+actual84+802/treef90f61bca0783386a226286d1c7b75cf91f3f3ca matches inspected union.
+Preflight06:28:05UTC found exactly one original factory row, frontier800000 and
+own800005 unapplied. Normal deploy-migrations40070347073/deploy120802323976
+succeeded, actual db-live2e. Independent06:30:22UTC production read confirms
+800005, original enabled soft ZIONv3/job_kindplan and2793-byte prompt with MD5
+adcfeb8550c0967b023ecf81a74c23ee matching the reviewed literal. Exact READY web
+above and both public2e-mvm0q2ze/null read06:30:36UTC.
+[Original receipt6380934945](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2735#issuecomment-6380934945)
+retains full identities/hashes and the genuine earlier preview/history failures.
+No new Edge executor or role/tool/provider/budget/recurrence/Live authority.
+One ordinary QA request prepared a plan-only assignment from current governed
+records and waits at original owner Trust approval; actual ZION invocation count
+is zero at06:36:33UTC. A prepared approval is not a specialist draft or business
+execution. Original response/Rail/reload/cohorts and full Experience remain owed.

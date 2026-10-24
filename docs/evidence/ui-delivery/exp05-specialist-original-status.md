@@ -1,6 +1,14 @@
 # EXP05 — original specialist status through the native history channel
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
+
+Original536867b7 completed all11 exact-head checks and both web statuses. Before
+merge, main advanced through E07/a984 and our weekly recovery2700/d006. The only
+text conflict was two adjacent EXP05 Brain headings; both complete sections are
+retained. Original status/helper/loader/parser/tests and reviewed source pins
+are unchanged. Incoming E07 product/evidence and exact weekly adapter are
+preserved. This composition requires fresh exact-head CI; prior green does not
+substitute for it. No layout, authority, provider or activation change is added.
 INTERNAL_BUILD_IDENTITY: c2716bb9ddf19489af41dd1db8f3619ce157f45c; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal affected-function deployment after exact-head required gates); evidence=docs/evidence/ui-delivery/exp05-specialist-original-status.md
 RELEASE_CHANNEL: development: reviewed original status transport and shared client loader awaiting required release gates.
 RELEASE_CLASSIFICATION: internal-only: bounded EXP05 original-result recovery integration, no customer launch.

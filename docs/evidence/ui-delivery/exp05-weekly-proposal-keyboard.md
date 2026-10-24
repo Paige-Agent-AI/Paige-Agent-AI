@@ -38,6 +38,15 @@ SOLO_900X1000_PAIGE_OPEN: PASS: assets/exp05-weekly-proposal-keyboard/final-dark
 
 ## Cause, repair and scoped ownership
 
+Current-main composition: original EXP04 accepted-commercial release
+`ba97335e016b9fea741da5005d1e8dedd7baa696` is preserved in composed head
+`3370c603c1fbd205ee3d1dd805c690fcf689f18b`, tree
+`25c525e7493da5f902bd11ff1b76b8ef633e0e7f`. All 350 rendered product Git
+blobs are identical; none of the 59 incoming paths overlaps those inputs.
+[Exact continuity](assets/exp05-weekly-proposal-keyboard/main-continuity.json)
+preserves the original rendered evidence without claiming a fresh render or
+production proof. No EXP04 record, permission, migration or receipt is replaced.
+
 The original Prepare button unmounted without moving focus into the new form.
 Closing the form likewise removed the focused Close proposal button without
 returning to its replacement opener. Ordinary production keyboard inspection

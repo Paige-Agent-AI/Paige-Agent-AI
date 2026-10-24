@@ -1,0 +1,546 @@
+[
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "light",
+    "panel": "closed",
+    "name": "final-light-1536-closed",
+    "entry": {
+      "docWidth": 1536,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 770.4000244140625,
+        "height": 770.4000244140625,
+        "left": 936,
+        "right": 1536,
+        "top": 0,
+        "width": 600,
+        "x": 936,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "light",
+    "panel": "open",
+    "name": "final-light-1536-open",
+    "entry": {
+      "docWidth": 1536,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 770.4000244140625,
+        "height": 770.4000244140625,
+        "left": 936,
+        "right": 1536,
+        "top": 0,
+        "width": 600,
+        "x": 936,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "dark",
+    "panel": "closed",
+    "name": "final-dark-1536-closed",
+    "entry": {
+      "docWidth": 1536,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 770.4000244140625,
+        "height": 770.4000244140625,
+        "left": 936,
+        "right": 1536,
+        "top": 0,
+        "width": 600,
+        "x": 936,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "dark",
+    "panel": "open",
+    "name": "final-dark-1536-open",
+    "entry": {
+      "docWidth": 1536,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 770.4000244140625,
+        "height": 770.4000244140625,
+        "left": 936,
+        "right": 1536,
+        "top": 0,
+        "width": 600,
+        "x": 936,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "light",
+    "panel": "closed",
+    "name": "final-light-1366-closed",
+    "entry": {
+      "docWidth": 1366,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 768,
+        "height": 768,
+        "left": 766.4000244140625,
+        "right": 1366.4000244140625,
+        "top": 0,
+        "width": 600,
+        "x": 766.4000244140625,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "light",
+    "panel": "open",
+    "name": "final-light-1366-open",
+    "entry": {
+      "docWidth": 1366,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 768,
+        "height": 768,
+        "left": 766.4000244140625,
+        "right": 1366.4000244140625,
+        "top": 0,
+        "width": 600,
+        "x": 766.4000244140625,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "dark",
+    "panel": "closed",
+    "name": "final-dark-1366-closed",
+    "entry": {
+      "docWidth": 1366,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 768,
+        "height": 768,
+        "left": 766.4000244140625,
+        "right": 1366.4000244140625,
+        "top": 0,
+        "width": 600,
+        "x": 766.4000244140625,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "dark",
+    "panel": "open",
+    "name": "final-dark-1366-open",
+    "entry": {
+      "docWidth": 1366,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 768,
+        "height": 768,
+        "left": 766.4000244140625,
+        "right": 1366.4000244140625,
+        "top": 0,
+        "width": 600,
+        "x": 766.4000244140625,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "light",
+    "panel": "closed",
+    "name": "final-light-1024-closed",
+    "entry": {
+      "docWidth": 1024,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 768,
+        "height": 768,
+        "left": 424,
+        "right": 1024,
+        "top": 0,
+        "width": 600,
+        "x": 424,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "light",
+    "panel": "open",
+    "name": "final-light-1024-open",
+    "entry": {
+      "docWidth": 1024,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 768,
+        "height": 768,
+        "left": 424,
+        "right": 1024,
+        "top": 0,
+        "width": 600,
+        "x": 424,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "dark",
+    "panel": "closed",
+    "name": "final-dark-1024-closed",
+    "entry": {
+      "docWidth": 1024,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 768,
+        "height": 768,
+        "left": 424,
+        "right": 1024,
+        "top": 0,
+        "width": 600,
+        "x": 424,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "dark",
+    "panel": "open",
+    "name": "final-dark-1024-open",
+    "entry": {
+      "docWidth": 1024,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 768,
+        "height": 768,
+        "left": 424,
+        "right": 1024,
+        "top": 0,
+        "width": 600,
+        "x": 424,
+        "y": 0
+      },
+      "panelScroll": 584,
+      "panelWidth": 584,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "light",
+    "panel": "closed",
+    "name": "final-light-900-closed",
+    "entry": {
+      "docWidth": 900,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 1000,
+        "height": 1000,
+        "left": 300,
+        "right": 900,
+        "top": 0,
+        "width": 600,
+        "x": 300,
+        "y": 0
+      },
+      "panelScroll": 599,
+      "panelWidth": 599,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "light",
+    "panel": "open",
+    "name": "final-light-900-open",
+    "entry": {
+      "docWidth": 900,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 1000,
+        "height": 1000,
+        "left": 300,
+        "right": 900,
+        "top": 0,
+        "width": 600,
+        "x": 300,
+        "y": 0
+      },
+      "panelScroll": 599,
+      "panelWidth": 599,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "dark",
+    "panel": "closed",
+    "name": "final-dark-900-closed",
+    "entry": {
+      "docWidth": 900,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 1000,
+        "height": 1000,
+        "left": 300,
+        "right": 900,
+        "top": 0,
+        "width": 600,
+        "x": 300,
+        "y": 0
+      },
+      "panelScroll": 599,
+      "panelWidth": 599,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "dark",
+    "panel": "open",
+    "name": "final-dark-900-open",
+    "entry": {
+      "docWidth": 900,
+      "error": "",
+      "labels": [
+        "Responsibility"
+      ],
+      "panel": {
+        "bottom": 1000,
+        "height": 1000,
+        "left": 300,
+        "right": 900,
+        "top": 0,
+        "width": 600,
+        "x": 300,
+        "y": 0
+      },
+      "panelScroll": 599,
+      "panelWidth": 599,
+      "reduced": true,
+      "rootAnimation": "1e-05s",
+      "tag": "INPUT"
+    },
+    "exit": {
+      "active": "Prepare a weekly responsibility",
+      "form": false,
+      "tag": "BUTTON"
+    }
+  }
+]

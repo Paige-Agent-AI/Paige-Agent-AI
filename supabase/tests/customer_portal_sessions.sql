@@ -161,16 +161,14 @@ SELECT is(pg_temp.ids(pg_temp.as_user('e0961000-0000-4000-8000-000000000004',$q$
 
 -- 5. Business argument and multiple relationships.
 SELECT ok(pg_temp.jordan($q$SELECT public.client_portal_sessions(p_tenant_id=>'e0962000-0000-4000-8000-000000000002')$q$) IS NULL,'a foreign business argument returns NULL, never that business''s rows');
--- A second relationship for one account is the future multi-business shape; today the global
--- one-link index forbids it, so (as client_portal_self_projection.sql does) lift it for this block only.
-DROP INDEX public.clients_linked_user_id_unique;
+-- The current per-business schema supports two original relationships.
+-- Ambiguous unscoped scheduling still refuses; no index is disabled.
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0963000-0000-4000-8000-000000000005','e0962000-0000-4000-8000-000000000002','e0961000-0000-4000-8000-000000000006','e0961000-0000-4000-8000-000000000002','Two','Businesses','active');
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000006',$q$SELECT public.client_portal_sessions()$q$),
  '{"sqlstate":"42501","error":"select an authorized customer relationship"}'::jsonb,'two relationships raise 42501 with the exact message');
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000006',$q$SELECT public.client_portal_session_change_admit('e0965000-0000-4000-8000-000000000001','cancel','e0966000-0000-4000-8000-000000000004')$q$)->>'sqlstate','42501','two relationships raise 42501 on admission too');
 DELETE FROM public.clients WHERE id='e0963000-0000-4000-8000-000000000005';
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
 
 -- 6. Kinds.
 SELECT ok((SELECT pg_temp.s(r,'e0965000-0000-4000-8000-000000000010') IS NULL FROM up),'a class session marker row is excluded');

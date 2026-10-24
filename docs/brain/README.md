@@ -1,3 +1,32 @@
+## EXP05 weekly original approval and recovery — October24 source released
+
+Native #2758 exactadf6/LOWER6386231227+6386546848/all13+twoSUCCESS merged actual
+ebbd603cd981ea50aba9ed5b34c7fad2cb7491bb/tree41081036589734f1df0008e60a9523b61ad847fe.
+Normal40110935353/deploy120922420221 persisted840003 once/db-liveebbd; retired
+NEVER-PRODUCTION860005 is absent. Actual15 native bodies/ABI/security/effective
+grants plus four reused original helpers match fresh Preview19/19. Original
+UI facades, canonical definition writer, Trust/runtime and stable Rail remain.
+Exact GFAi production web and both publicebbd-mvmlsk52/null were read back.
+
+Original recovery #2762 exactadfeb/LOWER6386232702+6386573621/all11+twoSUCCESS
+merged77b88428e0d5c79c57f699bd8fec32e5f6064642/tree1d0f4b1c883308c76989969745dd5ff8d9a6ffc9;
+six reviewed blobs unchanged. Actual ES2020 correction retains the prior failure;
+264 local/nine suites and124 existing dependency pins remain source proof.
+Exact5XRe READY and both public77b-mvmlvuip/null observed16:23:55–56UTC. Normal
+Edge40111131429 succeeded with zero affected/retired entries and no deployment.
+The original browser parser/transport is preserved; the new bound native recovery
+reader and model projection remain unadmitted. No new SQL belongs to this reader.
+
+See the sole [Master4.0 shipped rows](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log),
+[actual production readback](../evidence/exp05-weekly-chat-source-production-readback.json),
+[native receipt6386588301](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2758#issuecomment-6386588301)
+and [reader receipt6386642987](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2762#issuecomment-6386642987).
+These are prerequisites, not actual new Chat/Live, recurring, ZION or customer
+execution. No uncertain replay, expired approval renewal, provider/role activation,
+catalogue/algorithm promotion or announcement. All ten outcomes/E5-CV1–9 and
+ordinary approval→original record/Rail→reload/universal SOLO/founder acceptance
+remain owed. This mechanical identity closeout adds no product or recursive row.
+
 ## EXP02 original report source requests — October24 source released
 
 Original #2734 exact408923cc/author-related LOWER5638380473 passed all13 required
@@ -203,9 +232,15 @@ Team index. Read these before any Team or Team Hub work:
 - 11 `team.*` Spine capabilities.
 - Presence RPCs.
 
-**Not built:** a Team Hub main-menu item, channels, DMs, threads, mentions, a team `/PAIGE`
-palette, and the messaging tables behind them. Searching the migrations for `team_message`,
-`team_channel`, `channel_members`, `direct_message` and `message_mentions` returned zero hits.
+**Increment 1 (PR #2764, 2026-10-24, `PROOF_OWED`):** the TEAM HUB main-menu item below
+Operations (`/solo/{n}/team-hub`), channels, private channels, DMs, threads, @people mentions,
+search and read markers, on the `team_hub_*` tables and functions (migration `20271113850008`).
+Contract: [Team Hub collaboration contract](../delivery/exp08-team-hub-collaboration-contract.md).
+Evidence: [increment 1 record](../evidence/ui-delivery/exp08-team-hub-increment1.md). Owed: the
+§32 persisted-apply check and an authenticated drive on the owner-designated SOLO account.
+
+**Not built:** a team `/PAIGE` palette, specialist requests through EXP05 Work, the Team work
+panel, attachments, Knowledge and Chat/Live continuity (increments 2–4).
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

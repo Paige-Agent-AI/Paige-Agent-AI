@@ -6,6 +6,7 @@
   - **Design and behavior: APPROVED.** Interactive prototype v2 is approved for production and frozen under §28.
   - **Collaboration storage: APPROVED.** Team channels, members, messages, threads, mentions and read markers may be added as reviewed, additive migrations with tenant and channel-membership enforcement. Isolation must be proven before release.
   - These are approvals to build, not runtime proof. Neither authorizes ownership transfer, an external send or a provider connection. Source: [Team surface card](../doctrine/surface-cards/team.md).
+- **EXP08 Team Hub increment 1 built (PR #2764, 2026-10-24).** Channels, private channels, DMs, threads, @people mentions and read markers on additive `team_hub_*` storage (migration `20271113850008`), SOLO-only, with seat-scoped isolation proven in a disposable-database proof wired into CI. `PROOF_OWED` until persisted-apply and an authenticated drive. Specialists, `/PAIGE`, the work panel and attachments are later increments.
 
 ## October20 — current-main composition preparation; NOT RELEASED
 

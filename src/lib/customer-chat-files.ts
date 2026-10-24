@@ -1,4 +1,5 @@
 import {
+  CLIENT_DOCUMENT_LIMIT,
   clientDocumentMime,
   readClientDocument,
   type ClientDocument,
@@ -89,6 +90,9 @@ export function selectCustomerChatFiles(
     catch {
       issues.push({ filename: file.name, message: "Choose a PDF, JPG, PNG or DOCX file up to 20 MB." });
       continue;
+    }
+    if(files.reduce((sum,selected)=>sum+selected.file.size,0)+file.size>CLIENT_DOCUMENT_LIMIT){
+      issues.push({filename:file.name,message:"Keep the files for one message within 20 MB in total."});continue;
     }
     const id = makeId();
     if (!uuid(id) || files.some(f => f.id === id)) throw new Error("Private file selection changed");

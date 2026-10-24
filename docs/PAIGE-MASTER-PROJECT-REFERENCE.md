@@ -826,6 +826,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-24 UTC — EXP05 original weekly Chat native scope and recovery prerequisites; source released.**
+
+| Increment | Exact release and production proof | Completion boundary |
+| --- | --- | --- |
+| [#2758](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2758), preserve exact original weekly approval and native thread scope | Reviewed `adf6dd5c4bc7f01b28e46a4f3ab8df60caac274a`, AUTHOR-REVIEW / LOWER ASSURANCE6386231227/6386546848; all13 exact checks/genuine Preview and two web statuses SUCCESS. Main `ebbd603cd981ea50aba9ed5b34c7fad2cb7491bb`, parents1b4a4a73+adf6/tree41081036589734f1df0008e60a9523b61ad847fe equals inspected union; all five owning blobs unchanged. Normal migration40110935353/lint120922314773/deploy120922420221 SUCCESS; db-liveebbd. Production840003 recorded once, retired NEVER-PRODUCTION860005 absent; all15 bodies/full ABI/security/effective grants and four reused canonical references match fresh managed Preview19/19. SQL SHA256228ecd4611f8d08f6fad6f14b101bab22ec938055094117a258005e257d62a94. Exact webGFAi READY, both public HTTP200/ebbd-mvmlsk52/null16:20:38UTC. [Original receipt6386588301](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2758#issuecomment-6386588301), [actual readback](evidence/exp05-weekly-chat-source-production-readback.json). | Native source/permission prerequisite, preserving original UI facades and canonical writer/Rail. No Chat admission, new customer action, provider/role/recurrence/Live activation, expired-approval replay, catalogue or algorithm promotion. Actual approved definition/Rail/returning-session, ZION, weekly execution and complete EXP05 acceptance remain PROOF OWED. Existing native-order receiving acknowledgments retained; no applied history rewrite or customer announcement. |
+| [#2762](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2762), recover the same original weekly draft with minimized model context | Reviewed `adfebf0047762508b9d18c59dae1b5f01a4fad8f`, LOWER6386232702/6386573621; all11 exact checks/two statuses SUCCESS, original54d typecheck failure retained/repaired to actual ES2020. Main `77b88428e0d5c79c57f699bd8fec32e5f6064642`, parentsebbd+adfeb/tree1d0f4b1c883308c76989969745dd5ff8d9a6ffc9 equals inspected union; all six reviewed blobs unchanged. Exact production web5XRe READY, both public77b-mvmlvuip/null16:23:55–56UTC. Normal Edge40111131429/job120922900694 SUCCESS with affected/retired0 and deployment/readback/tag steps legitimately SKIPPED; no new Edge version or SQL. [Receipt6386642987](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2762#issuecomment-6386642987), [source/recovery evidence](evidence/ui-delivery/exp05-weekly-draft-chat-readback.md). | Original browser parser/transport preserved with explicit bound-thread validation; new one-read native recovery consumer remains unadmitted.264 local assertions/nine suites and124 unchanged live Chat dependency pins are bounded source proof, not ordinary mutation or customer acceptance. No DOM/style change or visual quality promotion. Actual approval→record→original Rail→reload, equivalent existing/new SOLO cohorts, separate Live, all ten outcomes/E5-CV1–9 and one complete founder evaluation remain owed. |
+
 **2026-10-24 UTC — EXP05 original approval-expiry repair; production source verified.**
 
 | Increment | Exact release and production proof | Completion boundary |
@@ -7316,13 +7323,19 @@ A Team Hub request references one original EXP05 Work record, and its status is 
 record.
 
 Current gaps:
-- No team channel, message, membership or mention substrate exists.
-- `/solo/{n}/team` already redirects to Settings → Team.
+- Increment 1 (PR #2764, 2026-10-24) adds the collaboration substrate: channels, private
+  channels, DMs, threads, @people mentions and read markers (migration `20271113850008`), and the
+  TEAM HUB destination at `/solo/{n}/team-hub`. It is `PROOF_OWED` until the §32 persisted-apply
+  check and an authenticated drive on the owner-designated existing SOLO account. Contract:
+  [Team Hub collaboration contract](delivery/exp08-team-hub-collaboration-contract.md).
+- Still not built: specialist and `/PAIGE` requests through EXP05 Work, the Team work panel,
+  attachments, Knowledge and Chat/Live continuity (increments 2–4).
+- `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 
 On 2026-10-24 the owner approved the design (prototype v2, frozen under §28) and the
 collaboration storage, as additive migrations with isolation proven before release. These are
-approvals to build; production Team Hub is not built yet. Current source: [Team surface card](doctrine/surface-cards/team.md). Staffing is not a
+approvals to build; increment 1 is the first build against them. Current source: [Team surface card](doctrine/surface-cards/team.md). Staffing is not a
 release, so §4.0 is unchanged.
 
 **E09 CURA identity — tracked follow-ups (2026-10-19; CURA merged #2378 and live; recorded, not fixed there).** (a) **Action-item kind mapping.** `advance_action` (`20271110220000`) builds the portal action item with `action_type` = the action kind (`client.portal_recommendation`, `client.portal_welcome`, `owner.onboarding_nudge`, `owner.schedule_meeting`), but `paige_customer_actions_action_type_check` allows only `task`, `message`, `recommendation`, `nudge`. Every action item the owner's PAIGE chat files through `action_file` / `action_advance` therefore ends `blocked` with `client_surface_failed: … action_type_check` (proved in a rolled-back transaction on the round-4 pgTAP fixtures with the synthetic customer Jordan Rivera). Consequence today: the customer's data-sharing switch (CURA-D1) has no practical effect, because neither route that it gates delivers anything (the staff `ContactPaigePanel` is unmounted). (b) **PAIGE in AI-drafted action-item text.** The chat's model-written title and draft reach `paige_customer_actions` unfiltered, so nothing stops one that names PAIGE; the owner ruled PAIGE is never in the Customer Portal. **(b) must be fixed before (a)**, or fixing the mapping starts delivering PAIGE-named items to customers. Neither is changed on this branch.

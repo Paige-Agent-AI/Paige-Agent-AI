@@ -13,7 +13,7 @@ export async function provePreparedSealSource({sql,read,context,tenant,actor,cli
  const originalBody=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${identity}'::regprocedure;`);
  check(originalBody==='3a2fa340fca9838aa9c6737f1e41ae61','Original actual signature13 positive source control');
  const existing=fresh();check(existing.id&&existing.version===1,'Original authenticated draft writer remains usable');
- const migration=read('supabase/migrations/20271113850004_e04_prepared_seal_source.sql');
+ const migration=read('supabase/migrations/20271113850009_e04_prepared_seal_source.sql');
  if(!process.argv.includes('--prepared-seal-source-baseline')){sql(migration);sql(migration);}
  const readSource=id=>json(`SET ROLE service_role;SELECT public._read_prepared_agreement_seal('${id}');`);
  check(readSource(existing.id).state==='legacy','Only an actual native no-preparation read permits legacy rendering');

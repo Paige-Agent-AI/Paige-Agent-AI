@@ -28,12 +28,13 @@ describe("tenant Command Center shell routing", () => {
     expect(TENANT_SHELL_DESTINATIONS.some(({ label }) => label === "Fleet")).toBe(false);
   });
 
-  it("puts Operations below Command Center and preserves Finance below Sales", () => {
+  it("puts Operations below Command Center, Team Hub directly below Operations, and preserves Finance below Sales", () => {
     const destinations = tenantShellDestinationsForPath("/solo/42/command-center", "standalone");
 
     expect(destinations.map(({ label }) => label)).toEqual([
       "Command Center",
       "Operations",
+      "Team Hub",
       "Clients",
       "Marketing",
       "Ads",
@@ -45,6 +46,7 @@ describe("tenant Command Center shell routing", () => {
     expect(destinations.map(({ id, href }) => [id, href])).toEqual([
       ["command", "/solo/42/command-center"],
       ["operations", "/solo/42/operations/overview"],
+      ["teamhub", "/solo/42/team-hub"],
       ["clients", "/solo/42/clients"],
       ["campaigns", "/solo/42/growth"],
       ["ads", "/solo/42/ads"],
@@ -272,6 +274,21 @@ describe("tenant Command Center shell routing", () => {
       tenantShellDestinationsForPath("/business/9082725/setup", "sub_account")
         .find(({ id }) => id === "settings")?.href,
     ).toBe("/business/9082725/setup");
+  });
+
+  it("opens Team Hub at its own address while /team stays with Settings → Team", () => {
+    expect(resolveTenantShellDestination("/solo/42/team-hub", "standalone")).toMatchObject({
+      id: "teamhub",
+      label: "Team Hub",
+      href: "/solo/42/team-hub",
+    });
+    expect(resolveTenantShellDestination("/solo/42/team", "standalone").id).toBe("settings");
+    expect(resolveTenantShellDestination("/solo/42/settings/team", "standalone").id).toBe("settings");
+    // Team Hub is a Solo destination only: Agency and Sub-account shells are held.
+    expect(TENANT_SHELL_DESTINATIONS.some(({ id }) => id === "teamhub")).toBe(false);
+    expect(tenantShellDestinationsForPath("/business/42/command-center", "sub_account").some(({ id }) => id === "teamhub")).toBe(false);
+    expect(tenantShellDestinationsForPath("/agency/42/command-center", "agency").some(({ id }) => id === "teamhub")).toBe(false);
+    expect(tenantShellDestinationsForPath("/solo/42/command-center").some(({ id }) => id === "teamhub")).toBe(false);
   });
 
   it.each([

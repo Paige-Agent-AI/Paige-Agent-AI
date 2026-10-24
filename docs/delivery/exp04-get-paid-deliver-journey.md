@@ -1,3 +1,22 @@
+
+### C25 current-frontier continuation — October24, source not released
+
+Original2745 preserves reviewed14df/6fa runtime and native SQL. Actual released mainfb710 includes the E09 private-file/root/C0b source, E05 weekly claim and Team Hub/native850008; all136 incoming paths are retained. Actual production READ finds original850004=0 and owner860004=0, frontier850008. The never-production-applied source is safely renamed850009, after actual850008 and before owner860004. No include-all, applied history rewrite, parent reset, sender or business effect. Native SQL blob a33dc8ace5062e101af7fe8e803a4c507d3c2c6a is byte-identical; only its original proof loader filename changes. The whole incoming CI is retained with one named strict seal test; inverse is exact. Original verified-empty nonpersistent2745 Preview is renewed normally through the same PR, never direct reset/delete. Fresh exact-head review/CI/cold Preview/native and selected importer/web readback remain required. Old source/CI/Preview counts and all original proof files remain dated evidence. Full12, prepared HIGH send/atomic field producer, ordinary roles/reload/CentralQA and founder acceptance remain unfinished. Source scope ANT161/1d15f1b6.
+
+## C25 current native and actual-handler proof — October24
+
+Actual main1b4a4a73 helper release and all incoming E02 documentation are preserved. Original C25 runtime/native bytes match tested0b078b6a8; fresh44 strict cases/45 actual-handler steps PASS28s with all runtime external/env/read/write/run/FFI/sys denied. Same original fenced local native proof PASS51 C25 checks/three replays/forward-contract refusal/observed two-session wait plus all original preparation/signature controls; task cluster verified empty and stopped. Initial sandbox socket denial executed no tests and is retained. Original86/62 support remains dated, not inflated into this fresh run. New exact-head review/CI/managed Preview/native850004/importer production readback and actual prepared-send/atomic-field producer/ordinary roles/results/receipt/reload/CentralQA/full12/founder acceptance remain owed. No activation.
+
+## C25 current original helper composition — October24
+
+Composes original helper b3c2 and actual5ff main, keeping the entire incoming journal, shared Chat/C0b/CI/native/Work/UI/Master/Brain and original reviewed prepared-seal source. Original850004 SQL and private reader bytes are unchanged. Dated4d3 exact14 checks/cold Preview/native/strict proof remain history; new final-head review/CI/source-consumer proof and ordered normal release/readback remain required. Prepared HIGH sending, actual assigned-field producer, ordinary-role signing/consent/seal/reload and full12/CentralQA/founder acceptance remain incomplete.
+
+## C25 original seal consumer — current source parent
+
+Same original2745 consumes current2741/6dff,2714/79d,2705/c303 and actual main666/source-native820004 release6384139888. All nine original owning source/test/native/proof files remain exact1e5; original13 signature body and selected-preparation token/effect holds are not changed. Whole current Chat/C0b/UI/source and original CI plus only owning strict test are retained, no new literal renewal. Native850004 remains reserved after ordered830004/existingE02proposed840002 and before existingE05860005. This reads actual original signature/consent/field-event facts for original PDF sealer; it creates none. Atomic assigned-field producer, approved canonical sender/request and actual recipient/native/provider flow remain MISSING. Original86 strict/62handler steps/51native/replay proof is dated support until renewed; current source tests/final review/CI/cold Preview/native+selected importer readback and all12 acceptance remain owed. No provider or Chat/Live activation.
+
+Earlier dated source checkpoints follow unchanged.
+
 ## C24 actual released-parent continuation — October24
 
 Current helper composes actual5ff source-record release plus original e1 owner UI/f6 action/6c Work and E02840002 source. Same original source/test helper and owning evidence record; source-input only, no runtime sender/approval/native/field-fact producer. Both genuine stale-base and missing-own-record CI failures are retained; no assertion/trailer/evidence gate waiver. New current-head review/CI required, no earlier green borrowed. Original full12 and ordinary-role/provider/receipt/reload/CentralQA/founder acceptance remain unfinished.
@@ -4042,6 +4061,101 @@ final prepared seal remains unfinished. Activation, ordinary owner/staff/linked
 client/cohorts/revoke/reload/provider/CentralQA and Founder Acceptance UNVERIFIED.
 ALG01 bounded source reconciliation PARTIAL,02 progression incomplete,12 bounded
 refusal/recovery PARTIAL and13 usefulness UNVERIFIED; no catalogue Live promotion.
+
+## C25 original prepared-field seal consumer — October24
+
+Owner outcome: retain the exact reviewed PDF with the actual recipient's assigned
+answers, signatures, initials, dates and checkboxes in their original positions.
+The shipped2655 renderer is reused unchanged by ORIGINAL sealAndComplete. It must
+not silently produce the legacy appended-signature layout for a selected prepared
+document. This increment is LOCAL SOURCE ONLY, not a complete signing capability.
+
+The private service-only _read_prepared_agreement_seal(uuid) reads the original
+agreement/preparation/signers/events. The original event check gains only
+field_values_recorded: a supplemental append-only answer fact correlated to the
+REAL original consented_event_id and signed_event_id, exact source and native
+timestamp. No table, column, ledger, sender, scheduler, approval or signing engine
+is added. The future atomic original prepared-signature wrapper must write that
+fact in the SAME transaction; this read cannot invent or retrofit it. Original13
+body/ABI/ACL and selected-preparation token/effect holds remain unchanged.
+
+Only a successful explicit native no-preparation result permits the legacy path.
+Unknown selection, missing facts, foreign receipts, malformed/checksum-inconsistent
+answers or changed source prevent upload. Completed retries retain their original
+read-only stored-copy verification. The investigation also reproduced five
+source-read failures that reached upload: outstanding-count, signer, audit,
+business and empty-signer reads. Those now refuse before upload, including a
+plausible data object accompanied by an error.
+
+Proof: the incumbent prepared renderer1PASS plus17 genuine integration/refusal
+REDs preceded the consumer. Five additional missing-source REDs preceded their
+repair. Final strict Deno86 cases/62 steps PASS, including the actual intercepted
+original signing handler preserving an acknowledged signature while completion
+evidence is unavailable; no completion or private path is fabricated. Two initial
+readonly hostile-fixture assignments failed typecheck before execution; corrected
+by replacing copied objects, with no skipped checks or weakened assertions.
+
+Native baseline reached the exact absent private function after original controls.
+The first repaired run exposed an over-wide synthetic signer input to the closed
+existing constructor; narrowed to its actual six-field source without changing
+the validator. Final original fenced native proof PASS: C25-specific51 checks,
+three migration replays, one forward-owner contract refusal, two sessions and one
+observed parent-lock wait. A concurrent committed void returns unavailable.
+Actual microsecond equality is tested within one JavaScript millisecond, foreign
+ACTUAL signature/consent records are refused, ordinary roles cannot execute the
+reader and service still cannot select the private preparation table. Original
+native preparation, commercial, accepted-record and signature suites also pass.
+Native metadata fixtures are not actual prepared sends or customer signatures.
+
+Evidence: existing assets/e04-prepared-field-sealing/source-consumer-proof.json
+records the actual local logs, source digests and unchanged original boundaries.
+Seventeen retained source/binary inputs are byte-exact to parent5edfd; the existing
+render-inspection.json is LF-equivalent with Windows checkout CRLF, not a raw-byte
+claim. Original renderer, six native rendered pages and PDF files are untouched;
+no fresh C25 visual or authenticated proof is claimed. CI adds only this strict
+test path and the native source-proof flag; all original flags/controls remain.
+Scoped canonical ESLint on the new module/tests and owning proof files passes.
+A broad legacy seal.ts lint probe retains its two pre-existing explicit-any
+diagnostics; no lint rule, ignore, baseline, timeout or assertion was weakened.
+
+Orchestration contract:
+1. Event: original all-signatures-recorded completion request.
+2. Entry: existing token-authorized signing handler and existing recovery UI.
+3. Records: original agreement/preparation/signers/events/private retained PDF;
+   original agreement.send Spine registration remains, prepared send UNAVAILABLE.
+4. Execution: original native13 plus deterministic internal seal/readback/CAS;
+   ordinary reads and PDF rendering do not need a new LayerC event executor.
+5. Authority: original handler resolves recipient/tenant/agreement from the actual
+   credential; new read is private service-only with no ordinary-role/table grant.
+6. Risk: no approval is inferred. Canonical HIGH prepared sender/message/source
+   binding is still required; selected token/effect holds remain intact.
+7. Durable result: existing retained object, original completion and receipts;
+   no separate execution or answer store.
+8. Readback: original actual consent/signature references and canonical inputs,
+   original PDF inspector/field constructor and unchanged Storage download/hash.
+9. Recovery: missing, interrupted, malformed, changed or uncertain evidence
+   withholds completion; concurrent void and existing winner-copy handling tested.
+10. Result: actual acknowledged signature stays recorded; completed remains false
+    until the original exact retained copy and completion are genuinely verified.
+
+Never-applied850004 is reserved after existing E02 proposed840002. Preserve the
+earlier E05lower800005 → E04reader810004 → E09proposed810009 receiving ACK →
+E04exact820004/catalogue830004 order. Source leases ANT1612a51cdf5/dac25f3c and
+original ANT163 contract supplement1efdaca9; Portal UI and permissions stay with
+EXP09. No new or retired agent was assigned.
+
+Functional: built/locally verified, exact final review/CI/merge/deployment owed.
+Visual: NOT_APPLICABLE to this backend-only increment; existing C14 assets retained.
+Experiential: full prepared approval/send, atomic answer capture, signing and
+accepted completion/download still unfinished. Activation, authentic ordinary
+owner/staff/linked-client/revocation/reload/CentralQA and Founder Acceptance remain
+UNVERIFIED. ALG01/12 bounded reconciliation/refusal PARTIAL;02 progression still
+incomplete;13 recommendation usefulness UNVERIFIED. No catalogue Live promotion.
+All original O1–O12 commercial/payment/Collections/onboarding/delivery/self-service
+and standing outcomes remain required for one integrated founder evaluation.
+
+
+Current-parent renewal: actual86 strict Deno cases/62 actual-handler steps PASS24s, all runtime external/env/read/write/run/FFI/sys denied. The existing ignored LOCAL lock (not a tracked product lock) selected SDK2.117.3 for the unchanged unversioned source URL; private expanded lock preserves all original entries/root hash614f9e55 plus11 transitive integrity records. No tracked source/lock/test/CI/permission change. Initial cache failures and private tracked-lock assumption retained as INVALID_SETUP;85/17 did not establish handler success. Native51/replay and old deployment/CI remain dated support. Atomic assigned-field producer/approved canonical send remains MISSING, all native holds retained. Fresh exact review/CI/new normal cold Preview/native850004 and selected importer proof remain required.
 
 
 ### C34 — Sales metric initialization continuity — October24

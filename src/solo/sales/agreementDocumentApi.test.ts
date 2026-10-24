@@ -93,6 +93,7 @@ async function signingReview(value=retained()){
   return projectPreparedSignatureReview({tenant_id:value.source.tenant_id,agreement_id:value.source.agreement_id,preparation_id:value.preparation.id,
     preparation_sha256:value.preparation.preparation_sha256,expected_source:{client_id:value.source.client_id,version:value.source.version,updated_at:value.source.updated_at}},value);
 }
+type MutableReviewWire<T>={-readonly [Key in keyof T]:T[Key] extends object?MutableReviewWire<T[Key]>:T[Key]};
 describe('saved signature review on the original owner document SDK',()=>{
   it('reads the exact retained tuple with the actual actor token and preserves honest unready field work',async()=>{
     const value=retained(),review=await signingReview(value);invoke.mockResolvedValue({data:{ok:true,review},error:null});
@@ -104,7 +105,7 @@ describe('saved signature review on the original owner document SDK',()=>{
     expect(args).toMatchObject({method:'GET',headers:{Authorization:'Bearer controlled-auth-token'}});expect(args.body).toBeUndefined();expect(rpc).not.toHaveBeenCalled();
   });
   it.each(['digest','document','signer','source','approved','sending','unknown_field','missing_issue'] as const)('refuses changed or expanded %s review evidence',async variant=>{
-    const value=retained(),review=structuredClone(await signingReview(value));
+    const value=retained(),review=structuredClone(await signingReview(value)) as MutableReviewWire<Awaited<ReturnType<typeof signingReview>>>;
     if(variant==='digest')review.review_sha256='0'.repeat(64);if(variant==='document')review.document.sha256='0'.repeat(64);
     if(variant==='signer')review.signers[0].email='other@example.test';if(variant==='source')review.request.expected_source.version++;
     if(variant==='approved')Object.assign(review,{approval:'approved'});if(variant==='sending')Object.assign(review,{sending:'sent'});

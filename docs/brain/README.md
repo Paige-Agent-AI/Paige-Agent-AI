@@ -58,6 +58,16 @@ settled original-focus return. Original receipt6380668920 and sole Master4.0 row
 retain the exact review/CI/source identities. Populated weekly execution/Rail,
 cohorts/Live and complete Operations/founder acceptance remain unfinished.
 
+October24 original weekly proposal keyboard correction is locally verified:
+ordinary no-write owner inspection reproduced lost entry/cancel focus. Three
+causal failures are corrected; original63 Composer/Panel/Entry cases pass.
+Explicit cancellation returns its own enabled opener and owner/session loss cannot
+focus a disabled control. The same weekly Sheet root now respects reduced motion;
+default motion/layout/authority remain unchanged. [Source and native proof](../evidence/ui-delivery/exp05-weekly-proposal-keyboard.md)
+retain final responsive frames, synthetic/no-effect boundaries and remaining
+review/CI/web/authenticated obligations. No weekly save/activation, catalogue or
+algorithm maturity, full Experience or founder acceptance is inferred.
+
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
 The bounded original#2401 successor preserves a known pre-processing refusal on

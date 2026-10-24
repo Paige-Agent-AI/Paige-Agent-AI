@@ -45,9 +45,9 @@ GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 CREATE SCHEMA IF NOT EXISTS auth;
 GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
 CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
-$$ SELECT nullif(current_setting('test.uid', true), '')::uuid $$;
+$sql$ SELECT nullif(current_setting('test.uid', true), '')::uuid $$;
 CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS
-$$ SELECT nullif(current_setting('test.role', true), '') $$;
+$sql$ SELECT nullif(current_setting('test.role', true), '') $$;
 CREATE TABLE IF NOT EXISTS auth.users (id uuid PRIMARY KEY);
 
 -- ── Production column shapes (as migration_d carries them) ───────────────────────────────────────
@@ -87,34 +87,34 @@ CREATE TABLE IF NOT EXISTS public.studio_sessions (
 
 -- ── Platform helpers: production bodies (as migration_d_studio_authority.sql carries them) ────────
 CREATE OR REPLACE FUNCTION public.is_super_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS
-$$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'super_admin'::public.app_role); $$;
+$sql$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'super_admin'::public.app_role); $$;
 CREATE OR REPLACE FUNCTION public.is_super_admin(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS
-$$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = 'super_admin'::public.app_role); $$;
+$sql$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = 'super_admin'::public.app_role); $$;
 CREATE OR REPLACE FUNCTION public.is_platform_admin(_actor uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS
-$$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _actor AND (role::text = 'platform_admin' OR role::text = 'super_admin')); $$;
+$sql$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _actor AND (role::text = 'platform_admin' OR role::text = 'super_admin')); $$;
 CREATE OR REPLACE FUNCTION public.is_platform_operator() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS
-$$ SELECT public.is_super_admin() OR public.is_platform_admin(auth.uid()); $$;
+$sql$ SELECT public.is_super_admin() OR public.is_platform_admin(auth.uid()); $$;
 CREATE OR REPLACE FUNCTION public.is_company_workspace(_tenant uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS
-$$ SELECT EXISTS (SELECT 1 FROM public.tenants t WHERE t.id = _tenant AND t.parent_tenant_id IS NULL
+$sql$ SELECT EXISTS (SELECT 1 FROM public.tenants t WHERE t.id = _tenant AND t.parent_tenant_id IS NULL
      AND t.account_type = 'standalone' AND COALESCE(t.features -> 'system_workspace' = 'true'::jsonb, false)); $$;
 CREATE OR REPLACE FUNCTION public.has_any_role(_user_id uuid, _roles text[]) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS
-$$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role::text = ANY (_roles)); $$;
+$sql$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role::text = ANY (_roles)); $$;
 CREATE OR REPLACE FUNCTION public.is_tenant_member(_tenant uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS
-$$ SELECT EXISTS (SELECT 1 FROM public.tenant_members WHERE tenant_id = _tenant AND user_id = auth.uid() AND status = 'active')
+$sql$ SELECT EXISTS (SELECT 1 FROM public.tenant_members WHERE tenant_id = _tenant AND user_id = auth.uid() AND status = 'active')
    OR (public.is_company_workspace(_tenant) AND public.is_platform_operator()); $$;
 CREATE OR REPLACE FUNCTION public.is_tenant_admin(_tenant uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS
-$$ SELECT EXISTS (SELECT 1 FROM public.tenant_members WHERE tenant_id = _tenant AND user_id = auth.uid()
+$sql$ SELECT EXISTS (SELECT 1 FROM public.tenant_members WHERE tenant_id = _tenant AND user_id = auth.uid()
        AND status = 'active' AND role IN ('owner','admin'))
    OR (public.is_company_workspace(_tenant) AND public.is_platform_operator()); $$;
 CREATE OR REPLACE FUNCTION public.agency_team_role(_agency uuid, _actor uuid) RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS
-$$ SELECT CASE
+$sql$ SELECT CASE
     WHEN EXISTS (SELECT 1 FROM public.tenant_members m WHERE m.tenant_id = _agency AND m.user_id = _actor AND m.status = 'active' AND m.role = 'owner')
       THEN 'agency_owner'
     ELSE (SELECT atm.agency_role FROM public.agency_team_members atm
             WHERE atm.agency_tenant_id = _agency AND atm.user_id = _actor AND atm.status = 'active' LIMIT 1)
   END $$;
 CREATE OR REPLACE FUNCTION public.agency_can_manage_child(_child uuid, _actor uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS
-$$ SELECT
+$sql$ SELECT
     EXISTS (SELECT 1 FROM public.tenants child
       JOIN public.tenants parent    ON parent.id = child.parent_tenant_id
       JOIN public.tenant_members pm ON pm.tenant_id = parent.id AND pm.user_id = _actor
@@ -124,7 +124,7 @@ $$ SELECT
       JOIN public.tenants child ON child.id = atm.scoped_subaccounts[1]
       WHERE atm.agency_tenant_id = _child AND atm.user_id = _actor AND atm.status = 'active') $$;
 CREATE OR REPLACE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS
-$$ SELECT COALESCE(
+$sql$ SELECT COALESCE(
     (SELECT p.active_tenant_id FROM public.profiles p
        WHERE p.user_id = auth.uid() AND p.active_tenant_id IS NOT NULL
          AND (EXISTS (SELECT 1 FROM public.tenant_members m
@@ -290,7 +290,7 @@ BEGIN
       RETURN _row;
     END $fn$;
     v := pg_temp.run('00000000-0000-4000-8000-00000000e003', 'authenticated', '',
-      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
+      $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no role gate): the plain member succeeds — the gate is what the probe tests: ' || v);
     ROLLBACK TO SAVEPOINT m1;
   END;
@@ -308,7 +308,7 @@ BEGIN
       RETURN _row;
     END $fn$;
     v := pg_temp.run('00000000-0000-4000-8000-00000000e005', 'authenticated', '',
-      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
+      $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a101'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no tenant wall): the other workspace''s owner finds it — the wall is what the probe tests: ' || v);
     ROLLBACK TO SAVEPOINT m2;
   END;
@@ -328,7 +328,7 @@ BEGIN
       RETURN _row;
     END $fn$;
     v := pg_temp.run('00000000-0000-4000-8000-00000000e004', 'authenticated', '',
-      $$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $sql$);
+      $sql$ SELECT 1 FROM public.set_studio_session_template('00000000-0000-4000-8000-00000000a102'::uuid, true, NULL) $sql$);
     PERFORM pg_temp.chk(v LIKE 'ok:%', 'mutated (no owner-or-admin predicate): the coach templates another''s project — the predicate is what the probe tests: ' || v);
     ROLLBACK TO SAVEPOINT m3;
   END;

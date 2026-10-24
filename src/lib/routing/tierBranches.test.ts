@@ -131,7 +131,7 @@ describe("Sub-tab tree (§65 3-level, agency verified 2026-08-17)", () => {
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(7);
     expect(count("calendar")).toBe(6);
-    expect(count("growth")).toBe(8)  // EXP07 row 8 added the calendar planning subtab;
+    expect(count("growth")).toBe(7);
     expect(count("analytics")).toBe(6);
     expect(count("marketplace")).toBe(6);
     expect(count("team")).toBe(6);
@@ -210,7 +210,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(6);
     expect(count("calendar")).toBe(6);
-    expect(count("growth")).toBe(11);
+    expect(count("growth")).toBe(12); // +calendar (EXP07 row 8 planning subtab)
     expect(count("ads")).toBe(5);
     expect(count("sales")).toBe(7);
     expect(count("finance")).toBe(7);
@@ -251,6 +251,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     roundTrip("growth", "campaigns", "campaigns");
     roundTrip("growth", "audience", "audience");
     roundTrip("growth", "content", "content");
+    roundTrip("growth", "calendar", "calendar");
     roundTrip("growth", "email", "email");
     roundTrip("growth", "lead-capture", "capture");
     roundTrip("growth", "social", "social");

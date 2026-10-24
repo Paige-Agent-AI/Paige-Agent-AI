@@ -26,9 +26,12 @@ export interface InteractiveEffect {
   record_refs?: Array<{ kind: string; id: string }>;
 }
 const RECORD_FIELDS: Readonly<Record<string, string>> = { task_id: "task", plan_id: "plan", plan_item_id: "plan_item", contact_id: "contact", deal_id: "deal",
-  booking_id: "booking", payment_id: "payment", message_id: "message", invoice_id: "invoice", knowledge_doc_id: "knowledge_document", automation_id: "automation", research_run_id: "research_run" };
-function recordReferences(r: Record<string, unknown>) {
-  return Object.entries(RECORD_FIELDS).flatMap(([field, kind]) => typeof r[field] === "string" && UUID.test(r[field] as string)
+  booking_id: "booking", payment_id: "payment", message_id: "message", invoice_id: "invoice", knowledge_doc_id: "knowledge_document", automation_id: "automation", research_run_id: "research_run", invocation_id: "subagent_invocation" };
+function recordReferences(r: Record<string, unknown>, tool: string) {
+  // The original dispatch response owns this reference; another tool cannot
+  // borrow it. An identity is inspect-only, never completion or retry authority.
+  return Object.entries(RECORD_FIELDS).flatMap(([field, kind]) => (field !== "invocation_id" || tool === "delegate_to_subagent")
+    && typeof r[field] === "string" && UUID.test(r[field] as string)
     ? [{ kind, id: r[field] as string }] : []);
 }
 /** The same closed read envelope used by Chat's step wording. No result flags
@@ -70,7 +73,7 @@ export function interactiveEffect(tool: string, result: unknown, spine: readonly
   // contradictory uncertainty, success, approval or native/durable identity.
   if (r.refused_before_run === true && r.not_applied === true && r.success === false && !uncertain
     && r.outcome_unknown !== true && r.ok !== true && r.accepted !== true && r.needs_confirm !== true && r.queued !== true
-    && r.outcome !== "succeeded" && recordReferences(r).length === 0 && r.work_id == null && r.run_id == null) return null;
+    && r.outcome !== "succeeded" && recordReferences(r, tool).length === 0 && r.work_id == null && r.run_id == null) return null;
   const readStatus = readEnvelopeStatus(r);
   const closedRead = readStatus !== null && !readHasEffectContradiction(r) && declaresClosedRead(tool, spine);
   const outcome = uncertain || r.outcome_unknown === true ? "outcome_unknown"
@@ -87,7 +90,7 @@ export function interactiveEffect(tool: string, result: unknown, spine: readonly
     : r.success === true || r.ok === true || r.outcome === "succeeded" ? "reported_success"
     : r.success === false || r.outcome === "failed" || r.outcome === "refused" ? "reported_failure" : "outcome_unknown";
   return { tool, outcome,
-    ...(recordReferences(r).length ? { record_refs: recordReferences(r) } : {}),
+    ...(recordReferences(r, tool).length ? { record_refs: recordReferences(r, tool) } : {}),
     ...(typeof r.work_id === "string" && UUID.test(r.work_id) ? { work_id: r.work_id } : {}),
     ...(typeof r.run_id === "string" && UUID.test(r.run_id) ? { run_id: r.run_id } : {}),
   };
@@ -101,7 +104,9 @@ export function interactiveReceiptContext(bundle: unknown): string {
     if (!/^[a-z][a-z0-9_]{0,95}$/.test(e.tool) || !["outcome_unknown", "reported_success", "reported_failure", "approval_required", "durable_accepted"].includes(e.outcome)) return [];
     return [{ tool: e.tool, outcome: e.outcome,
       ...(Array.isArray(e.record_refs) ? { record_refs: e.record_refs.slice(0, 8).filter((ref) =>
-        ref && Object.values(RECORD_FIELDS).includes(ref.kind) && typeof ref.id === "string" && UUID.test(ref.id))
+        ref && Object.values(RECORD_FIELDS).includes(ref.kind)
+        && (ref.kind !== "subagent_invocation" || e.tool === "delegate_to_subagent")
+        && typeof ref.id === "string" && UUID.test(ref.id))
         .map((ref) => ({ kind: ref.kind, id: ref.id })) } : {}),
       ...(typeof e.work_id === "string" && UUID.test(e.work_id) ? { work_id: e.work_id } : {}),
       ...(typeof e.run_id === "string" && UUID.test(e.run_id) ? { run_id: e.run_id } : {}),

@@ -889,6 +889,10 @@ jobs:
           # Owner addendum 6088460092: source-level boundary tests read the door's real
           # source, so this one line grants read (repo tree only); every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys             supabase/functions/_shared/inbox-intelligence/door-boundary.test.ts
+          # EXP07 row 3: the byte-header dimension parser behind a generated image's recorded
+          # metadata. Pure function over constructed fixtures; same deny-all sandbox.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/media-provider/image-dimensions.test.ts
           # E09 Slice M: the customer portal menu executor (merge by key, server tenant, readback) and its
           # drift against the frontend registry it mirrors. Read grants the repo tree only; every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \

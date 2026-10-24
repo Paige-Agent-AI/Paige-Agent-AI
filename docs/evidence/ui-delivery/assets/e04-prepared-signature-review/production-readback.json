@@ -1,0 +1,189 @@
+{
+  "result": "PASS_SOURCE_RELEASE_READBACK",
+  "at": "2026-10-24T11:02:22.137Z",
+  "pr": 2756,
+  "reviewedHead": "a7b6b2d2c6e876b89d88dc6e0f759c8036fc70fd",
+  "merge": "9e1963d953f670973f167ba67a40bf8bb73617d4",
+  "tree": "891030f1bd6f50a8d0a39e66cb4678e9857b1cb8",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE5637889154",
+  "preMergeReceipt": 6383377086,
+  "requiredCI": {
+    "namedChecks": 11,
+    "all": "SUCCESS",
+    "general": 120846305863,
+    "native": 120846304698,
+    "audit": 120846304260,
+    "managedPreview": 120847037527,
+    "webStatuses": 2
+  },
+  "deployment": "dpl_6zY2cvmeRLG8YyNwfMuk9KZXujxd",
+  "versions": [
+    {
+      "url": "https://paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "9e1963d953f670973f167ba67a40bf8bb73617d4-mvmadeet",
+        "customerUpdate": null
+      }
+    },
+    {
+      "url": "https://app.paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "9e1963d953f670973f167ba67a40bf8bb73617d4-mvmadeet",
+        "customerUpdate": null
+      }
+    }
+  ],
+  "capturedLFInputs": 34,
+  "original44SourceBlobs": "Retained, exact pre-merge guard",
+  "original10NativePNGs": "Unchanged",
+  "new3NativePNGs": "Exact reviewed source frames",
+  "actualServedModule": {
+    "url": "https://app.paigeagent.ai/assets/AgreementDocumentPreparation-CReGVF_j.js",
+    "SHA256": "1ea03f22943c0760b3b7be931723264470b5d68c4e0582671cd7e0efe22613a1",
+    "markers": [
+      "Review saved signing request",
+      "Saved request checked",
+      "The fingerprint identifies this read. It is not an approval or execution receipt.",
+      "This review does not request signatures. Approval and sending are not connected to it yet.",
+      "signing_review"
+    ]
+  },
+  "actualStylesheet": {
+    "url": "https://app.paigeagent.ai/assets/AgreementDocumentPreparation-BDd6y3ot.css",
+    "SHA256": "074b1694c37c0d4c48ad4d751ccb3c78f810cb482ac39ec1166c9746df58c8f0",
+    "rules": {
+      "grid": "display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:16px;align-items:start;border-top:1px solid var(--pg-line);padding:14px 0;max-width:none",
+      "summary": "min-height:44px;align-content:center;cursor:pointer;font:500 13px/1.5 var(--pg-font-ui)",
+      "narrow": "56px minmax(0,1fr)"
+    }
+  },
+  "publicDiscovery": {
+    "visited": 344,
+    "bytes": 10366964,
+    "onlyObservedRefs": true
+  },
+  "normalEdge": {
+    "run": 40088022454,
+    "job": 120854822549,
+    "status": "SUCCESS",
+    "function": {
+      "id": "ecec534b-caf1-4c1c-9fbe-4b83b6710879",
+      "slug": "agreement-document",
+      "version": 84,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "import_map": false,
+      "archiveSHA256": "c89fa5b5746eec504040f83968af75ca9a95b73ea21d78cf47af8e7589f044dc"
+    },
+    "all25FilesMatchActualMerge": true,
+    "files": [
+      {
+        "path": "supabase/functions/agreement-document/index.ts",
+        "SHA256": "51ec325164c2c5167cb93cfcfd744b87b8c5e99e92cc106fc4677bd750d05d19"
+      },
+      {
+        "path": "supabase/functions/_shared/rateLimit.ts",
+        "SHA256": "811d644eaef72c60e640666f0076bb06936b09e0814421a116b5176ab6bbde3d"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/token.ts",
+        "SHA256": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/signing-guard.ts",
+        "SHA256": "3997edf2abb0e9064b1e6e89aac68fce9a2aded43caa90b0f3f1b4e167a54ad7"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/portal-door.ts",
+        "SHA256": "9550a04bff485341da6f09cdfdc65741fb6679e0654f650db895da4e804c4bd4"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/retained-document.ts",
+        "SHA256": "cee0296f159becaf704d8853b32dc205033dd8f34d6a0dd878e7a1a60e920db0"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/owner-preparation-http.ts",
+        "SHA256": "6686857bec9a82d7ea03eb1f4018af8f88040d94a1a30a6f1ba79dea1df659b1"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/owner-preparation.ts",
+        "SHA256": "0d0c901424ed4da708242404fe5125559807a9ccb2c5b4036e016dfb125a711f"
+      },
+      {
+        "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+        "SHA256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+        "SHA256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+        "SHA256": "822fb917acf2821a983e43b75177029c75db52fdae655186fbd90599c43ba466"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+        "SHA256": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419"
+      },
+      {
+        "path": "supabase/functions/_shared/sales-collections/contract.ts",
+        "SHA256": "aad73fa38bb9c960f4362e5cd741c85dbae2e4cdcc46ec7f635869d51df8e2d3"
+      },
+      {
+        "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+        "SHA256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e"
+      },
+      {
+        "path": "supabase/functions/_shared/sales-collections/model.ts",
+        "SHA256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6"
+      },
+      {
+        "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+        "SHA256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+        "SHA256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/document.ts",
+        "SHA256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e"
+      },
+      {
+        "path": "supabase/functions/_shared/doc-render.ts",
+        "SHA256": "06f72d693cd333b18bfab176112f66bd3862f58ac3a29a298f2cdb02fc2b6fe2"
+      },
+      {
+        "path": "supabase/functions/_shared/provider-types.ts",
+        "SHA256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/preparation-artifact.ts",
+        "SHA256": "f634cba7d0c9872bbdb1958c3ca3928ec0425654c2dabdd84dbe5bc47bc45a0b"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/document-preparation.ts",
+        "SHA256": "4164eeb196c1c599e486ac95efdeb21eb9a0287427e9fd8830dc8ac3f4a2b630"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/commercial-presentation-read.ts",
+        "SHA256": "5d4b690eb72ce7e6511a893b316f4a4f10ec8ef78b5cbaf55471d14dc985c46c"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/prepared-signature-review.ts",
+        "SHA256": "80a83187539821c25e3ed4ea203d9138b525b9ce9a2d541248b5198cbf034529"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/prepared-signature-review-contract.ts",
+        "SHA256": "2cdb8f0fa0c8d243746c3db07adb6e4cb1abd60379ab0d9ebc604f43f8092531"
+      }
+    ],
+    "otherFunctions": "agreement-send16/finalize-agreement71/sign-agreement35/Chat527/orchestrator124/Stripe20 before-after metadata identical"
+  },
+  "native": "No changed migration, no native apply claimed",
+  "activation": "No new provider/consequential/Chat/Live/payment/send/signature/service action or capability promotion",
+  "boundary": "Actual production public static source/style/version and original Edge source/config verification only. No ordinary authenticated owner/staff/linked-client, real read/PDF/permission withdrawal/reload/later-session, provider/send/signature/payment/service/CentralQA/full12/founder acceptance.",
+  "releaseReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2756#issuecomment-6383470157"
+}

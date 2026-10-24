@@ -10,7 +10,7 @@ import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/com
 import { AlertDialog,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction } from "@/components/ui/alert-dialog";
 import {browserDeliveryRecoveryStorage,readDeliveryRecovery,saveDeliveryRecovery,clearDeliveryRecovery,type RecoveryStorage} from "./operations-delivery-local-recovery";
 import "./operations-staff-delivery-review.css";
-export type PreparationProps={scope:StaffDeliveryScope;members:TeamMemberRecord[];theme?:string;onSubmitted?:()=>void|Promise<void>;registerCloseGuard?:(guard:()=>boolean)=>()=>void;recoveryStorage?:RecoveryStorage};
+export type PreparationProps={scope:StaffDeliveryScope;members:TeamMemberRecord[];theme?:string;onSubmitted?:()=>void|Promise<void>;registerCloseGuard?:(guard:(showNotice?:boolean)=>boolean)=>()=>void;recoveryStorage?:RecoveryStorage};
 type Sources={key:string;loading:boolean;sessions:DeliverySourceSession[]|null;work:StaffDeliveryRead|null};
 type Versions={key:string;loading:boolean;versions:DeliverySourceVersion[]|null;unsupported:number};
 type PickOption={value:string;label:string};
@@ -103,7 +103,7 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
 
  useBeforeUnloadGuard(needsGuard);
  useEffect(()=>registerAccountSwitchGuard(()=>{if(needsGuard){setHint("Finish or clear this preparation before switching workspaces.");return false;}return true;}),[needsGuard]);
- useEffect(()=>registerCloseGuard?.(()=>{if(needsGuard){setHint(unknown?"Inspect the original submission before leaving; its outcome remains unconfirmed.":busy?"Wait for submission and readback before closing.":"Clear this preparation explicitly before closing.");return false;}return true;}),[needsGuard,unknown,busy,registerCloseGuard]);
+ useEffect(()=>registerCloseGuard?.((showNotice=true)=>{if(needsGuard){if(showNotice)setHint(unknown?"Inspect the original submission before leaving; its outcome remains unconfirmed.":busy?"Wait for submission and readback before closing.":"Clear this preparation explicitly before closing.");return false;}return true;}),[needsGuard,unknown,busy,registerCloseGuard]);
  useEffect(()=>{if(result||hint||sourceFailed)feedback.current?.scrollIntoView?.({block:"center",behavior:"auto"});},[result,hint,sourceFailed]);
  const save=async()=>{
   if(!current()||!confirming||!canSubmit||!version||!reviewer||writing.current)return;

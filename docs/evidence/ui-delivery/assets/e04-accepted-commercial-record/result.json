@@ -1,0 +1,305 @@
+{
+  "result": "PASS",
+  "scope": "Actual locally mounted original Sales component and canonical parsers with explicit synthetic Auth/RPC ports; no hosted/customer/provider or private PDF acceptance",
+  "sourceSHA256": {
+    "src/solo/sales/CommercialPackageInspection.tsx": "3c1dbd65c0899ec3dc08785312a247acf4da24415e91672768fce1d021a37dd1",
+    "src/solo/sales/AcceptedCommercialInspection.tsx": "be125dfbeeb4b7395f7d272f2e116bd420ea0d6da8ca062b92fd7da1fc9ed165",
+    "src/solo/sales/accepted-commercial-inspection.css": "f4f35451a5608afa58a9f7f79a323cb6742e8dfb15ce670dbdbc4282349c3543",
+    "src/solo/sales/sales-billing.css": "707ab36fb8573c0f00b31d8b12a28fea2b33ab8277f19f50309076a1fb38132e",
+    "src/solo/solo-tokens.css": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+    "supabase/functions/_shared/agreements/accepted-commercial-read.ts": "4e14c5c9ecf96d2e504b0338ad432dee0942c631594b6b9ad874f55d5d2a6263",
+    "supabase/functions/_shared/agreements/commercial-presentation.ts": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419",
+    "supabase/functions/_shared/agreements/preparation-json.ts": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8",
+    "supabase/functions/_shared/agreements/commercial-engagement.ts": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+    "supabase/functions/_shared/sales-commercial/package-projection.ts": "e65a4549d40ee09482aaa36033367f898bafc64e4eae38caf9f7639db70bbb51",
+    "supabase/functions/_shared/sales-commercial/conditions.ts": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2",
+    "supabase/functions/_shared/sales-commercial/terms-reference.ts": "d9048bb3aae0e7507930c5d7257c7398614e966792868d0bfef04e4c5d3d1b5f",
+    "supabase/functions/_shared/sales-collections/contract.ts": "aad73fa38bb9c960f4362e5cd741c85dbae2e4cdcc46ec7f635869d51df8e2d3",
+    "supabase/functions/_shared/sales-collections/model.ts": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+    "supabase/functions/_shared/sales-collections/primitives.ts": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91",
+    "scripts/proof/e04-accepted-commercial-ui/vite.config.mjs": "870dd8c99392e62989452967c5518ef0647537288fc9731586f4fc6d6aa3156d",
+    "scripts/proof/e04-accepted-commercial-ui/sdk.ts": "6a72b9faede65226a8d79529073d7e2eaa2b3e1e686ff211ca4bfd9b2e4eed7f",
+    "scripts/proof/e04-accepted-commercial-ui/source.tsx": "46b8f715f921119cc834db5e3c5e936f150d0fe2f8fd6beab111f48c01df301d",
+    "scripts/proof/e04-accepted-commercial-ui/index.html": "2f69a396c12a84a023221c98fbc5a6218f266d194617a34349b64602b8b63863"
+  },
+  "frames": [
+    {
+      "file": "1536-light-recorded.jpg",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "light",
+      "image": {
+        "format": "JPEG",
+        "bytes": 56062
+      },
+      "sha256": "be0ad5d632f5cc844a57bab3b5ce0798a28f651510cf21b5e49d224bf48695b4",
+      "actualDOMObservation": {
+        "innerWidth": 1536,
+        "scrollWidth": 1521,
+        "focus": "Close record",
+        "buttonMinHeight": "36px",
+        "fieldLayout": "two columns, right aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "1536-dark-recorded.jpg",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "dark",
+      "image": {
+        "format": "JPEG",
+        "bytes": 57290
+      },
+      "sha256": "9a7eb2e984502e5941b7f87b836c68bb3ff35e06f1a0dd2b4869a4e0aeed6444",
+      "actualDOMObservation": {
+        "innerWidth": 1536,
+        "scrollWidth": 1521,
+        "focus": "Close record",
+        "buttonMinHeight": "36px",
+        "fieldLayout": "two columns, right aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "1366-light-recorded.jpg",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "image": {
+        "format": "JPEG",
+        "bytes": 55108
+      },
+      "sha256": "5ba119aa75e5741dd4082761c9c5bda761a25ba569042b9c14ad9858959aaae0",
+      "actualDOMObservation": {
+        "innerWidth": 1366,
+        "scrollWidth": 1351,
+        "focus": "Close record",
+        "buttonMinHeight": "36px",
+        "fieldLayout": "two columns, right aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "1366-dark-recorded.jpg",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "dark",
+      "image": {
+        "format": "JPEG",
+        "bytes": 56072
+      },
+      "sha256": "0303b603f2beeba4765f22e3a5fb1ca5b605c6437430e2f0a10f4b1589de20e3",
+      "actualDOMObservation": {
+        "innerWidth": 1366,
+        "scrollWidth": 1351,
+        "focus": "Close record",
+        "buttonMinHeight": "36px",
+        "fieldLayout": "two columns, right aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "1024-light-recorded.jpg",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "light",
+      "image": {
+        "format": "JPEG",
+        "bytes": 51191
+      },
+      "sha256": "e64e09f81216cdf41ae85b56cb5eb2d554589e6e74ef9d7933158a723d150c7a",
+      "actualDOMObservation": {
+        "innerWidth": 1024,
+        "scrollWidth": 1009,
+        "focus": "Close record",
+        "buttonMinHeight": "36px",
+        "fieldLayout": "two columns, right aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "1024-dark-recorded.jpg",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "dark",
+      "image": {
+        "format": "JPEG",
+        "bytes": 52836
+      },
+      "sha256": "59b41e7490d36c8d203e55587de1381701ebf3c99384f156917b8a4ef204929e",
+      "actualDOMObservation": {
+        "innerWidth": 1024,
+        "scrollWidth": 1009,
+        "focus": "Close record",
+        "buttonMinHeight": "36px",
+        "fieldLayout": "two columns, right aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "900-light-recorded.jpg",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "light",
+      "image": {
+        "format": "JPEG",
+        "bytes": 66983
+      },
+      "sha256": "f4ad8f5156c25b0476f343a98eff971fa25dd5c4bd122c6c3350575bece25b54",
+      "actualDOMObservation": {
+        "innerWidth": 900,
+        "scrollWidth": 885,
+        "focus": "Close record",
+        "buttonMinHeight": "36px",
+        "fieldLayout": "two columns, right aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "900-dark-recorded.jpg",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "dark",
+      "image": {
+        "format": "JPEG",
+        "bytes": 69356
+      },
+      "sha256": "546bc2ce5057d492828f3005ba30689fb85d1acee9ba4700de2143fff0b51dbc",
+      "actualDOMObservation": {
+        "innerWidth": 900,
+        "scrollWidth": 885,
+        "focus": "Close record",
+        "buttonMinHeight": "36px",
+        "fieldLayout": "two columns, right aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "320-light-recorded.jpg",
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "light",
+      "image": {
+        "format": "JPEG",
+        "bytes": 29300
+      },
+      "sha256": "0a94178bde516cf3a8a28ba91188f03bf3c1d191439c0ef31a0c8041a3595ebb",
+      "actualDOMObservation": {
+        "innerWidth": 320,
+        "scrollWidth": 305,
+        "focus": "Close record",
+        "buttonMinHeight": "44px",
+        "fieldLayout": "single column, start aligned",
+        "geistAvailable": true
+      }
+    },
+    {
+      "file": "320-dark-recorded.jpg",
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "dark",
+      "image": {
+        "format": "JPEG",
+        "bytes": 30472
+      },
+      "sha256": "812b8d92bdfcd6fe32747f96b374f893b4a7f3db072d48c021d9972faf509cf0",
+      "actualDOMObservation": {
+        "innerWidth": 320,
+        "scrollWidth": 305,
+        "focus": "Close record",
+        "buttonMinHeight": "44px",
+        "fieldLayout": "single column, start aligned",
+        "geistAvailable": true
+      }
+    }
+  ],
+  "additional": [
+    {
+      "file": "320-light-expanded.jpg",
+      "sha256": "548ce1b9e3177064aeb10bed773334d784066ff3598b72d1077a005ca4a0ca91"
+    },
+    {
+      "file": "prototype-1536.jpg",
+      "sha256": "c0167f673112338ac409f3ac2b14e2ea5cd70bd8e1da56bba181544d46b453e6"
+    },
+    {
+      "file": "prototype-320.jpg",
+      "sha256": "7a265769a3c2a378a082b5859d5444f0e2f23da1058ffe32b6649f84cd7463ea"
+    },
+    {
+      "file": "prototype-320-context.jpg",
+      "sha256": "d481911f269d798b3ed67dcc2be5619173c389e3c214d10273997e307984f571"
+    }
+  ],
+  "actualBranches": [
+    {
+      "mode": "legacy",
+      "recorded": true,
+      "serviceStartInvented": false
+    },
+    {
+      "mode": "unverified",
+      "privateTextHidden": true
+    },
+    {
+      "mode": "refused",
+      "privateTextHidden": true,
+      "retryVisible": true
+    },
+    {
+      "mode": "changed",
+      "originalAcceptedPrincipalPreserved": true,
+      "currentDifferenceExplained": true
+    }
+  ],
+  "behavior": {
+    "explicitOwnerRead": true,
+    "allDatedObligations": 11,
+    "retainedWordsEscaped": true,
+    "busyReadDisabled": true,
+    "cancelFocus": "Inspect accepted terms",
+    "lateResultAfterCancelHidden": true,
+    "sourceRetirement": "Component tests cover tenant/invoice/agreement/version retirement and late replies"
+  },
+  "corrections": [
+    "Prototype close focus loss fixed in actual component and tested",
+    "Parent CSS overrode narrow layout; scoped override and final ten frames confirmed",
+    "Initial local navigation deadline elapsed before page readiness; actual later state inspected",
+    "Initial exact label/summary role selectors failed; observed native/DOM controls used"
+  ],
+  "supplementaryBrowserAttempt": {
+    "result": "INVALID",
+    "detail": "Later multi-branch capture timed out and reset the browser kernel; subsequent recovery also timed out. No missing supplementary frames or final scope result are claimed."
+  },
+  "unverified": [
+    "native200percentzoom",
+    "actual assistive technology",
+    "complete authenticated SOLO shell with PAIGE open/closed",
+    "ordinary owner/staff/linked-client and two legitimate cohorts",
+    "actual retained private PDF",
+    "hosted native/provider/signature/payment",
+    "CentralQA",
+    "all12 and founder acceptance"
+  ]
+}

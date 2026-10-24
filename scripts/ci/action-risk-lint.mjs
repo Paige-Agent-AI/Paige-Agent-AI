@@ -760,7 +760,7 @@ if (fs.existsSync(collectionHandlerPath)) {
   const contract=fs.readFileSync('supabase/functions/_shared/sales-collections/contract.ts','utf8');
   const map=contract.slice(contract.indexOf('export const COLLECTION_ACTIONS ='),contract.indexOf('} as const;'));
   const actions=[...map.matchAll(/'collection\.[a-z_]+':\s*'([a-z0-9_]+)'/g)].map(match=>match[1]);
-  const expectedCollectionActions=['sales_save_collection_terms','sales_stage_collection_import','sales_commit_collection_import','sales_record_manual_payment','sales_reverse_manual_payment','sales_create_commercial_terms'];
+  const expectedCollectionActions=['sales_save_collection_terms','sales_stage_collection_import','sales_commit_collection_import','sales_record_manual_payment','sales_reverse_manual_payment','sales_create_commercial_terms','sales_effectuate_commercial_terms'];
   if(actions.length!==expectedCollectionActions.length||new Set(actions).size!==actions.length||expectedCollectionActions.some(action=>!actions.includes(action)))throw new Error('Collections closed action map could not be parsed');
   governedEdgeActions.push(...actions);
   requiredClassifications.push(...actions);

@@ -1,0 +1,536 @@
+{
+  "base": "d95794a2e668dacd81f61d85437e07fc16cf32a0",
+  "chatInverse": "Exactly one static WRITE_TARGET row removed restores original bytes",
+  "sourcePins": 123,
+  "baseline": {
+    "findings": [],
+    "dispatches": 29
+  },
+  "sourceSha256": {
+    "before": "c5a6b738ed648ab7b1d1fe028bfbd313a32190b8bf2648f243231f5b0d365fa5",
+    "after": "aad1b1f1e70fd3805b6bc469d5e0aefec21ef5068568ab2542e00c8dce41828f"
+  },
+  "changes": [
+    {
+      "tool": "comms_setup_calling",
+      "before": "64e98ed11c57f5f022387ce2b95554fbbdc7c2a39e3f36c302fec6e8bbb80d0b",
+      "after": "384ba9cad1aa92517ad611577726a8de5112829ae6dd0e9d86f90ec998bd0999",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "before": "6fb76ded1b548e1edfc825f69bee8f62817f86477edfe639e058307801deb7e9",
+      "after": "4a091ae9177a44da1e075d4d530ff5b23eacb8bcc5afa9f1c4735cf099bc6074",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "calendar_link_send",
+      "before": "323ee4af182cb9b0285006da7339c2ecdc796e2fa3bc109772e640156484f44e",
+      "after": "fc79f91d8ceed3a78e44a9bcc53cf5c60b40352dfc1fb890ea0090786d3329c9",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "before": "2f5e6838371f3aa5f39a5f8161d9a7dd7c82dba1e691d7cd8215ae3b1902872e",
+      "after": "8c1721faefd567978a57d05faef99dee37e99f6f4a9932a3cdf26eca5d6fe897",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "update_business_profile",
+      "before": "7a001d9cdae89fc987f1efab65b54423d2ed2742c10834691c83c45f481a9b44",
+      "after": "f5592ed725f3c51de502a3f2a5ae6a64f4d8fe600055ebfc5166b122e7a30d55",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "capability_status",
+      "before": "fb25642a8938f65b86e70bc09a4eb675051c91289c5d44058377df3558b23fe4",
+      "after": "5fb4820daf6b5a880e47d68de9a9aef23c1ad89c94e2e67764b4a6cd3729085a",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "improvement_propose",
+      "before": "a4bb096856c49082cca6df40e26c6abd12fb7322869d171787408db1e7601df5",
+      "after": "c8b81e5d3b2a5555b063b92f9b505771015ce82e9f69cb9ce2d655949dc1647d",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "improvement_decide",
+      "before": "816272671c15207c3df2f544bb3d6d2260d74428584a0f34a1abea7dbd1dcb19",
+      "after": "a72ff1bdcba75dcf166bb7e4cd55dd2856797b4fcbdc6739b02f4928e91ee1ab",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "list_subagents",
+      "before": "63cfb1aa30daeb262d6411077fde87f068707d171c52b0bf002de4e75cdbba8c",
+      "after": "963d066046e7882f9e887ca94f306375b5f51b16d3886b4829c80742b057a584",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "before": "63cfb1aa30daeb262d6411077fde87f068707d171c52b0bf002de4e75cdbba8c",
+      "after": "963d066046e7882f9e887ca94f306375b5f51b16d3886b4829c80742b057a584",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "forge_subagent",
+      "before": "06baa89307a2a66d78f47b23852f66b56f282535204ea95a4d1cbae89f1a7981",
+      "after": "c82991ec96efb0cd60e8b5cabc8c1426addd8acb21527c20c68b4766476f53ce",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "author_event_kind",
+      "before": "7ccf576be1a862807573b894cc71070857c3ac94e221c3b7745176ab3ebb617e",
+      "after": "6d1cb81c9cb4712b92b2c50b7455b5d0a0f457039b5fb9c366e95d172e00e973",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "crm_add_note",
+      "before": "aeb788915663349284271d6e102115889dec478ba049cef7afd3f179ffcc808e",
+      "after": "6c5bc5c456769725130f69a03c014e05276011b61f3a4f8e9110666cd48f8d6c",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "crm_file_document",
+      "before": "e49150f8822ff3ce6fce89d50646de123680e959b1cd12695f85223938576a64",
+      "after": "d3cd7136e36ebf8e1d80dc6942aa8b69764da10c849db578d5a505b01e3eaa11",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "update_client_data",
+      "before": "4f12056f8ec8ba5a1b6900c375dfe0f86649078070f837b58e85f202736b9e70",
+      "after": "495374a59a0a281dbd63f38dc3ede99031a5bfa97f9f8f631851eacaa7b9ff53",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "pipeline_configure",
+      "before": "fd57c1deba2641cbbd09d9d023a20de1e7f7030748275d55a48423d3f4c63025",
+      "after": "5a4583f06490c6f6183ec08a4ee2756ddbd536d5832d9d422b3ee1efafb8d0a5",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "deep_research",
+      "before": "e6e95c616848615de67896a2288046cfcfca41c955ceadeeb14318532490a992",
+      "after": "a387d5277aab9ff01428b2cf993cc4b626f609d58b63a9181f5d4014e12ffbd5",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "web_search",
+      "before": "c4d178f2c7c9bdf053a114ebb09154c782441350e5d67b13b2612a8e2e935348",
+      "after": "9b143aa6764f761584507728a54a7e5c646af92f2e176d47faa978e3416bef3c",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "web_fetch",
+      "before": "22cb9559575ed277709ef8083fae078c3c9116d8ee8fd963b122b9ccbb183559",
+      "after": "6e9bca55d144410ee9b01ac568ee3441cd71a6c95cc822b674c8ec1873b48324",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "before": "5b2c02488d926bfdb2e4a71fa67567d51c80961fcfe0aa412d0f24f019d666ae",
+      "after": "0bbeced215e3057ed0019ec3aba5fd7221f1cf672e8266b8646d0d33b99049e3",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "automation_draft",
+      "before": "6621380da27cda53d82a71e1e429b216c7be3b6fd1dd81ff79709d06f9275cf4",
+      "after": "7b2cb692a2f34fd6f4d6a587c50c88ed333bb07ffacd9f72ac063eea05015c68",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_connection_summary",
+      "before": "042e79cfd3f69c89ba9e9790e1d997150c342eb422aa9e282aa8c6fd35672792",
+      "after": "4e1af2ba123d7021345d4bb1c4798aface90722631139ff782d8ebf85d82a3f9",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_registration_status",
+      "before": "7d2734eeed17f4416ae2865a0410f47bb8c25fecc00c11298439e0fc137471a9",
+      "after": "081779b63c1acec9d0ce1ef08294ca6ee29b4ff83eb115ea3022d6489a9afc11",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_list_numbers",
+      "before": "97d05476d112b7f230f7988ca27cca3de3244cdd25d657205a1bffc68c1dc730",
+      "after": "20d9b01572ca594a8b400ad55f043769a7f91f7b9709de2d51f432ff3ee2aa29",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_search_numbers",
+      "before": "233550f344d4e1059e7fa2d38f6725644d4c3b1bfabdc112c945f739589ed327",
+      "after": "66ba061b0955b1b7bbb606be72ccdf4e4b974f6b8dfb7385cb54ec8c24e8ba68",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_buy_number",
+      "before": "cad70747b8a3deb30d9a3e62ca69bd81745702189dc47296fe176d9d61c8ed48",
+      "after": "c208c7c1e62236af96aabcd31538b9ed41776e639ed9f53e465942f011700c3b",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_draft_registration",
+      "before": "5bbfc5814640d7f9456941e3fe936fbebd6b972eccb8f316c6c152b4aefaeb4b",
+      "after": "b4b7d9880f0a9f648383416a0877d50794ea37a444b178445d2551af0e6fc4b8",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_name_number",
+      "before": "89259b16e6517911d26d3cec4b7279145ebb506d947536b582d49d227b851e6b",
+      "after": "b8556bc9320c805b9888a6cac0ed55f26527cd7f8ae8a4dd511a9e90940121f9",
+      "changedIdentity": [
+        15
+      ]
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "before": "c3b30f8f116aa171c270613cf59662cccb009aac5b8e35b3ca69c0c24b177273",
+      "after": "d5291b4322013d5f15705223682554f044562b1ad31d95847e58bb2f339464b1",
+      "changedIdentity": [
+        15
+      ]
+    }
+  ],
+  "scope": "Read-only original-extractor decomposition; no pin regeneration/writes, admission or customer verification",
+  "sourceBoundary": "Original123 paths retained; existing E04 reviewed HIGH risk digest is explicit; all other122 source digests and complete producer/verifier/metadata/hostile controls preserved",
+  "pinContinuity": {
+    "renewedLiteralCount": 29,
+    "scopedInverse": "PASS",
+    "producerByteInverse": "PASS",
+    "sourceSha256": "d478c9c124353f28d596618f741a57dfc513da0b13b46ed545059ec2e1b5b143",
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE; pending original2697 release and all E04 current-head gates"
+  },
+  "releasedProducerContinuation": {
+    "producer": "92554a4f23182ababad5d7f8eb61f96c1fe12c8e",
+    "actualMain": "04edecb0f484d8f45a46068645892030064c5cf9",
+    "originalEvidenceSHA256": "8ef006cf4e928ee082bc006d7c7dfed125cb634aaa840c168eb09ac3e9fd5945",
+    "producerBindingSHA256": "ed420f761ee125b117efe3d443a581a57a0bf285a43021edaed280c715aa4a8b",
+    "currentBindingSHA256": "8ca4706a6af7150b90ce69fa92112fc561deb64f4452d6839bcc28d30a239cb2",
+    "currentChatSHA256": "aad1b1f1e70fd3805b6bc469d5e0aefec21ef5068568ab2542e00c8dce41828f",
+    "producerChatSHA256": "c5a6b738ed648ab7b1d1fe028bfbd313a32190b8bf2648f243231f5b0d365fa5",
+    "fullProducerBindingByteInverse": "PASS",
+    "fullProducerChatStaticRowInverse": "PASS",
+    "allOriginal29ScalarValuesUnchanged": true,
+    "allCurrent123SourcePinsRetainedExceptExistingReviewedE04Risk": true,
+    "originalReleasedE05InteractiveDigest": "2917df7c8f03806e63b5f38f4aa386d6df0a1ca6892028cf8384cf98646c74ff",
+    "boundary": "Consume actual released2697/2719 producer source, preserving original d957 record as dated evidence. No new digest/scalar acceptance, metadata/extractor/guard relaxation, shared runtime or admission edit. Exact-head CI, deployment/readback and authenticated customer proof remain separate."
+  },
+  "releasedExpiryUnion": {
+    "at": "2026-10-24T10:25:07.455Z",
+    "base": "2b14cedd546eb285e3db0c24fecf374d2a986659",
+    "chatInverse": "Exactly one static WRITE_TARGET row removed restores original bytes",
+    "sourcePins": 124,
+    "baseline": {
+      "findings": [],
+      "dispatches": 29
+    },
+    "sourceSha256": {
+      "before": "cc8290faabf929819856ca6eab4e1bcf23cb60f42c508121a8fd878aa547ea71",
+      "after": "2983e0970b3a7ffce0c42efbb0b3be80c51c7558423bdac21ee66ffa8f313c94"
+    },
+    "changes": [
+      {
+        "tool": "comms_setup_calling",
+        "before": "cd0ff75ae909aa7fec94dc191f43ab22051f54e5d6293d7c84503a34cdf4780b",
+        "after": "5f54b0ef8895519cc43b5ec866fa4c113fefe4a7971c5205e738e517e1d6470f",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "calendar_book_meeting",
+        "before": "ae966877f6a561c8a57fa55a0502d373dc18d47edfa35b511f00abe6260855ee",
+        "after": "f5241a50668b4898560eb4387ec9bb9cbacba3ff4551e0c40ef3d24894126bc4",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "calendar_link_send",
+        "before": "e98cec6dee52f97e6ebf0a23297ff07b2bba9d02a4666733b0175121ff7d1354",
+        "after": "c66b3f264984751a756994748da8eef17051cc730a8b65f7730bd915c26c6054",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "propose_business_brief_update",
+        "before": "47e98ac6689d67319730b1ccad42062ad0b256288ca6b1b70abfc07effd8ad60",
+        "after": "e0119b1b4b843079e97ef896b56bba8b9234dc392f4c16696e6a8ba09d62dbd7",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "update_business_profile",
+        "before": "c23a11d4b9a5cdcd93e0d266ab768e78a1577a16f41e6a81098073ea5232728e",
+        "after": "7ae87b4096aa166a83d108b7c47ca280ba10ab7fa144255466a47344afedc4ad",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "capability_status",
+        "before": "27257078449e8158eefea550d570898ce91f506a690c0dd054236a5cc8bb24b4",
+        "after": "ce247557573f4c299317294442fba94c21e5410d498fa092686835b5f9788a8e",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "improvement_propose",
+        "before": "c0b8a34c192b4289d1dd8b0eb81a37bbcb926f49b44ef0005b0374a67fad00b5",
+        "after": "1198d6d9d75d73963add0de18a1d8bfab848b648d807c15fc5289dd94a92cc39",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "improvement_decide",
+        "before": "015e6243dfc3dcf4177f2c077b343b20845d4760f958740da2d27c12ed77eb2f",
+        "after": "1e6e0fabf16d77ecd8a83b5949302498befc28913a8dc3ed75030d6019bc985c",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "list_subagents",
+        "before": "4fe91c7849ac75fedd107840fe75c241b508afc37ca0be2219d75e536cb0e826",
+        "after": "60a3ded1db83ffeedbc0158ed11870f839f1431f0fc24b3353d2229d31a66472",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "delegate_to_subagent",
+        "before": "4fe91c7849ac75fedd107840fe75c241b508afc37ca0be2219d75e536cb0e826",
+        "after": "60a3ded1db83ffeedbc0158ed11870f839f1431f0fc24b3353d2229d31a66472",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "forge_subagent",
+        "before": "442edc78f948185398fa2146a39802d0fcba10df12d3cda0e8d74aa0934267b5",
+        "after": "0521a843cabf42dcb433f70995cf41be9521c8bdd2c2305080d309e5a0f76dfd",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "author_event_kind",
+        "before": "843c6af913689a416e47904663cb8cfbab937863ccc5d4975130b2c089c94998",
+        "after": "3ed25cf99bc2da895b861980d54b8e607cbc45bc86efd5460feac90e66123412",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "crm_add_note",
+        "before": "3d5364e3aaa5441e1de8257782c8dfec068a6f6db59dd69f14afccbdfbbd6dca",
+        "after": "b5dce8449689cb605659c3a508b2ef9529342a7f150a0caf7edf042b7dff4371",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "crm_file_document",
+        "before": "f9f54cb56253546b10ced4a9284cba161a22ea5c8b59460838beb89ddf103375",
+        "after": "4fab050a90633d92b4b5a05f3fe5e1c59d2211ace1918edea9e0ab896caedb2b",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "update_client_data",
+        "before": "93b449545af4488701ce1dfc60af70cd506f0d08bfe78a34d7f32debf0d39403",
+        "after": "0417d835b546129f37995477f4304f883f2bcf294dc6bf9dd5ab35990329eee7",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "pipeline_configure",
+        "before": "ad5c077695d0f70f411e75a12d9f9401283a60fd549910d7ab306d2893ab44dd",
+        "after": "4a973ffcbf38d3fa2d47a2f1fa87c04b60444cbc3e745d19e384dd5b25e95f11",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "deep_research",
+        "before": "e8013c6418dc88ab17a654bedd7f5d1c58fbac466eb0c9b710153a3428f79870",
+        "after": "aaaae2329efb215e56491a1ac7832f3fa4cf5d87f2284ac413cadc49229e3e26",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "web_search",
+        "before": "dcf7b164653866a2613c2d271057a8db813e470310870df58c4c6ce60c094f3a",
+        "after": "8c1a8961652a17f6e6807c4cda51b50860f42cedc54e779ad4e2bb6dbce845ec",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "web_fetch",
+        "before": "17012df78fcd56436756c30dc2bb58c268deb37e0bd773bff6841f9d9a6471a5",
+        "after": "cfdf82e3db79f6fe4808bc9be159b91825bfed28714802061df99cc2b1d7add6",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "save_to_knowledge_base",
+        "before": "66b8c5dfd2c382550ab70be0c136b98852ef1442ac83ead3cc7643c06c4876d1",
+        "after": "b186d43a429b5d61f4a813074f7456463c6ea75f4462e83c3a0411f640bbacd4",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "automation_draft",
+        "before": "926a1a2e3b083f7b233bdf0418772ac8cfa8281a6536d3cabbcf6f54cea96e58",
+        "after": "c00c40c6f0bfa35b67b28288d0a3911a33eb7c960c81dd836416f40b4de74309",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "comms_connection_summary",
+        "before": "499a75ca1ab437a446c162c7778bf90a90ebdfe9add13daff18537bed446f210",
+        "after": "53f127771b6e3351c3b5b3d127b50d44d25bca5eb9f7152ead454b67f1c7456b",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "comms_registration_status",
+        "before": "08bbc6b985b864f7f01b51af76920a823995278201b32feb117e54c6dff4b3c6",
+        "after": "2dfcaf73efba3571fd0be223478f325ec7ea1eef798f145caf8a8c0b8b045eb2",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "comms_list_numbers",
+        "before": "879137df00f639effa1ee1034d4d1d7559090b0905f986afb8b9cd59dfee8075",
+        "after": "6aa57437c3561581a89476032a3171ff8f0431913e16e8423b81db7e7128a531",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "comms_search_numbers",
+        "before": "4716ef7e4c7908412a7e8f0927c3358a60398f3b0e464286e7b9ee126c683403",
+        "after": "60c2485e58ffa613dad15e415e4be23148da20fbffb289eb676c0a1674beea1e",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "comms_buy_number",
+        "before": "b12f187bd17ea845a8358614b22c227efadb5bf570a4d065fd296a43fce7e527",
+        "after": "52e072d06782348fc5956c3f62ee0f5e9555a3e357bd366c344fe82465741a14",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "comms_draft_registration",
+        "before": "0efffb36b37d99d4bcf73b96c55047d6b7b5e7c9cedaab611eb4063727d842af",
+        "after": "b5ed57a82fc453898913b1d91205c17b6b4108e1fbdf21ef83fe63c202b127f7",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "comms_name_number",
+        "before": "b1ebda2f97be8d521927dc98a5207d9385a41117d6f156ee7922adcd833ef943",
+        "after": "d433cbcd7615c1f9b1db0e04d4136ecf6942bd1f4a49227a3d98c56b264ef7e9",
+        "changedIdentity": [
+          15
+        ]
+      },
+      {
+        "tool": "comms_set_primary_number",
+        "before": "6ccc9da6e5506232972a1f4c01e94805a36dc88948a8b8c7321c05e577624c73",
+        "after": "f780081abaa0fb356e4b8f02b9b87692e7ba5e31ffd4e56f85e49d95ea5fc8c8",
+        "changedIdentity": [
+          15
+        ]
+      }
+    ],
+    "scope": "Read-only original-extractor decomposition; no pin regeneration/writes, admission or customer verification",
+    "sourceReleaseReceipt": 6382984309,
+    "sourceLeaseRelease": "aa794e53-f0ba-40a7-95e6-7fce79b46f71",
+    "preRenewalReview": 6383068164,
+    "reviewAssurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "originalRecordSHA256": "829adb0c8b46f1498c5d3c0699106a05b4e600121a0539229b84446895be596f",
+    "bindingBeforeSHA256": "2bbf525ca7af05d7cbc6e973dca5f73e57d23cbff9ea4ea33b53e48ee546bc7a",
+    "bindingAfterSHA256": "4379b98061d640ab2ace69e90717054080fd4842042114a27ea1638b0a230436",
+    "all29LiteralOwnInverse": true,
+    "entireReleasedProducerOwnInverse": true,
+    "priorE04HIGHSourceUnchanged": true,
+    "allOther123DependenciesExact": true,
+    "originalCombinedValidation": {
+      "findings": [],
+      "tools": 29
+    },
+    "boundary": "Exact source reconciliation only. Final-head review/CI/native order/deployment/ordinary roles/CentralQA/full12/founder acceptance owed; no new Chat/Live schema/admission/provider effect."
+  }
+}

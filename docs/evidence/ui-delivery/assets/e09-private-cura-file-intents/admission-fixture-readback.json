@@ -1,0 +1,29 @@
+{
+  "scope": "owned nonpersistent Preview; synthetic transaction-local native source proof only",
+  "sourceHead": "0cb6dbc9ea4dd3189269ce824e944bf8ec136ae3",
+  "protocolFixture": "Fresh replay starts inactive. First admission is refused. Active control row is seeded only inside an intentionally discarded subtransaction; no activation evidence is invented and no provider/model/worker is called.",
+  "inactive": {
+    "result": {
+      "native_error": "INTERACTIVE_PROTOCOL_NOT_READY",
+      "native_sqlstate": "P0001"
+    },
+    "files_after": 0,
+    "turns_after": 0,
+    "users_after": 0,
+    "clients_after": 0
+  },
+  "activeFixture": {
+    "result": {
+      "status": "accepted",
+      "turn_id": "51f518c6-1e58-4076-9d1a-b4c1c2af2247"
+    },
+    "files_after": 0,
+    "turns_after": 0,
+    "users_after": 0,
+    "clients_after": 0,
+    "protocol_active_after": false
+  },
+  "production": "read only: original active=true/database_executor_isolation already existed; no production activation changed",
+  "fullNative": "old245 has11 failures caused by missing active source fixture; repaired247 must run required exact-head CI",
+  "customerAcceptance": "UNVERIFIED"
+}

@@ -3737,3 +3737,48 @@ and token holds remain. All O1–O12, Stripe TEST/payment truth, onboarding/Work
 client acceptance/completion/self-service and integrated founder evaluation stay
 in scope. Own PR/current main/review/CI/release/Auth/acceptance remain independent;
 this LOCAL source increment has no shipped-log row until actual merge/readback.
+## EXP04 prepared signing request source input — October24 local integration
+
+Same originating Agreements engine and sole EXP04 lane; full O1–O12/consultant
+launch, own-SOLO creative scenario and held Agency/Subaccounts remain unchanged.
+The new server-internal prepared-signature-request module extends the original
+saved-preparation reader. It captures exact operation/source intent before awaits,
+re-reads the actual selected PDF/parties/current native authority, refuses a
+different prior review or missing required fields, requires the original handler's
+server-authenticated actor and freezes exact document/version/customer/recipient/
+role/order/field-source arguments. The review checksum is only a precondition.
+
+It creates NO confirmation or approval fingerprint. Only original agreement_send
+HIGH/confirm and the canonical Kit/paige_pending_confirmations may hash, store and
+claim a COMPLETE call. Verified original sender and exact message revision still
+must be bound before that gate; source-only input must never admit an effect.
+Runtime/Spine/HTTP/UI sending is UNAVAILABLE. Original selected-preparation token/
+effect holds, signature transaction/consent/seal, shared sender and Portal remain
+unchanged. No native migration, provider, financial, permission or customer action.
+
+Actual original PDF/native-reader control PASS plus22 corrected missing-integration
+cases RED precede source. Initial all-numeric uppercase-UUID test fixture was
+corrected to a genuinely uppercase UUID before implementation; original log retained.
+Fresh review found missing internal expectedActor could adopt current session;
+one causal RED preceded mandatory refusal. Strict52 cases now PASS (25new and
+27original unmodified) with denied network/env/run/ffi/sys; lint2files0. A pre-test
+readonly-array assertion cast failed strict typing and was corrected using its
+actual readonly type, without skipping checks. These are synthetic Auth/RPC/Storage
+ports around the real renderer/readers; no authenticated native customer proof.
+
+No visible UI source changes, new navigation, alternative document/approval/
+execution store, sender, scheduler or provider adapter. Only the owning test path
+is added to the original STRICT Deno step. Original CI flags/assertions and all
+captured UI source/assets remain. Original source leases ANT1618e1c0d50/43aacc63.
+Shared Communications agreement-specific message binding remains a receiving
+contract/reservation dependency before send-message edits; generic comms.email_send
+and SOLO welcome do not authorize an agreement request. EXP09 consumes original
+client/relationship/document/version/consent/history via ANT163, not a copied Portal.
+
+Functional: LOCAL/UNMOUNTED, exact final review/CI/source release owed. Visual:
+NOT_APPLICABLE to this unmounted server helper; no fresh render claim. Experiential:
+complete prepared review→approved send→assigned inputs/consent→atomic signature→
+final prepared seal remains unfinished. Activation, ordinary owner/staff/linked
+client/cohorts/revoke/reload/provider/CentralQA and Founder Acceptance UNVERIFIED.
+ALG01 bounded source reconciliation PARTIAL,02 progression incomplete,12 bounded
+refusal/recovery PARTIAL and13 usefulness UNVERIFIED; no catalogue Live promotion.

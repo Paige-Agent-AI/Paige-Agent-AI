@@ -3550,6 +3550,27 @@ promotion, customer name/version/announcement or restricted activation. Ordinary
 reviewed forward fix or bounded hook revert preserves original native records.
 
 
+## C26 original Clients scope, refusal and uncertain readback — October24
+
+REPAIR/REUSE, LOCAL SOURCE: consultants/coaches/fractional professionals and
+own-SOLO creative firms retain the complete O1–O12 roadmap. Original Clients
+standing/shared Work now follows canonical actor/workspace/client/status, retires
+stale callbacks at commit and rejects superseded confirmations. Original native42501
+clears old figures; transient failure does not count as confirmation, and the
+recoverable read-error message no longer claims a dispatched write did not happen.
+Original read/parser/composer/Collections calendar and exact Operations RPC/actor/
+tenant/row-version arguments are unchanged. No Portal grants or private UI edit.
+
+Original65 assertions plus32 new cases PASS; current compiled v6 source has11
+unmodified native PNGs,20 input/nine asset hashes and real local keyboard/share/
+unshare/unsaved-form cancel checks. Actual main7b2ac5207 composition preserves all25
+own files and all other incoming records. Source-only scoped lint/detector pass;
+fresh exact-head type/review/CI/merge/deployment and authenticated ordinary roles,
+reload/revocation/full shell/CentralQA/founder acceptance remain separate and owed.
+[Evidence](../evidence/ui-delivery/e04-client-scope-continuity.md). No shipped row or
+Capabilities/Algorithm Live promotion before its real release; no provider/business
+activation, new engine or agent. Earlier causal failures and original E4-S3 intact.
+
 ## C18 same-branch mainc9ab reconciliation — October24
 
 SOURCE RELEASE VERIFIED, October24 07:46:46UTC: original2681 reviewed2a24465b/LOWER5637255408/all14 exact checks+two webSUCCESS → mainba97335e016b9fea741da5005d1e8dedd7baa696/tree85622aed, actual e328+2a parents equal inspected union. Normal production dpl_5N4vqtooBsZC9sDQ7qkJzJSgiKeK READY/both public200exactba-mvm39n7q/customerUpdate:null; actual served SoloEntry-DA7JaV92.js/1524cbcd9/allthree owning markers. Normal deploy-migrations40075012907 SUCCESS, actual native810004/owner readerffc779/private validators5347818+235026/original13 signature3a2fa340 ABI/ACL/config preserved. All21 reviewed Git blobs unchanged:20 historical raw frame pins exact, one accepted-commercial-read.ts pin exactly its WindowsCRLF checkout. The failed raw-only assertion and original manifest/images remain; no new rendered/authenticated claim. No changed Edge entrypoint or Edge importer of the new isomorphic browser read SDK; normal workflow40075012882 succeeded, no fresh Edge-version claim. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2681#issuecomment-6381631848). Ordinary owner/staff/linked-client private records/file availability/roles/reload/revocation/CentralQA/fullO1–O12/founder acceptance remain UNVERIFIED. Higher820004 waits E09 proposed810009 actual receiving/release. No charge/send/signing/service-completion or Algorithm/Capabilities activation.

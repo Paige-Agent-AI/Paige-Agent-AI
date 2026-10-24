@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-24T08:51:57.148Z",
+  "original": "1aeaee54eae2f865c88591f2a4adb20355f704f3",
+  "incoming": "7b2ac52074e1697e961f31a28490d0e22bd2ebbb",
+  "composed": "e98b2f35d773005f5062cde7d4cc0fecd5e10f1c",
+  "tree": "9a88bb7e6a09472d6ba6f3f7f1ac330746e9a178",
+  "all25OwnFilesUnchanged": true,
+  "allOtherIncomingFilesUnchanged": true,
+  "capturedSourceBytesUnchanged": 20,
+  "boundary": "Exact source composition only, not a new render, authenticated operation or production release. Final review/CI head recorded separately."
+}

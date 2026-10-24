@@ -1,3 +1,21 @@
+## EXP02 original report source requests — October24 source candidate
+
+The original document_generate report path now has a local closed source-request
+alternative to reference-based admission: canonical Metric issuer/resolver facts
+are captured once under the original work lock, retaining the existing worker,
+private artifact, completion turn and Rail. Exact replay never reissues facts;
+legacy references/nine document types and current authority remain intact.
+[Bounded evidence](../evidence/ui-delivery/e2-report-source-requests.md):116 owning
+tests, isolated native proof and scoped lint; genuine full-schema issuer suite,
+exact-head review/CI, ordered migration/Edge readback and actual customer settlement
+remain owed. Original E03/E10 migration700000 collision is resolved by2732/e35bb7f9.
+Current main6667393a and actual native820004 are verified; never-applied840002
+follows original E04catalogue830004. Current composed review/CI/Preview remain owed.
+No shared Chat entry edit, new engine/store, provider or action activation.
+CAP014/015 remain Unverified, full19/nine and the consultant SOLO launch scenario
+remain required. Original CPU-failed uncertain monthly request stays unretried
+with EXP05; this source foundation is not root-cause or recovery evidence.
+
 ## EXP09 private CURA files — native source released, October24 UTC
 
 Original2723/5391 → maina2db/tree0c858 is actually deployed through containing28622/normal40081233729/deploy120837432245. Production records810009;13 incumbent source/ABI/default/ACL bindings,6 helper/wrapper bodies/permissions, restrictiveALLprivacy/purposeCHECK/enabledorigintrigger and original private20MBbucket match tested source. Native305/453/294/61/allseven/Knowledge208/grantordering and all13 exactchecks/two statusesPASS; lower5637529215. [Sole Master4.0 shipped row](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log), [receipt6382571591](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2723#issuecomment-6382571591), [actual sanitized readback](../evidence/ui-delivery/assets/e09-private-cura-files/production-readback.json). First lock refusal and concurrent originating Studio migration reconciliation are historical, not waived. No ownEdge/provider/business/Live activation. This is a native foundation: actual paste/bulk/private message/model/customer return and all42/seven/Teach/full founder acceptance remain in the original E09 packet and PROOF OWED. No customer version or algorithm/capability promotion.
@@ -5,6 +23,14 @@ Original2723/5391 → maina2db/tree0c858 is actually deployed through containing
 ## EXP09 customer microphone — source release verified, October24 UTC
 
 Original#2718/5868 → maina2d9b3e5/treedf941330 is deployed, exact productionFLfGdD READY/publica2d-mvlt2i7h/null. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records actual parents, unchanged six reviewed source/test blobs, lower5636374775, all exact-head checks and fresh native/full-pillar/grant proof; [release receipt6379127602](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2718#issuecomment-6379127602). Original paige-dictate and newer EXP05#2697 recovery remain; no migration, Edge, provider or Live activation. Actual physical iPhone capture/transcription, ordinary customer reload and full Experience/founder acceptance remain UNVERIFIED. Private file storage, Chat integration, all42/seven outcomes and source-owned dependencies continue in the original [EXP09 packet](../delivery/e09-customer-relationships.md). No recursive documentation-release row or algorithm maturity promotion.
+
+## EXP09 private upload consumer — source released, October 24 UTC
+
+Original #2733/cc2 → main dea2db4a7865ccf379815e5b10b2e54103337879/tree 49b9b75f passed lower-assurance review 5638005838, all 10 applicable checks/two web statuses and legitimate schema-free Preview SKIPPED. Five consumer/test blobs remain exact; production Haji READY/public dea2-mvmbr1y2/null and actual served Documents private gate markers read back. [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log), [receipt 6383779107](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2733#issuecomment-6383779107), [original readback](../evidence/ui-delivery/assets/e09-private-cura-files/consumer-production-readback.json). No migration/Edge/activation or customer outcome/algorithm promotion. Actual mounted files/model/Word/private return, all 42/seven/Teach and one integrated founder evaluation remain unfinished; mechanical closeout has no recursive product row.
+
+## EXP09 private file/message binding — native source released, October24 UTC
+
+Original2755/1919 → main65699d36369c88412e3e7e370b7c14e893272773/tree351627f7 is deployed through normal40089541033/deploy120859317009 with actual810109 persistence,11 native bodies/API/default/security/access fields, four original dependencies and enabled terminal trigger read back. All13 required checks/two statusesSUCCESS, lower5637979787; actual final1919 native247/all seven original pillarsPASS. Exact web9fgi READY/public65699-mvmb61so/null. Sole [Master4.0 source row](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log), [receipt6383622816](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2755#issuecomment-6383622816) and [sanitized original readback](../evidence/ui-delivery/assets/e09-private-cura-file-intents/production-readback.json) distinguish this native foundation from actual composer/model/customer return. No own runtime/provider/Live/Research/Knowledge/business activation or algorithm promotion. All42/seven/Teach and one integrated founder evaluation remain unfinished. This mechanical source-identity closeout has no recursive product-release row.
 
 ## EXP09 access and invitation source releases — October24 UTC
 
@@ -148,6 +174,41 @@ records94/94 tests, causal focus correction and native responsive/theme checks w
 explicit synthetic ports. Settings authority and source failures are unchanged.
 Review/CI/release and authenticated read-only proof remain owed; no zone was saved,
 trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed.
+
+## EXP08 Manage My Team / Team Hub — receiving lead and Team index, October23
+
+**Owner authorization:** one Claude Code lead owns EXP08, with ZION as the supervised product
+specialist. EXP05 keeps Work, assignments, Planning, Calendar execution, the ZION runtime and
+receipts. Team Hub messages and requests reference one original EXP05 Work record and read their
+status from it. Staffing, a receiving acknowledgment, runtime proof and customer acceptance are
+separate states.
+
+Team index. Read these before any Team or Team Hub work:
+
+| Source | What it carries |
+|---|---|
+| [Team surface card](../doctrine/surface-cards/team.md) | Current source and its corrections (Oct 23), owner decisions D1–D4, the six `high` access tools, why Team is `PARTIAL` (no Rail outcome) |
+| [Ownership & authority lifecycle](../handoff/team-ownership-authority-lifecycle.md) | Received by EXP08 and still `UNAVAILABLE`; business-ownership facts never grant authority |
+| [Recipient binding P0](../delivery/solo-team-recipient-binding-p0.md) | Invites bind to the confirmed recipient email (`20261200000300`); production persistence not re-read |
+| [Team Spine packet](../delivery/spine-integration-packet-team.md) | `team.authority` read (shipped #876). Its "no code yet" and four-fact statements are historical |
+
+**Live today:**
+- Settings → Team (`src/solo/team-workspace.tsx`).
+- 11 `team.*` Spine capabilities.
+- Presence RPCs.
+
+**Not built:** a Team Hub main-menu item, channels, DMs, threads, mentions, a team `/PAIGE`
+palette, and the messaging tables behind them. Searching the migrations for `team_message`,
+`team_channel`, `channel_members`, `direct_message` and `message_mentions` returned zero hits.
+
+**Owner decisions, 2026-10-24:**
+- The Team Hub design (prototype v2) is approved and frozen under §28.
+- The collaboration storage is approved, as additive migrations with isolation proven before
+  release.
+
+Both are approvals to build. Neither is runtime proof.
+
+Slack and Teams connections belong to EXP10, and Team Hub doesn't depend on them.
 
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
@@ -2905,7 +2966,50 @@ ALG01/12 supporting checks only; ALG02/13/catalogue unchanged. Next original PDF
 prepared-field renderer/source integration remains bounded, not a second engine.
 
 
-## EXP02 original source-backed report Chat consumer — October23 development
+## EXP02 original source-backed report Chat consumer — October23 source released
+
+The consultant launch workflow and secondary creative-firm SOLO scenario connect
+the full19/nine scope. See the original [matrix acceptance crosswalk](../delivery/e2-customer-experience-integration-matrix.md#consultant-launch-acceptance-alignment--october2324)
+and existing Capability Outcome Map126–128; original IDs/writers, held Agency and
+Subaccounts, algorithm maturity, actual source/result/Rail proof and one final
+integrated founder evaluation remain intact. No new provider or business activation.
+
+October24 reconciliation: original collision2732 is resolved; EXP04 original
+reference-continuity2728 and reader2681 are merged, signed terms820004 source/native
+release verified separately. New report foundation2734 remains a candidate with
+never-applied840002 after original catalogue830004. Actual customer report recovery,
+corrected Finance native proof and all19/nine acceptance remain owed. No protected
+monthly replay/reset or heldE13/provider activation. These are current source
+dependencies, not new customer acceptance.
+
+Source2675 reviewed1f893139364fbdcb0607ddac6798952d5fd6c3dd/tree0187aa25,
+LOWER5633346286; all11 exact-head applicable checks/genuine Preview/full native/
+Edge ratchet and both statuses SUCCESS. Actual main10eb1647fdd0b527c2dd2cc919c7a169cdac11bc
+exactly matches inspected64347+1f/tree0187aa25. Normal Edge40015241840/120625516345
+SUCCESS, source artifact12528421385. Independent actual Chat518/all267 files/
+verify_jwt:true and original worker56/all36 files/verify_jwt:false match the reviewed
+tree; original internal-caller safeguards retained. Own SQL N/A. Web9GL READY/exact
+10eb metadata; actual public HTTP200 containing56219-mvle4w9k/null, ancestry and
+unchanged original sources verified. Exact10eb public version not sampled.
+[Production source6373627396](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2675#issuecomment-6373627396).
+
+Actual ordinary monthly report QA did not settle successfully: matching Chat518
+CPU exhaustion2026-10-23T20:17:31Z before confirmed work. Original saved user turn,
+no assistant terminal, zero original document work/completion at readback; existing
+executor claim retained. No retry, claim/drain/recovery reset or safe-cessation
+inference. Existing protected recovery owner coordinated through ANT11de6fb038.
+[Actual QA6373990753](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2675#issuecomment-6373990753).
+This is a real remaining reliability finding, not a source/CI/deployment failure.
+
+Actual released nine-entry catalogue read6374099460 retains Coming Soon for
+CAP009/010/011/013, Limited012/016/017 and Unverified014/015; actor access Unverified.
+Functional source deployed / Visual unchanged supporting renderer / Experiential
+report interrupted, ordinary artifact/Rail/read/reload/refusal/recovery/roles/cohorts/
+Live/full19 proof owed / Founder NOT_ACCEPTED. Algorithms and original9PASS/0FAIL
+plus12PASS/0FAIL/4BLOCKED unchanged. No new provider/model/permission/INT346 or
+consequential activation, runtime, registry or customer release identity.
+
+### Historical candidate preparation — superseded by the source release above
 
 The original document_generate tool adds closed business_review briefs with an
 explicit month/quarter period and1–12 issued canonical Metric references. Same

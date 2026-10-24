@@ -7,17 +7,20 @@ vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: () => {
   const location = useLocation(); const navigate = useNavigate();
   return [location.pathname.endsWith("/capacity") ? "capacity" : "work", (view: string) => navigate(`/solo/123/operations/${view}`)];
 } }));
-vi.mock("./OperationsWorkspace", () => ({ OperationsWorkspace: ({ view, weeklySourceSearch, onNavigationGuardChange, onViewChange, onWeeklySourceDismiss, onTaskFocusDismiss, onOpenAgreements, onPlaybooksViewChange }: {
+vi.mock("./OperationsWorkspace", () => ({ OperationsWorkspace: ({ view, weeklySourceSearch, onNavigationGuardChange, onViewChange, onWeeklySourceDismiss, onTaskFocusDismiss, onOpenAgreements, onPlaybooksViewChange, onOpenBusinessTimeZone, businessTimeZoneRef }: {
   view: string; weeklySourceSearch: string; onViewChange: (view: string) => void; onWeeklySourceDismiss: () => void;
   onNavigationGuardChange: (guard: (() => string | null) | null) => void;
   onTaskFocusDismiss: () => void; onOpenAgreements?: () => void; onPlaybooksViewChange?: (view: "procedures" | "automations") => void;
+  onOpenBusinessTimeZone?: () => void;
+  businessTimeZoneRef?: React.Ref<HTMLButtonElement>;
 }) => {
   React.useLayoutEffect(() => { onNavigationGuardChange(() => harness.reason); return () => onNavigationGuardChange(null); }, [onNavigationGuardChange]);
   return <div data-view={view} data-query={weeklySourceSearch}><button onClick={() => onViewChange("capacity")}>Capacity</button>
     <button onClick={onWeeklySourceDismiss}>Dismiss source</button><button onClick={onTaskFocusDismiss}>Dismiss Task focus</button>
     <button onClick={() => onPlaybooksViewChange?.("automations")}>Automations</button>
     <button onClick={() => onPlaybooksViewChange?.("procedures")}>Procedures</button>
-    <button disabled={!onOpenAgreements} onClick={onOpenAgreements}>Original agreements</button></div>;
+    <button disabled={!onOpenAgreements} onClick={onOpenAgreements}>Original agreements</button>
+    <button ref={businessTimeZoneRef} disabled={!onOpenBusinessTimeZone} onClick={onOpenBusinessTimeZone}>Original business time zone</button></div>;
 } }));
 import { OperationsRoute } from "./OperationsRoute";
 function HistoryControls() {
@@ -125,4 +128,22 @@ it("keeps the selected process view in accepted URL/history without losing origi
   expect(container.querySelector("output")?.textContent).toBe("/solo/123/operations/playbooks?filter=mine#source");
   await click("Forward"); expect(container.querySelector("output")?.textContent).toBe(selected);
   await click("Procedures"); expect(container.querySelector("output")?.textContent).toBe("/solo/123/operations/playbooks?filter=mine#source");
+});
+
+it.each(["123", "456"])("opens account %s's canonical zone setting only after the original navigation guard permits leaving", async account => {
+  const original = `/solo/${account}/operations/overview?filter=mine#week`;
+  await act(async () => root.render(<MemoryRouter initialEntries={[original]}><HistoryControls />
+    <Routes><Route path="/solo/:account/operations/*" element={<OperationsRoute openPaige={vi.fn()} />} />
+      <Route path="/solo/:account/settings/setup/business-profile" element={<p>Canonical business time zone setting</p>} /></Routes>
+  </MemoryRouter>));
+  harness.reason = "Unconfirmed original work";
+  await click("Original business time zone"); expect(container.querySelector("output")?.textContent).toBe(original);
+  harness.reason = null; await click("Original business time zone");
+  expect(container.querySelector("output")?.textContent).toBe(`/solo/${account}/settings/setup/business-profile#business-time-zone`);
+  await click("Back"); expect(container.querySelector("output")?.textContent).toBe(original);
+  expect(document.activeElement?.textContent).toBe("Original business time zone");
+});
+it("offers no zone-setting exit without a canonical account route", async () => {
+  await render();
+  expect([...container.querySelectorAll<HTMLButtonElement>("button")].find(node => node.textContent === "Original business time zone")?.disabled).toBe(true);
 });

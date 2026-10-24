@@ -35,14 +35,24 @@ function Screen() {
   return (params["*"] || "").split("/")[0] === "ads" ? <AdsWorkspace tenantId="tenant-review"/> : <GrowthHub />;
 }
 const legacy = params.get("legacy");
-const entry = legacy !== null ? `/solo/review/growth/ads${legacy ? `?view=${legacy}` : ""}` : tab === "ads" ? "/solo/review/ads" : `/solo/review/growth/${tab}`;
+// EXP07: `piece=`/`kind=` pass through to the Content tab's preview/filter (the real app keeps
+// them in the address), and `paige=open` reserves the 380px PAIGE column beside the workspace so
+// reflow can be captured with the chat panel present. Defaults keep every existing drive intact.
+const piece = params.get("piece");
+const kind = params.get("kind");
+const query = [piece ? `piece=${piece}` : "", kind ? `kind=${kind}` : ""].filter(Boolean).join("&");
+const entry = legacy !== null ? `/solo/review/growth/ads${legacy ? `?view=${legacy}` : ""}` : tab === "ads" ? "/solo/review/ads" : `/solo/review/growth/${tab}${query ? `?${query}` : ""}`;
+const paigeOpen = params.get("paige") === "open";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode><HarnessBoundary>
-    <main className="paige-solo" data-theme={theme} style={{ height: "100vh", minHeight: 0, minWidth: 0, overflow: "hidden" }}>
-      <MemoryRouter initialEntries={[entry]}>
-        <Routes><Route path="/solo/:account/*" element={<Screen />} /></Routes>
-      </MemoryRouter>
-    </main>
+    <div style={{ display: "flex", height: "100vh", minWidth: 0, overflow: "hidden" }}>
+      <main className="paige-solo" data-theme={theme} style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+        <MemoryRouter initialEntries={[entry]}>
+          <Routes><Route path="/solo/:account/*" element={<Screen />} /></Routes>
+        </MemoryRouter>
+      </main>
+      {paigeOpen && <aside aria-label="PAIGE column (reserved)" style={{ width: 380, minWidth: 380, borderLeft: "1px solid rgba(127,127,127,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(127,127,127,0.8)", fontSize: 13 }}>PAIGE column reserved (380px)</aside>}
+    </div>
   </HarnessBoundary></StrictMode>,
 );

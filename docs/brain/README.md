@@ -11,6 +11,17 @@ tenant, original turn and receipt are rechecked; unknown is not replay authority
 retain missing UI mounting, exact-head release and authenticated recovery evidence.
 Full Operations/weekly/automation/ZION outcomes remain open; no activation.
 
+## EXP05 original weekly receipt validation — source development, October23
+
+The original weekly ActionAdapter now correlates committed observation and receipt
+to its exact original work identities. Mismatches remain unconfirmed and cannot
+turn into retry permission.23 focused cases and the original real-engine/Gateway/
+SQL observation/redrain case pass locally; full native program, review, exact-head
+CI, release/readback and authenticated recurrence remain separate proof obligations.
+[Original Experience packet](../delivery/experience-05-weekly-commitment-check.md)
+preserves all ten outcomes/E5-CV1–9 and activation boundaries. No new engine,
+scheduler, ledger, approval, domain writer, provider or ZION instructions activation.
+
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
 The bounded original#2401 successor preserves a known pre-processing refusal on

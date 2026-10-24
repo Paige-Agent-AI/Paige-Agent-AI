@@ -1,6 +1,14 @@
 # EXP05 — original specialist status through the native history channel
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
+
+Original536867b7 completed all11 exact-head checks and both web statuses. Before
+merge, main advanced through E07/a984 and our weekly recovery2700/d006. The only
+text conflict was two adjacent EXP05 Brain headings; both complete sections are
+retained. Original status/helper/loader/parser/tests and reviewed source pins
+are unchanged. Incoming E07 product/evidence and exact weekly adapter are
+preserved. This composition requires fresh exact-head CI; prior green does not
+substitute for it. No layout, authority, provider or activation change is added.
 INTERNAL_BUILD_IDENTITY: c2716bb9ddf19489af41dd1db8f3619ce157f45c; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal affected-function deployment after exact-head required gates); evidence=docs/evidence/ui-delivery/exp05-specialist-original-status.md
 RELEASE_CHANNEL: development: reviewed original status transport and shared client loader awaiting required release gates.
 RELEASE_CLASSIFICATION: internal-only: bounded EXP05 original-result recovery integration, no customer launch.
@@ -196,3 +204,10 @@ No server helper, source pin, authority, renderer/layout or execution route chan
 Fresh exact-head full-project CI remains mandatory; current main's separate
 duplicate700000 migration must be corrected by its originating owner before
 release. Prior native success is not a current-main green-gate claim.
+
+Current main79171c82 now includes originating E10 correction2732/e35 and E03
+closeout2729, consumed without changing the status/authority/client source.
+E10 SQL body is preserved at800000, genuinely recorded in production; the
+earlier duplicate-version hold is resolved. Full local compiler completed with
+six existing baseline signatures and no added signature; the exact parser's
+isolated compiler exits0. Fresh composed-head hosted CI remains required.

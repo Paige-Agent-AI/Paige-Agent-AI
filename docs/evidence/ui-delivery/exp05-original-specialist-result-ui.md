@@ -1,6 +1,14 @@
 # EXP05 — inspect the original specialist result in Chat
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
+
+Original16492aa7 completed all11 applicable checks (schema-free Preview skipped)
+and both web statuses. The composed original-status parent56b81b3f now preserves
+released weekly recovery2700/d006 and E07/a984, with both owning Brain sections.
+All four actual UI/parser/owning-test files are byte-identical to reviewed16492;
+no rendering, focus, authority or effect change is introduced by composition.
+Fresh exact-head CI and parent production readback remain required; prior green
+and dated native-component renders are not new authenticated recovery proof.
 INTERNAL_BUILD_IDENTITY: 4919d49834d4e7a9016677b19e14c925f63a38d7; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(parent2722 normal status-function deployment); evidence=docs/evidence/ui-delivery/exp05-original-specialist-result-ui.md
 RELEASE_CHANNEL: development: native original-result control, dependent on reviewed status transport.
 RELEASE_CLASSIFICATION: internal-only: bounded EXP05 recovery increment; full Operations remains unfinished.

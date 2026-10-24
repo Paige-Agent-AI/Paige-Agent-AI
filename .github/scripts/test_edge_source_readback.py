@@ -1026,5 +1026,22 @@ class BoundedDeployFixtures(unittest.TestCase):
         self.assertEqual(len(self.calls), 3)
 
 
+    def test_signal_or_abnormal_exit_cannot_authorize_fallback_from_error_text(self):
+        for code in [-9, 2, 137]:
+            with self.subTest(code=code):
+                self.calls.clear()
+                self.oversize()
+                self.api_result.returncode = code
+                self.assertEqual(self.run_deploy()['reason'], 'api_failed_no_retry')
+                self.assertEqual(len(self.calls), 1)
+
+    def test_invalid_function_selector_is_refused_before_provider_io(self):
+        result = edge_deploy.deploy(
+            self.fixture.repo, self.fixture.commit, 'paige-ai-chat;unsafe',
+            runner=self.runner)
+        self.assertEqual(result['reason'], 'source_validation_refused')
+        self.assertEqual(self.calls, [])
+
+
 if __name__ == '__main__':
     unittest.main()

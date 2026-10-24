@@ -28,7 +28,7 @@ MAX_SECONDS = 600
 
 def rejected_for_source_size(result):
     """Only the exact vendor API rejection admits another bundling method."""
-    if result.returncode == 0 or not isinstance(result.stderr, str):
+    if result.returncode != 1 or not isinstance(result.stderr, str):
         return False
     if len(result.stderr) > 1024 * 1024:
         return False

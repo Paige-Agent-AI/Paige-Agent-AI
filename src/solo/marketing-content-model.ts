@@ -17,8 +17,38 @@ export type ContentPiece = {
   image_url: string | null;
   size: string | null;
   brief: string | null;
+  meta?: Record<string, unknown> | null;
   updated_at: string;
 };
+
+/** What a generated image or video actually is, from the metadata its completion recorded (EXP07
+ *  row 3): file format, real pixel dimensions, the model that made it and its license class. Every
+ *  fragment is shown only when the record holds it — a piece with no recorded metadata says
+ *  nothing rather than guessing, the same honesty rule as every other line here. */
+export function generatedFacts(piece: Pick<ContentPiece, "kind" | "meta">): string[] {
+  const kind = pieceKind(piece);
+  if (kind !== "image" && kind !== "video") return [];
+  const meta = piece.meta;
+  if (!meta || typeof meta !== "object") return [];
+  const record = meta as Record<string, unknown>;
+  const str = (key: string) => {
+    const value = record[key];
+    return typeof value === "string" && value.trim() ? value.trim() : null;
+  };
+  const width = record.width;
+  const height = record.height;
+  const facts: string[] = [];
+  const mime = str("mime_type");
+  if (mime) facts.push(mime.split("/")[1]?.split("+")[0]?.toUpperCase() ?? mime);
+  if (typeof width === "number" && typeof height === "number" && Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+    facts.push(`${width}×${height}`);
+  }
+  const model = str("model");
+  if (model) facts.push(`made by ${model}`);
+  const license = str("license_class");
+  if (license) facts.push(license === "provider_and_model_terms" ? "provider & model terms" : license);
+  return facts;
+}
 
 /** The four kinds the library holds. Copy is anything that isn't an image, a video or a document. */
 export type PieceKind = "image" | "video" | "document" | "copy";

@@ -105,3 +105,18 @@ session termination. Reservation is original ANT16163c71847 continuation.
 ### Corrected main79171c824 / actual production800000 continuation
 
 Originating EXP10 correction2732 resolved the duplicate; the earlier collision is historical. Production records800000. Only our never-applied reader710004 moves to810004, preserving SQL SHA221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb and all original assertions/timeouts. The three proof path replacements and full current-manifest metadata have exact inverses; prior710004 manifest is retained in compiled-result-before-fourth-native-filename.json. All21 captured critical source inputs remain byte-identical except that same SQL filename. Original14 frames and3 assets retain pixels/times/bytes. This is continuity, not newly rendered/authenticated proof. Entire incoming Master/Brain preserved by original-own-delta inverse. Exact-head review/CI and ordinary native release/readback remain owed; no manual SQL/history/include-all/session workaround. Original ANT16163c71847 now reserves810004→E09-proposed810009→820004→830004; E09 receiving confirmation remains separate.
+
+
+### Current mainc9ab source composition, October24
+
+Actual mainc9ab5325ae318b0602eab2883a5d25269f569aaf is composed on the SAME original
+reader branch after actual production800005. Original f7 all14 gates are dated.
+One shared Brain append conflict retained both complete contributions; original
+own-insertion inverse verifies ENTIRE incoming Master/Brain/journey. All21
+captured critical inputs and36 old tracked assets/14 frames are unchanged; SQL
+810004 SHA221b03654a5b45096bc75ddf2218769359d133f59ad766721947578eed3a1bfb.
+No frame, capture time, compiled asset, manifest or historical failure was rewritten.
+See assets/e04-accepted-commercial-record/current-main-c9ab-continuity.json.
+This is source compatibility, not fresh visual/native/customer acceptance. Exact
+new-head review/CI/normal release/readback and full owner/client/CentralQA/founder
+proof remain owed; no higher native release around E09 proposed810009 reservation.

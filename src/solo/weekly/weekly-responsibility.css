@@ -47,6 +47,8 @@
 .spw-chat-head:has(> .e5-weekly-chat-entry) { container-name:e5-weekly-chat-header; container-type:inline-size; flex-shrink:0; height:auto; min-height:46px; padding-block:1px; }
 .e5-weekly-chat-entry .e5-weekly-open-label { display:inline; font-size:inherit; color:inherit; margin:0; }
 .e5-weekly-open { display:flex; align-items:center; gap:8px; font-size:12px; }
+.e5-weekly-chat-entry[data-weekly-outcome] { display:grid; gap:4px; min-width:0; }
+.e5-weekly-entry-outcome { max-width:30ch; color:var(--pg-muted,hsl(var(--muted-foreground))); font-size:12px; line-height:1.4; overflow-wrap:anywhere; }
 .e5-weekly-calendar-entry { padding:16px 0; font-size:12px; line-height:1.5; border-top:1px solid var(--pg-line,hsl(var(--border))); }
 .e5-weekly-calendar-entry ul { padding:0; list-style:none; }
 .e5-weekly-calendar-entry li > button { display:flex; flex-direction:column; gap:6px; width:100%; text-align:left; margin-bottom:12px; }

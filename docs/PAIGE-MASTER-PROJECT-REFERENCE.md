@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-24 UTC — EXP05 original specialist approval brief; source release, customer execution still owed.**
+
+| Increment | Exact release and production proof | Completion boundary |
+| --- | --- | --- |
+| [#2747](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2747), show the stored specialist assignment before approval | Reviewed a7a9c7eb57fa6e080d918acefab2d7373195a011, LOWER5637311646/5637407558; all11 exact checks/two statuses SUCCESS/no unresolved thread. Main48054028e819fba4f11d1728a8559b241bb52c74 parentsba973+a7/treec9a2cb4d59caf93b99d6aa51c10e00ae79e8a642 equal inspected union. First Edge40076089722 deployed/readback525 then FAILED only prior-baseline record guard; retained. Existing recovery40076295305/job120820251218 SUCCESS; onlyChat affected, certified edge-live480. Actual08:01:47UTC Chat526 ACTIVE/JWTtrue/import_mapfalse, all269 source files independently exact480; rootcd1532c2a8287c777b63964059d1066b53b26c6aee1c73a8d72e323cb661563a/archive4efb5659b9d0932581ba556bd1371d952b2164bd668d1f10fd6f290a8696482a. Recovery artifact12552284876/digest332a5a2ec5bff03ffe3d3d5c6d6cad49a722796c6de387059c0334c217c03998. Exact webdpl_AYTJE2es7b3EHvgiWLy9P6t41m3Y READY; both public480-mvm3v0hz/null08:01:06–07UTC. [Original receipt6381759625](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2747#issuecomment-6381759625). | Future original proposal sentence only; stored arguments, HIGH Trust approval, Harness, execution and recovery unchanged. No SQL/provider/recurrence/Live activation or approval. Original protected proposal expired unconsumed; repaired ordinary display, actual ZION response/Rail/reload, weekly/automation/cohort/eligibleLive and full ten-outcome/E5-CV1–9/founder acceptance remain UNVERIFIED. No catalogue/algorithm promotion or customer announcement. |
+
 **2026-10-24 UTC — EXP03 form inquiries join Conversations (#2172, the resumed zCod lane's first code release); the first live F5→F6 journey reproduction is recorded separately (journey §13, PR #2706 — a drive record, not a release).**
 
 | Increment | Exact release and production proof | Completion boundary |

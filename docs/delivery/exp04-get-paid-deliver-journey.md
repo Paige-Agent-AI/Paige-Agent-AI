@@ -1,3 +1,15 @@
+## October24 catalogue forward continuation — source only
+
+Current original main includes E03700000. Preserve reviewed reader710004, native
+exact terms720004 and original compatible E09 slot before catalogue730004. Only
+never-applied650004→730004 changes filename; all SQL bytes remain SHA62f1f423eee91f54a3c5dd5848a69b8c448357eaa4f3671a6ececf587771bbdd.
+One original26-control proof path has exact byte inverse, assertions/timeouts and
+all49 incumbent catalogue records unchanged. Original pending E05 dependency is
+now released; consume its current original source without admission/pin bypass.
+Fresh exact review/CI/cold normal Preview and native/API/source readback are
+required. Prior dated evidence below remains historical; no include-all, history
+patch, session termination, new grant/provider/Chat activation or all12 claim.
+
 ## October24 forward reader release order
 
 Actual production E09 620009 and630009 are persisted before this still-draft

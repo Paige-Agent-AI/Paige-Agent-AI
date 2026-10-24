@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 export function proveEffectiveCommercialCatalogue({sql,read,tenant,actor}){
  let checks=0;
  const equal=(actual,expected,why)=>{assert.deepEqual(actual,expected,why);checks++;};
- const source='supabase/migrations/20271113650004_e04_effective_terms_catalogue.sql';
+ const source='supabase/migrations/20271113730004_e04_effective_terms_catalogue.sql';
  const original=read('supabase/migrations/20271112130000_experience05_confirmed_weekly_draft.sql');
  const start=original.indexOf('-- Extend the incumbent Settings catalogue;');
  const end=original.indexOf("DO $$ BEGIN\n  IF to_regprocedure('public._workspace_event_display_before_weekly_draft",start);

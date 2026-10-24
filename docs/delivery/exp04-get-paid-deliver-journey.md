@@ -1,3 +1,7 @@
+## C29 current-main saved signing review — October24
+
+REUSE/EXTEND original2737/b244 saved-review read and existing mounted document workspace on main584. At selective import45 original blobs were exact; current proof then updates only its evidence record, retaining44 exact original blobs. One owning strict test is the only CI addition. No C19/C20/C21 execution/native/Chat/C0b/risk/approval code is imported. Current44 strict Deno/87 SDK+pane assertions, scoped ESLint, Vite194files/28.16s and three native desktop/narrow ready/error frames plus keyboard return/retry pass in synthetic original-source ports. Original10 frames retained unchanged. Source/review/CI/merge/deployment/activation/authenticatedQA/founder acceptance remain independent; final release gates still owed. See original [saved-review evidence](../evidence/ui-delivery/e04-prepared-signature-review.md). Full12 scope, consultant launch scenario, original sender/Work/Portal owners and consequential holds preserved.
+
 ## October24 forward reader release order
 
 Actual production E09 620009 and630009 are persisted before this still-draft

@@ -8,14 +8,14 @@ FLOW_PROTOTYPE: NOT_REQUIRED: existing report flow and interface retained; this 
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner/admin explicitly requests a private draft report using original permitted sources, without authoring facts or keeping foreground Chat busy issuing each source.
 VISUAL_DIRECTION: PASS: preserve approved Executive design and original spacious report reader. No generic dashboard or fabricated chart.
 AUTOMATED_EVIDENCE: PASS: original validator/worker RED3FAIL113PASS →116PASS. Existing isolated PostgreSQL proof first rejects planned sources; updated path passes same-intent concurrency, ordered issuance/capture, current authority, rollback and expired-reference replay. Full-schema real-issuer additions await required native CI; port fixtures are not that proof.
-STATIC_EVIDENCE: PARTIAL: scoped ESLint0 and diff-check pass; required exact-head CI, deployed source/ACL parity and migration compatibility remain owed. Current main's original E03/E10 duplicate700000 is a known originating-owner hold; no peer rename or guard waiver.
+STATIC_EVIDENCE: UNVERIFIED: required exact-head CI, deployed source/ACL parity and migration compatibility remain owed; scoped ESLint0 and diff-check pass locally. Current main's original E03/E10 duplicate700000 is a known originating-owner hold; no peer rename or guard waiver.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no visual source change; old screenshots do not prove this new backend path.
-BEHAVIORAL_EVIDENCE: PARTIAL: local original validator, worker and isolated native transaction controls only. No production customer request was submitted or retried.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: released customer behavior remains owed; local original validator, worker and isolated native transaction controls only. No production customer request was submitted or retried.
 AUTHENTICATED_RUNTIME: UNVERIFIED: genuine new authorized report, actual artifact/turn/Rail, reload, permitted retrieval, role/tenant negatives and recovery remain owed after legitimate release/admission. Original CPU-failed uncertain request remains unretried with EXP05.
 KEYBOARD_FOCUS: NOT_APPLICABLE: original Chat/report controls unchanged.
 ZOOM_REFLOW: NOT_APPLICABLE: no interface layout change.
 REDUCED_MOTION: NOT_APPLICABLE: no animation change.
-STATE_COVERAGE: PARTIAL: strict selector/ref XOR, invalid/unknown/version/mixed/forged/duplicate input, authority retirement, atomic rollback, same-intent replay and original failed/unknown completion remain covered locally; real-issuer/full-schema/customer execution proof pending.
+STATE_COVERAGE: UNVERIFIED: real-issuer/full-schema/customer execution proof pending; strict selector/ref XOR, invalid/unknown/version/mixed/forged/duplicate input, authority retirement, atomic rollback, same-intent replay and original failed/unknown completion remain covered locally.
 TRUTHFUL_STATE_LABELS: PASS: CAP014 Monthly/CAP015 Quarterly remain Unverified; this unadvertised foundation grants no Live status. Other seven assigned catalogue entries and actor readiness unchanged.
 SOLO_UI: YES: existing generic SOLO report path and canonical provisioning/owner-admin eligibility, no tenant allowlist or account-specific implementation.
 SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: no visual source change.
@@ -28,7 +28,7 @@ SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no visual source change.
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no visual source change.
 UNVERIFIED: exact-head review/CI, real-issuer native suite, ordered normal Preview/production migration and affected Edge source readback, later leased Chat consumer, actual report settlement/receipts/reload/permission/recovery/Live and full19/nine/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: base=9d4a85179da7a186d840bc66ed24fc8828f7740e; branch=codex/e2-report-source-plan; migration=20271113740002; deployment=none; environment=development; exact committed identity in PR review.
+INTERNAL_BUILD_IDENTITY: base=9d4a85179da7a186d840bc66ed24fc8828f7740e; branch=codex/e2-report-source-plan; deployment=none; environment=development; migrations=PROOF_OWED(20271113740002 normal ordered release); edge=PROOF_OWED(paige-ai-chat and paige-document-worker source readback); evidence=ANT161/9b29a091. Exact committed identity in PR review.
 RELEASE_CHANNEL: development: original private report foundation only; no activation or customer announcement.
 RELEASE_CLASSIFICATION: internal-only: one bounded existing report-admission outcome.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated founder evaluation remains pending.

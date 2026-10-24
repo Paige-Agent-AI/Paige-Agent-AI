@@ -7,7 +7,7 @@ export type WeeklyDraftState = {
   expiresAt: string; token: string | null; automationId: string | null; revision: number | null;
   processState: string | null; receiptId: string | null;
 };
-type WeeklyDraftScope = Readonly<{ actorId: string; tenantId: string }>;
+type WeeklyDraftScope = Readonly<{ actorId: string; tenantId: string; threadId?: string }>;
 const object = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === "object" && !Array.isArray(v);
 const uuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(v);
 const instant = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d\d-\d\dT/.test(v) && Number.isFinite(Date.parse(v));
@@ -19,6 +19,8 @@ const instant = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d
  * No capability admission, proposal issuance, claim, write or retry happens here.
  */
 export function parseWeeklyDraftState(raw: unknown, scope: WeeklyDraftScope): WeeklyDraftState | null {
+  // An explicit Chat scope cannot degrade into the incumbent threadless UI scope.
+  if (Object.hasOwn(scope, "threadId") && (!uuid(scope.threadId) || !object(raw) || raw.thread_id !== scope.threadId)) return null;
   if (!object(raw) || raw.ok !== true || raw.actor_id !== scope.actorId || raw.tenant_id !== scope.tenantId ||
     !uuid(raw.confirmation_id) || !uuid(raw.request_id) || !instant(raw.read_at) || !instant(raw.expires_at) ||
     typeof raw.summary !== "string" || raw.summary.length < 1 || raw.summary.length > 2048 ||
@@ -58,7 +60,8 @@ const nextStep = {
  * This deliberately excludes tokens, selectors, raw summary, args and errors.
  * A changed definition's original draft must not be described as current.
  */
-export function weeklyDraftModelContext(raw: unknown, scope: WeeklyDraftScope) {
+export function weeklyDraftModelContext(raw: unknown, scope: WeeklyDraftScope & Readonly<{ threadId: string }>) {
+  if (!object(scope) || !Object.hasOwn(scope, "threadId") || !uuid(scope.threadId)) return null;
   const state = parseWeeklyDraftState(raw, scope);
   if (!state) return null;
   return {

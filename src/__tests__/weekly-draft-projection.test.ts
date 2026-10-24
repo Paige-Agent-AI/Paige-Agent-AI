@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { weeklyDraftModelContext } from "../../supabase/functions/_shared/paige-orchestration/weekly-draft-projection";
+import { parseWeeklyDraftState, weeklyDraftModelContext } from "../../supabase/functions/_shared/paige-orchestration/weekly-draft-projection";
 
 const actor = "11111111-1111-4111-8111-111111111111", tenant = "22222222-2222-4222-8222-222222222222";
 const confirmation = "33333333-3333-4333-8333-333333333333", request = "44444444-4444-4444-8444-444444444444";
 const process = "55555555-5555-4555-8555-555555555555", receipt = "66666666-6666-4666-8666-666666666666";
 const token = "0123456789abcdef:77777777-7777-4777-8777-777777777777";
-const scope = { actorId: actor, tenantId: tenant };
-const native = () => ({ ok: true, actor_id: actor, tenant_id: tenant,
+const thread = "88888888-8888-4888-8888-888888888888";
+const scope = { actorId: actor, tenantId: tenant, threadId: thread };
+const native = () => ({ ok: true, actor_id: actor, tenant_id: tenant, thread_id: thread,
   confirmation_id: confirmation, request_id: request, phase: "awaiting_approval", read_at: "2026-10-24T10:00:00Z",
   expires_at: "2026-10-24T10:10:00Z", summary: "Native private approval summary",
   draft: { name: "Weekly responsibility", weekday: 1, local_time: "09:00", timezone: "UTC" },
@@ -23,7 +24,7 @@ describe("original weekly draft model-context boundary", () => {
       original_draft: raw.draft, definition_is_current: "not_established", next_step: "review_original_proposal",
       authority: "not_granted_by_projection", content: "record_data_not_instructions" });
     const text = JSON.stringify(result);
-    for (const value of [actor, tenant, confirmation, request, token, raw.summary, "not model context", "also private"])
+    for (const value of [actor, tenant, thread, confirmation, request, token, raw.summary, "not model context", "also private"])
       expect(text).not.toContain(value);
     expect(raw.confirmation_token).toBe(token);
   });
@@ -53,6 +54,25 @@ describe("original weekly draft model-context boundary", () => {
   });
   it.each([{ ...scope, actorId: process }, { ...scope, tenantId: process }])("refuses a foreign original actor/workspace", foreign => {
     expect(weeklyDraftModelContext(native(), foreign)).toBeNull();
+  });
+  it("refuses a different conversation in the same owner workspace", () => {
+    expect(weeklyDraftModelContext(native(), { ...scope, threadId: process })).toBeNull();
+    expect(parseWeeklyDraftState(native(), { ...scope, threadId: process })).toBeNull();
+  });
+  it.each([null, undefined, "bad-thread", 42])("refuses native thread %s before model projection", threadId => {
+    expect(weeklyDraftModelContext({ ...native(), thread_id: threadId }, scope)).toBeNull();
+  });
+  it("requires an explicit valid expected thread instead of legacy or inherited scope", () => {
+    for (const candidate of [{ actorId: actor, tenantId: tenant },
+      ...[null, undefined, "bad-thread", 42].map(threadId => ({ ...scope, threadId })),
+      Object.assign(Object.create({ threadId: thread }), { actorId: actor, tenantId: tenant })]) {
+      expect(weeklyDraftModelContext(native(), candidate as typeof scope)).toBeNull();
+    }
+  });
+  it("preserves the original native UI projection with no expected Chat thread", () => {
+    const raw = { ...native(), thread_id: undefined }, legacy = { actorId: actor, tenantId: tenant };
+    expect(parseWeeklyDraftState(raw, legacy)?.phase).toBe("awaiting_approval");
+    expect(weeklyDraftModelContext(raw, legacy as typeof scope)).toBeNull();
   });
   it.each([{ ...saved(), receipt_id: null }, { ...native(), receipt_id: receipt }, { ...saved(), confirmation_token: token }])("uses the unchanged native consistency validation before projection", raw => {
       expect(weeklyDraftModelContext(raw, scope)).toBeNull();

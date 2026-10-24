@@ -1,3 +1,88 @@
+## C19 released lower810109 composition — October24
+
+Original EXP092755/1919c4e4 is actually main65699d36369c88412e3e7e370b7c14e893272773/tree351627f7, after verified8d/C29/C26/E05 source. Independent production metadata confirms native810109 recorded once/frontier810109 and higher820004absent. This resolves that lower source/native-order hold only; it is not E04 customer acceptance. All six original6eaa93b2 runtime/native/proof/test blobs and SQL820004SHA57d7f2b1 remain exact. All incoming source/documents/Chat/C0b/E09 and prior release rows are retained.
+
+Previous normal empty Previewkwz/b505 has820004 but lacks this now-released lower810109; it cannot prove the final union. Only normal verified-empty/disposable same-PR replacement may rebuild the Preview. No include-all/reset/history repair/direct native apply or retained-data deletion. Current exact review/CI/complete cold Preview/readback still required; all old-head checks remain dated evidence. No send/payment/signature/Chat/Live effect or capability promotion. All12 and integrated founder evaluation remain unfinished.
+
+Earlier dated checkpoints follow unchanged.
+
+## C19 actual predecessor and released Clients composition — October24
+
+Actual main58416369d2de317c7c6e9301248e0ea36e2d0989 is composed as
+66428e57d82963c970d7c8db080b8d3d679b7497/treeb5e6f8d298ef16f02d74a598779e81d7b06aab49.
+All six original runtime/native/proof/test blobs remain exact6eaa93b2; the existing
+dated Preview artifact is unchanged. Only those seven paths and this original
+journal differ from main; exact own-hunk inverse reproduces the ENTIRE incoming
+journal, and all other incoming source, C26 release, Brain/Master and peer work
+is preserved. SQL820004 remains57d7f2b1c4445605641e2484a8476ad44189ca003216ef834ed9ea844b05bfbf.
+
+Original E09 source2723/a2db and810009 SQLb634388b/34817bytes are verified in actual
+containingmain28622. Direct09:32 production metadata confirms810009 recorded once,
+frontier810009/820004absent; originating receipt6382571591 preserves actual native
+failure/retry/source/ACL/readback. The predecessor release hold is RESOLVED, not
+customer acceptance. Current source includes E05800005 and E07800010 before
+E04810004→E09810009→E04820004, without rewriting applied or another owner's history.
+
+The EARLIER dated692a3b05 Preview below lacks new lower810009, despite matching
+the same13 function bodies; it does not establish final combined-schema proof.
+Use only normal verified-empty/disposable same-PR replacement, no reset/include-all/
+history change/direct DDL. Final exact-head review/CI/complete native Preview and
+source/security readback remain required. Original37 source cases and native564
+are dated unchanged-source support until current integration gates actually pass.
+No provider, financial, send, signer or effectful Chat activation is authorized.
+Full O1–O12 and one complete integrated founder evaluation remain unfinished.
+
+Earlier dated checkpoints below remain unchanged history.
+
+## C19 current-main7b continuation — October24, not released
+
+Current normal cold Preview692a3b05/fymtisosylqfmzgwwlhg is nonpersistent/
+with_datafalse; actual09:15:13UTC metadata confirms lower800005 and frontier820004,
+zero Auth users/clients/agreements/files, all13 expected commercial/signature
+function bodies/definer/search-path/ACLs exact. The unrelated original two-argument
+display overload is listed separately, not counted as a new E04 function. Actual
+E09reserved810009 remains absent here and release-order held in production.
+[Native Preview metadata](../evidence/e04-exact-terms-preview.json) is not customer
+or financial execution proof.
+
+The first a6b source check120834124422 FAILED on an unchanged E05 record because
+the closed-push event still used former parent2a24465b before main retarget.
+Primary job log40080920279 proves that exact old base. Actual correct main7b
+guard is NOT_REQUIRED, no UI source changed; the E05 file is byte-exact incoming.
+No peer record/validator is edited or failure waived. This factual checkpoint
+receives fresh normal open-PR/main-context gates and final review, not a blind
+rerun of the stale event. Initial not-associated PreviewSKIP also remains history.
+
+Original2689 now composes actual main7b2ac52074e1697e961f31a28490d0e22bd2ebbb
+as3de2ef2c19dc12b257f0c4150ef38e569852947f/tree8c6672e6e434cba78225d2fea038096052cd2351.
+All six owning runtime/native/proof/test files remain byte-identical to6eaa93b2;
+only those six plus this original journal differ from incoming main. Reversing
+exactly the two original own journal inserts reproduces the ENTIRE incoming file.
+Incoming Master/Brain/Chat/C0b/peer source and reader810004 release are preserved.
+Original820004 SQL remains57d7f2b1c4445605641e2484a8476ad44189ca003216ef834ed9ea844b05bfbf.
+No native body/ABI/ACL/assertion/timeout/CI-rule change or transferred old green.
+
+Original reader2681/ba and docs2749/7b are production-source verified. E09
+receiving03cb5f8f/718110f9 now identifies actual candidate2723/5391/810009; the
+receiving hold is RESOLVED, actual810009 release/readback still precedes820004.
+Fresh exact-head review/CI/normal Preview and native-source/ACL verification remain
+required. No Chat/provider/payment/send/signature activation or customer acceptance.
+All O1–O12 and one integrated founder evaluation remain mandatory and incomplete.
+Earlier dated source/filename paragraphs below are historical checkpoints.
+
+## October24 current-main700000 continuation — source only
+
+Current main04edecb0 includes original E03 migration700000. Before any E04
+release, own never-applied reader631004→710004 and exact terms640004→720004
+move forward. This exact-terms SQL remains SHA57d7f2b1c4445605641e2484a8476ad44189ca003216ef834ed9ea844b05bfbf.
+Only the one proof filename changes with full byte inverse; original564 controls,
+assertions, timeouts, five sessions, three waits, authority/receipt and native
+function behavior are unchanged. Fresh exact review/CI/cold normal Preview and
+production ABI/ACL/readback remain required. No include-all/history/schema patch
+or session termination. Preserve current main/original owners, compatible E09
+private slot before own catalogue730004, and all12 outcomes. Prior dated evidence
+below remains historical, not transferred CI or customer acceptance.
+
 ## C29 current-main saved signing review — October24
 
 REUSE/EXTEND original2737/b244 saved-review read and existing mounted document workspace on main584. At selective import45 original blobs were exact; current proof then updates only its evidence record, retaining44 exact original blobs. One owning strict test is the only CI addition. No C19/C20/C21 execution/native/Chat/C0b/risk/approval code is imported. Current44 strict Deno/87 SDK+pane assertions, scoped ESLint, Vite194files/28.16s and three native desktop/narrow ready/error frames plus keyboard return/retry pass in synthetic original-source ports. Original10 frames retained unchanged. Source/review/CI/merge/deployment/activation/authenticatedQA/founder acceptance remain independent; final release gates still owed. See original [saved-review evidence](../evidence/ui-delivery/e04-prepared-signature-review.md). Full12 scope, consultant launch scenario, original sender/Work/Portal owners and consequential holds preserved.
@@ -12,6 +97,73 @@ No include-all, migration-history patch, session cleanup, test waiver or actual
 business/provider effect. Existing dated evidence below remains historical.
 
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
+
+## C19 exact signed-term effectuation — October23 continuation
+
+REUSE/EXTEND original2191 selectively after C18/2681. Existing old branch and all
+its integration assertions remain intact. Current pure source guard reuses the
+canonical commercial-engagement parser, including explicit service start/end and
+catalog/negotiated price basis. Genuine old-source baseline had15 positives and
+three intended failures; repaired18 plus19 accepted-source cases PASS37 locally.
+Native640004 supersedes never-production-applied580004 after current600000;
+the repaired SQL bytes/ABI/ACL and original564 controls are unchanged. It remains
+reserved and UNAPPLIED in production. The original
+service-only Collections router delegates the exact effectuation action; its
+typed endpoint/approval card and customer UI are not connected by this slice.
+No Chat/Live action or production execution is activated.
+
+Current repaired native proof PASS564:406 preserved preparation/signature/
+accepted-source controls plus158 effectuation controls, replay2, five added
+concurrent sessions and three observed lock waits. Actual authority withdrawal
+while waiting produces SQLSTATE42501 with zero terms/operation/Rail effect.
+Original manual writer errors/CAS/closed response keys, unchanged package DTO,
+incumbent read labels/time-zone attribution and all original tests are retained.
+Before/replay body and search-path drift refuse before replacement. The final
+original Linux Deno invocation adds the same cases, removing no existing gate.
+
+Earlier current-guard run correctly rejected an outdated Rail fixture; it now
+loads the canonical final E02 read-label wrapper. Its original source uses
+pg_catalog/public, while actual deployed metadata reports empty; only those two
+inspected original configurations are accepted, and the cause is UNVERIFIED.
+Genuine full-schema CI then failed the unchanged E02 assertion15: the new E04
+wrapper had changed its pinned path to empty. A native reproduction preserves
+the original predicate, confirms the pre-E04 positive and fails after E04/replay.
+The bounded repair pins the new wrapper to canonical pg_catalog/public and
+requires that exact replay metadata. All original562 controls plus the two
+E02 predicate checks pass; the original20-assertion suite is unchanged and
+still requires fresh full-schema CI. This native564 proof is synthetic, not
+production repair or customer acceptance. A later authority case
+reached refusal but lacked session SQLSTATE diagnostics; it remains FAIL, then
+the added session alone enabled verbose diagnostics and the original proof
+passed unchanged. The disposable cluster was verified empty and stopped.
+All identity/Trust-rung/file metadata is synthetic. No real document, provider,
+ordinary-role or customer acceptance is implied by native proof.
+
+Pre-edit routes for this native increment: Sales/Agreements owns the intended
+exact-accepted-terms outcome; E05 retains shared Chat/risk/runtime source and
+E09 retains Portal. Existing Harness/Trust/Collections command/immutable operation/
+Rail are reused. Existing sales.commercial_package_read stays unchanged; a new
+Spine effectuation action is UNAVAILABLE, not registered/Live. No provider or
+connection is required; a signature never grants charge/send authority. Existing
+operator_card governance, Trust rung and tenant tool autonomy are re-read after
+record-lock waits. There is no new scheduler/job/approval/execution store. Exact
+original operation and Rail readback prove only historical effectuation; later
+pause returns that history without reactivation. Existing invoice-commercial
+surface remains PARTIAL, with no new mounted UI. Exact-head full-schema/CI/
+review/release and real owner/staff/client/cohort/CentralQA proof are owed.
+
+Next flow: original accepted agreement → existing Collections consequence review
+→ canonical governed status writer → original terms/immutable operation/Rail →
+current record and later reload. Retain exact document/signing/invoice/terms
+versions, raw PostgreSQL timestamp precision and current actor/tenant authority.
+Do not infer missing legacy service terms, charge, send, create debt, onboard or
+claim accepted service delivery. Current Collections explicitly treats schedules
+as previews without invoice/accrual/charge; owed totals use the canonical issued
+invoice flag/balance, excluding drafts/voids. Native integration must preserve
+that distinction and prove duplicate/replay/current-source behavior before use.
+Protected shared Chat/risk/audit source and original closed package DTO are not
+copied wholesale from the old stack. Full native/endpoint/UI/review/CI/release,
+ordinary-role/cohort/CentralQA and whole-Experience acceptance remain owed.
 
 October23 release-order continuation: actual production600000/main2748432
 requires never-applied C18 SQL570004→630004, then C19 native580004→640004.

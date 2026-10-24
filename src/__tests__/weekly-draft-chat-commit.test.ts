@@ -95,7 +95,7 @@ describe("original weekly Chat save after native claim and existing Kit decision
   });
   it.each(["scope", "abort"])("suppresses a late completion after %s retirement", async mode => {
     let resolve!: (reply: Reply) => void, current = true;
-    const controller = new AbortController(), db = { rpc: vi.fn(() => new Promise<Reply>(r => { resolve = r; })) };
+    const controller = new AbortController(), db = { rpc: vi.fn((_name: string, _args: Record<string, unknown>) => new Promise<Reply>(r => { resolve = r; })) };
     const pending = commitWeeklyDraftChatApproval(db, { ...options(), current: () => current, signal: controller.signal });
     await Promise.resolve(); await Promise.resolve();
     if (mode === "scope") current = false; else controller.abort();
@@ -105,7 +105,7 @@ describe("original weekly Chat save after native claim and existing Kit decision
   });
   it("uses the supplied remaining elapsed budget and ignores a late write response", async () => {
     vi.useFakeTimers(); let resolve!: (reply: Reply) => void;
-    const db = { rpc: vi.fn(() => new Promise<Reply>(r => { resolve = r; })) };
+    const db = { rpc: vi.fn((_name: string, _args: Record<string, unknown>) => new Promise<Reply>(r => { resolve = r; })) };
     const pending = commitWeeklyDraftChatApproval(db, { ...options(), remainingMs: 50 });
     await vi.advanceTimersByTimeAsync(51);
     expect(await pending).toMatchObject({ status: "unknown", commitAttempted: true });
@@ -114,12 +114,42 @@ describe("original weekly Chat save after native claim and existing Kit decision
   });
   it("freezes original selector, args and identity before an asynchronous reply", async () => {
     let resolve!: (reply: Reply) => void;
-    const option = options(), db = { rpc: vi.fn(() => new Promise<Reply>(r => { resolve = r; })) };
+    const option = options(), db = { rpc: vi.fn((_name: string, _args: Record<string, unknown>) => new Promise<Reply>(r => { resolve = r; })) };
     const pending = commitWeeklyDraftChatApproval(db, option);
     await Promise.resolve(); await Promise.resolve();
     option.confirmationId = process; option.scope.actorId = process; option.claim.storedArgs._weekday = 2;
     resolve({ data: saved(), error: null });
     expect(await pending).toMatchObject({ status: "saved", record: { requestId: request } });
     expect(db.rpc.mock.calls[0][1]).toMatchObject({ _confirmation_id: confirmation, _expected_args: args() });
+  });
+
+  it.each(["unknown", "saved_unreceipted"])("reports recovered %s without claiming a verified save", async phase => {
+    const state = phase === "unknown" ? { ...saved(), phase, automation_id: null, revision: null,
+      process_state: null, receipt_id: null } : { ...saved(), phase, receipt_id: null };
+    const db = { rpc: vi.fn().mockResolvedValueOnce({ data: null, error: { code: "XX000" } })
+      .mockResolvedValueOnce({ data: state, error: null }) };
+    const result = await commitWeeklyDraftChatApproval(db, options());
+    expect(result).toMatchObject({ status: "observed", context: { phase }, retryAllowed: false });
+    expect(result).not.toHaveProperty("record");
+    expect(db.rpc.mock.calls.map(call => call[0])).toEqual(["commit_weekly_commitment_chat_draft", "read_weekly_commitment_chat_draft"]);
+  });
+  it("keeps native authority refusals terminal without trying a privileged fallback", async () => {
+    const db = { rpc: vi.fn().mockResolvedValue({ data: null, error: { code: "42501", message: "private native reason" } }) };
+    const result = await commitWeeklyDraftChatApproval(db, options());
+    expect(result).toEqual({ status: "unknown", commitAttempted: true, retryAllowed: false, genericFallbackAllowed: false });
+    expect(db.rpc.mock.calls.map(call => call[0])).toEqual(["commit_weekly_commitment_chat_draft", "read_weekly_commitment_chat_draft"]);
+    expect(JSON.stringify(result)).not.toContain("private native reason");
+  });
+  it("never gives the recovery read a new elapsed budget", async () => {
+    vi.useFakeTimers();
+    let resolve!: (reply: Reply) => void;
+    const db = { rpc: vi.fn().mockImplementationOnce(() => new Promise<Reply>(r => { resolve = r; }))
+      .mockImplementationOnce(() => new Promise<Reply>(() => {})) };
+    const pending = commitWeeklyDraftChatApproval(db, { ...options(), remainingMs: 50 });
+    await vi.advanceTimersByTimeAsync(40);
+    resolve({ data: null, error: { code: "XX000" } });
+    await vi.advanceTimersByTimeAsync(11);
+    expect(await pending).toMatchObject({ status: "unknown", commitAttempted: true, retryAllowed: false });
+    expect(db.rpc.mock.calls.map(call => call[0])).toEqual(["commit_weekly_commitment_chat_draft", "read_weekly_commitment_chat_draft"]);
   });
 });

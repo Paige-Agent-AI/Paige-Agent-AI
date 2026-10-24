@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: repair a dropped reference in the existing receipt cha
 FLOW_PROTOTYPE: NOT_REQUIRED: the approved original-result/recovery flow and its boundaries are unchanged.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owners retain the exact original specialist identity as evidence for subsequent inspection; an identity grants no completion, authority or retry.
 VISUAL_DIRECTION: NOT_APPLICABLE: metadata-only correction in the existing shared turn contract.
-AUTOMATED_EVIDENCE: PASS: scripts/int336-interactive-check.mjs causally failed with a dropped invocation UUID; repaired actual module passes the positive and fail-closed projections, original Task preservation and minimized-context assertions. Unchanged actual-registry27 and original-handler75 recording-port cases PASS. No real provider or customer operation.
+AUTOMATED_EVIDENCE: PASS: scripts/int336-interactive-check.mjs causally failed with a dropped invocation UUID; repaired actual module passes the positive and fail-closed projections, original Task preservation and minimized-context assertions. Original denied-network Deno11, unchanged actual-registry27 and original-handler75 recording-port cases PASS. No real provider or customer operation.
 STATIC_EVIDENCE: PASS: scoped ESLint/diff checks; actual canonical validator refuses exactly the changed interactive.ts dependency while its review pin remains deliberately unrenewed. This refusal is a release hold, not a passing source-binding proof.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no UI component or visual state is modified; local metadata tests cannot establish rendered or authenticated execution.
 BEHAVIORAL_EVIDENCE: PASS: actual original projection retains invocation UUID for delegate_to_subagent only; wrong-tool, malformed and contradictory-read cases are excluded. Existing Task identity remains. No execution, retry or hold reset occurs in these assertions.
@@ -29,9 +29,9 @@ RELEASE_CHANNEL: development: local source correction, not customer reachable.
 RELEASE_CLASSIFICATION: internal-only: bounded original-reference repair within EXP05 recovery.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement, launch or founder acceptance.
 RELEASE_NOTE_REQUIRED: no: ongoing internal Experience increment and proof boundary.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: shared-pin coordination/review, exact-head CI/Deno tests, deployment and ordinary authenticated original-reference/status recovery. Local causal/recording-port proof is not customer acceptance. Full ten outcomes/E5-CV1-CV9 remain open.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: shared-pin coordination/review, exact-head hosted CI, deployment and ordinary authenticated original-reference/status recovery. Local causal/recording-port proof is not customer acceptance. Full ten outcomes/E5-CV1-CV9 remain open.
 RELEASE_RECOVERY: position=withhold while the original binding gate refuses; reference=existing source validator, immutable parent and canonical turn receipt. No reset/replay/activation workaround.
-UNVERIFIED: Deno unavailable locally; existing denied-network Deno tests remain required in normal CI. Source binding deliberately fails pending reviewed one-scalar renewal. No new native status consumer, full delegation lifecycle, ZION instructions, recurring execution, Live or complete Experience acceptance.
+UNVERIFIED: existing denied-network Deno tests pass locally and remain required in normal exact-head CI. Source binding deliberately fails pending reviewed one-scalar renewal. No new native status consumer, full delegation lifecycle, ZION instructions, recurring execution, Live or complete Experience acceptance.
 
 ## Exact boundary and collision evidence
 
@@ -53,6 +53,20 @@ were read before editing. Lease/pre-edit packetc4eecd95 and coordinationb494d3d3
 preserve EXP04's separate action-risk scalar write; that shared file is not edited.
 Existing2697/ec466,2700/a8c574 and2709/b68 remain frozen separate releases.
 No other lead, agent, registry, scheduler, provider, runtime or business record is created.
+
+### Local Edge runtime correction and proof
+
+The earlier missing-Deno checkpoint is superseded by a workspace-only copy of the
+[official Deno2.9.8 release](https://github.com/denoland/deno/releases/tag/v2.9.8),
+matching the existing CI2.x major. Official archive SHA256
+cba84b26e0df5ae7f74fc66b86a95b866872a86292ebd84fa1e959927edd93bf
+was verified before extraction/run; no PATH/system setting or production change.
+The first typechecked run correctly failed two TS2322 diagnostics: the new test
+declaration lacked the required original railVisibility field. Completing the
+fixture, without a cast or --no-check, passes both original files:11 tests/0 failures.
+Normal --deny-net/env/read/write/run/ffi/sys and original static-import rules remain.
+The helper canonical digest is unchanged; no assertion, validator or type baseline
+was weakened. Hosted exact-head proof remains separately required.
 
 ## Orchestration Contract / Algorithm Support
 

@@ -119,7 +119,7 @@ Deno.test("specialist references are excluded from other tools and malformed ori
 
 Deno.test("a declared closed read cannot borrow a specialist invocation as read-success evidence", () => {
   const declaration = { action: { chatTool: "read_fixture", classification: "read", riskPolicyKey: "read_only", approvalAuthority: "none",
-    executor: "edge.fixture", idempotency: "read only" }, outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "fixture" } } as const;
+    executor: "edge.fixture", idempotency: "read only" }, outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "fixture", railVisibility: "No execution receipt" } } as const;
   const read = { status: "available", message: "Read original record" };
   assertEquals(interactiveEffect("read_fixture", read, [declaration])?.outcome, "reported_success");
   assertEquals(interactiveEffect("read_fixture", { ...read, invocation_id: "00000000-0000-4000-8000-000000000001" }, [declaration])?.outcome, "outcome_unknown");

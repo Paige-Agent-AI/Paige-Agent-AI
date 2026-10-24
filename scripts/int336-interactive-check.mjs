@@ -34,7 +34,7 @@ for(const invocation_id of [null,{},'invalid',` ${originalInvocation}`,{id:origi
 }
 assert.deepEqual(interactiveEffect('crm_create_task',{success:true,task_id:originalInvocation,invocation_id:originalInvocation}).record_refs,[{kind:'task',id:originalInvocation}]);
 const readDeclaration={action:{chatTool:'read_fixture',classification:'read',riskPolicyKey:'read_only',approvalAuthority:'none',executor:'edge.fixture',idempotency:'read only'},
- outcome:{kinds:['available','needs_input','refused','unavailable'],projector:'fixture'}};
+ outcome:{kinds:['available','needs_input','refused','unavailable'],projector:'fixture',railVisibility:'No execution receipt'}};
 assert.equal(interactiveEffect('read_fixture',{status:'available',message:'Read original record'},[readDeclaration]).outcome,'reported_success');
 assert.equal(interactiveEffect('read_fixture',{status:'available',message:'Read original record',invocation_id:originalInvocation},[readDeclaration]).outcome,'outcome_unknown');
 console.log('PASS: latest wins, no timeout theft, idempotent release, stalled model interruption');

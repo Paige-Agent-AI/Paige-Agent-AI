@@ -234,7 +234,22 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings }: {
     const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [] });
     if (outcome.kind === "sent") announce("Reply posted");
     else if (outcome.kind === "failed") announce("Reply not sent. Retry is available.");
-    else { setThreadDraft((current) => current || outcome.body); setThreadError(outcome.message); announce(outcome.message); }
+    else { restoreReply(thread.rootId, outcome.body, outcome.message); announce(outcome.message); }
+  };
+
+  // The reply box is shared by every thread, and a refusal can arrive after another thread was
+  // opened. A refused reply goes back only into its own thread: straight into the box if that
+  // thread is still open, otherwise held until it is opened again.
+  const openRootRef = useRef<string | null>(null);
+  openRootRef.current = hub.thread?.rootId ?? null;
+  const heldReplies = useRef<Record<string, string>>({});
+  const restoreReply = (rootId: string, body: string, message: string) => {
+    if (openRootRef.current === rootId) {
+      setThreadDraft((current) => current || body);
+      setThreadError(message);
+    } else if (!heldReplies.current[rootId]) {
+      heldReplies.current[rootId] = body;
+    }
   };
 
   const retry = async (item: PendingMessage) => {
@@ -245,7 +260,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings }: {
     // A refused retry takes the pending row away, so its text goes back to the composer it came
     // from, as a refused first send does; a draft already being written there is not overwritten.
     if (outcome.kind === "refused") {
-      if (item.parentId) { setThreadDraft((current) => current || outcome.body); setThreadError(outcome.message); }
+      if (item.parentId) restoreReply(item.parentId, outcome.body, outcome.message);
       else { setDrafts((current) => current[item.channelId] ? current : { ...current, [item.channelId]: outcome.body }); setComposerError(outcome.message); }
     }
   };
@@ -253,7 +268,9 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings }: {
   const focusThreadWhenReady = useRef(false);
   const openThread = (rootId: string, trigger: HTMLElement) => {
     threadReturn.current = trigger;
-    setThreadDraft("");
+    const held = heldReplies.current[rootId];
+    delete heldReplies.current[rootId];
+    setThreadDraft(held ?? "");
     setThreadError(null);
     // The reply box exists only once the thread has loaded; focus moves there then, not before.
     focusThreadWhenReady.current = true;

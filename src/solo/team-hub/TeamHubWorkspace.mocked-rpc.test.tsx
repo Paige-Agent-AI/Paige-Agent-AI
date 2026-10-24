@@ -573,6 +573,45 @@ describe("paging (mocked RPC)", () => {
 });
 
 describe("threads (mocked RPC)", () => {
+  it("puts a refused reply back only into its own thread, even when another thread was opened meanwhile", async () => {
+    db.messages["c-general"] = [
+      msg({ id: "m-a", body: "First root", reply_count: 1, created_at: at(20) }),
+      msg({ id: "m-b", body: "Second root", reply_count: 2, created_at: at(10) }),
+    ];
+    db.replies["m-a"] = [msg({ id: "r-a", parent_message_id: "m-a", body: "A reply", created_at: at(19) })];
+    db.replies["m-b"] = [msg({ id: "r-b1", parent_message_id: "m-b", body: "B one", created_at: at(9) }), msg({ id: "r-b2", parent_message_id: "m-b", body: "B two", created_at: at(8) })];
+    let attempt = 0;
+    let refuse: (value: unknown) => void = () => {};
+    mocks.rpc.mockImplementation(async (name: string, params: Record<string, unknown>) => {
+      if (name === "team_hub_post_message") {
+        calls.push({ name, params });
+        attempt += 1;
+        if (attempt === 1) return { data: null, error: new Error("network down") };
+        return new Promise((resolve) => { refuse = resolve; });
+      }
+      return { data: backend(name, params), error: null };
+    });
+    const { host } = await mount();
+    const replyBox = () => host.querySelector<HTMLTextAreaElement>("aside.th-thread textarea")!;
+    await act(async () => button(host, /1 reply/)!.click());
+    await flush();
+    await type(replyBox(), "Only for the first thread");
+    await press(replyBox(), "Enter");
+    await flush();
+    await act(async () => { button(host, "Retry")!.click(); });
+    // Another thread opens before the retry's answer arrives.
+    await act(async () => button(host, /2 replies/)!.click());
+    await flush();
+    await act(async () => refuse({ data: { ok: false, code: "invalid" }, error: null }));
+    await flush();
+    expect(host.querySelector("aside.th-thread")!.textContent).toContain("B two");
+    expect(replyBox().value).toBe("");
+    // Back in the first thread, the refused text is waiting in its reply box.
+    await act(async () => button(host, /1 reply/)!.click());
+    await flush();
+    expect(replyBox().value).toBe("Only for the first thread");
+  });
+
   it("moves focus to the reply box once the thread has loaded, and back to its trigger on Esc", async () => {
     db.messages["c-general"] = [msg({ id: "m-root", body: "Root post", reply_count: 1, created_at: at(10) })];
     db.replies["m-root"] = [msg({ id: "r-1", parent_message_id: "m-root", body: "A reply", created_at: at(5) })];

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: three defect fixes from the Codex review of PR #2764 i
 FLOW_PROTOTYPE: PASS: not required for a material-flow-free defect fix; the approved prototype v2 (2026-10-24, frozen under §28) is unchanged and this restores behaviour it already shows (a refused send keeps its text)
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: active teammates of a canonical SOLO workspace coordinate in channels, DMs and threads; the primary action is reading a conversation and posting into it, with Create channel and Add people as the two act moments
 VISUAL_DIRECTION: PASS: approved prototype v2 on --pg-* tokens only (Obsidian dark / Mineral light); gold fill only on the Create channel and Add N people submits (text --pg-env on dark, --pg-ink on light where --pg-env measures 1.78:1 and ink 7.37:1, as client-portal-access.css does); Send is ink; disclosures (Add people toggle, visibility toggles) are neutral; no banner
-AUTOMATED_EVIDENCE: PASS: npx vitest run src/solo/team-hub → 79 tests pass; three new mocked-RPC tests, each shown to FAIL with its fix reverted: (1) loads under React StrictMode, (2) a retry the server refuses puts the text back in the composer, (3) a message sent between an absence and the refresh no longer hides the gap
+AUTOMATED_EVIDENCE: PASS: npx vitest run src/solo/team-hub → 80 tests pass; four new mocked-RPC tests, each shown to FAIL with its fix reverted: (1) loads under React StrictMode, (2) a retry the server refuses puts the text back in the composer, (3) a message sent between an absence and the refresh no longer hides the gap, (4) a refused reply goes back only into its own thread, even when another thread was opened before the refusal arrived (Codex review of this PR)
 STATIC_EVIDENCE: PASS: npx eslint src/solo/team-hub → clean; NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit -p tsconfig.app.json → the same 6 baseline errors in untouched files (PaigeWorkspaceContext.tsx, customFields.ts ×2, planning.ts, tenantLifecycle.ts, CalendarAdmin.tsx), none in src/solo/team-hub
 RENDERED_EVIDENCE: PASS: STRUCTURAL / RENDERED-HARNESS, reused from increment 1 because this follow-up changes no markup or style: the 38 frames under [assets/exp08-team-hub-increment1](assets/exp08-team-hub-increment1/) were re-captured 2026-10-24T16:15Z against code whose rendered tree is identical to this change outside the three behaviours, which are proven by the mocked-RPC tests, not by a frame
 BEHAVIORAL_EVIDENCE: PASS: jsdom MOCKED-RPC only (supabase.rpc replaced by an in-memory double): StrictMode double mount renders the stream; transport failure then `invalid` on Retry restores the body to the composer with the refusal shown; one held message + 60 arrivals + a local send + a focus refresh replaces the held list and offers Load earlier messages while keeping the sent message
@@ -49,7 +49,7 @@ RELEASE_RECOVERY: position=revert the follow-up merge, since the change is clien
 
 - Classification: defect fixes in the existing SOLO Team Hub surface, from the Codex review of PR #2764.
 - Affected flows: send recovery (Retry), loading, refresh merging for the stream and thread replies.
-- Neighboring regressions: all 79 Team Hub tests; no nav, shell or SQL file changed.
+- Neighboring regressions: all 80 Team Hub tests; no nav, shell or SQL file changed.
 - Active-owner/file collisions: none; only src/solo/team-hub/** and this record change.
 - Explicit exclusions: everything listed as later increments in the contract.
 

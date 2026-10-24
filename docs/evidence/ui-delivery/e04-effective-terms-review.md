@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: accepted economics and original versions lead. A su
 SOLO_UI: YES: shared eligible SOLO implementation, original department/invoice context, canonical theme and responsive local Dialog. No account allowlist or tenant-specific implementation. Full signed-in SOLO shell/PAIGE-open and closed role/cohort acceptance remains owed.
 UNVERIFIED: source merge, release/deployment, real owner/staff/external-client operation, current physical signed-file availability, provider effects, full shell/zoom/AT, CentralQA and founder acceptance. Parent2681/2689/2705 must release/read back first. All O1–O12 and the professional preparation/signing/invoice/payment/delivery destination remain mandatory.
 
-INTERNAL_BUILD_IDENTITY: source=6df23f4a9f94f49bd58c74b1f65099e83c034f3f; final exact head/review in the C21 PR; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(parent630004 and640004 ordinary production readback); edge=PROOF_OWED(parent2705 sales-collection-command production readback); evidence=docs/evidence/ui-delivery/assets/e04-effective-terms-review/current-screenshot-manifest.json,29 frozen source hashes and three actual compiled assets.
+INTERNAL_BUILD_IDENTITY: source=6df23f4a9f94f49bd58c74b1f65099e83c034f3f; final exact head/review in the C21 PR; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(parent631004 and640004 ordinary production readback); edge=PROOF_OWED(parent2705 sales-collection-command production readback); evidence=docs/evidence/ui-delivery/assets/e04-effective-terms-review/current-screenshot-manifest.json,29 frozen source hashes and three actual compiled assets.
 RELEASE_CHANNEL: development: actual compiled component proof, required exact-head checks and ordinary production readback remain separate.
 RELEASE_CLASSIFICATION: internal-only: bounded source integration inside the incomplete full E04 Experience, without a completed customer release claim.
 CUSTOMER_RELEASE_IDENTITY: none: integrated all12 Experience and one founder evaluation remain incomplete.
@@ -48,3 +48,12 @@ Applied the already-approved Flow-by-Flow, PAIGE UI router and Impeccable workfl
 All native/provider/final founder acceptance states remain separately reported.
 
 Visible-Flow-Impact: yes
+
+October24 source-path continuity: actual production E09 630009 overtook the
+unmerged original reader. Only never-applied630004→631004 changed its path,
+with SQL SHA221b0365 unchanged. The original source-before-current-capture.json
+remains byte-for-byte intact with its captured path. Explicit
+assets/e04-effective-terms-review/native-filename-continuity.json maps that ONE
+path; the prior screenshot manifest is separately retained with its SHA.
+All29 raw/LF source hashes,17 original PNG bytes/dimensions and three assets
+remain exact. No new capture, actual runtime effect or customer proof is claimed.

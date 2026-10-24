@@ -85,8 +85,17 @@ Supabase sessions or authenticated customer acceptance.
    threadless-proposal read refusal, unknown claim recovery, duplicate commit,
    original history, expired approval, revoked owner, held/stopped/unbound
    runtime, and a typed bound answer before/after its canonical stamped claim.
-   The final complete native run is pending; do not reuse the earlier green
-   as proof of these final additions.
+   The earlier green was not reused as proof of these final additions.
+8. Final complete run passed **117** broader native cases, including **170**
+   scoped Chat assertions, on 2026-10-24. Original role restoration was read
+   back true. Source candidate `253d882dfdf038b4ddab078b8b62fb55831ec486`
+   composes with actual main `9e1963d953f670973f167ba67a40bf8bb73617d4`
+   at `55dbc9dd4f27ce615219f2c1bb2e3e9a7c8d196d`; the five owned source/test
+   paths and native hash above are unchanged by the composition. Full local
+   transcript: `work/weekly-chat-draft-final-full.txt`; generated result:
+   `../test-temp/paige-weekly-proof-BjValN/result.json`. These private local
+   artifacts and static preservation proof do not replace hosted exact-head
+   CI, native deployment or authenticated acceptance.
 
 The native protocol starts inactive: claim refuses, the original proposal is
 unconsumed, and no definition or Rail exists. Only the rolled-back fixture

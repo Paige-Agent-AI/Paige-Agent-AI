@@ -6,7 +6,7 @@ RELEASE_CHANNEL: development: reviewed original status transport and shared clie
 RELEASE_CLASSIFICATION: internal-only: bounded EXP05 original-result recovery integration, no customer launch.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or founder acceptance.
 RELEASE_NOTE_REQUIRED: NO: original PR, Brain and evidence retain exact source/runtime boundaries.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source proof; PROOF OWED exact-head hosted CI, production source, native Chat mounting and authenticated recovery.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: original source proof only; hosted exact-head CI, production source, native Chat mounting and authenticated recovery remain owed.
 RELEASE_RECOVERY: position=hold for failed required checks; reference=original server-stamped turn and immutable receipt, never reset or replay.
 UNVERIFIED: actual rendered Chat original-result control, production packages and ordinary authenticated reload/recovery remain owed; loader tests do not close the customer job or full Experience.
 FLOW_BY_FLOW: PASS: original terminal -> explicit original status read -> current workspace authority -> original invocation inspector -> closed original result, without another execution.

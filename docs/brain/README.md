@@ -13,6 +13,12 @@ CI, release/readback and authenticated recurrence remain separate proof obligati
 preserves all ten outcomes/E5-CV1–9 and activation boundaries. No new engine,
 scheduler, ledger, approval, domain writer, provider or ZION instructions activation.
 
+[Original weekly entry status](../evidence/ui-delivery/exp05-weekly-entry-outcome.md)
+extends only Overview's existing control with bounded original receipt/uncertainty
+feedback and refreshes the same inspection.36 owning assertions and actual native
+viewport/state/theme evidence are development proof, not activation, original
+customer execution, catalogue promotion or full Run My Week acceptance.
+
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
 The bounded original#2401 successor preserves a known pre-processing refusal on

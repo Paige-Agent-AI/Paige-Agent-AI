@@ -21,13 +21,14 @@ async function mount(review=vi.fn()){
   await act(async()=>root.render(<MemoryRouter initialEntries={["/solo/123/operations/overview"]}><div data-pg="light"><OperationsOverview tenantId="test-tenant" plans={[]} items={[]} members={[]} onInspectItem={vi.fn()} onInspectPlan={vi.fn()} onReviewWithPaige={review}/></div></MemoryRouter>));
   cleanup=()=>act(()=>{root.unmount();host.remove();});return{host,review};
 }
-it("opens the original weekly inspection from Overview without reading until requested or replacing Plan with ZION",async()=>{
-  const {review}=await mount();expect(button("Weekly responsibility")).toBeTruthy();expect(h.enabled).toEqual([false]);expect(h.draft).not.toHaveBeenCalled();
-  await act(async()=>button("Plan with ZION")!.click());expect(review).toHaveBeenCalledTimes(1);expect(h.enabled).not.toContain(true);
+it("reads original status on Overview and refreshes the same inspection without replacing Plan with ZION",async()=>{
+  const {review}=await mount();expect(button("Weekly responsibility")).toBeTruthy();expect(h.enabled).toEqual([true]);expect(h.draft).not.toHaveBeenCalled();
+  expect(document.body.textContent).toContain("Status unverified");
+  await act(async()=>button("Plan with ZION")!.click());expect(review).toHaveBeenCalledTimes(1);expect(h.refresh).not.toHaveBeenCalled();
   await act(async()=>button("Weekly responsibility")!.click());expect(h.enabled).toContain(true);
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Current status couldn’t be verified");
   expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain("No weekly responsibility is registered");
-  expect(button("Enable")).toBeUndefined();expect(h.refresh).not.toHaveBeenCalled();
+  expect(button("Enable")).toBeUndefined();expect(h.refresh).toHaveBeenCalledTimes(1);
   expect(h.draft.mock.calls.map(call=>call[3])).toEqual([{action:"pending"}]);
 });
 it("keeps a noneligible audience out of the weekly reader while retaining the original operating work",async()=>{
@@ -52,5 +53,5 @@ it("uses the same current SOLO Calendar and Work destinations without a new sche
   const dialog=document.querySelector('[role="dialog"]')!;
   expect(dialog.textContent).toContain("No weekly responsibility is registered");expect(dialog.textContent).toContain("Recurring execution is currently unavailable");
   expect([...dialog.querySelectorAll("a")].map(a=>a.getAttribute("href"))).toEqual(["/solo/123/clients/calendar","/solo/123/operations/work"]);
-  expect(h.refresh).not.toHaveBeenCalled();
+  expect(h.refresh).toHaveBeenCalledTimes(1);
 });

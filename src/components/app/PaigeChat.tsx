@@ -882,7 +882,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
               {message.documentFileName && <DocumentMessageBubble fileName={message.documentFileName} />}
               {customerFrame&&message.files?.map(file=><div key={file.id} className="min-w-0">
                 {fileAccess?.id===file.id&&fileAccess.phase==="ready"&&fileAccess.url?<a href={fileAccess.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 max-w-full items-center gap-2 rounded px-2 text-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Paperclip aria-hidden="true" className="h-4 w-4 shrink-0"/><span className="min-w-0 break-words [overflow-wrap:anywhere]">Open {file.filename}</span></a>:
-                  <Button variant="ghost" className="min-h-11 max-w-full whitespace-normal text-left text-sm" disabled={fileAccess?.id===file.id&&fileAccess.phase==="loading"}
+                  <Button variant="ghost" className="h-auto min-h-11 w-full max-w-full justify-start whitespace-normal px-2 py-2 text-left text-sm" disabled={fileAccess?.id===file.id&&fileAccess.phase==="loading"}
                     onClick={()=>void openPrivateMessageFile(file)}><Paperclip aria-hidden="true" className="mr-2 h-4 w-4 shrink-0"/><span className="min-w-0 break-words [overflow-wrap:anywhere]">{fileAccess?.id===file.id&&fileAccess.phase==="loading"?"Checking file…":file.filename}</span></Button>}
                 {fileAccess?.id===file.id&&fileAccess.phase==="error"&&<p role="status" className="text-sm">This file couldn’t be opened. Select it to try again.</p>}
               </div>)}

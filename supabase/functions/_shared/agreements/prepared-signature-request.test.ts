@@ -539,6 +539,7 @@ for (const [label, change] of Object.entries({
   "missing signing link": { body_text: "Please sign" },
   "repeated signing link": { body_text: signingLinkMarker + signingLinkMarker },
   "subject line break": { subject: "Review\r\nHidden header" },
+  "NUL subject": { subject: "Review\u0000Hidden" },
   "subject marker": { subject: signingLinkMarker },
   "empty body": { body_text: " " },
   "oversize body": { body_text: "a".repeat(10001) + signingLinkMarker },
@@ -656,4 +657,142 @@ Deno.test("request review retains valid Unicode including an initial BOM without
   const result = await x.run();
   assert.equal((result.args.messages as Array<Record<string, unknown>>)[0].body_text,
     x.input.messages[0].body_text);
+});
+
+
+Deno.test("original agreement-send mounts private request review before legacy provider or effects", async t => {
+  const x = await requestSeed(), before = effects(x.f);
+  const previousServe = Deno.serve, previousEnv = Deno.env.get, previousFetch = globalThis.fetch;
+  let handler!: (request: Request) => Promise<Response>;
+  let limited = false;
+  const unexpected: string[] = [];
+  const json = (value: unknown, status = 200) => new Response(JSON.stringify(value),
+    { status, headers: { "Content-Type": "application/json" } });
+  const project = (row: Record<string, unknown>, url: URL) =>
+    Object.fromEntries((url.searchParams.get("select") ?? "").split(",").map(k => [k, row[k]]));
+  try {
+    Deno.serve = ((fn: typeof handler) => { handler = fn; return {} as never; }) as unknown as typeof Deno.serve;
+    Deno.env.get = name => name === "SUPABASE_URL" ? "https://request-review.invalid"
+      : ["SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SENDGRID_MAIL_SEND_API_KEY"].includes(name)
+      ? "synthetic-not-a-credential" : undefined;
+    globalThis.fetch = async (input, init) => {
+      const req = new Request(input, init), url = new URL(req.url);
+      assert.equal(url.origin, "https://request-review.invalid", "No external provider or customer request");
+      if (url.pathname === "/auth/v1/user") return json((await x.f.caller.auth.getUser()).data.user);
+      if (url.pathname.startsWith("/rest/v1/rpc/")) {
+        const name = url.pathname.slice("/rest/v1/rpc/".length);
+        const args = await req.json() as Record<string, unknown>;
+        if (name === "check_public_rate_limit") return json(!limited);
+        if (name === "tenant_sender_identity") return json((await x.emailPorts.admin.rpc(name, args)).data);
+        if (name === "_read_agreement_document_preparation") {
+          const r = await x.f.service.rpc(name, args);
+          return json(r.error ?? r.data, r.error ? 403 : 200);
+        }
+        if (["current_user_tenant_id", "is_tenant_admin", "read_paige_agreement_preparation"].includes(name)) {
+          const r = await x.f.caller.rpc(name, args);
+          return json(r.error ?? r.data, r.error ? 403 : 200);
+        }
+      }
+      if (req.method === "GET" && url.pathname === "/rest/v1/tenants") {
+        assert.equal(url.searchParams.get("id"), "eq." + tenant);
+        return json({ name: "Controlled Studio", account_type: "solo", parent_tenant_id: null });
+      }
+      if (req.method === "GET" && ["channel_connectors", "tenant_email_domains"].some(
+        name => url.pathname === "/rest/v1/" + name)) {
+        const table = url.pathname.slice("/rest/v1/".length);
+        const value = table === "channel_connectors" ? x.state.connector : x.state.domain;
+        assert.equal(url.searchParams.get("tenant_id"), "eq." + tenant);
+        return json(project(value, url));
+      }
+      if (req.method === "GET" && url.pathname === "/rest/v1/clients") {
+        assert.equal(url.searchParams.get("tenant_id"), "eq." + tenant);
+        return json({ dnd_active: false, dnd_until: null, dnd_reason: null, timezone: "UTC" });
+      }
+      if (req.method === "GET" && url.pathname === "/rest/v1/paige_suppressions") {
+        assert.equal(url.searchParams.get("tenant_id"), "eq." + tenant);
+        return json([]);
+      }
+      if (req.method === "GET" && url.pathname === "/rest/v1/tenant_comms_preferences") {
+        assert.equal(url.searchParams.get("tenant_id"), "eq." + tenant);
+        return json(null);
+      }
+      if (req.method === "GET" && url.pathname.startsWith("/storage/v1/object/")) {
+        let rest = url.pathname.slice("/storage/v1/object/".length);
+        const info = rest.startsWith("info/");
+        if (info) rest = rest.slice(5);
+        if (rest.startsWith("authenticated/")) rest = rest.slice("authenticated/".length);
+        const [bucket, ...key] = rest.split("/");
+        const store = x.f.service.storage.from(bucket);
+        if (info) {
+          const result = await store.info(decodeURIComponent(key.join("/")));
+          return json(result.error ?? result.data, result.error ? 404 : 200);
+        }
+        const result = await store.download(decodeURIComponent(key.join("/")));
+        return result.error || !result.data ? json({ error: "not found" }, 404)
+          : new Response(await result.data.arrayBuffer(), { headers: { "Content-Type": "application/pdf" } });
+      }
+      unexpected.push(req.method + " " + url.pathname);
+      throw new Error("Unexpected request-review transport: " + req.method + " " + url.pathname);
+    };
+    await import("../../agreement-send/index.ts");
+    assert.equal(typeof handler, "function");
+    const invoke = (value: unknown = x.input, query = "?review=prepared-request",
+      headers: Record<string, string> = {}) => handler(new Request("https://request-review.invalid/agreement-send" + query,
+      { method: "POST", headers: { Authorization: "Bearer synthetic-owner", "Content-Type": "application/json", ...headers },
+        body: JSON.stringify(value) }));
+    await t.step("eligible owner reads exact sender/messages with no Resend key or send", async () => {
+      const response = await invoke();
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("cache-control"), "no-store, private");
+      assert.equal(response.headers.get("vary"), "Authorization");
+      const wire = await response.text(), data = JSON.parse(wire);
+      assert.equal(data.ok, true);
+      assert.equal(data.review.kind, "prepared_signature_request_review");
+      assert.equal(data.review.approval, "not_requested");
+      assert.equal(data.review.execution, "unavailable");
+      assert(!wire.includes("credentials_vault_ref") && !wire.includes("content_storage_key"));
+      assert.deepEqual(effects(x.f), before);
+    });
+    await t.step("foreign business is refused before private source reads", async () => {
+      const reads = x.f.calls.source;
+      const response = await invoke({ ...x.input, review: { ...x.input.review, tenant_id: operation } });
+      assert.equal(response.status, 403);
+      assert.equal(x.f.calls.source, reads);
+    });
+    await t.step("missing ordinary role cannot read prepared source", async () => {
+      x.f.state.admin = false;
+      const reads = x.f.calls.source;
+      try { assert.equal((await invoke()).status, 403); assert.equal(x.f.calls.source, reads); }
+      finally { x.f.state.admin = true; }
+    });
+    await t.step("anonymous identity cannot use a nominal admin result", async () => {
+      x.f.state.anonymous = true;
+      try { assert.equal((await invoke()).status, 403); }
+      finally { x.f.state.anonymous = false; }
+    });
+    await t.step("existing fail-closed read limit returns a retryable refusal", async () => {
+      limited = true;
+      const reads = x.f.calls.source;
+      try { assert.equal((await invoke()).status, 429); assert.equal(x.f.calls.source, reads); }
+      finally { limited = false; }
+    });
+    await t.step("cross-door token and duplicate mode never fall through to legacy sending", async () => {
+      assert.equal((await invoke(x.input, "?review=prepared-request&token=forbidden")).status, 400);
+      assert.equal((await invoke(x.input, "?review=prepared-request&review=prepared-request")).status, 400);
+    });
+    await t.step("review uses the original bounded JSON parser", async () => {
+      assert.equal((await invoke(x.input, "?review=prepared-request", { "Content-Type": "text/plain" })).status, 400);
+      const response = await handler(new Request("https://request-review.invalid/agreement-send?review=prepared-request",
+        { method: "POST", headers: { Authorization: "Bearer synthetic-owner", "Content-Type": "application/json" },
+          body: " ".repeat(1048577) + "{}" }));
+      assert.equal(response.status, 400);
+    });
+    await t.step("no caller credential cannot reach original authority reads", async () => {
+      assert.equal((await invoke(x.input, "?review=prepared-request", { Authorization: "" })).status, 401);
+    });
+    assert.deepEqual(unexpected, []);
+    assert.deepEqual(effects(x.f), before);
+  } finally {
+    Deno.serve = previousServe; Deno.env.get = previousEnv; globalThis.fetch = previousFetch;
+  }
 });

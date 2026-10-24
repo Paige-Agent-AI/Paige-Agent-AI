@@ -56,11 +56,11 @@ CUSTOMER_RELEASE_IDENTITY: none: Solo Live pilot surface, not yet in the founder
 RELEASE_NOTE_REQUIRED: no: internal repair; the disclosure copy is unchanged.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: fold repair proven at the rendered+synthetic class (geometry-asserted frames); the founder's own acceptance and audio remain their window.
 RELEASE_RECOVERY: position=forward-fix; reference=this record and the review thread on #2721
-SOLO_1536x770_PAIGE_CLOSED: PASS: merged #2710 frames live-1536x770-{dark,light}-closed.png — the closed trigger surface is untouched by this diff (DOM change confined to the notice subtree).
-SOLO_1536x770_PAIGE_OPEN: PASS: fold-1536x770-{dark,light}-terms.png — geometry-asserted (overflow 72px; accept bottom 667px of 770; actions outside the scroll region).
-SOLO_1366x768_PAIGE_CLOSED: PASS: merged #2710 frame live-1366x768-{dark,light}-closed.png (unchanged surface).
-SOLO_1366x768_PAIGE_OPEN: NOT_APPLICABLE: notice reflow proven at the primary and narrow canonical viewports; no layout mechanism in this diff that varies between those widths (same flex column, same 34vh scroll cap) — mirrors the merged #2710 record's coverage rationale.
-SOLO_1024x768_PAIGE_CLOSED: PASS: merged #2710 frame live-1024x768-{dark,light}-closed.png (unchanged surface).
-SOLO_1024x768_PAIGE_OPEN: NOT_APPLICABLE: same primary+narrow coverage rationale as 1366x768.
-SOLO_900x1000_PAIGE_CLOSED: PASS: merged #2710 frames live-900x1000-{dark,light}-closed.png (unchanged surface).
-SOLO_900x1000_PAIGE_OPEN: PASS: fold-900x1000-{dark,light}-terms.png — geometry-asserted (overflow 138px; accept bottom 781px of 1000; actions outside the scroll region).
+SOLO_1536X770_PAIGE_CLOSED: PASS: merged #2710 frames live-1536x770-{dark,light}-closed.png — the closed trigger surface is untouched by this diff (DOM change confined to the notice subtree).
+SOLO_1536X770_PAIGE_OPEN: PASS: fold-1536x770-{dark,light}-terms.png — geometry-asserted (overflow 72px; accept bottom 667px of 770; actions outside the scroll region).
+SOLO_1366X768_PAIGE_CLOSED: PASS: merged #2710 frame live-1366x768-{dark,light}-closed.png (unchanged surface).
+SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: notice reflow proven at the primary and narrow canonical viewports; no layout mechanism in this diff that varies between those widths (same flex column, same 34vh scroll cap) — mirrors the merged #2710 record's coverage rationale.
+SOLO_1024X768_PAIGE_CLOSED: PASS: merged #2710 frame live-1024x768-{dark,light}-closed.png (unchanged surface).
+SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: same primary+narrow coverage rationale as 1366x768.
+SOLO_900X1000_PAIGE_CLOSED: PASS: merged #2710 frames live-900x1000-{dark,light}-closed.png (unchanged surface).
+SOLO_900X1000_PAIGE_OPEN: PASS: fold-900x1000-{dark,light}-terms.png — geometry-asserted (overflow 138px; accept bottom 781px of 1000; actions outside the scroll region).

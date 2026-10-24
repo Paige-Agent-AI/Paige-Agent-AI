@@ -826,6 +826,20 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-23 — EXP09 original ordinary customer sign-in source released.**
+
+| Increment | Exact released identity and original proof | Completion boundary |
+| --- | --- | --- |
+| [#2687](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2687): ordinary native ambiguity may open the existing verified customer-business choice | Reviewed34a6829ff632acfb82f7d7ab6bda195887dc9fc6, AUTHOR-REVIEW / LOWER ASSURANCE5634929569/5635225236. Ten exact-head checks SUCCESS including verify120679486306/native120679485680/audit120679485563, normal schema-free Preview SKIP, two Vercel statuses SUCCESS. Main907a73784f4f84e49b48b34056a422352083ba02; actual2748432e1+34a682 parents/treeea3d8438a96993e78b647076056739d3db8b83a7 independently reproduced, shared EXP01 source retained. Exact production dpl_CndfEBCVQpqfhM8vcoFYFNSgtk8q READY/public907-mvlka5t2/customerUpdate:null. Actual served loader SHA256f71f4e9a5bcbbc80c88262be11703749b63e727b03bc88b7e409d99a64834c99 and applicationfe8c383293d52bdbac5ae90883e222fd5b635096e0b3e9866880561087fe47f5 prove native42501+exact ambiguity/limit2/two-verified-relationship guard. Own SQL/Edge N/A. [Receipt6376334526](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2687#issuecomment-6376334526). | SOURCE RELEASE VERIFIED, not customer acceptance. Original163 focused cases/five desktop-narrow raw original-component frames/ten source pins are synthetic supporting evidence. Gate still owns admission; global multi-business acceptance NOT_ACTIVATED. Actual owner/client/new-existing/two-business/revoked/interrupted/returning/private history/all-seven/device/AT/zoom/founder proof owed. No owner workspace/role/provider/Spine/INT346 activation or customer announcement. |
+
+
+**2026-10-23 — EXP09 original saved-business Gateway released.**
+
+| Increment | Exact released identity and original proof | Completion boundary |
+| --- | --- | --- |
+| [#2680](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2680): continue original Gateway to an authorized saved customer business | Reviewed b0300921744d37f0a12f574f2a2c664b22b19516, AUTHOR-REVIEW / LOWER ASSURANCE5633846957/5634287520; ten applicable exact-head checks SUCCESS plus one schema-free Preview SKIP/two web statuses SUCCESS. Main cb1d891d7b20e09d3d09263d3d9e4a6b690a8241, actual de58+b030 parents/tree9c920fad297e8b0fa4556385d3260831dfecf4b5 independently reproduced, preserving E05/E02 source.145 owning tests; actual Native120629909895 ran61 relationship/243 scope/full grant ordering on b030+56219. Exact production dpl_DQZEtszeUH7eB1kHcwYGCkPdJVsM READY/publiccb1-mvlg18he/customerUpdate:null. Served Gateway SHA256660f6a47cb46832e508c18ea51264b524f03ce5ad05c771bb0f2c5d9ff2067f3, entry248c529cfd0cbac9bb15ca3634fa5ec2ce0519952e323c2c31982198f6e26392 and landing app4f000998fae309c4228a49bb2d7702e10ed558c80ab35b00793e34fdfddb3055 verified. Own SQL/Edge N/A. [Release6374536491](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2680#issuecomment-6374536491). | SOURCE RELEASE VERIFIED. Original native pointer/role-priority resolver/final Auth-scope gate remain authority; no identity or owner workspace write. Seven valid raw frames/six viewport classes and synthetic original-code/keyboard proof are not real Auth. Invalid foreign frame excluded; ordinary owner/client/new-account/multiple-business/revoked/returning/all7/device/AT/zoom/founder proof owed. Global multiple-membership NOT_ACTIVATED. No customer announcement/provider/protected Chat-Live effect. |
+
+
 **2026-10-23 — EXP05 original governed-work prerequisites source/configuration verified.**
 
 These are bounded engineering releases for the shared SOLO implementation, not

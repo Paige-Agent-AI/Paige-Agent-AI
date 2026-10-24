@@ -90,3 +90,37 @@ Deno.test("INT-336 closed receipt projection retains write, unknown, durable ide
   assertEquals(interactiveAcceptanceBoundary(null, true).message_accepted, true);
   assertEquals(interactiveAcceptanceBoundary({ status: "superseded" }, false).message_accepted, false);
 });
+
+Deno.test("original specialist invocation survives the existing effect and receipt projection without upgrading uncertainty", () => {
+  const id = "00000000-0000-4000-8000-000000000001";
+  for (const result of [{ ok: true, runtime: "soft", receipt_recorded: true },
+    { ok: false, outcome_unknown: true }, { ok: true, runtime: "langgraph", success: false, outcome_unknown: true }]) {
+    const effect = interactiveEffect("delegate_to_subagent", { ...result, invocation_id: id, secret: "private input" })!;
+    assertEquals(effect.record_refs, [{ kind: "subagent_invocation", id }]);
+    if (result.outcome_unknown) assertEquals(effect.outcome, "outcome_unknown");
+    const context = interactiveReceiptContext({ interactive: { effects: [effect] } });
+    assert(context.includes(id)); assert(!context.includes("private input"));
+  }
+});
+
+Deno.test("specialist references are excluded from other tools and malformed original identities", () => {
+  const id = "00000000-0000-4000-8000-000000000001";
+  for (const tool of ["list_subagents", "crm_create_task"]) {
+    assertEquals(interactiveEffect(tool, { ok: true, invocation_id: id })?.record_refs, undefined);
+    const context = interactiveReceiptContext({ interactive: { effects: [{ tool, outcome: "reported_success",
+      record_refs: [{ kind: "subagent_invocation", id }] }] } });
+    assert(!context.includes(id));
+  }
+  for (const invocation_id of [null, {}, "invalid", ` ${id}`, { id }]) {
+    assertEquals(interactiveEffect("delegate_to_subagent", { ok: false, outcome_unknown: true, invocation_id })?.record_refs, undefined);
+  }
+  assertEquals(interactiveEffect("crm_create_task", { success: true, task_id: id, invocation_id: id })?.record_refs, [{ kind: "task", id }]);
+});
+
+Deno.test("a declared closed read cannot borrow a specialist invocation as read-success evidence", () => {
+  const declaration = { action: { chatTool: "read_fixture", classification: "read", riskPolicyKey: "read_only", approvalAuthority: "none",
+    executor: "edge.fixture", idempotency: "read only" }, outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "fixture" } } as const;
+  const read = { status: "available", message: "Read original record" };
+  assertEquals(interactiveEffect("read_fixture", read, [declaration])?.outcome, "reported_success");
+  assertEquals(interactiveEffect("read_fixture", { ...read, invocation_id: "00000000-0000-4000-8000-000000000001" }, [declaration])?.outcome, "outcome_unknown");
+});

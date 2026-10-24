@@ -1058,6 +1058,84 @@
       "sources": ["docs/brain/paige-spine-and-rail-state.md", "supabase/functions/_shared/paige-spine/domains/team.ts", "docs/doctrine/surface-cards/team.md"]
     },
     {
+      "id": "teamhub",
+      "consequential": false,
+      "intended_capability": {
+        "read": "The caller's own visible conversations: team-visible and private channels they belong to, DMs, threads, mentions and unread counts, inside their own SOLO workspace.",
+        "draft": "Prepare a message, a thread reply or a channel for the caller to send; later increments prepare a task, assignment or approval request linked to one original Work record.",
+        "auto": "Within the caller's own seat and visible conversations only: post, reply, mention, create or join channels and mark read, as the caller, bounded to their workspace and never crossing to another workspace or a private channel they are not in.",
+        "confirm": "Leaving a private channel confirms its consequence first; consequential requests (tasks, approvals, specialist work) route through the one approval gate in later increments.",
+        "prohibited": "Never reveal a private channel's existence, name, members, counts or text to a non-member, including workspace owners; never grant agency, operator or removed people access; never send anything outside the business.",
+        "completion_criterion": "A teammate sends a message in a channel or DM; it is delivered to the mentioned teammate with an unread count, survives reload, and private-channel isolation is verified on a real authenticated SOLO account."
+      },
+      "surface": "Team Hub (main menu, below Operations)",
+      "group": "main",
+      "tier_scope": [
+        "solo"
+      ],
+      "owner_component": "src/solo/team-hub/TeamHubWorkspace.tsx",
+      "canonical_source": "team_hub_channels; team_hub_channel_members; team_hub_messages; team_hub_message_mentions (migration 20271113850008)",
+      "prohibited_context": [
+        "another workspace's channels or messages",
+        "private channel names, members, counts or text for non-members",
+        "member emails"
+      ],
+      "chain": {
+        "canonical_source": {
+          "status": "real"
+        },
+        "tenant_scope": {
+          "status": "server_resolved",
+          "note": "current_user_tenant_id() plus an active tenant_members seat; canonical SOLO only (standalone, no parent); p_expected_tenant is a fence, never a selector"
+        },
+        "safe_context": {
+          "status": "none",
+          "note": "Increment 1 adds no Paige context feed; Chat/Live answers about team work arrive in increment 4"
+        },
+        "authority": {
+          "status": "none",
+          "note": "Human-to-human messaging; no Paige act and no Spine key in increment 1"
+        },
+        "governed_write": {
+          "status": "wired",
+          "note": "SECURITY DEFINER team_hub_* functions; tables have no browser grants"
+        },
+        "verified_outcome": {
+          "status": "partial",
+          "note": "Every post returns the stored row; authenticated runtime proof owed"
+        },
+        "rail_evidence": {
+          "producer": "none",
+          "read": "n/a",
+          "note": "Team conversation is not a business outcome; no Rail row"
+        },
+        "mind_eligibility": {
+          "axis_a": "BLOCKED",
+          "axis_b": "NO",
+          "note": "Message text and member identity never cross to Mind in increment 1"
+        },
+        "memory_retention": {
+          "status": "n/a"
+        }
+      },
+      "state": "PROOF_OWED",
+      "state_reason": "Increment 1 source with a disposable-PostgreSQL isolation proof and mocked-RPC tests; not yet applied to production and not driven on an authenticated SOLO account.",
+      "evidence_class": [
+        "automated_test",
+        "rendered_structural",
+        "source_read"
+      ],
+      "linked": [
+        "docs/delivery/exp08-team-hub-collaboration-contract.md"
+      ],
+      "next_slice": "Increment 2: /PAIGE commands and specialist requests linked to one original EXP05 Work record, plus the Team work panel.",
+      "sources": [
+        "docs/delivery/exp08-team-hub-collaboration-contract.md",
+        "docs/doctrine/surface-cards/team.md",
+        "supabase/tests/exp08_team_hub_collaboration.sql"
+      ]
+    },
+    {
       "id": "settings.connections",
       "consequential": true,
       "intended_capability": {

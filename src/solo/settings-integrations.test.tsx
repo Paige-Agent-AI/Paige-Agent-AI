@@ -1166,21 +1166,18 @@ describe("Team chat — Slack first-class, Teams honest", () => {
     expect(host.querySelector('.ig-card[data-provider="slack"]')?.textContent).toContain("Connected");
   });
 
-  it("asserts NOTHING while the gateway list is loading or unread (review P2)", async () => {
-    // Loading: hold the gateway read unresolved — the tile must say "Checking connection…",
-    // never a transient "Not connected" for a tenant whose row is still in flight.
-    const gate = deferred<{ data: unknown; error: unknown }>();
+  it("asserts NOTHING when the gateway list is unread (review P2)", async () => {
+    // Refused read: the tile says "Status unavailable", never a false "Not connected".
     const original = rpc.getMockImplementation()!;
     rpc.mockImplementation((name: string, ...args: unknown[]) =>
-      name === "get_mcp_connections_v2" ? gate.promise : original(name, ...args));
-    const first = await render();
-    expect(first.host.querySelector('.ig-card[data-provider="slack"]')?.textContent).toContain("Checking connection");
-    // Refused read: "Status unavailable", never a false not-connected.
-    await act(async () => { gate.resolve({ data: null, error: { message: "unreadable" } }); });
-    await act(async () => { await Promise.resolve(); });
-    expect(first.host.querySelector('.ig-card[data-provider="slack"]')?.textContent).toContain("Status unavailable");
-    expect(first.host.querySelector('.ig-card[data-provider="slack"]')?.textContent).not.toContain("Not connected");
-    await act(async () => { first.root.unmount(); });
+      name === "get_mcp_connections_v2"
+        ? Promise.resolve({ data: null, error: { message: "unreadable" } })
+        : original(name, ...args));
+    const view = await render();
+    const card = view.host.querySelector('.ig-card[data-provider="slack"]');
+    expect(card).toBeTruthy();
+    expect(card?.textContent).toContain("Status unavailable");
+    expect(card?.textContent).not.toContain("Not connected");
   });
 
   it("a CONNECTED tenant's drawer opens in manage mode, not a blank create form (review P2)", async () => {

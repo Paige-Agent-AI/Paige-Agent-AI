@@ -205,7 +205,7 @@ function providerMark(id: ProviderIdentity) {
  * so it is named once, on the group heading, and the tools below it carry only their own identity.
  * Each group takes one of the platform's existing --k-* accents; no new colour enters the system.
  */
-type GroupId = "automation" | "social" | "financial" | "documents" | "client-data" | "developer";
+type GroupId = "automation" | "collaboration" | "social" | "financial" | "documents" | "client-data" | "developer";
 const GROUPS: ReadonlyArray<{ id: GroupId; label: string; accent: string; blurb: string; note?: string }> = [
   { id: "automation", label: "Automation", accent: "var(--k-automation)", blurb: "Run workflows and reach other apps." },
   { id: "collaboration", label: "Team chat", accent: "var(--k-integration)", blurb: "Workplace chat and channels." },

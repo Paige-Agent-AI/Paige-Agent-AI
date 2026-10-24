@@ -410,3 +410,217 @@ Deno.test("preserves separate client, business and witness identities and parall
   assert.deepEqual(recipients.map((r) => r.signing_order), [1, 1, 2]);
   assert.deepEqual(effects(f), before);
 });
+
+
+// C35: the original source input must bind the actual verified sender and the
+// exact recipient messages before a future canonical HIGH request is possible.
+const signingLinkMarker = "[[PAIGE_AGREEMENT_SIGNING_LINK]]";
+const connectorId = "dddddddd-0000-4000-8000-000000000001";
+type RequestReview = {
+  kind: "prepared_signature_request_review";
+  tool: "agreement_send";
+  args: Record<string, unknown>;
+  request_sha256: string;
+  approval: "not_requested";
+  execution: "unavailable";
+};
+type ReviewBuilder = (input: unknown, caller: OwnerPreparationCaller,
+  service: OwnerPreparationService, actorId: string, emailPorts: unknown) => Promise<RequestReview>;
+const reviewBuilder = () => {
+  const fn = (candidate as unknown as { prepareSignatureRequestReview?: ReviewBuilder })
+    .prepareSignatureRequestReview;
+  assert.equal(typeof fn, "function", "Missing original sender-and-message request review");
+  return fn!;
+};
+async function requestSeed() {
+  const seed = await seeded();
+  const signerId = seed.packet.signers[0].id;
+  const input = { ...seed.input, connector_id: connectorId,
+    messages: [{ signer_id: signerId, subject: "Please review your service agreement",
+      body_text: "Review the exact document before signing.\n" + signingLinkMarker }] };
+  const state = {
+    connector: { id: connectorId, tenant_id: tenant, provider: "sendgrid",
+      channel_type: "email", active: true, status: "active",
+      from_address: "hello@studio.example.test", from_name: "Studio Team",
+      reply_to: "support@studio.example.test", mailbox_class: "shared_support",
+      mailbox_owner_user_id: null as string | null, credentials_vault_ref: null, config: {} },
+    domain: { tenant_id: tenant, domain: "studio.example.test", sendgrid_status: "verified",
+      sendgrid_domain_id: "controlled-domain", sendgrid_verified_at: at },
+    identity: { from_name: "Original business", from_address: "original@studio.example.test",
+      reply_to: "original-reply@studio.example.test", tenant_name: "Controlled Studio" },
+    configured: true, readError: false,
+    preSend: { proceed: true, outcome: "proceed" },
+    preSendCalls: [] as Array<Record<string, unknown>>,
+    onPreSend: null as (() => void) | null,
+    reads: [] as Array<{ table: string; filters: Record<string, unknown> }>,
+  };
+  const emailPorts = {
+    admin: {
+      from(table: string) {
+        return { select(_columns: string) {
+          const filters: Record<string, unknown> = {};
+          const query = {
+            eq(key: string, value: unknown) { filters[key] = value; return query; },
+            async maybeSingle() {
+              state.reads.push({ table, filters: { ...filters } });
+              return { data: structuredClone(table === "channel_connectors"
+                ? state.connector : table === "tenant_email_domains" ? state.domain : null),
+                error: state.readError ? { message: "private provider detail" } : null };
+            },
+          };
+          return query;
+        } };
+      },
+      async rpc(name: string, args: Record<string, unknown>) {
+        assert.equal(name, "tenant_sender_identity", "No approval or message RPC in a review");
+        assert.deepEqual(args, { _tenant_id: tenant });
+        return { data: structuredClone(state.identity), error: null };
+      },
+    },
+    environment: () => ({ resendConfigured: false, googleConfigured: false,
+      sendgridConfigured: state.configured }),
+    async preSend(input: Record<string, unknown>) {
+      state.preSendCalls.push(structuredClone(input));
+      state.onPreSend?.();
+      return { ...state.preSend };
+    },
+  };
+  return { ...seed, input, state, emailPorts,
+    run: () => reviewBuilder()(input, seed.f.caller, seed.f.service, actor, emailPorts) };
+}
+Deno.test("request review binds original PDF, actual verified sender and exact messages without approval or effects", async () => {
+  const x = await requestSeed(), before = effects(x.f);
+  const result = await x.run();
+  assert.equal(result.kind, "prepared_signature_request_review");
+  assert.equal(result.tool, "agreement_send");
+  assert.equal(result.approval, "not_requested");
+  assert.equal(result.execution, "unavailable");
+  assert.match(result.request_sha256, /^[a-f0-9]{64}$/);
+  const args = result.args as Record<string, unknown>;
+  assert.equal(args.agreementId, agreement);
+  assert.equal(args.preparationId, next);
+  assert.deepEqual(args.recipients, x.packet.signers);
+  assert.deepEqual(args.document, x.packet.document);
+  const sender = args.sender as Record<string, unknown>;
+  assert.equal(sender.connector_id, connectorId);
+  assert.equal(sender.from_address, x.state.connector.from_address);
+  assert.equal(sender.from_name, "Studio Team");
+  assert.equal(sender.reply_to, "support@studio.example.test");
+  const messages = args.messages as Array<Record<string, unknown>>;
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].signer_id, x.packet.signers[0].id);
+  assert.equal(messages[0].to, x.packet.signers[0].email);
+  assert.equal(messages[0].subject, x.input.messages[0].subject);
+  assert.equal(messages[0].body_text, x.input.messages[0].body_text);
+  assert.equal(messages[0].body_html, "<p>Review the exact document before signing.<br>" + signingLinkMarker + "</p>");
+  assert.deepEqual(x.state.preSendCalls, [{ tenantId: tenant, channel: "email",
+    to: x.packet.signers[0].email, contactId: client }]);
+  assert(x.state.reads.every(r => r.filters.tenant_id === tenant));
+  assert.deepEqual(effects(x.f), before);
+  assert(Object.isFrozen(result) && Object.isFrozen(args) && Object.isFrozen(sender));
+  assert(!("approved_fingerprint" in result) && !("receipt_id" in result));
+});
+Deno.test("request review captures messages and sender choice before the first await", async () => {
+  const x = await requestSeed(), original = structuredClone(x.input);
+  x.f.state.onDownload = () => {
+    x.input.connector_id = operation;
+    x.input.messages[0].body_text = "Changed";
+  };
+  const result = await x.run();
+  assert.equal((result.args.sender as Record<string, unknown>).connector_id, connectorId);
+  assert.equal((result.args.messages as Array<Record<string, unknown>>)[0].body_text,
+    original.messages[0].body_text);
+});
+for (const [label, change] of Object.entries({
+  "missing signing link": { body_text: "Please sign" },
+  "repeated signing link": { body_text: signingLinkMarker + signingLinkMarker },
+  "subject line break": { subject: "Review\r\nHidden header" },
+  "subject marker": { subject: signingLinkMarker },
+  "empty body": { body_text: " " },
+  "oversize body": { body_text: "a".repeat(10001) + signingLinkMarker },
+  "NUL body": { body_text: "\u0000" + signingLinkMarker },
+  "unretained Unicode": { body_text: "\ud800" + signingLinkMarker },
+  "live signing secret": { body_text: "https://paigeagent.ai/sign/" + "a".repeat(64) + "\n" + signingLinkMarker },
+  "recipient override": { to: "another@example.test" },
+})) {
+  Deno.test("request review refuses " + label + " before private reads", async () => {
+    const x = await requestSeed(), before = { ...x.f.calls };
+    x.input.messages[0] = { ...x.input.messages[0], ...change };
+    await assert.rejects(x.run, refuses("MESSAGE_INVALID"));
+    assert.deepEqual(x.f.calls, before);
+    assert.equal(x.state.reads.length, 0);
+  });
+}
+for (const [label, change] of Object.entries({
+  "foreign tenant": { tenant_id: operation },
+  "inactive connection": { active: false },
+  "revoked connection": { status: "revoked" },
+  "unapproved provider": { provider: "resend" },
+  "private mailbox owned by another actor": { mailbox_class: "personal", mailbox_owner_user_id: operation },
+  "malformed mailbox": { mailbox_class: "unknown" },
+  "unverified From": { from_address: "other@another.example.test" },
+  "header name injection": { from_name: "Studio\r\nHidden" },
+})) {
+  Deno.test("request review withholds " + label + " using original sender policy", async () => {
+    const x = await requestSeed(), before = effects(x.f);
+    Object.assign(x.state.connector, change);
+    await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+    assert.deepEqual(effects(x.f), before);
+  });
+}
+Deno.test("request review requires actual business-domain verification and current platform readiness", async () => {
+  const x = await requestSeed();
+  x.state.domain.sendgrid_status = "pending";
+  await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+  x.state.domain.sendgrid_status = "verified";
+  x.state.configured = false;
+  await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+  x.state.configured = true;
+  x.state.readError = true;
+  await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+});
+for (const outcome of ["blocked_suppressed", "blocked_client_dnd", "queued_tenant_dnd", "error"]) {
+  Deno.test("request review preserves canonical recipient hold " + outcome, async () => {
+    const x = await requestSeed(), before = effects(x.f);
+    x.state.preSend = { proceed: false, outcome };
+    await assert.rejects(x.run, refuses("RECIPIENT_HELD"));
+    assert.deepEqual(effects(x.f), before);
+  });
+}
+Deno.test("request review refuses missing, duplicate or foreign assigned signer messages", async () => {
+  for (const mode of ["missing", "duplicate", "foreign"]) {
+    const x = await requestSeed(), before = effects(x.f);
+    if (mode === "missing") x.input.messages = [];
+    if (mode === "duplicate") x.input.messages.push({ ...x.input.messages[0] });
+    if (mode === "foreign") x.input.messages[0].signer_id = operation;
+    await assert.rejects(x.run, refuses("MESSAGE_INVALID"));
+    assert.deepEqual(effects(x.f), before);
+  }
+});
+Deno.test("request review rejects changed sender identity after recipient work without adopting it", async () => {
+  const x = await requestSeed(), before = effects(x.f);
+  x.state.onPreSend = () => { x.state.connector.from_name = "Another name"; };
+  await assert.rejects(x.run, refuses("SENDER_CHANGED"));
+  assert.deepEqual(effects(x.f), before);
+});
+Deno.test("request review revalidates the original actor after sender and recipient work", async () => {
+  const x = await requestSeed(), before = effects(x.f);
+  x.state.onPreSend = () => { x.f.state.actor = operation; };
+  await assert.rejects(x.run, e => e instanceof Error &&
+    e.message === "PREPARED_SIGNATURE_REVIEW_ACCESS_UNVERIFIED");
+  assert.deepEqual(effects(x.f), before);
+});
+Deno.test("every approved sender or message value changes the original canonical confirmation fingerprint", async () => {
+  const x = await requestSeed(), result = await x.run();
+  const fingerprint = await confirmFingerprint("agreement_send", result.args);
+  for (const key of ["from_address", "from_name", "reply_to", "connector_id", "provider"]) {
+    const changed = structuredClone(result.args);
+    (changed.sender as Record<string, unknown>)[key] = "changed";
+    assert.notEqual(await confirmFingerprint("agreement_send", changed), fingerprint);
+  }
+  for (const key of ["signer_id", "to", "subject", "body_text", "body_html"]) {
+    const changed = structuredClone(result.args);
+    (changed.messages as Array<Record<string, unknown>>)[0][key] = "changed";
+    assert.notEqual(await confirmFingerprint("agreement_send", changed), fingerprint);
+  }
+});

@@ -20,7 +20,7 @@ const instant = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d
  */
 export function parseWeeklyDraftState(raw: unknown, scope: WeeklyDraftScope): WeeklyDraftState | null {
   // An explicit Chat scope cannot degrade into the incumbent threadless UI scope.
-  if (Object.hasOwn(scope, "threadId") && (!uuid(scope.threadId) || !object(raw) || raw.thread_id !== scope.threadId)) return null;
+  if (Object.prototype.hasOwnProperty.call(scope, "threadId") && (!uuid(scope.threadId) || !object(raw) || raw.thread_id !== scope.threadId)) return null;
   if (!object(raw) || raw.ok !== true || raw.actor_id !== scope.actorId || raw.tenant_id !== scope.tenantId ||
     !uuid(raw.confirmation_id) || !uuid(raw.request_id) || !instant(raw.read_at) || !instant(raw.expires_at) ||
     typeof raw.summary !== "string" || raw.summary.length < 1 || raw.summary.length > 2048 ||
@@ -61,7 +61,7 @@ const nextStep = {
  * A changed definition's original draft must not be described as current.
  */
 export function weeklyDraftModelContext(raw: unknown, scope: WeeklyDraftScope & Readonly<{ threadId: string }>) {
-  if (!object(scope) || !Object.hasOwn(scope, "threadId") || !uuid(scope.threadId)) return null;
+  if (!object(scope) || !Object.prototype.hasOwnProperty.call(scope, "threadId") || !uuid(scope.threadId)) return null;
   const state = parseWeeklyDraftState(raw, scope);
   if (!state) return null;
   return {

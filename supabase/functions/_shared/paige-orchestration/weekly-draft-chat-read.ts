@@ -26,7 +26,7 @@ export async function readWeeklyDraftChatStatus(callerJwtDb: CallerDb,
   options: WeeklyDraftChatReadOptions): Promise<WeeklyDraftChatReadResult> {
   const original = options?.scope;
   if (!original || typeof original !== "object" || Array.isArray(original)
-    || !["actorId", "tenantId", "threadId"].every(key => Object.hasOwn(original, key))
+    || !["actorId", "tenantId", "threadId"].every(key => Object.prototype.hasOwnProperty.call(original, key))
     || !uuid(original.actorId) || !uuid(original.tenantId) || !uuid(original.threadId)
     || !uuid(options.confirmationId) || typeof options.current !== "function"
     || !options.signal || typeof options.signal.aborted !== "boolean") {

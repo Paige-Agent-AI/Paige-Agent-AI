@@ -120,3 +120,27 @@
 @media(max-width:1050px) { .e04-document-layout { grid-template-columns:minmax(0,1fr); } .e04-document-inspector { grid-template-columns:repeat(2,minmax(0,1fr)); } .e04-document-field-properties { grid-column:1/-1; } .e04-document-review { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:600px) { .e04-document-tools,.e04-document-inspector { grid-template-columns:minmax(0,1fr); } .e04-document-stage { padding:10px; } .e04-document-page-controls { grid-template-columns:44px minmax(0,1fr) 44px; } .e04-document-zoom { grid-column:1/-1; justify-content:space-between; } .e04-document-kind button { flex:1; } .e04-document-fields-head { flex-direction:column; gap:10px; } }
 @media(forced-colors:active) { .e04-document-fields .e04-pdf-field { border:2px solid Highlight; color:CanvasText; background:Canvas; } .e04-document-fields button[aria-pressed=true] { outline:2px solid Highlight; } }
+
+.e04-signature-invitations{display:grid;grid-template-columns:minmax(180px,.65fr) minmax(0,1.35fr);gap:20px 28px;padding-block:24px;border-top:1px solid var(--pg-line);min-width:0}
+.e04-signature-invitations>header,.e04-invitation-checked,.e04-signature-invitations>p,.e04-invitation-problem{grid-column:1/-1}
+.e04-signature-invitations :is(h5,h6){margin:0 0 8px;font:600 14px/1.5 var(--pg-font-ui);color:var(--pg-ink)}
+.e04-signature-invitations p{font:400 13px/1.65 var(--pg-font-ui);max-width:70ch;overflow-wrap:anywhere}
+.e04-invitation-sender,.e04-invitation-message{display:grid;align-content:start;gap:12px;min-width:0}
+.e04-signature-invitations label{display:grid;gap:7px;min-width:0;font:500 12px/1.5 var(--pg-font-ui);color:var(--pg-ink-2)}
+.e04-signature-invitations :is(input,select,textarea){width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--pg-line-strong);border-radius:var(--r-s);background:var(--pg-surface);color:var(--pg-ink);caret-color:var(--pg-violet);font:400 14px/1.55 var(--pg-font-ui)}
+.e04-signature-invitations textarea{resize:vertical;min-height:144px}
+.e04-signature-invitations :is(input,select,textarea,button,summary):focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}
+.e04-signature-invitations ::selection{background:var(--pg-violet);color:var(--pg-canvas)}
+.e04-invitation-sender>button{justify-self:start}
+.e04-invitation-link,.e04-invitation-checked>h6{display:flex;align-items:start;gap:8px}
+.e04-invitation-link svg{flex:none;margin-top:3px;color:var(--pg-ink-2)}
+.e04-invitation-actions{grid-column:2;display:flex;gap:12px;flex-wrap:wrap}
+.e04-invitation-problem{display:grid;justify-items:start;gap:12px}
+.e04-invitation-checked{min-width:0}
+.e04-invitation-checked article{margin-top:20px;padding-top:16px;border-top:1px solid var(--pg-line)}
+.e04-invitation-checked article>strong{display:block;margin-top:12px;font:600 14px/1.5 var(--pg-font-ui);overflow-wrap:anywhere}
+.e04-invitation-checked .e04-invitation-body{white-space:pre-wrap;margin-block:8px}
+.e04-invitation-checked>p,.e04-invitation-checked>button{margin-top:16px}
+.e04-invitation-checked summary{min-height:44px;align-content:center;cursor:pointer;font:500 13px/1.5 var(--pg-font-ui)}
+.e04-invitation-checked details{margin-top:12px;overflow-wrap:anywhere}
+@media(max-width:700px){.e04-signature-invitations{grid-template-columns:minmax(0,1fr);gap:20px}.e04-invitation-actions{grid-column:1}.e04-invitation-actions>button{flex:1}.e04-invitation-sender select{max-width:100%}}

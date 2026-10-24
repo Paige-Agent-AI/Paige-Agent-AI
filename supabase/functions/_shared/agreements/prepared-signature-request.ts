@@ -1,6 +1,6 @@
 import { canonicalPresentationJson } from "./preparation-json.ts";
 import { sha256Hex } from "./token.ts";
-import { commsEmailBodyHtml, normalizeCommsEmailAddress } from "../comms-email/contract.ts";
+import { COMMS_EMAIL_SUBJECT_MAX, COMMS_EMAIL_BODY_MAX, commsEmailBodyHtml, normalizeCommsEmailAddress } from "../comms-email/contract.ts";
 import { readEmailSenderFacts, emailSenderReadiness, listCommsEmailSenders, type CommsEmailAdmin,
   type EmailProviderEnvironment } from "../comms-email/readiness.ts";
 import { senderDisplayName } from "../email/sender-display-name.ts";
@@ -125,7 +125,8 @@ export async function prepareSignatureRequestInput(
 }
 
 
-export const PREPARED_SIGNING_LINK_MARKER = "[[PAIGE_AGREEMENT_SIGNING_LINK]]";
+export { PREPARED_SIGNING_LINK_MARKER } from "./prepared-signature-review-contract.ts";
+import { PREPARED_SIGNING_LINK_MARKER } from "./prepared-signature-review-contract.ts";
 type MessageDraft = { signer_id: string; subject: string; body_text: string };
 type BoundSender = { connector_id: string; provider: "sendgrid"; from_address: string;
   from_name: string | null; reply_to: string | null };
@@ -156,11 +157,11 @@ function captureMessage(value: unknown): MessageDraft {
     typeof value.signer_id !== "string" || !UUID.test(value.signer_id) ||
     value.signer_id !== value.signer_id.toLowerCase()) return fail("MESSAGE_INVALID");
   const { subject, body_text } = value;
-  if (typeof subject !== "string" || !subject.trim() || subject.length > 200 ||
+  if (typeof subject !== "string" || !subject.trim() || subject.length > COMMS_EMAIL_SUBJECT_MAX ||
     (/[\r\n]/.test(subject) || subject.includes("\u0000")) || subject.includes(PREPARED_SIGNING_LINK_MARKER) ||
     containsSigningCredential(subject) ||
     !exactUnicode(subject) || typeof body_text !== "string" || !body_text.trim() ||
-    body_text.length > 10000 || body_text.includes("\u0000") || !exactUnicode(body_text) ||
+    body_text.length > COMMS_EMAIL_BODY_MAX || body_text.includes("\u0000") || !exactUnicode(body_text) ||
     body_text.split(PREPARED_SIGNING_LINK_MARKER).length !== 2 ||
     containsSigningCredential(body_text)) return fail("MESSAGE_INVALID");
   return { signer_id: value.signer_id, subject, body_text };

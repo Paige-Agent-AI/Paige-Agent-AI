@@ -6,6 +6,9 @@ import {prepareAgreementFields,prepareCommercialAgreementFields,type AgreementFi
 import {assembleFixedRepaymentSchedule} from '../../../supabase/functions/_shared/sales-collections/model';
 import {prepareCommercialPresentation,commercialPresentationText} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
 import {projectPreparedSignatureReview} from '../../../supabase/functions/_shared/agreements/prepared-signature-review-contract';
+import {commsEmailBodyHtml} from '../../../supabase/functions/_shared/comms-email/contract';
+import {canonicalPresentationJson} from '../../../supabase/functions/_shared/agreements/preparation-json';
+import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
 import * as documentSDK from './agreementDocumentApi';
 const {getSession,invoke,rpc,setHeader,abortSignal}=vi.hoisted(()=>({getSession:vi.fn(),invoke:vi.fn(),rpc:vi.fn(),setHeader:vi.fn(),abortSignal:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:{getSession},functions:{invoke},rpc}}));
@@ -201,4 +204,88 @@ describe('same original owner document SDK boundary',()=>{
   it('rejects malformed scope and history cursor without any Auth or native operation',async()=>{
     expect(await readAgreementDocument({...context(),actorId:'missing'})).toMatchObject({ok:false,reason:'invalid_request'});expect(await listAgreementDocumentHistory(context(),0)).toMatchObject({ok:false,reason:'invalid_request'});expect(getSession).not.toHaveBeenCalled();expect(rpc).not.toHaveBeenCalled();expect(invoke).not.toHaveBeenCalled();
   });
+});
+
+
+const senderId='d1111111-0000-4000-8000-000000000001';
+const requestMarker='[[PAIGE_AGREEMENT_SIGNING_LINK]]';
+async function readyRequestFixture(){
+  const value=retained();const fields=fixture.signers.map((signer,index)=>({id:'f1111111-0000-4000-8000-00000000000'+(index+1),signer_id:signer.id,kind:'signature' as const,page:1,x:20,y:20+index*80,width:120,height:40,required:true,label:'Signature'}));
+  const saved=await prepareAgreementFields(fixture.source,fixture.document,fields);
+  value.preparation.manifest=structuredClone(saved.manifest);value.preparation.preparation_sha256=saved.preparation_sha256;
+  const review=await signingReview(value),sender={connector_id:senderId,from_address:'hello@studio.example.test',state:'ready' as const,reason:null};
+  const draft={operation_id:event,connector_id:senderId,messages:review.signers.map(s=>({signer_id:s.id,subject:'Review your agreement',body_text:'Please review before signing.\n'+requestMarker}))};
+  expect(review.ready_for_review).toBe(true);
+  return {review,sender,draft};
+}
+describe('complete request review through the original agreement SDK',()=>{
+  it('reads closed sender choices using original caller authorization, never a primary-client lookup',async()=>{
+    const {review}=await readyRequestFixture();
+    invoke.mockResolvedValue({data:{ok:true,review:{kind:'prepared_signature_sender_choices',review_sha256:review.review_sha256,
+      senders:[{connector_id:senderId,from_address:'hello@studio.example.test',state:'ready',reason:null}],provider_execution_verified:false,approval:'not_requested',execution:'unavailable'}},error:null});
+    expect(documentSDK.readAgreementSigningSenders).toBeTypeOf('function');
+    const result=await documentSDK.readAgreementSigningSenders(context(),event,review);
+    expect(result).toMatchObject({ok:true,value:{senders:[{connector_id:senderId}]}});
+    expect(invoke.mock.calls[0][0]).toBe('agreement-send?review=senders');
+    expect(invoke.mock.calls[0][1]).toMatchObject({method:'POST',headers:{Authorization:'Bearer controlled-auth-token'},body:{operation_id:event,review:review.request,expected_review_sha256:review.review_sha256}});
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it.each(['changed_digest','executed','duplicate','foreign_field'])('withholds %s sender choices instead of treating them as ready',async variant=>{
+    const {review,sender}=await readyRequestFixture();
+    const response={kind:'prepared_signature_sender_choices',review_sha256:review.review_sha256,senders:[sender],provider_execution_verified:false,approval:'not_requested',execution:'unavailable'};
+    if(variant==='changed_digest')response.review_sha256='0'.repeat(64);
+    if(variant==='executed')Object.assign(response,{execution:'sent'});
+    if(variant==='duplicate')response.senders.push(sender);
+    if(variant==='foreign_field')Object.assign(response,{token:'forbidden'});
+    invoke.mockResolvedValue({data:{ok:true,review:response},error:null});
+    expect(documentSDK.readAgreementSigningSenders).toBeTypeOf('function');
+    expect(await documentSDK.readAgreementSigningSenders(context(),event,review)).toMatchObject({ok:false,reason:'unconfirmed'});
+  });
+  it('keeps an unknown read distinct from a possibly executed action',async()=>{
+    const {review}=await readyRequestFixture();invoke.mockRejectedValue(Error('private transport detail'));
+    expect(documentSDK.readAgreementSigningSenders).toBeTypeOf('function');
+    const result=await documentSDK.readAgreementSigningSenders(context(),event,review);
+    expect(result).toMatchObject({ok:false,reason:'unconfirmed'});
+    expect(JSON.stringify(result)).not.toMatch(/private transport|may.*recorded|already.*recorded/);
+  });
+  it('retires a late identity read after an actual business or role change',async()=>{
+    const {review}=await readyRequestFixture(),work=held<{data:unknown;error:null}>();let active=true;invoke.mockReturnValue(work.promise);
+    expect(documentSDK.readAgreementSigningSenders).toBeTypeOf('function');
+    const waiting=documentSDK.readAgreementSigningSenders({...context(),isCurrent:()=>active},event,review);
+    await vi.waitFor(()=>expect(invoke).toHaveBeenCalledOnce());active=false;work.resolve({data:{},error:null});
+    expect(await waiting).toMatchObject({ok:false,reason:'retired'});
+  });
+});
+
+async function requestWire(x:Awaited<ReturnType<typeof readyRequestFixture>>){
+  const args={agreementId:x.review.request.agreement_id,expectedTenantId:x.review.request.tenant_id,operationId:x.draft.operation_id,
+    preparationId:x.review.request.preparation_id,preparationSha256:x.review.request.preparation_sha256,reviewSha256:x.review.review_sha256,
+    source:x.review.request.expected_source,title:x.review.title,document:x.review.document,recipients:x.review.signers,requestSchemaVersion:1,
+    sender:{connector_id:senderId,provider:'sendgrid',from_address:x.sender.from_address,from_name:'Studio',reply_to:null},
+    messages:x.review.signers.map(s=>{const m=x.draft.messages.find(m=>m.signer_id===s.id)!;return {...m,to:s.email,
+      body_html:commsEmailBodyHtml(m.body_text)};})};
+  return {kind:'prepared_signature_request_review',tool:'agreement_send',args,request_sha256:await sha256Hex(canonicalPresentationJson(args)),
+    approval:'not_requested',execution:'unavailable'};
+}
+it('reads the complete exact request through the original SDK without claiming approval or execution',async()=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x);invoke.mockResolvedValue({data:{ok:true,review:wire},error:null});
+  expect(documentSDK.readAgreementSignatureRequest).toBeTypeOf('function');
+  expect(await documentSDK.readAgreementSignatureRequest(context(),x.review,x.sender,x.draft)).toEqual({ok:true,value:wire});
+  expect(invoke.mock.calls[0][0]).toBe('agreement-send?review=prepared-request');
+  expect(invoke.mock.calls[0][1].body.messages).toEqual(x.draft.messages);
+  expect(rpc).not.toHaveBeenCalled();
+});
+it.each(['subject','recipient','document','source','digest','approval','unknown','sender'] as const)('withholds a changed %s complete-request response',async variant=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x);
+  if(variant==='subject')wire.args.messages[0].subject='Different wording';
+  if(variant==='recipient')wire.args.messages[0].to='other@example.test';
+  if(variant==='document')wire.args.document={...wire.args.document,sha256:'0'.repeat(64)};
+  if(variant==='source')wire.args.source={...wire.args.source,version:2};
+  if(variant==='digest')wire.request_sha256='0'.repeat(64);
+  if(variant==='approval')wire.approval='approved';
+  if(variant==='unknown')Object.assign(wire,{token:'forbidden'});
+  if(variant==='sender')wire.args.sender.from_address='other@example.test';
+  invoke.mockResolvedValue({data:{ok:true,review:wire},error:null});
+  expect(documentSDK.readAgreementSignatureRequest).toBeTypeOf('function');
+  expect(await documentSDK.readAgreementSignatureRequest(context(),x.review,x.sender,x.draft)).toMatchObject({ok:false,reason:'unconfirmed'});
 });

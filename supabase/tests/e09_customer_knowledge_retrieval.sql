@@ -28,7 +28,7 @@
 --  10. A turn begun through the original 7-argument begin (a v1 binding) replays through the unchanged
 --      v1 context.
 BEGIN;
-SELECT plan(208);
+SELECT plan(245);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
@@ -637,6 +637,88 @@ SELECT set_config('paige.portal_access_write','',true);
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_assistant_begin_progress(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector)'::regprocedure),'5dc86fa2c0afe766939cc39ada1078a9','original Progress begin byte-preserved');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_progress_scope_current(uuid,uuid,uuid)'::regprocedure),'cef5bd234d501bce4268cb572b013a78','original trusted actor authority byte-preserved');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_sessions(uuid,text,timestamptz,integer)'::regprocedure),'a49e96af6eb2fa582b375a500abcc433','original public Sessions reader byte-preserved');
+
+-- Additional original native file/message contract. Synthetic rows; outer rollback.
+CREATE FUNCTION pg_temp.files_ctx(who text,th uuid,intent uuid,ids jsonb DEFAULT NULL) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(pg_temp.u(who),format('SELECT public.client_portal_assistant_files_context(%L,%L,%L::jsonb)',th,intent,ids::text)) $$;
+CREATE FUNCTION pg_temp.files_begin(th uuid,intent uuid,ids jsonb,effectful boolean DEFAULT true) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_assistant_begin_files(%L,%L,NULL,%L,false,false,%L,NULL,%L::jsonb)',th,intent,'Read my private files',effectful,ids::text)) $$;
+CREATE FUNCTION pg_temp.files_settle(th uuid,intent uuid,content text,files jsonb,state text DEFAULT 'FINAL') RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE original jsonb; bundle jsonb;
+BEGIN
+ SELECT bundle_ref INTO original FROM public.paige_chat_turns WHERE thread_id=th AND role='user' AND interactive_intent_id=intent;
+ bundle:=original||jsonb_build_object('interactive',jsonb_build_object('request_intent_id',intent),'turn_state',jsonb_build_object('v',1,'state',state));
+ bundle:=bundle-'customer_files';
+ IF content='' AND state IN('WITHHELD','REFUSED','INTERRUPTED') THEN bundle:=bundle-ARRAY['customer_knowledge','customer_progress','customer_sessions']; END IF;
+ IF files IS NOT NULL THEN bundle:=bundle||jsonb_build_object('customer_files',files); END IF;
+ RETURN pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_settle(%L,%L,%L,%L,%L,NULL,NULL,%L::jsonb,NULL))',th,pg_temp.u('a2'),pg_temp.t('a'),intent,content,bundle::text),'service_role');
+END $$;
+CREATE FUNCTION pg_temp.files_executor(th uuid,intent uuid,operation text) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.paige_chat_interactive_executor_v2(%L,%L,%L,%L,%L)',th,pg_temp.u('a2'),pg_temp.t('a'),intent,operation),'service_role') $$;
+CREATE FUNCTION pg_temp.file_id(n integer) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$
+ SELECT ('e0994100-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid $$;
+
+SELECT ok(NOT has_function_privilege('authenticated',f,'EXECUTE') AND NOT has_function_privilege('anon',f,'EXECUTE')
+ AND NOT has_function_privilege('service_role',f,'EXECUTE'),'private file source helper is internal: '||f)
+FROM unnest(ARRAY['public._client_chat_file_ids_valid(jsonb)','public._client_chat_files_projection(uuid,uuid,uuid,uuid,jsonb)',
+ 'public._client_chat_files_snapshot_valid(jsonb)','public._client_chat_files_snapshot_current(uuid,uuid,uuid,uuid,jsonb)',
+ 'public._client_chat_files_snapshot_lock(uuid,uuid,uuid,uuid,jsonb)','public._client_chat_files_terminal_guard()',
+ 'public._client_chat_files_publication_current(uuid,uuid)']) f;
+SELECT ok(has_function_privilege('authenticated',f,'EXECUTE') AND NOT has_function_privilege('anon',f,'EXECUTE')
+ AND NOT has_function_privilege('service_role',f,'EXECUTE'),'file request uses original customer Auth only: '||f)
+FROM unnest(ARRAY['public.client_portal_assistant_files_context(uuid,uuid,jsonb)',
+ 'public.client_portal_assistant_begin_files(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector,jsonb)']) f;
+SELECT ok(public._client_chat_file_ids_valid(jsonb_build_array(pg_temp.file_id(1))),'one exact file ID is valid');
+SELECT ok(NOT public._client_chat_file_ids_valid(NULL) AND NOT public._client_chat_file_ids_valid('[]')
+ AND NOT public._client_chat_file_ids_valid('[null]') AND NOT public._client_chat_file_ids_valid('["not-a-file"]')
+ AND NOT public._client_chat_file_ids_valid(jsonb_build_array(pg_temp.file_id(1),pg_temp.file_id(1)))
+ AND NOT public._client_chat_file_ids_valid((SELECT jsonb_agg(pg_temp.file_id(n)) FROM generate_series(1,6) n)),
+ 'invalid, empty, duplicate and excessive file selections are refused');
+
+-- Archive only synthetic prior test threads; the real native creator issues a fresh one.
+UPDATE public.paige_chat_threads SET is_archived=true WHERE caller_user_id=pg_temp.u('a2') AND audience='customer_private';
+CREATE TEMP TABLE files_turn AS SELECT pg_temp.thread('a2') th,gen_random_uuid() intent,
+ jsonb_build_array(pg_temp.file_id(1),pg_temp.file_id(2)) ids,NULL::jsonb pre;
+SELECT pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_begin_chat_file_upload(%L,%L,%L,%L,%L,4,%L)',
+ pg_temp.file_id(n),pg_temp.c('a2'),th,'Private-'||n||'.pdf','application/pdf',pg_temp.t('a'))) FROM files_turn,generate_series(1,2) n;
+INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) SELECT 'client-files',storage_path,pg_temp.u('a2')::text,
+ jsonb_build_object('size',4,'mimetype','application/pdf','eTag','original-private-'||id::text) FROM public.client_files WHERE id IN(pg_temp.file_id(1),pg_temp.file_id(2));
+SELECT pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_finish_file_upload(%L,%L)',pg_temp.file_id(n),pg_temp.t('a'))) FROM generate_series(1,2) n;
+UPDATE files_turn SET pre=pg_temp.files_ctx('a2',th,intent,ids);
+SELECT is((SELECT pre->>'mode' FROM files_turn),'fresh','original own ready files yield fresh private context');
+SELECT ok((SELECT public._client_chat_files_snapshot_valid(pre->'snapshot') FROM files_turn),'native file manifest is closed and valid');
+SELECT is((SELECT pre#>'{snapshot,file_ids}' FROM files_turn),(SELECT ids FROM files_turn),'exact selected ordering is bound');
+SELECT is((SELECT pg_temp.files_ctx('a1',th,intent,ids)->>'sqlstate' FROM files_turn),'42501','owner is not a private customer');
+SELECT is((SELECT pg_temp.files_ctx('a3',th,intent,ids)->>'sqlstate' FROM files_turn),'42501','same-business peer cannot use private files');
+SELECT is((SELECT pg_temp.files_ctx('b2',th,intent,ids)->>'sqlstate' FROM files_turn),'42501','other business cannot use private files');
+SELECT is((SELECT pg_temp.files_ctx('a2',th,intent,'[]')->>'sqlstate' FROM files_turn),'22023','empty selection is not a file request');
+SELECT is((SELECT pg_temp.files_ctx('a2',th,intent,jsonb_build_array(pg_temp.file_id(3)))->>'sqlstate' FROM files_turn),'42501','unknown file is not invented');
+SELECT is((SELECT pg_temp.files_begin(th,intent,ids,false)->>'sqlstate' FROM files_turn),'42501','processing cannot bypass effectful native admission with a read-only downgrade');
+SELECT is((SELECT pg_temp.files_begin(th,intent,ids)->>'status' FROM files_turn),'accepted','same original native begin accepts exact private files');
+SELECT ok((SELECT bundle_ref ?& ARRAY['customer_knowledge','customer_progress','customer_sessions','customer_files']
+ FROM public.paige_chat_turns t,files_turn f WHERE t.thread_id=f.th AND t.interactive_intent_id=f.intent AND t.role='user'),
+ 'original Knowledge, Progress and Sessions binding remains on the same user turn');
+SELECT is((SELECT bundle_ref->'customer_files' FROM public.paige_chat_turns t,files_turn f
+ WHERE t.thread_id=f.th AND t.interactive_intent_id=f.intent AND t.role='user'),(SELECT pre->'snapshot' FROM files_turn),'saved manifest is the exact checked native snapshot');
+SELECT is((SELECT pg_temp.files_begin(th,intent,ids)->>'turn_id' FROM files_turn),
+ (SELECT t.id::text FROM public.paige_chat_turns t,files_turn f WHERE t.thread_id=f.th AND t.interactive_intent_id=f.intent AND t.role='user'),'replay returns original user receipt');
+SELECT is((SELECT count(*) FROM public.paige_chat_turns t,files_turn f WHERE t.thread_id=f.th AND t.interactive_intent_id=f.intent AND t.role='user'),1::bigint,'no duplicate private user turn');
+SELECT is((SELECT pg_temp.files_begin(th,intent,jsonb_build_array(pg_temp.file_id(2),pg_temp.file_id(1)))->>'sqlstate' FROM files_turn),'42501','replay cannot substitute the manifest ordering');
+SELECT ok((SELECT (pg_temp.files_executor(th,intent,'acquire')->>'acquired')::boolean FROM files_turn),'one original executor acquired for file processing');
+SELECT is((SELECT pg_temp.files_settle(th,intent,'An unbound file answer',NULL)->>'error' FROM files_turn),'CUSTOMER_FILES_SOURCE_WITHDRAWN','unbound answer cannot publish');
+SELECT is((SELECT pg_temp.files_settle(th,intent,'A forged file answer',jsonb_set(pre->'snapshot','{source_fingerprint}',to_jsonb(repeat('0',64))))->>'error' FROM files_turn),'CUSTOMER_FILES_SOURCE_WITHDRAWN','forged manifest cannot publish');
+SELECT ok((SELECT NOT (pg_temp.files_settle(th,intent,'Private current file answer',pre->'snapshot') ? 'sqlstate') FROM files_turn),'exact current source may settle through original native writer');
+SELECT pg_temp.files_executor(th,intent,'release') FROM files_turn;
+SELECT ok((SELECT (pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM files_turn),'original publication permits exact current file result');
+CREATE TEMP TABLE files_object_before AS SELECT id,metadata FROM storage.objects WHERE bucket_id='client-files' AND name IN(SELECT storage_path FROM public.client_files WHERE id IN(pg_temp.file_id(1),pg_temp.file_id(2)));
+UPDATE storage.objects SET metadata=metadata||'{"eTag":"replaced-object"}' WHERE id IN(SELECT id FROM files_object_before);
+SELECT is((SELECT pg_temp.files_ctx('a2',th,intent)->>'sqlstate' FROM files_turn),'42501','changed stored object invalidates accepted file source');
+SELECT ok((SELECT NOT (pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM files_turn),'source withdrawal closes existing answer publication');
+SELECT ok((SELECT NOT EXISTS(SELECT 1 FROM jsonb_array_elements(pg_temp.ctx('a2',th,gen_random_uuid(),NULL)->'history') h(v)
+ WHERE v->>'content'='Private current file answer') FROM files_turn),'new model context omits withdrawn private file answer');
+SELECT ok((SELECT NOT public._client_chat_files_snapshot_valid((pre->'snapshot')||'{"owner_override":true}') FROM files_turn),'extra manifest authority is refused');
+SELECT ok((SELECT NOT public._client_chat_files_snapshot_current(pg_temp.u('a3'),pg_temp.t('a'),pg_temp.c('a2'),th,pre->'snapshot') FROM files_turn),'trusted terminal helper cannot substitute actor');
+SELECT ok((SELECT NOT public._client_chat_files_snapshot_current(pg_temp.u('a2'),pg_temp.t('b'),pg_temp.c('a2'),th,pre->'snapshot') FROM files_turn),'trusted terminal helper cannot substitute business');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -1,3 +1,12 @@
+## EXP05 original specialist status — local source, release and presentation owed
+
+The original native status channel can project only the exact assignment named
+by a server-issued terminal and the existing caller-JWT inspector. Current seat,
+tenant, original turn and receipt are rechecked; unknown is not replay authority.
+[Bounded source and proof](../evidence/ui-delivery/exp05-specialist-original-status.md)
+retain missing UI mounting, exact-head release and authenticated recovery evidence.
+Full Operations/weekly/automation/ZION outcomes remain open; no activation.
+
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
 The bounded original#2401 successor preserves a known pre-processing refusal on

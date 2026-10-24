@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: same approved original-result inspection; mounting
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible owner/admin can inspect the exact previously recorded specialist assignment without resubmitting it.
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual source change.
 AUTOMATED_EVIDENCE: PASS: original helper and control tests56/56; actual production-handler offline proof18/18. Initial helper stub had five behavioral failures; original unwired handler had three failures and control selector one failure before implementation.
-STATIC_EVIDENCE: PARTIAL: isolated Deno helper typecheck passes; source binding review and final exact-head hosted gates remain required.
+STATIC_EVIDENCE: PASS: isolated Deno helper check, original registry228 and complete six-file source-authority family229/229 pass; exact-head hosted gates remain required.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no native control is mounted by this increment. Tests are not rendered or customer proof.
 BEHAVIORAL_EVIDENCE: PASS: original actor/tenant/thread/intent binding, server-stamped terminal, exact returned invocation/receipt, repeated read, pending/unknown, revoke/abort/account change and late contradictory observations covered.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no actual customer original-assignment reload or held-thread result acceptance.
@@ -120,3 +120,13 @@ The permitted next change is these29 inspected literals, the one transport
 literal and one new restrictive helper pin. Original extractor, validator,
 metadata, other122 sources, all negative controls and adjacent owner scalars
 remain intact. No snapshot regeneration or admission waiver is introduced.
+
+After the manually reviewed literal renewal, the actual original admission
+consumer and complete six-file hostile source family pass229/229, no failures
+or skips,143155ms. The two added negative controls alter the original native
+actor check and final authority publication check; each is refused before
+incumbent admission. The existing registry passes228. No production source,
+capability status, approval or execution is inferred from these build checks.
+UI delivery verifier correctly reports no recognized UI source changed.
+The original INT-336 CI block adds this actual handler proof without changing
+its permissions, timeout, conditions, thresholds or any preceding test.

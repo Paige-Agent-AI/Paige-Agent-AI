@@ -81,3 +81,64 @@ failure. No production backend or external provider is contacted by unit tests.
 No current/future SOLO account receives a private implementation, and no tenant,
 role, provider or recurrence activation is inferred. The original expired ZION
 plan-only approval remains unused; this source neither renews nor spends it.
+
+## Original claim adapter production source release — October24 UTC
+
+PR #2766 reviewed `add90a50809b0f5e7f50f113a75bb9f40e33aa2a`, separate
+AUTHOR-REVIEW / LOWER ASSURANCE6386482207/6386634598 and all11 exact checks/two
+statuses SUCCESS, merged `a0530ddfbccd8b3585e8f6f34e76fbedabf0395b`.
+Parents77b88428+add90 and treec850fe766c83e05ca68c196c3f03a525619993e0 preserve
+the reviewed three files. Production webAT7LUhy94ovicxKPhDRWgW1psKbM READY;
+both public version observations at17:09:07–08UTC matched
+a0530ddfbccd8b3585e8f6f34e76fbedabf0395b-mvmnj8o4/customerUpdate:null.
+[Original release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2766#issuecomment-6387134613)
+preserves the boundary: unused source, not a new Chat action or recurring grant.
+Its normal Edge job succeeded but returned no step detail, so no new Edge
+version/archive/tag was asserted. Canonical Master closeout for2766 remains owed.
+
+## Fixed native commit and recovery continuation — PR #2772
+
+This new UNADMITTED transport consumes the original native-claim result and
+server-resolved caller/availability/Trust facts. That claim must be freshly returned
+in the same current normal turn, never reconstructed from cached JSON or a status
+read after reload. Unknown calls go to original readback, never this writer again.
+It reuses the actual ordinary
+Capability Kit decision, runs only its unchanged five stored arguments through
+`public.commit_weekly_commitment_chat_draft`, and accepts a saved result only
+with the same proposal/request/scope/schedule and original draft/Rail references.
+
+A lost acknowledgment permits at most one `read_weekly_commitment_chat_draft`
+on the SAME original proposal/thread. Unknown, changed and unreceipted results
+remain distinct observations, not fresh authorization. The original turn supplies
+its remaining budget, capped at12seconds; recovery cannot refresh that budget.
+Stopped, cancelled, expired-budget and retired-scope replies cannot resume a
+write or expose late results. No generic fallback, retry, new proposal, enablement,
+provider, scheduler, authority service, action ledger or receipt writer is added.
+The original native transaction remains the only definition/Rail writer.
+
+The existing claim validator is exported and renamed only for reuse; an inverse
+comparison preserves its original body and both call sites exactly. No protected
+root/registry/Kit/C0b/native or mounted surface is edited. The E09 root lease was
+released at exact531; the recorded E02-schema then E05 then E03 sequence remains.
+Actual root selection/claim-before-CAS/admission and customer proof are still owed.
+
+Verification: original test-first commit64d8146041c2876fa7591e9961c15f05e9e7be69
+pins the missing adapter. Its hosted Typecheck step93 in job120986251551/run40132243230
+actually FAILED; the immutable candidate lacks the imported module. Raw compiler
+diagnostics were not retrieved, so no specific diagnostic line or executed test
+count is invented. The whole run was still in progress after that step; it is not
+reported as an independently completed failing suite. New implementation-head
+checks, owning positive/negative and regression results, review and release remain
+separate pending evidence; no local
+run is claimed while local terminal/Node/browser workers are unavailable.
+The tests cover actual Kit refusals, unchanged arguments, native foreign and
+contradictory results, original-only lost-ack recovery, no-replay, elapsed budget,
+late scope/abort and immutable original identity. Explicit native ports are test
+doubles, not authenticated business proof. Original PostgreSQL permission and
+concurrency proofs remain with2758. Current production read-only comparison of
+all19 original native/canonical functions again matches the recorded metadata.
+
+Catalogue: `automations.weekly_commitment_draft` Chat binding remains UNAVAILABLE;
+no owner-visible status, visual, algorithm or acceptance maturity is promoted.
+ALG-01 gains bounded source preparation only; ALG-12/13 and full ten/E5-CV1–9
+acceptance remain open. No customer announcement or founder slice test.

@@ -1168,6 +1168,7 @@ describe("Team chat — Slack first-class, Teams honest", () => {
 
   it("asserts NOTHING when the gateway list is unread (review P2)", async () => {
     // Refused read: the tile says "Status unavailable", never a false "Not connected".
+    world({ gateway: [] });
     const original = rpc.getMockImplementation()!;
     rpc.mockImplementation((name: string, ...args: unknown[]) =>
       name === "get_mcp_connections_v2"

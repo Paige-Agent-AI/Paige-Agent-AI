@@ -2,6 +2,25 @@
 
 ## C20 governance completeness repair — October24 source checkpoint
 
+Current source union also preserves the original frozen EXP05 recovery producer
+2697/d95794a2 as an explicit PENDING dependency, not an E04 replacement or
+activation. Original2697 must release before this consumer. Its complete shared
+source, refusal marker,123rd restrictive source path and original hostile tests
+remain. Removing only E04's static target row restores that producer's entire
+Chat source. Original-extractor decomposition again changes ONLY identity[15]
+for all29 scalars; the29 literals are manually renewed with source/metadata
+inverse evidence in e04-effective-terms-recovery-union-binding.json. The earlier
+b73/122-pin proof below remains dated evidence. The separate E04 HIGH risk
+digest stays explicit; all other122 producer dependency digests are exact.
+Both complete incoming Brain additions are retained. No producer is reassigned.
+
+Native deployment interleave now explicitly includes the existing invitation
+consumer: EXP09620009 → E04630004 → EXP09630009 → E04640004 → E04650004.
+Read-only production catalogue actually shows620009 applied, original signature
+and Rail bodies unchanged, and all own63/64/65 absent. No timestamp or production
+ledger is rewritten to skip a reserved predecessor. Native/CI/deployment results
+and genuine owner/staff/client/Portal/provider/founder acceptance remain separate.
+
 REPAIR the existing effective-terms action; no new execution architecture. Retain
 the required general-verify failure120714859070 at b73ff25d. The original
 SHA256-verified attribution artifact12541205791 identifies one unit failure:

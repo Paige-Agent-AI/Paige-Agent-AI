@@ -18,6 +18,7 @@ import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, wee
 import { prepareWeeklyCommitmentChatResponse } from "../_shared/paige-orchestration/weekly-commitment-read.ts";
 import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
 import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../_shared/paige-turn/interactive-refusal.ts";
 import { stageCuraKnowledge, CURA_TEACH_PURPOSE } from '../_shared/cura-knowledge-teaching.ts';
 import { readOriginalCuraPreparationHistory } from "../_shared/paige-turn/interactive-cura-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
@@ -1588,12 +1589,17 @@ serve(async (req) => {
         return new Response(JSON.stringify(status), { headers: { ...corsHeaders,
           "Content-Type": "application/json", "Cache-Control": "no-store" } });
       }
+      // Only this turn's explicit pre-processing refusal may label its original fallback.
+      // Later holds and unknown outcomes retain the interrupted, reconcile-first result.
+      let recoveryInputRefused = false;
       // This exact query/fallback/order was driven in the isolated proposed handler.
       const interactiveFallback = async () => await appendAssistant({
         p_thread_id: validatedData.threadId, p_role: "assistant",
-        p_content: "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
+        p_content: recoveryInputRefused ? RECOVERY_READ_ONLY_REFUSAL.message
+          : "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
         p_surfaces_used: null, p_load_id: null, p_model: null, p_tokens_used: null, p_latency_ms: null,
         p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
+          ...(recoveryInputRefused ? { interactive_refusal: { v: 1, code: RECOVERY_READ_ONLY_REFUSAL.code } } : {}),
           turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
       const beginTurn = (effectful: boolean) => (customerPortal?customerCaller:supabaseClient).rpc(customerPortal ? (interactiveInput.kind === "message" ? "client_portal_assistant_begin_sessions" : "client_portal_assistant_begin") : "paige_chat_interactive_begin_v2", {
@@ -1685,8 +1691,9 @@ serve(async (req) => {
       if (interactiveRecoveryReadOnly && (validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length
         || validatedData.resume || validatedData.document || validatedData.attachments?.length
         || validatedData.sessionDocumentContext?.length || validatedData.canvasArtifact)) {
-        return new Response(JSON.stringify({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true,
-          reason: "An earlier answer was interrupted and its business outcomes still need checking. This conversation can answer and read existing records; it cannot submit approvals, documents or actions." }),
+        recoveryInputRefused = true;
+        return new Response(JSON.stringify({ code: RECOVERY_READ_ONLY_REFUSAL.code, message_accepted: true,
+          reason: RECOVERY_READ_ONLY_REFUSAL.message }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // Re-read only after the preceding executor has finished its receipts.

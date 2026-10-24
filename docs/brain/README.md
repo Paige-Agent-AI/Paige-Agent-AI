@@ -48,6 +48,18 @@ Reserved630004 replaces never-production-applied570004 after current600000;
 original SQL bytes are unchanged. Original UI captures have an explicit
 byte-identical SQL filename continuation, not a new render. This read does not activate terms.
 
+## EXP05 original refusal/reload — source verified, release owed, October23
+
+The bounded original#2401 successor preserves a known pre-processing refusal on
+the same native assistant record and hydrates its held status without replay.
+Original late/unknown outcomes stay uncertain, scope changes remove old feedback,
+and no file is represented as parsed or published. Owning source/rendered tests
+pass; review, exact-head CI, production and ordinary authenticated proof remain owed.
+[Original Experience packet](../delivery/experience-05-weekly-commitment-check.md)
+retains all outstanding Operations/ZION/weekly/automation acceptance. EXP13's full
+Knowledge upload experience and attachment restoration remain separate, incomplete
+obligations. No new tracker, engine, registry, privilege or activation.
+
 ## EXP02 Finance metric context — October23 source released, proof bounded
 
 Original2684/main d780fd85e3cfd0c73256847c79f2692a5a399d1a exact review/CI,
@@ -96,12 +108,16 @@ The current [Harness source correction](../delivery/harness-completion-map.md)
 identifies the existing Layer C engine. Reuse canonical ActionBus, durable work,
 Planning, Trust, adapters and Rails; create no replacement engine or ledger.
 
-Original-result reentry is now a source candidate in the existing reader:
+Original-result reentry2692 is now source-released in the existing reader:
 bounded own-identity discovery followed by exact response/receipt inspection,
 never a repeat dispatch. Six original suites192PASS and77 original hostile/binding
 cases PASS; stale outcome/contact races were causally reproduced and corrected.
-Review, hosted exact-head CI, deployment and ordinary authenticated proof remain
-separate gates. [Bounded contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
+Reviewed b880/all11 checks plus two statuses passed; main400118998 and normal
+Chat519/orchestrator122 packages match all392 returned files. Both public aliases
+serve the exact merged build. [Production receipt6376512781](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2692#issuecomment-6376512781)
+and the sole Master row retain exact source/configuration identities. Ordinary
+authenticated reentry and native held-thread specialist inspection remain owed.
+[Bounded contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
 No ZION instructions, provider effect, workflow activation or catalogue Live
 promotion occurs. All full ten-outcome/E5-CV1–9 obligations above remain open.
 

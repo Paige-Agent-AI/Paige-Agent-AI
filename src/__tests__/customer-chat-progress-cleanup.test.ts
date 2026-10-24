@@ -6,6 +6,7 @@ import {customerSessionsTerminalSource} from "../../supabase/functions/_shared/c
 import {readCustomerAssistantContext,customerTerminalSource} from "../../supabase/functions/_shared/client-portal-assistant-context";
 import {readCustomerProgressContext,customerProgressTerminalSource,CUSTOMER_PROGRESS_TIMEOUT_MS} from "../../supabase/functions/_shared/client-portal-progress-context";
 import {createInteractiveLifetime,createInteractiveSettlement} from "../../supabase/functions/_shared/paige-turn/interactive";
+import {RECOVERY_READ_ONLY_REFUSAL} from "../../supabase/functions/_shared/paige-turn/interactive-refusal";
 
 const source=readFileSync("supabase/functions/paige-ai-chat/index.ts","utf8"),ast=ts.createSourceFile("handler.ts",source,ts.ScriptTarget.Latest,true);
 function declaration(name:string){const found:ts.VariableDeclaration[]=[];function visit(n:ts.Node){if(ts.isVariableDeclaration(n)&&n.name.getText(ast)===name)found.push(n);ts.forEachChild(n,visit);}visit(ast);if(found.length!==1)throw Error("actual source boundary changed");return found[0].getText(ast);}
@@ -25,12 +26,12 @@ describe("accepted Progress read failure retains original native cleanup",()=>{
    expect(name).toBe("paige_chat_interactive_settle");
    // The original native Progress guard allows cleanup only with empty prose and no source claim.
    // Its accepted user has a Progress snapshot, even though this failed read has not hydrated it.
-   expect(args.p_content).toBe("");expect(args.p_bundle_ref).not.toHaveProperty("customer_progress");expect(args.p_bundle_ref).not.toHaveProperty("customer_knowledge");expect(args.p_bundle_ref).not.toHaveProperty("customer_sessions");
+   expect(args.p_content).toBe("");expect(args.p_bundle_ref).not.toHaveProperty("customer_progress");expect(args.p_bundle_ref).not.toHaveProperty("customer_knowledge");expect(args.p_bundle_ref).not.toHaveProperty("customer_sessions");expect(args.p_bundle_ref).not.toHaveProperty("interactive_refusal");
    expect(args).toMatchObject({p_thread:thread,p_actor:actor,p_tenant:tenant,p_intent:intent});
    settlementCalls.push(args);return {data:client,error:null};
   });
-  const setup=new Function("env",compile("const {supabase,supabaseClient,user,interactiveReceiptScope,customerSourceSnapshot,customerTerminalSource,customerProgressTerminalSource,customerSessionsTerminalSource,z,validatedData}=env;let customerProgressSnapshot=null,customerSessionsSnapshot=null;const "+declaration("appendAssistant")+";const "+declaration("interactiveFallback")+";return {fallback:interactiveFallback};"));
-  const fallback=setup({supabase:{rpc},supabaseClient:{rpc:vi.fn()},user:{id:actor},interactiveReceiptScope:{thread,tenant,intent},customerSourceSnapshot:k.data.snapshot,customerTerminalSource,customerProgressTerminalSource,customerSessionsTerminalSource,z,validatedData:{threadId:thread,requestIntentId:intent}}).fallback;
+  const setup=new Function("env",compile("const {supabase,supabaseClient,user,interactiveReceiptScope,customerSourceSnapshot,customerTerminalSource,customerProgressTerminalSource,customerSessionsTerminalSource,z,validatedData,RECOVERY_READ_ONLY_REFUSAL}=env;let customerProgressSnapshot=null,customerSessionsSnapshot=null;let "+declaration("recoveryInputRefused")+";const "+declaration("appendAssistant")+";const "+declaration("interactiveFallback")+";return {fallback:interactiveFallback};"));
+  const fallback=setup({supabase:{rpc},supabaseClient:{rpc:vi.fn()},user:{id:actor},interactiveReceiptScope:{thread,tenant,intent},customerSourceSnapshot:k.data.snapshot,customerTerminalSource,customerProgressTerminalSource,customerSessionsTerminalSource,z,validatedData:{threadId:thread,requestIntentId:intent},RECOVERY_READ_ONLY_REFUSAL}).fallback;
   const settlement=createInteractiveSettlement({owns:async()=>true,readback:async()=>false,fallback,release});
   const lifetime=createInteractiveLifetime(settlement);
   const run=new AsyncFunction("env",compile("const {customerPortal,customerControl,customerPersona,customerCaller,user,validatedData,readCustomerProgressContext,corsHeaders,lifetime}=env;let customerProgressContext=null,customerProgressSnapshot=null;try{"+preflight()+"}finally{await lifetime.handlerFinished();}"));

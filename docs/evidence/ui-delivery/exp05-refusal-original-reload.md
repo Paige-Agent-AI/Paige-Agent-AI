@@ -85,3 +85,15 @@ does. No product source, assertion, type baseline, approval or permission change
 Original turn-view52 plus customer cleanup3 cases55/55 PASS after this correction.
 Final hosted exact-lock type/build/regression checks and review remain required;
 the failedf588 run is retained as FAIL, never inherited as a passing gate.
+
+Corrected086 hosted verify120715041467 passed the type ratchet, then exposed one
+older ancestry cardinality assertion in the separate full C0b family:123 actual
+restrictive dependencies versus122 expected. All original source pins and29 dispatch
+identities remain unchanged; the extra dependency is this already-reviewed closed
+refusal constant. Original local positive causally fails123!=122. The owning ancestry
+test now requires123, explicitly includes that source and adds a changed-refusal
+negative through the actual admission consumer. Full original six-file authority
+family227/227 PASS, no skips,196.317s; separate original resource suite79/79 PASS.
+No validator, extraction, source fingerprint, permission, threshold or admission
+change. The failed086 check remains FAIL. Final new-head hosted gates/review/release
+and ordinary authenticated proof remain owed.

@@ -103,3 +103,15 @@ ALG-01: bounded identity preservation; no claim of complete reconciliation.
 ALG-12/13 and ALG-02/03/08/10/11: no new verified integration or readiness.
 Full native held-thread correlation still needs the original bound status path;
 the unsafe caller conversation_id is not promoted into evidence.
+
+### Current-main dependency composition
+
+Composition5c0da2457b1d2f29020a6d90a331185bba2a66c3 preserves reviewed refusal
+parentd95794a2e and maindf691e3fc, including E07 Studio/canvas source, E09's
+original undici patch and610009 isolation migration, and released calendar
+reentry. The original interactive.ts blob44db516e3 and reviewed2917df7c digest
+are unchanged; the shared one-scalar change composes cleanly with the parent's
+separately reviewed29 handler literals. No new source renewal is inferred.
+Parent2697 release/readback, fresh composed-head review/CI and original native
+held-thread consumer remain required. This metadata slice is a prerequisite,
+not complete original-result recovery, ZION execution or capability acceptance.

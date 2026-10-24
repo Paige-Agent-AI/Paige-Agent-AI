@@ -38,10 +38,8 @@ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,las
  ('c0900000-0000-4000-8000-000000000003','a0900000-0000-4000-8000-000000000002','0a090000-0000-4000-8000-000000000004','0a090000-0000-4000-8000-000000000001','Agreement','ForeignTenant','active'),
  ('c0900000-0000-4000-8000-000000000005','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006','0a090000-0000-4000-8000-000000000001','Two','InA','active'),
  ('c0900000-0000-4000-8000-000000000007','a0900000-0000-4000-8000-000000000004','0a090000-0000-4000-8000-000000000007','0a090000-0000-4000-8000-000000000001','Agreement','SubCustomer','active');
--- A login linked in two businesses is not possible today (one global partial unique link index); the
--- future multi-business shape is staged here, inside this rolled-back transaction, the same way
--- client_portal_self_projection.sql does, to prove the ambiguity refuses rather than picks.
-DROP INDEX public.clients_linked_user_id_unique;
+-- A login may join different businesses through original recipient-bound invitations.
+-- Current-schema rollback data still proves ambiguity refuses rather than selecting a business.
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('c0900000-0000-4000-8000-000000000006','a0900000-0000-4000-8000-000000000002','0a090000-0000-4000-8000-000000000006','0a090000-0000-4000-8000-000000000001','Two','InB','active');
 -- An older duplicate of customer A, merged into A: its agreement is not A's to see.
@@ -714,8 +712,7 @@ SELECT set_config('paige.link_ok','1',true);
 UPDATE public.clients SET linked_user_id=NULL WHERE id IN('c0900000-0000-4000-8000-000000000008','c0900000-0000-4000-8000-000000000006');
 UPDATE public.clients SET linked_user_id='0a090000-0000-4000-8000-000000000006' WHERE id='c0900000-0000-4000-8000-000000000005';
 SELECT set_config('paige.link_ok','',true);
-CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
-SELECT ok(EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'original global identity index restored before outer rollback');
+SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 1');
 
 SELECT * FROM finish();
 ROLLBACK;

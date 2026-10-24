@@ -1,5 +1,34 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — original weekly receipt correlation, development
+
+REPAIR the existing native weekly ActionAdapter: success must carry the same
+original automation/event/act and deterministic receipt in both return locations.
+Contradictory completion or receipt evidence cannot become proven absence/retry.
+Eight actual-adapter failures reproduced; final23 owning cases pass. The original
+disposable PostgreSQL engine/Gateway/native RPC observation/redrain case passes
+with executed1, adopted original result and0 outbound requests. Full native
+program, required review/exact-head CI, release and authenticated recurrence
+remain separate until evidenced on the original PR.
+[Exact source/Orchestration/capability boundary](../evidence/ui-delivery/exp05-weekly-original-receipt.md).
+No trigger, provider, ZION instructions or catalogue status is activated.
+
+Local full native program is FAIL at the unchanged accumulated-history timing
+margin: median1038.140ms against the existing below1000ms assertion. The original
+engine/redrain case did pass; do not convert that into a full native PASS. Getter
+SQL/migrations/performance test and threshold are unchanged from main2748432.
+Retain the failure; required exact-head native proof and latency disposition
+remain a release gate, with no timeout/threshold or fixture waiver.
+
+Hosted original-head2041 native job120693293093 subsequently passed112 cases,
+the actual engine/Gateway/SQL observation/redrain and unchanged history timing
+limits (10k/100k synthetic rows, medians18.160/18.797ms). This is required native
+CI proof, not production performance or authenticated recurrence. Preserve the
+separate local timing FAIL above. Current-main composition requires fresh exact-head
+verification; no SQL, fixture, permission or threshold was changed.
+
+## October23 — original specialist result reentry, development
+
 ## October23 — original known-refusal reload, development
 
 REPAIR the original Chat fallback/history: persist the exact pre-processing refusal

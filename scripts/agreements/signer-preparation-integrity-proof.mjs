@@ -43,6 +43,13 @@ try{
  refused(add(a.id,'foreign@example.test'),'42501',context+"SET test.tenant='bbbbbbbb-0000-4000-8000-000000000002';");
  refused(add(a.id,'member@example.test'),'42501',context+"SET test.admin='false';");
  console.log(JSON.stringify({checkpoint:'Original signer/authority/duplicate positive controls',checks}));
+ // A contract-absence baseline must reach the exact new callable, rather than
+ // mistaking an unrelated timing/setup failure for evidence of that defect.
+ // The repaired/full path below keeps every original lock/refusal control.
+ if(process.argv.includes('--accepted-commercial-baseline')){
+  const {proveAcceptedCommercial}=await import('./accepted-commercial-evidence-proof.mjs');
+  await proveAcceptedCommercial({sql});
+ }
  if(mode!=='baseline-order'){
   const frozen=fresh();sql(`UPDATE paige_agreements SET content_storage_key='${tenant}/${frozen.id}/reviewed.pdf',content_sha256=repeat('a',64) WHERE id='${frozen.id}';`);
   refused(add(frozen.id,'later@example.test'));

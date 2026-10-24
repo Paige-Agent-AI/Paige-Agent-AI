@@ -1,0 +1,8 @@
+{
+  "buttonMinHeight": "44px",
+  "caption": "Needs review · Earlier result verified",
+  "captionAnimation": "none",
+  "captionTransition": "1e-05s",
+  "overflow": false,
+  "reducedMotion": true
+}

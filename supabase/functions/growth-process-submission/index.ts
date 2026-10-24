@@ -53,6 +53,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { isEmailAddress } from "../_shared/growth-intake.ts";
 import { appendLeadReply, fileLeadReply, LEAD_REPLY_ACTION_KIND, leadReplyEnabled } from "./lead-reply.ts";
+import { recordFormInquiry } from "./inquiry.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // NOTE: the outbound_webhook executor (which uses the shared SSRF guard) is DEFERRED for the first
 // live ship (see its case below); its only shared import is the pure address check above.
@@ -362,6 +363,14 @@ Deno.serve(async (req) => {
       }
     }
 
+    // The opted-in inquiry itself belongs in the same canonical contact thread as its reply.
+    // Readback failure retries through this processor's existing claim lifecycle; the database
+    // serializes the submission and inserts at most one message, so no duplicate unread/history.
+    if (form.lead_reply_enabled === true) {
+      const inquiry = await recordFormInquiry(admin, { submissionId, submittedEmail: extractIdentity(payload, form.schema_json).email, answers: labelledAnswers(payload, form.schema_json) });
+      if (inquiry.status === "done") executed.push({ slug: "form_inquiry", executor: "canonical_message", result: inquiry.result });
+      else failed.push({ slug: "form_inquiry", executor: "canonical_message", error: inquiry.error });
+    }
     // -- 5. Terminal lifecycle (honest) --
     if (failed.length > 0) {
       await failSubmission(`executor_failures: ${failed.map((f) => `${f.slug}:${f.error}`).join("; ")}`);

@@ -6,7 +6,6 @@ BEGIN IF v IS DISTINCT FROM true THEN RAISE EXCEPTION 'ZION_PROOF_FAILED: %',lab
 RAISE NOTICE 'PASS: %',label; END $$;
 SELECT pg_temp.check_zion((SELECT count(*)=1 FROM public.paige_subagents WHERE slug='zion' AND tenant_id IS NULL),'one existing global ZION');
 SELECT pg_temp.check_zion((SELECT role='VP Operations & Automation' AND domain='operations_automation' FROM public.paige_subagents WHERE slug='zion'),'fresh migrated remit');
-CREATE TEMP TABLE zion_protected AS SELECT to_jsonb(s)-ARRAY['domain','role','description','goal','backstory','version','updated_at'] AS fields FROM public.paige_subagents s WHERE slug='zion';
 CREATE TEMP TABLE zion_other AS SELECT slug,to_jsonb(s) AS fields FROM public.paige_subagents s WHERE slug<>'zion';
 CREATE TEMP TABLE zion_acl AS SELECT relacl,relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='public.paige_subagents'::regclass;
 CREATE FUNCTION pg_temp.restore_zion_seed() RETURNS void LANGUAGE plpgsql AS $$
@@ -19,6 +18,9 @@ BEGIN
   WHERE slug='zion';
 END $$;
 SELECT pg_temp.restore_zion_seed();
+-- Snapshot the deliberately restored legacy fixture, rather than a newer
+-- instruction revision installed by later migrations. The transaction rolls back.
+CREATE TEMP TABLE zion_protected AS SELECT to_jsonb(s)-ARRAY['domain','role','description','goal','backstory','version','updated_at'] AS fields FROM public.paige_subagents s WHERE slug='zion';
 \ir ../migrations/20271113080000_exp05_zion_operations_role.sql
 SELECT pg_temp.check_zion((SELECT role='VP Operations & Automation' AND domain='operations_automation' AND version=2 FROM public.paige_subagents WHERE slug='zion'),'guarded existing seed corrected');
 SELECT pg_temp.check_zion((SELECT (to_jsonb(s)-ARRAY['domain','role','description','goal','backstory','version','updated_at'])=p.fields FROM public.paige_subagents s CROSS JOIN zion_protected p WHERE s.slug='zion'),'identity permissions runtime caps and parent unchanged');

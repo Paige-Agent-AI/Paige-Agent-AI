@@ -21,6 +21,7 @@ import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/inter
 import { RECOVERY_READ_ONLY_REFUSAL } from "../_shared/paige-turn/interactive-refusal.ts";
 import { stageCuraKnowledge, CURA_TEACH_PURPOSE } from '../_shared/cura-knowledge-teaching.ts';
 import { readOriginalCuraPreparationHistory } from "../_shared/paige-turn/interactive-cura-history.ts";
+import { readOriginalSpecialistHistory } from "../_shared/paige-turn/interactive-specialist-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, readBusinessSnapshotTransport } from '../_shared/paige-context/business-review-chat.ts';
@@ -291,7 +292,7 @@ import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
 import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
-import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
+import { specialistStepLabel, specialistAssignmentSummary, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
 import { crmResultReferenceMetadata } from "../_shared/paige-turn/crm-result-reference.ts";
@@ -880,10 +881,14 @@ const messageSchema = z.object({
   requestIntentId: z.string().uuid().optional(),
   interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional(),
     includeCuraPreparationHistory: z.literal(true).optional(),
+    includeSpecialistHistory: z.literal(true).optional(),
   }).superRefine((control, context) => {
     // A projection selector, never actor, permission, approval or execution authority.
     if (control.includeCuraPreparationHistory && (control.kind !== "status" || !control.approvalTurnId)) {
       context.addIssue({ code: z.ZodIssueCode.custom, path: ["includeCuraPreparationHistory"], message: "Preparation history requires the original approval status request." });
+    }
+    if (control.includeSpecialistHistory && (control.kind !== "status" || !control.approvalTurnId)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["includeSpecialistHistory"], message: "Specialist history requires the original turn status request." });
     }
   }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
@@ -1515,9 +1520,30 @@ serve(async (req) => {
               } as unknown as Parameters<typeof readOriginalCuraPreparationHistory>[0]["caller"],
               service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
             }) : null;
+          const specialist_history = validatedData.interactive.includeSpecialistHistory === true
+            && protocolActive && thread.audience === "workspace"
+            ? await readOriginalSpecialistHistory({
+              actorId: user.id, tenantId: thread.tenant_id, threadId: validatedData.threadId,
+              intentId: validatedData.requestIntentId, turnId: validatedData.interactive.approvalTurnId,
+              caller: supabaseClient as unknown as Parameters<typeof readOriginalSpecialistHistory>[0]["caller"],
+              authorize: async () => {
+                const authority = await resolveWorkspaceAuthority(supabaseClient, supabase, user.id, thread.tenant_id);
+                return authority.seat && authorityAdmits("list_subagents", authority, WORKSPACE_BUILD_TOOLS);
+              },
+              inspectOriginal: async (invocationId: string) => {
+                // Reuse the caller-JWT inspector, never the service-role delegate.
+                const { data, error } = await supabaseClient.functions.invoke("paige-orchestrator", {
+                  body: { action: "tool_search", tenant_id: thread.tenant_id, invocation_id: invocationId },
+                  headers: { Authorization: authHeader },
+                });
+                return error ? null : data;
+              },
+              current: () => !req.signal.aborted,
+            }) : null;
           return new Response(JSON.stringify({ approval_recovery,
             ...(approval_history?.status === "verified_original" ? { approval_history } : {}),
             ...(cura_preparation_history?.status === "recorded_preparation" ? { cura_preparation_history } : {}),
+            ...(specialist_history?.status === "recorded_assignment" ? { specialist_history } : {}),
           }), { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
         const originalScope = { threadId: validatedData.threadId!,
@@ -9054,13 +9080,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
     const recordConfirmation = async (
       fp: string, tool: string, args: Record<string, unknown>, summary: string,
-    ): Promise<{ state: "created" | "exists" | "failed"; fingerprint?: string; summary?: string }> => {
+    ): Promise<{ state: "created" | "exists" | "failed"; fingerprint?: string; summary?: string; expires_at?: string | null }> => {
       try {
         if (!(await revalidateProposalScope())) return { state: "failed" };
         const storedArgs = confirmationArgs(args);
-        const findReusable = async (): Promise<Array<{ fingerprint: string; summary: string }>> => {
+        const findReusable = async (): Promise<Array<{ fingerprint: string; summary: string; expires_at: string | null }>> => {
           let existing = supabase.from("paige_pending_confirmations")
-            .select("fingerprint,args,issued_in_request,summary").eq("user_id", user.id).eq("tool_name", tool)
+            .select("fingerprint,args,issued_in_request,summary,expires_at").eq("user_id", user.id).eq("tool_name", tool)
             .is("consumed_at", null)
             .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
             .gt("expires_at", new Date().toISOString());
@@ -9071,12 +9097,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (pendingError || (pending?.length ?? 0) > 64) {
             throw new Error("confirmation preparation unavailable");
           }
-          const reusable: Array<{ fingerprint: string; summary: string }> = [];
+          const reusable: Array<{ fingerprint: string; summary: string; expires_at: string | null }> = [];
           for (const row of pending ?? []) {
             if (!row?.args || typeof row.args !== "object" || Array.isArray(row.args)
               || await confirmFingerprint(tool, row.args) !== fp) continue;
             const token = await confirmationToken(row, tool);
-            if (token) reusable.push({ fingerprint: token, summary: typeof row.summary === "string" ? row.summary : summary });
+            if (token) reusable.push({ fingerprint: token, summary: typeof row.summary === "string" ? row.summary : summary,
+              expires_at: typeof row.expires_at === "string" ? row.expires_at : null });
           }
           return reusable;
         };
@@ -9096,7 +9123,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         const { error: expiryError } = await expired;
         if (expiryError) return { state: "failed" };
         await requireRecoveryPermission(true);
-        const { error } = await supabase.from("paige_pending_confirmations").insert({
+        const { data: recorded, error } = await supabase.from("paige_pending_confirmations").insert({
           user_id: user.id,
           tenant_id: personaCtx?.tenant_id ?? null,
           thread_id: payloadThreadId ?? null,
@@ -9107,7 +9134,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           server_issued_at: new Date().toISOString(),
           args: storedArgs,
           summary,
-        });
+        }).select("expires_at").single();
         if (error) {
           if (error.code === "23505") {
             const winner = await findReusable();
@@ -9116,7 +9143,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           console.error("[paige] confirm proposal NOT recorded", JSON.stringify({ tool, code: error.code ?? null }));
           return { state: "failed" };
         }
-        return { state: "created", fingerprint: `${fingerprint}:${requestNonce}`, summary };
+        return { state: "created", fingerprint: `${fingerprint}:${requestNonce}`, summary,
+          expires_at: typeof recorded?.expires_at === "string" ? recorded.expires_at : null };
       } catch {
         console.error("[paige] confirmation preparation failed");
         return { state: "failed" };
@@ -10037,7 +10065,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Save ${paths.length ? paths.length : "these"} detail${paths.length === 1 ? "" : "s"} to the client's file${paths.length ? ` (${paths.join(", ")})` : ""}.`;
         }
         case "delegate_to_subagent":
-          return `Hand this to your ${a?.subagent_slug || a?.slug || "specialist"} and let them run it${a?.task ? `: "${String(a.task).slice(0, 120)}"` : ""}.`;
+          return specialistAssignmentSummary(a, specialistStepRoster);
         case "automation_draft": {
           const n = typeof a?.name === "string" ? a.name : "a new process";
           const count = Array.isArray(a?.steps) ? a.steps.length : 0;
@@ -12553,7 +12581,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 success: false,
                 needs_confirm: recorded.state !== "failed",
                 ...(recorded.state !== "failed" ? { confirm_fingerprint: recorded.fingerprint,
-                  requires_operator_approval: true, confirm_summary: recorded.summary ?? summary } : {}),
+                  requires_operator_approval: true, confirm_summary: recorded.summary ?? summary,
+                  confirm_expires_at: recorded.expires_at ?? null } : {}),
                 ...(recorded.state === "failed" ? { error: "confirmation_unavailable" } : {}),
                 note: recorded.state === "failed"
                   ? "The approval could not be recorded. Nothing ran and there is no approval card to use yet. Explain the failure and retry only after the operator asks."
@@ -18368,6 +18397,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
         sales_create_invoice_link: "paige_invoices",
         sales_create_commercial_terms: "tenant_client_agreements",
+        sales_effectuate_commercial_terms: "tenant_client_agreements",
         sales_save_collection_terms: "tenant_client_agreements",
         sales_stage_collection_import: "paige_sales_import_batches",
         sales_commit_collection_import: "paige_sales_import_batches",
@@ -18595,7 +18625,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // render an Approve/Deny card instead of Paige asking in prose.
       // Carries the FINGERPRINT alongside the summary, because the surface that shows the card has
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
-      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
+      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; expires_at?: unknown; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
       // A native proposal already supplies the exact approval. Do not spend another
       // model round before recording that pause, or publish a card before its receipt.
       let durableApprovalPause = false;
@@ -19294,7 +19324,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   ok = parsed?.success !== false;
                   // Capture a pending confirmation so the client renders an approve card.
                   if (parsed?.needs_confirm && parsed?.confirm_summary) {
-                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}), ...(parsed.confirm_preview && typeof parsed.confirm_preview === "object" && !Array.isArray(parsed.confirm_preview) ? { preview: parsed.confirm_preview as Record<string, unknown> } : {}) });
+                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(Object.prototype.hasOwnProperty.call(parsed, "confirm_expires_at") ? { expires_at: parsed.confirm_expires_at } : {}), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}), ...(parsed.confirm_preview && typeof parsed.confirm_preview === "object" && !Array.isArray(parsed.confirm_preview) ? { preview: parsed.confirm_preview as Record<string, unknown> } : {}) });
                   }
                   if (tc.function?.name === "deep_research" && parsed && typeof parsed === "object" && Array.isArray(parsed.findings)) {
                     researchTrace.push({

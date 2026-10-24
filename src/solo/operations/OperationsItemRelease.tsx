@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
-import { OperationsDeliverablePreparation } from "./OperationsDeliverablePreparation";
+import { OperationsDeliveryInspection } from "./OperationsDeliveryInspection";
 import { OperationsStaffDeliveryReview } from "./OperationsStaffDeliveryReview";
 import { releaseReviewers, type ReleaseItem } from "./operations-item-release";
 
@@ -21,9 +21,10 @@ import { releaseReviewers, type ReleaseItem } from "./operations-item-release";
  * hidden.
  */
 
-export function OperationsItemRelease({ actorId, tenantId, item, members, peopleReady, theme }: {
+export function OperationsItemRelease({ actorId, tenantId, item, members, peopleReady, theme, registerCloseGuard, onSubmitted }: {
   actorId: string; tenantId: string; item: ReleaseItem & { plan_id: string; contact_id: string; updated_at: string };
   members: TeamMemberRecord[]; peopleReady: boolean; theme: string;
+  registerCloseGuard?:(guard:(showNotice?:boolean)=>boolean)=>()=>void; onSubmitted?:()=>void;
 }) {
   const scope = { actorId, tenantId, workItemId: item.id, planId: item.plan_id, clientId: item.contact_id, workUpdatedAt: item.updated_at };
   const reviewers = releaseReviewers(members, actorId);
@@ -47,11 +48,12 @@ export function OperationsItemRelease({ actorId, tenantId, item, members, people
           <p>Until then, you can share a finished file with this client from their client record.</p>
         </div>
       ) : (
-        <OperationsDeliverablePreparation key={`prepare:${JSON.stringify(scope)}`} scope={scope} members={members} theme={theme}
-          onSubmitted={() => setSubmitted(n => n + 1)} />
+        <OperationsDeliveryInspection key={`inspection:${JSON.stringify(scope)}:${submitted}`} scope={scope} members={members} theme={theme}
+          initialMode="preparation" registerCloseGuard={registerCloseGuard}
+          onSubmitted={() => { setSubmitted(n => n + 1); onSubmitted?.(); }} />
       )}
-      {peopleReady && <OperationsStaffDeliveryReview key={`review:${JSON.stringify(scope)}:${submitted}`} scope={scope} members={members} theme={theme}
-        recordedOnly={single} />}
+      {peopleReady && single && <OperationsStaffDeliveryReview key={`review:${JSON.stringify(scope)}:${submitted}`} scope={scope} members={members} theme={theme}
+        recordedOnly registerCloseGuard={registerCloseGuard} />}
     </section>
   );
 }

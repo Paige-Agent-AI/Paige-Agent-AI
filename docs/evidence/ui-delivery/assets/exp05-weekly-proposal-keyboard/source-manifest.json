@@ -1,0 +1,38 @@
+{
+  "acceptedMain": "e328ce8d247ccd0fb5e41b19232dc5b02ed7a37e",
+  "acceptedTree": "70a9eec958f20756b866800ee706635e03a933d7",
+  "productInputs": 350,
+  "unchangedProductInputs": 347,
+  "candidates": [
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "sha256": "a999cecb1193b49590ed830f633a7644bcff0d37e45003e4fbec3fc3673f8323",
+      "gitBlob": "1f84eb763e6f5f6facf5ba3b7e8f04a7764e919d",
+      "acceptedBlob": "29156f74a7d644545296c643c81cbed9296a46e1",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftReview.tsx",
+      "sha256": "71603bc24810bcc3042001110a22ccf0438f74b2826467df3cc65af93f783f4b",
+      "gitBlob": "03a5c3e802e86c1a7dd7df223df9a5ccf2657c4f",
+      "acceptedBlob": "47eb4569b7d21d05731c6ac7aae32cbe2afdb848",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftComposer.tsx",
+      "sha256": "0da63639baee9bb6f9153902f5cbe3695726145eb3acefbbca838c7cd6ff9f1a",
+      "gitBlob": "019a00e4baae4e44e3c9ce299a9928952bbded8a",
+      "acceptedBlob": "a8637c0ce4ffed6db8c35735d48b2be948d94b52",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    }
+  ],
+  "productTransforms": [],
+  "explicitSyntheticPorts": 178,
+  "bundleSha256": "c962ab5eed38b379b96aa1aa3fb78c7892d230e54ed077816b7a84df61645b5e",
+  "htmlSha256": "3ce149f525ae2f50dad4c715a41fd3ec2497119028a714dd04af3028058235c6",
+  "cssSha256": "255483e349f20a7233a76f985b6ccbd4a6c0decbd9ebcf19d2b66b77240134cd",
+  "boundary": "Original native shell and candidate weekly components; synthetic identities/read-only pending transport; no authentication, save, approval or execution proof"
+}

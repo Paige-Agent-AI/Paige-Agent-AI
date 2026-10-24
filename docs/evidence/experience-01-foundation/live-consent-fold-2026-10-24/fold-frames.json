@@ -1,0 +1,79 @@
+{
+  "capturedAt": "2026-10-24",
+  "syntheticOnly": true,
+  "guard": "geometry asserted pre-capture (overflow>0, actions outside scroll region, accept bottom<=viewport-4); sha256 distinct; IHDR==viewport",
+  "frames": {
+    "fold-1536x770-dark-terms.png": {
+      "viewport": "1536x770",
+      "theme": "dark",
+      "state": "terms",
+      "assertedGeometry": {
+        "disclosureOverflowPx": 72,
+        "actionsPinnedInViewport": true,
+        "actionsInsideScrollRegion": false,
+        "acceptBottomPx": 666.9375,
+        "viewportH": 770
+      },
+      "observed": {
+        "liveRegions": 1,
+        "stagePresent": true
+      },
+      "sha256": "72722c5df127c6739257d9432f676e05bc487471f49d6cd5f97c1c8ba4007ab9",
+      "ihdr": "1536x770"
+    },
+    "fold-1536x770-light-terms.png": {
+      "viewport": "1536x770",
+      "theme": "light",
+      "state": "terms",
+      "assertedGeometry": {
+        "disclosureOverflowPx": 72,
+        "actionsPinnedInViewport": true,
+        "actionsInsideScrollRegion": false,
+        "acceptBottomPx": 666.9375,
+        "viewportH": 770
+      },
+      "observed": {
+        "liveRegions": 1,
+        "stagePresent": true
+      },
+      "sha256": "085751008f5fbd3ad3a331ec8345bf0dde7acfb1c4959862506bdaeddaec8280",
+      "ihdr": "1536x770"
+    },
+    "fold-900x1000-dark-terms.png": {
+      "viewport": "900x1000",
+      "theme": "dark",
+      "state": "terms",
+      "assertedGeometry": {
+        "disclosureOverflowPx": 138,
+        "actionsPinnedInViewport": true,
+        "actionsInsideScrollRegion": false,
+        "acceptBottomPx": 781.421875,
+        "viewportH": 1000
+      },
+      "observed": {
+        "liveRegions": 1,
+        "stagePresent": true
+      },
+      "sha256": "3c281e1daadd4a58541a25350218e7ac9c0fb10f92fe71c25e3c861e3d66d8b0",
+      "ihdr": "900x1000"
+    },
+    "fold-900x1000-light-terms.png": {
+      "viewport": "900x1000",
+      "theme": "light",
+      "state": "terms",
+      "assertedGeometry": {
+        "disclosureOverflowPx": 138,
+        "actionsPinnedInViewport": true,
+        "actionsInsideScrollRegion": false,
+        "acceptBottomPx": 781.421875,
+        "viewportH": 1000
+      },
+      "observed": {
+        "liveRegions": 1,
+        "stagePresent": true
+      },
+      "sha256": "9c6a1c0aef6521a74deb4dd85e781c86a02bc9d1ae9b5fa8bacb2c8d06d0c583",
+      "ihdr": "900x1000"
+    }
+  }
+}

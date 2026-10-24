@@ -175,6 +175,41 @@ explicit synthetic ports. Settings authority and source failures are unchanged.
 Review/CI/release and authenticated read-only proof remain owed; no zone was saved,
 trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed.
 
+## EXP08 Manage My Team / Team Hub — receiving lead and Team index, October23
+
+**Owner authorization:** one Claude Code lead owns EXP08, with ZION as the supervised product
+specialist. EXP05 keeps Work, assignments, Planning, Calendar execution, the ZION runtime and
+receipts. Team Hub messages and requests reference one original EXP05 Work record and read their
+status from it. Staffing, a receiving acknowledgment, runtime proof and customer acceptance are
+separate states.
+
+Team index. Read these before any Team or Team Hub work:
+
+| Source | What it carries |
+|---|---|
+| [Team surface card](../doctrine/surface-cards/team.md) | Current source and its corrections (Oct 23), owner decisions D1–D4, the six `high` access tools, why Team is `PARTIAL` (no Rail outcome) |
+| [Ownership & authority lifecycle](../handoff/team-ownership-authority-lifecycle.md) | Received by EXP08 and still `UNAVAILABLE`; business-ownership facts never grant authority |
+| [Recipient binding P0](../delivery/solo-team-recipient-binding-p0.md) | Invites bind to the confirmed recipient email (`20261200000300`); production persistence not re-read |
+| [Team Spine packet](../delivery/spine-integration-packet-team.md) | `team.authority` read (shipped #876). Its "no code yet" and four-fact statements are historical |
+
+**Live today:**
+- Settings → Team (`src/solo/team-workspace.tsx`).
+- 11 `team.*` Spine capabilities.
+- Presence RPCs.
+
+**Not built:** a Team Hub main-menu item, channels, DMs, threads, mentions, a team `/PAIGE`
+palette, and the messaging tables behind them. Searching the migrations for `team_message`,
+`team_channel`, `channel_members`, `direct_message` and `message_mentions` returned zero hits.
+
+**Owner decisions, 2026-10-24:**
+- The Team Hub design (prototype v2) is approved and frozen under §28.
+- The collaboration storage is approved, as additive migrations with isolation proven before
+  release.
+
+Both are approvals to build. Neither is runtime proof.
+
+Slack and Teams connections belong to EXP10, and Team Hub doesn't depend on them.
+
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist invocation identity is now preserved in a local candidate
@@ -3090,6 +3125,22 @@ byte-identical SQL filename continuation, not a new render. This read does not a
 ## EXP04 C29 saved signing request review — October24
 
 SOURCE RELEASE VERIFIED, October24 11:02:22UTC: original2756 reviewed a7b6b2d2c6e876b89d88dc6e0f759c8036fc70fd/LOWER5637889154/all11 exact checks+two web statusesSUCCESS → main9e1963d953f670973f167ba67a40bf8bb73617d4/tree891030f1bd6f50a8d0a39e66cb4678e9857b1cb8, exact inspected72a+a7 union. Original44 selected blobs/all34 captured LF inputs,10 original and three fresh native synthetic frames preserved. Normal Edge40088022454/120854822549SUCCESS; actual agreement-document84 ACTIVE/original JWTfalse/import_mapfalse configuration retained, all25 entry/imported files match actual main LF bytes, guarded edge-live TAG9e. Six unselected send/signature/Chat/orchestration/Stripe functions retain exact metadata/config/version. Normal READY dpl_6zY2cvmeRLG8YyNwfMuk9KZXujxd/both public200exact9e-mvmadeet/customerUpdate:null; actual imported AgreementDocumentPreparation JS1ea03f22/CSS074b1694, five original markers/narrow and44px rules verified. Original2737 CLOSED UNMERGED only after this bounded source released; original branch/b244/history/children2741/2745 preserved. No native apply, approval, token, signing, send, payment, service completion, provider or Chat/Live activation. Ordinary authenticated owner/staff/linked-client/private PDF/role withdrawal/reload/later-session/full shell/mobile/AT/zoom/CentralQA/all12/founder acceptance remainUNVERIFIED. Existing prepared approval/send/assigned-field producer/consent/seal integration remains unfinished. ALG01/12 bounded PARTIAL,02 incomplete,13 usefulnessUNVERIFIED; no Capabilities promotion. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2756#issuecomment-6383470157).
+
+### EXP04 exact accepted terms — actual2689 source/native release
+
+Original2689 reviewed eaa6aa0817573c5b4d71c642f5aa1e23676a89af/LOWER5638092378/all13 exact checks+two webSUCCESS merged actual5a4837d357f9c9a75d85e158143170a9e4255ff8/tree22d55f58; original six6eaa implementation bodies and SQL820004SHA57d7f2b1 unchanged. Normal40092583130 first lock-bound55P03 failure and verified atomic rollback retained; actual0locks precede ONE unchanged failed-job retry120870101892SUCCESS/db-live5a. Actual production12:19:50UTC820004/count1/all14 full definitions/ABI/defaults/returns/owner/ACL/config/security and provenance columns/constraints/guard/unique index match fresh source-built Preview; exact original own cold14 observations also match. READY4tw/both public5a-mvmcswf5/null; normal Edge selected no entry/new caller. No directDDL/session/timeout/history/include-all/test/permission bypass or business/provider/signature/payment/send/Chat/Live effect. This is source/native deployment proof, not actual owner approval/operation/private PDF/roles/reload/CentralQA/all12/founder acceptance.2705/2714 governed consumer and prepared native assigned-field producer/send/consent/seal remain unfinished. No capability/algorithm maturity or customer release promotion. [Release6384139888](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2689#issuecomment-6384139888); [actual native/source readback](../evidence/e04-exact-terms-production-readback.json); original Master4.0 row retains exact source identity.
+
+### EXP04 current commercial action, owner review and staff Work — actual source releases
+
+Original2161 reviewed 8daf227617fe627310210bf3fe3cb6423b413419 → actual6c0cc01e4c8ea6e55e2a161e302462f320cd53d7. Exact8daf/LOWER5638174767; all10 applicable checks/two webSUCCESS/designed schema-freePreviewSKIP. Actual6c0cc01e/treead2b6c82,139cases/eight suites and146 captured inputs. ProductionGQ3READY/bothpublic6c-mvme81ga/null; actual JS944dc0e1/CSS09058aee/sixmarkers44px controls verified12:50:48UTC. SOURCE/WEB VERIFIED only. Original E05 scoped Work/Planning and E09 release composed; second-person/recordedOnly/dirty-unknown recovery retained. Sole-consultant D2 question unanswered. Synthetic native frames are not ordinary owner/staff/client approval/reload. Raw TypeScript six existing signatures/baseline10/zeroNEW, not compiler-green. No own native/Edge or restricted activation. [Release6384446832](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2161#issuecomment-6384446832); [actual source/readback](../evidence/e04-staff-work-production-readback.json).
+
+Original2705 reviewed c30323d5f561275a397b10e59c2d0adb6fe173d1 → actualf6d82e0c45d27a8bd39485c116f3ef3ffd18f908. Exactc303/LOWER5638204725; all13 exact checks/two webSUCCESS→actualf6d82e0c/tree60d295c3. Native830004 count1/full predecessor-wrapper source/ABI/ACL/security and six recorded statements exact62f1f423 source/Preview. First23505 failure retained; unchanged retry passed persisted/tag checks. First Edge final marker guardFAIL retained; original full-baseline recovery40097432236/120882510825SUCCESS. Artifact12561482400 SHAe8a67761 verified; all26selected configs/1094 source hashes exactf6. ActualChat529/271files, sales-collection-command70/21, orchestrator126/127. Guardeddb-live=edge-live=f6 at readback; web3LbaREADY/bothf6-mvmep25c/null. SOURCE/NATIVE/EDGE/WEB VERIFIED only. Entire incumbent Chat one-original-target-row inverse; original29 reviewed literals/extractor/provenance and146 Work inputs retained. No source-pin renewal/history/permission/marker bypass. Canonical HIGH confirmation and exact original source/operation/Rail retained. No Chat/Live admission, auto grant, provider/send/payment or capability activation. [Release6384790221](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2705#issuecomment-6384790221); [actual source/readback](../evidence/e04-effective-terms-action-production-readback.json).
+
+Original2714 reviewed 79d7a72a2000ed50b685dde32173757669bcb58a → actuale1a6a6bcc508d42ce058643ca64fb06e710f5263. Exact79d7/LOWER5638222529; all10 applicable checks/two webSUCCESS/schema-freePreviewSKIP→actuale1a6a6bcc508d42ce058643ca64fb06e710f5263/treed1b9fd1d, exactf6+79 union.40-path whole inverse/all29 review+146 Work captured inputs exact. Current55cases/six suites. ProductionBqhREADY/bothpublice1-mvmfqv4x/null; actualJSff7e52e7/CSS5ecef204/seven original source markers,520px/44px/unknown-recovery/wrap rules verified13:33:00UTC. SOURCE/WEB VERIFIED only. Original invoice→accepted version→canonical HIGH explicit review/confirmation→historical operation/Rail→separate current refresh. No own native/Edge/permission/admission/provider/send/payment change. Original synthetic frames remain dated; private records/actual commands/roles/reload/full-shell/device/AT/CentralQA/full12/founder acceptance UNVERIFIED. Minor320 refresh-label refinement open. [Release6384844122](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2714#issuecomment-6384844122); [actual source/readback](../evidence/e04-effective-terms-review-production-readback.json).
+
+All12 consultant-first outcomes remain mandatory and unfinished. Prepared canonical HIGH approved send, verified exact sender/message revision, atomic assigned-field fact producer and real recipient consent/signature/seal integration remain missing. Existing prepared-effect/token holds stay. ALG01/12 boundedPARTIAL,02 onboarding/completion incomplete,13 recommendation usefulnessUNVERIFIED; no new capability maturity, provider/Chat/Live activation or customer release. Ordinary owner/staff/linked-client permission/results/reload/recovery/CentralQA and one complete founder acceptance remain UNVERIFIED. Original native order830004→E02original840002→E04original850004→E05original860005 retained. Earlier dated source/release/failure paragraphs remain historical evidence.
+
+
 
 ## EXP04 C26 existing client scope and recovery — October24
 

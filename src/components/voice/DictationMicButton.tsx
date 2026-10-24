@@ -30,6 +30,8 @@ interface DictationMicButtonProps {
   activeLabel?: string;
   /** Show ongoing compact state; safety-stop and error reasons are always visible. */
   showStatus?: boolean;
+  /** A customer composer can reserve a readable full-width status row. */
+  statusLayout?: "inline" | "composer-row";
   /** Authenticated composer context epoch used to invalidate a recording generation. */
   scopeEpoch: string;
   /** True from mic request through provider finalization; lets the composer hold Send. */
@@ -48,6 +50,7 @@ export function DictationMicButton({
   label,
   activeLabel,
   showStatus = false,
+  statusLayout = "inline",
   scopeEpoch,
   onActiveChange,
   composerRef,
@@ -208,22 +211,27 @@ export function DictationMicButton({
   );
 
   if (!showStatus && !statusVisible) return button;
+  const statusMessage = statusVisible ? (
+    <span
+      id={statusId}
+      data-dictation-state={statusLayout === "composer-row" ? state : undefined}
+      role={failed || unsupported ? "alert" : "status"}
+      aria-live={failed || unsupported ? "assertive" : "polite"}
+      className={cn(
+        statusLayout === "composer-row"
+          ? "order-last basis-full min-w-0 text-sm font-medium leading-normal"
+          : "max-w-52 text-[10px] font-medium leading-tight",
+        failed || unsupported ? "text-destructive" : "text-muted-foreground",
+      )}
+    >
+      {stateLabel}
+    </span>
+  ) : null;
+  if (statusLayout === "composer-row") return <>{button}{statusMessage}</>;
   return (
     <span className="inline-flex min-w-0 flex-none items-center gap-1.5" data-dictation-state={state}>
       {button}
-      {statusVisible && (
-        <span
-          id={statusId}
-          role={failed || unsupported ? "alert" : "status"}
-          aria-live={failed || unsupported ? "assertive" : "polite"}
-          className={cn(
-            "max-w-52 text-[10px] font-medium leading-tight",
-            failed || unsupported ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
-          {stateLabel}
-        </span>
-      )}
+      {statusMessage}
     </span>
   );
 }

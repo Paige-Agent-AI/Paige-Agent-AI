@@ -1,3 +1,16 @@
+## October24 current-main700000 continuation — source only
+
+Current main04edecb0 includes original E03 migration700000. Before any E04
+release, own never-applied reader631004→710004 and exact terms640004→720004
+move forward. This exact-terms SQL remains SHA57d7f2b1c4445605641e2484a8476ad44189ca003216ef834ed9ea844b05bfbf.
+Only the one proof filename changes with full byte inverse; original564 controls,
+assertions, timeouts, five sessions, three waits, authority/receipt and native
+function behavior are unchanged. Fresh exact review/CI/cold normal Preview and
+production ABI/ACL/readback remain required. No include-all/history/schema patch
+or session termination. Preserve current main/original owners, compatible E09
+private slot before own catalogue730004, and all12 outcomes. Prior dated evidence
+below remains historical, not transferred CI or customer acceptance.
+
 ## October24 forward reader release order
 
 Actual production E09 620009 and630009 are persisted before this still-draft

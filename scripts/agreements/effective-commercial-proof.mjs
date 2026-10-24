@@ -240,6 +240,6 @@ export async function proveEffectiveCommercialCurrent({sql:originalSql,read,quot
   finally{sql(`DELETE FROM tenant_tool_autonomy WHERE tenant_id='${tenant}' AND tool_key='sales_effectuate_commercial_terms';`);}
  };
  const checks=await proveEffectiveCommercialTerms({sql,read,concurrent,refuseAfterLock,scope:`SET test.uid='${actor}';SET test.tenant='${tenant}';SET test.admin='true';SET test.member='true';`,
-  tenant,actor,termsId:c.terms,invoiceId:c.invoice,agreementId,prepared,migration:'supabase/migrations/20271113640004_e04_exact_signed_terms.sql'});
+  tenant,actor,termsId:c.terms,invoiceId:c.invoice,agreementId,prepared,migration:'supabase/migrations/20271113720004_e04_exact_signed_terms.sql'});
  return {checks,concurrentSessions:5,observedLockWaits:3,migrationReplay:2,scope:'Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance'};
 }

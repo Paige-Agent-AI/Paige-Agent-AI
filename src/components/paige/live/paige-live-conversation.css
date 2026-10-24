@@ -39,7 +39,13 @@
    actually open and the notice disappears, the orb would be left staring at a dead gap. `auto`
    collapses to zero when there is no panel and gives the whole column back to the presence, while
    the cap keeps a long notice inside its own scroll. */
-.plc-presence > .plc-working,.plc-presence > .plc-notice { grid-row: 4; width: 100%; min-height: 0; max-height: 34vh; overflow-y: auto; margin-top: .8rem; }
+.plc-presence > .plc-working,.plc-presence > .plc-notice { grid-row: 4; width: 100%; min-height: 0; max-height: 34vh; margin-top: .8rem; }
+/* The notice is now a column: the DISCLOSURE scrolls inside its own cap, the actions
+   row never scrolls — the acceptance control must be visible on every height the
+   stage supports (the #2710 evidence review caught it below the internal fold). */
+.plc-notice { display: flex; flex-direction: column; gap: .6rem; overflow: hidden; }
+.plc-notice__scroll { min-height: 0; overflow-y: auto; }
+.plc-notice__actions { flex: none; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .plc-state { margin-top: 1rem; display: flex; align-items: center; gap: .5rem; font-weight: 650; }
 .plc-state span { width: .55rem; height: .55rem; border-radius: 50%; background: hsl(var(--muted-foreground)); }
 [data-live-state="listening"] .plc-state span,[data-live-state="speaking"] .plc-state span { background: hsl(var(--primary)); }

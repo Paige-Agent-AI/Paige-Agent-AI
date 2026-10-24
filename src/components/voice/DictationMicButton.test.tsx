@@ -755,4 +755,31 @@ describe("Solo dictation control", () => {
     await act(async () => sockets[0].closed());
     expect(onActiveChange).toHaveBeenLastCalledWith(false);
   });
+  it("keeps customer error feedback in its own full-width composer row", async () => {
+    const denied = new DOMException("Denied", "NotAllowedError");
+    voiceHarness.recorderStart.mockRejectedValueOnce(denied);
+    await act(async () => root.render(<DictationMicButton onText={vi.fn()} scopeEpoch="customer-a" statusLayout="composer-row" />));
+    await act(async () => { host.querySelector("button")!.click(); });
+    await flush();
+    const alert = host.querySelector<HTMLElement>('[role="alert"]')!;
+    expect(alert.parentElement).toBe(host);
+    expect(alert.classList.contains("basis-full")).toBe(true);
+    expect(alert.classList.contains("text-sm")).toBe(true);
+    expect(alert.dataset.dictationState).toBe("permission-denied");
+    expect(host.querySelector("button")?.getAttribute("aria-describedby")).toBe(alert.id);
+    expect(host.querySelector("button")?.getAttribute("aria-label")).toBe("Microphone permission off");
+  });
+
+  it("preserves the shared inline status layout by default for the other composers", async () => {
+    voiceHarness.recorderStart.mockRejectedValueOnce(new DOMException("Denied", "NotAllowedError"));
+    await act(async () => root.render(<DictationMicButton onText={vi.fn()} scopeEpoch="owner-a" />));
+    await act(async () => { host.querySelector("button")!.click(); });
+    await flush();
+    const alert = host.querySelector<HTMLElement>('[role="alert"]')!;
+    expect(alert.parentElement).not.toBe(host);
+    expect(alert.parentElement?.dataset.dictationState).toBe("permission-denied");
+    expect(alert.classList.contains("max-w-52")).toBe(true);
+    expect(alert.classList.contains("basis-full")).toBe(false);
+  });
+
 });

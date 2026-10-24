@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { StatePill, type PillState } from "@/components/ui/page/StatePill";
 import { routeLinkTarget } from "@/lib/links/workspaceLinks";
-import { useClientEngagementStatus } from "@/solo/engagement/useClientEngagementStatus";
+import { clientEngagementScopeKey, useClientEngagementStatus } from "@/solo/engagement/useClientEngagementStatus";
+import { useTenantContext } from "@/hooks/useTenantContext";
 import { businessCalendarHeldNote, businessDateLabel } from "@/solo/data/useBusinessTimeZone";
 import { AGREEMENT_STATE, SIGNATURE_STATE } from "@/solo/sales/agreementVocabulary";
 import { collectionMoney } from "@/solo/sales/collections/presentation";
@@ -239,13 +240,19 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
   );
 }
 
-export function ClientStanding({ contactId, clientName, account, openPaige }: Props) {
+export function ClientStanding(props: Props) {
+  const context = useTenantContext();
+  return <ClientStandingScope key={clientEngagementScopeKey(context, props.contactId)} {...props} />;
+}
+
+function ClientStandingScope({ contactId, clientName, account, openPaige }: Props) {
   const read = useClientEngagementStatus(contactId);
   const busy = read.phase === "loading" || read.phase === "idle";
   // "Check again" re-reads; the last answer for THIS client stays on screen, at full ink, until the new one
   // lands. The skeleton is only for the first read, so the record below never jumps.
   const last = useRef<{ contactId: string; status: ClientEngagementStatus } | null>(null);
   if (read.phase === "ready") last.current = { contactId, status: read.status };
+  if (!busy && read.phase !== "ready") last.current = null;
   const shown = read.phase === "ready" ? read.status : busy && last.current?.contactId === contactId ? last.current.status : null;
   const refreshing = busy && shown !== null;
   const zone = shown?.time_zone.state === "configured" ? shown.time_zone.zone : null;

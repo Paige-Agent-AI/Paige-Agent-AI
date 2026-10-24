@@ -1,5 +1,43 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — original known-refusal reload, development
+
+REPAIR the original Chat fallback/history: persist the exact pre-processing refusal
+on its original assistant record, then show the existing held status after reload.
+Prior unknown business outcomes remain uncertain; no retry or claim reset occurs.
+Actual handler75, pure turn52, Chat/status53 and binding79 cases pass; local
+desktop/narrow light/dark renders inspected. [Exact boundary and remaining proof](../evidence/ui-delivery/exp05-refusal-original-reload.md).
+Required review, exact-head CI, release and authenticated recovery remain owed.
+This does not implement EXP13 uploads or restore attachments, publish Knowledge,
+activate ZION/weekly execution or close ten-outcome/E5-CV1–9 acceptance.
+
+## October23 — original specialist result reentry, source released
+
+REPAIR the existing agents.list/list_subagents reader: bounded own-assignment
+discovery and exact original-response/receipt inspection, with current JWT/RLS,
+owner/admin, tenant and contact checks. Original ActionBus action_get/list_actions
+remains authoritative for its own references. No re-dispatch, settlement, approval
+or claim reset; the existing uncertain-effect hold remains.
+Six original suites192/192 and original binding/mutation77/77 PASS. Actual stale
+outcome/receipt and changed-contact races reproduced then corrected. Local proof
+does not establish ordinary customer recovery, ZION activation, complete history,
+Live or ten-outcome/E5-CV1–9 acceptance. [Exact proof and contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
+
+Reviewed b880/all11 checks and both statuses passed; main400118998's actual tree
+matches the inspected union. Normal production Chat519267/267 and orchestrator122125/125
+files match that merge, preserving JWT/configuration. Exact READY web and both
+public aliases verified. [Original production receipt6376512781](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2692#issuecomment-6376512781).
+The native persistently held-thread specialist-read gap remains explicit; this
+ordinary reader never clears a hold, replays work or activates instructions.
+
+Current receiving scope stays on the original Capability Outcome Map IDs and
+ANT11/061ae96f acknowledgment; no retired BUG denominator or new inventory.
+CAP001–008 delegated evidence and CORE009/015/016 recovery remain partial.
+The delegate_and_collect draft and orchestration_run_review inspection recipes
+are not promoted to Live from this source change. Weekly/automation actual
+execution, provider readiness, ZION runtime instructions and full current/new
+cohort proof remain separate obligations.
+
 ## October23 — unavailable specialist evidence, development
 
 Original specialist inspection must distinguish a failed read from no activity.

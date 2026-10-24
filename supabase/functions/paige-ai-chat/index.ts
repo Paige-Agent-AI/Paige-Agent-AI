@@ -18,6 +18,7 @@ import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, wee
 import { prepareWeeklyCommitmentChatResponse } from "../_shared/paige-orchestration/weekly-commitment-read.ts";
 import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
 import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../_shared/paige-turn/interactive-refusal.ts";
 import { stageCuraKnowledge, CURA_TEACH_PURPOSE } from '../_shared/cura-knowledge-teaching.ts';
 import { readOriginalCuraPreparationHistory } from "../_shared/paige-turn/interactive-cura-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
@@ -1588,12 +1589,17 @@ serve(async (req) => {
         return new Response(JSON.stringify(status), { headers: { ...corsHeaders,
           "Content-Type": "application/json", "Cache-Control": "no-store" } });
       }
+      // Only this turn's explicit pre-processing refusal may label its original fallback.
+      // Later holds and unknown outcomes retain the interrupted, reconcile-first result.
+      let recoveryInputRefused = false;
       // This exact query/fallback/order was driven in the isolated proposed handler.
       const interactiveFallback = async () => await appendAssistant({
         p_thread_id: validatedData.threadId, p_role: "assistant",
-        p_content: "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
+        p_content: recoveryInputRefused ? RECOVERY_READ_ONLY_REFUSAL.message
+          : "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
         p_surfaces_used: null, p_load_id: null, p_model: null, p_tokens_used: null, p_latency_ms: null,
         p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
+          ...(recoveryInputRefused ? { interactive_refusal: { v: 1, code: RECOVERY_READ_ONLY_REFUSAL.code } } : {}),
           turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
       const beginTurn = (effectful: boolean) => (customerPortal?customerCaller:supabaseClient).rpc(customerPortal ? (interactiveInput.kind === "message" ? "client_portal_assistant_begin_sessions" : "client_portal_assistant_begin") : "paige_chat_interactive_begin_v2", {
@@ -1685,8 +1691,9 @@ serve(async (req) => {
       if (interactiveRecoveryReadOnly && (validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length
         || validatedData.resume || validatedData.document || validatedData.attachments?.length
         || validatedData.sessionDocumentContext?.length || validatedData.canvasArtifact)) {
-        return new Response(JSON.stringify({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true,
-          reason: "An earlier answer was interrupted and its business outcomes still need checking. This conversation can answer and read existing records; it cannot submit approvals, documents or actions." }),
+        recoveryInputRefused = true;
+        return new Response(JSON.stringify({ code: RECOVERY_READ_ONLY_REFUSAL.code, message_accepted: true,
+          reason: RECOVERY_READ_ONLY_REFUSAL.message }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // Re-read only after the preceding executor has finished its receipts.
@@ -6746,12 +6753,41 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
               content: `CANVAS STATE — the artifact currently on the canvas is a document (content id ${canvasArtifact.id}). Documents can't be revised in this Studio session; if the user asks to change it, say so plainly in one line.`,
             });
           } else if (canvasArtifact && canvasArtifact.kind === "content") {
-            const canvasLabel = "image";
-            const canvasTool = "generate_image";
-            aiMessages.splice(2, 0, {
-              role: "system",
-              content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasLabel} (content id ${canvasArtifact.id}). If the user is refining, adjusting, or regenerating THAT ${canvasLabel}, pass target_content_id:"${canvasArtifact.id}" to ${canvasTool} so it updates in place and keeps its version history. If they instead want a brand-new/additional ${canvasLabel}, OMIT target_content_id so it's created as a separate asset — never overwrite the on-canvas one when they asked for a new one.`,
-            });
+            // EXP07 — the canvas kind "content" spans images AND copy (the Studio client maps both),
+            // so steer refinement by the row's own kind: copy revisions stack versions through
+            // content_save (save_marketing_content p_id), image refinements keep riding
+            // generate_image's reuse clamp, documents stay unrevisable. A read that fails keeps the
+            // legacy image-only hint: the executor clamps remain the authority, a hint only steers.
+            let canvasContentKind: "image" | "copy" | "document" | "unknown" = "unknown";
+            try {
+              let kindQuery = supabase.from("marketing_content").select("kind").eq("id", canvasArtifact.id);
+              if (personaCtx?.tenant_id) kindQuery = kindQuery.eq("tenant_id", personaCtx.tenant_id);
+              const { data: canvasRow } = await kindQuery.maybeSingle();
+              canvasContentKind = canvasRow?.kind === "image" ? "image"
+                : canvasRow?.kind === "document" ? "document"
+                : canvasRow?.kind ? "copy"
+                : "unknown";
+            } catch {
+              canvasContentKind = "unknown";
+            }
+            if (canvasContentKind === "document") {
+              aiMessages.splice(2, 0, {
+                role: "system",
+                content: `CANVAS STATE — the artifact currently on the canvas is a document (content id ${canvasArtifact.id}). Documents can't be revised in this Studio session; if the user asks to change it, say so plainly in one line.`,
+              });
+            } else if (canvasContentKind === "copy") {
+              aiMessages.splice(2, 0, {
+                role: "system",
+                content: `CANVAS STATE — the artifact currently on the canvas is a piece of copy (content id ${canvasArtifact.id}). If the user is refining, adjusting, or revising THAT copy, pass target_content_id:"${canvasArtifact.id}" to content_save so it updates in place and keeps its version history. If they instead want a brand-new/additional piece, OMIT target_content_id so it's created as a separate asset — never overwrite the on-canvas one when they asked for a new one.`,
+              });
+            } else {
+              const canvasLabel = "image";
+              const canvasTool = "generate_image";
+              aiMessages.splice(2, 0, {
+                role: "system",
+                content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasLabel} (content id ${canvasArtifact.id}). If the user is refining, adjusting, or regenerating THAT ${canvasLabel}, pass target_content_id:"${canvasArtifact.id}" to ${canvasTool} so it updates in place and keeps its version history. If they instead want a brand-new/additional ${canvasLabel}, OMIT target_content_id so it's created as a separate asset — never overwrite the on-canvas one when they asked for a new one.`,
+              });
+            }
           }
         }
         // Task #15 (Codex P2) — canvasArtifact is a CLIENT field; honor it ONLY in a server-resolved
@@ -7708,7 +7744,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   title: { type: "string", description: "Short label for the saved item." },
                   body: { type: "string", description: "The full copy to save." },
                   channel: { type: "string", enum: ["social_post", "ad_copy", "email_campaign", "caption", "blog_outline", "sms_broadcast"], description: "Optional channel this copy is for." },
-                  brief: { type: "string", description: "Optional brief/prompt that produced it." }
+                  brief: { type: "string", description: "Optional brief/prompt that produced it." },
+                  target_content_id: { type: "string", description: "Set to the on-canvas artifact's id (see CANVAS STATE) ONLY when the user is refining/revising the copy already on the canvas — this updates that same copy in place and keeps its version history. OMIT it to create a brand-new/additional piece as a separate asset. Never pass an id for a genuinely new piece." }
                 },
                 required: ["title", "body"]
               }
@@ -8454,12 +8491,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "list_subagents",
-              description: "List Paige's ACTUAL current specialists live from the team registry (their names, desks, and what each does) — the roster is tenant-aware, so call this FIRST whenever delegation is on the table; never recite a remembered list of names. Use this when the user asks for deep analysis, audits, research, or anything beyond simple data lookups — then call delegate_to_subagent with the matching slug. AUTO-DELEGATION: when the user describes a problem, blocker, or 'why isn't X working' situation, immediately delegate_to_subagent with slug='problem-reverse-engineer' and pass {problem_statement: <verbatim user problem>, contact_id?: <if known>}. When you receive a root_cause_analysis result, embed the raw JSON inside a fenced code block tagged ```root-cause-analysis on its own line so the UI can render the Root-Cause card, then add a 2-3 sentence plainspoken summary underneath.",
+              description: "Recovery first: when asked about unfinished or previous specialist work, use recent_assignments to find its original identity, then invocation_id to inspect it; never delegate again to check what happened. This read takes precedence over auto-delegation below. List Paige's ACTUAL current specialists live from the team registry (their names, desks, and what each does) — the roster is tenant-aware, so call this FIRST whenever delegation is on the table; never recite a remembered list of names. Use this when the user asks for deep analysis, audits, research, or anything beyond simple data lookups — then call delegate_to_subagent with the matching slug. AUTO-DELEGATION: when the user describes a problem, blocker, or 'why isn't X working' situation, immediately delegate_to_subagent with slug='problem-reverse-engineer' and pass {problem_statement: <verbatim user problem>, contact_id?: <if known>}. When you receive a root_cause_analysis result, embed the raw JSON inside a fenced code block tagged ```root-cause-analysis on its own line so the UI can render the Root-Cause card, then add a 2-3 sentence plainspoken summary underneath.",
 
               parameters: {
                 type: "object",
                 properties: {
                   query: { type: "string", description: "Keyword(s) to match against agent name/description/triggers." },
+                  invocation_id: { type: "string", description: "Read one known original specialist assignment by its returned invocation_id, without delegating again. Use for recovery before any new delegation. A stored specialist response is not proof of business-action completion." },
+                  recent_assignments: { type: "boolean", description: "Read a bounded recent sample of your own assignments to find an original invocation_id, then inspect that ID. Use before repeating interrupted specialist work. This does not read complete history or execute anything." },
                   domain: { type: "string", description: fundingEnabled
                     ? "Filter by domain (fundability / compliance / credit / funding / research / outreach / intake / sales / coaching)."
                     : "Filter by domain (research / outreach / intake / sales / coaching / ops / content)." }
@@ -15397,12 +15436,29 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 else throw error; // Preserve answered native authorization/validation failures.
               }
             } else if (tc.function.name === "content_save") {
+              // EXP07 copy refine (rows 5/7) — update the on-canvas copy row in place ONLY when the
+              // model targets the exact artifact the server has on the canvas (the #292 clamp
+              // generate_image uses): any other id degrades to a fresh save, so a stray/echoed id can
+              // never clobber a different artifact. Only a copy row (kind 'text') is refinable here;
+              // an image/document id on the canvas also degrades to a fresh save rather than
+              // mutating a non-copy row's fields.
+              const refineCopyId = canvasArtifact?.kind === "content" && args.target_content_id === canvasArtifact.id
+                ? canvasArtifact.id
+                : null;
+              let refineTargetId: string | null = null;
+              if (refineCopyId && personaCtx?.tenant_id) {
+                const { data: targetRow } = await supabaseClient
+                  .from("marketing_content").select("id, kind").eq("id", refineCopyId)
+                  .eq("tenant_id", personaCtx.tenant_id).maybeSingle();
+                if (targetRow?.kind === "text") refineTargetId = refineCopyId;
+              }
               const { data: cid, error } = await supabaseClient.rpc("save_marketing_content", {
                 p_kind: "text",
                 p_title: args.title,
                 p_body: args.body,
                 p_channel: args.channel ?? null,
                 p_brief: args.brief ?? null,
+                ...(refineTargetId ? { p_id: refineTargetId } : {}),
                 // The RPC files into the session's own workspace (Migration D). Naming the persona's
                 // tenant could only refuse: for someone who is a client of one workspace and staff of
                 // another, the persona resolves the client side first.
@@ -15411,8 +15467,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (error) throw error;
               // §13/§70 — a 200 with no returned id means the row may or may not have persisted.
               result = artifactProduced("saved_id", cid)
-                ? { success: true, content_id: cid }
+                ? { success: true, content_id: cid, ...(refineTargetId ? { updated_in_place: true } : {}) }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id, outcome_unknown: true };
+              // EXP07 — every Studio copy save/revision appends the session's version snapshot, so
+              // the version strip the Timeline renders carries real lineage from the first save and
+              // stacks on each in-place revision. Side link only (V0): a capture failure never
+              // undoes a save that already succeeded.
+              if (cid && studioSessionId) {
+                try {
+                  await supabaseClient.rpc("save_artifact_version", { p_session_id: studioSessionId, p_kind: "content", p_artifact_id: cid, p_tenant_id: null });
+                } catch (versionCaptureError) {
+                  console.warn("[exp07] copy version capture failed:", versionCaptureError instanceof Error ? versionCaptureError.message : versionCaptureError);
+                }
+              }
             } else if (tc.function.name === "document_generate") {
               const currentDocumentCallOrdinal = documentCallOrdinal++;
               const documentIntentId = payloadRequestIntentId
@@ -16646,13 +16713,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const orchTenant = personaCtx?.tenant_id ?? null;
             // §2/#206: pass the tenant's funding opt-in so the orchestrator gates funding-domain agents.
             const orchFunding = personaCtx?.funding_enabled === true;
+            const inspectingOriginal = tc.function.name === "list_subagents"
+              && (args.invocation_id !== undefined || args.recent_assignments === true);
             const body = tc.function.name === "list_subagents"
-              ? { action: "tool_search", query: args.query, domain: args.domain, tenant_id: orchTenant, funding_enabled: orchFunding }
+              ? { action: "tool_search", query: args.query, domain: args.domain, tenant_id: orchTenant, funding_enabled: orchFunding,
+                  ...(inspectingOriginal ? { invocation_id: args.invocation_id, recent_assignments: args.recent_assignments } : {}) }
               : { action: "tool_invoke", slug: args.slug, input: args.input ?? {}, tenant_id: orchTenant, funding_enabled: orchFunding, context: { contact_id: args.contact_id, user_id: user.id } };
             specialistDispatched = tc.function.name === "delegate_to_subagent";
             const r = await fetch(orchestratorUrl, {
               method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseServiceKey}`, apikey: supabaseServiceKey },
+              headers: { "Content-Type": "application/json", Authorization: inspectingOriginal ? authHeader : `Bearer ${supabaseServiceKey}`,
+                apikey: inspectingOriginal ? supabaseKey : supabaseServiceKey },
               body: JSON.stringify(body),
             });
             const text = await r.text();

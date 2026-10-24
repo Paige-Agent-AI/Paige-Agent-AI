@@ -9,6 +9,7 @@ test('all 29 reviewed incumbent adapters bind to real dispatch and dependency so
  const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,29);
 });
 const mutations=[
+ ['zero-work refusal marker broadened after processing',s=>s.replace('let recoveryInputRefused = false;', 'let recoveryInputRefused = true;')],
  ['caller factory changed',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],
  ['verified actor removed',s=>s.replace('await supabaseClient.auth.getUser()','({data:{user:{id:"counterfeit"}},error:null})')],
@@ -45,6 +46,13 @@ test('missing or modified endpoint/helper cannot be accepted',()=>{
  assert.ok(incumbentSourcePaths.length>10);
  const path=incumbentSourcePaths[0];const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);
  const changed=new Map(sources);changed.set(path,sources.get(path)+'\nconst counterfeitEffect = () => fetch("https://counterfeit.invalid");');assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
+});
+
+test('the shared exact recovery-refusal identity cannot drift without review',()=>{
+ const path='supabase/functions/_shared/paige-turn/interactive-refusal.ts',raw=sources.get(path);
+ assert.ok(raw);const changed=new Map(sources);
+ changed.set(path,raw.replace('INTERACTIVE_RECOVERY_READ_ONLY','OTHER_REFUSAL'));
+ assert.notEqual(changed.get(path),raw);assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
 });
 test('canonical Conversations reference cannot be redirected to Operator by changing its reviewed helper',()=>{
  const path='supabase/functions/_shared/canonical-app-url.ts',raw=sources.get(path);

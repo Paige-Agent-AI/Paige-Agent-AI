@@ -9,6 +9,33 @@ positive reference lifetime remains incomplete because subsequent original
 issuance revokes the prior reference. Original authority, domain ownership and
 all19/nine remain unchanged. No candidate release or founder acceptance claimed.
 
+## EXP09 access and invitation source releases — October24 UTC
+
+Original2713/df691e3f lock repair,2695/0b836763 private caller access and2701/bc0b5dad per-business original invitation admission are actually released and read back. Sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) records exact heads/parents/trees, accurate lower-assurance sequential reviews, all required checks, normal migrations620009/630009, all16 original ABI/ACL/source pins, unchanged S7 and actual READY web/public versions. Receipts6377892283/6378046694/6378167524. First630009 deployment57014 is retained; precisely bounded read-only administrative-session cleanup (later identified as including a legitimate CI snapshot; affected microphone verification must rerun) and unchanged normal retry succeeded, with no customer/data/role/history/DDL workaround. Native453/294/61/all seven/grant proof is engineering evidence, not ordinary customer acceptance. Private CURA history remains separate from shared Conversations; current microphone2718/attachments/permitted research work stays in the original relationship packet. Full42/seven-pillar authenticated owner/client/reload/revoke/device and Founder Acceptance remain unfinished; one complete integrated evaluation, no per-slice owner request. This mechanical cross-reference changes no capability/algorithm maturity and has no recursive release row.
+
+## EXP05 original refusal/reload — source verified, release owed, October23
+
+The bounded original#2401 successor preserves a known pre-processing refusal on
+the same native assistant record and hydrates its held status without replay.
+Original late/unknown outcomes stay uncertain, scope changes remove old feedback,
+and no file is represented as parsed or published. Owning source/rendered tests
+pass; review, exact-head CI, production and ordinary authenticated proof remain owed.
+[Original Experience packet](../delivery/experience-05-weekly-commitment-check.md)
+retains all outstanding Operations/ZION/weekly/automation acceptance. EXP13's full
+Knowledge upload experience and attachment restoration remain separate, incomplete
+obligations. No new tracker, engine, registry, privilege or activation.
+
+## EXP09 original exact-customer tier journey — source released, October23
+
+Original2691/main3b8f9736621cf5763a0a398c7ab98ff5a5094ff0 passed all13 reviewed-head checks/two statuses and actual Native265/61/seven-pillar/full-grant proof. Normal610009 deployment and productiona6e37/private ACL/original tier_state trigger/SET NULL FKs/two unique guards verified. Exact READY webHE4 and actual containing public33bb85/customerUpdate:null verified; [receipt6376896655](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2691#issuecomment-6376896655), sole Master4.0 exact row. Original tier/payment semantics preserved; actual customer actions/full Experience/founder acceptance remain UNVERIFIED and global multi-business admission NOT_ACTIVATED. No new runtime, sender, financial writer, permission or provider activation.
+
+## EXP09 original saved-business Gateway — source release verified, October23
+
+**EXP09 ordinary customer sign-in source release, 2026-10-23 — #2687/main907a73784f4f84e49b48b34056a422352083ba02.** Exact34a682/accurate LOWER ASSURANCE5634929569/5635225236, ten checks/two statuses SUCCESS plus schema-free Preview SKIP, actual merge union and original shared EXP01 preserved. Exact READY dpl_CndfEBCVQpqfhM8vcoFYFNSgtk8q/public907-mvlka5t2/null; served applicationfe8c383293d52bdbac5ae90883e222fd5b635096e0b3e9866880561087fe47f5 confirms exact native ambiguity guard and two actual verified choices before original gate. Own SQL/Edge N/A; [receipt6376334526](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2687#issuecomment-6376334526), original Master4.0 row is the shipped ledger. Global multi-business invitation/index transition NOT_ACTIVATED; full real owner/client/new-existing/revoked/returning/seven/device/founder proof remains UNVERIFIED. No new sender, identity registry, runtime, provider/privilege/INT346 activation or customer announcement.
+
+
+PR2680 reviewedb0300921744d37f0a12f574f2a2c664b22b19516 mergedcb1d891d7b20e09d3d09263d3d9e4a6b690a8241/tree9c920fad; normal productionDQZE/publiccb1 and actual served Gateway/entry/landing source verified. Original receipt6374536491 and sole [Master4.0 log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) retain review/ten passing checks+PreviewSKIP/two statuses/145 focused and actual Native61+243/full grant proof. Original Auth/role priorities/native gate/unsaved work/domain sources remain; no workspace/identity writer/provider effect. Bounded raw render/keyboard proof is not customer acceptance; invalid foreign frame excluded. Global multiple-membership, complete owner/client/new-account/revoked/returning/all7/device/AT journey and one founder evaluation remain unfinished. Source candidates stay in the original [relationship packet](../delivery/e09-customer-relationships.md), not another ledger or Live promotion.
+
 ## EXP02 Finance metric context — October23 source released, proof bounded
 
 Original2684/main d780fd85e3cfd0c73256847c79f2692a5a399d1a exact review/CI,
@@ -21,6 +48,16 @@ Sales owner coordination retains canonical resolver/revocation.
 Overview/Banking visual refinements2694/2696 are drafts, not released or accepted.
 All19/nine, original monthly CPU/recovery/claim hold and one complete founder
 evaluation remain open. No provider/permission/algorithm/catalogue activation.
+
+## EXP05 business-calendar return — local correction, October23
+
+Known missing/invalid calendar now has guarded reentry to the original current-account
+Setup setting; native Back restores the original control and keyboard focus.
+The [owning evidence](../evidence/ui-delivery/exp05-business-week-zone-reentry.md)
+records94/94 tests, causal focus correction and native responsive/theme checks with
+explicit synthetic ports. Settings authority and source failures are unchanged.
+Review/CI/release and authenticated read-only proof remain owed; no zone was saved,
+trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed.
 
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
@@ -46,6 +83,19 @@ not promoted by source, CI or deployment.
 The current [Harness source correction](../delivery/harness-completion-map.md)
 identifies the existing Layer C engine. Reuse canonical ActionBus, durable work,
 Planning, Trust, adapters and Rails; create no replacement engine or ledger.
+
+Original-result reentry2692 is now source-released in the existing reader:
+bounded own-identity discovery followed by exact response/receipt inspection,
+never a repeat dispatch. Six original suites192PASS and77 original hostile/binding
+cases PASS; stale outcome/contact races were causally reproduced and corrected.
+Reviewed b880/all11 checks plus two statuses passed; main400118998 and normal
+Chat519/orchestrator122 packages match all392 returned files. Both public aliases
+serve the exact merged build. [Production receipt6376512781](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2692#issuecomment-6376512781)
+and the sole Master row retain exact source/configuration identities. Ordinary
+authenticated reentry and native held-thread specialist inspection remain owed.
+[Bounded contract](../evidence/ui-delivery/exp05-specialist-original-reentry.md).
+No ZION instructions, provider effect, workflow activation or catalogue Live
+promotion occurs. All full ten-outcome/E5-CV1–9 obligations above remain open.
 
 
 ## EXP05 original MCP ZION context — source preparation, October23
@@ -1557,7 +1607,7 @@ worse than none — it lies with authority.
 | `../doctrine/canonical-solo-parity-matrix.md` | **The canonical Solo parity matrix** — every Solo route, branch, sub-tab, Settings destination and PAIGE entry point, each marked canonical / needs-auth-comparison / needs-UI-repair / backend-owned / Spine-owned / intentionally-unavailable / parked. Carries the Wave 0 finding that 3 of 7 Solo tenants do not receive the canonical shell at all, and the sequenced wave plan | Before ANY Solo parity work; "is Solo surface X canonical yet?" |
 | `../doctrine/solo-shell-contract.md` | **The canonical Solo shell contract** — one shell for every Solo tenant, address-vs-authority, the CSS-clip interaction policy, the four-viewport proof bar, and the map of what already enforces each rule | Before ANY Solo shell, routing, layout, page-host, responsive or PAIGE-workspace change |
 | `solo-settings-scroll-and-release-playbook.md` | Shipped Solo Settings scroll/reachability contract: one real owner, visible-scroll scope, reset/focus, reproduced-shell proof, actual-`SoloApp` gaps, harness cleanup and exact-head release labels | Any Solo Settings reachability, scrolling, contextual-rail, PAIGE-fold or release-proof work |
-| `../delivery/exp03-grow-my-business-journey.md` | **Experience 03 — Grow My Business journey record**: grounded inventory (WORKING / PARTIAL / NOT CONNECTED / MISSING / BLOCKED), flow map F1–F9, missing features, UI plan, shared dependencies (INT-346, PC-1), the S1–S6 delivery sequence and the decisions left to the owner | Before any acquisition, campaign attribution, lead-capture or campaign-to-customer work |
+| `../delivery/exp03-grow-my-business-journey.md` | **Experience 03 — Grow My Business journey record** (2026-10-23: ONE zCod EXP03 resumption owner-authorized; old staffing/PC-1 snapshots historical; full roadmap/mapped matrix retained; ACK/start/source/customer release separately evidenced — ACK on ANT-161): grounded inventory (WORKING / PARTIAL / NOT CONNECTED / MISSING / BLOCKED), flow map F1–F9, missing features, UI plan, shared dependencies, the S1–S6 delivery sequence and the decisions left to the owner | Before any acquisition, campaign attribution, lead-capture or campaign-to-customer work |
 | `../delivery/exp03-s2a-form-embed-acceptance-package.md` | **Experience 03 S2a authenticated acceptance package** (a Studio form on the business's own website) — the designated account (Antonio Cook's SOLO account, ANT-52; PC-1 retired), the blocking no-send precondition, what is already proven without a sign-in, the Studio / visitor / fallback / unpublish runs and their pass criteria, the owner-only real Genspark/Cloudflare site case | Before any signed-in S2a run, or claiming the embed works signed in |
 | `../delivery/exp03-launch-email-providers-plan.md` | **Experience 03 launch email providers — Gmail and iCloud Mail grounded plan** (2026-10-13): Gmail REUSE/REPAIR/MISSING per part, iCloud gap (Supabase blocks outbound 587; no IMAP code), Google sensitive vs restricted scopes and CASA, the provider-neutral Communications/Conversations contract changes, launch-critical vs later, first bounded PRs ordered around S3, Central QA strategy, owner-only Google actions | Before any Gmail/iCloud/IMAP/SMTP connection work, or claiming customer mailbox send/receive works |
 | `../guides/put-a-paige-form-on-a-cloudflare-or-genspark-site.md` | **Install guide: a Paige form on a site built elsewhere** (Genspark, Cloudflare Pages/Workers, any host) — the one-line code, the Genspark agent instruction, CSP, the no-script frame, builder sandboxes, how to check it, what was tested and what was not (live edge, real Genspark site, COEP) | Before telling an owner how to put a form on their own site |

@@ -449,3 +449,176 @@ describe("INT-313 — subagent-forge: X-Orchestrator-Call is a signal, never aut
     expect(h.from.length).toBeGreaterThan(0);
   });
 });
+
+// Original-assignment reentry exercises the SAME full handler/authority loader.
+function specialistReentry(options: {
+  actor?: string; tenant?: string; member?: boolean; admin?: boolean; globalOnly?: boolean;
+  state?: string; source?: "missing" | "error"; receipt?: "missing" | "error" | "conflict" | "wrong-attempt" | "foreign" | "wrong-source" | "wrong-key";
+  revokeAfter?: "invocation" | "receipt"; runtime?: string; legacyOutput?: boolean; many?: boolean;
+  registration?: "foreign" | "funding"; changeAfterRead?: boolean; changeContactAfterRead?: boolean; bigResponse?: boolean;
+} = {}) {
+  const id = "dddddddd-3333-4333-8333-333333333333";
+  let switched = false, invocationReads = 0;
+  const reads: Array<{ table: string; key: unknown; selected: string }> = [];
+  const writes: string[] = [];
+  const model = vi.fn(() => { throw Error("A read must never dispatch a model"); });
+  const database = (...clientArgs: unknown[]) => ({
+    auth: { getUser: async () => ({ data: { user: { id: USER_A } }, error: null }) },
+    rpc: async (name: string) => {
+      if (name === "get_paige_persona_context") return { data: [{ tenant_id: switched ? CONTACT : TENANT_A, funding_enabled: false }], error: null };
+      if (name === "is_tenant_admin_as") return { data: options.member !== true && !options.globalOnly, error: null };
+      if (name === "agency_can_manage_child") return { data: false, error: null };
+      throw Error("Unexpected RPC " + name);
+    },
+    from(table: string) {
+      const entry = { table, key: clientArgs[1], selected: "" }; reads.push(entry);
+      let data: Array<Record<string, unknown>> = table === "tenant_members"
+        ? options.globalOnly ? [] : [{ role: options.member ? "member" : options.admin ? "admin" : "owner", status: "active", tenant_id: TENANT_A, user_id: USER_A }]
+        : table === "user_roles" ? options.globalOnly ? [{ role: "super_admin", user_id: USER_A }] : []
+        : table === "paige_subagents" ? [{ id: CONTACT, version: 2, slug: "zion", name: "ZION", domain: options.registration === "funding" ? "funding" : "operations", description: "", runtime: options.runtime ?? "soft", tenant_id: options.registration === "foreign" ? CONTACT : null, enabled: true, system_prompt: "PRIVATE_INSTRUCTIONS", config: {} }]
+        : table === "paige_subagent_invocations" ? options.source === "missing" ? [] : [{
+          id, invoked_by: options.actor ?? USER_A, tenant_id: options.tenant ?? TENANT_A,
+          subagent_slug: "zion", status: options.state ?? "succeeded", contact_id: null,
+          output: options.legacyOutput ? { raw: "PRIVATE_LEGACY" } : { ok: true, agent: "zion", answer: options.bigResponse ? "x".repeat(9000) : "Original planning response" },
+          created_at: "2026-10-23T12:00:00Z", input: { secret: "PRIVATE_INPUT" }, error: "PRIVATE_PROVIDER_ERROR",
+        }]
+        : table === "paige_workspace_events" ? options.receipt === "missing" ? [] : [
+          { id: CONTACT, tenant_id: TENANT_A, actor_id: options.receipt === "foreign" ? CONTACT : USER_A, source_kind: "capability_run", source_id: options.receipt === "wrong-source" ? CONTACT : id,
+            source_revision: 0, capability_key: options.receipt === "wrong-key" ? "OTHER_CAPABILITY" : "subagent_invoke", actor_agent_slug: "zion",
+            outcome: options.state === "failed" ? "capability_failed" : "capability_succeeded",
+            job_attempt_id: options.receipt === "wrong-attempt" ? "OTHER_ATTEMPT" : `subagent-invocation:${id}:run`, occurred_at: "2026-10-23T12:00:01Z" },
+          ...(options.receipt === "conflict" ? [{ id: TENANT_A, tenant_id: TENANT_A, actor_id: USER_A, source_kind: "capability_run", source_id: id, source_revision: 0, capability_key: "subagent_invoke", actor_agent_slug: "zion", outcome: "capability_failed", job_attempt_id: `subagent-invocation:${id}:run` }] : []),
+        ] : (() => { throw Error("Unexpected read " + table); })();
+      if (table === "paige_subagent_invocations" && options.many && data.length) data = Array.from({ length: 9 }, (_, index) => ({
+        ...data[0], id: `dddddddd-3333-4333-8333-${String(index + 1).padStart(12, "0")}`,
+      }));
+      const result = (single = false) => {
+        if (table === "paige_subagent_invocations" && ++invocationReads > 1) {
+          if (options.changeAfterRead) data = data.map(row => ({ ...row, status: "failed" }));
+          if (options.changeContactAfterRead) data = data.map(row => ({ ...row, contact_id: CONTACT }));
+        }
+        if (options.revokeAfter === "invocation" && table === "paige_subagent_invocations"
+          || options.revokeAfter === "receipt" && table === "paige_workspace_events") switched = true;
+        if (table === "paige_subagent_invocations" && options.source === "error"
+          || table === "paige_workspace_events" && options.receipt === "error") return { data: null, error: { message: "PRIVATE_TRANSPORT_DETAIL" } };
+        const keys = entry.selected.split(",");
+        const projected = data.map(row => Object.fromEntries(keys.map(key => [key, row[key]])));
+        return { data: single ? projected[0] ?? null : projected, error: null };
+      };
+      const chain = {
+        select: (keys: string) => { entry.selected = keys; return chain; },
+        eq: (key: string, value: unknown) => { data = data.filter(row => row[key] === value); return chain; },
+        is: (key: string, value: unknown) => { data = data.filter(row => row[key] === value); return chain; },
+        or: () => chain, limit: (count: number) => { data = data.slice(0, count); return chain; },
+        order: () => chain, maybeSingle: async () => result(true),
+        then: (resolve: (value: unknown) => void) => Promise.resolve(result()).then(resolve),
+        insert: () => { writes.push(table); throw Error("No write on reentry"); },
+        update: () => { writes.push(table); throw Error("No update on reentry"); },
+      };
+      return chain;
+    },
+  });
+  const h = loadEdge("paige-orchestrator", { database, stubs: {
+    ...ORCH_STUBS, "_shared/model-router.ts": { ...ORCH_STUBS["_shared/model-router.ts"], routedChatCompletion: model },
+    "_shared/model-fabric.ts": { fabricCompletion: model },
+  } });
+  return { id, reads, writes, model, run: async (extra = {}, token = USER_JWT) => {
+    const response = await h.handler(post({ action: "tool_search", invocation_id: id, tenant_id: TENANT_A, ...extra }, bearer(token)));
+    return { status: response.status, body: await response.json() };
+  } };
+}
+
+describe("EXP05 original specialist assignment discovery", () => {
+  it("finds an original own identity without returning private response text or inventing receipts", async () => {
+    const h = specialistReentry(), r = await h.run({ invocation_id: undefined, recent_assignments: true });
+    expect(r.status).toBe(200); expect(r.body.recent_invocations).toMatchObject([{ id: h.id, specialist: "zion", recorded_status: "succeeded" }]);
+    expect(r.body.sample_only).toBe(true); expect(JSON.stringify(r.body)).not.toMatch(/PRIVATE_|Original planning response|receipt_state/);
+    expect(h.reads.some(x => x.table === "paige_workspace_events")).toBe(false); expect(h.writes).toEqual([]); expect(h.model).not.toHaveBeenCalled();
+  });
+  it.each([{ actor: CONTACT }, { tenant: CONTACT }])("cannot discover another person's or business's identities: %j", async options => {
+    const r = await specialistReentry(options).run({ invocation_id: undefined, recent_assignments: true });
+    expect(r.status).toBe(200); expect(r.body.recent_invocations).toEqual([]);
+  });
+  it("returns at most five identities and labels the bounded sample instead of all history", async () => {
+    const r = await specialistReentry({ many: true }).run({ invocation_id: undefined, recent_assignments: true });
+    expect(r.body.recent_invocations).toHaveLength(5); expect(r.body.sample_only).toBe(true); expect(r.body.limit).toBe(5);
+  });
+  it("discards discovered identities after a workspace switch", async () => {
+    const r = await specialistReentry({ revokeAfter: "invocation" }).run({ invocation_id: undefined, recent_assignments: true });
+    expect(r.status).toBe(403); expect(r.body.recent_invocations).toBeUndefined();
+  });
+});
+describe("EXP05 original specialist assignment reentry, never re-dispatch", () => {
+  it("returns the same stored response and independently correlated original receipt", async () => {
+    const h = specialistReentry(), r = await h.run();
+    expect(r.status).toBe(200);
+    expect(r.body.invocation).toMatchObject({ id: h.id, recorded_status: "succeeded", receipt_state: "verified", response_text: "Original planning response", completion_scope: "specialist_response_only" });
+    expect(h.reads.find(x => x.table === "paige_subagent_invocations")?.key).toBe(ANON);
+    expect(JSON.stringify(r.body)).not.toMatch(/PRIVATE_|system_prompt|input|config/);
+    expect(h.writes).toEqual([]); expect(h.model).not.toHaveBeenCalled();
+  });
+  it.each([{ actor: CONTACT }, { tenant: CONTACT }, { source: "missing" as const }])("refuses absent or foreign original work identically: %j", async options => {
+    const r = await specialistReentry(options).run(); expect(r.status).toBe(404);
+    expect(r.body.error).toBe("The original specialist assignment is unavailable in this workspace.");
+  });
+  it.each([{ member: true }, { globalOnly: true }])("private response needs the original owner/admin seat: %j", async options => {
+    const h = specialistReentry(options); expect((await h.run()).status).toBe(403);
+    expect(h.reads.some(x => x.table === "paige_subagent_invocations")).toBe(false);
+  });
+  it("an exact internal service call cannot substitute for the person's read", async () => {
+    const h = specialistReentry(); expect((await h.run({}, SERVICE)).status).toBe(403);
+    expect(h.reads.some(x => x.table === "paige_subagent_invocations")).toBe(false);
+  });
+  it("rejects malformed identifiers before reading private work", async () => {
+    const h = specialistReentry(); expect((await h.run({ invocation_id: "not-an-id" })).status).toBe(400);
+    expect(h.reads.some(x => x.table === "paige_subagent_invocations")).toBe(false);
+  });
+  it.each(["invocation", "receipt"] as const)("a workspace change after %s discards the original response", async revokeAfter => {
+    const r = await specialistReentry({ revokeAfter }).run(); expect(r.status).toBe(403);
+    expect(JSON.stringify(r.body)).not.toContain("Original planning response");
+  });
+  it.each(["missing", "error", "conflict", "wrong-attempt", "foreign", "wrong-source", "wrong-key"] as const)("a %s receipt cannot certify the assignment", async receipt => {
+    const r = await specialistReentry({ receipt }).run(); expect(r.status).toBe(200);
+    expect(r.body.invocation.receipt_state).not.toBe("verified");
+    expect(JSON.stringify(r.body)).not.toContain("PRIVATE_TRANSPORT_DETAIL");
+  });
+  it.each(["pending", "dispatched", "unexpected"] as const)("%s is inspect-only and never a completed business effect", async state => {
+    const h = specialistReentry({ state }), r = await h.run();
+    expect(r.body.invocation.receipt_state).not.toBe("verified");
+    expect(r.body.invocation.response_text).toBeNull(); expect(h.writes).toEqual([]); expect(h.model).not.toHaveBeenCalled();
+  });
+  it("legacy output and local-provider payloads are not exposed as a soft response", async () => {
+    for (const options of [{ legacyOutput: true }, { runtime: "local" }]) {
+      const r = await specialistReentry(options).run(); expect(r.body.invocation.response_text).toBeNull();
+      expect(JSON.stringify(r.body)).not.toMatch(/PRIVATE_|Original planning response/);
+    }
+  });
+  it("two reads recover one identity without creating an invocation or new receipt", async () => {
+    const h = specialistReentry(), a = await h.run(), b = await h.run();
+    expect(a.body.invocation.id).toBe(h.id); expect(b.body.invocation.id).toBe(h.id);
+    expect(h.writes).toEqual([]); expect(h.model).not.toHaveBeenCalled();
+  });
+  it("source failure is unavailable, with no private transport detail or fake empty result", async () => {
+    const r = await specialistReentry({ source: "error" }).run(); expect(r.status).toBe(503);
+    expect(JSON.stringify(r.body)).not.toMatch(/PRIVATE_|matches/);
+  });
+  it("a current admin can read their own original assignment through the same authority", async () => {
+    expect((await specialistReentry({ admin: true }).run()).body.invocation.receipt_state).toBe("verified");
+  });
+  it.each(["foreign", "funding"] as const)("a %s registration cannot expose an old private response", async registration => {
+    const r = await specialistReentry({ registration }).run(); expect(r.status).toBe(404);
+    expect(JSON.stringify(r.body)).not.toContain("Original planning response");
+  });
+  it("bounds a stored response and explicitly labels truncation", async () => {
+    const r = await specialistReentry({ bigResponse: true }).run();
+    expect(r.body.invocation.response_text).toHaveLength(8000); expect(r.body.invocation.response_truncated).toBe(true);
+  });
+  it("a changed original outcome cannot be certified by an earlier matching receipt", async () => {
+    const r = await specialistReentry({ changeAfterRead: true }).run();
+    expect(r.status).toBe(409); expect(r.body.invocation).toBeUndefined();
+  });
+  it("a changed contact relationship cannot reuse the earlier assignment admission", async () => {
+    const r = await specialistReentry({ changeContactAfterRead: true }).run();
+    expect(r.status).toBe(409); expect(r.body.invocation).toBeUndefined();
+  });
+});

@@ -61,6 +61,16 @@ Overview/Banking visual refinements2694/2696 are drafts, not released or accepte
 All19/nine, original monthly CPU/recovery/claim hold and one complete founder
 evaluation remain open. No provider/permission/algorithm/catalogue activation.
 
+## EXP05 business-calendar return — local correction, October23
+
+Known missing/invalid calendar now has guarded reentry to the original current-account
+Setup setting; native Back restores the original control and keyboard focus.
+The [owning evidence](../evidence/ui-delivery/exp05-business-week-zone-reentry.md)
+records94/94 tests, causal focus correction and native responsive/theme checks with
+explicit synthetic ports. Settings authority and source failures are unchanged.
+Review/CI/release and authenticated read-only proof remain owed; no zone was saved,
+trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed.
+
 ## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist outcome/receipt recovery, requester-and-workspace activity
@@ -1605,7 +1615,7 @@ worse than none — it lies with authority.
 | `../doctrine/canonical-solo-parity-matrix.md` | **The canonical Solo parity matrix** — every Solo route, branch, sub-tab, Settings destination and PAIGE entry point, each marked canonical / needs-auth-comparison / needs-UI-repair / backend-owned / Spine-owned / intentionally-unavailable / parked. Carries the Wave 0 finding that 3 of 7 Solo tenants do not receive the canonical shell at all, and the sequenced wave plan | Before ANY Solo parity work; "is Solo surface X canonical yet?" |
 | `../doctrine/solo-shell-contract.md` | **The canonical Solo shell contract** — one shell for every Solo tenant, address-vs-authority, the CSS-clip interaction policy, the four-viewport proof bar, and the map of what already enforces each rule | Before ANY Solo shell, routing, layout, page-host, responsive or PAIGE-workspace change |
 | `solo-settings-scroll-and-release-playbook.md` | Shipped Solo Settings scroll/reachability contract: one real owner, visible-scroll scope, reset/focus, reproduced-shell proof, actual-`SoloApp` gaps, harness cleanup and exact-head release labels | Any Solo Settings reachability, scrolling, contextual-rail, PAIGE-fold or release-proof work |
-| `../delivery/exp03-grow-my-business-journey.md` | **Experience 03 — Grow My Business journey record**: grounded inventory (WORKING / PARTIAL / NOT CONNECTED / MISSING / BLOCKED), flow map F1–F9, missing features, UI plan, shared dependencies (INT-346, PC-1), the S1–S6 delivery sequence and the decisions left to the owner | Before any acquisition, campaign attribution, lead-capture or campaign-to-customer work |
+| `../delivery/exp03-grow-my-business-journey.md` | **Experience 03 — Grow My Business journey record** (2026-10-23: ONE zCod EXP03 resumption owner-authorized; old staffing/PC-1 snapshots historical; full roadmap/mapped matrix retained; ACK/start/source/customer release separately evidenced — ACK on ANT-161): grounded inventory (WORKING / PARTIAL / NOT CONNECTED / MISSING / BLOCKED), flow map F1–F9, missing features, UI plan, shared dependencies, the S1–S6 delivery sequence and the decisions left to the owner | Before any acquisition, campaign attribution, lead-capture or campaign-to-customer work |
 | `../delivery/exp03-s2a-form-embed-acceptance-package.md` | **Experience 03 S2a authenticated acceptance package** (a Studio form on the business's own website) — the designated account (Antonio Cook's SOLO account, ANT-52; PC-1 retired), the blocking no-send precondition, what is already proven without a sign-in, the Studio / visitor / fallback / unpublish runs and their pass criteria, the owner-only real Genspark/Cloudflare site case | Before any signed-in S2a run, or claiming the embed works signed in |
 | `../delivery/exp03-launch-email-providers-plan.md` | **Experience 03 launch email providers — Gmail and iCloud Mail grounded plan** (2026-10-13): Gmail REUSE/REPAIR/MISSING per part, iCloud gap (Supabase blocks outbound 587; no IMAP code), Google sensitive vs restricted scopes and CASA, the provider-neutral Communications/Conversations contract changes, launch-critical vs later, first bounded PRs ordered around S3, Central QA strategy, owner-only Google actions | Before any Gmail/iCloud/IMAP/SMTP connection work, or claiming customer mailbox send/receive works |
 | `../guides/put-a-paige-form-on-a-cloudflare-or-genspark-site.md` | **Install guide: a Paige form on a site built elsewhere** (Genspark, Cloudflare Pages/Workers, any host) — the one-line code, the Genspark agent instruction, CSP, the no-script frame, builder sandboxes, how to check it, what was tested and what was not (live edge, real Genspark site, COEP) | Before telling an owner how to put a form on their own site |

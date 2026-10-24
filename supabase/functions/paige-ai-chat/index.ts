@@ -6746,12 +6746,41 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
               content: `CANVAS STATE — the artifact currently on the canvas is a document (content id ${canvasArtifact.id}). Documents can't be revised in this Studio session; if the user asks to change it, say so plainly in one line.`,
             });
           } else if (canvasArtifact && canvasArtifact.kind === "content") {
-            const canvasLabel = "image";
-            const canvasTool = "generate_image";
-            aiMessages.splice(2, 0, {
-              role: "system",
-              content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasLabel} (content id ${canvasArtifact.id}). If the user is refining, adjusting, or regenerating THAT ${canvasLabel}, pass target_content_id:"${canvasArtifact.id}" to ${canvasTool} so it updates in place and keeps its version history. If they instead want a brand-new/additional ${canvasLabel}, OMIT target_content_id so it's created as a separate asset — never overwrite the on-canvas one when they asked for a new one.`,
-            });
+            // EXP07 — the canvas kind "content" spans images AND copy (the Studio client maps both),
+            // so steer refinement by the row's own kind: copy revisions stack versions through
+            // content_save (save_marketing_content p_id), image refinements keep riding
+            // generate_image's reuse clamp, documents stay unrevisable. A read that fails keeps the
+            // legacy image-only hint: the executor clamps remain the authority, a hint only steers.
+            let canvasContentKind: "image" | "copy" | "document" | "unknown" = "unknown";
+            try {
+              let kindQuery = supabase.from("marketing_content").select("kind").eq("id", canvasArtifact.id);
+              if (personaCtx?.tenant_id) kindQuery = kindQuery.eq("tenant_id", personaCtx.tenant_id);
+              const { data: canvasRow } = await kindQuery.maybeSingle();
+              canvasContentKind = canvasRow?.kind === "image" ? "image"
+                : canvasRow?.kind === "document" ? "document"
+                : canvasRow?.kind ? "copy"
+                : "unknown";
+            } catch {
+              canvasContentKind = "unknown";
+            }
+            if (canvasContentKind === "document") {
+              aiMessages.splice(2, 0, {
+                role: "system",
+                content: `CANVAS STATE — the artifact currently on the canvas is a document (content id ${canvasArtifact.id}). Documents can't be revised in this Studio session; if the user asks to change it, say so plainly in one line.`,
+              });
+            } else if (canvasContentKind === "copy") {
+              aiMessages.splice(2, 0, {
+                role: "system",
+                content: `CANVAS STATE — the artifact currently on the canvas is a piece of copy (content id ${canvasArtifact.id}). If the user is refining, adjusting, or revising THAT copy, pass target_content_id:"${canvasArtifact.id}" to content_save so it updates in place and keeps its version history. If they instead want a brand-new/additional piece, OMIT target_content_id so it's created as a separate asset — never overwrite the on-canvas one when they asked for a new one.`,
+              });
+            } else {
+              const canvasLabel = "image";
+              const canvasTool = "generate_image";
+              aiMessages.splice(2, 0, {
+                role: "system",
+                content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasLabel} (content id ${canvasArtifact.id}). If the user is refining, adjusting, or regenerating THAT ${canvasLabel}, pass target_content_id:"${canvasArtifact.id}" to ${canvasTool} so it updates in place and keeps its version history. If they instead want a brand-new/additional ${canvasLabel}, OMIT target_content_id so it's created as a separate asset — never overwrite the on-canvas one when they asked for a new one.`,
+              });
+            }
           }
         }
         // Task #15 (Codex P2) — canvasArtifact is a CLIENT field; honor it ONLY in a server-resolved
@@ -7708,7 +7737,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   title: { type: "string", description: "Short label for the saved item." },
                   body: { type: "string", description: "The full copy to save." },
                   channel: { type: "string", enum: ["social_post", "ad_copy", "email_campaign", "caption", "blog_outline", "sms_broadcast"], description: "Optional channel this copy is for." },
-                  brief: { type: "string", description: "Optional brief/prompt that produced it." }
+                  brief: { type: "string", description: "Optional brief/prompt that produced it." },
+                  target_content_id: { type: "string", description: "Set to the on-canvas artifact's id (see CANVAS STATE) ONLY when the user is refining/revising the copy already on the canvas — this updates that same copy in place and keeps its version history. OMIT it to create a brand-new/additional piece as a separate asset. Never pass an id for a genuinely new piece." }
                 },
                 required: ["title", "body"]
               }
@@ -15399,12 +15429,29 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 else throw error; // Preserve answered native authorization/validation failures.
               }
             } else if (tc.function.name === "content_save") {
+              // EXP07 copy refine (rows 5/7) — update the on-canvas copy row in place ONLY when the
+              // model targets the exact artifact the server has on the canvas (the #292 clamp
+              // generate_image uses): any other id degrades to a fresh save, so a stray/echoed id can
+              // never clobber a different artifact. Only a copy row (kind 'text') is refinable here;
+              // an image/document id on the canvas also degrades to a fresh save rather than
+              // mutating a non-copy row's fields.
+              const refineCopyId = canvasArtifact?.kind === "content" && args.target_content_id === canvasArtifact.id
+                ? canvasArtifact.id
+                : null;
+              let refineTargetId: string | null = null;
+              if (refineCopyId && personaCtx?.tenant_id) {
+                const { data: targetRow } = await supabaseClient
+                  .from("marketing_content").select("id, kind").eq("id", refineCopyId)
+                  .eq("tenant_id", personaCtx.tenant_id).maybeSingle();
+                if (targetRow?.kind === "text") refineTargetId = refineCopyId;
+              }
               const { data: cid, error } = await supabaseClient.rpc("save_marketing_content", {
                 p_kind: "text",
                 p_title: args.title,
                 p_body: args.body,
                 p_channel: args.channel ?? null,
                 p_brief: args.brief ?? null,
+                ...(refineTargetId ? { p_id: refineTargetId } : {}),
                 // The RPC files into the session's own workspace (Migration D). Naming the persona's
                 // tenant could only refuse: for someone who is a client of one workspace and staff of
                 // another, the persona resolves the client side first.
@@ -15413,8 +15460,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (error) throw error;
               // §13/§70 — a 200 with no returned id means the row may or may not have persisted.
               result = artifactProduced("saved_id", cid)
-                ? { success: true, content_id: cid }
+                ? { success: true, content_id: cid, ...(refineTargetId ? { updated_in_place: true } : {}) }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id, outcome_unknown: true };
+              // EXP07 — every Studio copy save/revision appends the session's version snapshot, so
+              // the version strip the Timeline renders carries real lineage from the first save and
+              // stacks on each in-place revision. Side link only (V0): a capture failure never
+              // undoes a save that already succeeded.
+              if (cid && studioSessionId) {
+                try {
+                  await supabaseClient.rpc("save_artifact_version", { p_session_id: studioSessionId, p_kind: "content", p_artifact_id: cid, p_tenant_id: null });
+                } catch (versionCaptureError) {
+                  console.warn("[exp07] copy version capture failed:", versionCaptureError instanceof Error ? versionCaptureError.message : versionCaptureError);
+                }
+              }
             } else if (tc.function.name === "document_generate") {
               const currentDocumentCallOrdinal = documentCallOrdinal++;
               const documentIntentId = payloadRequestIntentId

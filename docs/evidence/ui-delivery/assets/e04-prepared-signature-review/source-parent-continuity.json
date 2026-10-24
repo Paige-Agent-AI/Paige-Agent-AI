@@ -1,0 +1,20 @@
+{
+  "status": "PASS_EXACT_SOURCE_CONTINUITY",
+  "own": "108b905ca1835c8820f189a456dbd2e70504fe14",
+  "incoming": "ee501bd7e94db53a4ce3a9df87c8124878345880",
+  "cleanMergedTree": "64fa0e8e79ce551d620db6fe602bf74d0ac69500",
+  "fullIncomingMasterBrain": true,
+  "fullIncomingJournalPlusOwnAppend": true,
+  "capturedInputCount": 34,
+  "unchangedCapturedGitLfAndWorkingRawInputs": 33,
+  "ciContinuation": {
+    "file": ".github/workflows/ci.yml",
+    "capturedSourceSHA256": "79572538c195d6ecbc3afad7dbb6a0e6f13b5604221b49e249c9ca3eb08bfb5e",
+    "currentGitSHA256": "b43baaec1806ad78f359a7bb54307f6fe6e82f806e913b5e3ca7d02284886021",
+    "producerGitSHA256": "2aaab9950faea3c3aaaec582c72c617ba6681444394071b807875accf319b32e",
+    "fullProducerInverse": "Remove ONLY own strict prepared-signature-review.test.ts invocation → entire incoming workflow bytes",
+    "incomingChange": "Original released E10 connections_healthy test and two explanatory lines retained unchanged; existing E10 --no-check baseline is not changed here.",
+    "renderImpact": "NONE: CI workflow is not a browser/compiler input. Original frozen capture snapshot/PNGs/assets remain unchanged."
+  },
+  "boundary": "Source composition only, not rerendered or authenticated/customer acceptance. Original native810004/820004/830004 bodies and caller/grant gates retained."
+}

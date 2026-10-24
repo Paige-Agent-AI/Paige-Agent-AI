@@ -4,6 +4,7 @@ import {documentDescriptorSchema,assignedFieldSchema} from './agreementDocumentM
 import {prepareAgreementFields,readAgreementPdfDocument,type AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
 import {canonicalPresentationJson} from '../../../supabase/functions/_shared/agreements/preparation-json';
 import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
+import {parsePreparedSignatureReviewIntent,projectPreparedSignatureReview,type PreparedSignatureReview} from '../../../supabase/functions/_shared/agreements/prepared-signature-review-contract';
 import {verifyRetainedAgreementPdf} from '../../../supabase/functions/_shared/agreements/retained-document';
 import {prepareCommercialPresentation,commercialPresentationText,type PreparedCommercialPresentation} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
 
@@ -171,6 +172,34 @@ export async function readAgreementDocument(ctx:AgreementDocumentContext,prepara
   if(preparationId!==null&&!id.safeParse(preparationId).success)return failure('invalid_request');
   const query=new URLSearchParams({preparation:'metadata',businessId:ctx.tenantId,agreementId:ctx.agreementId});if(preparationId)query.set('preparationId',preparationId);
   return authorized(ctx,(headers,signal)=>supabase.functions.invoke('agreement-document?'+query,{method:'GET',headers,signal}),async data=>verifyView(readReply.parse(data).view,ctx,preparationId));
+}
+export type {PreparedSignatureReview};
+/** Read the exact SAVED source through the original authenticated owner door.
+ * The local projection only checks the reply; it grants no access or approval. */
+export async function readAgreementSigningReview(ctx:AgreementDocumentContext,current:Extract<AgreementDocumentView,{state:'retained'}>):Promise<DocumentResult<PreparedSignatureReview>>{
+  ctx={...ctx};
+  let captured:Extract<AgreementDocumentView,{state:'retained'}>;
+  try{captured=structuredClone(current);}catch{return failure('invalid_request');}
+  if(!valid(ctx)||!captured||captured.state!=='retained'||captured.source.tenant_id!==ctx.tenantId||captured.source.agreement_id!==ctx.agreementId)return failure('invalid_request');
+  const p=captured.preparation;
+  let expected:PreparedSignatureReview;
+  try{
+    // This browser-only comparison value is never part of the native DTO.
+    delete captured.preparation.derived_fields_sha256;
+    const verified=await verifyView(view.parse(captured),ctx,p.id);
+    const intent=parsePreparedSignatureReviewIntent({tenant_id:ctx.tenantId,agreement_id:ctx.agreementId,preparation_id:p.id,preparation_sha256:p.preparation_sha256,
+      expected_source:{client_id:captured.source.client_id,version:captured.source.version,updated_at:captured.source.updated_at}});
+    expected=await projectPreparedSignatureReview(intent,verified);
+  }catch{return failure('source_changed');}
+  const intent=expected.request,query=new URLSearchParams({preparation:'signing_review',businessId:intent.tenant_id,agreementId:intent.agreement_id,
+    preparationId:intent.preparation_id,preparationSha256:intent.preparation_sha256,sourceClientId:intent.expected_source.client_id,
+    sourceVersion:String(intent.expected_source.version),sourceUpdatedAt:intent.expected_source.updated_at});
+  const result=await authorized(ctx,(headers,signal)=>supabase.functions.invoke('agreement-document?'+query,{method:'GET',headers,signal}),async data=>{
+    const reply=z.object({ok:z.literal(true),review:z.unknown()}).strict().parse(data);
+    if(canonicalPresentationJson(reply.review)!==canonicalPresentationJson(expected))throw Error('Unverified saved signing review');
+    return expected;
+  });
+  return result.ok===false&&result.reason==='unconfirmed'?{...result,message:'The saved signing review could not be confirmed. Retry the review or return to the document.'}:result;
 }
 export function prepareAgreementDocumentCommand(ctx:AgreementDocumentContext,requestId:string,current:AgreementDocumentView,fields?:AgreementFieldPreparation):AgreementDocumentCommand|null{
   if(!valid(ctx)||!id.safeParse(requestId).success||requestId!==requestId.toLowerCase()||!isCurrent(ctx)||!current.can_prepare||current.source.tenant_id!==ctx.tenantId||current.source.agreement_id!==ctx.agreementId)return null;

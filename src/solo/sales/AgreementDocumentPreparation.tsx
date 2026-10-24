@@ -2,9 +2,10 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import {ArrowLeft,FileText,Loader2,RefreshCw} from 'lucide-react';
 import {AgreementDocumentFields} from './AgreementDocumentFields';
+import {AgreementSigningReview,type AgreementSigningReviewState} from './AgreementSigningReview';
 import type {AssignedField} from './agreementDocumentModel';
 import type {AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
-import {listAgreementDocumentHistory,prepareAgreementDocumentCommand,prepareAgreementCommercialCommand,readAgreementCommercialSources,readAgreementCommercialReview,readAgreementDocument,readAgreementDocumentPdf,saveAgreementDocument,
+import {listAgreementDocumentHistory,prepareAgreementDocumentCommand,prepareAgreementCommercialCommand,readAgreementCommercialSources,readAgreementCommercialReview,readAgreementDocument,readAgreementDocumentPdf,readAgreementSigningReview,saveAgreementDocument,
   type AgreementCommercialReview,type AgreementCommercialSources,type AgreementDocumentCommand,type AgreementDocumentContext,type AgreementDocumentHistory,type AgreementDocumentReceipt,type AgreementDocumentView} from './agreementDocumentApi';
 import './agreement-document-fields.css';
 
@@ -76,6 +77,8 @@ function CommercialDocumentReview({context,onPrepare,onAccessRefused}:{context:(
  * the URL retains only the original request and business UUIDs for recovery. */
 export function AgreementDocumentPreparation(props:Props){
   const [session,setSession]=React.useState<Session>(initial),[history,setHistory]=React.useState<AgreementDocumentHistory|null>(null);
+  const [signingReview,setSigningReview]=React.useState<AgreementSigningReviewState|null>(null);
+  const signingEpoch=React.useRef(0),reviewEntry=React.useRef<HTMLButtonElement>(null),returnToReviewEntry=React.useRef(false);
   const [historyState,setHistoryState]=React.useState<'idle'|'loading'|'ready'|'error'>('idle');
   const [cursor,setCursor]=React.useState<number|null>(null),[historyMessage,setHistoryMessage]=React.useState('');
   const state=React.useRef(session),callbacks=React.useRef(props);callbacks.current=props;
@@ -89,7 +92,8 @@ export function AgreementDocumentPreparation(props:Props){
     state.current=next;setSession(next);callbacks.current.onGuard({draft:next.fields,busy:next.phase==='saving'||next.phase==='checking',uncertain:next.phase==='unconfirmed',
       ...(next.view?.state==='retained'?{preparationId:next.view.preparation.id}:{})},adoptBaseline?baseline:undefined);
   };
-  const refuse=()=>{epoch.current++;work.current=false;publish({...initial,phase:'error'},true);callbacks.current.onAccessRefused();};
+  const retireReview=()=>{signingEpoch.current++;setSigningReview(null);};
+  const refuse=()=>{retireReview();epoch.current++;work.current=false;publish({...initial,phase:'error'},true);callbacks.current.onAccessRefused();};
   const retain=(id:string|null)=>{
     const prior=reference.current;reference.current=id;
     if(callbacks.current.onRetainRequest(id)){observedReference.current=id;return true;}
@@ -106,6 +110,7 @@ export function AgreementDocumentPreparation(props:Props){
   };
   const load=async(id:string|null,recovering=false,restore?:DocumentGuard)=>{
     if(work.current)return;work.current=true;
+    retireReview();
     epoch.current++;reference.current=id;
     const ctx=context(),previous=restore?{...state.current,fields:restore.draft}:state.current;
     publish({...previous,phase:recovering?'checking':'loading',view:null,bytes:null,pdfError:false,message:''});
@@ -132,6 +137,7 @@ export function AgreementDocumentPreparation(props:Props){
     // Return keyboard focus to that result rather than leaving it on <body>.
     if(session.phase==='ready'&&session.receipt)heading.current?.focus();
   },[session.phase,session.receipt]);
+  React.useLayoutEffect(()=>{if(!signingReview&&returnToReviewEntry.current){returnToReviewEntry.current=false;reviewEntry.current?.focus();}},[signingReview]);
   React.useEffect(()=>{
     if(observedReference.current===props.requestId)return;
     observedReference.current=props.requestId;reference.current=props.requestId;
@@ -145,6 +151,7 @@ export function AgreementDocumentPreparation(props:Props){
     if(!command){publish({...previous,message:'Inspect the current agreement and document before saving a new preparation.'});return;}
     // Checkpoint precedes EVERY first dispatch. A retry retains the SAME command.
     if(!retain(command.request_id)){publish({...previous,message:'The recovery reference could not be retained. No preparation request was sent.'});return;}
+    retireReview();
     work.current=true;historyEpoch.current++;publish({...previous,phase:'saving',command,message:'',receipt:null});
     const result=await saveAgreementDocument(ctx,command);if(!ctx.isCurrent())return;work.current=false;
     if(result.ok===false){if(result.reason==='access_unverified'){refuse();return;}
@@ -165,9 +172,22 @@ export function AgreementDocumentPreparation(props:Props){
   };
   const choose=(id:string|null)=>callbacks.current.onRequest(()=>{if(retain(id))void loadRef.current(id,Boolean(id));});
   const retryPdf=()=>{const value=state.current.view;if(value?.state==='retained')void loadBytes(context(),value);};
+  const inspectSigning=async()=>{
+    const current=state.current,value=current.view;
+    if(work.current||current.phase!=='ready'||!current.bytes||current.pdfError||value?.state!=='retained'||!value.can_edit||!value.preparation.is_selected||!value.preparation.source_matches
+      ||JSON.stringify(current.fields)!==JSON.stringify(value.preparation.manifest.fields))return;
+    const opened=++signingEpoch.current,ctx=context();setSigningReview({phase:'loading'});
+    const result=await readAgreementSigningReview(ctx,value);
+    if(!ctx.isCurrent()||opened!==signingEpoch.current)return;
+    if(result.ok===false){if(result.reason==='access_unverified'||result.reason==='retired'){refuse();return;}setSigningReview({phase:'error',reason:result.reason,message:result.message});return;}
+    setSigningReview({phase:'ready',review:result.value});
+  };
   const view=session.view,retained=view?.state==='retained'?view:null;
   const busy=session.phase==='saving'||session.phase==='checking';
-  const editable=Boolean(retained?.can_edit&&session.phase==='ready'&&session.bytes&&!session.pdfError);
+  const documentEditable=Boolean(retained?.can_edit&&session.phase==='ready'&&session.bytes&&!session.pdfError);
+  const editable=documentEditable&&!signingReview;
+  const unsavedFields=Boolean(retained&&JSON.stringify(session.fields)!==JSON.stringify(retained.preparation.manifest.fields));
+  const canReview=documentEditable&&retained?.preparation.is_selected&&retained?.preparation.source_matches&&!unsavedFields;
   const commercialRetained=retained?.preparation.manifest.schema_version===2;
   const reviewCommercial=Boolean(view?.source.status==='draft'&&(!retained||retained.preparation.is_selected)&&(view.preparation_hold==='commercial_review_required'||commercialRetained&&!retained?.can_edit&&retained?.can_prepare));
   const locked=retained&&!retained.preparation.is_selected?'This earlier preparation is read-only. It has not replaced the selected document.':commercialRetained&&retained?.commercial_readback?.state!=='current'?retained?.commercial_readback?.state==='changed'?'The original commercial terms changed after this preparation. This retained version is read-only; review the current terms before preparing another.':'The current commercial terms could not be verified. This retained version remains read-only; retry the original source read.':retained&&!retained.preparation.source_matches?'The agreement or its signers changed after this preparation. Inspect the current source before preparing another version.':view?.preparation_hold==='commercial_review_required'?'This agreement is linked to commercial terms. Its original economics must be verified before document preparation.':'This agreement is no longer an editable signing draft.';
@@ -187,7 +207,9 @@ export function AgreementDocumentPreparation(props:Props){
       </div>
       {commercialRetained&&<p className="e04-document-readonly" role="status">{retained.commercial_readback?.state==='current'?'The retained commercial terms match the current original records. Payment and signing status remain separate.':locked}</p>}
       {!retained.can_edit&&!session.bytes&&<p className="e04-document-readonly" role="status">{locked}</p>}
-      {session.pdfError?<div className="e04-preparation-message" role="alert"><h4>Retained PDF unavailable</h4><p>The file has not passed byte and checksum verification. Your stored preparation has not been changed.</p><button onClick={retryPdf}>Retry retained PDF</button></div>:!session.bytes?<p role="status">Verifying the retained PDF…</p>:<AgreementDocumentFields key={retained.preparation.id} authorityKey={`${props.authorityKey}:${retained.preparation.id}`} canView canEdit={editable} lockedReason={locked}
+      {retained.can_edit&&session.bytes&&!session.pdfError&&!signingReview&&<div className="e04-prepared-review-entry"><div><h4>Check the saved signing request</h4><p>Review recipients, signing order and assigned fields against this saved document.</p>{unsavedFields&&<p role="status">Save your field changes before reviewing the saved request.</p>}</div><button ref={reviewEntry} className="e04-preparation-primary" disabled={!canReview} onClick={()=>{void inspectSigning();}}>Review saved signing request</button></div>}
+      {signingReview&&<AgreementSigningReview state={signingReview} revisionNo={retained.preparation.revision_no} onReturn={()=>{returnToReviewEntry.current=true;retireReview();}} onRetry={()=>{void inspectSigning();}} onReloadSource={()=>choose(null)}/>}
+      {session.pdfError?<div className="e04-preparation-message" role="alert"><h4>Retained PDF unavailable</h4><p>The file has not passed byte and checksum verification. Your stored preparation has not been changed.</p><button onClick={retryPdf}>Retry retained PDF</button></div>:!session.bytes?<p role="status">Verifying the retained PDF…</p>:<AgreementDocumentFields key={retained.preparation.id} authorityKey={`${props.authorityKey}:${retained.preparation.id}`} canView canEdit={editable} lockedReason={signingReview?'Return to the document to change and save field assignments.':locked}
         title={retained.title} showTitle={false} bytes={session.bytes} document={retained.preparation.manifest.document} source={retained.source} signers={retained.document_signers} fields={session.fields} savedPreparationSha={retained.preparation.derived_fields_sha256??retained.preparation.preparation_sha256}
         onChange={fields=>{if(!editable||work.current)return;publish({...state.current,fields,message:''});}}
         onSave={preparation=>{void save(preparation);}} onReload={()=>callbacks.current.onRequest(retryPdf)} onAddSigners={()=>callbacks.current.onRequest(callbacks.current.onAddSigners)}/>}

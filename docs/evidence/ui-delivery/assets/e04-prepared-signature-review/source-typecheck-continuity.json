@@ -1,0 +1,25 @@
+{
+  "result": "PASS_TYPE_ONLY_TEST_REPAIR",
+  "source": "192bfc56b0b2c39a99d8107263658e665baf1085",
+  "originalRequiredFailure": {
+    "run": 40064875758,
+    "job": 120785895788,
+    "step": "Typecheck ratchet",
+    "ciDiagnosticLogs": "HTTP502 from primary and official provider log reads; step metadata independently confirms failure",
+    "localExactRatchet": "FAIL3 new TS2540 readonly assignments in owning hostile-wire test; original baseline untouched"
+  },
+  "owningTest": "src/solo/sales/agreementDocumentApi.test.ts",
+  "beforeLFSHA256": "f7fac33ca7fbb5ae32bac3995d68a685bcece9fef6db7501912af01e65a27830",
+  "afterLFSHA256": "b2f1de0af3740cc3ee44ddbfbd9484d2dffb65833baf0a9432fecdd050f64276",
+  "emittedTestJavaScriptSHA256": "2f19fdfd648aec123586be3be0d734220ac21ad11d917c4b2ee968b6e3468db2",
+  "emittedTestJavaScriptByteIdentical": true,
+  "typeScriptVersion": "5.9.3",
+  "fullTestInverse": true,
+  "originalSourceSnapshotSHA256": "ac226078bbb2ecdba8e69705219f248b34efe2769d595b5f885be930e4f40461",
+  "unchangedOtherCapturedRuntimeReadTestInputs": 32,
+  "originalCurrentProducerCIByteIdentical": true,
+  "originalFrozenCompiledFilesUnchanged": 196,
+  "originalNativePNGsAndSidecarsUnchanged": 10,
+  "scope": "Mutable deep type applies ONLY to the already structured-cloned hostile transport fixture; immutable production DTO and every assertion/input/timeout/runtime byte remain unchanged.",
+  "boundary": "Source/type-only continuity and historical synthetic rendered evidence; not a new render, completed new-head typecheck/CI, deployment, provider/customer/CentralQA/founder acceptance."
+}

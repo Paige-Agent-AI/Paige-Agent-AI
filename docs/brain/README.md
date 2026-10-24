@@ -149,8 +149,6 @@ explicit synthetic ports. Settings authority and source failures are unchanged.
 Review/CI/release and authenticated read-only proof remain owed; no zone was saved,
 trigger enabled, catalogue entry promoted or whole-Experience acceptance claimed.
 
-## EXP05 governed-work prerequisites — source releases verified, October23
-
 ## EXP08 Manage My Team / Team Hub — receiving lead and Team index, October23
 
 **Owner authorization:** one Claude Code lead owns EXP08, with ZION as the supervised product
@@ -185,6 +183,8 @@ palette, and the messaging tables behind them. Searching the migrations for `tea
 Both are approvals to build. Neither is runtime proof.
 
 Slack and Teams connections belong to EXP10, and Team Hub doesn't depend on them.
+
+## EXP05 governed-work prerequisites — source releases verified, October23
 
 Original specialist invocation identity is now preserved in a local candidate
 of the existing turn receipt, with wrong-tool and unknown-outcome controls.

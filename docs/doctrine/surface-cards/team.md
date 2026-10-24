@@ -43,9 +43,10 @@ below. The originals stay where they are as history (§58).
   - The only `channel*` table is the provider `channel_connectors`.
   - `messages`/`threads` are the customer inbox and have no participant ACL.
   - `paige_chat_threads` is single-owner PAIGE chat.
-  - Adding the substrate is a backend change and goes to the owner for a decision (§00).
-- **Owner decisions, 2026-10-24.** These are recorded as answered in this Claude Code session. They
-  are approvals to build, not proof that anything works.
+  - Adding the substrate is a backend change (§00). The owner approved it on 2026-10-24 (below).
+- **Owner decisions, 2026-10-24.** Answered by the owner in the EXP08 Claude Code session and
+  logged in `docs/brain/decision-log.md`. They are approvals to build, not proof that anything
+  works.
   - **Design and behavior: APPROVED.** The Team Hub interactive prototype v2 (private artifact,
     sample data, nothing saved or sent) is approved for production, and it is approved-frozen
     under §28.

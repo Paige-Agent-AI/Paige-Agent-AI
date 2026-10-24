@@ -1,0 +1,146 @@
+{
+  "evidence_class": "production_source_readback_not_customer_execution",
+  "recorded_on_utc": "2026-10-24",
+  "native": {
+    "pr": 2758,
+    "reviewed_head": "adf6dd5c4bc7f01b28e46a4f3ab8df60caac274a",
+    "main": "ebbd603cd981ea50aba9ed5b34c7fad2cb7491bb",
+    "parents": ["1b4a4a73f88c05a97b7a91ab3b6f09bc3d349ed1","adf6dd5c4bc7f01b28e46a4f3ab8df60caac274a"],
+    "tree": "41081036589734f1df0008e60a9523b61ad847fe",
+    "review": ["6386231227","6386546848"],
+    "review_relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "exact_head_checks": [
+      {"name":"Supabase Preview","id":120916395091,"conclusion":"success"},
+      {"name":"Vercel Preview Comments","id":120915699839,"conclusion":"success"},
+      {"name":"postgres-authority","id":120915610968,"conclusion":"success"},
+      {"name":"verify","id":120915608182,"conclusion":"success"},
+      {"name":"comms-provider-boundary","id":120915608065,"conclusion":"success"},
+      {"name":"web-fetch-hardening-smoke","id":120915607993,"conclusion":"success"},
+      {"name":"contract","id":120915607612,"conclusion":"success"},
+      {"name":"database-contract","id":120915607467,"conclusion":"success"},
+      {"name":"Validate UI delivery evidence","id":120915607464,"conclusion":"success"},
+      {"name":"collections-sql","id":120915607359,"conclusion":"success"},
+      {"name":"channel-sql","id":120915607347,"conclusion":"success"},
+      {"name":"audit","id":120915607310,"conclusion":"success"},
+      {"name":"lint","id":120915607221,"conclusion":"success"}
+    ],
+    "statuses": [
+      {"context":"Vercel","state":"success","target_url":"https://vercel.com/paige-agent-ai/paige-agent-ai/9YRqUCA1AsrZHhyPmzAWC3zEp2Yh"},
+      {"context":"Vercel Deployments – MMA","state":"success","target_url":"https://vercel.com/paige-agent-ai/~/deployments?repo=github%2FPaige-Agent-AI%2FPaige-Agent-AI&filterBranch=feat%2Fexp05-weekly-chat-draft-scope&sha=adf6dd5c4bc7f01b28e46a4f3ab8df60caac274a"}
+    ],
+    "migration": "20271113840003",
+    "migration_count": 1,
+    "retired_never_production_version": "20271113860005",
+    "retired_version_count": 0,
+    "sql_sha256": "228ecd4611f8d08f6fad6f14b101bab22ec938055094117a258005e257d62a94",
+    "deployment": {
+      "run": 40110935353,
+      "lint_job": 120922314773,
+      "deploy_job": 120922420221,
+      "conclusion": "success",
+      "db_live": "ebbd603cd981ea50aba9ed5b34c7fad2cb7491bb"
+    },
+    "native_full_metadata_preview_production_equal": 19,
+    "all_15_invariants": {
+      "owner": "postgres",
+      "definer": true,
+      "config": ["search_path=\"\""],
+      "defaults": 0,
+      "returns_set": false,
+      "volatility": "v",
+      "anon": false,
+      "service_role": false,
+      "public_execute": false
+    },
+    "functions": [
+      {"signature":"private.weekly_chat_draft_mutation_scope(uuid,uuid,uuid)","body_md5":"6a195d19b9340d532e423b3900e0ea39","language":"plpgsql","returns":"void","names":["_expected_thread_id","_intent_id","_runtime_request_nonce"],"authenticated":false},
+      {"signature":"private.weekly_draft_claim(uuid,text,uuid,uuid)","body_md5":"a1c057acdc1040a2c0f30602343a69e4","language":"plpgsql","returns":"jsonb","names":["_confirmation_id","_approved_token","_request_nonce","_expected_thread_id"],"authenticated":false},
+      {"signature":"private.weekly_draft_commit(uuid,uuid,jsonb,uuid)","body_md5":"a13822d3e464a3d0dbba4c948e3c9e8c","language":"plpgsql","returns":"jsonb","names":["_confirmation_id","_request_nonce","_expected_args","_expected_thread_id"],"authenticated":false},
+      {"signature":"private.weekly_draft_decline(uuid,text,uuid)","body_md5":"15041fe12603dafade63e1ce64c6da62","language":"plpgsql","returns":"jsonb","names":["_confirmation_id","_declined_token","_expected_thread_id"],"authenticated":false},
+      {"signature":"private.weekly_draft_read(uuid,uuid)","body_md5":"24fc2a8d928192d38613ace209749b36","language":"plpgsql","returns":"jsonb","names":["_confirmation_id","_expected_thread_id"],"authenticated":false},
+      {"signature":"public._weekly_draft_proposal(uuid,uuid)","body_md5":"b2c270fce07e58a998535c14e09d6bc6","language":"plpgsql","returns":"paige_pending_confirmations","names":["_confirmation_id","_expected_thread_id"],"authenticated":false},
+      {"signature":"public._weekly_draft_proposal(uuid)","body_md5":"a38480c0d146cee6ad9c7b0ded31c1bf","language":"sql","returns":"paige_pending_confirmations","names":["_confirmation_id"],"authenticated":false},
+      {"signature":"public.claim_weekly_commitment_chat_draft(uuid,text,uuid,uuid,uuid,uuid)","body_md5":"275cdf3532f265be387512d13e3b55ec","language":"plpgsql","returns":"jsonb","names":["_confirmation_id","_approved_token","_request_nonce","_expected_thread_id","_intent_id","_runtime_request_nonce"],"authenticated":true},
+      {"signature":"public.claim_weekly_commitment_draft(uuid,text,uuid)","body_md5":"2172e26969f1d3f384fc33a797e2f93b","language":"sql","returns":"jsonb","names":["_confirmation_id","_approved_token","_request_nonce"],"authenticated":true},
+      {"signature":"public.commit_weekly_commitment_chat_draft(uuid,uuid,jsonb,uuid,uuid,uuid)","body_md5":"b6635afb24cc3e7123ae87f3a524c97d","language":"plpgsql","returns":"jsonb","names":["_confirmation_id","_request_nonce","_expected_args","_expected_thread_id","_intent_id","_runtime_request_nonce"],"authenticated":true},
+      {"signature":"public.commit_weekly_commitment_draft(uuid,uuid,jsonb)","body_md5":"1834badbb94c5f4d962337286a20eb1b","language":"sql","returns":"jsonb","names":["_confirmation_id","_request_nonce","_expected_args"],"authenticated":true},
+      {"signature":"public.decline_weekly_commitment_chat_draft(uuid,text,uuid,uuid,uuid)","body_md5":"e68932fe5e8f81764dc7866d05c2ba5e","language":"plpgsql","returns":"jsonb","names":["_confirmation_id","_declined_token","_expected_thread_id","_intent_id","_runtime_request_nonce"],"authenticated":true},
+      {"signature":"public.decline_weekly_commitment_draft(uuid,text)","body_md5":"91db8abdefb47158163821bef5488b26","language":"sql","returns":"jsonb","names":["_confirmation_id","_declined_token"],"authenticated":true},
+      {"signature":"public.read_weekly_commitment_chat_draft(uuid,uuid)","body_md5":"7dba48520c66b78a048bed6fa51cb2b5","language":"plpgsql","returns":"jsonb","names":["_confirmation_id","_expected_thread_id"],"authenticated":true},
+      {"signature":"public.read_weekly_commitment_draft(uuid)","body_md5":"0ea1b96ada71cd7148a7c269fcaf8d22","language":"sql","returns":"jsonb","names":["_confirmation_id"],"authenticated":true}
+    ],
+    "reused_canonical": [
+      {"signature":"private.paige_reminder_runtime(uuid,uuid,uuid,uuid,uuid)","present":true,"body_md5":"d8c4e312b9f5ab8ebe88df95c4536dda","migration_count":1,"retired_version_count":0,"owner":"postgres","definer":true,"config":["search_path=\"\""],"language":"plpgsql","returns":"jsonb","names":["p_actor","p_tenant","p_thread","p_intent","p_runtime_request_nonce"],"defaults":0,"returns_set":false,"volatility":"v","anon":false,"authenticated":false,"service_role":false,"public_execute":false,"unchanged_from_pre_release":true},
+      {"signature":"private.paige_reminder_scope(uuid,uuid,uuid,uuid)","present":true,"body_md5":"5de14b74411df60609089203178b821a","migration_count":1,"retired_version_count":0,"owner":"postgres","definer":true,"config":["search_path=\"\""],"language":"plpgsql","returns":"void","names":["p_actor","p_tenant","p_thread","p_client"],"defaults":0,"returns_set":false,"volatility":"v","anon":false,"authenticated":false,"service_role":false,"public_execute":false,"unchanged_from_pre_release":true},
+      {"signature":"public.draft_weekly_commitment_check(uuid,text,integer,text,text)","present":true,"body_md5":"82c322eb1ed76e2f7a0693c1a10a09ad","migration_count":1,"retired_version_count":0,"owner":"postgres","definer":true,"config":["search_path=\"\""],"language":"plpgsql","returns":"jsonb","names":["_request_id","_name","_weekday","_local_time","_timezone"],"defaults":0,"returns_set":false,"volatility":"v","anon":false,"authenticated":true,"service_role":false,"public_execute":false,"unchanged_from_pre_release":true},
+      {"signature":"public.weekly_commitment_owner(uuid,uuid)","present":true,"body_md5":"be5b982a1081ae6c37d3efc5e0713e7a","migration_count":1,"retired_version_count":0,"owner":"postgres","definer":true,"config":["search_path=\"\""],"language":"sql","returns":"boolean","names":["_tenant","_actor"],"defaults":0,"returns_set":false,"volatility":"s","anon":false,"authenticated":true,"service_role":true,"public_execute":false,"unchanged_from_pre_release":true}
+    ],
+    "web": {
+      "deployment": "dpl_GFAi3vpPZHrnGEoKdx1xHHShduuc",
+      "state": "READY",
+      "channel": "production",
+      "public_readback": [
+        {"host":"https://paigeagent.ai","status":200,"readAt":"2026-10-24T16:20:38.1797448Z","version":{"buildId":"ebbd603cd981ea50aba9ed5b34c7fad2cb7491bb-mvmlsk52","customerUpdate":null}},
+        {"host":"https://www.paigeagent.ai","status":200,"readAt":"2026-10-24T16:20:38.5898799Z","version":{"buildId":"ebbd603cd981ea50aba9ed5b34c7fad2cb7491bb-mvmlsk52","customerUpdate":null}}
+      ]
+    },
+    "edge": "NOT_APPLICABLE: no Edge source changed by this native slice",
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2758#issuecomment-6386588301"
+  },
+  "reader": {
+    "pr": 2762,
+    "reviewed_head": "adfebf0047762508b9d18c59dae1b5f01a4fad8f",
+    "main": "77b88428e0d5c79c57f699bd8fec32e5f6064642",
+    "parents": ["ebbd603cd981ea50aba9ed5b34c7fad2cb7491bb","adfebf0047762508b9d18c59dae1b5f01a4fad8f"],
+    "tree": "1d0f4b1c883308c76989969745dd5ff8d9a6ffc9",
+    "review": ["6386232702","6386573621"],
+    "review_relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "exact_head_checks": [
+      {"name":"Supabase Preview","id":120915965851,"conclusion":"success"},
+      {"name":"Vercel Preview Comments","id":120915768422,"conclusion":"success"},
+      {"name":"lint","id":120915450836,"conclusion":"success"},
+      {"name":"Validate UI delivery evidence","id":120915450700,"conclusion":"success"},
+      {"name":"postgres-authority","id":120915450430,"conclusion":"success"},
+      {"name":"web-fetch-hardening-smoke","id":120915450272,"conclusion":"success"},
+      {"name":"comms-provider-boundary","id":120915450158,"conclusion":"success"},
+      {"name":"database-contract","id":120915450111,"conclusion":"success"},
+      {"name":"verify","id":120915449958,"conclusion":"success"},
+      {"name":"contract","id":120915449934,"conclusion":"success"},
+      {"name":"audit","id":120915449555,"conclusion":"success"}
+    ],
+    "source_files_preserved": 6,
+    "app_target": "ES2020",
+    "original_failed_check": 120893673593,
+    "corrected_successful_check": 120915449958,
+    "local_focused_tests": 264,
+    "local_suites": 9,
+    "live_chat_dependency_pins_unchanged": 124,
+    "migration": "NOT_APPLICABLE",
+    "edge": {
+      "run": 40111131429,
+      "job": 120922900694,
+      "conclusion": "success",
+      "affected_functions": 0,
+      "retired_functions": 0,
+      "new_deployment": false,
+      "verification": "NOT_APPLICABLE: no affected Edge entry",
+      "deployed_tag_advance": false
+    },
+    "web": {
+      "deployment": "dpl_5XRe6Q9TNjW2gBedPRe4zigRRd6P",
+      "state": "READY",
+      "channel": "production",
+      "public_readback": [
+        {"host":"https://paigeagent.ai","status":200,"readAt":"2026-10-24T16:23:55.3821582Z","version":{"buildId":"77b88428e0d5c79c57f699bd8fec32e5f6064642-mvmlvuip","customerUpdate":null}},
+        {"host":"https://www.paigeagent.ai","status":200,"readAt":"2026-10-24T16:23:56.0956859Z","version":{"buildId":"77b88428e0d5c79c57f699bd8fec32e5f6064642-mvmlvuip","customerUpdate":null}}
+      ]
+    },
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2762#issuecomment-6386642987",
+    "statuses": [
+      {"context":"Vercel","state":"success","target_url":"https://vercel.com/paige-agent-ai/paige-agent-ai/29Xz5sUwMQNLTyWPPAYtcZtCmTZB"},
+      {"context":"Vercel Deployments – MMA","state":"success","target_url":"https://vercel.com/paige-agent-ai/~/deployments?repo=github%2FPaige-Agent-AI%2FPaige-Agent-AI&filterBranch=feat%2Fexp05-weekly-draft-chat&sha=adfebf0047762508b9d18c59dae1b5f01a4fad8f"}
+    ]
+  },
+  "excluded_claims": ["Chat draft admission","approved business record and original Rail from ordinary Chat","recurring activation/execution","new ZION result","Live acceptance","all ten EXP05 outcomes and E5-CV1-9","universal cohort authenticated acceptance","founder acceptance","customer announcement"],
+  "recovery": "Withhold future admission and reconcile original records; no uncertain replay, down migration or applied-history rewrite."
+}

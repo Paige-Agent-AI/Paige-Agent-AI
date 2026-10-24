@@ -1,3 +1,12 @@
+## October24 forward reader release order
+
+Actual production E09 620009 and630009 are persisted before this still-draft
+reader. Preserve original SQL byte-for-byte; never-applied630004→631004 only.
+Forward order is631004→640004→650004, after current-main composition, fresh
+exact-head review/CI/normal empty Preview and original native deployment/readback.
+No include-all, migration-history patch, session cleanup, test waiver or actual
+business/provider effect. Existing dated evidence below remains historical.
+
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
 October23 release-order continuation: actual production600000/main2748432

@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: explicit owner can inspect the exact accepted source, compa
 MOTION_PURPOSE: NONE: no authored animation or haptic; immediate named feedback and focus preserve causality.
 PROTECTED_SEAMS: new owner read uses original _sales_invoice_actor and read_sales_commercial_package with current authority checked after waits; private validators are not callable by ordinary/service roles. No Portal UI, client-access grant, shared Chat admission, approval/runtime/provider/ledger/scheduler or core shell rewrite.
 
-INTERNAL_BUILD_IDENTITY: source=84d2634dfcdc60db7833d30b7dee927b56d43b4f; exact final head/review in PR2681; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113630004_e04_accepted_commercial_evidence normal full-schema release); edge=NOT_APPLICABLE; prerequisite=original530004; evidence=this record, original fenced native406 proof and prior source-pinned component frames.
+INTERNAL_BUILD_IDENTITY: source=84d2634dfcdc60db7833d30b7dee927b56d43b4f; exact final head/review in PR2681; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113631004_e04_accepted_commercial_evidence normal full-schema release); edge=NOT_APPLICABLE; prerequisite=original530004; evidence=this record, original fenced native406 proof and prior source-pinned component frames.
 RELEASE_CHANNEL: development: current full native proof passed; final exact-head gates and production source readback still owed.
 RELEASE_CLASSIFICATION: internal-only: bounded original accepted-record integration within incomplete EXP04.
 CUSTOMER_RELEASE_IDENTITY: none: full integrated Experience and founder evaluation remain incomplete.
@@ -75,3 +75,14 @@ compiled-result-before-native-filename.json is preserved byte-for-byte. Current
 compiled-result.json declares the same captured images/times/assets/hashes and
 one explicit old/new source-path equivalence; no new rendering is claimed.
 Fresh exact-head full-schema/Preview/review/release evidence remains required.
+
+Native filename continuation — October24: actual production E09 630009 was
+applied before this unmerged reader. Canonical deployment refuses older missing
+versions and forbids include-all. Only never-applied630004 moves to631004,
+below the existing E04 640004/650004 reservations. SQL SHA221b0365 and ALL
+original twenty-one critical rendered inputs remain identical. The prior
+compiled-result-before-second-native-filename.json retains the immediately
+preceding receipt byte-for-byte; its SHA and the original570004 capture are
+explicit in the current manifest. Images/assets/times remain original; no new
+rendering, deployed behavior or customer acceptance is asserted. Fresh exact-head
+full-schema/Preview/review and ordinary deployment/readback remain required.

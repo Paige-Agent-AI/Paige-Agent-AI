@@ -1,3 +1,7 @@
+# Current dependency composition — 2026-10-24 UTC
+
+Existing2733 consumes parent5391a0b7 and actual main48054028 without changing its four reviewed consumer source/test blobs. Original700000 collision was repaired by2732/e35bb7f9, and actual commercial reader810004 precedes parent810009; E04later820004 remains ordered after it. Both original evidence sections are retained in the sole packet conflict. Current new-head tests/review/requiredCI remain mandatory; old proof is supporting history, not a release. No new UI callsite, message binding, model extraction, provider effect or customer authority comes from this source composition. Prior NOTEXECUTED native failures remain historical.
+
 # Private CURA file consumer — engineering increment
 
 UI_CHANGE: NO — no component calls the private-purpose option yet.

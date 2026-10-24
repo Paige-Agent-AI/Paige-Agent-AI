@@ -1,0 +1,81 @@
+{
+  "status": "FROZEN_BEFORE_FINAL_NATIVE_CAPTURE",
+  "sourceCommit": "aec7f3014f39950b3441258d5fd76d331c8bb404",
+  "branch": "codex/e04-sales-metric-continuity",
+  "sourceState": "Local product source commit plus pending tracked proof fixture. Exact final review/head/CI/release remain separate.",
+  "boundary": "Original SalesPerformance presenter and repaired useSalesPerformanceMetrics; synthetic denied-network RPC/Auth ports. Not the complete authenticated shell, Finance, Chat, canonical database/provider/customer outcome or founder acceptance.",
+  "sourceSHA256": {
+    "src/solo/sales/performance/useSalesPerformanceMetrics.ts": "7bb0ce3916496851ed277826d7ba4b6a398a03241c16ca12fa07caaad13ae8a7",
+    "src/solo/sales/performance/SalesPerformance.tsx": "3c1e3bba586f91d74b21ad417b3be9c04bd431002cacf5b5fef5f94ac74ad1bc",
+    "src/solo/sales/performance/SalesPerformanceWorkspace.tsx": "fc5cc2d23b9ae9822f03b0f871ca3b32cf0f77c72c6d5e71806c6d01615438f3",
+    "src/solo/sales/performance/sales-performance.css": "47d13bf7b781281b07502a7ea8131eca3e25b7e6e0c1edc1b9e313c1f7a785c4",
+    "src/solo/sales/performance/types.ts": "1aab10d927beafa50f0243d2da62d29cdbd176995a5c704d7e32fc4955b02adb",
+    "src/solo/sales/performance/format.ts": "50f18ffe4e8f17880200119ed1e1b2e8eba094a3480d0838b7796c8b661ea279",
+    "src/solo/sales/collections/presentation.ts": "e6e0cf5d0021dcf12d5833774c642f4645c5e50b43a73a997f292eb8a294fb9f",
+    "src/lib/analytics/metric-contract.ts": "a19f485f9d1c3ed2b685e45ec2b5c7bcb1226b08c021217bc0a3937e656619ba",
+    "supabase/functions/_shared/analytics-metrics/metric-contract.ts": "9b7c3f8bebcafad7976d9baf571829f8928a4e0fb01e97939518d3b15714ba61",
+    "supabase/functions/_shared/paige-context/snapshot.ts": "e2e4dcb6c003e15fee9d619224f1792a7465896886d792286f605550600614f1",
+    "src/components/ui/sheet.tsx": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5",
+    "src/lib/utils.ts": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27",
+    "src/solo/solo-tokens.css": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+    "src/index.css": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+    "tailwind.config.ts": "05fb4b0f7b025bc2e09cf7169e7f225082e3948f19d06a9c2000d2388a71e257",
+    "postcss.config.js": "e32657baf631d7c5f4dc67b4b2ee0ec8e7d5b3c41860e09cddce7c0377cd80bc",
+    "supabase/migrations/20271101110001_int2086_overdue_metric_compatibility.sql": "b78e789f61efae394bc80b8e11b776587ddb61d6d5ce58b08663a6e6d3b57ccc",
+    "scripts/proof/e04-sales-metric-continuity-ui/index.html": "bf7f9525e745434c34ddc26f2b78ab6a9062735e6b97211f06dc32f558412c03",
+    "scripts/proof/e04-sales-metric-continuity-ui/source.tsx": "7fae0d63a055b12fd0d094ca3f9204df5cc5faf3baf724db08bee3b608da6234",
+    "scripts/proof/e04-sales-metric-continuity-ui/sdk.ts": "0424539f6b1a799412605ceca918009f3100cd4e1e8e4a14991a4c7ff9a0b129",
+    "scripts/proof/e04-sales-metric-continuity-ui/proof.css": "3f67bfadb56283962b4ce4a864fd5dba1ec729e5b7311277f27058030e3de8ad",
+    "scripts/proof/e04-sales-metric-continuity-ui/vite.config.mjs": "cc308ea653fe34a569f50aa4d3e606d3b57768c0dd66e9aa3e0f7197a1283ce9"
+  },
+  "sourceLFSHA256": {
+    "src/solo/sales/performance/useSalesPerformanceMetrics.ts": "7bb0ce3916496851ed277826d7ba4b6a398a03241c16ca12fa07caaad13ae8a7",
+    "src/solo/sales/performance/SalesPerformance.tsx": "3c1e3bba586f91d74b21ad417b3be9c04bd431002cacf5b5fef5f94ac74ad1bc",
+    "src/solo/sales/performance/SalesPerformanceWorkspace.tsx": "fc5cc2d23b9ae9822f03b0f871ca3b32cf0f77c72c6d5e71806c6d01615438f3",
+    "src/solo/sales/performance/sales-performance.css": "47d13bf7b781281b07502a7ea8131eca3e25b7e6e0c1edc1b9e313c1f7a785c4",
+    "src/solo/sales/performance/types.ts": "1aab10d927beafa50f0243d2da62d29cdbd176995a5c704d7e32fc4955b02adb",
+    "src/solo/sales/performance/format.ts": "50f18ffe4e8f17880200119ed1e1b2e8eba094a3480d0838b7796c8b661ea279",
+    "src/solo/sales/collections/presentation.ts": "e6e0cf5d0021dcf12d5833774c642f4645c5e50b43a73a997f292eb8a294fb9f",
+    "src/lib/analytics/metric-contract.ts": "a19f485f9d1c3ed2b685e45ec2b5c7bcb1226b08c021217bc0a3937e656619ba",
+    "supabase/functions/_shared/analytics-metrics/metric-contract.ts": "9b7c3f8bebcafad7976d9baf571829f8928a4e0fb01e97939518d3b15714ba61",
+    "supabase/functions/_shared/paige-context/snapshot.ts": "e2e4dcb6c003e15fee9d619224f1792a7465896886d792286f605550600614f1",
+    "src/components/ui/sheet.tsx": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5",
+    "src/lib/utils.ts": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27",
+    "src/solo/solo-tokens.css": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+    "src/index.css": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+    "tailwind.config.ts": "05fb4b0f7b025bc2e09cf7169e7f225082e3948f19d06a9c2000d2388a71e257",
+    "postcss.config.js": "e32657baf631d7c5f4dc67b4b2ee0ec8e7d5b3c41860e09cddce7c0377cd80bc",
+    "supabase/migrations/20271101110001_int2086_overdue_metric_compatibility.sql": "b78e789f61efae394bc80b8e11b776587ddb61d6d5ce58b08663a6e6d3b57ccc",
+    "scripts/proof/e04-sales-metric-continuity-ui/index.html": "bf7f9525e745434c34ddc26f2b78ab6a9062735e6b97211f06dc32f558412c03",
+    "scripts/proof/e04-sales-metric-continuity-ui/source.tsx": "7fae0d63a055b12fd0d094ca3f9204df5cc5faf3baf724db08bee3b608da6234",
+    "scripts/proof/e04-sales-metric-continuity-ui/sdk.ts": "0424539f6b1a799412605ceca918009f3100cd4e1e8e4a14991a4c7ff9a0b129",
+    "scripts/proof/e04-sales-metric-continuity-ui/proof.css": "3f67bfadb56283962b4ce4a864fd5dba1ec729e5b7311277f27058030e3de8ad",
+    "scripts/proof/e04-sales-metric-continuity-ui/vite.config.mjs": "cc308ea653fe34a569f50aa4d3e606d3b57768c0dd66e9aa3e0f7197a1283ce9"
+  },
+  "compiledAssets": {
+    "index.html": "d680e5af80d9281411df4c374de1e7f0d99e2d1ba839925638b37329ba7714ef",
+    "assets/index-q5Syh8Tx.js": "ecb53e0bac773529e6107ea90c061405131c3db3e14b86bce58e8464ddbdcfcc",
+    "assets/index-CYRIpn2e.css": "1481d2e38a5d200544577e8d862893b2b7c6b71ff987d27c044b32173338bce4"
+  },
+  "runtimes": {
+    "vite": "5.4.21",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "next-themes": "0.3.0",
+    "@radix-ui/react-dialog": "1.1.23"
+  },
+  "build": {
+    "modules": 1652,
+    "result": "PASS",
+    "seconds": 31.77,
+    "provenance": "Versioned fixture/app compiler; three generated files copied byte-for-byte to existing local static proof server. Mis-targeted disposable output removed only after exact-copy verification."
+  },
+  "verification": {
+    "originalControls": 13,
+    "initialCausalREDs": 11,
+    "currentHookTests": 27,
+    "selectedOriginalConsumerTotal": 52,
+    "scopedESLint": "PASS"
+  },
+  "recordedAt": "2026-10-24T02:53:27.235Z"
+}

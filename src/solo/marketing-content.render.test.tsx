@@ -48,7 +48,8 @@ const DOC_BODY = JSON.stringify({ docType: "sales_offer", title: "Spring offer",
 ] });
 const LONG_PROMPT = "A clean minimal hero illustration of a rising arrow over a city skyline at dawn, soft light, wide composition with room for a headline on the left side and the brand colours";
 const ROWS = [
-  { id: "c1", kind: "image", channel: null, status: "published", title: LONG_PROMPT, body: null, image_url: "https://cdn.example/paige-generated/hero.webp", size: "3:2", brief: null, updated_at: "2026-10-01T10:00:00Z" },
+  { id: "c1", kind: "image", channel: null, status: "published", title: LONG_PROMPT, body: null, image_url: "https://cdn.example/paige-generated/hero.webp", size: "3:2", brief: null,
+    meta: { mime_type: "image/webp", width: 1440, height: 960, model: "fal-ai/flux-pro", license_class: "provider_and_model_terms" }, updated_at: "2026-10-01T10:00:00Z" },
   { id: "c2", kind: "document", channel: null, status: "draft", title: "Spring offer", body: DOC_BODY, image_url: null, size: null, brief: "Offer for a new client", updated_at: "2026-09-30T10:00:00Z" },
   { id: "c3", kind: "text", channel: "social_post", status: "draft", title: "Launch post", body: "## Big news\n**We’re open** for spring.\n- Book a call", image_url: null, size: null, brief: null, updated_at: "2026-09-29T10:00:00Z" },
   { id: "c4", kind: "image", channel: null, status: "draft", title: "Testimonial card", body: null, image_url: "https://cdn.example/paige-generated/card.png", size: "square", brief: null, updated_at: "2026-09-28T10:00:00Z" },
@@ -143,8 +144,30 @@ describe("Marketing › Content", () => {
     expect(panel.parentElement?.classList.contains("solo-campaigns")).toBe(true);
     expect(document.activeElement?.getAttribute("aria-label")).toBe("Close details");
     expect(panel.querySelector(".mct-full img")?.getAttribute("src")).toBe(ROWS[0].image_url);
-    expect(panel.querySelector(".mct-facts")?.textContent).toMatch(/^Image · Landscape · In your Catalog · saved/);
+    // EXP07 row 3: the facts line carries what the completion actually recorded — format,
+    // real dimensions, the model, the license class — between the shape and the status.
+    expect(panel.querySelector(".mct-facts")?.textContent).toMatch(/^Image · Landscape · WEBP · 1440×960 · made by fal-ai\/flux-pro · provider & model terms · In your Catalog · saved/);
     expect(panel.querySelector(".mct-asked p")?.textContent).toBe(LONG_PROMPT);
+  });
+
+  it("shows no invented facts for an image whose record holds none (EXP07 row 3)", async () => {
+    db.tables.marketing_content = { data: ROWS, error: null };
+    await renderContent({ piece: "c4" });
+    const facts = dialog()!.querySelector(".mct-facts")?.textContent ?? "";
+    expect(facts).toMatch(/^Image · Square · Draft · saved/);
+    expect(facts).not.toContain("made by");
+    expect(facts).not.toContain("×");
+  });
+
+  it("ignores malformed metadata values rather than rendering them (EXP07 row 3)", async () => {
+    db.tables.marketing_content = { data: [
+      { ...ROWS[3], meta: { mime_type: 42, width: "lots", height: null, model: "", license_class: { rogue: true } } },
+    ], error: null };
+    await renderContent({ piece: "c4" });
+    const facts = dialog()!.querySelector(".mct-facts")?.textContent ?? "";
+    expect(facts).toMatch(/^Image · Square · Draft · saved/);
+    expect(facts).not.toContain("made by");
+    expect(facts).not.toContain("×");
   });
 
   it("downloads an image, says when a download fails, and hands PAIGE the exact piece to revise", async () => {

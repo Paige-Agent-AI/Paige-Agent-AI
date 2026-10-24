@@ -1,3 +1,7 @@
+# Current ordered release continuation
+
+The shared700000 collision was repaired by original2732/e35bb7f9. Current main48054028 and actual production810004 include the originating commercial reader; customer permission is not inferred. Receiving ACK ANT161/03cb5f8f reserves only our never-applied810009 after810004/before820004. SQL b634388b77b3e5220f5c8fc67c449336870ca74860c1802661dc4904c377780b remains byte-identical to710009, with current production13 source/ABI/default/ACL matches. Existing305 fixture and local62/mutation/drift controls remain intact. Fresh full current-head CI/native/normal empty Preview/review/production readback are required. Prior checkpoints below are historical, including the now-resolved external collision; no old green substitutes for new proof. UI_CHANGE and SOLO_UI remain NO for this native increment.
+
 # Private CURA files — native service increment
 
 UI_CHANGE: NO — backend file-purpose and privacy contract only.

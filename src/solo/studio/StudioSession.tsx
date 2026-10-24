@@ -47,8 +47,11 @@ function AskCard({ choices, disabled, onAnswer }: { choices: Choices; disabled: 
   );
 }
 
-export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBack }: {
-  tenantId: string; tenantSlug: string; sessionId: string; seedBrief: string | null; onBack: () => void;
+export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNexusHandoff, onBack }: {
+  tenantId: string; tenantSlug: string; sessionId: string; seedBrief: string | null;
+  /** "Review with NEXUS" pre-approval handoff to the global PAIGE chat; absent ⇒ no affordance. */
+  onNexusHandoff?: (prompt: string) => void;
+  onBack: () => void;
 }) {
   const [session, setSession] = React.useState<Session | null>(null);
   const [sessionError, setSessionError] = React.useState<string | null>(null);
@@ -60,6 +63,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [chatOpen, setChatOpen] = React.useState(false);
+  const [briefOpen, setBriefOpen] = React.useState(true);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [previewing, setPreviewing] = React.useState<StudioVersion | null>(null);
@@ -252,6 +256,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
             // A different piece is a different door preparation: never carry a fingerprint across.
             key={`${artifact.kind}:${artifactId(artifact)}`}
             artifact={artifact}
+            onNexusHandoff={onNexusHandoff}
             onClose={() => { setPublishOpen(false); publishBtnRef.current?.focus(); }}
             onDone={(m) => { setNotice(m); setRefreshKey((k) => k + 1); }}
             onRefresh={() => setRefreshKey((k) => k + 1)}
@@ -261,6 +266,15 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
 
       <div className="vs-body">
         <section className="vs-chat" aria-label="Chat with Paige" data-open={chatOpen}>
+          {/* The brief the project started from, pinned above the conversation so it survives reopen
+              (EXP07 row 1): the chat's first message already carries it, but nothing showed it after
+              that. Open when the project opens; the owner's own toggle always wins. */}
+          {session?.seedBrief && (
+            <details className="vs-brief-card" open={briefOpen} onToggle={(e) => setBriefOpen(e.currentTarget.open)}>
+              <summary>The brief</summary>
+              <MarkdownMessage content={session.seedBrief} className="vs-md" />
+            </details>
+          )}
           <div className="vs-chat-log" ref={logRef}>
             {chat.loadError && <p className="vs-alert" role="alert">{chat.loadError}</p>}
             {!chat.ready && !chat.loadError && <p className="vs-inspector-note" role="status">Opening the conversation…</p>}

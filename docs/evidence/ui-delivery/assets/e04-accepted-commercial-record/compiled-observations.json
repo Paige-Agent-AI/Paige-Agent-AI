@@ -1,0 +1,152 @@
+{
+  "scope": "Compiled original components and parsers; synthetic RPC/Auth ports only",
+  "frames": [
+    {
+      "file": "compiled-1280-light-recorded.jpg",
+      "focus": "Accepted agreement",
+      "height": 720,
+      "privateTextPresent": true,
+      "scrollWidth": 1265,
+      "theme": "light",
+      "width": 1280
+    },
+    {
+      "file": "compiled-1536-light-recorded.jpg",
+      "focus": "Accepted agreement",
+      "height": 770,
+      "privateTextPresent": true,
+      "scrollWidth": 1536,
+      "theme": "light",
+      "width": 1536
+    },
+    {
+      "file": "compiled-1536-dark-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 770,
+      "privateTextPresent": true,
+      "scrollWidth": 1536,
+      "theme": "dark",
+      "width": 1536
+    },
+    {
+      "file": "compiled-1366-dark-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 768,
+      "privateTextPresent": true,
+      "scrollWidth": 1366,
+      "theme": "dark",
+      "width": 1366
+    },
+    {
+      "file": "compiled-1366-light-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 768,
+      "privateTextPresent": true,
+      "scrollWidth": 1366,
+      "theme": "light",
+      "width": 1366
+    },
+    {
+      "file": "compiled-1024-light-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 768,
+      "privateTextPresent": true,
+      "scrollWidth": 1024,
+      "theme": "light",
+      "width": 1024
+    },
+    {
+      "file": "compiled-1024-dark-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 768,
+      "privateTextPresent": true,
+      "scrollWidth": 1024,
+      "theme": "dark",
+      "width": 1024
+    },
+    {
+      "file": "compiled-900-dark-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 1000,
+      "privateTextPresent": true,
+      "scrollWidth": 900,
+      "theme": "dark",
+      "width": 900
+    },
+    {
+      "file": "compiled-900-light-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 1000,
+      "privateTextPresent": true,
+      "scrollWidth": 900,
+      "theme": "light",
+      "width": 900
+    },
+    {
+      "file": "compiled-320-light-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 720,
+      "privateTextPresent": true,
+      "scrollWidth": 320,
+      "theme": "light",
+      "width": 320
+    },
+    {
+      "file": "compiled-320-dark-recorded.jpg",
+      "focus": "Toggle theme",
+      "height": 720,
+      "privateTextPresent": true,
+      "scrollWidth": 320,
+      "theme": "dark",
+      "width": 320
+    },
+    {
+      "file": "compiled-320-dark-access-withdrawn.jpg",
+      "focus": "Restore owner access",
+      "height": 720,
+      "privateTextPresent": false,
+      "scrollWidth": 320,
+      "theme": "dark",
+      "width": 320
+    },
+    {
+      "file": "compiled-320-dark-expanded.jpg",
+      "focus": "Read dated obligations (11)",
+      "height": 720,
+      "privateTextPresent": true,
+      "scrollWidth": 320,
+      "theme": "dark",
+      "width": 320
+    },
+    {
+      "file": "compiled-320-dark-cancelled.jpg",
+      "focus": "Resolve pending read",
+      "height": 720,
+      "privateTextPresent": false,
+      "scrollWidth": 320,
+      "theme": "dark",
+      "width": 320
+    }
+  ],
+  "behavior": {
+    "accountEpochCleared": true,
+    "ownerAccessCleared": true,
+    "expandedObligations": 11,
+    "busyReadDisabled": true,
+    "cancelFocus": "Inspect accepted terms",
+    "lateResultAfterCancelHidden": true
+  },
+  "additionalBranchAttempt": {
+    "result": "INVALID",
+    "reason": "Supplementary screenshot failed; no complete four-branch result claimed"
+  },
+  "unverified": [
+    "actual owner/staff/linked client",
+    "full authenticated SOLO and PAIGE open/closed",
+    "native zoom and assistive technology",
+    "actual retained private PDF",
+    "provider/signature/payment",
+    "CentralQA",
+    "full12 and founder acceptance"
+  ]
+}

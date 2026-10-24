@@ -252,5 +252,20 @@
     "producerByteInverse": "PASS",
     "sourceSha256": "d478c9c124353f28d596618f741a57dfc513da0b13b46ed545059ec2e1b5b143",
     "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE; pending original2697 release and all E04 current-head gates"
+  },
+  "releasedProducerContinuation": {
+    "producer": "92554a4f23182ababad5d7f8eb61f96c1fe12c8e",
+    "actualMain": "04edecb0f484d8f45a46068645892030064c5cf9",
+    "originalEvidenceSHA256": "8ef006cf4e928ee082bc006d7c7dfed125cb634aaa840c168eb09ac3e9fd5945",
+    "producerBindingSHA256": "ed420f761ee125b117efe3d443a581a57a0bf285a43021edaed280c715aa4a8b",
+    "currentBindingSHA256": "8ca4706a6af7150b90ce69fa92112fc561deb64f4452d6839bcc28d30a239cb2",
+    "currentChatSHA256": "aad1b1f1e70fd3805b6bc469d5e0aefec21ef5068568ab2542e00c8dce41828f",
+    "producerChatSHA256": "c5a6b738ed648ab7b1d1fe028bfbd313a32190b8bf2648f243231f5b0d365fa5",
+    "fullProducerBindingByteInverse": "PASS",
+    "fullProducerChatStaticRowInverse": "PASS",
+    "allOriginal29ScalarValuesUnchanged": true,
+    "allCurrent123SourcePinsRetainedExceptExistingReviewedE04Risk": true,
+    "originalReleasedE05InteractiveDigest": "2917df7c8f03806e63b5f38f4aa386d6df0a1ca6892028cf8384cf98646c74ff",
+    "boundary": "Consume actual released2697/2719 producer source, preserving original d957 record as dated evidence. No new digest/scalar acceptance, metadata/extractor/guard relaxation, shared runtime or admission edit. Exact-head CI, deployment/readback and authenticated customer proof remain separate."
   }
 }

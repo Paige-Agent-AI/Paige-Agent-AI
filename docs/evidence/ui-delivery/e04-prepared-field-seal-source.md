@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: a recorded signature and a verified completed docum
 SOLO_UI: NO: no mounted Solo interface is changed; this is the original private native reader and backend completion consumer.
 UNVERIFIED: final-head hosted CI/review, ordered850004 managed Preview/production source/ABI/ACL and affected Edge importer readback; missing complete HIGH sender/message approval/claim/token request, atomic assigned-field producer, real recipient consent/signing/seal, ordinary roles/reload, CentralQA/full12/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: source=b06f6f9072adf98a5b57a11bee31ca5624e068e8; final evidence-only metadata head/review recorded in PR2745; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE (850004 proposed, never production-applied); edge=NOT_APPLICABLE (not released); evidence=original scripts/agreements/prepared-seal-source-proof.mjs and owning strict tests.
+INTERNAL_BUILD_IDENTITY: source=b06f6f9072adf98a5b57a11bee31ca5624e068e8; final evidence-only metadata head/review recorded in PR2745; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113850004 proposed and never production-applied); edge=PROOF_OWED(original selected importer deployment and source readback); evidence=original scripts/agreements/prepared-seal-source-proof.mjs and owning strict tests.
 RELEASE_CHANNEL: development: incomplete source integration; no prepared signing/customer execution claim.
 RELEASE_CLASSIFICATION: internal-only: bounded private evidence consumer inside the incomplete full EXP04 journey.
 CUSTOMER_RELEASE_IDENTITY: none: the complete consultant commercial and delivery Experience is not yet accepted.
@@ -33,6 +33,8 @@ RELEASE_RECOVERY: position=retain actual signature and original completion recei
 REUSE original thirteen-argument native signature writer, original PDF field renderer, original retained Storage document and completion history. EXTEND original completion with the private service-only850004 reader. REPAIR missing/partial source reads that otherwise could authorize a legacy fallback or false completion. No signing engine, agreement store, sender, ledger, executor, scheduler, approval channel or permission framework is added.
 
 The full local native run uses actual original transactions with controlled synthetic preparation/field projections; it does not implement the missing producer or disable the original prepared-effect/token holds. Initial sandbox socket denial executed no tests; the same fenced runner succeeded after verifying the exact task-owned cluster and empty database scope, then verified cleanup and stopped that cluster. The private frozen cache lock preserves original entries and is not a tracked product dependency pin.
+
+The first scoped evidence validation at5e512b213 correctly rejected explanatory suffixes after the two build-identity state values. Both now use the existing complete PROOF_OWED(boundary) grammar. The validator, source tests, trailer and native/Edge release obligations are unchanged; this formatting correction is not a product failure or gate waiver.
 
 ## Orchestration and algorithms
 

@@ -1,0 +1,15 @@
+{
+  "source": "5ba2664f8279fe24d15250d9ae92fb69a05d45b1",
+  "base": "993c608e74135786356715127d3ed8089e5d0518",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE, sequential source review; no independent or production acceptance claim",
+  "failedCheck": 120710805691,
+  "sourcePins": 122,
+  "baselineFindings": [],
+  "baselineDispatches": 29,
+  "currentFindingsBeforeRenewal": ["incumbent reviewed source changed: supabase/functions/_shared/action-risk.ts"],
+  "oldCanonicalRiskSHA256": "8b21a6cd7166a9d382ef832bb31afda27625a3c675923dbec943a6bd189c049f",
+  "newCanonicalRiskSHA256": "b4e005d2ec8a07936c2d2c457e57a8e015ffee196c2ac90dd1544dc8b577db9e",
+  "reviewedDelta": "One explicit sales_effectuate_commercial_terms HIGH row; removing that exact row reproduces parent risk bytes modulo LF. Original Chat bytes unchanged.",
+  "preserved": "All29 dispatch literals, other121 source pins, extractor, metadata, assertion and hostile controls. No runtime, admission, auto-accept or snapshot regeneration path.",
+  "verificationBoundary": "Read-only source decomposition. Original full registry self-test and exact-head required CI remain separate gates. No authenticated business, provider, algorithm or catalogue activation proof."
+}

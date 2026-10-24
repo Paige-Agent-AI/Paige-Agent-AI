@@ -1,0 +1,736 @@
+{
+  "recordedAt": "2026-10-24T09:30:23Z",
+  "scope": "EXP09 native private-file foundation only",
+  "reviewedHead": "5391a0b700e85e173da9bacc8016fb309d880d6e",
+  "review": {
+    "id": 5637529215,
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE"
+  },
+  "merge": "a2dbbe5be27b239f6a51cd6fbbae8ebf6cade9ae",
+  "tree": "0c858b603b13d836250f0b958a9b6b185b0f9403",
+  "parents": [
+    "7b2ac52074e1697e961f31a28490d0e22bd2ebbb",
+    "5391a0b700e85e173da9bacc8016fb309d880d6e"
+  ],
+  "exactCandidateGates": {
+    "head": "5391a0b700e85e173da9bacc8016fb309d880d6e",
+    "checks": [
+      {
+        "id": 120827395129,
+        "name": "Supabase Preview",
+        "conclusion": "success"
+      },
+      {
+        "id": 120827024824,
+        "name": "Vercel Preview Comments",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826736924,
+        "name": "comms-provider-boundary",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826736831,
+        "name": "verify",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826736667,
+        "name": "web-fetch-hardening-smoke",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826692924,
+        "name": "postgres-authority",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826664656,
+        "name": "contract",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826664537,
+        "name": "audit",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826664459,
+        "name": "database-contract",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826664345,
+        "name": "lint",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826664255,
+        "name": "collections-sql",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826664245,
+        "name": "channel-sql",
+        "conclusion": "success"
+      },
+      {
+        "id": 120826664100,
+        "name": "Validate UI delivery evidence",
+        "conclusion": "success"
+      }
+    ],
+    "statuses": [
+      {
+        "context": "Vercel Deployments – MMA",
+        "state": "success"
+      },
+      {
+        "context": "Vercel",
+        "state": "success"
+      }
+    ],
+    "review": 5637529215,
+    "unresolvedReviewThreads": 0
+  },
+  "nativeJob": 120826664459,
+  "suites": [
+    {
+      "name": "customer_portal_documents.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/customer_portal_documents.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=305, 61 wallclock secs ( 0.02 usr  0.01 sys +  0.01 cusr  0.01 csys =  0.05 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "customer_portal_messages.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/customer_portal_messages.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=63,  0 wallclock secs ( 0.02 usr +  0.01 sys =  0.03 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "customer_portal_sessions.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/customer_portal_sessions.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=113,  1 wallclock secs ( 0.01 usr +  0.01 sys =  0.02 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "customer_portal_progress.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/customer_portal_progress.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=129,  0 wallclock secs ( 0.02 usr +  0.00 sys =  0.02 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "customer_portal_payments.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/customer_portal_payments.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=171,  1 wallclock secs ( 0.01 usr  0.01 sys +  0.00 cusr  0.01 csys =  0.03 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "customer_portal_profile_consent.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/customer_portal_profile_consent.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=253,  8 wallclock secs ( 0.03 usr  0.00 sys +  0.01 cusr  0.01 csys =  0.05 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "customer_portal_agreements.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/customer_portal_agreements.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=255,  1 wallclock secs ( 0.03 usr  0.01 sys +  0.00 cusr  0.01 csys =  0.05 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "consumer_invite_acceptance.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/consumer_invite_acceptance.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=453,  1 wallclock secs ( 0.02 usr  0.00 sys +  0.00 cusr  0.01 csys =  0.03 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "e09_customer_request_scope.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/e09_customer_request_scope.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=294,  1 wallclock secs ( 0.02 usr  0.01 sys +  0.00 cusr  0.01 csys =  0.04 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "e09_customer_relationship_choices.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/e09_customer_relationship_choices.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=61,  0 wallclock secs ( 0.01 usr +  0.00 sys =  0.01 CPU)",
+        "Result: PASS"
+      ]
+    },
+    {
+      "name": "e09_customer_knowledge_retrieval.sql",
+      "lines": [
+        "/home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/tests/e09_customer_knowledge_retrieval.sql .. ok",
+        "All tests successful.",
+        "Files=1, Tests=208,  1 wallclock secs ( 0.02 usr  0.01 sys +  0.01 cusr  0.01 csys =  0.05 CPU)",
+        "Result: PASS"
+      ]
+    }
+  ],
+  "migration": {
+    "version": "20271113810009",
+    "sha256": "b634388b77b3e5220f5c8fc67c449336870ca74860c1802661dc4904c377780b",
+    "normalRun": 40081233729,
+    "containingHead": "28622e6d825a404169834bbd4714952094bb6967",
+    "successJobs": {
+      "deploy": 120837432245,
+      "lint": 120837433659
+    },
+    "loggedAppliedAt": "2026-10-24T09:28:22.9203436Z",
+    "loggedFinishedAt": "2026-10-24T09:28:23.6494191Z",
+    "priorAttempts": [
+      {
+        "run": 40080921170,
+        "job": 120834208927,
+        "error": "55P03 lock timeout at statement3 before the column",
+        "applied": false
+      },
+      {
+        "run": 40080921170,
+        "job": 120835835399,
+        "error": "old immutable source lacked now-recorded originating EXP07 800010",
+        "applied": false
+      },
+      {
+        "run": 40081233729,
+        "job": 120835128334,
+        "error": "original then-unrecorded lower800010; originating source later recorded it",
+        "applied": false
+      }
+    ],
+    "historyReset": false,
+    "includeAll": false,
+    "unknownSessionTermination": false
+  },
+  "production": {
+    "project": "xygzykjyynhzqytbqnzu",
+    "versionAndColumn": [
+      {
+        "frontier": "20271113810009",
+        "own_applied": true,
+        "own_column": true
+      }
+    ],
+    "all13Bindings": [
+      {
+        "signature": "_client_portal_lock_relationship(uuid,text)",
+        "binding": {
+          "acl": [
+            "postgres:EXECUTE:false"
+          ],
+          "args": "p_tenant_id uuid, p_lock text",
+          "hash": "416002c40cb71ed54cc4c3387c37563f",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "result": "uuid",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_tenant_id uuid, p_lock text DEFAULT 'share'::text",
+          "signature": "_client_portal_lock_relationship(uuid,text)",
+          "volatility": "v"
+        }
+      },
+      {
+        "signature": "_client_portal_request_business()",
+        "binding": {
+          "acl": [
+            "postgres:EXECUTE:false"
+          ],
+          "args": "",
+          "hash": "72efd408dc26f9672088f10eea9ebea1",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "result": "uuid",
+          "definer": false,
+          "language": "plpgsql",
+          "full_args": "",
+          "signature": "_client_portal_request_business()",
+          "volatility": "s"
+        }
+      },
+      {
+        "signature": "client_file_owner_list(uuid,uuid,uuid,integer,timestamp with time zone,uuid)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false"
+          ],
+          "args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_contact_id uuid, p_limit integer, p_before timestamp with time zone, p_before_id uuid",
+          "hash": "d58f23f107ad5348f97591258e0618af",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "result": "jsonb",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_contact_id uuid, p_limit integer DEFAULT 100, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone, p_before_id uuid DEFAULT NULL::uuid",
+          "signature": "client_file_owner_list(uuid,uuid,uuid,integer,timestamp with time zone,uuid)",
+          "volatility": "s"
+        }
+      },
+      {
+        "signature": "client_file_set_client_share(uuid,uuid,uuid,boolean,timestamp with time zone)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false"
+          ],
+          "args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_file_id uuid, p_shared boolean, p_expected_updated_at timestamp with time zone",
+          "hash": "828069e76ecdaa43002982ecd668fa9e",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "result": "jsonb",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_file_id uuid, p_shared boolean, p_expected_updated_at timestamp with time zone",
+          "signature": "client_file_set_client_share(uuid,uuid,uuid,boolean,timestamp with time zone)",
+          "volatility": "v"
+        }
+      },
+      {
+        "signature": "client_portal_begin_file_upload(uuid,uuid,text,text,bigint,uuid)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false",
+            "service_role:EXECUTE:false"
+          ],
+          "args": "p_file_id uuid, p_expected_client_id uuid, p_filename text, p_mime_type text, p_size_bytes bigint, p_tenant_id uuid",
+          "hash": "1af390453141672cf84ab10627fd87b9",
+          "owner": "postgres",
+          "config": [
+            "search_path=public, storage, pg_temp"
+          ],
+          "result": "jsonb",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_file_id uuid, p_expected_client_id uuid, p_filename text, p_mime_type text, p_size_bytes bigint, p_tenant_id uuid DEFAULT NULL::uuid",
+          "signature": "client_portal_begin_file_upload(uuid,uuid,text,text,bigint,uuid)",
+          "volatility": "v"
+        }
+      },
+      {
+        "signature": "client_portal_can_upload_file_object(text)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false",
+            "service_role:EXECUTE:false"
+          ],
+          "args": "p_name text",
+          "hash": "1d14e8a769796be9b674c63699db22ff",
+          "owner": "postgres",
+          "config": [
+            "search_path=public, storage, pg_temp"
+          ],
+          "result": "boolean",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_name text",
+          "signature": "client_portal_can_upload_file_object(text)",
+          "volatility": "s"
+        }
+      },
+      {
+        "signature": "client_portal_documents(uuid,integer,timestamp with time zone,uuid)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false",
+            "service_role:EXECUTE:false"
+          ],
+          "args": "p_tenant_id uuid, p_limit integer, p_before timestamp with time zone, p_before_id uuid",
+          "hash": "0baf145ea8e773c96132217c5a7d05c9",
+          "owner": "postgres",
+          "config": [
+            "search_path=public, pg_temp"
+          ],
+          "result": "jsonb",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_tenant_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone, p_before_id uuid DEFAULT NULL::uuid",
+          "signature": "client_portal_documents(uuid,integer,timestamp with time zone,uuid)",
+          "volatility": "s"
+        }
+      },
+      {
+        "signature": "client_portal_file_upload_status(uuid,uuid)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false",
+            "service_role:EXECUTE:false"
+          ],
+          "args": "p_file_id uuid, p_tenant_id uuid",
+          "hash": "c3eaa683f9606580842ec10e2648822b",
+          "owner": "postgres",
+          "config": [
+            "search_path=public, storage, pg_temp"
+          ],
+          "result": "jsonb",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_file_id uuid, p_tenant_id uuid DEFAULT NULL::uuid",
+          "signature": "client_portal_file_upload_status(uuid,uuid)",
+          "volatility": "s"
+        }
+      },
+      {
+        "signature": "client_portal_finish_file_upload(uuid,uuid)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false",
+            "service_role:EXECUTE:false"
+          ],
+          "args": "p_file_id uuid, p_tenant_id uuid",
+          "hash": "65a91440c1662b9154bf8c0ad379b0a0",
+          "owner": "postgres",
+          "config": [
+            "search_path=public, storage, pg_temp"
+          ],
+          "result": "jsonb",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_file_id uuid, p_tenant_id uuid DEFAULT NULL::uuid",
+          "signature": "client_portal_finish_file_upload(uuid,uuid)",
+          "volatility": "v"
+        }
+      },
+      {
+        "signature": "client_portal_frame()",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false"
+          ],
+          "args": "",
+          "hash": "b3826e6b52ba34cd40348112b8145883",
+          "owner": "postgres",
+          "config": [
+            "search_path=public, pg_temp"
+          ],
+          "result": "jsonb",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "",
+          "signature": "client_portal_frame()",
+          "volatility": "s"
+        }
+      },
+      {
+        "signature": "client_portal_relationship_id(uuid)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false",
+            "service_role:EXECUTE:false"
+          ],
+          "args": "p_tenant_id uuid",
+          "hash": "ff84ba24689e5043d7d15ed3d9150268",
+          "owner": "postgres",
+          "config": [
+            "search_path=public, pg_temp"
+          ],
+          "result": "uuid",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_tenant_id uuid DEFAULT NULL::uuid",
+          "signature": "client_portal_relationship_id(uuid)",
+          "volatility": "s"
+        }
+      },
+      {
+        "signature": "handle_data_subject_request(uuid,uuid,text,jsonb,text,uuid)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false",
+            "service_role:EXECUTE:false"
+          ],
+          "args": "_tenant_id uuid, _contact_id uuid, _request_type text, _corrections jsonb, _reason text, _actor_user_id uuid",
+          "hash": "8a50eda76529adb4c5dcfa3a9bd785eb",
+          "owner": "postgres",
+          "config": [
+            "search_path=public"
+          ],
+          "result": "jsonb",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "_tenant_id uuid, _contact_id uuid, _request_type text, _corrections jsonb DEFAULT NULL::jsonb, _reason text DEFAULT NULL::text, _actor_user_id uuid DEFAULT NULL::uuid",
+          "signature": "handle_data_subject_request(uuid,uuid,text,jsonb,text,uuid)",
+          "volatility": "v"
+        }
+      },
+      {
+        "signature": "paige_chat_customer_thread_authorized(uuid)",
+        "binding": {
+          "acl": [
+            "authenticated:EXECUTE:false",
+            "postgres:EXECUTE:false"
+          ],
+          "args": "p_thread uuid",
+          "hash": "1f736ad4206faf196290c13939edca35",
+          "owner": "postgres",
+          "config": [
+            "search_path=public, pg_temp"
+          ],
+          "result": "boolean",
+          "definer": true,
+          "language": "plpgsql",
+          "full_args": "p_thread uuid",
+          "signature": "paige_chat_customer_thread_authorized(uuid)",
+          "volatility": "s"
+        }
+      }
+    ],
+    "bindingValidation": [
+      {
+        "signature": "_client_portal_lock_relationship(uuid,text)",
+        "failures": []
+      },
+      {
+        "signature": "client_file_owner_list(uuid,uuid,uuid,integer,timestamp with time zone,uuid)",
+        "failures": []
+      },
+      {
+        "signature": "client_file_set_client_share(uuid,uuid,uuid,boolean,timestamp with time zone)",
+        "failures": []
+      },
+      {
+        "signature": "client_portal_begin_file_upload(uuid,uuid,text,text,bigint,uuid)",
+        "failures": []
+      },
+      {
+        "signature": "client_portal_can_upload_file_object(text)",
+        "failures": []
+      },
+      {
+        "signature": "client_portal_documents(uuid,integer,timestamp with time zone,uuid)",
+        "failures": []
+      },
+      {
+        "signature": "client_portal_file_upload_status(uuid,uuid)",
+        "failures": []
+      },
+      {
+        "signature": "client_portal_finish_file_upload(uuid,uuid)",
+        "failures": []
+      },
+      {
+        "signature": "client_portal_frame()",
+        "failures": []
+      },
+      {
+        "signature": "paige_chat_customer_thread_authorized(uuid)",
+        "failures": []
+      },
+      {
+        "signature": "handle_data_subject_request(uuid,uuid,text,jsonb,text,uuid)",
+        "failures": []
+      },
+      {
+        "signature": "client_portal_relationship_id(uuid)",
+        "failures": []
+      },
+      {
+        "signature": "_client_portal_request_business()",
+        "failures": []
+      }
+    ],
+    "permissions": {
+      "allPass": true,
+      "failures": [],
+      "metadata": {
+        "bucket": {
+          "id": "client-files",
+          "limit": 20971520,
+          "mimes": [
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ],
+          "public": false
+        },
+        "column": {
+          "type": "uuid",
+          "default": null,
+          "nullable": "YES"
+        },
+        "policies": [
+          {
+            "name": "client_files_private_chat_boundary",
+            "check": "((customer_chat_thread_id IS NULL) OR ((uploaded_by_user_id = auth.uid()) AND (contact_id = client_portal_relationship_id(tenant_id))))",
+            "using": "((customer_chat_thread_id IS NULL) OR ((uploaded_by_user_id = auth.uid()) AND (contact_id = client_portal_relationship_id(tenant_id))))",
+            "command": "*",
+            "permissive": false
+          }
+        ],
+        "triggers": [
+          {
+            "name": "trg_client_files_private_chat_guard",
+            "definition": "CREATE TRIGGER trg_client_files_private_chat_guard BEFORE INSERT OR UPDATE ON public.client_files FOR EACH ROW EXECUTE FUNCTION _client_files_private_chat_guard()"
+          }
+        ],
+        "functions": [
+          {
+            "anon": false,
+            "args": "",
+            "auth": false,
+            "hash": "d481b684b33132dbf8c933d4c8edb4a0",
+            "name": "_client_files_private_chat_guard",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": null
+          },
+          {
+            "anon": false,
+            "args": "p_thread_id uuid, p_tenant_id uuid",
+            "auth": false,
+            "hash": "18ff71ce490f6ee182c97e7be3898491",
+            "name": "_client_portal_chat_files_authorize",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": null
+          },
+          {
+            "anon": false,
+            "args": "p_client_id uuid",
+            "auth": false,
+            "hash": "1fca45c01f2ed32608a9c1fcb0a92562",
+            "name": "_client_portal_chat_files_solo_scope",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": null
+          },
+          {
+            "anon": false,
+            "args": "p_file_id uuid, p_expected_client_id uuid, p_thread_id uuid, p_filename text, p_mime_type text, p_size_bytes bigint, p_tenant_id uuid",
+            "auth": true,
+            "hash": "c788e03137f6e165af78e333fb2212fd",
+            "name": "client_portal_begin_chat_file_upload",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": "NULL::uuid"
+          },
+          {
+            "anon": false,
+            "args": "p_file_id uuid, p_thread_id uuid, p_tenant_id uuid",
+            "auth": true,
+            "hash": "c76eeb267e6b828891488713a14972d2",
+            "name": "client_portal_chat_file_status",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": "NULL::uuid"
+          },
+          {
+            "anon": false,
+            "args": "p_thread_id uuid, p_tenant_id uuid, p_limit integer, p_before timestamp with time zone, p_before_id uuid",
+            "auth": true,
+            "hash": "b24a860caf0efdfcad0a702f8fd7542d",
+            "name": "client_portal_chat_files",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": "NULL::uuid, 50, NULL::timestamp with time zone, NULL::uuid"
+          }
+        ],
+        "table_rls": true,
+        "constraints": [
+          {
+            "name": "client_files_private_chat_purpose",
+            "definition": "CHECK (((customer_chat_thread_id IS NULL) OR (NOT (visibility IS DISTINCT FROM 'client_upload'::client_file_visibility))))"
+          }
+        ],
+        "trigger_enabled": true
+      }
+    }
+  },
+  "web": {
+    "exact": {
+      "id": "dpl_9sQ3WJkcKyGnngHjtfJyZPH1ouBv",
+      "sha": "a2dbbe5be27b239f6a51cd6fbbae8ebf6cade9ae",
+      "state": "READY",
+      "environment": "production"
+    },
+    "containing": {
+      "id": "dpl_6pNUFgQdNnqAk5ZRSEYH1D3A9L6W",
+      "sha": "28622e6d825a404169834bbd4714952094bb6967",
+      "state": "READY",
+      "environment": "production"
+    },
+    "public": {
+      "url": "https://paigeagent.ai/version.json",
+      "buildId": "28622e6d825a404169834bbd4714952094bb6967-mvm6oppc",
+      "customerUpdate": null
+    }
+  },
+  "releaseReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2723#issuecomment-6382571591",
+  "edge": "NOT_APPLICABLE",
+  "activation": "NO_CHANGE",
+  "actualCustomerUpload": "UNVERIFIED",
+  "composerMessageModelIntegration": "NOT_CONNECTED",
+  "all42AndSevenPillars": "NOT_COMPLETE",
+  "algorithms": "ALG01/12 bounded deterministic support only; whole algorithms and02/04/13 UNVERIFIED",
+  "founderAcceptance": "NOT_REQUESTED"
+}

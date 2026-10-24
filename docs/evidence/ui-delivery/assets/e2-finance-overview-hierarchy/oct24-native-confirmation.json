@@ -69,5 +69,101 @@
     }
   ],
   "format_note": "Original capture bytes are JPEG; .png names in private output were misleading. Published .jpg copies are byte-identical, no resampling or editing.",
-  "proof_boundary": "Only named states. Remaining all-eight viewports/open/zoom/reduced-motion/ordinary roles/VERA exact-reference/reload and complete Finance acceptance owed. Latest physical-Escape stop retained."
+  "proof_boundary": "Named current synthetic states only; current release, zoom, ordinary roles/cohorts, VERA exact-reference/reload and complete Finance acceptance remain owed. Prior tool stops remain historical; owner explicitly resumed current QA.",
+  "resumed_confirmation": {
+    "source_composition": "fc1d361202026a06c1e1787a3aedff42e43bae42",
+    "product_unchanged_from": "d8865fa54a2b67fdef94e844b1e9fff3825057b2",
+    "states": [
+      {
+        "file": "oct24-resumed-1536x770-light-closed.jpg",
+        "sha256": "4a91e893593978306d8fad0239542ec67c0bbf795fc8bbafdb38cadf6a96d5fe",
+        "window_pixels": {
+          "width": 1523,
+          "height": 906
+        },
+        "viewport_toolbar": "1536x770",
+        "rail": "closed",
+        "inspection": "Original exact monetary strings, comparison and unavailable bank/accounting coverage remain readable; local content scroll retained."
+      },
+      {
+        "file": "oct24-resumed-1536x770-light-open.jpg",
+        "sha256": "5799e9bc7c489e3c468418f70b566acde72b036fd6713c0c33c100122ad1bbba",
+        "window_pixels": {
+          "width": 1523,
+          "height": 906
+        },
+        "viewport_toolbar": "1536x770",
+        "rail": "open",
+        "inspection": "Existing responsive PAIGE rail/overlay fits and can close back to the unchanged Finance context; fixture has no actual Chat runtime."
+      },
+      {
+        "file": "oct24-resumed-1366x768-light-closed.jpg",
+        "sha256": "0f693b85df4f2ccf58ff7c41e9c48ae1d44b75587a8735e514719f38153dd120",
+        "window_pixels": {
+          "width": 1523,
+          "height": 906
+        },
+        "viewport_toolbar": "1366x768",
+        "rail": "closed",
+        "inspection": "Original exact monetary strings, comparison and unavailable bank/accounting coverage remain readable; local content scroll retained."
+      },
+      {
+        "file": "oct24-resumed-1366x768-light-open.jpg",
+        "sha256": "534a941326633c7e0f011306269d5d86ececa6d499a1aea695d1963ad29e7cad",
+        "window_pixels": {
+          "width": 1523,
+          "height": 906
+        },
+        "viewport_toolbar": "1366x768",
+        "rail": "open",
+        "inspection": "Existing responsive PAIGE rail/overlay fits and can close back to the unchanged Finance context; fixture has no actual Chat runtime."
+      },
+      {
+        "file": "oct24-resumed-1024x768-light-closed.jpg",
+        "sha256": "70e9263f90581b0a1618b05c31fa1b235c1d3f0e867120a9c03a5a25812f8437",
+        "window_pixels": {
+          "width": 1523,
+          "height": 906
+        },
+        "viewport_toolbar": "1024x768",
+        "rail": "closed",
+        "inspection": "Original exact monetary strings, comparison and unavailable bank/accounting coverage remain readable; local content scroll retained."
+      },
+      {
+        "file": "oct24-resumed-1024x768-light-open.jpg",
+        "sha256": "0bbc03af068e10b523872c0ed0be68b69822a8eafe9074e72a43a7754ddcc722",
+        "window_pixels": {
+          "width": 1523,
+          "height": 906
+        },
+        "viewport_toolbar": "1024x768",
+        "rail": "open",
+        "inspection": "Existing responsive PAIGE rail/overlay fits and can close back to the unchanged Finance context; fixture has no actual Chat runtime."
+      },
+      {
+        "file": "oct24-resumed-900x1000-light-closed.jpg",
+        "sha256": "c7f6e03f0656717cbe7782e37d124418bb2ed437e9d8c1055aaaa8d54e33a148",
+        "window_pixels": {
+          "width": 1523,
+          "height": 906
+        },
+        "viewport_toolbar": "900x1000",
+        "rail": "closed",
+        "inspection": "Original exact monetary strings, comparison and unavailable bank/accounting coverage remain readable; local content scroll retained."
+      },
+      {
+        "file": "oct24-resumed-900x1000-light-open.jpg",
+        "sha256": "3193db2675e892366a19ea15c6b4f351684a673821c2661e51d39e24c3f5d1e3",
+        "window_pixels": {
+          "width": 1523,
+          "height": 906
+        },
+        "viewport_toolbar": "900x1000",
+        "rail": "open",
+        "inspection": "Existing responsive PAIGE rail/overlay fits and can close back to the unchanged Finance context; fixture has no actual Chat runtime."
+      }
+    ],
+    "geometry_note": "Observed Edge Responsive toolbar CSS dimensions; original 1523x906 window pixels. 50/75 percent canvas scaling is not a full-size raster or browser 200 percent zoom claim. Height1000 was initially only an input value while auto height remained applied; native Up/Down then verified applied Description1000 and 900x1000 tooltip before captures. Initial auto-height frames are not used.",
+    "proof_boundary": "Synthetic layout and rail return only. Original320 source Sheet Escape focus capture remains bounded proof. Browser200 percent zoom, actual roles/cohorts, Chat draft/scroll/Live and post-release customer flow remain UNVERIFIED; no capability/provider/algorithm promotion."
+  }
 }

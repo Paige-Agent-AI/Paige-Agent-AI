@@ -1,5 +1,19 @@
 # Finance department — current source and full operating target
 
+## October24 — resumed final-source visual confirmation
+
+All eight required desktop/panel states now have actual native Responsive
+captures on unchanged original Finance product source, alongside the original320
+monetary/focus proof. [Original confirmation](../evidence/ui-delivery/assets/e2-finance-overview-hierarchy/oct24-native-confirmation.json)
+records byte hashes, actual window pixels, toolbar geometry and synthetic scope.
+Initial auto-height1000 input was not applied; native stepper verification fixed
+the proof setup before accepted captures. No product workaround or state change.
+Browser200percent zoom, ordinary role/cohort/Live, actual VERA same-reference
+review/reload and post-release acceptance remain owed; source candidate release
+stays gated. Existing authorized customer Overview was separately observed with
+truthful source-backed facts versus unavailable cash/accounting; no customer
+amounts or browser metadata are published. All seven subpages remain in scope.
+
 ## October23 — Overview visual refinement, development only
 
 October24 checkpoint: current-source native Sheet focus return now works on

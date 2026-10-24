@@ -9,10 +9,10 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owner/admin reads supported
 VISUAL_DIRECTION: PASS: preserve Mineral/Obsidian and Schibsted Grotesk. Original measurements and actual receipt-source comparison lead; compact bank/accounting coverage supports them. No decorative chart, forecast curve, invented total or empty hero.
 AUTOMATED_EVIDENCE: PASS: two genuine original bare-route failures/26 incumbent cases skipped in the targeted red run; then53 passing cases/four original Finance workspace, invoice, shared metric hook and Finance evidence suites. Original denial, unavailable-versus-zero, expiry, account retirement, source inspection and seven VERA handoffs retained. Four dependency/native-cache startup failures were INVALID/pre-collection, not product failures; actual red/green logs retained separately.
 STATIC_EVIDENCE: PASS: scoped ESLint0; production build4m22s with existing chunk/comment advisories. Actual raw tsc exits2/six incumbent errors versus unchanged ten-error signature/count baseline; retained-log multiset comparison proves zero additions, not a zero-error typecheck. Impeccable current9 advisory signatures exactly match unchanged CSS baseline9, zero new or blocking findings and no TSX finding. Two new off-ramp font sizes corrected to documented21px/14px before final scan. SOLO parity SP1–SP5 passes; hostile controls/evidence guard and hosted exact-head CI remain separate checks.
-RENDERED_EVIDENCE: UNVERIFIED: exact owner origin permission now works. Actual19dff source native populated1536/1366/1024/900 open/closed frames and390px source Sheet support the original layout; initial blank/loading or lagging compositor frames are INVALID. Correct Schibsted Grotesk and original source/currency/unknown distinctions observed. Final focus-repair source pins, matched captures and complete mobile/zoom proof remain owed after intermittent control stalls/kernel reset. No synthetic frame is customer acceptance.
+RENDERED_EVIDENCE: PASS: final unchanged product source has eight current required Responsive toolbar/rail states plus original320 amount and source-Sheet focus captures. Source hashes/window pixels/accepted geometry are in oct24-native-confirmation.json. Bounded synthetic rendering only, not authenticated customer or real Chat acceptance.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: native bare Finance→Overview preserves query/fragment, Home/End reaches first/last original tab, and source Sheet exposes original period/coverage/limitations. A genuine focus-loss finding held release: inline Metric remount disconnected the source button; the original controlled Sheet also lacked a tracked close target. Final source repair passes owning tests, but native corrected return/complete Chat continuity still require confirmation.
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate is not deployed. Earlier Finance no-source and bounded VERA QA remain dated evidence, not this refinement's acceptance.
-KEYBOARD_FOCUS: UNVERIFIED: native Home/End/source opening verified. Original-node disconnection RED retained; stable module Metric plus the original Sheet onCloseAutoFocus now restore only the connected original control in the same epoch/range.54 original cases/four suites pass, including same-control return and changed-workspace refusal. Initial focus test checked before Radix's scheduled close event; final check waits one original zero-delay cleanup turn without changing the assertion or global timeouts. Corrected native return still owed.
+KEYBOARD_FOCUS: PASS: original320 source-Sheet Escape returns visibly to the same metric on final stable-module source; connected same-epoch/range guards and changed-workspace refusal pass owning tests. Original Home/End/tab navigation proof is retained. Full actual Chat/Live continuity and ordinary-role acceptance remain separately UNVERIFIED.
 ZOOM_REFLOW: UNVERIFIED: candidate required shell viewports, narrow content, enlarged text and200percent browser zoom require actual inspection.
 REDUCED_MOTION: UNVERIFIED: no new animation is intended; actual candidate reduced-motion behavior still requires native observation.
 STATE_COVERAGE: PASS: original53 consumer cases include supported/no-source data, denial, read failure/retry, expiry, account retirement, original source Sheet, editable VERA hints and all seven original tab choices. Real native states remain separately unverified; no business-action success state introduced.
@@ -26,7 +26,7 @@ MUST_PRESERVE: original Metric/Evidence issuer/resolver and expiry/revocation, S
 ACCEPTANCE_CRITERIA: bare Finance entry replaces to the same account Overview while retaining query/fragment; all deep links and Back remain useful. Original measurements precede concise missing-source context, source comparisons retain currency/evidence, and every original control remains reachable on desktop/narrow with PAIGE open/closed. Actual source/refusal and reload remain truthful.
 MOTION_PURPOSE: NONE: no authored animation or artificial AI progress.
 PROTECTED_SEAMS: affected consumer route selection, responsive content geometry, accessible labels/order and existing source/tenant/expiry/permission presentation require owning tests and native proof. Not affected: authentication/account choice, entitlement/billing/provisioning, approval/autonomy authority, Spine execution, canonical writers/readback, Rails/audit/Memory, Chat transcript/stream/thread/popout, Live state, Secure Browser/Vault, integration activation/external effects, durable jobs/retries/idempotency and credential/privacy boundaries. No backend/schema/shared shell edit.
-INTERNAL_BUILD_IDENTITY: source-main=89e48402cc488252f6803c1c62645950ea3500ea; branch=codex/e2-finance-visual-hierarchy; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record
+INTERNAL_BUILD_IDENTITY: source-main=9cb8a6ff69aa07d72bf6b7b6dae50cbfdf0c4fa3; source-composition=fc1d361202026a06c1e1787a3aedff42e43bae42; branch=codex/e2-finance-visual-hierarchy; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record
 RELEASE_CHANNEL: development: original Finance presentation refinement; no customer-reachable candidate yet.
 RELEASE_CLASSIFICATION: internal-only: bounded visual/default-route correction, no capability activation.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release name or announcement.
@@ -34,14 +34,14 @@ RELEASE_NOTE_REQUIRED: no: sanitized engineering evidence only.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: candidate visual/navigation behavior; full Finance remains incomplete. Source tests and synthetic fixtures do not establish ordinary authenticated customer acceptance.
 RELEASE_RECOVERY: position=forward-fix original consumer or revert bounded presentation; reference=ANT138/099b587d and ANT161/b4d05902.
 
-SOLO_1536X770_PAIGE_CLOSED: PASS: October24 actual native Responsive1536x770 toolbar/fit-to-window capture, final unchanged Finance source4fd24ea2. Closed rail/synthetic inputs only; exact source hashes/original window pixels in oct24-native-confirmation.json.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: final corrected source needs this native state after the latest physical-Escape stop; earlier pre-correction frames remain dated support.
+SOLO_1536X770_PAIGE_CLOSED: PASS: October24 resumed actual Edge Responsive1536x770 closed-rail confirmation on byte-identical product source; original window pixels/hashes and bounded synthetic inspection in oct24-native-confirmation.json.
+SOLO_1536X770_PAIGE_OPEN: PASS: October24 resumed actual Edge Responsive1536x770 open-rail confirmation on byte-identical product source; original window pixels/hashes and bounded synthetic inspection in oct24-native-confirmation.json.
+SOLO_1366X768_PAIGE_CLOSED: PASS: October24 resumed actual Edge Responsive1366x768 closed-rail confirmation on byte-identical product source; original window pixels/hashes and bounded synthetic inspection in oct24-native-confirmation.json.
+SOLO_1366X768_PAIGE_OPEN: PASS: October24 resumed actual Edge Responsive1366x768 open-rail confirmation on byte-identical product source; original window pixels/hashes and bounded synthetic inspection in oct24-native-confirmation.json.
+SOLO_1024X768_PAIGE_CLOSED: PASS: October24 resumed actual Edge Responsive1024x768 closed-rail confirmation on byte-identical product source; original window pixels/hashes and bounded synthetic inspection in oct24-native-confirmation.json.
+SOLO_1024X768_PAIGE_OPEN: PASS: October24 resumed actual Edge Responsive1024x768 open-rail confirmation on byte-identical product source; original window pixels/hashes and bounded synthetic inspection in oct24-native-confirmation.json.
+SOLO_900X1000_PAIGE_CLOSED: PASS: October24 resumed actual Edge Responsive900x1000 closed-rail confirmation on byte-identical product source; original window pixels/hashes and bounded synthetic inspection in oct24-native-confirmation.json.
+SOLO_900X1000_PAIGE_OPEN: PASS: October24 resumed actual Edge Responsive900x1000 open-rail confirmation on byte-identical product source; original window pixels/hashes and bounded synthetic inspection in oct24-native-confirmation.json.
 
 ## Capability routing before source edits
 
@@ -139,3 +139,23 @@ actual VERA/reference/reload proof remain owed. Latest physical-Escape stop ende
 browser input; no alternate control used. UI release remains held for material
 final proof/current exact review/required CI. No customer/synthetic, algorithm,
 Capabilities or provider promotion; full19/nine and Founder Acceptance unchanged.
+
+## October24 resumed native confirmation — current eight states
+
+Owner resumed existing Edge QA. All eight original required toolbar viewport/rail
+states now have actual final-source captures in the existing confirmation record.
+The prior amount/focus defects stay preserved; no product or test change follows
+this confirmation. Exact original formatted amounts remain whole, responsive
+PAIGE uses its existing rail/overlay, and closing returns to Finance. The tall
+height initially remained automatic despite its typed value; native stepper input
+then verified applied1000 before the accepted900x1000 captures. Automatic/lagging
+frames and stale/out-of-window accessibility targets are INVALID diagnostics, not
+product failures or accepted proof. Copies retain original JPEG bytes.
+
+This is synthetic rendered coverage, not real Chat/composer continuity or customer
+acceptance. Original320 Escape focus proof is retained; browser200percent zoom,
+current roles/cohorts, actual VERA reference/reload, exact final review/CI and
+normal release/readback remain owed. Required verify on d886 was still running
+at the last read, not failed; the current records composition needs new exact
+checks. Original2734 closeout2763 is now9cb8a6ff, web9AEKREADY/both public exact
+9cb8a6ff-mvmlkpkp/null, existing Second Brain preserved. All19/nine remain required.

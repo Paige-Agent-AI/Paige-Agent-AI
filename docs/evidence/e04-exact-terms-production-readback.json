@@ -1,0 +1,461 @@
+{
+  "result": "PASS_ACTUAL_NATIVE_FULL_SOURCE_SECURITY_SCHEMA",
+  "at": "2026-10-24T12:19:50.479621+00:00",
+  "pr": 2689,
+  "reviewed": "eaa6aa0817573c5b4d71c642f5aa1e23676a89af",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE5638092378",
+  "merge": "5a4837d357f9c9a75d85e158143170a9e4255ff8",
+  "tree": "22d55f58286eca772afee78ddf87e3ef85ac47f4",
+  "migration": "20271113820004",
+  "frontier": "20271113820004",
+  "normalRun": 40092583130,
+  "retryDeployJob": 120870101892,
+  "priorFailure": {
+    "job": 120868236470,
+    "sqlstate": "55P03",
+    "originalFiveSecondLockBound": true,
+    "receipt": 6384055220,
+    "rollbackReadback": "migration0/newcolumns0/original eight definitions; exact0relationlocks before controlled retry6384097134",
+    "retained": true
+  },
+  "dbLive": "5a4837d357f9c9a75d85e158143170a9e4255ff8",
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_execute_sales_effectuation",
+      "owner": "postgres",
+      "types": "uuid, uuid, uuid, jsonb, jsonb",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": true,
+      "body_md5": "d0fadc565ec92654a3622525557fbccc",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_actor_user_id",
+        "_expected_tenant_id",
+        "_operation_id",
+        "_command",
+        "_governance"
+      ],
+      "arguments": "_actor_user_id uuid, _expected_tenant_id uuid, _operation_id uuid, _command jsonb, _governance jsonb",
+      "volatility": "v",
+      "full_definition_md5": "44803df79733a4c37c9290f60ce978f7"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_paige_accepted_commercial_payload",
+      "owner": "postgres",
+      "types": "paige_agreements",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": false,
+      "body_md5": "235026b37dfde7b0f151588c680c8ca9",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_a"
+      ],
+      "arguments": "_a paige_agreements",
+      "volatility": "s",
+      "full_definition_md5": "5684e541aa6fd7fe4370f2da6d016a06"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_preview_sales_effectuation",
+      "owner": "postgres",
+      "types": "uuid, uuid, jsonb",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": true,
+      "body_md5": "66e1e8dd52f1560e8229c3c0e3f49115",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_actor_user_id",
+        "_expected_tenant_id",
+        "_command"
+      ],
+      "arguments": "_actor_user_id uuid, _expected_tenant_id uuid, _command jsonb",
+      "volatility": "v",
+      "full_definition_md5": "0021d9841e3c8b9191915ea738a47757"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "_record_agreement_signature",
+      "owner": "postgres",
+      "types": "text, integer, text, text, text, text, boolean, boolean, text, integer, text, inet, text",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": false,
+      "body_md5": "3a2fa340fca9838aa9c6737f1e41ae61",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_token_hash",
+        "_agreement_version",
+        "_content_sha256",
+        "_content_storage_key",
+        "_typed_name",
+        "_signature_image_png",
+        "_consent_read",
+        "_consent_esign",
+        "_consent_slug",
+        "_consent_version",
+        "_consent_sha256",
+        "_ip",
+        "_user_agent"
+      ],
+      "arguments": "_token_hash text, _agreement_version integer, _content_sha256 text, _content_storage_key text, _typed_name text, _signature_image_png text, _consent_read boolean, _consent_esign boolean, _consent_slug text, _consent_version integer, _consent_sha256 text, _ip inet, _user_agent text",
+      "volatility": "v",
+      "full_definition_md5": "3b842ad0a9db8dfa03d9f635659a20ac"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_sales_effective_provenance_guard",
+      "owner": "postgres",
+      "types": "",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "trigger",
+      "strict": false,
+      "definer": false,
+      "body_md5": "5250ce89de90a007b4ff8a0dff9b0072",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": null,
+      "arguments": "",
+      "volatility": "v",
+      "full_definition_md5": "d8d802dee1e7f919dc615bd3eeb855f6"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_set_client_agreement_status",
+      "owner": "postgres",
+      "types": "uuid, uuid, uuid, text, timestamp with time zone",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": false,
+      "body_md5": "b3a2fbca5ad01acb5bfb5ed1fbd5fc50",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_actor",
+        "_tenant",
+        "_agreement_id",
+        "_status",
+        "_expected_updated_at"
+      ],
+      "arguments": "_actor uuid, _tenant uuid, _agreement_id uuid, _status text, _expected_updated_at timestamp with time zone",
+      "volatility": "v",
+      "full_definition_md5": "7c80933de74af1d9516711e698d633cb"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_validate_sales_effectuation",
+      "owner": "postgres",
+      "types": "jsonb",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "void",
+      "strict": false,
+      "definer": false,
+      "body_md5": "c72a8fdabb404c18505de615c04133a1",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_command"
+      ],
+      "arguments": "_command jsonb",
+      "volatility": "i",
+      "full_definition_md5": "499112e70c5a07c859c209ba13fb0234"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_workspace_event_display",
+      "owner": "postgres",
+      "types": "text, text",
+      "config": [
+        "search_path=public, pg_catalog"
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": false,
+      "body_md5": "74ae364c374aa2f6be09fab557617e46",
+      "language": "sql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_source_kind",
+        "_outcome"
+      ],
+      "arguments": "_source_kind text, _outcome text",
+      "volatility": "i",
+      "full_definition_md5": "3d8ef546681a262265e1f1ab9dbf5b3e"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_workspace_event_display",
+      "owner": "postgres",
+      "types": "text, text, text",
+      "config": [
+        "search_path=pg_catalog, public"
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": false,
+      "body_md5": "e551ecbcca75dda0764353647757feed",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_source_kind",
+        "_outcome",
+        "_capability"
+      ],
+      "arguments": "_source_kind text, _outcome text, _capability text",
+      "volatility": "i",
+      "full_definition_md5": "585b84cdf75444dcf30eef73e058e305"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "_workspace_event_display_before_e04_effectuation",
+      "owner": "postgres",
+      "types": "text, text, text",
+      "config": [
+        "search_path=pg_catalog, public"
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": false,
+      "body_md5": "8798140accd05c06fa406796efd7dbdd",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_source_kind",
+        "_outcome",
+        "_capability"
+      ],
+      "arguments": "_source_kind text, _outcome text, _capability text",
+      "volatility": "i",
+      "full_definition_md5": "14beb55f22bd68a78c8d1aa2d5718629"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "execute_sales_collection_command",
+      "owner": "postgres",
+      "types": "uuid, uuid, uuid, jsonb, jsonb",
+      "config": [
+        "search_path=pg_catalog, public"
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": true,
+      "body_md5": "4a25621d37c0b292aa3b38d5b7f055f2",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_actor_user_id",
+        "_expected_tenant_id",
+        "_operation_id",
+        "_command",
+        "_governance"
+      ],
+      "arguments": "_actor_user_id uuid, _expected_tenant_id uuid, _operation_id uuid, _command jsonb, _governance jsonb",
+      "volatility": "v",
+      "full_definition_md5": "5f7297f38d12ffdf65d9176416176af5"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "preview_sales_collection_command",
+      "owner": "postgres",
+      "types": "uuid, uuid, jsonb",
+      "config": [
+        "search_path=pg_catalog, public"
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": true,
+      "body_md5": "9ccde31a3199fefc4aac2afbd9547fc0",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_actor_user_id",
+        "_expected_tenant_id",
+        "_command"
+      ],
+      "arguments": "_actor_user_id uuid, _expected_tenant_id uuid, _command jsonb",
+      "volatility": "v",
+      "full_definition_md5": "e989acafe17fb127fd4710bf9cedefea"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "read_sales_collection_command_result",
+      "owner": "postgres",
+      "types": "uuid, uuid, uuid, jsonb",
+      "config": [
+        "search_path=pg_catalog, public"
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": true,
+      "body_md5": "ed9ee0effd12873fd7853c887bc7de8c",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_actor_user_id",
+        "_expected_tenant_id",
+        "_operation_id",
+        "_command"
+      ],
+      "arguments": "_actor_user_id uuid, _expected_tenant_id uuid, _operation_id uuid, _command jsonb",
+      "volatility": "v",
+      "full_definition_md5": "f63e6b55b46b8184c9344b684363293a"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "name": "set_client_agreement_status",
+      "owner": "postgres",
+      "types": "uuid, uuid, text, timestamp with time zone",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "result": "jsonb",
+      "strict": false,
+      "definer": true,
+      "body_md5": "f88b77e51d282ef5ecc8b951297a99a6",
+      "language": "plpgsql",
+      "parallel": "u",
+      "arg_modes": null,
+      "arg_names": [
+        "_expected_tenant_id",
+        "_agreement_id",
+        "_status",
+        "_expected_updated_at"
+      ],
+      "arguments": "_expected_tenant_id uuid, _agreement_id uuid, _status text, _expected_updated_at timestamp with time zone DEFAULT NULL::timestamp with time zone",
+      "volatility": "v",
+      "full_definition_md5": "8c73200861b75de8d131d86d42fa2177"
+    }
+  ],
+  "provenanceSchema": {
+    "columns": [
+      {
+        "name": "effective_at",
+        "type": "timestamptz",
+        "default": null,
+        "nullable": "YES"
+      },
+      {
+        "name": "effective_operation_id",
+        "type": "uuid",
+        "default": null,
+        "nullable": "YES"
+      },
+      {
+        "name": "effective_signing_id",
+        "type": "uuid",
+        "default": null,
+        "nullable": "YES"
+      },
+      {
+        "name": "effective_source_digest",
+        "type": "text",
+        "default": null,
+        "nullable": "YES"
+      },
+      {
+        "name": "effective_terms_version",
+        "type": "int8",
+        "default": null,
+        "nullable": "YES"
+      }
+    ],
+    "constraints": [
+      {
+        "name": "e04_effective_operation_fk",
+        "deferred": true,
+        "validated": true,
+        "deferrable": true,
+        "definition": "FOREIGN KEY (effective_operation_id) REFERENCES paige_sales_collection_operations(id) DEFERRABLE INITIALLY DEFERRED"
+      },
+      {
+        "name": "e04_effective_provenance_complete",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK ((((effective_signing_id IS NULL) AND (effective_terms_version IS NULL) AND (effective_at IS NULL) AND (effective_operation_id IS NULL) AND (effective_source_digest IS NULL)) OR ((effective_signing_id IS NOT NULL) AND (effective_terms_version IS NOT NULL) AND (effective_terms_version >= 0) AND (effective_at IS NOT NULL) AND (effective_operation_id IS NOT NULL) AND (effective_source_digest IS NOT NULL) AND (effective_source_digest ~ '^[a-f0-9]{64}$'::text))))"
+      },
+      {
+        "name": "e04_effective_signing_fk",
+        "deferred": true,
+        "validated": true,
+        "deferrable": true,
+        "definition": "FOREIGN KEY (effective_signing_id) REFERENCES paige_agreements(id) DEFERRABLE INITIALLY DEFERRED"
+      }
+    ],
+    "trigger": [
+      {
+        "name": "sales_effective_provenance_guard",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER sales_effective_provenance_guard BEFORE INSERT OR UPDATE ON public.tenant_client_agreements FOR EACH ROW EXECUTE FUNCTION _sales_effective_provenance_guard()"
+      }
+    ],
+    "uniqueIndex": [
+      {
+        "name": "sales_effectuation_pair_unique",
+        "ready": true,
+        "valid": true,
+        "unique": true,
+        "definition": "CREATE UNIQUE INDEX sales_effectuation_pair_unique ON public.paige_sales_collection_operations USING btree (tenant_id, ((command ->> 'signing_id'::text)), ((command ->> 'expected_version'::text))) WHERE ((command ->> 'action'::text) = 'collection.effectuate_terms'::text)"
+      }
+    ]
+  },
+  "comparison": "All14 full definitions/arguments/defaults/returns/modes/owner/ACL/config/security/language/volatility/parallel/strictness and schema exact normal fresh source-built Preview; independent original own cold14 observations also exact",
+  "web": {
+    "deployment": "dpl_4twLBNNdLF9KCjYepVAeSaMgkqUh",
+    "state": "READY",
+    "at": "2026-10-24T12:14:53.101Z",
+    "bothAliasesHTTP200": true,
+    "buildId": "5a4837d357f9c9a75d85e158143170a9e4255ff8-mvmcswf5",
+    "customerUpdate": null
+  },
+  "edge": {
+    "run": 40092583159,
+    "job": 120868132921,
+    "conclusion": "SUCCESS",
+    "selectedEntries": 0,
+    "deployAndSourceReadback": "SKIPPED",
+    "newCallerOrVersion": "NONE"
+  },
+  "receipt": 6384139888,
+  "boundary": "Actual source/native/web deployment readback only. No ordinary owner/staff/linked-client act, actual signature/charge/send/provider effect, historical backfill, Chat/Live activation, whole12/CentralQA/founder acceptance; internal production increment/no customer release identity. No session/timeout/history/DDL/include-all/test/permission bypass."
+}

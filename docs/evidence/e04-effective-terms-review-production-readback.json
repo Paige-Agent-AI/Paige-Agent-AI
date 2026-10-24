@@ -1,0 +1,62 @@
+{
+  "result": "PASS_ACTUAL_OWNER_TERMS_REVIEW_SOURCE_STYLE_WEB",
+  "at": "2026-10-24T13:33:00.226Z",
+  "pr": 2714,
+  "reviewedHead": "79d7a72a2000ed50b685dde32173757669bcb58a",
+  "merge": "e1a6a6bcc508d42ce058643ca64fb06e710f5263",
+  "tree": "d1b9fd1dbc39d62a6b8b89bb0d3643115e0817fc",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE5638222529",
+  "premerge": 6384797187,
+  "requiredCI": "All10 applicable exact-head checks/two webSUCCESS/designed schema-freePreviewSKIP",
+  "deployment": "dpl_BqhMNALKZdLCnqG4UicJ1JyDvBsh READY",
+  "versions": [
+    {
+      "url": "https://paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "e1a6a6bcc508d42ce058643ca64fb06e710f5263-mvmfqv4x",
+        "customerUpdate": null
+      }
+    },
+    {
+      "url": "https://app.paigeagent.ai/version.json",
+      "status": 200,
+      "version": {
+        "buildId": "e1a6a6bcc508d42ce058643ca64fb06e710f5263-mvmfqv4x",
+        "customerUpdate": null
+      }
+    }
+  ],
+  "prospectiveUnion": "Exact actual merge tree and parents match inspected40-path inverse; all29 terms-review and146 Work source pins exact",
+  "modules": [
+    {
+      "url": "https://app.paigeagent.ai/assets/SoloEntry-B1KA-xS_.js",
+      "SHA256": "ff7e52e76f98efba69c8ae038c1d789c9bed0a1015d8f9bbd05483e3fdc7ca4d",
+      "markers": [
+        "Make accepted terms effective",
+        "Review effective terms",
+        "Accepted-version operation recorded",
+        "Original pending operation recovered",
+        "The historical receipt records the accepted version as effective at execution. Current status must be read separately.",
+        "These commercial terms match the exact signed version. Approval records that accepted version as effective.",
+        "No invoice, payment request, charge, onboarding or completed service is created."
+      ]
+    }
+  ],
+  "stylesheet": {
+    "url": "https://app.paigeagent.ai/assets/SoloEntry-C3Sxi97g.css",
+    "SHA256": "5ecef2048eead3f60e6510a1684ce8dd398a92341640169a7cc92d7e8173725a",
+    "narrow520": true,
+    "controls44px": true,
+    "unknownCloseHidden": true,
+    "receiptWrap": true
+  },
+  "discovery": {
+    "modules": 24,
+    "bytes": 5516841,
+    "onlyObservedImports": true
+  },
+  "nativeEdge": "No own change; actual parent830004/selected functions at f6 verified6384790221",
+  "activation": "No Chat/Live/provider/send/payment/auto-grant/capability maturity activation",
+  "boundary": "Public deployed static source/style and build identity only. Earlier native component frames synthetic. No real private document/ordinary owner-staff-client permission/action/receipt/reload/provider/full12/CentralQA/founder acceptance."
+}

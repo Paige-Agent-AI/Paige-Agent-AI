@@ -21,14 +21,17 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 // the owner or an admin of the session's own workspace, or the agency that manages it; never a member,
 // never a global role, and a caller-named tenant other than the session's is refused, never swapped.
 //
-// IDEMPOTENCY, honestly (§13). The chat tool passes no content id, so every save INSERTS a new row: a
-// blind retry saves a second copy. The Chat confirmation fingerprint and the auto lane's one call per
-// tool call are the guard. (The RPC can update a row by id, but the chat path does not use that.)
+// IDEMPOTENCY, honestly (§13). A save with no target INSERTS a new row: a blind retry saves a second
+// copy. An in-place revision is possible ONLY through the server-side on-canvas clamp (EXP07 rows
+// 5/7): the executor honors target_content_id exclusively when it names the exact copy row the
+// server itself has on the Studio canvas (the #292 clamp generate_image uses), so a stray or echoed
+// id degrades to a fresh save and can never clobber a different artifact. The Chat confirmation
+// fingerprint and the auto lane's one call per tool call remain the execute-once guards.
 
 export const MARKETING_CONTENT_SAVE = {
   key:"marketing_content.save",domain:"marketing_content",owner:"vibe-studio",humanSurface:"/solo/:account/growth/content",
-  action:{classification:"mutate",executor:"public.save_marketing_content",chatTool:"content_save",riskPolicyKey:"ordinary",approvalAuthority:"chat-canonical",idempotency:"Not convergent from Chat — the chat tool passes no content id, so every save inserts a new library row and a blind retry saves a second copy; the Chat confirmation fingerprint is the execute-once guard."},
-  outcome:{kinds:["created","refused","failed"],projector:"public.save_marketing_content",railVisibility:"Records that a piece of copy was saved to the workspace's private library — never that it was sent, posted or published."},
+  action:{classification:"mutate",executor:"public.save_marketing_content",chatTool:"content_save",riskPolicyKey:"ordinary",approvalAuthority:"chat-canonical",idempotency:"Insert without target (a blind retry saves a second copy); in-place update ONLY through the server-side on-canvas clamp — target_content_id is honored exclusively when it names the exact copy row the server has on the Studio canvas, so a stray id degrades to a fresh save. The Chat confirmation fingerprint is the execute-once guard."},
+  outcome:{kinds:["created","updated","refused","failed"],projector:"public.save_marketing_content",railVisibility:"Records that a piece of copy was saved or revised in place in the workspace's private library — never that it was sent, posted or published."},
   chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
 } as const satisfies SpineCapability;
 
@@ -55,6 +58,7 @@ export const MARKETING_CONTENT_SAVE_CAPABILITY = defineCapability({
       body: { type: "string", minLength: 1 },
       channel: { type: "string", enum: ["social_post", "ad_copy", "email_campaign", "caption", "blog_outline", "sms_broadcast"] },
       brief: { type: "string" },
+      target_content_id: { type: "string", description: "On-canvas refine target; honored exclusively when it names the exact copy row the server has on the Studio canvas." },
     },
     required: ["title", "body"],
   }),
@@ -78,7 +82,7 @@ export const MARKETING_CONTENT_SAVE_CAPABILITY = defineCapability({
   providerBinding: { kind: "internal", operation: "public.save_marketing_content", connectionResolver: null },
   idempotency: {
     mode: "required",
-    key: "none from Chat — no content id is passed, so each save inserts a new row and a blind retry saves a second copy; the Chat confirmation fingerprint is the execute-once guard.",
+    key: "insert without target (a blind retry saves a second copy); in-place update only via the server-side on-canvas clamp, so a stray target_content_id degrades to a fresh insert. The Chat confirmation fingerprint is the execute-once guard.",
     readback: "public.save_marketing_content",
     replay: "return_recorded_result",
   },

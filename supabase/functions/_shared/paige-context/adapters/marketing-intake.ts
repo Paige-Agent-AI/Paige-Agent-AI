@@ -87,11 +87,16 @@ export function createMarketingIntakeSnapshotAdapter(
           // projection stays free of it. "Credited" is the producer's own grouping (a durable
           // brief link, a uniquely-matching campaign tag, or a recorded tag), not causal
           // attribution — the standing note below keeps saying so.
-          if (name === 'campaignTags' && tagsValid) {
-            const credited = tagItems.filter(row => /^(brief:|tag:)/.test(row.key));
+          if (name === 'campaignTags' && tagsValid && !partial) {
+            // `_other` is the producer's fold of campaign-grouped buckets beyond its rank
+            // limit — those leads ARE credited, so the sum includes it; the busiest figure
+            // does not (a fold is not one campaign). Withheld entirely on a partial read:
+            // excluded rows make an exact-seeming total untrustworthy.
+            const credited = tagItems.filter(row => /^(brief:|tag:)/.test(row.key) || row.key === '_other');
+            const named = tagItems.filter(row => /^(brief:|tag:)/.test(row.key));
             figures.push(
               ['leads_credited_to_campaigns', 'Leads credited to a campaign', credited.reduce((n, row) => n + row.count, 0)],
-              ['busiest_campaign_leads', 'Most leads one campaign brought in', credited.reduce((n, row) => Math.max(n, row.count), 0)]);
+              ['busiest_campaign_leads', 'Most leads one campaign brought in', named.reduce((n, row) => Math.max(n, row.count), 0)]);
           }
         }
         if (!figures.length || figures.some(([, , value]) => value === null)) {

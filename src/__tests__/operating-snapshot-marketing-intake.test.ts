@@ -191,6 +191,28 @@ describe('Campaign results in the COO review (EXP03 S2)', () => {
     expect(headlines(result)).not.toHaveProperty('campaigns.leads_credited_to_campaigns');
     expect(headlines(result)).not.toHaveProperty('campaigns.busiest_campaign_leads');
   });
+  it('the producer-rank fold into _other still counts as credited, but never as one campaign', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags)
+        row.values = distribution(['brief:11111111-1111-4111-8111-111111111111', 3], ['_other', 9], ['_untagged', 2]);
+    } }).read();
+    expect(headlines(result)).toMatchObject({
+      'campaigns.leads_credited_to_campaigns': 12,
+      'campaigns.busiest_campaign_leads': 3,
+      'campaigns.leads_without_campaign_tag': 2,
+    });
+  });
+  it('a partial distribution that still contains an _untagged bucket withholds the aggregates too', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags) {
+        row.values = distribution(['brief:11111111-1111-4111-8111-111111111111', 4], ['_untagged', 2]);
+        row.truth_state = 'PARTIAL'; row.coverage = { state: 'partial', candidate_count: 8, contributing_count: 6, excluded_count: 2 };
+        row.exclusions = [{ reason: 'Not measured', count: 2 }];
+      }
+    } }).read();
+    expect(headlines(result)).not.toHaveProperty('campaigns.leads_credited_to_campaigns');
+    expect(headlines(result)).not.toHaveProperty('campaigns.busiest_campaign_leads');
+  });
   it('a partial distribution withholds the whole campaign figure set — never an inferred untagged zero nor an exact-seeming credited total', async () => {
     const result = await harness({ edit(row, key) {
       if (key === MARKETING_INTAKE_METRICS.campaignTags) {

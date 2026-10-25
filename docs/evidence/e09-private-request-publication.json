@@ -2353,4 +2353,22 @@
     "founderAcceptance": "NOT_REQUESTED",
     "scope": "all42/seven pillars/Teach CURA/CAP018-024/ALG01,02,04,12,13 remain open"
   }
+,
+  "ownerCommandGovernanceCorrection": {
+    "failedHead": "72690e961439a6b054d4ae585e5ef575f25aec0f",
+    "runtime": "90e967d50294ba273bdb0e5eb122d4079b498fd4",
+    "rootSha256": "2e2d88d86b44f688aa76da928628512489e89d33958360ee7193ded57ba27c28",
+    "finding": "Original strict gate-order discovery, missing imported-catalog discovery and original receipt coverage failed hosted CI; prior no-finding review is superseded for release",
+    "disposition": "Original preparation block moved intact after unchanged original risk brakes; one closed actual-import/mount/domain-array AST discovery with8 hostile negatives; one truthful emits row in original receipt ledger. No assertion/gate/exemption relaxed.",
+    "verification": {
+      "focused": 94,
+      "actionRisk": "197 classified / zero unclassified and self-test PASS",
+      "receiptCoverage": "197 all declared and original10 hostile cases PASS through actual original CLI",
+      "rootDeno": "same10 inherited diagnostics, not zero-error compile",
+      "binding": "29 original aggregates reproduced; only28 literals and sameHIGH risk digest reviewed/renewed; original provider/control/helper/imports unchanged, same Portal-only Search refusal"
+    },
+    "preview": "First-head standard Preview270009/source/ABI/ACL PASS, zero users/clients; not corrected-head or production proof",
+    "status": "NOT_MERGED/NOT_DEPLOYED/NOT_ACTIVATED; fresh exact-head review and CI required",
+    "authenticated": "UNVERIFIED; original customer consent/identity/session/other browser leases unchanged"
+  }
 }

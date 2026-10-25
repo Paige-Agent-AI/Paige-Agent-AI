@@ -1,0 +1,110 @@
+{
+  "at": "2026-10-25T14:30:17.205Z",
+  "sourceBase": "02a0c20535019b59e80d35322ebae57268e76cc0",
+  "sourceSha256": "2c361525e04909a426fabf156fe5d7816bf3df7dea9dca7c954b12318ec8195b",
+  "stylesheetSourceSha256": "61a2f53608549c56c205d8b4f1684efea3251acf5d7d17fdcea575544010a240",
+  "actualEntryAssetsVerified": true,
+  "finalCssViewports": 4,
+  "finalPaigeStates": 2,
+  "finalCaptures": 9,
+  "prototypeStates": 13,
+  "captures": [
+    {
+      "file": "prototype-1536-closed.jpg",
+      "sha256": "8032abcf8314982d3e06be74c75092ac2e5a894f3a57f77a07489aa6a46b0430"
+    },
+    {
+      "file": "prototype-1536-open.jpg",
+      "sha256": "e2ee802cbd55ce7092125b8c0102d3f9228902a2fc1f405ec8efb1d629d24274"
+    },
+    {
+      "file": "prototype-1366-open.jpg",
+      "sha256": "16a89f6f4afd5ff6d0879241ed5e3102733b7f0c37fa68f424e13ee08b922dfd"
+    },
+    {
+      "file": "prototype-1366-closed.jpg",
+      "sha256": "728018da015ede72f85965a206072d07327a9cd592e954256892c369183cca81"
+    },
+    {
+      "file": "prototype-1024-closed.jpg",
+      "sha256": "2f86b98540ecc84561b54c4eaa8db94b3356167d9e873b7df6394bf658b5c9f9"
+    },
+    {
+      "file": "prototype-1024-open.jpg",
+      "sha256": "71f821f47ee67429c13f551265442177011eaa60c9aeadd67f3f75009df1adc1"
+    },
+    {
+      "file": "prototype-900-open.jpg",
+      "sha256": "959debe65e1e3f0a2ae180e98708c239c5c05d30007cb5b309948dbccea007af"
+    },
+    {
+      "file": "prototype-900-closed.jpg",
+      "sha256": "4de9b5de62f36a374b5165a394983466e465621c379e3011a24c92cb620c9371"
+    },
+    {
+      "file": "prototype-390-drawer.jpg",
+      "sha256": "3a2e757b9964e066337d831581a45661a179d71360bf39a2b72e472c1ce996ba"
+    },
+    {
+      "file": "prototype-390-keyboard-bottom.jpg",
+      "sha256": "bce444d205e747e9a0a6b9f0fdaf45b374de5342cbbdb432fa85bc582d3f9826"
+    },
+    {
+      "file": "prototype-320-drawer.jpg",
+      "sha256": "8f7f87a91c0909b3f45709d095752fc84a24a5227f3c6593acf277e8c08a64c3"
+    },
+    {
+      "file": "prototype-320-keyboard-bottom.jpg",
+      "sha256": "d9b84289bc5115af3b155fca6bb9e73a8b7f6faa402d9dcef08e02648cf797ac"
+    },
+    {
+      "file": "prototype-obsidian-reduced-drawer.jpg",
+      "sha256": "111261f62e50274cca383dea1e6d2da15674005abf70007ab668e83f0fe78e83"
+    },
+    {
+      "file": "product-1536-closed-drawer.jpg",
+      "sha256": "4656f9f84b00667baadc279ae672ce1637a642d2fd19b485b6b939f99966db89"
+    },
+    {
+      "file": "product-1536-open.jpg",
+      "sha256": "e2ee802cbd55ce7092125b8c0102d3f9228902a2fc1f405ec8efb1d629d24274"
+    },
+    {
+      "file": "product-1366-closed-drawer.jpg",
+      "sha256": "3e5edc1d683260c87654127078b5dd91b55fb2aef0f8bdd245185871e346751b"
+    },
+    {
+      "file": "product-1366-open.jpg",
+      "sha256": "8438ab4a42d88c10bca4f025f84fd486d7fc59111aac5253d13ff760b76491b2"
+    },
+    {
+      "file": "product-1024-closed-drawer.jpg",
+      "sha256": "bda341f5fe656c2b5ea6ff5310632c0b24c0f1165e994da0f9bcbc9b334df50e"
+    },
+    {
+      "file": "product-1024-open.jpg",
+      "sha256": "09efccaf8f80bc33426336146e526a141cf52f8de241d26c8aab42aa621bc9f1"
+    },
+    {
+      "file": "product-900-closed-drawer.jpg",
+      "sha256": "d07a4105a7408626a98e0106d08aa6ed1d304839e3a39082239fc892139976c5"
+    },
+    {
+      "file": "product-900-open.jpg",
+      "sha256": "40e2d9ab8f2917d062dd965f05486e568d2b0669ac84296c1297395d494b222c"
+    },
+    {
+      "file": "product-390-closed-drawer.jpg",
+      "sha256": "4d2badec98d3f00694d4eb6ac71487743c619d46b886368c4415b22c28cc53d6"
+    }
+  ],
+  "impeccable": {
+    "blocking": 0,
+    "advisory": 29,
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE; actual contrast, type, geometry and recovery inspected; detector alone is not quality proof"
+  },
+  "nativeZoomAndAt": "UNVERIFIED",
+  "authenticatedCustomerProof": "UNVERIFIED",
+  "productionReleased": false,
+  "founderAccepted": false
+}

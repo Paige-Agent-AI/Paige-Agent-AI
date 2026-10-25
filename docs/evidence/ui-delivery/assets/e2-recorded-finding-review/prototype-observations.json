@@ -1,0 +1,449 @@
+{
+  "at": "2026-10-25T14:17:58.889Z",
+  "sourceSha256": "2c361525e04909a426fabf156fe5d7816bf3df7dea9dca7c954b12318ec8195b",
+  "prototype": "original component; four import-only aliases; original stylesheet plus proposed .sc-drawer.is-recorded .sc-button min-height44px",
+  "neutralSynthetic": true,
+  "states": [
+    {
+      "state": "current",
+      "text": "Linked recorded finding\nClear selection\nPayment processor declaration\nNEEDS ATTENTION\n\nThis recorded setup result does not verify a business action.\n\nFrom the last completed check · Recorded 10/22/2026, 5:00:00 AM\n\nInspect linked evidence",
+      "inspectCurrent": 1,
+      "inspectHistorical": 0
+    },
+    {
+      "state": "unfinished",
+      "text": "Linked recorded finding\nClear selection\nPayment processor declaration\nRecorded Fail\n\nThis recorded setup result does not verify a business action.\n\nOriginal recorded check · Started; completion not recorded 10/10/2026, 5:00:00 AM\n\nInspect original finding",
+      "inspectCurrent": 0,
+      "inspectHistorical": 1
+    },
+    {
+      "state": "resolved",
+      "text": "Linked recorded finding\nClear selection\nPayment processor declaration\nRecorded Fail\n\nThis recorded setup result does not verify a business action.\n\nOriginal recorded check · Recorded 10/10/2026, 5:00:00 AM\n\nInspect original finding",
+      "inspectCurrent": 0,
+      "inspectHistorical": 1
+    },
+    {
+      "state": "unfinished-current",
+      "text": "Linked recorded finding\nClear selection\nPayment processor declaration\nRecorded Fail\n\nThis recorded setup result does not verify a business action.\n\nOriginal recorded check · Started; completion not recorded 10/22/2026, 5:00:00 AM\n\nInspect original finding",
+      "inspectCurrent": 0,
+      "inspectHistorical": 1
+    },
+    {
+      "state": "different-completion",
+      "text": "Linked recorded finding\nClear selection\nPayment processor declaration\nRecorded Fail\n\nThis recorded setup result does not verify a business action.\n\nOriginal recorded check · Recorded 10/10/2026, 5:00:00 AM\n\nInspect original finding",
+      "inspectCurrent": 0,
+      "inspectHistorical": 1
+    },
+    {
+      "state": "changed-result",
+      "text": "Linked recorded finding\nClear selection\nPayment processor declaration\nRecorded Pass\n\nThis recorded setup result does not verify a business action.\n\nOriginal recorded check · Recorded 10/22/2026, 5:00:00 AM\n\nInspect original finding",
+      "inspectCurrent": 0,
+      "inspectHistorical": 1
+    },
+    {
+      "state": "changed-decision",
+      "text": "Linked recorded finding\nClear selection\nPayment processor declaration\nRecorded Fail\n\nThis recorded setup result does not verify a business action.\n\nOriginal recorded check · Recorded 10/22/2026, 5:00:00 AM\n\nInspect original finding",
+      "inspectCurrent": 0,
+      "inspectHistorical": 1
+    },
+    {
+      "state": "loading",
+      "text": "Linked recorded finding\nClear selection\n\nReading the original finding…\n\nRefresh records",
+      "inspectHistorical": 0
+    },
+    {
+      "state": "error",
+      "text": "Linked recorded finding\nClear selection\n\nThe original finding could not be read. Refresh records to retry.\n\nRefresh records",
+      "inspectHistorical": 0
+    },
+    {
+      "state": "withheld",
+      "text": "Linked recorded finding\nClear selection\n\nThe original finding is unavailable in this workspace. Refresh records or clear the selection.\n\nRefresh records",
+      "inspectHistorical": 0
+    },
+    {
+      "state": "missing",
+      "text": "Linked recorded finding\nClear selection\n\nThe original finding is unavailable in this workspace. Refresh records or clear the selection.\n\nRefresh records",
+      "inspectHistorical": 0
+    },
+    {
+      "state": "member",
+      "text": "Linked recorded finding\nClear selection\n\nThe original finding is unavailable in this workspace. Refresh records or clear the selection.\n\nRefresh records",
+      "inspectHistorical": 0
+    },
+    {
+      "state": "invalid",
+      "text": "Linked recorded finding\nClear selection\n\nThis source reference is not valid. Clear the selection to continue.",
+      "inspectHistorical": 0
+    }
+  ],
+  "behaviors": [
+    {
+      "check": "reverse-tab-contained",
+      "focus": "Back to original source"
+    },
+    {
+      "check": "forward-tab-wrap",
+      "focus": "Expand"
+    },
+    {
+      "check": "expanded",
+      "visible": true
+    },
+    {
+      "check": "escape-return",
+      "dialogs": 0,
+      "focused": true
+    },
+    {
+      "check": "error-refresh-recovers",
+      "text": "Linked recorded finding\nClear selection\nPayment processor declaration\nRecorded Fail\n\nThis recorded setup result does not verify a business action.\n\nOriginal recorded check · Recorded 10/10/2026, 5:00:00 AM\n\nInspect original finding"
+    },
+    {
+      "check": "current-preparation-cancel",
+      "dialogVisible": true,
+      "focus": " Put PAIGE to work"
+    },
+    {
+      "check": "clear-preserves-query-hash",
+      "url": "http://127.0.0.1:5242/solo/1234567/command-center/systems-check?history=older&keep=planning#evidence",
+      "linkedRows": 0,
+      "focus": "Refresh current data"
+    }
+  ],
+  "layouts": [
+    {
+      "label": "1536-closed",
+      "composerVisible": false,
+      "height": 770,
+      "rootHeight": 770,
+      "rootWidth": 1536,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 616,
+          "overflowY": "hidden",
+          "scrollHeight": 616,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 572,
+          "overflowY": "hidden",
+          "scrollHeight": 572,
+          "tag": "MAIN"
+        }
+      ],
+      "width": 1536
+    },
+    {
+      "label": "1536-open",
+      "composerVisible": true,
+      "height": 770,
+      "rootHeight": 770,
+      "rootWidth": 1536,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 616,
+          "overflowY": "hidden",
+          "scrollHeight": 616,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 572,
+          "overflowY": "hidden",
+          "scrollHeight": 572,
+          "tag": "MAIN"
+        }
+      ],
+      "width": 1536
+    },
+    {
+      "label": "1366-open",
+      "composerVisible": true,
+      "height": 768,
+      "rootHeight": 768,
+      "rootWidth": 1366,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 614,
+          "overflowY": "hidden",
+          "scrollHeight": 614,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 569,
+          "overflowY": "hidden",
+          "scrollHeight": 569,
+          "tag": "MAIN"
+        }
+      ],
+      "width": 1366
+    },
+    {
+      "label": "1366-closed",
+      "composerVisible": false,
+      "height": 768,
+      "rootHeight": 768,
+      "rootWidth": 1366,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 614,
+          "overflowY": "hidden",
+          "scrollHeight": 614,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 569,
+          "overflowY": "hidden",
+          "scrollHeight": 569,
+          "tag": "MAIN"
+        }
+      ],
+      "width": 1366
+    },
+    {
+      "label": "1024-closed",
+      "composerVisible": false,
+      "height": 768,
+      "rootHeight": 768,
+      "rootWidth": 1024,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 614,
+          "overflowY": "hidden",
+          "scrollHeight": 614,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 569,
+          "overflowY": "hidden",
+          "scrollHeight": 569,
+          "tag": "MAIN"
+        }
+      ],
+      "width": 1024
+    },
+    {
+      "label": "1024-open",
+      "composerVisible": true,
+      "height": 768,
+      "rootHeight": 768,
+      "rootWidth": 1024,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 614,
+          "overflowY": "hidden",
+          "scrollHeight": 614,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 560,
+          "overflowY": "hidden",
+          "scrollHeight": 560,
+          "tag": "MAIN"
+        }
+      ],
+      "width": 1024
+    },
+    {
+      "label": "900-open",
+      "composerVisible": true,
+      "height": 1000,
+      "rootHeight": 1000,
+      "rootWidth": 900,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 846,
+          "overflowY": "hidden",
+          "scrollHeight": 846,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 792,
+          "overflowY": "hidden",
+          "scrollHeight": 792,
+          "tag": "MAIN"
+        }
+      ],
+      "width": 900
+    },
+    {
+      "label": "900-closed",
+      "composerVisible": false,
+      "height": 1000,
+      "rootHeight": 1000,
+      "rootWidth": 900,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 846,
+          "overflowY": "hidden",
+          "scrollHeight": 846,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 801,
+          "overflowY": "hidden",
+          "scrollHeight": 801,
+          "tag": "MAIN"
+        }
+      ],
+      "width": 900
+    },
+    {
+      "label": "390-drawer",
+      "composerVisible": false,
+      "height": 844,
+      "rootHeight": 844,
+      "rootWidth": 390,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 697,
+          "overflowY": "hidden",
+          "scrollHeight": 697,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 643,
+          "overflowY": "hidden",
+          "scrollHeight": 643,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-drawer-body",
+          "height": 546,
+          "overflowY": "auto",
+          "scrollHeight": 787,
+          "tag": "DIV"
+        }
+      ],
+      "width": 390
+    },
+    {
+      "label": "320-drawer",
+      "composerVisible": false,
+      "height": 780,
+      "rootHeight": 780,
+      "rootWidth": 320,
+      "scrollOwners": [
+        {
+          "classes": "tcs-main",
+          "height": 633,
+          "overflowY": "hidden",
+          "scrollHeight": 633,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-workspace",
+          "height": 579,
+          "overflowY": "hidden",
+          "scrollHeight": 579,
+          "tag": "MAIN"
+        },
+        {
+          "classes": "sc-drawer-body",
+          "height": 456,
+          "overflowY": "auto",
+          "scrollHeight": 911,
+          "tag": "DIV"
+        }
+      ],
+      "width": 320
+    }
+  ],
+  "captures": [
+    {
+      "label": "1536-closed",
+      "file": "prototype-1536-closed.jpg"
+    },
+    {
+      "label": "1536-open",
+      "file": "prototype-1536-open.jpg"
+    },
+    {
+      "label": "1366-open",
+      "file": "prototype-1366-open.jpg"
+    },
+    {
+      "label": "1366-closed",
+      "file": "prototype-1366-closed.jpg"
+    },
+    {
+      "label": "1024-closed",
+      "file": "prototype-1024-closed.jpg"
+    },
+    {
+      "label": "1024-open",
+      "file": "prototype-1024-open.jpg"
+    },
+    {
+      "label": "900-open",
+      "file": "prototype-900-open.jpg"
+    },
+    {
+      "label": "900-closed",
+      "file": "prototype-900-closed.jpg"
+    },
+    {
+      "label": "390-drawer",
+      "file": "prototype-390-drawer.jpg"
+    },
+    {
+      "label": "390-keyboard-bottom",
+      "file": "prototype-390-keyboard-bottom.jpg"
+    },
+    {
+      "label": "320-drawer",
+      "file": "prototype-320-drawer.jpg"
+    },
+    {
+      "label": "320-keyboard-bottom",
+      "file": "prototype-320-keyboard-bottom.jpg"
+    },
+    {
+      "label": "obsidian-reduced-drawer",
+      "file": "prototype-obsidian-reduced-drawer.jpg"
+    }
+  ],
+  "contrast": {
+    "mineralBody": 5.371569479721624,
+    "obsidianBody": 7.401381715576836
+  },
+  "touchCorrection": {
+    "beforeHeight": 36,
+    "proposedHeight": 44,
+    "measuredAfterHeight": 44,
+    "narrowIconTargets44": true,
+    "narrowBody16px": true
+  },
+  "keyboardBottomReachableAt390": true,
+  "keyboardBottomReachableAt320": true,
+  "syntheticDraftPreservedAcrossFoldAndViewport": true,
+  "reducedMotion": {
+    "mode": "browser media emulation, restored",
+    "animation": "none",
+    "transition": "1e-05s",
+    "nativeOsPreference": "UNVERIFIED"
+  },
+  "nativeZoom": "NOT_RUN; bound native Edge window did not display the local proof, so no keyboard action was sent there",
+  "screenReaderAndPhysicalDevice": "UNVERIFIED",
+  "authenticatedBackendPermissionProof": false,
+  "productionDeployed": false,
+  "founderAcceptance": "NOT_ACCEPTED"
+}

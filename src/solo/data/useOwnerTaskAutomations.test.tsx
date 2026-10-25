@@ -1,17 +1,21 @@
 import { act, useLayoutEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OwnerTaskControl, OwnerTaskRead, OwnerTaskReview, OwnerTaskScope } from "./ownerTaskAutomation";
+type AuthSnapshot = { user: { id: string; last_sign_in_at?: string } };
 const m = vi.hoisted(() => ({ context: { activeUserId: "owner", activeTenantId: "tenant", loading: false, accountContextLoading: false, accountContextStatus: "ready" },
-  impersonating: false, auth: null as null | (() => void), unsubscribe: vi.fn(), read: vi.fn(), control: vi.fn(), history: vi.fn(), outcome: vi.fn() }));
+  impersonating: false, auth: null as null | ((event?: string, session?: AuthSnapshot | null) => void), unsubscribe: vi.fn(), read: vi.fn(), control: vi.fn(), history: vi.fn(), outcome: vi.fn() }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => m.context }));
 vi.mock("@/contexts/ImpersonationContext", () => ({ useImpersonation: () => ({ isImpersonating: m.impersonating }) }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { onAuthStateChange: (callback: () => void) => {
-  m.auth = callback; return { data: { subscription: { unsubscribe: m.unsubscribe } } };
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { onAuthStateChange: (callback: (event?: string, session?: AuthSnapshot | null) => void) => {
+  m.auth = callback; callback('INITIAL_SESSION', { user: { id: m.context.activeUserId, last_sign_in_at: '2026-10-25T14:00:00Z' } });
+  return { data: { subscription: { unsubscribe: m.unsubscribe } } };
 } } } }));
 vi.mock("./ownerTaskAutomation", () => ({ readOwnerTaskAutomations: (...args: unknown[]) => m.read(...args), controlOwnerTaskAutomation: (...args: unknown[]) => m.control(...args),
   readOwnerTaskHistoryList: (...args: unknown[]) => m.history(...args), readOwnerTaskOutcome: (...args: unknown[]) => m.outcome(...args) }));
 import { useOwnerTaskAutomations } from "./useOwnerTaskAutomations";
+import { OwnerTaskAutomations } from "../owner-task-automations";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const roots = new Set<Root>();
@@ -43,6 +47,7 @@ const locator = (id = "22222222-2222-4222-8222-222222222222") => ({
   approvalId: id, occurrenceId: "33333333-3333-4333-8333-333333333333",
   updatedAt: "2026-10-20T00:00:00Z", approvalStatus: "approved",
 });
+const sameSession = (): AuthSnapshot => ({ user: { id: 'owner', last_sign_in_at: '2026-10-25T14:00:00Z' } });
 const historyReview = (id = processId): OwnerTaskReview => ({
   ...review(), id, process: { ...review().process, id, state: "paused" },
 });
@@ -56,6 +61,79 @@ function historyRow(h: Awaited<ReturnType<typeof historyLoaded>>, index = 0) {
   return view.list.items[index];
 }
 describe("original process history interaction lifetime", () => {
+  it('keeps the original native history/result/link rendered through routine recovery without another request', async () => {
+    m.read.mockResolvedValue({status:'ready',items:[historyReview()],hasMore:false});
+    m.outcome.mockResolvedValue({status:'ready',title:'Original protected task',recordedOutcome:'executed',decidedAt:'2026-10-17T20:27:00Z',
+      originalTask:{state:'verified',taskId:'44444444-4444-4444-8444-444444444444'}});
+    const host = document.createElement('div'), root = createRoot(host); roots.add(root);
+    await act(async () => { root.render(<MemoryRouter initialEntries={['/solo/1701/operations/playbooks']}><OwnerTaskAutomations /></MemoryRouter>); });
+    const click = async (name: string) => { const b=Array.from(host.querySelectorAll('button')).find(x=>x.textContent===name);
+      if(!b) throw new Error('Missing original native control '+name); await act(async()=>{b.click();}); };
+    await click('View history'); await click('Inspect outcome');
+    const before=host.textContent, original=host.querySelector('.sa-owner-task-result'), link=original?.querySelector('a');
+    expect(original?.textContent).toContain('Original task creation is verified'); expect(link?.getAttribute('href')).toContain('44444444-4444-4444-8444-444444444444');
+    await act(async()=>{m.auth?.('SIGNED_IN',sameSession());});
+    expect(host.textContent).toBe(before); expect(host.querySelector('.sa-owner-task-result')).toBe(original);
+    expect(original?.querySelector('a')).toBe(link); expect(m.read).toHaveBeenCalledTimes(1); expect(m.history).toHaveBeenCalledTimes(1);
+    expect(m.outcome).toHaveBeenCalledTimes(1); expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each(['new-login','foreign-person','missing-metadata','SIGNED_OUT','TOKEN_REFRESHED','USER_UPDATED'] as const)(
+    'still retires original history synchronously for %s and never accepts its late response', async change => {
+      const h = await historyLoaded(), pending = deferred<unknown>(); let request!: Promise<void>;
+      m.history.mockReturnValueOnce(pending.promise); act(() => { request = h.result.current.openHistory(item(h.result.current.read)); });
+      const captured = m.history.mock.calls[0][3] as () => OwnerTaskScope | null;
+      const session = change === 'new-login' ? { user:{id:'owner',last_sign_in_at:'2026-10-25T16:00:00Z'} }
+        : change === 'foreign-person' ? { user:{id:'other',last_sign_in_at:sameSession().user.last_sign_in_at} }
+          : change === 'missing-metadata' ? { user:{id:'owner'} } : change === 'SIGNED_OUT' ? null : sameSession();
+      act(() => { m.auth?.(change.includes('-') ? 'SIGNED_IN' : change,session); expect(captured()).toBeNull(); });
+      await act(async () => { pending.resolve({status:'ready',items:[locator()],hasMore:false}); await request; });
+      expect(h.result.current.history.status).toBe('closed'); expect(m.control).not.toHaveBeenCalled();
+    });
+  it('a late initial notification cannot restore old interaction after sign-out', async () => {
+    const h = await historyLoaded(); await act(async () => { await h.result.current.openHistory(item(h.result.current.read)); });
+    const original = h.result.current.history;
+    await act(async () => { m.auth?.('SIGNED_OUT',null); });
+    await act(async () => { m.auth?.('INITIAL_SESSION',sameSession()); m.auth?.('SIGNED_IN',sameSession()); });
+    expect(h.result.current.history.status).toBe('closed'); expect(h.result.current.history).not.toBe(original);
+    expect(m.history).toHaveBeenCalledTimes(1); expect(m.control).not.toHaveBeenCalled();
+  });
+  it('retains the exact selected original result on routine same-session sign-in without rereading or controlling', async () => {
+    const h = await historyLoaded();
+    await act(async () => { await h.result.current.openHistory(item(h.result.current.read)); });
+    await act(async () => { await h.result.current.inspectOutcome(historyRow(h)); });
+    const before = h.result.current, captured = m.outcome.mock.calls[0][4] as () => OwnerTaskScope | null;
+    await act(async () => { m.auth?.('SIGNED_IN', sameSession()); });
+    expect(h.result.current.scopeKey).toBe(before.scopeKey); expect(captured()).not.toBeNull();
+    expect(h.result.current.read).toBe(before.read); expect(h.result.current.history).toBe(before.history);
+    expect(m.read).toHaveBeenCalledTimes(1); expect(m.history).toHaveBeenCalledTimes(1); expect(m.outcome).toHaveBeenCalledTimes(1);
+    expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each(['list', 'detail'] as const)('retains an original held %s on routine sign-in and accepts only its original response', async stage => {
+    const h = await historyLoaded(), pending = deferred<unknown>(); let request!: Promise<void>;
+    if (stage === 'list') {
+      m.history.mockReturnValueOnce(pending.promise);
+      act(() => { request = h.result.current.openHistory(item(h.result.current.read)); });
+    } else {
+      await act(async () => { await h.result.current.openHistory(item(h.result.current.read)); });
+      m.outcome.mockReturnValueOnce(pending.promise);
+      act(() => { request = h.result.current.inspectOutcome(historyRow(h)); });
+    }
+    const captured = (stage === 'list' ? m.history.mock.calls.at(-1)![3] : m.outcome.mock.calls.at(-1)![4]) as () => OwnerTaskScope | null;
+    await act(async () => { m.auth?.('SIGNED_IN', sameSession()); }); expect(captured()).not.toBeNull();
+    await act(async () => { pending.resolve(stage === 'list' ? { status:'ready', items:[locator()], hasMore:false } : { status:'refused' }); await request; });
+    expect(h.result.current.history.status).toBe('ready'); expect(m.read).toHaveBeenCalledTimes(1); expect(m.control).not.toHaveBeenCalled();
+    if (stage === 'detail') expect(h.result.current.history).toMatchObject({outcome:{status:'refused'}});
+  });
+  it('keeps a pending control busy and its unknown hold through routine sign-in without allowing a second effect', async () => {
+    const h = await loaded(), pending = deferred<OwnerTaskControl>(), original = item(h.result.current.read); let request!: Promise<OwnerTaskControl>;
+    m.control.mockReturnValueOnce(pending.promise); act(() => { request = h.result.current.control(original,'arm'); });
+    await act(async () => { m.auth?.('SIGNED_IN',sameSession()); });
+    expect(h.result.current.busy).toBe(true); expect(await h.result.current.control(original,'arm')).toEqual({status:'busy'});
+    await act(async () => { pending.resolve({status:'unknown'}); await request; });
+    await act(async () => { m.auth?.('SIGNED_IN',sameSession()); });
+    expect(h.result.current.feedback?.result.status).toBe('unknown'); expect(h.result.current.needsRefresh).toBe(true);
+    expect(m.control).toHaveBeenCalledTimes(1); expect(m.read).toHaveBeenCalledTimes(1);
+  });
   it("retires captured reader authority during layout unmount before passive cleanup", async () => {
     const root = createRoot(document.createElement("div")); roots.add(root);
     let inspect = false, observed: OwnerTaskScope | null | undefined;

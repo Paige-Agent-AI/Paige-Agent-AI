@@ -1,0 +1,99 @@
+{
+  "sourceBase": "005f5d389d9faf98fa4e56ac9f3bb53c1471fd68",
+  "oneExpressionOnly": true,
+  "financeCleanupOnly": true,
+  "layoutCaptureSourceHead": "827bf1d3abbdf8a01c11de41f8b53dd73ae40fb5",
+  "postReviewCleanupNativeProof": "source-history-return.json",
+  "synthetic": true,
+  "actualSoloApp": true,
+  "customerAcceptance": false,
+  "frames": [
+    {
+      "file": "mineral-1024x768-closed.png",
+      "width": 1024,
+      "height": 768,
+      "sha256": "a2cdbc339b19e52b7ba5d51b14fcb0c1154272f36e88fce24aae33cfd1a84de7"
+    },
+    {
+      "file": "mineral-1024x768-open.png",
+      "width": 1024,
+      "height": 768,
+      "sha256": "e98516dc8344a25baa39c5e3e9334a0d4321d1ea51446cef286ca1cd63d64f0f"
+    },
+    {
+      "file": "mineral-1366x768-closed.png",
+      "width": 1366,
+      "height": 768,
+      "sha256": "1f9bd8e36b6217058a76adc03bed55b0062975bcfbda8b0c8587f231898e2db5"
+    },
+    {
+      "file": "mineral-1366x768-open.png",
+      "width": 1366,
+      "height": 768,
+      "sha256": "feb55bc4bb8db171c72c09fdc547a9ebb3809254cddb032cde96bfe894ff1cb8"
+    },
+    {
+      "file": "mineral-1536x770-closed.png",
+      "width": 1536,
+      "height": 770,
+      "sha256": "b9ae7c5a6856236a1ec7053e39cd0fa2688e94c16173055afcdf37ce08312282"
+    },
+    {
+      "file": "mineral-1536x770-open.png",
+      "width": 1536,
+      "height": 770,
+      "sha256": "800209b488eaec63e53f80446198454bb438fa36a7d68d03577e1ae43115a9d0"
+    },
+    {
+      "file": "mineral-900-denied.png",
+      "width": 900,
+      "height": 1000,
+      "sha256": "fe97df89c771d86f8c9f11083dd0b84548867bc5cbb1b95c93a87da6884d4d9c"
+    },
+    {
+      "file": "mineral-900-loading.png",
+      "width": 900,
+      "height": 1000,
+      "sha256": "bf020bd5b0ffdd869a9d0f1314cd953aab0d43250797622f051d6252e3ab731a"
+    },
+    {
+      "file": "mineral-900x1000-closed.png",
+      "width": 900,
+      "height": 1000,
+      "sha256": "ee019b4107c9b9604e6ccead1e143b291fbe2acb781844ef07d0d2e3fbcf2960"
+    },
+    {
+      "file": "mineral-900x1000-open.png",
+      "width": 900,
+      "height": 1000,
+      "sha256": "ef1f5b95f0a1ec194fca1b3ff954f6e8a2b9b7608073a17820b35d5ac6bfd4f8"
+    },
+    {
+      "file": "obsidian-1536-secondary.png",
+      "width": 1536,
+      "height": 770,
+      "sha256": "d422980eb9dd4c1de2a8d40be36facd2a65d06c2bb4d0cad294a4afe8d9e1ebb"
+    },
+    {
+      "file": "obsidian-390-keyboard.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "50c5e1b2b8dc87bcc5b78de474e55848a42937543f0d723ff6b15c8bc5494ddc"
+    },
+    {
+      "file": "obsidian-390.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "4f3a1350a76c1c9b3ae5b205ea7d0d552fb17bb986942ffed66897fae6247fd0"
+    }
+  ],
+  "sources": {
+    "src/solo/SoloApp.tsx": "523925d9989c5d8919fb00b193bc4f8d53691252dae7bc9920fab51752dc3426",
+    "src/solo/finance/FinanceWorkspace.tsx": "91d45a6eb794bcbd1409f421454a1cc59eb620c83c7456cae2e0bba7c68310f8",
+    "src/solo/SoloApp.finance-navigation.test.tsx": "60a68edb09a9368e385c36caac051fd097d4d3e8454a896a1fcaf50169c85b3f",
+    "scripts/live-drive/harness/finance-review-mount/main.tsx": "b0ca0c351762f10264171b54a74b014c96eeb1a92a3f958e62a539b6f27c68c7",
+    "scripts/live-drive/harness/finance-review-mount/vite.config.ts": "1f1fde85a3dfa0790f96d76374b9374cea819afc2ff1b348b1a9dcc5bb5b5a75",
+    "scripts/live-drive/harness/finance-review-mount/route-stubs.tsx": "793473708a09792b53a4133fcd8664c9f9a9fcb8b22bd1d045f11675a4a53708",
+    "scripts/live-drive/harness/finance-review-mount/stubs.tsx": "1ab0e3614122c896bc8e3a7c29fb3becab6c1976c2f697ba5e5602c15fa973b8"
+  }
+}

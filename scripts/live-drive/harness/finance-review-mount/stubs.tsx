@@ -5,7 +5,13 @@ import { SECOND_REVIEW_TENANT, withTargetAndFinanceFixtures } from '../executive
 import type { SalesMetricBundle, SalesPerformancePhase } from '@/solo/sales/performance/types';
 
 // Synthetic inputs only. All backend calls are refused by the existing shell stub.
-function useHarnessParams() { return new URLSearchParams(useLocation().search); }
+function useHarnessParams() {
+  const current = useLocation();
+  // A fixture input, not application authority. Canonical tab navigation omits
+  // query parameters; keep this synthetic context stable until a full reload.
+  const [params] = useState(() => new URLSearchParams(current.search));
+  return params;
+}
 const noop = () => {};
 // Render inputs only: these references cannot resolve against any real reader.
 function syntheticMetric(metric_key: string, amount_minor: string): SalesMetricBundle {

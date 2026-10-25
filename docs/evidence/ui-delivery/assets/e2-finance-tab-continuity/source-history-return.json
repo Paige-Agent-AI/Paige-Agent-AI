@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "browser": "Chrome",
+  "before": {
+    "dialog": true,
+    "selected": "Overview"
+  },
+  "after": {
+    "conversation": "Keep this discussion while I review Finance.",
+    "dialog": false,
+    "focusClass": "",
+    "height": 735,
+    "selected": "Banking & Cash",
+    "width": 1536
+  },
+  "sourceReviewFindingFixed": true
+}

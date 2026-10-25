@@ -14,6 +14,7 @@
 // Logs carry reason codes only, never a file name or a byte.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { teamHubFileVerdict } from "../_shared/team-hub-file-type.ts";
+import { stalePaths, TEAM_HUB_PATH } from "../_shared/team-hub/file-paths.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -30,8 +31,6 @@ const CORS = {
   "X-Content-Type-Options": "nosniff",
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-// The only object names this function will ever ask the service role to remove.
-const TEAM_HUB_PATH = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/team-hub\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 type CheckFile = { id: string; path: string; mime: string; size: number; state: string };
 type Rpc = { data: unknown; error: { code?: string; message?: string } | null };
@@ -44,15 +43,6 @@ function checkFile(value: unknown): CheckFile | null {
   if (!file || typeof file.id !== "string" || typeof file.path !== "string" || typeof file.mime !== "string" ||
       typeof file.size !== "number" || typeof file.state !== "string") return null;
   return { id: file.id, path: file.path, mime: file.mime, size: file.size, state: file.state };
-}
-
-/** The stale-sweep result may arrive as text[], {paths}, or rows; keep only canonical Team Hub paths. */
-function stalePaths(value: unknown): string[] {
-  const list = Array.isArray(value) ? value : (record(value)?.paths as unknown);
-  if (!Array.isArray(list)) return [];
-  return list
-    .map((item) => typeof item === "string" ? item : record(item)?.path ?? record(item)?.storage_path)
-    .filter((path): path is string => typeof path === "string" && TEAM_HUB_PATH.test(path));
 }
 
 function storageMissing(error: unknown): boolean {

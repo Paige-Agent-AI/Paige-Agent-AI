@@ -1,0 +1,14 @@
+.ops-zion-history { padding:20px 0; margin-top:24px; border-top:1px solid var(--pg-line); font-size:14px; line-height:1.6; }
+.ops-zion-history p { margin:8px 0; max-width:65ch; }
+.ops-zion-history h2 { font-size:16px; line-height:1.4; font-weight:600; }
+.ops-zion-history header .ops-desk-inspect { font-size:13px; }
+.ops-zion-rows { list-style:none; padding:0; margin:12px 0; }
+.ops-zion-rows>li { padding:12px 0; border-bottom:1px solid var(--pg-line); }
+.ops-zion-result { margin-top:12px; }
+.ops-zion-result summary { min-height:44px; display:flex; align-items:center; gap:8px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.ops-zion-result summary:focus-visible { outline:2px solid var(--pg-violet); outline-offset:3px; }
+.ops-zion-result details[open]>summary svg { transform:rotate(90deg); }
+.ops-zion-result details p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.ops-zion-result dd { margin:0 0 8px; overflow-wrap:anywhere; }
+.ops-zion-skeleton { height:14px; width:65%; margin:14px 0; background:var(--pg-line); border-radius:4px; }
+.ops-zion-history .ops-view-text-action { min-height:44px; display:inline-flex; align-items:center; gap:8px; }

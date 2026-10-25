@@ -66,7 +66,17 @@ export function useOwnerTaskAutomations() {
   }, [current, publish, closeHistory]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    let signInIdentity: string | null = null, observedChange = false;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Canonical tenant context distinguishes a genuine sign-in by this same
+      // nonsecret metadata. This preserves local interaction only, never authority.
+      const user = session?.user, at = user?.last_sign_in_at;
+      const identity = user && user.id === scopeRef.current?.actorId && typeof at === 'string' && Number.isFinite(Date.parse(at))
+        ? JSON.stringify([user.id, at]) : null;
+      if (event === 'INITIAL_SESSION') { if (!observedChange) signInIdentity = identity; return; }
+      observedChange = true;
+      if (event === 'SIGNED_IN' && identity !== null && identity === signInIdentity) return;
+      signInIdentity = event === 'SIGNED_OUT' ? null : identity;
       // Synchronous invalidation; never invoke a Supabase read from its auth callback.
       epoch.current++; scopeRef.current = null; sequence.current++;
       historyTicket.current++; historyRef.current = null;

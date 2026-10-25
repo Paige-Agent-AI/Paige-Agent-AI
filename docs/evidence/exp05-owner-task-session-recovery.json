@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "base": "709c181c13e45ae59288a2c0631ed0a616e9d09f",
+  "source": {
+    "src/solo/data/useOwnerTaskAutomations.ts": "cc842a386f9bcbc8ec4a05b74432bffbc35298566e6a8ba417ae98bf25e60876",
+    "src/solo/data/useOwnerTaskAutomations.test.tsx": "5c719f1dbf095643eaefead5e911f3249701eb2be1cb8ff9c63906b536442e02"
+  },
+  "tests": {
+    "red": {
+      "sha256": "82cc874399d6261ec49babbf4a9a2647df3c7285f07469dba6d3fda8b5f434cd",
+      "files": 1,
+      "passed": 38,
+      "failed": 4,
+      "success": false
+    },
+    "green": {
+      "sha256": "9c418923f0989d3821ae5691c8bcdf8296f750851dbe81369acb351c88b085dd",
+      "files": 5,
+      "passed": 228,
+      "failed": 0,
+      "success": true
+    }
+  },
+  "strictGraph": {
+    "base": "709c181c13e45ae59288a2c0631ed0a616e9d09f",
+    "same": true,
+    "diagnostics": 15,
+    "new": 0,
+    "bothInvocations": "FAIL; incumbent generated-database/context and original data.process narrowing signatures",
+    "candidateRestored": true
+  },
+  "unchangedRenderAndAuthorityInputs": {
+    "src/solo/owner-task-automations.tsx": "983b8bf154ddb3684d8bdb15c4b42a80ad322ada1b605d40f06cd8b813a542eb",
+    "src/solo/owner-task-process-history.tsx": "5176d864baec7dea1c543f312908bfc7de22af0e30e370905969c31cf429ac1c",
+    "src/solo/data/ownerTaskAutomation.ts": "f5dafb637971e64da94c4ca86e510cd661c2f4d7c69017a73e5f2540ff739796",
+    "src/solo/settings-integrations.css": "203243be6fe2aabe71414fac33773901b6fef039e9755d1a7ac127eddb075df7",
+    "src/solo/operations/OperationsPlaybooks.tsx": "377a91b3af627052cd5e3269d1e46a63b2921304c48de522dca5deb8396f9dbf",
+    "src/solo/operations/operations-workspace.css": "f502346c0f2ffb1ba0aa516ab88403a4aa47d27f09aece69d3f2d989b4dd3f2f"
+  },
+  "renderedProof": "One actual original OwnerTaskAutomations + original history/link child using the corrected real hook in MemoryRouter/React DOM; deterministic Auth/domain read/control ports only. No pixel/full-shell/provider/RLS/new business execution claim.",
+  "preReleaseAuthenticatedRead": "Ordinary owner inspected existing approved result/receipt and same native Task after reload; original declined result showed cancellation with zero task links; protected process remained paused. This is incumbent behavior, not corrected deployed-hook acceptance.",
+  "catalogue": "Existing eleven Operations recipes remain Listed/Unverified; no registry, permission, provider or maturity change.",
+  "boundary": "No secrets or real customer payloads, new runtime/store/approval/job/provider activation or action replay."
+}

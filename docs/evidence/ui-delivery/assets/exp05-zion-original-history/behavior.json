@@ -1,0 +1,313 @@
+{
+  "boundary": "Actual candidate UI/reader/deadline; synthetic SDK/auth replies only; no business/provider effect or authenticated proof",
+  "states": [
+    {
+      "mode": "recorded",
+      "text": "ZION assignments\nClose inspection\n\nYour recent requests · sampled from up to five specialist assignments.\n\nZION\n\nRequested Oct 25, 2026, 15:12 UTC\n\nResponse recorded\nRefresh original response\n\nOriginal receipt verified\n\nInspected Oct 25, 2026, 15:15 UTC\n\nRead original response\n\nBusiness actions need their own work records and results.\n\nOriginal references\nRefresh sample"
+    },
+    {
+      "mode": "pending",
+      "text": "ZION assignments\nClose inspection\n\nYour recent requests · sampled from up to five specialist assignments.\n\nZION\n\nRequested Oct 25, 2026, 15:12 UTC\n\nRecorded pending\nRefresh original response\n\nNo original receipt was returned\n\nInspected Oct 25, 2026, 15:15 UTC\n\nThe original assignment is recorded as pending.\n\nBusiness actions need their own work records and results.\n\nOriginal references\nRefresh sample"
+    },
+    {
+      "mode": "unknown",
+      "text": "ZION assignments\nClose inspection\n\nYour recent requests · sampled from up to five specialist assignments.\n\nZION\n\nRequested Oct 25, 2026, 15:12 UTC\n\nOutcome unknown\nRefresh original response\n\nNo original receipt was returned\n\nInspected Oct 25, 2026, 15:15 UTC\n\nThe original outcome is unknown. Inspect the same assignment before repeating work.\n\nBusiness actions need their own work records and results.\n\nOriginal references\nRefresh sample"
+    },
+    {
+      "mode": "conflicting",
+      "text": "ZION assignments\nClose inspection\n\nYour recent requests · sampled from up to five specialist assignments.\n\nZION\n\nRequested Oct 25, 2026, 15:12 UTC\n\nResponse recorded\nRefresh original response\n\nOriginal receipt needs review\n\nInspected Oct 25, 2026, 15:15 UTC\n\nRead original response\n\nBusiness actions need their own work records and results.\n\nOriginal references\nRefresh sample"
+    },
+    {
+      "mode": "empty",
+      "text": "ZION assignments\nClose inspection\n\nNo ZION assignment appears in this recent sample.\n\nThe sample is not a complete history. Use Plan with ZION to prepare your next request.\n\nRefresh sample"
+    },
+    {
+      "mode": "denied",
+      "text": "ZION assignments\nClose inspection\n\nCurrent owner or admin access is required to inspect these assignments.\n\nCheck current access again"
+    },
+    {
+      "mode": "unavailable",
+      "text": "ZION assignments\nClose inspection\n\nYour recent assignments could not be verified.\n\nCheck current access again"
+    },
+    {
+      "mode": "malformed",
+      "text": "ZION assignments\nClose inspection\n\nYour recent assignments could not be verified.\n\nCheck current access again"
+    },
+    {
+      "mode": "held-original-read",
+      "text": "ZION assignments\nClose inspection\n\nReading your recent specialist assignments…"
+    },
+    {
+      "mode": "signed-out-then-late",
+      "text": "ZION assignments\nClose inspection\n\nCurrent owner or admin access is required to inspect these assignments.\n\nCheck current access again"
+    },
+    {
+      "mode": "elapsed-eight-second-budget",
+      "text": "ZION assignments\nClose inspection\n\nYour recent assignments could not be verified.\n\nCheck current access again",
+      "lateText": "ZION assignments\nClose inspection\n\nYour recent assignments could not be verified.\n\nCheck current access again"
+    },
+    {
+      "mode": "actual-scope-unmount-reentry-then-late",
+      "text": "ZION assignments\nInspect recent work\n\nInspect the original responses from work you asked ZION to prepare."
+    },
+    {
+      "mode": "actual-keyboard-close",
+      "collapsed": true,
+      "focus": "Inspect recent work"
+    }
+  ],
+  "frames": [
+    {
+      "theme": "mineral",
+      "size": [
+        1536,
+        770
+      ],
+      "panel": "closed",
+      "buttonHeights": [
+        44,
+        44,
+        44
+      ],
+      "scrollWidth": 758,
+      "summaryHeights": [
+        44,
+        44
+      ],
+      "width": 758
+    },
+    {
+      "theme": "mineral",
+      "size": [
+        1536,
+        770
+      ],
+      "panel": "open",
+      "nativePanelVisible": true
+    },
+    {
+      "theme": "mineral",
+      "size": [
+        1366,
+        768
+      ],
+      "panel": "closed",
+      "buttonHeights": [
+        44,
+        44,
+        44
+      ],
+      "scrollWidth": 654,
+      "summaryHeights": [
+        44,
+        44
+      ],
+      "width": 654
+    },
+    {
+      "theme": "mineral",
+      "size": [
+        1366,
+        768
+      ],
+      "panel": "open",
+      "nativePanelVisible": true
+    },
+    {
+      "theme": "mineral",
+      "size": [
+        1024,
+        768
+      ],
+      "panel": "closed",
+      "buttonHeights": [
+        44,
+        44,
+        44
+      ],
+      "scrollWidth": 532,
+      "summaryHeights": [
+        44,
+        44
+      ],
+      "width": 532
+    },
+    {
+      "theme": "mineral",
+      "size": [
+        1024,
+        768
+      ],
+      "panel": "open",
+      "nativePanelVisible": true
+    },
+    {
+      "theme": "mineral",
+      "size": [
+        900,
+        1000
+      ],
+      "panel": "closed",
+      "buttonHeights": [
+        44,
+        44,
+        44
+      ],
+      "scrollWidth": 415,
+      "summaryHeights": [
+        44,
+        44
+      ],
+      "width": 415
+    },
+    {
+      "theme": "mineral",
+      "size": [
+        900,
+        1000
+      ],
+      "panel": "open",
+      "nativePanelVisible": true
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        1536,
+        770
+      ],
+      "panel": "closed",
+      "scrollWidth": 768,
+      "width": 768
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        1536,
+        770
+      ],
+      "panel": "open",
+      "nativePanelVisible": true
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        1366,
+        768
+      ],
+      "panel": "closed",
+      "scrollWidth": 743,
+      "width": 743
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        1366,
+        768
+      ],
+      "panel": "open",
+      "nativePanelVisible": true
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        1024,
+        768
+      ],
+      "panel": "closed",
+      "scrollWidth": 484,
+      "width": 484
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        1024,
+        768
+      ],
+      "panel": "open",
+      "nativePanelVisible": true
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        900,
+        1000
+      ],
+      "panel": "closed",
+      "scrollWidth": 415,
+      "width": 415
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        900,
+        1000
+      ],
+      "panel": "open",
+      "nativePanelVisible": true
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        390,
+        844
+      ],
+      "panel": "closed",
+      "open": true,
+      "scrollWidth": 281,
+      "summaryHeights": [
+        44,
+        44
+      ],
+      "textLength": 6200,
+      "width": 281
+    },
+    {
+      "theme": "obsidian",
+      "size": [
+        320,
+        800
+      ],
+      "panel": "closed",
+      "open": true,
+      "scrollWidth": 210,
+      "summaryHeights": [
+        44.79999923706055,
+        44
+      ],
+      "textLength": 6200,
+      "width": 210
+    }
+  ],
+  "contrast": [
+    {
+      "theme": "obsidian",
+      "background": "#16131a",
+      "base": "#19161e",
+      "body": "rgb(246, 242, 234)",
+      "muted": "rgb(172, 166, 157)"
+    },
+    {
+      "theme": "mineral",
+      "background": "#f7f4ee",
+      "base": "#f5f2ec",
+      "body": "rgb(32, 30, 35)",
+      "muted": "rgb(103, 97, 107)"
+    }
+  ],
+  "reducedMotion": {
+    "observed": true,
+    "authoredAnimation": "none"
+  },
+  "zoom": {
+    "widthBefore": 1536,
+    "widthAfter": 1536,
+    "dprBefore": 1,
+    "dprAfter": 1,
+    "true200Percent": "UNVERIFIED - shortcut did not change the browser zoom",
+    "reflow": "Actual 390 and320 CSS pixel captures; no changed-section horizontal overflow"
+  },
+  "invalids": [
+    "Private native-switch fixture controls were closed after reentry; opened with confirmed details attribute before completing held read.",
+    "Initial second-round capture had an undefined output-directory binding; no image/PASS counted before correction."
+  ]
+}

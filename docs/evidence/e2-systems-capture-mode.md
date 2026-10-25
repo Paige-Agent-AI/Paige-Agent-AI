@@ -1,5 +1,31 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — original manual Work history read actually released
+
+[#2877 production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521)
+records reviewedf292c96a752f75d957e52a3ea6edc12ff04de5c0/LOWER5645590987,
+all13 exact checks/Preview/two webSUCCESS/zero threads and renewed E05 receiving
+ANT161/9cd8952b. Actual6683bfb7cf1f0179922cc7c84840c6a0f3a5799c/tree9a286b3e9ac9fe6f07ef4debf4f1a35c947a75bf
+matches actual79768362+f292 parents and inspected union: frozen native/proof,
+16,274 outside entries and whole incoming CI/evidence inverses exact.
+
+Normal deploy-migrations40241921677/job121315482302 SUCCESS/db-live6683.
+Authoritative readback:250102 once/current frontier,1467 recorded versions;
+bodyd953ea9965f31193d3dbf2f184114730/original12-field ABI/postgres/SQL stable
+definer/empty search_path/authenticated-only ACL, anon denied. Claim260002 absent.
+READYdpl_BTNcv7Wp3rjSUbjcpmG5LCs7VWS9/both public200/exact6683bfb7cf1f0179922cc7c84840c6a0f3a5799c-mvof6mtm/null22:51:45UTC;
+Edge N/A. Local31 checkpoints/causal3FAIL5PASS→8PASS/sixteen incumbent comparisons
+and original47 factory regressions retain their bounded engineering proof class.
+No customer invocation or receipt inferred. Retired unapplied240202 was safely
+forward-renamed; guarded disposable Preview recovery produced250102 once/retired
+version zero, with no production reset/include-all/history rewrite/second applier.
+
+Functional bounded history reader RELEASED; Visual N/A; Experiential manual
+request/scan/original result/Rail/recovery/customer proof INCOMPLETE; Founder
+NOT_ACCEPTED. Historical reads do not widen creation. No new grant/invocation,
+scan/activation/catalogue/algorithm promotion. All19/nine/9/0+12/0/4 and protected
+monthly UNKNOWN/UNRETRIED retained. Later proposal/CI text below is dated history.
+
 ## October25 — private request foundation actually released
 
 Original [#2867](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)

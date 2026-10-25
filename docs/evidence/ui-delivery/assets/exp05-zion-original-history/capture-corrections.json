@@ -1,0 +1,62 @@
+{
+  "reason": "Browser-level viewport override and physical-window screenshots did not reliably match this tab. Previous mismatched captures are invalid; replacement uses the tab-scoped native render at confirmed CSS dimensions.",
+  "frames": [
+    {
+      "theme": "obsidian",
+      "width": 1536,
+      "height": 770,
+      "nativePanelVisible": true,
+      "capture": "tab-scoped Page.captureScreenshot PNG, exact DOM size"
+    },
+    {
+      "theme": "obsidian",
+      "width": 1366,
+      "height": 768,
+      "nativePanelVisible": true,
+      "capture": "tab-scoped Page.captureScreenshot PNG, exact DOM size"
+    },
+    {
+      "theme": "obsidian",
+      "width": 1024,
+      "height": 768,
+      "nativePanelVisible": true,
+      "capture": "tab-scoped Page.captureScreenshot PNG, exact DOM size"
+    },
+    {
+      "theme": "obsidian",
+      "width": 900,
+      "height": 1000,
+      "nativePanelVisible": true,
+      "capture": "tab-scoped Page.captureScreenshot PNG, exact DOM size"
+    },
+    {
+      "theme": "mineral",
+      "width": 1536,
+      "height": 770,
+      "nativePanelVisible": true,
+      "capture": "tab-scoped Page.captureScreenshot PNG, exact DOM size"
+    },
+    {
+      "theme": "mineral",
+      "width": 1366,
+      "height": 768,
+      "nativePanelVisible": true,
+      "capture": "tab-scoped Page.captureScreenshot PNG, exact DOM size"
+    },
+    {
+      "theme": "mineral",
+      "width": 1024,
+      "height": 768,
+      "nativePanelVisible": true,
+      "capture": "tab-scoped Page.captureScreenshot PNG, exact DOM size"
+    },
+    {
+      "theme": "mineral",
+      "width": 900,
+      "height": 1000,
+      "nativePanelVisible": true,
+      "capture": "tab-scoped Page.captureScreenshot PNG, exact DOM size"
+    }
+  ],
+  "scope": "Only the private neutral local prototype. No production account, theme, task, approval or provider mutation."
+}

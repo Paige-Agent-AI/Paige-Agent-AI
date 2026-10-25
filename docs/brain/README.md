@@ -500,6 +500,19 @@ ZION result, historical acceptance or full ten-outcome/E5/founder closure.
 
 
 
+## EXP02 original recorded-finding source — October25 development
+
+O6/O14 extends the original Systems hook with an opt-in exact-record RLS read;
+default consumers keep their original RPC/projection/result shape. Actor/account,
+reference, original run and readable timestamps bind the optional result; missing,
+withheld, failed and retired reads remain distinct from current health or actions.
+No SQL/grant, current UI, Spine/Chat admission, scan, approval or Rail writer changes.
+[Source and proof boundary](../evidence/e2-recorded-finding-source.md):152/6 source
+tests PASS, type/review/CI/release pending. Historical customer/UI acceptance and
+all19/nine/founder remain owed; browser/input stop is held. Original source2787
+is separately merged2f04941f/web+Chat535 verified, not report/customer acceptance.
+Queued Master2694/2690/2696/2787 closeouts remain unclaimed as complete.
+
 ## EXP02 Systems Check dialog return — October23 source candidate
 
 **October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.

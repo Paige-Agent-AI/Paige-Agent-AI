@@ -3,8 +3,10 @@
 // the tenant's OR the operator's latest scan run + its findings (joined to the shared
 // registry for the human check name + domain + priority) + the tenant's created_at, in
 // ONE round-trip (task #122 perf — replaced 2–3 serialized PostgREST queries per mount).
+// Optional original-record inspection adds one exact-ID read only when requested;
+// it never replaces the latest completed snapshot or supplies execution authority.
 //
-// SCOPE ISOLATION (§9/§51/§53/§59): the client passes ONLY the scope, never a tenant id.
+// SCOPE ISOLATION (§9/§51/§53/§59): the default snapshot RPC receives ONLY scope, never a tenant id.
 // The RPC enforces caller-scope IN-BODY (§59): `scope="tenant"` derives the tenant from
 // current_user_tenant_id() (the caller's own resolved tenant — a sub-account can never
 // widen to the parent, §51 invariant); `scope="operator"` gates on is_platform_operator()
@@ -20,6 +22,7 @@ import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
 
 export type SystemsCheckScope = "tenant" | "operator";
 export type FindingStatus = "pass" | "fail" | "skip" | "error";
@@ -104,7 +107,13 @@ export interface SystemsCheckSnapshot {
    *  Distinct from `scanPending`, which is only a recent-workspace hint before any row exists. */
   scanInProgressSince: string | null;
   refresh: () => void;
+  /** Optional original-record inspection, separate from current health and action authority. */
+  recordedFinding?: RecordedFindingRead;
 }
+
+export type RecordedFindingRead =
+  | { state: "not_requested" | "unavailable" | "loading" | "error" }
+  | { state: "ready"; finding: SystemsCheckFinding; run: Pick<SystemsCheckRun, "id" | "started_at" | "completed_at"> };
 
 // How long after tenant creation we treat "no run yet" as "first scan in progress" rather than the
 // terminal empty state. The onboarding scan fires on creation (enqueue → edge fn → run row); this
@@ -128,8 +137,35 @@ interface RawFinding {
   reg?: { check_name?: string | null; domain?: string | null; priority?: number | null } | null;
 }
 
-export function useSystemsCheck(scope: SystemsCheckScope): SystemsCheckSnapshot {
-  const { activeTenantId } = useTenantContext();
+function findingFromRow(r: RawFinding): SystemsCheckFinding {
+  return {
+    id: r.id,
+    run_id: r.run_id,
+    check_id: r.check_id,
+    status: r.status,
+    severity_at_finding: r.severity_at_finding,
+    evidence: r.evidence,
+    paige_interpretation: r.paige_interpretation,
+    paige_drafted_fix: r.paige_drafted_fix,
+    department_id: r.department_id,
+    resolved_at: r.resolved_at,
+    resolution: r.resolution,
+    resolution_action_id: r.resolution_action_id,
+    created_at: r.created_at,
+    check_name: r.reg?.check_name ?? null,
+    domain: r.reg?.domain ?? null,
+    priority: r.reg?.priority ?? null,
+  };
+}
+
+interface RecordedRow extends RawFinding {
+  tenant_id: string;
+  run: Pick<SystemsCheckRun, "id" | "started_at" | "completed_at"> & { tenant_id: string };
+}
+const readableTimestamp = (value: unknown) => typeof value === "string" && Number.isFinite(Date.parse(value));
+
+export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?: string | null }): SystemsCheckSnapshot {
+  const { activeTenantId, activeUserId, accountContextStatus, activeTenant } = useTenantContext();
   const qc = useQueryClient();
   const scopeKey = scope === "tenant" ? (activeTenantId ?? "none") : "operator";
 
@@ -162,24 +198,7 @@ export function useSystemsCheck(scope: SystemsCheckScope): SystemsCheckSnapshot 
       };
 
       const run = snap.run ?? null;
-      const findings: SystemsCheckFinding[] = ((snap.findings ?? []) as RawFinding[]).map((r) => ({
-        id: r.id,
-        run_id: r.run_id,
-        check_id: r.check_id,
-        status: r.status,
-        severity_at_finding: r.severity_at_finding,
-        evidence: r.evidence,
-        paige_interpretation: r.paige_interpretation,
-        paige_drafted_fix: r.paige_drafted_fix,
-        department_id: r.department_id,
-        resolved_at: r.resolved_at,
-        resolution: r.resolution,
-        resolution_action_id: r.resolution_action_id,
-        created_at: r.created_at,
-        check_name: r.reg?.check_name ?? null,
-        domain: r.reg?.domain ?? null,
-        priority: r.reg?.priority ?? null,
-      }));
+      const findings = ((snap.findings ?? []) as RawFinding[]).map(findingFromRow);
 
       // tenant_created_at is only populated (and only consumed) when there is no run yet, in
       // tenant scope — it drives scanPending below. Operator scope always returns null.
@@ -194,6 +213,48 @@ export function useSystemsCheck(scope: SystemsCheckScope): SystemsCheckSnapshot 
       };
     },
   });
+
+  // No existing caller opts in. This exact-record read reuses the original tables'
+  // authenticated SELECT/RLS; client filters only narrow, never grant, access.
+  // It does not use or widen the current-only signal-reference/approval contracts.
+  const recordRequested = options?.findingId !== undefined && options.findingId !== null;
+  const recordId = readRecordLinks([{ destination: "systems_check", record_id: options?.findingId }])[0]?.record_id;
+  const recordEnabled = scope === "tenant" && accountContextStatus === "ready"
+    && !!activeUserId && !!activeTenantId && activeTenant?.id === activeTenantId
+    && activeTenant.account_type === "standalone" && !!recordId;
+  const recordedQuery = useQuery({
+    queryKey: ["systems_check", scope, scopeKey, "recorded", activeUserId ?? "none", recordId ?? "none"],
+    enabled: recordEnabled,
+    retry: false,
+    gcTime: 0,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+    queryFn: async ({ signal }) => {
+      // These source tables are not generated yet, as with the original RPC above.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).from("paige_systems_check_finding")
+        .select("id,tenant_id,run_id,check_id,status,severity_at_finding,evidence,paige_interpretation,paige_drafted_fix,department_id,resolved_at,resolution,resolution_action_id,created_at,reg:paige_systems_check_registry(check_name,domain,priority),run:paige_systems_check_run!inner(id,tenant_id,started_at,completed_at)")
+        .eq("id", recordId).eq("tenant_id", activeTenantId).eq("run.tenant_id", activeTenantId)
+        .abortSignal(signal).maybeSingle();
+      if (error) throw new Error("Recorded check could not be read");
+      const row = data as RecordedRow | null;
+      if (!row || row.id !== recordId || row.tenant_id !== activeTenantId
+        || !row.run || Array.isArray(row.run) || row.run.tenant_id !== activeTenantId
+        || row.run.id !== row.run_id || !["pass", "fail", "skip", "error"].includes(row.status)
+        || !readableTimestamp(row.created_at) || !readableTimestamp(row.run.started_at)
+        || (row.run.completed_at !== null && !readableTimestamp(row.run.completed_at))) return null;
+      return {
+        finding: findingFromRow(row),
+        run: { id: row.run.id, started_at: row.run.started_at, completed_at: row.run.completed_at },
+      };
+    },
+  });
+  const recordedFinding: RecordedFindingRead = !recordRequested ? { state: "not_requested" }
+    : !recordEnabled ? { state: "unavailable" }
+      : recordedQuery.isError ? { state: "error" }
+        : recordedQuery.isFetching || recordedQuery.isLoading ? { state: "loading" }
+          : recordedQuery.data ? { state: "ready", ...recordedQuery.data } : { state: "unavailable" };
 
   const refresh = useCallback(() => {
     qc.invalidateQueries({ queryKey: ["systems_check", scope, scopeKey] });
@@ -219,5 +280,6 @@ export function useSystemsCheck(scope: SystemsCheckScope): SystemsCheckSnapshot 
     scanPending,
     scanInProgressSince: query.data?.scanInProgressSince ?? null,
     refresh,
+    ...(options ? { recordedFinding } : {}),
   };
 }

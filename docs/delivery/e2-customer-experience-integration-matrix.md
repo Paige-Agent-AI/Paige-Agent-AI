@@ -1,5 +1,16 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October25 — original recorded-finding source foundation, development
+
+O6/O14 adds only an opt-in read to the original Systems hook over existing RLS
+records. All default consumers and current snapshot health remain unchanged;
+no current UI uses the extension.152/6 source tests PASS, scoped lint0; type,
+exact review/CI/release remain pending. [Owning proof and routing](../evidence/e2-recorded-finding-source.md).
+Original report2787 is independently reconciled as released2f04941f/web+Chat535;
+actual report/document/turn/Rail/retrieval/reload acceptance remains owed.
+Four exact Master closeouts remain queued. All19/nine/ALG/founder obligations
+and browser/input/activation/protected monthly boundaries remain unchanged.
+
 ## October24 evening — original-reference Finance read and reload verified
 
 The originating Sales2768 repair is released in containing production03edfad8a.

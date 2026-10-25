@@ -1,0 +1,38 @@
+{
+  "evidenceClass": "actual-source-synthetic-transport",
+  "desktop": {
+    "buttonHeight": 44,
+    "focus": "This invitation is unavailable",
+    "scrollWidth": 900,
+    "viewport": [
+      900,
+      900
+    ]
+  },
+  "narrow": {
+    "buttons": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(245, 245, 245)",
+        "height": 44,
+        "text": "Sign in to check existing access"
+      }
+    ],
+    "focus": "This invitation is unavailable",
+    "scrollWidth": 390,
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  "hoverBefore": {
+    "color": "rgb(4, 20, 57)",
+    "background": "rgb(26, 17, 39)"
+  },
+  "hoverAfter": {
+    "color": "rgb(250, 250, 250)",
+    "background": "rgb(26, 17, 39)"
+  },
+  "keyboard": "Tab/Enter for acceptance and read-only reconciliation; h1 focused after each transition",
+  "authenticatedCustomer": "NOT_RUN"
+}

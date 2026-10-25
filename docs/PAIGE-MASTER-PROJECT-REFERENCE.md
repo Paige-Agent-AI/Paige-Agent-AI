@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP02 unused manual Systems purpose.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2853 original manual capture purpose](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2853) | Reviewedd1c86219a1a6f7c9c63a864105a5da6404844271; AUTHOR-REVIEW / LOWER ASSURANCE5644115608/final5644251947; all13 exact checks/two webSUCCESS/zero threads. Actualbbee3e1d40071b7fce95228cb3cca633ab0008f7/tree68a7a950 equals61dc46199+d1 union, all16174 outside entries/four own runtime-test-SQL blobs/whole CI inverse/history exact. Native20271114220002 applied and actual constraint/owner/RLS/ordinary-role write refusals read back. Normal Edge40214639936/job121233023970 SUCCESS; independently checked API certificate12607325507/SHA256da1a4a91b4c0f87742ba4536d2dd21e9fd083d70fed89646e936e8e08a452c04 verifies159 source entries/configs across change138/onboarding142/operator144/scheduled145; original JWT settings retained. READYdpl_GnF5c2npPAQj55VLf57CLsxrEFPn; both public200/exactbbee-mvo2uzff/null. [Release6400618979](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2853#issuecomment-6400618979). | Internal manual purpose requires tenant/none and cannot replace the legacy scheduled baseline. Actual PG16 compatibility/refusal/unchanged-permission/rollback and73 owning source cases PASS; broad256PASS/cold-import timeout/original5s Operator rerun5PASS retained. Hosted Deno artifact12605752877: all4 functions3 unchanged baseline/head diagnostics,0new/own-core, not zero-error typing. No customer manual caller/Work/registry/worker/approval/provider activation or scan. UI N/A; actual manual result/receipt/recovery, all19/nine and founder acceptance remain owed. No customer release identity/announcement. |
+
 **2026-10-25 UTC — EXP02 original finding review and capture-start recovery.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

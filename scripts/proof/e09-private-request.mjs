@@ -3,7 +3,7 @@
 // Full-schema customer_portal_access.sql remains the normative role/trigger proof.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,spawn,exe,args,transcripts}) {
+export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,publicationBaseline=false,spawn,exe,args,transcripts}) {
  const read=file=>fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n');
  const preparationFile='supabase/migrations/20271114150009_e09_private_request_preparation.sql';
  const historyFile='supabase/migrations/20271114150019_e09_private_request_history.sql';
@@ -279,13 +279,75 @@ export async function privateRequestProof({sql,check,assert,fs,root,path,fixture
   await privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked});
  }
  check('Original native file, advance and Portal authority remain byte-exact',()=>assert.deepEqual(fingerprints(),before));
+ const publication=publicationBaseline?privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot}):null;
  return {baseline,historyBaseline,baselineSource:historyBaseline?'ba786f11b52c71b4ed87e7eb7a022b5aaa376e18':null,originalFingerprints:before,canonicalReplayFileHash:replayFileHash,
   migration:'20271114150009_e09_private_request_preparation.sql',
   migrationNormalizedSHA256:createHash('sha256').update(read(preparationFile)).digest('hex'),
   historyMigration:historyBaseline?null:'20271114150019_e09_private_request_history.sql',
   historyMigrationNormalizedSHA256:historyBaseline?null:createHash('sha256').update(read(historyFile)).digest('hex'),
   appliedMigrationOrder:baseline?[]:['20271114150009',...(!historyBaseline?['20271114150019']:[])],
-  fixture:'synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority',customerPublication:'NOT_RUN',fullSchema:'PROOF_OWED'};
+  fixture:'synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority',customerPublication:publicationBaseline?'ORIGINAL_NATIVE_BASELINE_ONLY':'NOT_RUN',fullSchema:'PROOF_OWED',...(publicationBaseline?{publication}:{})};
+}
+
+function privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot}) {
+ const sourceFile='supabase/migrations/20271111010000_e09_customer_portal_access.sql';
+ const publisher=read(sourceFile).match(/CREATE OR REPLACE FUNCTION public\.admin_propose_paige_actions\(p_contact_id uuid, p_actions jsonb\)[\s\S]*?END; \$function\$;/)?.[0];
+ assert(publisher,'Actual original customer-action writer required, never a stub');
+ // Complete only the existing fixture's role graph. This remains an explicit
+ // synthetic Auth/role port; original domain tables/constraint/writer execute.
+ sql(`CREATE TYPE public.app_role AS ENUM('admin','super_admin','client');
+  CREATE FUNCTION public.has_role(uuid,public.app_role) RETURNS boolean LANGUAGE sql STABLE AS $$
+   SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=$1 AND role=$2::text)$$;`);
+ sql(publisher);
+ const acl=read('supabase/migrations/20271110215000_e09_customer_portal_profile_consent.sql').split('\n')
+  .filter(line=>line.includes('ON FUNCTION public.admin_propose_paige_actions(')).join('\n');
+ assert(acl.includes('REVOKE')&&acl.includes('GRANT'),'Original published ACL statements required');sql(acl);
+ const publisherHash=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.admin_propose_paige_actions(uuid,jsonb)'::regprocedure");
+ check('Publication baseline executes the exact observed original customer-action writer',()=>assert.equal(publisherHash,'21bd99c7a036f28f82a677fa25c6db04'));
+ const f=fixture(),foreign=fixture(),member=fixture();
+ sql(`INSERT INTO public.profiles(user_id,active_tenant_id) VALUES('${f.other}','${f.tenant}');
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner)VALUES('${f.tenant}','${f.other}','owner','active',true);
+  INSERT INTO public.user_roles(user_id,role)VALUES('${f.other}','admin');
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner)VALUES('${f.tenant}','${member.other}','member','active',false);
+  INSERT INTO public.profiles(user_id,active_tenant_id)VALUES('${member.other}','${f.tenant}');
+  UPDATE public.clients SET linked_user_id='${f.actor}',portal_access_state='open',paige_shared_context_consent=true WHERE id='${f.contact}';`);
+ const lit=x=>`'${String(x).replaceAll("'","''")}'`;
+ const direct=(actor=f.other,contact=f.contact)=>asActor(`SELECT public.admin_propose_paige_actions(${lit(contact)},'[{
+  "action_type":"recommendation","title":"Read the welcome guide","body":"Start with section one.","payload":{}}]'::jsonb)`,actor);
+ const snapshot=()=>customerSnapshot()+':'+sql('SELECT count(*) FROM public.paige_audit_log');
+ check('Original direct publisher positive control creates one exact customer item and notice',()=>{
+  const before=JSON.parse(customerSnapshot()),r=direct();assert.equal(r.ok,true);assert.equal(r.count,1);assert.equal(r.ids.length,1);
+  const after=JSON.parse(customerSnapshot());assert.equal(after.actions,before.actions+1);assert.equal(after.notices,before.notices+1);
+  const saved=JSON.parse(sql(`SELECT to_jsonb(x) FROM public.paige_customer_actions x WHERE id='${r.ids[0]}'`));
+  assert.equal(saved.tenant_id,f.tenant);assert.equal(saved.contact_id,f.contact);assert.equal(saved.initiated_by_admin_id,f.other);
+  assert.equal(saved.action_type,'recommendation');assert.equal(saved.title,'Read the welcome guide');
+  assert.equal(sql(`SELECT count(*) FROM public.notifications WHERE user_id='${f.actor}' AND metadata->>'action_id'='${r.ids[0]}'`),'1');
+ });
+ // Portal clients deliberately have no owner-workspace profile pointer. Never
+ // grant them staff standing merely to force a later refusal branch in a test.
+ check('Original direct publisher refuses customer authority without customer effects',()=>{const before=snapshot();const r=direct(f.actor);assert.equal(r.ok,false);assert.equal(r.error,'NO_TENANT');assert.equal(snapshot(),before);});
+ check('Original direct publisher refuses an ordinary team member inside the same business',()=>{const before=snapshot();const r=direct(member.other);assert.equal(r.ok,false);assert.equal(r.error,'FORBIDDEN');assert.equal(snapshot(),before);});
+ check('Original direct publisher refuses another business without customer effects',()=>{const before=snapshot();const r=direct(f.other,foreign.contact);assert.equal(r.ok,false);assert.equal(r.error,'CROSS_TENANT_FORBIDDEN');assert.equal(snapshot(),before);});
+ check('Original direct publisher preserves client-controlled consent',()=>{
+  sql(`UPDATE public.clients SET paige_shared_context_consent=false WHERE id='${f.contact}'`);const before=snapshot();
+  try{const r=direct();assert.equal(r.ok,false);assert.equal(r.error,'CONSENT_NOT_GRANTED');assert.equal(snapshot(),before);}
+  finally{sql(`UPDATE public.clients SET paige_shared_context_consent=true WHERE id='${f.contact}'`);}
+ });
+ const prepared=invoke({actor:f.other,expected:f.other,tenant:f.tenant,contact:f.contact,intent:'e09df200-0000-4000-8000-000000000001'});
+ assert.equal(prepared.found,true);assert.equal(prepared.request.status,'assigned');const beforePublication=snapshot();
+ let observed,observedError;
+ check('Prepared original Work can publish one recommendation linked to that same customer',()=>{
+  observed=asActor(`SELECT public.advance_action(p_action_id=>'${prepared.request.work_id}',p_to_status=>'executing',p_tenant_id=>'${f.tenant}')`,f.other);
+  observedError=sql(`SELECT error FROM public.paige_actions WHERE id='${prepared.request.work_id}'`);
+  // Intentionally RED on the unmodified incumbent. Retain the actual enum
+  // constraint error; never bless blocked as the desired customer outcome.
+  assert.equal(observed.status,'done',JSON.stringify({observed,observedError}));assert(observed.customer_action_id);
+ });
+ check('Original publication baseline isolates the real action-type constraint gap',()=>assert.match(observedError,/paige_customer_actions_action_type_check/));
+ check('Original failed publication leaves no partial customer item, notice, response or publisher audit',()=>assert.equal(snapshot(),beforePublication));
+ return {sourceFile,publisherHash,advanceSource:'66dcedb5e40dd43a54373c0e0ded1884',directPositiveControl:'original writer/constraint/notification/audit',
+  observed,observedError,fixture:'synthetic Auth/role/relationship setup and outer graph; original PCA table constraint, publisher and Action Bus bodies',
+  productionOperation:false,fixApplied:false,fullCustomerJourney:'UNVERIFIED'};
 }
 
 async function privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked}) {

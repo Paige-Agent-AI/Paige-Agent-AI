@@ -156,6 +156,15 @@ Deno.test('the signing handler verifies the retained presentation before any ter
         preparation_sha256:proposedFields.preparation_sha256,values:proposedFields.field_values});
       assert.equal(Object.hasOwn(nativeInputs[0]._prepared_fields as object,'signed_at'),false,'only the native clock can establish signing time');
     });
+    for(const final of [false,true])await t.step('prepared signature activity cannot enter the legacy notification sender: '+final,async()=>{
+      preparedState();nativeMode='record';preparedSourceFailure=false;
+      if(final)receiptOverride={outstanding_count:0,agreement_status:'partially_signed'};
+      const reply=await invoke(proposedFields),result=await reply.json();
+      assert.equal(reply.status,200);assert.equal(result.ok,true);assert.equal(result.completed,false);
+      assert.equal(result.audit_complete,true);assert.equal(result.signed_event_id,receipt(false).signed_event_id);
+      assert.equal(terminalWrites,1);assert.equal(nativeInputs.length,1);
+      assert.equal(notices,0,'prepared activity requires the original governed Communications path, never a legacy fallback');
+    });
     for(const patch of [
       {preparation_id:'50000000-0000-4000-8000-000000000099'},
       {preparation_sha256:'c'.repeat(64)},

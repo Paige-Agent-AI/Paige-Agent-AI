@@ -1003,6 +1003,12 @@ jobs:
           [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries are required."; exit 2; }
           PG_PROOF_BIN="$PGBIN" node scripts/proof/paige-durable-document-work.mjs
 
+      - name: EXP09 original customer-request catalogue, current authority and incumbent rows in isolated PostgreSQL
+        run: |
+          PGBIN="$(pg_config --bindir)"
+          [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries are required."; exit 2; }
+          E09_PG_BIN="$PGBIN" E09_PROOF_DIR="outputs/e09-request-catalogue-ci" node scripts/proof/e09-consumer-invite.mjs --request-share-catalogue
+
       - name: C0b — incumbent adapter authority bindings
         run: |
           node --test scripts/ci/c0b-*.test.mjs

@@ -1,0 +1,64 @@
+# EXP09 — review and share the original saved customer request
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+OWNER_INTENT: Complete the existing business-owner/private Work/customer action journey inside SOLO Clients and PAIGE. The owner deliberately approves exact saved words for the original customer; CURA and customer principals never inherit owner authority.
+MUST_NOT_HAPPEN: No publication from private Save or composer opening, alternate approval, automatic resend after uncertainty, replaced approved words, cross-business/customer text, private Knowledge/Memory copy, email-delivery claim, consent switch or provider activation.
+MUST_PRESERVE: Original CRM relationship, Work/PCA/notification/audit writers, common confirmation and native publisher, E08 Team Hub privacy and all incumbent adapters, E04 commercial changes, E05 Work, shared Chat/composer/history and existing shell/scroll ownership.
+ACCEPTANCE_CRITERIA: Save privately in the original selected CRM relationship; explicitly open PAIGE with identifiers only; send the review request; inspect full exact wording and recipient label in the original card; approve once; return to the same Work/PCA and actual customer response. Refuse changed actor/business/customer/version/recipient/consent, missing approval, Live publication and replay after uncertainty.
+FLOW_BY_FLOW: PASS: original pre-edit ten-part receiving contract and full state map in docs/delivery/e09-customer-actions-business-scope.md; same original records and execution paths throughout.
+PAIGE_UI_DESIGN: PASS: project five-module workflow, original visual/scroll contracts and Impeccable Operate mode used before the bounded visible integration. No new shell or component system.
+MATERIAL_FLOW_CHANGE: YES: one saved-request review entry connects the original CRM editor to PAIGE's existing approval and native sharing path.
+FLOW_PROTOTYPE: PASS: local self-contained HTML used the original React editor, confirmation card and formatter with deterministic local ports; 19 checks, zero failures/external requests. Retained prototype/result.json and prototype/prototype.html are development evidence only. The October21 owner discretion and single final evaluation authorize safe implementation; no simulated founder approval is claimed.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: any eligible business owner reviews one exact saved request before making it visible to its authorized customer. Account names, IDs and QA cohorts do not select implementations.
+VISUAL_DIRECTION: PASS: existing Mineral/Obsidian tokens, Schibsted, thin separators and quiet 44px controls; inline original record composition. The single shared focus-banner sentence now accurately describes governed actions without changing focus/composer behavior.
+MOTION_PURPOSE: NONE: no animation or transition added.
+PROTECTED_SEAMS: Affected and tested: actual source preparation/claim/native transport, exact stored-call binding, private-content egress/summary/trace, current authority/result withholding, original Work attribution, explicit owner prefill and retained drafts, native catalogue compatibility. Unchanged: identity/signup, customer consent writers, sender/provider/payment, common issuer/approval inbox, Chat runtime/history/stream, Live admission, Team Hub implementation, scheduler, Rail/Memory/Knowledge writers and original customer response writer.
+AUTOMATED_EVIDENCE: PASS: final focused original-component/Root-source suite 94/0; exact-call focused 18/0 overlaps that suite and is not added to its total. Source-preparation and claim negatives execute extracted actual Root bodies. Original native catalogue proof 49/0 retains all35 original case objects and exercises real wrapper/ACL/source guard with explicit synthetic Auth/pre-E08 catalogue ports; original domain transport proof68 remains separate. No authenticated action is inferred.
+STATIC_EVIDENCE: PASS: new consumer/tests strict TypeScript0 and owning ESLint0; actual Root SDK2.75.0 mapper/publisher caller graph0. Actual full Root Deno2.1.4 comparison retains exactly10 pre-existing diagnostics, with raw evidence and only offsets/two exact literal-union ordering normalized; it is not a zero-error compile. Clean hosted build and exact-head CI are separately required. Shared focus file entire-text inverse retains everything except one sentence.
+RENDERED_EVIDENCE: PASS: original production component/CSS/tokens/font, 33 checks/31 captures, no failures/external requests; both themes at1536x770,1366x768,1024x768,900x1000,390x844,320x700. Original 44px targets, text contrast>=4.5 and font loading measured. Committed source hashes/results and representative desktop/mobile/refusal screenshots are under e09-owner-request-command/. These are component renders, not a full authenticated shell.
+BEHAVIORAL_EVIDENCE: PASS: local original button via keyboard, complete saved words, collapse/reopen, private save/readback, next request and same-record history; actual integration tests assert original paige:open only, identifiers without private body/email/token, no RPC/publication on review and refusal when recipient eligibility is unavailable.
+AUTHENTICATED_RUNTIME: UNVERIFIED: attached customer browser cannot currently be driven; owner tab lease belongs to another thread. No repeated reconnect request, account substitution or profile/session workaround. Full ordinary owner-to-customer publication/response/return and latest-head customer re-entry are not credited.
+KEYBOARD_FOCUS: PASS: original review button Enter and saved-heading focus, disclosure/Escape/collapse restoration and retained draft in actual component tests. Real assistive-technology/device verification remains owed.
+ZOOM_REFLOW: PASS: isolated original component at200% and320/390px retains review reachability without horizontal overflow. Full signed-in shell reflow remains UNVERIFIED.
+REDUCED_MOTION: PASS: renderer uses reduced motion; no new motion. This is not device/AT conformance proof.
+STATE_COVERAGE: PASS: private edit/loading/empty/validation/save/returned saved/history error/refused/recipient unavailable; source unavailable; original card/decline/changed words/current authority; denied/unknown/reconciled/native success. Uncertain results remain uncertain and do not trigger another publication. Customer read/response/completion are separate facts.
+TRUTHFUL_STATE_LABELS: PASS: review opening and draft are not approval or sharing. Already-shared reconciliation says confirmed existing share; no second-write attribution. Actual native receipt is retained if current response authority retires, while its presentation is withheld. Existing clients.portal maturity remains PARTIAL; no catalogue or algorithm activation is inferred.
+SOLO_UI: YES: original universal SOLO Clients record and original PAIGE focus banner; no tenant-private implementation.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: isolated original component render passes; full authenticated shell not exercised.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: original composer integration tested with local ports; full authenticated shell not exercised.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: isolated component is not signed-in shell proof.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: full authenticated shell not exercised.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: full authenticated shell not exercised.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: full authenticated shell not exercised.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: full authenticated shell not exercised.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: full authenticated shell not exercised.
+UNVERIFIED: ordinary authenticated owner/customer journey, two legitimate cohorts, full open/closed shell, phone/AT, final exact-head CI, native/Edge/web deployment/readback and founder evaluation remain owed. Protected-preview grant creation was refused by automatic review; no grant or alternative access bypass was attempted. Earlier #2864 genuine customer return remains separate from this new command.
+
+INTERNAL_BUILD_IDENTITY: runtime=64102341e4fadded558174ab8cfeea30540165c4; composed=d74b1db523ad872ed81f4b5a48558c6246da1992; final evidence head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114270009 normal ordered apply/readback); edge=PROOF_OWED(paige-ai-chat and original dependent emitter/source verification); evidence=docs/evidence/e09-private-request-publication.json
+RELEASE_CHANNEL: development: source implementation and bounded local proof; no production customer-action claim.
+RELEASE_CLASSIFICATION: internal-only: incremental existing governed customer-service integration; complete Experience remains open.
+CUSTOMER_RELEASE_IDENTITY: none: no owner-approved release name/version or publication.
+RELEASE_NOTE_REQUIRED: no: internal engineering increment, not the complete integrated founder-ready Experience.
+RELEASE_TRUTH_BOUNDARY: PARTIAL source integration; PROOF OWED hosted gates/deployment/authenticated journey. All42 outcomes/seven pillars/Teach CURA/CAP018–024/ALG-01/02/04/12/13 and founder acceptance remain open.
+RELEASE_RECOVERY: position=forward-fix original source and reconcile the same Work/approval; never duplicate uncertain effects or remove applied migrations; reference=docs/delivery/e09-customer-actions-business-scope.md
+
+## Scope, sources and orchestration contract
+
+E08's explicit frozen handoff ANT-161/4c3f0a30 and E09 receiving ACK e2c08b1f govern Root/risk/C0b/domain/registry integration before E05. The one focus-banner copy correction was separately declared under203190e0; no composer or hydration edits. Current main6683bfb7 and its E02 original reader are retained. Existing29 incumbent bindings are decomposed against original a8aaa131 before renewal; original dispatch/control/helper/imports and all other identities remain exact. The unchanged inspector additionally captures one Portal-only Search privacy refusal, alongside the exact original provider branch. Only28 dispatch literals and one HIGH-risk digest are renewed; extractor/validator/contract metadata/other pins remain unchanged.
+
+1. Original request/event: an authorized owner reviews previously privately saved customer Work.
+2. Entry: Clients → unsent original PAIGE composer → typed owner confirmation. Eligible Live may prepare a review; voice cannot publish.
+3. Registered capability/specialist: client.portal_request_share / client_portal_request_share; owner PAIGE consumes original EXP09 service records. CURA/customer authority is not promoted.
+4. Actor/business/relationship: original authenticated caller, selected business, contact, original Work, exact recipient/access/version. Model references are not authority.
+5. Authorization: original admission/Harness/Trust/common HIGH gate; OFF remains OFF, auto cannot lower HIGH, exact actual claimed row metadata remains outside model arguments. Caller-JWT native authority rechecks before effects.
+6. Execution: existing share_client_portal_request native publisher. This established atomic writer legitimately executes without a new Layer C ActionAdapter or duplicated executor.
+7. Durable identity: original common confirmation plus paige_actions Work, paige_customer_actions, original notification/audit and record_capability_run. A notification is not email delivery.
+8. Recovery: one dispatch per actual claim; unknown acknowledgement requires original source reconciliation. No new card after an uncertain claim, automatic retry or replacement Work. Already-shared readback reports the original linkage only.
+9. Correct result: actual original publication/receipt into the same PAIGE reply and original owner/customer action projections. Current audience revalidation can withhold presentation without erasing a verified native outcome.
+10. Production evidence: NOT_DEPLOYED for this command. Original native publisher/source release #2851/#2858 remains separately recorded; it does not prove new Root admission, customer action or activation.
+
+## Review and quality dimensions
+
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE inspects the final PR head after implementation; exact receipt belongs in that PR. Local review corrected unpublished gaps around post-result authority, private Web Search egress and exact-call selection; causal failing and passing checks are retained. Existing Team Hub121 and wiring17 regressions remain separate bounded proof. No production vulnerability or complete customer result is claimed from those synthetic findings.
+
+Functional: implemented with bounded tests; hosted release and authenticated use owed. Visual: original design-system component, desktop/mobile/theme/reflow evidence; full-shell proof owed. Experiential: same-record draft/review/approval/recovery source and local flows; actual owner/customer continuation owed. Founder Acceptance: NOT_REQUESTED; one complete integrated evaluation later.

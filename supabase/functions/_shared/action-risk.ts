@@ -180,6 +180,10 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // (rule 2: nothing in a request lowers a class). Its RPC re-proves owner/admin of the caller's own
   // active workspace and refuses a reminder, an unlinked or cancelled item, and a stale version.
   ["plan_item_set_client_share", "high", "changes what a client can see in their portal"],
+  // EXP08 Team Hub increment 4 (owner, 2026-10-24: posting only with the person's approval). The
+  // reply goes out under the person's own name to teammates who read it at once, and a posted
+  // message cannot be unsent. `high`, so the card is forced on every lane and no grant runs it alone.
+  ["team_hub_post_reply", "high", "posts words under a person's own name to teammates, and a posted message cannot be unsent"],
   // E09 Slice M. Showing, hiding, renaming or reordering an entry in the customer portal menu changes
   // what EVERY client of the business sees on their next visit, and a hidden entry takes a page away
   // from people who may be relying on it. `high` whatever the entries say. Its writer

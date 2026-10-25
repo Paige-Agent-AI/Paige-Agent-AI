@@ -54,7 +54,7 @@ below. The originals stay where they are as history (§58).
     Also `PROOF_OWED`; see the
     [increment 2 work contract](../../delivery/exp08-team-hub-increment2-work-contract.md).
   - **Update, 2026-10-25:** increment 3 adds attachments (migrations `20271114160008` and
-    `20271114160108`, not yet merged).
+    `20271114160108`, merged PR #2839 and read back on production).
     - Limits: up to 5 files of 10 MB each per message or thread reply.
     - Storage: the private `comms-attachments` bucket at `<tenant>/team-hub/<file_id>`, recorded
       in `team_hub_files` behind four restrictive storage policies.
@@ -64,8 +64,17 @@ below. The originals stay where they are as history (§58).
     - Files are not malware-scanned, and the UI says so.
     - Not accepted: legacy `.doc`/`.xls` and PowerPoint. Word and Excel files with embedded
       objects, charts, external links or macros are refused.
-    - Also `PROOF_OWED`, and the edge function is not deployed. See the
+    - Also `PROOF_OWED` until an authenticated drive. See the
       [increment 3 attachments contract](../../delivery/exp08-team-hub-increment3-attachments-contract.md).
+  - **Update, 2026-10-25:** increment 4 adds PAIGE with Team Hub (migrations `20271114240008` and
+    `20271114240108`).
+    - Reads: in Chat and Live, PAIGE lists, reads and searches the conversations the asker can see,
+      with the asker's own JWT, fresh every turn. Nothing is stored or indexed.
+    - Reply: drafted by PAIGE, posted under the person's own name only from their approval card.
+    - Memory: once a person has read Team Hub through PAIGE, their automatic memory summaries stop
+      (owner ruling 2026-10-25) and their PAIGE traces carry no text.
+    - Also `PROOF_OWED`. See the
+      [increment 4 PAIGE contract](../../delivery/exp08-team-hub-increment4-paige-contract.md).
 - **Owner decisions, 2026-10-24.** Answered by the owner in the EXP08 Claude Code session and
   logged in `docs/brain/decision-log.md`. They are approvals to build, not proof that anything
   works.

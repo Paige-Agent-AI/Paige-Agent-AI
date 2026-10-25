@@ -35,6 +35,11 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   comms_set_primary_number: "Changing which number you send from",
   comms_registration_status: "Checking your carrier registration",
   comms_draft_registration: "Drafting your carrier registration",
+  // EXP08 Team Hub increment 4 (contract section 3 step copy)
+  team_hub_conversations: "Reading Team Hub",
+  team_hub_read_conversation: "Reading Team Hub",
+  team_hub_search: "Searching Team Hub",
+  team_hub_post_reply: "Posting your Team Hub reply",
   // Action bus
   action_advance: "Moving that action forward",
   action_list: "Checking the team's queue",

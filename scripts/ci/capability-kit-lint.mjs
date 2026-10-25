@@ -151,6 +151,27 @@ export function businessSnapshotReadDoorBound(resolver) {
 // naming-only read_* wrapper. Only this exact read tuple/schema and mounted caller-JWT
 // adapter qualify. This does not clear risk debt, arbitrary list_* tools or effects.
 const CALENDAR_BOOKING_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/calendar_booking.ts";
+// EXP08 Team Hub increment 4: the three reads keep their existing team_hub_* definer names (the
+// read_* naming heuristic predates them). Admit each exact read tuple and schema only when the
+// actual caller-JWT door is bound: the domain catalog mounted on the tenant tier, the dispatch
+// passing the server tenant and the caller client, and the dispatch module calling that definer.
+const TEAM_HUB_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/team_hub.ts";
+const TEAM_HUB_READ_DECLARATIONS = new Map([
+  ["public.team_hub_list_conversations", ["team.hub_list_conversations", "TEAM_HUB_LIST_CONVERSATIONS_CAPABILITY", "team_hub_conversations"]],
+  ["public.team_hub_list_messages", ["team.hub_read_conversation", "TEAM_HUB_READ_CONVERSATION_CAPABILITY", "team_hub_read_conversation"]],
+  ["public.team_hub_search", ["team.hub_search", "TEAM_HUB_SEARCH_CAPABILITY", "team_hub_search"]],
+]);
+function teamHubReadDoorBound(resolver, operation) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const compact = value => value.replace(/\s+/g, "");
+  const chat = compact(read("supabase/functions/paige-ai-chat/index.ts"));
+  const door = compact(read("supabase/functions/_shared/team-hub/chat.ts"));
+  return chat.includes("from'../_shared/paige-spine/domains/team_hub.ts'")
+    && chat.includes("from'../_shared/team-hub/chat.ts'")
+    && chat.includes('if(callerTier==="tenant"&&calendarBookingAccountShape==="solo"&&!scopedClientId&&!customerPortal)toolDefs.push(...TEAM_HUB_READ_TOOLS);')
+    && chat.includes("awaitTEAM_HUB_READERS[tc.function.name]({tenantId:hubTenant,userId:user.id},supabaseClient,hubArgs)")
+    && door.includes(`caller.rpc("${operation.slice(7)}",{p_expected_tenant:scope.tenantId`);
+}
 const CALENDAR_BOOKING_ADAPTER_FILE = "supabase/functions/_shared/calendar-booking-read.ts";
 function calendarChatReadBranch(resolver, tool) {
   const source = resolver.sourceFile(path.join(ROOT, "supabase/functions/paige-ai-chat/index.ts"));
@@ -357,6 +378,11 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='business.operating_snapshot'&&owner.name.text==='BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY'
                   && businessSnapshotReadDoorBound(resolver))readTools.set('get_business_snapshot',owner.name.text);
+              }
+              else if(TEAM_HUB_READ_DECLARATIONS.has(operation)&&relative(file)===TEAM_HUB_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                const [id,symbol,tool]=TEAM_HUB_READ_DECLARATIONS.get(operation);
+                if(identity&&literalProperty(identity,'id')===id&&owner.name.text===symbol&&teamHubReadDoorBound(resolver,operation))readTools.set(tool,owner.name.text);
               }
               else if(operation==='public.list_team_bookings'&&relative(file)===CALENDAR_BOOKING_DECLARATION_FILE){
                 const identity=nestedProperties(sections,'identity',sourceFile);

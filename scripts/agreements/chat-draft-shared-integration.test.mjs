@@ -32,8 +32,10 @@ function visit(node) {
 visit(parsed);
 assert.ok(branch, 'canonical dispatch branch exists');
 assert.deepEqual(admittedReadTools, ['read_business_metric', 'get_business_snapshot',
-  'read_client_engagement_status', 'read_business_time_zone', 'read_calendar_booking', 'read_calendar_agenda', 'crm_get_task'],
-  'the closed read set includes only reviewed exact/bounded Calendar and Task successors; PRE-1 adds no action');
+  'read_client_engagement_status', 'read_business_time_zone', 'read_calendar_booking', 'read_calendar_agenda', 'crm_get_task',
+  // EXP08 Team Hub increment 4 (owner decision 2026-10-24, docs/brain/decision-log.md): three caller-JWT reads.
+  'team_hub_conversations', 'team_hub_read_conversation', 'team_hub_search'],
+  'the closed read set includes only reviewed exact/bounded Calendar, Task and Team Hub reads; PRE-1 adds no action');
 let branchSource = branch.getText(parsed);
 // Deliberate in-memory defect controls: no production source is rewritten during falsification.
 const mutation = process.argv.find(arg => arg.startsWith('--mutate='))?.slice('--mutate='.length);

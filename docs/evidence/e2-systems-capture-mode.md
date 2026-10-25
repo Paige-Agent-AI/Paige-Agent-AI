@@ -48,10 +48,11 @@ declared runtime import and original client ports. Unexpected imports fail the
 harness; no undeclared helper is injected, no provider/network/database is used.
 Initial original-core results:10RED/13PASS after correcting a subset-fixture
 parameter shape. A subsequent unsupported-scope campaign reproduces5RED before
-the closed guard. Final30 owning cases plus184 original Systems/console/tier
-controls:214PASS across8 suites in4.10s; scoped ESLint0. The original owner-required
-draft-failure/action-filing backstop and all original assertions remain untouched.
-The unchanged project type ratchet passes (baseline10/current6, no new errors).
+the closed guard. Historical80aa source proof:30 owning cases plus184 original
+Systems/console/tier controls,214PASS across8 suites in4.10s; scoped ESLint0.
+The original owner-required remediation draft-failure/action-filing backstop is
+preserved. The new capture-only partial-summary assertion was subsequently
+strengthened to require unconfirmed persistence, as documented below.
 The test compiler proves source syntax/execution at the isolated ports, not native
 database authorization or a production Edge invocation.
 
@@ -68,7 +69,10 @@ behavior and its original guard remain unchanged and separately tested.
 
 The actual core initially failed19 new completion/acknowledgement controls while
 31 other controls passed. The refined source passes52 owning+184 incumbent
-controls,236/8 suites in22.92s. Test ports retain rows produced by the actual
+controls,236/8 suites in5.06s on the current-main composition95722a76. Scoped
+ESLint exits0; the unchanged complete-project type ratchet passes10baseline/
+6current, with no new errors or baseline edits. That app type check is not a
+substitute for the fresh hosted native Deno graph gate. Test ports retain rows produced by the actual
 inserts; readback does not manufacture results from the catalog or expected test
 status. Native database/permission proof is still not established by these ports.
 

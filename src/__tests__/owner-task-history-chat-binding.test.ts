@@ -10,6 +10,7 @@ describe("original task-history Chat binding", () => {
     expect(OWNER_TASK_HISTORY_READ).toMatchObject({ key: "automations.owner_task_history", owner: "experience-05", maturity: "PARTIAL",
       action: { classification: "read", chatTool: "read_owner_task_act", riskPolicyKey: "read_only", approvalAuthority: "none", executor: "public.read_owner_task_act" } });
     expect(OWNER_TASK_HISTORY_READ_CAPABILITY).toMatchObject({ effect: "read", governance: { approval: "none", risk: "read_only" } });
+    expect(OWNER_TASK_HISTORY_READ.selfDescribe).toBe(false);
     expect(OWNER_TASK_HISTORY_TOOLS[0].function.parameters.required).toEqual(["approval_id"]);
     expect(Object.keys(OWNER_TASK_HISTORY_TOOLS[0].function.parameters.properties)).toEqual(["approval_id"]);
     expect(OWNER_TASK_HISTORY_TOOLS[0].function.parameters.additionalProperties).toBe(false);

@@ -970,7 +970,11 @@ const SOURCES = {
   // provider payload changed; paige-ai-chat untouched, so all dispatch fingerprints are unchanged. Old digest
   // 08ec0fe3… reproduced from 1dac06b8b with the same canonical form (TypeScript printer {removeComments:true},
   // sha256) before renewing; the new value was then confirmed by this file's own test passing. Renew this digest only.
-  "supabase/functions/send-message/index.ts": "2eea5765cb8f5fa2feac614b275f13ba519bd510d04c12d241a981a7bc4afd2e",
+  // EXP04 C45/E08 receiving AUTHOR-REVIEW / LOWER ASSURANCE: both whole
+  // sender inverses preserve the complete reviewed agreement extension and
+  // incoming Team Hub attachment refusals. Old08ec/E082eea/C451f8 reproduced.
+  // This one explicit composed pin changes no validator, dispatch or peer pin.
+  "supabase/functions/send-message/index.ts": "2405fcebb5a03881de4e430cf2e4d4727fef1d797bf82998098e018acb28f42b",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are

@@ -46,6 +46,8 @@ import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 import { parseDeliveryBinding, renderTransientInvoiceLink, renderTransientInvoiceText, type DeliveryBinding } from "../_shared/sales-invoice-delivery/binding.ts";
 import { mintSignerToken, sha256Hex } from "../_shared/agreements/token.ts";
+import {capturePreparedSignatureMessage,isPreparedAgreementMessage,prepareSignatureMessage,assertPreparedSignatureSenderEnvelope,
+  type PreparedSignatureMessageSource} from "../_shared/agreements/prepared-signature-message.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,6 +94,9 @@ interface SendBody {
   // true = re-enter an 'unknown'/stale-'dispatching' Resend operation under the SAME
   // provider idempotency key (the claim RPC decides whether that is allowed).
   comms_email_reconcile?: boolean;
+  // Internal, one-use signing credential. It is never copied into the draft,
+  // audit, Work, Conversation, receipt, error or any other provider pathway.
+  agreement_signature_token?: string;
 }
 
 // ── INT-328 comms.email_send helpers. Every one is used ONLY on the comms_email path. ──
@@ -665,6 +670,11 @@ Deno.serve(async (req) => {
   //    attachment-free email of a PREPARED row, sent only by comms-email-command under the service
   //    role. It never rides marketing, the invoice binding, or the scheduler.
   const commsEmailRequested = body?.comms_email_operation_id !== undefined || body?.comms_email_reconcile !== undefined;
+  if(body?.agreement_signature_token!==undefined&&(!isInternal||!commsEmailRequested||body.channel!=="email")){
+    return new Response(JSON.stringify({error:"agreement_signature_binding_required"}),{
+      status:403,headers:{...corsHeaders,"Content-Type":"application/json"},
+    });
+  }
   if (commsEmailRequested) {
     if (typeof body.comms_email_operation_id !== "string" || !COMMS_EMAIL_UUID.test(body.comms_email_operation_id) ||
         (body.comms_email_reconcile !== undefined && typeof body.comms_email_reconcile !== "boolean") ||
@@ -817,6 +827,7 @@ Deno.serve(async (req) => {
   // ── INT-328 comms.email_send binding. A prepared governed email is never an ordinary editable
   //    draft: it is sent only with its operation id, and only exactly as prepared.
   let commsBinding: CommsEmailBinding | null = null;
+  let preparedAgreement:PreparedSignatureMessageSource|null=null;
   const commsReconcile = body.comms_email_reconcile === true;
   let commsDispatchClaimed = false;
   // The attempt number THIS request's claim returned. finalize_comms_email_send accepts a
@@ -842,6 +853,20 @@ Deno.serve(async (req) => {
       });
     }
     commsBinding = parsed;
+    if(isPreparedAgreementMessage(data)){
+      try{
+        preparedAgreement=capturePreparedSignatureMessage(data);
+        if(preparedAgreement.messageId!==body.message_id)throw Error("agreement_message_changed");
+      }catch{
+        return new Response(JSON.stringify({error:"agreement_signature_binding_invalid"}),{
+          status:409,headers:{...corsHeaders,"Content-Type":"application/json"},
+        });
+      }
+    }else if(body.agreement_signature_token!==undefined){
+      return new Response(JSON.stringify({error:"agreement_signature_binding_required"}),{
+        status:409,headers:{...corsHeaders,"Content-Type":"application/json"},
+      });
+    }
     // The read RPC's own whole-row check (message, connector, contact method all still as prepared).
     commsBindingEligible = (data as { eligible?: unknown }).eligible === true;
   }
@@ -1090,8 +1115,8 @@ Deno.serve(async (req) => {
     const recipient = normalizeRecipient(body.channel, body.to);
     const recipientBelongsToContact = recipient !== "" &&
       contactAddresses.some((address) => normalizeRecipient(body.channel, address) === recipient);
-    if (!recipientBelongsToContact && commsBinding) return await refuseCommsEmail("RECIPIENT_CHANGED");
-    if (!recipientBelongsToContact && !invoiceBinding) {
+    if (!recipientBelongsToContact && commsBinding && !preparedAgreement) return await refuseCommsEmail("RECIPIENT_CHANGED");
+    if (!recipientBelongsToContact && !invoiceBinding && !preparedAgreement) {
       if (isInternal && body.message_id && tenantId) {
         // A scheduled row keeps the exact recipient approved when it was queued. If the
         // canonical People address changes before release, never retarget silently and never
@@ -1552,6 +1577,17 @@ Deno.serve(async (req) => {
         outMsg.body_html = transientHtml;
       }
       let commsAbort: AbortController | null = null;
+      let signingMessage:Awaited<ReturnType<typeof prepareSignatureMessage>>|null=null;
+      if(preparedAgreement){
+        try{
+          assertPreparedSignatureSenderEnvelope(preparedAgreement,{address:resolvedSenderEmail,name:senderName,replyTo});
+          signingMessage=await prepareSignatureMessage(preparedAgreement,body.agreement_signature_token,{
+            admin:{from:table=>({select:columns=>admin.from(table).select<string,unknown>(columns)}),rpc:async(name,args)=>{
+              const result=await admin.rpc(name,args);return {data:result.data,error:result.error};
+            }},environment:()=>({resendConfigured:false,googleConfigured:false,sendgridConfigured:!!Deno.env.get("SENDGRID_MAIL_SEND_API_KEY")}),
+          });
+        }catch{return await refuseCommsEmail("AGREEMENT_SIGNATURE_REQUEST_UNAVAILABLE");}
+      }
       if (commsBinding) {
         // The one atomic provider-admission point (mirrors the invoice claim above). A losing,
         // concurrent or uncertain claim never calls the provider and never finalizes: the
@@ -1578,6 +1614,21 @@ Deno.serve(async (req) => {
         };
       }
       await assertCurrentEmailSender();
+      if(signingMessage&&preparedAgreement){
+        try{
+          // Native readback repeats current HIGH/Work/document/credential after
+          // the winning claim and every sender wait. No second claim or sender.
+          await signingMessage.revalidate(commsClaimedAttempt!);
+          signingMessage.apply(outMsg);
+          ctx.from={address:preparedAgreement.sender.from_address,display_name:preparedAgreement.sender.from_name??undefined};
+          ctx.replyTo=preparedAgreement.sender.reply_to;
+          outMsg.sender={address:preparedAgreement.sender.from_address,display_name:preparedAgreement.sender.from_name??undefined};
+        }catch{
+          signingMessage.dispose();
+          const receipt=await finalizeCommsEmail("failed",null,"agreement_signature_source_changed");
+          return commsEmailResponse(receipt?"failed":"outcome_unknown","AGREEMENT_SIGNATURE_SOURCE_CHANGED");
+        }
+      }
       if (invoiceBinding) invoiceProviderAttempted = true;
       if (commsBinding) commsProviderAttempted = true;
       const delivery = commsAbort

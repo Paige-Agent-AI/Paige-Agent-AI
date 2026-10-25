@@ -1,0 +1,304 @@
+{
+  "frames": [
+    {
+      "frame": "solo-1536x770-paige-closed",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1536x770-paige-open",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1366x768-paige-closed",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1366x768-paige-open",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1024x768-paige-closed",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1024x768-paige-open",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-900x1000-paige-closed",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-900x1000-paige-open",
+      "overflowX": 0
+    }
+  ],
+  "results": [
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed channel labels render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed linked piece title renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed plan statuses render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the boundary line is on the surface",
+      "detail": "This is your plan — nothing here posts or schedules by itself. Times are shown in America/"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed a cancelled entry is struck through, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open channel labels render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open linked piece title renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open plan statuses render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the boundary line is on the surface",
+      "detail": "This is your plan — nothing here posts or schedules by itself. Times are shown in America/"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open a cancelled entry is struck through, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed channel labels render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed linked piece title renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed plan statuses render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the boundary line is on the surface",
+      "detail": "This is your plan — nothing here posts or schedules by itself. Times are shown in America/"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed a cancelled entry is struck through, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open channel labels render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open linked piece title renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open plan statuses render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the boundary line is on the surface",
+      "detail": "This is your plan — nothing here posts or schedules by itself. Times are shown in America/"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open a cancelled entry is struck through, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed channel labels render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed linked piece title renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed plan statuses render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the boundary line is on the surface",
+      "detail": "This is your plan — nothing here posts or schedules by itself. Times are shown in America/"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed a cancelled entry is struck through, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open channel labels render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open linked piece title renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open plan statuses render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the boundary line is on the surface",
+      "detail": "This is your plan — nothing here posts or schedules by itself. Times are shown in America/"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open a cancelled entry is struck through, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed channel labels render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed linked piece title renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed plan statuses render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the boundary line is on the surface",
+      "detail": "This is your plan — nothing here posts or schedules by itself. Times are shown in America/"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed a cancelled entry is struck through, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open channel labels render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open linked piece title renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open plan statuses render",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the boundary line is on the surface",
+      "detail": "This is your plan — nothing here posts or schedules by itself. Times are shown in America/"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open a cancelled entry is struck through, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "adding runs the governed upsert (tenant never named by the browser)",
+      "detail": "{\"p_id\":null,\"p_content_id\":\"mc-4\",\"p_channel\":\"blog_outline\",\"p_planned_for\":\"2026-11-05T14:00:00.000Z\",\"p_note\":\"Teard"
+    },
+    {
+      "ok": true,
+      "name": "planned_for is a timezone-aware instant",
+      "detail": "2026-11-05T14:00:00.000Z"
+    },
+    {
+      "ok": true,
+      "name": "the new entry renders after save",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "cancelling re-upserts the same row (p_id set, status cancelled — no new row)",
+      "detail": "{\"p_id\":\"cp-1\",\"p_content_id\":\"mc-2\",\"p_channel\":\"email_campaign\",\"p_planned_for\":\"2026-10-25T17:48:32.369Z\",\"p_note\":\"T"
+    },
+    {
+      "ok": true,
+      "name": "empty state is honest",
+      "detail": ""
+    }
+  ],
+  "pageErrors": []
+}

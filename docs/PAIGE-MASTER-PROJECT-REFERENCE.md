@@ -852,6 +852,20 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP02 original finding review and capture-start recovery.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2817 original recorded-finding review](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2817) | Reviewed9674023eeb8abf67a8ddde12d14f8cad1c9f84c9; AUTHOR-REVIEW / LOWER ASSURANCE5643757548/final5643880231, all10 applicable exact checks/two webSUCCESS/Preview designedSKIP/zero threads. Actual001130396eb01354a6b27273978bad2ae8761b98/tree3ce5928e equals480627ac5+967 union; all16134 outside entries/all36 owning leaves/incoming Brain and visual dependencies exact. READYdpl_98GxFj5d1zFoeaaNmWBgTxbkZ7Yf; both public200/exact001130-mvnzn7xp/null. Fresh containingc908 original-record read matches public bootstrap; six affected UI/visual leaves unchanged. Own SQL/EdgeN/A. [Release6399704342](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2817#issuecomment-6399704342). |202/9 source controls and neutral rendered desktop/narrow evidence. Genuine designated ordinary SOLO Owner original prepared source/new-tab preservation, historical-versus-current distinction, expanded read, keyboard wrap, Escape/focus, original-route reload, empty composer, read-only refresh/clear/Back PASS; ANT52/35794f47. Other roles/tenant/cohorts/native zoom/AT/device/current-action/manual scan/full19/nine/founder acceptance remain owed. No execution or catalogue/algorithm promotion. |
+| [#2847 original capture-start identity](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2847) | Reviewede1fdf8740e1f5006d890ef1b56c030c2b9db4a5a; LOWER5643768520/final5643912963/receiving correction6399644574; all11 exact checks/two webSUCCESS/zero threads. Actualc908539817d029c4b745b8518c24a16fa2c11795/tree7ace2fa2 equals72a2c69c2+e1 union; all16174 outside entries/three owned blobs/four native closures exact. Normal Edge40208009138/job121213021865; actual API certificate12604896678/SHA256a6b2df9981237bf08c3601c8ce79bc4baee523ef8a29c3a671396342d87ab241 independently verifies all159 returned entries/configs: change136/JWTtrue,onboarding140/false,operator142/false,scheduled143/false; edge-livec908. READYdpl_9Tt77RbWUXj18d2W2sRfG2SCribp; both public200/exactc908-mvnzv71o/null. Own SQLN/A. [Release6399705002](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2847#issuecomment-6399705002). |64 owning+5 original source cases PASS; causal8RED and unchanged cold-import/rerun history retained. Native Deno both-leg artifact12603581532:3/3 baseline,0new for4 functions. Existing run identity retained on uncertain initial INSERT only in internal none mode; legacy behavior preserved. Identity is not persistence/absence, idempotency or a receipt. Manual Work/admission/scan/repair, all19/nine and founder acceptance remain open; no activation. |
+
+Additive Finance2696 QA: a fresh seven-view read/source inspection/Escape/focus/
+Profitability reload passed on public884386-mvnyytgj with unchanged four original
+Finance leaves; [receipt6399493118](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2696#issuecomment-6399493118),
+ANT52/b598089f and [Finance Brain](brain/finance-department.md#october25--fresh-seven-view-finance-read-and-reload).
+No populated company-source/provider/role/cohort or full Finance acceptance follows.
+This mechanical documentation closeout is not logged recursively.
+
 **2026-10-25 UTC - EXP05 bounded Automation inspection - production readback.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

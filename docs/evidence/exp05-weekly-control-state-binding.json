@@ -141,5 +141,176 @@
       },
       "scope": "Original native proof driver/module and owning evidence only; production controller, SQL, writer, trigger posture and authority remain unchanged from reviewed e463. New exact-head hosted CI is required; ordinary account/Live/full Experience acceptance remains unverified."
     }
+  },
+  "productionRelease20261025": {
+    "pr": 2824,
+    "reviewedHead": "ce133a8bd08746205d5bad28418e9ec5d0f9d2f6",
+    "merge": "ef732d23c5053d4e2452dae62d57d53dfb2680e1",
+    "tree": "30d68fb0cea02ab8918d53fbd06013a79fbe3173",
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "receipt": 5642495471
+    },
+    "ci": {
+      "success": 13,
+      "webStatusesSuccess": 2
+    },
+    "migration": {
+      "version": "20271114130105",
+      "statements": 4,
+      "run": 40186310099,
+      "job": 121147837109,
+      "status": "APPLIED / READ_BACK",
+      "getterOid": "305612",
+      "sourceMd5": "60d5acc132111d9db7e63d9848c06c47",
+      "owner": "postgres",
+      "volatility": "STABLE",
+      "securityDefiner": true,
+      "searchPath": "empty",
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "metadataPreserved": true
+    },
+    "sourceRun": 40186310137,
+    "sourceJob": 121147729011,
+    "artifact": 12596367775,
+    "artifactSha256": "6faec5a75048894ce2e9a4a96315a86eee55ff1dbad486f00db11e519a429ec3",
+    "source": {
+      "commit": "ef732d23c5053d4e2452dae62d57d53dfb2680e1",
+      "allPass": true,
+      "functions": [
+        {
+          "name": "execute-approval",
+          "version": 180,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 119,
+          "emittedFiles": 0,
+          "archiveSha256": "25b49df4e87478425d3d527488c5e1ab012327afee81433a8ce82a89c4bfa3e7"
+        },
+        {
+          "name": "paige-ai-chat",
+          "version": 538,
+          "status": "PASS",
+          "downloadMode": "docker_requested",
+          "files": 283,
+          "emittedFiles": 283,
+          "archiveSha256": "90884a5998d359201168d48f4fc3cc99cdda1be20c44161084141451c63dd514"
+        },
+        {
+          "name": "paige-native-event-dispatch",
+          "version": 261,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 116,
+          "emittedFiles": 0,
+          "archiveSha256": "35f017a9f5e46a5141c9902ffb310630671df127cb440f72276c26f5f7f9da36"
+        },
+        {
+          "name": "paige-orchestrator",
+          "version": 130,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 127,
+          "emittedFiles": 0,
+          "archiveSha256": "d8955d4d7bd41b66e4937388a15b945c81577d3e76c014421f839b8790475720"
+        },
+        {
+          "name": "weekly-commitment-command",
+          "version": 21,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 18,
+          "emittedFiles": 0,
+          "archiveSha256": "9e3824fb1d67452eef7a070449714d2e39201f150687d1c588b76e0757a7cc15"
+        }
+      ],
+      "scratchCleanup": {
+        "status": "incomplete",
+        "reason": "permission_denied"
+      }
+    },
+    "web": {
+      "deployment": "dpl_533Tmvr66b7Ev4ZjARqcbgvFcNK4",
+      "state": "READY",
+      "commit": "ef732d23c5053d4e2452dae62d57d53dfb2680e1",
+      "publicVersionAtExactMerge": "NOT_CAPTURED; later descendant30b public identity verified separately"
+    },
+    "dependentChild": {
+      "pr": 2832,
+      "head": "ee927b54005486fb16666b4bd883610a5eecf6d8",
+      "status": "REVIEWED / NEW_CI_PENDING",
+      "nativeCases": 125,
+      "all124PriorCasesRetained": true,
+      "priorHostedFailure": "e463/job121140863240 retained; original driver ordering corrected without changing the controller/native writer"
+    },
+    "releaseChannel": "production",
+    "customerReleaseIdentity": null,
+    "boundary": "Source/review/CI/production identity only. Ordinary owner authority, original business result/Rail, reload/recovery, equivalent existing/new SOLO cohorts, deployed Capabilities panel, separate Live, full ten outcomes/E5-CV1–9 and founder acceptance remain unverified. No trigger, provider, spend, external send or customer announcement is activated."
+  },
+  "ownerPreflightProductionRelease20261025": {
+    "pr": 2832,
+    "reviewedHead": "ee927b54005486fb16666b4bd883610a5eecf6d8",
+    "merge": "bdd68b63c06d24a316c70f90a0956c7836a2076a",
+    "tree": "6d75c97c1b7daa1f30753d7a09697cd242a253ca",
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "source": 5642801275,
+      "composition": 5642810202
+    },
+    "ci": {
+      "success": 9,
+      "skipped": 1,
+      "webStatusesSuccess": 2,
+      "verifyJob": 121148165942,
+      "nativeJob": 121148165702
+    },
+    "nativeProof": {
+      "localWindowsCases": 125,
+      "hostedLinuxCases": 123,
+      "sharedCases": 121,
+      "note": "Actual PostgreSQL catalogue selects the preserved CET/EST positive/stale or unsupported-zone refusal branches; no scenario removed or skipped.",
+      "roleRestorationVerified": true
+    },
+    "currentMainComposition": {
+      "main": "9f5333229a649983f8ac55e43d045fa333140eed",
+      "all6OwningBlobsUnchanged": true,
+      "allOtherIncomingPathsPreserved": true,
+      "unitCases": 126,
+      "actualChatRecordingPortCases": 34
+    },
+    "web": {
+      "observedAt": "2026-10-25T11:34:54.754Z",
+      "expected": "bdd68b63c06d24a316c70f90a0956c7836a2076a",
+      "deployment": "dpl_JD3Rd7KP42vhNHG8LJ11BnCjwYnA",
+      "results": [
+        {
+          "url": "https://paigeagent.ai/version.json",
+          "status": 200,
+          "body": {
+            "buildId": "bdd68b63c06d24a316c70f90a0956c7836a2076a-mvnqyvo5",
+            "customerUpdate": null
+          }
+        },
+        {
+          "url": "https://app.paigeagent.ai/version.json",
+          "status": 200,
+          "body": {
+            "buildId": "bdd68b63c06d24a316c70f90a0956c7836a2076a-mvnqyvo5",
+            "customerUpdate": null
+          }
+        }
+      ],
+      "edge": "NOT_APPLICABLE; original function source unchanged",
+      "migration": "NOT_APPLICABLE; original native source unchanged"
+    },
+    "ownMigration": "NOT_APPLICABLE",
+    "ownEdge": "NOT_APPLICABLE",
+    "runtimeSample": "No matching Chat invocation records in bounded10:40–11:22UTC operational sample; this is not CPU recovery or authenticated customer proof.",
+    "releaseChannel": "production",
+    "customerReleaseIdentity": null,
+    "acceptance": "Ordinary owner approval/records/Rails/reload, existing/new SOLO cohorts, panel availability, fresh visual/keyboard, separate Live, full ten/E5/Builder/ZION/notice/recovery and founder acceptance remain unverified. No recurrence/provider activation."
   }
 }

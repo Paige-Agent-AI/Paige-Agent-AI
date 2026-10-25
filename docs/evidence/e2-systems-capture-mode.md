@@ -435,3 +435,55 @@ callable manual capture and canonical result/receipt/recovery remain INCOMPLETE.
 Founder Acceptance: NOT_ACCEPTED; all19/nine and original9/0+12/0/4 preserved.
 ALG03/06/11/12/13 and CAP009–017 readiness are unchanged. No model/provider,
 customer scan, business action or protected monthly retry was performed.
+
+## October25 — current-authority read of the original manual Work request
+
+O07/O14 prerequisite only: EXTEND the existing EXP05-owned
+`get_paige_durable_work(uuid)` with one explicit manual-Systems branch. Original
+UUID, twelve projected fields, function OID/ABI/owner/ACL/config and all planner
+attributes remain unchanged. The complete non-Systems definition is preserved
+by exact source inverse, including the original Knowledge and other caller
+branches. No new callable, grant, table, job, worker, receipt or provider.
+
+The closed kind/capability pair, exact tenant/manual/none payload, original
+scope epoch and one-attempt ceiling must agree. Both reserved pair sides refuse
+fallback. Current JWT/workspace and actual canonical Metric actor authority
+remain mandatory; only eligible standalone parentless SOLO Owner/Admin may read
+this purpose. Historical active/trial/past_due requests follow the existing
+Metric read policy; this does not broaden active-only request admission. An
+Operator helper positive cannot replace current Metric authority. Payload,
+authority context, intent, lease and dispatch markers are not added to projection.
+
+`node scripts/proof/e2-manual-systems-work-read.mjs <isolated-port>` uses the
+original disposable PostgreSQL fixture, actual Work creator/current identity
+trigger, original Knowledge authority and canonical Metric predicates. Genuine
+new-flow suitability baseline3PASS/5FAIL becomes8PASS/0FAIL after applying the
+actual migration. Final native31 checkpoints include sixteen incumbent
+caller/kind/permission comparisons, raw-profile/Auth/member/cohort negatives,
+closed-purpose/foreign refusals, anonymous execute denial, exact metadata,
+every-other-function preservation, DDL replay/drift refusal and whole-row
+immutability including cancellation/uncertainty. The initial clone used the RPC
+return name instead of the original idempotency column; that fixture setup run
+is INVALID, never a source finding. The corrected thirty-check run and final
+expanded thirty-one-check run are distinct retained observations.
+
+Auth table shapes/current-user extraction and surrounding Operator helpers are
+controlled fixture boundaries, not real customer authentication or Operator
+acceptance. Existing protected native suites and fresh required exact-head CI
+remain required. EXP05 receiving ACK ANT161/a4b1cdb2 permits this bounded source
+window and requires exact candidate/slot/proofs for final receiving inspection
+before release. Proposed forward migration20271114240202 was CLI-scaffolded;
+native/source frontier and conflicts must be rechecked before merge.
+
+Zero projected rows are privacy-safe unavailable, never proof that a request
+does not exist, failed or can be restarted. Transport errors remain unknown.
+Original Work status is neither a completed Systems run nor a Rail receipt.
+No public caller/consumer, dispatch, scan or corrective action is activated.
+Future claim/runner/result/Rail and interruption/recovery proof remain owed.
+
+Functional: local read prerequisite. Visual: N/A, no customer UI delta.
+Experiential: complete manual Systems journey INCOMPLETE. Founder Acceptance:
+NOT_ACCEPTED. ALG03/06/11/12/13 maturity, Systems binding and CAP009–017 readiness
+unchanged; manual Spine capability remains UNAVAILABLE/unregistered. Original
+9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved; all19/nine remain open. No customer
+release identity, activation, provider effect or protected monthly retry.

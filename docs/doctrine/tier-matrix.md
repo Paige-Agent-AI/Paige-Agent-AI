@@ -429,7 +429,7 @@ In the one PAIGE chat, typed or Live, an active SOLO member can ask PAIGE what's
 - Disposable-PostgreSQL proof `supabase/tests/exp08_team_hub_search.sql` (14 PASS, mutation-tested), in CI.
 - Node tests `_shared/team-hub/chat.test.ts` and `chat-wiring.test.ts`, mutation-tested, in CI.
 
-Merged as #2860 (`a8aaa1316`). Production holds `20271114240008` and `20271114240108`, `team_hub_search` (DEFINER, `authenticated` only) and the `team_hub_post_reply` catalogue row; `paige-ai-chat` v547's deployed source matches `a8aaa1316`. Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
+Merged as #2860 (`a8aaa1316`). Production holds `20271114240008` and `20271114240108`, `team_hub_search` (DEFINER, `authenticated` only) and the `team_hub_post_reply` catalogue row; `paige-ai-chat` v547's deployed source matches `a8aaa1316`, and `edge-live` is `a8aaa1316`. Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
 **Read-performance slice (migration `20271114250008`):** no tier, availability or output changes. `team_hub_list_messages` and `team_hub_search` are re-emitted with byte-identical output and unchanged privileges, plus two btree indexes over ids and times only (no text). Proof: `supabase/tests/exp08_team_hub_read_performance.sql`, in CI.
 

@@ -65,7 +65,7 @@ export type WeeklyFutureControl = (check: WeeklyCheck, action: "pause" | "cancel
 export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: WeeklyCheck, action: "pause" | "cancel" | "configure" | "authorize",
   caller: Caller, current: () => WeeklyBrowserScope | null, schedule?: WeeklySchedule): Promise<WeeklyOwnerControl> {
   const origin = { ...scope }, expected = { id: review.automation_id, revision: review.revision,
-    status: review.schedule_status, futureControlAt: review.future_control_at ?? null, schedule: { ...review.schedule } };
+    status: review.schedule_status, futureControlAt: review.future_control_at, schedule: { ...review.schedule } };
   const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
   let retired = false, dispatched = false;
   const matches = () => {
@@ -81,6 +81,8 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
     || authorizing && !["requested", "paused"].includes(expected.status)
     || !uuid.test(origin.actorId) || !uuid.test(origin.tenantId)
     || !uuid.test(expected.id) || !Number.isSafeInteger(expected.revision) || expected.revision < 1 || !matches()) return { status: "refused" };
+  // An unobserved field is not the native writer's explicit saved-null state.
+  if (authorizing && expected.futureControlAt === undefined) return { status: "unavailable" };
   const stage = createWeeklyDraftDeadline(12_000, matches);
   const sameDefinition = (value: WeeklyCheck) => value.automation_id === expected.id && value.revision === expected.revision
     && value.schedule.weekday === expected.schedule.weekday && value.schedule.local_time === expected.schedule.local_time
@@ -90,8 +92,9 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
     if (!matches()) return { status: "refused" };
     if (before.status !== "ready") return { status: before.status === "refused" ? "refused" : "unavailable" };
     const target = before.snapshot.checks.find(item => item.automation_id === expected.id);
+    if (authorizing && target && target.future_control_at === undefined) return { status: "unavailable" };
     if (!target || !sameDefinition(target) || target.schedule_status !== expected.status
-      || authorizing && (target.future_control_at ?? null) !== expected.futureControlAt
+      || authorizing && target.future_control_at !== expected.futureControlAt
       || target.schedule_status === "cancelled" || action === "pause" && target.schedule_status === "paused") return { status: "stale" };
     if (proposed && proposed.weekday === expected.schedule.weekday && proposed.local_time === expected.schedule.local_time
       && proposed.timezone === expected.schedule.timezone) return { status: "unsupported" };

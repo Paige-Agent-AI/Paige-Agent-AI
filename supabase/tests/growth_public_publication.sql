@@ -20,10 +20,13 @@ RAISE EXCEPTION 'FAIL: % (was allowed)',label; END $$;
 -- The visitor's page read: the renderer resolves the workspace, then selects the LIVE columns of
 -- growth_pages for that workspace by slug. As the anon role this exercises the
 -- growth_pages_public_read_published policy and the column-scoped grant (draft_* excluded).
-CREATE FUNCTION pg_temp.anon_page(tenant_id uuid,page_slug text) RETURNS jsonb LANGUAGE sql AS $$
+-- Parameters are p_-prefixed: in a SQL-language function an unqualified name that collides with
+-- a column binds to the COLUMN, so (tenant_id, page_slug) parameters would turn the filter into a
+-- tautology — the wall leg caught exactly that.
+CREATE FUNCTION pg_temp.anon_page(p_tenant uuid,p_slug text) RETURNS jsonb LANGUAGE sql AS $$
   SELECT coalesce(jsonb_agg(jsonb_build_object('status',p.status,'blocks',p.blocks_json,'seo',p.seo_json) ORDER BY p.slug),'[]'::jsonb)
     FROM public.growth_pages p
-   WHERE p.tenant_id=tenant_id AND p.slug=page_slug $$;
+   WHERE p.tenant_id=p_tenant AND p.slug=p_slug $$;
 CREATE FUNCTION pg_temp.as_anon() RETURNS void LANGUAGE sql AS $$
   SELECT set_config('request.jwt.claims','{"role":"anon"}',true), set_config('request.jwt.claim.sub','',true) $$;
 CREATE FUNCTION pg_temp.as_server() RETURNS void LANGUAGE sql AS $$
@@ -117,11 +120,7 @@ SELECT pg_temp.as_anon();
 SET LOCAL ROLE anon;
 SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000711','never-published'))->0 IS NULL,'a draft page never appears to a visitor');
 SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007a3',NULL,NULL))=1,'the form is live while its page is live');
-DO $wall$ DECLARE seen jsonb; BEGIN
- SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000712','workshop') INTO seen;
- RAISE NOTICE 'WALL-DIAG tenant-b workshop read=%', seen;
- PERFORM pg_temp.require_true(jsonb_array_length(seen)=0,'one workspace''s page never answers another workspace''s visitor');
-END $wall$;
+SELECT pg_temp.require_true(jsonb_array_length((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000712','workshop')))=0,'one workspace''s page never answers another workspace''s visitor');
 RESET ROLE;
 
 -- 4. UNPUBLISH REMOVES IT FROM THE PUBLIC READ, KEEPING THE WORK.

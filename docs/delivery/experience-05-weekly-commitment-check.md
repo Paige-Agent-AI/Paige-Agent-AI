@@ -1,5 +1,32 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October24 — original native Chat integration baseline, development
+
+Current main `da794029f82e57ae6b8403005dcd2436d67f769a` preserves the
+released native weekly claim/commit/decline consumers and original owner UI.
+The actual Chat offer and consumer are still missing; helper publication is not
+an authenticated saved draft, authorized recurrence or completed weekly check.
+The original real-handler recording ports now specify 17 cases in
+`scripts/proof/weekly-draft-chat.mjs`. All 17 are **EXPECTED_RED** against this
+unchanged handler because its real weekly tool/native path is not admitted.
+These are acceptance obligations, not 17 new production findings or passing
+security tests. Original reminder handler baseline33/33 remains distinct.
+
+REUSE the original declaration, exact native approval/Kit/commit, original-only
+read recovery, canonical definition and stable Rail. EXTEND the existing Chat
+connection only after its recorded E02 source handoff; preserve E03's following
+window and E04's disjoint source pin. Repeated preparation must retain the
+original stored request UUID, including across turns. No generic CAS, replacement
+proposal, second commit or owner-UI writer may follow a selected native approval
+or unknown outcome. Source proof must exercise interruption and foreign results.
+
+ANT-11/147/161 retain the current Experience ownership and source coordination.
+The sole Master shipped rows and actual original PR receipts retain release
+identities; this is an implementation checkpoint, not another release log.
+`automations.weekly_commitment_draft` remains UNAVAILABLE to Chat/Live; recurrence,
+original E5-CV1–9, all ten outcomes, equivalent current/new SOLO cohorts and final
+founder acceptance remain unverified. Original historical registers are preserved.
+
 ## October23 — original weekly receipt correlation, development
 
 REPAIR the existing native weekly ActionAdapter: success must carry the same
@@ -766,3 +793,26 @@ The original future-control review now retains its unsaved proposal across an un
 Review correction: saved PostgreSQL CET/GMT/EST zones and newer server time zones now retain their original validity through the shared pure projection helper; the original actual-Node consumer import is repaired. Six zone regressions and the hosted import failure were reproduced before correction, not waived. Actual native configure/audit/readback/stale/lost-ack proof passes36 cases without activation; existing uniqueness remains enforced after correcting duplicate synthetic fixture names. Source883 native recapture includes349 pinned product inputs/177 explicit ports/zero transforms and current CET review/save. Ordinary authenticated schedule persistence, live recurrence and founder acceptance remain UNVERIFIED.
 
 October19 continuation: real handler→installed public SDK→receiver review atd434 reproduced a second P2. HTTP401/403 produces FunctionsHttpError/data:null, while the receiver previously reported unavailable after successfully rechecking the current workspace. Preserve the sealed REVISE receipt SHA256279611bac3ab4ff507b1e7fc29acaa093d724bf0c13fbf6d773b8c9927d57a07. A narrow correction recognizes only that canonical SDK error class with an original native Response401/403, after unchanged post-response authority/deadline checks, and returns refused. HTTP400/404/409/500, relay/network failure, name-only errors and non-Response contexts remain unavailable. No error body is consumed, copied or treated as authorization; there is no retry, writer or permission change. Actual handler/SDK causal regressions fail401/403 before correction and pass afterward; the complete126 protected tests across3owning suites pass with the existing network-denial guard unchanged. Existing native43-case evidence predates this correction and is not relabeled a new run. Final correction review, exact-head CI, deployment and authentic customer behavior remain separate obligations.
+
+### October 24 continuation - original weekly draft Chat consumer, development
+
+The original 17-case RED preparation is preserved above as a historical checkpoint.
+Current original-handler recording-port proof passes 26 cases; unchanged reminder
+proof passes 33/33 and original offer/schema eligibility passes 17/17. These are
+local tests with explicit fake authentication/provider/native boundaries, never
+customer execution or recurring acceptance. No denominator closure is inferred.
+
+The existing owner-only native claim, Kit commit and decline transports are now
+connected ahead of generic confirmation consumption. Exact stored arguments,
+server request identity, fresh native owner/Trust facts and the original runtime
+are retained. A stopped executor is explicitly re-read before commit. Unknown
+acknowledgements allow only the original outcome read; no fallback CAS, repeated
+save, replacement approval, provider or recurring activation is permitted.
+
+Actual handler execution also exposed missing canonical metric-key imports in the
+unreleased E02 parent. The exact one-line correction was separately handed back
+through ANT-161 as de79e7052f80125b453946058ced9d21f182ba5d; E02 acknowledged
+the parent release hold. Incoming EXP03 and EXP04 source must be composed, then
+immutable review, scalar/dependency proof, full required exact-head CI, actual
+production source/native record/Rail and ordinary authenticated recovery remain
+owed. See exp05-weekly-native-chat.md for the full truthful flow boundary.

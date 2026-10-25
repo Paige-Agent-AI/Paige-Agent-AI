@@ -110,7 +110,24 @@ type Scene = {
   reload?: "available" | "unavailable" | "interrupted" | "refused";
 };
 
+const WEEKLY_TOKEN = 'cccccccccccccccc:00000000-0000-4000-8000-000000000006';
+const WEEKLY_DRAFT = [{tool:'weekly_commitment_draft',fingerprint:WEEKLY_TOKEN,
+  summary:'Save private weekly draft “Weekly commitments”: weekday 1, 09:00 America/New_York. This does not authorize or enable recurring work.'}];
+const WEEKLY_SCENES: Scene[] = [
+  {label:'Weekly draft review',note:'Original exact-card layout; synthetic private draft only, no native effect.',
+    ask:'Prepare a private weekly check draft for Monday at 9 AM America/New_York.',
+    offer:'Review the private definition below. No recurring responsibility is authorized, enabled or executed.',proposal:WEEKLY_DRAFT},
+  ...(['ran','unconfirmed'] as const).map(outcome=>({label:'Weekly draft '+outcome,
+    note:'Synthetic original-wire approval outcome; actual native authentication and persistence remain separate.',
+    ask:'Prepare a private weekly check draft for Monday at 9 AM America/New_York.',
+    offer:'Review this exact private draft before saving.',proposal:WEEKLY_DRAFT,
+    answer:sse([frame({paige_approval_outcome:{actions:[{fingerprint:WEEKLY_TOKEN,outcome}],
+      ...(outcome==='unconfirmed'?{note:'This may have gone through. Check before asking again, so it doesn’t happen twice.'}:{})}}),
+      say(outcome==='ran'?'The private draft and its original save receipt are verified. It remains an unapproved draft; no recurring check was enabled or run.':'The original outcome could not be verified. Inspect the original weekly responsibility before asking again. Nothing was retried.'),DONE])})),
+];
+
 const SCENES: Scene[] = [
+  ...WEEKLY_SCENES,
   {
     label: "Reload — known input refusal", reload: "refused", ask: "", proposal: [],
     offer: "An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. You can still ask questions about existing records.",
@@ -327,6 +344,14 @@ async function capture(scene: Scene, shell?: { width: number; height: number; op
     const messages = Array.from(transcript!.querySelectorAll("[data-paige-message-id]"));
     // An empty capture must fail here, not ship as a screenshot of a blank frame.
     expect(messages.length).toBeGreaterThanOrEqual(2);
+    if (scene.label.startsWith('Weekly draft')) {
+      expect(transcript?.textContent).toContain(WEEKLY_DRAFT[0].summary);
+      if (scene.label === 'Weekly draft review') expect(Array.from(host.querySelectorAll('button')).some(b=>/^Approve/.test(b.textContent??''))).toBe(true);
+      if (scene.label === 'Weekly draft unconfirmed') {
+        expect(transcript?.textContent).toContain('Check before asking again');
+        expect(Array.from(host.querySelectorAll('button')).some(b=>/Ask Paige again/.test(b.textContent??''))).toBe(false);
+      }
+    }
     return messages.slice(-4).map((m) => m.outerHTML).join("\n");
   } finally {
     await act(async () => { root.unmount(); });

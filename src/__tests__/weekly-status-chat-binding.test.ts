@@ -13,6 +13,11 @@ function offer() {
   expect(typeof value, "the original domain must own the offer boundary").toBe("function");
   return value as Offer;
 }
+function draftOffer() {
+  const value = (automation as Record<string, unknown>).weeklyCommitmentDraftToolsForContext;
+  expect(typeof value, "the original domain must own the draft offer boundary").toBe("function");
+  return value as Offer;
+}
 
 describe("original owner-private weekly status Chat binding", () => {
   it("reuses closed-read recovery admission without granting actions or undeclared tools", () => {
@@ -41,6 +46,17 @@ describe("original owner-private weekly status Chat binding", () => {
       chatTool: "read_weekly_commitment_status", executor: "public.get_weekly_commitment_checks" });
   });
 
+  it("keeps draft intent separate from server-issued identity and recurring authority", () => {
+    const tools = draftOffer()(owner);
+    expect(tools).toHaveLength(1);
+    expect(tools[0].function).toMatchObject({ name: "weekly_commitment_draft",
+      parameters: automation.WEEKLY_COMMITMENT_DRAFT_CAPABILITY.input });
+    const input = tools[0].function.parameters as { properties: Record<string, unknown> };
+    expect(Object.keys(input.properties).sort()).toEqual(["local_time", "name", "timezone", "weekday"]);
+    expect(input).toMatchObject({ type: "object", additionalProperties: false,
+      required: ["name", "weekday", "local_time", "timezone"] });
+  });
+
   it.each([
     { role: "admin" }, { role: "member" }, { role: "platform_operator" }, { role: null },
     { accountShape: "agency_parent" }, { accountShape: "subaccount" }, { accountShape: "platform" }, { accountShape: null },
@@ -48,6 +64,7 @@ describe("original owner-private weekly status Chat binding", () => {
     { scopedClientId: "11111111-1111-4111-8111-111111111111" }, { customerPortal: true },
   ])("withholds private weekly records for ineligible server context %j", patch => {
     expect(offer()({ ...owner, ...patch })).toEqual([]);
+    expect(draftOffer()({ ...owner, ...patch })).toEqual([]);
   });
 
   it("uses server facts and the original caller-JWT reader behind normal read admission", () => {

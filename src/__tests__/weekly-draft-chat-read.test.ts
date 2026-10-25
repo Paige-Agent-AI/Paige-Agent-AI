@@ -51,8 +51,27 @@ describe("original weekly draft Chat readback", () => {
     expect(result).toMatchObject({ status: "available", context: {
       phase: "saved", definition_is_current: "saved_draft", authority: "not_granted_by_projection",
     } });
-    expect(JSON.stringify(result)).not.toContain(other);
+    expect(result).toMatchObject({ record: { automationId: other, runId: request, receiptId: request } });
+    expect(JSON.stringify(result.status === "available" && result.context)).not.toContain(other);
     expect(db.rpc).toHaveBeenCalledTimes(1);
+  });
+  it("keeps an original changed record inspectable without substituting its receipt for the run", async () => {
+    const receipt = "77777777-7777-4777-8777-777777777777";
+    const db = caller({ ...native(), phase: "changed", confirmation_token: null,
+      automation_id: other, revision: 2, process_state: "paused", receipt_id: receipt });
+    const result = await readWeeklyDraftChatStatus(db, options());
+    expect(result).toMatchObject({ status: "available", record: {
+      automationId: other, runId: request, receiptId: receipt,
+    }, context: { definition_is_current: "historical", authority: "not_granted_by_projection" } });
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+    if (result.status === "available") for (const id of [other, receipt, request, confirmation, token])
+      expect(JSON.stringify(result.context)).not.toContain(id);
+  });
+  it("keeps an unreceipted native record uncertain without an execution reference", async () => {
+    const result = await readWeeklyDraftChatStatus(caller({ ...native(), phase: "saved_unreceipted",
+      confirmation_token: null, automation_id: other, revision: 1, process_state: "draft" }), options());
+    expect(result).toMatchObject({ status: "available", record: null,
+      context: { phase: "saved_unreceipted", next_step: "reconcile_original_record_and_receipt" } });
   });
   it.each(["actor_id", "tenant_id", "thread_id", "confirmation_id"])("refuses a foreign %s result", async key => {
     expect(await readWeeklyDraftChatStatus(caller({ ...native(), [key]: other }), options()))

@@ -57,7 +57,7 @@ export async function verifiedCompletedCopy(db: Db, record: {
   }
 }
 
-export async function sealAndComplete(db: Db, agreementId: string): Promise<SealOutcome> {
+export async function sealAndComplete(db: Db, agreementId: string, options?:{preparedOnly:true}): Promise<SealOutcome> {
   const { data: agreement, error: readError } = await db.from("paige_agreements")
     .select("id,tenant_id,contact_id,version,title,status,body_source,body_markdown,content_storage_key,content_sha256,sealed_sha256,sealed_storage_key")
     .eq("id", agreementId).maybeSingle();
@@ -71,7 +71,7 @@ export async function sealAndComplete(db: Db, agreementId: string): Promise<Seal
   }
 
   const preparedSource=await readPreparedSealSource(db,agreement);
-  if(preparedSource.kind==='unavailable')return {ok:false,reason:'not_ready',detail:'original preparation and signing evidence could not be verified'};
+  if(preparedSource.kind==='unavailable'||options?.preparedOnly&&preparedSource.kind!=='prepared')return {ok:false,reason:'not_ready',detail:'original preparation and signing evidence could not be verified'};
 
   const { count: outstanding,error:outstandingError } = await db.from("paige_agreement_signers")
     .select("id", { count: "exact", head: true }).eq("agreement_id", agreementId).neq("status", "signed");

@@ -2,13 +2,13 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: actual reviewed agreement -> unchanged agreement.send HIGH declaration/Kit -> original server-issued pending confirmation -> nonce-bound original native claim. This is an unmounted prerequisite; token issuance, messages, provider execution, signature/field/seal completion and the full commercial journey remain incomplete.
-PAIGE_UI_DESIGN: NOT_APPLICABLE: no frontend, layout, interaction, customer-facing copy or design-system changes in this increment.
+PAIGE_UI_DESIGN: PASS: current project router/design modules and original Sales surfaces remain unchanged; [bounded source proof](assets/e04-prepared-signature-admission/source-proof.json). No frontend, layout, interaction or customer-facing copy changes in this increment.
 MATERIAL_FLOW_CHANGE: NO: no production caller or permission/admission activation.
-FLOW_PROTOTYPE: NOT_APPLICABLE: no UI or mounted workflow.
+FLOW_PROTOTYPE: NOT_REQUIRED: no UI or mounted workflow.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: originating Sales server factories can use the existing approval records without substituting user-authored approval flags or starting a commercial effect.
 VISUAL_DIRECTION: NOT_APPLICABLE: no UI; incumbent professional Agreements direction is unchanged.
 AUTOMATED_EVIDENCE: PASS: original92 source cases preserved as a whole-file prefix; eight missing concrete-native-store cases failed then100 passed. A further lost-native-claim acknowledgement case failed with100 original passes, then101 strict cases/13 handler steps passed, including Deno type checking. Separately, the original full fenced native fixture passed: new59 native cases/replay2/six concurrent sessions/three observed lock waits, plus every incumbent group including original signature76, decline49, recipient52, accepted-commercial/effectuation and seal controls. Runtime proof-body equality and migration/proof SHA hashes bind the actual executed source. Local PostgreSQL16 and synthetic mailbox/Storage/session metadata are engineering proof, not hosted authentication/provider/customer acceptance.
-STATIC_EVIDENCE: PASS: current actor/business/owner-admin and source locks reuse the original _sales_invoice_actor and _read_agreement_document_preparation. Existing canonical JSON/request digest, original pending rows, server-issued marker, current autonomy, native clock expiry and consumed/claimed request identity are retained. No replacement fingerprint implementation, approval engine, ledger, scheduler, provider adapter or signing engine.
+STATIC_EVIDENCE: PASS: [bounded source proof](assets/e04-prepared-signature-admission/source-proof.json). Current actor/business/owner-admin/source locks reuse the original _sales_invoice_actor and _read_agreement_document_preparation. Canonical JSON/request digest, original confirmation rows, server marker, current autonomy, native-clock expiry and consumed/claimed request identity are retained. No replacement fingerprint, risk engine, ledger, scheduler, provider adapter or signing engine.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no UI changes or browser acceptance claim.
 RESPONSIVE_EVIDENCE: NOT_APPLICABLE: no UI changes.
 INTERACTION_EVIDENCE: NOT_APPLICABLE: original Sales/Chat/Portal interactions remain unmounted for this new prerequisite.
@@ -16,6 +16,11 @@ BEHAVIORAL_EVIDENCE: PASS: source controls cover exact original args, scope capt
 AUTHENTICATED_RUNTIME: UNVERIFIED: no genuine owner/staff/recipient/client, provider send, signing act, payment, reload, Central QA or founder acceptance.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no UI changes.
 ACCESSIBILITY: NOT_APPLICABLE: no UI changes.
+ZOOM_REFLOW: NOT_APPLICABLE: no frontend, renderer or layout change.
+REDUCED_MOTION: NOT_APPLICABLE: no motion or frontend change.
+STATE_COVERAGE: PASS: original source/authority checks, explicit confirmation, single use, expiry, superseded source, withdrawn access, malformed native reply and interrupted-claim recovery controls are exercised within declared local ports and native fixture.
+TRUTHFUL_STATE_LABELS: PASS: retained, consumed, expired and unverified confirmation records stay distinct. A claim or callback is never a provider send, signature, payment or commercial-completion receipt.
+SOLO_UI: NO: unmounted original backend confirmation prerequisite; no Sales, Portal, shell or recipient interface change.
 UNVERIFIED: fresh final review/required exact-head CI, normal migration/web source readback, actual endpoint/factory mount, private signing links, original durable-work/message/provider binding, atomic assigned fields/signature/seal and ordinary customer operation. Full O1–O12 is still assigned and incomplete.
 
 OWNER_INTENT: owners explicitly approve the exact original document, recipients, sender and message revision, and PAIGE can later determine whether the original request really ran.
@@ -25,7 +30,9 @@ ACCEPTANCE_CRITERIA: actual native current-authority/source/expiry/concurrency c
 MOTION_PURPOSE: NONE: no UI changes.
 PROTECTED_SEAMS: source/tenant/client/party identity; full exact approved args; genuine server issuance and request nonce; native single use and post-lock expiry; uncertain claim/outcome recovery. A native pending claim grants no permission to charge or send independently.
 
-INTERNAL_BUILD_IDENTITY: source=6c8b87c6a0504b136728bb149807a976a6104b27; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114140004); edge=PROOF_OWED(original affected-importer selection and source certification). CLI created20261025064435; only the never-applied own file was forward-ordered to20271114140004 after actual production14130009 and declared reservation d2dadaaa. No applied SQL/history/tag rewrite.
+INTERNAL_BUILD_IDENTITY: source=6c8b87c6a0504b136728bb149807a976a6104b27; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114140004); edge=PROOF_OWED(original affected-importer selection and source certification); evidence=assets/e04-prepared-signature-admission/source-proof.json.
+
+CLI scaffold20261025064435 was forward-ordered only before application to20271114140004 after actual production14130009 and declared reservationd2dadaaa. No applied SQL/history/tag rewrite.
 RELEASE_CHANNEL: development: unmounted original-domain prerequisite.
 RELEASE_CLASSIFICATION: internal-only: no customer announcement or individual founder review.
 CUSTOMER_RELEASE_IDENTITY: none: no complete customer outcome accepted.

@@ -1,0 +1,125 @@
+{
+  "scope": "Actual two Home components and synthetic selected frame/read boundary. Natural host page scroller, not authenticated AppShell. Full-page image height differs from viewport. No backend/model or physical-device claim.",
+  "checks": [
+    {
+      "ask": {
+        "height": 36,
+        "pseudoBottom": "-5px",
+        "pseudoTop": "-5px"
+      },
+      "clientWidth": 1521,
+      "close": {
+        "h": 44,
+        "w": 44
+      },
+      "firstMessageClaim": false,
+      "focus": "Set Your First GoalTell Cura what you're working toward. Cura will help you map the path.",
+      "profileDone": true,
+      "reduced": true,
+      "scroll": [
+        1521,
+        1557
+      ],
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "ask": {
+        "height": 36,
+        "pseudoBottom": "-5px",
+        "pseudoTop": "-5px"
+      },
+      "clientWidth": 1351,
+      "close": {
+        "h": 44,
+        "w": 44
+      },
+      "firstMessageClaim": false,
+      "focus": "Set Your First GoalTell Cura what you're working toward. Cura will help you map the path.",
+      "profileDone": true,
+      "reduced": true,
+      "scroll": [
+        1351,
+        1557
+      ],
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "ask": {
+        "height": 36,
+        "pseudoBottom": "-5px",
+        "pseudoTop": "-5px"
+      },
+      "clientWidth": 1009,
+      "close": {
+        "h": 44,
+        "w": 44
+      },
+      "firstMessageClaim": false,
+      "focus": "Set Your First GoalTell Cura what you're working toward. Cura will help you map the path.",
+      "profileDone": true,
+      "reduced": true,
+      "scroll": [
+        1009,
+        1557
+      ],
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "ask": {
+        "height": 36,
+        "pseudoBottom": "-5px",
+        "pseudoTop": "-5px"
+      },
+      "clientWidth": 885,
+      "close": {
+        "h": 44,
+        "w": 44
+      },
+      "firstMessageClaim": false,
+      "focus": "Set Your First GoalTell Cura what you're working toward. Cura will help you map the path.",
+      "profileDone": true,
+      "reduced": true,
+      "scroll": [
+        885,
+        1557
+      ],
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "ask": {
+        "height": 36,
+        "pseudoBottom": "-5px",
+        "pseudoTop": "-5px"
+      },
+      "clientWidth": 375,
+      "close": {
+        "h": 44,
+        "w": 44
+      },
+      "firstMessageClaim": false,
+      "focus": "Set Your First GoalTell Cura what you're working toward. Cura will help you map the path.",
+      "profileDone": true,
+      "reduced": true,
+      "scroll": [
+        375,
+        2338
+      ],
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

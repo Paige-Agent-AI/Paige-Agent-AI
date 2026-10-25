@@ -1,0 +1,537 @@
+{
+  "scope": "Actual original source with synthetic SDK ports, not hosted recipient/customer acceptance",
+  "codeHead": "680b7febd43a980522a59686631ee4bfe8dff8d5",
+  "artifacts": [
+    {
+      "path": "01-desktop-original-source-focus.png",
+      "bytes": 62815,
+      "sha256": "a8c78318c0a932637634da142681b557668008c38dde79a5d40e2d00d4328c0a"
+    },
+    {
+      "path": "02-server-date-not-an-answer.png",
+      "bytes": 29224,
+      "sha256": "2a99a50efb7cd21d2b1679fac4800fec7039a829dc14401c9a6c56f14ee6b2af"
+    },
+    {
+      "path": "03-fresh-consent-mobile.png",
+      "bytes": 41120,
+      "sha256": "22c7e66389eb3da8a8ce20bdb390297d434d8e3801e527befca240799f93f0d1"
+    },
+    {
+      "path": "04-actual-consumer-recorded-reply.png",
+      "bytes": 16893,
+      "sha256": "bf429790e1125d539a2a1e9e723bf5214d96bca2954296ac443b9159b4a427ab"
+    },
+    {
+      "path": "05-original-short-legacy-review.png",
+      "bytes": 40292,
+      "sha256": "da11fa0714506258d1e0fd0a102d48a41744f18685acae1025eae375aecb29d6"
+    },
+    {
+      "path": "06-current-source-field-read-recovery.png",
+      "bytes": 36802,
+      "sha256": "a573e7bfcdbbab1b3862f1fc67630eac10b94ea8c294e8b88583d060b63fa898"
+    },
+    {
+      "path": "1024-dark-actual.png",
+      "bytes": 55702,
+      "sha256": "02dc6a9064532e581a752127fcba8876f730a37d0e157c356fbbf5b6def0e699"
+    },
+    {
+      "path": "1024-light-actual.png",
+      "bytes": 55763,
+      "sha256": "1eda5ddcaa440e6a0a9d17daf942e7e158c220ddc4e9e75b3f448766bd313f96"
+    },
+    {
+      "path": "1366-dark-actual.png",
+      "bytes": 57258,
+      "sha256": "9e6319fd51039ef84555444d46d7ec34f35a25f318a93276caa2238936bac08e"
+    },
+    {
+      "path": "1366-light-actual.png",
+      "bytes": 58976,
+      "sha256": "f34befbd66a834e2d344460200d9343783fe86c8a2aedd84bea245bf3e03006e"
+    },
+    {
+      "path": "1536-dark-actual.png",
+      "bytes": 61309,
+      "sha256": "646ff4844a4c1cbe0d0dd2c6854db701a6395ce45628dab171c12a425624ff38"
+    },
+    {
+      "path": "1536-light-actual.png",
+      "bytes": 62017,
+      "sha256": "e3ad2f3310712fe9651ffb786fae48736f0f23bceabbbd474da70d95446c14cc"
+    },
+    {
+      "path": "390-dark-actual.png",
+      "bytes": 25484,
+      "sha256": "f433dc6d051f92cc8ef0f345ce00dd7d0ae56af2d4d37c741a7507ba84fffa31"
+    },
+    {
+      "path": "390-light-actual.png",
+      "bytes": 24591,
+      "sha256": "aa600589186d1e3f000f5f0f18a210b0179c9f5082c98d81b0e0514e4d47e87d"
+    },
+    {
+      "path": "900-dark-actual.png",
+      "bytes": 41896,
+      "sha256": "c3994022fcb78d7cdf92760235eef5b4dbe538564546fbc534f44fc2c77586bb"
+    },
+    {
+      "path": "900-light-actual.png",
+      "bytes": 40322,
+      "sha256": "0b49902328f147224fa283bacb463e295e4d3f5282a000792457200d91106914"
+    },
+    {
+      "path": "actual-layout-geometry.json",
+      "bytes": 14149,
+      "sha256": "7767bbdcb48057e99e89bf6c8df98ac08d16dd929505659c0ecda6bdab74b031"
+    }
+  ],
+  "runtime": [
+    {
+      "name": "pdfjs-dist",
+      "declared": "5.5.207",
+      "locked": "5.5.207",
+      "installed": "5.5.207"
+    },
+    {
+      "name": "vite",
+      "declared": "^5.4.21",
+      "locked": "5.4.21",
+      "installed": "5.4.21"
+    },
+    {
+      "name": "vitest",
+      "declared": "^4.1.9",
+      "locked": "4.1.11",
+      "installed": "4.1.11"
+    },
+    {
+      "name": "typescript",
+      "declared": "^5.8.3",
+      "locked": "5.9.3",
+      "installed": "5.9.3"
+    },
+    {
+      "name": "react",
+      "declared": "^18.3.1",
+      "locked": "18.3.1",
+      "installed": "18.3.1"
+    },
+    {
+      "name": "zod",
+      "declared": "^4.6.6",
+      "locked": "4.6.6",
+      "installed": "4.5.4"
+    }
+  ],
+  "tests": {
+    "ceremony": 42,
+    "model": 15,
+    "total": 57,
+    "originalPreserved": 53,
+    "causalBaseline": "FOUR_RED_ORIGINAL53_PASS",
+    "current": "PASS57",
+    "eslint": "PASS0",
+    "staticImpeccable": "PASS_EMPTY_EXIT0",
+    "finalTypescript": "PASS_ORIGINAL_RATCHET_BASELINE10_CURRENT6_NO_NEW",
+    "earlierTypeScript": "PASS_ORIGINAL53_SOURCE_RATCHET_BASELINE10_CURRENT6"
+  },
+  "gates": {
+    "preparedHighSendAtomicFields": "UNAVAILABLE",
+    "ordinaryRolesReloadProviderCentralQa": "UNVERIFIED",
+    "founderAcceptance": "NOT_ACCEPTED",
+    "browserCurrent": "Input stopped after navigation and one reconnect timed out; no v7 approval",
+    "currentRenderedKeyboardResponsive": "HELD_PENDING_BROWSER_RECOVERY"
+  },
+  "visualAdvisory": "Previous radio typography repaired using existing font token; new pixels and decision row require actual inspection before release",
+  "precedingCodeHead": "9a45c1ad1de4ee7b08c8414267e9594252f761fb",
+  "precedingSource": {
+    "main": "2a6c8b92841e011019562fb1cdcd0c9f90f6562e",
+    "originalAncestor": "04a067568512ca81c5ece6f4e59990791d568d94",
+    "savedSource": "319ec359d3a6c957fff2507e5b8c801e9037896d",
+    "rows": [
+      {
+        "file": "src/pages/sign/AgreementSigning.tsx",
+        "blob": "c2815a3f971de26b82b208dabf8738c0ce9c83cc",
+        "sha256": "86d08bb8653c85667934a706065565836151a3c0b4f8f302a8e5bdab321816ce",
+        "renderedSourceExact": true,
+        "testOnly": false
+      },
+      {
+        "file": "src/pages/sign/AgreementSigning.test.tsx",
+        "blob": "cbff17d38fd88ffa765de291c523cc228484c606",
+        "sha256": "6edb27766ffef9dd26182c42135e01ac35c0d4e047cc3ae2fd7b69250484cdab",
+        "renderedSourceExact": false,
+        "testOnly": true
+      },
+      {
+        "file": "src/pages/sign/RecipientAgreementDocument.tsx",
+        "blob": "938f75ee7d6e688eceb4294f563f48052ad5a00d",
+        "sha256": "70618007e5d2ce5157c5c97c269456c5ee41fbea6b6c29c9ab92702d6e6c9db2",
+        "renderedSourceExact": true,
+        "testOnly": false
+      },
+      {
+        "file": "src/pages/sign/recipientSigningFields.ts",
+        "blob": "462d9bd75077dba5ec63c68fe491504e54b5cf3e",
+        "sha256": "fd80b7b1e47902727d37fa3eb48da6b08988b5563f95854824114e8be2abd073",
+        "renderedSourceExact": true,
+        "testOnly": false
+      },
+      {
+        "file": "src/pages/sign/recipientSigningFields.test.ts",
+        "blob": "b222f9250162a25758933f7b8687b85fea23bd3f",
+        "sha256": "35cd68783201d70498888af40cb176a0fe1bce61bb890b7a1eb6eba4cfd48f9d",
+        "renderedSourceExact": false,
+        "testOnly": true
+      },
+      {
+        "file": "src/pages/sign/recipient-signing.css",
+        "blob": "fe34884d56f574e6958bb3d2e29f9d1133dd276d",
+        "sha256": "9df69f2729c292a443aa3b94946f03aaaac237c5579a0a7269a033b91c630d63",
+        "renderedSourceExact": true,
+        "testOnly": false
+      },
+      {
+        "file": "src/solo/sales/AgreementPdfPage.tsx",
+        "blob": "4a813f7ee5e35d205bcf26abb8e548245cd78796",
+        "sha256": "7376f3708e1c5d00f7b9dc73e0b68d9d42c2f1d46dff31c14e30841be6e54ace",
+        "renderedSourceExact": true,
+        "testOnly": false
+      }
+    ],
+    "privateV7Excluded": true
+  },
+  "precedingRenderedClosure": {
+    "currentCodeHead": "9a45c1ad1de4ee7b08c8414267e9594252f761fb",
+    "manifest": "e04-c36-prototype-inputs-v6.json",
+    "rows": [
+      {
+        "path": "src/index.css",
+        "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+        "exact": true
+      },
+      {
+        "path": "src/solo/sales/agreement-document-fields.css",
+        "sha256": "310de6a0a06912ad99b5ed56f04ec816a982e8d632ccb624fb113791432d1fb4",
+        "exact": true
+      },
+      {
+        "path": "src/pages/sign/AgreementSigning.tsx",
+        "sha256": "86d08bb8653c85667934a706065565836151a3c0b4f8f302a8e5bdab321816ce",
+        "exact": true
+      },
+      {
+        "path": "src/solo/sales/fixtures/agreement-document-source.json",
+        "sha256": "e9a9a8abe99f3b916334be651e95a7e3a8d10fb941624c3d1042e32779aadb25",
+        "exact": true
+      },
+      {
+        "path": "src/pages/sign/agreement-signing.css",
+        "sha256": "42720dd7a23b315d5144fe2cc7fd22524a5cc5dd3860ecdb4de030fc39ae9dbd",
+        "exact": true
+      },
+      {
+        "path": "src/pages/sign/RecipientAgreementDocument.tsx",
+        "sha256": "70618007e5d2ce5157c5c97c269456c5ee41fbea6b6c29c9ab92702d6e6c9db2",
+        "exact": true
+      },
+      {
+        "path": "src/pages/sign/recipientSigningFields.ts",
+        "sha256": "fd80b7b1e47902727d37fa3eb48da6b08988b5563f95854824114e8be2abd073",
+        "exact": true
+      },
+      {
+        "path": "src/pages/sign/recipient-signing.css",
+        "sha256": "9df69f2729c292a443aa3b94946f03aaaac237c5579a0a7269a033b91c630d63",
+        "exact": true
+      },
+      {
+        "path": "src/solo/sales/AgreementPdfPage.tsx",
+        "sha256": "7376f3708e1c5d00f7b9dc73e0b68d9d42c2f1d46dff31c14e30841be6e54ace",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+        "sha256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+        "sha256": "291dc4af1f8543d67f451545c0970de4ae7e1cf02fed32df22a510c415091b38",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/signing-guard.ts",
+        "sha256": "3997edf2abb0e9064b1e6e89aac68fce9a2aded43caa90b0f3f1b4e167a54ad7",
+        "exact": true
+      },
+      {
+        "path": "src/solo/sales/agreementDocumentModel.ts",
+        "sha256": "e20769ea15ab97013b48bc6197b624d57d80bfa1b03b89ddf9b12399da3c5766",
+        "exact": true
+      },
+      {
+        "path": "src/solo/sales/agreementPdfRenderer.ts",
+        "sha256": "fe3465a5190e6b578c5ff97feb4b337facb214ebad9e5126b4a1cbb0a1671e4a",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/token.ts",
+        "sha256": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+        "sha256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+        "sha256": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/sales-collections/contract.ts",
+        "sha256": "0d538a7c9b51f2065a36bae4c70095ec622971202807dc9b97766b9971f01c64",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/sales-collections/model.ts",
+        "sha256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+        "sha256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+        "sha256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/document.ts",
+        "sha256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+        "sha256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/sales-commercial/effectuation-command.ts",
+        "sha256": "dbb81094e9b7903e9458533c7e81dad71f4f0fc0d11d51931fdaba36ad26aad1",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/doc-render.ts",
+        "sha256": "06f72d693cd333b18bfab176112f66bd3862f58ac3a29a298f2cdb02fc2b6fe2",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/document-preparation.ts",
+        "sha256": "4164eeb196c1c599e486ac95efdeb21eb9a0287427e9fd8830dc8ac3f4a2b630",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/retained-document.ts",
+        "sha256": "cee0296f159becaf704d8853b32dc205033dd8f34d6a0dd878e7a1a60e920db0",
+        "exact": true
+      },
+      {
+        "path": "supabase/functions/_shared/provider-types.ts",
+        "sha256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631",
+        "exact": true
+      }
+    ],
+    "allExact": true
+  },
+  "currentSource": [
+    {
+      "path": "src/pages/sign/AgreementSigning.tsx",
+      "blob": "305bb118abe53e3d2bfe3ae799b39751e3c07842",
+      "sha256": "4d0582c9fbbd0a75ec0cf366cef97e0600daa83c04d1abf24ca10126b3d8f09e"
+    },
+    {
+      "path": "src/pages/sign/AgreementSigning.test.tsx",
+      "blob": "12d236c6b35520589c439d9d06fd708e04c16703",
+      "sha256": "3f861b9605a53f2d83ea3e274249760d8f710f5de8a372de79d3389ee2a675e5"
+    },
+    {
+      "path": "src/pages/sign/RecipientAgreementDocument.tsx",
+      "blob": "938f75ee7d6e688eceb4294f563f48052ad5a00d",
+      "sha256": "70618007e5d2ce5157c5c97c269456c5ee41fbea6b6c29c9ab92702d6e6c9db2"
+    },
+    {
+      "path": "src/pages/sign/recipientSigningFields.ts",
+      "blob": "462d9bd75077dba5ec63c68fe491504e54b5cf3e",
+      "sha256": "fd80b7b1e47902727d37fa3eb48da6b08988b5563f95854824114e8be2abd073"
+    },
+    {
+      "path": "src/pages/sign/recipientSigningFields.test.ts",
+      "blob": "b222f9250162a25758933f7b8687b85fea23bd3f",
+      "sha256": "35cd68783201d70498888af40cb176a0fe1bce61bb890b7a1eb6eba4cfd48f9d"
+    },
+    {
+      "path": "src/pages/sign/recipient-signing.css",
+      "blob": "ae42c2223f572b4a67b639e6eab6b9376c031889",
+      "sha256": "3d0d46ae85a8f60bc4b0b440295e034ac9cbaca9517559e9f7fac07ba0cee383"
+    },
+    {
+      "path": "src/solo/sales/AgreementPdfPage.tsx",
+      "blob": "4a813f7ee5e35d205bcf26abb8e548245cd78796",
+      "sha256": "7376f3708e1c5d00f7b9dc73e0b68d9d42c2f1d46dff31c14e30841be6e54ace"
+    }
+  ],
+  "currentRenderedContinuity": [
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "exact": true
+    },
+    {
+      "path": "src/solo/sales/agreement-document-fields.css",
+      "sha256": "310de6a0a06912ad99b5ed56f04ec816a982e8d632ccb624fb113791432d1fb4",
+      "exact": true
+    },
+    {
+      "path": "src/pages/sign/AgreementSigning.tsx",
+      "sha256": "86d08bb8653c85667934a706065565836151a3c0b4f8f302a8e5bdab321816ce",
+      "exact": false
+    },
+    {
+      "path": "src/solo/sales/fixtures/agreement-document-source.json",
+      "sha256": "e9a9a8abe99f3b916334be651e95a7e3a8d10fb941624c3d1042e32779aadb25",
+      "exact": true
+    },
+    {
+      "path": "src/pages/sign/agreement-signing.css",
+      "sha256": "42720dd7a23b315d5144fe2cc7fd22524a5cc5dd3860ecdb4de030fc39ae9dbd",
+      "exact": true
+    },
+    {
+      "path": "src/pages/sign/RecipientAgreementDocument.tsx",
+      "sha256": "70618007e5d2ce5157c5c97c269456c5ee41fbea6b6c29c9ab92702d6e6c9db2",
+      "exact": true
+    },
+    {
+      "path": "src/pages/sign/recipientSigningFields.ts",
+      "sha256": "fd80b7b1e47902727d37fa3eb48da6b08988b5563f95854824114e8be2abd073",
+      "exact": true
+    },
+    {
+      "path": "src/pages/sign/recipient-signing.css",
+      "sha256": "9df69f2729c292a443aa3b94946f03aaaac237c5579a0a7269a033b91c630d63",
+      "exact": false
+    },
+    {
+      "path": "src/solo/sales/AgreementPdfPage.tsx",
+      "sha256": "7376f3708e1c5d00f7b9dc73e0b68d9d42c2f1d46dff31c14e30841be6e54ace",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+      "sha256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+      "sha256": "291dc4af1f8543d67f451545c0970de4ae7e1cf02fed32df22a510c415091b38",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/signing-guard.ts",
+      "sha256": "3997edf2abb0e9064b1e6e89aac68fce9a2aded43caa90b0f3f1b4e167a54ad7",
+      "exact": true
+    },
+    {
+      "path": "src/solo/sales/agreementDocumentModel.ts",
+      "sha256": "e20769ea15ab97013b48bc6197b624d57d80bfa1b03b89ddf9b12399da3c5766",
+      "exact": true
+    },
+    {
+      "path": "src/solo/sales/agreementPdfRenderer.ts",
+      "sha256": "fe3465a5190e6b578c5ff97feb4b337facb214ebad9e5126b4a1cbb0a1671e4a",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/token.ts",
+      "sha256": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+      "sha256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+      "sha256": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/contract.ts",
+      "sha256": "0d538a7c9b51f2065a36bae4c70095ec622971202807dc9b97766b9971f01c64",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/model.ts",
+      "sha256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+      "sha256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+      "sha256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/document.ts",
+      "sha256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+      "sha256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/effectuation-command.ts",
+      "sha256": "dbb81094e9b7903e9458533c7e81dad71f4f0fc0d11d51931fdaba36ad26aad1",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/doc-render.ts",
+      "sha256": "06f72d693cd333b18bfab176112f66bd3862f58ac3a29a298f2cdb02fc2b6fe2",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/document-preparation.ts",
+      "sha256": "4164eeb196c1c599e486ac95efdeb21eb9a0287427e9fd8830dc8ac3f4a2b630",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/retained-document.ts",
+      "sha256": "cee0296f159becaf704d8853b32dc205033dd8f34d6a0dd878e7a1a60e920db0",
+      "exact": true
+    },
+    {
+      "path": "supabase/functions/_shared/provider-types.ts",
+      "sha256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631",
+      "exact": true
+    }
+  ],
+  "newRenderedEvidenceRequired": [
+    "src/pages/sign/AgreementSigning.tsx",
+    "src/pages/sign/recipient-signing.css"
+  ]
+}

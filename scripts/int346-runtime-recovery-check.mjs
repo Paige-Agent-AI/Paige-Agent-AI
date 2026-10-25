@@ -3,7 +3,7 @@ import {interactiveRuntimeIdentity,interactiveRecoveryReadAllowed} from '../supa
 import {PAIGE_SPINE_CAPABILITIES} from '../supabase/functions/_shared/paige-spine/registry.ts';
 import {readInteractiveOutcomeStatus} from '../supabase/functions/_shared/paige-turn/outcome-status.ts';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
-const reads=new Set(['read_business_metric','get_business_snapshot','read_client_engagement_status','read_business_time_zone','read_calendar_booking','crm_get_task']);
+const reads=new Set(['read_business_metric','get_business_snapshot','read_client_engagement_status','read_business_time_zone','read_calendar_booking','read_calendar_agenda','crm_get_task']);
 const deployment=`abcdefghijklmnopqrst_${id(82)}_441`;
 let passed=0;const check=(name,fn)=>{fn();console.log(`ok ${++passed} - ${name}`);};
 check('server identity records separate per-request nonce in a shared isolate',()=>{
@@ -20,6 +20,14 @@ for(const action of [{classification:'mutate'},{riskPolicyKey:'money_move'},{app
  check('changed server declaration fails closed',()=>assert.equal(interactiveRecoveryReadAllowed('crm_get_task',reads,[{...target,action:{...target.action,...action}}]),false));
 check('duplicate declaration refuses ambiguous authority',()=>assert.equal(interactiveRecoveryReadAllowed('crm_get_task',reads,[target,target]),false));
 check('allowlist membership cannot replace Spine metadata',()=>assert.equal(interactiveRecoveryReadAllowed('crm_get_task',reads,[]),false));
+const agenda=PAIGE_SPINE_CAPABILITIES.find(c=>c.action?.chatTool==='read_calendar_agenda');
+for(const action of [{classification:'mutate'},{riskPolicyKey:'money_move'},{approvalAuthority:'confirm'}])
+ check('agenda declaration drift refuses recovered authority',()=>assert.equal(interactiveRecoveryReadAllowed('read_calendar_agenda',reads,[{...agenda,action:{...agenda.action,...action}}]),false));
+check('duplicate agenda declaration refuses recovered authority',()=>assert.equal(interactiveRecoveryReadAllowed('read_calendar_agenda',reads,[agenda,agenda]),false));
+check('agenda allowlist cannot replace its registry or current admission',()=>{
+ assert.equal(interactiveRecoveryReadAllowed('read_calendar_agenda',reads,[]),false);
+ assert.equal(interactiveRecoveryReadAllowed('read_calendar_agenda',new Set(),PAIGE_SPINE_CAPABILITIES),false);
+});
 const status=await readInteractiveOutcomeStatus({state:async()=>({executor:id(1),terminal:false,stopped:true,recovery_read_only:true})});
 check('status exposes native read-only hold without pretending Stop settled producer',()=>{assert.equal(status.recovery_read_only,true);assert.equal(status.settled,false);});
 const legacy=await readInteractiveOutcomeStatus({state:async()=>({executor:null,terminal:true})});

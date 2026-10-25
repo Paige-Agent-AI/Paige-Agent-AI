@@ -53,6 +53,10 @@ const memberBooking = id(200001), foreignBooking = id(200002);
 const claims = actor => `set role authenticated;set request.jwt.claims='${JSON.stringify({ role: 'authenticated', ...(actor ? { sub: actor } : {}) })}';`;
 const columns = 'id,tenant_id,calendar_id,host_user_id,contact_id,title,start_at,end_at,timezone,status,booking_kind,guest_name';
 const query = (booking, workspace = ta, range = "'-infinity','infinity'") => `select ${columns} from public.list_team_bookings(${range},null,'${workspace}'${baseline ? '' : ",'" + booking + "'"}) where id='${booking}' limit 2`;
+const agendaColumns = columns.split(',').filter(column => column !== 'guest_name').join(',');
+// The actual adapter's native read, including the strict half-open overlap and
+// stable overfetch. This remains the existing Calendar RPC, not a new reader.
+const agendaQuery = (from, to, host, workspace = ta) => `select ${agendaColumns} from public.list_team_bookings('${from}','${to}',${host ? "array['" + host + "']::uuid[]" : 'null'},'${workspace}',null) where booking_kind <> 'class_seat' and end_at > '${from}'::timestamptz order by start_at,id limit 51`;
 const rows = (actor, booking, workspace = ta) => JSON.parse(sql(claims(actor) + `select coalesce(json_agg(r),'[]') from (${query(booking, workspace)}) r;`));
 const cases = [], measurements = [], compatibility = {};
 const check = (name, run) => {
@@ -212,6 +216,41 @@ try {
       assert.equal(sql(claims(owner) + `select count(*) from public.list_team_bookings('-infinity','infinity',array['${staff}']::uuid[],'${ta}','${id(100000)}');`), '0');
     });
     check('null exact ID retains the complete legacy listing contract', () => assert.equal(sql(claims(owner) + `select count(*) from public.list_team_bookings('-infinity','infinity',null,'${ta}',null);`), '100001'));
+    check('agenda uses original native overlap, own-host authority and excludes class participants', () => {
+      const from = '2026-10-17T00:00:00Z', to = '2026-10-18T00:00:00Z';
+      // These records exist only inside this rolled-back proof transaction.
+      // Keep every original exact-ID/count/ABI proof and its fixtures unchanged.
+      const values = [
+        [id(210001), ta, owner, '2026-10-16T23:00:00Z', '2026-10-17T01:00:00Z', 'single'],
+        [id(210002), ta, owner, '2026-10-17T12:00:00Z', '2026-10-17T12:30:00Z', 'single'],
+        [id(210003), ta, owner, '2026-10-17T12:00:00Z', '2026-10-17T12:30:00Z', 'class_seat'],
+        [id(210004), ta, owner, '2026-10-16T23:00:00Z', from, 'single'],
+        [id(210005), ta, owner, to, '2026-10-18T01:00:00Z', 'single'],
+        [id(210006), ta, staff, '2026-10-17T13:00:00Z', '2026-10-17T13:30:00Z', 'single'],
+        [id(210007), tb, owner, '2026-10-17T12:00:00Z', '2026-10-17T12:30:00Z', 'single'],
+        [id(210008), ta, owner, '2026-10-17T12:00:00Z', '2026-10-17T12:30:00Z', 'collective'],
+      ].map(row => '(' + row.map(value => "'" + value + "'").join(',') + ')').join(',');
+      const aggregate = statement => `select coalesce(jsonb_agg(to_jsonb(r)),'[]'::jsonb) from (${statement}) r;`;
+      const insert = `insert into public.internal_bookings(id,tenant_id,host_user_id,title,start_at,end_at,booking_kind) select id::uuid,tenant::uuid,host::uuid,'Neutral agenda',start_at::timestamptz,end_at::timestamptz,kind from (values ${values}) v(id,tenant,host,start_at,end_at,kind);`;
+      const raw = sql(`begin;${insert}${claims(owner)}${aggregate(agendaQuery(from, to, owner))}${claims(owner)}${aggregate(agendaQuery(from, to, null))}${claims(staff)}${aggregate(agendaQuery(from, to, staff))}${aggregate(agendaQuery(from, to, owner))}rollback;`);
+      writeFileSync(resolve(scratch, 'agenda-original-rows.jsonl'), raw + '\n');
+      const output = raw.split('\n').map(row => JSON.parse(row));
+      assert.deepEqual(output[0].map(row => row.id), [id(210001), id(210002), id(210008)]);
+      assert.deepEqual(output[1].map(row => row.id), [id(210001), id(210002), id(210008), id(210006)]);
+      assert.deepEqual(output[2].map(row => row.id), [id(210006)]);
+      assert.deepEqual(output[3], []);
+      for (const rows of output) for (const row of rows) { assert.equal(row.tenant_id, ta); assert.equal('guest_name' in row, false); }
+    });
+    check('agenda native query stays bounded and stable within a 32-day window over 100000 records', () => {
+      const statement = agendaQuery('2027-02-01T00:00:00Z', '2027-03-05T00:00:00Z', owner);
+      const output = JSON.parse(sql(claims(owner) + `select json_agg(r) from (${statement}) r;`));
+      assert.equal(output.length, 51); assert.equal(new Set(output.map(row => row.id)).size, 51);
+      assert.ok(output.every((row, index) => index === 0 || row.start_at > output[index - 1].start_at || (row.start_at === output[index - 1].start_at && row.id > output[index - 1].id)));
+      const plan = JSON.parse(sql(`set temp_file_limit='256MB';` + claims(owner) + `set work_mem='4MB';set statement_timeout='8000ms';explain(analyze,buffers,format json) ${statement};`))[0];
+      assert.ok(plan['Execution Time'] < 8000, 'agenda must settle within the existing fixed read budget');
+      assert.equal(plan.Plan['Actual Rows'], 51);
+      measurements.push({ name: 'agenda_32_day_51_overfetch', executionMs: plan['Execution Time'], plan: plan.Plan, nativeMaterialization: 'The native function may materialize all matching window rows before outer limit; output count is not a DB work bound.' });
+    });
     check('migration replay retains the original wrapper OID and exact row outcome', () => { sql(text(paths.migration)); assert.equal(metadata(), compatibility.beforeMetadata); assert.equal(rows(owner, id(109999)).length, 1); });
   }
   check('active member retains own-host visibility and cannot read another host', () => {

@@ -90,6 +90,10 @@ describe("describeStepStart — parity with describeStep", () => {
 });
 
 describe("describeStepStart — what a START says", () => {
+  it("announces an agenda read without pretending that a booking or action completed", () => {
+    expect(describeStepStart(call("read_calendar_agenda"), describeStep)).toEqual({ label: "Checking that Calendar window", group: "shared" });
+    expect(describeStep(call("read_calendar_agenda"), { content: JSON.stringify({ status: "unavailable", message: "This Calendar agenda could not be verified." }) })).toEqual({ label: "Couldn't check that Calendar window", group: "shared" });
+  });
   it("every announced tool gets a present-tense label of at most 60 characters, its finished group, and no detail", () => {
     for (const name of [...startNames, ...sameNames]) {
       const start = describeStepStart(call(name), describeStep);

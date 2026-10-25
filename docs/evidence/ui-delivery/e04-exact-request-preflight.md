@@ -32,7 +32,7 @@ ACCEPTANCE_CRITERIA: original authenticated read can optionally require its exac
 MOTION_PURPOSE: NONE: backend only.
 PROTECTED_SEAMS: original token/effect holds, ROOT/C0b/Spine/Kit/action-risk, approval channels, canonical send-message/provider/history, Portal and native financial/Operations records. No shared writer edits.
 
-INTERNAL_BUILD_IDENTITY: source=197d4b4c4d4bdabcc22514d984417de67e2c5211; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=agreement-send source implementation only; evidence=assets/e04-exact-request-preflight/source-proof.json.
+INTERNAL_BUILD_IDENTITY: source=197d4b4c4d4bdabcc22514d984417de67e2c5211; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(agreement-send production deployment and exact source/config readback); evidence=assets/e04-exact-request-preflight/source-proof.json.
 RELEASE_CHANNEL: development: read-only contract increment, production release not yet observed.
 RELEASE_CLASSIFICATION: internal-only: prerequisite source safety, no complete prepared execution or customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: full integrated Experience remains unaccepted.

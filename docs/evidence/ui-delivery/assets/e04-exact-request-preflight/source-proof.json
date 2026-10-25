@@ -55,5 +55,118 @@
     "priorSharedGate": "Actual source certificate/readback cleared; own affected-importer proof remains owed",
     "native": "NO_OWN_MIGRATION",
     "release": "NOT_MERGED_NOT_DEPLOYED"
+  },
+  "productionRelease": {
+    "pr": 2814,
+    "reviewedHead": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd",
+    "reviewedTree": "33ef3e10ffffc895fae9c6b7c5ba6cc20ac98570",
+    "main": "f34b177ed229faabdba5c3ed6904723f601c986f",
+    "tree": "3167eee70fef706d66800d6a09fa9ef84170aa27",
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "initial": 6396817326,
+      "final": 6397138101
+    },
+    "checks": [
+      {
+        "id": 121150873305,
+        "name": "Supabase Preview",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150631298,
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150427678,
+        "name": "audit",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150424628,
+        "name": "contract",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150424422,
+        "name": "database-contract",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150419756,
+        "name": "lint",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150419734,
+        "name": "Validate UI delivery evidence",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150419603,
+        "name": "comms-provider-boundary",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150419537,
+        "name": "verify",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150419393,
+        "name": "postgres-authority",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      },
+      {
+        "id": 121150419368,
+        "name": "web-fetch-hardening-smoke",
+        "conclusion": "success",
+        "head": "5c95622e4fd7a059f045f3f3a21a27eaf92eaebd"
+      }
+    ],
+    "webStatuses": 2,
+    "unresolvedThreads": 0,
+    "receipt": 6397199221,
+    "deployment": "dpl_2W1JxEFfJbZVP5Mg7NZ7YnZtotCY",
+    "buildId": "f34b177ed229faabdba5c3ed6904723f601c986f-mvnr6w7r",
+    "edge": {
+      "run": 40189619241,
+      "job": 121157630415,
+      "artifact": 12597374109,
+      "sha256": "b38bc4f4f27069a74c6656df91d5d2642bfc01efae89eadd81bf811f29dd8e33",
+      "function": "agreement-send",
+      "version": 21,
+      "files": 33,
+      "verifyJwt": true,
+      "allPass": true
+    },
+    "native": "NOT_APPLICABLE",
+    "recordedAt": "2026-10-25T11:54:09.002Z",
+    "channel": "production",
+    "classification": "internal-only",
+    "source": "Original exact-head review/CI, expected-head normal merge, normal pipelines and independent native/source/config/public-version readback",
+    "publicHosts": [
+      "https://paigeagent.ai",
+      "https://app.paigeagent.ai"
+    ],
+    "customerUpdate": null,
+    "activation": "NONE",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "OPEN",
+    "algorithms": "ALG01/12 PARTIAL; ALG02 incomplete; ALG13 usefulnessUNVERIFIED",
+    "fullExperience": "O1–O12 OPEN",
+    "recovery": "forward-fix; preserve original records and holds",
+    "proofBoundary": "Exact request private read only; no send/approval/native effect"
   }
 }

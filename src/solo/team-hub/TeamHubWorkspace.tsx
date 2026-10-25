@@ -1,5 +1,5 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { ArrowLeft, AtSign, ClipboardList, Hash, Lock, MessageSquareReply, PanelRight, Plus, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
+import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
+import { ArrowLeft, AtSign, ClipboardList, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareReply, PanelRight, Paperclip, Plus, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
@@ -45,8 +45,19 @@ import {
   type TeamHubConversation,
   type TeamHubMessage,
   type TeamHubPerson,
+  fileKind,
+  fileRefusalMessage,
+  fileSizeLabel,
+  isImageMime,
+  TEAM_HUB_ATTACH_LABEL,
+  TEAM_HUB_DOWNLOAD_FAILED,
+  TEAM_HUB_FILE_ACCEPT,
+  TEAM_HUB_FILE_DISCLOSURE,
+  TEAM_HUB_FILE_TYPES,
+  TEAM_HUB_FILE_TYPES_NOTE,
+  type TeamHubFile,
 } from "./team-hub-contract";
-import { useTeamHub, type PendingMessage, type TaskDraft, type TeamHub } from "./useTeamHub";
+import { attachmentScope, teamHubNavigation, useTeamHub, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub } from "./useTeamHub";
 import "./team-hub.css";
 
 /**
@@ -57,8 +68,13 @@ import "./team-hub.css";
  *
  * Team Hub never delegates, approves or books anything itself. A specialist, approval or meeting
  * request only PREFILLS PAIGE (`handOffPaigePrompt` + the shell's `openPaige`); the person presses
- * send there, and PAIGE keeps the approval card and the owner/admin delegation check. Attachments,
- * realtime and links back from PAIGE are later increments and are omitted, not shown dead.
+ * send there, and PAIGE keeps the approval card and the owner/admin delegation check.
+ *
+ * Increment 3 adds attachments (docs/delivery/exp08-team-hub-increment3-attachments-contract.md §7):
+ * the paperclip and drop target in both composers, file chips that show each upload's real state,
+ * and file rows on messages whose Download mints a fresh 60-second URL on every click. Files are not
+ * scanned, and the screen says so. Realtime and links back from PAIGE are later increments and are
+ * omitted, not shown dead.
  */
 export function TeamHubWorkspace({ onOpenTeamSettings, openPaige }: { onOpenTeamSettings?: () => void; openPaige?: () => void }) {
   const { activeTenant, activeUserId, loading, accountContextStatus, refresh } = useTenantContext();
@@ -78,12 +94,28 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
   tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void;
 }) {
   const [announcement, setAnnouncement] = useState("");
+  // One polite region, one write per frame. Everything said before the next frame paints (a pick
+  // that starts two uploads and refuses a third, a mocked-fast check that finishes in the same
+  // frame) is joined into that one write instead of the last message silently replacing the rest.
+  const queued = useRef<string[]>([]);
+  const flushing = useRef(false);
   const announce = useCallback((text: string) => {
+    if (!text) return;
+    if (!queued.current.includes(text)) queued.current.push(text);
+    if (flushing.current) return;
+    flushing.current = true;
+    // Cleared first, so the same words said twice in a row are still read the second time.
     setAnnouncement("");
-    window.requestAnimationFrame(() => setAnnouncement(text));
+    window.requestAnimationFrame(() => {
+      const said = joinAnnouncements(queued.current);
+      queued.current = [];
+      flushing.current = false;
+      setAnnouncement(said);
+    });
   }, []);
   // New arrivals found by a refresh are announced as a count through the hub's one live region.
-  const hub = useTeamHub(tenantId, { onTenantRefresh, onIncoming: announce });
+  // Attachment progress (Uploading 2 files, File ready, File refused: …) goes through the same one region.
+  const hub = useTeamHub(tenantId, { onTenantRefresh, onIncoming: announce, onAttachment: announce });
 
   if (hub.status === "account_unavailable") {
     // The server's `unavailable` (A1): not a canonical SOLO workspace. One honest state, no controls.
@@ -112,7 +144,16 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
   return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} />;
 }
 
+/** Several messages for the one live region, read as sentences in the order they were said. */
+function joinAnnouncements(parts: string[]): string {
+  const said = parts.map((part) => part.trim()).filter(Boolean);
+  return said.map((part, index) => index < said.length - 1 && !/[.!?…]$/.test(part) ? `${part}.` : part).join(" ");
+}
+
 type Form = { kind: "channel" } | { kind: "dm" } | null;
+
+/** How close to the newest message still counts as "at it" when the stream or its rows resize. */
+const PIN_SLACK_PX = 4;
 
 /** Same thresholds as the stylesheet's `@container th-hub (max-width: 759.98px | 1149.98px | 1439.98px)`. */
 const ONE_COLUMN_BELOW = 760;
@@ -187,6 +228,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const [workOpen, setWorkOpen] = useState(false);
   const workToggleRef = useRef<HTMLButtonElement>(null);
   const previewFirstRef = useRef<HTMLElement | null>(null);
+  const { fileUrl } = hub;
+  const fileAccess = useMemo(() => ({ sign: fileUrl, announce }), [fileUrl, announce]);
   // Assigning someone else is Operations' own rule: an owner or admin may, a member only themselves.
   const canAssignOthers = me?.permission === "owner" || me?.permission === "admin";
   // The PAIGE handoffs exist only where the shell can open PAIGE; without it they're omitted, not dead.
@@ -345,10 +388,13 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
       const problem = bodyProblem(body);
       if (!hub.online || problem === "empty") return;
       if (problem === "too_long") { const text = refusalMessage("too_long", "send"); setPreview({ ...open, error: text }); announce(text); return; }
+      // The message posts with the files attached to it, so they must all be ready first.
+      const waiting = filesProblem(hub.attachments[attachmentScope(open.channelId, null)] ?? []);
+      if (waiting) { setPreview({ ...open, error: waiting }); announce(waiting); return; }
       const mentions = resolveMentions(body, pickedHere, people);
       if (!mentions.ok) { setPreview({ ...open, error: mentions.problem }); announce(mentions.problem); return; }
       setPreview({ ...open, busy: true, error: null });
-      const outcome = await hub.send({ channelId: open.channelId, parentId: null, body, mentionIds: mentions.ids });
+      const outcome = await hub.send({ channelId: open.channelId, parentId: null, body, mentionIds: mentions.ids, withFiles: true });
       if (outcome.kind !== "sent") {
         // Not posted, so PAIGE isn't opened yet. A lost answer leaves the message below with Retry, and
         // turns posting off here so Continue can't post it a second time.
@@ -378,7 +424,11 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const send = async () => {
     if (!hub.activeId || !active) return;
     const problem = bodyProblem(draft);
-    if (problem === "empty" || !hub.online) return;
+    const chips = hub.attachments[attachmentScope(hub.activeId, null)] ?? [];
+    // A message may be files only; it may not leave while a file is still uploading or was refused.
+    if ((problem === "empty" && !chips.length) || !hub.online) return;
+    const waiting = filesProblem(chips);
+    if (waiting) { setComposerError(waiting); announce(waiting); return; }
     // Any draft that starts with /PAIGE, one line or several: the menu reads a single line only, so a
     // multi-line /PAIGE draft would otherwise be posted as if the command had run.
     if (/^\s*\/paige\b/i.test(draft)) {
@@ -401,7 +451,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     setPicked((current) => ({ ...current, [channelId]: [] }));
     setComposerError(null);
     focusComposer();
-    const outcome = await hub.send({ channelId, parentId: null, body: draft, mentionIds: mentions.ids });
+    const outcome = await hub.send({ channelId, parentId: null, body: draft, mentionIds: mentions.ids, withFiles: true });
     if (outcome.kind === "sent") announce("Message sent");
     else if (outcome.kind === "failed") announce("Message not sent. Retry is available.");
     else {
@@ -416,13 +466,16 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     const thread = hub.thread;
     if (!thread || thread.status !== "ready" || !hub.online) return;
     const problem = bodyProblem(threadDraft);
-    if (problem === "empty") return;
+    const chips = hub.attachments[attachmentScope(thread.channelId, thread.rootId)] ?? [];
+    if (problem === "empty" && !chips.length) return;
     if (problem === "too_long") { const text = refusalMessage("too_long", "send"); setThreadError(text); announce(text); return; }
+    const waiting = filesProblem(chips);
+    if (waiting) { setThreadError(waiting); announce(waiting); return; }
     const body = threadDraft;
     setThreadDraft("");
     setThreadError(null);
     window.requestAnimationFrame(() => threadComposerRef.current?.focus());
-    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [] });
+    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [], withFiles: true });
     if (outcome.kind === "sent") announce("Reply posted");
     else if (outcome.kind === "failed") announce("Reply not sent. Retry is available.");
     else { restoreReply(thread.rootId, outcome.body, outcome.message); announce(outcome.message); }
@@ -584,8 +637,18 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const listCovered = (threadOpen || workOpen) && oneColumn;
   const assignable = canAssignOthers ? people : people.filter((person) => person.user_id === meId);
   const previewHere = preview && preview.channelId === hub.activeId ? preview : null;
+  const mainScope = hub.activeId ? attachmentScope(hub.activeId, null) : null;
+  const threadScope = thread ? attachmentScope(thread.channelId, thread.rootId) : null;
+  const threadChips = threadScope ? hub.attachments[threadScope] ?? [] : [];
+  const threadFilesOk = threadChips.every((chip) => chip.state === "ready");
+  const removeThreadFile = (localId: string) => {
+    if (!threadScope) return;
+    hub.removeAttachment(threadScope, localId);
+    announce("File removed");
+    window.requestAnimationFrame(() => threadComposerRef.current?.focus());
+  };
 
-  return <div ref={hubRef} className="th-hub" onKeyDown={onHubKeyDown}>
+  return <FileAccess.Provider value={fileAccess}><div ref={hubRef} className="th-hub" onKeyDown={onHubKeyDown}>
    <div className="th-grid" data-view={mobileView} data-thread={thread ? "open" : "closed"} data-work={workOpen && !thread ? "open" : "closed"}>
     <section className="th-list" aria-label="Conversations" {...(listCovered ? { inert: "" } : {})}>
       <div className="th-list-head">
@@ -669,6 +732,16 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
             picked={pickedHere} onPick={(mention) => hub.activeId && setPicked((current) => ({ ...current, [hub.activeId!]: [...(current[hub.activeId!] ?? []), mention] }))}
             commands={commands} specialistsOffered={Boolean(openPaige)}
             onCommand={pickCommand} onSpecialist={pickSpecialist}
+            attachments={mainScope ? hub.attachments[mainScope] ?? [] : []}
+            onAttach={(files) => { if (hub.activeId) { setComposerError(null); hub.attach(hub.activeId, null, files); } }}
+            onRetryAttachment={(localId) => mainScope && hub.retryAttachment(mainScope, localId)}
+            onRemoveAttachment={(localId) => {
+              if (!mainScope) return;
+              hub.removeAttachment(mainScope, localId);
+              setComposerError(null);
+              announce("File removed");
+              window.requestAnimationFrame(() => composerRef.current?.focus());
+            }}
             error={composerError} onSend={() => void send()} /> : null} />}
     </section>
 
@@ -698,25 +771,30 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
       {thread.status === "ready" && <div className="th-composer-wrap">
         {/* Announced once, through the live region; shown here and tied to the field. */}
         {threadError && <p id="th-thread-error" className="th-error">{threadError}</p>}
-        <div className="th-composer">
+        <DropZone online={hub.online} onFiles={(files) => { setThreadError(null); hub.attach(thread.channelId, thread.rootId, files); }}>
           <label htmlFor="th-thread-reply" className="th-sr">Reply in thread</label>
           <textarea id="th-thread-reply" ref={threadComposerRef} rows={1} placeholder="Reply in thread" value={threadDraft}
             aria-describedby={threadError ? "th-thread-error" : undefined}
             onChange={(event) => { setThreadDraft(event.target.value); setThreadError(null); }}
             onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void sendReply(); } }} />
+          <AttachmentTray chips={threadChips} onRemove={removeThreadFile}
+            onRetry={(localId) => threadScope && hub.retryAttachment(threadScope, localId)} />
           <div className="th-composer-row">
-            <span className="th-hint">{hub.online ? "Replies stay in this thread" : "Offline · draft kept"}</span>
-            <SendButton ready={Boolean(threadDraft.trim()) && hub.online && bodyProblem(threadDraft) !== "too_long"} disabled={!hub.online}
-              label="Send reply" onClick={() => void sendReply()} />
+            <AttachButton online={hub.online} onFiles={(files) => { setThreadError(null); hub.attach(thread.channelId, thread.rootId, files); }} />
+            <span className="th-hint">{!hub.online ? "Offline · draft kept" : filesHint(threadChips) ?? "Replies stay in this thread"}</span>
+            <SendButton ready={(Boolean(threadDraft.trim()) || threadChips.length > 0) && threadFilesOk && hub.online && bodyProblem(threadDraft) !== "too_long"}
+              disabled={!hub.online || !threadFilesOk} label="Send reply" onClick={() => void sendReply()} />
           </div>
-        </div>
+        </DropZone>
       </div>}
     </aside>}
     {workOpen && !thread && <WorkPanel hub={hub} people={people} conversations={conversations} headingRef={workHeadingRef}
       onClose={() => closeWork()} onJump={(item) => void jumpTo(item)} />}
    </div>
     <div className="th-sr" aria-live="polite" role="status">{announcement}</div>
-  </div>;
+    {/* The one description every file row carries (§1.4): files are not scanned. */}
+    <span id={FILE_DISCLOSURE_ID} className="th-sr">{TEAM_HUB_FILE_DISCLOSURE}</span>
+  </div></FileAccess.Provider>;
 }
 
 function conversationTitle(conversation: TeamHubConversation, people: TeamHubPerson[]): string {
@@ -992,27 +1070,62 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
   const placed = useRef<string | null>(null);
   const older = useRef<{ height: number; top: number } | null>(null);
   const nearBottom = useRef(true);
+  /** At the newest message (within PIN_SLACK_PX) as of the last scroll: the only reader a resize re-pins. */
+  const atEnd = useRef(true);
+  /** The stream's size when its position was last read. A scroll event that arrives with a different
+   *  size was caused by layout (our own placement landing a frame late, the browser's scroll
+   *  anchoring, a shrinking stream), not by the reader, and is left to the resize handling. */
+  const seen = useRef({ height: 0, client: 0 });
+  const content = useRef<HTMLDivElement>(null);
   const pendingKey = pending.map((item) => `${item.localId}:${item.status}`).join("|");
+  const remember = useCallback((element: HTMLElement) => {
+    const gap = element.scrollHeight - element.scrollTop - element.clientHeight;
+    nearBottom.current = gap < 80;
+    atEnd.current = gap <= PIN_SLACK_PX;
+    seen.current = { height: element.scrollHeight, client: element.clientHeight };
+  }, []);
+  const place = useCallback((element: HTMLElement, top: number) => {
+    element.scrollTop = top;
+    remember(element);
+  }, [remember]);
 
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
     if (older.current) {
       // Keep the reader's place when earlier messages load above it.
-      element.scrollTop = element.scrollHeight - older.current.height + older.current.top;
+      place(element, element.scrollHeight - older.current.height + older.current.top);
       older.current = null;
       return;
     }
     if (placed.current !== stream.channelId) {
       placed.current = stream.channelId;
       const divider = element.querySelector<HTMLElement>("[data-new-divider]");
-      element.scrollTop = divider ? Math.max(0, divider.offsetTop - element.offsetTop - 8) : element.scrollHeight;
+      // Recorded now, not on the scroll event a frame later, so a resize in between can't misread it.
+      place(element, divider ? Math.max(0, divider.offsetTop - element.offsetTop - 8) : element.scrollHeight);
       return;
     }
-    if (nearBottom.current) element.scrollTop = element.scrollHeight;
+    if (nearBottom.current) place(element, element.scrollHeight);
     // Keyed on each pending row's status too: a send that fails grows its row (Retry, Delete), and
     // that recovery must stay in view.
-  }, [stream.channelId, stream.messages, pendingKey]);
+  }, [stream.channelId, stream.messages, pendingKey, place]);
+
+  // The stream also changes size without a new message: the composer grows when files are attached
+  // (the stream gets shorter), and rows grow once their own reads land (a task card's Operations
+  // read, an image thumbnail). A reader who was at the newest message stays there; a reader who
+  // scrolled up is never moved.
+  useEffect(() => {
+    const element = ref.current;
+    const inner = content.current;
+    if (!element || !inner || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      if (atEnd.current) place(element, element.scrollHeight);
+      else seen.current = { height: element.scrollHeight, client: element.clientHeight };
+    });
+    observer.observe(element);
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, [place]);
 
   const loadOlder = () => {
     const element = ref.current;
@@ -1023,7 +1136,17 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
   let lastDay = "";
   // A labelled region, not a live log: arrivals are announced once, as a count, by the hub's live region.
   return <div ref={ref} className="th-stream" role="region" aria-label="Messages" tabIndex={-1}
-    onScroll={(event) => { const element = event.currentTarget; nearBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80; }}>
+    onScroll={(event) => {
+      const element = event.currentTarget;
+      if (element.scrollHeight !== seen.current.height || element.clientHeight !== seen.current.client) {
+        // Layout moved it, not the reader: keep whether they were at the end, and take the new size.
+        seen.current = { height: element.scrollHeight, client: element.clientHeight };
+        return;
+      }
+      remember(element);
+    }}>
+    {/* One box around every row, so a row that grows after placement is one observed size change. */}
+    <div ref={content} className="th-stream-content">
     {stream.hasMore && <div className="th-older">
       <button type="button" className="th-btn th-btn--ghost" disabled={stream.loadingOlder || !hub.online} onClick={loadOlder}>
         {stream.loadingOlder ? "Loading earlier messages…" : "Load earlier messages"}</button>
@@ -1045,6 +1168,7 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
     })}
     {pending.map((item) => <PendingRow key={item.localId} item={item} me={me} online={hub.online}
       onRetry={() => onRetry(item)} onDiscard={() => onDiscard(item)} />)}
+    </div>
   </div>;
 }
 
@@ -1076,8 +1200,10 @@ function MessageRow({ message, people, meId, onOpenThread, taskReads }: {
       {message.work_ref
         // A command message: its fixed words are a tag, and the task itself is read from Operations.
         ? <p className="th-text"><span className="th-cmdtag">{message.body}</span></p>
-        : <p className="th-text">{mentionRuns(message.body, message.mentions, people).map((run, index) =>
-          run.mention ? <span key={index} className="th-mention">{run.text}</span> : <span key={index}>{run.text}</span>)}</p>}
+        // A files-only message has no text line at all, not an empty one.
+        : message.body || !message.files.length ? <p className="th-text">{mentionRuns(message.body, message.mentions, people).map((run, index) =>
+          run.mention ? <span key={index} className="th-mention">{run.text}</span> : <span key={index}>{run.text}</span>)}</p> : null}
+      {message.files.length > 0 && <MessageFiles files={message.files} />}
       {message.work_ref && <TaskCard id={message.work_ref.id} read={taskReads?.[message.work_ref.id]} people={people} meId={meId} />}
       {onOpenThread && message.reply_count > 0 && <button type="button" className="th-replies"
         onClick={(event) => onOpenThread(message.id, event.currentTarget)}>
@@ -1102,7 +1228,13 @@ function PendingRow({ item, me, online, onRetry, onDiscard }: {
       <div className="th-who"><b>{name} (you)</b>{item.status === "sending" && <span className="th-role">{task ? "Creating task…" : "Sending…"}</span>}</div>
       {task
         ? <p className="th-text"><span className="th-cmdtag">{item.body}</span> {task.title}</p>
-        : <p className="th-text">{item.body}</p>}
+        : item.body ? <p className="th-text">{item.body}</p> : null}
+      {item.files.length > 0 && <ul className="th-files" aria-label={item.files.length === 1 ? "1 file" : `${item.files.length} files`}>
+        {item.files.map((file) => <li key={file.localId}><div className="th-file">
+          <span className="th-file-glyph" aria-hidden="true"><FileGlyph mime={file.mime} /></span>
+          <span className="th-file-meta"><span className="th-file-name" title={file.name}>{file.name}</span><small><span className="th-file-size">{fileSizeLabel(file.size)}</span></small></span>
+        </div></li>)}
+      </ul>}
       {/* Announced once by the live region when the send fails; shown here with its recovery. */}
       {item.status === "failed" && <div className="th-fail">{task ? "Not confirmed. Retry checks first, so the task is never created twice." : "Not sent. Your message is kept here."}
         <button type="button" disabled={!online} onClick={onRetry}>Retry</button>
@@ -1121,13 +1253,19 @@ type ComposerProps = {
   /** The six specialists join the @ list only where a pick can continue in PAIGE. */
   specialistsOffered: boolean;
   onSpecialist: (name: SpecialistName, draftWithoutQuery: string) => void;
+  /** Increment 3: this composer's file chips, and what picking, retrying and removing one does. */
+  attachments: AttachmentChip[];
+  onAttach: (files: File[]) => void;
+  onRetryAttachment: (localId: string) => void;
+  onRemoveAttachment: (localId: string) => void;
 };
 
 const SPECIALIST_ROLES: Record<string, string> = Object.fromEntries(VP_ROSTER.map((vp) => [vp.name, vp.role.replace(/^VP /, "")]));
 
 type MentionItem = { kind: "person"; key: string; person: TeamHubPerson } | { kind: "specialist"; key: string; name: SpecialistName };
 
-function Composer({ conversation, people, meId, online, value, onChange, picked, onPick, error, onSend, inputRef, commands, onCommand, specialistsOffered, onSpecialist }: ComposerProps) {
+function Composer({ conversation, people, meId, online, value, onChange, picked, onPick, error, onSend, inputRef, commands, onCommand, specialistsOffered, onSpecialist,
+  attachments, onAttach, onRetryAttachment, onRemoveAttachment }: ComposerProps) {
   const localRef = useRef<HTMLTextAreaElement | null>(null);
   const [mention, setMention] = useState<{ start: number; query: string } | null>(null);
   // The `/` menu: typed (the draft starts with `/` or `/PAIGE`) or opened by the slash button over a draft.
@@ -1155,7 +1293,9 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   const optionCount = commandOpen ? commandOptions.length : items.length;
   const label = conversation.kind === "dm" ? `Message ${conversationLabel(conversation, people)}` : `Message #${conversation.name}`;
   const problem = bodyProblem(value);
-  const ready = online && problem === null;
+  // Files only is a message too; every chip must be ready before anything leaves.
+  const filesOk = attachments.every((chip) => chip.state === "ready");
+  const ready = online && filesOk && (problem === null || (problem === "empty" && attachments.length > 0));
   const listId = `th-mentions-${conversation.id}`;
   const commandListId = `th-commands-${conversation.id}`;
   const disabledCommand = (item: TeamHubCommand) => item.kind === "task" && !online;
@@ -1308,7 +1448,7 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     {/* Refusals are announced once, by the hub's live region; here they are shown and tied to the field. */}
     {error && <p id={`${listId}-error`} className="th-error">{error}</p>}
     {problem === "too_long" && !error && <p id={`${listId}-length`} className="th-error">{messageLength(value).toLocaleString()} of {MESSAGE_MAX_LENGTH.toLocaleString()} characters.</p>}
-    <div className="th-composer">
+    <DropZone online={online} onFiles={onAttach}>
       <label htmlFor={`th-composer-${conversation.id}`} className="th-sr">{label}</label>
       <textarea id={`th-composer-${conversation.id}`} ref={setRefs} rows={1} value={value} placeholder={label}
         role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded={listOpen}
@@ -1318,15 +1458,18 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
         onChange={(event) => { onChange(event.target.value); detect(event.target.value, event.target.selectionStart ?? event.target.value.length); }}
         onKeyDown={onKeyDown}
         onBlur={() => { setMention(null); setCommand(null); }} />
+      <AttachmentTray chips={attachments} onRemove={onRemoveAttachment} onRetry={onRetryAttachment} />
       <div className="th-composer-row">
         {mentionsOffered && <button type="button" className="th-icon-btn" aria-label="Mention someone" disabled={!online}
           onMouseDown={(event) => event.preventDefault()} onClick={insertAt}><AtSign aria-hidden="true" /></button>}
+        {/* Between @ and /, as approved (§7). */}
+        <AttachButton online={online} onFiles={onAttach} />
         <button type="button" className="th-icon-btn" aria-label="PAIGE commands" aria-haspopup="listbox" aria-expanded={commandOpen}
           onMouseDown={(event) => event.preventDefault()} onClick={openCommands}><Slash aria-hidden="true" /></button>
-        <span className="th-hint">{online ? (mentionsOffered ? "@ to mention · / for PAIGE" : "/ for PAIGE · Shift+Enter for a new line") : "Offline · draft kept"}</span>
-        <SendButton ready={ready} disabled={!online} label="Send" onClick={onSend} />
+        <span className="th-hint">{!online ? "Offline · draft kept" : filesHint(attachments) ?? (mentionsOffered ? "@ to mention · / for PAIGE" : "/ for PAIGE · Shift+Enter for a new line")}</span>
+        <SendButton ready={ready} disabled={!online || !filesOk} label="Send" onClick={onSend} />
       </div>
-    </div>
+    </DropZone>
     {picked.length > 0 && <span className="th-sr">Mentioning {picked.map((item) => item.label).join(", ")}</span>}
   </div>;
 }
@@ -1558,6 +1701,182 @@ function WorkPanel({ hub, people, conversations, headingRef, onClose, onJump }: 
       </ul>}
     </div>
   </aside>;
+}
+
+// ── Increment 3: attachments ──
+
+const FILE_DISCLOSURE_ID = "th-file-disclosure";
+
+/** How file rows mint their URLs and speak, without threading both through every message row. */
+const FileAccess = createContext<{ sign: (path: string, download?: string) => Promise<string | null>; announce: (text: string) => void }>({
+  sign: async () => null, announce: () => undefined,
+});
+
+/** Why a composer can't send yet because of its files, or null when every file is ready. */
+function filesProblem(chips: AttachmentChip[]): string | null {
+  if (chips.some((chip) => chip.state === "refused" || chip.state === "failed")) return "Remove the files that can't be attached, or retry them, then send.";
+  if (chips.some((chip) => chip.state === "uploading" || chip.state === "checking")) return "Wait for your files to finish uploading.";
+  return null;
+}
+
+/** The composer hint while files are in play; null leaves the usual hint. */
+function filesHint(chips: AttachmentChip[]): string | null {
+  if (chips.some((chip) => chip.state === "uploading" || chip.state === "checking")) return "Uploading files…";
+  if (chips.some((chip) => chip.state === "failed")) return "Retry or remove files to send";
+  if (chips.some((chip) => chip.state === "refused")) return "Remove refused files to send";
+  return null;
+}
+
+function FileGlyph({ mime }: { mime: string | null }) {
+  const kind = mime && TEAM_HUB_FILE_TYPES.some((type) => type.mime === mime) ? fileKind(mime as TeamHubFile["mime"]) : "document";
+  return kind === "image" ? <FileImage aria-hidden="true" /> : kind === "sheet" ? <FileSpreadsheet aria-hidden="true" /> : <FileText aria-hidden="true" />;
+}
+
+const typeLabel = (mime: string) => TEAM_HUB_FILE_TYPES.find((type) => type.mime === mime)?.label ?? "File";
+
+/**
+ * The composer box, which also takes dropped files. Only a drag that carries files is accepted, so
+ * dragging text into the box still drops text.
+ */
+function DropZone({ online, onFiles, children }: { online: boolean; onFiles: (files: File[]) => void; children: ReactNode }) {
+  const [over, setOver] = useState(false);
+  const carriesFiles = (event: ReactDragEvent) => Array.from(event.dataTransfer?.types ?? []).includes("Files");
+  return <div className="th-composer" data-drop={over ? "" : undefined}
+    onDragOver={(event) => { if (!online || !carriesFiles(event)) return; event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setOver(true); }}
+    onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOver(false); }}
+    onDrop={(event) => {
+      if (!carriesFiles(event)) return;
+      event.preventDefault();
+      setOver(false);
+      if (online) onFiles(Array.from(event.dataTransfer.files ?? []));
+    }}>
+    {children}
+  </div>;
+}
+
+/** The paperclip and its hidden input, whose `accept` is exactly the allowed extensions. */
+function AttachButton({ online, onFiles }: { online: boolean; onFiles: (files: File[]) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return <>
+    <button type="button" className="th-icon-btn" aria-label={TEAM_HUB_ATTACH_LABEL} title={TEAM_HUB_ATTACH_LABEL} disabled={!online}
+      onMouseDown={(event) => event.preventDefault()} onClick={() => inputRef.current?.click()}><Paperclip aria-hidden="true" /></button>
+    <input ref={inputRef} type="file" multiple accept={TEAM_HUB_FILE_ACCEPT} hidden tabIndex={-1}
+      onChange={(event) => {
+        const files = Array.from(event.target.files ?? []);
+        // Cleared, so picking the same file again (after removing it) is a new pick.
+        event.target.value = "";
+        onFiles(files);
+      }} />
+  </>;
+}
+
+/**
+ * The files waiting in a composer, each as a chip with its real state: Uploading…, Checking…, ready,
+ * or refused with the reason. A chip is removable in every state; a failed upload can be retried.
+ * The disclosure sits under the chips, quiet, whenever a file is in play.
+ */
+function AttachmentTray({ chips, onRemove, onRetry }: { chips: AttachmentChip[]; onRemove: (localId: string) => void; onRetry: (localId: string) => void }) {
+  if (!chips.length) return null;
+  const typeRefused = chips.some((chip) => chip.reason === "type");
+  return <div className="th-atts">
+    <ul className="th-att-list" aria-label={chips.length === 1 ? "1 attached file" : `${chips.length} attached files`}>
+      {chips.map((chip) => {
+        const status = chip.state === "uploading" ? "Uploading…"
+          : chip.state === "checking" ? "Checking…"
+            : chip.state === "ready" ? `${fileSizeLabel(chip.size)} · Ready`
+              : chip.state === "failed" ? "Upload didn't finish"
+                : fileRefusalMessage(chip.reason ?? "type");
+        return <li key={chip.localId} className="th-att" data-state={chip.state}>
+          <span className="th-att-glyph" aria-hidden="true"><FileGlyph mime={chip.mime} /></span>
+          <span className="th-att-meta">
+            <span className="th-att-name" title={chip.name}>{chip.name}</span>
+            <small className="th-att-state">{status}</small>
+          </span>
+          {chip.state === "failed" && <button type="button" className="th-att-retry" aria-label={`Retry ${chip.name}`}
+            onMouseDown={(event) => event.preventDefault()} onClick={() => onRetry(chip.localId)}>Retry</button>}
+          <button type="button" className="th-icon-btn" aria-label={`Remove ${chip.name}`}
+            onClick={() => onRemove(chip.localId)}><X aria-hidden="true" /></button>
+        </li>;
+      })}
+    </ul>
+    {typeRefused && <p className="th-att-note">{TEAM_HUB_FILE_TYPES_NOTE}</p>}
+    <p className="th-att-note">{TEAM_HUB_FILE_DISCLOSURE}</p>
+  </div>;
+}
+
+function MessageFiles({ files }: { files: TeamHubFile[] }) {
+  return <ul className="th-files" aria-label={files.length === 1 ? "1 file" : `${files.length} files`}>
+    {files.map((file) => <FileRow key={file.id} file={file} />)}
+  </ul>;
+}
+
+/**
+ * One posted file. Download mints a fresh 60-second URL on every click, served as an attachment under
+ * the file's own name, then goes to it; nothing is cached. Download is neutral, never gold.
+ */
+function FileRow({ file }: { file: TeamHubFile }) {
+  const access = useContext(FileAccess);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const errorId = `th-file-error-${file.id}`;
+  const download = async () => {
+    if (busy) return;
+    setBusy(true);
+    setFailed(false);
+    const url = await access.sign(file.path, file.name);
+    setBusy(false);
+    if (!url) { setFailed(true); access.announce(TEAM_HUB_DOWNLOAD_FAILED); return; }
+    teamHubNavigation.assign(url);
+  };
+  return <li><div className="th-file" role="group" aria-label={`${file.name}, ${typeLabel(file.mime)}, ${fileSizeLabel(file.size)}`} aria-describedby={FILE_DISCLOSURE_ID}>
+    {isImageMime(file.mime) ? <FileThumb file={file} /> : <span className="th-file-glyph" aria-hidden="true"><FileGlyph mime={file.mime} /></span>}
+    <span className="th-file-meta">
+      <span className="th-file-name" title={file.name}>{file.name}</span>
+      <small>{typeLabel(file.mime)} · <span className="th-file-size">{fileSizeLabel(file.size)}</span></small>
+    </span>
+    {/* aria-disabled while minting, so focus stays on the button. On a narrow row the stylesheet
+        hides the visible word and the button is a 40px icon; its name is always "Download <file>". */}
+    <button type="button" className="th-btn th-file-dl" aria-label={`Download ${file.name}`} title={`Download ${file.name}`} aria-disabled={busy || undefined}
+      aria-describedby={failed ? `${errorId} ${FILE_DISCLOSURE_ID}` : FILE_DISCLOSURE_ID} onClick={() => void download()}><Download aria-hidden="true" /><span className="th-file-dl-label">{busy ? "Getting…" : "Download"}</span></button>
+    {failed && <p id={errorId} className="th-error th-file-error">{TEAM_HUB_DOWNLOAD_FAILED}</p>}
+  </div></li>;
+}
+
+/**
+ * An image's small thumbnail, from its own 60-second URL; the type glyph stands in until, or instead.
+ * A lazy image scrolled into view after a minute meets an expired URL, so a failed load mints one
+ * fresh URL and tries once more before settling on the glyph.
+ */
+function FileThumb({ file }: { file: TeamHubFile }) {
+  const { sign } = useContext(FileAccess);
+  const [url, setUrl] = useState<string | null>(null);
+  const [broken, setBroken] = useState(false);
+  // Which path the answers belong to, and whether this path has had its one fresh URL.
+  const current = useRef({ path: file.path, reminted: false });
+  const mint = useCallback((path: string) => {
+    void sign(path).then((next) => {
+      if (current.current.path !== path) return;
+      if (next) setUrl(next); else setBroken(true);
+    });
+  }, [sign]);
+  useEffect(() => {
+    current.current = { path: file.path, reminted: false };
+    setUrl(null);
+    setBroken(false);
+    mint(file.path);
+    return () => { current.current = { path: "", reminted: true }; };
+  }, [file.path, mint]);
+  const failed = () => {
+    if (current.current.reminted) { setBroken(true); return; }
+    current.current.reminted = true;
+    setUrl(null);
+    mint(file.path);
+  };
+  return <span className="th-file-thumb" aria-hidden="true">
+    {url && !broken
+      ? <img src={url} alt="" loading="lazy" decoding="async" onError={failed} />
+      : <FileGlyph mime={file.mime} />}
+  </span>;
 }
 
 function SendButton({ ready, disabled, label, onClick }: { ready: boolean; disabled: boolean; label: string; onClick: () => void }) {

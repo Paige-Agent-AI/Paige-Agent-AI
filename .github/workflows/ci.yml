@@ -74,6 +74,10 @@ jobs:
           supabase/functions/_shared/booking-provider-boundary.test.mjs
           supabase/functions/send-portal-invite/canonical-delivery.test.mjs
           supabase/functions/_shared/operator-retirement-handler.test.mjs
+          supabase/functions/_shared/team-hub-file-type.test.ts
+          supabase/functions/send-message/attachment-validation.test.mjs
+          supabase/functions/analyze-financial-document/document-source.test.mjs
+          supabase/functions/subagent-email-composer/attachment-path.test.mjs
       - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
       - name: EXP02 analytics catalogue guards, replay and read-only permissions in isolated database
@@ -82,6 +86,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_collaboration.sql
       - name: EXP08 Team Hub team work, atomic Operations task creation, exactly-once retry and work list isolation in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_team_work.sql
+      - name: EXP08 Team Hub files, restrictive storage policies, verdict, posting with files and read-now isolation in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_files.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
@@ -92,6 +98,8 @@ jobs:
         run: node scripts/proof/operator-provider-retirement.mjs --postgres
       - name: Operator provider-independent Archive and Delete in disposable PostgreSQL
         run: node scripts/proof/operator-provider-retirement.mjs --postgres --cached-audio --generated-media --platform-independent
+      - name: Operator Team Hub files retirement, Storage guard, exact plan and partial recovery in disposable PostgreSQL
+        run: node scripts/proof/operator-team-hub-files-retirement.mjs --postgres 5432
       - name: Operator cached-audio retirement, Storage boundary and partial recovery proof
         run: |
           node --test supabase/functions/_shared/operator-storage-retirement.test.mjs supabase/functions/_shared/operator-storage-handler.test.mjs

@@ -11,6 +11,7 @@ const reminderApprovalPath = 'supabase/functions/_shared/planning/approved-remin
 const recoveryRefusalPath = 'supabase/functions/_shared/paige-turn/interactive-refusal.ts';
 const specialistHistoryPath = 'supabase/functions/_shared/paige-turn/interactive-specialist-history.ts';
 const weeklyDeclarationsPath = 'supabase/functions/_shared/paige-spine/domains/automations.ts';
+const weeklyDeadlinePath = 'supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts';
 // Exercise the actual admission consumer. The validator's tools map retains
 // diagnostic progress; findings, rather than an empty map, invalidate admission.
 const consumerSource = ts.createSourceFile('registry-lint.mjs', readFileSync('scripts/ci/paige-spine-registry-lint.mjs', 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
@@ -22,6 +23,7 @@ const [tool, spec] = baseline.tools.entries().next().value;
 const capability = { key: spec.key, action: { ...spec, chatTool: tool }, selfDescribe: spec.selfDescribe,
   readiness: spec.readiness, chatBinding: 'LIVE', mindBinding: 'UNAVAILABLE', maturity: 'PARTIAL' };
 const changes = [
+  ['draft elapsed and current-request fence', weeklyDeadlinePath, 'if (!current() || performance.now() >= expires)', 'if (false)'],
   ['weekly draft requires exact confirmation', weeklyDeclarationsPath, 'actionRiskKey: "weekly_commitment_draft", risk: "ordinary", approval: "confirm"', 'actionRiskKey: "weekly_commitment_draft", risk: "ordinary", approval: "none"'],
   ['customer Sessions relationship binding', 'supabase/functions/_shared/client-portal-sessions-context.ts', 's.contact_id!==persona.data.binding.clientId', 'false'],
   ['customer Progress relationship binding', 'supabase/functions/_shared/client-portal-progress-context.ts', 's.contact_id!==persona.data.binding.clientId', 'false'],
@@ -52,7 +54,8 @@ const changes = [
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 125);
+  assert.equal(incumbentSourcePaths.length, 126);
+  assert.ok(incumbentSourcePaths.includes(weeklyDeadlinePath), 'the shared elapsed-stage fence must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes(weeklyDeclarationsPath), 'the weekly draft declaration must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes(specialistHistoryPath));
   assert.ok(incumbentSourcePaths.includes(recoveryRefusalPath), 'original closed recovery-refusal evidence must remain a restrictive ancestry input');

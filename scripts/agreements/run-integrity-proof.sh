@@ -249,6 +249,11 @@ deno test --allow-import --node-modules-dir=none --allow-read="$REPO/supabase/fu
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-work.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-credentials.test.ts"
+# Dynamic source-test imports do not establish actual SDK type compatibility.
+# Check the original deployed door as well as its private history projection.
+deno check --allow-import --node-modules-dir=none \
+  "$REPO/supabase/functions/_shared/agreements/prepared-signature-outcome.ts" \
+  "$REPO/supabase/functions/agreement-send/index.ts"
 # Runtime-created imports in the hostile source tests do not type-check the
 # imported module. Check the actual credential bridge directly as well.
 deno check --allow-import --node-modules-dir=none \

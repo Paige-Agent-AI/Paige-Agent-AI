@@ -5,15 +5,15 @@ import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import AgreementSigning from './AgreementSigning';
 import documentFixture from '@/solo/sales/fixtures/agreement-document-source.json';
 
-const fixture=vi.hoisted(()=>({rpc:vi.fn(),invoke:vi.fn(),fields:vi.fn(),create:vi.fn(),revoke:vi.fn()}));
+const fixture=vi.hoisted(()=>({rpc:vi.fn(),invoke:vi.fn(),fields:vi.fn(),create:vi.fn(),revoke:vi.fn(),pdfAuto:true,pdfFrames:[] as Array<{page:number;zoom:'fit'|number;sha256:string;ready:(r:unknown)=>void}>}));
 // Preserve every original act/document assertion; the added ordinary field-read
 // has its own spy and explicit scope/recovery tests below.
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:fixture.rpc,functions:{invoke:(name:string,options?:{body?:Record<string,unknown>})=>options?.body?.action==='fields'?fixture.fields(name,options):fixture.invoke(name,options)}}}));
 // Component tests drive readiness, not PDF pixels. Actual original-renderer
 // browser evidence is separate; this avoids fetching font assets in jsdom.
-vi.mock('@/solo/sales/AgreementPdfPage',()=>({AgreementPdfPage:({document:doc,pageNumber,onReady,onRetry,children}: {document:{sha256:string};pageNumber:number;onReady:(r:unknown)=>void;onRetry:()=>void;children:React.ReactNode})=>{
+vi.mock('@/solo/sales/AgreementPdfPage',()=>({AgreementPdfPage:({document:doc,pageNumber,zoom,onReady,onRetry,children}: {document:{sha256:string};pageNumber:number;zoom:'fit'|number;onReady:(r:unknown)=>void;onRetry:()=>void;children:React.ReactNode})=>{
  const cb=React.useRef(onReady);cb.current=onReady;
- React.useEffect(()=>{cb.current({page:pageNumber,sha256:doc.sha256,zoom:'fit'});return()=>cb.current(null);},[doc.sha256,pageNumber]);
+ React.useEffect(()=>{const ready=cb.current,frame={page:pageNumber,sha256:doc.sha256,zoom,ready};fixture.pdfFrames.push(frame);if(fixture.pdfAuto)ready({page:pageNumber,sha256:doc.sha256,zoom});return()=>ready(null);},[doc.sha256,pageNumber,zoom]);
  return <div aria-label={'Synthetic PDF readiness page '+pageNumber}>{children}<button onClick={onRetry}>Reload original document</button></div>;
 }}));
 vi.mock('react-helmet-async',()=>({Helmet:()=>null}));
@@ -24,6 +24,7 @@ const signingReceipt=(patch:Record<string,unknown>={})=>({ok:true,state:'recorde
 const OriginalURL=URL;
 let host:HTMLDivElement,root:Root,router:ReturnType<typeof createMemoryRouter>;
 beforeEach(()=>{
+  fixture.pdfAuto=true;fixture.pdfFrames=[];
   fixture.rpc.mockReset().mockResolvedValue({data:[row()],error:null});
   fixture.fields.mockReset().mockResolvedValue({data:{kind:'legacy'},error:null});
   fixture.invoke.mockReset().mockImplementation(async()=>({data:new Blob(['%PDF-1.7\nsynthetic component transport'],{type:'application/pdf'}),error:null}));
@@ -326,4 +327,42 @@ it('preserves the original exact-token decline and 500-character limit after una
  await render();await openDeclineReview();act(()=>fillDeclineReason('x'.repeat(600)));await act(async()=>button('Decline agreement').click());
  expect(fixture.rpc).toHaveBeenLastCalledWith('decline_agreement_signing',{_token:token,_reason:'x'.repeat(500)});
  expect(host.querySelector('h2')?.textContent).toBe('You declined this agreement');expect(fixture.invoke).not.toHaveBeenCalled();
+});
+
+const zoomControl=()=>host.querySelector<HTMLSelectElement>('select[aria-label="Document zoom"]')!;
+const changeZoom=async(value:string)=>{await act(async()=>{const el=zoomControl();expect(el).not.toBeNull();el.value=value;el.dispatchEvent(new Event('change',{bubbles:true}));});};
+const lastPdf=()=>fixture.pdfFrames[fixture.pdfFrames.length-1];
+const showPdf=(frame:ReturnType<typeof lastPdf>,patch:Record<string,unknown>={})=>act(()=>frame.ready({page:frame.page,sha256:frame.sha256,zoom:frame.zoom,...patch}));
+it('offers native document magnification, retains answers, and requires fresh review and consents without another remote read',async()=>{
+ prepareOwn();await render();await completeAnswers();act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(i=>i.click()));expect(signButton().disabled).toBe(false);
+ expect([...zoomControl().options].map(o=>o.text)).toEqual(['Fit width','100%','150%','200%']);const calls=fixture.invoke.mock.calls.length;
+ await changeZoom('2');expect(lastPdf().zoom).toBe(2);expect(host.querySelector<HTMLInputElement>('#field-'+ownText)?.value).toBe('Controlled Contact');expect(host.querySelectorAll<HTMLInputElement>('input[type=radio]')[1].checked).toBe(true);
+ expect([...host.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].every(i=>!i.checked&&i.matches(':disabled'))).toBe(true);expect(signButton().disabled).toBe(true);expect(fixture.invoke.mock.calls).toHaveLength(calls);expect(fixture.fields).toHaveBeenCalledTimes(1);
+ await act(async()=>button('Continue to signature').click());expect(host.querySelector<HTMLInputElement>('input.ags-sig')?.matches(':disabled')).toBe(false);expect(signButton().disabled).toBe(true);expect([...host.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].every(i=>!i.checked)).toBe(true);
+ await act(async()=>button('Fit width').click());expect(zoomControl().value).toBe('fit');expect(lastPdf().zoom).toBe('fit');expect(button('Fit width')).toBeUndefined();expect(host.querySelector<HTMLInputElement>('#field-'+ownText)?.value).toBe('Controlled Contact');
+});
+it('refuses stale and mismatched page, bytes and magnification receipts until the current render finishes',async()=>{
+ prepareOwn();await render();await completeAnswers();const retired=lastPdf();fixture.pdfAuto=false;await changeZoom('1.5');const current=lastPdf();expect(button('Continue to signature').disabled).toBe(true);
+ showPdf(retired);expect(button('Continue to signature').disabled).toBe(true);
+ for(const patch of [{zoom:'fit'},{page:1},{sha256:'b'.repeat(64)}]){showPdf(current,patch);expect(button('Continue to signature').disabled).toBe(true);}
+ showPdf(current);expect(button('Continue to signature').disabled).toBe(false);expect(signButton().disabled).toBe(true);
+ act(()=>current.ready(null));expect(button('Continue to signature').disabled).toBe(true);expect(fixture.invoke.mock.calls.filter(([name])=>name==='sign-agreement')).toHaveLength(0);
+});
+it('retires an earlier fit-width callback even after a round trip to the same page and magnification',async()=>{
+ prepareOwn();await render();await completeAnswers();const previousFit=lastPdf();fixture.pdfAuto=false;await changeZoom('2');const previous200=lastPdf();await changeZoom('fit');const currentFit=lastPdf();
+ showPdf(previousFit);showPdf(previous200);expect(button('Continue to signature').disabled).toBe(true);showPdf(currentFit);expect(button('Continue to signature').disabled).toBe(false);
+ act(()=>previousFit.ready(null));expect(button('Continue to signature').disabled).toBe(false);
+});
+it('cannot count a retired page callback as review of the next page',async()=>{
+ prepareOwn();await render();act(()=>{answer(ownText,'Controlled Contact');host.querySelectorAll<HTMLInputElement>('input[type=radio]')[1].click();});const previous=lastPdf();fixture.pdfAuto=false;
+ await act(async()=>button('Next page').click());const current=lastPdf();showPdf(previous,{page:2});expect(button('Continue to signature').disabled).toBe(true);expect(host.textContent).toContain('1 of 2 pages shown');showPdf(current);expect(button('Continue to signature').disabled).toBe(false);
+});
+it('preserves document scale across assigned-field navigation and rejects an invalid scale',async()=>{
+ prepareOwn();await render();await changeZoom('1');await act(async()=>[...host.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')==='Go to Your signature on page 2')!.click());expect(lastPdf().page).toBe(2);expect(lastPdf().zoom).toBe(1);
+ await changeZoom('99');expect(lastPdf().zoom).toBe(1);expect(zoomControl().value).toBe('1');expect(fixture.fields).toHaveBeenCalledTimes(1);expect(fixture.invoke).toHaveBeenCalledTimes(1);
+});
+it('locks zoom and fit reset during the original in-flight signature and never repeats the act',async()=>{
+ prepareOwn();await render();await completeAnswers();await changeZoom('2');await act(async()=>button('Continue to signature').click());let finish!:(v:unknown)=>void;fixture.invoke.mockImplementation(()=>new Promise(r=>{finish=r;}));act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(i=>i.click()));await act(async()=>signButton().click());
+ expect(zoomControl().disabled).toBe(true);expect(button('Fit width').disabled).toBe(true);await changeZoom('1');expect(lastPdf().zoom).toBe(2);expect(fixture.invoke.mock.calls.filter(([name])=>name==='sign-agreement')).toHaveLength(1);
+ await act(async()=>finish({data:null,error:new Error('Synthetic acknowledgement lost')}));expect(host.textContent).toContain('Signing is not yet confirmed');
 });

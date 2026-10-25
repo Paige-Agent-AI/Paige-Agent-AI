@@ -101,18 +101,17 @@ export function weeklyCommitmentDraftToolsForContext(context: Parameters<typeof 
   return weeklyCommitmentStatusToolsForContext(context).length ? WEEKLY_COMMITMENT_DRAFT_TOOLS : [];
 }
 
-// Prepared original-outcome reader, not an action or conversational offer. The
+// Original-outcome reader; a conversational lookup grants no action authority. The
 // server transport reauthorizes the exact companion under its original caller
 // JWT before using this unchanged service-only native result reader. Current
 // Task inspection stays with crm_clients.task_read; registration grants no SQL.
 export const OWNER_TASK_HISTORY_READ_CAPABILITY = defineCapability({
-  identity: { id: "automations.owner_task_history", version: 1, domain: "automations", owner: "experience-05",
+  identity: { id: "automations.owner_task_history", version: 2, domain: "automations", owner: "experience-05",
     humanSurface: "Operations / internal task process inspection",
     description: "Inspect one original internal-task occurrence, its approval and verified native Task/Rail result without dispatch, replay or a current Task-state claim." },
   input: objectInputSchema({ properties: {
-    approvalId: { type: "string", format: "uuid", maxLength: 36, description: "Exact original native task approval; not a new approval." },
-    tenantId: { type: "string", format: "uuid", maxLength: 36, description: "Stale-workspace refusal guard only; authority is resolved from the original JWT." },
-  }, required: ["approvalId", "tenantId"] }),
+    approval_id: { type: "string", format: "uuid", maxLength: 36, description: "Exact saved original task approval UUID. Actor and workspace are server-derived; this is not a new approval." },
+  }, required: ["approval_id"] }),
   effect: "read",
   governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("automations.owner_task_history.read") },
   tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user",
@@ -126,10 +125,24 @@ export const OWNER_TASK_HISTORY_READ_CAPABILITY = defineCapability({
 export const OWNER_TASK_HISTORY_READ = {
   key: "automations.owner_task_history", domain: "automations", owner: "experience-05",
   humanSurface: "Operations / internal task process inspection", readiness: "none", selfDescribe: false,
-  action: { classification: "read", executor: "public.read_owner_task_act", seatAuthority: "door-seat",
-    idempotency: "Read-only original-JWT companion authorization and original native result/receipt correlation. No execution, settlement, receipt creation, retries or current Task substitution.",
+  action: { classification: "read", executor: "public.read_owner_task_act", chatTool: "read_owner_task_act", seatAuthority: "door-seat",
+    idempotency: "Read-only original-JWT companion authorization and original native result/receipt correlation. No execution, settlement, action receipt creation, retries or current Task substitution.",
     riskPolicyKey: "read_only", approvalAuthority: "none" },
-  outcome: { kinds: ["ready", "refused", "unavailable"], projector: "public.read_owner_task_act",
+  outcome: { kinds: ["ready", "available", "needs_input", "refused", "unavailable"], projector: "public.read_owner_task_act",
     railVisibility: "Returns the existing native creation receipt identity only when verified. Does not issue a new action receipt or imply optional orchestration/contact Rail publication." },
-  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
+
+// Chat takes only an original address. Native transport's tenantId is a separate,
+// server-derived refusal guard, never a model-selected workspace or authority.
+export const OWNER_TASK_HISTORY_TOOL_NAME = "read_owner_task_act";
+export const OWNER_TASK_HISTORY_TOOLS = [{ type: "function" as const, function: {
+  name: "read_owner_task_act",
+  description: "Read one original internal-task automation outcome by its saved approval_id, from an earlier original result or native history. Never guess the ID. This inspection cannot approve, execute, retry or read the current Task state. Recorded execution without verified original Task and Rail evidence remains unconfirmed.",
+  parameters: OWNER_TASK_HISTORY_READ_CAPABILITY.input,
+} }];
+export function ownerTaskHistoryToolsForContext(facts: Parameters<typeof weeklyCommitmentStatusToolsForContext>[0]) {
+  return facts.callerTier === "tenant" && facts.accountShape === "solo"
+    && (facts.role === "owner" || facts.role === "admin")
+    && facts.scopedClientId === null && facts.customerPortal === false ? OWNER_TASK_HISTORY_TOOLS : [];
+}

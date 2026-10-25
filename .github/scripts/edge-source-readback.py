@@ -5,9 +5,12 @@ Uses only the release CLI's existing authentication. Downloads never touch the
 checkout. This is source identity, not a business-action/worker-cessation proof.
 """
 import argparse
+from contextlib import contextmanager
+import errno
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -30,17 +33,58 @@ class ReadbackError(Exception):
     """Only fixed reason codes leave the verifier; CLI payloads may be sensitive."""
 
 
+class SourceMismatch(ReadbackError):
+    """Only immutable repository identity and digests, never downloaded text."""
+    def __init__(self, relative, expected_sha, downloaded_sha, known):
+        super().__init__('deployed_source_mismatch')
+        self.source_identity = {
+            'category': 'source_sha256_mismatch',
+            'source_scope': 'expected_closure' if known else 'additional_repository_source',
+            'expected_sha256': expected_sha, 'downloaded_sha256': downloaded_sha,
+        }
+        if known:
+            self.source_identity['file'] = relative
+
+
 def value_error_diagnostic(error, phase):
     # Only this public helper's static function names/line numbers. Never copy
     # exception text, source lines, filesystem paths, locals or CLI payloads.
     allowed = {'main', 'verify', 'invoke', 'listing', 'expected_release',
                'runtime_closure', 'metadata_for', 'entrypoint_matches',
                'downloaded_manifest', 'digest', 'normalized', 'cli',
-               'server_unbundle_failed'}
+               'server_unbundle_failed', 'readback_scratch'}
     sites = [{'function': frame.f_code.co_name, 'line': line}
              for frame, line in walk_tb(error.__traceback__)
              if frame.f_code.co_filename == __file__ and frame.f_code.co_name in allowed]
     return {'category': 'invalid_readback_data', 'phase': phase, 'sites': sites[-8:]}
+
+
+def os_error_diagnostic(error, phase):
+    diagnostic = value_error_diagnostic(error, phase)
+    diagnostic['category'] = 'readback_os_error'
+    if isinstance(error.errno, int) and 0 <= error.errno <= 4095:
+        diagnostic['errno'] = error.errno
+    return diagnostic
+
+
+@contextmanager
+def readback_scratch(cleanup):
+    # This object creates its own unique directory, never a caller-selected
+    # deletion target. Only nonsecret config and downloaded source live here.
+    # Docker unbundling can leave nested files the hosted runner cannot remove.
+    # Do not escalate privileges or let that cleanup erase source observations.
+    temporary = tempfile.TemporaryDirectory(prefix='paige-edge-readback-')
+    try:
+        yield temporary.name
+    finally:
+        try:
+            temporary.cleanup()
+        except PermissionError as error:
+            if error.errno not in (errno.EACCES, errno.EPERM):
+                raise
+            # Best-effort cleanup only, after inspection. The ephemeral job owns
+            # the remainder. This does not handle setup/read/validation errors.
+            cleanup.update(status='incomplete', reason='permission_denied')
 
 
 def normalized(data):
@@ -255,11 +299,53 @@ def metadata_for(rows, name, expected):
     return {key: row.get(key) for key in ('id', 'slug', 'status', 'version', 'verify_jwt', 'entrypoint_path', 'import_map_path', 'ezbr_sha256')}
 
 
-def downloaded_manifest(repo, commit, directory, expected):
+def compiled_sources(repo, commit, sources, timeout, cache_directory):
+    """Exact vendor emission of trusted Git bytes, never downloaded code."""
+    helper = '.github/scripts/edge-source-emit.ts'
+    lock = '.github/scripts/edge-source-emit.lock'
+    for relative in (helper, lock):
+        commit_file(repo, commit, relative)
+    payload = {'version': 1, 'files': [
+        {'path': path, 'source': source.decode('utf-8')}
+        for path, source in sorted(sources.items())]}
+    # No provider token, other secrets, filesystem, process or environment
+    # permission enters this compiler. Imports are externalized, never fetched.
+    environment = {key: os.environ[key] for key in ('PATH', 'SystemRoot', 'SYSTEMROOT', 'TEMP', 'TMP')
+                   if key in os.environ}
+    environment.update(DENO_DIR=str(cache_directory), DENO_NO_UPDATE_CHECK='1')
+    try:
+        result = subprocess.run([
+            'deno', 'run', '--no-prompt', '--no-config', '--frozen',
+            '--lock=' + str(repo / lock), '--allow-net=jsr.io', str(repo / helper)],
+            input=json.dumps(payload), text=True, encoding='utf-8',
+            cwd=repo, env=environment, capture_output=True, check=True,
+            timeout=timeout)
+        if len(result.stdout) > 1024 * 1024:
+            raise ValueError('compiler result budget')
+        output = json.loads(result.stdout)
+        if (not isinstance(output, dict) or set(output) != {'version', 'compiler', 'files'} or
+                type(output['version']) is not int or output['version'] != 1 or
+                output['compiler'] != '@deno/emit@0.46.0' or not isinstance(output['files'], list) or
+                len(output['files']) != len(sources)):
+            raise ValueError('compiler envelope')
+        emitted = {}
+        for row in output['files']:
+            if (not isinstance(row, dict) or set(row) != {'path', 'source_sha256', 'sha256'} or
+                    not isinstance(row['path'], str) or row['path'] not in sources or row['path'] in emitted or
+                    row['source_sha256'] != hashlib.sha256(sources[row['path']]).hexdigest() or
+                    not isinstance(row['sha256'], str) or not re.fullmatch('[0-9a-f]{64}', row['sha256'])):
+                raise ValueError('compiler identity')
+            emitted[row['path']] = row['sha256']
+        return emitted
+    except (OSError, subprocess.SubprocessError, ValueError, UnicodeError) as error:
+        raise ReadbackError('expected_compiler_failed') from error
+
+
+def downloaded_manifest(repo, commit, directory, expected, compiler=None, emitted=None):
     root = directory / 'supabase/functions'
     if not root.is_dir() or root.is_symlink():
         raise ReadbackError('download_missing_source')
-    actual = {}
+    actual, mismatched = {}, {}
     for path in sorted(root.rglob('*')):
         if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
             raise ReadbackError('unsafe_download_path')
@@ -267,12 +353,31 @@ def downloaded_manifest(repo, commit, directory, expected):
             relative = 'supabase/functions/' + path.relative_to(root).as_posix()
             actual[relative] = digest(path.read_bytes())
             # Check every downloaded local file, not only the expected subset.
-            if digest(commit_file(repo, commit, relative)) != actual[relative]:
-                raise ReadbackError('deployed_source_mismatch')
+            source = commit_file(repo, commit, relative)
+            repository_sha = digest(source)
+            if repository_sha != actual[relative]:
+                mismatched[relative] = source
     if not set(expected['files']).issubset(actual):
         raise ReadbackError('download_missing_dependency')
-    if any(actual[p] != sha for p, sha in expected['files'].items()):
-        raise ReadbackError('deployed_source_mismatch')
+    # API downloads retain the original source contract. Only the explicit
+    # vendor fallback may contain emitted JS under the original .ts filename.
+    compiled = {}
+    if mismatched and compiler is not None:
+        try:
+            compiled = compiler(mismatched)
+        except (ReadbackError, OSError) as error:
+            if str(error) == 'verification_budget_exhausted':
+                raise
+            # An unavailable compiler never turns a source mismatch into proof.
+    for relative, source in mismatched.items():
+        if compiled.get(relative) != actual[relative]:
+            error = SourceMismatch(relative, digest(source), actual[relative], relative in expected['files'])
+            if relative in compiled:
+                error.source_identity['expected_emitted_sha256'] = compiled[relative]
+            raise error
+        if emitted is not None:
+            emitted[relative] = {'compiler': '@deno/emit@0.46.0',
+                                 'source_sha256': digest(source), 'sha256': actual[relative]}
     return actual
 
 
@@ -357,8 +462,17 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
         except (ValueError, TypeError) as error:
             raise ReadbackError('invalid_metadata_response') from error
 
-    with tempfile.TemporaryDirectory(prefix='paige-edge-readback-') as temporary:
+    cleanup = {}
+    with readback_scratch(cleanup) as temporary:
         isolated = Path(temporary)
+        def expected_compilation(sources):
+            remaining = deadline - clock()
+            if remaining <= 0:
+                raise ReadbackError('verification_budget_exhausted')
+            result = compiled_sources(repo, commit, sources, min(60, remaining), isolated / 'compiler-cache')
+            if clock() >= deadline:
+                raise ReadbackError('verification_budget_exhausted')
+            return result
         # Minimal nonsecret config; never copy auth state or overwrite checkout.
         (isolated / 'supabase').mkdir()
         (isolated / 'supabase/config.toml').write_text(f'project_id = "{project}"\n', encoding='utf-8')
@@ -398,7 +512,12 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                             invoke(['functions', 'download', name, '--use-docker'], directory)
                             mode = 'docker_requested'
                         phase = 'downloaded_source'
-                        manifest = downloaded_manifest(repo, commit, directory, expected[name])
+                        emitted = {}
+                        if mode == 'docker_requested':
+                            manifest = downloaded_manifest(repo, commit, directory, expected[name],
+                                                           expected_compilation, emitted)
+                        else:
+                            manifest = downloaded_manifest(repo, commit, directory, expected[name])
                         results[name] = {'function': name, 'status': 'PASS', 'attempts': attempt,
                                          'download_mode': mode,
                                          'version': identity['version'], 'verify_jwt': identity['verify_jwt'],
@@ -406,6 +525,8 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                                          'archive_sha256': identity.get('ezbr_sha256'),
                                          'files': manifest,
                                          'manifest_sha256': hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()}
+                        if emitted:
+                            results[name]['emitted_files'] = emitted
                         candidates[name] = identity
                     except (ReadbackError, UnicodeError, OSError, ValueError) as error:
                         identities.pop(name, None)
@@ -413,7 +534,9 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                         reason = str(error) if isinstance(error, ReadbackError) else (
                             'invalid_readback_data' if invalid_value else 'invalid_download_source')
                         results[name] = {'function': name, 'status': 'FAIL', 'reason': reason, 'attempts': attempt}
-                        if invalid_value:
+                        if isinstance(error, SourceMismatch):
+                            results[name]['diagnostic'] = {**error.source_identity, 'download_mode': mode}
+                        elif invalid_value:
                             results[name]['diagnostic'] = value_error_diagnostic(error, phase)
                 after = listing(isolated)
                 for name, identity in candidates.items():
@@ -439,10 +562,13 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                 sleeper(RETRY_SECONDS)
             elif clock() >= deadline:
                 break
-    return {'commit': commit, 'selected': names, 'all_pass': all(r['status'] == 'PASS' for r in results.values()),
+    report = {'commit': commit, 'selected': names, 'all_pass': all(r['status'] == 'PASS' for r in results.values()),
             'normalization': 'UTF-8; CRLF to LF; retain one terminal LF',
-            'proof_boundary': 'Selected deployed source/configuration only; not business execution or customer acceptance',
-            'functions': list(results.values())}
+            'proof_boundary': 'Selected deployed source or exact vendor-emitted runtime/configuration only; not business execution or customer acceptance',
+              'functions': list(results.values())}
+    if cleanup:
+        report['scratch_cleanup'] = cleanup
+    return report
 
 
 def main(argv=None):
@@ -478,7 +604,11 @@ def main(argv=None):
                   'reason': str(error) if isinstance(error, ReadbackError) else 'invalid_readback_input'}
         if isinstance(error, ValueError):
             report['diagnostic'] = value_error_diagnostic(error, 'verification_input')
+        elif isinstance(error, OSError):
+            report['diagnostic'] = os_error_diagnostic(error, 'verification_input')
     args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    if report.get('scratch_cleanup'):
+        print('::warning::Source-inspection scratch cleanup was incomplete; see the verification report.')
     for row in report.get('functions', []):
         print(f"{row['function']}: {row['status']} ({row.get('reason', 'source/configuration matched')})")
     if not report['all_pass']:

@@ -169,5 +169,36 @@
     "sourceSha256": "05565e7088e6ddcb3cb8d4ffd29fda82d144a932b238387b82f61f3038845fbd",
     "change": "Only --prepared-confirmation appended to the original FULL native invocation; every original flag/other invocation byte-inverse exact",
     "shellSyntaxExit": 0
+  },
+  "currentMainComposition": {
+    "recordedAt": "2026-10-25T11:09:56.057Z",
+    "head": "68573d80618d8b6b937b511d69ffe80812867579",
+    "tree": "0abfad4ac8824eb61860c758ec9b7b1c79f0d26f",
+    "incomingMain": "622c5532a91284cad60cfb343fd5bbc94e44fd8a",
+    "originalReviewedHead": "a1e5d18898ddb5434d6d1ef92238ade2ff0979a4",
+    "sixOriginalInputHashesExact": true,
+    "sourceCases": 101,
+    "httpSteps": 13,
+    "unitLog": "e04-c40-current-unit-1792926250778.log",
+    "nativeLog": "e04-c40-current-repaired-1792926253418.log",
+    "native": {
+      "result": "PASS",
+      "checks": 59,
+      "migrationReplay": 2,
+      "concurrentSessions": 6,
+      "observedLockWaits": 3,
+      "proofBodySha256": "643d09a4b28b5ca6448b93af676e68a8389eea613292c3cddd4dc26038dc01fd",
+      "migrationSha256": "67ec7e77ce6b5089e312bb55b2b3ed867ba0194e230afeb72b970b5b2fd819d7",
+      "scope": "Original native pending-confirmation prerequisite only. Synthetic mailbox/Storage metadata; no prepared issuer/provider/signature/field effect, activation or customer acceptance."
+    },
+    "cleanup": "0 databases; task-owned cluster stopped",
+    "directStrict": 0,
+    "scopedLint": 0,
+    "actualAclBaseline": 4,
+    "actualAclSelfTests": 12,
+    "sourceGate": "Prior shared source hold cleared; own release/readback still owed",
+    "nativeOrder": "Actual14130105 -> own14140004 -> E0914150009+14150019 -> own14160004+14170004+14180004",
+    "productionNative": "NOT_APPLIED",
+    "activation": "NONE"
   }
 }

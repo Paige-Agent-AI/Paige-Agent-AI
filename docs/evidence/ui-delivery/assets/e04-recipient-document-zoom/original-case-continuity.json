@@ -1,0 +1,16 @@
+{
+  "originalSourceCases": 33,
+  "originalCasesByteExact": true,
+  "addedSourceCases": 6,
+  "priorExecutedCases": 48,
+  "priorModelCases": 15,
+  "red": {
+    "retained48Pass": true,
+    "added6Fail": true
+  },
+  "green": {
+    "component54": true,
+    "model15": true
+  },
+  "notes": "Initial green command used an unmatched third test filter; it proves only two actual suites/69 cases. Original viewer source proof10 will be run at its verified path."
+}

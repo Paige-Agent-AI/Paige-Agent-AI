@@ -14,12 +14,12 @@ describe("E2-2 admission set (ANT-23)", () => {
     const m = CHAT.match(/CONVERSATIONAL_ADMITTED_READ_TOOLS[^=]*=\s*new Set\(Object\.freeze\(\[([^\]]*)\]\)\)/);
     expect(m).not.toBeNull();
     // The captured literal must BE this exact closed set, including the single imported
-    // EXP05 constant: no spread or arbitrary unquoted token. A
+    // EXP05 constants: no spread or arbitrary unquoted token. A
     // `...EXTRA` inside the brackets would evade a quoted-name extraction (the review's P2), so
     // pin the raw text itself.
     // E4-S2 (2026-10-13) widened it deliberately, by the recorded determination in
     // docs/delivery/e2-1-readonly-admission-determination.md and its independent security review.
-    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME');
+    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME, OWNER_TASK_HISTORY_TOOL_NAME');
   });
 
   it("the set is declared ReadonlySet and its comment forbids widening without an owner-recorded change", () => {
@@ -70,6 +70,7 @@ describe("E2-2 prompt block stays truthful", () => {
     expect(block).not.toMatch(/you have NO tools/);
     expect(block).toMatch(/get_business_snapshot/);
     expect(block).toMatch(/read_business_metric/);
+    expect(block).toMatch(/read_calendar_agenda for a bounded saved Calendar window/);
     expect(block).toMatch(/A lookup is a read: it changes nothing and grants no action authority/);
   });
 });

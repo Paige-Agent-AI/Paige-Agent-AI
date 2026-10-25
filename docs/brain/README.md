@@ -623,13 +623,26 @@ Contract: [Team Hub collaboration contract](../delivery/exp08-team-hub-collabora
 Evidence: [increment 1 record](../evidence/ui-delivery/exp08-team-hub-increment1.md). Owed: the
 §32 persisted-apply check and an authenticated drive on the owner-designated SOLO account.
 
-**Increment 2 (2026-10-24, `PROOF_OWED`, not yet merged):** team work. `/` commands; *Draft a
+**Increment 2 (PR #2779, 2026-10-24, `PROOF_OWED`):** team work. `/` commands; *Draft a
 task* creates one Operations task through `plan_assign_task_scoped` with an exactly-once link in
 `team_hub_work_refs` (migration `20271113860008`); specialist, approval and meeting requests only
 prefill PAIGE; the Team work panel reads status from `plan_items`. Contract:
 [increment 2 work contract](../delivery/exp08-team-hub-increment2-work-contract.md).
 
-**Not built:** attachments, and PAIGE/Knowledge and Chat/Live continuity (increments 3–4).
+**Increment 3 (2026-10-25, `PROOF_OWED`, not yet merged):** attachments, up to 5 files of 10 MB
+each per message, in `comms-attachments` at `<tenant>/team-hub/<file_id>`. Files are recorded in
+`team_hub_files` behind four restrictive storage policies (migration `20271114160008`) and purged
+on retirement by the `team_hub_files` provider (`20271114160108`). The `team-hub-file` edge
+function checks the real bytes, and Download mints a fresh 60-second attachment URL. Files are
+**not malware-scanned**. Legacy `.doc`/`.xls` and PowerPoint are not accepted, and Word or Excel
+files with embedded objects, charts, external links or macros are refused. No scheduled stale-file
+sweep exists. Contract:
+[increment 3 attachments contract](../delivery/exp08-team-hub-increment3-attachments-contract.md).
+Evidence: [increment 3 record](../evidence/ui-delivery/exp08-team-hub-increment3.md), a harness
+render that is not authenticated and lists four open defects.
+
+**Not built:** PAIGE with Team Hub, meaning Chat/Live reads, search and approved reply drafts
+(increment 4). No Team Hub content enters Knowledge or Memory.
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

@@ -242,6 +242,16 @@ for(const phase of ['saved','changed','declined','unknown'])await check('Native 
   assert.equal(r.approvalOutcomes.at(-1)?.actions.find(a=>a.fingerprint===r.token)?.outcome,phase==='saved'?'ran':'unconfirmed','Original observed outcome uses the existing truthful card classifier');
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);noFallback(r);
   assert.ok(r.values.some(v=>v.original_outcome?.phase===phase),'Preserve the actual original phase, not an unavailable substitute');
+  if(['saved','changed'].includes(phase))originalReferences(r);
+  if(phase==='unknown')assert.equal(r.settled.at(-1)?.bundle_ref?.interactive?.effects?.find(e=>e.tool==='weekly_commitment_draft')?.outcome,'outcome_unknown');
+});
+await check('Lost save acknowledgement preserves the original changed record without treating its old draft as current',async()=>{
+  const r=await driveWeekly({commitLost:true,readPhase:'changed'});
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,1);
+  assert.equal(r.calls('read_weekly_commitment_chat_draft').length,1);
+  assert.ok(r.values.some(v=>v.original_outcome?.phase==='changed'&&v.original_outcome.definition_is_current==='historical'));
+  originalReferences(r);
+  noFallback(r);
 });
 await check('Lost native claim never becomes generic CAS, fresh commit or replacement proposal',async()=>{
   const r=await driveWeekly({claimLost:true});
@@ -360,6 +370,7 @@ for(const phase of ['unknown','saved_unreceipted','declined','changed'])await ch
   } else {
     assert.notEqual(result.success,true,'Unverified or declined original work cannot be reported successful');
     assert.equal(result.automation_id,undefined,'No fabricated verified resource/receipt');
+    if(['unknown','saved_unreceipted'].includes(phase))assert.equal(r.settled.at(-1)?.bundle_ref?.interactive?.effects?.find(e=>e.tool==='weekly_commitment_draft')?.outcome,'outcome_unknown');
   }
   noFallback(r);
 });

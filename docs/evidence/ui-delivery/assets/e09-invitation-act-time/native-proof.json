@@ -1,0 +1,678 @@
+{
+  "evidenceClass": "actual-source synthetic transport and local native PostgreSQL; not authenticated customer proof",
+  "sourceParent": "204db1be3dcd819ec73776bb252bf1676cd44a4f",
+  "baseline": {
+    "mode": "invite-act-time-baseline",
+    "evidenceClass": "synthetic-native-postgresql",
+    "fullSupabaseReplay": "UNVERIFIED",
+    "authenticatedAcceptance": "NOT_RUN",
+    "host": "127.0.0.1",
+    "port": 55447,
+    "platform": "win32",
+    "node": "v24.19.0",
+    "migrationSHA256": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4",
+    "results": [
+      {
+        "name": "Other invitation branches preserved byte-for-byte",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: unused consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: used unlimited consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: recorded consumer acceptance despite count drift",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: revoked consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: expired consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: existing unlimited team semantics",
+        "status": "PASS"
+      },
+      {
+        "name": "No custom questions uses the existing contact form; malformed published configuration still refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Entry preserves all staff/agency/owner branches",
+        "status": "PASS"
+      },
+      {
+        "name": "Wrong recipient with legitimate staff standing cannot claim consumer contact",
+        "status": "PASS"
+      },
+      {
+        "name": "Matching unconfirmed email refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing recipient refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Anonymous caller denied",
+        "status": "PASS"
+      },
+      {
+        "name": "Expired invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Legacy unlimited token with prior use refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recorded prior acceptance refuses even if count zero",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Occupied exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Merged contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Archived contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Unbound consumer token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recipient address removed from contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Different existing relationship does not redirect acceptance",
+        "status": "PASS"
+      },
+      {
+        "name": "Malformed token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Team recipient regression",
+        "status": "PASS"
+      },
+      {
+        "name": "Verified recipient with pre-existing staff standing binds the exact contact once",
+        "status": "PASS"
+      },
+      {
+        "name": "Pure verified external recipient joins without a business seat or staff context",
+        "status": "PASS"
+      },
+      {
+        "name": "Email normalization accepts only authoritative verified recipient",
+        "status": "PASS"
+      },
+      {
+        "name": "Team acceptance still grants ordinary member and staff pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Claimed JWT email cannot override stored auth identity",
+        "status": "PASS"
+      },
+      {
+        "name": "Audit failure rolls back link, role and token consumption",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent acceptance grants once and records one attributable receipt",
+        "status": "PASS"
+      },
+      {
+        "name": "Current native recipient joins once without a staff seat or workspace pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Current native invitation refuses wrong verified recipient without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Current native invitation refuses already expired without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Current native invitation refuses revoked without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Current consumer invitation after observed token wait refuses expiry with zero link/role/token/audit/pointer effects",
+        "status": "FAIL",
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ok: true,\n+   tenant: 'e0920000-0000-0000-0000-000000000037'\n-   error: 'invite has expired',\n-   ok: false,\n-   sqlstate: 'P0001'\n  }\n"
+      },
+      {
+        "name": "Current consumer invitation after observed contact wait refuses expiry with zero link/role/token/audit/pointer effects",
+        "status": "FAIL",
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ok: true,\n+   tenant: 'e0920000-0000-0000-0000-000000000038'\n-   error: 'invite has expired',\n-   ok: false,\n-   sqlstate: 'P0001'\n  }\n"
+      },
+      {
+        "name": "Current consumer invitation after observed business wait refuses expiry with zero link/role/token/audit/pointer effects",
+        "status": "FAIL",
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ok: true,\n+   tenant: 'e0920000-0000-0000-0000-000000000039'\n-   error: 'invite has expired',\n-   ok: false,\n-   sqlstate: 'P0001'\n  }\n"
+      }
+    ],
+    "passed": 39,
+    "failed": 3,
+    "inviteActTime": {
+      "sourceMd5": "543bb36574e23f05c20838b7ee56413f",
+      "baseline": true,
+      "waits": [
+        {
+          "target": "token",
+          "transactionStarted": "2026-10-25T01:05:27.363135-04:00",
+          "expiresAt": "2026-10-25T01:05:32.103359-04:00",
+          "releasedAt": "2026-10-25T01:05:32.163236-04:00",
+          "startedBeforeExpiry": true,
+          "observedNativeWait": true,
+          "releasedAfterExpiry": true,
+          "actualCallerRole": "authenticated",
+          "result": {
+            "ok": true,
+            "tenant": "e0920000-0000-0000-0000-000000000037"
+          },
+          "durableStateUnchanged": false
+        },
+        {
+          "target": "contact",
+          "transactionStarted": "2026-10-25T01:05:32.594968-04:00",
+          "expiresAt": "2026-10-25T01:05:37.369131-04:00",
+          "releasedAt": "2026-10-25T01:05:37.432796-04:00",
+          "startedBeforeExpiry": true,
+          "observedNativeWait": true,
+          "releasedAfterExpiry": true,
+          "actualCallerRole": "authenticated",
+          "result": {
+            "ok": true,
+            "tenant": "e0920000-0000-0000-0000-000000000038"
+          },
+          "durableStateUnchanged": false
+        },
+        {
+          "target": "business",
+          "transactionStarted": "2026-10-25T01:05:37.891153-04:00",
+          "expiresAt": "2026-10-25T01:05:42.650817-04:00",
+          "releasedAt": "2026-10-25T01:05:42.72643-04:00",
+          "startedBeforeExpiry": true,
+          "observedNativeWait": true,
+          "releasedAfterExpiry": true,
+          "actualCallerRole": "authenticated",
+          "result": {
+            "ok": true,
+            "tenant": "e0920000-0000-0000-0000-000000000039"
+          },
+          "durableStateUnchanged": false
+        }
+      ],
+      "historicalStage": "Earlier invitation cases run before the original multi-business source; not full current schema proof"
+    }
+  },
+  "candidate": {
+    "mode": "invite-act-time-candidate",
+    "evidenceClass": "synthetic-native-postgresql",
+    "fullSupabaseReplay": "UNVERIFIED",
+    "authenticatedAcceptance": "NOT_RUN",
+    "host": "127.0.0.1",
+    "port": 55447,
+    "platform": "win32",
+    "node": "v24.19.0",
+    "migrationSHA256": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4",
+    "results": [
+      {
+        "name": "Other invitation branches preserved byte-for-byte",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: unused consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: used unlimited consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: recorded consumer acceptance despite count drift",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: revoked consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: expired consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: existing unlimited team semantics",
+        "status": "PASS"
+      },
+      {
+        "name": "No custom questions uses the existing contact form; malformed published configuration still refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Entry preserves all staff/agency/owner branches",
+        "status": "PASS"
+      },
+      {
+        "name": "Wrong recipient with legitimate staff standing cannot claim consumer contact",
+        "status": "PASS"
+      },
+      {
+        "name": "Matching unconfirmed email refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing recipient refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Anonymous caller denied",
+        "status": "PASS"
+      },
+      {
+        "name": "Expired invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Legacy unlimited token with prior use refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recorded prior acceptance refuses even if count zero",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Occupied exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Merged contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Archived contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Unbound consumer token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recipient address removed from contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Different existing relationship does not redirect acceptance",
+        "status": "PASS"
+      },
+      {
+        "name": "Malformed token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Team recipient regression",
+        "status": "PASS"
+      },
+      {
+        "name": "Verified recipient with pre-existing staff standing binds the exact contact once",
+        "status": "PASS"
+      },
+      {
+        "name": "Pure verified external recipient joins without a business seat or staff context",
+        "status": "PASS"
+      },
+      {
+        "name": "Email normalization accepts only authoritative verified recipient",
+        "status": "PASS"
+      },
+      {
+        "name": "Team acceptance still grants ordinary member and staff pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Claimed JWT email cannot override stored auth identity",
+        "status": "PASS"
+      },
+      {
+        "name": "Audit failure rolls back link, role and token consumption",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent acceptance grants once and records one attributable receipt",
+        "status": "PASS"
+      },
+      {
+        "name": "Consumer act-time unrecognized predecessor refuses without overwrite",
+        "status": "PASS"
+      },
+      {
+        "name": "Consumer act-time preserves non-consumer bytes, ABI/ACL and every original effect",
+        "status": "PASS"
+      },
+      {
+        "name": "Consumer act-time exact replay changes nothing",
+        "status": "PASS"
+      },
+      {
+        "name": "Consumer act-time unrecognized forward source refuses without overwrite",
+        "status": "PASS"
+      },
+      {
+        "name": "Full-schema act-time inverse restores the exact original current body",
+        "status": "PASS"
+      },
+      {
+        "name": "Current native recipient joins once without a staff seat or workspace pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Current native invitation refuses wrong verified recipient without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Current native invitation refuses already expired without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Current native invitation refuses revoked without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Current consumer invitation after observed token wait refuses expiry with zero link/role/token/audit/pointer effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Current consumer invitation after observed contact wait refuses expiry with zero link/role/token/audit/pointer effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Current consumer invitation after observed business wait refuses expiry with zero link/role/token/audit/pointer effects",
+        "status": "PASS"
+      }
+    ],
+    "passed": 47,
+    "failed": 0,
+    "inviteActTime": {
+      "sourceMd5": "543bb36574e23f05c20838b7ee56413f",
+      "baseline": false,
+      "waits": [
+        {
+          "target": "token",
+          "transactionStarted": "2026-10-25T01:22:23.122045-04:00",
+          "expiresAt": "2026-10-25T01:22:27.886845-04:00",
+          "releasedAt": "2026-10-25T01:22:27.946769-04:00",
+          "startedBeforeExpiry": true,
+          "observedNativeWait": true,
+          "releasedAfterExpiry": true,
+          "actualCallerRole": "authenticated",
+          "result": {
+            "ok": false,
+            "error": "invite has expired",
+            "sqlstate": "P0001"
+          },
+          "durableStateUnchanged": true
+        },
+        {
+          "target": "contact",
+          "transactionStarted": "2026-10-25T01:22:28.473838-04:00",
+          "expiresAt": "2026-10-25T01:22:33.203354-04:00",
+          "releasedAt": "2026-10-25T01:22:33.27659-04:00",
+          "startedBeforeExpiry": true,
+          "observedNativeWait": true,
+          "releasedAfterExpiry": true,
+          "actualCallerRole": "authenticated",
+          "result": {
+            "ok": false,
+            "error": "invite has expired",
+            "sqlstate": "P0001"
+          },
+          "durableStateUnchanged": true
+        },
+        {
+          "target": "business",
+          "transactionStarted": "2026-10-25T01:22:33.731636-04:00",
+          "expiresAt": "2026-10-25T01:22:38.485646-04:00",
+          "releasedAt": "2026-10-25T01:22:38.539464-04:00",
+          "startedBeforeExpiry": true,
+          "observedNativeWait": true,
+          "releasedAfterExpiry": true,
+          "actualCallerRole": "authenticated",
+          "result": {
+            "ok": false,
+            "error": "invite has expired",
+            "sqlstate": "P0001"
+          },
+          "durableStateUnchanged": true
+        }
+      ],
+      "historicalStage": "Earlier invitation cases run before the original multi-business source; not full current schema proof",
+      "appliedSourceMd5": "99b75b7f65d50cc4971c12dca4bef74e",
+      "migrationSHA256": "8b6821ad59acb808222147493d60cf8d91bf72ab7f6687a2c346a7e8f7d3d41a"
+    }
+  },
+  "focusedTests": {
+    "passed": 60,
+    "suites": 4,
+    "newRegression": "expiry refusal -> read-only reconciliation -> reload, one acceptance and zero profile/navigation reads"
+  },
+  "fullSchema": "11 new elapsed assertions; hosted exact-head replay owed",
+  "render": {
+    "evidenceClass": "actual-source-synthetic-transport",
+    "desktop": {
+      "buttonHeight": 44,
+      "focus": "This invitation is unavailable",
+      "scrollWidth": 900,
+      "viewport": [
+        900,
+        900
+      ]
+    },
+    "narrow": {
+      "buttons": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(245, 245, 245)",
+          "height": 44,
+          "text": "Sign in to check existing access"
+        }
+      ],
+      "focus": "This invitation is unavailable",
+      "scrollWidth": 390,
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    "hoverBefore": {
+      "color": "rgb(4, 20, 57)",
+      "background": "rgb(26, 17, 39)"
+    },
+    "hoverAfter": {
+      "color": "rgb(250, 250, 250)",
+      "background": "rgb(26, 17, 39)"
+    },
+    "keyboard": "Tab/Enter for acceptance and read-only reconciliation; h1 focused after each transition",
+    "authenticatedCustomer": "NOT_RUN"
+  },
+  "photos": [
+    {
+      "path": "390-ready-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "1e493a3d6e54a11b46cdb59beaec5f56e87570566c0f32b11b8a4197a63eb0b5"
+    },
+    {
+      "path": "390-refused-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "8f27c7e2cf061f6b0c6ec4e8dc750e820322992b2d223ff9ec4d50d7f801cd28"
+    },
+    {
+      "path": "390-unavailable-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "06d8f906528613a453585523aa5942e91746ac4f224600774e16112c49456325"
+    },
+    {
+      "path": "desktop-ready.jpg",
+      "format": "JPEG",
+      "width": 900,
+      "height": 900,
+      "sha256": "ae1ff0ec651777e838cc5b301043244878b169c0bc1212ac1e1f853071c664e6"
+    },
+    {
+      "path": "desktop-refused.jpg",
+      "format": "JPEG",
+      "width": 900,
+      "height": 900,
+      "sha256": "53404fa41cb9034192b07b5685487d983345c829f44192c99e84e2afdf522e58"
+    },
+    {
+      "path": "desktop-unavailable.jpg",
+      "format": "JPEG",
+      "width": 900,
+      "height": 900,
+      "sha256": "9eab75786e5c39da9fde7ef7cc9741b61adbd64689f5fcf29879b90f01e175e6"
+    }
+  ],
+  "sourceHashes": {
+    "src/pages/ConsumerInvitation.tsx": {
+      "worktreeSHA256": "c122d209adce432408ba3d92134084a42a527bab83579b12fc8110cb1c9ac7f5",
+      "lfSHA256": "c122d209adce432408ba3d92134084a42a527bab83579b12fc8110cb1c9ac7f5"
+    },
+    "src/pages/ConsumerInvitation.css": {
+      "worktreeSHA256": "c882470ec39309b643e79b6d45a56b882a59be49dca06f96d786ffaf804f6281",
+      "lfSHA256": "c882470ec39309b643e79b6d45a56b882a59be49dca06f96d786ffaf804f6281"
+    },
+    "src/components/ui/button.tsx": {
+      "worktreeSHA256": "af60647e810333eab6c4a99139445436a21e11ccbb7d5531cb171685ba752f77",
+      "lfSHA256": "af60647e810333eab6c4a99139445436a21e11ccbb7d5531cb171685ba752f77"
+    },
+    "src/index.css": {
+      "worktreeSHA256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "lfSHA256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    "src/lib/client-portal-access.ts": {
+      "worktreeSHA256": "45a1247b93721b6c7bcc5f8163a5c4876c9cd4e2dd5a4c7eb84c45bc19992abe",
+      "lfSHA256": "45a1247b93721b6c7bcc5f8163a5c4876c9cd4e2dd5a4c7eb84c45bc19992abe"
+    },
+    "src/lib/client-portal-self-profile.ts": {
+      "worktreeSHA256": "0e6167187869c34f0fea5f73f29f6cff3b2ba5a9b0941e9441fc3e53475e2b04",
+      "lfSHA256": "0e6167187869c34f0fea5f73f29f6cff3b2ba5a9b0941e9441fc3e53475e2b04"
+    },
+    "src/lib/client-portal-entry.ts": {
+      "worktreeSHA256": "0586dec8165b19198d258afd3dd119eabfcb59889345368fec13e38267e33b0b",
+      "lfSHA256": "0586dec8165b19198d258afd3dd119eabfcb59889345368fec13e38267e33b0b"
+    },
+    "src/lib/brand/contrast.ts": {
+      "worktreeSHA256": "bfbfc16e4683c2ad6c8b6d44d711077f8fa2d92eedaeed0a2793036668981cbf",
+      "lfSHA256": "bfbfc16e4683c2ad6c8b6d44d711077f8fa2d92eedaeed0a2793036668981cbf"
+    },
+    ".cache/invite-act-time-source/main.tsx": {
+      "worktreeSHA256": "5bcca7b79699398e3937183153b06c17486686584380f8532d68728a468d4e94",
+      "lfSHA256": "5bcca7b79699398e3937183153b06c17486686584380f8532d68728a468d4e94"
+    },
+    ".cache/invite-act-time-source/sdk.ts": {
+      "worktreeSHA256": "60b49fcd609071bbdb8bc21c2aab08a28400642b56c4a3c0c4609ff7ea60097f",
+      "lfSHA256": "60b49fcd609071bbdb8bc21c2aab08a28400642b56c4a3c0c4609ff7ea60097f"
+    },
+    ".cache/invite-act-time-source/vite.config.ts": {
+      "worktreeSHA256": "8540f3accdfe7a4c7ea725ff79495055220acba351df9b520c9803d34fd339aa",
+      "lfSHA256": "8540f3accdfe7a4c7ea725ff79495055220acba351df9b520c9803d34fd339aa"
+    },
+    "scripts/proof/e09-consumer-invite.mjs": {
+      "worktreeSHA256": "f3179ef4ca7b636744f6efc524d61fc8bdd253fd8185c736350b4208074cba83",
+      "lfSHA256": "f3179ef4ca7b636744f6efc524d61fc8bdd253fd8185c736350b4208074cba83"
+    },
+    "scripts/proof/e09-invitation-act-time.mjs": {
+      "worktreeSHA256": "5972a6d951e58989ca0ed0f64960690239bb71e8cdac2aaa4e366f77042e3a57",
+      "lfSHA256": "5972a6d951e58989ca0ed0f64960690239bb71e8cdac2aaa4e366f77042e3a57"
+    },
+    "supabase/migrations/20271114120009_e09_consumer_invite_act_time.sql": {
+      "worktreeSHA256": "8b6821ad59acb808222147493d60cf8d91bf72ab7f6687a2c346a7e8f7d3d41a",
+      "lfSHA256": "8b6821ad59acb808222147493d60cf8d91bf72ab7f6687a2c346a7e8f7d3d41a"
+    },
+    "supabase/tests/consumer_invite_acceptance.sql": {
+      "worktreeSHA256": "8319e0b5d38089227ef2f4bd00900b0e0bd11eb24223e4046eb1bd3d2007d63b",
+      "lfSHA256": "8319e0b5d38089227ef2f4bd00900b0e0bd11eb24223e4046eb1bd3d2007d63b"
+    },
+    "src/pages/JoinWorkspace.customer-entry.test.tsx": {
+      "worktreeSHA256": "b0ab9e6443011ff13670108dcc32cfb1f3a2fe89bd962996f4b23098930ae38e",
+      "lfSHA256": "b0ab9e6443011ff13670108dcc32cfb1f3a2fe89bd962996f4b23098930ae38e"
+    }
+  },
+  "hoverContrast": {
+    "before": 1.01,
+    "after": 17.44
+  },
+  "cleanup": [
+    {
+      "run": "e09-invite-act-time-baseline",
+      "ownClusterStopped": true
+    },
+    {
+      "run": "e09-invite-act-time-candidate-verified",
+      "ownClusterStopped": true
+    },
+    {
+      "ownIabTabClosed": true,
+      "viewportReset": true,
+      "verifiedOwnViteProcessStopped": true
+    }
+  ],
+  "authenticatedRuntime": "UNVERIFIED: customer disconnected, owner will reconnect later; Chrome update required",
+  "deployment": "NOT_DEPLOYED",
+  "founderAcceptance": "NOT_ACCEPTED"
+}

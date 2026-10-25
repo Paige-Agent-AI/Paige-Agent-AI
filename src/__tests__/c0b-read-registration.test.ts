@@ -30,6 +30,21 @@ describe("C0b canonical read declaration convergence", () => {
     const outsideBefore = new Set(`list_subagents delegate_to_subagent forge_subagent propose_action read_email_campaigns read_email_campaign_audience email_campaign_draft email_campaign_request_approval read_email_series email_series_draft email_series_request_approval gmail_organize read_message_content read_support_cases get_pipeline_lead_funnel set_ad_creative_featured campaign_step_plan campaign_step_record_result campaign_step_judge process_scope_set get_business_snapshot read_client_engagement_status read_business_time_zone`.split(" "));
     const known = new Set([...Object.keys(LEGACY_CAPABILITIES), ...PAIGE_SPINE_CAPABILITIES.map((c) => c.action?.chatTool).filter((t): t is string => !!t), ...batch.map(([tool]) => tool)]);
     for (const tool of known) {
+      // EXP05's newly mounted original-task reader was absent from the frozen
+      // roster. Preserve its existing native owner/admin seat requirement.
+      if (tool === "read_owner_task_act") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        expect(mutatingTools().has(tool)).toBe(false);
+        expect(PAIGE_SPINE_CAPABILITIES.find(cap => cap.action?.chatTool === tool)).toMatchObject({
+          key: "automations.owner_task_history", selfDescribe: false, maturity: "PARTIAL",
+          action: { classification: "read", executor: "public.read_owner_task_act",
+            riskPolicyKey: "read_only", approvalAuthority: "none", seatAuthority: "door-seat" },
+        });
+        for (const workspaceAdmin of [false, true]) for (const platformOperator of [false, true]) for (const seat of [false, true]) {
+          expect(authorityAdmits(tool, { workspaceAdmin, platformOperator, seat }, new Set())).toBe(seat);
+        }
+        continue;
+      }
       // This newly registered owner-only invitation did not exist in the frozen
       // pre-registration roster. Preserve every incumbent assertion below.
       if (tool === "client_portal_invitation_send") {
@@ -57,10 +72,16 @@ describe("C0b canonical read declaration convergence", () => {
         expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
         continue;
       }
-      // EXP05's newly bound private read retains the stricter native owner gate.
+      // EXP05's newly bound private read and draft retain the native owner gate.
       // Its shared door-seat prerequisite cannot admit a seatless Operator.
-      if (tool === "read_weekly_commitment_status") {
+      if (tool === "read_weekly_commitment_status" || tool === "weekly_commitment_draft") {
         expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        if (tool === "weekly_commitment_draft") {
+          expect(mutatingTools().has(tool)).toBe(true);
+          expect(PAIGE_SPINE_CAPABILITIES.find(cap => cap.action?.chatTool === tool)?.action).toMatchObject({
+            classification: "mutate", riskPolicyKey: "ordinary", approvalAuthority: "chat-canonical", seatAuthority: "door-seat",
+          });
+        }
         for (const workspaceAdmin of [false, true]) for (const platformOperator of [false, true]) {
           expect(authorityAdmits(tool, { workspaceAdmin, platformOperator, seat: false }, new Set())).toBe(false);
         }

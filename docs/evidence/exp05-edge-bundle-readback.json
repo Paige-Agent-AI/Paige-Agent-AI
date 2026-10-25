@@ -1,0 +1,363 @@
+{
+  "schema": 1,
+  "outcome": "Verify the original weekly release after an acknowledged upload cannot be returned by server-side unbundling.",
+  "base": "61d3308269aadd7c80d050a87f0b718a85d798c5",
+  "channel": "development",
+  "incident": {
+    "pr": 2792,
+    "run": 40162938654,
+    "artifact": 12587131886,
+    "artifactSha256": "f2df80eb4870962aab2c32812fbd935c7aa825293287531e55889f4ca03e14c0",
+    "allPass": false,
+    "chat": "cli_readback_failed after three attempts; independent MCP returned Failed to retrieve function bundle",
+    "passed": [
+      "execute-approval@178",
+      "paige-native-event-dispatch@257",
+      "paige-orchestrator@128",
+      "weekly-commitment-command@17"
+    ],
+    "chatMetadata": {
+      "version": 536,
+      "verifyJwt": true,
+      "importMap": false,
+      "sourceVerified": false
+    },
+    "web": {
+      "deployment": "dpl_35DwSKc4S9ZuHg5bgibRPBvEXFwg",
+      "status": "READY",
+      "bothPublicVersionHosts": 200,
+      "build": "61d3308269aadd7c80d050a87f0b718a85d798c5-mvncf7qi"
+    },
+    "localCli": "2.109.1 has403; no credential extraction, alternate identity or local provider retry is authorized."
+  },
+  "repair": {
+    "download": "Only the exact exit1 server-unbundle500 may request one same-project pinned vendor Docker download per existing attempt, in a fresh temporary tree. All other errors remain fixed refusals.",
+    "source": "Original immutable source closure, every downloaded local file, import-map refusal, JWT/entrypoint metadata, final identity race and overall deadline remain mandatory.",
+    "baseline": "Both original push and manual paths start from freshly fetched existing edge-live commit. Missing, unfetchable, noncommit and nonancestor anchors refuse before provider I/O. Original affected graph, retirement, config and tag gates retained.",
+    "noBusinessChange": true
+  },
+  "tests": {
+    "downloadRed": {
+      "total": 92,
+      "failures": 9,
+      "errors": 0,
+      "log": "private work/edge-bundle-readback-red.log",
+      "note": "Includes initially wrong new fixture expected reason/map metadata, corrected; no production defect inferred from fixture errors."
+    },
+    "downloadGreen": {
+      "total": 92,
+      "failures": 0,
+      "seconds": 187.336,
+      "log": "private work/edge-bundle-readback-green.log"
+    },
+    "baselineRed": {
+      "tests": 2,
+      "failedAssertions": 5,
+      "errors": 0,
+      "log": "private work/edge-baseline-recovery-red-final.log",
+      "earlierInvalidFixture": "First run had two cleanup errors after intentional subtest failure; repaired fixture and reran before source change."
+    },
+    "baselineGreen": {
+      "tests": 2,
+      "failures": 0,
+      "seconds": 6.487,
+      "log": "private work/edge-baseline-recovery-green.log"
+    },
+    "proofBoundary": "Actual original verifier and shell against neutral throwaway Git/file/recording CLI ports; not a real provider download, business execution, authorization or customer acceptance."
+  },
+  "vendorSource": {
+    "tag": "v2.116.0",
+    "download": "https://github.com/supabase/cli/blob/v2.116.0/apps/cli/src/shared/functions/download.ts",
+    "legacy": "https://github.com/supabase/cli/blob/v2.116.0/apps/cli-go/internal/functions/download/download.go",
+    "finding": "Existing use-api asks the provider to unbundle; use-docker downloads original eszip and uses the vendor runtime extractor. Requested method alone is never a source proof."
+  },
+  "sourceSha256": {
+    ".github/scripts/edge-source-readback.py": "8125c7029214485130b8d80e0017082bd9a0b07d62611145d584673cc1b363a0",
+    ".github/scripts/test_edge_source_readback.py": "c48eb521330a8aa30d108ba5e0631c695ca27a92f89d974b67d4c517697397dc",
+    ".github/workflows/deploy-edge-functions.yml": "3b87cd5818b5a8306735dc5294ca156e7fb07297c1c0c78fa3221f41757ed4bc",
+    "src/__tests__/legacy-contact-delete-retirement.test.ts": "63488a458bcfbd643db1af1477b442e5018dc802d9583c3f025b1de7432f8c9a"
+  },
+  "review": "Exact-head review receipt belongs in the owning PR; sequential author review must be labeled AUTHOR-REVIEW / LOWER ASSURANCE.",
+  "remaining": [
+    "Required exact-head CI and exact reviewed merge",
+    "Actual full downloaded source/config readback from the original production release workflow",
+    "Existing Master4.0 and Second Brain mechanical closeout after actual release",
+    "Ordinary authenticated weekly approval/native result/Rail/reload proof remains HELD; no browser bypass, expired approval replay or new fixture",
+    "Calendar2805 has actual new Deno typing and INT336 review findings; do not merge while required checks fail",
+    "Full EXP05, recurrence, Live and founder acceptance remain separate and unclaimed"
+  ],
+  "capabilityStatus": "No registry/catalogue/provider activation or customer Live promotion; this is the original engineering release verifier.",
+  "orchestrationContract": "N/A engineering source read only; no business executor, receipt stream, scheduler or approval system changed.",
+  "algorithmSupport": "N/A algorithm maturity; ALG01 runtime recovery and all original EXP05 acceptance still owed.",
+  "functional": "Source repair tested at the bounded verifier/shell boundary only.",
+  "visual": "N/A no customer interface change.",
+  "experiential": "Original customer flow unchanged; no authenticated completion claimed.",
+  "founderAcceptance": "NOT REQUESTED; complete EXP05 evaluation remains later.",
+  "hostedCorrection": {
+    "head": "02fcea5382037b0411df6a55e49cefc29569a486",
+    "run": 40163821042,
+    "artifact": 12588457019,
+    "artifactSha256": "498f139d37cb3bb64bff7ebc0ecae82f4bac8541f49986750e9979df39ba1731",
+    "totals": {
+      "total": 21719,
+      "passed": 21714,
+      "failed": 2,
+      "pending": 3
+    },
+    "cause": "Two original retirement tests retained a manual-only branch/text and a scratch repository with no fetchable origin; the new shared certified baseline correctly refuses that fixture.",
+    "localRed": {
+      "total": 20,
+      "passed": 18,
+      "failed": 2,
+      "skipped": 0,
+      "report": "private work/2808-retirement-red-native.json"
+    },
+    "initialTooling": "Windows first run lacked Git Unix utilities:17PASS/3FAIL includes two mkdir ENOENT errors and is not causal workflow evidence. Repeated with existing verified Git utilities before changes.",
+    "repair": "Preserve all retirement/authority assertions; original actual-step scratch simulation now runs for both push/manual, fetches a real neutral local bare origin after deleting its local tag and verifies exact original certified commit and retired set. Common baseline asserts no event.before, event-name branch or HEAD^ fallback.",
+    "green": {
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "report": "private work/2808-retirement-green.json"
+    },
+    "boundary": "No production source/workflow/helper mutation in this correction; actual full provider readback and new exact-head CI remain required."
+  },
+  "readOnlyRecoveryProbe": {
+    "actualFailedRelease": {
+      "pr": 2808,
+      "commit": "18757b70a80781717efd807dc3a96e14c5378e6a",
+      "run": 40169531913,
+      "artifact": 12588952958,
+      "artifactSha256": "37cc37e4567b56862c7e39f599b1905a6ddf76ebe5a9aaba9eddf182fc45380c",
+      "allPass": false,
+      "reason": "invalid_readback_input"
+    },
+    "immutableInputOnly": {
+      "commit": "18757b70a80781717efd807dc3a96e14c5378e6a",
+      "fileCounts": [
+        119,
+        283,
+        32,
+        116,
+        127,
+        18
+      ],
+      "status": "PASS source-only expected_release; no provider download or ordinary actor proof"
+    },
+    "purpose": "Obtain fixed phase/static helper-site evidence for the actual unexpected ValueError, without repeating identical uploads. This is NOT a claim the underlying provider-path error is already repaired.",
+    "diagnostic": "Only fixed category/phase and at most8 static helper function+line sites; no exception message, source line, raw CLI/source payload, file path, environment, token or header.",
+    "upload": "Only a valid ancestral same-source/config PUSH with no retirements may skip upload. Full selection remains freshly certified edge-live and full download/config/race/tag proof remains mandatory. Manual, source, config, retirement and unknown predecessor retain original behavior.",
+    "red": {
+      "tests": 5,
+      "failures": 2,
+      "errors": 3,
+      "log": "private work/readback-diagnostic-red.log",
+      "boundary": "Missing diagnostic/upload-decision controlled baseline, not a production reproduction"
+    },
+    "green": {
+      "tests": 99,
+      "failures": 0,
+      "seconds": 126.077,
+      "log": "private work/readback-diagnostic-full.log"
+    },
+    "retirement": {
+      "tests": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "report": "private work/readback-diagnostic-retirement-serial.json",
+      "retainedFirstRun": "20PASS/1 host-case failure at5215.958ms (STACK_TRACE_ERROR) during concurrent local tests; unchanged serial21PASS. No timeout, assertion or source change used to obtain the repeat."
+    },
+    "sourceSha256": {
+      ".github/scripts/edge-source-readback.py": "b7d5074315b3ed1ae8957414cbfe48b395e439118251ca64ea09ebe4b183a694",
+      ".github/scripts/test_edge_source_readback.py": "959285af3a3374b5924066d3d94c8db8d5159828ce16732286d9311bcacd113b",
+      ".github/workflows/deploy-edge-functions.yml": "4671650709a8dc5661ff56ae5d9970ba40103c39e1f0cdf7ea7119b07e9f078d"
+    },
+    "remaining": [
+      "New exact-head review/CI",
+      "Actual original provider diagnostic, then correction of demonstrated cause if still failing",
+      "Full source certificate and canonical release-log closeout",
+      "Browser/input stop, ordinary domain record/Rail/reload, Live and complete EXP05/founder proof remain held/owed"
+    ]
+  },
+  "sourceScratchRecovery": {
+    "base": "5f7fbd0c51e58709a6ab8ee2b361392a21cf1a57",
+    "originalRelease": {
+      "pr": 2816,
+      "commit": "91d3718cfe6b7b2b54fcfe19f8c6a08a88ab0317",
+      "run": 40173099400,
+      "job": 121107923712,
+      "artifact": 12591370320,
+      "artifactSha256": "f5b5b5abcf2d1ff8f943abb4ac4abaebee05d79831e06b8dc03babcb168a7e68",
+      "allPass": false,
+      "reason": "invalid_readback_input",
+      "uploads": "SKIPPED",
+      "edgeLive": "NOT ADVANCED",
+      "diagnostic": "No diagnostic in actual report; exact2816 exception mapping identifies outer OSError only. Errno and underlying operation were not recorded."
+    },
+    "candidate": "Pinned vendor Docker extraction writes beneath the generated source-inspection directory. Permission cleanup is a candidate; the actual production cause remains UNPROVEN.",
+    "officialSource": "https://github.com/supabase/cli/blob/v2.116.0/apps/cli-go/internal/functions/download/download.go#L228-L260",
+    "repair": "Only EACCES/EPERM raised by cleanup of this uniquely generated source-only temporary directory is reported separately as incomplete. No privilege escalation, caller-selected cleanup target, auth-state copy or provider retry. All source/configuration/metadata/race/budget comparisons still decide all_pass. Setup, read, unknown-errno and nonpermission OS errors remain failures with fixed category/errno/static-site diagnostics.",
+    "controlledRed": {
+      "tests": 7,
+      "passed": 4,
+      "errors": 3,
+      "log": "private work/readback-scratch-controlled-red.log",
+      "boundary": "Controlled original verifier fixture, not actual provider reproduction"
+    },
+    "focusedGreen": {
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "log": "private work/readback-scratch-focused-green.log"
+    },
+    "fullGreen": {
+      "tests": 106,
+      "failed": 0,
+      "seconds": 110.401,
+      "log": "private work/readback-scratch-full-green.log"
+    },
+    "retirement": {
+      "tests": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "report": "private work/readback-scratch-retirement-final.json",
+      "sourceChanged": false
+    },
+    "sourceSha256": {
+      ".github/scripts/edge-source-readback.py": "d138be32b7f07813350fee3d7502af87d6db66076fe19295e7d365aa8ab11d3d",
+      ".github/scripts/test_edge_source_readback.py": "2f7a089997088ca5cefeded9c998b9051fe7df25c3d75334d535f81604854b0a"
+    },
+    "unchanged": "Original deployment workflow, source closure, JWT/config/metadata/race checks, upload skip, certified baseline, retirement and edge-live controls are unchanged.",
+    "acceptance": "Required exact-head CI, reviewed merge and actual full deployed-source readback still owed. Calendar2805 is green but source-held; Task2820 is stacked/unreleased. No customer/Live/algorithm maturity or catalogue promotion. Browser/input hold and ordinary domain/Rail/reload/founder proof stay separate."
+  },
+  "sourceIdentityDiagnostics": {
+    "base": "cfc313eb554ef8f266d9eb5ff71b8aaa2ccfd081",
+    "actualRelease": {
+      "pr": 2822,
+      "run": 40176675738,
+      "job": 121118731641,
+      "artifact": 12592247017,
+      "artifactSha256": "4ccc6fdada7faa4468d0228faa58413f7d6f629d41528c8ea194e523c0fa38d6",
+      "allPass": false,
+      "scratchCleanup": {
+        "status": "incomplete",
+        "reason": "permission_denied"
+      },
+      "passed": [
+        "execute-approval@179",
+        "paige-business-review@80",
+        "paige-native-event-dispatch@260",
+        "paige-orchestrator@129",
+        "weekly-commitment-command@20"
+      ],
+      "failed": {
+        "function": "paige-ai-chat",
+        "reason": "deployed_source_mismatch",
+        "attempts": 3
+      },
+      "uploads": "SKIPPED",
+      "edgeLive": "NOT ADVANCED",
+      "web": {
+        "deployment": "dpl_76dF1SSbLzHtX9x8HS8J7d8TdtsG",
+        "state": "READY",
+        "bothPublicVersionHosts": 200,
+        "build": "cfc313eb554ef8f266d9eb5ff71b8aaa2ccfd081-mvnkeokk"
+      }
+    },
+    "diagnostic": "Retain only first differing immutable expected-closure repository path plus expected/downloaded SHA256 and fixed mode/scope. Additional repository-source names and unknown download names remain omitted. No text, absolute paths, raw CLI/provider payload, environment, token or header. Original source comparison and FAIL reason/exit/tag rules unchanged.",
+    "red": {
+      "tests": 3,
+      "passed": 1,
+      "errors": 2,
+      "log": "private work/source-identity-diagnostic-red.log"
+    },
+    "green": {
+      "tests": 109,
+      "failed": 0,
+      "seconds": 132.324,
+      "log": "private work/source-identity-diagnostic-full.log"
+    },
+    "sourceSha256": {
+      ".github/scripts/edge-source-readback.py": "5a0abb59d1e7bbb41e8f92cb05d25025669e27e1f5ed988af1c3b24f64d97595",
+      ".github/scripts/test_edge_source_readback.py": "7ee48ab79ed207e0bbf3c4ecb4bda0761f3ddc310cad8f3ecae5dcba95fbcc02"
+    },
+    "proofBoundary": "Controlled original verifier/recording ports only. Actual differing production file/source meaning and original full source certificate remain UNVERIFIED. Do not assume stale source versus vendor representation or automatically redeploy.",
+    "unchanged": "Workflow, source normalizer, closure, metadata/config/JWT/race/budget, credential, upload, retirement and tag gates; no business/Root/SQL/provider/admission/activation/catalogue/maturity change.",
+    "remaining": [
+      "Required exact-head review/CI/merge",
+      "Actual safe source-identity diagnostic, then correction of the demonstrated cause",
+      "Calendar/Task parent/deployment/authenticated/receipt/reload proof",
+      "Physical browser/input hold, separate Live, complete ten/E5/Builder/ZION/algorithms/founder acceptance"
+    ]
+  },
+  "compiledRuntimeVerification": {
+    "base": "783a7c2527b3940a870d7b0d14c92089699ed313",
+    "channel": "engineering-only; no customer update",
+    "actualPriorRelease": {
+      "pr": 2827,
+      "merge": "81968e5a03766d9d9bd9d0746d63c7a62fb2d22c",
+      "run": 40180199618,
+      "artifact": 12593572875,
+      "artifactSha256": "b51636ff05a99793423bb254e9c0829611d38a7220e45f13c13167ad53339853",
+      "allPass": false,
+      "knownFile": "supabase/functions/_shared/action-risk.ts",
+      "sourceSha256": "e2cc4ae0724c65e6d1b52b24af7462df468dbba36a175739119461b3fc9c595a",
+      "downloadedSha256": "ca9d94d96855ca24f5dca7f7af695d2b4b7793469b21c85f0d6cf7d03539a008",
+      "downloadMode": "docker_requested",
+      "edgeLive": "NOT ADVANCED"
+    },
+    "calibration": {
+      "reproducer": "@deno/emit@0.46.0 default options, frozen JSR package integrity",
+      "source": "immutable original Git module, not downloaded code",
+      "matchesActualDownloadedSha256": true,
+      "actualProviderCompilerVersion": "UNVERIFIED; exact expected output bytes, not a version guess",
+      "fullExpectedClosure": {
+        "modules": 283,
+        "sourceBytes": 4735251,
+        "elapsedMilliseconds": 3065,
+        "actualWholeProviderReadback": "STILL OWED"
+      }
+    },
+    "repair": "Original API source contract unchanged. After the original exact server-unbundle refusal and fresh Docker read only, require each differing file to equal the exact pinned compilation of its immutable expected Git source. Retain every expected and additional repository file, no normalization/AST/source-map waiver or local-build-only certification.",
+    "compilerBoundary": "Frozen helper and lock must match target commit; compiler receives expected Git bytes only, no provider credentials, filesystem/process/environment permissions or source execution; imports externalized. Strict output identities and original global deadline, max60s compiler subprocess. Failure never certifies.",
+    "tests": {
+      "causal": {
+        "cases": 6,
+        "passed": 3,
+        "failed": 3,
+        "log": "private work/compiled-readback-focused-red.log"
+      },
+      "full": {
+        "cases": 122,
+        "failed": 0,
+        "skipped": 0,
+        "seconds": 149.486,
+        "log": "private work/compiled-readback-full-second.log"
+      },
+      "intermediate": "First full122 retained one original four-argument manifest test-driver TypeError; preserved the original API four-argument call and reran full original suite, no assertion waived. One missing-dependency wrapper restoration and type-only frozen-lock finding corrected; require-await fixed with Promise.resolve.",
+      "strictCompilerCheck": "PASS/frozen",
+      "compilerLint": "PASS",
+      "originalRetirement": {
+        "cases": 21,
+        "failed": 0,
+        "log": "private work/compiled-readback-retirement.log"
+      }
+    },
+    "sourceSha256": {
+      ".github/scripts/edge-source-readback.py": "84f8a57beed783191013afc6073c666aaa66f71bfc320fb961b5693099dba838",
+      ".github/scripts/test_edge_source_readback.py": "d53c3954c3f2f05f2e5fb0f1a2bc7caef2cdd300836a2cdb7a071e3a12ce0fd9",
+      ".github/scripts/edge-source-emit.ts": "29743761643f2f4725f7461bd1516ec363b7c73c8a2879aebe6f00bc041cf0ad",
+      ".github/scripts/edge-source-emit.lock": "99997230be56cf5cb9faad0c095126545b66f1ac280af42503b016a73f0a9f46",
+      ".github/workflows/ci.yml": "07b538e27beca96c3ea7443c8fdcc886eedfb396f7d2db731a47a61bdd1889ad",
+      ".github/workflows/deploy-edge-functions.yml": "a3787d7749d693414ea1c50819d3c71dc77ef3296ba807809e60bf56d73d6ecf"
+    },
+    "unchanged": "Business/domain source, source normalizer, JWT/config, CLI/API-first and exact500 fallback, original closure selection, metadata/identity race, overall budget/attempts, credential authority, uploads/retirements/tag gates, Spine/Harness/Trust/Rail/activation, catalogue and algorithm maturity.",
+    "functional": "SOURCE IMPLEMENTED and local122 proof only; exact review/CI/release/actual full source certificate remain owed",
+    "visual": "No customer UI change or browser/control operation",
+    "experiential": "Calendar/Task/weekly/Builder/ZION, ordinary authorized cohort approvals/records/Rails/reload/recovery and separate Live remain distinct proof obligations",
+    "founderAcceptance": "NOT REQUESTED; one full EXP05 evaluation remains later"
+  }
+}

@@ -68,7 +68,7 @@ export function createMarketingIntakeSnapshotAdapter(
           continue;
         }
         const { metric, partial } = result;
-        let figures: readonly [string, string, number | null][];
+        let figures: [string, string, number | null][];
         if (name === 'processing') {
           // The original producer always emits BOTH closed buckets, including real zeros.
           // A missing/unknown bucket is a changed contract, never an invented zero.
@@ -82,6 +82,22 @@ export function createMarketingIntakeSnapshotAdapter(
             row.key === '_untagged' || row.key === '_other' || (name === 'sourceTags' ? row.key.startsWith('src:') : /^(brief:|tag:)/.test(row.key)));
           const key = name === 'sourceTags' ? 'leads_without_source_tag' : name === 'campaignTags' ? 'leads_without_campaign_tag' : name;
           figures = [[key, label, !tagsValid ? null : kind === 'count' ? countFigure(metric) : bucket(metric, '_untagged', partial)]];
+          // Campaign results for the COO review (EXP03 S2): counts only, never the items'
+          // labels — the distribution's label text is visitor-supplied campaign naming and the
+          // projection stays free of it. "Credited" is the producer's own grouping (a durable
+          // brief link, a uniquely-matching campaign tag, or a recorded tag), not causal
+          // attribution — the standing note below keeps saying so.
+          if (name === 'campaignTags' && tagsValid && !partial) {
+            // `_other` is the producer's fold of campaign-grouped buckets beyond its rank
+            // limit — those leads ARE credited, so the sum includes it; the busiest figure
+            // does not (a fold is not one campaign). Withheld entirely on a partial read:
+            // excluded rows make an exact-seeming total untrustworthy.
+            const credited = tagItems.filter(row => /^(brief:|tag:)/.test(row.key) || row.key === '_other');
+            const named = tagItems.filter(row => /^(brief:|tag:)/.test(row.key));
+            figures.push(
+              ['leads_credited_to_campaigns', 'Leads credited to a campaign', credited.reduce((n, row) => n + row.count, 0)],
+              ['busiest_campaign_leads', 'Most leads one campaign brought in', named.reduce((n, row) => Math.max(n, row.count), 0)]);
+          }
         }
         if (!figures.length || figures.some(([, , value]) => value === null)) {
           draft.failures.push({ reason: ISSUER_METRIC_REASON.shapeUnexpected, headline: true });
@@ -103,7 +119,7 @@ export function createMarketingIntakeSnapshotAdapter(
         if (partial) draft.notes.push(ISSUER_NOTE.partial(label));
       }
       // Leads are submissions, not visitors or won clients. Tags are recorded labels, not causal attribution.
-      draft.notes.unshift('Recorded intake only: no visits, ad spend, revenue, full funnel or causal attribution');
+      draft.notes.unshift('Recorded intake only: no visits, ad spend, revenue, full funnel or causal attribution. Which campaign each lead is credited to lives in Campaigns, not this summary');
       return finishIssuerSnapshot(draft, { domain: 'campaigns', owner: 'marketing', period: ctx.period, now: ctx.now });
     },
   };

@@ -1,5 +1,40 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October25 — verified source-release closeout, full Experience still open
+
+Original2694/2690/2696/2787/2800 have actual reviewed, merged and production-source
+identities in the sole [Master§4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Finance2694 all-seven-tab/Overview/source return and Systems2690 Escape/focus/
+Chat-draft/reload have bounded ordinary SOLO PASS. Finance2696 child and report2787
+artifact/turn/Rail/retrieval/reload proof remain owed under the browser input stop;
+synthetic visual and source tests do not substitute for customer acceptance.
+
+Original2800 is released410d5419b437161326c8bb84667ee6fbdc7767cc, an O06/O14
+source foundation only. It supplies no current UI consumer or historical Chat
+capability; original historical inspection/role/tenant/cohort/return/reload proof
+remains required. O07 actual scans/corrections is separate: Refresh rereads and
+Ask First opens PAIGE; onboarding scans can draft/file original remediation work
+and must not be invoked as an unapproved read or relabelled customer request.
+
+All19/nine required outcomes, historical9PASS/0FAIL and supplement12PASS/0FAIL/
+4BLOCKED, original monthly uncertainty, algorithm maturity, activation controls
+and one complete founder evaluation remain unchanged. No customer release name,
+new provider/action/runtime, acceptance closure or recursive docs-release row.
+
+
+## October25 — original recorded-finding source foundation, development
+
+O6/O14 adds only an opt-in read to the original Systems hook over existing RLS
+records. All default consumers and current snapshot health remain unchanged;
+no current UI uses the extension. Initial152/6 source cases passed; hosted tier
+guard caught the inline compare. Unchanged canonical eligibility/loading helper
+now applies, all original negatives retained;184/7 PASS. Fresh type/review/CI/release
+remain pending. [Owning proof and routing](../evidence/e2-recorded-finding-source.md).
+Original report2787 is independently reconciled as released2f04941f/web+Chat535;
+actual report/document/turn/Rail/retrieval/reload acceptance remains owed.
+Four exact Master closeouts remain queued. All19/nine/ALG/founder obligations
+and browser/input/activation/protected monthly boundaries remain unchanged.
+
 ## October24 evening — original-reference Finance read and reload verified
 
 The originating Sales2768 repair is released in containing production03edfad8a.
@@ -1770,3 +1805,21 @@ synthetic Visual support, bounded Experiential proof and NOT_ACCEPTED founder
 status remain distinct. All 19/nine, populated sources, roles/tenant/cohorts/Live
 and the protected CPU-failed original report/recovery remain open. No readiness,
 provider, permission, algorithm, catalogue or consequential activation.
+
+## October25 — O07 original capture prerequisite, development only
+
+The [original Systems core source slice](../evidence/e2-systems-capture-mode.md)
+adds an explicit internal capture choice with no remediation forge/file_action;
+existing default/all/delta calls remain. Original runs/findings carry actual mode
+and scope; unsupported internal choices fail before reads/effects. No new API,
+role/grant, manual flavor/admission, queue, registry or execution authority.
+Initial30 owning+184 original controls,214/8 are retained as source history.
+Readback19RED/31PASS now yields52own+184original=236/8 source PASS; none mode
+confirms original findings/run and retains the known identity on unconfirmed
+persistence, without replay, new authority or legacy caller behavior changes.
+Composed source236/8 passes in5.06s, scoped lint0 and project type ratchet10/6;
+fresh exact review/native Deno/CI/source release remain owed; no authenticated
+or rendered proof follows. The required manual scan/corrective outcome stays incomplete until
+existing Spine/Harness/Trust/Layer C/work/receipt and original-run recovery are
+connected and verified. All19/nine and one final founder evaluation remain open;
+no activation, provider spend, new QA account or browser-control bypass.

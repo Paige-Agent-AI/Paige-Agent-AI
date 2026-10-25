@@ -1,7 +1,7 @@
 import { uuid } from "./weekly-commitment-control-intent.ts";
 import { bindWeeklyControlForReview } from "./weekly-commitment-control-input.ts";
 import { createWeeklyDraftDeadline } from "./weekly-draft-deadline.ts";
-import { parseWeeklyDraftState, weeklyDraftModelContext } from "./weekly-draft-projection.ts";
+import { parseWeeklyDraftState, weeklyDraftModelContext, weeklyDraftRecordReference } from "./weekly-draft-projection.ts";
 
 type Caller = { rpc(name: "claim_weekly_commitment_chat_draft", args: Record<string, unknown>):
   PromiseLike<{ data: unknown; error: unknown }> };
@@ -16,7 +16,8 @@ type ClaimOptions = Readonly<{
 type NoReplay = { rpcAttempted: boolean; retryAllowed: false; genericFallbackAllowed: false };
 type ClaimResult = NoReplay & (
   | { status: "claimed"; storedArgs: Readonly<Record<string, string | number>> }
-  | { status: "observed"; context: NonNullable<ReturnType<typeof weeklyDraftModelContext>> }
+  | { status: "observed"; context: NonNullable<ReturnType<typeof weeklyDraftModelContext>>;
+      record: ReturnType<typeof weeklyDraftRecordReference> }
   | { status: "unavailable" }
 );
 const dataRecord = (raw: unknown): Record<string, unknown> | null => {
@@ -88,6 +89,7 @@ export async function claimWeeklyDraftChatApproval(caller: Caller, options: Clai
       state.draft.name !== expected._name || state.draft.weekday !== expected._weekday ||
       state.draft.local_time !== expected._local_time || state.draft.timezone !== expected._timezone) return fail();
     const context = weeklyDraftModelContext(data.state, scope);
-    return context ? { status: "observed", context, ...flags } : fail();
+    return context ? { status: "observed", context,
+      record: weeklyDraftRecordReference(data.state, scope, id), ...flags } : fail();
   } catch { return fail(); }
 }

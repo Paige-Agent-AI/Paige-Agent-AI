@@ -1,0 +1,225 @@
+{
+  "scope": "Actual original ClientActionItems/useClientActionsOwner under explicit synthetic auth/RPC/context and shell-layout boundary. Not authenticated People or production execution.",
+  "prototypeBeforeImplementation": true,
+  "viewports": [
+    {
+      "dock": "closed",
+      "documentWidth": 1536,
+      "hasSavedResponse": true,
+      "headerHeight": 71.92500305175781,
+      "refresh": {
+        "height": 44,
+        "width": 83.26250457763672
+      },
+      "section": {
+        "left": 344,
+        "right": 1264,
+        "width": 920
+      },
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "dock": "closed",
+      "documentWidth": 1366,
+      "hasSavedResponse": true,
+      "headerHeight": 71.92500305175781,
+      "refresh": {
+        "height": 44,
+        "width": 83.26250457763672
+      },
+      "section": {
+        "left": 259.20001220703125,
+        "right": 1179.2000122070312,
+        "width": 920
+      },
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "dock": "closed",
+      "documentWidth": 1024,
+      "hasSavedResponse": true,
+      "headerHeight": 71.92500305175781,
+      "refresh": {
+        "height": 44,
+        "width": 83.26250457763672
+      },
+      "section": {
+        "left": 96,
+        "right": 1000,
+        "width": 904
+      },
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "dock": "closed",
+      "documentWidth": 900,
+      "hasSavedResponse": true,
+      "headerHeight": 71.92500305175781,
+      "refresh": {
+        "height": 44,
+        "width": 83.26250457763672
+      },
+      "section": {
+        "left": 96,
+        "right": 876,
+        "width": 780
+      },
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    },
+    {
+      "dock": "closed",
+      "documentWidth": 390,
+      "hasSavedResponse": true,
+      "headerHeight": 146.0500030517578,
+      "refresh": {
+        "height": 44,
+        "width": 83.26250457763672
+      },
+      "section": {
+        "left": 96,
+        "right": 366.3999938964844,
+        "width": 270.3999938964844
+      },
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    },
+    {
+      "dock": "open",
+      "documentWidth": 1536,
+      "hasSavedResponse": true,
+      "section": {
+        "left": 144.3249969482422,
+        "right": 1064.3249969482422,
+        "width": 920
+      },
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "dock": "open",
+      "documentWidth": 1366,
+      "hasSavedResponse": true,
+      "section": {
+        "left": 96,
+        "right": 987.1375122070312,
+        "width": 891.1375122070312
+      },
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "dock": "open",
+      "documentWidth": 1024,
+      "hasSavedResponse": true,
+      "section": {
+        "left": 96,
+        "right": 1000,
+        "width": 904
+      },
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "dock": "open",
+      "documentWidth": 900,
+      "hasSavedResponse": true,
+      "section": {
+        "left": 96,
+        "right": 876,
+        "width": 780
+      },
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    },
+    {
+      "dock": "open",
+      "documentWidth": 390,
+      "hasSavedResponse": true,
+      "section": {
+        "left": 96,
+        "right": 366.3999938964844,
+        "width": 270.3999938964844
+      },
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  ],
+  "keyboard": {
+    "focused": true,
+    "outline": "solid",
+    "outlineWidth": "1.6px",
+    "savedResponse": true
+  },
+  "states": [
+    {
+      "state": "empty",
+      "content": "Customer action items\n\nRequests shared with Jordan Rivera and their saved responses.\n\nRefresh\n\nNo action items have been shared with this customer."
+    },
+    {
+      "state": "error",
+      "content": "Customer action items\n\nRequests shared with Jordan Rivera and their saved responses.\n\nRefresh\n\nSaved action items could not be loaded. Check your connection and refresh."
+    },
+    {
+      "state": "denied",
+      "content": "Customer action items\n\nRequests shared with Jordan Rivera and their saved responses.\n\nRefresh\n\nYour access to these action items could not be verified."
+    },
+    {
+      "state": "consent",
+      "content": "Customer action items\n\nRequests shared with Jordan Rivera and their saved responses.\n\nRefresh\n\nShared context is not allowed by the customer. They control this consent in their Portal.\n\nNo action items have been shared with this customer."
+    },
+    {
+      "state": "paused",
+      "content": "Customer action items\n\nRequests shared with Jordan Rivera and their saved responses.\n\nRefresh\n\nPortal access is paused. Shared history remains here.\n\nReview your welcome guide\nCustomer asked a question\nCreated Oct 24, 2026, 8:00 AM\n\nRead the shared guide and tell us which section would be most useful to discuss.\n\nQuestion\nOct 24, 2026, 8:01 AM\n\nWhich section should I read before our next session?"
+    },
+    {
+      "state": "populated",
+      "content": "Customer action items\n\nRequests shared with Jordan Rivera and their saved responses.\n\nRefresh\nReview your welcome guide\nCustomer asked a question\nCreated Oct 24, 2026, 8:00 AM\n\nRead the shared guide and tell us which section would be most useful to discuss.\n\nQuestion\nOct 24, 2026, 8:01 AM\n\nWhich section should I read before our next session?"
+    }
+  ],
+  "businessChangeClearedOldResponse": true,
+  "dark": {
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)",
+    "documentWidth": 390,
+    "hasResponse": true,
+    "headerHeight": 146.0500030517578,
+    "muted": "rgb(172, 166, 157)",
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "materialFinding": "Initial narrow header inherited horizontal18rem flex-basis as288px vertical heading. Corrected only in this section at the original620px breakpoint; remeasured146px total header and44px refresh.",
+  "unverified": [
+    "authenticated owner/client domain records",
+    "two actual owner cohorts",
+    "physical iPhone",
+    "assistive technology",
+    "native200percent zoom",
+    "production release"
+  ]
+}

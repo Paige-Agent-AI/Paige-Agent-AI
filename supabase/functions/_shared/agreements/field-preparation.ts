@@ -78,20 +78,35 @@ export function readAgreementPdfDocument(value: unknown): AgreementPdfDocument {
 /** Coordinates are PDF points from the visible, rotated crop's TOP LEFT, at
  * scale 1. CSS pixels, browser zoom and percentage prototype values never enter
  * this contract. Future display and stamping must use this same page descriptor. */
-function readAssignedFields(document:AgreementPdfDocument,seenSigners:ReadonlySet<string>,fieldsValue:unknown):AgreementField[]{
+function readFieldDisplay(document:AgreementPdfDocument,f:Record<string,unknown>):Omit<AgreementField,'signer_id'>{
+  const fieldId=id(f.id);
+  if(!['signature','initials','signed_date','text','checkbox'].includes(String(f.kind))
+    ||typeof f.required!=='boolean'||f.kind==='signature'&&!f.required)return fail();
+  const page=integer(f.page,1,document.pages.length),p=document.pages[page-1];
+  const x=finite(f.x,0,p.width),y=finite(f.y,0,p.height);
+  const width=finite(f.width,1,p.width),height=finite(f.height,1,p.height);
+  if(x+width>p.width||y+height>p.height)return fail();
+  return {id:fieldId,kind:f.kind as AgreementField['kind'],page,x,y,width,height,required:f.required,label:text(f.label,160)};
+}
+/** Display-only projection. It cannot assign a signer or establish authority.
+ * Native token scope supplies the own-field subset before this is called. */
+export function readRecipientDisplayFields(document:AgreementPdfDocument,fieldsValue:unknown):Omit<AgreementField,'signer_id'>[]{
+  if(!Array.isArray(fieldsValue)||fieldsValue.length>500)return fail();
+  const seen=new Set<string>();
+  return Array.from(fieldsValue).map(value=>{
+    const field=readFieldDisplay(document,closed(value,['id','kind','page','x','y','width','height','required','label']));
+    if(seen.has(field.id))return fail();seen.add(field.id);return field;
+  }).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
+}
+export function readAssignedFields(document:AgreementPdfDocument,seenSigners:ReadonlySet<string>,fieldsValue:unknown):AgreementField[]{
   if (!Array.isArray(fieldsValue) || fieldsValue.length > 500) return fail();
   const seenFields = new Set<string>();
   return Array.from(fieldsValue).map(value => {
     const f = closed(value, ['id', 'signer_id', 'kind', 'page', 'x', 'y', 'width', 'height', 'required', 'label']);
-    const fieldId = id(f.id), signer_id = id(f.signer_id);
-    if (seenFields.has(fieldId) || !seenSigners.has(signer_id) || !['signature', 'initials', 'signed_date', 'text', 'checkbox'].includes(String(f.kind))
-      || typeof f.required !== 'boolean' || f.kind === 'signature' && !f.required) return fail();
+    const {id:fieldId,...display}=readFieldDisplay(document,f),signer_id=id(f.signer_id);
+    if(seenFields.has(fieldId)||!seenSigners.has(signer_id))return fail();
     seenFields.add(fieldId);
-    const page = integer(f.page, 1, document.pages.length), p = document.pages[page - 1];
-    const x = finite(f.x, 0, p.width), y = finite(f.y, 0, p.height);
-    const width = finite(f.width, 1, p.width), height = finite(f.height, 1, p.height);
-    if (x + width > p.width || y + height > p.height) return fail();
-    return { id: fieldId, signer_id, kind: f.kind as AgreementField['kind'], page, x, y, width, height, required: f.required, label: text(f.label, 160) };
+    return {id:fieldId,signer_id,...display};
   }).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }
 function assignedFieldIssues(signers:readonly {id:string}[],fields:readonly AgreementField[]):AgreementFieldIssue[]{

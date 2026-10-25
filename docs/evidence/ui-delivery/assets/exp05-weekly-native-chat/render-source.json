@@ -1,0 +1,59 @@
+{
+  "evidenceClass": "Rendered current React Chat and compiled CSS, synthetic scope/auth/network/frames; no native or production effect",
+  "reviewedBackend": "e20298af0d47236970289f1d9f95e8aa9530ca4f",
+  "renderedProof": "Original renderer actual card approval, ran and unconfirmed scenes passed; unrelated original scenes retained",
+  "sources": [
+    {
+      "path": "src/components/dashboard/PaigeAIChat.tsx",
+      "sha256": "4e83b6388711ea8adf4887d297434f68fad1559917ce633bd4dd4c72b7693d2f"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "sha256": "f0b6e9e17746d2f9b51d6e22ff2daeceb99e85f630e1fb92ce16dc1809f5575a"
+    },
+    {
+      "path": "src/solo/__render__/approval-recovery.render.test.tsx",
+      "sha256": "1e2bcbc824bb14b068b5106f7d6925e6a87e952481de4f3fb63fdb4684a29bce"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/solo/solo-paige-workspace.css",
+      "sha256": "102217d07536ce43e9eec9a258deb541ecb7ccb226f43752c3cc2d06fdd736aa"
+    }
+  ],
+  "images": [
+    {
+      "name": "cards-mineral-desktop.png",
+      "sha256": "ea5182240109a9debcc9958fcc92988c94adbda1e8495d0895ee7528a30d73b6"
+    },
+    {
+      "name": "cards-obsidian-narrow.png",
+      "sha256": "ca84107f8bfdb73eb38bb1071e1095e3c2a83c3f8623d63d9fedd986dd862eea"
+    },
+    {
+      "name": "cards-unknown-narrow.png",
+      "sha256": "eb685e9dc4c22f0d2c864509b5bef4d94a79a91826873c936913d387964a16ea"
+    }
+  ],
+  "viewports": [
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "Mineral",
+      "documentWidth": 1521,
+      "cardWidth": 820
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "Obsidian",
+      "documentWidth": 375,
+      "cardWidth": 335.20001220703125
+    }
+  ],
+  "keyboard": "Static native browser Tab from original Approve reaches Not now; no execution occurs in serialized HTML",
+  "limits": "Standalone card layout only, not paired full-SOLO shell certification. Original standalone approval buttons measure36 CSSpx high; no44px touch-target or physical-mobile/zoom certification is claimed. No frontend layout or token changed."
+}

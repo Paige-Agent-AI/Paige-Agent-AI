@@ -47,7 +47,7 @@ import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
 import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
 // INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
-import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, isApprovableDraft } from "./conversations/governedSend";
+import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedEmailReceiptLabel, governedSendView, isApprovableDraft, type GovernedSendFields } from "./conversations/governedSend";
 // E09 — the portal channel: recognise portal rows and reply through comms_portal_reply (no provider).
 import {
   PORTAL_BODY_MAX, PORTAL_IDENTITY_ID, createPortalRequestIds, isPortalHelpRequest, isPortalMessage, portalBodyError,
@@ -136,13 +136,21 @@ function mergeContext(sel: SelectedView | null, sig?: Signature, snip?: Snippet)
 // ported email-template picker resolve merge vars through the exact same helper).
 
 // ── Status pill mapping for a single message ─────────────────────────────────────
-function messageStatusPill(m: MessageRow) {
+function messageStatusPill(m: MessageRow & GovernedSendFields) {
   // A send the server stopped before it left (suppressed, do-not-disturb, no consent) is written
   // 'blocked'. Without a pill it read as an ordinary sent bubble.
   if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
   if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
-  if (m.status === "sent" || m.status === "delivered" || m.status === "read")
+  if (m.status === "sent" || m.status === "delivered" || m.status === "read") {
+    // A settled governed email never says plain "Sent" — that reads as delivered to a
+    // non-technical owner. Only the provider's own delivered event says Delivered; an
+    // accepted operation with a sent/read marker says Accepted (the email service took it,
+    // delivery not confirmed). Everything else (no binding, not accepted) keeps "Sent".
+    const receipt = governedEmailReceiptLabel(m);
+    if (receipt === "Delivered") return <StatePill state="success">Delivered</StatePill>;
+    if (receipt === "Accepted") return <StatePill state="success">Accepted</StatePill>;
     return <StatePill state="success">Sent</StatePill>;
+  }
   if (m.status === "queued") return <StatePill state="pending">Queued</StatePill>;
   return null;
 }

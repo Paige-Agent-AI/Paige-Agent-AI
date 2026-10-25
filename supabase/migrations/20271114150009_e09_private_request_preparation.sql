@@ -188,10 +188,10 @@ BEGIN
  RETURN current_request||pg_catalog.jsonb_build_object('replayed',false);
 END $e09_request_prepare$;
 
-REVOKE ALL ON FUNCTION public.read_client_portal_request_draft(uuid,uuid,uuid,uuid),
- public.prepare_client_portal_request(uuid,uuid,uuid,uuid,text,text) FROM PUBLIC,anon,authenticated,service_role;
-GRANT EXECUTE ON FUNCTION public.read_client_portal_request_draft(uuid,uuid,uuid,uuid),
- public.prepare_client_portal_request(uuid,uuid,uuid,uuid,text,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.read_client_portal_request_draft(uuid,uuid,uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.prepare_client_portal_request(uuid,uuid,uuid,uuid,text,text) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.read_client_portal_request_draft(uuid,uuid,uuid,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.prepare_client_portal_request(uuid,uuid,uuid,uuid,text,text) TO authenticated;
 COMMENT ON FUNCTION public.prepare_client_portal_request(uuid,uuid,uuid,uuid,text,text) IS
  'Owner-private original Work preparation only. Actual current SOLO owner/CRM scope, same-intent recovery; no customer publication, approval, model or provider action. Not yet mounted in Portal/Chat/Live.';
 COMMENT ON FUNCTION public.read_client_portal_request_draft(uuid,uuid,uuid,uuid) IS

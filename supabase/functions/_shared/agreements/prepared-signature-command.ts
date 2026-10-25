@@ -121,7 +121,13 @@ export async function admitPreparedSignatureRequest(value: unknown, ports: Prepa
     let confirmationId: string | null = null;
     let cycle: unknown;
     if (approvedFingerprint !== undefined) {
-      const origin = await ports.pending.claim({ fingerprint: approvedFingerprint, requestNonce });
+      let origin: unknown;
+      try { origin = await ports.pending.claim({ fingerprint: approvedFingerprint, requestNonce }); }
+      catch {
+        // Native consumption may have committed. Do not say the approval was
+        // refused, renew it, or proceed without its actual stored claim.
+        return { state: "outcome_unknown" as const, code: "APPROVAL_CLAIM_READBACK_REQUIRED", operation_id: operation };
+      }
       claimed = null;
       if (object(origin) && uuid(origin.confirmation_id) && origin.request_nonce === requestNonce && object(origin.args)) {
         claimed = structuredClone(origin.args); confirmationId = origin.confirmation_id;
@@ -185,4 +191,63 @@ export async function admitPreparedSignatureRequest(value: unknown, ports: Prepa
     // No credentials, provider details, document wording or fabricated result.
     return originalWorkMayExist ? unknown(operation) : refuse("REQUEST_ADMISSION_UNVERIFIED");
   }
+}
+
+type ConfirmationService = {
+  rpc(name: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: unknown }>;
+};
+/** Concrete ORIGINAL confirmation-store bridge for a genuine authenticated
+ * server factory. Scope comes from that factory, never request-authored actor
+ * fields. Native functions recheck/lock current authority and the source; the
+ * Kit must still decide over the returned original claim. This is not an
+ * execution factory, signing issuer or provider adapter and stays unmounted. */
+export function preparedSignatureConfirmationStore(service: ConfirmationService,
+  scope: { actorId: string; tenantId: string; operationId: string }): PreparedSignatureCommandPorts["pending"] {
+  const { actorId, tenantId, operationId } = scope;
+  const unavailable = (): never => { throw Error("PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE"); };
+  if (!uuid(actorId) || !uuid(tenantId) || !uuid(operationId)) return unavailable();
+  const bound = { _actor: actorId, _tenant: tenantId };
+  const originalArgs = (value: unknown): value is Args => object(value)
+    && value.expected_tenant_id === tenantId && value.operation_id === operationId;
+  const expires = (value: unknown): value is string => typeof value === "string" && Number.isFinite(Date.parse(value));
+  const read = async (name: string, args: Record<string, unknown>) => {
+    try {
+      const result = await service.rpc(name, { ...bound, ...structuredClone(args) });
+      if (!result || result.error) return unavailable();
+      return structuredClone(result.data);
+    } catch { return unavailable(); }
+  };
+  return {
+    async find(operation) {
+      if (operation !== operationId) return unavailable();
+      const row = await read("_read_prepared_agreement_confirmation", { _operation: operationId });
+      if (row === null) return null;
+      if (!object(row) || row.state !== "proposed" || !uuid(row.confirmation_id)
+        || !expires(row.expires_at) || !originalArgs(row.args)) return unavailable();
+      return row.args;
+    },
+    async issue(value) {
+      let copy: typeof value;
+      try { copy = structuredClone(value); } catch { return unavailable(); }
+      if (!fingerprint(copy.fingerprint) || !uuid(copy.issuedInRequest) || !originalArgs(copy.args)) return unavailable();
+      // Summary and expiry are computed natively. No browser-provided expiry,
+      // sender readiness or prose constitutes permission to issue or execute.
+      const row = await read("_issue_prepared_agreement_confirmation", {
+        _args: copy.args, _fingerprint: copy.fingerprint, _request_nonce: copy.issuedInRequest,
+      });
+      if (!object(row) || Object.keys(row).length !== 1 || !expires(row.expires_at)) return unavailable();
+      return { expires_at: row.expires_at };
+    },
+    async claim(value) {
+      const { fingerprint: fp, requestNonce } = value;
+      if (!fingerprint(fp) || !uuid(requestNonce)) return unavailable();
+      const row = await read("_claim_prepared_agreement_confirmation", {
+        _operation: operationId, _fingerprint: fp, _request_nonce: requestNonce,
+      });
+      if (row === null) return null;
+      if (!object(row) || Object.keys(row).length !== 3 || !uuid(row.confirmation_id)
+        || row.request_nonce !== requestNonce || !originalArgs(row.args)) return unavailable();
+      return row;
+    },
+  };
 }

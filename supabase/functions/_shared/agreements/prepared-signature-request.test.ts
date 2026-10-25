@@ -1164,3 +1164,81 @@ Deno.test('prepared command withholds a late result after execution without clai
   assert.equal(result.state,'outcome_unknown');assert(!('work_id' in result));
   assert.equal(f.calls.filter(x=>x==='execute-original').length,1);
 });
+
+async function confirmationStoreFixture(){
+  const f=await commandFixture(),proposal=await f.run(),args=structuredClone(f.pending()!);
+  const fp=proposal.fingerprint;assert(typeof fp==='string');
+  const calls:{name:string;args:Record<string,unknown>}[]=[];
+  const state:{data:unknown;error:unknown}={data:null,error:null};
+  const scope={actorId:actor,tenantId:tenant,operationId:operation};
+  const service={rpc:async(name:string,input:Record<string,unknown>)=>{calls.push({name,args:structuredClone(input)});return structuredClone(state);}};
+  const factory=Object.getOwnPropertyDescriptor(commandCandidate,'preparedSignatureConfirmationStore')?.value;
+  assert.equal(typeof factory,'function','Concrete original native confirmation factory is missing');
+  const store=factory(service,scope) as commandCandidate.PreparedSignatureCommandPorts['pending'];
+  const original={confirmation_id:operation,args,expires_at:'2099-01-01T00:00:00Z',state:'proposed'};
+  return {f,args,fp,calls,state,scope,store,original};
+}
+Deno.test('prepared command retains uncertainty when the original native claim commits but its acknowledgement is lost',async()=>{
+  const f=await commandFixture(),proposal=await f.run();
+  const nativeClaim=f.ports.pending.claim.bind(f.ports.pending);
+  f.ports.pending.claim=async value=>{await nativeClaim(value);throw Error('Synthetic lost claim acknowledgement');};
+  const issued=f.calls.filter(x=>x==='issue').length;
+  const result=await f.run({...f.input,approved_fingerprint:proposal.fingerprint});
+  assert.equal(result.state,'outcome_unknown');assert.equal(result.code,'APPROVAL_CLAIM_READBACK_REQUIRED');
+  assert.equal(f.calls.filter(x=>x==='issue').length,issued);assert(!f.calls.includes('execute-original'));
+});
+Deno.test('native confirmation adapter binds original actor tenant and operation using only the existing native store',async()=>{
+  const x=await confirmationStoreFixture();x.state.data=x.original;
+  assert.deepEqual(await x.store.find(operation),x.args);
+  assert.deepEqual(x.calls,[{name:'_read_prepared_agreement_confirmation',args:{_actor:actor,_tenant:tenant,_operation:operation}}]);
+});
+Deno.test('native confirmation adapter keeps its originating scope after a caller alias changes',async()=>{
+  const x=await confirmationStoreFixture();x.scope.actorId=next;x.scope.tenantId=next;x.scope.operationId=next;
+  await x.store.find(operation);
+  assert.deepEqual(x.calls[0].args,{_actor:actor,_tenant:tenant,_operation:operation});
+});
+Deno.test('native confirmation adapter refuses another operation before any privileged read',async()=>{
+  const x=await confirmationStoreFixture();
+  await assert.rejects(()=>x.store.find(next),/PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE/);
+  assert.equal(x.calls.length,0);
+});
+Deno.test('native confirmation adapter never presents consumed expired or unverified rows as a fresh proposal',async()=>{
+  const x=await confirmationStoreFixture();
+  for(const state of ['consumed','expired','unverified']){
+    x.state.data={...x.original,state};
+    await assert.rejects(()=>x.store.find(operation),/PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE/);
+  }
+  assert(x.calls.every(c=>c.name==='_read_prepared_agreement_confirmation'));
+});
+Deno.test('native confirmation adapter issues the unchanged exact args without trusting supplied expiry or summary authority',async()=>{
+  const x=await confirmationStoreFixture();x.state.data={expires_at:x.original.expires_at};
+  assert.deepEqual(await x.store.issue({fingerprint:x.fp,args:x.args,summary:'UI summary is not authority',issuedInRequest:next}),
+    {expires_at:x.original.expires_at});
+  assert.deepEqual(x.calls,[{name:'_issue_prepared_agreement_confirmation',args:{_actor:actor,_tenant:tenant,_args:x.args,
+    _fingerprint:x.fp,_request_nonce:next}}]);
+});
+Deno.test('native confirmation adapter returns only an original nonce-bound claim and no request-authored success',async()=>{
+  const x=await confirmationStoreFixture();
+  assert.equal(await x.store.claim({fingerprint:x.fp,requestNonce:next}),null);
+  x.state.data={confirmation_id:operation,request_nonce:next,args:x.args};
+  assert.deepEqual(await x.store.claim({fingerprint:x.fp,requestNonce:next}),x.state.data);
+  x.state.data={confirmation_id:operation,request_nonce:operation,args:x.args};
+  await assert.rejects(()=>x.store.claim({fingerprint:x.fp,requestNonce:next}),/PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE/);
+});
+Deno.test('native confirmation adapter withholds malformed or failed privileged readback without exposing its error',async()=>{
+  const x=await confirmationStoreFixture();
+  for(const data of [true,[],{...x.original,args:{...x.args,expected_tenant_id:next}}]){
+    x.state.data=data;
+    await assert.rejects(()=>x.store.find(operation),/^Error: PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE$/);
+  }
+  x.state.error={message:'Synthetic private provider/SQL material'};x.state.data=null;
+  await assert.rejects(()=>x.store.find(operation),/^Error: PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE$/);
+});
+Deno.test('native confirmation adapter cannot issue changed scope args or malformed approval tokens',async()=>{
+  const x=await confirmationStoreFixture();
+  for(const args of [{...x.args,expected_tenant_id:next},{...x.args,operation_id:next}]){
+    await assert.rejects(()=>x.store.issue({fingerprint:x.fp,args,summary:'test',issuedInRequest:next}),/PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE/);
+  }
+  await assert.rejects(()=>x.store.claim({fingerprint:'malformed',requestNonce:next}),/PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE/);
+  assert.equal(x.calls.length,0);
+});

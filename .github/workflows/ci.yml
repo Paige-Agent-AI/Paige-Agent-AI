@@ -871,6 +871,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run build
 
+      - name: Solo entry size guard (chat-first first load)
+        if: ${{ !cancelled() }}
+        run: node scripts/ci/solo-entry-size-guard.mjs
+
       - name: Billing payment setup safety and reconciliation
         if: ${{ !cancelled() }}
         run: |

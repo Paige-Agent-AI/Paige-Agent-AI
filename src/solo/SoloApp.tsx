@@ -20,22 +20,10 @@ import { CommandHub } from "./CommandCenter";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
 import { clearPaigeClientScope, readPaigeOpenScope, setPaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope } from "./paigePublicPresenceScope";
-import { TenantRelationshipsClientsWorkspace } from "@/components/tenant-relationships/TenantRelationshipsClientsWorkspace";
 import { isLegacyRelationshipOwner } from "@/components/tenant-relationships/workspaceModel";
-import { ClientsHub } from "./conversations";
-import { GrowthHub } from "./growth2";
-import { AdsWorkspace } from "./AdsWorkspace";
-import { SalesWorkspace } from "./SalesWorkspace";
-import { FinanceWorkspace } from "./finance/FinanceWorkspace";
-import { OperationsRoute } from "./operations/OperationsRoute";
-import { TeamHubWorkspace } from "./team-hub/TeamHubWorkspace";
-import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
 import { soloAnalyticsCompatibility } from "./analytics-routing";
-import { Marketplace } from "./marketplace";
-import { SoloSettings } from "./settings";
 import { SOLO_SETTINGS_DESTINATIONS } from "./settings-contract";
 import { canShowVaultNavigation, useVaultAccess } from "./vault/useBusinessVault";
-import { VibeStudio } from "./vibe";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
 import { resolveTenantAccountContext, tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { cleanPaigePrompt, handOffPaigePrompt } from "@/lib/paigePromptHandoff";
@@ -44,6 +32,27 @@ import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
 import { IncomingCallOverlay } from "@/components/admin/voice/IncomingCallOverlay";
 import { LiveTranscriptPanel } from "@/components/admin/voice/LiveTranscriptPanel";
+
+// Route-level code split (EXP01 outcome 1): the chat-first Solo entry previously
+// compiled EVERY screen into its first download — 2.6 MB raw / 739 kB gzip — because
+// this table statically imported them all. Each non-chat screen now loads on first
+// visit behind React.lazy, exactly as the Live 3D scene and the sales-ops agreement
+// workspace already do. Deliberately EAGER: the voice surfaces (an incoming call must
+// never wait on a chunk fetch), CommandHub (the post-login landing), and
+// SoloPaigeWorkspace itself — the chat surface IS the first load.
+const TenantRelationshipsClientsWorkspace=React.lazy(()=>import("@/components/tenant-relationships/TenantRelationshipsClientsWorkspace").then(m=>({default:m.TenantRelationshipsClientsWorkspace})));
+const ClientsHub=React.lazy(()=>import("./conversations").then(m=>({default:m.ClientsHub})));
+const GrowthHub=React.lazy(()=>import("./growth2").then(m=>({default:m.GrowthHub})));
+const AdsWorkspace=React.lazy(()=>import("./AdsWorkspace").then(m=>({default:m.AdsWorkspace})));
+const SalesWorkspace=React.lazy(()=>import("./SalesWorkspace").then(m=>({default:m.SalesWorkspace})));
+const FinanceWorkspace=React.lazy(()=>import("./finance/FinanceWorkspace").then(m=>({default:m.FinanceWorkspace})));
+const OperationsRoute=React.lazy(()=>import("./operations/OperationsRoute").then(m=>({default:m.OperationsRoute})));
+const TeamHubWorkspace=React.lazy(()=>import("./team-hub/TeamHubWorkspace").then(m=>({default:m.TeamHubWorkspace})));
+const TenantCanonicalCalendarWorkspace=React.lazy(()=>import("@/components/tenant-calendar/TenantCanonicalCalendarWorkspace").then(m=>({default:m.TenantCanonicalCalendarWorkspace})));
+const Marketplace=React.lazy(()=>import("./marketplace").then(m=>({default:m.Marketplace})));
+const SoloSettings=React.lazy(()=>import("./settings").then(m=>({default:m.SoloSettings})));
+const VibeStudio=React.lazy(()=>import("./vibe").then(m=>({default:m.VibeStudio})));
+const ScreenOpening=({label})=>(<div role="status" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'50vh',color:'var(--ink-3)',fontSize:13.5}}>Opening {label}…</div>);
 
 // Trust Compass is reached through Command Center (its third sub-tab), not a top-level rail entry
 // (owner-ruled 2026-09-05). The legacy `/solo/{account}/trust-compass` address redirects into it.
@@ -54,7 +63,7 @@ const NAV2=[['market','Marketplace',()=><Ic.store/>],['integrations','Integratio
 const LEGACY_SETTINGS={setup:'setup',team:'team',integrations:'integrations','business-vault':'vault'};
 const SETTINGS_ICONS={setup:Building2,team:Users,connections:Link2,integrations:Blocks,analytics:BarChart3,'security-data':ShieldCheck,vault:FileLock2,billing:CircleDollarSign};
 
-const SoloClientsRoute=({openPaige})=>{const[tab]=useSubtabRoute("solo","clients","people");return isLegacyRelationshipOwner("solo",tab)?<ClientsHub openPaige={openPaige}/>:<TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={openPaige}/>};
+const SoloClientsRoute=({openPaige})=>{const[tab]=useSubtabRoute("solo","clients","people");return <React.Suspense fallback={<ScreenOpening label="Clients"/>}>{isLegacyRelationshipOwner("solo",tab)?<ClientsHub openPaige={openPaige}/>:<TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={openPaige}/>}</React.Suspense>};
 
 const Rail=({route,go,collapsed,setCollapsed,homeCount})=>{const w=collapsed?70:238;
 const Item=([k,label,Icn])=>{const on=route===k;
@@ -422,8 +431,8 @@ onSignOut={()=>void performSignOut({redirectTo:'/'})}>
 <div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>
-<main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'||screenRoute==='finance'?screenRoute:location.pathname}`} resetKey={location.pathname}>{screenRoute==='paige'?null:screens[screenRoute]}</SoloScreenBoundary></main>
-{studio&&<VibeStudio onBack={closeStudio} openPaige={openPaige}/>}</div></div>
+<main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'||screenRoute==='finance'?screenRoute:location.pathname}`} resetKey={location.pathname}><React.Suspense fallback={<ScreenOpening label={[...NAV,...NAV2].find(n=>n[0]===screenRoute)?.[1]||'this view'}/>}>{screenRoute==='paige'?null:screens[screenRoute]}</React.Suspense></SoloScreenBoundary></main>
+{studio&&<React.Suspense fallback={null}><VibeStudio onBack={closeStudio} openPaige={openPaige}/></React.Suspense>}</div></div>
 </TenantCommandCenterShell>};
 
 const SoloApp=()=> (

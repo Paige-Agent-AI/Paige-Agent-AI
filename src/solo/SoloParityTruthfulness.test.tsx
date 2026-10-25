@@ -52,9 +52,17 @@ const skill = (overrides: Partial<SoloSkill> = {}): SoloSkill => ({
   i: "01", n: "Registered public browse", slug: "test-public-browse", ro: true,
   cat: "research", on: true, runs: 0, ok: 0, d: "Catalogue description", trig: [], ...overrides,
 });
-const renderCapabilities = () => act(async () => {
-  root.render(<MemoryRouter><SoloPaigeWorkspace dockedTab="capabilities" /></MemoryRouter>);
-});
+// The capabilities panel is a lazy chunk (route/tab code split); under a loaded test
+// worker its dynamic import resolves on real macrotask ticks, so wait for the view
+// rather than assuming a single act flush covers it.
+const renderCapabilities = async () => {
+  await act(async () => {
+    root.render(<MemoryRouter><SoloPaigeWorkspace dockedTab="capabilities" /></MemoryRouter>);
+  });
+  for (let attempt = 0; attempt < 40 && !host.querySelector(".spw-management-view"); attempt += 1) {
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 5)); });
+  }
+};
 const renderResearch = () => act(async () => { root.render(<ResearchView activeTenantId={harness.tenantId} />); });
 const rowFor = (name: string) => Array.from(host.querySelectorAll<HTMLElement>(".spw-cap-row")).find(row => row.querySelector("strong")?.textContent === name)!;
 

@@ -49,7 +49,7 @@ type CanonicalBrief = {
 
 export type CampaignBriefContext = {
   lane: "campaign_brief";
-  canonicalSource: "public.get_campaign_briefs";
+  canonicalSource: "public.get_campaign_briefs" | "public.get_campaign_brief_leads";
   observedAt: string;
   freshness: "current_canonical_projection";
   mindEligibility: "UNAVAILABLE";
@@ -236,6 +236,86 @@ export async function resolveCampaignBriefListContext(input: {
   observedAt?: Date;
 }): Promise<CampaignBriefListContextResult> {
   return readCanonicalList({ ...input, observedAt: input.observedAt ?? new Date() });
+}
+
+export type CampaignBriefLeadsResult =
+  | {
+      ok: true;
+      tenantId: string;
+      briefId: string;
+      context: CampaignBriefContext;
+      leads: Record<string, unknown>[];
+      counts: Record<string, unknown>;
+      truncated: boolean;
+      ambiguousOnCampaignForms: boolean;
+    }
+  | { ok: false; code: string; tenantId?: string };
+
+const BRIEF_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * S1e — the leads one campaign brought in, read through the SAME canonical RPC the dossier's
+ * "Brought in" lane reads (public.get_campaign_brief_leads), on the caller's OWN session. The
+ * RPC decides who may read (its own workspace only; CAMPAIGN_BRIEF_FORBIDDEN for anyone else's)
+ * and redacts member views itself, so this helper adds no authority and no redaction of its own.
+ * Attribution is how a lead was LINKED (form in this campaign, the link's tag, or both) — the
+ * caller is responsible for never narrating it as ad performance.
+ */
+export async function readCampaignBriefLeads(input: {
+  caller: CampaignBriefRpcPort;
+  expectedTenantId: string;
+  briefId: unknown;
+  observedAt?: Date;
+}): Promise<CampaignBriefLeadsResult> {
+  if (typeof input.briefId !== "string" || !BRIEF_UUID_RE.test(input.briefId)) {
+    return { ok: false, code: "CAMPAIGN_BRIEF_ARGUMENTS_INVALID" };
+  }
+  const tenantId = await resolveTenant(input.caller);
+  if (!tenantId) return { ok: false, code: "CAMPAIGN_BRIEF_TENANT_NOT_RESOLVED" };
+  if (tenantId !== input.expectedTenantId) return { ok: false, code: "ACTIVE_ACCOUNT_CHANGED", tenantId };
+
+  let response: { data: unknown; error: RpcError };
+  try {
+    response = await input.caller.rpc("get_campaign_brief_leads", {
+      _tenant_id: tenantId,
+      _brief_id: input.briefId,
+    });
+  } catch {
+    return { ok: false, code: "CAMPAIGN_BRIEF_LEADS_READ_OUTCOME_UNKNOWN", tenantId };
+  }
+  if (response.error) return { ok: false, code: rpcCode(response.error, "CAMPAIGN_BRIEF_LEADS_READ_FAILED"), tenantId };
+  const envelope = response.data && typeof response.data === "object" ? response.data as Record<string, unknown> : null;
+  const counts = envelope?.counts && typeof envelope.counts === "object" && !Array.isArray(envelope.counts)
+    ? envelope.counts as Record<string, unknown> : null;
+  if (!envelope || !Array.isArray(envelope.leads) || !counts) {
+    return { ok: false, code: "CAMPAIGN_BRIEF_READBACK_INVALID", tenantId };
+  }
+  const leads = envelope.leads.filter((lead): lead is Record<string, unknown> =>
+    !!lead && typeof lead === "object" && !Array.isArray(lead));
+  // The RPC's own honesty signals ride along: `truncated` (the list is capped at the newest 200
+  // while counts.leads is the true total) and `ambiguous_on_campaign_forms` (some leads' tags
+  // matched several campaigns, so they are excluded from these counts and not credited — the
+  // owner is told rather than seeing a quiet undercount). Dropping them would let a chat answer
+  // understate honestly.
+  const truncated = envelope.truncated === true;
+  const ambiguousOnCampaignForms = envelope.ambiguous_on_campaign_forms === true;
+  return {
+    ok: true,
+    tenantId,
+    briefId: input.briefId,
+    context: {
+      lane: "campaign_brief",
+      canonicalSource: "public.get_campaign_brief_leads",
+      observedAt: (input.observedAt ?? new Date()).toISOString(),
+      freshness: "current_canonical_projection",
+      mindEligibility: "UNAVAILABLE",
+      memoryRetention: "UNAVAILABLE",
+    },
+    leads,
+    counts,
+    truncated,
+    ambiguousOnCampaignForms,
+  };
 }
 
 function commandFor(tool: CampaignBriefToolName, args: Record<string, unknown>): Record<string, unknown> {

@@ -7,6 +7,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(__dirname, "..", "..");
+const spineDomain = readFileSync(join(root, "supabase/functions/_shared/paige-spine/domains/campaigns.ts"), "utf8");
+const chatIndex = readFileSync(join(root, "supabase/functions/paige-ai-chat/index.ts"), "utf8");
+const growth2 = readFileSync(join(root, "src/solo/growth2.tsx"), "utf8");
 const migration = readFileSync(join(root, "supabase/migrations/20261225000000_solo_campaign_briefs_foundation.sql"), "utf8");
 const hook = readFileSync(join(root, "src/solo/useSoloCampaignBriefs.ts"), "utf8");
 const desk = readFileSync(join(root, "src/solo/campaign-desk.tsx"), "utf8");
@@ -137,5 +140,41 @@ describe("Campaign desk — §39 peer-gate invariants", () => {
 
   it("reports honestly when a save persists but the review transition fails (MAJOR)", () => {
     expect(desk).toContain("could not be sent for review");
+  });
+});
+
+
+describe("S1e — the campaign leads chat read and its navigable surface", () => {
+  it("registers campaign.leads as a member-seat read on the canonical leads RPC", () => {
+    expect(spineDomain).toContain('key:"campaign.leads"');
+    expect(spineDomain).toContain('executor:"public.get_campaign_brief_leads",chatTool:"read_campaign_leads",seatAuthority:"member"');
+    expect(spineDomain).toContain('readiness:"none"');
+    // Member seat, positively: the RPC redacts member views itself, so the chat gate must stay
+    // non-admin (an admin seat here would lock members out of a permitted read).
+    expect(spineDomain).toMatch(/campaign\.leads[\s\S]{0,400}seatAuthority:"member"/);
+    // The model-facing tool's parameters are the kit declaration's input, never a hand-written payload.
+    expect(spineDomain).toContain("parameters:CAMPAIGN_LEADS_READ_CAPABILITY.input");
+    // The tool's model-facing description forbids narrating attribution as ad performance.
+    expect(spineDomain).toContain("never ad performance");
+  });
+  it("repairs the Spine screen address to the real Campaigns route", () => {
+    expect(spineDomain).not.toContain('humanSurface:"/solo/:account/campaigns"');
+    expect(spineDomain.match(/humanSurface:"\/solo\/:account\/growth\/campaigns"/g)?.length).toBe(4);
+  });
+  it("dispatches the read on the caller's own session with the RPC's own refusals", () => {
+    expect(chatIndex).toContain('tc.function.name === "read_campaign_leads"');
+    expect(chatIndex).toContain("readCampaignBriefLeads({ caller: supabaseClient");
+    expect(chatIndex).toContain("CAMPAIGN_BRIEF_FORBIDDEN");
+    // The honest boundary rides with every successful read.
+    expect(chatIndex).toContain("it is not ad performance");
+    // Mounted through the domain's adapter spread, never hand-wired inline.
+    expect(chatIndex).toContain("...CAMPAIGN_BRIEF_TOOLS");
+  });
+  it("deep-links ?brief=<id> to that campaign's dossier and consumes the request once", () => {
+    expect(growth2).toContain('autoOpenDossierId={/^[0-9a-f]');
+    expect(desk).toContain('openDrawer("dossier", autoOpenDossierId)');
+    // Consumed exactly once per id (Back/refresh must not reopen), and an unknown id is consumed
+    // silently rather than guessing a campaign.
+    expect(desk).toContain("dossierRequestConsumed.current === autoOpenDossierId");
   });
 });

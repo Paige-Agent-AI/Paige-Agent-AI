@@ -1,7 +1,7 @@
 {
-  "recordedAt": "2026-10-25T13:22:50.693Z",
-  "sourceHead": "47aca325896fb997d8c78d66917845336377a6af",
-  "sourceTree": "5734ed8d8c9bc4c54eb417e6202c6edb856dfed0",
+  "recordedAt": "2026-10-25T13:25:26.078Z",
+  "sourceHead": "f7f4db9328837c3184b79a40e10bcbd48c8c75eb",
+  "sourceTree": "3564ae3443b75e86e005bf0dbffc167642a48102",
   "inputs": {
     "scripts/agreements/prepared-signature-work-proof.mjs": "cd1919de6f8471c67253902aabb324c2e634fe2e3184ebe5e3de27a9e748215d",
     "scripts/agreements/run-integrity-proof.sh": "c5b4d0a0b9b0570d3e1bc0b1ca956f52bfb18eb3fe60ab3879d531379dfe5de1",
@@ -14,7 +14,7 @@
     "supabase/functions/send-message/index.ts": "c5d583a2cda9138e7ee3b6f56962d21c195ab5444160a4accdad3b2f940b15b4",
     "scripts/agreements/prepared-message-admission-fixture.mjs": "bc95a0f285c6a1ff46b229f721f9919402e4de21471298c669e6a0b12e755da9",
     "scripts/agreements/prepared-message-admission-proof.mjs": "1f04cb2726ea09ef263025664fc2cbea12300873db8062f342ef0c94a7e5b93a",
-    "scripts/agreements/prepared-message-origin-proof.mjs": "db9ad431bf13a524076044a734d5c29bab246d9f4452192ce8fa61de60cddc66",
+    "scripts/agreements/prepared-message-origin-proof.mjs": "ed08289734726ad44a678187b96395fd026921c46b1044846092d640b0587f04",
     "supabase/functions/_shared/agreements/prepared-signature-message.ts": "dc1ddb65072634998debf472cd2dd371be041c52c0704433ebe99b8b69027498",
     "supabase/migrations/20271114190004_e04_agreement_message_origin.sql": "3b5656b69943363d6735d2cc380b1a1ccd1ff05c05fa21196c16cfb1f4a8915a"
   },

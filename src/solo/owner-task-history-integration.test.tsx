@@ -44,6 +44,9 @@ function mount() {
 
 it("withholds the verified Task link while an actual sibling editor is open and preserves its corrected draft", () => {
   mount();
+  const decisionTime = document.querySelector(".sa-owner-task-result time");
+  expect(decisionTime?.getAttribute("datetime")).toBe("2026-10-18T12:31:00Z");
+  expect(decisionTime?.closest("p")?.textContent).toContain("Decision recorded:");
   expect(document.querySelector('a[href*="?task="]')).not.toBeNull();
   act(() => button("New automation").click());
   expect(document.querySelector('form[aria-label="New automation"]')).not.toBeNull();

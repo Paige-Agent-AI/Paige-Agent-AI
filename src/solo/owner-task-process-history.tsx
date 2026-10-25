@@ -27,7 +27,7 @@ function OriginalResult({ result, account, navigationHeld }: { result: Result; a
       : result.status === 'refused' ? <p className="sa-note">This result is no longer available in your current workspace or role.</p>
         : result.status === 'unavailable' ? <p className="sa-note">The original outcome couldn’t be read. Select Inspect outcome to read it again; nothing will be rerun.</p>
           : result.status === 'ready' ? <>
-            <h4>{result.title}</h4><p className="sa-note">{outcomeWords(result.recordedOutcome)} · {when(result.decidedAt)}</p>
+            <h4>{result.title}</h4><p className="sa-note">{outcomeWords(result.recordedOutcome)} · Decision recorded: <time dateTime={result.decidedAt}>{when(result.decidedAt)}</time></p>
             {result.originalTask.state === 'verified' ? <>
               <p className="sa-note">Original task creation is verified against its saved result and receipt. Open the task to read its current state.</p>
               {target?.status === 'exact' && (navigationHeld ? <p className="sa-note">Finish or cancel your pipeline rule edit before opening the task.</p>

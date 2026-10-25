@@ -8,6 +8,7 @@ import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
@@ -105,7 +106,7 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-const output = "work/owner-task-frame-history";
+const output = process.env.PAIGE_OWNER_TASK_HISTORY_RENDER_OUTPUT ?? "work/owner-task-frame-history";
 if (!/^work\/owner-task-frame-[a-z0-9-]+$/i.test(output.replace(/\\/g, "/"))) {
   throw new Error("Corrected frame output must use its separate work/owner-task-frame-* directory");
 }
@@ -270,7 +271,7 @@ describe("original owner-task history full-shell fixture", () => {
     const compiledAssetInputs=readdirSync(assets).filter(f=>f.endsWith(".css") && ["main-","SoloEntry-","PaigeAIChat-"].some(p=>f.startsWith(p)))
       .map(file=>({path:`${assets}/${file}`,sha256:digest(readFileSync(`${assets}/${file}`))}));
     writeFileSync(`${output}/render-manifest.json`,JSON.stringify({proofClass:"SYNTHETIC_CURRENT_HISTORY_FULL_SOLO_FRAME",
-      base:"4bf05ec2b263dcb4e0fcdd35cc031832e000f52c",sources,components:["TenantCommandCenterShell","SoloApp actual three-ancestor frame","SoloScreenBoundary","SoloPaigeWorkspace","SoloSettings","SoloIntegrationsView","SoloAutomationsView","OwnerTaskAutomations","OwnerTaskProcessHistory"],
+      base:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),sources,components:["TenantCommandCenterShell","SoloApp actual three-ancestor frame","SoloScreenBoundary","SoloPaigeWorkspace","SoloSettings","SoloIntegrationsView","SoloAutomationsView","OwnerTaskAutomations","OwnerTaskProcessHistory"],
       actualHookAndCaller:true,identityAndBackend:"SYNTHETIC",realEffects:0,compiledAssetInputs,compiledCssSha256:digest(css),actualBrowserProof:"PENDING",authenticatedQa:"UNVERIFIED",records},null,2));
   },180_000);
 });

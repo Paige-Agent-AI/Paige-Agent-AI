@@ -78,8 +78,10 @@ The original `admin_propose_paige_actions` always publishes; it is not a private
 
 ### Release checkpoint
 
-INTERNAL_BUILD_IDENTITY: implementation=UNCOMMITTED; deployment=NOT_DEPLOYED; environment=development; migrations=20271114150009_NOT_APPLIED; edge=NOT_APPLICABLE; evidence=docs/delivery/e09-customer-actions-business-scope.md
+INTERNAL_BUILD_IDENTITY: implementation=cac886e4308a15385ae14a3c60c446b2951d0e4c; deployment=NOT_DEPLOYED; environment=development; migrations=20271114150009_NOT_APPLIED; edge=NOT_APPLICABLE; evidence=docs/delivery/e09-customer-actions-business-scope.md
 RELEASE_CHANNEL: development: original Work private request preparation/status only
 RELEASE_CLASSIFICATION: internal-only; no customer release name, version, note or announcement
 RELEASE_CLAIMS: native preparation built/local verified; hosted exact-head CI/review/merge/deployment/readback PROOF OWED; UI/Chat/Live sharing NOT_CONNECTED; authenticated owner/client/provider/device and complete Experience UNVERIFIED; founder acceptance NOT_REQUESTED
 RELEASE_RECOVERY: original transaction rolls back uncertain preparation failures; read original scoped status before retrying same intent; missing is never rejection. Forward correction only, preserve original source and history. No customer/provider compensation is required because preparation has no such effect.
+
+Frozen native source cac886e4308a15385ae14a3c60c446b2951d0e4c passes124/0 on the final source-matched runner. Reproducible command: `node scripts/proof/e09-consumer-invite.mjs --private-request` with an owned loopback PostgreSQL16 port. Sanitized generated report: [native proof](../evidence/e09-private-request-native.json). Full-schema hosted268 and actual deployment remain owed.

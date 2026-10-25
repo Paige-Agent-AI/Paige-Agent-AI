@@ -1,0 +1,579 @@
+{
+  "generatedAt": "2026-10-25T08:17:02.947606+00:00",
+  "sourceCommit": "cac886e4308a15385ae14a3c60c446b2951d0e4c",
+  "evidenceClass": "synthetic-native-postgresql",
+  "sourceBlobs": {
+    "scripts/proof/e09-consumer-invite.mjs": "0beddfbfbb279ee59e7022a25bde11158f322275",
+    "scripts/proof/e09-private-request.mjs": "e448ca901d7545e18870708819e7308faa505d7c",
+    "supabase/migrations/20271114150009_e09_private_request_preparation.sql": "fbc23e9aa806b202f9fcd286a5d3a88f91625039",
+    "supabase/tests/customer_portal_access.sql": "1b56c9f7715247844eb740d06ba2f7a698c1e499",
+    "docs/delivery/e09-customer-actions-business-scope.md": "ccb3956df62f85fb74d1c0d1b942b9bc75cd0a7a"
+  },
+  "baseline": {
+    "passed": 73,
+    "failed": 3,
+    "causalFailures": [
+      {
+        "name": "Private request status distinguishes missing committed work from a rejected request",
+        "status": "FAIL",
+        "error": "psql failed: ERROR:  function public.read_client_portal_request_draft(unknown, unknown, unknown, unknown) does not exist\r\nLINE 1: SELECT public.read_client_portal_request_draft('e0910000-000...\r\n               ^\r\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\r\n"
+      },
+      {
+        "name": "Owner prepares one original private Work record without customer publication",
+        "status": "FAIL",
+        "error": "psql failed: ERROR:  function public.prepare_client_portal_request(unknown, unknown, unknown, unknown, unknown, unknown) does not exist\r\nLINE 1: SELECT public.prepare_client_portal_request('e0910000-0000-0...\r\n               ^\r\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\r\n"
+      },
+      {
+        "name": "Same prepared intent returns original Work without another filing",
+        "status": "FAIL",
+        "error": "psql failed: ERROR:  function public.prepare_client_portal_request(unknown, unknown, unknown, unknown, unknown, unknown) does not exist\r\nLINE 1: SELECT public.prepare_client_portal_request('e0910000-0000-0...\r\n               ^\r\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\r\n"
+      }
+    ]
+  },
+  "candidate": {
+    "mode": "private-request-candidate",
+    "evidenceClass": "synthetic-native-postgresql",
+    "fullSupabaseReplay": "UNVERIFIED",
+    "authenticatedAcceptance": "NOT_RUN",
+    "host": "127.0.0.1",
+    "port": 55449,
+    "platform": "win32",
+    "node": "v24.19.0",
+    "migrationSHA256": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4",
+    "actionPredecessors": [
+      {
+        "name": "full-schema",
+        "before": "1be5e25443930bcb013a71b001743b66",
+        "after": "fcf773974057df079f85ae2b574b32a2",
+        "replay": "PASS"
+      },
+      {
+        "name": "recorded-production",
+        "before": "17868b60f3725f0b863705c59b9f4c07",
+        "after": "eac7910cd403aaf3c4d8fb7e429ab3c1",
+        "replay": "PASS"
+      }
+    ],
+    "actionMigrationSHA256": "dc3e2b646592dbe199c6c288133cccbdd4c3a2d96ba4815404053ac292067bda",
+    "results": [
+      {
+        "name": "Other invitation branches preserved byte-for-byte",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: unused consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: used unlimited consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: recorded consumer acceptance despite count drift",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: revoked consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: expired consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: existing unlimited team semantics",
+        "status": "PASS"
+      },
+      {
+        "name": "No custom questions uses the existing contact form; malformed published configuration still refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Entry preserves all staff/agency/owner branches",
+        "status": "PASS"
+      },
+      {
+        "name": "Wrong recipient with legitimate staff standing cannot claim consumer contact",
+        "status": "PASS"
+      },
+      {
+        "name": "Matching unconfirmed email refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing recipient refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Anonymous caller denied",
+        "status": "PASS"
+      },
+      {
+        "name": "Expired invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Legacy unlimited token with prior use refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recorded prior acceptance refuses even if count zero",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Occupied exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Merged contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Archived contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Unbound consumer token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recipient address removed from contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Different existing relationship does not redirect acceptance",
+        "status": "PASS"
+      },
+      {
+        "name": "Malformed token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Team recipient regression",
+        "status": "PASS"
+      },
+      {
+        "name": "Verified recipient with pre-existing staff standing binds the exact contact once",
+        "status": "PASS"
+      },
+      {
+        "name": "Pure verified external recipient joins without a business seat or staff context",
+        "status": "PASS"
+      },
+      {
+        "name": "Email normalization accepts only authoritative verified recipient",
+        "status": "PASS"
+      },
+      {
+        "name": "Team acceptance still grants ordinary member and staff pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Claimed JWT email cannot override stored auth identity",
+        "status": "PASS"
+      },
+      {
+        "name": "Audit failure rolls back link, role and token consumption",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent acceptance grants once and records one attributable receipt",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses archived relationship",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses merged relationship",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses suspended business",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses wrong business/contact tuple",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses wrong actual subject",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses missing actual subject",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses closed action",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses expired action",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses empty question",
+        "status": "PASS"
+      },
+      {
+        "name": "Native old caller cannot submit without the viewed version",
+        "status": "PASS"
+      },
+      {
+        "name": "Native version refusal null",
+        "status": "PASS"
+      },
+      {
+        "name": "Native version refusal 2025-01-01",
+        "status": "PASS"
+      },
+      {
+        "name": "Native completion persists canonical response, actor, status, notification, audit and incumbent linked output",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response accepted",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response declined",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response question",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent same-version completion persists once",
+        "status": "PASS"
+      },
+      {
+        "name": "Native audit failure rolls back response and all preceding effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner read preserves legacy reader, customer response writer and original authority byte-for-byte",
+        "status": "PASS"
+      },
+      {
+        "name": "Ordinary SOLO owner without global staff role reads exact original action and response",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner projection never includes private payload, login identity, foreign action or mismatched response",
+        "status": "PASS"
+      },
+      {
+        "name": "A second eligible SOLO cohort uses the same scoped reader",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner read refuses wrong current workspace without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner read refuses wrong customer without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner read refuses forged actor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner read refuses missing expected actor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner read refuses customer identity without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner read refuses service principal without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner read refuses anonymous principal without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Global staff role on a plain tenant member is not owner authority",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked owner membership invalidates a returning read",
+        "status": "PASS"
+      },
+      {
+        "name": "Ineligible business agency refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Ineligible business sub_account refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Ineligible business suspended refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Paused, ended and nonconsenting relationships retain only shared history without changing consent",
+        "status": "PASS"
+      },
+      {
+        "name": "Expired pending item is derived truth, not a status write or completed action",
+        "status": "PASS"
+      },
+      {
+        "name": "Bounded original actions and responses report more without silently implying a complete list",
+        "status": "PASS"
+      },
+      {
+        "name": "Private request status distinguishes missing committed work from a rejected request",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner prepares one original private Work record without customer publication",
+        "status": "PASS"
+      },
+      {
+        "name": "Same prepared intent returns original Work without another filing",
+        "status": "PASS"
+      },
+      {
+        "name": "Status/replay keep one original version and exactly the original two writer audits",
+        "status": "PASS"
+      },
+      {
+        "name": "Whitespace normalization preserves exact original private words on replay",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses changed content without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses changed title without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses blank title without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses blank body without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses null body without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses long title without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses long body without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses wrong expected actor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses missing expected actor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses wrong selected business without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses missing intent without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses customer identity without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses service principal without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation refuses anonymous principal without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign CRM contact cannot be prepared or read in the current business",
+        "status": "PASS"
+      },
+      {
+        "name": "Second eligible business gets its own original private Work and history",
+        "status": "PASS"
+      },
+      {
+        "name": "Same intent at another own CRM record never recovers the previous contact content",
+        "status": "PASS"
+      },
+      {
+        "name": "A global admin title on an ordinary member grants no Portal owner authority",
+        "status": "PASS"
+      },
+      {
+        "name": "Losing original Work staff standing refuses both read and preparation",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked membership refuses returning status and prepare without another filing",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Portal eligibility refuses agency without widening a cohort",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Portal eligibility refuses sub_account without widening a cohort",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Portal eligibility refuses trial without widening a cohort",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Portal eligibility refuses past_due without widening a cohort",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Portal eligibility refuses suspended without widening a cohort",
+        "status": "PASS"
+      },
+      {
+        "name": "Paused, ended and nonconsenting relationships stay private and their preferences stay unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "Known intent reconciles before a changed kind admission; new intent refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "A draft-agent change cannot silently turn private preparation into model work",
+        "status": "PASS"
+      },
+      {
+        "name": "Changing original Work content invalidates the prepared preview rather than exposing a stale version",
+        "status": "PASS"
+      },
+      {
+        "name": "Closed preparation result never projects arbitrary Work payload or staff routing",
+        "status": "PASS"
+      },
+      {
+        "name": "Failure of the original assignment audit rolls back filing and every original audit",
+        "status": "PASS"
+      },
+      {
+        "name": "New public API is authenticated-only and never exposes the private original authorizer",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent same-intent preparations wait on the original profile and commit one original Work record",
+        "status": "PASS"
+      },
+      {
+        "name": "A workspace switch committed during the profile wait refuses the stale request without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Membership revoked during a contact wait is revalidated before any filing or words return",
+        "status": "PASS"
+      },
+      {
+        "name": "Ambiguous original intent history refuses instead of arbitrarily choosing a record",
+        "status": "PASS"
+      },
+      {
+        "name": "An unrelated customer-action link is rejected rather than presented as a shared result",
+        "status": "PASS"
+      },
+      {
+        "name": "Replaying the same migration preserves original Work, source metadata and private history",
+        "status": "PASS"
+      },
+      {
+        "name": "Migration refuses unknown forward file_action without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Migration refuses unknown forward advance_action without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Migration refuses unknown forward _client_portal_access_authorize without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Migration refuses unknown forward read_client_portal_request_draft without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Migration refuses unknown forward prepare_client_portal_request without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Exact canonical LF original writer form replays without changing its permissions or words",
+        "status": "PASS"
+      },
+      {
+        "name": "Native source ABI, OID, owner, grants, search path and body are all preserved",
+        "status": "PASS"
+      },
+      {
+        "name": "Private preparation and every refusal create no customer action, response, notice or approval",
+        "status": "PASS"
+      },
+      {
+        "name": "Original native file, advance and Portal authority remain byte-exact",
+        "status": "PASS"
+      }
+    ],
+    "passed": 124,
+    "failed": 0,
+    "ownerActionMigrationSHA256": "578b43e6b9b04c7fbfc6a707b170e6f3b8278f5b2030b99ac0879e8e11c451f8",
+    "ownerActionSourceApplied": true,
+    "privateRequest": {
+      "baseline": false,
+      "originalFingerprints": {
+        "file_action": "40349ee33cf5f77ef6fc228087fdc67f",
+        "advance_action": "66dcedb5e40dd43a54373c0e0ded1884",
+        "_client_portal_access_authorize": "7c3eb55c866321fed052ae742b75e42d"
+      },
+      "canonicalReplayFileHash": "8389ea7b5589ad7ce939d9f8b01b6188",
+      "migration": "20271114150009_e09_private_request_preparation.sql",
+      "migrationNormalizedSHA256": "34b7772cd8027d18c368b7f072598aeef1878976ed8d4118f1d917ec3c85487f",
+      "fixture": "synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority",
+      "customerPublication": "NOT_RUN",
+      "fullSchema": "PROOF_OWED"
+    }
+  },
+  "hostedFullSchema": "PROOF_OWED",
+  "customerPublication": "NOT_RUN",
+  "authenticatedAcceptance": "UNVERIFIED",
+  "founderAcceptance": "NOT_REQUESTED"
+}

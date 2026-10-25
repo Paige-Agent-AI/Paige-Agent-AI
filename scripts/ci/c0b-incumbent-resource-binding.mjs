@@ -913,8 +913,8 @@ const SOURCES = {
   // branch, authority, verifier, adapter selection or recipient logic changed; paige-ai-chat untouched,
   // so all dispatch fingerprints are unchanged. Old canonical digest 29306707… reproduced from main
   // before renewing (scratchpad /tmp/renew-digest.mjs, printer {removeComments:true}). Renew this digest only.
-  // EXP08 Team Hub increment 3 renewal (2026-10-25), AUTHOR source review (NOT non-author; an independent
-  // reviewer must confirm): branch claude/practical-davinci-ij8hb8 changes send-message/index.ts only inside
+  // EXP08 Team Hub increment 3 renewal (2026-10-25), author source review, scope CONFIRMED by an independent
+  // §39 re-reviewer on the same diff: branch claude/practical-davinci-ij8hb8 changes send-message/index.ts only inside
   // attachmentValidationError — two early returns of "attachment_not_allowed": any path containing `%`
   // (Storage's router percent-decodes object names, so `team%2Dhub/<id>` is read as `team-hub/<id>`), and a
   // case-insensitive first folder of `team-hub` (<tenant>/team-hub/ holds members-only Team Hub files). An

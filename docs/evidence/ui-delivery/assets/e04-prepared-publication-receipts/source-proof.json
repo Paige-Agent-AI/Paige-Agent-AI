@@ -136,5 +136,18 @@
     "native": "20 NOT_APPLIED; exact19 parent must release first",
     "review": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE; hosted current source not yet verified",
     "fullSigning": "NOT_COMPLETE; original76 after publication passed historically; field-bearing signature and sealing remain separate"
+  },
+  "forwardFrontierReceivingOct25": {
+    "at": "2026-10-25T17:34:12.559Z",
+    "parentC45": "00174d4b745c5421ad6dbae59bdd273b68f51a6e",
+    "main": "5cecea30c6f7dc0ab13ce1f67795293564fca68e",
+    "actualFrontier": "20271114220002",
+    "oldVersion": "20271114200004",
+    "newVersion": "20271114230304",
+    "migrationBytesUnchanged": true,
+    "sqlSha256": "0d39fc3e17e8c6a1dabba74b9e9f050ed59d6cff0f940d8b97fb4afc1bc9b469",
+    "originalProofReferenceInverse": true,
+    "production": "Old/new version0; no history reset/include-all/applied-file edit",
+    "review": "New exact-head review/CI/Preview required"
   }
 }

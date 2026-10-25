@@ -8,7 +8,8 @@ const raw = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const source = ts.createSourceFile('index.ts', raw, ts.ScriptTarget.Latest, true);
 let guard: ts.IfStatement | undefined;
 function find(node: ts.Node) {
-  if (ts.isIfStatement(node) && node.expression.getText(source).includes('portalRequestContentCarried && TEAM_HUB_EGRESS_WITHHELD_TOOLS')) guard = node;
+  if (ts.isIfStatement(node) && node.expression.getText(source).includes('portalRequestContentCarried')
+    && node.expression.getText(source).includes('TEAM_HUB_EGRESS_WITHHELD_TOOLS')) guard = node;
   ts.forEachChild(node, find);
 }
 find(source);
@@ -17,11 +18,11 @@ const compiled = ts.transpileModule(`function gate(calls) { const toolResults=[]
 const run = (carried: boolean, names: string[]) => new Function('portalRequestContentCarried', 'TEAM_HUB_EGRESS_WITHHELD_TOOLS', `${compiled};return gate;`)(carried, TEAM_HUB_EGRESS_WITHHELD_TOOLS)(names.map((name, i) => ({ id: String(i), function: { name } })));
 
 it('keeps untainted owner turns on the original path', () => {
-  expect(run(false, ['web_fetch', 'save_to_knowledge_base', 'crm_log_activity']).reached).toEqual(['web_fetch', 'save_to_knowledge_base', 'crm_log_activity']);
+  expect(run(false, ['web_fetch', 'web_search', 'save_to_knowledge_base', 'crm_log_activity']).reached).toEqual(['web_fetch', 'web_search', 'save_to_knowledge_base', 'crm_log_activity']);
 });
 it('blocks private request egress before each subsequent tool reaches dispatch', () => {
-  const result = run(true, ['web_fetch', 'save_to_knowledge_base', 'crm_log_activity']);
-  expect(result.reached).toEqual([]); expect(result.toolResults).toHaveLength(3);
+  const result = run(true, ['web_fetch', 'web_search', 'save_to_knowledge_base', 'crm_log_activity']);
+  expect(result.reached).toEqual([]); expect(result.toolResults).toHaveLength(4);
   for (const row of result.toolResults) expect(JSON.parse(row.content)).toMatchObject({ success: false, not_applied: true, refused_before_run: true });
 });
 it('reuses the existing classifier while retaining the original approval lane', () => {

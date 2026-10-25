@@ -11636,7 +11636,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // Reuse the existing private-content egress classification, without
         // changing Team Hub's read-only flag or its round-level filter. Check
         // each call, including tools proposed later in this same batch.
-        if (portalRequestContentCarried && TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(String(tc.function.name))) {
+        // Preserve that shared classifier. The canonical read-only Search also
+        // sends its query outside the business, so this Portal review withholds it.
+        if (portalRequestContentCarried && (TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(String(tc.function.name)) || tc.function.name === "web_search")) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, not_applied: true,
             refused_before_run: true, error: "Private customer request content was reviewed in this reply. Web lookups, Knowledge publishing and changes without an approval card must wait for a fresh instruction. Do not try another tool to move those private words elsewhere." }) });
           continue;
@@ -18881,11 +18883,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           traceCtx.content_policy = "metadata_only";
           portalRequestContentCarried = true;
           const shareScope = portalRequestScope();
-          const shareToken = approvalChannel.get(tc.id) === "operator_card"
-            ? [...approvalSpend].find(([, callId]) => callId === tc.id)?.[0] ?? null : null;
-          const shareSlot = shareToken ? portalRequestClaims.get(shareToken) : undefined;
           let stored: unknown = null;
           try { stored = JSON.parse(tc.function.arguments || "{}"); } catch { /* native transport refuses */ }
+          // Provider call ids are presentation addresses, not approval identity.
+          // Match all original stored arguments with the SAME canonical hash the
+          // common gate uses; ambiguity or changed words never select a claim.
+          let storedFingerprint: string | null = null;
+          try {
+            if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+              storedFingerprint = await confirmFingerprint(tc.function.name, stored as Record<string, unknown>);
+            }
+          } catch { /* no exact original claim can be selected */ }
+          const shareTokens = approvalChannel.get(tc.id) === "operator_card"
+            ? [...approvalSpend].filter(([token, callId]) => callId === tc.id && token.split(":")[0] === storedFingerprint
+              && portalRequestClaims.get(token)?.state === "claimed").map(([token]) => token) : [];
+          const shareToken = shareTokens.length === 1 ? shareTokens[0] : null;
+          const shareSlot = shareToken ? portalRequestClaims.get(shareToken) : undefined;
           let result: Awaited<ReturnType<typeof executePortalRequestPublication>> = { success: false, outcome: "refused" };
           let originalPublicationVerified = false;
           if (!liveRuntimeScope && shareScope && portalRequestCurrent() && shareSlot?.state === "claimed"

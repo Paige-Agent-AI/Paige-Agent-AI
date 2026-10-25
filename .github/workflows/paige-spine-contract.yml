@@ -114,6 +114,7 @@ on:
       - "supabase/tests/paige_act_dispatch_claim.sql"
       # INT-298 MBC 7a — public visit evidence.
       - "supabase/tests/public_visits.sql"
+      - "supabase/tests/growth_public_publication.sql"
       - "supabase/migrations/20271023000000_paige_act_dispatch_claim.sql"
       - "supabase/migrations/20271023000200_paige_act_dispatch_claim_stale_parse.sql"
       # INT-179 Slice 2b milestone 2 — crash recovery for a dispatcher that dies after claiming.
@@ -292,6 +293,13 @@ jobs:
       - name: Public visits — recorded for the page's own business, read only by it (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/public_visits.sql
+
+      # EXP06 (ANT-162) verification items 3+5: the door's stored publish call and the anonymous
+      # public read are ONE contract — approved version byte-equal to the visitor's, unpublish
+      # removes it, restore+republish serves the restored content, drafts and refused placeholders
+      # never leak, foreign actors refused.
+      - name: Growth public publication binding proof (EXP06)
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/growth_public_publication.sql
 
       - name: Experience 03 — a lead carries its campaign; the campaign reads its leads (rolled back)
         if: ${{ !cancelled() }}

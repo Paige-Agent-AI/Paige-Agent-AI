@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(215);
+SELECT plan(234);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -574,6 +574,57 @@ SELECT ok((SELECT p.roles=(SELECT count(*) FROM public.user_roles WHERE user_id=
   AND p.memberships=(SELECT count(*) FROM public.tenant_members WHERE user_id='e0917000-0000-4000-8000-00000000000c') FROM person_before p),
  'no role or membership of the person changes');
 SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-00000000000c',$q$SELECT public.client_portal_access_state()$q$),'{"state": "open"}'::jsonb,'the person reads open (their B portal)');
+
+-- 17. The original action-item owner projection: no staff-role retrofit or new history.
+-- These rows are synthetic, inside this suite's existing BEGIN/ROLLBACK.
+DELETE FROM public.user_roles WHERE user_id='e0917000-0000-4000-8000-000000000001' AND role='admin';
+INSERT INTO public.paige_customer_actions(id,tenant_id,contact_id,initiated_by_admin_id,action_type,title,body,payload_json,status) VALUES
+ ('e0959000-0000-4000-8000-000000000001','e0927000-0000-4000-8000-000000000001','e0937000-0000-4000-8000-0000000000cd','e0917000-0000-4000-8000-000000000001','task','Review welcome guide','Read the shared guide.','{"internal":"PRIVATE ACTION PAYLOAD"}','customer_notified'),
+ ('e0959000-0000-4000-8000-000000000002','e0927000-0000-4000-8000-000000000002','e0937000-0000-4000-8000-0000000000ce','e0917000-0000-4000-8000-000000000002','task','FOREIGN SERVICE REQUEST',NULL,'{}','proposed');
+INSERT INTO public.paige_customer_responses(action_id,contact_id,responded_by_user_id,response_type,response_text) VALUES
+ ('e0959000-0000-4000-8000-000000000001','e0937000-0000-4000-8000-0000000000cd','e0917000-0000-4000-8000-00000000000c','question','Which section first?'),
+ ('e0959000-0000-4000-8000-000000000001','e0937000-0000-4000-8000-0000000000ce','e0917000-0000-4000-8000-00000000000c','question','FOREIGN RESPONSE CONTACT');
+CREATE FUNCTION pg_temp.owner_actions(_actor uuid DEFAULT 'e0917000-0000-4000-8000-000000000001',
+ _tenant uuid DEFAULT 'e0927000-0000-4000-8000-000000000001',_contact uuid DEFAULT 'e0937000-0000-4000-8000-0000000000cd',
+ _expected uuid DEFAULT 'e0917000-0000-4000-8000-000000000001') RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(_actor,format('SELECT public.list_pending_customer_actions(%L,%L,%L)',_expected,_tenant,_contact)) $$;
+CREATE TEMP TABLE owner_actions_before AS SELECT
+ (SELECT count(*) FROM public.paige_customer_actions) actions,
+ (SELECT count(*) FROM public.paige_customer_responses) responses,
+ (SELECT count(*) FROM public.notifications) notifications,
+ (SELECT count(*) FROM public.paige_audit_log) audits;
+CREATE TEMP TABLE owner_actions_read AS SELECT pg_temp.owner_actions() result;
+SELECT ok(has_function_privilege('authenticated','public.list_pending_customer_actions(uuid,uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.list_pending_customer_actions(uuid,uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.list_pending_customer_actions(uuid,uuid,uuid)','EXECUTE'),'owner action projection is authenticated-only, not a service or anonymous reader');
+SELECT ok(to_regprocedure('public.list_pending_customer_actions(uuid)') IS NOT NULL
+ AND to_regprocedure('public.admin_propose_paige_actions(uuid,jsonb)') IS NOT NULL
+ AND to_regprocedure('public.customer_respond_to_action(uuid,text,text,timestamptz)') IS NOT NULL,'original reader and writer signatures remain available');
+SELECT is((SELECT result->>'schema_version' FROM owner_actions_read),'1','ordinary SOLO owner without global admin reads the bounded native contract');
+SELECT is((SELECT result->>'tenant_id' FROM owner_actions_read),'e0927000-0000-4000-8000-000000000001','read belongs to the current authorized business');
+SELECT is((SELECT result->>'contact_id' FROM owner_actions_read),'e0937000-0000-4000-8000-0000000000cd','read belongs to the exact original CRM customer');
+SELECT is((SELECT result->'actions'->0->>'title' FROM owner_actions_read),'Review welcome guide','same original action is visible');
+SELECT is((SELECT result->'actions'->0->'responses'->0->>'response_text' FROM owner_actions_read),'Which section first?','same original customer response is visible');
+SELECT is((SELECT jsonb_array_length(result->'actions'->0->'responses') FROM owner_actions_read),1,'a response with a different contact is excluded even when its action id matches');
+SELECT ok((SELECT result::text NOT LIKE '%PRIVATE ACTION PAYLOAD%' AND result::text NOT LIKE '%FOREIGN SERVICE REQUEST%'
+ AND result::text NOT LIKE '%FOREIGN RESPONSE CONTACT%' AND result::text NOT LIKE '%linked_user_id%'
+ AND result::text NOT LIKE '%responded_by_user_id%' AND result::text NOT LIKE '%initiated_by_admin_id%' FROM owner_actions_read),'projection omits private payloads, account identities and foreign records');
+SELECT is((SELECT result->>'access_state' FROM owner_actions_read),'paused','paused client retains shared history, without implying active access');
+SELECT is((SELECT (result->>'shared_context_consent')::boolean FROM owner_actions_read),
+ (SELECT paige_shared_context_consent IS TRUE FROM public.clients WHERE id='e0937000-0000-4000-8000-0000000000cd'),'consent is the client-controlled saved value, not an owner grant');
+SELECT is(pg_temp.owner_actions(_tenant=>'e0927000-0000-4000-8000-000000000002',_contact=>'e0937000-0000-4000-8000-0000000000ce')->>'sqlstate','42501','current A workspace cannot request business B');
+SELECT is(pg_temp.owner_actions(_contact=>'e0937000-0000-4000-8000-0000000000ce')->>'sqlstate','42501','foreign customer cannot enter a current-business read');
+SELECT is(pg_temp.owner_actions(_expected=>'e0917000-0000-4000-8000-000000000002')->>'sqlstate','42501','claimed expected actor never grants another identity');
+SELECT is(pg_temp.owner_actions(_actor=>'e0917000-0000-4000-8000-000000000005',_expected=>'e0917000-0000-4000-8000-000000000005')->>'sqlstate','42501','global admin on a plain tenant member is not owner authority');
+SELECT is(pg_temp.owner_actions(_actor=>'e0917000-0000-4000-8000-00000000000c',_expected=>'e0917000-0000-4000-8000-00000000000c')->>'sqlstate','42501','a customer never acquires owner inspection rights');
+SELECT is(pg_temp.owner_actions('e0917000-0000-4000-8000-000000000002','e0927000-0000-4000-8000-000000000002','e0937000-0000-4000-8000-0000000000ce','e0917000-0000-4000-8000-000000000002')->'actions'->0->>'id',
+ 'e0959000-0000-4000-8000-000000000002','second legitimate SOLO cohort uses the same implementation');
+SELECT ok((SELECT b.actions=(SELECT count(*) FROM public.paige_customer_actions)
+ AND b.responses=(SELECT count(*) FROM public.paige_customer_responses)
+ AND b.notifications=(SELECT count(*) FROM public.notifications)
+ AND b.audits=(SELECT count(*) FROM public.paige_audit_log) FROM owner_actions_before b),'inspection/refusals create no action, response, notification or receipt');
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_access_authorize(uuid,uuid,boolean)','EXECUTE'),
+ 'adding the read never exposes or replaces internal owner authority');
 
 SELECT * FROM finish();
 ROLLBACK;

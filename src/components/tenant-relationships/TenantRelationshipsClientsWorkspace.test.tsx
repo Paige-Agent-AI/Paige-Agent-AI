@@ -1353,7 +1353,7 @@ describe("tenant Relationships / Clients workspace", () => {
       expect(body?.children[2]?.id).toBe("client-files");
       // The other record sections are all still there, after it (§58).
       expect([...host.querySelectorAll(".trc-record-body > .trc-record-section h3")].map(h => h.textContent)).toEqual(
-        ["Where Supplied Person stands", "Shared with Supplied Person", "Files for Supplied Person", "How Supplied Person can be reached", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+        ["Where Supplied Person stands", "Shared with Supplied Person", "Files for Supplied Person", "How Supplied Person can be reached", "Customer action items", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
       // The static "upload is not exposed here" card now says where the live library is.
       expect(host.textContent).toContain("Client files · LIVE");
       // E09 Slice 6: the record's footer no longer repeats the two flags the new section shows (§58: moved, not lost).

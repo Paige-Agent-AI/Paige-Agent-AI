@@ -1,0 +1,15 @@
+/* Original People record tokens and scroll owner; no independent dashboard. */
+.trc-action-body { padding: 14px; color: var(--pg-ink-2); font-size: 13px; line-height: 1.5; }
+.trc-action-body > p { margin: 0 0 10px; }
+.trc-action-item { padding: 15px 0; border-top: 1px solid var(--pg-line-soft); }
+.trc-action-item:first-child { padding-top: 0; border-top: 0; }
+.trc-action-item h4 { margin: 0 0 5px; color: var(--pg-ink); font-size: 14px; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
+.trc-action-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--pg-muted); font-size: 12px; }
+.trc-action-words { margin: 9px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.trc-action-item blockquote { margin: 12px 0 0; padding: 9px 12px; border-left: 2px solid var(--pg-line); }
+.trc-action-note { color: var(--pg-muted); }
+/* In the original narrow record header the flex axis becomes vertical. Its
+   shared 18rem horizontal basis must not become a 288px heading height. */
+@media (max-width: 620px) {
+  .trc-customer-actions .trc-shared-heading { flex: 0 1 auto; }
+}

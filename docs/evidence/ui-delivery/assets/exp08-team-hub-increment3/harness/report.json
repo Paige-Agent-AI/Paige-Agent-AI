@@ -4,7 +4,7 @@
    "name": "ev-1536x770-closed-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 575,
+    "top": 789,
     "max": 789
    },
    "hubW": 1320,
@@ -82,7 +82,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -142,7 +142,7 @@
    "name": "ev-1536x770-closed-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 575,
+    "top": 789,
     "max": 789
    },
    "hubW": 1320,
@@ -220,7 +220,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -278,7 +278,7 @@
    "name": "ev-1536x770-open-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 575,
+    "top": 789,
     "max": 789
    },
    "hubW": 921,
@@ -356,7 +356,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -414,7 +414,7 @@
    "name": "ev-1536x770-open-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 575,
+    "top": 789,
     "max": 789
    },
    "hubW": 921,
@@ -492,7 +492,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -550,7 +550,7 @@
    "name": "ev-1366x768-closed-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 577,
+    "top": 791,
     "max": 791
    },
    "hubW": 1294,
@@ -628,7 +628,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -686,7 +686,7 @@
    "name": "ev-1366x768-closed-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 577,
+    "top": 791,
     "max": 791
    },
    "hubW": 1294,
@@ -764,7 +764,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -822,7 +822,7 @@
    "name": "ev-1366x768-open-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 577,
+    "top": 791,
     "max": 791
    },
    "hubW": 954,
@@ -900,7 +900,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -958,7 +958,7 @@
    "name": "ev-1366x768-open-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 577,
+    "top": 791,
     "max": 791
    },
    "hubW": 954,
@@ -1036,7 +1036,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -1094,7 +1094,7 @@
    "name": "ev-1024x768-closed-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 577,
+    "top": 791,
     "max": 791
    },
    "hubW": 952,
@@ -1172,7 +1172,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -1230,7 +1230,7 @@
    "name": "ev-1024x768-closed-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 577,
+    "top": 791,
     "max": 791
    },
    "hubW": 952,
@@ -1308,7 +1308,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -1366,7 +1366,7 @@
    "name": "ev-1024x768-open-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 577,
+    "top": 791,
     "max": 791
    },
    "hubW": 952,
@@ -1444,7 +1444,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -1502,7 +1502,7 @@
    "name": "ev-1024x768-open-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 577,
+    "top": 791,
     "max": 791
    },
    "hubW": 952,
@@ -1580,7 +1580,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -1638,7 +1638,7 @@
    "name": "ev-900x1000-closed-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 384,
+    "top": 598,
     "max": 598
    },
    "hubW": 828,
@@ -1716,7 +1716,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -1774,7 +1774,7 @@
    "name": "ev-900x1000-closed-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 384,
+    "top": 598,
     "max": 598
    },
    "hubW": 828,
@@ -1852,7 +1852,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -1910,7 +1910,7 @@
    "name": "ev-900x1000-open-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 404,
+    "top": 598,
     "max": 598
    },
    "hubW": 828,
@@ -1988,7 +1988,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -2046,7 +2046,7 @@
    "name": "ev-900x1000-open-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 384,
+    "top": 598,
     "max": 598
    },
    "hubW": 828,
@@ -2124,7 +2124,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -2182,8 +2182,8 @@
    "name": "ev-390-files-dark",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 771,
-    "max": 1074
+    "top": 994,
+    "max": 994
    },
    "hubW": 330,
    "cols": "330px",
@@ -2254,7 +2254,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -2312,8 +2312,8 @@
    "name": "ev-390-files-light",
    "scrolledToEndByHarness": true,
    "streamBeforeScroll": {
-    "top": 771,
-    "max": 1074
+    "top": 994,
+    "max": 994
    },
    "hubW": 330,
    "cols": "330px",
@@ -2384,7 +2384,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -2517,7 +2517,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -2644,7 +2644,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -2802,7 +2802,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File refused: Files with macros can't be shared here"
+    "Uploading 5 files. File refused: That file type isn't allowed. File refused: Over 10 MB. Upload didn't finish. Retry is available. File ready. File refused: Files with macros can't be shared here"
    ],
    "fileLog": [
     {
@@ -3014,7 +3014,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File refused: Files with macros can't be shared here"
+    "Uploading 5 files. File refused: That file type isn't allowed. File refused: Over 10 MB. Upload didn't finish. Retry is available. File ready. File refused: Files with macros can't be shared here"
    ],
    "fileLog": [
     {
@@ -3226,7 +3226,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File refused: Files with macros can't be shared here"
+    "Uploading 5 files. File refused: That file type isn't allowed. File refused: Over 10 MB. Upload didn't finish. Retry is available. File ready. File refused: Files with macros can't be shared here"
    ],
    "fileLog": [
     {
@@ -3431,7 +3431,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File refused: This file looks damaged"
+    "Uploading 5 files. File refused: 5 files per message. File refused: Files with macros can't be shared here. File refused: Its contents don't match its type. File refused: Files with embedded objects or charts can't be shared here yet. File refused: Files that pull in content from elsewhere can't be shared here. File refused: This file looks damaged"
    ],
    "fileLog": [
     {
@@ -3631,7 +3631,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File refused: Its contents don't match its type"
+    "Uploading 1 file. File refused: That file type isn't allowed. File refused: Over 10 MB. File refused: Its contents don't match its type"
    ],
    "fileLog": [
     {
@@ -3738,8 +3738,8 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "Upload didn't finish. Retry is available.",
-    "File ready"
+    "Uploading 1 file. Upload didn't finish. Retry is available.",
+    "Uploading 1 file. File ready"
    ],
    "fileLog": [
     {
@@ -3860,7 +3860,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 1 file. File ready"
    ],
    "fileLog": [
     {
@@ -3967,7 +3967,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 1 file. File ready"
    ],
    "fileLog": [
     {
@@ -4077,7 +4077,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready",
+    "Uploading 2 files. File ready",
     "Message sent"
    ],
    "fileLog": [
@@ -4216,7 +4216,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready",
+    "Uploading 2 files. File ready",
     "Message sent"
    ],
    "fileLog": [
@@ -4607,7 +4607,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 1 file. File ready"
    ],
    "fileLog": [
     {
@@ -4714,7 +4714,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File ready"
+    "Uploading 2 files. File ready"
    ],
    "fileLog": [
     {
@@ -4942,7 +4942,7 @@
    "overflow": false,
    "hubOverflow": false,
    "announced": [
-    "File refused: Files with macros can't be shared here"
+    "Uploading 5 files. File refused: That file type isn't allowed. File refused: Over 10 MB. Upload didn't finish. Retry is available. File ready. File refused: Files with macros can't be shared here"
    ],
    "fileLog": [
     {

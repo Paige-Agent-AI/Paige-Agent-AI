@@ -53,8 +53,9 @@ const refusedSet = [
 ];
 
 const shots = [];
-// The viewport records scroll the stream to its end after the chips are added, as a person would:
-// adding chips does not re-pin the stream (see the two ev-state-unpinned frames, which do not scroll).
+// The viewport records also scroll the stream to its end after the chips are added (scrolledToEndByHarness);
+// streamBeforeScroll records where the stream sat on its own first. The two ev-state-unpinned frames
+// (names kept from the first capture) do NOT scroll, so they show whether the hub keeps the stream pinned.
 for (const r of records) for (const theme of ["dark", "light"]) shots.push({ ...r, theme, act: "chips", chips: viewportChips, scrollEnd: true, name: `ev-${r.id}-files-${theme}` });
 shots.push({ ...phone, theme: "dark", act: "phonechips", chips: viewportChips, scrollEnd: true, name: "ev-390-files-dark" });
 shots.push({ ...phone, theme: "light", act: "phonechips", chips: viewportChips, scrollEnd: true, name: "ev-390-files-light" });

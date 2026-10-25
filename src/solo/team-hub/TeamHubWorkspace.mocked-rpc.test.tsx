@@ -1178,6 +1178,8 @@ describe("Draft a task (increment 2, mocked RPC)", () => {
     const { host } = await mount();
     await type(composer(host), "/PAIGE draft a task Send the welcome packet");
     await press(composer(host), "Enter");
+    // A frame passes before anyone presses Create; announcements made in one frame are joined.
+    await flush();
     const form = preview(host, "Draft a task")!;
     expect(field(form, "Task")!.value).toBe("Send the welcome packet");
     expect(form.textContent).toContain("Creates a task in Operations");
@@ -1263,6 +1265,7 @@ describe("Draft a task (increment 2, mocked RPC)", () => {
     const { host } = await mount();
     await type(composer(host), "/PAIGE draft a task Call the client back");
     await press(composer(host), "Enter");
+    await flush();
     let form = preview(host, "Draft a task")!;
     const radios = Array.from(form.querySelectorAll<HTMLButtonElement>("[role=radio]"));
     await act(async () => radios[1].click());
@@ -1691,7 +1694,8 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
     await pick(fileInput(host), [fileFor("Fake.png", "image/png")]);
     await flush();
     expect(chips(host)[0].textContent).toContain("Its contents don't match its type");
-    expect(liveRegion(host).textContent).toBe("File refused: Its contents don't match its type");
+    // Begin, upload and the check all answer inside one frame here: both steps are said, joined.
+    expect(liveRegion(host).textContent).toBe("Uploading 1 file. File refused: Its contents don't match its type");
     expect(chips(host)[0].dataset.state).toBe("refused");
     // A refused chip has no Retry: only removing it lets the message go.
     expect(host.querySelector(".th-conv .th-hint")!.textContent).toBe("Remove refused files to send");
@@ -1723,7 +1727,8 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
     expect(said[4]).toContain("That file couldn't be checked");
     expect(said.join(" ")).not.toContain("Its contents don't match its type");
     expect(chips(host).every((chip) => chip.dataset.state === "refused")).toBe(true);
-    expect(liveRegion(host).textContent).toBe("File refused: That file couldn't be checked");
+    // Every refusal of the one pick is said, in order, not only the last.
+    expect(liveRegion(host).textContent).toBe("Uploading 5 files. File refused: Files with macros can't be shared here. File refused: Older Word and Excel files can't be shared here. Save it as .docx or .xlsx. File refused: Files that pull in content from elsewhere can't be shared here. File refused: Files with embedded objects or charts can't be shared here yet. File refused: That file couldn't be checked");
   });
 
   it("says a file may have expired when a message with a day-old file is refused (N6)", async () => {
@@ -1820,7 +1825,7 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
     await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf")]);
     await flush();
     expect(chips(host)[0].textContent).toContain("Upload didn't finish");
-    expect(liveRegion(host).textContent).toBe("Upload didn't finish. Retry is available.");
+    expect(liveRegion(host).textContent).toBe("Uploading 1 file. Upload didn't finish. Retry is available.");
     // A failed chip has Retry, so the hint offers it.
     expect(host.querySelector(".th-conv .th-hint")!.textContent).toBe("Retry or remove files to send");
     await act(async () => button(host, "Retry Brief.pdf")!.click());
@@ -2010,5 +2015,111 @@ describe("attachments: files on messages (increment 3, mocked RPC)", () => {
     expect(signs).toEqual([]);
     expect(assign).not.toHaveBeenCalled();
     expect(host.querySelector(".th-file-error")?.textContent).toBe("Couldn't get the file. Try again.");
+  });
+});
+
+// ── Increment 3 rendered-evidence fixes (docs/evidence/ui-delivery/assets/exp08-team-hub-increment3) ──
+
+describe("increment 3 rendered-evidence fixes (mocked RPC)", () => {
+  const posted = (over: Record<string, unknown> = {}) => ({ id: "f-9", name: "Kickoff-cover-brief.pdf", mime: "application/pdf", size: 1_887_437, path: `${TENANT}/team-hub/f-9`, ...over });
+
+  it("keeps the Download word in its own span (hidden on a narrow row) and the size as one unbreakable value", async () => {
+    db.messages["c-general"] = [msg({ files: [posted()] })];
+    const { host } = await mount();
+    const download = button(host, "Download Kickoff-cover-brief.pdf")!;
+    // The word is a separate span the narrow-row rule can drop; the name never depends on it.
+    expect(download.querySelector(".th-file-dl-label")?.textContent).toBe("Download");
+    expect(download.getAttribute("aria-label")).toBe("Download Kickoff-cover-brief.pdf");
+    expect(download.getAttribute("title")).toBe("Download Kickoff-cover-brief.pdf");
+    const row = host.querySelector<HTMLElement>(".th-stream .th-file")!;
+    expect(row.querySelector(".th-file-name")?.getAttribute("title")).toBe("Kickoff-cover-brief.pdf");
+    expect(row.querySelector(".th-file-meta small .th-file-size")?.textContent).toBe("1.8 MB");
+  });
+
+  it("joins announcements made in the same frame into the one polite region instead of dropping the first", async () => {
+    gates.upload = deferred();
+    const { host } = await mount();
+    const input = fileInput(host);
+    // Two picks before the next frame: one starts an upload, one is refused at once.
+    await act(async () => {
+      Object.defineProperty(input, "files", { configurable: true, value: [fileFor("Brief.pdf", "application/pdf")] });
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      Object.defineProperty(input, "files", { configurable: true, value: [fileFor("Setup.exe", "application/x-msdownload")] });
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await flush();
+    expect(host.querySelectorAll("[aria-live]")).toHaveLength(1);
+    expect(liveRegion(host).textContent).toBe("Uploading 1 file. File refused: That file type isn't allowed");
+    // A later frame still replaces it: nothing piles up across frames.
+    await act(async () => gates.upload!.resolve());
+    await flush();
+    expect(liveRegion(host).textContent).toBe("File ready");
+  });
+
+  describe("keeping the stream on the newest message when it or its rows resize", () => {
+    type Observed = { callback: ResizeObserverCallback; targets: Element[] };
+    let observers: Observed[];
+    beforeEach(() => {
+      observers = [];
+      vi.stubGlobal("ResizeObserver", class {
+        private entry: Observed;
+        constructor(callback: ResizeObserverCallback) { this.entry = { callback, targets: [] }; observers.push(this.entry); }
+        observe(target: Element) { this.entry.targets.push(target); }
+        unobserve() { /* not needed here */ }
+        disconnect() { this.entry.targets = []; }
+      });
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    /** jsdom lays nothing out: give the stream a scroll geometry the test controls. */
+    function geometry(stream: HTMLElement, start: { height: number; client: number; top: number }) {
+      const box = { ...start };
+      Object.defineProperty(stream, "scrollHeight", { configurable: true, get: () => box.height });
+      Object.defineProperty(stream, "clientHeight", { configurable: true, get: () => box.client });
+      Object.defineProperty(stream, "scrollTop", { configurable: true, get: () => box.top, set: (value: number) => { box.top = Math.max(0, Math.min(value, box.height - box.client)); } });
+      return box;
+    }
+    async function resized(target: Element) {
+      await act(async () => {
+        for (const observer of observers) if (observer.targets.includes(target)) observer.callback([{ target } as ResizeObserverEntry], {} as ResizeObserver);
+      });
+    }
+    async function scrolled(stream: HTMLElement) { await act(async () => { stream.dispatchEvent(new Event("scroll")); }); }
+
+    it("re-pins a reader who was at the end when a row grows after placement and when the composer grows", async () => {
+      db.messages["c-general"] = [msg()];
+      const { host } = await mount();
+      const stream = host.querySelector<HTMLElement>(".th-conv .th-stream")!;
+      const content = stream.querySelector<HTMLElement>(".th-stream-content")!;
+      expect(content).not.toBeNull();
+      const box = geometry(stream, { height: 1107, client: 532, top: 575 });
+      await scrolled(stream);
+      // A task card's read lands a frame later and the content grows 140px.
+      box.height = 1247;
+      await resized(content);
+      expect(box.top).toBe(1247 - 532);
+      // Files are attached: the composer grows, the stream gets 74px shorter. The browser's own
+      // scroll event for that layout change (anchoring) arrives first and must not count as the reader.
+      box.client = 458;
+      box.top = 716;
+      await scrolled(stream);
+      await resized(stream);
+      expect(box.top).toBe(1247 - 458);
+    });
+
+    it("never moves a reader who scrolled up", async () => {
+      db.messages["c-general"] = [msg()];
+      const { host } = await mount();
+      const stream = host.querySelector<HTMLElement>(".th-conv .th-stream")!;
+      const box = geometry(stream, { height: 1107, client: 532, top: 575 });
+      await scrolled(stream);
+      box.top = 100;
+      await scrolled(stream);
+      box.height = 1247;
+      await resized(stream.querySelector(".th-stream-content")!);
+      box.client = 458;
+      await resized(stream);
+      expect(box.top).toBe(100);
+    });
   });
 });

@@ -94,9 +94,24 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
   tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void;
 }) {
   const [announcement, setAnnouncement] = useState("");
+  // One polite region, one write per frame. Everything said before the next frame paints (a pick
+  // that starts two uploads and refuses a third, a mocked-fast check that finishes in the same
+  // frame) is joined into that one write instead of the last message silently replacing the rest.
+  const queued = useRef<string[]>([]);
+  const flushing = useRef(false);
   const announce = useCallback((text: string) => {
+    if (!text) return;
+    if (!queued.current.includes(text)) queued.current.push(text);
+    if (flushing.current) return;
+    flushing.current = true;
+    // Cleared first, so the same words said twice in a row are still read the second time.
     setAnnouncement("");
-    window.requestAnimationFrame(() => setAnnouncement(text));
+    window.requestAnimationFrame(() => {
+      const said = joinAnnouncements(queued.current);
+      queued.current = [];
+      flushing.current = false;
+      setAnnouncement(said);
+    });
   }, []);
   // New arrivals found by a refresh are announced as a count through the hub's one live region.
   // Attachment progress (Uploading 2 files, File ready, File refused: …) goes through the same one region.
@@ -129,7 +144,16 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
   return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} />;
 }
 
+/** Several messages for the one live region, read as sentences in the order they were said. */
+function joinAnnouncements(parts: string[]): string {
+  const said = parts.map((part) => part.trim()).filter(Boolean);
+  return said.map((part, index) => index < said.length - 1 && !/[.!?…]$/.test(part) ? `${part}.` : part).join(" ");
+}
+
 type Form = { kind: "channel" } | { kind: "dm" } | null;
+
+/** How close to the newest message still counts as "at it" when the stream or its rows resize. */
+const PIN_SLACK_PX = 4;
 
 /** Same thresholds as the stylesheet's `@container th-hub (max-width: 759.98px | 1149.98px | 1439.98px)`. */
 const ONE_COLUMN_BELOW = 760;
@@ -1046,27 +1070,62 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
   const placed = useRef<string | null>(null);
   const older = useRef<{ height: number; top: number } | null>(null);
   const nearBottom = useRef(true);
+  /** At the newest message (within PIN_SLACK_PX) as of the last scroll: the only reader a resize re-pins. */
+  const atEnd = useRef(true);
+  /** The stream's size when its position was last read. A scroll event that arrives with a different
+   *  size was caused by layout (our own placement landing a frame late, the browser's scroll
+   *  anchoring, a shrinking stream), not by the reader, and is left to the resize handling. */
+  const seen = useRef({ height: 0, client: 0 });
+  const content = useRef<HTMLDivElement>(null);
   const pendingKey = pending.map((item) => `${item.localId}:${item.status}`).join("|");
+  const remember = useCallback((element: HTMLElement) => {
+    const gap = element.scrollHeight - element.scrollTop - element.clientHeight;
+    nearBottom.current = gap < 80;
+    atEnd.current = gap <= PIN_SLACK_PX;
+    seen.current = { height: element.scrollHeight, client: element.clientHeight };
+  }, []);
+  const place = useCallback((element: HTMLElement, top: number) => {
+    element.scrollTop = top;
+    remember(element);
+  }, [remember]);
 
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
     if (older.current) {
       // Keep the reader's place when earlier messages load above it.
-      element.scrollTop = element.scrollHeight - older.current.height + older.current.top;
+      place(element, element.scrollHeight - older.current.height + older.current.top);
       older.current = null;
       return;
     }
     if (placed.current !== stream.channelId) {
       placed.current = stream.channelId;
       const divider = element.querySelector<HTMLElement>("[data-new-divider]");
-      element.scrollTop = divider ? Math.max(0, divider.offsetTop - element.offsetTop - 8) : element.scrollHeight;
+      // Recorded now, not on the scroll event a frame later, so a resize in between can't misread it.
+      place(element, divider ? Math.max(0, divider.offsetTop - element.offsetTop - 8) : element.scrollHeight);
       return;
     }
-    if (nearBottom.current) element.scrollTop = element.scrollHeight;
+    if (nearBottom.current) place(element, element.scrollHeight);
     // Keyed on each pending row's status too: a send that fails grows its row (Retry, Delete), and
     // that recovery must stay in view.
-  }, [stream.channelId, stream.messages, pendingKey]);
+  }, [stream.channelId, stream.messages, pendingKey, place]);
+
+  // The stream also changes size without a new message: the composer grows when files are attached
+  // (the stream gets shorter), and rows grow once their own reads land (a task card's Operations
+  // read, an image thumbnail). A reader who was at the newest message stays there; a reader who
+  // scrolled up is never moved.
+  useEffect(() => {
+    const element = ref.current;
+    const inner = content.current;
+    if (!element || !inner || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      if (atEnd.current) place(element, element.scrollHeight);
+      else seen.current = { height: element.scrollHeight, client: element.clientHeight };
+    });
+    observer.observe(element);
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, [place]);
 
   const loadOlder = () => {
     const element = ref.current;
@@ -1077,7 +1136,17 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
   let lastDay = "";
   // A labelled region, not a live log: arrivals are announced once, as a count, by the hub's live region.
   return <div ref={ref} className="th-stream" role="region" aria-label="Messages" tabIndex={-1}
-    onScroll={(event) => { const element = event.currentTarget; nearBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80; }}>
+    onScroll={(event) => {
+      const element = event.currentTarget;
+      if (element.scrollHeight !== seen.current.height || element.clientHeight !== seen.current.client) {
+        // Layout moved it, not the reader: keep whether they were at the end, and take the new size.
+        seen.current = { height: element.scrollHeight, client: element.clientHeight };
+        return;
+      }
+      remember(element);
+    }}>
+    {/* One box around every row, so a row that grows after placement is one observed size change. */}
+    <div ref={content} className="th-stream-content">
     {stream.hasMore && <div className="th-older">
       <button type="button" className="th-btn th-btn--ghost" disabled={stream.loadingOlder || !hub.online} onClick={loadOlder}>
         {stream.loadingOlder ? "Loading earlier messages…" : "Load earlier messages"}</button>
@@ -1099,6 +1168,7 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
     })}
     {pending.map((item) => <PendingRow key={item.localId} item={item} me={me} online={hub.online}
       onRetry={() => onRetry(item)} onDiscard={() => onDiscard(item)} />)}
+    </div>
   </div>;
 }
 
@@ -1162,7 +1232,7 @@ function PendingRow({ item, me, online, onRetry, onDiscard }: {
       {item.files.length > 0 && <ul className="th-files" aria-label={item.files.length === 1 ? "1 file" : `${item.files.length} files`}>
         {item.files.map((file) => <li key={file.localId}><div className="th-file">
           <span className="th-file-glyph" aria-hidden="true"><FileGlyph mime={file.mime} /></span>
-          <span className="th-file-meta"><span className="th-file-name" title={file.name}>{file.name}</span><small>{fileSizeLabel(file.size)}</small></span>
+          <span className="th-file-meta"><span className="th-file-name" title={file.name}>{file.name}</span><small><span className="th-file-size">{fileSizeLabel(file.size)}</span></small></span>
         </div></li>)}
       </ul>}
       {/* Announced once by the live region when the send fails; shown here with its recovery. */}
@@ -1762,11 +1832,12 @@ function FileRow({ file }: { file: TeamHubFile }) {
     {isImageMime(file.mime) ? <FileThumb file={file} /> : <span className="th-file-glyph" aria-hidden="true"><FileGlyph mime={file.mime} /></span>}
     <span className="th-file-meta">
       <span className="th-file-name" title={file.name}>{file.name}</span>
-      <small>{typeLabel(file.mime)} · {fileSizeLabel(file.size)}</small>
+      <small>{typeLabel(file.mime)} · <span className="th-file-size">{fileSizeLabel(file.size)}</span></small>
     </span>
-    {/* aria-disabled while minting, so focus stays on the button. */}
-    <button type="button" className="th-btn th-file-dl" aria-label={`Download ${file.name}`} aria-disabled={busy || undefined}
-      aria-describedby={failed ? `${errorId} ${FILE_DISCLOSURE_ID}` : FILE_DISCLOSURE_ID} onClick={() => void download()}><Download aria-hidden="true" />{busy ? "Getting…" : "Download"}</button>
+    {/* aria-disabled while minting, so focus stays on the button. On a narrow row the stylesheet
+        hides the visible word and the button is a 40px icon; its name is always "Download <file>". */}
+    <button type="button" className="th-btn th-file-dl" aria-label={`Download ${file.name}`} title={`Download ${file.name}`} aria-disabled={busy || undefined}
+      aria-describedby={failed ? `${errorId} ${FILE_DISCLOSURE_ID}` : FILE_DISCLOSURE_ID} onClick={() => void download()}><Download aria-hidden="true" /><span className="th-file-dl-label">{busy ? "Getting…" : "Download"}</span></button>
     {failed && <p id={errorId} className="th-error th-file-error">{TEAM_HUB_DOWNLOAD_FAILED}</p>}
   </div></li>;
 }

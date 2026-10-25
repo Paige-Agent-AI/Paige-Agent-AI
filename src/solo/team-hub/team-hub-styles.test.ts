@@ -15,6 +15,7 @@ const rule = (selector: string) => {
 
 describe("Team Hub stylesheet", () => {
   it("lays out by the hub's own width (container queries), never the viewport width", () => {
+    // Inline-size only: a size container collapses where its host's height is not definite.
     expect(rule(".th-hub")).toContain("container:th-hub / inline-size");
     expect(css).not.toMatch(/@media[^{]*(?:max|min)-width/);
     expect(css).toContain("@container th-hub (max-width:1149.98px)");
@@ -41,5 +42,41 @@ describe("Team Hub stylesheet", () => {
 
   it("marks a pressed visibility toggle with the same violet dot as a pressed chip, not colour alone", () => {
     expect(css).toContain('.th-chip[aria-pressed="true"]::before,.th-seg button[aria-pressed="true"]::after{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:var(--pg-violet)}');
+  });
+});
+
+describe("Team Hub stylesheet: increment 3 rendered-evidence fixes", () => {
+  it("drops the Download word on a narrow file list and keeps a 40x40 icon button there, by the list's own width", () => {
+    expect(rule(".th-files")).toContain("container:th-files / inline-size");
+    const narrow = /@container th-files \(max-width:399\.98px\)\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";
+    expect(narrow).toContain(".th-file-dl{width:40px;min-width:40px;padding:0}");
+    expect(narrow).toContain(".th-file-dl-label{display:none}");
+    expect(rule(".th-file-size")).toContain("white-space:nowrap");
+    expect(rule(".th-file-name")).toBe("");
+    expect(css).toMatch(/\.th-att-name,\.th-file-name\{overflow:hidden;text-overflow:ellipsis;white-space:nowrap/);
+  });
+
+  it("caps the chip tray against the screen height and lets it scroll, so Send stays on screen", () => {
+    expect(rule(".th-hub")).not.toContain("/ size");
+    const tray = rule(".th-att-list");
+    expect(tray).toMatch(/max-height:max\(73px,min\(125px,30dvh\)\)/);
+    expect(tray).toContain("round(down,30dvh - 21px,52px)");
+    expect(tray).toContain("overflow-y:auto");
+    // The inset keeps a focused chip's ring inside the scroller.
+    expect(tray).toContain("padding:3px");
+    expect(tray).toContain("scroll-padding-block:3px");
+  });
+
+  it("wraps every stream row in one observed box without changing the rows' own layout", () => {
+    expect(css).toContain(".th-stream > div,.th-stream-content > div{display:flex;flex-direction:column;gap:2px}");
+    expect(rule(".th-stream-content")).toContain("flex:1 0 auto");
+  });
+
+  it("colours a failed chip with the warning token and a refused chip with the negative (destructive) token, never gold", () => {
+    const failed = rule('.th-att[data-state="failed"]');
+    const refused = rule('.th-att[data-state="refused"]');
+    expect(failed).toContain("var(--pg-warning)");
+    expect(refused).toContain("var(--pg-negative)");
+    for (const declaration of [failed, refused]) expect(declaration).not.toMatch(/gold/);
   });
 });

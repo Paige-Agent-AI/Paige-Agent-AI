@@ -413,5 +413,25 @@
     "review": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE; fresh exact-head hosted CI remains owed",
     "native": "Production read-only frontier180004 and all five incumbent Comms bodies unchanged; native190004 not applied",
     "activation": "NONE; no customer/provider send, signature, payment or acceptance"
+  },
+  "forwardFrontierReceivingOct25": {
+    "at": "2026-10-25T17:25:37.314Z",
+    "main": "bbee3e1d40071b7fce95228cb3cca633ab0008f7",
+    "actualProductionFrontier": "20271114220002",
+    "oldCandidateCount": 0,
+    "newCandidateCount": 0,
+    "oldVersion": "20271114190004",
+    "newVersion": "20271114230204",
+    "sqlSha256": "3b5656b69943363d6735d2cc380b1a1ccd1ff05c05fa21196c16cfb1f4a8915a",
+    "migrationBytesUnchanged": true,
+    "proofReferences": [
+      "scripts/agreements/prepared-message-admission-fixture.mjs",
+      "scripts/agreements/prepared-message-origin-proof.mjs"
+    ],
+    "wholeReferenceInverses": true,
+    "previousExactHead": "a9f080cf124a8e1ae025e45c3f246beb8b3682c4",
+    "previousExactCI": "13 SUCCESS +2web SUCCESS +0threads; historical, not inherited",
+    "scope": "Only never-applied forward order and references; no applied migration/history/source/permission/provider/activation change",
+    "currentCI": "REQUIRED_ON_NEW_HEAD"
   }
 }

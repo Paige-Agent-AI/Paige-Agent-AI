@@ -6,6 +6,7 @@ import { PreparedSignatureReviewUnavailable } from "../_shared/agreements/prepar
 import { OwnerPreparationUnavailable, type OwnerPreparationService,
   type OwnerPreparationCaller } from "../_shared/agreements/owner-preparation.ts";
 import { readBoundedOwnerPreparationJson } from "../_shared/agreements/owner-preparation-http.ts";
+import {runOriginatingPreparedSignatureRequest,type PreparedSignatureOriginService} from "../_shared/agreements/prepared-signature-originating.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // agreement-send — freeze, hash, mint and send (INT-163). Authenticated; `verify_jwt` default true.
 //
@@ -99,6 +100,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Keep it before legacy Resend readiness, document freezing, token creation,
   // message/provider work and the consequential send rate bucket.
   const reviewUrl = new URL(req.url);
+  if(reviewUrl.searchParams.has('command')){
+    const reply=(value:unknown,status=200)=>{const r=json(value,status);r.headers.set('Cache-Control','no-store, private');r.headers.set('Vary','Authorization');r.headers.set('X-Content-Type-Options','nosniff');return r;};
+    if(reviewUrl.searchParams.get('command')!=='prepared-request'||reviewUrl.searchParams.getAll('command').length!==1||[...reviewUrl.searchParams.keys()].some(k=>k!=='command'))
+      return reply({ok:false,code:'invalid_request',error:'Choose the exact saved request for approval.'},400);
+    if(userData?.user?.is_anonymous===true)return reply({ok:false,code:'access_unverified',error:'Sign in to your business to review this request.'},403);
+    if(await overRateLimit(admin,`agreement-prepared:${tenantId}:${actorId}`,AGREEMENT_SENDS_PER_TENANT_PER_HOUR,3600,true))
+      return reply({ok:false,code:'rate_limited',error:'Too many request attempts. Keep the original reference and try its status later.'},429);
+    try{
+      const input=await readBoundedOwnerPreparationJson(req);
+      const source:OwnerPreparationService={rpc:(name,args)=>admin.rpc(name,args),storage:admin.storage,originalUploadPath:async(tenant,agreement)=>{
+        const r=await admin.from('paige_agreements').select('document_path').eq('id',agreement).eq('tenant_id',tenant).maybeSingle();
+        return !r.error&&r.data&&typeof r.data.document_path==='string'?r.data.document_path:null;
+      }};
+      const result=await runOriginatingPreparedSignatureRequest(input,{caller:caller as unknown as OwnerPreparationCaller,service:admin as unknown as PreparedSignatureOriginService,
+        actorId,tenantId,source,email:{admin:admin as unknown as PreparedSignatureEmailPorts['admin'],environment:()=>({resendConfigured:false,googleConfigured:false,sendgridConfigured:!!Deno.env.get('SENDGRID_MAIL_SEND_API_KEY')}),
+          preSend:input=>runPreSend(admin as never,input)}});
+      return reply({ok:true,result});
+    }catch(error){
+      if(error instanceof OwnerPreparationUnavailable&&error.code==='INVALID_REQUEST')return reply({ok:false,code:'invalid_request',error:'This request could not be read. Keep its original reference.'},400);
+      return reply({ok:false,code:'request_unverified',error:'The original request result could not be verified. Check its status before starting another request.'},503);
+    }
+  }
   if (reviewUrl.searchParams.has("review")) {
     const reply = (value: unknown, status = 200) => {
       const result = json(value, status);

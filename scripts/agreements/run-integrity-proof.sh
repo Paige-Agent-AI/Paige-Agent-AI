@@ -249,6 +249,7 @@ deno test --allow-import --node-modules-dir=none --allow-read="$REPO/supabase/fu
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-work.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-credentials.test.ts" \
+  "$REPO/supabase/functions/agreement-send/prepared-command.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-seal-completion.test.ts"
 # Dynamic source-test imports do not establish actual SDK type compatibility.
 # Check the original deployed door as well as its private history projection.

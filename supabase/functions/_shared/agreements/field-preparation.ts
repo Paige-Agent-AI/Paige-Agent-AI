@@ -78,7 +78,7 @@ export function readAgreementPdfDocument(value: unknown): AgreementPdfDocument {
 /** Coordinates are PDF points from the visible, rotated crop's TOP LEFT, at
  * scale 1. CSS pixels, browser zoom and percentage prototype values never enter
  * this contract. Future display and stamping must use this same page descriptor. */
-function readAssignedFields(document:AgreementPdfDocument,seenSigners:ReadonlySet<string>,fieldsValue:unknown):AgreementField[]{
+export function readAssignedFields(document:AgreementPdfDocument,seenSigners:ReadonlySet<string>,fieldsValue:unknown):AgreementField[]{
   if (!Array.isArray(fieldsValue) || fieldsValue.length > 500) return fail();
   const seenFields = new Set<string>();
   return Array.from(fieldsValue).map(value => {

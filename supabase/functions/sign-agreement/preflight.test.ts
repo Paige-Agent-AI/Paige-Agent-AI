@@ -18,6 +18,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
   let nativeMode:'refuse'|'record'|'lost_ack'='refuse',recorded=false,recoveryError:string|null=null,notices=0,completionAttempts=0;
   let receiptOverride:Record<string,unknown>={};
   let preparedSourceReads=0,preparedSourceFailure=false;
+  let fieldReadReply:unknown=null;
   let readFailure:'signer'|'agreement'|'order'|null=null;
   const nativeInputs:Record<string,unknown>[]=[];
   const receipt=(replayed:boolean)=>({state:'recorded',replayed,signing_id:agreementId,signer_id:signerId,
@@ -32,7 +33,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       const request=new Request(input,init),url=new URL(request.url);
       assert.equal(url.origin,'https://synthetic.invalid');
       if(url.pathname==='/rest/v1/rpc/check_public_rate_limit')return json(true);
-      if(url.pathname==='/rest/v1/rpc/_read_agreement_signing_fields'){assert.deepEqual(await request.json(),{_token_hash:await sha256Hex('a'.repeat(64))});return json({kind:'legacy'});}
+      if(url.pathname==='/rest/v1/rpc/_read_agreement_signing_fields'){assert.deepEqual(await request.json(),{_token_hash:await sha256Hex('a'.repeat(64))});return json(fieldReadReply??{kind:'legacy',tenant_id:tenant,agreement_id:agreementId,signer_id:signerId});}
       if(url.pathname==='/rest/v1/rpc/_read_prepared_agreement_seal'){
         preparedSourceReads++;assert.deepEqual(await request.json(),{_agreement:agreementId});
         return preparedSourceFailure?json({message:'Synthetic source unavailable',code:'SYNTHETIC_READ'},503)
@@ -88,7 +89,10 @@ Deno.test('the signing handler verifies the retained presentation before any ter
     const invoke=(patch:Record<string,unknown>={})=>handler(new Request('https://synthetic.invalid/sign-agreement',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'a'.repeat(64),typed_name:'Synthetic Signer',consent_read:true,consent_esign:true,...patch})}));
 
     await t.step('recipient field review is an ordinary token-derived read and cannot create a signature',async()=>{
-      agreement=base;storage=new Response(new Uint8Array(bytes).buffer);terminalWrites=0;notices=0;nativeInputs.length=0;
+
+
+
+    agreement=base;storage=new Response(new Uint8Array(bytes).buffer);terminalWrites=0;notices=0;nativeInputs.length=0;
       const reply=await invoke({action:'fields',typed_name:undefined,consent_read:undefined,consent_esign:undefined}),result=await reply.json();
       assert.equal(reply.status,200);assert.equal(result.kind,'legacy');
       assert.equal(terminalWrites,0);assert.equal(notices,0);assert.equal(nativeInputs.length,0);
@@ -98,6 +102,33 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       const reply=await invoke({action:'fields',typed_name:undefined,consent_read:undefined,consent_esign:undefined,tenant_id:'foreign',signer_id:signerId});
       assert.equal(reply.status,400);assert.equal((await reply.json()).code,'SIGNING_FIELD_REQUEST_INVALID');assert.equal(terminalWrites,0);assert.equal(notices,0);
     });
+
+    const fieldDocument=(await import('../_shared/agreements/document-preparation.ts')).inspectAgreementPreparationPdf;
+    const fieldReply={kind:'prepared',tenant_id:tenant,agreement_id:agreementId,signer_id:signerId,
+      source_version:1,content_storage_key:base.content_storage_key,
+      preparation_id:'50000000-0000-4000-8000-000000000001',preparation_sha256:'b'.repeat(64),
+      document:await fieldDocument(bytes,pdfDigest),
+      fields:[{id:'60000000-0000-4000-8000-000000000001',kind:'signature',page:1,x:10,y:10,width:180,height:35,required:true,label:'Your signature'}]};
+    await t.step('recipient receives only their native assigned display fields without internal source identity or an act',async()=>{
+      agreement=base;fieldReadReply=fieldReply;terminalWrites=0;notices=0;storageReads=0;nativeInputs.length=0;
+      const reply=await invoke({action:'fields',typed_name:undefined,consent_read:undefined,consent_esign:undefined}),result=await reply.json();
+      assert.equal(reply.status,200);assert.equal(result.kind,'prepared');assert.deepEqual(result.fields,fieldReply.fields);
+      assert.equal(result.document.sha256,pdfDigest);assert.equal(result.preparation_id,fieldReply.preparation_id);
+      for(const key of ['tenant_id','agreement_id','signer_id','source_version','content_storage_key'])assert(!Object.hasOwn(result,key));
+      assert.equal(terminalWrites,0);assert.equal(notices,0);assert.equal(storageReads,0);assert.equal(nativeInputs.length,0);
+    });
+    for(const patch of [
+      {tenant_id:'foreign'},{agreement_id:'foreign'},{signer_id:'foreign'},{source_version:2},
+      {content_storage_key:'foreign.pdf'},{document:{...fieldReply.document,sha256:'c'.repeat(64)}},
+      {private_other_recipients:['must not escape']},{fields:[{...fieldReply.fields[0],signer_id:signerId}]},
+      {fields:[fieldReply.fields[0],fieldReply.fields[0]]},{fields:[]},
+    ])await t.step('unverified recipient field source cannot become a legacy or signed result: '+JSON.stringify(patch),async()=>{
+      agreement=base;fieldReadReply={...fieldReply,...patch};terminalWrites=0;notices=0;nativeInputs.length=0;
+      const reply=await invoke({action:'fields',typed_name:undefined,consent_read:undefined,consent_esign:undefined});
+      assert.equal(reply.status,503);assert.equal((await reply.json()).code,'SIGNING_FIELDS_UNAVAILABLE');
+      assert.equal(terminalWrites,0);assert.equal(notices,0);assert.equal(nativeInputs.length,0);
+    });
+    fieldReadReply=null;
 
     agreement=base;storage=new Response(new Uint8Array(bytes).buffer);terminalWrites=0;
     assert.equal((await invoke()).status,409,'an eligible token with verified presented bytes reaches the synthetic write boundary');

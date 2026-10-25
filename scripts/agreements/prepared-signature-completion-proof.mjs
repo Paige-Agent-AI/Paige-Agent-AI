@@ -94,7 +94,8 @@ export async function provePreparedSignatureCompletion({sql,read,q,tenant,actor,
  let publicationStatus=null;
  if(process.argv.includes('--prepared-publication-status')){
   const {provePreparedPublicationStatus}=await import('./prepared-publication-status-proof.mjs');
-  publicationStatus=await provePreparedPublicationStatus({sql,read,q,tenant,actor,fixture,approved,put,claim,finalize,publish,acceptedFixture,original:v,published,context});
+  console.log(JSON.stringify({checkpoint:'Original publication and field/seal completion before historical status integration',publicationChecks:checks,fieldSignature}));
+  publicationStatus=await provePreparedPublicationStatus({sql,read,q,tenant,actor,fixture,approved,put,claim,finalize,publish,acceptedFixture,original:v,published,context,startSession,observe});
  }
  return {checks,concurrentSessions:sessions,observedLockWaits:waits,originalSignature,fieldSignature,publicationStatus,proofBodySha256:createHash('sha256').update(provePreparedSignatureCompletion.toString()).digest('hex'),scope:'Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance'};
 }

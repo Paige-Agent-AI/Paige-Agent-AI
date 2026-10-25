@@ -49,7 +49,14 @@ async function observedWait(label){
  throw Error('A real second PostgreSQL connection did not reach its lock wait');
 }
 try{
- assert.equal(fixture.run("SELECT inet_server_addr()='127.0.0.1'::inet AND current_database()=$1",[fixture.database]),'t');
+ // The existing fixture connects only to its literal loopback host. A hosted
+ // service container sees its own NAT interface, not the runner's loopback.
+ assert.deepEqual(fixture.args(),['-X','-h','127.0.0.1','-p',String(port),'-U','postgres','-d',fixture.database,'-A','-t','-v','ON_ERROR_STOP=1']);
+ assert.equal(fixture.run('SELECT current_database()=$1',[fixture.database]),'t');
+ if(port===5432){
+  assert.equal(process.env.CI,'true');assert.equal(process.env.GITHUB_ACTIONS,'true');
+  assert.equal(fixture.run("SELECT current_setting('port')='5432' AND inet_server_addr() IS NOT NULL"),'t');
+ }else assert.equal(fixture.run("SELECT inet_server_addr()='127.0.0.1'::inet"),'t');
  fixture.run(`CREATE EXTENSION pgcrypto;
  DO $$BEGIN
   IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='anon')THEN CREATE ROLE anon NOLOGIN;END IF;

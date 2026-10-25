@@ -61,6 +61,14 @@ stated source; the final exact-head result is recorded in the PR receipt.
 The final local program passes47 checkpoints, including two actual concurrent
 factory connections, six observed native lock waits and the bounded timeout.
 Native syntax/behavior proof is not authenticated customer acceptance.
+The initial hosted comms-provider-boundary job121272262308 failed the proof's
+server-address assertion before any factory test: the isolated service container
+reports its NAT interface. The successor verifies the original fixture's literal
+loopback arguments and exact disposable database; port5432 additionally requires
+the actual hosted CI environment and native service port. Other local ports retain
+the native loopback-server check. No remote URL, credential, permission, source
+expectation or production-target support is introduced. The failed run remains
+historical; the successor requires fresh review and exact-head CI.
 
 Functional: LOCAL, release pending. Visual: N/A for this unconsumed private
 function; prior synthetic prototype/focus correction is not product acceptance.

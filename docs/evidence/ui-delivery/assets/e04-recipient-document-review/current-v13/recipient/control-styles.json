@@ -1,0 +1,62 @@
+[
+  {
+    "panelBackground": "rgb(255, 255, 255)",
+    "styles": [
+      {
+        "background": "rgb(255, 255, 255)",
+        "foreground": "rgb(74, 69, 102)",
+        "height": 41.60000228881836,
+        "outline": "rgb(74, 69, 102)",
+        "outlineWidth": "2.4px",
+        "selector": ".ags-decline-panel p"
+      },
+      {
+        "background": "rgb(246, 245, 241)",
+        "foreground": "rgb(23, 19, 49)",
+        "height": 100,
+        "outline": "rgb(201, 134, 12)",
+        "outlineWidth": "1.6px",
+        "selector": ".ags-decline-panel textarea"
+      },
+      {
+        "background": "rgb(255, 255, 255)",
+        "foreground": "rgb(185, 62, 55)",
+        "height": 44,
+        "outline": "rgb(185, 62, 55)",
+        "outlineWidth": "2.4px",
+        "selector": ".ags-decline-confirm"
+      }
+    ],
+    "theme": "light"
+  },
+  {
+    "panelBackground": "rgb(20, 17, 41)",
+    "styles": [
+      {
+        "background": "rgb(20, 17, 41)",
+        "foreground": "rgb(176, 170, 203)",
+        "height": 62.400001525878906,
+        "outline": "rgb(176, 170, 203)",
+        "outlineWidth": "2.4px",
+        "selector": ".ags-decline-panel p"
+      },
+      {
+        "background": "rgb(12, 10, 27)",
+        "foreground": "rgb(239, 236, 250)",
+        "height": 100,
+        "outline": "rgb(233, 168, 58)",
+        "outlineWidth": "1.6px",
+        "selector": ".ags-decline-panel textarea"
+      },
+      {
+        "background": "rgb(20, 17, 41)",
+        "foreground": "rgb(238, 122, 114)",
+        "height": 44,
+        "outline": "rgb(238, 122, 114)",
+        "outlineWidth": "2.4px",
+        "selector": ".ags-decline-confirm"
+      }
+    ],
+    "theme": "dark"
+  }
+]

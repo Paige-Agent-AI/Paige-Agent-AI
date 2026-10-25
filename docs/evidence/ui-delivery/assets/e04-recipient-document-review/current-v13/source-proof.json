@@ -1,0 +1,1893 @@
+{
+  "sourceHead": "5bd6729972e475d48c053235f80ea63a76d72160",
+  "scope": "Actual local source rendering only, no authenticated owner/recipient/Chat/provider/native decision/customer acceptance.",
+  "nonPrivateInputs": {
+    "recipient": 28,
+    "ownerDefault": 211,
+    "eachContainsOneCommittedFixture": true
+  },
+  "artifacts": [
+    {
+      "path": "recipient/1024-dark-native-viewport.jpg",
+      "bytes": 47342,
+      "sha256": "0038a6865c48f85d4114bb4992cb3fd8d304297b0166a10524fccd02f6e43f8e",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1009,
+      "pixelHeight": 757
+    },
+    {
+      "path": "recipient/1024-light-native-viewport.jpg",
+      "bytes": 45038,
+      "sha256": "354f6b53cc0f2be3863ec7d540d67048b025ae21731ad8283d8ea9a531b6b82d",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1009,
+      "pixelHeight": 757
+    },
+    {
+      "path": "recipient/1366-dark-native-viewport.jpg",
+      "bytes": 52006,
+      "sha256": "c768691d674a7d72c707b17e4a095d2a5a64a3582a70b713b7cd70dc1bb8f842",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1351,
+      "pixelHeight": 759
+    },
+    {
+      "path": "recipient/1366-light-native-viewport.jpg",
+      "bytes": 50902,
+      "sha256": "f3dbc4ca58605370f5392ec8589d6b70638a6748b09afb31c80e5bb8316dbf23",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1351,
+      "pixelHeight": 759
+    },
+    {
+      "path": "recipient/1536-dark-native-viewport.jpg",
+      "bytes": 55110,
+      "sha256": "8d85b282dfe4c4b4aa3a8b868765d55bd3e88d2fa3335895c1ba4ccf094bf63f",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1521,
+      "pixelHeight": 763
+    },
+    {
+      "path": "recipient/1536-light-native-viewport.jpg",
+      "bytes": 53135,
+      "sha256": "be6ee696d6dabd5d07bd25572888c59bb640c493faf5c1741da48e70f3470922",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1521,
+      "pixelHeight": 763
+    },
+    {
+      "path": "recipient/390-dark-native-viewport.jpg",
+      "bytes": 29034,
+      "sha256": "e8997ddbb0cf27a3334975091e7845f3385c1e861a5bc68c0e61b6fabc7c8493",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/390-light-native-viewport.jpg",
+      "bytes": 27947,
+      "sha256": "1c79ff17b6a9f4964edfa165ae4f0b7d05095654e251cd90715426d0217c232e",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/900-dark-native-viewport.jpg",
+      "bytes": 42109,
+      "sha256": "911a5e40387e01545e44956386a11b0371c734d317d3c377e81f629d1ce9ca88",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 885,
+      "pixelHeight": 983
+    },
+    {
+      "path": "recipient/900-light-native-viewport.jpg",
+      "bytes": 40809,
+      "sha256": "a1622f984cc243987387118cdb7fadffa940c0d382dd2b7492a5bb60200e11d8",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 885,
+      "pixelHeight": 983
+    },
+    {
+      "path": "recipient/decision-dark-native-focus.jpg",
+      "bytes": 37578,
+      "sha256": "46cd4424765881cf26249fdff85e3ac5a4a13eb4f1ed2e64251d755facf4d82d",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/decision-light-native-focus.jpg",
+      "bytes": 50394,
+      "sha256": "d73b934b3d092b9e4ee9a7c52122207d0c26d77cac42bd0b8fc4b0faf5f14379",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1521,
+      "pixelHeight": 763
+    },
+    {
+      "path": "recipient/interaction-01-review-to-consent.jpg",
+      "bytes": 36025,
+      "sha256": "a2fc4696726a7c5b49893125255609cf91922ef1dc48f183256911b170097717",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-02-corrected-answer.jpg",
+      "bytes": 25995,
+      "sha256": "b683001c35ee44973e7b3d9ff728f9dc471d2cb673f4d4669722203115e3d2c8",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-03-signature-unconfirmed.jpg",
+      "bytes": 15580,
+      "sha256": "d96aeecf98c9c719583082b0d877cdf03babe683d15beedba7af75fec6b81a88",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-04-simulated-original-receipt.jpg",
+      "bytes": 25775,
+      "sha256": "f42afa757304d8b7088108764548398b649d73a191abbe1cb7d391162a60bf79",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-05-decline-review.jpg",
+      "bytes": 33788,
+      "sha256": "867e26cb257ecee38f94873f8337ec84d4f4393e5cb8f4129d2f4b6dd11e970e",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-06-decision-in-flight.jpg",
+      "bytes": 33478,
+      "sha256": "bb66901e25c1b20b16d80d7a95963718ca7f96c0123e92d14cea2fd4c825e03f",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-07-simulated-decline-receipt.jpg",
+      "bytes": 30228,
+      "sha256": "38e03f5eacf84704211cbe545282093cbf052a15df96ee8d3891bdd9aad530b2",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-08-decline-unconfirmed.jpg",
+      "bytes": 32735,
+      "sha256": "a50df38ed84bdbd14a16ce044e39838191fac8c7b0e3af925cbed5fd6636a712",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-09-source-unavailable.jpg",
+      "bytes": 30074,
+      "sha256": "bdd1acb6e744952e0a622bf2d7dd73a463cb7d241606853b675625c56ac7fec9",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-10-uniform-refusal.jpg",
+      "bytes": 17417,
+      "sha256": "9457b10468617eff02ec74cd5db5193e94787617cd3b868259acc03874265285",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "recipient/interaction-11-explicit-legacy.jpg",
+      "bytes": 38558,
+      "sha256": "81886d4865533b1dd472ffe2099c9256fce3e15f1749f643e0d590e8cb541aae",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "owner-default/v3-1024-dark-closed.jpg",
+      "bytes": 53735,
+      "sha256": "0ad4073c9352313f2341ea92ad3de68be2348fab4bc4a4a62ce2a3e451d755fb",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1024,
+      "pixelHeight": 768
+    },
+    {
+      "path": "owner-default/v3-1024-dark-open.jpg",
+      "bytes": 36889,
+      "sha256": "59f215f4277ff3beb03ba1047c876ebd0e91004c06bfcd214a3b3835e384fccb",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1024,
+      "pixelHeight": 768
+    },
+    {
+      "path": "owner-default/v3-1024-light-closed.jpg",
+      "bytes": 52395,
+      "sha256": "b440cbe04e7d5ab06a84f2b248c65d1260d94e772c03fa1561338d8f39d0476b",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1024,
+      "pixelHeight": 768
+    },
+    {
+      "path": "owner-default/v3-1024-light-open.jpg",
+      "bytes": 35572,
+      "sha256": "c00f7d59db6db8d0bbcb233495474a675666f8dd166ac5dfe1db1fa3143483be",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1024,
+      "pixelHeight": 768
+    },
+    {
+      "path": "owner-default/v3-1366-dark-closed.jpg",
+      "bytes": 77060,
+      "sha256": "fa958c80fd4613a0fc26ee5e9921e0f74c2f4ff22e56804c5349d51a94c58ff1",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1366,
+      "pixelHeight": 768
+    },
+    {
+      "path": "owner-default/v3-1366-dark-open.jpg",
+      "bytes": 80099,
+      "sha256": "01414701b05c5f19fd6ded589377c95a533b87ae6fd1c42e518fe8044fef4256",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1366,
+      "pixelHeight": 768
+    },
+    {
+      "path": "owner-default/v3-1366-light-closed.jpg",
+      "bytes": 74105,
+      "sha256": "831d126557d5c712db304a6d17a41df75c91d99d926f7c46e88985b4ff933130",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1366,
+      "pixelHeight": 768
+    },
+    {
+      "path": "owner-default/v3-1366-light-open.jpg",
+      "bytes": 78557,
+      "sha256": "7c0aa2c16e6f759fc04749bbd9f375bd63ced1d394be8d51831770e75bf8b409",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1366,
+      "pixelHeight": 768
+    },
+    {
+      "path": "owner-default/v3-1536-dark-closed.jpg",
+      "bytes": 82594,
+      "sha256": "f0c42c697788d4db8418df9421eb8c7a3d3610a9746ba975cbe961a1060506e9",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1535,
+      "pixelHeight": 770
+    },
+    {
+      "path": "owner-default/v3-1536-dark-open.jpg",
+      "bytes": 82871,
+      "sha256": "81119ffeeea21ee557752a392379ff7d300a00cdd09d32384fa2690b000501c8",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1535,
+      "pixelHeight": 770
+    },
+    {
+      "path": "owner-default/v3-1536-light-closed.jpg",
+      "bytes": 79856,
+      "sha256": "8159bf6df7a17105856e1578d5c6bbc9e127b0acaa3a60acc6dd7375683c18fa",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1535,
+      "pixelHeight": 770
+    },
+    {
+      "path": "owner-default/v3-1536-light-open.jpg",
+      "bytes": 80989,
+      "sha256": "9299b2b2253aea31b8e21035726d06803600db59bd5f649d6d8ddc960af0e09b",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1535,
+      "pixelHeight": 770
+    },
+    {
+      "path": "owner-default/v3-900-dark-closed.jpg",
+      "bytes": 59820,
+      "sha256": "87ff5f59c63e79f3160da9632df2104524b42730f56a97ba53818fcf55638f47",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 900,
+      "pixelHeight": 1000
+    },
+    {
+      "path": "owner-default/v3-900-dark-open.jpg",
+      "bytes": 38907,
+      "sha256": "64d3922236e233f1f0646569d77ac01432c6e77d6ea3a3aeb4f2d1910c699768",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 900,
+      "pixelHeight": 1000
+    },
+    {
+      "path": "owner-default/v3-900-light-closed.jpg",
+      "bytes": 60798,
+      "sha256": "42853c6a9b76bd93022e5a2968443961417462bc86ebdf17f361274b6c64ee69",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 900,
+      "pixelHeight": 1000
+    },
+    {
+      "path": "owner-default/v3-900-light-open.jpg",
+      "bytes": 37701,
+      "sha256": "8867286d47214aa26187d9e3ff65cec3554051dd9b160906740fe88abcfc6b86",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 900,
+      "pixelHeight": 1000
+    }
+  ],
+  "manifests": {
+    "recipient": {
+      "sourceHead": "5bd6729972e475d48c053235f80ea63a76d72160",
+      "scope": "Actual original recipient/PDF components; SDK-only synthetic ports.",
+      "inputs": [
+        {
+          "path": "src/index.css",
+          "privateFixture": false,
+          "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/agreement-document-fields.css",
+          "privateFixture": false,
+          "sha256": "310de6a0a06912ad99b5ed56f04ec816a982e8d632ccb624fb113791432d1fb4",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/pages/sign/AgreementSigning.tsx",
+          "privateFixture": false,
+          "sha256": "85093a5f8d4087f512dd9ad9cdfb85db6036621afb2c228fe05fd9e16de323f9",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/fixtures/agreement-document-source.json",
+          "privateFixture": false,
+          "sha256": "e9a9a8abe99f3b916334be651e95a7e3a8d10fb941624c3d1042e32779aadb25",
+          "role": "COMMITTED_SYNTHETIC_FIXTURE"
+        },
+        {
+          "path": "src/pages/sign/agreement-signing.css",
+          "privateFixture": false,
+          "sha256": "42720dd7a23b315d5144fe2cc7fd22524a5cc5dd3860ecdb4de030fc39ae9dbd",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/pages/sign/RecipientAgreementDocument.tsx",
+          "privateFixture": false,
+          "sha256": "70618007e5d2ce5157c5c97c269456c5ee41fbea6b6c29c9ab92702d6e6c9db2",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/pages/sign/recipientSigningFields.ts",
+          "privateFixture": false,
+          "sha256": "fd80b7b1e47902727d37fa3eb48da6b08988b5563f95854824114e8be2abd073",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/pages/sign/recipient-signing.css",
+          "privateFixture": false,
+          "sha256": "5ca817d8c346da63fa645419d6bd030cd0526f53af0707cca3d609ad76d3bc46",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/AgreementPdfPage.tsx",
+          "privateFixture": false,
+          "sha256": "7376f3708e1c5d00f7b9dc73e0b68d9d42c2f1d46dff31c14e30841be6e54ace",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+          "privateFixture": false,
+          "sha256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+          "privateFixture": false,
+          "sha256": "291dc4af1f8543d67f451545c0970de4ae7e1cf02fed32df22a510c415091b38",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/signing-guard.ts",
+          "privateFixture": false,
+          "sha256": "3997edf2abb0e9064b1e6e89aac68fce9a2aded43caa90b0f3f1b4e167a54ad7",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/agreementDocumentModel.ts",
+          "privateFixture": false,
+          "sha256": "e20769ea15ab97013b48bc6197b624d57d80bfa1b03b89ddf9b12399da3c5766",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/agreementPdfRenderer.ts",
+          "privateFixture": false,
+          "sha256": "fe3465a5190e6b578c5ff97feb4b337facb214ebad9e5126b4a1cbb0a1671e4a",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/token.ts",
+          "privateFixture": false,
+          "sha256": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+          "privateFixture": false,
+          "sha256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+          "privateFixture": false,
+          "sha256": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-collections/contract.ts",
+          "privateFixture": false,
+          "sha256": "0d538a7c9b51f2065a36bae4c70095ec622971202807dc9b97766b9971f01c64",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-collections/model.ts",
+          "privateFixture": false,
+          "sha256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+          "privateFixture": false,
+          "sha256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+          "privateFixture": false,
+          "sha256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/document.ts",
+          "privateFixture": false,
+          "sha256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+          "privateFixture": false,
+          "sha256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-commercial/effectuation-command.ts",
+          "privateFixture": false,
+          "sha256": "dbb81094e9b7903e9458533c7e81dad71f4f0fc0d11d51931fdaba36ad26aad1",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/doc-render.ts",
+          "privateFixture": false,
+          "sha256": "06f72d693cd333b18bfab176112f66bd3862f58ac3a29a298f2cdb02fc2b6fe2",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/document-preparation.ts",
+          "privateFixture": false,
+          "sha256": "4164eeb196c1c599e486ac95efdeb21eb9a0287427e9fd8830dc8ac3f4a2b630",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/retained-document.ts",
+          "privateFixture": false,
+          "sha256": "cee0296f159becaf704d8853b32dc205033dd8f34d6a0dd878e7a1a60e920db0",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/provider-types.ts",
+          "privateFixture": false,
+          "sha256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631",
+          "role": "ORIGINAL_SOURCE_MODULE"
+        }
+      ],
+      "privateBoundaryInputs": [
+        {
+          "path": "work/c36-recipient-prototype/index.html",
+          "privateFixture": true,
+          "sha256": "bfae04d47d8b6581071de5b15f1b7f11b0c01235074ee9efa6ff64d4949cefc4"
+        },
+        {
+          "path": "work/c36-recipient-prototype/src/main.tsx",
+          "privateFixture": true,
+          "sha256": "26b75d20b4fda859fe8dd698842ca965c611f550f14867f76e737e9c7373e5cb"
+        },
+        {
+          "path": "work/c36-recipient-prototype/src/sdk.ts",
+          "privateFixture": true,
+          "sha256": "6aac4e66117c7893b49c2f43544585fd19a5aa6bb14bf4f01f784d50e4d4cfb1"
+        },
+        {
+          "path": "work/c36-recipient-prototype/src/source-host.css",
+          "privateFixture": true,
+          "sha256": "480850ac5d83c8907ebc77e1af4e900bcf915535f8ed1d648ddbc24c3e7b82ff"
+        },
+        {
+          "path": "work/c36-recipient-prototype/src/themes.css",
+          "privateFixture": true,
+          "sha256": "eb518a91c12d9cba744f0aa00f014bf02b2827c68486785ff40464c19bdc3faa"
+        }
+      ]
+    },
+    "ownerDefault": {
+      "sourceHead": "5bd6729972e475d48c053235f80ea63a76d72160",
+      "scope": "Actual original default preparation caller, native Shell and native PaigeAIChat; synthetic SDK/hooks/provider context. Private framing is not the complete Sales route.",
+      "inputs": [
+        {
+          "path": "src/index.css",
+          "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/solo-tokens.css",
+          "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/tooltip.tsx",
+          "sha256": "bd9361649477cf9496f4b48415a2eafb9ae1ebca81af58a29b61b1516adc88c1",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+          "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/dashboard/PaigeAIChat.tsx",
+          "sha256": "4e83b6388711ea8adf4887d297434f68fad1559917ce633bd4dd4c72b7693d2f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/AgreementDocumentPreparation.tsx",
+          "sha256": "03a62357c46450cacadd79325facd681acfe230d61de3023074d1e8148bc300c",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales-dialog.tsx",
+          "sha256": "8a36536ab86879b0199b19426909e9940aa866c595c96678c7ca4e798f5c768e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/fixtures/agreement-document-source.json",
+          "sha256": "e9a9a8abe99f3b916334be651e95a7e3a8d10fb941624c3d1042e32779aadb25",
+          "privateFixture": false,
+          "role": "COMMITTED_SYNTHETIC_FIXTURE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/token.ts",
+          "sha256": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+          "sha256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/comms-email/contract.ts",
+          "sha256": "79c754ab6b261b64cdd93b225b46fb20c65f0ef46c693aea5c2b26b989f440c4",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+          "sha256": "291dc4af1f8543d67f451545c0970de4ae7e1cf02fed32df22a510c415091b38",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/prepared-signature-review-contract.ts",
+          "sha256": "e62fa5ba26fac4541f406aae915071a2733eab0c6688fef8b57139a5e3514767",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/utils.ts",
+          "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/useBeforeUnloadGuard.ts",
+          "sha256": "d4a4b3d02b7cccbea8b615cec0829027854d232db0a94ced6bf29187ec0cfd3e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/AgreementDocumentFields.tsx",
+          "sha256": "1b12b8f4aca462d5056479fb2a59c475d0894219c7d410b5fe3c7f55732b1ca8",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/AgreementSigningReview.tsx",
+          "sha256": "ae0a63d597ccac1c30c4c9cafa906c2fb3f530b212cae7b2b05bda7c1fdc154c",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/agreementDocumentApi.ts",
+          "sha256": "395cb9b7dc3c092f17ae55bc51ac7435dd5410b8d13cd49cbea1099160979736",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/agreement-document-fields.css",
+          "sha256": "310de6a0a06912ad99b5ed56f04ec816a982e8d632ccb624fb113791432d1fb4",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/tenant-shell/settings-scroll-contract.ts",
+          "sha256": "082ad58f4c84460e2cde6c87d3b219c468fc345c0a76f1733bce5911024aeeed",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/tenant-shell/tenant-content-focus.ts",
+          "sha256": "7f32786447b99863e649add8d7f9acbf4486c780ca63de3ab66dd0e5fb312106",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+          "sha256": "c88b329c2667f125e47cf9a5a0b8ed407f6df2416917570f33bf84a50c470b0d",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+          "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/operator/shell/CommandMark.tsx",
+          "sha256": "f16530566302d4b78151658e0b02ee76eaf57c2d73b97ef2bce30c27f201d46a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-turn/interactive-refusal.ts",
+          "sha256": "2b9e4de4f4e5da36b4759697e80c392fbea98484bb091a6330246abc4eedc24e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-turn/crm-result-reference.ts",
+          "sha256": "d40dbc393d2b41f70c1df9c02b87f1dd3b31171967572ede061da425a42dd77d",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-turn/control-transport.ts",
+          "sha256": "9d002afe748c9c41ea37207313d9dbc62c6ab65f1f9882da8a2fa944320b2e8f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+          "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-turn/resume.ts",
+          "sha256": "2ccd9ca43ae7081f5b61486d45bda7c958db20bf151766e29571d26e06487e9c",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigePromptHandoff.ts",
+          "sha256": "5ace29c005c1434322501ed2441b8471d71425ec870bfa9c79d2fd42d0616a75",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/dashboard/PaigeStepTrace.tsx",
+          "sha256": "f6ae8d83d2d667364cf588a000dafab74fb238ee0dabdf390aedf4f2f0d862d2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/card.tsx",
+          "sha256": "1dfb17920034a5659ddec7e016d8b8d572cda2449c67a6ab31d35d441c4a9d06",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/textarea.tsx",
+          "sha256": "2f5b24d28dc5c41817ca69653a396adcb2fe495200f8184777d086a62fc70461",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/button.tsx",
+          "sha256": "af60647e810333eab6c4a99139445436a21e11ccbb7d5531cb171685ba752f77",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/chat/PaigeResearchCard.tsx",
+          "sha256": "cb18a4dd5204d94591ef828000cf98a6fab3901c668d3a68886579f6459a3eed",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigeResearchReadback.ts",
+          "sha256": "820408782697494e7401223ffa1c1aee1ecb25732401c7f23caa6627983753c6",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/use-toast.ts",
+          "sha256": "0602ac84d95719f2a27075ce60333db73128e09c0b07365dce7f9c77441c9d7c",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigeChatError.ts",
+          "sha256": "e2ab909af66bfbe0661635317be8b270570c027d6110d06c8ef62960643776c2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/voice/useDictation.ts",
+          "sha256": "e356270667b3885b88fdf483480f826ad53e15d3fdbe1c010aeea1d5c6441b4f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/ResponseFeedback.tsx",
+          "sha256": "b6dbb45342b0ca4d1a0478bf0ce6c86b0adea8701d42447c2500e082ecb10154",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/MessageMeta.tsx",
+          "sha256": "69fab79f9bf30d30238ecdaa4652f20bb5fef3e65fbd2b85a5858e0e1cfeb4f4",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/SlashCommandMenu.tsx",
+          "sha256": "dd2370186ba5b3b0d8352bc7cdc62e5cf6830a3308a84c2e2324b69691eaa703",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/userClock.ts",
+          "sha256": "9582325d04f5b18599330a1126f66886800e0b59f2982400e736e9a1132e42cf",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/EntityDiagramCard.tsx",
+          "sha256": "f82c82a9506f0f9081e1c00e2eaca63c18c3a1768b232b4aab9a20a7f536c6d9",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/entityDiagram.ts",
+          "sha256": "80096444219b9e30c905fae9c2192653677404e6afb469caf0b6542611ff2a25",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/MarkdownMessage.tsx",
+          "sha256": "31ff405b48ae6ec986cc4381c56a112b48c14ea6c739bbd985b1782e95d224a0",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/PaigeConfirmCard.tsx",
+          "sha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/confirmPreview.ts",
+          "sha256": "9ccde70d641e1b8cfacbedadb32b38c279cdc0e86101027b1f77b11e41f58400",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/PaigeAskCard.tsx",
+          "sha256": "34f8fa4ec40dab4afd4f264d611bf7423d40489429d2c9cd49f0b0eb6dbc991f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/approvalOutcome.ts",
+          "sha256": "5679e54bee4f358f75b664944102b2facc698b7e547151bb1c02ed2c698a2292",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/PaigeCrmResultCard.tsx",
+          "sha256": "ac87d1f18334b5f4293ee32a3dd26b3b20f4499eaff351a30a626fa25cad4193",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/CheckLinks.tsx",
+          "sha256": "ee9149270246b42dc725e9946f5b4714b64ba28f868fd8af9c309f546ddc5b15",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/PaigeRecordLinks.tsx",
+          "sha256": "43a92f89a51c591068c5b5176d9c0318997eb6e903f6366d97f6bbfe919f3caf",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/links/workspaceLinks.ts",
+          "sha256": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/reminderHistory.ts",
+          "sha256": "57d0cce47a055607b4f5d2f870295dcf427e08f7870ce87d02abede360701939",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/specialistHistory.ts",
+          "sha256": "43865633f95f3e450a8503208ceff0aa9288cb7bbafdecd4729b2d8a9558f550",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/OriginalSpecialistResult.tsx",
+          "sha256": "38054f6e2835c967a063fc1b5e342763a2b977fb058e96e33d7fc43a5872d569",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/curaPreparationHistory.ts",
+          "sha256": "c3ef4bb81853c1887e3f4d2e0fd5801ee93661f87644dec1fb2448a927dedc9b",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/dashboard/paige/ThreadRail.tsx",
+          "sha256": "3de8c119c752e0e93e997b416ba96bd8894d68873a29caa24a0710133953f9a2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/DocumentAttachmentChip.tsx",
+          "sha256": "0714d17978193689474fcd1d4f3f0e02cdd2263fc38adc4936c9d97ad5c6bbae",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/DocumentMessageBubble.tsx",
+          "sha256": "f9b99ca20684a98c4e96a74eb8666fa47cf9a77741d72cb0892656b45b560fb2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/MessageAudioButton.tsx",
+          "sha256": "af535b392a9bd1482020e320ccd4eff8901074e7714d87b8a358a95de70bc394",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/chat/PaigeArtifactCard.tsx",
+          "sha256": "7bce0f610af4d0edd215253005e926894a3badc76517d067c89bf7e49acddc15",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/ExtractionProposalCard.tsx",
+          "sha256": "1887d101a395aacd277dbbace438b34c8f79443fb62e91c5a776d600853c223a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/chat/PaigeCompactingCard.tsx",
+          "sha256": "f03eaf339824986592b338c670d11017710490eb57f7a63251bdac7b49dc0eff",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/live/PaigeLiveConversation.tsx",
+          "sha256": "2ae038d8d6ac240d28319549274db5b8351ab5e1883c967ec4c22050e594c72f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paige-stream/index.ts",
+          "sha256": "fe24df943fd02239b8de3ca97ce19cf5c2f78e57e47886506250836e984d7f92",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/chat/PaigeTurnStatus.tsx",
+          "sha256": "1bd5808a9d6aa926bfff5f6db1b23175f22e808ef6048a09569b23ca2830945a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigeLiveConversation/contract.ts",
+          "sha256": "47fb9a1ab58582073688e24479ee13102a9699e35afbde46c4e5e20c3b2724aa",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/chat/anchoredTranscriptScroll.ts",
+          "sha256": "53204158d3e12307ab44c8ce6c33bcf8cdbcfcc02de60a3703e04833e29dbc6e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigeComposerScopeState.ts",
+          "sha256": "3f7a1e9f71ead22ecc9d6f190dc07cffd0417fb9ee9e03236c33e971262b0cec",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+          "sha256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/admin/voice/DialPadTrigger.tsx",
+          "sha256": "2efc60f1203b6eb662870db445393a269c3f9bbe65d168a307bc9d041c11c3f3",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/AgreementSignatureRequest.tsx",
+          "sha256": "81f4ce25439b72722eee92e216831f2c171c0f4f5df18339bd0fcfe415690f2a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/AgreementPdfPage.tsx",
+          "sha256": "7376f3708e1c5d00f7b9dc73e0b68d9d42c2f1d46dff31c14e30841be6e54ace",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/agreementDocumentModel.ts",
+          "sha256": "e20769ea15ab97013b48bc6197b624d57d80bfa1b03b89ddf9b12399da3c5766",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/agreement-preparation.css",
+          "sha256": "2cef8ef627b07b309703b67ed32378751229b001015e0390b53866efdb7c44c4",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+          "sha256": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/signing-guard.ts",
+          "sha256": "3997edf2abb0e9064b1e6e89aac68fce9a2aded43caa90b0f3f1b4e167a54ad7",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/retained-document.ts",
+          "sha256": "cee0296f159becaf704d8853b32dc205033dd8f34d6a0dd878e7a1a60e920db0",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/paige/index.ts",
+          "sha256": "4f2c913efba3964e050fc142e7dc9ede2c6b337db592b991864b69f73a0f003f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/voice/DictationMicButton.tsx",
+          "sha256": "a15fb96fe7af40cb59064fdf287ccaf0bda8c2c820fe92065d8b5859658bf9ce",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/useScopedUserId.ts",
+          "sha256": "e6bf43ad48a906691d73e0df9472af3cf80899084aaa3423083cbf30d0e884c1",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/useTenantContext.tsx",
+          "sha256": "ef4fbf387c068dd3a3a39c9f400c30722c119877644e2dcc6f3656c2aac2a73b",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/usePaigeThreads.ts",
+          "sha256": "eff836698924dd4aa188ba2b3772e07b4dca3415f563df6edc913e4c67d385cc",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/useChatDocumentUpload.ts",
+          "sha256": "e1970b452890879d58ec41615f2d138c97b247f03672c0b94a751f79c72aa95a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/playbook/index.ts",
+          "sha256": "d0e25ec0084a0023f3396220cbf0609ba792a1d84dfd8cece4e34a587d6a4543",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-context/vp-address.ts",
+          "sha256": "08da97f2dadd97468c54d57d8f35e9d5b22ce0348b03d12a2a9d3b33b7d4ad91",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/index.ts",
+          "sha256": "f7e1f8ae0c064198f6997584b216dbec9bd7f01b86316c30027dda7738953616",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/sheet.tsx",
+          "sha256": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/input.tsx",
+          "sha256": "aacef8933fe99ab553e12a82c874a23c97e2b5602eb6f00018454fa0a8d4f7f2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/scroll-area.tsx",
+          "sha256": "998181a10164aa6e508210064ba61b2f772a92958d7bb2141867007f0ebd9783",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/skeleton.tsx",
+          "sha256": "a229c310b9cbcb01ddd5e580865a6f14a19061aff7f6a97ef82a40b6a83583a4",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/dropdown-menu.tsx",
+          "sha256": "0aa6dfd88b188940c62d27d6f2b6b09beb4491bf5b54933fac8b5a3a1c72201e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/alert-dialog.tsx",
+          "sha256": "c8b01137c7552e63c9ccf2c38ef92e5417bd6616b6980d56d3015db027465283",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/GlyphPlate.tsx",
+          "sha256": "9e6063e589cbd28e2774fbb4de01cee2acb9b0b046d9eaa40744c061120a3c5a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/StatePill.tsx",
+          "sha256": "c5801f43ee3abd177b85ae861d05e7818e2fda0db938f1d06d2fbdc8845d2fdc",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/EmptyState.tsx",
+          "sha256": "af2ec5f89ae19650a3c526316700db94663612e5d4355f160950b3edfd47ee5e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paige-stream/framing.ts",
+          "sha256": "583d379140780a953c6d79b9e1c16da2e93acc6859cb17c57a3434e5fd8a8d45",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paige-stream/decode.ts",
+          "sha256": "b09188d5bf6797e98c52c37559823541f644bff73dbcd1da95624e4299b33c01",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paige-stream/step-status.ts",
+          "sha256": "c89e615170dd8b0a54cc5b0924240eb3b98d8a2139ec2f8bd0aedc6633748fa7",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paige-stream/turn-view.ts",
+          "sha256": "743c17f4728557d4e4c06e5dbd72f4c7a1792b5df22ced890b128ba21810e166",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/useCopyToClipboard.ts",
+          "sha256": "0e6f4fe79ba4211258e9639ac0507851aebc362af2631450d2805f9d759f0007",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/canonical-app-url.ts",
+          "sha256": "5299b1ef17b7b5b816f23ed1830291d9be04689fde8b827b0f709703cfb9ed62",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/tier/tierFeatures.ts",
+          "sha256": "ba484c578aa74e52357be19aaf0050f0a04877f62f6271b2b9455c9774505ae9",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/checkbox.tsx",
+          "sha256": "178f8177bedb1704b4dd3e748f4826848981c8af43178c04e1a276a7f017cf1f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/dialog.tsx",
+          "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/label.tsx",
+          "sha256": "d5dc9497cbb28a5401b864bd44a15f010c302584fbe8e07e015dbe443f103753",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/select.tsx",
+          "sha256": "a2b62120a033b36c8d6c4a1693aa9231645fa69251740e15eacec24c1eea4d82",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/use-mobile.tsx",
+          "sha256": "21eff740f9e5c965c7f0782925a7e8f67ddfcdf0f58b6613550f99c3e1c454e9",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/hostRouting.ts",
+          "sha256": "32f9039e9363ea2109d3c619ff43e7eeaa01245c54804058dea4f599974cd30c",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/chat/paige-research-card.css",
+          "sha256": "1804542f9d47ad95675d1e9b0da3df382c7d552f13bdc1a0ce7e699e7c695df3",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/chat/paige-turn-status.css",
+          "sha256": "394aeb8e810392ce4ab21fd999134e75379f249e55e71167a4bb5a562db13517",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/voice/messageTts.ts",
+          "sha256": "3debf726a4391da024997ad9a88bb3c5da224b2869c60e775f07c999518af2f4",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/voice/messageTtsFailure.ts",
+          "sha256": "1832e8d497ac1d4606c9ac756b530720db82b59db663fb779ef61e65403f5edc",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/admin/studio/studio.ts",
+          "sha256": "9a0e4b8ca416b05a486d14381d75e2a73d4069d56a34e4d61ef3c02344e6d028",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/admin/studio/DocumentPreview.tsx",
+          "sha256": "03511d34e9c2b52592f01bee91990b3e80731ae15b0261d46c7947607fb70d56",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/admin/studio/studio-types.ts",
+          "sha256": "91e10916e4267b7edb63a0b988c01eaf5712ff3fba056a768fd6f0aa6a48bf05",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/utils/VoiceAudio.ts",
+          "sha256": "abbbb8ad6dfb0e82f2fca93809357bffd755ac84807be920aa0197d249683cda",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/approval-outcome.ts",
+          "sha256": "e0f5a2ab8ab3f5be0435e8a796efca0a20f907a86e21adaca53532d1bfdbc9d1",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-turn/contract.ts",
+          "sha256": "d9f3b52e245ec6801f81e95d4960cd20f05435ae87423dd68db4c5220e152981",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/live/PaigePresence3D.tsx",
+          "sha256": "2851f82bd24f922ce3e66af1e5b157b6bd7d5374f03e5768be478fad9d8bc0b2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/live/usePaigeOutput.ts",
+          "sha256": "787603686e29eec8153e0149d36604746e40f78ece65778a6ab5424ec30cbd6a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/live/paige-live-conversation.css",
+          "sha256": "7d2106b8518b8c651e26efe2c0248079f7470d853e3e0a7875e46d41db7e5aff",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/brand/PaigeCommandMark.tsx",
+          "sha256": "da4aa525f2a5eb44080c63d9768d4c6d2dfb62f73720cef3417f2879b77a7310",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigeLiveConversation/client.ts",
+          "sha256": "62163cb65ee618a2f1ed0e6972ee045f5e97525ff3c802ab0dcfa8646f219fbc",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigeLiveConversation/relayTransport.ts",
+          "sha256": "2f08d16c4b6000fc4e09f7a40a718a77308ff2daaefe9269518373eb4c3cb220",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigeLiveConversation/presence.ts",
+          "sha256": "fb8434a88a8e134d19c4858cf56cacba4ac34426ba99c9d74862375ed61dfaa7",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/solo/sales/agreementPdfRenderer.ts",
+          "sha256": "fe3465a5190e6b578c5ff97feb4b337facb214ebad9e5126b4a1cbb0a1671e4a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/paige/AgentPresenceContext.tsx",
+          "sha256": "e5f737f324fa90b1efef4a60195913413ff90d28a9148fd4ce30f794cf49771b",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/paige/AgentRail.tsx",
+          "sha256": "d7b10b2859307056760c6a4e679c85a04b107f489b137c36f8771cff876ccaeb",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/paige/CommandLauncher.tsx",
+          "sha256": "2ba211a65b7b7a504795190931d3628377e055b708cdd85fb9572ff42ad1ca48",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/paige/AgentPresence.tsx",
+          "sha256": "d29411949a37bfae71d669e4b6503b0163bffde1f157dcb3a3d1bf4f7fec6c2d",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/paige/persona.ts",
+          "sha256": "628fbb37b14d712f1f5f284723e6e8c8cacf4c55fcb47d888a93add2cbacd2ea",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/voice/VoiceDeviceProvider.tsx",
+          "sha256": "a43a250b7ddaf6452eb3e5e0851bd81f42d7b150292c2b15c496c7646e081814",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/scopedUser.ts",
+          "sha256": "ba4a0e7293f21bdd9a9f7a19be4dde43fc65cfdf920fb6ee05e659309db3e7ca",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-collections/contract.ts",
+          "sha256": "0d538a7c9b51f2065a36bae4c70095ec622971202807dc9b97766b9971f01c64",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-collections/model.ts",
+          "sha256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+          "sha256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+          "sha256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/document.ts",
+          "sha256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/platform/fleetCommunications.ts",
+          "sha256": "2118b5eff6cb518d41e7551089ebb1312d3ba268630502ee5eb8b6b59a77b8bd",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/auth/workspaceEntry.ts",
+          "sha256": "cb5ef5ba9a503e4f245cb04e35ff8af98bd3f69455b93258d2e763112c22d0ca",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/auth/signOut.ts",
+          "sha256": "27ce12c219727abff8130cb1a1c7de66bce065b4312f44f02e077d91f4ab12f7",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/live/PaigePresence.tsx",
+          "sha256": "ceabefdf83b24dba197ee62a40cefdcd1c8a0aa1f3ad4d3d10fc40c2bdef198b",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/live/paige-presence-3d.css",
+          "sha256": "88f17cadb66add969544ac3b112fc3ccf124d92b5b2597b6cc110dd467719625",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/live/PaigePresenceScene.tsx",
+          "sha256": "cbb809344f2baab9be4f63feaf29d0b88e7a58e54ef5536881597b216443a334",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/webgl.ts",
+          "sha256": "fdcbed31f1fdb82015dbe14b96d946de011b0789414e8c248bfc0fd8f2b54852",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/solo-classification.ts",
+          "sha256": "51daa30a31f55912ecda5aa00847aee82b78dfa61050f99c3e8e4c43a63e3245",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/ArtifactPreview.tsx",
+          "sha256": "a38622162e4409fee4f8a69f379cc0bc5f4e4129104b86f6fb04624a46273906",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/PageShell.tsx",
+          "sha256": "2c9db0bf3dae4bdac35f8ad17a324d208011a505ad3cdd2e1b93d4a6c5a5cc8a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/PageHeader.tsx",
+          "sha256": "efd6c59507d106da7a49443730c8977ba7cddbed84088478b61346a217fd6e3e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/PageSkeleton.tsx",
+          "sha256": "c6a9a1c80c7634136fdc0e6d81a3dd8b95ba23825cc05397bfc592defabb8dfe",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/SectionCard.tsx",
+          "sha256": "b8fa7de3319f12c8df50df15c74e131ece9bc3c3ccc21ca7e217808ccc7bb43e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/SectionNote.tsx",
+          "sha256": "0bd97e46483204ed61c4a86bfec4cf22378abaa51679b9b3b65cd264e8f55f7a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/StatTile.tsx",
+          "sha256": "6b94f8b8f4d54e550eddc1257f76033881ef56bca6818320417e6cbe6358420a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/StatPill.tsx",
+          "sha256": "e4d79201baf3d3d1ce1854ef64674a0e28611bab66f44c6113f77ebd04b49eee",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/Sparkline.tsx",
+          "sha256": "e9102b940e9ddc36e120c34b34e2837c5f23dfa20b134ab35da57f57a2b408f1",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/DrillContainer.tsx",
+          "sha256": "34565d2b1147e4c5313c21eb07680450f34a238a61401dacdc56528a00fd369f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/MetricEntityCard.tsx",
+          "sha256": "a2a51dcee3fc30382b6bb9f5d8f2b379b919764ad6fce8266c0c045951c48717",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/ExploreChart.tsx",
+          "sha256": "e3134ae3eb9b453ac4d6d540e98ebf73579749ae12081f9152097c7cdee22238",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/ChartCards.tsx",
+          "sha256": "c069e22e912363a058e2c29911e4c130af2f7b4257cb3624086020041576a20d",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/DateRangePicker.tsx",
+          "sha256": "ce7ea2b2d2465c405ffa4e09d19e9b55b0ff89051c6955d616ac2d3a9f7c60af",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/DataTableShell.tsx",
+          "sha256": "b4ad4f32b4177ca05220545d52b75d688681137548cccab6fe65bafe5d9bd4f0",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/Toolbar.tsx",
+          "sha256": "8ed6c1958fafccfe4b82e3a87d16dfbc408079b4034d871ee5f57b5baa676fee",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/BrandControls.tsx",
+          "sha256": "78898e24d7169a31927671e6d6f472efab2e82eb36ad9f9001903d6b13ced0fb",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/PresenceDot.tsx",
+          "sha256": "760feb343f3b9b30cebe51f3226b5c80ac988253801c1647e058ea4d7f3bf326",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/page/PaigeAttribution.tsx",
+          "sha256": "a882da474e5a37cecdb0d18cd51174f8e9b91a225a45ab5b1f9de709ae50ee53",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/brand/paige-command-mark.css",
+          "sha256": "e2d17ad14b748140f6c55f08a6d248497515061e0053dcf7730539d06d5b41b8",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/playbook/presets.ts",
+          "sha256": "af73d67c907458d9ff99f95e39b3e2ea0d94eb4d14f000c3c5b2b1b05ee0754b",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/playbook/resolve.ts",
+          "sha256": "a7e4ebc0a458a6d19e0b915d06c29d20e025f4b191b82fc94da167c854a98bef",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/playbook/types.ts",
+          "sha256": "e3a7c1db81b7b0243818c64215dd98e22b859a7bab44f9c8db8b0b9adc4b84fc",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-turn/step-start.ts",
+          "sha256": "fec76367cc074c276f9839b7527452f6cf4df76323658be5a1bfc5f11968fda6",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/paigeLiveConversation/outputAnalysis.ts",
+          "sha256": "0f3617c5a456cc5eed684aff8be8574da6271a39236292ec97751b49ebd013b4",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/admin/studio/ArtifactStrip.tsx",
+          "sha256": "8c0a6483419ad8fca95d96bc617dcac125bb40b629c138f0d45190f7a13eb211",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/admin/studio/studio-document.ts",
+          "sha256": "945cee2cd9dffaec24db4e571ad71a65ca07638d25cb30938e66226ca958fb1b",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/admin/studio/studio-copy.ts",
+          "sha256": "6790975ecc76a088e2b75e9e1473c8d46b6cf8ab1efe4fc6b1133e29a40066f1",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/knowledge/ingest-outcome.ts",
+          "sha256": "24019e45e3fb725a09c5a1a962b8f1e29bb0b5edbcfc20d7a3c4dffffe75f78a",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/growth.ts",
+          "sha256": "a497e335ccabbc280433aa08cf32743c0f5cee208ff8b49f3d8b2b292da2bc9c",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/growth/growth-theme.ts",
+          "sha256": "c5bec29534d87af0a47b058da5c8d7d8eb32153927c9f0ee6190e08706163960",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/command.tsx",
+          "sha256": "004926ab33465d7f7fb5b7ad80aec626317171c4e15dabf21c756332be8ddbb5",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/doc-render.ts",
+          "sha256": "06f72d693cd333b18bfab176112f66bd3862f58ac3a29a298f2cdb02fc2b6fe2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/document-preparation.ts",
+          "sha256": "4164eeb196c1c599e486ac95efdeb21eb9a0287427e9fd8830dc8ac3f4a2b630",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/agency/accountCapabilities.ts",
+          "sha256": "f5f590728091da41ff30ec68c1f959f4e333c594fad9fd392c0d5d6ab6aa538f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+          "sha256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/sales-commercial/effectuation-command.ts",
+          "sha256": "dbb81094e9b7903e9458533c7e81dad71f4f0fc0d11d51931fdaba36ad26aad1",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/voice/voiceCallSafety.ts",
+          "sha256": "d0bca6b1c6a1c6922305865990c243677dac3543023c309a1f5f357672c47b10",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/voice/useLiveTranscript.ts",
+          "sha256": "b2d310d0d512fe88acb8e9a08c07196b2974844c630e4756225a0f1d181c7694",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/chart.tsx",
+          "sha256": "1889cbad6e8f0014667d05caea6bac7eaa2390562dace4c81e0c63fa7866af93",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/popover.tsx",
+          "sha256": "ee5f78ece57c9e8eb5f9b4186e2bb9ebe46b69b52f03f1edd9a601883bc64772",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/calendar.tsx",
+          "sha256": "845a0b0fdec33d8d49ab8ed05dd29a12c10b5bbcf60f24d0b9fc0a731ab18621",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/useBrandFontFaces.ts",
+          "sha256": "cf7065c88d9e9d657752a44543890f13c9b2221d4543d7f86d12516060a63854",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/brand-fonts.ts",
+          "sha256": "be20a5e5903f015424d32f6003ef4603eb951d2a3b499461e5a5443d91737a8f",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/brand/resolveBrand.ts",
+          "sha256": "df466f5a96dd86c26c48dbf92802ea08995fe55115fd6dddf063ee58dc4622ea",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/table.tsx",
+          "sha256": "fab18d9eeb84781f534330ff4b2c2cbe3a93f9bdf5c449debff2f682a83a4876",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/ui/avatar.tsx",
+          "sha256": "4a8bc00e5514912c54d414e207266fa100906aec2754d590adcc8ccc46d4c5c9",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/useClientPortalConfig.ts",
+          "sha256": "af7d9fd384f3bec6934d26bf94417426f43f8621ff2762a7acca7fdce4876e2e",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/components/paige/live/paige-presence.css",
+          "sha256": "ae19b83af2309c9abe32fe0f1a6b415eee6ff2d06c8f698ff518695dd1d37e99",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/growth-visit.ts",
+          "sha256": "8e3f92a9b447dc2817445c84fe73765350b05505d9a1fc8fdf226b8c67915e40",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/provider-types.ts",
+          "sha256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/voice/callIntelligence.ts",
+          "sha256": "72ed10c74857411c1f9e089eb6c071e9c77515276c0f9a7aa299e5632de694dd",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/useClientPortalRead.ts",
+          "sha256": "e3840e2774ce1d17ba43ba73c1bd2ad8138cd8cd0b3bff0ee292a13890ba0209",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/portal/customerIdentity.tsx",
+          "sha256": "52ad0ebb83dfbe16c55cd456c40ffd036f8d7ea47edef1719e19d2d459e2899b",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/brand-fonts.files.ts",
+          "sha256": "512aa69eb757081fd911c459267cf8cb96094e8da809eebd616a2aacb3d7a2e4",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/client-portal-identity.ts",
+          "sha256": "a124e67fb67546e4bc6e7040fd2a750f4abada95827b126755106c4d8084eff2",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/hooks/useClientPortalFrame.ts",
+          "sha256": "e38c808c95235bb21824fa9524e0e54793b0decee984e6f6ab84d69058c0dbf8",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/client-portal-frame.ts",
+          "sha256": "92f9fae5dd08df093111a053c8626ca9ab4318510cfe4a034562205937279416",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/client-portal-access.ts",
+          "sha256": "45a1247b93721b6c7bcc5f8163a5c4876c9cd4e2dd5a4c7eb84c45bc19992abe",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/client-portal-scope.ts",
+          "sha256": "7da8e203a5153adf3a834aba79d7350e0db4420fbc710007bdee9221a56690c9",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "src/lib/client-portal-self-profile.ts",
+          "sha256": "0e6167187869c34f0fea5f73f29f6cff3b2ba5a9b0941e9441fc3e53475e2b04",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        },
+        {
+          "path": "supabase/functions/_shared/client-portal-access.ts",
+          "sha256": "455d9c6b6757f8732b005939dd223f92e307b031fbbf71335660604edf5f5085",
+          "privateFixture": false,
+          "role": "ORIGINAL_SOURCE_MODULE"
+        }
+      ],
+      "privateBoundaryInputs": [
+        {
+          "path": "work/c35-request-prototype/owner-default.html",
+          "sha256": "a0e98e2d20d372111464c5139e1cdbf00642931de093bf25de4fb41484211f1e",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-default.tsx",
+          "sha256": "430f7f2c5e10b968f5464929ae587329df958e694b07be5fd571a4fb44f9e28a",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/sdk.ts",
+          "sha256": "45be99fe0db732c23a5b5e37f68041d60be56d89610a59967d2bae56ea1ddc14",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-state.ts",
+          "sha256": "3349bb79fab7a63557cef81d1a2cba2cffcef5400b8a75135748342e04d08d3b",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-theme.tsx",
+          "sha256": "9fd1d226b5ba4b4bbb7e73e70e5f5ec7697741974e41d24aef176d057010d46d",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-port-1.tsx",
+          "sha256": "73319f7fe67e5c8cdb5c181d7454741daa262bea87ede04d302cfd2b93c7a3d4",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-port-0.tsx",
+          "sha256": "95aaeb9b71199c8d2fc0296d032e4d8886db107c7e535456bd857b3daeb4dea8",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-sdk.ts",
+          "sha256": "b2bda5ec04fafc6054f8784f79cbe102cf4857b8338f381f3cfbc7443799cb6b",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-port-2.tsx",
+          "sha256": "b65e7b38a61829c18a82e6b7edd38049605e3719ffe0ba6ec9fb4f216749eb32",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-port-8.tsx",
+          "sha256": "9acf9230bfbc74a1a28ef8c1c24c1ae7bf59cccd76f4db3100765513c69a8910",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-port-9.tsx",
+          "sha256": "693ad8dc780717db2d6ac4e29884d594a632127eda714fe6ebb86d4e8742d1fc",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-port-4.tsx",
+          "sha256": "e180d06b2be4410e638983bbc1131ede7027aa46b442ee56db4a1304c4610e3f",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-port-3.tsx",
+          "sha256": "684c86f423bb685bd068f175a0a3d37a86f6bfe17a73e98e9c94651bc6ff25f7",
+          "privateFixture": true
+        },
+        {
+          "path": "work/c35-request-prototype/src/owner-port-10.tsx",
+          "sha256": "f6612fd85e4145ed0b009949eb3299acbd115aac501216c0622614c85728b69f",
+          "privateFixture": true
+        }
+      ]
+    }
+  },
+  "excluded": "Historical v6; preceding191/v8; private inline v7/v10/v11; incomplete owner forced-theme frames; full-page recipient captures which resize/reset a responsive canvas during capture. All raw originals retained locally, none borrowed as final pixel proof.",
+  "remaining": [
+    "actual ordinary owner/staff/linked client and recipient authentication",
+    "complete mounted Sales route scroll-owner/cohort verification",
+    "native mobile hardware, native screen reader speech and actual browser zoom",
+    "prepared HIGH/send/token/atomic field integration",
+    "CentralQA/full O1-O12/founder acceptance"
+  ],
+  "artifactPackaging": {
+    "at": "2026-10-25T05:47:46.910Z",
+    "imageEncoding": "Original browser JPEG bytes, extensions corrected without reencoding",
+    "captureDimensions": "Requested browser viewport and DOM geometry are in the geometry records. Original screenshot pixel dimensions are separately recorded; scrollbar/capture-boundary differences are not hidden.",
+    "invalidCameraArtifact": "One dark focus frame captured at375x188 was rejected and retained locally; replaced by a fresh390x844 DOM-verified normal-viewport focus capture. No image editing.",
+    "sourceHashParity": "All28 recipient and211 owner-default input hashes match current source; each includes one committed synthetic fixture.",
+    "focusCorrection": {
+      "requestedWidth": 390,
+      "requestedHeight": 844,
+      "documentWidth": 375,
+      "scrollWidth": 375,
+      "focus": "Keep reviewing",
+      "panelWithinViewport": true
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "scope": "Current local native style snapshots; text4.5 and keyboard ring on adjacent panel3 minimum. No full WCAG/hardware/AT certification.",
+  "rows": [
+    {
+      "theme": "light",
+      "text": [
+        {
+          "selector": ".ags-decline-panel p",
+          "contrast": 8.996350880163325
+        },
+        {
+          "selector": ".ags-decline-panel textarea",
+          "contrast": 16.397647479968594
+        },
+        {
+          "selector": ".ags-decline-confirm",
+          "contrast": 5.5160466069578495
+        }
+      ],
+      "focusContrastOnPanel": 3.0439859424654485
+    },
+    {
+      "theme": "dark",
+      "text": [
+        {
+          "selector": ".ags-decline-panel p",
+          "contrast": 8.282611316610712
+        },
+        {
+          "selector": ".ags-decline-panel textarea",
+          "contrast": 16.79148235785409
+        },
+        {
+          "selector": ".ags-decline-confirm",
+          "contrast": 6.709811601041912
+        }
+      ],
+      "focusContrastOnPanel": 8.868110909545333
+    }
+  ]
+}

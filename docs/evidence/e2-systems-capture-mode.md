@@ -1,5 +1,32 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — private request foundation actually released
+
+Original [#2867](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)
+reviewed2ef74cdb7d0fb171199ee8eff3e53b10d04da252/final LOWER5645103641,
+all13 exact checks/Preview/two webSUCCESS/zero threads, actually merged
+a358554c8cff8bbe0ba52243fb7097508c088c86/tree1cf0156eb4ddc484918f98f5173eaba23468c938.
+Actual parent1f614+2ef union preserves16225 outside entries, both frozen owning
+source blobs and complete incoming CI/evidence inverses. Local47 checkpoints
+and corrected hosted native proof pass; initial failed test transport is retained.
+
+Normal native40231237484/job121283322585 SUCCESS. Migration20271114240002 is
+applied once; all1462 versions/hash match source. Actual body37ddc854dcc05a10ab450fe5dfd8e3a6,
+ABI/defaults/owner/config and server-only permissions match. Original creator,
+identity trigger and Metric actor predicate source/owner/ACL/config are unchanged;
+all three table owners/RLS/permissions are unchanged. No new-function advisory;
+broader existing advisories are not claimed clear. db-live=a358; Edge N/A.
+Productiondpl_7BdPf2uscEZR5cSTU4gFer9CNFYp READY. Both public hosts200/exact
+a358554c8cff8bbe0ba52243fb7097508c088c86-mvoab511/customerUpdatenull at20:35:36UTC.
+
+The development section below is now SOURCE_RELEASED only at its bounded private
+preparation level. Functional prerequisite released; Visual N/A; Experiential
+manual admission/dispatch/result/Rail/recovery incomplete; Founder NOT_ACCEPTED.
+No customer scan, provider/action activation or availability promotion. Original
+9/0+12/0/4/all19/nine/monthly uncertainty remain intact. The sole Master4.0 row
+records the preceding release; this closeout adds no recursive row. Prefer a
+reviewed forward fix, never applied-history rewrite.
+
 ## October25 — approved private request foundation, development
 
 O07/O19 intended outcome: an explicit manual Systems request eventually returns

@@ -1,6 +1,7 @@
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { PaigeCommandMark } from "./components/brand/PaigeCommandMark";
+import { mountApplicationLoadFailure } from "./lib/mountApplicationLoadFailure";
 
 export type PaigeBootTheme = "light" | "dark";
 
@@ -53,5 +54,5 @@ window.addEventListener("paige:boot-splash-unmount", unmountPaigeBootSplash, { o
 // this dynamic is what prevents Rollup from making the 1 MB application graph a prerequisite
 // for the early mark on production cold loads.
 if (document.getElementById("root")) {
-  void import("./main.tsx");
+  void import("./main.tsx").catch(mountApplicationLoadFailure);
 }

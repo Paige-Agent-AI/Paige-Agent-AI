@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { readOwnerTaskHistory } from '../../supabase/functions/_shared/paige-orchestration/owner-task-history.ts';
 import { createOwnerTaskHistoryHandler } from '../../supabase/functions/_shared/paige-orchestration/owner-task-history-handler.ts';
+import { readOwnerTaskHistoryForChat } from '../../supabase/functions/_shared/paige-orchestration/owner-task-history-chat.ts';
 import { readOwnerTaskHistoryList, readOwnerTaskOutcome } from '../../src/solo/data/ownerTaskAutomation.ts';
 
 export async function proveOwnerTaskHistory(c) {
@@ -103,6 +104,53 @@ export async function proveOwnerTaskHistory(c) {
     assert.equal(httpReads, 1); assert.deepEqual(viaHttp, observed);
     assert.equal(viaHttp.originalTask.taskId, landed.result.readback.id);
   });
+  // Exercise the released Chat projection against the SAME actual native
+  // queue/companion/result/Rail. Auth, outer Team/shape scope and inspection
+  // receipt are explicit fixture ports, not authenticated Chat or Live proof.
+  // The production reader's own caller-RLS and service-only checks remain real.
+  const chat = async (viewer = actor, options = {}) => {
+    const identity = { actorId: viewer, tenantId: options.tenantId ?? tenant,
+      workspaceId: options.tenantId ?? tenant, role: viewer === actor ? 'owner' : 'admin',
+      accountShape: 'solo', actAsClientId: null, scopeEpoch: 1 };
+    let current = identity;
+    const start = reads.length;
+    const result = await readOwnerTaskHistoryForChat(identity, {
+      ...clients(viewer), currentIdentity: () => current,
+      revalidateScope: async () => options.outerScope !== false,
+      recordRead: async () => {
+        if (options.retireAfterReceipt) current = { ...identity, scopeEpoch: 2 };
+        return options.receiptVerified !== false;
+      },
+    }, { approval_id: approvalId });
+    return { result, reads: reads.slice(start) };
+  };
+  let chatRead = await chat();
+  check('Chat projection returns the same actual native Task, occurrence and original Rail with current Task explicitly unread', () => {
+    assert.equal(chatRead.result.status, 'available');
+    assert.deepEqual(chatRead.result.original, viaHttp);
+    assert.equal(chatRead.result.original.occurrenceId, f.row.id);
+    assert.equal(chatRead.result.original.originalTask.receiptId, viaHttp.originalTask.receiptId);
+    assert.equal(chatRead.result.original.currentTask.state, 'not_read');
+    assert.equal(chatRead.result.read_receipt, 'recorded');
+  });
+  chatRead = await chat(actor, { receiptVerified: false });
+  check('an unverified Chat inspection receipt does not replace or erase the actual original native Task receipt', () => {
+    assert.equal(chatRead.result.status, 'available');
+    assert.deepEqual(chatRead.result.original, viaHttp);
+    assert.equal(chatRead.result.read_receipt, 'unverified');
+  });
+  chatRead = await chat(actor, { retireAfterReceipt: true });
+  check('Chat epoch withdrawal after native read and inspection receipt withholds every original private field', () => {
+    assert.equal(chatRead.result.status, 'refused');
+    for (const field of ['original', 'approvalId', 'processId', 'occurrenceId', 'title', 'originalTask']) {
+      assert.equal(field in chatRead.result, false, field);
+    }
+    assert.ok(!JSON.stringify(chatRead.result).includes(landed.result.readback.id));
+  });
+  chatRead = await chat(actor, { outerScope: false });
+  check('unavailable outer Chat authority stops before every native private lookup', () => {
+    assert.equal(chatRead.result.status, 'refused'); assert.deepEqual(chatRead.reads, []);
+  });
   await readOwnerTaskHistory(request, clients());
   const after = sql("select jsonb_build_object('tasks',(select count(*)from tasks),'results',(select count(*)from crm_command_results),'rails',(select count(*)from paige_workspace_events),'approvals',(select jsonb_agg(to_jsonb(a)order by id)from paige_pending_approvals a),'acts',(select jsonb_agg(to_jsonb(l)order by id)from paige_act_executions l))::text;");
   check('repeated native history reads change zero tasks, results, Rail, approval or ledger rows', () => assert.equal(after, before));
@@ -112,18 +160,41 @@ export async function proveOwnerTaskHistory(c) {
   sql(`update tenant_members set role='member'where tenant_id=${literal(tenant)}and user_id=${literal(other)};`);
   observed = await readOwnerTaskHistory(request, clients(other));
   check('actual native companion refuses a member without exposing private result or receipt', () => assert.deepEqual(observed, { status: 'refused' }));
+  chatRead = await chat(other);
+  check('Chat stale administrator context cannot bypass actual native member revocation or read privileged history', () => {
+    assert.equal(chatRead.result.status, 'refused');
+    assert.ok(chatRead.reads.includes('can_read_owner_task_approval'));
+    assert.ok(!chatRead.reads.includes('paige_act_executions'));
+    assert.ok(!chatRead.reads.includes('read_owner_task_act'));
+  });
   sql(`update tenant_members set role='admin'where tenant_id=${literal(tenant)}and user_id=${literal(other)};`);
   observed = await readOwnerTaskHistory(request, clients(other));
   check('later authorized native admin can inspect original actor result without replacing that actor', () => {
     assert.equal(observed.status, 'ready'); assert.equal(observed.originalTask.taskId, landed.result.readback.id);
   });
+  chatRead = await chat(other);
+  check('later native administrator Chat inspection retains the original approving actor Task and receipt', () => {
+    assert.equal(chatRead.result.status, 'available'); assert.deepEqual(chatRead.result.original, observed);
+  });
   observed = await readOwnerTaskHistory({ ...request, tenantId: other }, clients());
   check('foreign requested tenant is refusal-only, never a service lookup scope', () => assert.deepEqual(observed, { status: 'refused' }));
+  chatRead = await chat(actor, { tenantId: other });
+  check('foreign selected Chat business is refused by the actual caller tenant before privileged task or Rail reads', () => {
+    assert.equal(chatRead.result.status, 'refused');
+    assert.ok(!chatRead.reads.includes('paige_act_executions'));
+    assert.ok(!chatRead.reads.includes('read_owner_task_act'));
+  });
   sql(`update tenant_members set status='inactive'where tenant_id=${literal(tenant)}and user_id=${literal(actor)};`);
   try {
     observed = await readOwnerTaskHistory(request, clients(other));
     check('revoked original actor keeps a later admin observation unconfirmed rather than impersonating a new actor', () => {
       assert.equal(observed.status, 'ready'); assert.equal(observed.originalTask.state, 'unconfirmed');
+    });
+    chatRead = await chat(other);
+    check('Chat preserves actual native unconfirmed outcome after original actor revocation without impersonation or retry', () => {
+      assert.equal(chatRead.result.status, 'available'); assert.deepEqual(chatRead.result.original, observed);
+      assert.equal(chatRead.result.original.originalTask.state, 'unconfirmed');
+      assert.equal(chatRead.result.original.currentTask.state, 'not_read');
     });
   } finally { sql(`update tenant_members set status='active'where tenant_id=${literal(tenant)}and user_id=${literal(actor)};`); }
 }

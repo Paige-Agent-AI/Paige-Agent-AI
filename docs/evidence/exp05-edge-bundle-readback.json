@@ -359,5 +359,116 @@
     "visual": "No customer UI change or browser/control operation",
     "experiential": "Calendar/Task/weekly/Builder/ZION, ordinary authorized cohort approvals/records/Rails/reload/recovery and separate Live remain distinct proof obligations",
     "founderAcceptance": "NOT REQUESTED; one full EXP05 evaluation remains later"
+  },
+  "productionRelease20261025": {
+    "pr": 2831,
+    "reviewedHead": "c102b96af2a37515bdd0d4176d3ab7c497944065",
+    "merge": "62b55cc10aa4911ef23d16cc16b97edefa412988",
+    "tree": "eec2a0af318f62b5b60d5b3352675eaeb18c5205",
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "receipt": 5642666210
+    },
+    "ci": {
+      "success": 10,
+      "skipped": 1,
+      "webStatusesSuccess": 2
+    },
+    "run": 40185963823,
+    "job": 121146684649,
+    "artifact": 12595723054,
+    "artifactSha256": "8b49082639e733412b3dd7480586806b87d0d6c1a21d84ea5e47b6fd8f7e06bd",
+    "duplicateUploads": "SKIPPED",
+    "source": {
+      "commit": "62b55cc10aa4911ef23d16cc16b97edefa412988",
+      "allPass": true,
+      "functions": [
+        {
+          "name": "execute-approval",
+          "version": 179,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 119,
+          "emittedFiles": 0,
+          "archiveSha256": "b83a1bcf96c1e3bf01f2f5f2fd278cf8fcb7ea5b8a000070d85af8ed5af85722"
+        },
+        {
+          "name": "paige-ai-chat",
+          "version": 537,
+          "status": "PASS",
+          "downloadMode": "docker_requested",
+          "files": 283,
+          "emittedFiles": 283,
+          "archiveSha256": "49d8ea9731ea029600e8c3b4d4f78732a69c04a7d5e8397de7ec37ea38cab2fb"
+        },
+        {
+          "name": "paige-business-review",
+          "version": 80,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 32,
+          "emittedFiles": 0,
+          "archiveSha256": "8852bacef8b11b51cd98ce71cacc348bc59f9728c485a9f60bdef9dd4aa4cafb"
+        },
+        {
+          "name": "paige-native-event-dispatch",
+          "version": 260,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 116,
+          "emittedFiles": 0,
+          "archiveSha256": "f91a97c6620cdbda3078fc5e74cd000136103c908bef1f09c841f8982ee65ad7"
+        },
+        {
+          "name": "paige-orchestrator",
+          "version": 129,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 127,
+          "emittedFiles": 0,
+          "archiveSha256": "9b0f13bbbda49f350aa8299514ff4b927676bca859d98af30fe7cc30a5b9c758"
+        },
+        {
+          "name": "weekly-commitment-command",
+          "version": 20,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 18,
+          "emittedFiles": 0,
+          "archiveSha256": "1d5e605e5af98a8749e70f50fd7bbbd7518eadfeae6ba473baf30e408bbccb1e"
+        }
+      ],
+      "scratchCleanup": {
+        "status": "incomplete",
+        "reason": "permission_denied"
+      }
+    },
+    "web": {
+      "observedAt": "2026-10-25T10:48:41.241Z",
+      "deployment": "dpl_jan4uRcPTEym162HpdvuZNc2PfeB",
+      "expected": "62b55cc10aa4911ef23d16cc16b97edefa412988",
+      "results": [
+        {
+          "url": "https://paigeagent.ai/version.json",
+          "status": 200,
+          "body": {
+            "buildId": "62b55cc10aa4911ef23d16cc16b97edefa412988-mvnpaaq4",
+            "customerUpdate": null
+          }
+        },
+        {
+          "url": "https://app.paigeagent.ai/version.json",
+          "status": 200,
+          "body": {
+            "buildId": "62b55cc10aa4911ef23d16cc16b97edefa412988-mvnpaaq4",
+            "customerUpdate": null
+          }
+        }
+      ]
+    },
+    "priorFailure": "Original2827/run40180199618 failed full source verification and remains historical; this later actual complete certificate does not rewrite it. Exact trusted-source emission, not a comparison waiver.",
+    "releaseChannel": "production",
+    "customerReleaseIdentity": null,
+    "boundary": "Source/review/CI/production identity only. Ordinary owner authority, original business result/Rail, reload/recovery, equivalent existing/new SOLO cohorts, deployed Capabilities panel, separate Live, full ten outcomes/E5-CV1–9 and founder acceptance remain unverified. No trigger, provider, spend, external send or customer announcement is activated."
   }
 }

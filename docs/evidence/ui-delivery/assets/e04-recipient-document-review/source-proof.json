@@ -533,5 +533,28 @@
   "newRenderedEvidenceRequired": [
     "src/pages/sign/AgreementSigning.tsx",
     "src/pages/sign/recipient-signing.css"
-  ]
+  ],
+  "inlineContinuation": {
+    "sourceParent": "19112cabe10b0d7dfe7686562e9ba99d650390eb",
+    "prototypeSelection": "ANT-161/0bc3f23e-4640-44ff-99ad-9a7521c9bf65",
+    "assurance": "AUTHOR_REVIEW_LOWER_ASSURANCE_UNDER_STANDING_UX_DELEGATION",
+    "sixCaseBaseline": "6_FAIL_57_PASS",
+    "current": "63_PASS",
+    "originalAssertionExpressions": 142,
+    "originalAssertionsExact": true,
+    "originalInteractionsAdapted": 7,
+    "privateAdapterFailure": "RETAINED_INVALID_TEST_ADAPTER_HELPER_MATCH_7_FAIL_56_PASS",
+    "eslint": 0,
+    "typeRatchet": {
+      "exit": 0,
+      "baseline": 10,
+      "current": 6
+    },
+    "impeccable": {
+      "exit": 0,
+      "findings": []
+    },
+    "finalActualRendering": "UNVERIFIED",
+    "customerAcceptance": "UNVERIFIED"
+  }
 }

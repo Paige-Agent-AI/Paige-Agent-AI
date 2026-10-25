@@ -204,25 +204,25 @@ it('keeps a revoked or expired reload credential closed after native verificatio
   expect(host.querySelector('input.ags-sig')).toBeNull();expect(document.activeElement).toBe(host.querySelector('h2'));
 });
 it('cancels a decline without submitting a decision',async()=>{
-  vi.spyOn(window,'prompt').mockReturnValueOnce(null);await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
-  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==="I don't agree to these terms")!.click());
+  await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==="I don't agree to these terms")!.click());await act(async()=>button('Keep reviewing').click());
   expect(fixture.rpc).toHaveBeenCalledTimes(1);expect(host.querySelector('iframe')).not.toBeNull();
 });
 it('allows a genuine decline without filling or accepting the prepared signing answers',async()=>{
   prepareOwn();fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data:{ok:true},error:null});
-  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic decline before acceptance');await render();
+  await render();
   expect(signButton().disabled).toBe(true);expect(button('Continue to signature').disabled).toBe(true);
   const control=button("I don't agree to these terms");expect(control.disabled).toBe(false);
-  await act(async()=>control.click());
+  await act(async()=>control.click());act(()=>fillDeclineReason("Synthetic decline before acceptance"));await act(async()=>button('Decline agreement').click());
   expect(host.querySelector('h2')?.textContent).toBe('You declined this agreement');
   expect(fixture.rpc).toHaveBeenLastCalledWith('decline_agreement_signing',{_token:token,_reason:'Synthetic decline before acceptance'});
   expect(fixture.invoke.mock.calls.filter(([name])=>name==='sign-agreement')).toHaveLength(0);
 });
 it('exposes unconfirmed decline feedback even while prepared signing remains locked',async()=>{
   prepareOwn();fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data:{ok:false},error:null});
-  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic unconfirmed decline');await render();
+  await render();
   const control=button("I don't agree to these terms");expect(control.disabled).toBe(false);
-  await act(async()=>control.click());
+  await act(async()=>control.click());act(()=>fillDeclineReason("Synthetic unconfirmed decline"));await act(async()=>button('Decline agreement').click());
   expect(host.querySelector('[role=alert]')?.textContent).toContain('Declining could not be confirmed');
   expect(host.querySelector('[role=alert]')?.closest('[aria-hidden=true]')).toBeNull();
   expect(host.textContent).not.toContain('You declined this agreement');expect(signButton().disabled).toBe(true);
@@ -230,16 +230,16 @@ it('exposes unconfirmed decline feedback even while prepared signing remains loc
 it('labels a pending decline as a decision without claiming a signature is being recorded',async()=>{
   let resolve!:(value:{data:{ok:boolean};error:null})=>void;
   fixture.rpc.mockImplementation((name:string)=>name==='peek_agreement_signing'?Promise.resolve({data:[row()],error:null}):new Promise(r=>{resolve=r;}));
-  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic pending decline');await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
-  await act(async()=>button("I don't agree to these terms").click());
+  await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+  await act(async()=>button("I don't agree to these terms").click());act(()=>fillDeclineReason("Synthetic pending decline"));await act(async()=>button('Decline agreement').click());
   expect(host.textContent).not.toContain('Recording your signature');expect(button('Recording your decision…').disabled).toBe(true);
   await act(async()=>resolve({data:{ok:true},error:null}));expect(host.querySelector('h2')?.textContent).toBe('You declined this agreement');
 });
 it('holds both decisions after an unconfirmed decline instead of submitting another act',async()=>{
   fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data:{ok:false},error:null});
-  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic uncertain decision');await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+  await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
   act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input=>input.click()));expect(signButton().disabled).toBe(false);
-  await act(async()=>button("I don't agree to these terms").click());
+  await act(async()=>button("I don't agree to these terms").click());act(()=>fillDeclineReason("Synthetic uncertain decision"));await act(async()=>button('Decline agreement').click());
   expect(signButton().disabled).toBe(true);expect(button("I don't agree to these terms").disabled).toBe(true);
   await act(async()=>{signButton().click();button("I don't agree to these terms").click();});
   expect(fixture.rpc.mock.calls.filter(([name])=>name==='decline_agreement_signing')).toHaveLength(1);
@@ -253,9 +253,9 @@ it.each([false,null,undefined,0,'true'])('requires an explicitly valid peek befo
 });
 it.each([{ok:false},null,{}, {ok:'true'}, {ok:1}])('withholds an unacknowledged decline receipt: %s',async(data)=>{
   fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data,error:null});
-  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic review reason');
+
   await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
-  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==="I don't agree to these terms")!.click());
+  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==="I don't agree to these terms")!.click());act(()=>fillDeclineReason("Synthetic review reason"));await act(async()=>button('Decline agreement').click());
   expect(host.textContent).not.toContain('You declined this agreement');
   expect(host.textContent).toContain('Declining could not be confirmed');
   expect(host.querySelector('[role=alert]')?.textContent).toContain('Declining could not be confirmed');
@@ -263,11 +263,67 @@ it.each([{ok:false},null,{}, {ok:'true'}, {ok:1}])('withholds an unacknowledged 
 });
 it('shows a recorded decline only after the native positive receipt, without claiming delivery',async()=>{
   fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data:{ok:true},error:null});
-  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic review reason');
+
   await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
-  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==="I don't agree to these terms")!.click());
+  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==="I don't agree to these terms")!.click());act(()=>fillDeclineReason("Synthetic review reason"));await act(async()=>button('Decline agreement').click());
   expect(host.querySelector('h2')?.textContent).toBe('You declined this agreement');
   expect(document.activeElement).toBe(host.querySelector('h2'));
   expect(host.textContent).toContain('Your decision is recorded');expect(host.textContent).not.toContain('has been told');
   expect(fixture.rpc).toHaveBeenLastCalledWith('decline_agreement_signing',{_token:token,_reason:'Synthetic review reason'});
+});
+
+// The reviewed inline decision retains the original native contract. No browser
+// prompt, signature consent or completed assigned answers can authorize it.
+const reasonInput=()=>host.querySelector<HTMLTextAreaElement>('.ags-decline-panel textarea');
+const fillDeclineReason=(value:string)=>{const input=reasonInput()!;Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));};
+const openDeclineReview=async()=>{await act(async()=>button("I don't agree to these terms").click());expect(reasonInput()).not.toBeNull();};
+it('requires explicit inline review without invoking a browser prompt or native decision',async()=>{
+ const prompt=vi.spyOn(window,'prompt').mockReturnValue(null);prepareOwn();await render();await openDeclineReview();
+ expect(prompt).not.toHaveBeenCalled();expect(host.textContent).toContain('This closes the signing request for everyone');
+ expect(reasonInput()?.maxLength).toBe(500);expect(document.activeElement).toBe(reasonInput());
+ expect(fixture.rpc.mock.calls.filter(([name])=>name==='decline_agreement_signing')).toHaveLength(0);
+ expect(fixture.invoke.mock.calls.filter(([name])=>name==='sign-agreement')).toHaveLength(0);
+});
+it('cancels inline review with Escape, restores focus and retains the private reason without retaining consent',async()=>{
+ vi.spyOn(window,'prompt').mockReturnValue(null);await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+ act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input=>input.click()));expect(signButton().disabled).toBe(false);
+ await openDeclineReview();act(()=>fillDeclineReason('Synthetic private draft'));
+ act(()=>reasonInput()!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+ await act(async()=>new Promise<void>(resolve=>requestAnimationFrame(()=>resolve())));
+ expect(reasonInput()).toBeNull();expect(document.activeElement).toBe(button("I don't agree to these terms"));expect(signButton().disabled).toBe(true);
+ await openDeclineReview();expect(reasonInput()?.value).toBe('Synthetic private draft');
+ expect([...host.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].every(input=>!input.checked)).toBe(true);
+ expect(fixture.rpc.mock.calls.filter(([name])=>name==='decline_agreement_signing')).toHaveLength(0);
+});
+it('keeps prepared answers and signing actions locked only while the inline decision is open',async()=>{
+ vi.spyOn(window,'prompt').mockReturnValue(null);prepareOwn();await render();await openDeclineReview();
+ expect(host.querySelector<HTMLInputElement>('#field-'+ownText)?.disabled).toBe(true);expect(button('Next page').disabled).toBe(true);
+ expect(signButton().matches(':disabled')).toBe(true);await act(async()=>button('Keep reviewing').click());
+ expect(host.querySelector<HTMLInputElement>('#field-'+ownText)?.disabled).toBe(false);expect(button('Next page').disabled).toBe(false);
+ expect(fixture.invoke.mock.calls.filter(([name])=>name==='sign-agreement')).toHaveLength(0);
+});
+it('allows one native decision for rapid confirms and cannot cancel an in-flight decision',async()=>{
+ vi.spyOn(window,'prompt').mockReturnValue(null);let resolve!:(value:unknown)=>void;
+ fixture.rpc.mockImplementation((name:string)=>name==='peek_agreement_signing'?Promise.resolve({data:[row()],error:null}):new Promise(r=>{resolve=r;}));
+ await render();await openDeclineReview();const confirm=button('Decline agreement');
+ await act(async()=>{confirm.click();confirm.click();});
+ expect(fixture.rpc.mock.calls.filter(([name])=>name==='decline_agreement_signing')).toHaveLength(1);
+ expect(button('Keep reviewing').disabled).toBe(true);expect(button('Recording your decision…').disabled).toBe(true);
+ act(()=>reasonInput()!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));expect(reasonInput()).not.toBeNull();
+ expect(host.textContent).not.toContain('Recording your signature');
+ await act(async()=>resolve({data:null,error:new Error('Synthetic interrupted decision')}));
+ expect(reasonInput()).toBeNull();expect(button("I don't agree to these terms").disabled).toBe(true);
+ expect(document.activeElement).toBe(host.querySelector('[role=alert]'));
+});
+it('discards an unsubmitted reason at the original token boundary',async()=>{
+ vi.spyOn(window,'prompt').mockReturnValue(null);await render();await openDeclineReview();act(()=>fillDeclineReason('Previous recipient draft'));
+ await act(async()=>router.navigate('/sign/'+nextToken));expect(reasonInput()).toBeNull();await openDeclineReview();expect(reasonInput()?.value).toBe('');
+ expect(fixture.rpc.mock.calls.filter(([name])=>name==='decline_agreement_signing')).toHaveLength(0);
+});
+it('preserves the original exact-token decline and 500-character limit after unavailable field reads',async()=>{
+ vi.spyOn(window,'prompt').mockReturnValue(null);fixture.fields.mockResolvedValue({data:null,error:new Error('Synthetic read unavailable')});
+ fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data:{ok:true},error:null});
+ await render();await openDeclineReview();act(()=>fillDeclineReason('x'.repeat(600)));await act(async()=>button('Decline agreement').click());
+ expect(fixture.rpc).toHaveBeenLastCalledWith('decline_agreement_signing',{_token:token,_reason:'x'.repeat(500)});
+ expect(host.querySelector('h2')?.textContent).toBe('You declined this agreement');expect(fixture.invoke).not.toHaveBeenCalled();
 });

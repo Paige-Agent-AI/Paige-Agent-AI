@@ -200,8 +200,17 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   const [consentRead, setConsentRead] = useState(false);
   const [consentEsign, setConsentEsign] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [declineOpen,setDeclineOpen]=useState(false);
+  const [declineReason,setDeclineReason]=useState('');
+  const declineReasonInput=useRef<HTMLTextAreaElement>(null);
+  const declineOpener=useRef<HTMLButtonElement>(null);
+  const declineFeedback=useRef<HTMLDivElement>(null);
+  const actionInFlight=useRef(false);
+  useEffect(()=>{if(declineOpen)declineReasonInput.current?.focus();},[declineOpen]);
+  const cancelDecline=()=>{if(busy||actionInFlight.current)return;setDeclineOpen(false);requestAnimationFrame(()=>declineOpener.current?.focus());};
   const [busyAction,setBusyAction]=useState<'sign'|'check'|'decline'|null>(null);
   const [declineUnconfirmed,setDeclineUnconfirmed]=useState(false);
+  useEffect(()=>{if(declineUnconfirmed)declineFeedback.current?.focus();},[declineUnconfirmed]);
   const [fieldMode,setFieldMode]=useState<'review'|'legacy'>('review');
   const [preparedReview,setPreparedReview]=useState<ReviewedRecipientFields|null>(null);
   const signatureInput=useRef<HTMLInputElement>(null);
@@ -291,10 +300,11 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   }, [phase, row?.document_body, evaluate,fieldMode]);
 
   const named = mode === "type" ? typed.trim().length > 1 : !!drawn;
-  const canSign = docGateOpen && named && consentRead && consentEsign && !busy && !declineUnconfirmed;
+  const canSign = docGateOpen && named && consentRead && consentEsign && !busy && !declineOpen && !declineUnconfirmed;
 
   const sign = async (checkOnly=false) => {
-    if (busy||(!checkOnly&&!canSign)) return;
+    if (busy||actionInFlight.current||declineOpen||(!checkOnly&&!canSign)) return;
+    actionInFlight.current=true;
     setBusyAction(checkOnly?'check':'sign');
     setBusy(true);
     setFailure(null);
@@ -337,14 +347,15 @@ function AgreementSigningCeremony({ token }: { token: string }) {
     } finally {
       setBusyAction(null);
       setBusy(false);
+      actionInFlight.current=false;
       if(checkOnly)resultHeading.current?.focus();
     }
   };
 
   const decline = async () => {
-    if (busy||declineUnconfirmed) return;
-    const reason = window.prompt("If you'd like, say briefly why. This is recorded for the business.");
-    if (reason === null) return;
+    if (busy||actionInFlight.current||declineUnconfirmed||!declineOpen) return;
+    actionInFlight.current=true;
+    const reason=declineReason;
     setBusyAction('decline');
     setBusy(true);
     setFailure(null);
@@ -365,6 +376,8 @@ function AgreementSigningCeremony({ token }: { token: string }) {
       setDeclineUnconfirmed(true);
       setFailure("Declining could not be confirmed. Reload this page or ask the business to verify the recorded status before trying again.");
     } finally {
+      actionInFlight.current=false;
+      setDeclineOpen(false);
       setBusyAction(null);
       setBusy(false);
     }
@@ -509,7 +522,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
           </div>
         </div>
 
-        {fieldMode!=='legacy'?<RecipientAgreementDocument token={token} busy={busy} onReady={preparedReady} onLegacy={legacyReady} onCheck={()=>void sign(true)} onContinue={()=>requestAnimationFrame(()=>{
+        {fieldMode!=='legacy'?<RecipientAgreementDocument token={token} busy={busy||declineOpen||declineUnconfirmed} onReady={preparedReady} onLegacy={legacyReady} onCheck={()=>void sign(true)} onContinue={()=>requestAnimationFrame(()=>{
           (signatureInput.current??signatureChoices.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]'))?.focus();
         })}/>:<div className="ags-doc">
           <div className="ags-doc-hd">
@@ -571,8 +584,8 @@ function AgreementSigningCeremony({ token }: { token: string }) {
             )}
           </div>
 
-          <div style={docGateOpen&&!busy&&!declineUnconfirmed ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}>
-            <fieldset disabled={!docGateOpen||busy||declineUnconfirmed} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+          <div style={docGateOpen&&!busy&&!declineOpen&&!declineUnconfirmed ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}>
+            <fieldset disabled={!docGateOpen||busy||declineOpen||declineUnconfirmed} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <div ref={signatureChoices} className="ags-tabs" role="group" aria-label="How to sign">
               <button type="button" aria-pressed={mode === "type"} onClick={() => setMode("type")}>Type it</button>
               <button type="button" aria-pressed={mode === "draw"} onClick={() => setMode("draw")}>Draw it</button>
@@ -617,12 +630,16 @@ function AgreementSigningCeremony({ token }: { token: string }) {
           </div>
         </div>
 
-        {failure && <div className="ags-alert" role="alert"><p>{failure}</p></div>}
-        <div className="ags-decision-row" aria-live="polite" aria-atomic="true">
-          <button type="button" className="ags-decline" onClick={decline} disabled={busy||declineUnconfirmed}>
-            {busyAction==='decline'?"Recording your decision…":"I don't agree to these terms"}
-          </button>
-        </div>
+        {failure && <div ref={declineFeedback} tabIndex={-1} className="ags-alert" role="alert"><p>{failure}</p></div>}
+        <section className="ags-decision-row" aria-label="Agreement decision" aria-live="polite" aria-atomic="true">
+          {!declineOpen?<button ref={declineOpener} type="button" className="ags-decline" disabled={busy||declineUnconfirmed} onClick={()=>{if(actionInFlight.current)return;setConsentRead(false);setConsentEsign(false);setFailure(null);setDeclineOpen(true);}}>I don't agree to these terms</button>:<div className="ags-decline-panel" aria-busy={busyAction==='decline'} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();cancelDecline();}}}>
+            <h2>Decline this agreement?</h2>
+            <p>This closes the signing request for everyone on this agreement. Your reason is optional and will be recorded for {business}.</p>
+            <label className="ags-field"><span>Reason (optional)</span><textarea ref={declineReasonInput} maxLength={500} value={declineReason} disabled={busy} onChange={event=>setDeclineReason(event.target.value)}/></label>
+            <div className="ags-decline-actions"><button type="button" className="ags-decline-cancel" disabled={busy} onClick={cancelDecline}>Keep reviewing</button><button type="button" className="ags-decline-confirm" disabled={busy} onClick={()=>void decline()}>{busyAction==='decline'?'Recording your decision…':'Decline agreement'}</button></div>
+            {busyAction==='decline'&&<p role="status">Recording your decision. Please wait for its result.</p>}
+          </div>}
+        </section>
 
         <p className="ags-legal">
           If you sign, your signature, the exact document you reviewed and the time you signed

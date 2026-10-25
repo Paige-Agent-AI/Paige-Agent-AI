@@ -4,6 +4,9 @@ const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 let hosted=true,held=true,protocolActive=true,lateHold=null,holdProjection='native',hasThread=true,threadReads=0,modelCalls=0,emittedTool=null,stopResult='stopped';
 let clientFocus='own',missionFocus='own',focusWorkspaceFlip=null,selectedWorkspace=null;
 const bodies=[],receipts=[];
+let emittedArguments={};
+const agendaBooking={id:id(70),tenant_id:id(2),calendar_id:null,host_user_id:id(1),contact_id:null,
+ title:'Protected held Calendar fixture',start_at:'2026-10-17T10:00:00Z',end_at:'2026-10-17T10:30:00Z',timezone:'UTC',status:'scheduled',booking_kind:'single'};
 globalThis.Deno={env:{get:key=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key',ANTHROPIC_API_KEY:'test-key',
  SB_EXECUTION_ID:hosted?id(80):'',DENO_DEPLOYMENT_ID:hosted?`abcdefghijklmnopqrst_${id(82)}_441`:''})[key]??''}};
 globalThis.fetch=async(url,options)=>{
@@ -14,13 +17,29 @@ globalThis.fetch=async(url,options)=>{
  if(lateHold==='provider'){held=true;executor=null;}
  const events=modelCalls===1&&emittedTool?[{type:'message_start',message:{usage:{input_tokens:1}}},
   {type:'content_block_start',index:0,content_block:{type:'tool_use',id:'tool-control',name:emittedTool}},
-  {type:'content_block_delta',index:0,delta:{type:'input_json_delta',partial_json:'{}'}},
+  {type:'content_block_delta',index:0,delta:{type:'input_json_delta',partial_json:JSON.stringify(emittedArguments)}},
   {type:'message_delta',delta:{stop_reason:'tool_use'},usage:{output_tokens:1}},{type:'message_stop'}]:[
   {type:'message_start',message:{usage:{input_tokens:1}}},{type:'content_block_delta',index:0,delta:{type:'text_delta',text:'I can read existing information; the earlier outcome is still unconfirmed.'}},
   {type:'message_delta',delta:{stop_reason:'end_turn'},usage:{output_tokens:1}},{type:'message_stop'}];
  return new Response(events.map(e=>`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(''),{headers:{'Content-Type':'text/event-stream'}});
 };
 const fake=await import('./knowledge-scope/fake-supabase.mjs');
+// Calendar's original PostgREST reader chains filters and a transport signal.
+// Model that boundary explicitly; the shared fake's async RPC is only a Promise.
+const calendarQueries=[],prototype=Object.getPrototypeOf(fake.createClient('', 'anon-key')),originalRpc=prototype.rpc;
+prototype.rpc=function(name,args){
+ if(!['current_user_tenant_id','is_tenant_member','is_tenant_admin','list_team_bookings'].includes(name))return originalRpc.call(this,name,args);
+ const observation={name,args,client:this._kind,operations:[]};calendarQueries.push(observation);
+ const pending=originalRpc.call(this,name,args),query={
+  select(value){observation.operations.push(['select',value]);return query;},
+  eq(key,value){observation.operations.push(['eq',key,value]);return query;},
+  neq(key,value){observation.operations.push(['neq',key,value]);return query;},
+  gt(key,value){observation.operations.push(['gt',key,value]);return query;},
+  order(key,value){observation.operations.push(['order',key,value]);return query;},
+  limit(value){observation.operations.push(['limit',value]);return query;},
+  abortSignal(signal){observation.signal=signal;return query;},then:pending.then.bind(pending)};
+ return query;
+};
 await import('../supabase/functions/paige-ai-chat/index.ts');
 const {capturedHandler}=await import('./knowledge-scope/stub-serve.mjs');
 const actor=id(1),tenant=id(2),thread='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';let executor=null,latest=null,passed=0,failed=0;
@@ -50,6 +69,8 @@ function scenario(){return fake.setScenario({authUser:{id:actor},tables:{profile
   :{data:null,error:{message:missionFocus==='foreign'?'MISSION_NOT_FOUND':'MISSION_READ_FAILED'}};},
  is_tenant_admin_as:{data:true,error:null},agency_can_manage_child:{data:false,error:null},
  read_business_time_zone:{data:{state:'missing',zone:null,set_at:null,local_date:null,can_set:true},error:null},
+ is_tenant_member:{data:true,error:null},is_tenant_admin:{data:false,error:null},
+ list_team_bookings:{data:[agendaBooking],error:null},
  paige_chat_interactive_begin_v2:a=>{if(a.p_stop)return stopResult==='error'?{data:null,error:{code:'fixture'}}
   :{data:stopResult===null?null:{status:stopResult,turn_id:stopResult==='accepted'?id(5):null},error:null};
   latest=a.p_intent;return{data:{status:'accepted',turn_id:id(5)},error:null};},
@@ -60,8 +81,10 @@ function scenario(){return fake.setScenario({authUser:{id:actor},tables:{profile
  paige_chat_interactive_publication_context_v2:{data:true,error:null},
  paige_chat_interactive_settle:a=>{receipts.push({role:'assistant',content:a.p_content,bundle_ref:a.p_bundle_ref});return{data:id(9),error:null};},
  }});}
-const reads=new Set(['read_business_metric','get_business_snapshot','read_client_engagement_status','read_business_time_zone','read_calendar_booking','crm_get_task']);
-async function execute(tool=null,extras={},content='Explain the current business status'){
+const reads=new Set(['read_business_metric','get_business_snapshot','read_client_engagement_status','read_business_time_zone','read_calendar_booking','read_calendar_agenda','crm_get_task']);
+async function execute(tool=null,extras={},content='Explain the current business status',args={}){
+ emittedArguments=args;
+ calendarQueries.length=0;
  emittedTool=tool;modelCalls=0;bodies.length=0;receipts.length=0;executor=null;latest=null;threadReads=0;selectedWorkspace=tenant;
  const rec=scenario();
  const response=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},
@@ -82,6 +105,28 @@ await check('held continuation actually executes the existing original-JWT read 
  assert.ok(!r.rec.rpc.some(c=>c.name==='paige_chat_interactive_recover_bound'));
  assert.equal(held,true);assert.ok(receipts.at(-1).bundle_ref.interactive.effects.some(e=>e.tool==='read_business_time_zone'));
 });
+const agendaWindow={from:'2026-10-17T00:00:00Z',to:'2026-10-18T00:00:00Z',view:'mine'};
+await check('held agenda uses the original caller and native host scope without resolving uncertainty',async()=>{
+ const r=await execute('read_calendar_agenda',{},'Inspect only my saved Calendar window.',agendaWindow);
+ const native=r.rec.rpc.filter(c=>c.name==='list_team_bookings');assert.equal(native.length,1);
+ assert.equal(native[0].client,'jwt');assert.deepEqual(native[0].args,{_from:'2026-10-17T00:00:00.000Z',_to:'2026-10-18T00:00:00.000Z',_host_ids:[actor],_tenant_id:tenant,_booking_id:null});
+ const query=calendarQueries.find(c=>c.name==='list_team_bookings');assert.ok(query.signal instanceof AbortSignal);
+ assert.ok(query.operations.some(c=>c[0]==='limit'&&c[1]===51));
+ assert.ok(query.operations.some(c=>c[0]==='select'&&!c[1].includes('guest_name')));
+ assert.ok(JSON.stringify(bodies).includes(agendaBooking.id));
+ assert.ok(JSON.stringify(bodies).includes('title_preview'));
+ assert.ok(receipts.at(-1).bundle_ref.interactive.effects.some(e=>e.tool==='read_calendar_agenda'));
+ assert.equal(held,true);assert.equal(r.rec.functions.length,0);
+ assert.ok(!r.rec.rpc.some(c=>/recover_bound|execute_crm|approve|book_meeting|record_paige_memory/.test(c.name)));
+ assert.ok(!r.rec.inserts.some(c=>/internal_booking|pending_approval|pending_confirmation|knowledge_doc|paige_owner_memory/.test(c.table)));
+});
+for(const [name,args]of [['foreign selector',{...agendaWindow,tenant_id:id(91)}],['team authority',{...agendaWindow,view:'team'}]])
+ await check('held agenda refuses '+name+' before booking lookup without an effect',async()=>{
+  const r=await execute('read_calendar_agenda',{},'Inspect only the requested saved window.',args);
+  assert.equal(r.rec.rpc.filter(c=>c.name==='list_team_bookings').length,0);
+  assert.ok(!JSON.stringify(bodies).includes(agendaBooking.title));assert.equal(held,true);
+  assert.equal(r.rec.functions.length,0);assert.ok(!r.rec.rpc.some(c=>/recover_bound|execute_crm|approve|book_meeting|record_paige_memory/.test(c.name)));
+ });
 const focusInputs=[['client',{clientId:id(3)}],['Play',{businessMissionId:id(4)}]];
 for(const [name,extra]of focusInputs)await check('held '+name+' focus remains authorized read scope, not a write-bearing input',async()=>{
  const r=await execute(null,extra);assert.equal(r.response.status,200);assert.ok(bodies.length);

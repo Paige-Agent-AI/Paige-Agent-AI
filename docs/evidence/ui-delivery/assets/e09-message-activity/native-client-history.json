@@ -1,0 +1,36 @@
+[
+  {
+    "id": "63555bef-cf3b-47ae-a5d0-d2ba7072d0a7",
+    "title": "Message sent",
+    "ref_id": null,
+    "payload": {},
+    "summary": null,
+    "surface": "client_portal",
+    "audience": "both",
+    "ref_table": null,
+    "actor_type": "client",
+    "event_kind": "comms.inbound",
+    "visibility": "client_visible",
+    "occurred_at": "2026-10-25T01:44:49.086971-04:00",
+    "actor_user_id": null,
+    "to_department": null,
+    "from_department": null
+  },
+  {
+    "id": "a36e7716-fd4d-44b8-a915-ea931a44b5b5",
+    "title": "Message from your team",
+    "ref_id": null,
+    "payload": {},
+    "summary": null,
+    "surface": "client_portal",
+    "audience": "both",
+    "ref_table": null,
+    "actor_type": "owner_staff",
+    "event_kind": "comms.outbound",
+    "visibility": "client_visible",
+    "occurred_at": "2026-10-25T01:44:49.388933-04:00",
+    "actor_user_id": null,
+    "to_department": null,
+    "from_department": null
+  }
+]

@@ -55,6 +55,7 @@ const chatEvidence = read(
 
 const EMPTY: SocialCommandInput = {
   handles: [],
+  connections: [],
   publishedOutputs: 0,
   approvalGatedForms: 0,
   formsNeedingRepair: 0,
@@ -75,6 +76,7 @@ describe("social projection — a module with no source renders its absence", ()
 
   it("never offers a queue, a schedule or a placement figure, whatever the inputs", () => {
     const full: SocialCommandInput = {
+      connections: [],
       handles: [{ network: "instagram", label: "Instagram", handle: "@acme" }],
       publishedOutputs: 12,
       approvalGatedForms: 3,
@@ -104,6 +106,45 @@ describe("social projection — a module with no source renders its absence", ()
     expect(cards).toHaveLength(SOCIAL_NETWORKS.length);
     // There is no branch in which a declared handle produces an audience figure.
     for (const card of cards) expect(card.reach.value).toBeNull();
+  });
+
+  it("keeps reach absent even when a channel is connected — a connection grants no figure (EXP07 row 9)", () => {
+    const handles = [{ network: "instagram" as const, label: "Instagram", handle: "@a" }];
+    const cards = buildChannels(handles, [{ network: "instagram", status: "connected", label: "Main", verifiedAt: "2026-10-20T10:00:00Z", profiles: 1 }]);
+    expect(cards[0].reach.value).toBeNull();
+    expect(cards[0].connection?.status).toBe("connected");
+    expect(cards[0].connectionNote).toMatch(/consent to read the account, not to publish/i);
+    expect(cards[0].reach.note).toMatch(/no audience or performance number reaches you/i);
+  });
+
+  it("renders each lifecycle state in the owner's words, and absence as absence", () => {
+    const handle = (network: string) => ({ network: network as never, label: network, handle: "@a" });
+    const cases: Array<[string, string, RegExp]> = [
+      ["needs_reauth", "needs_reauth", /sign in again/i],
+      ["error", "error", /error state/i],
+      ["setup_required", "setup_required", /one-time setup/i],
+      ["disconnected", "disconnected", /was disconnected/i],
+      ["authorizing", "authorizing", /in progress/i],
+    ];
+    for (const [network, status, pattern] of cases) {
+      const cards = buildChannels([handle(network)], [{ network, status: status as never, label: null, verifiedAt: null, profiles: 1 }]);
+      expect(cards[0].connection?.status, `${network} carries its status`).toBe(status);
+      expect(cards[0].connectionNote, `${network} speaks its state`).toMatch(pattern);
+    }
+    // No connection: absence stays absence, in the owner's words.
+    const bare = buildChannels([handle("x")]);
+    expect(bare[0].connection).toBeNull();
+    expect(bare[0].connectionNote).toMatch(/on record, not connected/i);
+  });
+
+  it("aggregates multiple profiles honestly: the best state is primary, the count is said", () => {
+    const cards = buildChannels(
+      [{ network: "facebook" as const, label: "Facebook", handle: "a" }],
+      [{ network: "facebook", status: "connected", label: "Page", verifiedAt: null, profiles: 2 }],
+    );
+    expect(cards[0].connection?.profiles).toBe(2);
+    expect(cards[0].connectionNote).toMatch(/2 profiles/i);
+    expect(cards[0].connectionNote).toMatch(/best one/i);
   });
 
   it("counts published outputs but never calls them posts or placements", () => {
@@ -264,6 +305,7 @@ describe("§13 fabrication guard — the shapes this surface must never grow", (
     // Every string below is copy a person actually reads, produced by the builders for a maximal
     // input. If any of them ever NAMES a metric without denying it, a figure was invented.
     const loud: SocialCommandInput = {
+      connections: [],
       handles: SOCIAL_NETWORKS.map((n) => ({ network: n.key, label: n.label, handle: "@acme" })),
       publishedOutputs: 31, approvalGatedForms: 4, formsNeedingRepair: 2,
       capturedSubmissions: 88, waitingOnYou: 6,
@@ -294,6 +336,7 @@ describe("§13 fabrication guard — the shapes this surface must never grow", (
     // placements" — those are the honest names of the gaps — but it may never carry a number,
     // because no record anywhere produces one. This is the invariant; the wording is not.
     const loud: SocialCommandInput = {
+      connections: [],
       handles: SOCIAL_NETWORKS.map((n) => ({ network: n.key, label: n.label, handle: "@acme" })),
       publishedOutputs: 31, approvalGatedForms: 4, formsNeedingRepair: 2,
       capturedSubmissions: 88, waitingOnYou: 6,

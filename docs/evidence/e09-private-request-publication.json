@@ -1646,5 +1646,187 @@
       "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
       "founderAcceptance": "NOT_REQUESTED"
     }
+  },
+  "receiptReadbackReview": {
+    "generatedAt": "2026-10-25T17:51:25.929Z",
+    "runtimeCommit": "8d728d41f8cc6bf305f58d55c1ddc53e223942aa",
+    "originalReviewedHead": "7c6e3c83271e7e799c7da23c07b23b3b2edcb735",
+    "findingReview": 5644423905,
+    "finding": "Pending historical source must verify original publication receipt rather than infer sharing from a same-customer link",
+    "baseline": {
+      "passed": 257,
+      "failed": 3,
+      "sourceBody": "4eb171a1dd0b2de6bab6355ddcf303e1",
+      "reportSHA256": "b0c8bc08e9dc1fde1aa9b8bf153015887f18048cf6fc7d0db95745c874f01472",
+      "failures": [
+        {
+          "name": "Historical sharing source refuses an unrelated same-customer record",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        },
+        {
+          "name": "Historical sharing source refuses missing original publication marker",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        },
+        {
+          "name": "Historical sharing source refuses different original publisher result",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        }
+      ],
+      "boundary": "Additional uncommitted probes against immutable7c6e native source; isolated fixture only, not production evidence"
+    },
+    "migration": "supabase/migrations/20271114230119_e09_original_request_receipt_readback.sql",
+    "originalPreviewAppliedMigrationByteExact": true,
+    "sourceBody": "ce47399b991cea106916d331a88657fe",
+    "sourceBlobs": {
+      "scripts/proof/e09-private-request.mjs": "41aedbda1a306cdd324fce4e10f81e9a2274071e",
+      "supabase/migrations/20271114230119_e09_original_request_receipt_readback.sql": "82860594baa248bedf2485faa3a657d04ed28a55",
+      "supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql": "ec59b7bcf4f1435bd6d9e42dd2e6934c55b35e4f",
+      "supabase/tests/customer_portal_access.sql": "94f1dcc23537f4c32976aa43577f2938f57dc3ff"
+    },
+    "candidate": {
+      "passed": 284,
+      "failed": 0,
+      "allPrior257CaseObjectsPreserved": true,
+      "currentReaderRegressionControls": 19,
+      "reportSHA256": "641ff5d7d60c14eee9b571471a487791bffbf286e5d1422cd3b012b6ed2023e5",
+      "newControls": [
+        {
+          "name": "Historical-source forward repair applies without changing any original business data",
+          "status": "PASS"
+        },
+        {
+          "name": "Receipt-readback inverse restores the entire original source definition",
+          "status": "PASS"
+        },
+        {
+          "name": "Receipt-readback preserves the original source OID, ABI, owner, ACL and search path",
+          "status": "PASS"
+        },
+        {
+          "name": "The same receipt-readback forward replays without any original data change",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses an unrelated same-customer record",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses missing original publication marker",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses different original publisher result",
+          "status": "PASS"
+        },
+        {
+          "name": "Exact original receipt still reconciles after customer access and consent are withdrawn",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Actual owner reads exact original Work/customer source without a model-authored binding",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Read-only sharing source exposes no private intent, claim, arbitrary payload or role data",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses another actor comparison without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses another active business without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses foreign CRM contact without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses foreign original Work without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses a customer principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses anonymous principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses service identity without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses paused access without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses client consent off without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses no joined customer without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses revoked member without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses lost Work standing without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses changed private source without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Source reader has the exact Auth-only, postgres definer and empty-path boundary",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source replay refuses an unknown forward body without overwriting it",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Already-shared source returns the same canonical identity and no new proposal or content",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Owner historical readback survives client pause without granting the client access",
+          "status": "PASS"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "boundary": "Original private reader/current owner authorization, common approval/writer/Work/PCA/receipt stores retained. New projection verifies original Work/version/words/publisher result/PCA binding; PCA read takes no new lock. Historical pause/consent withdrawal permits owner readback, never client access or new effect.",
+    "fullSchema": {
+      "plan": 341,
+      "original338HostedPredecessor": "SUCCESS exact7c6e step98/job121238928060; new341 still NOT_RUN",
+      "additionalReceiptNegatives": 3
+    },
+    "transport": {
+      "passed": 68,
+      "failed": 0,
+      "sourceUnchangedFrom7c6e": true
+    },
+    "delivery": {
+      "review": "PENDING exact final head",
+      "ci": "NOT_RUN for repaired head",
+      "merge": "NOT_MERGED",
+      "deployment": "NOT_DEPLOYED",
+      "activation": "NOT_REGISTERED_OR_MOUNTED",
+      "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+      "founderAcceptance": "NOT_REQUESTED"
+    }
   }
 }

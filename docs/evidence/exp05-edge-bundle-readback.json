@@ -470,5 +470,158 @@
     "releaseChannel": "production",
     "customerReleaseIdentity": null,
     "boundary": "Source/review/CI/production identity only. Ordinary owner authority, original business result/Rail, reload/recovery, equivalent existing/new SOLO cohorts, deployed Capabilities panel, separate Live, full ten outcomes/E5-CV1–9 and founder acceptance remain unverified. No trigger, provider, spend, external send or customer announcement is activated."
+  },
+  "ownerTaskChatProduction20261025": {
+    "pr": 2820,
+    "reviewedHead": "d5077e680fe532a26b7b6d5107f3f168c6d89e7d",
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE5642862282",
+    "finalGate": 6397322969,
+    "merge": "31e25a98c0d653c7c49abefbc96ea78c7893a03b",
+    "tree": "2a68288ad2ef21dec0fa2b3ca7edf529526b013f",
+    "exactHeadCi": "all11SUCCESS;bothwebSUCCESS",
+    "source": {
+      "run": 40190965302,
+      "job": 121161691730,
+      "artifact": 12597677862,
+      "artifactSha256": "4c1535c0675ab25e20940ae569dd54aa798c9704b306b69aab3125c850d5ea52",
+      "allPass": true,
+      "functions": [
+        {
+          "function": "execute-approval",
+          "version": 182,
+          "status": "PASS",
+          "verify_jwt": true,
+          "entrypoint": "supabase/functions/execute-approval/index.ts",
+          "files": 119,
+          "emittedFiles": 0,
+          "archiveSha256": "831c75e4c2c8bbeec28922890ddf466e390c63b0692cbd759ac64c59f7afd86c",
+          "manifestSha256": "da08184f87f953d38803db02b5be16136ec6ff8d936b4bbd0f03858a2ef47024",
+          "downloadMode": "api"
+        },
+        {
+          "function": "paige-ai-chat",
+          "version": 540,
+          "status": "PASS",
+          "verify_jwt": true,
+          "entrypoint": "supabase/functions/paige-ai-chat/index.ts",
+          "files": 286,
+          "emittedFiles": 286,
+          "archiveSha256": "486cfd76a2b0d664639174476baa5446c9d2d5b6c4a5e5de002f6f46322f6a73",
+          "manifestSha256": "0a972f2253168770809034cd2f874fb4766286fac24d6ede0454db01213d1ce8",
+          "downloadMode": "docker_requested"
+        },
+        {
+          "function": "paige-native-event-dispatch",
+          "version": 265,
+          "status": "PASS",
+          "verify_jwt": false,
+          "entrypoint": "supabase/functions/paige-native-event-dispatch/index.ts",
+          "files": 116,
+          "emittedFiles": 0,
+          "archiveSha256": "fc0e92c986c8b9b9d8de4955eb88dd937f2b5e90ecc493885822e0a6aca16566",
+          "manifestSha256": "abf8fb487521eb7259f42c88035992f8c77b446b1ea38e876e8b339fc97bd7d7",
+          "downloadMode": "api"
+        },
+        {
+          "function": "paige-orchestrator",
+          "version": 132,
+          "status": "PASS",
+          "verify_jwt": true,
+          "entrypoint": "supabase/functions/paige-orchestrator/index.ts",
+          "files": 127,
+          "emittedFiles": 0,
+          "archiveSha256": "1ee26bac5ed61a4cc481fc9d25554f5f5580ca768188a39cb5b2515a093fdf96",
+          "manifestSha256": "b7a087c524c56c866e1f16183767525cf1282c9da20fbee3da1777d8b1945921",
+          "downloadMode": "api"
+        },
+        {
+          "function": "weekly-commitment-command",
+          "version": 23,
+          "status": "PASS",
+          "verify_jwt": true,
+          "entrypoint": "supabase/functions/weekly-commitment-command/index.ts",
+          "files": 18,
+          "emittedFiles": 0,
+          "archiveSha256": "02972c52fc5fdb136bf7f98ecebdf199986bb7ce821798e34236b8874af6079f",
+          "manifestSha256": "15708256abfd9bf05e1889130041f0df8f25798f8f47bd422767e4325c081b53",
+          "downloadMode": "api"
+        }
+      ],
+      "scratchCleanup": {
+        "status": "incomplete",
+        "reason": "permission_denied"
+      }
+    },
+    "weeklyCommandLaterReadback": {
+      "observedAt": "2026-10-25T12:01:08.076Z",
+      "version": 24,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "files": 18,
+      "sourceEquality": "all18 original source files and closure match immutable31e and certified23; second metadata stable24",
+      "boundary": "No version/time inference, redeploy, trigger or provider activation."
+    },
+    "web": {
+      "deployment": "dpl_2TevQU7m4hauMVHU7iusMDNUrS9R",
+      "status": "READY",
+      "observedAt": "2026-10-25T11:58:47.888Z",
+      "results": [
+        {
+          "host": "https://paigeagent.ai",
+          "status": 200,
+          "version": {
+            "buildId": "31e25a98c0d653c7c49abefbc96ea78c7893a03b-mvnrw0rm",
+            "customerUpdate": null
+          }
+        },
+        {
+          "host": "https://app.paigeagent.ai",
+          "status": 200,
+          "version": {
+            "buildId": "31e25a98c0d653c7c49abefbc96ea78c7893a03b-mvnrw0rm",
+            "customerUpdate": null
+          }
+        }
+      ]
+    },
+    "native": "NOT_APPLICABLE",
+    "releaseChannel": "production",
+    "customerReleaseIdentity": null,
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2820#issuecomment-6397371858",
+    "boundary": "Original occurrence/Task/creation Rail only; currentTask:not_read. No approval or uncertain-effect replay. Ordinary authenticated Chat response/receipts/reload, roles/cohorts/new accounts, separate Live, full EXP05 and founder acceptance remain unverified."
+  },
+  "ownerTaskNativeChatProjection20261025": {
+    "pr": 2838,
+    "reviewedHead": "319ea5dc0132456a4d6d13c54dca9d7e3024eb2c",
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE5643138624",
+    "finalGate": 6397735586,
+    "merge": "34122897c01bf2fe9ac2ab80ffb1c3f263cf65aa",
+    "tree": "2fcd99be6ccaa771758c5ecbbfb15fe6fb03728d",
+    "exactHeadCi": "tenSUCCESS;no-schemaPreviewSKIP;bothwebSUCCESS",
+    "nativeProof": {
+      "harness": "scripts/proof/owner-task-history-cases.mjs via original LayerC native vertical",
+      "passed": 51,
+      "failed": 0,
+      "priorCasesRetained": 43,
+      "addedProjectionCases": 8,
+      "reportSha256": "5d4e27e39e4c906d91a1a520d1d401d09fcca0c8fa1e7a2fa27ca30633513fac",
+      "real": "Original caller-RLS view, companion, native Task result and creation Rail; original full no-write snapshot.",
+      "fixturePorts": "Auth, outer Team/shape scope and inspection-receipt delivery. Not full ChatHTTP or Supabase customer authentication."
+    },
+    "web": {
+      "deployment": "dpl_A7Pbq6Aqxa5LJudcGD8Pjw8dDZPu",
+      "status": "READY",
+      "observedAt": "2026-10-25T12:41:47.454Z",
+      "publicStatus": 200,
+      "buildId": "34122897c01bf2fe9ac2ab80ffb1c3f263cf65aa-mvntdvo0",
+      "aliases": 2,
+      "customerUpdate": null
+    },
+    "nativeDelta": "NOT_APPLICABLE",
+    "edgeDelta": "NOT_APPLICABLE",
+    "releaseChannel": "production",
+    "customerReleaseIdentity": null,
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2838#issuecomment-6397776233",
+    "boundary": "Engineering native/projection proof only. No new customer execution, role/tenant acceptance, recurrence/provider/Live/catalogue/algorithm activation or full Experience/founder acceptance."
   }
 }

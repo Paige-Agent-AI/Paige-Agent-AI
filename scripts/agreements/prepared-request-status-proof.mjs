@@ -3,7 +3,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 
 // Original isolated native Work/approval/agreement context, no provider or customer evidence.
-export async function provePreparedRequestStatus({sql,read,quote,tenant,actor,setup,register}) {
+export async function provePreparedRequestStatus({sql,read,quote,tenant,actor,setup,register,preserveCurrentReader=false}) {
  const q=quote,native=s=>'SET ROLE service_role;'+s;let checks=0;
  const check=(v,m)=>{assert(v,m);checks++;};
  const json=s=>{const v=sql(s);return v===''?null:JSON.parse(v);};
@@ -13,7 +13,8 @@ export async function provePreparedRequestStatus({sql,read,quote,tenant,actor,se
  check(provePreparedRequestStatus.toString()===body,'Executed native status proof equals retained source');
  const originals=()=>sql("SELECT jsonb_agg(jsonb_build_object('name',oid::regprocedure::text,'body',md5(prosrc),'owner',proowner,'acl',proacl::text,'config',proconfig,'definer',prosecdef) ORDER BY oid) FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN ('create_paige_durable_work','transition_paige_durable_work','_sales_invoice_actor','_record_agreement_signature','_paige_preparation_legacy_effect_hold','_paige_preparation_legacy_token_hold','_claim_prepared_agreement_confirmation','_read_prepared_agreement_work','_register_prepared_agreement_work');");
  const stamp=originals(),migration=read('supabase/migrations/20271114170004_e04_prepared_request_status.sql');
- if(!process.argv.includes('--prepared-status-baseline')){sql(migration);sql(migration);}
+ const currentBody=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid=to_regprocedure('public._read_prepared_agreement_request_status(uuid,uuid,uuid,text)');");
+ if(!process.argv.includes('--prepared-status-baseline')&&!preserveCurrentReader){sql(migration);sql(migration);}
  check(sql("SELECT to_regprocedure('public._read_prepared_agreement_request_status(uuid,uuid,uuid,text)') IS NOT NULL;")==='t','Missing native original-request status reader');
  check(originals()===stamp,'Original approval/Work/13-argument signature/holds bodies and permissions remain exact');
  const metadata=json("SELECT jsonb_build_object('definer',prosecdef,'config',proconfig,'defaults',pronargdefaults,'service',has_function_privilege('service_role',oid,'EXECUTE'),'anon',has_function_privilege('anon',oid,'EXECUTE'),'authenticated',has_function_privilege('authenticated',oid,'EXECUTE')) FROM pg_proc WHERE oid='public._read_prepared_agreement_request_status(uuid,uuid,uuid,text)'::regprocedure;");
@@ -57,5 +58,6 @@ export async function provePreparedRequestStatus({sql,read,quote,tenant,actor,se
   [`UPDATE tenants SET archived_at=clock_timestamp() WHERE id='${tenant}';`,`UPDATE tenants SET archived_at=NULL WHERE id='${tenant}';`]]){sql(mutate);try{refused(status(v));}finally{sql(restore);}}
  check(snapshot()===afterFixture,'Revoked status reads cannot create records or effects');
  check(originals()===stamp,'All original native authority and effects remain unchanged after controls');
- return {checks,migrationReplay:2,migrationSha256:createHash('sha256').update(migration).digest('hex'),proofBodySha256:createHash('sha256').update(provePreparedRequestStatus.toString()).digest('hex'),scope:'Original private Work history only, not a provider/status transition, signature or acceptance'};
+ if(preserveCurrentReader)check(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid=to_regprocedure('public._read_prepared_agreement_request_status(uuid,uuid,uuid,text)');")===currentBody,'All original status controls retain the current extended reader, never reinstall its predecessor');
+ return {checks,migrationReplay:preserveCurrentReader?0:2,currentReaderRetained:preserveCurrentReader,migrationSha256:createHash('sha256').update(migration).digest('hex'),proofBodySha256:createHash('sha256').update(provePreparedRequestStatus.toString()).digest('hex'),scope:'Original private Work history only, not a provider/status transition, signature or acceptance'};
 }

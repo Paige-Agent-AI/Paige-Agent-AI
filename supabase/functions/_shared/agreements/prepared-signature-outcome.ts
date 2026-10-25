@@ -12,8 +12,9 @@ const closed=(v:unknown,keys:string[]):v is Record<string,unknown>=>object(v)
  &&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
 
 /** Ordinary private history over ORIGINAL Work/consumed approval/preparation.
- * This projection cannot prove delivery: only prepared or outcome_unknown is
- * admitted until the original canonical message/provider receipts are wired.
+ * Provider acceptance requires the original native publication receipt; it is
+ * still not delivery, viewing, a signature or a payment. A bare Work result is
+ * only prepared or outcome_unknown and carries no publication receipt.
  * No fresh approval, claim, credential, provider attempt or fallback is issued.
  * The native reader rechecks actual actor authority; JWT checks around its
  * await retire a result from a changed business/session before disclosure. */
@@ -47,10 +48,10 @@ export async function readPreparedSignatureOutcome(value:unknown,caller:OwnerPre
  if(data===null)return null;
  if(!closed(data,['kind','state','tenant_id','actor_id','operation_id','request_sha256','agreement_id','work_id','receipt_id'])
   ||data.kind!=='prepared_signature_request_result'||typeof data.state!=='string'
-  ||!['prepared','outcome_unknown'].includes(data.state)||data.tenant_id!==tenant||data.actor_id!==expectedActorId
+  ||!['prepared','outcome_unknown','provider_accepted','provider_partial'].includes(data.state)||data.tenant_id!==tenant||data.actor_id!==expectedActorId
   ||data.operation_id!==operation||data.request_sha256!==digest||data.agreement_id!==agreement
-  ||!uuid(data.work_id)||data.receipt_id!==null)return fail('UNAVAILABLE');
- return {kind:'prepared_signature_request_result' as const,state:data.state as 'prepared'|'outcome_unknown',
+  ||!uuid(data.work_id)||(['provider_accepted','provider_partial'].includes(data.state)?!uuid(data.receipt_id):data.receipt_id!==null))return fail('UNAVAILABLE');
+ return {kind:'prepared_signature_request_result' as const,state:data.state as 'prepared'|'outcome_unknown'|'provider_accepted'|'provider_partial',
   tenant_id:tenant,actor_id:expectedActorId,operation_id:operation,request_sha256:digest,
-  agreement_id:agreement,work_id:data.work_id,receipt_id:null};
+  agreement_id:agreement,work_id:data.work_id,receipt_id:data.receipt_id as string|null};
 }

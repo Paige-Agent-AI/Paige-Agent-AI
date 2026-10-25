@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(321);
+SELECT plan(341);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -754,6 +754,44 @@ SELECT ok((SELECT paige_shared_context_consent FROM public.clients WHERE id='e09
 CREATE TEMP TABLE publication_request AS SELECT pg_temp.private_request(
  _contact=>'e0937000-0000-4000-8000-0000000000ef',_intent=>'e0959000-0000-4000-8000-000000000021') result;
 SELECT is((SELECT result#>>'{request,content_state}' FROM publication_request),'prepared','current private preparation still works after the ordinary publication fence');
+-- Trusted source is an owner read, never approval or a publication writer.
+CREATE FUNCTION pg_temp.publication_source(
+ _actor uuid DEFAULT 'e0917000-0000-4000-8000-000000000001',_role text DEFAULT 'authenticated',
+ _tenant uuid DEFAULT 'e0927000-0000-4000-8000-000000000001',_contact uuid DEFAULT 'e0937000-0000-4000-8000-0000000000ef',_work uuid DEFAULT NULL)
+ RETURNS jsonb LANGUAGE sql AS $$ SELECT pg_temp.as_user(_actor,format(
+ 'SELECT public.read_client_portal_request_share_source(%L,%L,%L,%L)',_actor,_tenant,_contact,
+ COALESCE(_work,(SELECT (result#>>'{request,work_id}')::uuid FROM publication_request))),_role) $$;
+CREATE FUNCTION pg_temp.publication_source_mutation(_sql text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE result jsonb;
+BEGIN
+ BEGIN
+  EXECUTE _sql;result:=pg_temp.publication_source();
+  RAISE EXCEPTION USING ERRCODE='ZX009',MESSAGE='rollback only this synthetic source mutation';
+ EXCEPTION WHEN SQLSTATE 'ZX009' THEN NULL; END;
+ RETURN result;
+END $$;
+CREATE TEMP TABLE source_before AS SELECT
+ (SELECT count(*) FROM public.paige_customer_actions) actions,(SELECT count(*) FROM public.notifications) notices,
+ (SELECT count(*) FROM public.paige_pending_confirmations) proposals;
+CREATE TEMP TABLE publication_source AS SELECT pg_temp.publication_source() result;
+SELECT ok(has_function_privilege('authenticated','public.read_client_portal_request_share_source(uuid,uuid,uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.read_client_portal_request_share_source(uuid,uuid,uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.read_client_portal_request_share_source(uuid,uuid,uuid,uuid)','EXECUTE'),'trusted sharing source is Auth-only and requires real owner authority');
+SELECT is((SELECT result->'args' FROM publication_source),(SELECT jsonb_build_object('expected_tenant_id',c.tenant_id,'contact_id',c.id,
+ 'work_id',r.result#>>'{request,work_id}','version',r.result#>>'{request,version}','title',r.result#>>'{request,title}',
+ 'body',r.result#>>'{request,body}','recipient_user_id',c.linked_user_id,'access_version',c.portal_access_changed_at)
+ FROM publication_request r,public.clients c WHERE c.id='e0937000-0000-4000-8000-0000000000ef'),'source arguments come from original Work and current client, retaining exact version and words');
+SELECT is((SELECT count(*) FROM publication_source s,jsonb_object_keys(s.result)),9::bigint,'source exposes only its closed native envelope');
+SELECT is(pg_temp.publication_source(_tenant=>'e0927000-0000-4000-8000-000000000002')->>'sqlstate','42501','source cannot cross the selected business');
+SELECT is(pg_temp.publication_source(_contact=>'e0937000-0000-4000-8000-0000000000ee')->>'sqlstate','55000','source cannot substitute another customer');
+SELECT is(pg_temp.publication_source(_work=>'e0959000-0000-4000-8000-000000000099')->>'sqlstate','55000','source cannot substitute another Work');
+SELECT is(pg_temp.publication_source(_actor=>'e0917000-0000-4000-8000-000000000031')->>'sqlstate','42501','customer cannot prepare owner publication');
+SELECT is(pg_temp.publication_source(_role=>'service_role')->>'sqlstate','42501','service cannot impersonate the source owner');
+SELECT is(pg_temp.publication_source(_role=>'anon')->>'sqlstate','42501','anonymous source read refuses');
+SELECT ok(pg_temp.publication_source_mutation($q$SELECT pg_temp.access('e0917000-0000-4000-8000-000000000001','e0937000-0000-4000-8000-0000000000ef','pause')$q$)->>'sqlstate' IN ('42501','55000'),'source refuses paused access through the original access writer');
+SELECT ok(pg_temp.publication_source_mutation($q$SELECT pg_temp.as_user('e0917000-0000-4000-8000-000000000031','SELECT public.client_portal_set_shared_context_consent(false,''e0927000-0000-4000-8000-000000000001'')')$q$)->>'sqlstate' IN ('42501','55000'),'source refuses consent withdrawn through the original customer writer');
+SELECT ok((SELECT b.actions=(SELECT count(*) FROM public.paige_customer_actions) AND b.notices=(SELECT count(*) FROM public.notifications)
+ AND b.proposals=(SELECT count(*) FROM public.paige_pending_confirmations) FROM source_before b),'source preparation and refusals create no customer effect or approval');
 INSERT INTO public.paige_pending_confirmations(id,user_id,tenant_id,tool_name,fingerprint,args,summary,
  server_issued_at,issued_in_request,consumed_at,claimed_in_request,expires_at)
  SELECT 'e0959000-0000-4000-8000-000000000022','e0917000-0000-4000-8000-000000000001',
@@ -812,6 +850,10 @@ SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000001',format(
 SELECT ok((SELECT b.actions=(SELECT count(*) FROM public.paige_customer_actions) AND b.notices=(SELECT count(*) FROM public.notifications)
  AND b.domain_audits=(SELECT count(*) FROM public.paige_audit_log) AND b.work_audits=(SELECT count(*) FROM public.audit_logs)
  FROM publication_before b),'all publication refusals leave original customer records, notices and audits unchanged');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET scoped_client_id='e0937000-0000-4000-8000-0000000000ee' WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate',
+ '42501','owner approval with another selected CRM focus refuses');
+UPDATE public.paige_pending_confirmations SET scoped_client_id='e0937000-0000-4000-8000-0000000000ef'
+ WHERE id='e0959000-0000-4000-8000-000000000022';
 CREATE TEMP TABLE publication_result AS SELECT pg_temp.share_request() result;
 SELECT is((SELECT result->>'status' FROM publication_result),'shared','exact approved native publication reaches the real customer record');
 SELECT is((SELECT result->>'work_id' FROM publication_result),(SELECT result#>>'{request,work_id}' FROM publication_request),'publication keeps the original private Work identity');
@@ -837,6 +879,25 @@ SELECT is(pg_temp.owner_actions(_contact=>'e0937000-0000-4000-8000-0000000000ef'
 SELECT is(pg_temp.share_request()->>'replayed','true','publication retry after customer response is still historical, never another send');
 SELECT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=(SELECT (result->>'customer_action_id')::uuid FROM publication_result)),
  1::bigint,'one customer response survives publication reconciliation');
+CREATE TEMP TABLE historical_publication_source AS SELECT pg_temp.publication_source() result;
+SELECT is((SELECT result->>'source_state' FROM historical_publication_source),'shared','returning owner source recognizes actual already-shared Work');
+SELECT is((SELECT result->>'customer_action_id' FROM historical_publication_source),(SELECT result->>'customer_action_id' FROM publication_result),'returning source preserves the original customer action identity');
+SELECT is((SELECT result->'args' FROM historical_publication_source),'null'::jsonb,'historical source cannot create a replacement approval from old words');
+SELECT is((SELECT count(*) FROM public.paige_customer_actions WHERE id=(SELECT (result->>'customer_action_id')::uuid FROM publication_result)),1::bigint,'historical source does not create another customer action');
+-- Receipt corruption controls use another real same-customer publication, then
+-- roll back each synthetic mapping mutation. A link alone is not that receipt.
+CREATE TEMP TABLE unrelated_source_publication AS SELECT pg_temp.as_user('e0917000-0000-4000-8000-000000000001',format(
+ 'SELECT public.admin_propose_paige_actions(%L,%L::jsonb)','e0937000-0000-4000-8000-0000000000ef',
+ '[{"action_type":"recommendation","title":"Another actual request","body":"Different exact words","payload":{}}]')) result;
+SELECT is(pg_temp.publication_source_mutation(format('UPDATE public.paige_actions SET customer_action_id=%L WHERE id=%L',
+ (SELECT result#>>'{ids,0}' FROM unrelated_source_publication),(SELECT result#>>'{request,work_id}' FROM publication_request)))->>'sqlstate',
+ '55000','historical sharing source refuses an unrelated same-customer publication');
+SELECT is(pg_temp.publication_source_mutation(format('UPDATE public.paige_actions SET payload=payload-''client_portal_publication'' WHERE id=%L',
+ (SELECT result#>>'{request,work_id}' FROM publication_request)))->>'sqlstate',
+ '55000','historical sharing source requires the original publication marker');
+SELECT is(pg_temp.publication_source_mutation(format('UPDATE public.paige_actions SET result=jsonb_set(result,''{ids}'',jsonb_build_array(%L::text)) WHERE id=%L',
+ (SELECT result#>>'{ids,0}' FROM unrelated_source_publication),(SELECT result#>>'{request,work_id}' FROM publication_request)))->>'sqlstate',
+ '55000','historical sharing source refuses a different original publisher result');
 
 SELECT * FROM finish();
 ROLLBACK;

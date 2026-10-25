@@ -345,8 +345,37 @@ function privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invok
  });
  check('Original publication baseline isolates the real action-type constraint gap',()=>assert.match(observedError,/paige_customer_actions_action_type_check/));
  check('Original failed publication leaves no partial customer item, notice, response or publisher audit',()=>assert.equal(snapshot(),beforePublication));
+ let mappingOnlyCounterfactual=null;
+ check('Rolled-back mapping-only counterfactual diagnoses missing approval and private-payload exposure',()=>{
+  const intent='e09df200-0000-4000-8000-000000000002';
+  const draft=invoke({actor:f.other,expected:f.other,tenant:f.tenant,contact:f.contact,intent});
+  assert.equal(draft.request.status,'assigned');
+  const definition=sql("SELECT pg_get_functiondef('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure)");
+  const original="'action_type', _row.action_kind,";
+  assert.equal(definition.split(original).length,2,'Exactly one hypothetical mapping change');
+  const variant=definition.replace(original,"'action_type', 'recommendation',");
+  const before=snapshot();
+  // Diagnostic counterfactual only. DDL and customer effects roll back in the
+  // same isolated transaction; this variant is never a product implementation.
+  let out;
+  try{out=sql(`BEGIN;${variant};SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;
+   SELECT public.advance_action(p_action_id=>'${draft.request.work_id}',p_to_status=>'executing',p_tenant_id=>'${f.tenant}');
+   RESET ROLE;SELECT jsonb_build_object('status',a.status,'approval_id',a.approval_id,'action_type',c.action_type,
+    'private_intent',c.payload_json#>>'{client_portal_private_request,intent_id}')
+   FROM public.paige_actions a JOIN public.paige_customer_actions c ON c.id=a.customer_action_id
+   WHERE a.id='${draft.request.work_id}';ROLLBACK;`);}
+  finally{
+   assert.equal(snapshot(),before,'Counterfactual must leave no customer effects, even on a diagnostic error');
+   assert.equal(sql("SELECT pg_get_functiondef('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure)"),definition,'Original native definition restored by rollback');
+  }
+  const rows=out.split('\n').filter(x=>x.startsWith('{')).map(x=>JSON.parse(x));
+  assert.equal(rows.length,2);assert.equal(rows[0].status,'done');assert.equal(rows[1].status,'done');
+  assert.equal(rows[1].approval_id,null);assert.equal(rows[1].action_type,'recommendation');assert.equal(rows[1].private_intent,intent);
+  mappingOnlyCounterfactual={evidenceClass:'isolated transactional counterfactual; not deployed or authenticated Chat',
+   nativeStatus:rows[1].status,approvalAbsent:true,privateIntentWouldBeProjected:true,rolledBack:true};
+ });
  return {sourceFile,publisherHash,advanceSource:'66dcedb5e40dd43a54373c0e0ded1884',directPositiveControl:'original writer/constraint/notification/audit',
-  observed,observedError,fixture:'synthetic Auth/role/relationship setup and outer graph; original PCA table constraint, publisher and Action Bus bodies',
+  observed,observedError,mappingOnlyCounterfactual,fixture:'synthetic Auth/role/relationship setup and outer graph; original PCA table constraint, publisher and Action Bus bodies',
   productionOperation:false,fixApplied:false,fullCustomerJourney:'UNVERIFIED'};
 }
 

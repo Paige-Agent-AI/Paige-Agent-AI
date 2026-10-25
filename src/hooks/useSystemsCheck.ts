@@ -216,7 +216,7 @@ export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?
     },
   });
 
-  // No existing caller opts in. This exact-record read reuses the original tables'
+  // The optional linked-source view reuses the original tables'
   // authenticated SELECT/RLS; client filters only narrow, never grant, access.
   // It does not use or widen the current-only signal-reference/approval contracts.
   const recordRequested = options?.findingId !== undefined && options.findingId !== null;

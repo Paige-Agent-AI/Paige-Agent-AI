@@ -1,5 +1,31 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October25 — original finding journey released and verified within scope
+
+The sole [Master§4.0 log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+now records original2817/UI001130 and2847/recoveryc908 exact source reviews,
+required CI, actual current-main unions, web/public and four-function API source/
+config readback. [UI receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2817#issuecomment-6399704342);
+[recovery receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2847#issuecomment-6399705002).
+
+O06/O12–14/O16 gain a genuine designated ordinary SOLO Owner read of an ORIGINAL
+prepared source: new-tab review preservation, older evidence separate from latest
+health, expanded review, keyboard wrap, Escape/focus, source-route reload/empty
+composer, read-only refresh/clear/Back. Fresh containingc908 source read matches
+its public bootstrap and unchanged UI leaves; ANT52/35794f47. Source or synthetic
+cases remain separate from these actual bounded customer observations.
+O04 gains fresh all-seven-view Finance navigation/evidence/Escape/focus/reload
+proof on884386, ANT52/b598089f; company-source figures remain unavailable, not zero.
+
+O07/O19 remain INCOMPLETE: capture-start UUID preservation is not persistence,
+absence, idempotency, authorization, a manual scan or a Rail action receipt.
+Existing algorithms/CAP009–017 retain their current Partial/Limited/Coming Soon/
+Unverified boundaries; no registry/readiness change or Live promotion. Other
+legitimate roles/tenant/cohorts, populated domain evidence, native zoom/AT/device,
+governed follow-through, protected original monthly UNKNOWN/UNRETRIED and full
+nineteen/nine acceptance remain open. Functional/Visual/Experiential proof above
+does not establish Founder Acceptance; the complete Experience receives one review.
+
 ## October25 — verified source-release closeout, full Experience still open
 
 Original2694/2690/2696/2787/2800 have actual reviewed, merged and production-source
@@ -1837,3 +1863,27 @@ Functional source prerequisite only; no UI/rendered/customer scan, permission/co
 manual work/receipt, Chat/Live or O07/O19 completion. Historical9/0 and12/0/4,
 all19/nine, original ALG/catalogue readiness, monthly UNKNOWN/UNRETRIED, input and
 activation controls and one final founder evaluation remain open.
+
+## October25 — read-only resumption and original-finding UI candidate
+
+Owner renewed existing SOLO read-only QA. Finance menu→Overview, all seven pages,
+original source-sheet Escape/focus and Profitability route/figures/empty-composer
+reload passed bounded checks; [sanitized original receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2696#issuecomment-6398632354),
+ANT-52 ad4f5ed1. Populated company sources, negative roles/tenants/cohorts, native
+zoom/AT/physical mobile and exact tab-to-deployment binding remain unverified.
+Two CSS layouts were inspected; raw raster mismatches are not exact-raster passes.
+All nine catalogue entries were read with their original3Limited/4ComingSoon/
+2Unverified coverage and all9AccessUnverified. No capability/algorithm promotion.
+
+Existing #2817 O06/O14 candidate consumes the released exact reader, keeps older
+evidence separate from current health and offers no action from historical data.
+[Owning rendered evidence](../evidence/ui-delivery/e2-recorded-finding-review.md)
+records13 neutral browser states, original keyboard/return/retry paths, required
+CSS widths/PAIGE states, narrow drawer reachability and the selected44px return
+target. Fresh202/9 source controls pass on current-main composition. This is
+development/synthetic proof; final review/CI, merge/deployment, authenticated
+history/isolation/cohort/reload and founder acceptance remain separate obligations.
+Read-only analysis/inspection produces no Layer C execution or Rail result.
+All19 required outcomes, nine analytics, historical9/0 and16-case12/0/4 remain;
+ALG03/06/11/12 Partial,ALG13 usefulness Unverified and original monthly
+UNKNOWN/UNRETRIED stay unchanged. No provider/spend/Live/consequential activation.

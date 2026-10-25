@@ -54,6 +54,9 @@ function executionReport(data: Record<string,unknown>): Report {
   return data.already==="in_progress" ? "in_progress" : ["approved","sent"].includes(String(data.already)) ? "already" : "unknown";
 }
 
+// The reply families get words an owner reads, never the raw queue key ("owner.lead Followup").
+const FOLLOWUP_CATEGORY_LABEL:Record<string,string>={
+  "owner.lead_followup":"Lead reply","client.followup":"Follow-up reply","owner.followup_email":"Follow-up email"};
 function FollowupReviewLink({a,followup}:{a:ApprovalQueueRow;followup:boolean}) {
   const routed=useInRouterContext();
   return routed?<RoutedFollowupReviewLink a={a} followup={followup}/>:<p className="text-sm text-muted-foreground">Open the original reply in Conversations to review it.</p>;
@@ -102,9 +105,6 @@ function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,cur
 }) {
   const id=useId(), mounted=useRef(false), flight=useRef(false);
   const followup=a.category==="owner.lead_followup"||a.category==="client.followup"||a.category==="owner.followup_email";
-  // The reply families get words an owner reads, never the raw queue key ("owner.lead followup").
-  const FOLLOWUP_CATEGORY_LABEL:Record<string,string>={
-    "owner.lead_followup":"Lead reply","client.followup":"Follow-up reply","owner.followup_email":"Follow-up email"};
   // Legacy client.followup replies are decline-only at the database (the governed door replaced
   // them). The row says so plainly instead of just silently lacking an Approve button.
   const legacyDeclineOnly=followup&&a.category==="client.followup";
@@ -199,7 +199,7 @@ function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,cur
           {typeof args.title==="string" && <p>{args.title}</p>}{typeof args.description==="string" && <p>{args.description}</p>}
         </div>}
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-          {a.category && <span className="capitalize">{FOLLOWUP_CATEGORY_LABEL[a.category] ?? a.category.replace(/_/g," ")}</span>}
+          {a.category && <span className={FOLLOWUP_CATEGORY_LABEL[a.category] ? undefined : "capitalize"}>{FOLLOWUP_CATEGORY_LABEL[a.category] ?? a.category.replace(/_/g," ")}</span>}
           {a.contact_id && <span className="inline-flex items-center gap-1 min-w-0"><User className="h-3 w-3 shrink-0"/><span className="break-words">{contactLabel(a)}</span></span>}
         </div>
         {departmentVp && <p className="text-xs text-muted-foreground">Department specialist: {VP_ROSTER[departmentVp].name}</p>}

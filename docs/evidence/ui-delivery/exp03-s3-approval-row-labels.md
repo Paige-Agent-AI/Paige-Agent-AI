@@ -1,6 +1,6 @@
 # UI delivery evidence: exp03-s3-approval-row-labels
 
-S3 UI remainder (journey §12's O6/O8 gaps): the shared approval row now labels the reply families with words an owner reads — **Lead reply**, **Follow-up reply**, **Follow-up email** — instead of the raw queue key (`owner.lead_followup` rendered as "Owner.lead followup"), and a legacy `client.followup` row explains plainly that it **can only be declined here** while replies Paige writes now are reviewed and approved in Conversations. O5 (the intake toggle's reload state) and O7 (the reply review screen) already shipped with #2172; this closes the remaining approval-row gaps.
+S3 UI remainder (journey §12's O6/O8 gaps): the shared approval row now labels the reply families with words an owner reads — **Lead reply**, **Follow-up reply**, **Follow-up email** — instead of the raw queue key (`owner.lead_followup` rendered as "Owner.lead Followup"), and a legacy `client.followup` row explains plainly that it **can only be declined here** while replies Paige writes now are reviewed and approved in Conversations. O5 (the intake toggle's reload state) and O7 (the reply review screen) already shipped with #2172; this closes the remaining approval-row gaps.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: WAIVED: owner-decision=AGENTS.md mandatory routing with the #1280 waiver grammar; reason=the Flow-by-Flow skill is not installed in this agent environment, and the incumbent-surface grounding below carries the flow reading instead

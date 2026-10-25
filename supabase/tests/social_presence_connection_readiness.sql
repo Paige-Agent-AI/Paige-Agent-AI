@@ -184,13 +184,12 @@ INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
 -- Connections: A has instagram connected (verified), x needs_reauth, facebook connected twice
 -- (two profiles: one connected, one disconnected → primary connected, profiles 2), linkedin
 -- error. B has instagram connected — must never reach A's answer.
-INSERT INTO public.paige_social_connections (tenant_id, provider_key, provider_profile_key, label, status, last_verified_at) VALUES
-  ('00000000-0000-4000-8000-00000000d0a1', 'instagram', 'ps_1111111111111111111111111111111111111111', 'Alpha Coaching (main)', 'connected', '2026-10-20T10:00:00Z'),
-  ('00000000-0000-4000-8000-00000000d0a1', 'x',        'ps_2222222222222222222222222222222222222222', 'Alpha Coaching on X', 'needs_reauth', '2026-10-01T09:00:00Z'),
-  ('00000000-0000-4000-8000-00000000d0a1', 'facebook', 'ps_3333333333333333333333333333333333333333', 'Alpha Coaching page', 'connected', '2026-10-18T10:00:00Z'),
-  ('00000000-0000-4000-8000-00000000d0a1', 'facebook', 'ps_4444444444444444444444444444444444444444', 'Alpha Coaching (old)', 'disconnected', NULL),
-  ('00000000-0000-4000-8000-00000000d0a1', 'linkedin', 'ps_5555555555555555555555555555555555555555', NULL, 'error', NULL);
-UPDATE public.paige_social_connections SET failure_code = 'provider_token_expired' WHERE provider_key = 'linkedin' AND tenant_id = '00000000-0000-4000-8000-00000000d0a1'::uuid;
+INSERT INTO public.paige_social_connections (tenant_id, provider_key, provider_profile_key, label, status, failure_code, last_verified_at) VALUES
+  ('00000000-0000-4000-8000-00000000d0a1', 'instagram', 'ps_1111111111111111111111111111111111111111', 'Alpha Coaching (main)', 'connected', NULL, '2026-10-20T10:00:00Z'),
+  ('00000000-0000-4000-8000-00000000d0a1', 'x',        'ps_2222222222222222222222222222222222222222', 'Alpha Coaching on X', 'needs_reauth', NULL, '2026-10-01T09:00:00Z'),
+  ('00000000-0000-4000-8000-00000000d0a1', 'facebook', 'ps_3333333333333333333333333333333333333333', 'Alpha Coaching page', 'connected', NULL, '2026-10-18T10:00:00Z'),
+  ('00000000-0000-4000-8000-00000000d0a1', 'facebook', 'ps_4444444444444444444444444444444444444444', 'Alpha Coaching (old)', 'disconnected', NULL, NULL),
+  ('00000000-0000-4000-8000-00000000d0a1', 'linkedin', 'ps_5555555555555555555555555555555555555555', NULL, 'error', 'provider_token_expired', NULL);
 INSERT INTO public.paige_social_connections (tenant_id, provider_key, provider_profile_key, label, status, last_verified_at) VALUES
   ('00000000-0000-4000-8000-00000000d0b1', 'instagram', 'ps_6666666666666666666666666666666666666666', 'Beta (main)', 'connected', '2026-10-19T10:00:00Z');
 

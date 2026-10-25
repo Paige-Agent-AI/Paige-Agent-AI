@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: actual affected production tab reproduced; re
 KEYBOARD_FOCUS: PASS: Tab reaches the native Reload page button and Enter performs one same-address reload; visible focus outline, native disabled control for pending work. Real screen-reader drive remains unverified.
 ZOOM_REFLOW: PASS: actual local 390px view at 200 percent root text retains visible control without horizontal overflow; 320px/390px plus four desktop sizes checked.
 REDUCED_MOTION: PASS: recovery introduces no motion; local browser uses reduce preference; original splash behavior retained and its regression suite passes.
-STATE_COVERAGE: PASS: original loading/success, rejected route, rejected initial graph, blocked storage, pending work, explicit retry and navigation reset; backend permission/consent/empty/approval remain original successfully loaded page responsibilities.
+STATE_COVERAGE: PASS: original loading/success, rejected route, rejected initial graph, blocked storage, registered unsaved work, explicit retry and navigation reset; backend permission/consent/empty/authorization remain original successfully loaded page responsibilities.
 TRUTHFUL_STATE_LABELS: PASS: no business, delivery, login, payment or saved-work success fabricated; raw exception not shown; no LIVE product claim.
 SOLO_UI: NO: shell-neutral pre-entry/route failure notice, also consumed by customer /app; successful SOLO shell unchanged. No claim of authenticated two-cohort/open-PAIGE proof.
 UNVERIFIED: exact-head CI/build, deployment and actual affected customer return; full shell/real device/AT/cross-business acceptance; every complete EXP09 outcome remains separately owed.

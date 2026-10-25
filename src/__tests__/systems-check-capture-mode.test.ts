@@ -24,6 +24,7 @@ const TENANT = 'b4000000-0000-4000-8000-000000001111';
 const RUN = 'b4000000-0000-4000-8000-00000000a001';
 const captureUuid = vi.fn((): ReturnType<Crypto['randomUUID']> => RUN);
 const PRIOR = 'b4000000-0000-4000-8000-00000000a002';
+const MANUAL_PRIOR = 'b4000000-0000-4000-8000-00000000a003';
 const ACTION = 'b4000000-0000-4000-8000-00000000c001';
 type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; filters: unknown[][] };
 type Result = { data: unknown; error: { message: string } | null };
@@ -35,7 +36,7 @@ type Query = {
 };
 
 function fixture(statuses: string[] = ['fail'], options: {
-  previous?: string; scope?: 'tenant' | 'operator'; catalogError?: boolean; insertError?: boolean;
+  previous?: string; manualBaseline?: string; scope?: 'tenant' | 'operator'; catalogError?: boolean; insertError?: boolean;
   findingError?: boolean; missing?: boolean; throws?: boolean; finalizeError?: boolean; finalizeNoop?: boolean;
   findingReadError?: boolean; runReadError?: boolean; findingReadPatch?: Record<string, unknown>;
   runReadPatch?: Record<string, unknown>; findingRows?: 'missing' | 'duplicate'; findingWriteLostAck?: boolean;
@@ -59,12 +60,18 @@ function fixture(statuses: string[] = ['fail'], options: {
           return { data: selected.map(row => Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'status'))), error: null };
         }
         if (table === 'paige_systems_check_run' && call.operation === 'read') {
-          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'id' && item[2] === RUN)) return { data: options.previous ? { id: PRIOR } : null, error: null };
+          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'id' && item[2] === RUN)) {
+            const manualExcluded = call.filters.some(item => item[0] === 'neq' && item[1] === 'scan_flavor' && item[2] === 'manual');
+            return { data: options.manualBaseline && !manualExcluded ? { id: MANUAL_PRIOR } : options.previous ? { id: PRIOR } : null, error: null };
+          }
           if (options.runReadError) return { data: null, error: { message: 'Synthetic read unavailable' } };
           return { data: savedRun ? { ...savedRun, ...options.runReadPatch } : null, error: null };
         }
         if (table === 'paige_systems_check_finding' && call.operation === 'read') {
-          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === RUN)) return { data: rows.map(row => ({ check_id: row.check_id, status: options.previous })), error: null };
+          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === RUN)) {
+            const manual = call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === MANUAL_PRIOR);
+            return { data: rows.map(row => ({ check_id: row.check_id, status: manual ? options.manualBaseline : options.previous })), error: null };
+          }
           if (options.findingReadError) return { data: null, error: { message: 'Synthetic read unavailable' } };
           const persisted = savedFindings.map((row, index) => ({ ...row, ...(index === 0 ? options.findingReadPatch : {}) }));
           return { data: options.findingRows === 'missing' ? persisted.slice(1) : options.findingRows === 'duplicate' ? persisted.map(() => persisted[0]) : persisted, error: null };
@@ -115,6 +122,40 @@ beforeEach(() => {
   vi.restoreAllMocks(); captureUuid.mockClear();
   vi.spyOn(globalThis.crypto, 'randomUUID').mockImplementation(captureUuid);
   forge.mockReset().mockResolvedValue({ result: { content: 'Synthetic original draft', needs_config: false, model: 'synthetic' } });
+});
+
+describe('Unused manual capture purpose does not grant invocation or remediation', () => {
+  it.each([undefined, 'all', 'delta'])('refuses manual remediation mode %j before every source/effect', async actionFiling => {
+    const h = fixture();
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_CAPTURE_ONLY');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+  it('refuses an operator manual purpose before source reads or persistence', async () => {
+    const h = fixture(['fail'], { scope: 'operator' });
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none' })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_TENANT_ONLY');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(h.rpcs).toEqual([]);
+  });
+  it('records the explicit tenant purpose without drafts or actions', async () => {
+    const h = fixture(['pass', 'fail']);
+    expect(await h.execute({ scanFlavor: 'manual', actionFiling: 'none' })).toMatchObject({ run_id: RUN, check_count: 2, actions_filed: 0 });
+    expect(h.persisted().run).toMatchObject({ id: RUN, tenant_id: TENANT, scan_flavor: 'manual', selected_runner_keys: null, triggered_by: { scope: 'tenant', action_filing: 'none' } });
+    expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+  it('retains the original selected-runner marker for a partial manual capture', async () => {
+    const h = fixture(['pass', 'fail']);
+    expect(await h.execute({ scanFlavor: 'manual', actionFiling: 'none', runnerKeys: ['runner_0'] })).toMatchObject({ check_count: 1, actions_filed: 0 });
+    expect(h.persisted().run).toMatchObject({ scan_flavor: 'manual', selected_runner_keys: ['runner_0'] });
+    expect(h.dispatched).toHaveLength(1);
+  });
+  it.each([
+    { previous: 'pass', manualBaseline: 'fail', actions: 1 },
+    { previous: 'fail', manualBaseline: 'pass', actions: 0 },
+    { previous: undefined, manualBaseline: 'fail', actions: 1 },
+  ])('preserves the original scheduled delta decision with a newer manual record: %j', async scenario => {
+    const h = fixture(['fail'], scenario);
+    expect(await h.execute({ scanFlavor: 'scheduled', actionFiling: 'delta' })).toMatchObject({ actions_filed: scenario.actions });
+    expect(h.rpcs).toHaveLength(scenario.actions); expect(forge).toHaveBeenCalledTimes(scenario.actions);
+  });
 });
 
 describe('Original Systems capture mode: observations are separate from remediation', () => {

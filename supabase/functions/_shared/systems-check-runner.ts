@@ -48,7 +48,7 @@ const RUNNER_AGENT = "paige-systems-check";
 // ── Types ──────────────────────────────────────────────────────────────────────────────────────
 
 export type CheckStatus = "pass" | "fail" | "skip" | "error";
-export type ScanFlavor = "onboarding" | "scheduled" | "change_triggered";
+export type ScanFlavor = "onboarding" | "scheduled" | "change_triggered" | "manual";
 /** WHO the scan is for (§9/§51/§53). 'tenant' = the L1/L2 default 10 tenant checks (tenant_id set);
  *  'operator' = platform-operator infra checks that run TENANT-LESS (tenant_id NULL on every write). The
  *  catalog is scope-filtered so the two never mix, and operator writes never carry a tenant_id. */
@@ -230,6 +230,12 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   if (!["all", "delta", "none"].includes(actionFiling)) {
     throw new Error("SYSTEMS_CHECK_INVALID_ACTION_FILING");
   }
+  // Internal purpose only, not actor/admission authority. An eventual governed
+  // manual caller must capture the original evidence without automatic fixes.
+  if (scanFlavor === "manual") {
+    if (scope !== "tenant") throw new Error("SYSTEMS_CHECK_MANUAL_TENANT_ONLY");
+    if (actionFiling !== "none") throw new Error("SYSTEMS_CHECK_MANUAL_CAPTURE_ONLY");
+  }
 
   // Resolve the display name for the remediation brief's business-name token (§15 — no placeholder). For a
   // tenant scan this is the tenant's name; for an operator scan there is no tenant, so use a platform label
@@ -296,6 +302,9 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
           .from("paige_systems_check_run")
           .select("id")
           .neq("scan_flavor", "change_triggered")
+          // Observation-only manual work must not suppress or re-trigger the
+          // existing scheduled remediation decision by becoming its baseline.
+          .neq("scan_flavor", "manual")
           .order("started_at", { ascending: false })
           .order("created_at", { ascending: false })
           .order("id", { ascending: false })

@@ -1425,5 +1425,232 @@
     "customerActivation": "NOT_REGISTERED_OR_MOUNTED",
     "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
     "founderAcceptance": "NOT_REQUESTED"
+  },
+  "productionRelease": {
+    "generatedAt": "2026-10-25 18:03:37 UTC",
+    "pr": 2851,
+    "reviewedHead": "58fdff1ab4e8fe65ee627043c635ee51c9beee97",
+    "reviews": {
+      "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "source": 5644315607,
+      "finalReceiving": 5644495135
+    },
+    "mergeCommit": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+    "tree": "e98c7c72af63f08d0708e9ea5993fd179e94661d",
+    "parents": [
+      "21307aad3085df70c44c97d5cfc46ce64d1c3373",
+      "58fdff1ab4e8fe65ee627043c635ee51c9beee97"
+    ],
+    "actualTreeMatchesInspectedUnion": true,
+    "all9OwnAnd16174IncomingOutsidePreserved": true,
+    "checks": [
+      {
+        "id": 121238298216,
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237849170,
+        "name": "Vercel Preview Comments",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237765089,
+        "name": "web-fetch-hardening-smoke",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237765035,
+        "name": "verify",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237764859,
+        "name": "comms-provider-boundary",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237412091,
+        "name": "database-contract",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411915,
+        "name": "contract",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411630,
+        "name": "Validate UI delivery evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411577,
+        "name": "postgres-authority",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411573,
+        "name": "channel-sql",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411320,
+        "name": "lint",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411240,
+        "name": "collections-sql",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411169,
+        "name": "audit",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "webStatuses": "2_SUCCESS",
+    "unresolvedThreads": 0,
+    "native": {
+      "run": 40218936283,
+      "job": 121246162498,
+      "steps": [
+        {
+          "name": "Push migrations to prod",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Verify prod is caught up (PERSISTED, not just ran — §32)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Record applied commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        }
+      ],
+      "dbLive": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+      "frontier": "20271114230009",
+      "migration": {
+        "version": "20271114230009",
+        "rows": 1,
+        "statements": 9
+      },
+      "sourceBodies": {
+        "advance_action": "0d412f9c0a734aeb2815dca39ab061a3",
+        "share_client_portal_request": "81e21f92abe3d552f89d98c8d7b3b9d3"
+      },
+      "metadata": [
+        {
+          "signature": "public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)",
+          "body": "81e21f92abe3d552f89d98c8d7b3b9d3",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "args": "_expected_actor_id uuid, _expected_tenant_id uuid, _confirmation_id uuid, _fingerprint text, _claimed_in_request uuid, _thread_id uuid DEFAULT NULL::uuid",
+          "result": "jsonb",
+          "authenticated": true,
+          "anon": false,
+          "service_role": false
+        },
+        {
+          "signature": "public._client_portal_access_authorize(uuid,uuid,boolean)",
+          "body": "7c3eb55c866321fed052ae742b75e42d",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_lock boolean",
+          "result": "text",
+          "authenticated": false,
+          "anon": false,
+          "service_role": false
+        },
+        {
+          "signature": "public.admin_propose_paige_actions(uuid,jsonb)",
+          "body": "21bd99c7a036f28f82a677fa25c6db04",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=public"
+          ],
+          "args": "p_contact_id uuid, p_actions jsonb",
+          "result": "jsonb",
+          "authenticated": true,
+          "anon": false,
+          "service_role": true
+        },
+        {
+          "signature": "public.read_client_portal_request_draft(uuid,uuid,uuid,uuid)",
+          "body": "1701abdd098639638fa0495f43827e81",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "args": "_expected_actor_id uuid, _expected_tenant_id uuid, _contact_id uuid, _intent_id uuid",
+          "result": "jsonb",
+          "authenticated": true,
+          "anon": false,
+          "service_role": false
+        },
+        {
+          "signature": "public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)",
+          "body": "ad2d2f83823b7939a0272a4ccbca4b40",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "args": "_expected_actor_id uuid, _expected_tenant_id uuid, _contact_id uuid, _before_created_at timestamp with time zone DEFAULT NULL::timestamp with time zone, _before_work_id uuid DEFAULT NULL::uuid",
+          "result": "jsonb",
+          "authenticated": true,
+          "anon": false,
+          "service_role": false
+        }
+      ],
+      "method": "Read-only catalog/schema metadata; no customer or tenant business rows read or modified"
+    },
+    "web": {
+      "deployment": "dpl_92uuhfzSJ3CGcKziRzB3N9GLokhV",
+      "state": "READY",
+      "commit": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+      "canonicalPublicReadback": "outputs/e09-publication-production-web-readback.json",
+      "publicBuild": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5-mvo4ry4b",
+      "customerUpdate": null,
+      "observedAt": "2026-10-25T17:59:39.0702622+00:00"
+    },
+    "mainPushVerification": "40218936277/40218936282 still running; not substituted for exact58fd premerge13 green checks",
+    "edge": "NOT_APPLICABLE",
+    "classification": "internal-only; no customer release identity or announcement",
+    "functional": "MERGED / NATIVE SOURCE AND ACL / WEB BUILD VERIFIED",
+    "visual": "No changed rendered source; no new responsive/premium/AT claim",
+    "experiential": "Native227/full-schema321 bounded engineering proof; original shared command and owner/client journey incomplete",
+    "activation": "NOT_REGISTERED_OR_MOUNTED",
+    "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+    "founderAcceptance": "NOT_REQUESTED",
+    "closeout": "Original Master4.0/Brain/owning packet append prepared locally; main publication pending"
   }
 }

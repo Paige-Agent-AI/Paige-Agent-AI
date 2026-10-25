@@ -852,6 +852,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP09 original approved customer-request publication.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2851](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851), publish the exact approved private request through original Work | Reviewed58fdff1ab4e8fe65ee627043c635ee51c9beee97; AUTHOR-REVIEW / LOWER ASSURANCE5644315607/final5644495135; all13 exact checks/two webSUCCESS/zero threads. Actual81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5/treee98c7c72af63f08d0708e9ea5993fd179e94661d equals213+58 union/all9own/all16174incoming outside. Normal native40218936283/job121246162498/persisted steps4–6 SUCCESS; db-live81a;14230009 once9statements, advance0d412f9c/share81e21f92, new Auth-only API/postgres/empty-path ABI and original authority7c/publisher21bd/read1701/historyad2d verified. READYdpl_92uuhfzSJ3CGcKziRzB3N9GLokhV/exact81a; both public200/build81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5-mvo4ry4b/null at17:59:39UTC. [Receipt6401201920](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851#issuecomment-6401201920); [original proof](evidence/e09-private-request-publication.json). | MERGED / NATIVE SOURCE AND ACL / WEB BUILD VERIFIED, internal-only. Native227/full-schema321 and actual observed-wait/customer-response recovery are bounded engineering proof, not authenticated acceptance. Ordinary fixed-kind publication refuses; same original common claim/Work/PCA/notification/audits remain, public payload empty. New command UNREGISTERED/UNMOUNTED: complete owner Portal/typed Chat/eligible Live and real customer return remain incomplete. Edge deltaN/A; no real customer/provider/consent act, activation, customer release identity or founder acceptance. Full42/seven/Teach/seven Capabilities/ALG remain open. |
+
+
 **2026-10-25 UTC — EXP02 original finding review and capture-start recovery.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

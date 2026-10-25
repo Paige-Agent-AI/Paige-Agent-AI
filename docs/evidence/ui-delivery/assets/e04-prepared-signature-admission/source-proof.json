@@ -1,0 +1,163 @@
+{
+  "sourceHead": "6c8b87c6a0504b136728bb149807a976a6104b27",
+  "scope": "Unmounted originating agreement.send canonical confirmation prerequisite. Actual local native functions and synthetic mailbox/Storage/session identity; no production/customer/provider activation or outcome.",
+  "sourceTests": {
+    "passed": 101,
+    "handlerSteps": 13,
+    "original92WholeFilePrefixPreserved": true,
+    "concreteFactoryBaseline": {
+      "passed": 92,
+      "failed": 8
+    },
+    "claimAcknowledgementBaseline": {
+      "passed": 100,
+      "failed": 1
+    },
+    "typeChecking": true,
+    "baselineOrTimeoutWaiver": false
+  },
+  "native": {
+    "head": "6c8b87c6a0504b136728bb149807a976a6104b27",
+    "proof": {
+      "result": "PASS",
+      "checks": 59,
+      "migrationReplay": 2,
+      "concurrentSessions": 6,
+      "observedLockWaits": 3,
+      "proofBodySha256": "643d09a4b28b5ca6448b93af676e68a8389eea613292c3cddd4dc26038dc01fd",
+      "migrationSha256": "67ec7e77ce6b5089e312bb55b2b3ed867ba0194e230afeb72b970b5b2fd819d7",
+      "scope": "Original native pending-confirmation prerequisite only. Synthetic mailbox/Storage metadata; no prepared issuer/provider/signature/field effect, activation or customer acceptance."
+    },
+    "original": {
+      "result": "PASS",
+      "checks": 44,
+      "checked": {
+        "checks": 75,
+        "migrationReplay": 2,
+        "concurrentSessions": 8,
+        "observedLockWaits": 4,
+        "scope": "Checked native preparation and original receipts only; no customer JWT/provider/signature acceptance"
+      },
+      "editability": {
+        "checks": 23,
+        "migrationReplay": 2,
+        "authority": "original reader metadata and floor preserved",
+        "scope": "Original closed editability only; synthetic fixture is not customer acceptance"
+      },
+      "documentPreparations": {
+        "checks": 372,
+        "migrationReplay": 2,
+        "concurrentSessions": 6,
+        "observedLockWaits": 4,
+        "commercial": {
+          "checks": 29,
+          "migrationReplay": 2,
+          "concurrentSessions": 2,
+          "observedLockWaits": 1
+        },
+        "acceptedEvidence": {
+          "checks": 267,
+          "migrationReplay": 2,
+          "ownerRead": {
+            "checks": 27,
+            "concurrentSessions": 2,
+            "observedLockWaits": 1,
+            "scope": "Actual original native package/balance/actor/Rail bodies with synthetic session identity; no hosted customer acceptance"
+          },
+          "effectiveCommercial": {
+            "checks": 184,
+            "catalogue": {
+              "checks": 26,
+              "migrationReplay": 2,
+              "originalRows": 49,
+              "scope": "Actual native catalogue source with synthetic Auth; no hosted/customer/admission or business action proof"
+            },
+            "concurrentSessions": 5,
+            "observedLockWaits": 3,
+            "migrationReplay": 2,
+            "scope": "Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance"
+          },
+          "scope": "Synthetic original native evidence only; metadata PDF hashes are not actual file/provider/customer acceptance"
+        },
+        "scope": "Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance"
+      },
+      "signatureRecord": {
+        "result": "PASS",
+        "checks": 76,
+        "migrationReplay": 2,
+        "concurrentSessions": 8,
+        "observedLockWaits": 4,
+        "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+      },
+      "declineRecord": {
+        "result": "PASS",
+        "checks": 49,
+        "migrationReplay": 2,
+        "forwardGuardRefusals": 1,
+        "concurrentSessions": 14,
+        "observedLockWaits": 7,
+        "scope": "Same original native proof; no hosted decline/customer acceptance or public recovery privilege"
+      },
+      "preparedSealSource": {
+        "result": "PASS",
+        "checks": 51,
+        "migrationReplay": 3,
+        "forwardGuardRefusals": 1,
+        "concurrentSessions": 2,
+        "observedLockWaits": 1,
+        "scope": "Actual local original13 controls plus controlled private metadata projection; no real prepared send/signing/Storage/customer acceptance"
+      },
+      "migrationReplay": 2,
+      "concurrentSessions": 5,
+      "observedLockWaits": 3,
+      "scope": "Original native signer preparation only; no actual JWT/signature/provider/customer acceptance"
+    },
+    "migrationSourceMatches": true,
+    "proofRuntimeSourceMatches": true
+  },
+  "inputs": [
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-signature-command.ts",
+      "sha256": "db0539c01f4b08ad66e57afbce798fd7e3ffc4820a3dc33373bb254fcb3aeba2"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-signature-request.test.ts",
+      "sha256": "8415cd5fa9c78edef719d3f91c16f81cd563edadbe772257191a250ccc4975b0"
+    },
+    {
+      "path": "scripts/agreements/signer-preparation-integrity-proof.mjs",
+      "sha256": "a5a9e234c31143f4ece9152ac3ff484254442afd5adc6246c6c3c562388fe35f"
+    },
+    {
+      "path": "scripts/agreements/prepared-confirmation-proof.mjs",
+      "sha256": "4770a0be2b3bef84d48be6f7c176ac43222b6d263ed4b247e57f09a8174601cd"
+    },
+    {
+      "path": "supabase/migrations/20271114140004_e04_prepared_request_confirmation.sql",
+      "sha256": "67ec7e77ce6b5089e312bb55b2b3ed867ba0194e230afeb72b970b5b2fd819d7"
+    }
+  ],
+  "toolingFailuresRetained": [
+    "Initial test type narrowing before execution",
+    "Initial duplicate native proof local constant before new cases",
+    "Initial SQL NULL decoded as empty JSON after migration replay; no product defect or passing full new native result claimed"
+  ],
+  "release": {
+    "review": "PROOF_OWED",
+    "ci": "PROOF_OWED",
+    "merge": "NOT_MERGED",
+    "deployment": "NOT_DEPLOYED",
+    "activation": "NOT_ACTIVATED",
+    "ordinaryAuthentication": "UNVERIFIED",
+    "centralQa": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "remaining": [
+    "original authenticated server factories and customer approval surface",
+    "canonical durable work, messages and exact sender/provider claim",
+    "governed original signing-token issuer",
+    "atomic assigned-field/signature/seal producer and genuine retained bytes",
+    "EXP09 authorized signing/download/status consumers",
+    "all twelve commercial-to-delivery outcomes and ordinary-role reload/recovery"
+  ]
+}

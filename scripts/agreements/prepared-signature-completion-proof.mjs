@@ -4,7 +4,7 @@ import {createHash,randomUUID} from 'node:crypto';
 // Extend the SAME original fenced native program, after its complete approval,
 // credential and canonical message controls. Provider acceptance here is an
 // explicitly synthetic input to the ORIGINAL native finalizer, never a send.
-export async function provePreparedSignatureCompletion({sql,read,q,tenant,actor,fixture,put,claim,finalize,context,startSession,observe}){
+export async function provePreparedSignatureCompletion({sql,read,q,tenant,actor,fixture,approved,put,claim,finalize,context,startSession,observe}){
  let checks=0,sessions=0,waits=0;const check=(value,message)=>{assert(value,message);checks++;};
  const native=s=>'SET ROLE service_role;'+s,json=s=>{const result=sql(s);return result===''?null:JSON.parse(result);};
  const source=read('scripts/agreements/prepared-signature-completion-proof.mjs');
@@ -30,7 +30,15 @@ export async function provePreparedSignatureCompletion({sql,read,q,tenant,actor,
  const publish=(f,patch={})=>{const args={actor,tenant,operation:f.operation,digest:f.args.request_sha256,...patch};return `SELECT _publish_prepared_agreement_request('${args.actor}','${args.tenant}','${args.operation}',${q(args.digest)});`;};
  const refused=(statement,code='23514',role='service_role')=>{sql(`SET ROLE ${role};DO $proof$ BEGIN BEGIN ${statement.replace(/^SELECT\s+/,'PERFORM ').replace(/;\s*$/,'')};RAISE EXCEPTION 'Expected prepared publication refusal';EXCEPTION WHEN SQLSTATE '${code}' THEN NULL;END;END $proof$;`);checks++;};
  const count=f=>sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${f.a.id}' AND event_type='sent' AND detail->>'action'='prepared_signature_request_recorded';`);
- const acceptedFixture=async()=>{const f=await fixture();f.message=put(f).message_id;json(native(claim(f)));json(native(finalize(f,'provider_accepted','synthetic-publication-'+f.g.operation_id)));return f;};
+ const acceptedFixture=async(options)=>{
+  const f=await fixture(options?await approved(options):undefined);
+  for(const party of f.source.signers){
+   const recipient=party.id===f.signer.id?f:await fixture({...f,signer:party});
+   recipient.message=put(recipient).message_id;json(native(claim(recipient)));
+   json(native(finalize(recipient,'provider_accepted','synthetic-publication-'+recipient.g.operation_id)));
+  }
+  return f;
+ };
  check(published.receipt_id&&published.accepted_count===1&&published.recipient_count===v.args.request.recipients.length
   &&published.delivery_confirmed===false,'Actual original event identity is a provider receipt, never delivery/signature/payment evidence');
  const replay=json(native(publish(v)));
@@ -78,5 +86,10 @@ export async function provePreparedSignatureCompletion({sql,read,q,tenant,actor,
  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${q(voidTag+'reader')} AND wait_event_type='Lock');`);waits++;
  const [,answer]=await Promise.all([holder,reader]);check(answer==='refused'&&count(raced)==='0','Observed concurrent void wins without a false sent record');
  check(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid=to_regprocedure('public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)');")===originalSignature,'Original signature engine is unchanged after all publication controls');
- return {checks,concurrentSessions:sessions,observedLockWaits:waits,originalSignature,proofBodySha256:createHash('sha256').update(provePreparedSignatureCompletion.toString()).digest('hex'),scope:'Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance'};
+ let fieldSignature=null;
+ if(process.argv.includes('--prepared-field-signatures')){
+  const {provePreparedFieldSignature}=await import('./prepared-field-signature-proof.mjs');
+  fieldSignature=await provePreparedFieldSignature({sql,read,q,tenant,actor,context,acceptedFixture,publish,startSession,observe});
+ }
+ return {checks,concurrentSessions:sessions,observedLockWaits:waits,originalSignature,fieldSignature,proofBodySha256:createHash('sha256').update(provePreparedSignatureCompletion.toString()).digest('hex'),scope:'Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance'};
 }

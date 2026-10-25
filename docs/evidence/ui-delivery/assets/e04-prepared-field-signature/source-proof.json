@@ -1,0 +1,242 @@
+{
+  "recordedAt": "2026-10-25T18:41:15.629Z",
+  "sourceHead": "36d86b1336da0bc0d95ab97d799056661c1250a6",
+  "sourceTree": "c2f58ba06cef1c0d8eaa7c20162f4b2fc2deb661",
+  "parent": "6a34a50e333bdeef6e9d2a5f1733d7ad47a2c2c5",
+  "inputs": [
+    {
+      "file": "scripts/agreements/prepared-confirmation-proof.mjs",
+      "sha256": "b57f177deaf11f10222934526ecd220ccf52b393225f04305c2b04621d6fd272",
+      "blob": "ff33c4559dc44f9d4b218d6b8c0a76a0aa708505"
+    },
+    {
+      "file": "scripts/agreements/prepared-field-signature-proof.mjs",
+      "sha256": "a5bcacf8e4f6ff63a6ae6608e37678eeb3f71a77cadbf872d6845a4c2d28fb44",
+      "blob": "2ab1a7afdd4322ba74aaee2644e64f258d253e4e"
+    },
+    {
+      "file": "scripts/agreements/prepared-message-admission-proof.mjs",
+      "sha256": "04637a5b36b2911a8dfab3f63eca5c61e090112497eba7d1de9bbb5f9f3bc759",
+      "blob": "17d16708d0ef46778ce0d88c4518203d56359490"
+    },
+    {
+      "file": "scripts/agreements/prepared-message-origin-proof.mjs",
+      "sha256": "1f44fbd63dba93fb638e5aed35927641d54aec8e3bb977436fb6e91ce84cb10e",
+      "blob": "c0a9c0be0b38944685d388be904fca17496c4afa"
+    },
+    {
+      "file": "scripts/agreements/prepared-seal-completion-proof.mjs",
+      "sha256": "2a64dee3aa9390f549622f64226d9283fe178542477d99b9d22eb5be543b91c0",
+      "blob": "79fe6c26e9e47aebe6c4bc8821aeac9e5f0e2c57"
+    },
+    {
+      "file": "scripts/agreements/prepared-signature-completion-proof.mjs",
+      "sha256": "5be53dd13da59dd894eddae97ee25c1c72540647174cffe4ab5f8509ed77239b",
+      "blob": "f151c13c23adcfd166962ceb53c22b4bd422bcc0"
+    },
+    {
+      "file": "scripts/agreements/prepared-signature-work-proof.mjs",
+      "sha256": "1150dcdbe4a25ecccb59307e6f9b2dc27ac6ceb9f5ab6ebe576e3b6630a191e7",
+      "blob": "0b8c336a6c1627650ad49befd78c846d46b88b34"
+    },
+    {
+      "file": "scripts/agreements/run-integrity-proof.sh",
+      "sha256": "a987c3041a302da7359a39417a5c3e5156f8a9605310f55aca5d43b22cf35211",
+      "blob": "0aa13326c2aff74675067dd1b16cc81796d044c1"
+    },
+    {
+      "file": "scripts/agreements/signature-record-proof.mjs",
+      "sha256": "a1273fec73c98ee98b1f1e575047b8badbe4ee5f277cf0537b1f9ecf8b5ecd3f",
+      "blob": "178c0c5b3030aeb3ac510fb8016894a51e50d8e5"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/document.ts",
+      "sha256": "bd96d380d13dfa96e96c458b123276a9018600e04286048a55abd5d4cd3cfc45",
+      "blob": "af60dab9975dd41e693f6a4fb969dd693ce58d52"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/field-preparation.ts",
+      "sha256": "cafa736f5ffb329530baa1bf3200a592495739bbfb4c07ba6d5c6747ed2c9a36",
+      "blob": "7100f542300b92434841fc340df533bc98cd3200"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/prepared-seal-completion.test.ts",
+      "sha256": "b538d10d3f7264fd53a88172958cbf7ad812096408b1f6ca80bf92cf781b5c21",
+      "blob": "0dbc21759a81940bb4cee3b8312b4568f6102988"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/prepared-seal-source.ts",
+      "sha256": "4fa57b61e5aab8da9c1edb8bcd3642d6ac498cb5f9076679496bdf26f8270eab",
+      "blob": "36989cc25b2576547fe9f53f829ae67724a99a2a"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/seal.ts",
+      "sha256": "cddc150827ae0c30b95191f184c9dbb3b37fc01a17b9c75fba4a23d6ee24e333",
+      "blob": "e3e006daa278a8c85b28d1f30ad11592cd0fa380"
+    },
+    {
+      "file": "supabase/functions/sign-agreement/index.ts",
+      "sha256": "44d7a8e4fe0fc17c88db0881706464bc1460db155b11e626d135c89bd9e89fae",
+      "blob": "674cee546c8d0f033b1c6b321f8074e956a24acf"
+    },
+    {
+      "file": "supabase/functions/sign-agreement/preflight.test.ts",
+      "sha256": "b59d04d023661aa4033868ac73cc4254e5f378e7b9624894b40055bcffc45790",
+      "blob": "01037cc10d40c095c8ddf9cf247af52e1c0d33ad"
+    },
+    {
+      "file": "supabase/migrations/20271114230404_e04_prepared_field_signature.sql",
+      "sha256": "220ded86fc604909d2e895e0b343c40dba5b8a9d6432c8d29541f246164557d9",
+      "blob": "e9c1905ec0da1b56274b9e0f4594d48d9dc84428"
+    }
+  ],
+  "review": {
+    "assurance": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE; no fresh non-author or Central QA acceptance",
+    "entireNativeProofInputsUnchanged": [
+      "scripts/agreements/prepared-confirmation-proof.mjs",
+      "scripts/agreements/prepared-field-signature-proof.mjs",
+      "scripts/agreements/prepared-message-admission-proof.mjs",
+      "scripts/agreements/prepared-message-origin-proof.mjs",
+      "scripts/agreements/prepared-seal-completion-proof.mjs",
+      "scripts/agreements/prepared-signature-completion-proof.mjs",
+      "scripts/agreements/prepared-signature-work-proof.mjs",
+      "scripts/agreements/run-integrity-proof.sh",
+      "scripts/agreements/signature-record-proof.mjs",
+      "supabase/functions/_shared/agreements/document.ts",
+      "supabase/functions/_shared/agreements/field-preparation.ts",
+      "supabase/functions/_shared/agreements/prepared-seal-source.ts",
+      "supabase/functions/_shared/agreements/seal.ts",
+      "supabase/migrations/20271114230404_e04_prepared_field_signature.sql"
+    ],
+    "wholeParentGateInverse": true,
+    "canonicalEngine": "Original13 ABI delegates to one original14 implementation; no second signing store/engine",
+    "permissions": "Original protected preparation table and canonical JSON function grants unchanged; new native completion service-only, helper not executable by service",
+    "finalChecks": "Hosted exact-head CI, actual source/native/Edge/web release readback required"
+  },
+  "native": {
+    "at": "2026-10-25T18:34:54.551Z",
+    "sourceHead": "47970727b7b0363868e6a525da5dde39c6eba0c0",
+    "log": "e04-c47-field-signature-sealing-repaired-1792952806873.log",
+    "field": {
+      "checks": 50,
+      "concurrentSessions": 4,
+      "observedLockWaits": 2,
+      "sealing": {
+        "checks": 33,
+        "sourceSha256": "0411f594e9f8678e08a2107e993af6e5eb858beebb69fc8bd9b1edf088ff0df1",
+        "sealedSha256": "171e8584f7d83566c658210eac87c49620589e1b1ff0ca3d8945f4dffd00f606",
+        "sealedByteLength": 4194,
+        "concurrentSessions": 2,
+        "observedLockWaits": 1,
+        "scope": "Real original local PDF/native state with synthetic Auth/provider/storage ports; no hosted Storage or customer acceptance"
+      },
+      "scope": "Original native prepared field/signature transaction with synthetic provider input; not hosted recipient/provider/customer acceptance"
+    },
+    "sealing": {
+      "checks": 33,
+      "sourceSha256": "0411f594e9f8678e08a2107e993af6e5eb858beebb69fc8bd9b1edf088ff0df1",
+      "sealedSha256": "171e8584f7d83566c658210eac87c49620589e1b1ff0ca3d8945f4dffd00f606",
+      "sealedByteLength": 4194,
+      "concurrentSessions": 2,
+      "observedLockWaits": 1,
+      "scope": "Real original local PDF/native state with synthetic Auth/provider/storage ports; no hosted Storage or customer acceptance"
+    },
+    "legacyAfterNewEngine": {
+      "result": "PASS",
+      "checks": 76,
+      "migrationReplay": 0,
+      "engineRetained": true,
+      "concurrentSessions": 8,
+      "observedLockWaits": 4,
+      "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+    },
+    "counts": {
+      "confirmation": 59,
+      "work": 57,
+      "status": 35,
+      "credentials": 122,
+      "origin": 41,
+      "admission": 47,
+      "publication": 34
+    },
+    "cleanup": "0DB/stopped",
+    "scope": "Real local native transactions/PDF; synthetic Auth/provider/storage transport; no hosted recipient/customer acceptance"
+  },
+  "consumers": {
+    "exit": 0,
+    "args": [
+      "test",
+      "--cached-only",
+      "--frozen",
+      "--lock=C:\\Users\\tonig\\Documents\\Codex\\2026-10-14\\paige-engineering-2-0-experience-04\\outputs\\e04-c45-concrete-sender.lock",
+      "--allow-import",
+      "--node-modules-dir=none",
+      "--allow-read=C:\\Users\\tonig\\Documents\\Codex\\2026-10-14\\paige-engineering-2-0-experience-04\\work\\e04-effective\\supabase\\functions",
+      "--deny-net",
+      "--deny-env",
+      "--deny-write",
+      "--deny-run",
+      "--deny-ffi",
+      "--deny-sys",
+      "supabase/functions/sign-agreement/preflight.test.ts",
+      "supabase/functions/_shared/agreements/field-preparation.test.ts",
+      "supabase/functions/_shared/agreements/document.test.ts",
+      "supabase/functions/_shared/agreements/prepared-seal-completion.test.ts",
+      "supabase/functions/_shared/agreements/prepared-seal-source.test.ts",
+      "supabase/functions/_shared/agreements/seal-readback.test.ts"
+    ],
+    "log": "C:\\Users\\tonig\\Documents\\Codex\\2026-10-14\\paige-engineering-2-0-experience-04\\outputs\\e04-c47-combined-consumer-1792953172218.log",
+    "sourceHead": "ea60ca607af70d459415f1a550d87edfe3471bd2",
+    "tests": 113,
+    "steps": 163,
+    "result": "PASS",
+    "scope": "Actual SDK/handler/renderer consumers with controlled transport; network/env/write/run/ffi/sys denied"
+  },
+  "causalFailures": {
+    "fieldHandler": "Original58 steps PASS /15 additional FAIL before repair",
+    "fieldRace": "Original73 steps PASS /2 additional FAIL before repair",
+    "preparedCompletion": "Frozen5331113 real PDF/original native signatures reached50+4 prerequisites then absent completion42883",
+    "legacyNotificationFallback": "Original75 steps PASS /2 prepared activity controls FAIL; final77/0; complete previous handler/test inverses preserved",
+    "retained": "Original permission, refusal-order, deadline-observer, CRLF drift-fixture and legacy reused-credential diagnostics remain historical, not erased"
+  },
+  "visual": {
+    "source": "Original preparedSealFixture and actual sealAgreementPdf; no separate PDF implementation",
+    "sha256": "e653543af3e3e97bc0f456607030f225446c9fb323e7b3ff41fe0ead5020b173",
+    "pages": 6,
+    "reviewed": "All four crop/rotation cases, typed signature, initials, native date, text, true/false checkbox, signature appendix and signing record. Poppler renders all6; PDFium independently renders all6, appendix pages inspected; original PDF text/coordinates verified.",
+    "limitations": "Synthetic source document and fictional identity/consent. No genuine signed customer document, hosted Storage, desktop/narrow customer UI or authenticated recipient proof."
+  },
+  "status": {
+    "implemented": "LOCAL_VERIFIED",
+    "hostedCI": "REQUIRED",
+    "merge": "NOT_DONE",
+    "native230404": "NOT_APPLIED",
+    "edge": "NOT_DEPLOYED",
+    "activation": "NONE",
+    "authenticatedCustomerAcceptance": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "algorithms": {
+    "ALG01": "PARTIAL: original signature/field/completion deduplication and same-record recovery; provider/hosted proof owed",
+    "ALG02": "INCOMPLETE: signing does not authorize charging, onboarding or service completion",
+    "ALG12": "PARTIAL: source-backed field/refusal/unknown/retained-copy failures; full recovery UI and operational evidence owed",
+    "ALG13": "UNVERIFIED customer usefulness; no score/recommendation promotion"
+  },
+  "remaining": [
+    "Canonical originating HIGH agreement factory and provider/source receipts",
+    "Explicit prepared completed-copy recovery after interruption and owner/recipient returning navigation",
+    "Canonical authorized activity/completion notices, explicit reissue and credential recovery",
+    "Exact signed terms to approved obligations and original invoices/Stripe evidence",
+    "Full O1–O12, E09 private relationship proof, ordinary owner/staff/client Central QA and one founder evaluation"
+  ],
+  "capabilities": "Original catalogue/Spine/Trust/Chat/Live maturity unchanged; INT-346 and provider/financial effects remain gated",
+  "receivingOct25": {
+    "at": "2026-10-25T18:46:01.121Z",
+    "incoming": "4f8788b1a7a502c143f9b7446752dc7609da72ba",
+    "previousHead": "10b8685ab672164d0f3fc3dbe87a6ca504197133",
+    "actualNativeFrontier": "20271114230119",
+    "all17OwnCodeBlobsUnchanged": true,
+    "exactHostedCI": "REQUIRED",
+    "activation": "NONE"
+  }
+}

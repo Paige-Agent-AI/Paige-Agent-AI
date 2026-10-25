@@ -1,0 +1,296 @@
+{
+  "evidenceClass": "isolated original-component render; local deterministic ports; no authenticated or full-shell proof",
+  "automated": "123/0 owning tests; no authenticated native access",
+  "viewportBounds": [
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "scrollWidth": 1536,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(61, 57, 65)",
+        "muted": "rgb(103, 97, 107)",
+        "background": "rgb(251, 249, 245)",
+        "inkContrast": 10.736889704216747,
+        "mutedContrast": 5.707692331559825,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scrollWidth": 1366,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(61, 57, 65)",
+        "muted": "rgb(103, 97, 107)",
+        "background": "rgb(251, 249, 245)",
+        "inkContrast": 10.736889704216747,
+        "mutedContrast": 5.707692331559825,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "scrollWidth": 1024,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(61, 57, 65)",
+        "muted": "rgb(103, 97, 107)",
+        "background": "rgb(251, 249, 245)",
+        "inkContrast": 10.736889704216747,
+        "mutedContrast": 5.707692331559825,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "scrollWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(61, 57, 65)",
+        "muted": "rgb(103, 97, 107)",
+        "background": "rgb(251, 249, 245)",
+        "inkContrast": 10.736889704216747,
+        "mutedContrast": 5.707692331559825,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollWidth": 390,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(61, 57, 65)",
+        "muted": "rgb(103, 97, 107)",
+        "background": "rgb(251, 249, 245)",
+        "inkContrast": 10.736889704216747,
+        "mutedContrast": 5.707692331559825,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "scrollWidth": 320,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(61, 57, 65)",
+        "muted": "rgb(103, 97, 107)",
+        "background": "rgb(251, 249, 245)",
+        "inkContrast": 10.736889704216747,
+        "mutedContrast": 5.707692331559825,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "scrollWidth": 1536,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(214, 208, 201)",
+        "muted": "rgb(172, 166, 157)",
+        "background": "rgb(16, 14, 20)",
+        "inkContrast": 12.534826312657467,
+        "mutedContrast": 7.941454567611965,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scrollWidth": 1366,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(214, 208, 201)",
+        "muted": "rgb(172, 166, 157)",
+        "background": "rgb(16, 14, 20)",
+        "inkContrast": 12.534826312657467,
+        "mutedContrast": 7.941454567611965,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "scrollWidth": 1024,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(214, 208, 201)",
+        "muted": "rgb(172, 166, 157)",
+        "background": "rgb(16, 14, 20)",
+        "inkContrast": 12.534826312657467,
+        "mutedContrast": 7.941454567611965,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "scrollWidth": 900,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(214, 208, 201)",
+        "muted": "rgb(172, 166, 157)",
+        "background": "rgb(16, 14, 20)",
+        "inkContrast": 12.534826312657467,
+        "mutedContrast": 7.941454567611965,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollWidth": 390,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(214, 208, 201)",
+        "muted": "rgb(172, 166, 157)",
+        "background": "rgb(16, 14, 20)",
+        "inkContrast": 12.534826312657467,
+        "mutedContrast": 7.941454567611965,
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "scrollWidth": 320,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "minimumTargetHeight": 44,
+      "minimumTargetWidth": 44,
+      "colors": {
+        "ink": "rgb(214, 208, 201)",
+        "muted": "rgb(172, 166, 157)",
+        "background": "rgb(16, 14, 20)",
+        "inkContrast": 12.534826312657467,
+        "mutedContrast": 7.941454567611965,
+        "fontLoaded": true
+      }
+    }
+  ],
+  "interactions": [
+    {
+      "interaction": "type/collapse/reopen/private-save/original readback/start-another/focus",
+      "result": "PASS"
+    },
+    {
+      "state": "unknown",
+      "result": "rendered"
+    },
+    {
+      "state": "saved",
+      "result": "rendered"
+    },
+    {
+      "state": "loading",
+      "result": "rendered"
+    },
+    {
+      "state": "error",
+      "result": "rendered"
+    },
+    {
+      "state": "refused",
+      "result": "rendered"
+    }
+  ],
+  "externalRequests": [],
+  "failures": [],
+  "sources": [
+    {
+      "file": "src/components/tenant-relationships/ClientPrivateRequests.tsx",
+      "sha256": "1fda8ba9ca790368c7de58953daa6e1548446f62abb3f58db2321434869bb5ac"
+    },
+    {
+      "file": "src/components/tenant-relationships/client-private-requests.css",
+      "sha256": "2e5bacb7b61ad73c763351e88d806f862e73a0b69e41154b85e2941bdaec3494"
+    },
+    {
+      "file": "src/components/tenant-relationships/ClientActionItems.tsx",
+      "sha256": "66beea30556c0c7fc11af922be0ea59069bb6df9a21882b1694eb0aac0d2583b"
+    },
+    {
+      "file": "src/hooks/useClientPrivateRequest.ts",
+      "sha256": "3f77e7e31bccdca0054b315ba8a266c70ece74ac661e349c23e97372a1c209fe"
+    },
+    {
+      "file": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    }
+  ],
+  "captures": [
+    {
+      "file": "desktop.png",
+      "sha256": "128302897608a983f2a573efa9372aae56f8b6666221310403e5218375d6fdca"
+    },
+    {
+      "file": "mobile.png",
+      "sha256": "7cc4b5badfb9c1104bbf12871f4ae85af0141dc76c8113d5733d1afb1961f728"
+    }
+  ],
+  "proof": "node scripts/proof/e09-private-request-ui/check.mjs",
+  "boundary": "Component with deterministic view model; actual original hook covered by owning unit ports, not signed-in shell, two customer cohorts, real phone/AT, provider effects or founder acceptance."
+}

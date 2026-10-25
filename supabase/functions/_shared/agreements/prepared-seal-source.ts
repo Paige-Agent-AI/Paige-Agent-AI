@@ -1,10 +1,12 @@
 import {object,UUID} from '../sales-collections/primitives.ts';
 import type {sealAgreementPdf} from './document.ts';
+import {canonicalPresentationJson} from './preparation-json.ts';
+import {sha256Hex} from './token.ts';
 
 type PreparedFields=NonNullable<Parameters<typeof sealAgreementPdf>[0]['preparedFields']>;
 export type SealSourceDb={rpc?:(name:string,args:Record<string,unknown>)=>PromiseLike<{data:unknown;error:unknown}>};
 type AgreementSource={id:string;tenant_id:string;contact_id:string;version:number;content_sha256:string;content_storage_key:string|null};
-type Result={kind:'legacy'}|{kind:'unavailable'}|{kind:'prepared';fields:PreparedFields;signers:Record<string,unknown>[]};
+type Result={kind:'legacy'}|{kind:'unavailable'}|{kind:'prepared';fields:PreparedFields;signers:Record<string,unknown>[];sourceSha256:string};
 const closed=(v:unknown,keys:string[])=>object(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.prototype.hasOwnProperty.call(v,k));
 /** Private original-engine read. Never accept a caller's manifest/answers or
  * infer a legacy document when the native selection/evidence read is unknown.
@@ -27,6 +29,7 @@ export async function readPreparedSealSource(db:SealSourceDb,agreement:Agreement
    ||!object(r.prepared_fields.preparation)||!Array.isArray(r.prepared_fields.inputs)
    ||!Array.isArray(r.signers)||r.signers.length<1||r.signers.length>100
    ||r.signers.some(s=>!object(s)||typeof s.id!=='string'||!UUID.test(s.id)||s.status!=='signed'))return {kind:'unavailable'};
-  return {kind:'prepared',fields:r.prepared_fields as PreparedFields,signers:r.signers};
+  return {kind:'prepared',fields:r.prepared_fields as PreparedFields,signers:r.signers,
+   sourceSha256:await sha256Hex(canonicalPresentationJson(r))};
  }catch{return {kind:'unavailable'};}
 }

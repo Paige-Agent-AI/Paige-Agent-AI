@@ -29,7 +29,7 @@ async function bounded<T>(request: PromiseLike<T>): Promise<T> {
   finally { if (timer !== undefined) clearTimeout(timer); }
 }
 
-/** Unmounted original-domain consumer. The native APIs enforce authority and
+/** Original-domain consumer in the existing CRM client record. Native APIs enforce authority and
  * save the same private Work; this hook neither shares it nor approves work.
  * A write timeout is unknown, never rejection or an automatic mutation retry.
  */

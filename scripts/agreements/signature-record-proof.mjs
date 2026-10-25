@@ -3,12 +3,13 @@
 import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
 
-export async function proveSignatureRecord({sql,read,context,tenant,fresh,quote,startSession,observe}){
+export async function proveSignatureRecord({sql,read,context,tenant,fresh,quote,startSession,observe,preserveCurrentEngine=false}){
   let checks=0;const check=(value,message)=>{assert(value,message);checks++;};
   const q=value=>value===null?'NULL':quote(value),json=input=>JSON.parse(sql(input));
   // Each invocation must remain independent when the original regression runs again after a later fence.
   const revokedToken=createHash('sha256').update(randomUUID()).digest('hex'),completedCopyToken=createHash('sha256').update(randomUUID()).digest('hex');
-  const migration=read('supabase/migrations/20271113530004_e04_atomic_original_signature.sql');sql(migration);sql(migration);
+  const migration=read('supabase/migrations/20271113530004_e04_atomic_original_signature.sql');if(!preserveCurrentEngine){sql(migration);sql(migration);}
+  const engineBefore=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)'::regprocedure;");
   const source=(later=false)=>{
     const a=fresh(),token=createHash('sha256').update(randomUUID()).digest('hex');
     if(later)sql(context+`SELECT add_agreement_signer('${tenant}','${a.id}','Later original signer','later@example.invalid','counterparty',2);`);
@@ -77,5 +78,6 @@ export async function proveSignatureRecord({sql,read,context,tenant,fresh,quote,
   check(meta.definer===false&&meta.config.includes('search_path=""')&&!meta.anon&&!meta.authenticated&&meta.service,'Service-only invoker uses existing grants, no new definer privilege');
   sql(`SET ROLE service_role;UPDATE paige_agreement_signers SET token_hash='${completedCopyToken}',token_expires_at=clock_timestamp()+interval '2 days',updated_at=clock_timestamp() WHERE id='${first.s.id}';`);
   check(sql(`SELECT token_hash FROM paige_agreement_signers WHERE id='${first.s.id}';`)===completedCopyToken,'Original completed-copy credential maintenance remains allowed');refuse(first,{},'42501');
-  return {result:'PASS',checks,migrationReplay:2,concurrentSessions:8,observedLockWaits:4,scope:'Synthetic actual native transactions only; no hosted signature/provider/customer acceptance'};
+  assert.equal(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)'::regprocedure;"),engineBefore,'All original cases must exercise and retain the actual current engine');
+  return {result:'PASS',checks,migrationReplay:preserveCurrentEngine?0:2,engineRetained:preserveCurrentEngine,concurrentSessions:8,observedLockWaits:4,scope:'Synthetic actual native transactions only; no hosted signature/provider/customer acceptance'};
 }

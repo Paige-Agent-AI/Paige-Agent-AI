@@ -693,6 +693,16 @@ describe("Adding a tool", () => {
     expect(rpc.mock.calls.filter((c) => c[0] === "get_mcp_connections_v2").length).toBeGreaterThan(1);
   });
 
+  it("the curated selector is provider-scoped only: the generic entry keeps all four modes", async () => {
+    // The generic "Any MCP server" names no vendor, so no mode is wrong for it — the
+    // curation must never leak into the neutral door.
+    world({ rows: [] });
+    const { host } = await render();
+    await openAddForm(host);
+    const labels = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []).map(b => b.textContent);
+    expect(labels).toEqual(["OAuth", "Token", "Token + headers", "None"]);
+  });
+
   it("routes the Slack preset to the Slack provider with the token mode preselected", async () => {
     // EXP10: Slack is a curated provider, not a generic entry. The catalogue tile must open the
     // form with Slack's hosted endpoint and bearer mode already chosen (the tenant supplies only
@@ -703,6 +713,11 @@ describe("Adding a tool", () => {
     await openCatalogue(host);
     await click(tile(host, "Slack"));
     expect((fieldFor(host, "Server URL") as HTMLInputElement).value).toBe("https://mcp.slack.com/mcp");
+    // Curated: one button, the provider's own words — never a generic OAuth/None wall
+    // (Slack does not support dynamic registration; sign-in style OAuth is not offered).
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.map(b => b.textContent)).toEqual(["Slack user token"]);
+    expect(authButtons[0].getAttribute("aria-pressed")).toBe("true");
     await type(fieldFor(host, "Name"), "Operations workspace");
     await type(fieldFor(host, "Token"), "xoxp-slack-user-token-123456");
     await click(byText(host, "Save configuration"));
@@ -807,9 +822,16 @@ describe("Adding a tool", () => {
     await openCatalogue(host);
     await click([...host.querySelectorAll<HTMLButtonElement>('.ig-gw-tile[data-mode="connect"]')]
       .find(b => b.textContent?.includes("HighLevel")));
-    // The provider contract preselects the only mode that can satisfy required headers.
+    // The provider contract preselects the only mode that can satisfy required headers —
+    // and (owner direction 2026-10-24) the CURATED selector names it in GHL's own words
+    // instead of the generic four-mode wall: one button, "Private Integration Token".
     const pressed = dialog(host)?.querySelector('[aria-pressed="true"]');
-    expect(pressed?.textContent).toBe("Token + headers");
+    expect(pressed?.textContent).toBe("Private Integration Token");
+    const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
+    expect(authButtons.length).toBe(1);
+    expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
+    expect(dialog(host)?.textContent).not.toContain("Token + headers");
+    expect(dialog(host)?.textContent).toMatch(/Private Integration token/i);
     // Saving without the locationId header is refused in the product's own words.
     await type(fieldFor(host, "Token"), "pit-token-value-0123456789");
     await click(byText(host, "Save configuration"));

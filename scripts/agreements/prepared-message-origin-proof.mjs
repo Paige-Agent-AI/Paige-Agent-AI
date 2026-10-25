@@ -25,7 +25,7 @@ export async function provePreparedMessageOrigin({sql,read,quote,tenant,actor,se
  }
  check(sql("SELECT to_regprocedure('private.e04_agreement_email_origin(uuid,uuid,jsonb,boolean)') IS NOT NULL;")==='t','Missing original agreement-to-message source contract');
  check(protectedMetadata()===before,'Original approval/Work/signature/credential/hold/authority bodies and grants remain exact');
- const approved=async()=>{const v=await setup();json(native(register(v)));const hashes=await Promise.all(v.args.request.recipients.map(async r=>({signer_id:r.id,token_hash:await sha256Hex(mintSignerToken())})));
+ const approved=async(options)=>{const v=await setup(options);json(native(register(v)));const hashes=await Promise.all(v.args.request.recipients.map(async r=>({signer_id:r.id,token_hash:await sha256Hex(mintSignerToken())})));
   const credential=json(native(`SELECT _issue_prepared_agreement_credentials('${actor}','${tenant}','${v.operation}',${q(v.args.request_sha256)},${q(JSON.stringify(hashes))}::jsonb);`));return {...v,credential,hashes};};
  const governance=v=>({actor_user_id:actor,tenant_id:tenant,tool:'agreement_send',action:'agreement.send',approval_channel:'chat-canonical',decision_receipt_recorded:true,approved_fingerprint:v.fp,purpose:'agreement_signature_request',agreement_work_id:v.credential.work_id,agreement_operation_id:v.operation,agreement_request_sha256:v.args.request_sha256,signer_id:v.signer.id,operation_id:randomUUID()});
  const origin=(g,fresh=false,patch={})=>{const bound={actor,tenant,...patch};return `SELECT private.e04_agreement_email_origin('${bound.actor}','${bound.tenant}',${q(JSON.stringify(g))}::jsonb,${fresh});`;};

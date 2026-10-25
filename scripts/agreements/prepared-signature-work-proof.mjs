@@ -27,8 +27,8 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
  check(originals()===stamp,'Migration/replay preserves original Work/signature/authority/hold metadata');
  const metadata=json("SELECT jsonb_agg(jsonb_build_object('name',proname,'definer',prosecdef,'config',proconfig,'defaults',pronargdefaults,'service',has_function_privilege('service_role',oid,'EXECUTE'),'anon',has_function_privilege('anon',oid,'EXECUTE'),'authenticated',has_function_privilege('authenticated',oid,'EXECUTE')) ORDER BY proname) FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN ('_read_prepared_agreement_work','_register_prepared_agreement_work');");
  check(metadata.length===2&&metadata.every(m=>m.definer&&m.defaults===0&&m.service&&!m.anon&&!m.authenticated&&m.config?.includes('search_path=""')),'New exact native ABI is service-only with empty search path and no defaults');
- const setup=async()=>{
-  const v=await fixture();json(native(issue(v)));const nonce=randomUUID(),pending=json(native(claim(v,nonce))),audit=randomUUID();
+ const setup=async(options)=>{
+  const v=await fixture(options);json(native(issue(v)));const nonce=randomUUID(),pending=json(native(claim(v,nonce))),audit=randomUUID();
   const payload={capability:'agreement_send',decision:'execute',risk:'high',lane_effective:'confirm',operation_id:v.operation,request_sha256:v.args.request_sha256};
   sql(`INSERT INTO paige_audit_log(id,actor_user_id,actor_role,tenant_id,action,target_type,target_id,payload) VALUES('${audit}','${actor}','sales:owner','${tenant}','sales.agreement_signature_request_governed_decision','agreement','${v.a.id}',${q(JSON.stringify(payload))}::jsonb);`);
   return {...v,pending,nonce,audit};
@@ -80,9 +80,12 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
  const [,changedReply]=await Promise.all([changing,stale]);check(changedReply==='refused','Complete stored approval is rechecked after an observed pending-row wait');
  check(sql(`SELECT count(*) FROM paige_durable_work WHERE intent_id='${altered.operation}';`)==='0','Changed stored words cannot create original Work with an old digest');
  const expiring=await setup(),expiryTag=tag+'expiry';
- sql(`UPDATE paige_pending_confirmations SET expires_at=clock_timestamp()+interval '0.8 seconds' WHERE id='${expiring.pending.confirmation_id}';`);
- const holding=startSession(expiryTag+'holder',`BEGIN;SELECT id FROM paige_agreements WHERE id='${expiring.a.id}' FOR UPDATE;SELECT pg_sleep(1.5);COMMIT;`);sessions++;
+ // Leave a real process-startup window, then keep the SAME original source
+ // lock beyond expiry. The observed wait and act-clock refusal stay required.
+ sql(`UPDATE paige_pending_confirmations SET expires_at=clock_timestamp()+interval '3 seconds' WHERE id='${expiring.pending.confirmation_id}';`);
+ const holding=startSession(expiryTag+'holder',`BEGIN;SELECT id FROM paige_agreements WHERE id='${expiring.a.id}' FOR UPDATE;SELECT pg_sleep(5);COMMIT;`);sessions++;
  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${q(expiryTag+'holder')} AND wait_event='PgSleep');`);
+ check(sql(`SELECT expires_at>clock_timestamp() FROM paige_pending_confirmations WHERE id='${expiring.pending.confirmation_id}';`)==='t','The expiry-race reader begins with a genuinely live original approval');
  const elapsed=startSession(expiryTag+'reader',native(`DO $proof$ BEGIN BEGIN ${register(expiring).replace(/^SELECT\s+/,'PERFORM ')} RAISE EXCEPTION 'Expected act-time approval expiry';EXCEPTION WHEN SQLSTATE '42501' THEN NULL;END;END $proof$;SELECT 'refused';`));sessions++;
  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${q(expiryTag+'reader')} AND wait_event_type='Lock');`);waits++;
  const [,expiredReply]=await Promise.all([holding,elapsed]);check(expiredReply==='refused','Actual clock expiry wins after an observed original source wait');
@@ -116,7 +119,7 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
  if(process.argv.includes('--prepared-signature-completion')){
   assert(messageOrigin?.admission?.completion?.checks>0,'Publication controls must precede original legacy regression');
   const {proveSignatureRecord}=await import('./signature-record-proof.mjs');
-  legacySignatureAfterPublication=await proveSignatureRecord({sql,read,context,tenant,fresh,quote,startSession,observe});
+  legacySignatureAfterPublication=await proveSignatureRecord({sql,read,context,tenant,fresh,quote,startSession,observe,preserveCurrentEngine:process.argv.includes('--prepared-field-signatures')});
   assert.equal(legacySignatureAfterPublication.checks,76,'All original signature controls must pass AFTER the publication fence extension');
  }
  return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),requestStatus,credentials,messageOrigin,legacySignatureAfterPublication,scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};

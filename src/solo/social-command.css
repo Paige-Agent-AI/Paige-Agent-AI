@@ -349,6 +349,12 @@
 }
 .social-panel-head h3 { font-size: 13.5px; letter-spacing: -.02em; }
 .social-panel-head p { margin-top: 3px; font-size: 11px; line-height: 1.45; color: var(--ink-3); }
+/* EXP07 row 9 — the per-channel readiness line (what the connection lifecycle proves). */
+.social-channels .social-channel-readiness { grid-column: 1 / -1; margin: 2px 0 0; font-size: 11.6px; line-height: 1.5; color: var(--ink-3); }
+.social-channels .social-channel-readiness[data-state="connected"] { color: var(--good, #2e7d43); }
+.social-channels .social-channel-readiness[data-state="needs_reauth"],
+.social-channels .social-channel-readiness[data-state="error"] { color: var(--danger, #a12a2a); }
+
 .social-panel-foot {
   padding: 11px 16px 14px;
   border-top: 1px solid var(--line-soft);

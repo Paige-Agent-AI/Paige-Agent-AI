@@ -423,6 +423,25 @@ function GatewayDrawer({
  * header names the provider declares the connection must carry (mcp_providers.
  * required_custom_headers mirrors them server-side), and auth preselects the proven mode. */
 type AddPreset = { label?: string; url?: string; providerKey?: string; auth?: AuthenticationChoice; requiredHeaders?: string[] };
+/**
+ * A CURATED preset (providerKey set, auth resolved by the catalogue row) locks the auth
+ * selector to the provider's ONE proven mode and names it in the provider's own words —
+ * the owner's 2026-10-24 direction: GHL offers "Private Integration Token", not a generic
+ * "None / OAuth / Token / Token + headers" wall. The generic "Any MCP server" entry keeps
+ * all four modes: it names no vendor, so no mode is wrong for it.
+ */
+export function presetAuthContract(preset: AddPreset): { choices: ReadonlyArray<{ value: AuthenticationChoice; label: string }>; note?: string } | null {
+  if (!preset.providerKey || !preset.auth) return null;
+  if (preset.providerKey === "gohighlevel") {
+    return { choices: [{ value: "headers", label: "Private Integration Token" }],
+      note: "The proven GHL contract: your Private Integration token as the credential, plus your locationId header (sub-account Settings → Private Integrations). GHL OAuth is not yet verified for Paige, so it is not offered." };
+  }
+  if (preset.providerKey === "slack") {
+    return { choices: [{ value: "bearer", label: "Slack user token" }],
+      note: "A user token from your own Slack app (internal or directory-listed). The token's granted scopes decide what Paige is offered. Slack does not support automatic registration, so sign-in style OAuth is not offered." };
+  }
+  return null;
+}
 type AuthenticationChoice = "oauth" | "bearer" | "headers" | "none";
 const AUTH_CHOICES: ReadonlyArray<{ value: AuthenticationChoice; label: string }> = [
   { value: "oauth", label: "OAuth" },
@@ -463,6 +482,10 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
     ? tool.authKind === "oauth" ? "oauth" : tool.authKind === "bearer"
       ? (tool.customHeaderCount ? "headers" : "bearer") : tool.authKind === "header" ? "headers" : "none"
     : preset.auth ?? null;
+  // Curated presets lock the selector (and their note names the provider's real contract);
+  // editing an EXISTING tool keeps every mode reachable — the row's saved kind is already
+  // proven for it, and a re-key may legitimately change custom headers.
+  const authContract = !tool ? presetAuthContract(preset) : null;
   const [auth, setAuth] = useState<AuthenticationChoice | null>(initialAuth);
   const [token, setToken] = useState("");
   const [primaryHeader, setPrimaryHeader] = useState(tool?.authKind === "header" ? "" : "Authorization");
@@ -605,8 +628,9 @@ export function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel,
         <label className="ig-field"><span id="ig-config-address-label">{tool ? "Full address" : "Server URL"}</span><input type="url" spellCheck={false} autoComplete="off" value={url} placeholder="https://tools.example.com/mcp" onChange={e => setUrl(e.target.value)} aria-labelledby="ig-config-address-label" aria-invalid={!!validation.url} aria-describedby="ig-config-address-note" />
           <small id="ig-config-address-note">{validation.url ?? (tool ? "The saved address is kept private. Enter the full address from your provider, including its path." : "Enter the complete public HTTPS address, including its path. Its contents stay private after saving.")}</small></label>
         <div className="ig-gw-seg ig-gw-seg-auth" role="group" aria-label="Authentication">
-          {AUTH_CHOICES.map(choice => <button type="button" key={choice.value} aria-invalid={!!validation.auth} aria-pressed={auth === choice.value} className={auth === choice.value ? "on" : ""} onClick={() => choose(choice.value)}>{choice.label}</button>)}
+          {(authContract?.choices ?? AUTH_CHOICES).map(choice => <button type="button" key={choice.value} aria-invalid={!!validation.auth} aria-pressed={auth === choice.value} className={auth === choice.value ? "on" : ""} onClick={() => choose(choice.value)}>{choice.label}</button>)}
         </div>
+        {authContract?.note && <p className="ig-note">{authContract.note}</p>}
         {validation.auth && <p className="ig-gw-err" role="alert">{validation.auth}</p>}
         {auth === "oauth" && <p className="ig-note">Save first, then choose Authorize with server. You’ll leave this page only after that choice. Server support determines whether authorization is available.</p>}
         {(auth === "bearer" || auth === "headers") && <>

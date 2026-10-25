@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC - EXP05 original Automation draft recovery - production readback.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2845](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2845), bounded original draft save | Reviewed846b33c55c39179a2af1702b430a3280d11a3e37/tree2a573efba35ff229a72706dea5323cb8a840de88; AUTHOR-REVIEW / LOWER ASSURANCE5643723169/final6399488477; all11 exact-head checks/Preview and both web statuses SUCCESS. Actual merge480627ac5bdc3ad92e4524d70ebaa23e56520ed9/treed7da83c258daef43f4dc19c129260b6480731165. Normal Edge40206859995/job121209549454 SUCCESS; artifact12603484998 independently ZIP-SHA256 a9ac026f0724757042da0f92706bfec1d8c5e196b85932b96576da87dc0c6b75. Selected Chat542/JWTtrue/all287 source/emitted closure entries exact; actual provider version/config/archive922eedfdc61683f96b179ad9af18a7175dc66edde31b1a42f7e87a24a91ddb5e match. Verceldpl_GdFCvnGzMTfGovKvxkhMb1RWWrxm READY/exact SHA/aliases; bothpublic200/build480627ac5bdc3ad92e4524d70ebaa23e56520ed9-mvnzcgjf/customerUpdate:null at15:31:02UTC. [Production receipt6399571871](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2845#issuecomment-6399571871). | SOURCE/WEB/SELECTED EDGE VERIFIED. Existing automation_draft/ordinary exact approval/caller-JWT/RLS/native process and ordered acts; one8s stage budget, no late follow-on effects or automatic unknown replay. Verified saved draft remains saved when only optional readiness is unavailable. No new full-operation idempotency guarantee, native migration, recurrence/provider/Live activation. Original scratch cleanup remains INCOMPLETE/permission_denied. Current read-only original-record/weekly/Calendar/catalogue observations do not establish a new draft save, equivalent second cohort, full Builder, ZION, ten outcomes/E5 or founder acceptance. Catalogue remains PARTIAL; eleven recipes Listed/Unverified. |
+
 **2026-10-25 UTC - EXP05 bounded Automation inspection - production readback.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

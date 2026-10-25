@@ -170,24 +170,24 @@ describe("the retirement reaches the provider, not just the source tree", () => 
     expect(result.stderr).not.toContain("skipped=");
   }, 65_000);
 
-  it("manual dispatch resolves its baseline from edge-live, never HEAD^ (the vacuous-recovery fix)", () => {
+  it("push and manual recovery resolve a fresh certified baseline, never event.before or HEAD^", () => {
     // A dispatch on a main whose prior merge already carried the retirement
     // must diff edge-live → HEAD. HEAD^ would resolve zero changed function
     // files, skip the retired-set step, and strand the retirement while the
     // run goes green — the coordinator's blocking finding on the first head.
     const baselineIdx = wf.indexOf("Resolve deployment baseline");
     const baselineBlock = wf.slice(baselineIdx, wf.indexOf("- name:", baselineIdx + 10));
-    expect(baselineBlock).toContain('workflow_dispatch');
+    expect(wf).toContain('workflow_dispatch');
     expect(baselineBlock).toContain("refs/tags/edge-live");
-    expect(baselineBlock).toContain("a manual recovery cannot know what production last received");
-    // The dispatch branch must not consult github.event.before (absent on
-    // dispatch) and must not fall back to HEAD^ inside its own branch.
-    const dispatchBranch = baselineBlock.slice(
-      baselineBlock.indexOf('if [ "${{ github.event_name }}" = "workflow_dispatch" ]'),
-      baselineBlock.indexOf("else", baselineBlock.indexOf('if [ "${{ github.event_name }}" = "workflow_dispatch" ]')),
-    );
-    expect(dispatchBranch).not.toContain("github.event.before");
-    expect(dispatchBranch).not.toContain('"${after}^"');
+    expect(baselineBlock).toContain('git fetch -q --force origin "refs/tags/edge-live:refs/tags/edge-live"');
+    expect(baselineBlock).toContain("git rev-parse --verify 'refs/tags/edge-live^{commit}'");
+    expect(baselineBlock).toContain('git merge-base --is-ancestor "$before" "$after"');
+    expect(baselineBlock).toContain("no provider operation is authorized");
+    // Both events share this exact certified path. A push's prior SHA can be
+    // an unverified upload, so it must not hide the same stranded retirement.
+    expect(baselineBlock).not.toContain("github.event_name");
+    expect(baselineBlock).not.toContain("github.event.before");
+    expect(baselineBlock).not.toContain('"${after}^"');
   });
 });
 
@@ -287,7 +287,7 @@ describe("manual-dispatch recovery computes the stranded retirement (executable 
       return [l.slice(0, i), l.slice(i + 1)];
     }));
 
-  it("edge-live → HEAD under dispatch targets exactly delete-contact", () => {
+  it.each(["workflow_dispatch", "push"])("edge-live → HEAD under %s targets exactly delete-contact", eventName => {
     // ── fixture: the 2026-09-19 shape ──────────────────────────────────────
     const repo = mkdtempSync(resolve(tmpdir(), "pr-a-dispatch-"));
     writeFn(repo, "delete-contact");
@@ -307,19 +307,26 @@ describe("manual-dispatch recovery computes the stranded retirement (executable 
     git(repo, "add", "-A");
     git(repo, "commit", "-q", "-m", "retirement merge (mirrors #1273)", "--", ".");
     const head = git(repo, "rev-parse", "HEAD");
+    // A real neutral local remote, not a mocked fetch. Remove the local tag:
+    // the original workflow must actually refresh it before computing changes.
+    const remote = mkdtempSync(resolve(tmpdir(), "pr-a-certified-origin-"));
+    git(repo, "clone", "--bare", "-q", repo, remote);
+    git(repo, "remote", "add", "origin", remote);
+    git(repo, "tag", "-d", "edge-live");
     const ghOut = `${repo}/gh-outputs`;
     const env = { GITHUB_OUTPUT: ghOut, GITHUB_PATH: `${repo}/gh-path` };
 
     // ── 1. Resolve deployment baseline (dispatch branch) ───────────────────
     const baselineOut = run(repo, stepScript("Resolve deployment baseline", {
       "github.sha": head,
-      "github.event_name": "workflow_dispatch",
-      "github.event.before": "",
+      "github.event_name": eventName,
+      "github.event.before": eventName === "push" ? head : "",
     }), env);
     const baselineStep = parseOutputs(readFileSync(ghOut, "utf8"));
     expect(baselineStep.before).toBe(baseline);
     expect(baselineStep.after).toBe(head);
-    expect(baselineOut).toContain("manual dispatch: reconciling edge-live");
+    expect(baselineOut).toContain("reconciling certified edge-live");
+    expect(git(repo, "rev-parse", "refs/tags/edge-live")).toBe(baseline);
 
     // ── 2. Compute changed function files (baseline → HEAD) ────────────────
     writeFileSync(ghOut, "");

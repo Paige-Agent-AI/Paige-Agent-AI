@@ -1,0 +1,45 @@
+{
+  "evidenceClass": "actual original component/history hook; native synthetic client-lens rows transported through SDK port",
+  "renderBase": "5edff84a01f5c822f4461a3d0e0d1af17bd6b898",
+  "desktop": {
+    "focusable": 0,
+    "headlines": [
+      "You sent a message",
+      "Harbor Coaching sent you a message"
+    ],
+    "rows": 2,
+    "scrollWidth": 900,
+    "viewport": [
+      900,
+      770
+    ]
+  },
+  "narrow": {
+    "headlines": [
+      "You sent a message",
+      "Harbor Coaching sent you a message"
+    ],
+    "rowWidths": [
+      358.3999938964844,
+      358.3999938964844
+    ],
+    "scrollWidth": 390,
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  "states": [
+    "ready",
+    "reloaded",
+    "loading",
+    "empty",
+    "forbidden",
+    "unavailable",
+    "recovered"
+  ],
+  "failurePresentation": "Original forbidden and unavailable states share a truthful failure view, distinct from Nothing yet; no in-place retry control",
+  "keyboard": "Read-only feed has no actionable/focusable controls; full shell/AT not tested",
+  "realtime": "CLOSED synthetic channel; no live connection claimed",
+  "authenticatedCustomer": "NOT_RUN"
+}

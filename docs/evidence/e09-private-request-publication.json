@@ -1397,6 +1397,81 @@
     "repair": "Only each current advance scalar and an added whole-prosrc inverse. All original test bytes restored by that exact patch inverse. Five other pins, snapshots, historical replays, current admissions and rollback retained. No Communications runtime/provider change.",
     "newHeadCI": "NOT_RUN; required exact-head repeat; predecessor native successes are not inherited release gates"
   },
+  "focusedOwnerTransport": {
+    "generatedAt": "2026-10-25T16:42:28.501Z",
+    "runtimeCommit": "189b9bc97c31197cd77cd33d8db207e2b4c1d6a9",
+    "parent": "06df735504b2596866e4ec9d6c1c2a37d985b214",
+    "sourceBlobs": {
+      "scripts/proof/e09-consumer-invite.mjs": "06803459f88a0f50aa321956f2e04cd75dec3392",
+      "scripts/proof/e09-private-request.mjs": "8e2706b8c9ad9d44682c88dcda4fafba7c065ea3",
+      "supabase/tests/customer_portal_access.sql": "73a161bf40be0a03e50dcbfeaa2da9a992c26f72",
+      "supabase/migrations/20271114210109_e09_owner_focused_request_publication.sql": "164d95ca3eff998219db7933af77e5a12c7f3043",
+      "supabase/functions/_shared/client-portal-request-publication.ts": "439d368fe63f25b11b1bec6b118139a4a3df1834",
+      "supabase/functions/_shared/client-portal-request-publication.test.ts": "aff518620fa538de01edf976ec9291c497319632"
+    },
+    "parentNativeMigrationByteExact": true,
+    "baseline": {
+      "passed": 226,
+      "failed": 2,
+      "reportSHA256": "b8cfb723d22b87acff91f1f2ae2086fa62f39dd4446d4792bd37dd6ecdee4df5",
+      "boundary": "pre-refinement native81e21; genuine owner focus refused, not a customer role failure; uncommitted proof before an additional compatibility control"
+    },
+    "preParentComposition": {
+      "passed": 234,
+      "failed": 0,
+      "reportSHA256": "7098b7769ca3bab7904dfd8154cbc29d983a093d3d4a669facfd2164a27fe5cb"
+    },
+    "composed": {
+      "passed": 238,
+      "failed": 0,
+      "all227ParentCaseObjectsPreserved": true,
+      "observedLockWaits": 6,
+      "sourceFingerprints": {
+        "advance_action": "0d412f9c0a734aeb2815dca39ab061a3",
+        "share_client_portal_request": "f011f8a047c8025508ea3ece73efbcee"
+      },
+      "reportSHA256": "2426fc0d20fa9f00a7d28c4dcd4d42ec42631b4fddd7457a7499dff8801e7de8",
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "adapter": {
+      "initial": "FAILED_COLLECTION: missing module; zero executed cases",
+      "beforeAdditionalReview": {
+        "passed": 31,
+        "failed": 0
+      },
+      "reviewRed": {
+        "passed": 31,
+        "failed": 2,
+        "transcriptSHA256": "1b521ff54dd9e37c3c5bfc1cdf7e3284b9b909edbb4b9ea54338238f3b5dbecb"
+      },
+      "reviewed": {
+        "passed": 33,
+        "failed": 0,
+        "transcriptSHA256": "b167305930382d6c92b7482c14a2128678eacd6d84bd05a9b9344b4fadfe6e72"
+      },
+      "strictScopedTypeGraph": "PASS; installed app SDK2.112.4 shape compatible",
+      "lint": "PASS",
+      "rootPinnedSDK": "2.75.0; actual Root/Deno integration graph NOT_RUN; no dependency/pin changed"
+    },
+    "native": "Same ABI/OID/owner/ACL and one original executor; actual owner may use NULL or exact CRM focus, foreign focus/customer principal denied; no new approval path",
+    "fullSchema": {
+      "suite": "supabase/tests/customer_portal_access.sql",
+      "plan": 322,
+      "status": "NOT_RUN; required exact-head hosted execution"
+    },
+    "release": {
+      "status": "LOCAL_UNPUSHED",
+      "registration": "NOT_REGISTERED",
+      "mount": "NOT_MOUNTED",
+      "activation": "NOT_ACTIVATED",
+      "customer": "OWNER_DEFERRED",
+      "founder": "NOT_REQUESTED"
+    }
+  },
   "frontierRecovery": {
     "generatedAt": "2026-10-25T17:16:13.764Z",
     "runtimeCommit": "4e8e3d4af4e6317017da3bd738b63598bb197bf4",
@@ -1425,5 +1500,333 @@
     "customerActivation": "NOT_REGISTERED_OR_MOUNTED",
     "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
     "founderAcceptance": "NOT_REQUESTED"
+  },
+  "trustedSourceContinuation": {
+    "generatedAt": "2026-10-25T17:26:21.401Z",
+    "runtimeCommit": "362764768d3392812dac7968f09b05dc3e8f06b3",
+    "parent": "58fdff1ab4e8fe65ee627043c635ee51c9beee97",
+    "sourceBlobs": {
+      ".github/workflows/ci.yml": "21ee2c2f631a0d1076292af48deda89680575df1",
+      "scripts/proof/e09-consumer-invite.mjs": "06803459f88a0f50aa321956f2e04cd75dec3392",
+      "scripts/proof/e09-private-request.mjs": "114c7bf33d311747b67869a7748e2efb51757a99",
+      "supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql": "ec59b7bcf4f1435bd6d9e42dd2e6934c55b35e4f",
+      "supabase/functions/_shared/client-portal-request-publication.ts": "841c11e2bc4ced99ff79c9b233d896de27f9a787",
+      "supabase/functions/_shared/client-portal-request-publication.test.ts": "aff518620fa538de01edf976ec9291c497319632",
+      "supabase/functions/_shared/client-portal-request-publication-source.test.ts": "50c08103d795928d85c8387c77e05f169079be6f",
+      "supabase/tests/customer_portal_access.sql": "78c4cde413ed08d4e8e96d4f4275f1a469963f04"
+    },
+    "migration": "supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql",
+    "parentNativeByteExact": true,
+    "sourceReaderBody": "4eb171a1dd0b2de6bab6355ddcf303e1",
+    "baseline": {
+      "passed": 231,
+      "failed": 3,
+      "reportSHA256": "e9a9c807e37612215b0e9d85b903c32ebcb9210560cef9476a30a25b53caa990",
+      "boundary": "V1 owner focus refuses twice; trusted source API absent; remaining source cases NOT_RUN"
+    },
+    "firstCandidate": {
+      "passed": 256,
+      "failed": 0,
+      "reportSHA256": "34e7cedfa4929a24d73441dee67dc8694d3a404708dac18272e6053f3a029466"
+    },
+    "reviewed": {
+      "passed": 257,
+      "failed": 0,
+      "allPrior238And256CaseObjectsPreserved": true,
+      "reportSHA256": "e44231249435795babb472bbcbff92182522717265dcb6fa99ab6cdc578b4f0d",
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      },
+      "addedSourceControls": [
+        {
+          "name": "Actual owner reads exact original Work/customer source without a model-authored binding",
+          "status": "PASS"
+        },
+        {
+          "name": "Read-only sharing source exposes no private intent, claim, arbitrary payload or role data",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses another actor comparison without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses another active business without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses foreign CRM contact without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses foreign original Work without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses a customer principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses anonymous principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses service identity without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses paused access without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses client consent off without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses no joined customer without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses revoked member without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses lost Work standing without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses changed private source without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Source reader has the exact Auth-only, postgres definer and empty-path boundary",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source replay refuses an unknown forward body without overwriting it",
+          "status": "PASS"
+        },
+        {
+          "name": "Already-shared source returns the same canonical identity and no new proposal or content",
+          "status": "PASS"
+        },
+        {
+          "name": "Owner historical readback survives client pause without granting the client access",
+          "status": "PASS"
+        }
+      ]
+    },
+    "transport": {
+      "initial": "INVALID_COLLECTION: absent export, zero source cases; not a passing or behavioral test",
+      "failFirst": "Explicit unavailable baseline32PASS/3causalFAIL; no production stub retained",
+      "baselineTranscriptSHA256": "e62718b1adffae17eb215614c08b2527169dae9dceaad9c8696e751886ec3538",
+      "passed": 68,
+      "failed": 0,
+      "transcriptSHA256": "6c0466def717f922625dc0c2bc749a0169ed00bb3d8b4902271426ea4175d635",
+      "scopedStrictTypeScript": "PASS including installed app SDK2.112.4 shape; not actual Root2.75.0 integration",
+      "scopedLint": "PASS",
+      "hostedDenoDenyAll": "NOT_RUN; original CI block extended without relaxing permissions"
+    },
+    "fullSchema": {
+      "plan": 338,
+      "additionalSourceAssertions": 16,
+      "entirePrior322SuiteInverse": "PASS",
+      "execution": "NOT_RUN; required exact-head hosted gate"
+    },
+    "ciWholeIncomingInverse": "PASS; original58fd entire workflow restored after removing only new E09 block",
+    "sourceBoundary": "Native source read is not approval. Common stored-call issue/claim and outer admission remain original shared responsibilities",
+    "delivery": {
+      "review": "PENDING final exact-head sequential passes",
+      "ci": "NOT_RUN",
+      "merge": "NOT_MERGED",
+      "production": "NOT_DEPLOYED",
+      "activation": "NOT_REGISTERED_OR_MOUNTED",
+      "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+      "founderAcceptance": "NOT_REQUESTED"
+    }
+  },
+  "receiptReadbackReview": {
+    "generatedAt": "2026-10-25T17:51:25.929Z",
+    "runtimeCommit": "8d728d41f8cc6bf305f58d55c1ddc53e223942aa",
+    "originalReviewedHead": "7c6e3c83271e7e799c7da23c07b23b3b2edcb735",
+    "findingReview": 5644423905,
+    "finding": "Pending historical source must verify original publication receipt rather than infer sharing from a same-customer link",
+    "baseline": {
+      "passed": 257,
+      "failed": 3,
+      "sourceBody": "4eb171a1dd0b2de6bab6355ddcf303e1",
+      "reportSHA256": "b0c8bc08e9dc1fde1aa9b8bf153015887f18048cf6fc7d0db95745c874f01472",
+      "failures": [
+        {
+          "name": "Historical sharing source refuses an unrelated same-customer record",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        },
+        {
+          "name": "Historical sharing source refuses missing original publication marker",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        },
+        {
+          "name": "Historical sharing source refuses different original publisher result",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        }
+      ],
+      "boundary": "Additional uncommitted probes against immutable7c6e native source; isolated fixture only, not production evidence"
+    },
+    "migration": "supabase/migrations/20271114230119_e09_original_request_receipt_readback.sql",
+    "originalPreviewAppliedMigrationByteExact": true,
+    "sourceBody": "ce47399b991cea106916d331a88657fe",
+    "sourceBlobs": {
+      "scripts/proof/e09-private-request.mjs": "41aedbda1a306cdd324fce4e10f81e9a2274071e",
+      "supabase/migrations/20271114230119_e09_original_request_receipt_readback.sql": "82860594baa248bedf2485faa3a657d04ed28a55",
+      "supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql": "ec59b7bcf4f1435bd6d9e42dd2e6934c55b35e4f",
+      "supabase/tests/customer_portal_access.sql": "94f1dcc23537f4c32976aa43577f2938f57dc3ff"
+    },
+    "candidate": {
+      "passed": 284,
+      "failed": 0,
+      "allPrior257CaseObjectsPreserved": true,
+      "currentReaderRegressionControls": 19,
+      "reportSHA256": "641ff5d7d60c14eee9b571471a487791bffbf286e5d1422cd3b012b6ed2023e5",
+      "newControls": [
+        {
+          "name": "Historical-source forward repair applies without changing any original business data",
+          "status": "PASS"
+        },
+        {
+          "name": "Receipt-readback inverse restores the entire original source definition",
+          "status": "PASS"
+        },
+        {
+          "name": "Receipt-readback preserves the original source OID, ABI, owner, ACL and search path",
+          "status": "PASS"
+        },
+        {
+          "name": "The same receipt-readback forward replays without any original data change",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses an unrelated same-customer record",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses missing original publication marker",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses different original publisher result",
+          "status": "PASS"
+        },
+        {
+          "name": "Exact original receipt still reconciles after customer access and consent are withdrawn",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Actual owner reads exact original Work/customer source without a model-authored binding",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Read-only sharing source exposes no private intent, claim, arbitrary payload or role data",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses another actor comparison without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses another active business without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses foreign CRM contact without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses foreign original Work without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses a customer principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses anonymous principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses service identity without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses paused access without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses client consent off without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses no joined customer without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses revoked member without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses lost Work standing without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses changed private source without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Source reader has the exact Auth-only, postgres definer and empty-path boundary",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source replay refuses an unknown forward body without overwriting it",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Already-shared source returns the same canonical identity and no new proposal or content",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Owner historical readback survives client pause without granting the client access",
+          "status": "PASS"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "boundary": "Original private reader/current owner authorization, common approval/writer/Work/PCA/receipt stores retained. New projection verifies original Work/version/words/publisher result/PCA binding; PCA read takes no new lock. Historical pause/consent withdrawal permits owner readback, never client access or new effect.",
+    "fullSchema": {
+      "plan": 341,
+      "original338HostedPredecessor": "SUCCESS exact7c6e step98/job121238928060; new341 still NOT_RUN",
+      "additionalReceiptNegatives": 3
+    },
+    "transport": {
+      "passed": 68,
+      "failed": 0,
+      "sourceUnchangedFrom7c6e": true
+    },
+    "delivery": {
+      "review": "PENDING exact final head",
+      "ci": "NOT_RUN for repaired head",
+      "merge": "NOT_MERGED",
+      "deployment": "NOT_DEPLOYED",
+      "activation": "NOT_REGISTERED_OR_MOUNTED",
+      "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+      "founderAcceptance": "NOT_REQUESTED"
+    }
   }
 }

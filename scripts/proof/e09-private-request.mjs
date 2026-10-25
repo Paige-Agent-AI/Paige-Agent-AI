@@ -3,7 +3,7 @@
 // Full-schema customer_portal_access.sql remains the normative role/trigger proof.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,publicationBaseline=false,publicationCandidate=false,spawn,exe,args,transcripts}) {
+export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,publicationBaseline=false,publicationCandidate=false,focusCandidate=false,focusBaseline=false,spawn,exe,args,transcripts}) {
  const read=file=>fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n');
  const preparationFile='supabase/migrations/20271114150009_e09_private_request_preparation.sql';
  const historyFile='supabase/migrations/20271114150019_e09_private_request_history.sql';
@@ -279,7 +279,7 @@ export async function privateRequestProof({sql,check,assert,fs,root,path,fixture
   await privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked});
  }
  check('Original native file, advance and Portal authority remain byte-exact',()=>assert.deepEqual(fingerprints(),before));
- const publication=publicationBaseline?privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot}):publicationCandidate?await privatePublicationCandidateProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot,spawn,exe,args,transcripts}):null;
+ const publication=publicationBaseline?privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot}):publicationCandidate?await privatePublicationCandidateProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot,spawn,exe,args,transcripts,focusCandidate,focusBaseline}):null;
  return {baseline,historyBaseline,baselineSource:historyBaseline?'ba786f11b52c71b4ed87e7eb7a022b5aaa376e18':null,originalFingerprints:before,canonicalReplayFileHash:replayFileHash,
   migration:'20271114150009_e09_private_request_preparation.sql',
   migrationNormalizedSHA256:createHash('sha256').update(read(preparationFile)).digest('hex'),
@@ -652,10 +652,138 @@ async function privatePublicationCandidateProof(env) {
   assert.equal(replayRace.results.at(-1).customer_action_id,shared.customer_action_id);assert.equal(responseRace.results.at(-1).ok,true);
   assert.equal(sql(`SELECT count(*) FROM public.paige_customer_responses WHERE action_id='${shared.customer_action_id}'`),'1');
  });
+ const focus=env.focusCandidate?focusedPublicationProof({...env,prepare,publish,statement,snapshot,lit}):null;
  return {migration: migrationFile,advanceBeforeSHA256:createHash('sha256').update(advanceBefore).digest('hex'),
   originalPublisher:setup.publisherHash,outerApproval:'SYNTHETIC_TRUSTED_ISSUER_AND_AUTONOMY_PORT; NOT_REAL_CHAT_APPROVAL',
   observedLockWaits:waits,responseReplayWaited:replayWaited,authenticatedCustomer:'NOT_RUN',productionOperation:false,
-  sourceFingerprints:JSON.parse(sql(`SELECT jsonb_object_agg(proname,md5(prosrc)) FROM pg_proc WHERE oid IN('${advanceSig}'::regprocedure,'public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)'::regprocedure)`))};
+  ...(focus?{focus}:{}),sourceFingerprints:JSON.parse(sql(`SELECT jsonb_object_agg(proname,md5(prosrc)) FROM pg_proc WHERE oid IN('${advanceSig}'::regprocedure,'public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)'::regprocedure)`))};
+}
+
+function focusedPublicationProof({sql,check,assert,read,prepare,publish,snapshot,lit,focusBaseline}) {
+ const file='supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql';
+ const sig='public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)';
+ const original=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
+ const metadata=()=>sql(`SELECT jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'definer',prosecdef,'config',proconfig,
+  'args',pg_get_function_arguments(oid),'result',pg_get_function_result(oid)) FROM pg_proc WHERE oid='${sig}'::regprocedure`);
+ const beforeMetadata=metadata();if(!focusBaseline)sql(read(file));
+ const f=prepare();sql(`UPDATE public.paige_pending_confirmations SET scoped_client_id='${f.contact}' WHERE id='${f.invite}'`);let shared;
+ check('Actual owner with this approved CRM focus publishes the same request without clearing focus',()=>{
+  shared=publish(f);assert.equal(shared.status,'shared');assert.equal(shared.work_id,f.request.work_id);
+ });
+ const g=prepare();sql(`UPDATE public.paige_pending_confirmations SET scoped_client_id='${g.contact}',thread_id='${g.invite}' WHERE id='${g.invite}'`);
+ check('Owner-focused approval remains bound to its original conversation',()=>{
+  const before=snapshot();assert.throws(()=>publish(g));assert.equal(snapshot(),before);
+ });
+ check('Exact original thread and CRM focus can execute together for the authorized owner',()=>{
+  const r=publish(g,{thread:g.invite});assert.equal(r.status,'shared');assert.equal(r.work_id,g.request.work_id);
+ });
+ const h=prepare();sql(`UPDATE public.paige_pending_confirmations SET scoped_client_id='${f.contact}' WHERE id='${h.invite}'`);
+ check('A different approved CRM focus still refuses before customer effects',()=>{
+  const before=snapshot();assert.throws(()=>publish(h),/PORTAL_REQUEST_APPROVAL_UNAVAILABLE/);assert.equal(snapshot(),before);
+ });
+ check('CRM focus never grants the customer the business owner role',()=>{
+  const before=snapshot();assert.throws(()=>publish(f,{actor:f.actor,expected:f.actor}));assert.equal(snapshot(),before);
+ });
+ check('Owner call without a CRM focus remains compatible after the refinement',()=>{
+  const plain=prepare(),r=publish(plain);assert.equal(r.status,'shared');assert.equal(r.work_id,plain.request.work_id);
+ });
+ if(shared)check('Same owner-focused claim reconciles the original customer record once',()=>{
+  const before=snapshot(),again=publish(f);assert.equal(again.replayed,true);assert.equal(again.customer_action_id,shared.customer_action_id);assert.equal(snapshot(),before);
+ });
+ if(!focusBaseline){
+  const old='OR proposal.thread_id IS DISTINCT FROM _thread_id OR proposal.scoped_client_id IS NOT NULL';
+  const next='OR proposal.thread_id IS DISTINCT FROM _thread_id\n  OR (proposal.scoped_client_id IS NOT NULL AND proposal.scoped_client_id IS DISTINCT FROM v_contact_id)';
+  check('Focus refinement inverse restores the entire original native publication implementation',()=>{
+   const now=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');assert.equal(now.split(next).length,2);assert.equal(now.replace(next,old),original);
+  });
+  check('Focus refinement preserves native ABI, OID, owner, grants and search path',()=>assert.equal(metadata(),beforeMetadata));
+  check('The exact same focus migration replays without native data changes',()=>{const before=snapshot();sql(read(file));assert.equal(snapshot(),before);});
+  check('Original publication migration refuses to overwrite its new forward implementation',()=>{
+   const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);assert.throws(()=>sql(read('supabase/migrations/20271114230009_e09_approved_private_request_publication.sql')),/source changed/);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
+  });
+ }
+ const sourceProof=publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit,read});
+ return {baseline:focusBaseline,migration:file,originalSource:'81e21f92abe3d552f89d98c8d7b3b9d3',sourceProof,outerOwnerChat:'NOT_MOUNTED_OR_PROVEN',productionOperation:false};
+}
+
+function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit,read,receiptChecks=true,guardFile='supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql'}){
+ const f=prepare(),sig='public.read_client_portal_request_share_source(uuid,uuid,uuid,uuid)';
+ const statement=(o={})=>{const x={expected:f.other,tenant:f.tenant,contact:f.contact,work:f.request.work_id,...o};return `SELECT public.read_client_portal_request_share_source(${lit(x.expected)},${lit(x.tenant)},${lit(x.contact)},${lit(x.work)})`;};
+ const invoke=(o={})=>{const actor=o.actor===undefined?f.other:o.actor,role=o.role??'authenticated';const out=sql(`BEGIN;SELECT set_config('test.actor',${lit(actor??'')},true);SET LOCAL ROLE ${role};${statement(o)};COMMIT;`);return JSON.parse(out.split('\n').find(x=>x.startsWith('{')));};
+ let source;
+ check('Actual owner reads exact original Work/customer source without a model-authored binding',()=>{
+  const before=snapshot();source=invoke();assert.equal(source.source_state,'prepared');assert.deepEqual(source.args,f.approved);assert.equal(source.customer_action_id,null);assert.equal(snapshot(),before);
+ });
+ if(!source)return {source:'ABSENT_OR_FAILED',notExecuted:'remaining source controls',productionOperation:false};
+ check('Read-only sharing source exposes no private intent, claim, arbitrary payload or role data',()=>{
+  assert.deepEqual(Object.keys(source).sort(),['schema_version','actor_id','tenant_id','contact_id','work_id','source_state','args','customer_action_id','read_at'].sort());
+  for(const hidden of [f.intent,'confirmation_id','claimed_in_request','private_reasoning','payload'])assert(!JSON.stringify(source).includes(hidden));
+ });
+ for(const [name,options]of [
+  ['another actor comparison',{expected:f.actor}],['another active business',{tenant:f.foreign}],['foreign CRM contact',{contact:f.actor}],
+  ['foreign original Work',{work:f.actor}],['a customer principal',{actor:f.actor,expected:f.actor}],
+  ['anonymous principal',{actor:null,role:'anon'}],['service identity',{role:'service_role'}]
+ ])check('Sharing-source reader refuses '+name+' without writes',()=>{const before=snapshot();assert.throws(()=>invoke(options));assert.equal(snapshot(),before);});
+ for(const [name,change]of [
+  ['paused access',`UPDATE public.clients SET portal_access_state='paused' WHERE id='${f.contact}'`],
+  ['client consent off',`UPDATE public.clients SET paige_shared_context_consent=false WHERE id='${f.contact}'`],
+  ['no joined customer',`UPDATE public.clients SET linked_user_id=NULL WHERE id='${f.contact}'`],
+  ['revoked member',`UPDATE public.tenant_members SET status='inactive' WHERE user_id='${f.other}' AND tenant_id='${f.tenant}'`],
+  ['lost Work standing',`DELETE FROM public.user_roles WHERE user_id='${f.other}'`],
+  ['changed private source',`UPDATE public.paige_actions SET draft_content='{}' WHERE id='${f.request.work_id}'`]
+ ])check('Sharing-source readiness refuses '+name+' without approving or publishing',()=>{
+  const before=snapshot();assert.throws(()=>sql(`BEGIN;${change};SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;${statement()};ROLLBACK;`));assert.equal(snapshot(),before);
+ });
+ check('Source reader has the exact Auth-only, postgres definer and empty-path boundary',()=>{
+  const m=JSON.parse(sql(`SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig) FROM pg_proc WHERE oid='${sig}'::regprocedure`));
+  assert.equal(m.owner,'postgres');assert.equal(m.definer,true);assert.deepEqual(m.config,['search_path=""']);
+  assert.equal(sql(`SELECT has_function_privilege('authenticated','${sig}','EXECUTE')`),'t');for(const role of ['anon','service_role'])assert.equal(sql(`SELECT has_function_privilege('${role}','${sig}','EXECUTE')`),'f');
+ });
+ check('Sharing-source replay refuses an unknown forward body without overwriting it',()=>{
+  const original=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
+  const changed=original.replace('DECLARE intent_id uuid;','DECLARE /* unreviewed forward control */ intent_id uuid;');assert.notEqual(changed,original);
+  try{sql(changed);const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);
+   assert.throws(()=>sql(read(guardFile)),/source changed/);
+   assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
+  }finally{sql(original);}
+ });
+ const shared=publish(f);
+ const unrelated=receiptChecks?JSON.parse(sql(`BEGIN;SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;
+  SELECT public.admin_propose_paige_actions('${f.contact}','[{"action_type":"recommendation","title":"Other actual request","body":"Other words","payload":{}}]'::jsonb);COMMIT;`).split('\n').find(x=>x.startsWith('{'))).ids[0]:null;
+ check('Already-shared source returns the same canonical identity and no new proposal or content',()=>{
+  const before=snapshot(),r=invoke();assert.equal(r.source_state,'shared');assert.equal(r.args,null);assert.equal(r.customer_action_id,shared.customer_action_id);assert.equal(snapshot(),before);
+ });
+ check('Owner historical readback survives client pause without granting the client access',()=>{
+  sql(`UPDATE public.clients SET portal_access_state='paused',paige_shared_context_consent=false WHERE id='${f.contact}'`);
+  const before=snapshot(),r=invoke();assert.equal(r.source_state,'shared');assert.equal(r.customer_action_id,shared.customer_action_id);assert.equal(r.args,null);assert.equal(snapshot(),before);
+ });
+ if(receiptChecks){
+ const receiptFile='supabase/migrations/20271114230119_e09_original_request_receipt_readback.sql';
+ const metadata=()=>sql(`SELECT jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,'args',pg_get_function_arguments(oid),'result',pg_get_function_result(oid)) FROM pg_proc WHERE oid='${sig}'::regprocedure`);
+ const beforeMetadata=metadata(),original=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
+ check('Historical-source forward repair applies without changing any original business data',()=>{const before=snapshot();sql(read(receiptFile));assert.equal(snapshot(),before);});
+ check('Receipt-readback inverse restores the entire original source definition',()=>{
+  const migration=read(receiptFile),part=tag=>migration.split('$'+tag+'$')[1];
+  const current=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
+  assert.equal(current.split(part('decl_after')).length,2);assert.equal(current.split(part('receipt_guard')).length,2);
+  assert.equal(current.replace(part('decl_after'),()=>part('decl_before')).replace(part('receipt_guard'),()=>part('share_anchor')),original);
+ });
+ check('Receipt-readback preserves the original source OID, ABI, owner, ACL and search path',()=>assert.equal(metadata(),beforeMetadata));
+ check('The same receipt-readback forward replays without any original data change',()=>{const before=snapshot();sql(read(receiptFile));assert.equal(snapshot(),before);});
+ for(const [name,change]of [
+  ['an unrelated same-customer record',`UPDATE public.paige_actions SET customer_action_id='${unrelated}' WHERE id='${f.request.work_id}'`],
+  ['missing original publication marker',`UPDATE public.paige_actions SET payload=payload-'client_portal_publication' WHERE id='${f.request.work_id}'`],
+  ['different original publisher result',`UPDATE public.paige_actions SET result=jsonb_set(result,'{ids}',jsonb_build_array('${unrelated}'::text)) WHERE id='${f.request.work_id}'`]
+ ])check('Historical sharing source refuses '+name,()=>{
+  const before=snapshot();assert.throws(()=>sql(`BEGIN;${change};SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;${statement()};ROLLBACK;`),/PORTAL_REQUEST_SOURCE_CHANGED/);assert.equal(snapshot(),before);
+ });
+ check('Exact original receipt still reconciles after customer access and consent are withdrawn',()=>{
+  const before=snapshot(),r=invoke();assert.equal(r.source_state,'shared');assert.equal(r.customer_action_id,shared.customer_action_id);assert.equal(r.args,null);assert.equal(snapshot(),before);
+ });
+ const currentReader=publicationSourceProof({sql,check:(name,body)=>check('Current receipt-backed reader: '+name,body),assert,prepare,publish,snapshot,lit,read,receiptChecks:false,guardFile:receiptFile});
+ return {function:sig,sourceBody:sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),readOnly:true,approval:'NOT_ISSUED',currentReader,productionOperation:false};
+ }
+ return {function:sig,sourceBody:sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),readOnly:true,approval:'NOT_ISSUED',productionOperation:false};
 }
 
 async function privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked}) {

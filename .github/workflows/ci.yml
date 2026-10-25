@@ -938,6 +938,11 @@ jobs:
           # Pure module under test; read grants the repo tree only, every other deny stays (no network).
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/client-portal-assistant-context.test.ts
+          # E09 original-owner publication transport and read-only source preparation.
+          # No approval issuer, provider, network or native database is simulated as live.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-request-publication.test.ts \
+            supabase/functions/_shared/client-portal-request-publication-source.test.ts
           # The two-mailbox pilot's edge functions must at least TYPE-check.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/gmail-mailbox-sync/index.ts \

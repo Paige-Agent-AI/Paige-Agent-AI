@@ -229,5 +229,14 @@
     "Exact signed terms to approved obligations and original invoices/Stripe evidence",
     "Full O1–O12, E09 private relationship proof, ordinary owner/staff/client Central QA and one founder evaluation"
   ],
-  "capabilities": "Original catalogue/Spine/Trust/Chat/Live maturity unchanged; INT-346 and provider/financial effects remain gated"
+  "capabilities": "Original catalogue/Spine/Trust/Chat/Live maturity unchanged; INT-346 and provider/financial effects remain gated",
+  "receivingOct25": {
+    "at": "2026-10-25T18:46:01.121Z",
+    "incoming": "4f8788b1a7a502c143f9b7446752dc7609da72ba",
+    "previousHead": "10b8685ab672164d0f3fc3dbe87a6ca504197133",
+    "actualNativeFrontier": "20271114230119",
+    "all17OwnCodeBlobsUnchanged": true,
+    "exactHostedCI": "REQUIRED",
+    "activation": "NONE"
+  }
 }

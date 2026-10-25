@@ -49,7 +49,8 @@
     "uiLint": 0,
     "newTestDenoLint": 0,
     "impeccableDetector": 0,
-    "whitespace": 0
+    "whitespace": 0,
+    "impeccableDetectorScope": "Initial TSX-only scan; full changed-UI CSS scan subsequently failed side-tab. Final correction and complete rescan are recorded separately, without waiver."
   },
   "logs": {
     "e04-c48-recovery-handler-baseline-1792954870613.log": "1e3bd0923e5df14fa2afc309aaf8a86f767117f75206fdd7915d4eda3f520b76",

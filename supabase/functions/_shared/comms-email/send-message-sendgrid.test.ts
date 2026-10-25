@@ -13,6 +13,9 @@ import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
+import { createHash } from "node:crypto";
+import { capturePreparedSignatureMessage,isPreparedAgreementMessage,prepareSignatureMessage,assertPreparedSignatureSenderEnvelope } from "../agreements/prepared-signature-message.ts";
+import { PREPARED_SIGNING_LINK_MARKER } from "../agreements/prepared-signature-review-contract.ts";
 
 const OP = "22222222-2222-4222-8222-2222222222aa";
 const MSG = "33333333-3333-4333-8333-3333333333aa";
@@ -34,12 +37,31 @@ const raw = readFileSync("supabase/functions/send-message/index.ts", "utf8").rep
 const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
 type Mode = "accepted" | "accepted_no_id" | "reject400" | "status500" | "throw" | "hang";
-function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean } = {}) {
-  const b = { ...binding };
+type AgreementCase = { omitToken?:boolean; wrongToken?:boolean; expired?:boolean; missingSource?:boolean; receiptError?:boolean;
+  wrongScope?:boolean; witness?:boolean; changedName?:boolean; changedReply?:boolean; withdrawAfterClaim?:boolean };
+const TOKEN='1a'.repeat(32),TOKEN_HASH=createHash('sha256').update(TOKEN).digest('hex');
+const PARENT='88888888-8888-4888-8888-888888888801',WORK='99999999-9999-4999-8999-999999999999';
+const AGREEMENT='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',SIGNER='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+const PREPARATION='cccccccc-cccc-4ccc-8ccc-cccccccccccc',EVENT='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean; agreement?:AgreementCase } = {}) {
+  const a=opts.agreement;
+  const governance={actor_user_id:ACTOR,tenant_id:TENANT,tool:'agreement_send',action:'agreement.send',approval_channel:'chat-canonical',
+    decision_receipt_recorded:true,approved_fingerprint:'a'.repeat(16),purpose:'agreement_signature_request',agreement_work_id:WORK,
+    agreement_operation_id:PARENT,agreement_request_sha256:'f'.repeat(64),signer_id:SIGNER,operation_id:OP};
+  const approvedBody='Please review the agreement.\n\n'+PREPARED_SIGNING_LINK_MARKER;
+  const b = { ...binding,...(a?{body_text:approvedBody,body_html:'<p>'+approvedBody+'</p>',governance}: {}) };
+  const expiry=a?.expired?'2000-01-01T00:00:00Z':new Date(Date.now()+3_600_000).toISOString();
+  const source={kind:'prepared_agreement_message_source',source_only:true,tenant_id:TENANT,actor_id:a?.wrongScope?PARENT:ACTOR,
+    work_id:WORK,agreement_id:AGREEMENT,client_id:CONTACT,preparation_id:PREPARATION,preparation_sha256:'e'.repeat(64),document_sha256:'d'.repeat(64),
+    operation_id:OP,agreement_operation_id:PARENT,request_sha256:'f'.repeat(64),credential_event_id:EVENT,
+    credential_commitment:createHash('sha256').update(TOKEN_HASH).digest('hex'),credential_expires_at:expiry,recipient_ids:[SIGNER],
+    signer:{id:SIGNER,email:b.recipient},message:{signer_id:SIGNER,to:b.recipient,subject:b.subject,body_text:b.body_text,body_html:b.body_html},
+    sender:{connector_id:CONNECTOR,provider:'sendgrid',from_address:b.from_address,from_name:'Own Co',reply_to:null}};
   const db = { state: "prepared", attempts: 0 };
   const rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
   const fetchCalls: { url: string; init: RequestInit }[] = [];
   const adapters: Record<string, { send: (...a: unknown[]) => Promise<unknown> }> = {};
+  const writes:unknown[]=[];
   let handler: (req: Request) => Promise<Response>;
   const admin = {
     auth: { getUser: async () => ({ data: { user: { id: ACTOR } } }) },
@@ -47,12 +69,13 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean } = {}) {
       let mode = "select";
       const q: Record<string, (...args: unknown[]) => unknown> = {};
       for (const m of ["eq", "is", "in", "not", "neq", "order", "select"]) q[m] = () => q;
-      for (const m of ["insert", "upsert", "update"]) q[m] = () => { mode = m; return q; };
+      for (const m of ["insert", "upsert", "update"]) q[m] = (values:unknown) => { mode = m;writes.push({table,mode:m,values});return q; };
       const result = () => {
         if (mode !== "select") return { data: { id: table === "messages" ? MSG : "row-id" }, error: null };
         if (table === "messages") return { data: { tenant_id: TENANT, status: "draft", connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { source: "comms-email-command", comms_email_binding: b } }, error: null };
-        if (table === "clients") return { data: { tenant_id: TENANT, emails: ["Lead@Example.test"] }, error: null };
-        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "sendgrid", from_address: "hello@own.example.test", from_name: "Own Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
+        if (table === "clients") return { data: { tenant_id: TENANT, emails: a?.witness?[]:["Lead@Example.test"] }, error: null };
+        if (table === "channel_connectors") return { data: { id:CONNECTOR,tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "sendgrid", from_address: "hello@own.example.test", from_name: a?.changedName?'Changed sender':"Own Co", reply_to: a?.changedReply?'changed@own.example.test':null, credentials_vault_ref: null, config: null }, error: null };
+        if (table === "tenant_email_domains"&&a)return {data:{tenant_id:TENANT,domain:'own.example.test',sendgrid_status:'verified',sendgrid_domain_id:'synthetic-domain',sendgrid_verified_at:'2026-01-01T00:00:00Z'},error:null};
         return { data: null, error: null };
       };
       q.maybeSingle = async () => result();
@@ -63,7 +86,11 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean } = {}) {
     rpc: async (name: string, args: Record<string, unknown> = {}) => {
       rpcCalls.push({ name, args });
       if (name === "comms_provider_execution_allowed") return { data: true, error: null };
-      if (name === "read_comms_email_send_binding") return { data: { ...b, message_id: MSG, tenant_id: TENANT, channel_type: "email", message_status: "draft", eligible: opts.eligible ?? true }, error: null };
+      if (name === "read_comms_email_send_binding") return { data: { ...b,...(a?{state:db.state,attempts:db.attempts,...(a.missingSource?{}:{agreement_source:source})}:{}),message_id: MSG, tenant_id: TENANT, channel_type: "email", message_status: "draft", eligible: a?.withdrawAfterClaim&&db.state==='dispatching'?false:opts.eligible ?? true }, error: null };
+      if (name === "tenant_sender_identity"&&a)return {data:{from_name:'Own Co',from_address:b.from_address,reply_to:null,tenant_name:'Own Co'},error:null};
+      if (name === "_read_prepared_agreement_credentials"&&a)return {data:a.receiptError?null:{kind:'prepared_agreement_credentials',state:'recorded',tenant_id:TENANT,actor_id:ACTOR,
+        operation_id:PARENT,agreement_id:AGREEMENT,preparation_id:PREPARATION,request_sha256:'f'.repeat(64),preparation_sha256:'e'.repeat(64),document_sha256:'d'.repeat(64),work_id:WORK,event_id:EVENT,
+        credentials:[{signer_id:SIGNER,token_hash:TOKEN_HASH,expires_at:expiry}]},error:a.receiptError?{code:'unavailable'}:null};
       if (name === "claim_comms_email_send") { db.state = "dispatching"; db.attempts = 1; return { data: { state: "dispatching", attempts: 1, admitted: true }, error: null }; }
       if (name === "finalize_comms_email_send") {
         const attempt = args._claimed_attempt ?? null;
@@ -88,6 +115,7 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean } = {}) {
     return new Promise<Response>((_, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
   };
   const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",
+    capturePreparedSignatureMessage,isPreparedAgreementMessage,prepareSignatureMessage,assertPreparedSignatureSenderEnvelope,
     Deno: {
       env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "SENDGRID_MAIL_SEND_API_KEY" ? (opts.key === false ? undefined : SG_KEY) : k === "RESEND_API_KEY" ? undefined : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },
@@ -113,12 +141,13 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean } = {}) {
     const res = await handler!(new Request("https://example.test/send-message", {
       method: "POST", headers: { Authorization: "Bearer internal" },
       body: JSON.stringify({ channel: "email", to: b.recipient, contact_id: CONTACT, connector_id: CONNECTOR, message_id: MSG,
-        subject: b.subject, body: b.body_html, comms_email_operation_id: OP, idempotency_key: `comms-email:${OP}` }),
+        subject: b.subject, body: b.body_html, comms_email_operation_id: OP, idempotency_key: `comms-email:${OP}`,
+        ...(a&&!a.omitToken?{agreement_signature_token:a.wrongToken?'2b'.repeat(32):TOKEN}:{}) }),
     }));
     return { status: res.status, body: await res.json() as Record<string, unknown> };
   };
   const finalizeCalls = () => rpcCalls.filter((c) => c.name === "finalize_comms_email_send").map((c) => c.args);
-  return { request, rpcCalls, fetchCalls, finalizeCalls };
+  return { request, rpcCalls, fetchCalls, finalizeCalls,writes };
 }
 
 describe("send-message SendGrid arm on the governed comms_email path", () => {
@@ -166,5 +195,37 @@ describe("send-message SendGrid arm on the governed comms_email path", () => {
     await s.request();
     expect(s.fetchCalls).toHaveLength(0);
     expect(s.finalizeCalls().map((c) => [c._outcome, c._claimed_attempt])).toEqual([["failed", null]]);
+  });
+});
+
+describe('original governed sender for an approved agreement signing request',()=>{
+  it('uses the exact original credential in provider RAM only; drafts/audit/history and responses retain no working link',async()=>{
+    const s=setup({agreement:{}}),r=await s.request();
+    expect(r.body.outcome).toBe('provider_accepted');expect(s.fetchCalls).toHaveLength(1);
+    const payload=JSON.parse(String(s.fetchCalls[0].init.body));
+    expect(JSON.stringify(payload)).toContain('/sign/'+TOKEN);expect(JSON.stringify(payload)).not.toContain(PREPARED_SIGNING_LINK_MARKER);
+    expect(payload.content.map((part:{type:string})=>part.type)).toEqual(['text/plain','text/html']);
+    expect(payload.content[0].value).toContain('/sign/'+TOKEN);
+    expect(JSON.stringify(s.writes)).not.toContain(TOKEN);expect(JSON.stringify(s.writes)).not.toContain(TOKEN_HASH);
+    expect(JSON.stringify(r)).not.toContain(TOKEN);expect(s.rpcCalls.filter(c=>c.name==='_read_prepared_agreement_credentials')).toHaveLength(1);
+  });
+  it.each([
+    ['missing credential',{omitToken:true}],['different credential',{wrongToken:true}],['expired original credential',{expired:true}],
+    ['missing native source',{missingSource:true}],['unverified native credential record',{receiptError:true}],
+    ['different original actor',{wrongScope:true}],['changed approved sender name',{changedName:true}],['changed approved reply address',{changedReply:true}],
+  ] as const)('%s refuses BEFORE any claim/provider',async(_label,a)=>{
+    const s=setup({agreement:a});await s.request();expect(s.fetchCalls).toHaveLength(0);
+    expect(s.rpcCalls.some(c=>c.name==='claim_comms_email_send')).toBe(false);
+  });
+  it('revalidates the original native source after its winning claim and never dispatches a withdrawn request',async()=>{
+    const s=setup({agreement:{withdrawAfterClaim:true}});await s.request();
+    expect(s.rpcCalls.some(c=>c.name==='claim_comms_email_send')).toBe(true);expect(s.fetchCalls).toHaveLength(0);
+  });
+  it('accepts the original approved signer without manufacturing a CRM email contact',async()=>{
+    const s=setup({agreement:{witness:true}});const r=await s.request();expect(r.body.outcome).toBe('provider_accepted');expect(s.fetchCalls).toHaveLength(1);
+  });
+  it('a provider uncertainty remains unknown and never claims delivery/signing/payment',async()=>{
+    const s=setup({agreement:{},fetch:'status500'}),r=await s.request();expect(r.body.outcome).toBe('unknown');
+    expect(r.body.delivery_confirmed).toBe(false);expect(s.fetchCalls).toHaveLength(1);expect(JSON.stringify(s.writes)).not.toContain(TOKEN);
   });
 });

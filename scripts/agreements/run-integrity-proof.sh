@@ -258,6 +258,10 @@ deno check --allow-import --node-modules-dir=none \
 # imported module. Check the actual credential bridge directly as well.
 deno check --allow-import --node-modules-dir=none \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-credentials.ts"
+# The real shared sender must type-check against its actual pinned SDK too;
+# transpiled actual-handler tests do not prove that dependency boundary.
+deno check --allow-import --node-modules-dir=none \
+  "$REPO/supabase/functions/send-message/index.ts"
 # The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
 # runtime already exercised above, with this same fenced native cluster and all
 # 54 original assertions. No transpiled copy or relaxed test is substituted.
@@ -273,6 +277,10 @@ node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofr
 # original gate above remains intact. No hosted Storage or customer proof.
 deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
   --deny-net --deny-write --deny-ffi --deny-sys \
-  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work --prepared-status --prepared-credentials
+  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work --prepared-status --prepared-credentials --prepared-message-origin
+
+# Same native cluster, original generic/PPA/recipient/mailbox/unknown-outcome
+# Communications cases against the four actual agreement-extension functions.
+node "$HERE/../sql/comms-email-send-concurrency-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" --origin-admission --agreement-origin-compatibility
 
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

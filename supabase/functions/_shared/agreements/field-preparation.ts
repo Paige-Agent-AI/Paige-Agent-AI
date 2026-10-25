@@ -189,6 +189,32 @@ export type AgreementFieldInput=Readonly<{
   values:readonly Readonly<{field_id:string;kind:AgreementField['kind'];value:string|boolean}>[];field_input_sha256:string;
 }>;
 
+export type AgreementFieldAnswer=Readonly<{field_id:string;value:string|boolean}>;
+/** One existing answer policy for native-source preflight and retained input.
+ * The fields must come from the original authorized source; this pure helper
+ * cannot establish signer identity, consent, time or permission. */
+export function readRecipientFieldValues(fields:readonly Omit<AgreementField,'signer_id'>[],value:unknown):readonly AgreementFieldAnswer[]{
+  const invalid=():never=>{throw new TypeError('AGREEMENT_PREPARED_FIELD_INPUT_INVALID');};
+  try{
+    value=structuredClone(value);
+    if(!Array.isArray(value)||value.length>500||new TextEncoder().encode(JSON.stringify(value)).length>MAX_BODY_BYTES)return invalid();
+    const seen=new Set<string>(),answers:AgreementFieldAnswer[]=[];
+    for(const row of value){
+      const answer=closed(row,['field_id','value']),fieldId=id(answer.field_id),field=fields.find(field=>field.id===fieldId);
+      if(!field||field.kind==='signed_date'||seen.has(fieldId))return invalid();
+      const proposed=answer.value;
+      if(field.kind==='signature'){if(proposed!==true)return invalid();}
+      else if(field.kind==='checkbox'){if(typeof proposed!=='boolean')return invalid();}
+      else if(typeof proposed!=='string'||field.required&&!proposed.trim()||[...proposed].some(char=>{
+        const code=char.charCodeAt(0);return code===127||code<32&&!(field.kind==='text'&&[9,10,13].includes(code));
+      }))return invalid();
+      seen.add(fieldId);answers.push(Object.freeze({field_id:fieldId,value:proposed as string|boolean}));
+    }
+    if(fields.some(field=>field.required&&field.kind!=='signed_date'&&!seen.has(field.id)))return invalid();
+    return Object.freeze(answers);
+  }catch{return invalid();}
+}
+
 /** Proposed field input only, never signature/consent/approval/authority evidence.
  * A trusted caller MUST resolve the original preparation ID/hash, document and
  * token-derived signer/current source under native authority. Client-supplied
@@ -217,19 +243,8 @@ export async function prepareAgreementFieldInput(preparationValue:unknown,expect
     if(!signers.has(signer_id))return invalid();
     const fields=readAssignedFields(document,signers,m.fields);
     if(assignedFieldIssues([...signers].map(id=>({id})),fields).length)return invalid();
-    if(!Array.isArray(valuesValue)||valuesValue.length>500||new TextEncoder().encode(JSON.stringify(valuesValue)).length>MAX_BODY_BYTES)return invalid();
-    const own=fields.filter(field=>field.signer_id===signer_id),supplied=new Map<string,string|boolean>();
-    for(const row of valuesValue){
-      const answer=closed(row,['field_id','value']),fieldId=id(answer.field_id),field=own.find(field=>field.id===fieldId);
-      if(!field||field.kind==='signed_date'||supplied.has(fieldId))return invalid();
-      const value=answer.value;
-      if(field.kind==='signature'){if(value!==true)return invalid();}
-      else if(field.kind==='checkbox'){if(typeof value!=='boolean')return invalid();}
-      else{
-        if(typeof value!=='string'||field.required&&!value.trim()||[...value].some(char=>{const code=char.charCodeAt(0);return code===127||code<32&&!(field.kind==='text'&&[9,10,13].includes(code));}))return invalid();
-      }
-      supplied.set(fieldId,value as string|boolean);
-    }
+    const own=fields.filter(field=>field.signer_id===signer_id);
+    const supplied=new Map(readRecipientFieldValues(own,valuesValue).map(answer=>[answer.field_id,answer.value]));
     const values:AgreementFieldInput['values'][number][]=[];
     for(const field of own){
       if(field.kind==='signed_date')values.push(Object.freeze({field_id:field.id,kind:field.kind,value:signed_at}));

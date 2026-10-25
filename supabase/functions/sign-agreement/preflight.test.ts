@@ -19,6 +19,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
   let receiptOverride:Record<string,unknown>={};
   let preparedSourceReads=0,preparedSourceFailure=false;
   let fieldReadReply:unknown=null;
+  let fieldReadErrorCode:string|null=null;
   let readFailure:'signer'|'agreement'|'order'|null=null;
   const nativeInputs:Record<string,unknown>[]=[];
   const receipt=(replayed:boolean)=>({state:'recorded',replayed,signing_id:agreementId,signer_id:signerId,
@@ -33,7 +34,11 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       const request=new Request(input,init),url=new URL(request.url);
       assert.equal(url.origin,'https://synthetic.invalid');
       if(url.pathname==='/rest/v1/rpc/check_public_rate_limit')return json(true);
-      if(url.pathname==='/rest/v1/rpc/_read_agreement_signing_fields'){assert.deepEqual(await request.json(),{_token_hash:await sha256Hex('a'.repeat(64))});return json(fieldReadReply??{kind:'legacy',tenant_id:tenant,agreement_id:agreementId,signer_id:signerId});}
+      if(url.pathname==='/rest/v1/rpc/_read_agreement_signing_fields'){
+        assert.deepEqual(await request.json(),{_token_hash:await sha256Hex('a'.repeat(64))});
+        if(fieldReadErrorCode)return json({message:'Synthetic current source refusal',code:fieldReadErrorCode},403);
+        return json(fieldReadReply??{kind:'legacy',tenant_id:tenant,agreement_id:agreementId,signer_id:signerId});
+      }
       if(url.pathname==='/rest/v1/rpc/_read_prepared_agreement_seal'){
         preparedSourceReads++;assert.deepEqual(await request.json(),{_agreement:agreementId});
         return preparedSourceFailure?json({message:'Synthetic source unavailable',code:'SYNTHETIC_READ'},503)
@@ -128,7 +133,87 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       assert.equal(reply.status,503);assert.equal((await reply.json()).code,'SIGNING_FIELDS_UNAVAILABLE');
       assert.equal(terminalWrites,0);assert.equal(notices,0);assert.equal(nativeInputs.length,0);
     });
-    fieldReadReply=null;
+    const preparedFields={...fieldReply,fields:[...fieldReply.fields,
+      {id:'60000000-0000-4000-8000-000000000002',kind:'text',page:1,x:10,y:70,width:100,height:20,required:true,label:'Requested text'},
+      {id:'60000000-0000-4000-8000-000000000003',kind:'initials',page:1,x:10,y:110,width:70,height:20,required:true,label:'Initials'},
+      {id:'60000000-0000-4000-8000-000000000004',kind:'checkbox',page:1,x:10,y:150,width:24,height:24,required:true,label:'Explicit answer'},
+      {id:'60000000-0000-4000-8000-000000000005',kind:'signed_date',page:1,x:10,y:190,width:220,height:24,required:true,label:'Signed date'},
+    ]};
+    const proposedFields={preparation_id:preparedFields.preparation_id,preparation_sha256:preparedFields.preparation_sha256,
+      field_values:[{field_id:preparedFields.fields[0].id,value:true},
+        {field_id:preparedFields.fields[1].id,value:'Customer wording'},
+        {field_id:preparedFields.fields[2].id,value:'SS'},
+        {field_id:preparedFields.fields[3].id,value:false}]};
+    const preparedState=()=>{
+      agreement=base;storage=new Response(new Uint8Array(bytes).buffer);fieldReadReply=preparedFields;fieldReadErrorCode=null;
+      nativeMode='refuse';recorded=false;recoveryError=null;receiptOverride={};signerOverride={};earlier=0;
+      terminalWrites=0;notices=0;nativeInputs.length=0;
+    };
+    await t.step('actual prepared act passes exact token-derived field answers to the one original native writer',async()=>{
+      preparedState();const reply=await invoke(proposedFields);
+      assert.equal(reply.status,409,'the synthetic native refusal still stops the act');assert.equal(terminalWrites,1);
+      assert.deepEqual(nativeInputs[0]._prepared_fields,{preparation_id:proposedFields.preparation_id,
+        preparation_sha256:proposedFields.preparation_sha256,values:proposedFields.field_values});
+      assert.equal(Object.hasOwn(nativeInputs[0]._prepared_fields as object,'signed_at'),false,'only the native clock can establish signing time');
+    });
+    for(const final of [false,true])await t.step('prepared signature activity cannot enter the legacy notification sender: '+final,async()=>{
+      preparedState();nativeMode='record';preparedSourceFailure=false;
+      if(final)receiptOverride={outstanding_count:0,agreement_status:'partially_signed'};
+      const reply=await invoke(proposedFields),result=await reply.json();
+      assert.equal(reply.status,200);assert.equal(result.ok,true);assert.equal(result.completed,false);
+      assert.equal(result.audit_complete,true);assert.equal(result.signed_event_id,receipt(false).signed_event_id);
+      assert.equal(terminalWrites,1);assert.equal(nativeInputs.length,1);
+      assert.equal(notices,0,'prepared activity requires the original governed Communications path, never a legacy fallback');
+    });
+    for(const patch of [
+      {preparation_id:'50000000-0000-4000-8000-000000000099'},
+      {preparation_sha256:'c'.repeat(64)},
+      {field_values:null},{field_values:[]},
+      {field_values:[...proposedFields.field_values,proposedFields.field_values[0]]},
+      {field_values:[...proposedFields.field_values,{field_id:'60000000-0000-4000-8000-000000000099',value:'foreign'}]},
+      {field_values:proposedFields.field_values.map((x,i)=>i===0?{...x,value:false}:x)},
+      {field_values:proposedFields.field_values.map((x,i)=>i===3?{...x,value:'false'}:x)},
+      {field_values:[...proposedFields.field_values,{field_id:preparedFields.fields[4].id,value:'client-invented-date'}]},
+    ])await t.step('invalid or foreign assigned answers cannot reach the irreversible native act: '+JSON.stringify(patch),async()=>{
+      preparedState();const reply=await invoke({...proposedFields,...patch});
+      assert.equal(reply.status,400);assert.equal((await reply.json()).code,'SIGNING_FIELD_INPUT_INVALID');
+      assert.equal(terminalWrites,0);assert.equal(nativeInputs.length,0);assert.equal(notices,0);
+    });
+    for(const value of ['W'.repeat(10000),'\u6f22\u5b57'])await t.step('field text must be fully renderable in its exact reviewed box before signature recording: '+value.length,async()=>{
+      preparedState();const field_values=proposedFields.field_values.map((x,i)=>i===1?{...x,value}:x);
+      const reply=await invoke({...proposedFields,field_values});
+      assert.equal(reply.status,400);assert.equal((await reply.json()).code,'SIGNING_FIELD_UNRENDERABLE');
+      assert.equal(terminalWrites,0);assert.equal(nativeInputs.length,0);assert.equal(notices,0);
+    });
+    await t.step('a prepared source read failure cannot fall back to a legacy signing act',async()=>{
+      preparedState();fieldReadReply={...preparedFields,tenant_id:'foreign'};
+      const reply=await invoke(proposedFields);assert.equal(reply.status,503);
+      assert.equal((await reply.json()).code,'SIGNING_FIELDS_UNAVAILABLE');assert.equal(terminalWrites,0);assert.equal(notices,0);
+    });
+    await t.step('a prepared lost acknowledgement performs one original act then one empty read-only reconciliation',async()=>{
+      preparedState();nativeMode='lost_ack';const reply=await invoke(proposedFields);
+      assert.equal(reply.status,200);assert.equal((await reply.json()).replayed,true);
+      assert.equal(terminalWrites,1);assert.equal(nativeInputs.length,2);assert.equal(notices,0);
+      assert.deepEqual(nativeInputs[0]._prepared_fields,{preparation_id:proposedFields.preparation_id,
+        preparation_sha256:proposedFields.preparation_sha256,values:proposedFields.field_values});
+      assert.equal(Object.hasOwn(nativeInputs[1],'_prepared_fields'),false,'recovery cannot resubmit field answers');
+      assert.equal(nativeInputs[1]._consent_read,false);assert.equal(nativeInputs[1]._consent_esign,false);
+    });
+    await t.step('legacy documents refuse client-authored prepared answers without acquiring a new signing act',async()=>{
+      preparedState();fieldReadReply=null;const reply=await invoke(proposedFields);
+      assert.equal(reply.status,400);assert.equal((await reply.json()).code,'SIGNING_FIELD_INPUT_INVALID');assert.equal(terminalWrites,0);
+    });
+    for(const variant of [{exists:true,recovery:null,status:200},{exists:false,recovery:'42501',status:404}]){
+      await t.step('a signature racing the field read is reconciled only through original current credential authority: '+variant.exists,async()=>{
+        preparedState();fieldReadErrorCode='42501';recorded=variant.exists;recoveryError=variant.recovery;
+        storageReads=0;const reply=await invoke(proposedFields);assert.equal(reply.status,variant.status);
+        if(variant.exists)assert.equal((await reply.json()).replayed,true);
+        assert.equal(terminalWrites,0);assert.equal(notices,0);assert.equal(storageReads,0);
+        assert.equal(nativeInputs.length,1);assert.equal(nativeInputs[0]._consent_read,false);
+        assert.equal(Object.hasOwn(nativeInputs[0],'_prepared_fields'),false);
+      });
+    }
+    preparedState();fieldReadReply=null;
 
     agreement=base;storage=new Response(new Uint8Array(bytes).buffer);terminalWrites=0;
     assert.equal((await invoke()).status,409,'an eligible token with verified presented bytes reaches the synthetic write boundary');

@@ -49,7 +49,7 @@ export async function provePreparedConfirmation({sql,read,context,tenant,actor,c
     'full_name',s.full_name,'email',s.email,'signer_role',s.signer_role,'signing_order',s.signing_order,'status',s.status)
     ORDER BY s.signing_order,s.id) FROM paige_agreement_signers s WHERE s.agreement_id=a.id)) FROM paige_agreements a WHERE a.id='${a.id}';`);
   const signer=source.signers[0],preparation=randomUUID(),connector=randomUUID(),operation=randomUUID(),cycle=randomUUID(),nonce=randomUUID();
-  const document={sha256:'a'.repeat(64),byte_length:1234,pages:[{page:1,crop_x:0,crop_y:0,crop_width:600,crop_height:800,rotation:0,width:600,height:800}]};
+  const document=options.document??{sha256:'a'.repeat(64),byte_length:1234,pages:[{page:1,crop_x:0,crop_y:0,crop_width:600,crop_height:800,rotation:0,width:600,height:800}]};
   const fields=source.signers.flatMap((party,index)=>{
    const base={signer_id:party.id,page:1,x:20,y:20+index*350};
    return [{...base,id:randomUUID(),kind:'signature',width:200,height:40,required:true,label:'Signature'},
@@ -69,7 +69,7 @@ export async function provePreparedConfirmation({sql,read,context,tenant,actor,c
   sql(`INSERT INTO channel_connectors VALUES('${connector}','${tenant}','email','sendgrid',true,'active');`);
   const request={agreementId:a.id,expectedTenantId:tenant,operationId:operation,preparationId:preparation,preparationSha256:digest,
    reviewSha256:'b'.repeat(64),source:{client_id:client,version:source.version,updated_at:source.updated_at},title:'Original supplied document',
-   document:{sha256:document.sha256,byte_length:1234,page_count:1},recipients:source.signers.map(party=>({id:party.id,full_name:party.full_name,email:party.email,
+   document:{sha256:document.sha256,byte_length:document.byte_length,page_count:document.pages.length},recipients:source.signers.map(party=>({id:party.id,full_name:party.full_name,email:party.email,
     signer_role:party.signer_role,signing_order:party.signing_order,field_count:fields.filter(f=>f.signer_id===party.id).length})),requestSchemaVersion:1,
    sender:{connector_id:connector,provider:'sendgrid',from_address:'business@example.test',from_name:null,reply_to:null},
    messages:source.signers.map(party=>({signer_id:party.id,to:party.email,subject:'Please review',body_text:'Synthetic reviewed words',body_html:'<p>Synthetic reviewed words</p>'}))};

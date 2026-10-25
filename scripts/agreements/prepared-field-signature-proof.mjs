@@ -149,5 +149,11 @@ export async function provePreparedFieldSignature({sql,read,q,tenant,context,acc
  check(voidResult==='refused'&&sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${voided.a.id}' AND event_type IN ('consented','signed','field_values_recorded');`)==='0',
   'Observed parent-lock wait rechecks the original void and cannot record a late signing act');
  console.log(JSON.stringify({checkpoint:'Original prepared-field signature transaction',checks,scope:'Synthetic native fixture only; full original regression and customer acceptance remain separate'}));
- return{checks,concurrentSessions:sessions,observedLockWaits:waits,scope:'Original native prepared field/signature transaction with synthetic provider input; not hosted recipient/provider/customer acceptance'};
+ let sealing=null;
+ if(process.argv.includes('--prepared-seal-completion')){
+  assert.equal(checks,50,'All original assigned-field controls precede completed-copy integration');
+  const {provePreparedSealCompletion}=await import('./prepared-seal-completion-proof.mjs');
+  sealing=await provePreparedSealCompletion({sql,read,q,tenant,acceptedFixture,publish,write,readFields,payload,startSession,observe});
+ }
+ return{checks,concurrentSessions:sessions,observedLockWaits:waits,sealing,scope:'Original native prepared field/signature transaction with synthetic provider input; not hosted recipient/provider/customer acceptance'};
 }

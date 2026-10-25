@@ -1,0 +1,672 @@
+{
+  "evidenceClass": "local native PostgreSQL and original UI/real hook with synthetic SDK transport; not authenticated customer proof",
+  "nativeSourceCandidate": "ed26a1288469c36b90bab379fce9dbd85dbbc230",
+  "mainIntegration": "39565ce6332517c81a91d6f266502d9aa9bf191d",
+  "baseline": {
+    "mode": "message-activity-baseline",
+    "evidenceClass": "synthetic-native-postgresql",
+    "fullSupabaseReplay": "UNVERIFIED",
+    "authenticatedAcceptance": "NOT_RUN",
+    "host": "127.0.0.1",
+    "port": 55448,
+    "platform": "win32",
+    "node": "v24.19.0",
+    "migrationSHA256": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4",
+    "results": [
+      {
+        "name": "Other invitation branches preserved byte-for-byte",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: unused consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: used unlimited consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: recorded consumer acceptance despite count drift",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: revoked consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: expired consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: existing unlimited team semantics",
+        "status": "PASS"
+      },
+      {
+        "name": "No custom questions uses the existing contact form; malformed published configuration still refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Entry preserves all staff/agency/owner branches",
+        "status": "PASS"
+      },
+      {
+        "name": "Wrong recipient with legitimate staff standing cannot claim consumer contact",
+        "status": "PASS"
+      },
+      {
+        "name": "Matching unconfirmed email refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing recipient refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Anonymous caller denied",
+        "status": "PASS"
+      },
+      {
+        "name": "Expired invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Legacy unlimited token with prior use refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recorded prior acceptance refuses even if count zero",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Occupied exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Merged contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Archived contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Unbound consumer token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recipient address removed from contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Different existing relationship does not redirect acceptance",
+        "status": "PASS"
+      },
+      {
+        "name": "Malformed token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Team recipient regression",
+        "status": "PASS"
+      },
+      {
+        "name": "Verified recipient with pre-existing staff standing binds the exact contact once",
+        "status": "PASS"
+      },
+      {
+        "name": "Pure verified external recipient joins without a business seat or staff context",
+        "status": "PASS"
+      },
+      {
+        "name": "Email normalization accepts only authoritative verified recipient",
+        "status": "PASS"
+      },
+      {
+        "name": "Team acceptance still grants ordinary member and staff pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Claimed JWT email cannot override stored auth identity",
+        "status": "PASS"
+      },
+      {
+        "name": "Audit failure rolls back link, role and token consumption",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent acceptance grants once and records one attributable receipt",
+        "status": "PASS"
+      },
+      {
+        "name": "Original current native customer message saves once",
+        "status": "PASS"
+      },
+      {
+        "name": "Customer shared message has one original Rail event linked to that message",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\n'0' !== '1'\n"
+      },
+      {
+        "name": "Identical customer message request replays its original message",
+        "status": "PASS"
+      },
+      {
+        "name": "Original current native business reply saves once without a provider",
+        "status": "PASS"
+      },
+      {
+        "name": "Business shared reply has one original Rail event linked to that message",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\n'0' !== '1'\n"
+      },
+      {
+        "name": "Identical business reply request replays without a second notice",
+        "status": "PASS"
+      }
+    ],
+    "passed": 39,
+    "failed": 2,
+    "messageActivity": {
+      "source": "original S7 Portal RPCs and original Rail writer, exact production fingerprints",
+      "threadTriggers": "NOT_RECONSTRUCTED; full-schema original suite remains required",
+      "authenticatedCustomer": "NOT_RUN"
+    }
+  },
+  "candidate": {
+    "mode": "message-activity-candidate",
+    "evidenceClass": "synthetic-native-postgresql",
+    "fullSupabaseReplay": "UNVERIFIED",
+    "authenticatedAcceptance": "NOT_RUN",
+    "host": "127.0.0.1",
+    "port": 55448,
+    "platform": "win32",
+    "node": "v24.19.0",
+    "migrationSHA256": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4",
+    "results": [
+      {
+        "name": "Other invitation branches preserved byte-for-byte",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: unused consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: used unlimited consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: recorded consumer acceptance despite count drift",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: revoked consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: expired consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: existing unlimited team semantics",
+        "status": "PASS"
+      },
+      {
+        "name": "No custom questions uses the existing contact form; malformed published configuration still refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Entry preserves all staff/agency/owner branches",
+        "status": "PASS"
+      },
+      {
+        "name": "Wrong recipient with legitimate staff standing cannot claim consumer contact",
+        "status": "PASS"
+      },
+      {
+        "name": "Matching unconfirmed email refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing recipient refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Anonymous caller denied",
+        "status": "PASS"
+      },
+      {
+        "name": "Expired invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Legacy unlimited token with prior use refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recorded prior acceptance refuses even if count zero",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Occupied exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Merged contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Archived contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Unbound consumer token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recipient address removed from contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Different existing relationship does not redirect acceptance",
+        "status": "PASS"
+      },
+      {
+        "name": "Malformed token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Team recipient regression",
+        "status": "PASS"
+      },
+      {
+        "name": "Verified recipient with pre-existing staff standing binds the exact contact once",
+        "status": "PASS"
+      },
+      {
+        "name": "Pure verified external recipient joins without a business seat or staff context",
+        "status": "PASS"
+      },
+      {
+        "name": "Email normalization accepts only authoritative verified recipient",
+        "status": "PASS"
+      },
+      {
+        "name": "Team acceptance still grants ordinary member and staff pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Claimed JWT email cannot override stored auth identity",
+        "status": "PASS"
+      },
+      {
+        "name": "Audit failure rolls back link, role and token consumption",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent acceptance grants once and records one attributable receipt",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Portal source guard refuses drift and rolls back both function edits",
+        "status": "PASS"
+      },
+      {
+        "name": "Portal activity adds only each original Rail call and preserves ABI/ACL/effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Known Portal activity replay preserves both definitions and original metadata",
+        "status": "PASS"
+      },
+      {
+        "name": "Portal activity unrecognized forward source refuses without overwrite",
+        "status": "PASS"
+      },
+      {
+        "name": "Original current native customer message saves once",
+        "status": "PASS"
+      },
+      {
+        "name": "Customer shared message has one original Rail event linked to that message",
+        "status": "PASS"
+      },
+      {
+        "name": "Identical customer message request replays its original message",
+        "status": "PASS"
+      },
+      {
+        "name": "Original current native business reply saves once without a provider",
+        "status": "PASS"
+      },
+      {
+        "name": "Business shared reply has one original Rail event linked to that message",
+        "status": "PASS"
+      },
+      {
+        "name": "Identical business reply request replays without a second notice",
+        "status": "PASS"
+      },
+      {
+        "name": "Wrong customer cannot create another business message or activity",
+        "status": "PASS"
+      },
+      {
+        "name": "Changed customer request content cannot duplicate a message/activity",
+        "status": "PASS"
+      },
+      {
+        "name": "Changed owner request content cannot duplicate a reply/activity",
+        "status": "PASS"
+      },
+      {
+        "name": "Paused customer cannot post a message or activity",
+        "status": "PASS"
+      },
+      {
+        "name": "Owner cannot post to paused access or create an activity",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing original comms.inbound kind rolls back message/notice/activity/audit atomically",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing original comms.outbound kind rolls back message/notice/activity/audit atomically",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Rail audit refusal rolls back the original message and every activity effect",
+        "status": "PASS"
+      },
+      {
+        "name": "Shared message activity carries only canonical identity and no message/private Chat content",
+        "status": "PASS"
+      },
+      {
+        "name": "Original client-lens history reloads the same two saved shared-message events",
+        "status": "PASS"
+      },
+      {
+        "name": "Original client history withholds internal identity, departments, payload and refs",
+        "status": "PASS"
+      },
+      {
+        "name": "Original history denies the other legitimate customer relationship",
+        "status": "PASS"
+      },
+      {
+        "name": "Original history denies paused customer access",
+        "status": "PASS"
+      }
+    ],
+    "passed": 58,
+    "failed": 0,
+    "messageActivity": {
+      "source": "original S7 Portal RPCs and original Rail writer, exact production fingerprints",
+      "threadTriggers": "NOT_RECONSTRUCTED",
+      "authenticatedCustomer": "NOT_RUN",
+      "clientHistory": [
+        {
+          "id": "63555bef-cf3b-47ae-a5d0-d2ba7072d0a7",
+          "title": "Message sent",
+          "ref_id": null,
+          "payload": {},
+          "summary": null,
+          "surface": "client_portal",
+          "audience": "both",
+          "ref_table": null,
+          "actor_type": "client",
+          "event_kind": "comms.inbound",
+          "visibility": "client_visible",
+          "occurred_at": "2026-10-25T01:44:49.086971-04:00",
+          "actor_user_id": null,
+          "to_department": null,
+          "from_department": null
+        },
+        {
+          "id": "a36e7716-fd4d-44b8-a915-ea931a44b5b5",
+          "title": "Message from your team",
+          "ref_id": null,
+          "payload": {},
+          "summary": null,
+          "surface": "client_portal",
+          "audience": "both",
+          "ref_table": null,
+          "actor_type": "owner_staff",
+          "event_kind": "comms.outbound",
+          "visibility": "client_visible",
+          "occurred_at": "2026-10-25T01:44:49.388933-04:00",
+          "actor_user_id": null,
+          "to_department": null,
+          "from_department": null
+        }
+      ],
+      "originalSourceFingerprints": {
+        "client_portal_send_message": "0a0c835abd6fca8973068ea5c2640f83",
+        "comms_portal_reply": "e59afbaaa5d3f9003c2e26f1403b3729",
+        "record_rail_event": "06927b300c0a9645bae072a0a6aee2af",
+        "get_client_rail": "8bea2322c29c2b0c5651ff4f5dc2244f",
+        "client_portal_access_open": "70261d0136e175f37ac4f8370306be08"
+      },
+      "transport": "synthetic local Auth/scope/realtime ports; original native writers and history unchanged"
+    }
+  },
+  "focusedUI": {
+    "passed": 25,
+    "suites": 3
+  },
+  "fullSchema": {
+    "originalAssertionsRetained": 63,
+    "newAssertions": 20,
+    "plan": 83,
+    "status": "PROOF_OWED"
+  },
+  "render": {
+    "evidenceClass": "actual original component/history hook; native synthetic client-lens rows transported through SDK port",
+    "renderBase": "5edff84a01f5c822f4461a3d0e0d1af17bd6b898",
+    "desktop": {
+      "focusable": 0,
+      "headlines": [
+        "You sent a message",
+        "Harbor Coaching sent you a message"
+      ],
+      "rows": 2,
+      "scrollWidth": 900,
+      "viewport": [
+        900,
+        770
+      ]
+    },
+    "narrow": {
+      "headlines": [
+        "You sent a message",
+        "Harbor Coaching sent you a message"
+      ],
+      "rowWidths": [
+        358.3999938964844,
+        358.3999938964844
+      ],
+      "scrollWidth": 390,
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    "states": [
+      "ready",
+      "reloaded",
+      "loading",
+      "empty",
+      "forbidden",
+      "unavailable",
+      "recovered"
+    ],
+    "failurePresentation": "Original forbidden and unavailable states share a truthful failure view, distinct from Nothing yet; no in-place retry control",
+    "keyboard": "Read-only feed has no actionable/focusable controls; full shell/AT not tested",
+    "realtime": "CLOSED synthetic channel; no live connection claimed",
+    "authenticatedCustomer": "NOT_RUN"
+  },
+  "photos": [
+    {
+      "path": "390-empty-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "e30faab7c1e30801fed1267bbc37a04ae5aad94ea26d97ce52289cc8a4dc965a"
+    },
+    {
+      "path": "390-forbidden-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "ce4060cde017cb5e454cc7745e51004c2c739f65c816b7d7e85f4888da6449f7"
+    },
+    {
+      "path": "390-loading-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "f892a6a72e89fbeace20c41dd7ebf7e7953493aba0e78638f5d67dd6ae78a084"
+    },
+    {
+      "path": "390-recovered-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "6c6cd204a97d104baa8102aea33653905735fb54fa563d272000ed7ecaba6356"
+    },
+    {
+      "path": "390-saved-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "8201d6b32d90f270cc2acf63a32f53aaf2118186312824258ea3418bc43c9c89"
+    },
+    {
+      "path": "390-unavailable-dark.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "sha256": "ce4060cde017cb5e454cc7745e51004c2c739f65c816b7d7e85f4888da6449f7"
+    },
+    {
+      "path": "desktop-reloaded.jpg",
+      "format": "JPEG",
+      "width": 900,
+      "height": 770,
+      "sha256": "c45a6588869ce043f33627a3314ae2c98b25b3d023098382c33bf3b60a9ad2f4"
+    },
+    {
+      "path": "desktop-saved.jpg",
+      "format": "JPEG",
+      "width": 900,
+      "height": 770,
+      "sha256": "509fed61dd8176eb7176ee90ed2bf4e9a598873e451de8df3189d8d966b47189"
+    }
+  ],
+  "sourceHashes": {
+    "src/components/app/ClientActivityFeed.tsx": {
+      "worktreeSHA256": "a8919b34f329dae890e11b3df90b77e56cc8ea2ffaccf350c8663378231e3054",
+      "lfSHA256": "a8919b34f329dae890e11b3df90b77e56cc8ea2ffaccf350c8663378231e3054"
+    },
+    "src/hooks/useRailEvents.ts": {
+      "worktreeSHA256": "dd861fca025f5224e51ec6a49fb2b6448e48a4d7e34cb6898a657ae59d2bdd1a",
+      "lfSHA256": "dd861fca025f5224e51ec6a49fb2b6448e48a4d7e34cb6898a657ae59d2bdd1a"
+    },
+    "src/hooks/useMyContactId.ts": {
+      "worktreeSHA256": "140aec44a0181ddbd19c7eda4124ff7bf5f920c10500bea504c01130c6500008",
+      "lfSHA256": "140aec44a0181ddbd19c7eda4124ff7bf5f920c10500bea504c01130c6500008"
+    },
+    "src/index.css": {
+      "worktreeSHA256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "lfSHA256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    "src/components/ui/card.tsx": {
+      "worktreeSHA256": "1dfb17920034a5659ddec7e016d8b8d572cda2449c67a6ab31d35d441c4a9d06",
+      "lfSHA256": "1dfb17920034a5659ddec7e016d8b8d572cda2449c67a6ab31d35d441c4a9d06"
+    },
+    ".cache/message-activity-source/main.tsx": {
+      "worktreeSHA256": "20f245f179b18a75dbd042369b42a8c4b0ed69271db447674bcf82c52de84d96",
+      "lfSHA256": "20f245f179b18a75dbd042369b42a8c4b0ed69271db447674bcf82c52de84d96"
+    },
+    ".cache/message-activity-source/stubs.tsx": {
+      "worktreeSHA256": "962f56f01b80677d16ea80c1e18d8c11cd721a15821a9fd039dd2624ee58b46b",
+      "lfSHA256": "962f56f01b80677d16ea80c1e18d8c11cd721a15821a9fd039dd2624ee58b46b"
+    },
+    ".cache/message-activity-source/history.json": {
+      "worktreeSHA256": "0bfb1548efd6f5538effc24f4448fe1dd1d339a0f3544912e984a3ef4f7045e6",
+      "lfSHA256": "e214a41afab8433e1714a4ba42d188314827edb0d2bbf2eee1528ac6eae77751"
+    },
+    ".cache/message-activity-source/vite.config.ts": {
+      "worktreeSHA256": "ced7dff6856c56c15b4924a885ce08ee9225486954aa908a4070605137631fd1",
+      "lfSHA256": "ced7dff6856c56c15b4924a885ce08ee9225486954aa908a4070605137631fd1"
+    },
+    "scripts/proof/e09-consumer-invite.mjs": {
+      "worktreeSHA256": "5023bbf6c2da3cbd0c859e34f17ea856e9eb46bc932f4e46e1c65da692ad7ddf",
+      "lfSHA256": "5023bbf6c2da3cbd0c859e34f17ea856e9eb46bc932f4e46e1c65da692ad7ddf"
+    },
+    "scripts/proof/e09-message-activity.mjs": {
+      "worktreeSHA256": "0baf70911cc716a3fc2ed1e3d449bb22110af9a849409843252028b539333c7a",
+      "lfSHA256": "0baf70911cc716a3fc2ed1e3d449bb22110af9a849409843252028b539333c7a"
+    },
+    "supabase/migrations/20271114130009_e09_portal_message_activity.sql": {
+      "worktreeSHA256": "ad6e4f389a9798443dc32059540ec0f7e05a4cf352ff16e1c077581b83925960",
+      "lfSHA256": "ad6e4f389a9798443dc32059540ec0f7e05a4cf352ff16e1c077581b83925960"
+    },
+    "supabase/tests/customer_portal_messages.sql": {
+      "worktreeSHA256": "01e7a4ee4dafba092abf5006c45b376a7d1d4acc39eaec13b819ba95227dd669",
+      "lfSHA256": "01e7a4ee4dafba092abf5006c45b376a7d1d4acc39eaec13b819ba95227dd669"
+    }
+  },
+  "cleanup": [
+    {
+      "run": "e09-message-activity-baseline-source-matched",
+      "ownClusterStopped": true
+    },
+    {
+      "run": "e09-message-activity-candidate-history",
+      "ownClusterStopped": true
+    },
+    {
+      "ownIabTabClosed": true,
+      "viewportReset": true,
+      "verifiedOwnViteStopped": true
+    }
+  ],
+  "authenticatedRuntime": "UNVERIFIED: customer deferred reconnection; Chrome update required",
+  "deployment": "NOT_DEPLOYED",
+  "founderAcceptance": "NOT_ACCEPTED"
+}

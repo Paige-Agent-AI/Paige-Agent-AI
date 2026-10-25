@@ -6,9 +6,9 @@
 //   1. reads the applicable rows of the operator-authored catalog (paige_systems_check_registry),
 //   2. dispatches each check to its runner module (keyed by runner_key — modules land next phase),
 //   3. writes ONE paige_systems_check_run row + one paige_systems_check_finding per check (service-role),
-//   4. on each 'fail' forges the drafted fix (prompt-forge) and files a 'systems.remediate' action onto
-//      the action bus (file_action), routed to the finding's owning department, and links the finding's
-//      resolution_action_id back to the filed action.
+//   4. when remediation is selected, on each 'fail' forges the drafted fix (prompt-forge), files a
+//      'systems.remediate' action onto the action bus (file_action) at the finding's owning department,
+//      and links the finding's resolution_action_id back to the filed action.
 //
 // SEAMS REUSED (§18 — never forked):
 //   • forge()        (./prompt-forge.ts)        — the §26 remediation drafter.
@@ -138,8 +138,9 @@ export interface RunSystemsCheckOptions {
    *  enabled catalog (onboarding / scheduled). */
   runnerKeys?: string[];
   /** 'all' (default) files a remediation action for every fail. 'delta' files only for a fail that is NEW
-   *  or newly-degraded vs the tenant's previous run (the 'scheduled' flavor's noise-control). */
-  actionFiling?: "all" | "delta";
+   *  or newly-degraded vs the tenant's previous run. 'none' captures original checks/findings without
+   *  remediation drafts or actions; it grants no authority to run a check. Existing callers stay unchanged. */
+  actionFiling?: "all" | "delta" | "none";
   /** Test seam: override the dispatch map (defaults to the shared SYSTEMS_CHECK_DISPATCH registry). */
   dispatch?: Record<string, CheckRunner>;
 }
@@ -198,7 +199,10 @@ function priorityForSeverity(severity: RegistryRow["severity"]): "low" | "normal
  */
 export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<RunSystemsCheckSummary> {
   const { admin, tenantId, scanFlavor } = opts;
-  const scope: ScanScope = opts.scope ?? "tenant";
+  const scope: ScanScope = opts.scope === undefined ? "tenant" : opts.scope;
+  if (scope !== "tenant" && scope !== "operator") {
+    throw new Error("SYSTEMS_CHECK_INVALID_SCOPE");
+  }
   // §9/§51/§53 scope invariant (fail-loud §32): a tenant scan MUST carry a tenant; an operator scan MUST
   // NOT — so an operator run can never accidentally write a tenant_id, and a tenant run can never scan
   // tenant-less. Enforced here, before anything is read or written.
@@ -210,7 +214,10 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   }
 
   const dispatch = opts.dispatch ?? SYSTEMS_CHECK_DISPATCH;
-  const actionFiling = opts.actionFiling ?? "all";
+  const actionFiling = opts.actionFiling === undefined ? "all" : opts.actionFiling;
+  if (!["all", "delta", "none"].includes(actionFiling)) {
+    throw new Error("SYSTEMS_CHECK_INVALID_ACTION_FILING");
+  }
 
   // Resolve the display name for the remediation brief's business-name token (§15 — no placeholder). For a
   // tenant scan this is the tenant's name; for an operator scan there is no tenant, so use a platform label
@@ -342,7 +349,8 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
       // divergence the column exists to prevent.
       selected_runner_keys:
         opts.runnerKeys && opts.runnerKeys.length > 0 ? opts.runnerKeys : null,
-      triggered_by: { ...(opts.triggeredBy ?? {}), scope },  // scope carried in audit (run table has no scope col)
+      // Actual mode/scope override context labels; they describe this capture, never authorize it.
+      triggered_by: { ...(opts.triggeredBy ?? {}), scope, action_filing: actionFiling },
     })
     .select("id")
     .single();
@@ -408,7 +416,8 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     // condition as filing — only a NEW / newly-degraded fail drafts (and files). A chronically-failing
     // tenant does NOT re-forge a fresh draft on every scheduled tick; its original fail already carries
     // the draft + the queued action. In 'all' mode every fail still drafts.
-    const shouldDraft = result.status === "fail" &&
+    // An explicit capture excludes remediation. This is not a paused draft or a permission decision.
+    const shouldDraft = actionFiling !== "none" && result.status === "fail" &&
       (actionFiling !== "delta" || prevStatus[row.check_id] !== "fail"); // delta: only NEW/newly-degraded
     // The tenant action bus (paige_actions) is tenant-scoped BY CONSTRUCTION (tenant_id NOT NULL, RLS
     // tenant-member gated, and file_action RAISEs ACTION_NO_TENANT on a null tenant). An operator-scope

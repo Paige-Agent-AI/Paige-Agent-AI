@@ -292,5 +292,72 @@
       "Calendar/Task parent/deployment/authenticated/receipt/reload proof",
       "Physical browser/input hold, separate Live, complete ten/E5/Builder/ZION/algorithms/founder acceptance"
     ]
+  },
+  "compiledRuntimeVerification": {
+    "base": "783a7c2527b3940a870d7b0d14c92089699ed313",
+    "channel": "engineering-only; no customer update",
+    "actualPriorRelease": {
+      "pr": 2827,
+      "merge": "81968e5a03766d9d9bd9d0746d63c7a62fb2d22c",
+      "run": 40180199618,
+      "artifact": 12593572875,
+      "artifactSha256": "b51636ff05a99793423bb254e9c0829611d38a7220e45f13c13167ad53339853",
+      "allPass": false,
+      "knownFile": "supabase/functions/_shared/action-risk.ts",
+      "sourceSha256": "e2cc4ae0724c65e6d1b52b24af7462df468dbba36a175739119461b3fc9c595a",
+      "downloadedSha256": "ca9d94d96855ca24f5dca7f7af695d2b4b7793469b21c85f0d6cf7d03539a008",
+      "downloadMode": "docker_requested",
+      "edgeLive": "NOT ADVANCED"
+    },
+    "calibration": {
+      "reproducer": "@deno/emit@0.46.0 default options, frozen JSR package integrity",
+      "source": "immutable original Git module, not downloaded code",
+      "matchesActualDownloadedSha256": true,
+      "actualProviderCompilerVersion": "UNVERIFIED; exact expected output bytes, not a version guess",
+      "fullExpectedClosure": {
+        "modules": 283,
+        "sourceBytes": 4735251,
+        "elapsedMilliseconds": 3065,
+        "actualWholeProviderReadback": "STILL OWED"
+      }
+    },
+    "repair": "Original API source contract unchanged. After the original exact server-unbundle refusal and fresh Docker read only, require each differing file to equal the exact pinned compilation of its immutable expected Git source. Retain every expected and additional repository file, no normalization/AST/source-map waiver or local-build-only certification.",
+    "compilerBoundary": "Frozen helper and lock must match target commit; compiler receives expected Git bytes only, no provider credentials, filesystem/process/environment permissions or source execution; imports externalized. Strict output identities and original global deadline, max60s compiler subprocess. Failure never certifies.",
+    "tests": {
+      "causal": {
+        "cases": 6,
+        "passed": 3,
+        "failed": 3,
+        "log": "private work/compiled-readback-focused-red.log"
+      },
+      "full": {
+        "cases": 122,
+        "failed": 0,
+        "skipped": 0,
+        "seconds": 149.486,
+        "log": "private work/compiled-readback-full-second.log"
+      },
+      "intermediate": "First full122 retained one original four-argument manifest test-driver TypeError; preserved the original API four-argument call and reran full original suite, no assertion waived. One missing-dependency wrapper restoration and type-only frozen-lock finding corrected; require-await fixed with Promise.resolve.",
+      "strictCompilerCheck": "PASS/frozen",
+      "compilerLint": "PASS",
+      "originalRetirement": {
+        "cases": 21,
+        "failed": 0,
+        "log": "private work/compiled-readback-retirement.log"
+      }
+    },
+    "sourceSha256": {
+      ".github/scripts/edge-source-readback.py": "84f8a57beed783191013afc6073c666aaa66f71bfc320fb961b5693099dba838",
+      ".github/scripts/test_edge_source_readback.py": "d53c3954c3f2f05f2e5fb0f1a2bc7caef2cdd300836a2cdb7a071e3a12ce0fd9",
+      ".github/scripts/edge-source-emit.ts": "29743761643f2f4725f7461bd1516ec363b7c73c8a2879aebe6f00bc041cf0ad",
+      ".github/scripts/edge-source-emit.lock": "99997230be56cf5cb9faad0c095126545b66f1ac280af42503b016a73f0a9f46",
+      ".github/workflows/ci.yml": "07b538e27beca96c3ea7443c8fdcc886eedfb396f7d2db731a47a61bdd1889ad",
+      ".github/workflows/deploy-edge-functions.yml": "a3787d7749d693414ea1c50819d3c71dc77ef3296ba807809e60bf56d73d6ecf"
+    },
+    "unchanged": "Business/domain source, source normalizer, JWT/config, CLI/API-first and exact500 fallback, original closure selection, metadata/identity race, overall budget/attempts, credential authority, uploads/retirements/tag gates, Spine/Harness/Trust/Rail/activation, catalogue and algorithm maturity.",
+    "functional": "SOURCE IMPLEMENTED and local122 proof only; exact review/CI/release/actual full source certificate remain owed",
+    "visual": "No customer UI change or browser/control operation",
+    "experiential": "Calendar/Task/weekly/Builder/ZION, ordinary authorized cohort approvals/records/Rails/reload/recovery and separate Live remain distinct proof obligations",
+    "founderAcceptance": "NOT REQUESTED; one full EXP05 evaluation remains later"
   }
 }

@@ -69,7 +69,7 @@ describe('Marketing intake over the canonical Metric/Evidence cycle', () => {
     const h = harness(), result = await review(h);
     expect(result.ok).toBe(true); if (!result.ok) return;
     expect(result.snapshot.requested).toEqual(['campaigns']);
-    expect(result.snapshot.domains.campaigns?.data?.headline).toHaveLength(7);
+    expect(result.snapshot.domains.campaigns?.data?.headline).toHaveLength(9);
     expect(result.projection).toContain('Recorded intake only');
     expect(result.projection).not.toMatch(/PRIVATE_CUSTOMER|aneb_v1_|ae_v1_|UNTRUSTED_TAG_LABEL/);
     expect(h.calls.filter(row => row.name === 'issue_analytics_evidence_bundle').map(row => row.input?.p_metric_key))
@@ -88,6 +88,7 @@ describe('Marketing intake over the canonical Metric/Evidence cycle', () => {
     expect(validateDomainSnapshot(result.data, { domain: 'campaigns', period, notAfter: NOW }).ok).toBe(true);
     expect(headlines(result)).toEqual({ 'campaigns.received': 6, 'campaigns.linked': 1,
       'campaigns.leads_without_source_tag': 2, 'campaigns.leads_without_campaign_tag': 2,
+      'campaigns.leads_credited_to_campaigns': 4, 'campaigns.busiest_campaign_leads': 4,
       'campaigns.unrouted': 1, 'campaigns.failed': 2, 'campaigns.stalled': 1 });
     expect(result.data?.risks.map(row => row.severity)).toEqual(['watch', 'act', 'watch']);
     expect(result.data?.sources).toHaveLength(6);
@@ -107,12 +108,15 @@ describe('Marketing intake over the canonical Metric/Evidence cycle', () => {
     const text = JSON.stringify(result);
     for (const privateValue of [TENANT, 'aneb_v1_', 'ae_v1_', 'PRIVATE_CUSTOMER', 'UNTRUSTED_TAG_LABEL', 'private-campaign-name', 'untrusted-campaign']) expect(text).not.toContain(privateValue);
     expect(text).toContain('no visits, ad spend, revenue, full funnel or causal attribution');
+    // EXP03 S2: campaign results reach the review as counts only — never the items' labels.
+    expect(headlines(result)).toMatchObject({ 'campaigns.leads_credited_to_campaigns': 4, 'campaigns.busiest_campaign_leads': 4 });
+    expect(text).toContain('Which campaign each lead is credited to lives in Campaigns, not this summary');
   });
   it('keeps genuine empty intake and explicit processing zeros distinct from unavailable data', async () => {
     const result = await harness({ edit(row, key) { row.values = key === MARKETING_INTAKE_METRICS.processing ? distribution(['failed', 0], ['stalled', 0])
       : row.values.kind === 'distribution' ? distribution() : { kind: 'count', count: 0 };
       row.coverage = { state: 'complete', candidate_count: 0, contributing_count: 0, excluded_count: 0 }; } }).read();
-    expect(Object.values(headlines(result))).toEqual([0, 0, 0, 0, 0, 0, 0]); expect(result.data?.risks).toEqual([]);
+    expect(Object.values(headlines(result))).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0]); expect(result.data?.risks).toEqual([]);
     const unavailable = await harness({ edit(row) { row.values = null; row.truth_state = 'UNAVAILABLE'; row.coverage = { state: 'unavailable', candidate_count: 1, contributing_count: 0, excluded_count: 1 }; row.exclusions = [{ reason: 'Unavailable', count: 1 }]; } }).read();
     expect(unavailable.status).toBe('degraded'); expect(unavailable.data).toBeNull();
   });
@@ -139,11 +143,86 @@ describe('Marketing intake over the canonical Metric/Evidence cycle', () => {
     const switched = await harness({ switchAt: 2 }).read(); expect(switched.data).toBeNull();
     expect((await harness({ switchAt: 12 }).read()).data).toBeNull();
     const scope = { tenantId: TENANT }; const h = harness({ scope, afterResolve: () => { scope.tenantId = 'foreign'; } });
-    expect((await h.read()).data?.headline).toHaveLength(7);
+    expect((await h.read()).data?.headline).toHaveLength(9);
   });
   it('honors cancellation before reads and while the last issuer result settles', async () => {
     const pre = new AbortController(); pre.abort(); const h = harness(); expect((await h.read(pre.signal)).data).toBeNull(); expect(h.calls).toEqual([]);
     const late = new AbortController(); const pending = harness({ afterResolve: key => { if (key === MARKETING_INTAKE_METRICS.processing) late.abort(); } });
     expect((await pending.read(late.signal)).data).toBeNull();
+  });
+});
+
+
+describe('Campaign results in the COO review (EXP03 S2)', () => {
+  it('surfaces credited and busiest campaign counts from the durable attribution grouping', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags)
+        row.values = distribution(['brief:11111111-1111-4111-8111-111111111111', 3], ['tag:summer-push', 1], ['_untagged', 2]);
+    } }).read();
+    expect(result.status).toBe('available');
+    expect(headlines(result)).toMatchObject({
+      'campaigns.leads_credited_to_campaigns': 4,
+      'campaigns.busiest_campaign_leads': 3,
+      'campaigns.leads_without_campaign_tag': 2,
+    });
+  });
+  it('keeps visitor-supplied campaign naming out of every projection', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags)
+        row.values = distribution(['brief:11111111-1111-4111-8111-111111111111', 3], ['tag:untrusted-name', 1]);
+    } }).read();
+    const text = JSON.stringify(result);
+    expect(text).not.toContain('untrusted-name');
+    expect(text).not.toContain('UNTRUSTED_TAG_LABEL');
+    expect(headlines(result)).toMatchObject({ 'campaigns.leads_credited_to_campaigns': 4 });
+  });
+  it('an empty campaign grouping reads as zero credited, never as unavailable', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags) row.values = distribution(['_untagged', 5]);
+    } }).read();
+    expect(result.status).toBe('available');
+    expect(headlines(result)).toMatchObject({ 'campaigns.leads_credited_to_campaigns': 0, 'campaigns.busiest_campaign_leads': 0 });
+  });
+  it('a refused vocabulary still withholds the whole campaign-tag figure set', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags) row.values = distribution(['mystery_bucket', 4], ['_untagged', 1]);
+    } }).read();
+    expect(headlines(result)).not.toHaveProperty('campaigns.leads_without_campaign_tag');
+    expect(headlines(result)).not.toHaveProperty('campaigns.leads_credited_to_campaigns');
+    expect(headlines(result)).not.toHaveProperty('campaigns.busiest_campaign_leads');
+  });
+  it('the producer-rank fold into _other still counts as credited, but never as one campaign', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags)
+        row.values = distribution(['brief:11111111-1111-4111-8111-111111111111', 3], ['_other', 9], ['_untagged', 2]);
+    } }).read();
+    expect(headlines(result)).toMatchObject({
+      'campaigns.leads_credited_to_campaigns': 12,
+      'campaigns.busiest_campaign_leads': 3,
+      'campaigns.leads_without_campaign_tag': 2,
+    });
+  });
+  it('a partial distribution that still contains an _untagged bucket withholds the aggregates too', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags) {
+        row.values = distribution(['brief:11111111-1111-4111-8111-111111111111', 4], ['_untagged', 2]);
+        row.truth_state = 'PARTIAL'; row.coverage = { state: 'partial', candidate_count: 8, contributing_count: 6, excluded_count: 2 };
+        row.exclusions = [{ reason: 'Not measured', count: 2 }];
+      }
+    } }).read();
+    expect(headlines(result)).not.toHaveProperty('campaigns.leads_credited_to_campaigns');
+    expect(headlines(result)).not.toHaveProperty('campaigns.busiest_campaign_leads');
+  });
+  it('a partial distribution withholds the whole campaign figure set — never an inferred untagged zero nor an exact-seeming credited total', async () => {
+    const result = await harness({ edit(row, key) {
+      if (key === MARKETING_INTAKE_METRICS.campaignTags) {
+        row.values = distribution(['brief:11111111-1111-4111-8111-111111111111', 4]);
+        row.truth_state = 'PARTIAL'; row.coverage = { state: 'partial', candidate_count: 6, contributing_count: 4, excluded_count: 2 };
+        row.exclusions = [{ reason: 'Not measured', count: 2 }];
+      }
+    } }).read();
+    expect(headlines(result)).not.toHaveProperty('campaigns.leads_without_campaign_tag');
+    expect(headlines(result)).not.toHaveProperty('campaigns.leads_credited_to_campaigns');
+    expect(headlines(result)).not.toHaveProperty('campaigns.busiest_campaign_leads');
   });
 });

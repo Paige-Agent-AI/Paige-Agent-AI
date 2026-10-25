@@ -7652,7 +7652,7 @@ Current gaps:
   bytes. Files are **not malware-scanned** (owner decision), and the UI says so. Against the
   owner's increment-3 decision, legacy `.doc`/`.xls` and PowerPoint are not accepted, Word and
   Excel files with embedded objects, charts or external links are refused, and no scheduled
-  stale-file sweep is built. The same build closed an older gap: `analyze-financial-document`
+  stale-file sweep was built in increment 3 (superseded: migration `20271114260008` adds one). The same build closed an older gap: `analyze-financial-document`
   could read a file in any bucket by path. It is `PROOF_OWED` on the same terms as increments 1–2,
   short of an authenticated drive. Contract:
   [increment 3 attachments contract](delivery/exp08-team-hub-increment3-attachments-contract.md).
@@ -7669,6 +7669,10 @@ Current gaps:
 - Team Hub read performance (migration `20271114250008`): opening a conversation and searching cost
   the page, not the workspace (measured 0.75–4.8 s → 2–4 ms at 1M messages; rare-word search
   ~1.8 s). Two btree indexes over ids and times only, no message text; output byte-identical.
+- Team Hub scheduled stale-file sweep (migration `20271114260008`, edge `team-hub-file-sweep`, hourly
+  pg_cron, up to 50 uploaders per run): an unposted upload older than a day is discarded and its bytes
+  removed even if the person never uploads again. Service role / cron token only. `PROOF_OWED` until
+  merged, deployed and a first scheduled run is read back.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

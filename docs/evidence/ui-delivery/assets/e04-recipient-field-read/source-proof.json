@@ -1,0 +1,85 @@
+{
+  "codeHead": "ab4810cfb0d2e4c2435c8ff5debff0c0ef825639",
+  "sourceTree": "3704c3848cab6e578871ace3f7d68af941796996",
+  "base": "2f04941fe5789aa6d54577ef515958c9bb11f78b",
+  "scope": "ADDITIVE_TOKEN_READ_NO_NEW_MOUNTED_UI_OR_EXECUTION",
+  "proofSource": "319ec359d3a6c957fff2507e5b8c801e9037896d",
+  "inputs": [
+    {
+      "path": "scripts/agreements/recipient-fields-proof.mjs",
+      "blob": "7c064777a388279f949cd54e89fcc7581bd78f72",
+      "sha256": "053c1c9e8ded3db15d9cb1e26a600fcd010fb4db07f3a511b530ab5438fd9fbf",
+      "matchesActualProofSource": true
+    },
+    {
+      "path": "scripts/agreements/run-integrity-proof.sh",
+      "blob": "ab3ef7480d009cd9befe3666812629ce9de93327",
+      "sha256": "54b5598a3104716c457a4831a4cd5b2b0103f5b8023e9a76db59076937583c79",
+      "matchesActualProofSource": true
+    },
+    {
+      "path": "scripts/agreements/signer-preparation-integrity-proof.mjs",
+      "blob": "b8893feeda02705bf0e79018d13c9b57105efc7e",
+      "sha256": "d02d26721780f92cacd2881353c4aacf7b7def9503c00032f92639adca0414bb",
+      "matchesActualProofSource": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+      "blob": "93a1ccbeccc1613fbb4271f5b0df1afb3fe31acf",
+      "sha256": "291dc4af1f8543d67f451545c0970de4ae7e1cf02fed32df22a510c415091b38",
+      "matchesActualProofSource": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/recipient-fields.ts",
+      "blob": "38332b9d03cddc5426da588c340c603cf690074a",
+      "sha256": "345947aa134c015166d5b39d51449283d3b2e255ff53c2cbf6612450667e009b",
+      "matchesActualProofSource": true
+    },
+    {
+      "path": "supabase/functions/sign-agreement/index.ts",
+      "blob": "e7a477adb2ca36e534077d1406e142b7338f0a5b",
+      "sha256": "ba5e2318cdc7309008c9755f8cb3d7dd2fea6b0937ce4bc69b942170f6dee878",
+      "matchesActualProofSource": true
+    },
+    {
+      "path": "supabase/functions/sign-agreement/preflight.test.ts",
+      "blob": "c2ba25f041d44046b1a50021dde8fe31ecb0c050",
+      "sha256": "4f9da443aa3499d82c27b29cd02687b6869ba74c9877410d53f89b90756c2930",
+      "matchesActualProofSource": true
+    },
+    {
+      "path": "supabase/migrations/20271113870004_e04_recipient_field_read.sql",
+      "blob": "66451dc1bb48bab594778d9bc6c0847721f9152d",
+      "sha256": "3c33c053d78b38174c5207971bede0e98d244d1ad3b875cebe42a5aec237427a",
+      "matchesActualProofSource": true
+    }
+  ],
+  "strictDeno": {
+    "tests": 21,
+    "steps": 127,
+    "failures": 0,
+    "runtimePermissions": "denied"
+  },
+  "native": {
+    "newRecipientChecks": 52,
+    "migrationReplay": 2,
+    "concurrentSessions": 2,
+    "observedLockWaits": 1,
+    "allOriginalChecks": "PASS_SEPARATE_NESTED_COUNTS_NOT_SUMMED",
+    "clusterCleanup": "VERIFIED_EMPTY_STOPPED",
+    "sourceOnly": true
+  },
+  "production": {
+    "observedFrontier": "20271113860009",
+    "ownMigration": "20271113870004",
+    "ownAppliedCount": 0
+  },
+  "limitations": [
+    "New UI and atomic field producer/governed send remain unfinished",
+    "No provider/customer/signature/payment/Chat admission or full12 acceptance"
+  ],
+  "retainedSetupFailures": [
+    "PowerShell produced no proof transcript",
+    "Local pg_ctl start inherited a capture pipe; verified exact owned empty cluster and stopped only own wrapper; same original fenced proof ran after file-descriptor correction, no test/constraint/timeout change"
+  ]
+}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { GlyphPlate } from "@/components/ui/page";
 import { type CustomerUpdateManifest, usePlatformUpdate } from "@/hooks/usePlatformUpdate";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
+import { useHasUnsavedWork } from "@/hooks/useBeforeUnloadGuard";
 
 type BannerViewProps = {
   updateAvailable: boolean;
@@ -44,6 +45,7 @@ export function PlatformUpdateBannerView({ updateAvailable, customerUpdate, rece
   const reduce = useReducedMotion();
   const detailId = useId();
   const editing = useEditingFocus();
+  const unsavedWork = useHasUnsavedWork();
   const [expanded, setExpanded] = useState(false);
   const [reloadBlocked, setReloadBlocked] = useState(false);
   const release = customerUpdate ?? recentRelease;
@@ -53,7 +55,7 @@ export function PlatformUpdateBannerView({ updateAvailable, customerUpdate, rece
     setReloadBlocked(!reload());
   };
 
-  if (editing) return null;
+  if (editing || unsavedWork) return null;
 
   return (
     <AnimatePresence>

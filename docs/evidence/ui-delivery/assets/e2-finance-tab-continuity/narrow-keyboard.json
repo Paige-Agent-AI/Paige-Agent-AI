@@ -1,0 +1,17 @@
+{
+  "bodyWidth": 390,
+  "focus": "finance-tab-profitability",
+  "height": 844,
+  "rect": {
+    "bottom": 109.8000030517578,
+    "height": 41,
+    "left": 95.95000457763672,
+    "right": 193.21250915527344,
+    "top": 68.80000305175781,
+    "width": 97.26250457763672,
+    "x": 95.95000457763672,
+    "y": 68.80000305175781
+  },
+  "selected": "finance-tab-profitability",
+  "width": 390
+}

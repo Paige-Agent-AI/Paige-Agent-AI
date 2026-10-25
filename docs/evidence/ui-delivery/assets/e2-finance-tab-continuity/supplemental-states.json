@@ -1,0 +1,50 @@
+[
+  {
+    "case": "obsidian-1536-secondary",
+    "alert": null,
+    "fontLoaded": true,
+    "height": 770,
+    "loading": null,
+    "overflow": 0,
+    "review": true,
+    "width": 1536,
+    "encoding": "PNG",
+    "originalBrowserCapture": true
+  },
+  {
+    "case": "obsidian-390",
+    "alert": null,
+    "fontLoaded": true,
+    "height": 844,
+    "loading": null,
+    "overflow": 0,
+    "review": true,
+    "width": 390,
+    "encoding": "PNG",
+    "originalBrowserCapture": true
+  },
+  {
+    "case": "mineral-900-denied",
+    "alert": "Financial access is restrictedAn active workspace owner or administrator must authorize this read.Retry access check",
+    "fontLoaded": true,
+    "height": 1000,
+    "loading": null,
+    "overflow": 0,
+    "review": false,
+    "width": 900,
+    "encoding": "PNG",
+    "originalBrowserCapture": true
+  },
+  {
+    "case": "mineral-900-loading",
+    "alert": null,
+    "fontLoaded": true,
+    "height": 1000,
+    "loading": "Loading source…",
+    "overflow": 0,
+    "review": true,
+    "width": 900,
+    "encoding": "PNG",
+    "originalBrowserCapture": true
+  }
+]

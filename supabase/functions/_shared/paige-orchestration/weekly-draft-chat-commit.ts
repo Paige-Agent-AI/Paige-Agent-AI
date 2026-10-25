@@ -3,7 +3,7 @@ import { WEEKLY_COMMITMENT_DRAFT_CAPABILITY } from "../paige-spine/domains/autom
 import { uuid } from "./weekly-commitment-control-intent.ts";
 import { weeklyDraftNativeArgs, type claimWeeklyDraftChatApproval } from "./weekly-draft-chat-claim.ts";
 import { createWeeklyDraftDeadline } from "./weekly-draft-deadline.ts";
-import { parseWeeklyDraftState, weeklyDraftModelContext } from "./weekly-draft-projection.ts";
+import { parseWeeklyDraftState, weeklyDraftModelContext, weeklyDraftRecordReference } from "./weekly-draft-projection.ts";
 
 type Gate = Parameters<typeof decideDeclaredOrdinaryCapability>[1];
 type NativeClaim = Extract<Awaited<ReturnType<typeof claimWeeklyDraftChatApproval>>, { status: "claimed" }>;
@@ -19,7 +19,7 @@ type Options = Readonly<{
 type Context = NonNullable<ReturnType<typeof weeklyDraftModelContext>>;
 type Result = { commitAttempted: boolean; retryAllowed: false; genericFallbackAllowed: false } & (
   | { status: "saved"; context: Context; record: { automationId: string; receiptId: string; requestId: string } }
-  | { status: "observed"; context: Context }
+  | { status: "observed"; context: Context; recordReference: ReturnType<typeof weeklyDraftRecordReference> }
   | { status: "unknown" | "unavailable" }
 );
 
@@ -80,7 +80,7 @@ export async function commitWeeklyDraftChatApproval(caller: Caller, options: Opt
       if (state.phase === "saved" && state.automationId && state.receiptId)
         return { status: "saved", context, record: { automationId: state.automationId,
           receiptId: state.receiptId, requestId: state.requestId }, ...flags() };
-      return { status: "observed", context, ...flags() };
+      return { status: "observed", context, recordReference: weeklyDraftRecordReference(raw, scope, id), ...flags() };
     };
     const recover = async (): Promise<Result> => {
       if (!attempted || !active()) return uncertain();

@@ -81,3 +81,11 @@ Unscoped Edge ESLint remains inherited407 errors in both current main and the
 candidate; two moved conditional lines carry the same original as-any spans.
 This is not a clean Edge ESLint result. Required changed-src lint, scoped new
 files, protected guards and hosted exact-head checks remain separate gates.
+
+A second actual-wire assertion then reproduced a truthful-card gap: the native
+save was verified but the shared approval outcome had no original call mapping
+(25PASS/1FAIL). The consumer now feeds the existing approval outcome maps at the
+native attempt boundary, and records operator-card audit authority only after
+original claim validation. No new outcome classifier or approval engine. All26
+cases pass with actual SSE card outcomes checked for save, original reconciliation
+and uncertain observed phases; unknown cannot say nothing happened or offer replay.

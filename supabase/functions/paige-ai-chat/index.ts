@@ -12214,6 +12214,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const deadline = performance.now() + 12_000;
                 await requireRecoveryPermission(true);
                 nativeAttempted = true;
+                // Feed the original card/outcome ledger at the attempt boundary:
+                // a lost native acknowledgement is uncertain, never "did not run".
+                approvalTokenTool.set(token, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME);
+                approvalSpend.set(token, tc.id);
                 const claim = await claimWeeklyDraftChatApproval(supabaseClient, {
                   proposal: { id: row.id, approvedToken: token, storedArgs: row.args }, scope, runtime,
                   confirmationRequestNonce: requestNonce, current: weeklyDraftCurrent, signal: req.signal,
@@ -12225,6 +12229,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   continue;
                 }
                 if (claim.status !== "claimed" || !(await revalidateProposalScope())) throw new Error("weekly_original_claim_unavailable");
+                approvalChannel.set(tc.id, "operator_card");
                 await interactive?.check();
                 // The original native runtime exposes Stop/terminal separately
                 // from latest/executor. Re-read it before the commit; a retained

@@ -170,6 +170,7 @@ async function driveWeekly(options={}) {
       threadId:thread,requestIntentId:intent,interactive:{kind:'message'},
       ...(options.fresh?{}:options.declined?{declinedConfirmations:[token]}:{approvedConfirmations:[options.legacyToken?fingerprint:token]})}),signal:controller.signal}));
   const wire=await response.text();
+  const approvalOutcomes=wire.split('\n').filter(line=>line.startsWith('data: ')).flatMap(line=>{try { const frame=JSON.parse(line.slice(6));return frame.paige_approval_outcome?[frame.paige_approval_outcome]:[]; } catch { return []; }});
   const confirmations=wire.split('\n').filter(line=>line.startsWith('data: ')).flatMap(line=>{
     try { const frame=JSON.parse(line.slice(6));return frame.paige_confirm?[frame.paige_confirm]:[]; } catch { return []; }
   });
@@ -177,7 +178,7 @@ async function driveWeekly(options={}) {
   const values=modelBodies.flatMap(b=>b.messages??[]).filter(m=>m.role==='user')
     .flatMap(m=>Array.isArray(m.content)?m.content:[]).filter(p=>p.type==='tool_result')
     .flatMap(p=>{try{return[JSON.parse(p.content)];}catch{return[];}});
-  return{rec,wire,values,settled,state,token,args,status:response.status,confirmations,offered:modelBodies.filter(b=>b.stream).flatMap(b=>b.tools??[]),
+  return{rec,wire,values,settled,state,token,args,status:response.status,approvalOutcomes,confirmations,offered:modelBodies.filter(b=>b.stream).flatMap(b=>b.tools??[]),
     calls:name=>rec.rpc.filter(c=>c.name===name),
     genericCAS:()=>state.timeline.filter(c=>c.kind==='query'&&c.op==='update')};
 }
@@ -206,6 +207,7 @@ await check('Exact stored approval reaches one original-JWT native claim and one
   assert.equal(commit.args._intent_id,intent);assert.equal(commit.args._runtime_request_nonce,bound.args.p_request_nonce);
   assert.notEqual(commit.args._request_nonce,issued);
   assert.ok(r.values.some(v=>JSON.stringify(v).includes(receiptId)),'Original receipt must reach verified result projection');
+  assert.equal(r.approvalOutcomes.at(-1)?.actions.find(a=>a.fingerprint===r.token)?.outcome,'ran','The real approval card must agree with the original verified native save');
 });
 await check('Decline uses original native refusal before generic consumption and never commits',async()=>{
   const r=await driveWeekly({declined:true});
@@ -218,11 +220,13 @@ await check('Lost commit acknowledgement reads only the original outcome and nev
   const r=await driveWeekly({commitLost:true});
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,1);
   assert.equal(r.calls('read_weekly_commitment_chat_draft').length,1);
+  assert.equal(r.approvalOutcomes.at(-1)?.actions.find(a=>a.fingerprint===r.token)?.outcome,'ran','Recovered original save and card must agree');
   noFallback(r);
 });
 for(const phase of ['saved','changed','declined','unknown'])await check('Native observed '+phase+' never authorizes a fresh commit',async()=>{
   const r=await driveWeekly({observed:phase});
   assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,1);
+  assert.equal(r.approvalOutcomes.at(-1)?.actions.find(a=>a.fingerprint===r.token)?.outcome,phase==='saved'?'ran':'unconfirmed','Original observed outcome uses the existing truthful card classifier');
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);noFallback(r);
   assert.ok(r.values.some(v=>v.original_outcome?.phase===phase),'Preserve the actual original phase, not an unavailable substitute');
 });

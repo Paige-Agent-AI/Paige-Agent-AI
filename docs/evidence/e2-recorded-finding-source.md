@@ -81,6 +81,17 @@ controls. Final exact-head type/CI and final review remain required. SOLO parity
 guard and all original mutation controls passed on the preceding source; no
 identity, role or provider claim follows from those static controls.
 
+Required caad database CI first refused two changing production-ledger reads. Its
+unchanged-head retry recovered that read but correctly refused grant reproduction:
+released domain objects were missing from the older branch. Main468e50f6461517e43e5381ae2c2423332cf818cd
+is now composed through c4d0ab8097a8356ab23a598c1080aae14c3d5ee4/tree5289e11b,
+retaining all five reviewed EXP02 leaves and every incoming byte outside them.
+This imports the original owners' released migrations; it changes no migration,
+native writer, grant, workflow, assertion or guard. The failed checks are retained;
+fresh exact-head review/CI is required and no earlier green is borrowed. All184
+original cases across7 suites pass again on the composition in17.83s; scoped
+ESLint0 and diff-check pass. No new hosted typecheck or database PASS is inferred.
+
 Functional: foundation locally verified, not released. Visual: no UI change or new consumer.
 Experiential: current UI still honestly cannot resolve older finding links.
 Founder Acceptance: all19 outcomes/nine analytics remain open.

@@ -515,6 +515,13 @@ all19/nine/founder remain owed; browser/input stop is held. Original source2787
 is separately merged2f04941f/web+Chat535 verified, not report/customer acceptance.
 Queued Master2694/2690/2696/2787 closeouts remain unclaimed as complete.
 
+October25 source continuation: original required database CI refused moving
+ledger reads, then correctly identified released domain objects absent from the
+older branch. Composed actualmain468e50f6 through c4d0ab80/tree5289e11b preserves
+all five reviewed EXP02 leaves and every incoming change. No SQL/grant/CI/guard
+was altered; all184/7 original controls and scoped lint pass on the composition.
+The original failures remain and fresh exact-head review/CI is required.
+
 ## EXP02 Systems Check dialog return — October23 source candidate
 
 **October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.

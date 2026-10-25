@@ -709,8 +709,9 @@ Initial10RED/13PASS, closed-scope5RED and214/8 source proof are retained.
 Capture readback19RED/31PASS now yields52own+184original=236/8 source PASS:
 none mode confirms original findings before finalization and reads back its run;
 unconfirmed writes retain the known run identity, never replay or grant authority.
-Legacy all/delta/default partial behavior stays unchanged. Fresh exact review,
-type/native Deno/CI/full deployed readback remain owed. No UI/customer/ALG or
+Legacy all/delta/default partial behavior stays unchanged. Composed236/8 in5.06s,
+scoped lint0 and unchanged project type ratchet10/6 pass. Fresh exact review,
+native Deno/CI/full deployed readback remain owed. No UI/customer/ALG or
 Capabilities promotion. Manual purpose/admission/original work+receipt/recovery,
 authenticated isolation/reload and full19/nine/founder acceptance remain required.
 

@@ -74,7 +74,8 @@
   "sourceSha256": {
     ".github/scripts/edge-source-readback.py": "8125c7029214485130b8d80e0017082bd9a0b07d62611145d584673cc1b363a0",
     ".github/scripts/test_edge_source_readback.py": "c48eb521330a8aa30d108ba5e0631c695ca27a92f89d974b67d4c517697397dc",
-    ".github/workflows/deploy-edge-functions.yml": "3b87cd5818b5a8306735dc5294ca156e7fb07297c1c0c78fa3221f41757ed4bc"
+    ".github/workflows/deploy-edge-functions.yml": "3b87cd5818b5a8306735dc5294ca156e7fb07297c1c0c78fa3221f41757ed4bc",
+    "src/__tests__/legacy-contact-delete-retirement.test.ts": "63488a458bcfbd643db1af1477b442e5018dc802d9583c3f025b1de7432f8c9a"
   },
   "review": "Exact-head review receipt belongs in the owning PR; sequential author review must be labeled AUTHOR-REVIEW / LOWER ASSURANCE.",
   "remaining": [
@@ -91,5 +92,35 @@
   "functional": "Source repair tested at the bounded verifier/shell boundary only.",
   "visual": "N/A no customer interface change.",
   "experiential": "Original customer flow unchanged; no authenticated completion claimed.",
-  "founderAcceptance": "NOT REQUESTED; complete EXP05 evaluation remains later."
+  "founderAcceptance": "NOT REQUESTED; complete EXP05 evaluation remains later.",
+  "hostedCorrection": {
+    "head": "02fcea5382037b0411df6a55e49cefc29569a486",
+    "run": 40163821042,
+    "artifact": 12588457019,
+    "artifactSha256": "498f139d37cb3bb64bff7ebc0ecae82f4bac8541f49986750e9979df39ba1731",
+    "totals": {
+      "total": 21719,
+      "passed": 21714,
+      "failed": 2,
+      "pending": 3
+    },
+    "cause": "Two original retirement tests retained a manual-only branch/text and a scratch repository with no fetchable origin; the new shared certified baseline correctly refuses that fixture.",
+    "localRed": {
+      "total": 20,
+      "passed": 18,
+      "failed": 2,
+      "skipped": 0,
+      "report": "private work/2808-retirement-red-native.json"
+    },
+    "initialTooling": "Windows first run lacked Git Unix utilities:17PASS/3FAIL includes two mkdir ENOENT errors and is not causal workflow evidence. Repeated with existing verified Git utilities before changes.",
+    "repair": "Preserve all retirement/authority assertions; original actual-step scratch simulation now runs for both push/manual, fetches a real neutral local bare origin after deleting its local tag and verifies exact original certified commit and retired set. Common baseline asserts no event.before, event-name branch or HEAD^ fallback.",
+    "green": {
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "report": "private work/2808-retirement-green.json"
+    },
+    "boundary": "No production source/workflow/helper mutation in this correction; actual full provider readback and new exact-head CI remain required."
+  }
 }

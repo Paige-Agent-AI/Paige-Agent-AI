@@ -237,6 +237,29 @@ remain unfinished. UI, catalogue
 and algorithm maturity unchanged; no customer version/publication or recursive
 feature credit for this closeout.
 
+## EXP05 weekly save/source recovery — October25 merged, full source proof failed
+
+Original#2792 reviewed4c86/LOWER5641424249/all11+two webSUCCESS merged
+main61d3308269aadd7c80d050a87f0b718a85d798c5/treeff60dd5d. Its web release
+readback was exact61d; original401629 source report retained four PASS and Chat
+cli_readback_failed. Original#2808 reviewed5fbe/LOWER5641740002+5641859900/all10
+applicable+two webSUCCESS/PreviewSKIP merged18757b70a80781717efd807dc3a96e14c5378e6a/
+tree3d0f3231, preserving all15934 outside entries. Actual401695 source verification
+FAILED invalid_readback_input after six acknowledged uploads; no certificate advance.
+Web target18757 is READY by metadata; public readback had already advanced to2d9403,
+so exact18757 served-version proof is not claimed.
+
+Lesson: acknowledged uploads, ACTIVE metadata and a requested download method
+cannot replace immutable full source/configuration/race proof. Unknown read failures
+stay failed; diagnose through the original helper without copying raw errors, credentials,
+source payloads or private context, and avoid repeating identical uploads for diagnosis.
+Original source-only input checks do not establish the actual provider-path cause.
+See the [sole Master4.0 rows](../PAIGE-MASTER-PROJECT-REFERENCE.md) and original
+[#2808 readback receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2808#issuecomment-6394588006).
+Other2805/2816/Task increments are excluded from these two source-closeout rows. No capability,
+algorithm, ordinary customer/Live proof or full ten/E5/founder acceptance is closed.
+No new release ledger, provider path, engine or recursive closeout row is introduced.
+
 ## EXP05 weekly original approval and recovery — October24 source released
 
 Native #2758 exactadf6/LOWER6386231227+6386546848/all13+twoSUCCESS merged actual

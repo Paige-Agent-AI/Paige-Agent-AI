@@ -32,7 +32,7 @@ RELEASE_CHANNEL: development: actual local components, canonical styling and syn
 RELEASE_CLASSIFICATION: internal-only: bounded correctness/accessibility repair; no customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated EXP04 remains subject to one later founder evaluation.
 RELEASE_NOTE_REQUIRED: no: routine internal increment, no activation or complete-outcome claim.
-RELEASE_TRUTH_BOUNDARY: PARTIAL local/source refusal recovery; PROOF OWED exact-head hosted checks, deployment/readback and ordinary authenticated customer behavior; Chat/provider activation unchanged.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local/source refusal recovery; PROOF OWED: exact-head hosted checks, deployment/readback and ordinary authenticated customer behavior; Chat/provider activation unchanged.
 RELEASE_RECOVERY: position=forward-fix original error mapping without altering approvals, documents or receipts; reference=source-proof.json and original signature request tests.
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: full authenticated shell not exercised by controlled actual-component proof.

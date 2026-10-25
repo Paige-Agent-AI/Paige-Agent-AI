@@ -9,10 +9,10 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible ordinary standalone SOLO owner p
 VISUAL_DIRECTION: PASS: original compact Mineral/Obsidian Chat and Operations tokens/components remain unchanged; no banner, tab, motion or layout addition.
 AUTOMATED_EVIDENCE: PASS: actual unchanged handler with existing recording ports passes 26 runtime cases; original reminder proof remains 33/33; domain eligibility/schema suite passes 17/17. Counts overlap neither native authority nor authenticated evidence and are not a completion score.
 STATIC_EVIDENCE: UNVERIFIED: source/Kit construction inspected; Kit lint passes unchanged 288/296 debt baseline. Exact immutable review, composed-main fingerprint/dependency proof and hosted checks remain required before release.
-RENDERED_EVIDENCE: UNVERIFIED: no frontend source changed; fresh actual card and response inspection on this candidate is still owed.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: offline runtime covers approval, decline, unknown/lost acknowledgements, scope/Stop/abort, duplicate preparation, replay and refusals; connected browser/native behavior remains owed.
+RENDERED_EVIDENCE: PASS: actual original React approval-card renderer includes review, saved and uncertain weekly scenes; current compiled CSS, desktop1536x770 Mineral and narrow390x844 Obsidian pixels/DOM inspected in assets/exp05-weekly-native-chat/. This is a synthetic standalone frame, not customer or full-shell proof.
+BEHAVIORAL_EVIDENCE: PASS: offline actual-handler26 cases and original real React card transitions preserve exact summary, completion and no-retry uncertainty. Connected ordinary authenticated/native behavior remains owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in request, native claim, persisted private definition or original Rail from this candidate has been produced.
-KEYBOARD_FOCUS: UNVERIFIED: original approval and inspection controls unchanged; new end-to-end card keyboard check remains owed.
+KEYBOARD_FOCUS: PASS: native synthetic card Tab from Approve reaches Not now without activation; original React interaction verified. Full authenticated shell keyboard path remains owed.
 ZOOM_REFLOW: UNVERIFIED: no responsive layout changed; no new viewport certification claimed.
 REDUCED_MOTION: UNVERIFIED: no motion source changed; no new rendered certification claimed.
 STATE_COVERAGE: PASS: local handler exercises original prepare, approval-required, saved, changed, declined, unknown, scope-retired and refused paths without fallback mutation. Production counterparts remain unverified.
@@ -89,3 +89,21 @@ native attempt boundary, and records operator-card audit authority only after
 original claim validation. No new outcome classifier or approval engine. All26
 cases pass with actual SSE card outcomes checked for save, original reconciliation
 and uncertain observed phases; unknown cannot say nothing happened or offer replay.
+
+## Native and rendered proof limits retained
+
+Production build PASS in2m36s. Actual original React renderer PASS, with the
+separate full-shell matrix test deliberately not selected; its one skipped case
+is not reported as coverage. Two actual browser CSS viewports show no horizontal
+overflow and retain complete name/schedule/zone/non-recurring qualification.
+Standalone original buttons measure36px high; this fixture does not certify the
+full shell,44px touch geometry, physical devices or zoom. No UI style is changed
+to manufacture a pass. Impeccable clarity/state/consistency checks are applied to
+the preserved card, and both raw pixel samples were inspected.
+
+Full local native proof reached actual engine/Gateway/adapter/no-repeat and
+record/receipt checks, then FAILED the historical owner-read median timing target
+under concurrent local compilation. This failure is retained, not waived or
+reported green. The original native SQL/functions are unchanged in this Chat
+slice. Focused existing draft-command proof and a quiet timing recheck remain
+required, alongside full hosted required checks before release.

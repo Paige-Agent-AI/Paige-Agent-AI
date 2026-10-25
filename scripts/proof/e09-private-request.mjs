@@ -3,7 +3,7 @@
 // Full-schema customer_portal_access.sql remains the normative role/trigger proof.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,spawn,exe,args,transcripts}) {
+export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,publicationBaseline=false,publicationCandidate=false,spawn,exe,args,transcripts}) {
  const read=file=>fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n');
  const preparationFile='supabase/migrations/20271114150009_e09_private_request_preparation.sql';
  const historyFile='supabase/migrations/20271114150019_e09_private_request_history.sql';
@@ -279,13 +279,383 @@ export async function privateRequestProof({sql,check,assert,fs,root,path,fixture
   await privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked});
  }
  check('Original native file, advance and Portal authority remain byte-exact',()=>assert.deepEqual(fingerprints(),before));
+ const publication=publicationBaseline?privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot}):publicationCandidate?await privatePublicationCandidateProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot,spawn,exe,args,transcripts}):null;
  return {baseline,historyBaseline,baselineSource:historyBaseline?'ba786f11b52c71b4ed87e7eb7a022b5aaa376e18':null,originalFingerprints:before,canonicalReplayFileHash:replayFileHash,
   migration:'20271114150009_e09_private_request_preparation.sql',
   migrationNormalizedSHA256:createHash('sha256').update(read(preparationFile)).digest('hex'),
   historyMigration:historyBaseline?null:'20271114150019_e09_private_request_history.sql',
   historyMigrationNormalizedSHA256:historyBaseline?null:createHash('sha256').update(read(historyFile)).digest('hex'),
   appliedMigrationOrder:baseline?[]:['20271114150009',...(!historyBaseline?['20271114150019']:[])],
-  fixture:'synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority',customerPublication:'NOT_RUN',fullSchema:'PROOF_OWED'};
+  fixture:'synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority',customerPublication:publicationCandidate?'NATIVE_CANDIDATE_ONLY':publicationBaseline?'ORIGINAL_NATIVE_BASELINE_ONLY':'NOT_RUN',fullSchema:'PROOF_OWED',...((publicationBaseline||publicationCandidate)?{publication}:{})};
+}
+
+function privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot,setupOnly=false}) {
+ const sourceFile='supabase/migrations/20271111010000_e09_customer_portal_access.sql';
+ const publisher=read(sourceFile).match(/CREATE OR REPLACE FUNCTION public\.admin_propose_paige_actions\(p_contact_id uuid, p_actions jsonb\)[\s\S]*?END; \$function\$;/)?.[0];
+ assert(publisher,'Actual original customer-action writer required, never a stub');
+ // Complete only the existing fixture's role graph. This remains an explicit
+ // synthetic Auth/role port; original domain tables/constraint/writer execute.
+ sql(`CREATE TYPE public.app_role AS ENUM('admin','super_admin','client');
+  CREATE FUNCTION public.has_role(uuid,public.app_role) RETURNS boolean LANGUAGE sql STABLE AS $$
+   SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=$1 AND role=$2::text)$$;`);
+ sql(publisher);
+ const acl=read('supabase/migrations/20271110215000_e09_customer_portal_profile_consent.sql').split('\n')
+  .filter(line=>line.includes('ON FUNCTION public.admin_propose_paige_actions(')).join('\n');
+ assert(acl.includes('REVOKE')&&acl.includes('GRANT'),'Original published ACL statements required');sql(acl);
+ const publisherHash=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.admin_propose_paige_actions(uuid,jsonb)'::regprocedure");
+ check('Publication baseline executes the exact observed original customer-action writer',()=>assert.equal(publisherHash,'21bd99c7a036f28f82a677fa25c6db04'));
+ const f=fixture(),foreign=fixture(),member=fixture();
+ sql(`INSERT INTO public.profiles(user_id,active_tenant_id) VALUES('${f.other}','${f.tenant}');
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner)VALUES('${f.tenant}','${f.other}','owner','active',true);
+  INSERT INTO public.user_roles(user_id,role)VALUES('${f.other}','admin');
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner)VALUES('${f.tenant}','${member.other}','member','active',false);
+  INSERT INTO public.profiles(user_id,active_tenant_id)VALUES('${member.other}','${f.tenant}');
+  UPDATE public.clients SET linked_user_id='${f.actor}',portal_access_state='open',paige_shared_context_consent=true WHERE id='${f.contact}';`);
+ const lit=x=>`'${String(x).replaceAll("'","''")}'`;
+ const direct=(actor=f.other,contact=f.contact)=>asActor(`SELECT public.admin_propose_paige_actions(${lit(contact)},'[{
+  "action_type":"recommendation","title":"Read the welcome guide","body":"Start with section one.","payload":{}}]'::jsonb)`,actor);
+ const snapshot=()=>customerSnapshot()+':'+sql('SELECT count(*) FROM public.paige_audit_log');
+ check('Original direct publisher positive control creates one exact customer item and notice',()=>{
+  const before=JSON.parse(customerSnapshot()),r=direct();assert.equal(r.ok,true);assert.equal(r.count,1);assert.equal(r.ids.length,1);
+  const after=JSON.parse(customerSnapshot());assert.equal(after.actions,before.actions+1);assert.equal(after.notices,before.notices+1);
+  const saved=JSON.parse(sql(`SELECT to_jsonb(x) FROM public.paige_customer_actions x WHERE id='${r.ids[0]}'`));
+  assert.equal(saved.tenant_id,f.tenant);assert.equal(saved.contact_id,f.contact);assert.equal(saved.initiated_by_admin_id,f.other);
+  assert.equal(saved.action_type,'recommendation');assert.equal(saved.title,'Read the welcome guide');
+  assert.equal(sql(`SELECT count(*) FROM public.notifications WHERE user_id='${f.actor}' AND metadata->>'action_id'='${r.ids[0]}'`),'1');
+ });
+ // Portal clients deliberately have no owner-workspace profile pointer. Never
+ // grant them staff standing merely to force a later refusal branch in a test.
+ check('Original direct publisher refuses customer authority without customer effects',()=>{const before=snapshot();const r=direct(f.actor);assert.equal(r.ok,false);assert.equal(r.error,'NO_TENANT');assert.equal(snapshot(),before);});
+ check('Original direct publisher refuses an ordinary team member inside the same business',()=>{const before=snapshot();const r=direct(member.other);assert.equal(r.ok,false);assert.equal(r.error,'FORBIDDEN');assert.equal(snapshot(),before);});
+ check('Original direct publisher refuses another business without customer effects',()=>{const before=snapshot();const r=direct(f.other,foreign.contact);assert.equal(r.ok,false);assert.equal(r.error,'CROSS_TENANT_FORBIDDEN');assert.equal(snapshot(),before);});
+ check('Original direct publisher preserves client-controlled consent',()=>{
+  sql(`UPDATE public.clients SET paige_shared_context_consent=false WHERE id='${f.contact}'`);const before=snapshot();
+  try{const r=direct();assert.equal(r.ok,false);assert.equal(r.error,'CONSENT_NOT_GRANTED');assert.equal(snapshot(),before);}
+  finally{sql(`UPDATE public.clients SET paige_shared_context_consent=true WHERE id='${f.contact}'`);}
+ });
+ if(setupOnly)return {f,foreign,member,publisherHash};
+ const prepared=invoke({actor:f.other,expected:f.other,tenant:f.tenant,contact:f.contact,intent:'e09df200-0000-4000-8000-000000000001'});
+ assert.equal(prepared.found,true);assert.equal(prepared.request.status,'assigned');const beforePublication=snapshot();
+ let observed,observedError;
+ check('Prepared original Work can publish one recommendation linked to that same customer',()=>{
+  observed=asActor(`SELECT public.advance_action(p_action_id=>'${prepared.request.work_id}',p_to_status=>'executing',p_tenant_id=>'${f.tenant}')`,f.other);
+  observedError=sql(`SELECT error FROM public.paige_actions WHERE id='${prepared.request.work_id}'`);
+  // Intentionally RED on the unmodified incumbent. Retain the actual enum
+  // constraint error; never bless blocked as the desired customer outcome.
+  assert.equal(observed.status,'done',JSON.stringify({observed,observedError}));assert(observed.customer_action_id);
+ });
+ check('Original publication baseline isolates the real action-type constraint gap',()=>assert.match(observedError,/paige_customer_actions_action_type_check/));
+ check('Original failed publication leaves no partial customer item, notice, response or publisher audit',()=>assert.equal(snapshot(),beforePublication));
+ let mappingOnlyCounterfactual=null;
+ check('Rolled-back mapping-only counterfactual diagnoses missing approval and private-payload exposure',()=>{
+  const intent='e09df200-0000-4000-8000-000000000002';
+  const draft=invoke({actor:f.other,expected:f.other,tenant:f.tenant,contact:f.contact,intent});
+  assert.equal(draft.request.status,'assigned');
+  const definition=sql("SELECT pg_get_functiondef('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure)");
+  const original="'action_type', _row.action_kind,";
+  assert.equal(definition.split(original).length,2,'Exactly one hypothetical mapping change');
+  const variant=definition.replace(original,"'action_type', 'recommendation',");
+  const before=snapshot();
+  // Diagnostic counterfactual only. DDL and customer effects roll back in the
+  // same isolated transaction; this variant is never a product implementation.
+  let out;
+  try{out=sql(`BEGIN;${variant};SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;
+   SELECT public.advance_action(p_action_id=>'${draft.request.work_id}',p_to_status=>'executing',p_tenant_id=>'${f.tenant}');
+   RESET ROLE;SELECT jsonb_build_object('status',a.status,'approval_id',a.approval_id,'action_type',c.action_type,
+    'private_intent',c.payload_json#>>'{client_portal_private_request,intent_id}')
+   FROM public.paige_actions a JOIN public.paige_customer_actions c ON c.id=a.customer_action_id
+   WHERE a.id='${draft.request.work_id}';ROLLBACK;`);}
+  finally{
+   assert.equal(snapshot(),before,'Counterfactual must leave no customer effects, even on a diagnostic error');
+   assert.equal(sql("SELECT pg_get_functiondef('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure)"),definition,'Original native definition restored by rollback');
+  }
+  const rows=out.split('\n').filter(x=>x.startsWith('{')).map(x=>JSON.parse(x));
+  assert.equal(rows.length,2);assert.equal(rows[0].status,'done');assert.equal(rows[1].status,'done');
+  assert.equal(rows[1].approval_id,null);assert.equal(rows[1].action_type,'recommendation');assert.equal(rows[1].private_intent,intent);
+  mappingOnlyCounterfactual={evidenceClass:'isolated transactional counterfactual; not deployed or authenticated Chat',
+   nativeStatus:rows[1].status,approvalAbsent:true,privateIntentWouldBeProjected:true,rolledBack:true};
+ });
+ return {sourceFile,publisherHash,advanceSource:'66dcedb5e40dd43a54373c0e0ded1884',directPositiveControl:'original writer/constraint/notification/audit',
+  observed,observedError,mappingOnlyCounterfactual,fixture:'synthetic Auth/role/relationship setup and outer graph; original PCA table constraint, publisher and Action Bus bodies',
+  productionOperation:false,fixApplied:false,fullCustomerJourney:'UNVERIFIED'};
+}
+
+async function privatePublicationCandidateProof(env) {
+ const {sql,check,assert,fixture,asActor,invoke,read,customerSnapshot}=env;
+ const setup=privatePublicationBaselineProof({...env,setupOnly:true});
+ const canonical=read('supabase/migrations/20261023000000_confirmations_bind_the_approval_to_the_call.sql');
+ const start=canonical.indexOf('CREATE TABLE IF NOT EXISTS public.paige_pending_confirmations (');
+ const stop=canonical.indexOf('\n);',start)+4;
+ assert(start>=0&&stop>start,'Original common confirmation DDL required');
+ sql(canonical.slice(start,stop));
+ for(const [file,column]of [
+  ['20261026000000_a_token_cannot_be_redeemed_by_the_turn_that_minted_it.sql','issued_in_request'],
+  ['20271112130000_experience05_confirmed_weekly_draft.sql','claimed_in_request']
+ ]) {
+  const statement=read('supabase/migrations/'+file).match(new RegExp('ALTER TABLE public\\.paige_pending_confirmations\\s+ADD COLUMN IF NOT EXISTS '+column+' uuid;','i'))?.[0];
+  assert(statement,'Original trusted proposal column required: '+column);sql(statement);
+ }
+ sql('ALTER TABLE public.paige_pending_confirmations ENABLE ROW LEVEL SECURITY;GRANT SELECT ON public.paige_pending_confirmations TO authenticated;');
+ sql('ALTER TABLE public.clients ADD COLUMN portal_access_changed_at timestamptz;');
+ sql(read('supabase/migrations/20261201000400_canonical_proposal_integrity.sql'));
+ // Explicit synthetic current-autonomy port. The outer stored-call admission,
+ // genuine human approval and actual authenticated session remain separate proof.
+ sql(`CREATE TABLE public.proof_publication_autonomy(lane text);INSERT INTO public.proof_publication_autonomy VALUES('confirm');
+  CREATE FUNCTION public.resolve_tool_autonomy(uuid,text) RETURNS text LANGUAGE sql STABLE AS $$
+   SELECT lane FROM public.proof_publication_autonomy WHERE $2='client_portal_request_share'$$;`);
+ const migrationFile='supabase/migrations/20271114230009_e09_approved_private_request_publication.sql';
+ const advanceSig='public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)';
+ const advanceBefore=sql(`SELECT pg_get_functiondef('${advanceSig}'::regprocedure)`).replaceAll('\r\n','\n');
+ const metadata=()=>sql(`SELECT jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,
+  'definer',prosecdef,'args',pg_get_function_arguments(oid),'result',pg_get_function_result(oid)) FROM pg_proc WHERE oid='${advanceSig}'::regprocedure`);
+ const advanceMetadata=metadata();
+ sql(read(migrationFile));
+ const lit=x=>x===null?'NULL':`'${String(x).replaceAll("'","''")}'`;
+ const snapshot=()=>sql(`SELECT jsonb_build_object('work',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.paige_actions x),
+  'work_audit',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.audit_logs x),
+  'customer',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.paige_customer_actions x),
+  'notices',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.notifications x),
+  'publisher_audit',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.paige_audit_log x),
+  'common_proposals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.paige_pending_confirmations x),
+  'other_approvals',(SELECT jsonb_agg(to_jsonb(x)) FROM public.paige_pending_approvals x))`);
+ let serial=0;
+ const prepare=()=>{
+  const f=fixture();
+  sql(`INSERT INTO public.profiles(user_id,active_tenant_id)VALUES('${f.other}','${f.tenant}');
+   INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner)VALUES('${f.tenant}','${f.other}','owner','active',true);
+   INSERT INTO public.user_roles(user_id,role)VALUES('${f.other}','admin');
+   UPDATE public.clients SET linked_user_id='${f.actor}',portal_access_state='open',paige_shared_context_consent=true WHERE id='${f.contact}';`);
+  const intent=`e09df300-0000-4000-8000-${String(++serial).padStart(12,'0')}`;
+  const request=invoke({actor:f.other,expected:f.other,tenant:f.tenant,contact:f.contact,intent}).request;
+  const approved={expected_tenant_id:f.tenant,contact_id:f.contact,work_id:request.work_id,version:request.version,title:request.title,body:request.body,recipient_user_id:f.actor,access_version:null};
+  sql(`INSERT INTO public.paige_pending_confirmations(id,user_id,tenant_id,tool_name,fingerprint,args,summary,
+   server_issued_at,issued_in_request,consumed_at,claimed_in_request,expires_at)
+   VALUES('${f.invite}','${f.other}','${f.tenant}','client_portal_request_share','0123456789abcdef',${lit(JSON.stringify(approved))}::jsonb,
+    'Share the exact saved request with this customer',now()-interval '1 second','${f.invite}',now(),'${f.foreign}',now()+interval '5 minutes');`);
+  return {...f,request,approved,intent};
+ };
+ const statement=(f,o={})=>{
+  const x={expected:f.other,tenant:f.tenant,confirmation:f.invite,fingerprint:'0123456789abcdef',claim:f.foreign,thread:null,...o};
+  return `SELECT public.share_client_portal_request(${lit(x.expected)},${lit(x.tenant)},${lit(x.confirmation)},${lit(x.fingerprint)},${lit(x.claim)},${lit(x.thread)})`;
+ };
+ const publish=(f,o={})=>asActor(statement(f,o),o.actor===undefined?f.other:o.actor,o.role??'authenticated');
+ const f=prepare();let first;
+ check('Approved native publication creates one original customer record linked to the same Work',()=>{
+  const before=JSON.parse(customerSnapshot());first=publish(f);
+  assert.equal(first.status,'shared');assert.equal(first.work_id,f.request.work_id);assert.equal(first.replayed,false);assert(first.customer_action_id);
+  const after=JSON.parse(customerSnapshot());assert.equal(after.actions,before.actions+1);assert.equal(after.notices,before.notices+1);assert.equal(after.approvals,before.approvals);
+ });
+ // Keep running negatives when the initial desired API is absent on baseline.
+ if(!first)return {source: migrationFile,desiredPositive:'FAIL',outerApproval:'SYNTHETIC_PORT; NOT_PROVEN',productionOperation:false};
+ check('Customer gets only exact approved words and an empty closed public payload',()=>{
+  const row=JSON.parse(sql(`SELECT to_jsonb(x) FROM public.paige_customer_actions x WHERE id='${first.customer_action_id}'`));
+  assert.equal(row.tenant_id,f.tenant);assert.equal(row.contact_id,f.contact);assert.equal(row.initiated_by_admin_id,f.other);
+  assert.equal(row.action_type,'recommendation');assert.equal(row.title,f.approved.title);assert.equal(row.body,f.approved.body);assert.deepEqual(row.payload_json,{});
+  assert(!JSON.stringify(row).includes(f.intent));
+  const work=JSON.parse(sql(`SELECT to_jsonb(x) FROM public.paige_actions x WHERE id='${f.request.work_id}'`));
+  assert.equal(work.status,'done');assert.equal(work.customer_action_id,row.id);assert.equal(work.approval_id,null);
+  assert.equal(sql(`SELECT count(*) FROM public.notifications WHERE user_id='${f.actor}' AND metadata->>'action_id'='${row.id}'`),'1');
+  assert.equal(sql(`SELECT count(*) FROM public.audit_logs WHERE entity_id='${f.request.work_id}' AND action='advance_action' AND user_id='${f.other}'`),'2');
+ });
+ check('Lost acknowledgment reconciles the same claimed proposal and Work without another effect',()=>{
+  const before=snapshot(),again=publish(f);assert.equal(again.replayed,true);assert.equal(again.customer_action_id,first.customer_action_id);assert.equal(snapshot(),before);
+ });
+ check('A historical replay after proposal expiry returns the same record and never reexecutes',()=>{
+  sql(`UPDATE public.paige_pending_confirmations SET expires_at=consumed_at+interval '1 microsecond' WHERE id='${f.invite}'`);
+  const before=snapshot();assert.equal(publish(f).customer_action_id,first.customer_action_id);assert.equal(snapshot(),before);
+ });
+ check('Original private recovery and returning history reconcile shared Work without exposing metadata',()=>{
+  const r=invoke({actor:f.other,expected:f.other,tenant:f.tenant,contact:f.contact,intent:f.intent},true);
+  assert.equal(r.request.content_state,'shared');assert.equal(r.request.title,null);assert.equal(r.request.customer_action_id,first.customer_action_id);
+  const history=asActor(`SELECT public.list_client_portal_request_drafts('${f.other}','${f.tenant}','${f.contact}',NULL,NULL)`,f.other);
+  assert.equal(history.requests[0].request.customer_action_id,first.customer_action_id);assert(!JSON.stringify(history).includes('client_portal_publication'));
+ });
+ check('The original customer reader returns the shared request and excludes another customer',()=>{
+  const customerRead=actor=>asActor(`SELECT public.list_pending_customer_actions('${f.contact}')`,actor);
+  const own=customerRead(f.actor);assert(own.actions.some(a=>a.id===first.customer_action_id));
+  const foreign=customerRead(setup.foreign.actor);assert(!foreign.actions.some(a=>a.id===first.customer_action_id));
+ });
+ check('Customer completion and owner return use the same original action, response, Work and records',()=>{
+  const version=sql(`SELECT updated_at FROM public.paige_customer_actions WHERE id='${first.customer_action_id}'`);
+  const response=asActor(`SELECT public.customer_respond_to_action('${first.customer_action_id}','completed',NULL,${lit(version)}::timestamptz)`,f.actor);
+  assert.equal(response.ok,true);
+  const owner=asActor(`SELECT public.list_pending_customer_actions('${f.other}','${f.tenant}','${f.contact}')`,f.other);
+  const action=owner.actions.find(a=>a.id===first.customer_action_id);assert(action);assert.equal(action.status,'customer_acted');
+  assert.equal(action.responses.length,1);assert.equal(action.responses[0].response_type,'completed');
+  assert.equal(sql(`SELECT result->>'client_response' FROM public.paige_actions WHERE id='${f.request.work_id}'`),'completed');
+  const before=snapshot(),again=publish(f);assert.equal(again.replayed,true);assert.equal(again.customer_action_id,first.customer_action_id);assert.equal(snapshot(),before);
+ });
+ const pending=prepare();
+ for(const [name,options]of [
+  ['wrong expected actor',{expected:pending.actor}],['null expected actor',{expected:null}],
+  ['wrong business',{tenant:pending.foreign}],['missing proposal',{confirmation:null}],
+  ['unknown proposal',{confirmation:pending.actor}],['wrong fingerprint',{fingerprint:'fedcba9876543210'}],
+  ['missing claim',{claim:null}],['wrong claim',{claim:pending.invite}],['foreign conversation',{thread:pending.actor}],
+  ['customer principal',{actor:pending.actor,expected:pending.actor}],['anonymous principal',{actor:null,role:'anon'}],['service principal',{role:'service_role'}]
+ ])check('Publication refuses '+name+' without durable effects',()=>{const before=snapshot();assert.throws(()=>publish(pending,options));assert.equal(snapshot(),before);});
+ const refuseMutation=(name,change)=>check(name,()=>{
+  const before=snapshot();assert.throws(()=>sql(`BEGIN;${change};SELECT set_config('test.actor','${pending.other}',true);SET LOCAL ROLE authenticated;${statement(pending)};ROLLBACK;`));assert.equal(snapshot(),before);
+ });
+ const cp=`public.paige_pending_confirmations WHERE id='${pending.invite}'`;
+ for(const [name,assignment]of [
+  ['unclaimed proposal','consumed_at=NULL'],['untrusted legacy proposal','server_issued_at=NULL'],
+  ['same request that minted the proposal',`issued_in_request='${pending.foreign}'`],
+  ['unbound claim','claimed_in_request=NULL'],['expired proposal',"expires_at=now()-interval '1 second'"],
+  ['foreign actor',`user_id='${pending.actor}'`],['foreign tenant',`tenant_id='${pending.foreign}'`],
+  ['different tool',"tool_name='action_advance'"],['client persona focus',`scoped_client_id='${pending.contact}'`],
+  ['a changed exact title',`args=jsonb_set(args,'{title}','"Other words"')`],
+  ['a changed exact body',`args=jsonb_set(args,'{body}','"Other words"')`],
+  ['another joined identity',`args=jsonb_set(args,'{recipient_user_id}',to_jsonb('${pending.other}'::text))`],
+  ['another access version',`args=jsonb_set(args,'{access_version}','"2000-01-01T00:00:00Z"')`],
+  ['an obsolete version',`args=jsonb_set(args,'{version}','"2000-01-01T00:00:00Z"')`],
+  ['foreign CRM relationship',`args=jsonb_set(args,'{contact_id}',to_jsonb('${setup.foreign.contact}'::text))`],
+  ['foreign original Work',`args=jsonb_set(args,'{work_id}',to_jsonb('${f.request.work_id}'::text))`],
+  ['arbitrary internal payload',`args=args||'{"payload":{"private":true}}'::jsonb`],
+  ['nonobject approved arguments',"args='[]'::jsonb"]
+ ])refuseMutation('Stored-call publication refuses '+name,`UPDATE ${cp.replace(' WHERE',' SET '+assignment+' WHERE')}`);
+ for(const [name,change]of [
+  ['revoked membership',`UPDATE public.tenant_members SET status='inactive' WHERE tenant_id='${pending.tenant}' AND user_id='${pending.other}'`],
+  ['lost original staff standing',`DELETE FROM public.user_roles WHERE user_id='${pending.other}'`],
+  ['ordinary member with a global title',`UPDATE public.tenant_members SET role='member',is_owner=false WHERE tenant_id='${pending.tenant}' AND user_id='${pending.other}';UPDATE public.tenants SET owner_user_id='${pending.actor}' WHERE id='${pending.tenant}'`],
+  ['paused client',`UPDATE public.clients SET portal_access_state='paused' WHERE id='${pending.contact}'`],
+  ['ended client',`UPDATE public.clients SET portal_access_state='ended' WHERE id='${pending.contact}'`],
+  ['customer consent off',`UPDATE public.clients SET paige_shared_context_consent=false WHERE id='${pending.contact}'`],
+  ['missing joined identity',`UPDATE public.clients SET linked_user_id=NULL WHERE id='${pending.contact}'`],
+  ['changed joined identity',`UPDATE public.clients SET linked_user_id='${setup.foreign.actor}' WHERE id='${pending.contact}'`],
+  ['changed access version',`UPDATE public.clients SET portal_access_changed_at=clock_timestamp() WHERE id='${pending.contact}'`],
+  ['inactive client',`UPDATE public.clients SET status='archived' WHERE id='${pending.contact}'`],
+  ['a disabled original kind',"UPDATE public.paige_action_kinds SET enabled=false WHERE slug='client.portal_recommendation'"],
+  ['automation disabled',"UPDATE public.proof_publication_autonomy SET lane='off'"],
+  ['unexpected draft',`UPDATE public.paige_actions SET draft_content='{}' WHERE id='${pending.request.work_id}'`],
+  ['an attached second approval',`UPDATE public.paige_actions SET approval_id='${pending.invite}' WHERE id='${pending.request.work_id}'`],
+  ['changed private intent schema',`UPDATE public.paige_actions SET payload=jsonb_set(payload,'{client_portal_private_request,schema_version}','2') WHERE id='${pending.request.work_id}'`]
+ ])refuseMutation('Execution revalidation refuses '+name,change);
+ for(const status of ['drafted','executing'])check('Ordinary native '+status+' cannot publish the private-request kind',()=>{
+  const before=snapshot();assert.throws(()=>asActor(`SELECT public.advance_action(p_action_id=>'${pending.request.work_id}',p_to_status=>'${status}',p_tenant_id=>'${pending.tenant}')`,pending.other),/PORTAL_REQUEST_APPROVED_PUBLICATION_REQUIRED/);assert.equal(snapshot(),before);
+ });
+ check('A publisher-audit failure rolls back the customer item, notice, Work and original receipt atomically',()=>{
+  sql(`CREATE FUNCTION public.proof_reject_publication() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'controlled publisher audit failure';END$$;
+   CREATE TRIGGER proof_publication_audit BEFORE INSERT ON public.paige_audit_log FOR EACH ROW EXECUTE FUNCTION public.proof_reject_publication()`);
+  try{const before=snapshot();assert.throws(()=>publish(pending),/controlled publisher audit failure/);assert.equal(snapshot(),before);}
+  finally{sql('DROP TRIGGER proof_publication_audit ON public.paige_audit_log;DROP FUNCTION public.proof_reject_publication()');}
+ });
+ check('Browser cannot insert or rewrite canonical proposal evidence',()=>{
+  for(const privilege of ['INSERT','UPDATE','DELETE'])assert.equal(sql(`SELECT has_table_privilege('authenticated','public.paige_pending_confirmations','${privilege}')`),'f');
+ });
+ check('New native executor is caller-JWT-only with the original advance ABI and grants unchanged',()=>{
+  const sig='public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)';
+  assert.equal(sql(`SELECT has_function_privilege('authenticated','${sig}','EXECUTE')`),'t');
+  for(const role of ['anon','service_role'])assert.equal(sql(`SELECT has_function_privilege('${role}','${sig}','EXECUTE')`),'f');
+  assert.equal(metadata(),advanceMetadata);
+ });
+ check('Same forward migration replays without rewriting data or duplicating the original native guard',()=>{
+  const before=snapshot(),definition=sql(`SELECT pg_get_functiondef('${advanceSig}'::regprocedure)`);sql(read(migrationFile));assert.equal(snapshot(),before);assert.equal(sql(`SELECT pg_get_functiondef('${advanceSig}'::regprocedure)`),definition);
+ });
+ const guard="\n\n  -- E09: private customer requests publish only through the original HIGH stored-call gate.\n  IF _row.action_kind = 'client.portal_recommendation' AND _next IN ('drafted','executing') THEN\n    RAISE EXCEPTION 'PORTAL_REQUEST_APPROVED_PUBLICATION_REQUIRED' USING ERRCODE='42501';\n  END IF;";
+ check('Removing only the fixed-kind guard restores the entire original native advance definition',()=>{
+  const definition=sql(`SELECT pg_get_functiondef('${advanceSig}'::regprocedure)`).replaceAll('\r\n','\n');assert.equal(definition.split(guard).length,2);assert.equal(definition.replace(guard,''),advanceBefore);
+ });
+ for(const sig of [advanceSig,'public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)',
+  'public.admin_propose_paige_actions(uuid,jsonb)','public._client_portal_access_authorize(uuid,uuid,boolean)'])check('Forward replay refuses a changed protected dependency: '+sig,()=>{
+  const saved=JSON.parse(sql(`SELECT jsonb_build_object('definition',pg_get_functiondef(oid),'body',prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`));
+  sql(saved.definition.replace(saved.body,()=>saved.body+'\n-- controlled forward implementation\n'));
+  const changed=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);
+  try{assert.throws(()=>sql(read(migrationFile)),/changed/);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),changed);}
+  finally{sql(saved.definition);}
+ });
+ for(const file of ['supabase/tests/exp03_lead_reply_draft.sql','supabase/tests/paige_email_sendgrid_receipts.sql']){
+  const source=read(file),helper=source.match(/CREATE FUNCTION pg_temp\.check_true\([\s\S]*?END \$\$;/)?.[0];
+  const inverse=source.match(/DO \$e09_advance_inverse\$[\s\S]*?END \$e09_advance_inverse\$;/)?.[0];
+  assert(helper&&inverse,'Original Communications assertion and exact native inverse required: '+file);
+  check('Original Communications composition inverse executes on current native Work: '+file,()=>sql(helper+'\n'+inverse));
+  check('Communications composition inverse rejects any additional native source change: '+file,()=>{
+   const saved=JSON.parse(sql(`SELECT jsonb_build_object('definition',pg_get_functiondef(oid),'body',prosrc) FROM pg_proc WHERE oid='${advanceSig}'::regprocedure`));
+   sql(saved.definition.replace(saved.body,()=>saved.body+'\n-- controlled unreviewed forward body\n'));
+   try{assert.throws(()=>sql(helper+'\n'+inverse),/FAIL: E09 exact private-kind guard inverse/);}
+   finally{sql(saved.definition);}
+  });
+ }
+ check('Unrelated original record-only Work execution still uses the original advance branch',()=>{
+  sql(`INSERT INTO public.paige_action_kinds(slug,label,executor,requires_approval,default_autonomy_lane,enabled)
+   VALUES('proof.e09_unrelated','Unrelated native proof','record_only',false,'confirm',true)`);
+  const filed=asActor(`SELECT public.file_action(p_action_kind=>'proof.e09_unrelated',p_title=>'Unrelated work',p_tenant_id=>'${pending.tenant}')`,pending.other);
+  const advanced=asActor(`SELECT public.advance_action(p_action_id=>'${filed.action_id}',p_to_status=>'executing',p_tenant_id=>'${pending.tenant}')`,pending.other);
+  assert.equal(advanced.status,'done');assert.equal(advanced.customer_action_id,null);
+ });
+ // Real concurrent psql connections within the SAME original runner/cluster.
+ // Waits are observed in pg_stat_activity; no sleep-based assertion of ordering.
+ const {spawn,exe,args,transcripts}=env;
+ const launch=(body,name)=>{
+  const child=spawn(exe('psql'),args,{windowsHide:true,stdio:['pipe','pipe','pipe']});let out='',err='';
+  child.stdout.on('data',v=>out+=v);child.stderr.on('data',v=>err+=v);
+  const done=new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',code=>{
+   transcripts.push({command:'psql-e09-publication-'+name,args,exitCode:code,stdout:out,stderr:err});
+   resolve({code,out,err,results:out.split(/\r?\n/).filter(v=>v.startsWith('{')).map(v=>JSON.parse(v))});
+  });});
+  child.stdin.write(`SET application_name='e09_publication_${name}';SET statement_timeout='12s';${body}\n`);return {child,done};
+ };
+ const waitFor=async predicate=>{for(let n=0;n<100;n++){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,40));}throw Error('Publication proof did not observe its required native lock');};
+ const idle=name=>sql(`SELECT count(*) FROM pg_stat_activity WHERE application_name='e09_publication_${name}' AND state='idle in transaction'`)==='1';
+ const blocked=name=>sql(`SELECT count(*) FROM pg_stat_activity WHERE application_name='e09_publication_${name}' AND wait_event_type='Lock'`)==='1';
+ const asRequest=(x,o={})=>`BEGIN;SELECT set_config('test.actor','${x.other}',true);SET LOCAL ROLE authenticated;${statement(x,o)};COMMIT;`;
+ const concurrent=prepare(),countsBefore=JSON.parse(customerSnapshot());
+ const holder=launch(`BEGIN;SELECT 1 FROM public.profiles WHERE user_id='${concurrent.other}' FOR UPDATE;`,'duplicate_holder');let one,two,waits=0;
+ try{
+  await waitFor(()=>idle('duplicate_holder'));
+  one=launch(asRequest(concurrent),'duplicate_one');one.child.stdin.end();
+  two=launch(asRequest(concurrent),'duplicate_two');two.child.stdin.end();
+  await waitFor(()=>blocked('duplicate_one')&&blocked('duplicate_two'));waits+=2;
+ }finally{holder.child.stdin.end('COMMIT;\n');await holder.done;}
+ const duplicates=await Promise.all([one.done,two.done]);
+ check('Concurrent identical approved claims wait and commit one original customer item/notice',()=>{
+  duplicates.forEach(r=>assert.equal(r.code,0,r.err));const [a,b]=duplicates.map(r=>r.results.at(-1));
+  assert.equal(a.customer_action_id,b.customer_action_id);assert.notEqual(a.replayed,b.replayed);
+  const after=JSON.parse(customerSnapshot());assert.equal(after.actions,countsBefore.actions+1);assert.equal(after.notices,countsBefore.notices+1);
+ });
+ for(const [name,mutation]of [
+  ['consent',x=>`UPDATE public.clients SET paige_shared_context_consent=false WHERE id='${x.contact}'`],
+  ['membership',x=>`UPDATE public.tenant_members SET status='inactive' WHERE user_id='${x.other}' AND tenant_id='${x.tenant}'`],
+  ['expiry',x=>`UPDATE public.paige_pending_confirmations SET expires_at=consumed_at+interval '1 microsecond' WHERE id='${x.invite}'`],
+  ['recipient',x=>`UPDATE public.clients SET linked_user_id=NULL WHERE id='${x.contact}'`]
+ ]){
+  const x=prepare();const beforeCustomer=customerSnapshot(),auditBefore=sql('SELECT count(*) FROM public.audit_logs');
+  const lock=launch(`BEGIN;SELECT 1 FROM public.clients WHERE id='${x.contact}' FOR UPDATE;`,'change_holder_'+name);let request;
+  try{
+   await waitFor(()=>idle('change_holder_'+name));request=launch(asRequest(x),'change_'+name);request.child.stdin.end();
+   await waitFor(()=>blocked('change_'+name));waits++;
+   // The lock owner performs contact changes; a second session may revoke
+   // membership/expiry while the first is blocked at the original contact.
+   if(name==='consent'||name==='recipient')lock.child.stdin.write(mutation(x)+';\n');else sql(mutation(x));
+  }finally{lock.child.stdin.end('COMMIT;\n');await lock.done;}
+  const result=await request.done;
+  check('A real contact-lock wait revalidates changed '+name+' before any publication',()=>{
+   assert.notEqual(result.code,0);assert.match(result.err,/PORTAL_REQUEST_(NOT_AUTHORIZED|APPROVAL_UNAVAILABLE)|PORTAL_ACCESS_NOT_AUTHORIZED/);
+   assert.equal(customerSnapshot(),beforeCustomer);assert.equal(sql('SELECT count(*) FROM public.audit_logs'),auditBefore);
+   assert.equal(sql(`SELECT status FROM public.paige_actions WHERE id='${x.request.work_id}'`),'assigned');
+  });
+ }
+ check('Native publication proof actually observed every required concurrency wait',()=>assert.equal(waits,6));
+ const responding=prepare(),shared=publish(responding);
+ const responseVersion=sql(`SELECT updated_at FROM public.paige_customer_actions WHERE id='${shared.customer_action_id}'`);
+ const responder=launch(`BEGIN;SELECT 1 FROM public.paige_customer_actions WHERE id='${shared.customer_action_id}' FOR UPDATE;`,'response_holder');
+ let replay,replayFinished=false,replayWaited=false;
+ try{
+  await waitFor(()=>idle('response_holder'));replay=launch(asRequest(responding),'response_replay');replay.child.stdin.end();
+  replay.done.then(()=>{replayFinished=true;});
+  await waitFor(()=>replayFinished||blocked('response_replay'));replayWaited=!replayFinished;
+  responder.child.stdin.end(`SELECT set_config('test.actor','${responding.actor}',true);SET LOCAL ROLE authenticated;
+   SELECT public.customer_respond_to_action('${shared.customer_action_id}','completed',NULL,${lit(responseVersion)}::timestamptz);COMMIT;\n`);
+ }catch(error){responder.child.stdin.end('ROLLBACK;\n');throw error;}
+ const [responseRace,replayRace]=await Promise.all([responder.done,replay.done]);
+ check('Customer completion and historical owner reconciliation preserve the original lock order without deadlock',()=>{
+  assert.equal(responseRace.code,0,responseRace.err);assert.equal(replayRace.code,0,replayRace.err);
+  assert.equal(replayRace.results.at(-1).customer_action_id,shared.customer_action_id);assert.equal(responseRace.results.at(-1).ok,true);
+  assert.equal(sql(`SELECT count(*) FROM public.paige_customer_responses WHERE action_id='${shared.customer_action_id}'`),'1');
+ });
+ return {migration: migrationFile,advanceBeforeSHA256:createHash('sha256').update(advanceBefore).digest('hex'),
+  originalPublisher:setup.publisherHash,outerApproval:'SYNTHETIC_TRUSTED_ISSUER_AND_AUTONOMY_PORT; NOT_REAL_CHAT_APPROVAL',
+  observedLockWaits:waits,responseReplayWaited:replayWaited,authenticatedCustomer:'NOT_RUN',productionOperation:false,
+  sourceFingerprints:JSON.parse(sql(`SELECT jsonb_object_agg(proname,md5(prosrc)) FROM pg_proc WHERE oid IN('${advanceSig}'::regprocedure,'public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)'::regprocedure)`))};
 }
 
 async function privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked}) {

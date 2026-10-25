@@ -1,0 +1,130 @@
+[
+  {
+    "name": "oct24-1536x770-closed.jpg",
+    "documentWidth": 1536,
+    "panelScrollWidth": 1310,
+    "panelWidth": 1310,
+    "viewportHeight": 770,
+    "viewportWidth": 1536
+  },
+  {
+    "name": "oct24-1536x770-open.jpg",
+    "documentWidth": 1536,
+    "panelScrollWidth": 787,
+    "panelWidth": 787,
+    "viewportHeight": 770,
+    "viewportWidth": 1536
+  },
+  {
+    "name": "oct24-1366x768-closed.jpg",
+    "documentWidth": 1366,
+    "panelScrollWidth": 1140,
+    "panelWidth": 1140,
+    "viewportHeight": 768,
+    "viewportWidth": 1366
+  },
+  {
+    "name": "oct24-1366x768-open.jpg",
+    "documentWidth": 1366,
+    "panelScrollWidth": 675,
+    "panelWidth": 675,
+    "viewportHeight": 768,
+    "viewportWidth": 1366
+  },
+  {
+    "name": "oct24-1024x768-closed.jpg",
+    "documentWidth": 1024,
+    "panelScrollWidth": 942,
+    "panelWidth": 942,
+    "viewportHeight": 768,
+    "viewportWidth": 1024
+  },
+  {
+    "name": "oct24-1024x768-open.jpg",
+    "documentWidth": 1024,
+    "panelScrollWidth": 942,
+    "panelWidth": 942,
+    "viewportHeight": 768,
+    "viewportWidth": 1024
+  },
+  {
+    "name": "oct24-900x1000-closed.jpg",
+    "documentWidth": 900,
+    "panelScrollWidth": 818,
+    "panelWidth": 818,
+    "viewportHeight": 1000,
+    "viewportWidth": 900
+  },
+  {
+    "name": "oct24-900x1000-open.jpg",
+    "documentWidth": 900,
+    "panelScrollWidth": 818,
+    "panelWidth": 818,
+    "viewportHeight": 1000,
+    "viewportWidth": 900
+  },
+  {
+    "name": "oct24-390-source-heading.jpg",
+    "documentWidth": 390,
+    "panelScrollWidth": 308,
+    "panelWidth": 308,
+    "viewportHeight": 844,
+    "viewportWidth": 390
+  },
+  {
+    "name": "oct24-390-account-facts.jpg",
+    "documentWidth": 390,
+    "panelScrollWidth": 308,
+    "panelWidth": 308,
+    "viewportHeight": 844,
+    "viewportWidth": 390
+  },
+  {
+    "name": "oct24-native-200-source-heading.jpg",
+    "documentWidth": 757,
+    "panelScrollWidth": 680,
+    "panelWidth": 680,
+    "viewportHeight": 387,
+    "viewportWidth": 757
+  },
+  {
+    "name": "oct24-native-200-account-facts.jpg",
+    "documentWidth": 757,
+    "panelScrollWidth": 680,
+    "panelWidth": 680,
+    "viewportHeight": 387,
+    "viewportWidth": 757
+  },
+  {
+    "name": "oct24-error-default.jpg",
+    "documentWidth": 1514,
+    "panelScrollWidth": 1298,
+    "panelWidth": 1298,
+    "viewportHeight": 774,
+    "viewportWidth": 1514
+  },
+  {
+    "name": "oct24-error-390.jpg",
+    "documentWidth": 390,
+    "panelScrollWidth": 308,
+    "panelWidth": 308,
+    "viewportHeight": 844,
+    "viewportWidth": 390
+  },
+  {
+    "name": "oct24-member-390.jpg",
+    "documentWidth": 390,
+    "panelScrollWidth": 318,
+    "panelWidth": 318,
+    "viewportHeight": 844,
+    "viewportWidth": 390
+  },
+  {
+    "name": "oct24-unavailable-390.jpg",
+    "documentWidth": 390,
+    "panelScrollWidth": 308,
+    "panelWidth": 308,
+    "viewportHeight": 844,
+    "viewportWidth": 390
+  }
+]

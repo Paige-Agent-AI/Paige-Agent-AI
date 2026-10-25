@@ -55,3 +55,23 @@
 @container(max-width:850px){.finance-overview .finance-value{font-size:21px}}
 @container(max-width:760px){.finance-overview-columns{grid-template-columns:1fr;gap:24px}.finance-coverage-summary dl{display:grid;grid-template-columns:1fr 1fr;gap:24px}}
 @container(max-width:540px){.finance-position-heading{align-items:flex-start;flex-direction:column;gap:6px}.finance-overview .finance-bearing{grid-template-columns:1fr;gap:24px}.finance-coverage-summary{padding:20px}.finance-coverage-summary dl{grid-template-columns:1fr;gap:0}.finance-receipt-composition .finance-comparison>div{grid-template-columns:1fr}.finance-receipt-composition .finance-comparison strong{text-align:left}}
+
+/* Company facts stay together; provenance supports rather than competes. */
+.finance-content[aria-labelledby="finance-tab-banking"]>.finance-source-layout>section{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+.finance-banking-sources>h2{font-size:18px;font-weight:600}
+.finance-banking-sources summary{font-size:14px;font-weight:500}
+.finance-banking-sources summary small{font-size:12px;font-weight:400}
+.finance-banking-sources .exec-finance-account{padding:20px 0 0;margin:24px 0}
+.finance-banking-sources .exec-finance-account h3{font-size:16px;margin-bottom:8px}
+.finance-banking-sources .exec-figures{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px;padding:16px 0}
+.finance-banking-sources .exec-figures>div,.finance-banking-sources .exec-finance-references>div{display:block;min-width:0}
+.finance-banking-sources .exec-figures dd{font-size:20px;line-height:1.4;margin-top:6px}
+.finance-banking-sources .exec-finance-references{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;padding-top:20px;border-top:1px solid var(--line)}
+.finance-banking-sources .exec-finance-references dd{margin-top:6px}
+.finance-content[aria-labelledby="finance-tab-banking"] .finance-boundary{padding:20px 24px;background:var(--surface-2);border-top:0}
+.finance-content[aria-labelledby="finance-tab-banking"] .finance-boundary h2{font-size:16px;font-weight:600}
+.finance-content[aria-labelledby="finance-tab-banking"] .finance-boundary p{font-size:13px}
+.finance-content[aria-labelledby="finance-tab-banking"] .finance-boundary dl{grid-template-columns:1fr;gap:6px;font-size:13px}
+.finance-content[aria-labelledby="finance-tab-banking"] .finance-boundary dd{padding-bottom:14px}
+@container(min-width:980px){.finance-content[aria-labelledby="finance-tab-banking"]>.finance-source-layout>section{grid-template-columns:minmax(0,1.6fr) minmax(240px,1fr);gap:40px}}
+@container(max-width:440px){.finance-banking-sources .exec-figures,.finance-banking-sources .exec-finance-references{grid-template-columns:minmax(0,1fr)}}

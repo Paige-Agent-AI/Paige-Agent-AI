@@ -673,6 +673,9 @@ Deno.test("original agreement-send mounts private request review before legacy p
   const previousServe = Deno.serve, previousEnv = Deno.env.get, previousFetch = globalThis.fetch;
   let handler!: (request: Request) => Promise<Response>;
   let limited = false;
+  let limitUnavailable = false;
+  let legacyProviderConfigured = false;
+  const rateCalls: Array<Record<string, unknown>> = [];
   const unexpected: string[] = [];
   const json = (value: unknown, status = 200) => new Response(JSON.stringify(value),
     { status, headers: { "Content-Type": "application/json" } });
@@ -685,6 +688,7 @@ Deno.test("original agreement-send mounts private request review before legacy p
       SUPABASE_ANON_KEY: "synthetic-anon-key",
       SUPABASE_SERVICE_ROLE_KEY: "synthetic-service-key",
       SENDGRID_MAIL_SEND_API_KEY: "synthetic-sendgrid-key",
+      RESEND_API_KEY: legacyProviderConfigured ? "synthetic-legacy-key" : undefined,
     } as Record<string, string>)[name];
     globalThis.fetch = async (input, init) => {
       const req = new Request(input, init), url = new URL(req.url);
@@ -702,7 +706,13 @@ Deno.test("original agreement-send mounts private request review before legacy p
         assert.equal(req.headers.get("apikey"), native ? "synthetic-service-key" : "synthetic-anon-key");
         assert.equal(req.headers.get("authorization"), native
           ? "Bearer synthetic-service-key" : "Bearer synthetic-owner");
-        if (name === "check_public_rate_limit") return json(!limited);
+        if (name === "check_public_rate_limit") {
+          rateCalls.push(args);
+          assert.equal(args._window_seconds, 3600);
+          if (args._bucket === `agreement-review:${tenant}:${actor}`) assert.equal(args._max, 120);
+          else { assert.equal(args._bucket, `agreement-send:${tenant}`); assert.equal(args._max, 20); }
+          return limitUnavailable ? json({ message: "private limiter fault" }, 500) : json(!limited);
+        }
         if (name === "tenant_sender_identity") return json((await x.emailPorts.admin.rpc(name, args)).data);
         if (name === "_read_agreement_document_preparation") {
           const r = await x.f.service.rpc(name, args);
@@ -767,6 +777,8 @@ Deno.test("original agreement-send mounts private request review before legacy p
     await t.step("eligible owner reads exact sender/messages with no Resend key or send", async () => {
       const response = await invoke();
       assert.equal(response.status, 200);
+      assert.equal(rateCalls.length, 1);
+      assert.equal(rateCalls[0]._bucket, `agreement-review:${tenant}:${actor}`);
       assert.equal(response.headers.get("cache-control"), "no-store, private");
       assert.equal(response.headers.get("vary"), "Authorization");
       const wire = await response.text(), data = JSON.parse(wire);
@@ -784,6 +796,8 @@ Deno.test("original agreement-send mounts private request review before legacy p
       const data = await response.json();
       assert.equal(data.review.kind, "prepared_signature_sender_choices");
       assert.equal(data.review.provider_execution_verified, false);
+      assert.equal(rateCalls.length, 2);
+      assert.equal(rateCalls[1]._bucket, `agreement-review:${tenant}:${actor}`);
       assert.deepEqual(data.review.senders, [{ connector_id: connectorId, from_address: x.state.connector.from_address,
         state: "ready", reason: null }]);
       assert.deepEqual(effects(x.f), before);
@@ -818,6 +832,29 @@ Deno.test("original agreement-send mounts private request review before legacy p
       const reads = x.f.calls.source;
       try { assert.equal((await invoke()).status, 429); assert.equal(x.f.calls.source, reads); }
       finally { limited = false; }
+    });
+    await t.step("unavailable review limiter fails closed without private reads or sends", async () => {
+      limitUnavailable = true;
+      const reads = x.f.calls.source;
+      try {
+        const response = await invoke();
+        assert.equal(response.status, 429);
+        assert.equal(x.f.calls.source, reads);
+        assert(!(await response.text()).includes("private limiter fault"));
+      } finally { limitUnavailable = false; }
+    });
+    await t.step("legacy send keeps its workspace cap before source, rendering, minting or mailing", async () => {
+      legacyProviderConfigured = true; limited = true;
+      const reads = x.f.calls.source, calls = rateCalls.length;
+      try {
+        const response = await invoke({ agreementId: x.input.review.agreement_id }, "");
+        assert.equal(response.status, 429);
+        assert.equal(x.f.calls.source, reads);
+        assert.equal(rateCalls.length, calls + 1);
+        assert.deepEqual(rateCalls.at(-1), { _bucket: `agreement-send:${tenant}`, _max: 20, _window_seconds: 3600 });
+        assert.deepEqual(unexpected, []);
+        assert.deepEqual(effects(x.f), before);
+      } finally { legacyProviderConfigured = false; limited = false; }
     });
     await t.step("cross-door token and duplicate mode never fall through to legacy sending", async () => {
       assert.equal((await invoke(x.input, "?review=prepared-request&token=forbidden")).status, 400);

@@ -26,10 +26,10 @@ const captureUuid = vi.fn((): ReturnType<Crypto['randomUUID']> => RUN);
 const PRIOR = 'b4000000-0000-4000-8000-00000000a002';
 const MANUAL_PRIOR = 'b4000000-0000-4000-8000-00000000a003';
 const ACTION = 'b4000000-0000-4000-8000-00000000c001';
-type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; filters: unknown[][] };
+type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; selected?: string; filters: unknown[][] };
 type Result = { data: unknown; error: { message: string } | null };
 type Query = {
-  select(): Query; insert(payload: Record<string, unknown>): Query; update(payload: Record<string, unknown>): Query;
+  select(columns?: string): Query; insert(payload: Record<string, unknown>): Query; update(payload: Record<string, unknown>): Query;
   eq(...args: unknown[]): Query; neq(...args: unknown[]): Query; not(...args: unknown[]): Query; is(...args: unknown[]): Query;
   in(...args: unknown[]): Query; order(...args: unknown[]): Query; limit(...args: unknown[]): Query;
   maybeSingle(): Promise<Result>; single(): Promise<Result>; then(fulfilled: (result: Result) => unknown): Promise<unknown>;
@@ -102,7 +102,7 @@ function fixture(statuses: string[] = ['fail'], options: {
         throw new Error('Unbound original source operation: ' + table);
       };
       const query: Query = {
-        select() { return query; }, insert(payload: Record<string, unknown>) { call.operation = 'insert'; call.payload = payload; return query; }, update(payload: Record<string, unknown>) { call.operation = 'update'; call.payload = payload; return query; },
+        select(columns?: string) { call.selected = columns; return query; }, insert(payload: Record<string, unknown>) { call.operation = 'insert'; call.payload = payload; return query; }, update(payload: Record<string, unknown>) { call.operation = 'update'; call.payload = payload; return query; },
         eq(...args: unknown[]) { call.filters.push(['eq', ...args]); return query; }, neq(...args: unknown[]) { call.filters.push(['neq', ...args]); return query; }, not(...args: unknown[]) { call.filters.push(['not', ...args]); return query; }, is(...args: unknown[]) { call.filters.push(['is', ...args]); return query; },
         in(...args: unknown[]) { call.filters.push(['in', ...args]); return query; }, order(...args: unknown[]) { call.filters.push(['order', ...args]); return query; }, limit(...args: unknown[]) { call.filters.push(['limit', ...args]); return query; },
         maybeSingle: async () => answer(), single: async () => answer(), then: (fulfilled: (result: Result) => unknown) => Promise.resolve(answer()).then(fulfilled),
@@ -346,12 +346,14 @@ describe('Internal original-Work identity binding, never caller authority', () =
     const result = await h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR });
     expect(result).toMatchObject({ run_id: PRIOR, check_count: 2, actions_filed: 0 });
     expect(h.inserted('paige_systems_check_run')).toHaveLength(1);
+    expect(h.inserted('paige_systems_check_run')[0].payload).toMatchObject({id:PRIOR,work_id:PRIOR});
     expect(h.persisted().run?.id).toBe(PRIOR);
     expect(h.persisted().findings.every(f => f.run_id === PRIOR)).toBe(true);
     const reads = h.calls.filter(c => c.operation === 'read' && ['paige_systems_check_run','paige_systems_check_finding'].includes(c.table));
     expect(reads).toHaveLength(2);
     expect(reads[0].filters).toContainEqual(['eq', 'run_id', PRIOR]);
     expect(reads[1].filters).toContainEqual(['eq', 'id', PRIOR]);
+    expect(reads[1].selected?.split(',')).toContain('work_id');
     expect(captureUuid).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
   });
   it.each([null, 17, {}, '', 'not-a-uuid', RUN + 'x', PRIOR.toUpperCase(), 'b4000000-0000-0000-8000-00000000a002', 'b4000000-0000-4000-0000-00000000a002'])('rejects malformed internal identity before any I/O: %j', async id => {
@@ -374,6 +376,7 @@ describe('Internal original-Work identity binding, never caller authority', () =
     const h = fixture(['pass']);
     expect(await h.execute({ scanFlavor: 'manual', actionFiling: 'none', triggeredBy: { manualCaptureRunId: PRIOR, work_id: PRIOR } })).toMatchObject({ run_id: RUN });
     expect(captureUuid).toHaveBeenCalledTimes(1); expect(h.rpcs).toEqual([]);
+    expect(h.inserted('paige_systems_check_run')[0].payload).not.toHaveProperty('work_id');
   });
   it.each([
     ['run_insert', { runInsertLostAck: true }],
@@ -392,5 +395,10 @@ describe('Internal original-Work identity binding, never caller authority', () =
     expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.dispatched).toEqual([]);
     expect(h.calls.filter(c => c.operation === 'read' && c.table === 'paige_systems_check_run')).toEqual([]);
     expect(h.updated('paige_systems_check_run')).toEqual([]); expect(captureUuid).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+  it.each([null,undefined,ACTION])('refuses missing or mismatched canonical Work correlation in the original readback: %j', async workId => {
+    const h=fixture(['pass'],{runReadPatch:{work_id:workId}});
+    await expect(h.execute({scanFlavor:'manual',actionFiling:'none',manualCaptureRunId:PRIOR})).rejects.toMatchObject({name:'SystemsCheckCaptureUnconfirmed',runId:PRIOR,reason:'run_readback'});
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1);expect(captureUuid).not.toHaveBeenCalled();expect(h.rpcs).toEqual([]);
   });
 });

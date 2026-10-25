@@ -256,7 +256,10 @@ review, exact-head CI, deployment/readback and actual governed outcome are still
 ## October25 — internal original-Work identity bridge, local successor
 
 The existing core can bind a canonical native Work UUID as the ORIGINAL run's
-primary key only through an internal manual/tenant/none option. Every current
+primary key AND its existing work_id foreign key through an internal
+manual/tenant/none option. Actual production metadata confirmed that nullable
+uuid link with ON DELETE RESTRICT; no schema or second correlation store is added.
+Every current
 native caller stays byte-exact and none consumes that option; browser/model bodies
 and triggeredBy audit labels are not forwarded into it. No factory, claim, public
 door, registry, approval, provider, worker or schema is introduced by this bridge.
@@ -266,15 +269,17 @@ refuse before any I/O. Legacy captures still allocate their original UUID and
 legacy remediation still uses its database-assigned identity. The one original
 INSERT and strict acknowledgement remain; its known original UUID survives a
 refused or uncertain acknowledgement without dispatch, another-run inspection or
-automatic replay. Finding/finalization readback keeps the same original identity.
+automatic replay. Finding/finalization readback keeps the same original identity
+and explicitly selects/verifies the canonical Work link when one is bound.
 An identity is not current permission, a dispatch claim or a Rail receipt.
 
-Same final compiled-core harness: untouched releasedbbee core20FAIL/74PASS,
-candidate94PASS (73 incumbent+21 new). Initial three candidate failures exposed
+Same final compiled-core harness: untouched releasedbbee core23FAIL/74PASS,
+prior identity-onlya3 core4FAIL/93PASS, candidate97PASS (73 incumbent+24 new).
+Initial three candidate failures exposed
 the mock's hardcoded INSERT acknowledgement; the fixture now returns the actual
-inserted primary key, as the original table does. Both final causal legs use the
-same corrected fixture and restore candidate bytes exactly. The first new error
-assertion's field-name correction and earlier runs remain private history.
+inserted primary key, as the original table does. All final causal legs use the
+same corrected fixture and restore candidate bytes exactly. Earlier94-case results
+and initial assertion-placement corrections remain historical; no old case was removed.
 
 | Orchestration part | Actual boundary |
 | --- | --- |
@@ -284,7 +289,7 @@ assertion's field-name correction and earlier runs remain private history.
 | Authority/risk | No new grant/approval/risk decision; original native authority and admission still required |
 | Claim/adapter | Original Work dispatch_started_attempt CAS must be used by the future consumer; UUID is not that CAS |
 | Writer | Existing runSystemsCheck single INSERT/readback; legacy remediation untouched |
-| Identity/receipt | Future native Work UUID can bind the original run; no Work or Rail receipt produced here |
+| Identity/receipt | Future native Work UUID binds the run ID AND existing work_id FK; no Work or Rail receipt produced here |
 | Interruption | Original unconfirmed UUID/reason, no automatic resend, restart or absence claim |
 | Verification | Local source/fixture proof only; actual two simultaneous native workers and lost-ack/revocation still owed |
 | Return/result | Original authorized Work/run/receipt/reload/continuation verification required before customer admission |

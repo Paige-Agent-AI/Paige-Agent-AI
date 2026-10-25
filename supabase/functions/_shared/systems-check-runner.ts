@@ -145,6 +145,7 @@ export interface RunSystemsCheckOptions {
   actionFiling?: "all" | "delta" | "none";
   /** Internal manual worker only: the original native Work UUID, supplied AFTER
    *  its current actor/tenant/immutable-payload/lease/exclusive-dispatch checks.
+   *  Binds both the original run ID and its existing work_id foreign key.
    *  Never bind browser/model input or triggeredBy metadata here. This identity
    *  grants no authority, claim, persistence, idempotency or retry permission.
    *  No public caller consumes this option; legacy captures still mint their ID. */
@@ -377,6 +378,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     .from("paige_systems_check_run")
     .insert({
       ...(captureRunId ? { id: captureRunId } : {}),
+      ...(manualCaptureRunId ? { work_id: manualCaptureRunId } : {}),
       tenant_id: tenantId,                 // EXPLICIT (§9); NULL for an operator scan (§53 tenant-less)
       scan_flavor: scanFlavor,
       check_count: rows.length,
@@ -649,13 +651,14 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
 
   if (actionFiling === "none") {
     let runRead = admin.from("paige_systems_check_run")
-      .select("id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by")
+      .select("id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by" + (manualCaptureRunId ? ",work_id" : ""))
       .eq("id", runId);
     runRead = scope === "operator" ? runRead.is("tenant_id", null) : runRead.eq("tenant_id", tenantId);
     const { data, error } = await captureIo(() => runRead.maybeSingle(), "run_readback");
     const row = data as Record<string, unknown> | null;
     const audit = row?.triggered_by as Record<string, unknown> | null;
     if (error || !row || Array.isArray(row) || row.id !== runId || row.tenant_id !== tenantId
+      || (manualCaptureRunId !== undefined && row.work_id !== manualCaptureRunId)
       || row.scan_flavor !== scanFlavor || row.check_count !== summary.check_count
       || row.pass_count !== summary.pass_count || row.fail_count !== summary.fail_count
       || typeof row.completed_at !== "string" || new Date(row.completed_at).getTime() !== new Date(completedAt).getTime()

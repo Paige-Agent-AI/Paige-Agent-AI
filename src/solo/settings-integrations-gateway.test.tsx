@@ -829,7 +829,7 @@ describe("Adding a tool", () => {
     expect(pressed?.textContent).toBe("Private Integration Token");
     const authButtons = Array.from(dialog(host)?.querySelectorAll('.ig-gw-seg-auth button') ?? []);
     expect(authButtons.length).toBe(1);
-    expect(dialog(host)?.textContent).not.toMatch(/None/);
+    expect(authButtons.map(b => b.textContent)).toEqual(["Private Integration Token"]);
     expect(dialog(host)?.textContent).not.toContain("Token + headers");
     expect(dialog(host)?.textContent).toMatch(/Private Integration token/i);
     // Saving without the locationId header is refused in the product's own words.

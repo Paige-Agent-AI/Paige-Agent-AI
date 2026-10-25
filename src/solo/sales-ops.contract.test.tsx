@@ -339,7 +339,7 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
     const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Marketing views"] [role="tab"]')]
       .map((t) => t.textContent?.trim())
       .filter(Boolean);
-    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Analytics"]);
+    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Calendar", "Social", "Email", "Analytics"]);
   });
 
   it("keeps SalesOps' own four load phases distinct from the Campaigns snapshot's", () => {

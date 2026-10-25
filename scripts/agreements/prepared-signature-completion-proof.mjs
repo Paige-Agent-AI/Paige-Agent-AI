@@ -81,7 +81,7 @@ export async function provePreparedSignatureCompletion({sql,read,q,tenant,actor,
  let fieldSignature=null;
  if(process.argv.includes('--prepared-field-signatures')){
   const {provePreparedFieldSignature}=await import('./prepared-field-signature-proof.mjs');
-  fieldSignature=await provePreparedFieldSignature({sql,q,acceptedFixture,publish});
+  fieldSignature=await provePreparedFieldSignature({sql,read,q,acceptedFixture,publish});
  }
  return {checks,concurrentSessions:sessions,observedLockWaits:waits,originalSignature,fieldSignature,proofBodySha256:createHash('sha256').update(provePreparedSignatureCompletion.toString()).digest('hex'),scope:'Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance'};
 }

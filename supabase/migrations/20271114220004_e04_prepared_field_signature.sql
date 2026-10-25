@@ -1,0 +1,343 @@
+-- LOCAL WORK IN PROGRESS: canonical prepared-field/signature extension.
+-- This calculation alone is not signature, consent, approval or actor evidence.
+-- The complete original writer and native fences must consume it atomically.
+BEGIN;
+SET LOCAL lock_timeout='3s';
+
+CREATE OR REPLACE FUNCTION private.e04_prepared_field_input(
+ _source jsonb,_signer uuid,_at timestamptz,_proposed jsonb
+) RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+DECLARE answer jsonb; field jsonb; value jsonb; field_id text; kind text; code integer;
+ seen text[]:='{}'::text[]; normalized jsonb:='[]'::jsonb; own_ids text[]:='{}'::text[];
+ signed_at text; result jsonb; trim_chars text:=''; controls text:=''; text_controls text;
+BEGIN
+ -- Same code-point sets as the incumbent pure TypeScript validator, with
+ -- linear native string operations rather than a quadratic UTF-8 substring loop.
+ FOREACH code IN ARRAY ARRAY[9,10,11,12,13,32,160,5760,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8232,8233,8239,8287,12288,65279] LOOP
+  trim_chars:=trim_chars||pg_catalog.chr(code);
+ END LOOP;
+ FOR code IN 1..31 LOOP controls:=controls||pg_catalog.chr(code); END LOOP;
+ controls:=controls||pg_catalog.chr(127);
+ text_controls:=pg_catalog.replace(pg_catalog.replace(pg_catalog.replace(controls,pg_catalog.chr(9),''),pg_catalog.chr(10),''),pg_catalog.chr(13),'');
+ IF _signer IS NULL OR _at IS NULL OR NOT pg_catalog.isfinite(_at)
+  OR pg_catalog.jsonb_typeof(_source) IS DISTINCT FROM 'object'
+  OR _source->>'kind' IS DISTINCT FROM 'prepared'
+  OR _source->>'signer_id' IS DISTINCT FROM _signer::text
+  OR coalesce(_source->>'preparation_id','') !~ '^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$'
+  OR coalesce(_source->>'preparation_sha256','') !~ '^[a-f0-9]{64}$'
+  OR coalesce(_source#>>'{document,sha256}','') !~ '^[a-f0-9]{64}$'
+  OR pg_catalog.jsonb_typeof(_source->'fields') IS DISTINCT FROM 'array'
+  OR pg_catalog.jsonb_array_length(_source->'fields') NOT BETWEEN 1 AND 500
+  OR pg_catalog.jsonb_typeof(_proposed) IS DISTINCT FROM 'object'
+  OR (_proposed-ARRAY['preparation_id','preparation_sha256','values'])<>'{}'::jsonb
+  OR NOT(_proposed ?& ARRAY['preparation_id','preparation_sha256','values'])
+  OR _proposed->>'preparation_id' IS DISTINCT FROM _source->>'preparation_id'
+  OR _proposed->>'preparation_sha256' IS DISTINCT FROM _source->>'preparation_sha256'
+  OR pg_catalog.jsonb_typeof(_proposed->'values') IS DISTINCT FROM 'array'
+  OR pg_catalog.jsonb_array_length(_proposed->'values')>500
+  OR pg_catalog.octet_length(pg_catalog.convert_to(public._paige_commercial_canonical_json(_proposed->'values'),'UTF8'))>524288 THEN
+  RAISE EXCEPTION 'Prepared field input is not valid' USING ERRCODE='23514'; END IF;
+
+ -- The caller resolves this projection from ORIGINAL native token/preparation
+ -- authority under the original parent/signer locks. This pure calculation
+ -- cannot establish authority from an arbitrary client-supplied projection.
+ FOR field IN SELECT entry.value FROM pg_catalog.jsonb_array_elements(_source->'fields') entry(value) LOOP
+  IF pg_catalog.jsonb_typeof(field) IS DISTINCT FROM 'object'
+   OR coalesce(field->>'id','') !~ '^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$'
+   OR field->>'id'=ANY(own_ids) OR coalesce(field->>'kind','') NOT IN ('signature','initials','signed_date','text','checkbox')
+   OR pg_catalog.jsonb_typeof(field->'required') IS DISTINCT FROM 'boolean' THEN
+   RAISE EXCEPTION 'Prepared field source is not valid' USING ERRCODE='23514'; END IF;
+  own_ids:=pg_catalog.array_append(own_ids,field->>'id');
+ END LOOP;
+ IF NOT EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(_source->'fields') field
+  WHERE field->>'kind'='signature' AND field->'required'='true'::jsonb) THEN
+  RAISE EXCEPTION 'Original required signature field is missing' USING ERRCODE='23514'; END IF;
+ FOR answer IN SELECT entry.value FROM pg_catalog.jsonb_array_elements(_proposed->'values') entry(value) LOOP
+  IF pg_catalog.jsonb_typeof(answer) IS DISTINCT FROM 'object'
+   OR (answer-ARRAY['field_id','value'])<>'{}'::jsonb OR NOT(answer ?& ARRAY['field_id','value'])
+   OR pg_catalog.jsonb_typeof(answer->'field_id') IS DISTINCT FROM 'string'
+   OR answer->>'field_id'=ANY(seen) THEN
+   RAISE EXCEPTION 'Prepared field input is not valid' USING ERRCODE='23514'; END IF;
+  field_id:=answer->>'field_id';
+  SELECT entry.value INTO field FROM pg_catalog.jsonb_array_elements(_source->'fields') entry(value)
+   WHERE entry.value->>'id'=field_id;
+  IF NOT FOUND OR field->>'kind'='signed_date' THEN
+   RAISE EXCEPTION 'Prepared field input is not assigned to this signer' USING ERRCODE='23514'; END IF;
+  kind:=field->>'kind';value:=answer->'value';
+  IF kind='signature' THEN
+   IF value IS DISTINCT FROM 'true'::jsonb THEN
+    RAISE EXCEPTION 'Explicit original signature is required' USING ERRCODE='23514'; END IF;
+  ELSIF kind='checkbox' THEN
+   IF pg_catalog.jsonb_typeof(value) IS DISTINCT FROM 'boolean' THEN
+    RAISE EXCEPTION 'Checkbox field value is required' USING ERRCODE='23514'; END IF;
+  ELSE
+   IF pg_catalog.jsonb_typeof(value) IS DISTINCT FROM 'string'
+    OR ((field->>'required')::boolean AND pg_catalog.btrim(value#>>'{}',trim_chars)='') THEN
+    RAISE EXCEPTION 'Text field value is required' USING ERRCODE='23514'; END IF;
+   IF pg_catalog.translate(value#>>'{}',CASE WHEN kind='text' THEN text_controls ELSE controls END,'') IS DISTINCT FROM value#>>'{}' THEN
+    RAISE EXCEPTION 'Field contains unsupported control characters' USING ERRCODE='23514'; END IF;
+  END IF;
+  seen:=pg_catalog.array_append(seen,field_id);
+ END LOOP;
+ signed_at:=pg_catalog.to_char(_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+ FOR field IN SELECT entry.value FROM pg_catalog.jsonb_array_elements(_source->'fields') entry(value) LOOP
+  field_id:=field->>'id';kind:=field->>'kind';
+  IF kind='signed_date' THEN value:=pg_catalog.to_jsonb(signed_at);
+  ELSE
+   SELECT entry.value->'value' INTO value FROM pg_catalog.jsonb_array_elements(_proposed->'values') entry(value)
+    WHERE entry.value->>'field_id'=field_id;
+   IF NOT FOUND THEN
+    IF (field->>'required')::boolean THEN
+     RAISE EXCEPTION 'A required assigned field is missing' USING ERRCODE='23514'; END IF;
+    CONTINUE;
+   END IF;
+  END IF;
+  normalized:=normalized||pg_catalog.jsonb_build_array(pg_catalog.jsonb_build_object('field_id',field_id,'kind',kind,'value',value));
+ END LOOP;
+ result:=pg_catalog.jsonb_build_object('schema_version',1,'preparation_id',_source->'preparation_id',
+  'preparation_sha256',_source->'preparation_sha256','document_sha256',_source#>'{document,sha256}',
+  'signer_id',_signer,'signed_at',signed_at,'values',normalized);
+ RETURN result||pg_catalog.jsonb_build_object('field_input_sha256',pg_catalog.encode(pg_catalog.sha256(
+  pg_catalog.convert_to(public._paige_commercial_canonical_json(result),'UTF8')),'hex'));
+END $$;
+REVOKE ALL ON FUNCTION private.e04_prepared_field_input(jsonb,uuid,timestamptz,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION private.e04_prepared_field_input(jsonb,uuid,timestamptz,jsonb) TO service_role;
+
+-- Read the SAME original signed row, consent/signature pair and field event.
+-- A BEFORE trigger may pass its exact proposed NEW row; all immutable source
+-- and original event identities still come from their canonical tables.
+CREATE OR REPLACE FUNCTION private.e04_prepared_signed_fields(_candidate public.paige_agreement_signers)
+RETURNS boolean LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+DECLARE a public.paige_agreements%ROWTYPE; p public.paige_agreement_document_preparations%ROWTYPE;
+ f public.paige_agreement_events%ROWTYPE; se public.paige_agreement_events%ROWTYPE; ce public.paige_agreement_events%ROWTYPE;
+ source jsonb; answers jsonb; expected jsonb; input jsonb; n integer;
+BEGIN
+ IF _candidate.id IS NULL OR _candidate.status IS DISTINCT FROM 'signed' OR _candidate.signed_at IS NULL
+  OR _candidate.esign_consent_at IS DISTINCT FROM _candidate.signed_at
+  OR pg_catalog.length(pg_catalog.btrim(coalesce(_candidate.typed_name,''))) NOT BETWEEN 2 AND 200
+  OR coalesce(_candidate.esign_consent_sha256,'') !~ '^[a-f0-9]{64}$'
+  OR _candidate.esign_consent_slug IS NULL OR _candidate.esign_consent_version IS NULL
+  OR _candidate.esign_consent_version<1 THEN RETURN false; END IF;
+ SELECT * INTO a FROM public.paige_agreements WHERE id=_candidate.agreement_id AND tenant_id=_candidate.tenant_id;
+ IF NOT FOUND THEN RETURN false; END IF;
+ SELECT * INTO p FROM public.paige_agreement_document_preparations
+  WHERE agreement_id=a.id AND tenant_id=a.tenant_id AND is_current;
+ IF NOT FOUND OR p.client_id IS DISTINCT FROM a.contact_id OR p.source_version IS DISTINCT FROM a.version
+  OR p.content_storage_key IS DISTINCT FROM a.content_storage_key OR p.document_sha256 IS DISTINCT FROM a.content_sha256
+  OR p.preparation_sha256 IS DISTINCT FROM pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(p.manifest_canonical,'UTF8')),'hex')
+  OR p.manifest_canonical IS DISTINCT FROM public._paige_commercial_canonical_json(p.manifest_canonical::jsonb)
+  OR p.manifest_canonical::jsonb#>>'{source,tenant_id}' IS DISTINCT FROM a.tenant_id::text
+  OR p.manifest_canonical::jsonb#>>'{source,agreement_id}' IS DISTINCT FROM a.id::text
+  OR p.manifest_canonical::jsonb#>>'{source,client_id}' IS DISTINCT FROM a.contact_id::text
+  OR (p.manifest_canonical::jsonb#>>'{source,version}')::integer IS DISTINCT FROM p.source_version
+  OR (p.manifest_canonical::jsonb#>>'{source,updated_at}')::timestamptz IS DISTINCT FROM p.source_updated_at
+  OR p.manifest_canonical::jsonb#>>'{document,sha256}' IS DISTINCT FROM p.document_sha256
+  OR (p.manifest_canonical::jsonb#>>'{document,byte_length}')::integer IS DISTINCT FROM p.document_byte_length
+  OR p.manifest_canonical::jsonb->'signers' IS DISTINCT FROM public._agreement_preparation_parties(a.tenant_id,a.id)
+  OR p.created_at>_candidate.signed_at THEN RETURN false; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.paige_agreement_events e WHERE e.id=p.event_id
+  AND e.tenant_id=a.tenant_id AND e.agreement_id=a.id AND e.event_type='edited'
+  AND e.actor_kind='owner' AND e.actor_user_id=p.actor_user_id
+  AND e.detail->>'action'='document_preparation_recorded'
+  AND e.detail->>'preparation_id'=p.id::text AND e.detail->>'preparation_sha256'=p.preparation_sha256
+  AND e.detail->>'document_sha256'=p.document_sha256 AND e.detail->>'source_version'=p.source_version::text) THEN RETURN false; END IF;
+ SELECT count(*) INTO n FROM public.paige_agreement_events
+  WHERE agreement_id=a.id AND tenant_id=a.tenant_id AND signer_id=_candidate.id AND event_type='field_values_recorded';
+ IF n<>1 THEN RETURN false; END IF;
+ SELECT * INTO f FROM public.paige_agreement_events
+  WHERE agreement_id=a.id AND tenant_id=a.tenant_id AND signer_id=_candidate.id AND event_type='field_values_recorded';
+ IF pg_catalog.jsonb_typeof(f.detail) IS DISTINCT FROM 'object'
+  OR (f.detail-ARRAY['field_input','consented_event_id','signed_event_id'])<>'{}'::jsonb
+  OR NOT(f.detail ?& ARRAY['field_input','consented_event_id','signed_event_id']) THEN RETURN false; END IF;
+ SELECT * INTO ce FROM public.paige_agreement_events WHERE id=(f.detail->>'consented_event_id')::uuid
+  AND agreement_id=a.id AND tenant_id=a.tenant_id AND signer_id=_candidate.id;
+ IF NOT FOUND THEN RETURN false; END IF;
+ SELECT * INTO se FROM public.paige_agreement_events WHERE id=(f.detail->>'signed_event_id')::uuid
+  AND agreement_id=a.id AND tenant_id=a.tenant_id AND signer_id=_candidate.id;
+ IF NOT FOUND OR ce.event_type IS DISTINCT FROM 'consented' OR se.event_type IS DISTINCT FROM 'signed'
+  OR ce.actor_kind IS DISTINCT FROM 'signer' OR se.actor_kind IS DISTINCT FROM 'signer' OR f.actor_kind IS DISTINCT FROM 'signer'
+  OR ce.actor_email IS DISTINCT FROM _candidate.email OR se.actor_email IS DISTINCT FROM _candidate.email OR f.actor_email IS DISTINCT FROM _candidate.email
+  OR ce.id=se.id OR se.seq<=ce.seq OR f.seq<=se.seq
+  OR ce.created_at IS DISTINCT FROM _candidate.esign_consent_at OR se.created_at IS DISTINCT FROM _candidate.signed_at
+  OR f.created_at IS DISTINCT FROM _candidate.signed_at
+  OR ce.ip IS DISTINCT FROM _candidate.signing_ip OR se.ip IS DISTINCT FROM _candidate.signing_ip OR f.ip IS DISTINCT FROM _candidate.signing_ip
+  OR ce.user_agent IS DISTINCT FROM _candidate.signing_user_agent OR se.user_agent IS DISTINCT FROM _candidate.signing_user_agent OR f.user_agent IS DISTINCT FROM _candidate.signing_user_agent
+  OR ce.detail->>'signature_record_id' IS DISTINCT FROM _candidate.id::text OR se.detail->>'signature_record_id' IS DISTINCT FROM _candidate.id::text
+  OR ce.detail->>'document_version' IS DISTINCT FROM a.version::text OR se.detail->>'document_version' IS DISTINCT FROM a.version::text
+  OR ce.detail->>'document_sha256' IS DISTINCT FROM p.document_sha256 OR se.detail->>'document_sha256' IS DISTINCT FROM p.document_sha256 THEN RETURN false; END IF;
+ input:=f.detail->'field_input';
+ IF pg_catalog.jsonb_typeof(input) IS DISTINCT FROM 'object'
+  OR pg_catalog.jsonb_typeof(input->'values') IS DISTINCT FROM 'array' THEN RETURN false; END IF;
+ SELECT coalesce(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('field_id',entry.value->'field_id','value',entry.value->'value') ORDER BY entry.ordinal),'[]'::jsonb)
+ INTO answers FROM pg_catalog.jsonb_array_elements(input->'values') WITH ORDINALITY entry(value,ordinal)
+ WHERE entry.value->>'kind'<>'signed_date';
+ source:=pg_catalog.jsonb_build_object('kind','prepared','signer_id',_candidate.id,'preparation_id',p.id,
+  'preparation_sha256',p.preparation_sha256,'document',p.manifest_canonical::jsonb->'document',
+  'fields',(SELECT pg_catalog.jsonb_agg(entry.value ORDER BY entry.ordinal)
+   FROM pg_catalog.jsonb_array_elements(p.manifest_canonical::jsonb->'fields') WITH ORDINALITY entry(value,ordinal)
+   WHERE entry.value->>'signer_id'=_candidate.id::text));
+ expected:=private.e04_prepared_field_input(source,_candidate.id,_candidate.signed_at,
+  pg_catalog.jsonb_build_object('preparation_id',p.id,'preparation_sha256',p.preparation_sha256,'values',answers));
+ RETURN expected IS NOT DISTINCT FROM input;
+EXCEPTION WHEN data_exception OR check_violation THEN RETURN false;
+END $$;
+REVOKE ALL ON FUNCTION private.e04_prepared_signed_fields(public.paige_agreement_signers) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION private.e04_prepared_signed_fields(public.paige_agreement_signers) TO service_role;
+
+CREATE OR REPLACE FUNCTION public._record_agreement_signature(
+  _token_hash text,_agreement_version integer,_content_sha256 text,_content_storage_key text,
+  _typed_name text,_signature_image_png text,_consent_read boolean,_consent_esign boolean,
+  _consent_slug text,_consent_version integer,_consent_sha256 text,_ip inet,_user_agent text,_prepared_fields jsonb
+) RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+DECLARE
+  initial public.paige_agreement_signers%ROWTYPE;
+  signer public.paige_agreement_signers%ROWTYPE;
+  agreement public.paige_agreements%ROWTYPE;
+  act_at timestamptz;
+  consent_event uuid;
+  signature_event uuid;
+  remaining bigint;
+  event_detail jsonb;
+  preparation public.paige_agreement_document_preparations%ROWTYPE;
+  prepared_source jsonb; field_input jsonb; field_event uuid;
+BEGIN
+  IF _token_hash IS NULL OR _token_hash !~ '^[a-f0-9]{64}$' THEN
+    RAISE EXCEPTION 'Signing credential is not usable' USING ERRCODE='42501';
+  END IF;
+  -- Resolve original identity from the credential. Never accept tenant/signer IDs.
+  SELECT * INTO initial FROM public.paige_agreement_signers WHERE token_hash=_token_hash;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Signing credential is not usable' USING ERRCODE='42501'; END IF;
+
+  -- Short native transaction only: no file/provider work while holding these locks.
+  -- Same parent serializes signature progress with original void/expiry updates.
+  SELECT * INTO agreement FROM public.paige_agreements
+    WHERE id=initial.agreement_id AND tenant_id=initial.tenant_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Signing credential is not usable' USING ERRCODE='42501'; END IF;
+  SELECT * INTO signer FROM public.paige_agreement_signers
+    WHERE id=initial.id AND agreement_id=agreement.id AND tenant_id=agreement.tenant_id FOR UPDATE;
+  act_at:=pg_catalog.clock_timestamp();
+  IF NOT FOUND OR signer.token_hash IS DISTINCT FROM _token_hash
+    OR signer.token_revoked_at IS NOT NULL OR signer.token_expires_at IS NULL
+    OR signer.token_expires_at<=act_at THEN
+    RAISE EXCEPTION 'Signing credential is not usable' USING ERRCODE='42501';
+  END IF;
+  IF agreement.status NOT IN ('sent','viewed','partially_signed','completed')
+    OR (agreement.status<>'completed' AND agreement.expires_at IS NOT NULL AND agreement.expires_at<=act_at) THEN
+    RAISE EXCEPTION 'Agreement cannot be signed in its current state' USING ERRCODE='23514';
+  END IF;
+
+  SELECT * INTO preparation FROM public.paige_agreement_document_preparations
+    WHERE agreement_id=agreement.id AND tenant_id=agreement.tenant_id AND is_current FOR SHARE;
+  IF NOT FOUND AND EXISTS(SELECT 1 FROM public.paige_agreement_document_preparations WHERE agreement_id=agreement.id) THEN
+    RAISE EXCEPTION 'Original prepared source is unavailable' USING ERRCODE='23514'; END IF;
+  IF preparation.id IS NULL AND _prepared_fields IS NOT NULL THEN
+    RAISE EXCEPTION 'Assigned fields do not belong to a legacy agreement' USING ERRCODE='23514'; END IF;
+  IF signer.status='signed' THEN
+    IF preparation.id IS NOT NULL THEN
+      IF NOT private.e04_prepared_signed_fields(signer) THEN
+        RAISE EXCEPTION 'Original prepared signature evidence is unavailable' USING ERRCODE='23514'; END IF;
+      IF _prepared_fields IS NOT NULL THEN
+        prepared_source:=pg_catalog.jsonb_build_object('kind','prepared','signer_id',signer.id,'preparation_id',preparation.id,
+          'preparation_sha256',preparation.preparation_sha256,'document',preparation.manifest_canonical::jsonb->'document',
+          'fields',(SELECT pg_catalog.jsonb_agg(entry.value ORDER BY entry.ordinal)
+            FROM pg_catalog.jsonb_array_elements(preparation.manifest_canonical::jsonb->'fields') WITH ORDINALITY entry(value,ordinal)
+            WHERE entry.value->>'signer_id'=signer.id::text));
+        field_input:=private.e04_prepared_field_input(prepared_source,signer.id,signer.signed_at,_prepared_fields);
+        IF NOT EXISTS(SELECT 1 FROM public.paige_agreement_events e WHERE e.agreement_id=agreement.id AND e.tenant_id=agreement.tenant_id
+          AND e.signer_id=signer.id AND e.event_type='field_values_recorded' AND e.detail->'field_input'=field_input) THEN
+          RAISE EXCEPTION 'Recorded field answers cannot be replaced' USING ERRCODE='23514'; END IF;
+      END IF;
+    END IF;
+    -- Read actual retained evidence. Never retroactively invent missing old events.
+    SELECT id INTO consent_event FROM public.paige_agreement_events
+      WHERE agreement_id=agreement.id AND tenant_id=agreement.tenant_id AND signer_id=signer.id
+        AND event_type='consented' AND actor_kind='signer' ORDER BY seq LIMIT 1;
+    SELECT id INTO signature_event FROM public.paige_agreement_events
+      WHERE agreement_id=agreement.id AND tenant_id=agreement.tenant_id AND signer_id=signer.id
+        AND event_type='signed' AND actor_kind='signer' ORDER BY seq LIMIT 1;
+  ELSE
+    IF signer.status NOT IN ('pending','viewed') OR agreement.status='completed' THEN
+      RAISE EXCEPTION 'Agreement cannot be signed in its current state' USING ERRCODE='23514';
+    END IF;
+    IF agreement.version IS DISTINCT FROM _agreement_version
+      OR agreement.content_sha256 IS DISTINCT FROM _content_sha256
+      OR agreement.content_storage_key IS DISTINCT FROM _content_storage_key
+      OR _content_sha256 IS NULL OR _content_sha256 !~ '^[a-f0-9]{64}$' THEN
+      RAISE EXCEPTION 'Retained presentation changed before signing' USING ERRCODE='23514';
+    END IF;
+    IF _consent_read IS DISTINCT FROM true OR _consent_esign IS DISTINCT FROM true
+      OR pg_catalog.length(pg_catalog.btrim(coalesce(_typed_name,''))) NOT BETWEEN 2 AND 200
+      OR pg_catalog.length(coalesce(_typed_name,''))>200
+      OR pg_catalog.length(pg_catalog.btrim(coalesce(_consent_slug,''))) NOT BETWEEN 1 AND 100
+      OR _consent_version IS NULL OR _consent_version<1
+      OR _consent_sha256 IS NULL OR _consent_sha256 !~ '^[a-f0-9]{64}$'
+      OR pg_catalog.length(coalesce(_signature_image_png,''))>400000 THEN
+      RAISE EXCEPTION 'Explicit signature and consent evidence is required' USING ERRCODE='23514';
+    END IF;
+    IF EXISTS(SELECT 1 FROM public.paige_agreement_signers earlier
+      WHERE earlier.agreement_id=agreement.id AND earlier.tenant_id=agreement.tenant_id
+        AND earlier.signing_order<signer.signing_order AND earlier.status<>'signed') THEN
+      RAISE EXCEPTION 'Earlier signatures are still outstanding' USING ERRCODE='23514';
+    END IF;
+    IF preparation.id IS NOT NULL THEN
+      prepared_source:=public._read_agreement_signing_fields(_token_hash);
+      field_input:=private.e04_prepared_field_input(prepared_source,signer.id,act_at,_prepared_fields);
+    END IF;
+    -- Original pair and assigned-field receipt precede the mark in this SAME
+    -- short transaction. The prepared BEFORE fence can verify actual records;
+    -- no forgeable execution marker or deferred missing-field bypass is used.
+    event_detail:=pg_catalog.jsonb_build_object('signature_record_id',signer.id,
+      'document_version',agreement.version,'document_sha256',agreement.content_sha256);
+    INSERT INTO public.paige_agreement_events
+      (agreement_id,tenant_id,signer_id,event_type,actor_kind,actor_email,ip,user_agent,detail,created_at)
+      VALUES(agreement.id,agreement.tenant_id,signer.id,'consented','signer',signer.email,_ip,
+        pg_catalog.left(coalesce(_user_agent,''),500),event_detail,act_at) RETURNING id INTO consent_event;
+    INSERT INTO public.paige_agreement_events
+      (agreement_id,tenant_id,signer_id,event_type,actor_kind,actor_email,ip,user_agent,detail,created_at)
+      VALUES(agreement.id,agreement.tenant_id,signer.id,'signed','signer',signer.email,_ip,
+        pg_catalog.left(coalesce(_user_agent,''),500),event_detail,act_at) RETURNING id INTO signature_event;
+    IF preparation.id IS NOT NULL THEN
+      INSERT INTO public.paige_agreement_events
+        (agreement_id,tenant_id,signer_id,event_type,actor_kind,actor_email,ip,user_agent,detail,created_at)
+        VALUES(agreement.id,agreement.tenant_id,signer.id,'field_values_recorded','signer',signer.email,_ip,
+          pg_catalog.left(coalesce(_user_agent,''),500),pg_catalog.jsonb_build_object('field_input',field_input,
+            'consented_event_id',consent_event,'signed_event_id',signature_event),act_at) RETURNING id INTO field_event;
+    END IF;
+    -- Unchanged native original token/effect/order/tier/consent triggers still enforce this UPDATE.
+    UPDATE public.paige_agreement_signers SET status='signed',signed_at=act_at,typed_name=_typed_name,
+      signature_image_png=_signature_image_png,esign_consent_at=act_at,esign_consent_slug=_consent_slug,
+      esign_consent_version=_consent_version,esign_consent_sha256=_consent_sha256,
+      signing_ip=_ip,signing_user_agent=pg_catalog.left(coalesce(_user_agent,''),500)
+      WHERE id=signer.id AND agreement_id=agreement.id AND tenant_id=agreement.tenant_id;
+  END IF;
+  SELECT count(*) INTO remaining FROM public.paige_agreement_signers
+    WHERE agreement_id=agreement.id AND tenant_id=agreement.tenant_id AND status<>'signed';
+  -- Completion still requires the ORIGINAL real PDF seal and verified Storage readback.
+  IF signer.status<>'signed' AND remaining>0 AND agreement.status IN ('sent','viewed') THEN
+    UPDATE public.paige_agreements SET status='partially_signed'
+      WHERE id=agreement.id AND tenant_id=agreement.tenant_id;
+    agreement.status:='partially_signed';
+  END IF;
+  RETURN pg_catalog.jsonb_build_object('state','recorded','replayed',signer.status='signed',
+    'signing_id',agreement.id,'signer_id',signer.id,'signed_at',CASE WHEN signer.status='signed' THEN signer.signed_at ELSE act_at END,
+    'consented_event_id',consent_event,'signed_event_id',signature_event,
+    'audit_complete',consent_event IS NOT NULL AND signature_event IS NOT NULL,
+    'outstanding_count',remaining,'agreement_status',agreement.status);
+END $$;
+REVOKE ALL ON FUNCTION public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text,jsonb) TO service_role;
+
+CREATE OR REPLACE FUNCTION public._record_agreement_signature(
+  _token_hash text,_agreement_version integer,_content_sha256 text,_content_storage_key text,
+  _typed_name text,_signature_image_png text,_consent_read boolean,_consent_esign boolean,
+  _consent_slug text,_consent_version integer,_consent_sha256 text,_ip inet,_user_agent text
+) RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+BEGIN
+ RETURN public._record_agreement_signature(_token_hash,_agreement_version,_content_sha256,_content_storage_key,
+  _typed_name,_signature_image_png,_consent_read,_consent_esign,_consent_slug,_consent_version,_consent_sha256,_ip,_user_agent,NULL::jsonb);
+END $$;
+REVOKE ALL ON FUNCTION public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text) TO service_role;
+
+-- Remaining original prepared-fence, seal and forward-guard composition is PROOF OWED.
+COMMIT;

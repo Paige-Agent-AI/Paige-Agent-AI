@@ -118,6 +118,24 @@ export function isApprovableDraft(m: MessageRow & GovernedSendFields): boolean {
   return m.status === "draft" && m.direction === "outbound" && governedSendView(m) === null;
 }
 
+/**
+ * Durable native-email receipt wording for a SETTLED governed send, from the same bounded
+ * canonical projection the state machine reads. `null` when the row is not a settled governed
+ * email — the caller falls through to the ordinary pill. An inbox read marker is not recipient
+ * delivery evidence: only `provider_accepted` + `status='delivered'` (the provider's own event
+ * said the recipient's server took it) says Delivered; `sent`/`read` on an accepted operation
+ * say the email service took the message and nothing more, so the pill says Accepted — never
+ * "Sent", which reads as delivered to a non-technical owner.
+ */
+export function governedEmailReceiptLabel(
+  m: Pick<MessageRow, "direction" | "status"> & GovernedSendFields,
+): "Accepted" | "Delivered" | null {
+  if (m.direction !== "outbound" || !m.comms_email_operation || m.comms_email_state !== "provider_accepted") return null;
+  if (m.status === "delivered") return "Delivered";
+  if (m.status === "sent" || m.status === "read") return "Accepted";
+  return null;
+}
+
 /** Copy, kept with the rule so the label and the state cannot drift apart. */
 export const GOVERNED_SEND_COPY = {
   sending: { pill: "Sending…", line: null },

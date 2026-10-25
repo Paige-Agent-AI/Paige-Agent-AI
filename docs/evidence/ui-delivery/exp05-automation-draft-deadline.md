@@ -1,8 +1,8 @@
 # EXP05 - bounded draft save and original uncertain outcome
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: exact approved process -> original caller/workspace preflight -> original draft/ordered acts -> exact native readback or original unknown result; ANT161290bfac2
-PAIGE_UI_DESIGN: PASS: preserve existing Chat progress, saved/refused/unknown result and reentry; no control, layout, navigation, input or approval change
+FLOW_BY_FLOW: PASS: src/__tests__/automation-chat-draft-recovery.test.ts; exact approved process, original caller/workspace preflight, draft/ordered acts, native readback and bounded reconciliation as mapped below; ANT161290bfac2
+PAIGE_UI_DESIGN: PASS: docs/evidence/ui-delivery/exp05-automation-draft-deadline.md; existing Chat progress, saved/refused/unconfirmed presentation and reentry; original control, layout, navigation, input and approval preserved
 MATERIAL_FLOW_CHANGE: NO: bound the existing save and existing failure states; no new customer goal, control, confirmation, exit, retry authority or side effect
 FLOW_PROTOTYPE: NOT_REQUIRED: no new interaction architecture; existing saved/refused/unknown states and original approval remain
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: equally eligible existing/future SOLO actors save a reviewed definition without authorizing or executing it
@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: UNVERIFIED: original controls unchanged; no new changed-path ren
 ZOOM_REFLOW: UNVERIFIED: original layout unchanged; no new changed-path rendered response
 REDUCED_MOTION: NOT_APPLICABLE: no motion change
 STATE_COVERAGE: PASS: preflight refusal with zero writes, unknown sent creation/steps/readback/compensation, verified draft with unavailable optional readiness, cancellation, unchanged original known refusals and CAS guards
-TRUTHFUL_STATE_LABELS: PASS: saved draft is not enabled/executed; sent uncertain writes stay unknown; a late cleanup acknowledgment is not proof of non-application; optional readiness failure does not erase verified persistence
+TRUTHFUL_STATE_LABELS: PASS: src/__tests__/automation-chat-draft-recovery.test.ts; saved versus unconfirmed outcomes, exact compensation acknowledgment and optional-readiness refusal preserve original persistence; no enabled/executed claim
 SOLO_UI: YES: existing conversational result only, shared tenant-neutral code
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no layout change; no changed-path rendered response
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no layout change; no changed-path rendered response
@@ -31,7 +31,7 @@ OWNER_INTENT: PAIGE and ZION prepare genuine repeatable work without hanging the
 MUST_NOT_HAPPEN: no new approval/grant/state/recurrence/provider authority, automatic retry, unknown-write cleanup, late follow-on mutation or false execution claim
 MUST_PRESERVE: original stored arguments, caller JWT/RLS, ordinary risk/one approval, draft/confirm fields, ordered acts, exact readback, revision-safe known-refusal compensation and original Rail/unknown recording
 ACCEPTANCE_CRITERIA: an eligible current actor can approve the same exact draft; the save terminates within the existing elapsed limit, shows actual persistence or uncertainty and reconciles the original record before another decision
-INTERNAL_BUILD_IDENTITY: reviewed-source=2d1db756bb55e0c26c75db5e43016206e53d4ddce619010f9430e71476bf0df4; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(bounded-automation-draft); evidence=docs/evidence/ui-delivery/exp05-automation-draft-deadline.md
+INTERNAL_BUILD_IDENTITY: reviewed-source=14f7a595bbc3f50fec7fab96e226f863f1f92347; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(bounded-automation-draft); evidence=docs/evidence/ui-delivery/exp05-automation-draft-deadline.md
 RELEASE_CHANNEL: development: original handler and protected disposable native proof only
 RELEASE_CLASSIFICATION: internal-only: no customer version, announcement, activation or complete Experience claim
 CUSTOMER_RELEASE_IDENTITY: none: existing save reliability, no separately approved customer release identity

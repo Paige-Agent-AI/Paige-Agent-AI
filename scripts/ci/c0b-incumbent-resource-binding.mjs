@@ -935,7 +935,15 @@ const SOURCES = {
   // branch, authority, verifier, adapter selection or recipient logic changed; paige-ai-chat untouched,
   // so all dispatch fingerprints are unchanged. Old canonical digest 29306707… reproduced from main
   // before renewing (scratchpad /tmp/renew-digest.mjs, printer {removeComments:true}). Renew this digest only.
-  "supabase/functions/send-message/index.ts": "08ec0fe3db7aacb9ccc608aa71b10a607792dab06a3f0e74f24b620d738c8b87",
+  // EXP04 C45 AUTHOR-REVIEW / LOWER ASSURANCE, ANT161/2b682833: original
+  // 08ec0fe3 baseline and all29 bindings/125 source pins reproduced before renewal.
+  // Whole original sender inverse and four native Comms inverses;133 actual
+  // consumer cases, direct concrete-SDK strict0, native41+47/all predecessors
+  // and original61 generic/PPA controls PASS. Only approved agreement purpose
+  // adds native HIGH/Work/document/signer revalidation plus RAM-only links.
+  // One claim, policy, adapter, finalizer and history retained. No Chat admission,
+  // registry/dispatch/other dependency/extractor/validator or activation change.
+  "supabase/functions/send-message/index.ts": "1f8b4d987fa936eb696c1e787d8772cde34aaf1bd3ef4112f34a0fa6a538e1ae",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are

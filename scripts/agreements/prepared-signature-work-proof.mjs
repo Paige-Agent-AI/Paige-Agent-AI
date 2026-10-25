@@ -105,5 +105,12 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
   const {provePreparedSignatureCredentials}=await import('./prepared-signature-credentials-proof.mjs');
   credentials=await provePreparedSignatureCredentials({sql,read,quote,tenant,actor,setup,register,startSession,observe,fresh,context,client,makeCommercial,issue,claim});
  }
- return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),requestStatus,credentials,scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};
+ let messageOrigin=null;
+ if(process.argv.includes('--prepared-message-origin')){
+  assert.equal(credentials?.checks,122,'All original credential controls must run before the message-origin phase');
+  console.log(JSON.stringify({checkpoint:'Original credential controls before message origin',checks:credentials.checks}));
+  const {provePreparedMessageOrigin}=await import('./prepared-message-origin-proof.mjs');
+  messageOrigin=await provePreparedMessageOrigin({sql,read,quote,tenant,actor,setup,register,startSession,observe,makeCommercial,issue,claim,context});
+ }
+ return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),requestStatus,credentials,messageOrigin,scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};
 }

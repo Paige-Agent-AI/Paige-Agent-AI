@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
+import { isPreparedAgreementMessage } from "../agreements/prepared-signature-message.ts";
 
 const OP = "22222222-2222-4222-8222-222222222222";
 const MSG = "33333333-3333-4333-8333-333333333333";
@@ -142,7 +143,7 @@ function setup(options: Options = {}) {
     });
   };
 
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,isPreparedAgreementMessage,
     PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
       env: { get: (k: string) => (k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "RESEND_API_KEY" ? RESEND_KEY : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured") },

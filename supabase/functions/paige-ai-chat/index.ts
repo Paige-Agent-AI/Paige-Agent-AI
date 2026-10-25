@@ -9152,8 +9152,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // Read ONLY the original native proposal. Errors and malformed matching rows
     // never authorize generic consumption, a replacement proposal or another write.
     const selectedWeeklyDraft = async (token: string) => {
-      const scope = weeklyDraftScope(), nonce = await selectedConfirmationNonce(token, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME);
-      if (!scope || !nonce || !weeklyDraftCurrent() || !(await revalidateProposalScope())) return { status: "unavailable" } as const;
+      const scope = weeklyDraftScope();
+      if (!scope || !weeklyDraftCurrent() || !(await revalidateProposalScope())) return { status: "unavailable" } as const;
+      const nonce = await selectedConfirmationNonce(token, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME);
+      if (!nonce) return { status: "other" } as const;
       const { data, error } = await supabase.from("paige_pending_confirmations")
         .select("id,fingerprint,args,issued_in_request,tool_name")
         .eq("user_id", scope.actorId).eq("tenant_id", scope.tenantId).eq("thread_id", scope.threadId)

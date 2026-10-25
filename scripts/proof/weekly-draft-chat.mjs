@@ -77,7 +77,7 @@ queryProto._rows = function () {
   let rows = state.proposals.filter(row => matches(row, this._filters));
   if (this._op === 'update') {
     if (state.claimLose) rows = [];
-    else for (const row of rows) row.consumed_at = new Date().toISOString();
+    else for (const row of rows) { (state.appliedProposalUpdates??=[]).push(row.id); row.consumed_at = new Date().toISOString(); }
   }
   if (this._limit != null) rows = rows.slice(0, this._limit);
   const selection = this._filters.filter(f => f[0] === 'select').at(-1)?.[1];
@@ -103,7 +103,7 @@ const nativeState = phase => ({ok: true, actor_id: actor, tenant_id: tenant, thr
   receipt_id: ['saved','changed'].includes(phase)?receiptId:null, recurrence_authorized: false});
 async function driveWeekly(options={}) {
   modelBodies=[]; modelRound=0; forbiddenNetwork=[];
-  const args=exactArgs(), tool='weekly_commitment_draft';
+  const args=options.otherTool?{title:'Neutral unrelated reminder',remind_at:'2030-01-02T10:00:00Z',target:'user',channel:'in_app'}:exactArgs(), tool=options.otherTool??'weekly_commitment_draft';
   const fingerprint=await confirmFingerprint(tool,{intent:await confirmFingerprint(tool,args),tenant,thread,client:null});
   const token=fingerprint+':'+issued, settled=[], controller=new AbortController();
   active={timeline:[], tenant, held:null, stopped:false, runtimeRefused:false, hold:null, unbound:false,
@@ -323,6 +323,17 @@ await check('Missing schedule detail requests clarification without saving or pr
   assert.equal(r.confirmations.length,0);
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
   noFallback(r);
+});
+await check('An unrelated original reminder decline retains its own durable cancellation',async()=>{
+  const r=await driveWeekly({declined:true,otherTool:'plan_set_reminder'});
+  assert.equal(r.status,200);
+  assert.notEqual(r.state.proposals[0].consumed_at,null,'The weekly selector must distinguish another canonical proposal from an unavailable native weekly read');
+  assert.deepEqual(r.state.appliedProposalUpdates,[proposal],'Only the exact unrelated original row is consumed once; expiry housekeeping may match zero rows');
+  assert.ok(r.genericCAS().some(q=>q.filters.some(f=>f[0]==='neq'&&f[1]==='tool_name'&&f[2]==='weekly_commitment_draft')),'Generic cancellation still excludes native weekly proposals');
+  assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0);
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
+  assert.equal(r.calls('decline_weekly_commitment_chat_draft').length,0);
+  assert.equal(r.rec.functions.length,0);
 });
 const output={evidenceClass:'Development runtime proof: actual current handler, existing offline recording ports',
   sourceSHA256:createHash('sha256').update(readFileSync(path.join(root,'supabase/functions/paige-ai-chat/index.ts'))).digest('hex'),

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: connect the already approved native weekly draft-save 
 FLOW_PROTOTYPE: NOT_REQUIRED: original weekly draft/approval/native panel flow and existing Chat card remain the approved interaction; this change connects their canonical consumer.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible ordinary standalone SOLO owner prepares and explicitly saves one private weekly definition without authorizing or enabling future work.
 VISUAL_DIRECTION: PASS: original compact Mineral/Obsidian Chat and Operations tokens/components remain unchanged; no banner, tab, motion or layout addition.
-AUTOMATED_EVIDENCE: PASS: actual unchanged handler with existing recording ports passes 25 runtime cases; original reminder proof remains 33/33; domain eligibility/schema suite passes 17/17. Counts overlap neither native authority nor authenticated evidence and are not a completion score.
+AUTOMATED_EVIDENCE: PASS: actual unchanged handler with existing recording ports passes 26 runtime cases; original reminder proof remains 33/33; domain eligibility/schema suite passes 17/17. Counts overlap neither native authority nor authenticated evidence and are not a completion score.
 STATIC_EVIDENCE: UNVERIFIED: source/Kit construction inspected; Kit lint passes unchanged 288/296 debt baseline. Exact immutable review, composed-main fingerprint/dependency proof and hosted checks remain required before release.
 RENDERED_EVIDENCE: UNVERIFIED: no frontend source changed; fresh actual card and response inspection on this candidate is still owed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: offline runtime covers approval, decline, unknown/lost acknowledgements, scope/Stop/abort, duplicate preparation, replay and refusals; connected browser/native behavior remains owed.
@@ -65,3 +65,19 @@ Chat binding metadata describes a callable source connection, not customer
 availability proof. Maturity stays PARTIAL; generic Operations recipes CAP073–083
 remain Listed / Unverified. No provider readiness, whole Experience acceptance,
 tenant-specific implementation, permission grant or recurring activation is added.
+
+## Sequential review correction before release
+
+Fresh review of b6fb340c found that an absent weekly selection was classified as
+unavailable even when the declined token belonged to an original reminder. The
+new actual-handler regression failed before correction (25 pass/1 fail). The
+selector now distinguishes another canonical tool from a failed weekly read;
+generic cancellation still explicitly excludes weekly proposals. All26 pass.
+The fixture records actual matched row mutations: one unrelated original row is
+consumed once, while existing expiry housekeeping may match zero rows. Initial
+query-count assumption failure is retained and is not production evidence.
+
+Unscoped Edge ESLint remains inherited407 errors in both current main and the
+candidate; two moved conditional lines carry the same original as-any spans.
+This is not a clean Edge ESLint result. Required changed-src lint, scoped new
+files, protected guards and hosted exact-head checks remain separate gates.

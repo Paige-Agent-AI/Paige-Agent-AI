@@ -797,7 +797,7 @@ October19 continuation: real handler→installed public SDK→receiver review at
 ### October 24 continuation - original weekly draft Chat consumer, development
 
 The original 17-case RED preparation is preserved above as a historical checkpoint.
-Current original-handler recording-port proof passes 25 cases; unchanged reminder
+Current original-handler recording-port proof passes 26 cases; unchanged reminder
 proof passes 33/33 and original offer/schema eligibility passes 17/17. These are
 local tests with explicit fake authentication/provider/native boundaries, never
 customer execution or recurring acceptance. No denominator closure is inferred.

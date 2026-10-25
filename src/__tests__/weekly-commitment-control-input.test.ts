@@ -13,6 +13,24 @@ const control = { state: "paused", future_control_at: "2026-10-23T15:20:10.12345
 const facts = { requestId, process: { id: processId, revision: 3, control } };
 
 describe("unregistered weekly review inputs and canonical RPC bindings", () => {
+  it("prepares paused resume through the original exact compare-and-authorize writer", () => {
+    const result = bindWeeklyControlForReview("resume", intent("resume"), facts);
+    expect(result).toEqual({ rpc: "control_weekly_commitment_check", args: {
+      _automation_id: processId, _action: "authorize", _expected_revision: 3, _expected_control: control,
+    } });
+    expect(Object.isFrozen(result?.args._expected_control)).toBe(true);
+    expect(result?.args._expected_control).not.toBe(control);
+  });
+  it("cannot prepare resume without an exact paused control snapshot", () => {
+    for (const snapshot of [undefined, null, {}, { state: "requested", future_control_at: null },
+      { state: "scheduled", future_control_at: null }, { state: "cancelled", future_control_at: null },
+      { state: "paused" }, { state: "paused", future_control_at: false },
+      { state: "paused", future_control_at: "not-an-instant" }]) {
+      expect(bindWeeklyControlForReview("resume", intent("resume"), {
+        process: { id: processId, revision: 3, control: snapshot },
+      } as never)).toBeNull();
+    }
+  });
   it("binds authorization to the original exact control snapshot without normalizing microseconds", () => {
     const result = bindWeeklyControlForReview("authorize", intent("authorize"), facts);
     expect(result).toEqual({ rpc: "control_weekly_commitment_check", args: {
@@ -76,8 +94,8 @@ describe("unregistered weekly review inputs and canonical RPC bindings", () => {
   });
   it.each(["authorize", "pause", "resume", "cancel"] as const)("%s fixes the RPC action rather than consuming an action enum", operation => {
     expect(bindWeeklyControlForReview(operation, intent(operation), facts)).toEqual({ rpc: "control_weekly_commitment_check", args: {
-      _automation_id: processId, _action: operation, _expected_revision: 3,
-      ...(operation === "authorize" ? { _expected_control: control } : {}),
+      _automation_id: processId, _action: operation === "resume" ? "authorize" : operation, _expected_revision: 3,
+      ...(operation === "authorize" || operation === "resume" ? { _expected_control: control } : {}),
     } });
     expect(bindWeeklyControlForReview(operation, { ...intent(operation), action: "authorize" }, facts)).toBeNull();
   });

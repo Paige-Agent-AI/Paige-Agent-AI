@@ -89,5 +89,54 @@
       "exactCurrentCi": "PROOF_OWED",
       "customerAcceptance": "UNVERIFIED"
     }
+  },
+  "productionReleaseOct25": {
+    "recordedAt": "2026-10-25T16:04:14.237Z",
+    "reviewedHead": "72ccaa695a54695452eb8b2c2e6b562426cde9c4",
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE 6399148139",
+    "exactChecks": "13 SUCCESS +2web SUCCESS +0threads",
+    "merge": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2",
+    "tree": "a76d777ecb1fb3251a68ec19b3f4140629fa52e5",
+    "native": {
+      "version": "20271114170004",
+      "count": 1,
+      "statements": 6,
+      "run": 40204399496,
+      "job": 121202262104,
+      "evidence": {
+        "function": {
+          "anon": false,
+          "args": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text",
+          "auth": false,
+          "body": "7cdf08ab70430d5b95706695608e6fea",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": true,
+          "defaults": 0
+        },
+        "migration": {
+          "count": 1,
+          "statements": 6
+        }
+      }
+    },
+    "edge": "Normal Edge40204399616/job121202133288 SUCCESS, actual agreement-send v22/JWTtrue and34 source files exact. Certificate12602513494 SHA256c38a551309aab22c2453a0c968cf27290a323d247abe6315eddadc3145af1ae0.",
+    "web": {
+      "id": "dpl_PAPAXLkKNdpvVBWZ9xs3rw7UL1DK",
+      "environment": "production",
+      "state": "READY",
+      "sha": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2",
+      "canonicalPublicStatus": 200,
+      "build": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2-mvny84nd",
+      "customerUpdate": null,
+      "observedAt": "2026-10-25T14:58:03Z"
+    },
+    "scope": "Returning request history is only prepared or outcome_unknown with receipt_id:null. Work success is never provider acceptance, delivery, signature or payment proof.",
+    "authenticatedAcceptance": "UNVERIFIED",
+    "founderAcceptance": "OPEN for complete O1–O12",
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2830#issuecomment-6399204232"
   }
 }

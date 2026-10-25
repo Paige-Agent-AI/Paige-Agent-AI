@@ -433,5 +433,33 @@
     "previousExactCI": "13 SUCCESS +2web SUCCESS +0threads; historical, not inherited",
     "scope": "Only never-applied forward order and references; no applied migration/history/source/permission/provider/activation change",
     "currentCI": "REQUIRED_ON_NEW_HEAD"
+  },
+  "e09ActualReceivingOct25": {
+    "at": "2026-10-25T18:25:23.582Z",
+    "priorHead": "00174d4b745c5421ad6dbae59bdd273b68f51a6e",
+    "incoming": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+    "priorChecks": "13 exact SUCCESS +2 web SUCCESS +0 threads",
+    "fixtureComposition": {
+      "before": "00174d4b745c5421ad6dbae59bdd273b68f51a6e",
+      "incoming": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+      "results": [
+        {
+          "file": "supabase/tests/exp03_lead_reply_draft.sql",
+          "wholeIncomingInverse": true,
+          "originalE09AdvanceGuard": true,
+          "currentFunctionLiteralUpdates": 3
+        },
+        {
+          "file": "supabase/tests/paige_email_sendgrid_receipts.sql",
+          "wholeIncomingInverse": true,
+          "originalE09AdvanceGuard": true,
+          "currentFunctionLiteralUpdates": 3
+        }
+      ]
+    },
+    "nativeFrontier": "20271114230009",
+    "ownCandidate": "20271114230204",
+    "activation": "NONE",
+    "currentChecks": "REQUIRED"
   }
 }

@@ -52,14 +52,17 @@ export function bindWeeklyControlForReview(operation: WeeklyControlOperation, ra
     return Object.freeze({ rpc: "configure_weekly_commitment_check", args: Object.freeze({ _automation_id: process.id,
       _weekday: intent.weekday, _local_time: intent.local_time, _timezone: intent.timezone, _expected_revision: process.revision }) });
   }
-  if (operation === "authorize") {
+  if (operation === "authorize" || operation === "resume") {
     const control = process.control;
-    if (!control || (control.state !== "requested" && control.state !== "paused")) return null;
+    if (!control || (control.state !== "requested" && control.state !== "paused")
+      || operation === "resume" && control.state !== "paused") return null;
     const cutoff = control.future_control_at;
     if (cutoff !== null && (typeof cutoff !== "string" || cutoff.length > 40 ||
       !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(cutoff) || !Number.isFinite(Date.parse(cutoff)))) return null;
-    // The existing four-argument native writer compares this original state and
-    // cutoff after locking the process. Never normalize or reconstruct its time.
+    // Resuming a paused definition requires the same fresh exact authorization as
+    // the human owner surface. The existing four-argument writer compares the
+    // original state/cutoff under lock; never use the legacy unfenced resume call.
+    // Never normalize or reconstruct the saved time.
     const expected: WeeklyControlSnapshot = Object.freeze({ state: control.state, future_control_at: cutoff });
     return Object.freeze({ rpc: "control_weekly_commitment_check", args: Object.freeze({
       _automation_id: process.id, _action: "authorize", _expected_revision: process.revision, _expected_control: expected,

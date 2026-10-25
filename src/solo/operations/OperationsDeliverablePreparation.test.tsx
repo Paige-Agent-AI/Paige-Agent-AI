@@ -86,3 +86,53 @@ it("pure shell queries retain preparation without changing feedback; explicit le
  expect(host.textContent).toContain("Clear this preparation explicitly before closing.");
  expect(writeStaffDelivery).not.toHaveBeenCalled();
 });
+
+const ownerMember = { ...member, user_id: scope.actorId, full_name: "Delivery owner", is_owner: true };
+async function ownerPreparation() {
+  await act(async () => root.render(<OperationsDeliverablePreparation scope={scope} members={[ownerMember]} onSubmitted={onSubmitted} />));
+  await choose("Studio session", id(6)); await choose("Saved work", id(7)); await choose("Version", id(9)); await choose("Reviewer", scope.actorId);
+}
+it("the active owner explicitly selects their own review and cancellation writes nothing", async () => {
+  await ownerPreparation();
+  expect(selectFor("Reviewer")?.textContent).toContain("You (owner)");
+  await click("Review submission");
+  expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("separate owner review");
+  expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("before releasing it to the client");
+  await click("Keep preparing");
+  expect(writeStaffDelivery).not.toHaveBeenCalled();
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+});
+it("owner submission binds its method and records no approval, release or client decision", async () => {
+  await ownerPreparation();
+  vi.mocked(writeStaffDelivery).mockResolvedValue({ kind: "verified", readback: { kind: "ready", submissions: [], releases: [] } });
+  await click("Review submission"); await click("Confirm submission");
+  expect(writeStaffDelivery).toHaveBeenCalledWith(expect.anything(), scope, { kind: "submit", artifactVersionId: id(9), reviewerId: scope.actorId, expectedRevisionNo: 0, reviewMode: "owner_self_review" }, expect.any(Function));
+  expect(writeStaffDelivery).toHaveBeenCalledOnce();
+  expect(host.textContent).toContain("Internal review and client acceptance remain separate decisions");
+  expect(host.textContent).not.toContain("Client acceptance recorded");
+});
+it("owner role loss closes an unconfirmed submission dialog before a writer can run", async () => {
+  await ownerPreparation(); await click("Review submission");
+  expect(document.querySelector('[role="alertdialog"]')).not.toBeNull();
+  await act(async () => root.render(<OperationsDeliverablePreparation scope={scope} members={[{ ...ownerMember, is_owner: false, permission: "admin" }]} onSubmitted={onSubmitted} />));
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+  expect(button("Review submission").disabled).toBe(true);
+  expect(writeStaffDelivery).not.toHaveBeenCalled();
+});
+it("returning to an uncertain owner submission inspects its exact method without another write", async () => {
+  await ownerPreparation(); vi.mocked(writeStaffDelivery).mockResolvedValue({ kind: "unverified" });
+  await click("Review submission"); await click("Confirm submission");
+  await act(async () => root.unmount()); root = createRoot(host);
+  await act(async () => root.render(<OperationsDeliverablePreparation scope={scope} members={[ownerMember]} onSubmitted={onSubmitted} />));
+  expect(host.textContent).toContain("unconfirmed");
+  expect(button("Review submission").disabled).toBe(true);
+  vi.mocked(readStaffDelivery).mockResolvedValue({ kind: "ready", submissions: [{
+    id: id(30), tenant_id: scope.tenantId, work_item_id: scope.workItemId, plan_id: scope.planId, client_id: scope.clientId,
+    artifact_version_id: id(9), artifact_digest: "a".repeat(64), revision_no: 1, submitted_by: scope.actorId,
+    submitted_at: scope.workUpdatedAt, reviewer_user_id: scope.actorId, review_mode: "owner_self_review", state: "in_review",
+    review_note: null, reviewed_by: null, reviewed_at: null, updated_at: scope.workUpdatedAt,
+  }], releases: [] });
+  await click("Inspect recorded submission");
+  expect(host.textContent).toContain("original version and reviewer are confirmed");
+  expect(writeStaffDelivery).toHaveBeenCalledOnce();
+});

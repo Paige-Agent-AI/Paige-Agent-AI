@@ -92,8 +92,8 @@ function SurfaceHead({ truthKey, title, description, action }) {
 // owner-authored brief (campaign_briefs / useSoloCampaignBriefs), and each growth-loop stage is a
 // real source fact or an honest absence. `data` supplies the loop-source reads (pipeline, artifacts);
 // keyed by tenant so a workspace switch clears the desk's filters, drawers and pending edits.
-function Campaigns({ data, onRoute, autoOpenBrief, onAutoOpenConsumed }) {
-  return <CampaignOverview key={data.tenantId || "none"} data={data} onRoute={onRoute} autoOpenBrief={autoOpenBrief} onAutoOpenConsumed={onAutoOpenConsumed}/>;
+function Campaigns({ data, onRoute, autoOpenBrief, autoOpenDossierId, onAutoOpenConsumed }) {
+  return <CampaignOverview key={data.tenantId || "none"} data={data} onRoute={onRoute} autoOpenBrief={autoOpenBrief} autoOpenDossierId={autoOpenDossierId} onAutoOpenConsumed={onAutoOpenConsumed}/>;
 }
 
 // Offers: what this business sells. The definition belongs to the Sales lane (owner ruling
@@ -551,7 +551,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   const toSales=React.useCallback(()=>{ const account=params.account; if(!account)return; navigate(salesInShell?subtabPath("solo",account,"sales","pipeline"):subtabPath("solo",account,"growth","pipeline")); },[navigate,params.account,salesInShell]);
   let body=<OverviewTab data={data} moved={moved} scrollToCapture={Boolean(moved&&moved!=="missing-form")||captureFilter!=="all"} onDismissMoved={()=>setOverviewQuery({moved:null})} onCanManage={setOverviewCanManage} captureFilter={captureFilter} onCaptureFilter={(filter)=>setOverviewQuery({capture:filter==="all"?null:filter})} onGo={goTo} onCreateBrief={createBrief} onOpenSales={toSales} onOpenForm={openForm} onOpenAsset={openAsset} onOpenContact={openContact} onOpenDeal={openDeal}/>;
   if(redirectTo) body=null;
-  else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} onAutoOpenConsumed={clearBriefRequest}/>;
+  else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} autoOpenDossierId={/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query.get("brief") ?? "") ? query.get("brief") : null} onAutoOpenConsumed={clearBriefRequest}/>;
   else if(tab==="analytics") body=<AnalyticsTab data={data} range={rangeOf(query.get("range")).key} onRange={(range)=>setOverviewQuery({range:range===DEFAULT_RANGE?null:range})} onOpenForm={openForm} onOpenSales={()=>{ if(!params.account) return; if(salesInShell) navigate(subtabPath("solo",params.account,"sales","performance")); else toSales(); }} studioLauncher={<StudioLauncher/>} onOpenEmail={()=>setTab("email")} onOpenRouting={params.account?()=>navigate(`${subtabPath("solo",params.account,"growth","overview")}?capture=form`):null}/>;
   else if(tab==="catalog") body=<Catalog setDetail={setDetail}/>;
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;

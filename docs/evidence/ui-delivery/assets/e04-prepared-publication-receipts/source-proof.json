@@ -149,5 +149,16 @@
     "originalProofReferenceInverse": true,
     "production": "Old/new version0; no history reset/include-all/applied-file edit",
     "review": "New exact-head review/CI/Preview required"
+  },
+  "productionSchemaReceivingOct25": {
+    "at": "2026-10-25T18:26:40.925Z",
+    "priorHead": "d17a0da8b7c1f2446235376fa24f6d602cc266ab",
+    "failedJob": 121245737627,
+    "failure": "Production ACL reconciliation correctly refused missing newly released E09 share_client_portal_request",
+    "incomingC45": "9f84ef28552d23265d34e6f33f6d18cb58787fae",
+    "actualMain": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+    "originalPublicationUnchanged": true,
+    "currentChecks": "REQUIRED",
+    "activation": "NONE"
   }
 }

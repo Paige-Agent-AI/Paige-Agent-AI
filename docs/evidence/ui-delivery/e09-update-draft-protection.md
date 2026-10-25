@@ -2,13 +2,13 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: restore the existing compose → Send → response → return job; current-main 229fb5e96 preserves all other releases.
-PAIGE_UI_DESIGN: PASS: project overlay, five routed modules, existing approved Portal surface briefs and Impeccable harden/craft floor applied; rendered proof pending below.
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md, its five routed modules, existing approved Portal surface briefs and Impeccable harden/craft floor applied; actual rendered proof below.
 MATERIAL_FLOW_CHANGE: YES: defer the existing update notice throughout registered work, including the input-to-Send blur transition.
 FLOW_PROTOTYPE: PASS: before product implementation, loopback-only .cache/cura-update-guard-preview traversed draft/blur/keyboardSend/pending/error/retry/complete, other-editor/last-clear, upload/cancel and explicitReload. Chosen behavior recorded ANT161/42ccda82. Owner October21 and standing prelaunch direction authorize safe improvements without routine design signoff; no founder acceptance is inferred.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: customer or owner can finish composing and sending without the update notice intercepting their control.
 VISUAL_DIRECTION: PASS: preserve existing shared banner, semantic tokens, type, spacing, reduced-motion behavior and approved Portal; no new shell or notice.
 AUTOMATED_EVIDENCE: PASS: incumbent four new mounted deferral regressions FAILED / three existing guard/focus cases PASSED before implementation; final six guard/update suites19 PASS, unchanged private Chat stream/remount suites86 PASS. Counts are disjoint105 cases/eight suites, not authenticated evidence.
-STATIC_EVIDENCE: PARTIAL: scoped ESLint, diff whitespace and Impeccable detector exit0; existing manifest/reload/Chat/admission/authority paths unchanged. Local full type ratchet FAILED only on four missing-package diagnostics in untouched Sales files (@mdxeditor/editor and pdfjs-dist), not waived or relabeled green. Shared linked dependency folder/baseline remain untouched; clean required hosted check must pass before merge.
+STATIC_EVIDENCE: UNVERIFIED: scoped ESLint, diff whitespace and Impeccable detector exit0; existing manifest/reload/Chat/admission/authority paths unchanged. Local full type ratchet FAILED only on four missing-package diagnostics in untouched Sales files (@mdxeditor/editor and pdfjs-dist), not waived or relabeled green. Shared linked dependency folder/baseline remain untouched; clean required hosted check must pass before merge.
 RENDERED_EVIDENCE: PASS: actual shared banner and hook with synthetic local composer host at1536x770,1366x768,1024x768,900x1000,390x844; five captures and measured geometry in assets/e09-update-draft-protection/rendered-checks.json. Narrow dark and clear/update captures retained. Not an authenticated owner shell or physical iPhone render.
 BEHAVIORAL_EVIDENCE: PASS: actual registry/source draft→blur/keyboardSend→pending→error→retry→complete; second editor keeps notice absent until cleared; simulated upload/cancel and explicitReload work. No network/provider/business effects occurred.
 AUTHENTICATED_RUNTIME: UNVERIFIED: production fix has not shipped. Existing actual customer reproduction confirms notice covers Send; dismissing it allowed the original single request and reply.
@@ -25,12 +25,12 @@ MUST_PRESERVE: Existing registry and all consumers, native unload/explicit edito
 ACCEPTANCE_CRITERIA: Existing registry subscriber hides the notice while any registered work exists, even after blur; Send remains reachable; streaming/recovery stays protected; notice returns after every guard clears; reload remains explicit and independently refused while dirty.
 MOTION_PURPOSE: NONE: no new animation; retain canonical opacity/transform and existing reduced-motion preference.
 PROTECTED_SEAMS: Affected: existing unload registry, explicit update reload, focused input/Send, multiple editors and cleanup. Unaffected: Chat payload/runtime/admission, actor/tenant/relationship resolution, Knowledge, provider/Live/Research activation, consent, files, money, calendar, agreements, Rails and business writers.
-INTERNAL_BUILD_IDENTITY: development base=229fb5e96; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this packet.
+INTERNAL_BUILD_IDENTITY: development base=848e8176b0ad84e83280aaf50ec143a44e69fe21; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-update-draft-protection.md; exact candidate head is anchored by the original PR review.
 RELEASE_CHANNEL: development: bounded shared interaction repair; production release only after review/exact-head required checks.
 RELEASE_CLASSIFICATION: patch: existing canonical update interaction reliability.
 CUSTOMER_RELEASE_IDENTITY: none: routine repair, no approved customer version or announcement.
 RELEASE_NOTE_REQUIRED: no: internal repair receipt only.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED for final source, production and authenticated update behavior; no whole-Experience LIVE claim.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: final source, production and authenticated update behavior; no whole-Experience LIVE claim.
 RELEASE_RECOVERY: position=forward-fix or ordinary reviewed revert of this bounded change; reference=canonical release governance section8.
 
 ## Pre-edit capability routing

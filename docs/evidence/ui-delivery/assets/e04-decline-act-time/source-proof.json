@@ -29,7 +29,23 @@
     "observedWaits": 7,
     "forwardGuardRefusal": 1,
     "baseline": "CAUSAL_RED_RETAINED",
-    "fullSuite": "PROOF_OWED_ORIGINAL_WAIT_FAILURE_RETAINED_CURRENT_RERUN_IN_PROGRESS"
+    "fullSuite": "PASS_ORIGINAL_FLAGS_EFFECTIVE_COMMERCIAL_AND_DECLINE",
+    "priorFullFailure": "RETAINED_ORIGINAL_WAIT_OBSERVATION_BEFORE_NEW_CODE",
+    "originalFullCounters": {
+      "outer": 44,
+      "checked": 75,
+      "editability": 23,
+      "documentPreparations": 372,
+      "commercialNested": 29,
+      "acceptedNested": 267,
+      "effectiveNested": 184,
+      "ownerNested": 27,
+      "signature": 76,
+      "preparedSeal": 51,
+      "recipient": 52,
+      "decline": 49
+    },
+    "ownedCluster": "VERIFIED_EMPTY_AND_STOPPED"
   },
   "notClaimed": [
     "rendered new decline UI",

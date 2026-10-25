@@ -12,6 +12,8 @@ export type WeeklyControlSnapshot = Readonly<{ state: "requested" | "paused"; fu
 export type WeeklyBindingFacts = Readonly<{ requestId?: string; process?: { id: string; revision: number;
   control?: Readonly<{ state: string; future_control_at: string | null }> | null } }>;
 export type WeeklyRpcBinding = Readonly<{ rpc: "draft_weekly_commitment_check" | "configure_weekly_commitment_check" | "control_weekly_commitment_check"; args: Readonly<Record<string, string | number | WeeklyControlSnapshot>> }>;
+type WeeklyDraftRpcBinding = Readonly<{ rpc: "draft_weekly_commitment_check";
+  args: Readonly<Record<string, string | number>> }>;
 
 const scheduleProperties = {
   weekday: { type: "integer", minimum: 1, maximum: 7, description: "ISO weekday, Monday=1." },
@@ -30,6 +32,8 @@ export const WEEKLY_CONTROL_REVIEW_INPUTS = Object.freeze({
   authorize: targetInput(), pause: targetInput(), resume: targetInput(), cancel: targetInput(),
 });
 
+export function bindWeeklyControlForReview(operation: "draft", raw: unknown, facts: WeeklyBindingFacts): WeeklyDraftRpcBinding | null;
+export function bindWeeklyControlForReview(operation: WeeklyControlOperation, raw: unknown, facts: WeeklyBindingFacts): WeeklyRpcBinding | null;
 /** Produces the exact RPC arguments for future trusted issuance, not permission to call it.
  * Facts must come from the authenticated server. No receipt, execution or next run is inferred.
  */

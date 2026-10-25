@@ -47,5 +47,16 @@
   "functional": "Local source preparation proof only; required exact-head review/CI/merge/deployment/readback remain separate.",
   "visual": "N/A no UI/layout/control change; browser/input hold remains.",
   "experiential": "No new action can execute from this source. Ordinary eligible owner approval/native result/original Rail/reload and full ten/E5 cases remain unverified.",
-  "founderAcceptance": "NOT REQUESTED; one complete integrated EXP05 evaluation remains later."
+  "founderAcceptance": "NOT REQUESTED; one complete integrated EXP05 evaluation remains later.",
+  "hostedConvergenceCorrection": {
+    "failedHead": "da81684a6bdeac68ed00bd42ef6e11956f498653",
+    "run": 40175578121,
+    "artifact": 12592365289,
+    "artifactSha256": "9578273f112473ab5092e53b1c285bc4d1b6b63d87b6ce8a70cf0bc2c8c2add3",
+    "observed": "Both required type gates failed because the widened authorize binding also widened the draft claim return type. Hosted unit21812 PASS,0FAIL,3pending; original base Chat9/head10 Deno diagnostics, only new TS2322 in weekly-draft-chat-claim.ts.",
+    "repair": "Literal draft overload preserves the incumbent scalar-only draft argument contract. No cast, claim/result widening, runtime or schema change.",
+    "causalProof": "Original strict ES2020 claim consumer: TS2322 reproduced before correction, zero diagnostics after. Generated input-module JavaScript is byte-identical to the reviewed prior head.",
+    "regressionProof": "140 original binder/review/claim/commit tests PASS, zero failed or skipped. Full native120 and earlier189 composed cases remain separately recorded source proofs; new exact-head CI is required.",
+    "boundary": "Preparation only; no approval, recurrence enablement, execution, source-certification or customer acceptance is inferred."
+  }
 }

@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in request, native claim, persisted
 KEYBOARD_FOCUS: PASS: native synthetic card Tab from Approve reaches Not now without activation; original React interaction verified. Full authenticated shell keyboard path remains owed.
 ZOOM_REFLOW: UNVERIFIED: no responsive layout changed; no new viewport certification claimed.
 REDUCED_MOTION: UNVERIFIED: no motion source changed; no new rendered certification claimed.
-STATE_COVERAGE: PASS: local handler exercises original prepare, approval-required, saved, changed, declined, unknown, scope-retired and refused paths without fallback mutation. Production counterparts remain unverified.
+STATE_COVERAGE: UNVERIFIED: scripts/proof/weekly-draft-chat.mjs covers26 recording-port cases across original prepare, approval, save, decline, uncertainty and refusal. This candidate is not deployed; no ordinary owner workflow has been exercised against its source.
 TRUTHFUL_STATE_LABELS: PASS: a verified draft-save receipt proves only the private definition; no authorization, enablement, occurrence, delivered reminder, completed task or active ZION execution is inferred.
 SOLO_UI: NO: backend conversational connection only, consuming the unchanged original SOLO Chat card and native inspection surfaces.
 OWNER_INTENT: Restore complete universal SOLO Operations using original governed systems and ordinary safe increments, with one final integrated founder evaluation.

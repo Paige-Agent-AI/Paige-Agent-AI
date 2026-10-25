@@ -1,5 +1,35 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — unused manual-purpose source actually released
+
+Original [#2853](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2853#issuecomment-6400618979)
+mergedbbee3e1d40071b7fce95228cb3cca633ab0008f7/tree68a7a950 from61dc+d1 after
+reviewedd1c86219a1a6f7c9c63a864105a5da6404844271/LOWER5644115608/final5644251947,
+all13 exact checks/two webSUCCESS/zero threads. Actual union preserves all16174
+outside entries, four owning runtime/test/SQL blobs, whole incoming CI except
+two additive native-proof lines and all prior evidence. Sole Master4.0 has the row.
+
+Normal native20271114220002 is APPLIED: actual original-table purpose and
+tenant/none constraints match; ownerpostgres/forcedRLS and anon/authenticated
+INSERT/UPDATE refusal remain. Edge40214639936/job121233023970 SUCCESS;
+actual API certificate12607325507/SHA256da1a4a91b4c0f87742ba4536d2dd21e9fd083d70fed89646e936e8e08a452c04
+independently verifies159 source entries/configs: change138/JWTtrue,
+onboarding142/false,operator144/false,scheduled145/false. Original checkout guard
+refused a certificate invocation on the earlier branch; the unchanged helper
+then passed on the actual merged checkout. No source/config guard was weakened.
+READYwebdpl_GnF5c2npPAQj55VLf57CLsxrEFPn; both public200/exact
+bbee3e1d40071b7fce95228cb3cca633ab0008f7-mvo2uzff/customerUpdatenull.
+
+Actual isolatedPG16 compatibility/refusal/unchanged-permission/rollback proof and
+73 owning cases PASS. Initial7FAIL/66PASS, broad256PASS/cold-import timeout and
+original5s Operator rerun5PASS remain historical. Exact Deno artifact12605752877
+proves4 functions3 unchanged baseline/head diagnostics and0new/own-core, not
+zero-error native typing. Functional source prerequisite RELEASED; Visual N/A;
+Experiential manual Work/current-authority/claim/receipt/reload still incomplete.
+No manual caller, worker, registration, approval/provider activation or customer
+scan; no ALG/CAP promotion. Full19/nine and Founder Acceptance remain open.
+The local successor below is retained as historical source evidence.
+
 ## October25 — initial capture identity source released
 
 Successor [#2847](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2847#issuecomment-6399705002)
@@ -252,3 +282,51 @@ binding; this is no context/Memory widening. CAP009–017/readiness and ALG03/06
 manual flow unoffered and incomplete. Founder Acceptance: NOT_ACCEPTED; all19/nine
 and one complete live evaluation remain required. Native/full-schema permissions,
 review, exact-head CI, deployment/readback and actual governed outcome are still owed.
+
+## October25 — internal original-Work identity bridge, local successor
+
+The existing core can bind a canonical native Work UUID as the ORIGINAL run's
+primary key AND its existing work_id foreign key through an internal
+manual/tenant/none option. Actual production metadata confirmed that nullable
+uuid link with ON DELETE RESTRICT; no schema or second correlation store is added.
+Every current
+native caller stays byte-exact and none consumes that option; browser/model bodies
+and triggeredBy audit labels are not forwarded into it. No factory, claim, public
+door, registry, approval, provider, worker or schema is introduced by this bridge.
+
+Invalid/noncanonical identities and all nonmanual/operator/remediation contexts
+refuse before any I/O. Legacy captures still allocate their original UUID and
+legacy remediation still uses its database-assigned identity. The one original
+INSERT and strict acknowledgement remain; its known original UUID survives a
+refused or uncertain acknowledgement without dispatch, another-run inspection or
+automatic replay. Finding/finalization readback keeps the same original identity
+and explicitly selects/verifies the canonical Work link when one is bound.
+An identity is not current permission, a dispatch claim or a Rail receipt.
+
+Same final compiled-core harness: untouched releasedbbee core23FAIL/74PASS,
+prior identity-onlya3 core4FAIL/93PASS, candidate97PASS (73 incumbent+24 new).
+Initial three candidate failures exposed
+the mock's hardcoded INSERT acknowledgement; the fixture now returns the actual
+inserted primary key, as the original table does. All final causal legs use the
+same corrected fixture and restore candidate bytes exactly. Earlier94-case results
+and initial assertion-placement corrections remain historical; no old case was removed.
+
+| Orchestration part | Actual boundary |
+| --- | --- |
+| Request/entry | Future manual check from Systems/Chat; no caller admitted here |
+| Source/tenant | Original run/findings and server-resolved tenant; no new Metric source |
+| Capability/specialist | Manual scan remains UNAVAILABLE/unregistered; PAIGE/VERA existing read attribution unchanged |
+| Authority/risk | No new grant/approval/risk decision; original native authority and admission still required |
+| Claim/adapter | Original Work dispatch_started_attempt CAS must be used by the future consumer; UUID is not that CAS |
+| Writer | Existing runSystemsCheck single INSERT/readback; legacy remediation untouched |
+| Identity/receipt | Future native Work UUID binds the run ID AND existing work_id FK; no Work or Rail receipt produced here |
+| Interruption | Original unconfirmed UUID/reason, no automatic resend, restart or absence claim |
+| Verification | Local source/fixture proof only; actual two simultaneous native workers and lost-ack/revocation still owed |
+| Return/result | Original authorized Work/run/receipt/reload/continuation verification required before customer admission |
+
+Functional: LOCAL prerequisite. Visual: N/A; private request prototype remains
+REVISE for new-trigger focus return, no production UI shipped. Experiential:
+callable manual capture and canonical result/receipt/recovery remain INCOMPLETE.
+Founder Acceptance: NOT_ACCEPTED; all19/nine and original9/0+12/0/4 preserved.
+ALG03/06/11/12/13 and CAP009–017 readiness are unchanged. No model/provider,
+customer scan, business action or protected monthly retry was performed.

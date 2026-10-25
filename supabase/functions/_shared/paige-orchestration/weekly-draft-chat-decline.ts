@@ -13,8 +13,10 @@ type Options = Readonly<{
 }>;
 type Context = NonNullable<ReturnType<typeof weeklyDraftModelContext>>;
 type Result = { declineAttempted: boolean; retryAllowed: false; genericFallbackAllowed: false } & (
-  | { status: "declined" | "observed"; context: Context }
-  | { status: "unknown" | "unavailable" }
+  | { status: "declined"; context: Context }
+  | { status: "observed"; context: Context }
+  | { status: "unknown" }
+  | { status: "unavailable" }
 );
 
 /** Fixed consumer of the ORIGINAL native decline, not a second approval service.

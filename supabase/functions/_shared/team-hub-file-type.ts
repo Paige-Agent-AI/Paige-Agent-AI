@@ -177,7 +177,8 @@ async function inflateEntry(bytes: Uint8Array, entry: ZipEntry, budget: { left: 
     // read, so at most one piece is ever in flight. Cancelling the reader errors the writer too.
     const feeding = (async () => {
       for (let at = 0; at < raw.length; at += TEAM_HUB_INFLATE_PIECE_BYTES) {
-        await writer.write(raw.subarray(at, Math.min(at + TEAM_HUB_INFLATE_PIECE_BYTES, raw.length)));
+        // slice, not subarray: a copied piece owns its ArrayBuffer, which the stream's BufferSource type requires.
+        await writer.write(raw.slice(at, Math.min(at + TEAM_HUB_INFLATE_PIECE_BYTES, raw.length)));
       }
       await writer.close();
     })();

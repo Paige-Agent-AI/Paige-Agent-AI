@@ -295,7 +295,6 @@
     "founder": "NOT_ACCEPTED"
   },
   "productionPreflight": {
-    "observedAt": "2026-10-25T20:39:00Z",
     "scope": "Read-only native metadata; no business records or mutation",
     "metadata": {
       "latest": "20271114240108",
@@ -342,6 +341,10 @@
       ],
       "native_own": 0,
       "native_parent": 1
-    }
+    },
+    "observedBetweenUTC": [
+      "2026-10-25T20:38:37Z",
+      "2026-10-25T20:40:18Z"
+    ]
   }
 }

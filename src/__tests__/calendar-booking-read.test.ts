@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readCalendarAccountShape, readCalendarBooking, type CalendarBookingReadCaller } from "../../supabase/functions/_shared/calendar-booking-read";
+import * as calendarRead from "../../supabase/functions/_shared/calendar-booking-read";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 import { createClient } from "@supabase/supabase-js";
 
@@ -21,6 +22,9 @@ function fixture() {
     const query = {
       select(value: string) { call.operations.push(["select", value]); return query; },
       eq(key: string, value: unknown) { call.operations.push(["eq", key, value]); return query; },
+      neq(key: string, value: unknown) { call.operations.push(["neq", key, value]); return query; },
+      gt(key: string, value: unknown) { call.operations.push(["gt", key, value]); return query; },
+      order(key: string, value: unknown) { call.operations.push(["order", key, value]); return query; },
       limit(value: number) { call.operations.push(["limit", value]); return query; },
       abortSignal(signal: AbortSignal) { call.signal = signal; return query; },
       then<TResult1 = Response, TResult2 = never>(resolve?: ((r: Response) => TResult1 | PromiseLike<TResult1>) | null, reject?: ((e: unknown) => TResult2 | PromiseLike<TResult2>) | null) {
@@ -30,7 +34,8 @@ function fixture() {
   };
   const caller = { auth: { getUser: user }, rpc: (name: string, args?: unknown) => queryFor(name, args), from: (table: "tenants") => queryFor("tenant_classification", table, classificationQueries) };
   const deps = { caller, currentIdentity: () => current };
-  return { calls, classificationQueries, responses, pending, user, deps, switchTo(value: ContextIdentity | null) { current = value; }, read(args: unknown = { booking_id: id(3) }) { return readCalendarBooking(identity, deps, args); } };
+  return { calls, classificationQueries, responses, pending, user, deps, switchTo(value: ContextIdentity | null) { current = value; }, read(args: unknown = { booking_id: id(3) }) { return readCalendarBooking(identity, deps, args); },
+    agenda(args: unknown = { from: "2026-10-17T00:00:00Z", to: "2026-10-18T00:00:00Z" }) { return calendarRead.readCalendarAgenda(identity, deps, args); } };
 }
 afterEach(() => { vi.useRealTimers(); });
 
@@ -255,5 +260,125 @@ describe("canonical exact Calendar booking reader", () => {
     const native = requests.filter(r => r.url.pathname.endsWith("/list_team_bookings")); expect(native).toHaveLength(1);
     expect(native[0].method).toBe("POST"); expect(native[0].body).toEqual({ _from: "-infinity", _to: "infinity", _host_ids: null, _tenant_id: id(2), _booking_id: id(3) });
     expect(native[0].url.searchParams.get("select")).toBe(Object.keys(record()).join(",")); expect(native[0].url.searchParams.get("id")).toBe("eq." + id(3)); expect(native[0].url.searchParams.get("limit")).toBe("2"); expect(native[0].signal).toBeInstanceOf(AbortSignal);
+  });
+});
+
+describe("bounded original Calendar agenda", () => {
+  const window = { from: "2026-10-17T00:00:00Z", to: "2026-10-18T00:00:00Z" };
+  const core = () => Object.fromEntries(Object.entries(record()).filter(([key]) => key !== "guest_name"));
+  it("uses the same native reader with the server tenant, own host and bounded stable projection", async () => {
+    const f = fixture();
+    expect(await f.agenda()).toMatchObject({ status: "available", view: "mine", bookings: [core()], shown_count: 1, has_more: false });
+    const calls = f.calls.filter(c => c.name === "list_team_bookings"); expect(calls).toHaveLength(1);
+    expect(calls[0].args).toEqual({ _from: "2026-10-17T00:00:00.000Z", _to: "2026-10-18T00:00:00.000Z", _host_ids: [id(1)], _tenant_id: id(2), _booking_id: null });
+    expect(calls[0].operations).toEqual([["select", Object.keys(core()).join(",")], ["neq", "booking_kind", "class_seat"], ["gt", "end_at", "2026-10-17T00:00:00.000Z"], ["order", "start_at", { ascending: true }], ["order", "id", { ascending: true }], ["limit", 51]]);
+    expect(f.user).toHaveBeenCalledTimes(2); expect(f.classificationQueries).toHaveLength(2);
+  });
+  it("requires current native admin authority before and after a team read, even when empty", async () => {
+    const f = fixture(); f.responses.list_team_bookings.data = [];
+    expect(await f.agenda({ ...window, view: "team" })).toMatchObject({ status: "available", view: "team", bookings: [], shown_count: 0, has_more: false });
+    expect(f.calls.filter(c => c.name === "is_tenant_admin")).toHaveLength(2);
+    expect(f.calls.find(c => c.name === "list_team_bookings")?.args).toMatchObject({ _host_ids: null, _tenant_id: id(2) });
+    const denied = fixture(); denied.responses.is_tenant_admin.data = false;
+    expect(await denied.agenda({ ...window, view: "team" })).toMatchObject({ status: "refused" });
+    expect(denied.calls.some(c => c.name === "list_team_bookings")).toBe(false);
+  });
+  it("does not expose another host merely because the requester is an owner", async () => {
+    const f = fixture(); f.responses.list_team_bookings.data = [{ ...record(), host_user_id: id(9) }];
+    expect(await f.agenda()).toMatchObject({ status: "unavailable" });
+  });
+  for (const args of [null, [], {}, { ...window, tenant_id: id(9) }, { ...window, actor_id: id(9) }, { ...window, host_ids: [id(9)] },
+    { ...window, view: "all" }, { ...window, view: null }, { ...window, view: undefined }, { ...window, from: "yesterday" }, { ...window, from: "2026-02-30T00:00:00Z" },
+    { ...window, from: "2026-10-17T00:00:00" }, { ...window, from: "2026-10-17T00:00:00+24:00" },
+    { ...window, to: window.from }, { ...window, to: "2026-10-16T00:00:00Z" }, { ...window, to: "2027-10-18T00:00:00Z" }]) {
+    it("rejects missing, unbounded or authority-bearing query input before transport: " + JSON.stringify(args), async () => {
+      const f = fixture(); expect(await f.agenda(args)).toMatchObject({ status: "needs_input" }); expect(f.calls).toEqual([]); expect(f.user).not.toHaveBeenCalled();
+    });
+  }
+  it("keeps explicit DST offsets as absolute bounds without inventing a business time zone", async () => {
+    const f = fixture(); f.responses.list_team_bookings.data = [];
+    expect(await f.agenda({ from: "2026-11-01T00:00:00-04:00", to: "2026-11-02T00:00:00-05:00" })).toMatchObject({ status: "available", window: { from: "2026-11-01T04:00:00.000Z", to: "2026-11-02T05:00:00.000Z" } });
+    expect(f.calls.find(c => c.name === "list_team_bookings")?.args).toMatchObject({ _from: "2026-11-01T04:00:00.000Z", _to: "2026-11-02T05:00:00.000Z" });
+  });
+  it("reports overfetch as a shown subset, without exposing the extra record", async () => {
+    const f = fixture(); const rows = Array.from({ length: 51 }, (_, n) => ({ ...record(), id: id(100 + n), start_at: new Date(Date.UTC(2026, 9, 17, 10, n)).toISOString() }));
+    f.responses.list_team_bookings.data = rows;
+    const result = await f.agenda(); expect(result).toMatchObject({ status: "available", shown_count: 50, has_more: true });
+    expect(result.status === "available" && result.bookings).toHaveLength(50); expect(JSON.stringify(result)).not.toContain(id(150));
+  });
+  for (const [label, rows] of Object.entries({ foreign: [{ ...record(), tenant_id: id(9) }], duplicate: [record(), record()],
+    seat: [{ ...record(), booking_kind: "class_seat" }], outside: [{ ...record(), start_at: "2026-10-18T12:00:00Z", end_at: "2026-10-18T12:30:00Z" }],
+    ended: [{ ...record(), start_at: "2026-10-16T23:00:00Z", end_at: "2026-10-17T00:00:00Z" }],
+    malformed: [{ ...record(), end_at: "invalid" }], oversized: Array.from({ length: 52 }, (_, n) => ({ ...record(), id: id(100 + n) })),
+    unordered: [{ ...record(), id: id(4) }, record()] })) {
+    it("withholds unverified native " + label + " rows without inventing an empty calendar", async () => {
+      const f = fixture(); f.responses.list_team_bookings.data = rows; const result = await f.agenda();
+      expect(result).toMatchObject({ status: "unavailable" }); expect(result).not.toHaveProperty("bookings"); expect(result).not.toHaveProperty("shown_count");
+    });
+  }
+  it("does not expose guest contacts, private notes, provider links or unselected metadata", async () => {
+    const f = fixture(); f.responses.list_team_bookings.data = [{ ...record(), guest_name: "PRIVATE_GUEST", guest_email: "private@example.invalid", notes: "SECRET_NOTE", intake_answers: { secret: true }, provider_id: "PRIVATE_PROVIDER" }];
+    const result = await f.agenda(); expect(result).toMatchObject({ status: "available", bookings: [core()] }); expect(JSON.stringify(result)).not.toMatch(/PRIVATE_|SECRET_|guest_email|intake_answers/);
+  });
+  for (const [label, change] of Object.entries({ actor: { actorId: id(9) }, tenant: { tenantId: id(9) }, workspace: { workspaceId: id(9) }, epoch: { scopeEpoch: 2 }, role: { role: "member" }, client: { actAsClientId: id(9) } })) {
+    it("refuses stale " + label + " context before reading", async () => {
+      const f = fixture(); f.switchTo({ ...identity, ...change }); expect(await f.agenda()).toMatchObject({ status: "refused" }); expect(f.calls).toEqual([]);
+    });
+  }
+  it("suppresses a team result if native admin authority is withdrawn during its read", async () => {
+    const f = fixture(), slow = deferred<Response>(); f.pending.list_team_bookings = slow.promise;
+    const result = f.agenda({ ...window, view: "team" }); await vi.waitFor(() => expect(f.calls.some(c => c.name === "list_team_bookings")).toBe(true));
+    f.responses.is_tenant_admin.data = false; slow.resolve({ data: [], error: null });
+    expect(await result).toMatchObject({ status: "refused" });
+  });
+  it("honors Stop and does not upgrade after a late result or start another lookup", async () => {
+    const f = fixture(), stop = new AbortController(), slow = deferred<Response>(); f.pending.list_team_bookings = slow.promise;
+    const result = calendarRead.readCalendarAgenda(identity, { ...f.deps, signal: stop.signal }, window);
+    await vi.waitFor(() => expect(f.calls.some(c => c.name === "list_team_bookings")).toBe(true)); stop.abort();
+    expect(await result).toMatchObject({ status: "unavailable" }); expect(f.calls.find(c => c.name === "list_team_bookings")?.signal?.aborted).toBe(true);
+    slow.resolve({ data: [record()], error: null }); await Promise.resolve(); expect(f.user).toHaveBeenCalledTimes(1); expect(f.calls.filter(c => c.name === "list_team_bookings")).toHaveLength(1);
+  });
+  it("bounds the whole read and prevents deferred authentication from starting data transport", async () => {
+    vi.useFakeTimers(); const f = fixture(), slow = deferred<Awaited<ReturnType<typeof f.user>>>(); f.user.mockReturnValue(slow.promise);
+    const result = f.agenda(); await vi.advanceTimersByTimeAsync(8001); expect(await result).toMatchObject({ status: "unavailable" });
+    slow.resolve({ data: { user: { id: id(1) } }, error: null }); await vi.runAllTimersAsync(); expect(f.calls).toEqual([]);
+  });
+  for (const code of ["42501", "57014"]) {
+    it("preserves native refusal or uncertainty for " + code, async () => {
+      const f = fixture(); f.responses.list_team_bookings = { data: null, error: { code, message: "PRIVATE_ERROR" } };
+      const result = await f.agenda(); expect(result).toMatchObject({ status: code === "42501" ? "refused" : "unavailable" }); expect(JSON.stringify(result)).not.toContain("PRIVATE_ERROR");
+    });
+  }
+  it("uses the same eligible-member path for another tenant without a private account exception", async () => {
+    const f = fixture(), scope = { ...identity, actorId: id(11), tenantId: id(12), workspaceId: id(12), role: "member", scopeEpoch: 4 };
+    f.switchTo(scope); f.user.mockResolvedValue({ data: { user: { id: id(11) } }, error: null });
+    f.responses.current_user_tenant_id.data = id(12); f.responses.tenant_classification.data = [{ id: id(12), account_type: "standalone", parent_tenant_id: null }];
+    f.responses.list_team_bookings.data = [{ ...record(), id: id(13), tenant_id: id(12), host_user_id: id(11) }];
+    expect(await calendarRead.readCalendarAgenda(scope, f.deps, window)).toMatchObject({ status: "available", view: "mine", bookings: [{ id: id(13), tenant_id: id(12) }] });
+    expect(f.calls.find(c => c.name === "list_team_bookings")?.args).toMatchObject({ _tenant_id: id(12), _host_ids: [id(11)], _booking_id: null });
+  });
+  it("the actual Supabase client sends only the bounded native read under its original caller JWT", async () => {
+    const requests: { url: URL; body: unknown; authorization: string | null; signal: AbortSignal | null | undefined }[] = [];
+    const transport: typeof fetch = async (input, options) => {
+      const url = new URL(String(input)), headers = new Headers(options?.headers);
+      requests.push({ url, body: options?.body ? JSON.parse(String(options.body)) : null, authorization: headers.get("Authorization"), signal: options?.signal });
+      const data = url.pathname === "/auth/v1/user" ? { id: id(1), app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-01-01" }
+        : url.pathname.endsWith("/tenants") ? [{ id: id(2), account_type: "standalone", parent_tenant_id: null }]
+          : url.pathname.endsWith("/current_user_tenant_id") ? id(2) : url.pathname.endsWith("/is_tenant_member") ? true
+            : url.pathname.endsWith("/list_team_bookings") ? [record()] : null;
+      if (data === null) throw new Error("Unexpected endpoint in Calendar read");
+      return new Response(JSON.stringify(data), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const caller = createClient("https://calendar-fixture.invalid", "fixture-public-key", { global: { fetch: transport, headers: { Authorization: "Bearer TEST_ONLY_CALLER_JWT" } }, auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    const result = await calendarRead.readCalendarAgenda(identity, { caller: caller as unknown as CalendarBookingReadCaller, currentIdentity: () => identity }, window);
+    expect(result).toMatchObject({ status: "available", bookings: [core()] });
+    expect(requests.every(r => r.url.host === "calendar-fixture.invalid" && r.authorization === "Bearer TEST_ONLY_CALLER_JWT")).toBe(true);
+    const native = requests.filter(r => r.url.pathname.endsWith("/list_team_bookings")); expect(native).toHaveLength(1);
+    expect(native[0].body).toEqual({ _from: "2026-10-17T00:00:00.000Z", _to: "2026-10-18T00:00:00.000Z", _host_ids: [id(1)], _tenant_id: id(2), _booking_id: null });
+    expect(native[0].url.searchParams.get("select")).toBe(Object.keys(core()).join(","));
+    expect(native[0].url.searchParams.get("booking_kind")).toBe("neq.class_seat");
+    expect(native[0].url.searchParams.get("end_at")).toBe("gt.2026-10-17T00:00:00.000Z");
+    expect(native[0].url.searchParams.get("order")).toBe("start_at.asc,id.asc"); expect(native[0].url.searchParams.get("limit")).toBe("51");
+    expect(native[0].signal).toBeInstanceOf(AbortSignal);
   });
 });

@@ -925,6 +925,26 @@ Deno.test("original agreement-send mounts private request review before legacy p
     await t.step("no caller credential cannot reach original authority reads", async () => {
       assert.equal((await invoke(x.input, "?review=prepared-request", { Authorization: "" })).status, 401);
     });
+    await t.step("the original private read rechecks the exact reviewed request without admitting a send", async () => {
+      const initial = await invoke();
+      assert.equal(initial.status, 200);
+      const original = await initial.json();
+      const exact = { ...x.input, expected_request_sha256: original.review.request_sha256 };
+      const verified = await invoke(exact);
+      assert.equal(verified.status, 200, "The original review door must consume complete-request preflight");
+      const current = await verified.json();
+      assert.deepEqual(current, original);
+      assert.equal(current.review.approval, "not_requested");
+      assert.equal(current.review.execution, "unavailable");
+      try {
+        x.input.messages[0].subject = "A different valid invitation";
+        const changed = await invoke(exact);
+        assert.equal(changed.status, 409);
+        assert.equal((await changed.json()).code, "source_changed");
+        assert.deepEqual(effects(x.f), before);
+        assert.deepEqual(unexpected, []);
+      } finally { x.input.messages[0].subject = exact.messages[0].subject = "Please review your service agreement"; }
+    });
     assert.deepEqual(unexpected, []);
     assert.deepEqual(effects(x.f), before);
   } finally {

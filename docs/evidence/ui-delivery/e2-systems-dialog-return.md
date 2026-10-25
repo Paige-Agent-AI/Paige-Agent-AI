@@ -12,7 +12,7 @@ STATIC_EVIDENCE: UNVERIFIED: final exact-head hosted build/types/CI and review r
 RENDERED_EVIDENCE: PASS: eleven final original-shell browser-targeted captures after the44px correction, including all eight required closed/open CSS viewport layouts plus desktop/390 dialog and390 visible focus return; assets/e2-systems-dialog-return/oct24-native-confirmation.json records exact bytes, hashes, CSS and actual JPEG dimensions. Tablet/narrow open Chat is its original overlay; no click-through is claimed. Earlier lagged/pre-correction frames are excluded.
 BEHAVIORAL_EVIDENCE: PASS: original forward/reverse keyboard focus trap and Escape to Review approval verified on restored native page control; original synthetic draft retained across review and rail fold/open. Original67 source tests retain busy/late-result/account retirement. No confirmation or domain operation was submitted. Earlier exact scroll1429.5999755859375 observation is historical supporting evidence.
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate is not deployed; original authorized account inspection found the keyboard/focus defect without submitting an approval. Corrected released behavior/roles/tenant/cohorts/Live remain owed.
-KEYBOARD_FOCUS: PASS: current native forward/reverse dialog cycling and Escape return observed;390 final return image shows the original control with visible focus. Desktop/390 actions measure44CSSpx. Synthetic Chat draft stays intact. Native pending/late-result/account-retirement acceptance remains source-only.
+KEYBOARD_FOCUS: PASS: current native forward/reverse dialog cycling and Escape return observed;390 final return image shows the original control with visible focus. Desktop/390 actions measure44CSSpx. Synthetic Chat draft stays intact.
 ZOOM_REFLOW: UNVERIFIED: final1536/1366/1024/900 and390 CSS reflow/captures now verified; actual200percent native browser zoom remains unverified because the visible native window does not expose the synthetic Systems tab. No CSS scale or raster resize substitutes for browser zoom.
 REDUCED_MOTION: UNVERIFIED: this follow-up adds no animation; the existing media rules remain. Actual current preference and native behavior remain to be observed.
 STATE_COVERAGE: PASS: original success/refusal, busy decision/no repeat activation, Cancel/Escape and account retirement are tested; no draft preparation, diagnostic scan, action cancellation, execution result or backend success is simulated as customer proof.
@@ -45,7 +45,7 @@ SOLO_900X1000_PAIGE_OPEN: PASS: assets/e2-systems-dialog-return/oct24-final-900x
 
 ## Scope, behavior and authority
 
-REPAIR only the original workspace/tests and original synthetic command port. The
+REPAIR only the original workspace, scoped dialog-action CSS, tests and original synthetic command port. The
 existing executive harness mounts the actual shell, CommandHub, Systems Check,
 drawer, alertdialog and CSS, with backend-refusing data ports and neutral tenants.
 Its optional synthetic approval is explicitly pending forever; it produces no

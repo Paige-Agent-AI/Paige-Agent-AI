@@ -882,7 +882,16 @@ const SOURCES = {
   // branch, authority, verifier, adapter selection or recipient logic changed; paige-ai-chat untouched,
   // so all dispatch fingerprints are unchanged. Old canonical digest 29306707… reproduced from main
   // before renewing (scratchpad /tmp/renew-digest.mjs, printer {removeComments:true}). Renew this digest only.
-  "supabase/functions/send-message/index.ts": "08ec0fe3db7aacb9ccc608aa71b10a607792dab06a3f0e74f24b620d738c8b87",
+  // EXP08 Team Hub increment 3 renewal (2026-10-25), AUTHOR source review (NOT non-author; an independent
+  // reviewer must confirm): branch claude/practical-davinci-ij8hb8 changes send-message/index.ts only inside
+  // attachmentValidationError — two early returns of "attachment_not_allowed": any path containing `%`
+  // (Storage's router percent-decodes object names, so `team%2Dhub/<id>` is read as `team-hub/<id>`), and a
+  // case-insensitive first folder of `team-hub` (<tenant>/team-hub/ holds members-only Team Hub files). An
+  // input refusal before any send: no dispatch branch, authority, verifier, adapter selection, recipient or
+  // provider payload changed; paige-ai-chat untouched, so all dispatch fingerprints are unchanged. Old digest
+  // 08ec0fe3… reproduced from 1dac06b8b with the same canonical form (TypeScript printer {removeComments:true},
+  // sha256) before renewing; the new value was then confirmed by this file's own test passing. Renew this digest only.
+  "supabase/functions/send-message/index.ts": "2eea5765cb8f5fa2feac614b275f13ba519bd510d04c12d241a981a7bc4afd2e",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are

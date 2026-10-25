@@ -1542,6 +1542,8 @@ let gates: { upload?: Deferred; finish?: Deferred };
 let finishAnswer: (id: string) => unknown;
 let signAnswer: (path: string) => { data: { signedUrl: string } | null; error: unknown };
 let uploads: Array<{ path: string; contentType?: string; upsert?: boolean }>;
+/** What Storage would record: for a File body, its own `type` and name (storage-js ignores `contentType` then). */
+let bodies: Array<{ path: string; type: string; name: string; size: number }>;
 let signs: Array<{ bucket: string; path: string; seconds: number; options?: unknown }>;
 let invokes: Array<{ name: string; body: Record<string, unknown> }>;
 
@@ -1576,6 +1578,7 @@ beforeEach(() => {
   files = {};
   gates = {};
   uploads = [];
+  bodies = [];
   signs = [];
   invokes = [];
   finishAnswer = (id) => { files[id].state = "ready"; return { ok: true, file: { id, path: files[id].path, mime: files[id].mime, size: files[id].size, state: "ready" } }; };
@@ -1588,8 +1591,9 @@ beforeEach(() => {
     return { data: backend(name, params), error: null };
   });
   mocks.storageFrom.mockImplementation((bucket: string) => ({
-    async upload(path: string, _file: File, options: { contentType?: string; upsert?: boolean }) {
+    async upload(path: string, body: File, options: { contentType?: string; upsert?: boolean }) {
       uploads.push({ path, contentType: options.contentType, upsert: options.upsert });
+      bodies.push({ path, type: body.type, name: body.name, size: body.size });
       if (gates.upload) await gates.upload.promise;
       return { data: { path }, error: null };
     },
@@ -1662,6 +1666,25 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
     expect(host.querySelector(".th-conv .th-atts")!.textContent).toContain("Files aren't scanned for viruses. Only open files from people you trust.");
   });
 
+  it("uploads a body typed as the declared MIME, whatever the browser called the file", async () => {
+    const { host } = await mount();
+    const docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    await pick(fileInput(host), [
+      fileFor("Contacts.csv", "application/vnd.ms-excel"), fileFor("Proposal.docx", ""),
+      fileFor("Budget.xlsx", "application/octet-stream"), fileFor("Photo.jpg", "image/jpg"), fileFor("Notes.txt", "application/octet-stream"),
+    ]);
+    await flush();
+    expect(begins().map((call) => call.params.p_mime)).toEqual(["text/csv", docx, xlsx, "image/jpeg", "text/plain"]);
+    expect(bodies.map(({ type, name }) => ({ type, name }))).toEqual([
+      { type: "text/csv", name: "Contacts.csv" }, { type: docx, name: "Proposal.docx" }, { type: xlsx, name: "Budget.xlsx" },
+      { type: "image/jpeg", name: "Photo.jpg" }, { type: "text/plain", name: "Notes.txt" },
+    ]);
+    expect(bodies.every((body, index) => body.path === `${TENANT}/team-hub/f-${index + 1}`)).toBe(true);
+    expect(uploads.map((upload) => upload.contentType)).toEqual(["text/csv", docx, xlsx, "image/jpeg", "text/plain"]);
+    expect(chips(host).map((chip) => chip.dataset.state)).toEqual(["ready", "ready", "ready", "ready", "ready"]);
+  });
+
   it("says why a chip is refused, in the contract's words: type, size, contents, count", async () => {
     finishAnswer = () => ({ ok: false, code: "rejected", reason: "type_mismatch" });
     const { host } = await mount();
@@ -1670,6 +1693,8 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
     expect(chips(host)[0].textContent).toContain("Its contents don't match its type");
     expect(liveRegion(host).textContent).toBe("File refused: Its contents don't match its type");
     expect(chips(host)[0].dataset.state).toBe("refused");
+    // A refused chip has no Retry: only removing it lets the message go.
+    expect(host.querySelector(".th-conv .th-hint")!.textContent).toBe("Remove refused files to send");
 
     await pick(fileInput(host), [fileFor("Old.doc", "application/msword")]);
     await flush();
@@ -1747,6 +1772,8 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
     await flush();
     expect(chips(host)[0].textContent).toContain("Upload didn't finish");
     expect(liveRegion(host).textContent).toBe("Upload didn't finish. Retry is available.");
+    // A failed chip has Retry, so the hint offers it.
+    expect(host.querySelector(".th-conv .th-hint")!.textContent).toBe("Retry or remove files to send");
     await act(async () => button(host, "Retry Brief.pdf")!.click());
     await flush();
     expect(begins()).toHaveLength(2);
@@ -1891,14 +1918,34 @@ describe("attachments: files on messages (increment 3, mocked RPC)", () => {
     expect(host.querySelector(".th-stream .th-text")).toBeNull();
   });
 
-  it("gives images a thumbnail from its own 60-second URL, and falls back to the glyph when it fails", async () => {
+  it("gives images a thumbnail from its own 60-second URL; a failed load mints one fresh URL, then falls back to the glyph", async () => {
     db.messages["c-general"] = [msg({ files: [posted({ id: "f-img", name: "Photo.png", mime: "image/png", path: `${TENANT}/team-hub/f-img` })] })];
     const { host } = await mount();
-    expect(signs).toEqual([{ bucket: "comms-attachments", path: `${TENANT}/team-hub/f-img`, seconds: 60, options: undefined }]);
+    const sign = { bucket: "comms-attachments", path: `${TENANT}/team-hub/f-img`, seconds: 60, options: undefined };
+    expect(signs).toEqual([sign]);
     const img = host.querySelector<HTMLImageElement>(".th-file-thumb img")!;
     expect(img.getAttribute("src")).toBe(`https://storage.test/signed/${TENANT}/team-hub/f-img?n=1`);
     expect(img.getAttribute("alt")).toBe("");
+    // The first URL expired before the image loaded: one fresh URL, tried once.
     await act(async () => { img.dispatchEvent(new Event("error")); });
+    await flush();
+    expect(signs).toEqual([sign, sign]);
+    const retried = host.querySelector<HTMLImageElement>(".th-file-thumb img")!;
+    expect(retried.getAttribute("src")).toBe(`https://storage.test/signed/${TENANT}/team-hub/f-img?n=2`);
+    await act(async () => { retried.dispatchEvent(new Event("error")); });
+    await flush();
+    expect(host.querySelector(".th-file-thumb img")).toBeNull();
+    expect(host.querySelector(".th-file-thumb svg")).not.toBeNull();
+    expect(signs).toHaveLength(2);
+  });
+
+  it("settles on the glyph when the fresh URL can't be minted", async () => {
+    db.messages["c-general"] = [msg({ files: [posted({ id: "f-img", name: "Photo.png", mime: "image/png", path: `${TENANT}/team-hub/f-img` })] })];
+    const { host } = await mount();
+    signAnswer = () => ({ data: null, error: { message: "denied" } });
+    await act(async () => { host.querySelector<HTMLImageElement>(".th-file-thumb img")!.dispatchEvent(new Event("error")); });
+    await flush();
+    expect(signs).toHaveLength(2);
     expect(host.querySelector(".th-file-thumb img")).toBeNull();
     expect(host.querySelector(".th-file-thumb svg")).not.toBeNull();
   });

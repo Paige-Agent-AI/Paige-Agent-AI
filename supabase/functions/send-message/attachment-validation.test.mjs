@@ -30,6 +30,11 @@ describe("send-message refuses Team Hub files as email attachments", () => {
       assert.equal(one(path), "attachment_not_allowed", path);
     }
   });
+  it("refuses percent-encoded spellings, which Storage's router decodes into the Team Hub folder", () => {
+    for (const path of [`${tenant}/team%2Dhub/f`, `${tenant}/team-hub%2Ff`, `${tenant}/%74eam-hub/f`, `${tenant}/report%20final.pdf`]) {
+      assert.equal(one(path), "attachment_not_allowed", path);
+    }
+  });
   it("refuses the whole list when any one attachment is a Team Hub file", () => {
     assert.equal(attachmentValidationError([{ url: `${tenant}/inbox/a.pdf` }, { url: `${tenant}/team-hub/f` }], tenant), "attachment_not_allowed");
   });

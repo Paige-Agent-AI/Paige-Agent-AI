@@ -467,8 +467,15 @@ describe("attachments (increment 3 contract)", () => {
     expect(filePrecheck({ name: "deck.pptx", size: 10 }, 0)).toBe("type");
     expect(filePrecheck({ name: "tool.exe", size: 10 }, 0)).toBe("type");
     expect(filePrecheck({ name: "pdf", size: 10 }, 0)).toBe("type");
+    // Some systems know no type for Office or text files: that is unknown, not a mismatch.
+    for (const name of ["Report.docx", "Budget.xlsx", "notes.csv", "readme.txt"]) {
+      expect(filePrecheck({ name, size: 10, type: "application/octet-stream" }, 0), name).toBeNull();
+      expect(fileTypeFor(name, "application/octet-stream")?.mime, name).toBe(fileTypeFor(name)?.mime);
+    }
     // An allowed extension the browser says is something else entirely.
     expect(filePrecheck({ name: "invoice.pdf", size: 10, type: "application/x-msdownload" }, 0)).toBe("type");
+    expect(filePrecheck({ name: "Report.docx", size: 10, type: "application/pdf" }, 0)).toBe("type");
+    expect(filePrecheck({ name: "notes.csv", size: 10, type: "application/x-msdownload" }, 0)).toBe("type");
     expect(filePrecheck({ name: "Brief.pdf", size: TEAM_HUB_FILE_MAX_BYTES, type: "application/pdf" }, 0)).toBeNull();
     expect(filePrecheck({ name: "Brief.pdf", size: TEAM_HUB_FILE_MAX_BYTES + 1, type: "application/pdf" }, 0)).toBe("too_large");
     expect(filePrecheck({ name: "Brief.pdf", size: 0, type: "application/pdf" }, 0)).toBe("empty");

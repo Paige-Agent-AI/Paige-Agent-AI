@@ -681,6 +681,14 @@ SELECT pg_temp.check(NOT pg_temp.put(:'ta'||'/team-hub'), 'prefix: a member cann
 SELECT pg_temp.check(pg_temp.touched(format('DELETE FROM storage.objects WHERE name=%L',:'pin2'))='1', 'prefix: the Inbox attachment is removed as before');
 SELECT pg_temp.act(:'u10');
 SELECT pg_temp.check(NOT pg_temp.put(:'ta'||'/team-hub'), 'prefix: nor can the platform owner');
+-- The prefix test reads only the second segment, so it needs no tenant in the first. The platform
+-- owner, whom the member policies admit to any name, shows it: a non-tenant four-segment name is
+-- stored outside the prefix, refused under it, and an upper-case TEAM-HUB segment is outside it.
+SELECT pg_temp.check(pg_temp.put('x/inbox/y/z'), 'prefix: control: the platform owner stores x/inbox/y/z, outside the prefix'),
+ pg_temp.check(NOT pg_temp.put('x/team-hub/y/z'), 'prefix: but not x/team-hub/y/z, which is inside it with no tenant first segment'),
+ pg_temp.check(pg_temp.put('x/TEAM-HUB/y/z'), 'prefix: and x/TEAM-HUB/y/z is outside it: the segment is case-sensitive');
+SELECT pg_temp.check(pg_temp.touched('DELETE FROM storage.objects WHERE bucket_id=''comms-attachments'' AND name IN (''x/inbox/y/z'',''x/TEAM-HUB/y/z'')')='2',
+ 'prefix: the platform owner removes both outside-prefix names as before');
 RESET ROLE;
 INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES ('comms-attachments',:'ta'||'/team-hub',:'u2','{}');
 SELECT pg_temp.act(:'u2'); SET ROLE authenticated;

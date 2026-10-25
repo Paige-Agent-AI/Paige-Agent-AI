@@ -1652,7 +1652,8 @@ function filesProblem(chips: AttachmentChip[]): string | null {
 /** The composer hint while files are in play; null leaves the usual hint. */
 function filesHint(chips: AttachmentChip[]): string | null {
   if (chips.some((chip) => chip.state === "uploading" || chip.state === "checking")) return "Uploading files…";
-  if (chips.some((chip) => chip.state === "refused" || chip.state === "failed")) return "Remove refused files to send";
+  if (chips.some((chip) => chip.state === "failed")) return "Retry or remove files to send";
+  if (chips.some((chip) => chip.state === "refused")) return "Remove refused files to send";
   return null;
 }
 
@@ -1770,21 +1771,39 @@ function FileRow({ file }: { file: TeamHubFile }) {
   </div></li>;
 }
 
-/** An image's small thumbnail, from its own 60-second URL; the type glyph stands in until, or instead. */
+/**
+ * An image's small thumbnail, from its own 60-second URL; the type glyph stands in until, or instead.
+ * A lazy image scrolled into view after a minute meets an expired URL, so a failed load mints one
+ * fresh URL and tries once more before settling on the glyph.
+ */
 function FileThumb({ file }: { file: TeamHubFile }) {
   const { sign } = useContext(FileAccess);
   const [url, setUrl] = useState<string | null>(null);
   const [broken, setBroken] = useState(false);
+  // Which path the answers belong to, and whether this path has had its one fresh URL.
+  const current = useRef({ path: file.path, reminted: false });
+  const mint = useCallback((path: string) => {
+    void sign(path).then((next) => {
+      if (current.current.path !== path) return;
+      if (next) setUrl(next); else setBroken(true);
+    });
+  }, [sign]);
   useEffect(() => {
-    let current = true;
+    current.current = { path: file.path, reminted: false };
     setUrl(null);
     setBroken(false);
-    void sign(file.path).then((next) => { if (!current) return; if (next) setUrl(next); else setBroken(true); });
-    return () => { current = false; };
-  }, [file.path, sign]);
+    mint(file.path);
+    return () => { current.current = { path: "", reminted: true }; };
+  }, [file.path, mint]);
+  const failed = () => {
+    if (current.current.reminted) { setBroken(true); return; }
+    current.current.reminted = true;
+    setUrl(null);
+    mint(file.path);
+  };
   return <span className="th-file-thumb" aria-hidden="true">
     {url && !broken
-      ? <img src={url} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)} />
+      ? <img src={url} alt="" loading="lazy" decoding="async" onError={failed} />
       : <FileGlyph mime={file.mime} />}
   </span>;
 }

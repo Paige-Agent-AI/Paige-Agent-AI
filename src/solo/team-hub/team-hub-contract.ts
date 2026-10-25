@@ -806,13 +806,18 @@ export function fileExtension(name: string): string {
 
 /**
  * What a browser may report for an allowed extension. The declared MIME always comes from the
- * extension (it is what the server checks the name and the bytes against); the browser's own
- * report is only allowed to agree, be blank, or be a well-known alias (Windows calls CSV Excel).
+ * extension (it is what the server checks the name and the bytes against, and what the upload is
+ * stored under); the browser's own report is only allowed to agree, be blank, or be a well-known
+ * alias (Windows calls CSV Excel). Some systems know no type for Office or text files and say
+ * `application/octet-stream`; that is not a mismatch either, since the server reads the bytes.
  */
+const UNKNOWN_TYPE = "application/octet-stream";
 const BROWSER_ALIASES: Record<string, string[]> = {
-  "text/csv": ["application/vnd.ms-excel", "application/csv", "text/x-csv", "text/comma-separated-values", "text/plain"],
+  "text/csv": ["application/vnd.ms-excel", "application/csv", "text/x-csv", "text/comma-separated-values", "text/plain", UNKNOWN_TYPE],
   "image/jpeg": ["image/pjpeg", "image/jpg"],
-  "text/plain": [],
+  "text/plain": [UNKNOWN_TYPE],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [UNKNOWN_TYPE],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [UNKNOWN_TYPE],
 };
 
 export function fileTypeFor(name: string, browserMime = ""): typeof TEAM_HUB_FILE_TYPES[number] | null {

@@ -643,7 +643,10 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (state === "discarded") { refuse("gone"); return; }
     let uploaded = false;
     try {
-      const { error } = await supabase.storage.from(TEAM_HUB_FILE_BUCKET).upload(path, chip.file, { contentType: mime, upsert: false });
+      // The body carries the declared type, not the browser's: for a File, Storage records the body's
+      // own type and ignores `contentType`, and the check needs it to equal the declared MIME.
+      const body = new File([chip.file], chip.name, { type: mime });
+      const { error } = await supabase.storage.from(TEAM_HUB_FILE_BUCKET).upload(path, body, { upsert: false, contentType: mime });
       // A retry after a lost answer finds its own bytes already there (no overwrite is allowed): go on to the check.
       uploaded = !error || alreadyStored(error);
     } catch {

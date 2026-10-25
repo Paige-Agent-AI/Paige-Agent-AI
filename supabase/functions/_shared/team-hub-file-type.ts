@@ -233,8 +233,8 @@ type StartTag = { local: string; attributes: Map<string, string[]>; end: number;
  */
 function startTags(xml: string, locals: ReadonlySet<string>): StartTag[] | null {
   const tags: StartTag[] = [];
-  const opener = /<(?:[A-Za-z_][\w.\-]*:)?([A-Za-z_][\w.\-]*)/g;
-  const attributeName = /[^\s=\/>]+/y;
+  const opener = /<(?:[A-Za-z_][\w.-]*:)?([A-Za-z_][\w.-]*)/g;
+  const attributeName = /[^\s=/>]+/y;
   for (let match = opener.exec(xml); match; match = opener.exec(xml)) {
     const local = match[1].toLowerCase();
     if (!locals.has(local)) continue;
@@ -275,6 +275,10 @@ function startTags(xml: string, locals: ReadonlySet<string>): StartTag[] | null 
 const DTD = /<!(?:DOCTYPE|ENTITY|ATTLIST|ELEMENT)/i;
 const HYPERLINK = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink";
 const RELATIONSHIP = new Set(["relationship"]);
+// Relationship kinds (last Type segment, lower-cased) that carry code or an embedded object. A
+// relationship is how Office finds a part, so these are refused wherever the part itself lives.
+const MACRO_KINDS = new Set(["vbaproject", "vbaprojectsignature", "vbaprojectsignatureagile", "vbaprojectsignaturev3", "wordvbadata", "keymapcustomizations"]);
+const EMBEDDING_KINDS = new Set(["oleobject", "package", "control", "activexcontrolbinary", "extensibility"]);
 
 /**
  * A relationships part. Anything that points outside the file is refused unless it is a plain
@@ -286,11 +290,25 @@ function relationshipsRefusal(xml: string): TeamHubFileRefusal | null {
   const tags = startTags(xml, RELATIONSHIP);
   if (!tags) return "malformed_document";
   for (const tag of tags) {
+    const types = tag.attributes.get("type") ?? [];
+    // The relationship kind is the last path segment of its Type URI, whatever the namespace year.
+    const kind = types.length === 1 ? types[0].trim().split("/").pop()!.toLowerCase() : null;
     // Absent means Internal. Any other spelling is treated as External: it fails closed.
     const external = (tag.attributes.get("targetmode") ?? []).some((mode) => mode.trim() !== "Internal");
-    if (!external) continue;
-    const types = tag.attributes.get("type") ?? [];
-    if (types.length !== 1 || types[0].trim() !== HYPERLINK) return "external_content";
+    if (external) {
+      if (types.length !== 1 || types[0].trim() !== HYPERLINK) return "external_content";
+      continue;
+    }
+    // Inside the file, the kinds that run or embed something are refused by kind, so a part that
+    // dodges the folder names (any path, any percent-encoding of it) is still caught by what it is.
+    if (kind === null) return "malformed_document";
+    if (MACRO_KINDS.has(kind)) return "macro_content";
+    if (EMBEDDING_KINDS.has(kind)) return "embedded_content";
+    if (kind === "externallink") return "external_content";
+    // The one opaque .bin a real document carries is its printer setup, so a .bin target must be that.
+    const targets = (tag.attributes.get("target") ?? []).map((target) => partName(target.trim().replace(/^\/+/, "")));
+    if (targets.some((target) => target === null)) return "malformed_document";
+    if (targets.some((target) => target!.endsWith(".bin")) && kind !== "printersettings") return "embedded_content";
   }
   return null;
 }
@@ -321,7 +339,7 @@ function wordFieldRefusal(xml: string): TeamHubFileRefusal | null {
     if (tag.local === "instrtext") {
       let text = "";
       if (!tag.selfClosing) {
-        const closing = /<\/(?:[A-Za-z_][\w.\-]*:)?instrText\s*>/gi;
+        const closing = /<\/(?:[A-Za-z_][\w.-]*:)?instrText\s*>/gi;
         closing.lastIndex = tag.end;
         const close = closing.exec(xml);
         if (!close) return "malformed_document";
@@ -362,10 +380,26 @@ function entryNameRefusal(name: string): TeamHubFileRefusal | null {
   return null;
 }
 
+/**
+ * A part name as Office resolves it: percent-escapes decoded (part names are URIs, so
+ * `activ%65X/` IS `activeX/`) and lower-cased. Null for a name no package may carry: one that does
+ * not decode, or that uses a backslash or a leading slash, which a reader may treat as a separator.
+ */
+function partName(name: string): string | null {
+  if (name.includes("\\") || name.startsWith("/")) return null;
+  try {
+    return decodeURIComponent(name).toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 async function detectOfficeOpenXml(bytes: Uint8Array): Promise<Detection> {
   const entries = zipEntries(bytes);
   if (!entries) return { mime: null, reason: "malformed_document" };
-  const lowered = entries.map((entry) => entry.name.toLowerCase());
+  const decoded = entries.map((entry) => partName(entry.name));
+  if (decoded.some((name) => name === null)) return { mime: null, reason: "malformed_document" };
+  const lowered = decoded as string[];
   const named = new Set(lowered);
   // A macro project anywhere refuses the file. The central directory is the authority Office reads,
   // and the raw search also catches a name hidden in a local header the directory does not list.
@@ -392,9 +426,13 @@ async function detectOfficeOpenXml(bytes: Uint8Array): Promise<Detection> {
     const inflated = await inflateEntry(bytes, entry, budget);
     if (!inflated) return { mime: null, reason: "malformed_document" };
     const text = xmlText(inflated);
+    // The packaging standard allows only UTF-8 and UTF-16. A part that declares anything else would
+    // be read by Office in an encoding this check did not decode, so its markup is not what we saw.
+    const declared = text === null ? null : /^\uFEFF?<\?xml\b[^>]*?\bencoding\s*=\s*["']([^"']*)["']/i.exec(text)?.[1];
+    if (declared != null && !/^utf-(?:8|16(?:le|be)?)$/i.test(declared.trim())) return { mime: null, reason: "malformed_document" };
     const xml = text === null ? null : markupOnly(text);
     if (xml === null) return { mime: null, reason: "malformed_document" };
-    const name = entry.name.toLowerCase();
+    const name = partName(entry.name)!;
     let reason: TeamHubFileRefusal | null = null;
     if (name === "[content_types].xml") {
       if (DTD.test(xml)) reason = "malformed_document";
@@ -433,7 +471,7 @@ export async function detectTeamHubFileType(bytes: Uint8Array, declaredMime: str
   if (startsWith(bytes, RIFF) && startsWith(bytes, WEBP, 8)) return { mime: "image/webp", reason: null };
   if (startsWith(bytes, GIF87) || startsWith(bytes, GIF89)) return { mime: "image/gif", reason: null };
   if (startsWith(bytes, OLE)) return { mime: null, reason: "legacy_office" };
-  if (startsWith(bytes, ZIP_LOCAL)) return detectOfficeOpenXml(bytes);
+  if (startsWith(bytes, ZIP_LOCAL)) return await detectOfficeOpenXml(bytes);
   if (isPlainText(bytes)) return { mime: declaredMime === "text/csv" ? "text/csv" : "text/plain", reason: null };
   return { mime: null, reason: "unrecognised" };
 }

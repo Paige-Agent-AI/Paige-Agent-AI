@@ -49,8 +49,8 @@ BEGIN
    RAISE EXCEPTION 'Prepared field source is not valid' USING ERRCODE='23514'; END IF;
   own_ids:=pg_catalog.array_append(own_ids,field->>'id');
  END LOOP;
- IF NOT EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(_source->'fields') field
-  WHERE field->>'kind'='signature' AND field->'required'='true'::jsonb) THEN
+ IF NOT EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(_source->'fields') entry(value)
+  WHERE entry.value->>'kind'='signature' AND entry.value->'required'='true'::jsonb) THEN
   RAISE EXCEPTION 'Original required signature field is missing' USING ERRCODE='23514'; END IF;
  FOR answer IN SELECT entry.value FROM pg_catalog.jsonb_array_elements(_proposed->'values') entry(value) LOOP
   IF pg_catalog.jsonb_typeof(answer) IS DISTINCT FROM 'object'
@@ -107,7 +107,7 @@ GRANT EXECUTE ON FUNCTION private.e04_prepared_field_input(jsonb,uuid,timestampt
 -- A BEFORE trigger may pass its exact proposed NEW row; all immutable source
 -- and original event identities still come from their canonical tables.
 CREATE OR REPLACE FUNCTION private.e04_prepared_signed_fields(_candidate public.paige_agreement_signers)
-RETURNS boolean LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a public.paige_agreements%ROWTYPE; p public.paige_agreement_document_preparations%ROWTYPE;
  f public.paige_agreement_events%ROWTYPE; se public.paige_agreement_events%ROWTYPE; ce public.paige_agreement_events%ROWTYPE;
  source jsonb; answers jsonb; expected jsonb; input jsonb; n integer;
@@ -184,6 +184,44 @@ END $$;
 REVOKE ALL ON FUNCTION private.e04_prepared_signed_fields(public.paige_agreement_signers) FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION private.e04_prepared_signed_fields(public.paige_agreement_signers) TO service_role;
 
+-- The original preparation table deliberately has NO direct service-role
+-- SELECT or write grant. Preserve that boundary: pending recipients reuse the
+-- original token-derived reader; returning signatures use original event facts.
+CREATE OR REPLACE FUNCTION private.e04_prepared_signature_context(_candidate public.paige_agreement_signers)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE s public.paige_agreement_signers%ROWTYPE; a public.paige_agreements%ROWTYPE;
+ p public.paige_agreement_document_preparations%ROWTYPE;
+BEGIN
+ SELECT * INTO s FROM public.paige_agreement_signers WHERE id=_candidate.id
+  AND agreement_id=_candidate.agreement_id AND tenant_id=_candidate.tenant_id;
+ IF NOT FOUND OR pg_catalog.to_jsonb(s) IS DISTINCT FROM pg_catalog.to_jsonb(_candidate)
+  OR s.token_hash IS NULL OR s.token_revoked_at IS NOT NULL OR s.token_expires_at IS NULL
+  OR s.token_expires_at<=pg_catalog.clock_timestamp() THEN
+  RAISE EXCEPTION 'Original signing record is unavailable' USING ERRCODE='42501'; END IF;
+ IF s.status IN ('pending','viewed') THEN RETURN public._read_agreement_signing_fields(s.token_hash); END IF;
+ SELECT * INTO a FROM public.paige_agreements WHERE id=s.agreement_id AND tenant_id=s.tenant_id;
+ IF NOT FOUND OR s.status<>'signed' OR a.status NOT IN ('sent','viewed','partially_signed','completed')
+  OR (a.status<>'completed' AND a.expires_at IS NOT NULL AND a.expires_at<=pg_catalog.clock_timestamp()) THEN
+  RAISE EXCEPTION 'Original signing record is unavailable' USING ERRCODE='23514'; END IF;
+ SELECT * INTO p FROM public.paige_agreement_document_preparations
+  WHERE agreement_id=a.id AND tenant_id=a.tenant_id AND is_current FOR SHARE;
+ IF NOT FOUND THEN
+  IF EXISTS(SELECT 1 FROM public.paige_agreement_document_preparations WHERE agreement_id=a.id) THEN
+   RAISE EXCEPTION 'Original prepared source is unavailable' USING ERRCODE='23514'; END IF;
+  RETURN pg_catalog.jsonb_build_object('kind','legacy','tenant_id',a.tenant_id,'agreement_id',a.id,'signer_id',s.id);
+ END IF;
+ IF NOT private.e04_prepared_signed_fields(s) THEN
+  RAISE EXCEPTION 'Original prepared signature evidence is unavailable' USING ERRCODE='23514'; END IF;
+ RETURN pg_catalog.jsonb_build_object('kind','prepared','tenant_id',a.tenant_id,'agreement_id',a.id,'signer_id',s.id,
+  'source_version',a.version,'content_storage_key',p.content_storage_key,'preparation_id',p.id,
+  'preparation_sha256',p.preparation_sha256,'document',p.manifest_canonical::jsonb->'document',
+  'fields',(SELECT pg_catalog.jsonb_agg(entry.value ORDER BY entry.ordinal)
+   FROM pg_catalog.jsonb_array_elements(p.manifest_canonical::jsonb->'fields') WITH ORDINALITY entry(value,ordinal)
+   WHERE entry.value->>'signer_id'=s.id::text));
+END $$;
+REVOKE ALL ON FUNCTION private.e04_prepared_signature_context(public.paige_agreement_signers) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION private.e04_prepared_signature_context(public.paige_agreement_signers) TO service_role;
+
 CREATE OR REPLACE FUNCTION public._record_agreement_signature(
   _token_hash text,_agreement_version integer,_content_sha256 text,_content_storage_key text,
   _typed_name text,_signature_image_png text,_consent_read boolean,_consent_esign boolean,
@@ -198,7 +236,6 @@ DECLARE
   signature_event uuid;
   remaining bigint;
   event_detail jsonb;
-  preparation public.paige_agreement_document_preparations%ROWTYPE;
   prepared_source jsonb; field_input jsonb; field_event uuid;
 BEGIN
   IF _token_hash IS NULL OR _token_hash !~ '^[a-f0-9]{64}$' THEN
@@ -226,22 +263,14 @@ BEGIN
     RAISE EXCEPTION 'Agreement cannot be signed in its current state' USING ERRCODE='23514';
   END IF;
 
-  SELECT * INTO preparation FROM public.paige_agreement_document_preparations
-    WHERE agreement_id=agreement.id AND tenant_id=agreement.tenant_id AND is_current FOR SHARE;
-  IF NOT FOUND AND EXISTS(SELECT 1 FROM public.paige_agreement_document_preparations WHERE agreement_id=agreement.id) THEN
-    RAISE EXCEPTION 'Original prepared source is unavailable' USING ERRCODE='23514'; END IF;
-  IF preparation.id IS NULL AND _prepared_fields IS NOT NULL THEN
+  prepared_source:=private.e04_prepared_signature_context(signer);
+  IF prepared_source->>'kind'='legacy' AND _prepared_fields IS NOT NULL THEN
     RAISE EXCEPTION 'Assigned fields do not belong to a legacy agreement' USING ERRCODE='23514'; END IF;
   IF signer.status='signed' THEN
-    IF preparation.id IS NOT NULL THEN
+    IF prepared_source->>'kind'='prepared' THEN
       IF NOT private.e04_prepared_signed_fields(signer) THEN
         RAISE EXCEPTION 'Original prepared signature evidence is unavailable' USING ERRCODE='23514'; END IF;
       IF _prepared_fields IS NOT NULL THEN
-        prepared_source:=pg_catalog.jsonb_build_object('kind','prepared','signer_id',signer.id,'preparation_id',preparation.id,
-          'preparation_sha256',preparation.preparation_sha256,'document',preparation.manifest_canonical::jsonb->'document',
-          'fields',(SELECT pg_catalog.jsonb_agg(entry.value ORDER BY entry.ordinal)
-            FROM pg_catalog.jsonb_array_elements(preparation.manifest_canonical::jsonb->'fields') WITH ORDINALITY entry(value,ordinal)
-            WHERE entry.value->>'signer_id'=signer.id::text));
         field_input:=private.e04_prepared_field_input(prepared_source,signer.id,signer.signed_at,_prepared_fields);
         IF NOT EXISTS(SELECT 1 FROM public.paige_agreement_events e WHERE e.agreement_id=agreement.id AND e.tenant_id=agreement.tenant_id
           AND e.signer_id=signer.id AND e.event_type='field_values_recorded' AND e.detail->'field_input'=field_input) THEN
@@ -279,7 +308,7 @@ BEGIN
         AND earlier.signing_order<signer.signing_order AND earlier.status<>'signed') THEN
       RAISE EXCEPTION 'Earlier signatures are still outstanding' USING ERRCODE='23514';
     END IF;
-    IF preparation.id IS NOT NULL THEN
+    IF prepared_source->>'kind'='prepared' THEN
       prepared_source:=public._read_agreement_signing_fields(_token_hash);
       field_input:=private.e04_prepared_field_input(prepared_source,signer.id,act_at,_prepared_fields);
     END IF;
@@ -296,7 +325,7 @@ BEGIN
       (agreement_id,tenant_id,signer_id,event_type,actor_kind,actor_email,ip,user_agent,detail,created_at)
       VALUES(agreement.id,agreement.tenant_id,signer.id,'signed','signer',signer.email,_ip,
         pg_catalog.left(coalesce(_user_agent,''),500),event_detail,act_at) RETURNING id INTO signature_event;
-    IF preparation.id IS NOT NULL THEN
+    IF prepared_source->>'kind'='prepared' THEN
       INSERT INTO public.paige_agreement_events
         (agreement_id,tenant_id,signer_id,event_type,actor_kind,actor_email,ip,user_agent,detail,created_at)
         VALUES(agreement.id,agreement.tenant_id,signer.id,'field_values_recorded','signer',signer.email,_ip,
@@ -339,5 +368,111 @@ END $$;
 REVOKE ALL ON FUNCTION public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text) TO service_role;
 
--- Remaining original prepared-fence, seal and forward-guard composition is PROOF OWED.
+CREATE OR REPLACE FUNCTION public._paige_preparation_legacy_token_hold() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE p public.paige_agreement_document_preparations%ROWTYPE; a public.paige_agreements%ROWTYPE;
+ receipt jsonb; credential jsonb;
+BEGIN
+ SELECT * INTO p FROM public.paige_agreement_document_preparations
+  WHERE agreement_id=OLD.agreement_id AND tenant_id=OLD.tenant_id AND is_current;
+ IF NOT FOUND THEN RETURN NEW; END IF;
+ IF (NEW.status IS DISTINCT FROM OLD.status AND NEW.status IN ('viewed','signed'))
+  OR (OLD.token_revoked_at IS NOT NULL AND NEW.token_revoked_at IS NULL) THEN
+  -- Only the original writer's exact mark, backed by its ALREADY inserted
+  -- immutable consent/signature/assigned-field events in the SAME transaction.
+  -- Identity, original credential, expiry and revocation cannot change here.
+  IF OLD.status IN ('pending','viewed') AND NEW.status='signed' THEN
+   receipt:=public._read_agreement_signing_fields(OLD.token_hash);
+  END IF;
+  IF NOT (OLD.status IN ('pending','viewed') AND NEW.status='signed'
+   AND receipt->>'preparation_id' IS NOT DISTINCT FROM p.id::text
+   AND receipt->>'signer_id' IS NOT DISTINCT FROM OLD.id::text
+   AND (pg_catalog.to_jsonb(NEW)-ARRAY['status','signed_at','typed_name','signature_image_png','esign_consent_at','esign_consent_slug','esign_consent_version','esign_consent_sha256','signing_ip','signing_user_agent','updated_at'])
+    IS NOT DISTINCT FROM (pg_catalog.to_jsonb(OLD)-ARRAY['status','signed_at','typed_name','signature_image_png','esign_consent_at','esign_consent_slug','esign_consent_version','esign_consent_sha256','signing_ip','signing_user_agent','updated_at'])
+   AND private.e04_prepared_signed_fields(NEW)) THEN
+  RAISE EXCEPTION 'Prepared-document signing requires the canonical approved send integration' USING ERRCODE='23514';
+  END IF; END IF;
+ IF NEW.token_hash IS DISTINCT FROM OLD.token_hash OR NEW.token_expires_at IS DISTINCT FROM OLD.token_expires_at THEN
+  -- Preserve ORIGINAL void_agreement_signing: it first authorizes/voids through
+  -- void_paige_agreement, revokes access and records the original void event,
+  -- then irreversibly removes the credential. This cannot replace or revive it.
+  IF NEW.token_hash IS NULL AND NEW.token_expires_at IS NULL
+   AND OLD.token_revoked_at IS NOT NULL AND NEW.token_revoked_at IS NOT DISTINCT FROM OLD.token_revoked_at
+   AND (pg_catalog.to_jsonb(NEW)-ARRAY['token_hash','token_expires_at','updated_at'])
+    IS NOT DISTINCT FROM (pg_catalog.to_jsonb(OLD)-ARRAY['token_hash','token_expires_at','updated_at'])
+   AND EXISTS(SELECT 1 FROM public.paige_agreements v WHERE v.id=OLD.agreement_id
+    AND v.tenant_id=OLD.tenant_id AND v.status='voided' AND v.voided_at IS NOT NULL)
+   AND EXISTS(SELECT 1 FROM public.paige_agreement_events e WHERE e.agreement_id=OLD.agreement_id
+    AND e.tenant_id=OLD.tenant_id AND e.event_type='voided' AND e.actor_kind='owner'
+    AND e.actor_user_id=auth.uid()) THEN RETURN NEW; END IF;
+  IF OLD.token_hash IS NOT NULL OR OLD.token_revoked_at IS NOT NULL OR OLD.status<>'pending'
+   OR NEW.token_hash IS NULL OR NEW.token_expires_at IS NULL OR NEW.token_revoked_at IS NOT NULL
+   OR (pg_catalog.to_jsonb(NEW)-ARRAY['token_hash','token_expires_at','updated_at'])
+    IS DISTINCT FROM (pg_catalog.to_jsonb(OLD)-ARRAY['token_hash','token_expires_at','updated_at']) THEN
+   RAISE EXCEPTION 'Prepared-document credential replacement refused' USING ERRCODE='23514'; END IF;
+  receipt:=private.e04_prepared_issuance_write(OLD.tenant_id,OLD.agreement_id,p.id);
+ SELECT entry.value INTO credential FROM pg_catalog.jsonb_array_elements(receipt->'credentials') entry(value) WHERE entry.value->>'signer_id'=OLD.id::text;
+  SELECT * INTO a FROM public.paige_agreements WHERE id=OLD.agreement_id AND tenant_id=OLD.tenant_id;
+  IF receipt IS NULL OR credential IS NULL OR NEW.token_hash !~ '^[a-f0-9]{64}$'
+   OR credential->>'token_commitment' IS DISTINCT FROM pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(NEW.token_hash,'UTF8')),'hex')
+   OR (credential->>'expires_at')::timestamptz IS DISTINCT FROM NEW.token_expires_at
+   OR a.status IS DISTINCT FROM 'draft' OR a.content_storage_key IS DISTINCT FROM p.content_storage_key
+   OR a.content_sha256 IS DISTINCT FROM p.document_sha256 THEN
+   RAISE EXCEPTION 'Prepared-document credential lacks exact original issuance' USING ERRCODE='23514'; END IF;
+ END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._paige_preparation_legacy_token_hold() FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE OR REPLACE FUNCTION public._paige_preparation_legacy_effect_hold() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE p public.paige_agreement_document_preparations%ROWTYPE; receipt jsonb; expected_commercial jsonb;
+BEGIN
+ SELECT * INTO p FROM public.paige_agreement_document_preparations
+  WHERE agreement_id=OLD.id AND tenant_id=OLD.tenant_id AND is_current;
+ IF NOT FOUND THEN RETURN NEW; END IF;
+ IF (NEW.status IS DISTINCT FROM OLD.status AND NEW.status IN ('sent','viewed','partially_signed','completed'))
+  OR NEW.sealed_storage_key IS DISTINCT FROM OLD.sealed_storage_key
+  OR NEW.sealed_sha256 IS DISTINCT FROM OLD.sealed_sha256 THEN
+  -- Only a real ORIGINAL canonical message/Rail publication receipt may let
+  -- this draft record become sent. Other fields and all recipient/signature/
+  -- sealed-file transitions remain under the original closed fences.
+  IF OLD.status='draft' AND NEW.status='sent'
+   AND (pg_catalog.to_jsonb(NEW)-ARRAY['status','updated_at'])
+    IS NOT DISTINCT FROM (pg_catalog.to_jsonb(OLD)-ARRAY['status','updated_at'])
+   AND private.e04_prepared_publication_record(OLD.tenant_id,OLD.id,p.id) IS NOT NULL THEN RETURN NEW; END IF;
+  -- Original partial progress requires actual complete field/signature facts
+  -- for every marked recipient. Completion/sealed-file transitions stay closed.
+  IF OLD.status IN ('sent','viewed') AND NEW.status='partially_signed'
+   AND (pg_catalog.to_jsonb(NEW)-ARRAY['status','updated_at'])
+    IS NOT DISTINCT FROM (pg_catalog.to_jsonb(OLD)-ARRAY['status','updated_at'])
+   AND EXISTS(SELECT 1 FROM public.paige_agreement_signers s WHERE s.agreement_id=OLD.id AND s.tenant_id=OLD.tenant_id AND s.status='signed')
+   AND NOT EXISTS(SELECT 1 FROM public.paige_agreement_signers s WHERE s.agreement_id=OLD.id AND s.tenant_id=OLD.tenant_id
+    AND s.status='signed' AND NOT private.e04_prepared_signed_fields(s)) THEN RETURN NEW; END IF;
+  RAISE EXCEPTION 'Prepared-document signature requests require the canonical approved send integration' USING ERRCODE='23514'; END IF;
+ IF NEW.content_storage_key IS DISTINCT FROM OLD.content_storage_key OR NEW.content_sha256 IS DISTINCT FROM OLD.content_sha256 THEN
+  IF OLD.status<>'draft' OR NEW.status<>'draft' OR OLD.content_storage_key IS NOT NULL OR OLD.content_sha256 IS NOT NULL
+   OR NEW.content_storage_key IS DISTINCT FROM p.content_storage_key OR NEW.content_sha256 IS DISTINCT FROM p.document_sha256
+   OR (pg_catalog.to_jsonb(NEW)-ARRAY['content_storage_key','content_sha256','commercial_presentation','presented_body_markdown','updated_at'])
+    IS DISTINCT FROM (pg_catalog.to_jsonb(OLD)-ARRAY['content_storage_key','content_sha256','commercial_presentation','presented_body_markdown','updated_at']) THEN
+   RAISE EXCEPTION 'Prepared-document freeze differs from the reviewed source' USING ERRCODE='23514'; END IF;
+  receipt:=private.e04_prepared_issuance_write(OLD.tenant_id,OLD.id,p.id);
+  IF receipt IS NULL THEN RAISE EXCEPTION 'Prepared-document freeze requires original approved issuance' USING ERRCODE='23514'; END IF;
+  IF p.commercial_payload_digest IS NOT NULL THEN
+   expected_commercial:=pg_catalog.jsonb_build_object('schema_version',1,'payload',p.manifest_canonical::jsonb#>'{commercial,payload}',
+    'payload_digest',p.commercial_payload_digest,'presented_body_sha256',p.manifest_canonical::jsonb#>'{commercial,presented_body_sha256}',
+    'content_storage_key',p.content_storage_key,'document_sha256',p.document_sha256);
+   IF NEW.commercial_presentation IS DISTINCT FROM expected_commercial
+    OR NEW.presented_body_markdown IS DISTINCT FROM p.manifest_canonical::jsonb#>>'{commercial,presented_body_markdown}' THEN
+    RAISE EXCEPTION 'Prepared commercial presentation differs from reviewed terms' USING ERRCODE='23514'; END IF;
+  ELSIF NEW.commercial_presentation IS DISTINCT FROM OLD.commercial_presentation
+   OR NEW.presented_body_markdown IS DISTINCT FROM OLD.presented_body_markdown THEN
+   RAISE EXCEPTION 'Unreviewed commercial presentation refused' USING ERRCODE='23514';
+  END IF;
+ END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._paige_preparation_legacy_effect_hold() FROM PUBLIC,anon,authenticated,service_role;
+
+-- Prepared seal, forward drift guards and full negative/concurrency proof remain PROOF OWED.
 COMMIT;

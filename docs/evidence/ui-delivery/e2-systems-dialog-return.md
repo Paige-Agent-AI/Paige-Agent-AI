@@ -13,12 +13,12 @@ RENDERED_EVIDENCE: PASS: eleven final original-shell browser-targeted captures a
 BEHAVIORAL_EVIDENCE: PASS: original forward/reverse keyboard focus trap and Escape to Review approval verified on restored native page control; original synthetic draft retained across review and rail fold/open. Original67 source tests retain busy/late-result/account retirement. No confirmation or domain operation was submitted. Earlier exact scroll1429.5999755859375 observation is historical supporting evidence.
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate is not deployed; original authorized account inspection found the keyboard/focus defect without submitting an approval. Corrected released behavior/roles/tenant/cohorts/Live remain owed.
 KEYBOARD_FOCUS: PASS: current native forward/reverse dialog cycling and Escape return observed;390 final return image shows the original control with visible focus. Desktop/390 actions measure44CSSpx. Synthetic Chat draft stays intact.
-ZOOM_REFLOW: UNVERIFIED: final1536/1366/1024/900 and390 CSS reflow/captures now verified; actual200percent native browser zoom remains unverified because the visible native window does not expose the synthetic Systems tab. No CSS scale or raster resize substitutes for browser zoom.
+ZOOM_REFLOW: PASS: actual native Edge menu200percent observed on the original local Systems page; original dialog fits428x208CSSpx without internal overflow, both actions44CSSpx, forward/reverse focus trap and Escape-to-original-control verified. Two unedited page captures join the manifest. Native menu100percent restoration independently observed. Earlier CSS viewport captures remain separate; no CSS scaling or raster resize.
 REDUCED_MOTION: UNVERIFIED: this follow-up adds no animation; the existing media rules remain. Actual current preference and native behavior remain to be observed.
 STATE_COVERAGE: PASS: original success/refusal, busy decision/no repeat activation, Cancel/Escape and account retirement are tested; no draft preparation, diagnostic scan, action cancellation, execution result or backend success is simulated as customer proof.
 TRUTHFUL_STATE_LABELS: PASS: native PARTIAL Ask First/context-not-attached/no-work warning retained. The canonical command-center.systems-check Mind-context binding remains UNAVAILABLE, blocked by absent SCR-2 workspace subject and SCR-3 enumerated counts; the separately mounted recorded-check UI is partial, not Mind eligibility. CAP009–017/actor availability unchanged; no algorithm or action readiness promotion.
 SOLO_UI: YES: shared original SOLO Systems Check workspace for every eligible existing/future account, no account-specific implementation or provisioning change.
-UNVERIFIED: native200percent zoom, current reduced-motion/assistive technology and native pending/late-result/scope-retirement states; final review/exact-head CI, deployment/readback and ordinary role/tenant/cohort/eligibleLive/customer proof. All19/nine and one integrated founder evaluation remain open.
+UNVERIFIED: current reduced-motion/assistive technology and native pending/late-result/scope-retirement states; final review/exact-head CI, deployment/readback and ordinary role/tenant/cohort/eligibleLive/customer proof. All19/nine and one integrated founder evaluation remain open.
 
 OWNER_INTENT: restore usable review exits and preserve the owner's business/conversation context through small safe releases; do not ask for individual product evaluation.
 MUST_NOT_HAPPEN: Escape must not fold global Chat; a still-inert trigger must not receive restoration; an old account's response must not overwrite current UI or release a current pending decision; no click may create new authority.
@@ -59,7 +59,7 @@ including leaving and returning to the same account, or unmount. An old completi
 cannot mutate a new decision's UI/busy state. The original pending operation is
 neither cancelled nor settled by this UI guard; its original domain owns readback.
 
-Functional: bounded source tests. Visual: candidate proof owed, no redesign.
+Functional: bounded source tests. Visual: original-shell responsive and native200percent dialog/focus proof, no redesign.
 Experiential: genuine original defect and corrected source controls, native/released
 return verification owed. Founder Acceptance: NOT_ACCEPTED, full19/nine remain.
 
@@ -104,9 +104,24 @@ scoped dialog actions minimum changes36→44CSSpx. Eleven final captures and the
 hashes are committed in the existing UI evidence assets. All screenshots are
 synthetic original-component proof, with no backend/provider or approved action.
 The original Ask First/decision contracts, canonical writers and earlier failures
-remain. Native Confirm was never retried or bypassed. Original200percent/current
-reduced-motion/native pending/scope checks and released customer QA stay owed.
+remain. Native Confirm was never retried or bypassed. Actual200percent native zoom and
+restoration100percent were subsequently observed; current reduced-motion/native
+pending/scope checks and released customer QA stay owed.
 Applied [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
 control reachability, responsive composition, keyboard/focus and truthful-state
 checks; corrected the observed36px dialog target. No typography/redesign/runtime
 change, algorithm promotion, capability activation or founder acceptance.
+
+### October24 native zoom continuation
+
+Native Edge menu200percent was observed directly, followed by the original
+Systems alertdialog:428x208CSSpx, scroll extent equal to client extent, both
+actions44CSSpx. Reverse/forward keyboard cycling and Escape restore the exact
+connected Review approval control with visible focus. Two page-only JPEGs are
+unedited; native browser chrome is excluded. Menu100percent restoration was
+separately observed. No Confirm, domain operation or receipt was submitted.
+Current-main229fb5e9 is composed; original component/styles blobs remain exact.
+A subsequent development hot reload reset the synthetic composer, so no draft
+continuity claim is added by this zoom checkpoint; earlier bounded draft proof
+remains separate. Current preference/AT, native busy/account and released ordinary
+proof remain explicitly unverified, not a reason to invent activation or acceptance.

@@ -426,6 +426,8 @@ ZION result, historical acceptance or full ten-outcome/E5/founder closure.
 
 ## EXP02 Systems Check dialog return — October23 source candidate
 
+**October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.
+
 **October24 restored confirmation:** current-main03ed is composed; original
 component6ee9d5f9 is retained and its dialog-action CSS minimum improves36→44px.
 Original67/67 tests pass in34.52s. Eleven final original-shell captures now include

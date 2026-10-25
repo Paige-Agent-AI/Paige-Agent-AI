@@ -32,10 +32,11 @@
     "Desktop and390 decision controls render44CSSpx high after the scoped original rule repair.",
     "All four requested CSS widths read back exactly and document scrollWidth equals clientWidth.",
     "At1024/900 the original PAIGE overlay is retained: fold it before review; open-rail screenshots show the retained conversation rather than clicking through its backdrop.",
-    "Viewport restored after checks."
+    "Viewport restored after checks.",
+    "Native Edge browser menu200percent observed; original dialog428x208CSSpx without internal overflow and two44CSSpx actions. Forward/reverse focus trap and Escape to original connected Review approval observed. Native menu100percent restoration separately verified."
   ],
   "unverified": [
-    "native200percent browser zoom and reduced-motion setting",
+    "current reduced-motion setting and assistive technology",
     "native pending/late-result/other-account execution states",
     "authenticated released candidate, roles, tenant isolation, cohorts, eligible Live and full Experience/founder acceptance"
   ],
@@ -44,7 +45,8 @@
     "Read-only role evaluation timed out, then original DOM observation recovered.",
     "One tablet click during viewport movement opened Review dismissal; safely cancelled, settled Review approval then verified. No action was confirmed.",
     "All preliminary36px-button frames are supporting diagnostics only; final files below are after the44px source correction.",
-    "Earlier wrong-native-window screenshot and historical lagged frames remain excluded."
+    "Earlier wrong-native-window screenshot and historical lagged frames remain excluded.",
+    "After current-main composition, development hot reload reset the synthetic draft; no additional draft-retention claim is inferred from the native zoom checkpoint."
   ],
   "files": [
     {
@@ -123,6 +125,31 @@
       "sha256": "f3bd3eb7b323e71b3f81130dd0abc6db4761856734b9623da1daa0c9bf1ea815",
       "width": 900,
       "height": 1000
+    },
+    {
+      "name": "oct24-native-200-dialog.jpg",
+      "bytes": 30042,
+      "sha256": "4366e6bf44ad2b128b85f3c9079166e4a029706159a141125572ebb1d0340d99",
+      "width": 757,
+      "height": 387
+    },
+    {
+      "name": "oct24-native-200-return.jpg",
+      "bytes": 29570,
+      "sha256": "669a2c20bf7a8a001f15b6d25239040495a14559ba073c71ce1618712d2c6e4f",
+      "width": 757,
+      "height": 387
     }
-  ]
+  ],
+  "composedMain": "229fb5e968b1c4106e871bad4e66e7b087c882ae",
+  "zoom": {
+    "nativeMenuPercent": 200,
+    "restoredNativeMenuPercent": 100,
+    "dialogCss": {
+      "width": 428,
+      "height": 208,
+      "buttonHeight": 44
+    },
+    "confirmationSubmitted": false
+  }
 }

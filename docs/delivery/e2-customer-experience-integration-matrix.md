@@ -153,6 +153,8 @@ and catalogue maturity remain unchanged; one integrated founder evaluation.
 
 ## EXP02 Systems Check dialog return — October23 source candidate
 
+**October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.
+
 **October24 update:** composed main03ed, original67/67 PASS; eleven final native
 synthetic captures now cover eight closed/open layouts and desktop/390 dialog
 focus return. Original dialog actions render44px after a scoped CSS correction.

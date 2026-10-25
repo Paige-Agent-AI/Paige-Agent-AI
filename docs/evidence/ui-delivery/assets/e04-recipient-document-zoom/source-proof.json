@@ -1,0 +1,270 @@
+{
+  "sourceHead": "455a14f00223693d5b3ab2f65f49fb96c2557e13",
+  "scope": "Actual product source, original PDF renderer/ceremony; only synthetic SDK and private host/styles. No hosted auth/native act/provider acceptance.",
+  "candidateExact": true,
+  "productionInputs": 28,
+  "syntheticInputs": 5,
+  "inputs": [
+    {
+      "path": "work/c36-recipient-prototype/index.html",
+      "privateFixture": true,
+      "sha256": "bfae04d47d8b6581071de5b15f1b7f11b0c01235074ee9efa6ff64d4949cefc4"
+    },
+    {
+      "path": "work/c36-recipient-prototype/src/main.tsx",
+      "privateFixture": true,
+      "sha256": "26b75d20b4fda859fe8dd698842ca965c611f550f14867f76e737e9c7373e5cb"
+    },
+    {
+      "path": "work/c36-recipient-prototype/src/sdk.ts",
+      "privateFixture": true,
+      "sha256": "6aac4e66117c7893b49c2f43544585fd19a5aa6bb14bf4f01f784d50e4d4cfb1"
+    },
+    {
+      "path": "work/c36-recipient-prototype/src/source-host.css",
+      "privateFixture": true,
+      "sha256": "480850ac5d83c8907ebc77e1af4e900bcf915535f8ed1d648ddbc24c3e7b82ff"
+    },
+    {
+      "path": "work/c36-recipient-prototype/src/themes.css",
+      "privateFixture": true,
+      "sha256": "eb518a91c12d9cba744f0aa00f014bf02b2827c68486785ff40464c19bdc3faa"
+    },
+    {
+      "path": "src/index.css",
+      "privateFixture": false,
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "src/solo/sales/agreement-document-fields.css",
+      "privateFixture": false,
+      "sha256": "310de6a0a06912ad99b5ed56f04ec816a982e8d632ccb624fb113791432d1fb4"
+    },
+    {
+      "path": "src/pages/sign/AgreementSigning.tsx",
+      "privateFixture": false,
+      "sha256": "85093a5f8d4087f512dd9ad9cdfb85db6036621afb2c228fe05fd9e16de323f9"
+    },
+    {
+      "path": "src/solo/sales/fixtures/agreement-document-source.json",
+      "privateFixture": false,
+      "sha256": "e9a9a8abe99f3b916334be651e95a7e3a8d10fb941624c3d1042e32779aadb25"
+    },
+    {
+      "path": "src/pages/sign/agreement-signing.css",
+      "privateFixture": false,
+      "sha256": "42720dd7a23b315d5144fe2cc7fd22524a5cc5dd3860ecdb4de030fc39ae9dbd"
+    },
+    {
+      "path": "src/pages/sign/RecipientAgreementDocument.tsx",
+      "privateFixture": false,
+      "sha256": "33894f5f8c633751280a75ceee1d15739407e2bb9d329226f4643c2e9443e611"
+    },
+    {
+      "path": "src/pages/sign/recipientSigningFields.ts",
+      "privateFixture": false,
+      "sha256": "fd80b7b1e47902727d37fa3eb48da6b08988b5563f95854824114e8be2abd073"
+    },
+    {
+      "path": "src/pages/sign/recipient-signing.css",
+      "privateFixture": false,
+      "sha256": "211d0b26aeae193fa6871c8d58fdf465979e87f76a3434567ec395fb4e7f8bc6"
+    },
+    {
+      "path": "src/solo/sales/AgreementPdfPage.tsx",
+      "privateFixture": false,
+      "sha256": "7376f3708e1c5d00f7b9dc73e0b68d9d42c2f1d46dff31c14e30841be6e54ace"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+      "privateFixture": false,
+      "sha256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+      "privateFixture": false,
+      "sha256": "291dc4af1f8543d67f451545c0970de4ae7e1cf02fed32df22a510c415091b38"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/signing-guard.ts",
+      "privateFixture": false,
+      "sha256": "3997edf2abb0e9064b1e6e89aac68fce9a2aded43caa90b0f3f1b4e167a54ad7"
+    },
+    {
+      "path": "src/solo/sales/agreementDocumentModel.ts",
+      "privateFixture": false,
+      "sha256": "e20769ea15ab97013b48bc6197b624d57d80bfa1b03b89ddf9b12399da3c5766"
+    },
+    {
+      "path": "src/solo/sales/agreementPdfRenderer.ts",
+      "privateFixture": false,
+      "sha256": "fe3465a5190e6b578c5ff97feb4b337facb214ebad9e5126b4a1cbb0a1671e4a"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/token.ts",
+      "privateFixture": false,
+      "sha256": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+      "privateFixture": false,
+      "sha256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+      "privateFixture": false,
+      "sha256": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/contract.ts",
+      "privateFixture": false,
+      "sha256": "0d538a7c9b51f2065a36bae4c70095ec622971202807dc9b97766b9971f01c64"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/model.ts",
+      "privateFixture": false,
+      "sha256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+      "privateFixture": false,
+      "sha256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+      "privateFixture": false,
+      "sha256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/document.ts",
+      "privateFixture": false,
+      "sha256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+      "privateFixture": false,
+      "sha256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/effectuation-command.ts",
+      "privateFixture": false,
+      "sha256": "dbb81094e9b7903e9458533c7e81dad71f4f0fc0d11d51931fdaba36ad26aad1"
+    },
+    {
+      "path": "supabase/functions/_shared/doc-render.ts",
+      "privateFixture": false,
+      "sha256": "06f72d693cd333b18bfab176112f66bd3862f58ac3a29a298f2cdb02fc2b6fe2"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/document-preparation.ts",
+      "privateFixture": false,
+      "sha256": "4164eeb196c1c599e486ac95efdeb21eb9a0287427e9fd8830dc8ac3f4a2b630"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/retained-document.ts",
+      "privateFixture": false,
+      "sha256": "cee0296f159becaf704d8853b32dc205033dd8f34d6a0dd878e7a1a60e920db0"
+    },
+    {
+      "path": "supabase/functions/_shared/provider-types.ts",
+      "privateFixture": false,
+      "sha256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "1536-dark-zoom.jpg",
+      "bytes": 76749,
+      "sha256": "be35c6fe133fd39507cc6dbd56c940b1f6087df0ad40e9c595c9a63d51f36678",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1521,
+      "pixelHeight": 763
+    },
+    {
+      "path": "1536-light-zoom.jpg",
+      "bytes": 78490,
+      "sha256": "51608a32bcd1052ceadb2a359bbcf42182a15f448b2952dcc45968f5012912f1",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1521,
+      "pixelHeight": 763
+    },
+    {
+      "path": "390-dark-zoom.jpg",
+      "bytes": 37985,
+      "sha256": "00a1f0ea65a7e4d0efa89effe5e6f45338454dea390074d9bdff2a902a4b7950",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "390-fresh-consent.jpg",
+      "bytes": 35793,
+      "sha256": "e1c10f5018a68ee5a2321d05c870ce1dce304a26432710b9dfb126b567509d47",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "390-light-zoom.jpg",
+      "bytes": 37612,
+      "sha256": "7b684ae7ade5cb16f7dfac251155fc12f373848f5f96d15a9807648d2eb4ce86",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 375,
+      "pixelHeight": 811
+    },
+    {
+      "path": "actual-geometry.json",
+      "bytes": 3416,
+      "sha256": "23218d028f37d5f2c76df083cbeccfc3aee01dc9942f69a1c5a15eac0c18b96b",
+      "mimeType": "application/json"
+    },
+    {
+      "path": "actual-review-retirement.json",
+      "bytes": 916,
+      "sha256": "118ae39167545fe54f05dbc6af36885c0080d6340342a7aa4ae04946c440562e",
+      "mimeType": "application/json"
+    },
+    {
+      "path": "prototype-v2-selection.jpg",
+      "bytes": 126436,
+      "sha256": "56f56a6516cd320262765e9f8257837ba00a114fd905f644591bc400eaf49f61",
+      "mimeType": "image/jpeg",
+      "pixelWidth": 1425,
+      "pixelHeight": 990
+    },
+    {
+      "path": "prototype-v1-contrast-failure.json",
+      "bytes": 335,
+      "sha256": "8291c3a2e339a374ca635443cca95d907edc595f80337436b47a13e2afab7135",
+      "mimeType": "application/json"
+    },
+    {
+      "path": "original-case-continuity.json",
+      "bytes": 455,
+      "sha256": "ffbc96db84e25ceeceb0d4c79bc6a72b31341e983c0f5a09fba0a79b514eb187",
+      "mimeType": "application/json"
+    }
+  ],
+  "checks": {
+    "fourLayoutsMeasured": true,
+    "pageHorizontalOverflowZero": true,
+    "zoomAndReset44px": true,
+    "keyboardFocusVisible": true,
+    "keyboardPan40px": true,
+    "answersRetained": true,
+    "freshConsentAfterZoom": true,
+    "retiredConsentEffectivelyDisabled": true,
+    "originalCasesByteExact": true,
+    "focused79Pass": true,
+    "lintExit": 0,
+    "originalTypeRatchetExit": 0,
+    "baseline": 10,
+    "current": 6
+  },
+  "limitations": [
+    "Actual browser zoom/AT/phone",
+    "Hosted final release and actual recipient token/native prepared act/receipts/reload",
+    "Work cohort, sender, HIGH, issuer, atomic fields/signature/seal",
+    "Central QA, all12 and integrated founder acceptance"
+  ]
+}

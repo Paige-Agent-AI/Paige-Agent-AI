@@ -862,6 +862,20 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 These three source releases preserve the complete O1–O12 destination. They do not establish payment, notification, signed-agreement or completed-service evidence; full CentralQA and integrated founder acceptance remain open. ALG01/12 remain PARTIAL, ALG02 incomplete and ALG13 usefulness UNVERIFIED; no catalogue maturity, activation, provider/role change, customer version or announcement. Historical production identities describe their respective release readbacks, not a claim that moving production aliases remain pinned.
 
+**2026-10-25 UTC - EXP05 weekly Chat save and source recovery; merged source, full Edge proof failed.**
+
+| Increment | Exact source and observed delivery | Completion boundary |
+| --- | --- | --- |
+| [#2792](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2792), original weekly Chat draft save and exact outcome recovery | Reviewed `4c86a87dac31bd1d18c5729dfd7bb0b57e24273c`, AUTHOR-REVIEW / LOWER ASSURANCE5641424249, all11 required check groups and two web statuses SUCCESS; actual main `61d3308269aadd7c80d050a87f0b718a85d798c5` / tree `ff60dd5d821e67430a6f9eb3975494126f9a404a` equals inspected union. Web `dpl_35DwSKc4S9ZuHg5bgibRPBvEXFwg` READY; both canonical versions returned200/exact61d-mvncf7qi/customerUpdate:null at that release readback. Original Edge40162938654 acknowledged five uploads; artifact12587131886/SHAf2df80eb4870962aab2c32812fbd935c7aa825293287531e55889f4ca03e14c0 had four source PASS and Chat `cli_readback_failed`. Own migration N/A. | SOURCE MERGED / WEB READBACK VERIFIED / FULL EDGE SOURCE UNVERIFIED. No source certificate, ordinary approval/native result/original Rail/reload, recurrence, separate Live or founder acceptance earned. Original records/security/activation gates remain; no capability or parity closure. |
+| [#2808](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2808), bounded vendor download recovery and certified-gap selection | Reviewed `5fbe84e3e9fbcce122d915c13f55ca6edf8e9691`, sequential LOWER5641740002/5641859900; all10 applicable checks and two web statuses SUCCESS, schema-free Preview SKIPPED. Actual main `18757b70a80781717efd807dc3a96e14c5378e6a` / tree `3d0f323145c449233072358469b15b89fe7724b2` equals inspected union, all15934 outside entries preserved. Original Edge40169531913/job121097383014 acknowledged six uploads but artifact12588952958/SHA37cc37e4567b56862c7e39f599b1905a6ddf76ebe5a9aaba9eddf182fc45380c FAILED `invalid_readback_input`; edge-live did not advance. Web target `dpl_CfnwCzPW7DHW85BrjLX25DJpsxr2` READY/exact18757 by metadata; actual public hosts returned200/newer2d9403-mvnglf5a/null, not an exact18757 served-version proof. [Actual receipt6394588006](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2808#issuecomment-6394588006). | CONTROL-PLANE SOURCE MERGED / ACTUAL VERIFICATION FAILED CLOSED. Underlying provider-path error remains unresolved; source-only local input closure and upload/ACTIVE metadata do not certify deployed bytes. No business runtime, policy, provider, catalogue, algorithm maturity or customer acceptance change. |
+
+The existing [source-verification evidence](evidence/exp05-edge-bundle-readback.json)
+preserves both failures. Calendar#2805, diagnostic#2816 and Task history preparation
+are excluded from these two release rows; their later receipts must stand independently. No customer release
+identity or publication is earned; the complete ten outcomes/E5-CV1–9, ordinary
+authorized records/receipts/reload/isolation and one founder evaluation remain open.
+These are the sole closeout rows for these two deliveries; the mechanical closeout is not logged recursively.
+
 **2026-10-25 UTC - EXP05 original internal-task decision history (#2788).**
 
 | Increment | Exact release and production proof | Completion boundary |

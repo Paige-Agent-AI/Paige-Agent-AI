@@ -32,7 +32,7 @@ RELEASE_CLASSIFICATION: internal-only: invitation admission/recovery correction,
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement proposed.
 RELEASE_NOTE_REQUIRED: no: bounded correction with source proof and separate authenticated acceptance.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local native/source proof passes; production and ordinary authenticated outcome PROOF OWED. Existing clients.portal status and capability/algorithm maturity unchanged.
-RELEASE_RECOVERY: guarded forward correction retaining all prior restrictions; reference20271114120009_e09_consumer_invite_act_time.sql, exact source/inverse/replay/refusal proof and normal original pipeline. Preserve migration history; never restore transaction-start deadline semantics, use include-all or send a duplicate invitation.
+RELEASE_RECOVERY: position=guarded forward correction retaining all prior restrictions; reference=20271114120009_e09_consumer_invite_act_time.sql, exact source/inverse/replay/refusal proof and normal original pipeline. Preserve migration history; never restore transaction-start deadline semantics, use include-all or send a duplicate invitation.
 
 ## Original native contract
 

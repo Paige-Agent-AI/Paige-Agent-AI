@@ -391,11 +391,19 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE paths jsonb;
 BEGIN
  IF auth.role() IS DISTINCT FROM 'service_role' THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ -- Also re-offers this uploader's discarded or refused files whose object is still stored: a removal
+ -- that failed or timed out is retried on the next sweep instead of waiting for account retirement.
  WITH claimed AS (
   UPDATE public.team_hub_files x SET state='discarded'
    WHERE x.uploaded_by=p_uploader AND x.state IN ('pending','ready') AND x.message_id IS NULL AND x.created_at<=now()-interval '1 day'
-   RETURNING x.storage_path)
- SELECT coalesce(jsonb_agg(c.storage_path ORDER BY c.storage_path),'[]'::jsonb) INTO paths FROM claimed c;
+   RETURNING x.storage_path),
+ leftover AS (
+  SELECT x.storage_path FROM public.team_hub_files x
+   WHERE x.uploaded_by=p_uploader AND x.state IN ('discarded','rejected')
+    AND EXISTS(SELECT 1 FROM storage.objects o WHERE o.bucket_id='comms-attachments' AND o.name=x.storage_path)
+   ORDER BY x.created_at LIMIT 100),
+ every AS (SELECT c.storage_path FROM claimed c UNION SELECT l.storage_path FROM leftover l)
+ SELECT coalesce(jsonb_agg(e.storage_path ORDER BY e.storage_path),'[]'::jsonb) INTO paths FROM every e;
  RETURN jsonb_build_object('ok',true,'paths',paths);
 END $$;
 REVOKE ALL ON FUNCTION public.team_hub_claim_stale_files(uuid) FROM PUBLIC, anon, authenticated;

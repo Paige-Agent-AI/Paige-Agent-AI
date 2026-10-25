@@ -960,11 +960,21 @@ SET ROLE authenticated;
 SELECT pg_temp.check(public.team_hub_post_message(:'ta',:'general','',gen_random_uuid(),NULL,'{}',ARRAY[:'fpost']::uuid[])->>'ok'='true', 'claim: setup: a posted file');
 RESET ROLE;
 UPDATE public.team_hub_files SET created_at=now()-interval '3 days' WHERE id IN (:'fold',:'fpost');
+-- The edge function removed the objects of every file discarded or refused earlier in this proof.
+DELETE FROM storage.objects o USING public.team_hub_files x
+ WHERE o.bucket_id='comms-attachments' AND o.name=x.storage_path AND x.state IN ('discarded','rejected');
 SELECT pg_temp.service();
 SELECT pg_temp.check(public.team_hub_claim_stale_files(:'u1')=jsonb_build_object('ok',true,'paths',
   (SELECT jsonb_agg(x ORDER BY x) FROM unnest(ARRAY[:'pw',pg_temp.path(:'fold')]) x)),
  'claim: returns exactly the uploader''s pending and ready unposted files older than a day');
-SELECT pg_temp.check(public.team_hub_claim_stale_files(:'u1')=jsonb_build_object('ok',true,'paths','[]'::jsonb), 'claim: a second sweep finds nothing');
+-- The stale pending file's upload was refused in section 7, so only the ready file has stored bytes.
+SELECT pg_temp.check(public.team_hub_claim_stale_files(:'u1')=jsonb_build_object('ok',true,'paths',jsonb_build_array(pg_temp.path(:'fold'))),
+ 'claim: a removal that failed (object still stored) is offered again on the next sweep; a file with no stored object is not');
+RESET ROLE;
+DELETE FROM storage.objects o WHERE o.bucket_id='comms-attachments' AND o.name IN (:'pw',pg_temp.path(:'fold'));
+SELECT pg_temp.service();
+SELECT pg_temp.check(public.team_hub_claim_stale_files(:'u1')=jsonb_build_object('ok',true,'paths','[]'::jsonb),
+ 'claim: once the objects are removed, a sweep finds nothing');
 RESET ROLE;
 SELECT pg_temp.check((SELECT state FROM public.team_hub_files WHERE storage_path=:'pw')='discarded', 'claim: the stale pending file is discarded'),
  pg_temp.check((pg_temp.file(:'fold')).state='discarded' AND (pg_temp.file(:'fold')).message_id IS NULL, 'claim: the stale ready, never-posted file is discarded'),

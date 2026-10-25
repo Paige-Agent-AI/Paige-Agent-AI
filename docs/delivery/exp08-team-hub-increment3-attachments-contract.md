@@ -174,7 +174,7 @@ All are SECURITY DEFINER with `search_path=''` and return `{ok, code}`. They reu
     It then sets `ready` and `checked_at`. Otherwise it sets `rejected` with the reason.
   - Returns `{ok, state}`.
 - **`team_hub_claim_stale_files(p_uploader)`**
-  - Marks the uploader's own unposted (`pending` or `ready`, `message_id IS NULL`) files older than one day as `discarded`, and returns their paths so the edge function can remove the objects. A post locks the same rows `FOR UPDATE` and requires `ready`, so a file is either posted or swept, never both.
+  - Marks the uploader's own unposted (`pending` or `ready`, `message_id IS NULL`) files older than one day as `discarded`, and returns their paths so the edge function can remove the objects. A post locks the same rows `FOR UPDATE` and requires `ready`, so a file is either posted or swept, never both. The same sweep re-offers that uploader's discarded or refused files whose object is still stored, so a removal that failed or timed out is retried rather than left until retirement.
   - **Known limit:** the sweep runs when that person next finishes an upload. There is no scheduled sweep yet, so a person who never uploads again leaves at most 20 unreadable files until account retirement.
 
 ## 5. Edge function `team-hub-file`

@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(338);
+SELECT plan(341);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -884,6 +884,20 @@ SELECT is((SELECT result->>'source_state' FROM historical_publication_source),'s
 SELECT is((SELECT result->>'customer_action_id' FROM historical_publication_source),(SELECT result->>'customer_action_id' FROM publication_result),'returning source preserves the original customer action identity');
 SELECT is((SELECT result->'args' FROM historical_publication_source),'null'::jsonb,'historical source cannot create a replacement approval from old words');
 SELECT is((SELECT count(*) FROM public.paige_customer_actions WHERE id=(SELECT (result->>'customer_action_id')::uuid FROM publication_result)),1::bigint,'historical source does not create another customer action');
+-- Receipt corruption controls use another real same-customer publication, then
+-- roll back each synthetic mapping mutation. A link alone is not that receipt.
+CREATE TEMP TABLE unrelated_source_publication AS SELECT pg_temp.as_user('e0917000-0000-4000-8000-000000000001',format(
+ 'SELECT public.admin_propose_paige_actions(%L,%L::jsonb)','e0937000-0000-4000-8000-0000000000ef',
+ '[{"action_type":"recommendation","title":"Another actual request","body":"Different exact words","payload":{}}]')) result;
+SELECT is(pg_temp.publication_source_mutation(format('UPDATE public.paige_actions SET customer_action_id=%L WHERE id=%L',
+ (SELECT result#>>'{ids,0}' FROM unrelated_source_publication),(SELECT result#>>'{request,work_id}' FROM publication_request)))->>'sqlstate',
+ '55000','historical sharing source refuses an unrelated same-customer publication');
+SELECT is(pg_temp.publication_source_mutation(format('UPDATE public.paige_actions SET payload=payload-''client_portal_publication'' WHERE id=%L',
+ (SELECT result#>>'{request,work_id}' FROM publication_request)))->>'sqlstate',
+ '55000','historical sharing source requires the original publication marker');
+SELECT is(pg_temp.publication_source_mutation(format('UPDATE public.paige_actions SET result=jsonb_set(result,''{ids}'',jsonb_build_array(%L::text)) WHERE id=%L',
+ (SELECT result#>>'{ids,0}' FROM unrelated_source_publication),(SELECT result#>>'{request,work_id}' FROM publication_request)))->>'sqlstate',
+ '55000','historical sharing source refuses a different original publisher result');
 
 SELECT * FROM finish();
 ROLLBACK;

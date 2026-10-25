@@ -706,7 +706,7 @@ function focusedPublicationProof({sql,check,assert,read,prepare,publish,snapshot
  return {baseline:focusBaseline,migration:file,originalSource:'81e21f92abe3d552f89d98c8d7b3b9d3',sourceProof,outerOwnerChat:'NOT_MOUNTED_OR_PROVEN',productionOperation:false};
 }
 
-function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit,read}){
+function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit,read,receiptChecks=true,guardFile='supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql'}){
  const f=prepare(),sig='public.read_client_portal_request_share_source(uuid,uuid,uuid,uuid)';
  const statement=(o={})=>{const x={expected:f.other,tenant:f.tenant,contact:f.contact,work:f.request.work_id,...o};return `SELECT public.read_client_portal_request_share_source(${lit(x.expected)},${lit(x.tenant)},${lit(x.contact)},${lit(x.work)})`;};
  const invoke=(o={})=>{const actor=o.actor===undefined?f.other:o.actor,role=o.role??'authenticated';const out=sql(`BEGIN;SELECT set_config('test.actor',${lit(actor??'')},true);SET LOCAL ROLE ${role};${statement(o)};COMMIT;`);return JSON.parse(out.split('\n').find(x=>x.startsWith('{')));};
@@ -743,11 +743,13 @@ function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit,r
   const original=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
   const changed=original.replace('DECLARE intent_id uuid;','DECLARE /* unreviewed forward control */ intent_id uuid;');assert.notEqual(changed,original);
   try{sql(changed);const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);
-   assert.throws(()=>sql(read('supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql')),/source changed/);
+   assert.throws(()=>sql(read(guardFile)),/source changed/);
    assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
   }finally{sql(original);}
  });
  const shared=publish(f);
+ const unrelated=receiptChecks?JSON.parse(sql(`BEGIN;SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;
+  SELECT public.admin_propose_paige_actions('${f.contact}','[{"action_type":"recommendation","title":"Other actual request","body":"Other words","payload":{}}]'::jsonb);COMMIT;`).split('\n').find(x=>x.startsWith('{'))).ids[0]:null;
  check('Already-shared source returns the same canonical identity and no new proposal or content',()=>{
   const before=snapshot(),r=invoke();assert.equal(r.source_state,'shared');assert.equal(r.args,null);assert.equal(r.customer_action_id,shared.customer_action_id);assert.equal(snapshot(),before);
  });
@@ -755,6 +757,32 @@ function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit,r
   sql(`UPDATE public.clients SET portal_access_state='paused',paige_shared_context_consent=false WHERE id='${f.contact}'`);
   const before=snapshot(),r=invoke();assert.equal(r.source_state,'shared');assert.equal(r.customer_action_id,shared.customer_action_id);assert.equal(r.args,null);assert.equal(snapshot(),before);
  });
+ if(receiptChecks){
+ const receiptFile='supabase/migrations/20271114230119_e09_original_request_receipt_readback.sql';
+ const metadata=()=>sql(`SELECT jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,'args',pg_get_function_arguments(oid),'result',pg_get_function_result(oid)) FROM pg_proc WHERE oid='${sig}'::regprocedure`);
+ const beforeMetadata=metadata(),original=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
+ check('Historical-source forward repair applies without changing any original business data',()=>{const before=snapshot();sql(read(receiptFile));assert.equal(snapshot(),before);});
+ check('Receipt-readback inverse restores the entire original source definition',()=>{
+  const migration=read(receiptFile),part=tag=>migration.split('$'+tag+'$')[1];
+  const current=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
+  assert.equal(current.split(part('decl_after')).length,2);assert.equal(current.split(part('receipt_guard')).length,2);
+  assert.equal(current.replace(part('decl_after'),()=>part('decl_before')).replace(part('receipt_guard'),()=>part('share_anchor')),original);
+ });
+ check('Receipt-readback preserves the original source OID, ABI, owner, ACL and search path',()=>assert.equal(metadata(),beforeMetadata));
+ check('The same receipt-readback forward replays without any original data change',()=>{const before=snapshot();sql(read(receiptFile));assert.equal(snapshot(),before);});
+ for(const [name,change]of [
+  ['an unrelated same-customer record',`UPDATE public.paige_actions SET customer_action_id='${unrelated}' WHERE id='${f.request.work_id}'`],
+  ['missing original publication marker',`UPDATE public.paige_actions SET payload=payload-'client_portal_publication' WHERE id='${f.request.work_id}'`],
+  ['different original publisher result',`UPDATE public.paige_actions SET result=jsonb_set(result,'{ids}',jsonb_build_array('${unrelated}'::text)) WHERE id='${f.request.work_id}'`]
+ ])check('Historical sharing source refuses '+name,()=>{
+  const before=snapshot();assert.throws(()=>sql(`BEGIN;${change};SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;${statement()};ROLLBACK;`),/PORTAL_REQUEST_SOURCE_CHANGED/);assert.equal(snapshot(),before);
+ });
+ check('Exact original receipt still reconciles after customer access and consent are withdrawn',()=>{
+  const before=snapshot(),r=invoke();assert.equal(r.source_state,'shared');assert.equal(r.customer_action_id,shared.customer_action_id);assert.equal(r.args,null);assert.equal(snapshot(),before);
+ });
+ const currentReader=publicationSourceProof({sql,check:(name,body)=>check('Current receipt-backed reader: '+name,body),assert,prepare,publish,snapshot,lit,read,receiptChecks:false,guardFile:receiptFile});
+ return {function:sig,sourceBody:sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),readOnly:true,approval:'NOT_ISSUED',currentReader,productionOperation:false};
+ }
  return {function:sig,sourceBody:sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),readOnly:true,approval:'NOT_ISSUED',productionOperation:false};
 }
 

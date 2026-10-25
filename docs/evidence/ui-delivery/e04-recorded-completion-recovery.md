@@ -4,7 +4,7 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: returning recipient -> original token-only signature verification -> source-backed prepared completion availability -> explicit original completion -> retained-copy readback -> original token-only PDF download. Interrupted replies return to an ordinary read, never another signature.
 PAIGE_UI_DESIGN: PASS: project skill and applicable intent, visual, interaction, protected-regression and release modules applied. Existing public signing page, tokens and document architecture retained.
 MATERIAL_FLOW_CHANGE: YES: adds explicit recorded-completion recovery and completed-copy download to the existing recipient result page, plus correctable field-refusal feedback.
-FLOW_PROTOTYPE: PASS: read-only thirteen-state prototype and eight-line brief preceded implementation; retained brief in assets/e04-recorded-completion-recovery/prototype-flow.md. Owner's full Agreements/recovery authority and one integrated founder evaluation govern this continuation; no separate prototype or founder acceptance is invented.
+FLOW_PROTOTYPE: PASS: read-only thirteen-state prototype and eight-line brief preceded implementation; retained brief in assets/e04-recorded-completion-recovery/prototype-flow.txt. Owner's full Agreements/recovery authority and one integrated founder evaluation govern this continuation; no separate prototype or founder acceptance is invented.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized recipient can finish a previously recorded prepared agreement without signing again, and obtain the same verified completed document.
 VISUAL_DIRECTION: PASS: existing approved public signing world, PAIGE palette, hierarchy, result panel and focus ring. Responsive actions and source-backed recovery use existing controls; failure callouts use existing error tokens.
 AUTOMATED_EVIDENCE: PASS: actual SDK/HTTP/PDF consumers114tests/181steps, including original77 handler steps and18 new recovery steps; original UI65 plus recipient-field15 tests,80total/twofiles. Causal absent-action baseline and original tests retained; exact logs/hashes in source-proof.json.
@@ -26,13 +26,13 @@ MUST_PRESERVE: original current-token authority, signing order, immutable review
 ACCEPTANCE_CRITERIA: the real authorized recipient can inspect the same recorded signature, finish only its genuine prepared completed copy, download that exact retained file, and return after interruption without another signing act. Hosted acceptance is owed.
 MOTION_PURPOSE: NONE: no new animation, haptic or timing effect in product code.
 PROTECTED_SEAMS: original sign-agreement/Storage/completion tested; no Root, action-risk, C0b, registry, Harness, approval, native migration, scheduler, provider adapter or financial writer changes.
-INTERNAL_BUILD_IDENTITY: source=f9666eee9ea6b17fbf8b72e7f85e39b469ca6f40; tree=6cddb9d968209c41e34817fd4a72ac107ab1c3eb; environment=development; deployment=NOT_DEPLOYED; migrations=NONE; edge=PROOF_OWED; evidence=assets/e04-recorded-completion-recovery/source-proof.json.
+INTERNAL_BUILD_IDENTITY: source=f9666eee9ea6b17fbf8b72e7f85e39b469ca6f40; tree=6cddb9d968209c41e34817fd4a72ac107ab1c3eb; environment=development; deployment=NOT_DEPLOYED; migrations=NOT_APPLICABLE; edge=PROOF_OWED(sign-agreement and actual affected shared-seal importers); evidence=assets/e04-recorded-completion-recovery/source-proof.json.
 RELEASE_CHANNEL: development: production only through normal reviewed exact-head delivery.
 RELEASE_CLASSIFICATION: internal-only: bounded repair, no complete Experience announcement.
 CUSTOMER_RELEASE_IDENTITY: none: final integrated founder evaluation remains later.
 RELEASE_NOTE_REQUIRED: NO: source increment does not establish full customer acceptance.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: bounded local recovery/download proof; PROOF OWED: hosted ordinary-role behavior and all12outcomes; Chat/Live recovery capability UNAVAILABLE because no corresponding approved registration is added.
-RELEASE_RECOVERY: forward-fix original records; read same token and retained source after unknown outcome, never resend a signature, remint a credential or replace a completed file.
+RELEASE_RECOVERY: position=forward-fix; reference=original agreement, signer, retained source commitment, completed copy and native events; read same token after unknown outcome, never resend a signature, remint a credential or replace a completed file.
 
 ## Original orchestration and capability contract
 

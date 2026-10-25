@@ -744,5 +744,23 @@
         "elapsedMs": 143891
       }
     }
+  },
+  "hostedClosedReadCompatibility": {
+    "head": "e3fc79eb0047d7410055c9a9a68af7d89248c932",
+    "run": 40165915017,
+    "artifact": 12589075788,
+    "artifactSha256": "8c37ff4d7a6070caf85d262e4b88c60a78077dbcb5b81b111c715b196698efd0",
+    "totals": {
+      "total": 21776,
+      "passed": 21772,
+      "failed": 1,
+      "pending": 3
+    },
+    "cause": "Original E04 PRE1 assertion retained exact-booking/Task closed-read set and omitted the separately reviewed bounded agenda; actual original wrapper reproduced only that assertion.",
+    "repair": "Only the finite reviewed-read expectation and explanatory wording change; every other original proof byte is preserved. No E04 production/approval/fingerprint/dispatch/uncertainty/successor-brake change.",
+    "green": "Original actual E04 shared wrapper1PASS/0FAIL, including its9 original checks and actual production-handler safety cases.",
+    "coordination": "ANT161539bc8c0",
+    "sourceSha256": "ec133b78f5ea08b7952f6ca0b50eddb2ce9dbd5c376e498d03bea4f3b628861f",
+    "remaining": "New exact-head CI, actual source-certification recovery and ordinary customer proof remain required."
   }
 }

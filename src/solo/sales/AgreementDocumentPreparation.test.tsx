@@ -334,3 +334,11 @@ it('shows an actual canonical refusal without claiming a send or automatic retry
   await click('Prepare approval');expect(host.textContent).toContain('Request refused');expect(host.textContent).not.toContain('Email provider accepted');
   expect(ports.submit).toHaveBeenCalledOnce();expect(ports.recovery).not.toHaveBeenCalled();
 });
+
+it('retires private signing content when current canonical authority is withdrawn during preparation',async()=>{
+  await checkedInvitations();ports.submit.mockResolvedValueOnce(good({state:'refused',code:'ACCESS_UNVERIFIED'}));
+  await click('Prepare approval');expect(ports.refused).toHaveBeenCalledOnce();
+  expect(host.textContent).not.toContain('client@example.test');expect(host.textContent).not.toContain('Review before sending');
+  expect(host.textContent).toContain('Original document unavailable');expect(document.activeElement?.textContent).toBe('Signing document');
+  expect(ports.submit).toHaveBeenCalledOnce();expect(ports.recovery).not.toHaveBeenCalled();
+});

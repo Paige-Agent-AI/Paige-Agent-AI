@@ -47,6 +47,7 @@ export function AgreementSignatureExecution({request,context,onRetain,onProgress
     if(reply.ok===false){if(reply.reason==='access_unverified'||reply.reason==='retired'){p.onAccessRefused();return;}
       setPhase('result');setMessage(reply.message);p.onProgress({busy:false,uncertain:true,readOnly:true});return;}
     const value=reply.value;
+    if(value?.state==='refused'&&value.code==='ACCESS_UNVERIFIED'){p.onAccessRefused();return;}
     if(value&&'state' in value&&value.state==='approval_required'){
       setProposal(value);setPhase('approval');p.onProgress({busy:false,uncertain:false,retained:true});return;
     }

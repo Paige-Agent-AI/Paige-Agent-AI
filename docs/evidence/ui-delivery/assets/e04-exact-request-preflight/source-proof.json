@@ -40,5 +40,20 @@
     "prepared token/effect hold release",
     "real send, payment or signature",
     "ordinary roles/cohorts/CentralQA/full12 acceptance"
-  ]
+  ],
+  "currentMainComposition": {
+    "recordedAt": "2026-10-25T10:59:33.732Z",
+    "head": "ed118e95f94596728a53d852fe15fc48d301a24a",
+    "tree": "99e882b3fa963040353ce22fd5f202afa69ea059",
+    "incomingMain": "622c5532a91284cad60cfb343fd5bbc94e44fd8a",
+    "originalReviewedHead": "2e565836efc46ca9a98058362f918ea79ceecc40",
+    "threeOriginalSourceBlobsExact": true,
+    "sourceCases": 74,
+    "httpSteps": 13,
+    "log": "e04-c39-current-main-1792925866246.log",
+    "inputProof": "e04-c39-current-main-1792925866246-result.json",
+    "priorSharedGate": "Actual source certificate/readback cleared; own affected-importer proof remains owed",
+    "native": "NO_OWN_MIGRATION",
+    "release": "NOT_MERGED_NOT_DEPLOYED"
+  }
 }

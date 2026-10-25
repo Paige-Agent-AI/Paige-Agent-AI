@@ -248,6 +248,11 @@ deno test --allow-import --node-modules-dir=none --allow-read="$REPO/supabase/fu
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-request.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-work.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts"
+# Dynamic source-test imports do not establish actual SDK type compatibility.
+# Check the original deployed door as well as its private history projection.
+deno check --allow-import --node-modules-dir=none \
+  "$REPO/supabase/functions/_shared/agreements/prepared-signature-outcome.ts" \
+  "$REPO/supabase/functions/agreement-send/index.ts"
 # The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
 # runtime already exercised above, with this same fenced native cluster and all
 # 54 original assertions. No transpiled copy or relaxed test is substituted.

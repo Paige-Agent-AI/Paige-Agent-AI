@@ -87,6 +87,20 @@ export function weeklyCommitmentStatusToolsForContext(context: { callerTier: str
     && context.scopedClientId === null && context.customerPortal === false ? WEEKLY_COMMITMENT_STATUS_TOOLS : [];
 }
 
+/** Original draft intent only. The Chat consumer must still bind the server
+ * request identity, exact surface approval and native claim/Kit/commit. Exporting
+ * this schema grants no admission, recurring authority or completed result.
+ */
+export const WEEKLY_COMMITMENT_DRAFT_TOOL_NAME = "weekly_commitment_draft";
+export const WEEKLY_COMMITMENT_DRAFT_TOOLS = [{ type: "function" as const, function: {
+  name: WEEKLY_COMMITMENT_DRAFT_TOOL_NAME,
+  description: "Prepare a private weekly commitment-check draft for the workspace owner. Ask for its name, ISO weekday, local time and explicit time zone. Saving requires exact approval and does not authorize, enable or execute recurring work. Use read_weekly_commitment_status to inspect original saved work; do not reconstruct or repeat an uncertain save.",
+  parameters: WEEKLY_COMMITMENT_DRAFT_CAPABILITY.input,
+} }];
+export function weeklyCommitmentDraftToolsForContext(context: Parameters<typeof weeklyCommitmentStatusToolsForContext>[0]) {
+  return weeklyCommitmentStatusToolsForContext(context).length ? WEEKLY_COMMITMENT_DRAFT_TOOLS : [];
+}
+
 // Prepared original-outcome reader, not an action or conversational offer. The
 // server transport reauthorizes the exact companion under its original caller
 // JWT before using this unchanged service-only native result reader. Current

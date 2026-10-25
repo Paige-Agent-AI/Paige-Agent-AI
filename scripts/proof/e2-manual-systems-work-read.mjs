@@ -8,7 +8,7 @@ import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 const port=Number(process.argv[2]);
 if(!Number.isSafeInteger(port)||port<1024||port>65535)throw Error('Explicit disposable loopback PostgreSQL port required');
 const root=new URL('../../',import.meta.url),read=p=>readFileSync(new URL(p,root),'utf8');
-const migration=read('supabase/migrations/20271114240202_e02_manual_systems_work_read.sql');
+const migration=read('supabase/migrations/20271114250102_e02_manual_systems_work_read.sql');
 const knowledge=read('supabase/migrations/20270531600000_knowledge_durable_authority.sql');
 const marker='create or replace function public.get_paige_durable_work(';
 const original=knowledge.slice(knowledge.indexOf(marker));

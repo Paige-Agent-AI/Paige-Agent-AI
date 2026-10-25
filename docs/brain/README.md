@@ -114,6 +114,22 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and existing [EXP04 journey](../delivery/exp04-get-paid-deliver-journey.md) retain exact source/review/CI/deployment/acceptance boundaries. This mechanical closeout adds no product, activation, algorithm/capability maturity, provider/role change, customer version or recursive shipped row. Pending2745/2775 and full O1–O12/one integrated founder evaluation remain open.
 
+## EXP09 original customer response deadline — native/source released, October25 UTC
+
+Original2803/204db/LOWER5641506134/all13+2 green mergedc55ce067f358f41f83572bc9cefa7798c9e07b2f;
+actual tree2a62c786 equals inspected57ab+204db union, all12 own/incoming15905 exact.
+Normal40166853956/deploy121089642497 persisted14110009 once; actual response3e5b6bc2,
+original ABI/ACL/3arg wrapper880d/owner reader7b047 and both RLS retained.
+READY2Pjd/exactc55 and both public200/c55-mvneqgwc/null verified. Sole
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and
+[original receipt6394112647](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2803#issuecomment-6394112647)
+retain exact identities and native65/hosted469+234/UI70/six source-frame boundaries.
+Late expiry now refuses before effects through the original transaction; no second
+action/identity/approval engine, private Cura disclosure or provider/Live activation.
+Ordinary customer reconnect deferred; actual owner/client/phone/full42/seven/Teach/
+CAP/ALG and one complete founder evaluation remain open. Separate invitation/activity
+drafts are not shipped by this pointer; no recursive product row or maturity promotion.
+
 ## EXP09 Word, returning-customer Home and original requests — source released, October25 UTC
 
 Original2785/8244→main33b6 (Chat533 exact runtime/config),2791/ae3→9fe,

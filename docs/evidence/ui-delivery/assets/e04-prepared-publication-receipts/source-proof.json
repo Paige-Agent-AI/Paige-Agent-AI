@@ -125,5 +125,16 @@
     "ALG02": "INCOMPLETE: onboarding and commercial/service completion",
     "ALG12": "PARTIAL: uncertainty/refusal/recovery; operational monitoring unverified",
     "ALG13": "UNVERIFIED: usefulness of source-backed next steps"
+  },
+  "currentReceivingOct25": {
+    "at": "2026-10-25T16:48:57.571Z",
+    "sourceHead": "684fa76047ea67a0f2c925b7e8b0a6ccc8cee642",
+    "parentC45": "a9f080cf124a8e1ae025e45c3f246beb8b3682c4",
+    "currentMain": "61dc461991fff2aaf5b7925bca1f4cecab17b895",
+    "runtimeAndProofSourceExactTo": "5e444082958f72080c6e8c78a1fb65ee354adbbc",
+    "originalGateWholeInverse": true,
+    "native": "20 NOT_APPLIED; exact19 parent must release first",
+    "review": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE; hosted current source not yet verified",
+    "fullSigning": "NOT_COMPLETE; original76 after publication passed historically; field-bearing signature and sealing remain separate"
   }
 }

@@ -33,7 +33,7 @@ MUST_PRESERVE: original reference input, all nine legacy draft types, strict nat
 ACCEPTANCE_CRITERIA: normal authorized request creates one original bounded work identity; original permitted evidence settles into the original private artifact/conversation; source limitations and truthful state remain after reload and authorized retrieval; negative roles/tenants and interruption/recovery are proven separately.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: canonical metric keys/current versions, caller-JWT original submission, native840002 source capture, original current authority and uncertainty controls; C0b extractor/validator/metadata/hostile tests unchanged; E04 dependency-digest reservation retained.
-INTERNAL_BUILD_IDENTITY: source-base=78c7fda85952a87de1d4a802ad72562f6e7c946e; incoming-main=03edfad8a4d7829e6d77f513918369f5ce2bbb71; exact final head in PR review; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat); evidence=ANT138/99c911da.
+INTERNAL_BUILD_IDENTITY: source-base=78c7fda85952a87de1d4a802ad72562f6e7c946e; incoming-main=ba97aac6c07f7e147d70eb24d1c01d51cc660551; exact final head in PR review; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat); evidence=ANT138/99c911da.
 RELEASE_CHANNEL: development: not merged, deployed or activated.
 RELEASE_CLASSIFICATION: internal-only: bounded original report consumer integration, no customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no founder-approved customer release identity.
@@ -81,3 +81,8 @@ private global-value helper correctly refused duplicate scalar values before any
 write; its premature pre-renewal test start was stopped and is INVALID setup,
 not a product result. Final exact-head review/CI and genuine source/customer
 release proof remain separate.
+
+Current-main composition11a8c012 retains the full released Financeba97 source;
+one matrix add/add conflict is resolved with whole incoming inverse proof.
+The reviewed Chat blobb0ea23c7, original29-field renewal and every124 source
+dependency remain unchanged from the passing44/79 source checks.

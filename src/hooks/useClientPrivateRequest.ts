@@ -11,6 +11,18 @@ type Attempt = { scope: PrivateRequestScope; sent: boolean; busy: boolean; found
 type Life = { scope: OwnerActionScope; alive: boolean; epoch: number; reads: number; attempt: Attempt | null };
 type Draft = { life: Life; phase: Phase; result: PrivateRequestResult | null };
 type History = { life: Life; phase: HistoryPhase; data: PrivateRequestHistory | null };
+type PreparationArguments = ReturnType<typeof privateRequestArguments>;
+type NativeArguments = {
+  prepare_client_portal_request: PreparationArguments;
+  read_client_portal_request_draft: Omit<PreparationArguments, "_title" | "_body">;
+  list_client_portal_request_drafts: ReturnType<typeof privateHistoryArguments>;
+};
+type NativeReply = { data: unknown; error: { code?: string } | null };
+// Same original SDK/type-boundary pattern as useClientFilesOwner. Its generated
+// schema snapshot predates these three guarded migrations; keep exact names and
+// arguments here and parse unknown responses, without widening the shared client.
+const nativeRpc = <Name extends keyof NativeArguments>(name: Name, args: NativeArguments[Name]) =>
+  supabase.rpc(name as never, args as never) as unknown as PromiseLike<NativeReply>;
 async function bounded<T>(request: PromiseLike<T>): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try { return await Promise.race([Promise.resolve(request), new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error("Read unavailable")), 20_000); })]); }
@@ -55,7 +67,7 @@ export function useClientPrivateRequest(scope: OwnerActionScope) {
     try {
       const args = privateHistoryArguments(life.scope, cursor);
       if (!await actualActor(epoch) || !latest()) return;
-      const response = await bounded(supabase.rpc("list_client_portal_request_drafts", args as never));
+      const response = await bounded(nativeRpc("list_client_portal_request_drafts", args));
       if (!latest()) return;
       if (response.error) { if (response.error.code === "42501") refuse(epoch); else setHistory({ life, phase: "error", data: null }); return; }
       const data = parsePrivateRequestHistory(response.data, life.scope);
@@ -79,7 +91,7 @@ export function useClientPrivateRequest(scope: OwnerActionScope) {
     try {
       if (!await actualActor(epoch) || !current(epoch)) return;
       attempt.sent = true;
-      const response = await bounded(supabase.rpc("prepare_client_portal_request", args as never));
+      const response = await bounded(nativeRpc("prepare_client_portal_request", args));
       if (!current(epoch)) return;
       if (response.error) { if (response.error.code === "42501") refuse(epoch); else put(epoch, "unknown"); return; }
       const result = parsePrivateRequestResult(response.data, attempt.scope, "preparation");
@@ -108,7 +120,7 @@ export function useClientPrivateRequest(scope: OwnerActionScope) {
     const attempt = life.attempt, epoch = life.epoch; attempt.busy = true; attempt.found = false; put(epoch, "checking");
     try {
       if (!await actualActor(epoch) || !current(epoch)) return;
-      const response = await bounded(supabase.rpc("read_client_portal_request_draft", privateRequestArguments(attempt.scope) as never));
+      const response = await bounded(nativeRpc("read_client_portal_request_draft", privateRequestArguments(attempt.scope)));
       if (!current(epoch)) return;
       if (response.error) { if (response.error.code === "42501") refuse(epoch); else put(epoch, "unknown"); return; }
       const result = parsePrivateRequestResult(response.data, attempt.scope, "status");

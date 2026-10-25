@@ -33,7 +33,7 @@ MUST_PRESERVE: original readOwnerTaskHistory, can_read_owner_task_approval, read
 ACCEPTANCE_CRITERIA: an eligible ordinary owner/admin can recover the original saved approval and inspect its real result; unconfirmed evidence and withdrawn authority remain explicit and cannot replay work
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: original Spine/Kit, current server/Harness context, original caller JWT companion, existing service-only native observation and recordCapabilityRun; no alternate runtime
-INTERNAL_BUILD_IDENTITY: reviewed-source=420c81db90d8b0bde0cae22fa2ff17378d7ae9b1; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original-task-history-chat)
+INTERNAL_BUILD_IDENTITY: reviewed-source=420c81db90d8b0bde0cae22fa2ff17378d7ae9b1; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original-task-history-chat); evidence=docs/evidence/ui-delivery/exp05-owner-task-history-chat.md
 RELEASE_CHANNEL: development: protected source and recording-port verification only
 RELEASE_CLASSIFICATION: internal-only: supporting original-outcome read; no customer release identity or completed Experience claim
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement earned

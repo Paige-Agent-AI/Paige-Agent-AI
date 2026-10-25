@@ -234,6 +234,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }, 429);
   }
 
+  // Match the original native legacy-effect hold BEFORE any provider work.
+  // Any retained preparation belongs to the exact reviewed request path,
+  // including an earlier version; legacy resend cannot replace its credentials.
+  try {
+    const original = await admin.from('paige_agreement_document_preparations').select('id')
+      .eq('tenant_id',tenantId).eq('agreement_id',agreementId).limit(1).maybeSingle();
+    if (original.error || original.data !== null && !object(original.data))
+      return json({ok:false,code:'ORIGINAL_DOCUMENT_UNVERIFIED',error:'The original document could not be checked. Keep its request and check again before sending.'},503);
+    if (original.data !== null)
+      return json({ok:false,code:'PREPARED_DOCUMENT_REVIEW_REQUIRED',error:'Open the saved signing document to inspect its original request and receipts before another send.'},409);
+  } catch {
+    return json({ok:false,code:'ORIGINAL_DOCUMENT_UNVERIFIED',error:'The original document could not be checked. Keep its request and check again before sending.'},503);
+  }
+
   // Scoped by the caller's tenant, never by an id from the body alone.
   const { data: agreement } = await admin.from("paige_agreements")
     .select("id,tenant_id,title,body_source,body_markdown,document_path,status,expires_at,content_storage_key,content_sha256")

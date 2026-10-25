@@ -12,7 +12,7 @@ type Obj=Record<string,unknown>;
 type State={f:Awaited<ReturnType<typeof fixture>>;body:Obj;role:string;provider:boolean;lane:string;calls:string[];
  pending:Obj|null;workRow:Obj|null;credentials:Obj|null;outcome:Obj|null;child:Obj|null;providerOutcome:string;callbackOutcome:string;
  writes:{approval:number;claim:number;audit:number;work:number;credentials:number;message:number;provider:number;publication:number};
- auditFails:boolean;claimLost:boolean;retireAfterProvider:boolean;callbackLost:boolean;switchDuringOuterAuth:boolean};
+ auditFails:boolean;claimLost:boolean;retireAfterProvider:boolean;callbackLost:boolean;switchDuringOuterAuth:boolean;legacyPreparationError:boolean;legacyProviderConfigured:boolean};
 let current:State;
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 const nativeError=(code='42501')=>json({code,message:'Controlled private cause'},403);
@@ -94,6 +94,13 @@ async function transport(input:RequestInfo|URL,init?:RequestInit):Promise<Respon
  }
  if(url.pathname.startsWith('/rest/v1/')){
   const table=url.pathname.slice('/rest/v1/'.length);
+  if(table==='paige_agreement_document_preparations'){
+   assert.equal(req.method,'GET');assert.equal(req.headers.get('apikey'),'synthetic-service');assert.equal(req.headers.get('authorization'),'Bearer synthetic-service');
+   assert.equal(url.searchParams.get('tenant_id'),'eq.'+tenant);assert.equal(url.searchParams.get('agreement_id'),'eq.'+agreement);
+   assert.equal(url.searchParams.get('select'),'id');assert.equal(url.searchParams.get('limit'),'1');
+   return s.legacyPreparationError?nativeError('XX000'):json(s.f.rows.size?{id:next}:null);
+  }
+  if(table==='paige_agreements'&&url.searchParams.get('select')!=='document_path')return json(null);
   if(table==='paige_audit_log'&&req.method==='POST'){
    const a=await req.json();s.writes.audit++;assert.equal(a.action,'sales.agreement_signature_request_governed_decision');assert.equal(a.tenant_id,tenant);assert.equal(a.actor_user_id,actor);
    assert.equal(a.payload.operation_id,operation);assert.equal(a.payload.request_sha256,s.body.expected_request_sha256);return s.auditFails?nativeError():json({id:audit});
@@ -113,7 +120,7 @@ async function transport(input:RequestInfo|URL,init?:RequestInit):Promise<Respon
 async function arrange(){
  const f=await fixture();await executeOwnerPreparation(prepare(),f.caller,f.service);await executeOwnerPreparation(save(),f.caller,f.service);
  current={f,body:{},role:'owner',provider:true,lane:'confirm',calls:[],pending:null,workRow:null,credentials:null,outcome:null,child:null,
-  providerOutcome:'provider_accepted',callbackOutcome:'provider_accepted',writes:{approval:0,claim:0,audit:0,work:0,credentials:0,message:0,provider:0,publication:0},auditFails:false,claimLost:false,retireAfterProvider:false,callbackLost:false,switchDuringOuterAuth:false};
+  providerOutcome:'provider_accepted',callbackOutcome:'provider_accepted',writes:{approval:0,claim:0,audit:0,work:0,credentials:0,message:0,provider:0,publication:0},auditFails:false,claimLost:false,retireAfterProvider:false,callbackLost:false,switchDuringOuterAuth:false,legacyPreparationError:false,legacyProviderConfigured:false};
  const review={tenant_id:tenant,agreement_id:agreement,preparation_id:next,preparation_sha256:String(f.rows.get(next)!.preparation_sha256),expected_source:{client_id:client,version:1,updated_at:at}};
  const saved=await readPreparedSignatureReview(review,f.caller,f.service,actor);
  const initial={operation_id:operation,review,expected_review_sha256:saved.review_sha256,connector_id:connector,
@@ -128,10 +135,21 @@ Deno.test('original owner prepared command uses concrete governed execution',asy
  const old={serve:Deno.serve,env:Deno.env.get,fetch:globalThis.fetch};
  try{
   Deno.serve=((fn:typeof handler)=>{handler=fn;return {} as never;}) as unknown as typeof Deno.serve;
-  Deno.env.get=name=>({SUPABASE_URL:origin,SUPABASE_ANON_KEY:'synthetic-anon',SUPABASE_SERVICE_ROLE_KEY:'synthetic-service',SENDGRID_MAIL_SEND_API_KEY:'synthetic-configured'} as Record<string,string>)[name];
+  Deno.env.get=name=>name==='RESEND_API_KEY'?(current?.legacyProviderConfigured?'synthetic-legacy-provider':undefined):({SUPABASE_URL:origin,SUPABASE_ANON_KEY:'synthetic-anon',SUPABASE_SERVICE_ROLE_KEY:'synthetic-service',SENDGRID_MAIL_SEND_API_KEY:'synthetic-configured'} as Record<string,string>)[name];
   globalThis.fetch=transport;await import('./index.ts?original-prepared-command-proof');
   const invoke=(extra:Obj={},query='?command=prepared-request')=>handler(new Request(origin+'/agreement-send'+query,{method:'POST',headers:{Authorization:'Bearer synthetic-owner','Content-Type':'application/json'},body:JSON.stringify({...current.body,...extra})}));
   const recover=(extra:Obj={})=>handler(new Request(origin+'/agreement-send?review=request-recovery',{method:'POST',headers:{Authorization:'Bearer synthetic-owner','Content-Type':'application/json'},body:JSON.stringify({tenant_id:tenant,agreement_id:agreement,operation_id:operation,expected_request_sha256:current.body.expected_request_sha256,...extra})}));
+  await t.step('original prepared documents cannot enter legacy sending or resending before provider work',async()=>{
+   for(const resend of [false,true]){const s=await arrange();s.legacyProviderConfigured=true;const r=await invoke({agreementId:agreement,resend},''),v=await r.json();
+    assert.equal(r.status,409);assert.equal(v.code,'PREPARED_DOCUMENT_REVIEW_REQUIRED');
+    assert(s.calls.some(c=>c.includes('/rest/v1/paige_agreement_document_preparations')));assert.equal(Object.values(s.writes).reduce((a,b)=>a+b,0),0);}
+  });
+  await t.step('legacy absence preserves original scoped lookup while an unreadable preparation remains held',async()=>{
+   let s=await arrange();s.f.rows.clear();s.legacyProviderConfigured=true;let r=await invoke({agreementId:agreement,resend:true},'');let v=await r.json();
+   assert.equal(r.status,404);assert(s.calls.some(c=>c.endsWith('/rest/v1/paige_agreements')));assert.equal(Object.values(s.writes).reduce((a,b)=>a+b,0),0);
+   s=await arrange();s.legacyProviderConfigured=true;s.legacyPreparationError=true;r=await invoke({agreementId:agreement,resend:true},'');v=await r.json();
+   assert.equal(r.status,503);assert.equal(v.code,'ORIGINAL_DOCUMENT_UNVERIFIED');assert.equal(Object.values(s.writes).reduce((a,b)=>a+b,0),0);
+  });
   await t.step('exact original request proposes HIGH approval without Work, credentials or sending',async()=>{
    const s=await arrange(),r=await invoke(),v=await r.json();assert.equal(r.status,200);assert.equal(v.result.state,'approval_required');assert.equal(v.result.request_sha256,s.body.expected_request_sha256);
    assert.equal(r.headers.get('Cache-Control'),'no-store, private');assert.equal(r.headers.get('Vary'),'Authorization');assert.equal(s.writes.approval,1);assert.equal(s.writes.work+s.writes.credentials+s.writes.message+s.writes.provider,0);

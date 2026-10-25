@@ -15,12 +15,13 @@ const actionActTimeBaseline = process.argv.includes('--action-act-time-baseline'
 const actionActTime = process.argv.includes('--action-act-time') || actionActTimeBaseline;
 const inviteActTimeBaseline = process.argv.includes('--invite-act-time-baseline');
 const inviteActTime = process.argv.includes('--invite-act-time') || inviteActTimeBaseline;
+const messageActivityBaseline = process.argv.includes('--message-activity-baseline');
 const actions = process.argv.includes('--actions') || process.argv.includes('--actions-baseline') || ownerActions || actionActTime;
 const actionsBaseline = process.argv.includes('--actions-baseline');
 const actionPredecessors=[];
 let actionActTimeEvidence;
 let inviteActTimeEvidence;
-const entry = process.argv.includes('--entry') || actions || documents || inviteActTime;
+const entry = process.argv.includes('--entry') || actions || documents || inviteActTime || messageActivityBaseline;
 const entryBaseline = process.argv.includes('--entry-baseline');
 const root = process.cwd();
 const bin = process.env.E09_PG_BIN ?? (process.platform === 'win32' ? 'C:/Program Files/PostgreSQL/16/bin' : '');
@@ -393,6 +394,7 @@ try {
    const {invitationActTimeProof}=await import('./e09-invitation-act-time.mjs');
    await invitationActTimeProof({sql,check,assert,spawn,exe,args,transcripts,fixture,call,evidence:inviteActTimeEvidence});
  }
+ if(messageActivityBaseline){const {messageActivityProof}=await import('./e09-message-activity.mjs');await messageActivityProof({sql,check,assert,fs,root,path,fixture});}
  if(ownerActions){const {ownerActionReadProof}=await import('./e09-owner-customer-actions.mjs');ownerActionReadProof({sql,check,assert,fs,root,path,fixture});}
  if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
@@ -400,6 +402,7 @@ try {
  if(ownerActions){report.mode='owner-actions-candidate';report.ownerActionMigrationSHA256=createHash('sha256').update(fs.readFileSync('supabase/migrations/20271114090000_e09_owner_customer_action_read.sql')).digest('hex');report.ownerActionSourceApplied=process.env.E09_OWNER_ACTION_BASELINE!=='1';}
  if(actionActTime){report.mode=actionActTimeBaseline?'action-act-time-baseline':'action-act-time-candidate';report.actionActTime=actionActTimeEvidence;}
  if(inviteActTime){report.mode=inviteActTimeBaseline?'invite-act-time-baseline':'invite-act-time-candidate';report.inviteActTime=inviteActTimeEvidence;}
+ if(messageActivityBaseline){report.mode='message-activity-baseline';report.messageActivity={source:'original S7 Portal RPCs and original Rail writer, exact production fingerprints',threadTriggers:'NOT_RECONSTRUCTED; full-schema original suite remains required',authenticatedCustomer:'NOT_RUN'};}
  fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline||actionActTimeBaseline||inviteActTimeBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
  console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
  if(failed.length)process.exitCode=1;

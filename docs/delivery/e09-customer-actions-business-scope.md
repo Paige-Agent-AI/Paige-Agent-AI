@@ -30,3 +30,56 @@ Implementation6e51f366c, current-main composition0dab36796365a3a7a23f96a01b82739
 Functional, Visual, Experiential and final Founder Acceptance remain separate; actual joined owner/client/device and other domain/Edge/global identity proof owed. Founder evaluates the complete integrated live Experience once. Preserve existing Flow-by-Flow/PAIGE UI/Impeccable design and original shell; no activation/customer release authority.
 
 Fresh review correctionbf6a85ccef0bc88228bdd3122b6ae48da18cf2cc refuses retired refreshes before changing the active read counter; an explicit in-flight new-business negative confirms recovery. Final150 checks/eight suites and16 selected-business cases PASS. Native94 and required final-head CI remain pending.
+
+## 2026-10-25 — private preparation and original Work recovery
+
+The intended complete outcome is an owner preparing a private client request, reviewing its exact words, authorizing the original governed sharing step, and returning to the same customer response. This increment implements only preparation/status recovery, deliberately unmounted. It does not make the complete owner/customer workflow available. The full42 EXP09 outcomes, seven pillars, original42-row evidence denominator and one integrated founder evaluation remain open.
+
+### Pre-edit contract and source window
+
+Recorded in original ANT-161 native thread2803ab7c-45a0-463c-b6cd-be6a1091e9b3, contracte40013b5-7b27-41cb-a00f-02355124b5a1 and narrow source window52f612f8-3db2-422b-b827-8b4c1cfa31d7 before implementation.
+
+1. **Owner outcome:** save one private request and recover its original Work identity after a lost response, without notifying the customer or filing duplicates.
+2. **Domain owner:** EXP09 owns this private Portal preparation consumer; EXP05 retains original Action Bus/Work writers, EXP04 commercial work, E03 Communications. No shared writer, registry, Root/C0b, workflow or provider edit.
+3. **Harness/Gateway:** original native Auth/current workspace, S7 owner authorizer, original Work staff-standing requirements, `file_action` and `advance_action`. Preparation is an ordinary owner draft, not event-to-action execution. Missing future approval/share admission stays missing.
+4. **Spine:** original `action_bus.file`/`action_bus.advance` source contracts are consumed without changing their registrations or general non-idempotence declaration. A Portal-specific Chat/Live prepare/share capability is **UNAVAILABLE / NOT_CONNECTED**; no callable tool or activation is claimed.
+5. **Provider:** existing Supabase/Auth only; no connection, sender, external send, model, provider spend or payment. Communications publication/delivery remains its original governed sender contract.
+6. **Approval/autonomy:** private preparation requests original confirm lane and transitions only to `assigned`. It never advances to `drafted`/`executing` or creates/consumes an approval. A later consequential share requires the original one approval gate and exact approved source/version; no second confirmation system.
+7. **Durable work:** original `paige_actions` record plus its original file/advance audits. Actor+business+contact+intent metadata lives on that same Work row; no new table, ledger, index, job, queue, scheduler or approval inbox. Original profile lock serializes same-actor preparation and workspace switches.
+8. **Receipt/reload:** closed status returns original WorkID, original saved words/version only while privately prepared, and original state. Same intent plus different words refuses; identical retries recover original identity. A missing committed row is explicitly **not a rejected request** and must not enable automatic replacement intents.
+9. **Surface:** existing `clients.portal` remains PARTIAL. These native APIs are not mounted in owner Portal, customer Portal, typed Chat or Live. No new surface or falsely LIVE binding row. Future UI uses the original ClientActionItems/approved inline flow, not dormant ContactPaigePanel.
+10. **Proof:** actual native writers and owner authority run in the existing loopback proof with synthetic Auth/role/autonomy/unused graph ports. Full replayed Supabase tests exercise actual roles/triggers/RLS in the original S7 suite. Neither is legitimate signed-in customer proof; reconnect is owner-deferred, browser/input stops remain intact, no alternate control or real business/customer effect.
+
+### Source and authorization boundaries
+
+Production read-only catalog at frontier20271114130009 confirms original `file_action` body40349ee33cf5f77ef6fc228087fdc67f, advance66dcedb5e40dd43a54373c0e0ded1884, S7 authorizer7c3eb55c866321fed052ae742b75e42d, original postgres/definer/search paths and Work RLS. Original fixed portal-recommendation kind is enabled, surface_to_client, with no draft agent. Both new APIs are absent before release. These facts prove source availability, not customer execution or provisioning parity.
+
+Canonical full replay file_action after its original role-retirement migration has exact body8389ea7b5589ad7ce939d9f8b01b6188. Production's recorded form retains64 CRLFs; normalizing only those pairs yields the identical canonical body. The migration accepts those two exact recorded forms, not arbitrary unknown sources. The local runner reconstructs tracked source plus original role-retirement helper and reproduces CRLF transport server-side. It never executes a production dump or restores retired roles.
+
+New functions are authenticated-only, empty-search-path definers, with actual expected-actor/current-business checks. They require the intersection of original Portal ownership and original Work membership/admin standing. An ordinary owner lacking original Work standing **refuses**; no role retrofit or universal customer availability claim. Current legitimate eligibility is active standalone businesses; no tenant identity allowlist or change to provisioning/lifecycle classification. Existing owner reads without global staff standing remain unchanged.
+
+Private preparation remains allowed for paused/ended/nonconsenting relationships because it publishes nothing and changes neither access nor consent. Archived/merged contacts cannot receive a new preparation. Known history is reconciled before changed kind admission. Changed original content is withheld from the prepared preview; foreign customer-action links and ambiguous original intent history fail closed. The migration refuses changed original sources and forward changes to its own APIs before replacing anything.
+
+### Orchestration handoff
+
+Original owner request → future original Portal/Chat entry (not mounted) → current actual actor/business/contact checks → original native file_action → original advance_action **assigned only** → same original WorkID/audits → closed scoped status/reload. No Layer C ActionAdapter is needed to save this private draft. Future approval/publication must use its appropriate original governed path, preserve the same request/approved version/recipient and revalidate permissions before effects. Returning status is not permission to publish. Team Hub may later consume authorized shared work, never private CURA history or arbitrary Work payload.
+
+The original `admin_propose_paige_actions` always publishes; it is not a private-draft writer. The dormant surface_to_client path has a genuine kind/approval/version/recovery integration gap. This increment does not map around it, mount dormant UI or claim publication. Shared source ownership must be established before that bridge is changed. No original generic Action Bus non-idempotence promise is rewritten.
+
+### Proof and findings
+
+- Source-matched baseline:73 supporting PASS, three causal missing-API FAIL. Earlier source-fixture mismatches and missing local graph table are retained as **INVALID fixture attempts**, not product failures or passing proofs.
+- Current native candidate:124 PASS/0 FAIL in the original loopback runner, including actual two-session same-intent serialization, committed workspace change during wait, membership revocation during a contact wait, effect-free role/scope/content refusals, exact replay, assignment-audit atomic rollback, closed private projection, canonical/production source forms, own-forward-source refusal and original ABI/OID/owner/ACL/search-path/body preservation.72 inherited cases are supporting regression evidence, not124 new feature cases. Local raw transcript/output remains in outputs/e09-private-request-candidate-final; frozen review records exact source identity.
+- Original full-schema `customer_portal_access.sql`:234 incumbent assertions retained,34 new assertions added, plan268. Actual hosted exact-head result is **PROOF OWED** until run. No workflow or fixture role authority is widened. Synthetic role restoration inside BEGIN/ROLLBACK is not an account grant or provisioning proof.
+- Own migration CLI scaffold was created normally, then only that never-applied file was renamed to20271114150009. Ordering must preserve E04 reserved14140004 and proposed14160004; no include-all, applied-history rewrite or resets.
+- Visual: no production interface changes in this increment. Prior original-component desktop/mobile prototype is historical synthetic interaction evidence, not this native flow or founder acceptance. No new browser activity or current rendered-quality claim.
+- Experiential: durable private preparation/recovery is implemented; exact review/approval/sharing and saved customer reply integration remain incomplete. No physical microphone, actual file→model→history, provider or signed-in owner/customer claim.
+- Algorithms: ALG-01 receives bounded deterministic same-intent reconciliation proof only; ALG-12 receives explicit refusal/unknown-outcome signals, not a complete deployed exception algorithm. ALG-02 first value, ALG-04 retention and ALG-13 next-best-action remain their original open assessments; no maturity promotion, extra registry or complete seven-Capabilities claim.
+
+### Release checkpoint
+
+INTERNAL_BUILD_IDENTITY: implementation=UNCOMMITTED; deployment=NOT_DEPLOYED; environment=development; migrations=20271114150009_NOT_APPLIED; edge=NOT_APPLICABLE; evidence=docs/delivery/e09-customer-actions-business-scope.md
+RELEASE_CHANNEL: development: original Work private request preparation/status only
+RELEASE_CLASSIFICATION: internal-only; no customer release name, version, note or announcement
+RELEASE_CLAIMS: native preparation built/local verified; hosted exact-head CI/review/merge/deployment/readback PROOF OWED; UI/Chat/Live sharing NOT_CONNECTED; authenticated owner/client/provider/device and complete Experience UNVERIFIED; founder acceptance NOT_REQUESTED
+RELEASE_RECOVERY: original transaction rolls back uncertain preparation failures; read original scoped status before retrying same intent; missing is never rejection. Forward correction only, preserve original source and history. No customer/provider compensation is required because preparation has no such effect.

@@ -239,3 +239,36 @@ current requiredCI/release is independent. No SQL, permission, provider, recurre
 Live, catalogue/maturity or customer acceptance change. Full original customer
 record/receipt/reload/isolation, ZION/weekly/automation and founder proof remain owed.
 This three-document mechanical closeout records the original release, not itself.
+
+## October25 - bounded original-result read preparation, NOT RELEASED
+
+On main5cecea30c6f7dc0ab13ce1f67795293564fca68e, the original specialist-history
+helper could remain pending on an authority, thread or invocation read. Four new
+causal tests fail on that source; all28 incumbent cases and the new ordinary
+success case pass. Reuse the original elapsed-stage helper for one8s budget,
+preserving all current actor/tenant/thread/turn/intent/seat checks and sticky
+withdrawal. Late completion cannot start another read or publish a result.
+This does not cancel already-issued reads, retry an invocation or establish a
+production CPU incident. Earlier approval/history stages in the enclosing status
+route are not bounded by this helper; full-request timing remains separate proof.
+
+Corrected local source:90PASS across the original helper/parser/Chat-recovery/
+confirmation suites; actual original Root status-handler program18PASS through
+disclosed offline recording ports. Strict ES2020 helper graph and scoped lint0.
+Whole-source and whole-original-test inverses recover all prior code. Existing
+elapsed-stage helper, Root, registry, native writers, UI and source guard remain
+unchanged. Reviewed-pin renewal83c7ce93 to307f88e1 is still a shared-source
+handoff/review requirement; no alternate hash, weakened guard or release is claimed.
+
+Orchestration Contract: original explicit status request and caller-JWT invocation
+inspection only, reusing agents.list and original receipts. No new work, approval,
+LayerC execution or provider call. ALG-01 preserves original identity/no replay;
+ALG-12/13 retain truthful unavailable guidance, without a maturity promotion.
+
+Functional: local preparation; immutable review, source-pin handoff, exact-head CI,
+merge and production source/config readback remain owed. Visual: no JSX, layout,
+navigation, focus or new message copy. Experiential: same explicit original-result
+inspection; ordinary authenticated full-request/receipt/reload, eligible cohorts,
+isolation and separate Live remain unverified. Helpers still has no bounded-task
+dataset; this does not activate delegation or complete ZION, weekly execution,
+the Builder, any ten-outcome/E5-CV1-9 case or founder acceptance.

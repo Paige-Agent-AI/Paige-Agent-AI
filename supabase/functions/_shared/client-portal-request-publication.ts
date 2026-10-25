@@ -1,4 +1,4 @@
-/** Thin domain transport only; NOT registered/mounted. The existing shared gate
+/** Thin domain transport only. The existing shared gate
  * must supply its actual stored-call claim OUTSIDE model arguments. These shapes
  * grant no authority: the original caller-JWT native executor rechecks all of it.
  * No confirmation issuance/claiming, fallback publisher, store, or retry here.

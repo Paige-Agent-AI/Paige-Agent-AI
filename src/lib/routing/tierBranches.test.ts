@@ -218,7 +218,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(8);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(73); // Executive extends Command Center; existing departmental destinations remain.
+    expect(total).toBe(74); // +growth/calendar (EXP07 row 8 planning subtab); Executive extends Command Center; existing departmental destinations remain.
     // First sub-tab is the screen's default; the bare Command Center opens Executive.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("executive");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");
@@ -267,6 +267,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
       ["campaigns", "Campaigns"],
       ["audience", "Audience"],
       ["content", "Content"],
+      ["calendar", "Calendar"],
       ["social", "Social"],
       ["email", "Email"],
       ["analytics", "Analytics"],

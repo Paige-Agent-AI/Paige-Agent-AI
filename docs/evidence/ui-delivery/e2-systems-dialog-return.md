@@ -6,19 +6,19 @@ PAIGE_UI_DESIGN: PASS: existing project skill and five quality modules applied t
 MATERIAL_FLOW_CHANGE: NO: repair the original dialog's intended cancellation, focus and account retirement; same controls, steps, authority, confirmation and domain consequences.
 FLOW_PROTOTYPE: NOT_REQUIRED: bounded repair of existing review/cancel behavior; no new decision surface or action.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO actor inspects a finding or held decision, cancels safely and resumes the same work with a usable keyboard and conversation.
-VISUAL_DIRECTION: PASS: preserve the existing Systems Check drawer, alertdialog and shared PAIGE shell; no banner, modal redesign, new control, CSS, font or animation.
-AUTOMATED_EVIDENCE: PASS: four genuine native-inert-port/Escape failures before correction; then89 cases/three suites. Two additional stale-success/refusal source failures; corrected93 cases/three original suites and final composed106/four suites including original Rail/Router pass. A→B→A retirement, busy Escape, no repeat activation, original success and policy refusal remain covered. Initial unsupported Vitest worker flag is INVALID/zero tests, not product proof. No assertion/timeout/guard weakened.
-STATIC_EVIDENCE: PASS: scoped lint0; actual current-main composed production build1m52s with original chunk/comment advisories. Actual raw composed tsc exits2 with six incumbent errors against unchanged ten-signature/count baseline; retained-output multiset comparison proves zero new errors, not a zero-error build. Named original workspace detector0 findings, actual UI evidence guard1UI/1record PASS and SOLO parity SP1–SP5/all hostile controls PASS. Initial evidence wording failure retained/corrected, guard unchanged. Required hosted exact-head gates remain separate.
-RENDERED_EVIDENCE: UNVERIFIED: additive native desktop and390px dark dialog frames now exist after exact owner origin authorization. Eight required open/closed DOM geometries have no document overflow; some corresponding compositor frames lag their DOM state and are INVALID, not complete visual proof. Final matched captures remain required. No historical render is represented as current proof.
-BEHAVIORAL_EVIDENCE: PASS: native Cancel and Escape restore the exact original decision control after inert clears; forward/reverse focus trap, retained synthetic Chat draft and identical scroll1429.5999755859375 before/after Escape are observed. This is the original mounted component with backend-refusing ports, not authenticated customer acceptance. Native busy/late-result/other-account checks remain UNVERIFIED; original source tests retain them.
+VISUAL_DIRECTION: PASS: preserve the existing Systems Check drawer, alertdialog and shared PAIGE shell; one scoped44px minimum improves original dialog action targets. No new control, font or motion.
+AUTOMATED_EVIDENCE: PASS: fresh current-main original SoloSystemsCheckWorkspace suite67/67 in34.52s after the scoped44px correction. Original four native-inert/Escape RED controls and two stale-result RED controls remain; earlier106/four-suite result is dated supporting evidence. Busy/no-repeat/current-account/refusal coverage remains original source tests, not native effect acceptance.
+STATIC_EVIDENCE: UNVERIFIED: final exact-head hosted build/types/CI and review require the composed candidate. Original component blob6ee9d5f9 is unchanged by this follow-up; only scoped CSS changes. Earlier lint/build/baseline/parity results below remain dated source evidence, not fresh release proof.
+RENDERED_EVIDENCE: PASS: eleven final original-shell browser-targeted captures after the44px correction, including all eight required closed/open CSS viewport layouts plus desktop/390 dialog and390 visible focus return; assets/e2-systems-dialog-return/oct24-native-confirmation.json records exact bytes, hashes, CSS and actual JPEG dimensions. Tablet/narrow open Chat is its original overlay; no click-through is claimed. Earlier lagged/pre-correction frames are excluded.
+BEHAVIORAL_EVIDENCE: PASS: original forward/reverse keyboard focus trap and Escape to Review approval verified on restored native page control; original synthetic draft retained across review and rail fold/open. Original67 source tests retain busy/late-result/account retirement. No confirmation or domain operation was submitted. Earlier exact scroll1429.5999755859375 observation is historical supporting evidence.
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate is not deployed; original authorized account inspection found the keyboard/focus defect without submitting an approval. Corrected released behavior/roles/tenant/cohorts/Live remain owed.
-KEYBOARD_FOCUS: PASS: native original-trigger focus on Cancel/Escape and forward/reverse dialog focus trap verified. Original scroll layer changes from inert1 to0; Escape preserves open Chat and its own unsent synthetic draft. Busy-state and scope-retirement negatives remain source-test evidence only, not native PASS.
-ZOOM_REFLOW: UNVERIFIED: final required desktop/narrow layouts and200percent browser zoom have not been driven for this candidate; no geometry change is a source fact, not rendered proof.
-REDUCED_MOTION: UNVERIFIED: no animation/CSS change; actual preference and resulting candidate shell behavior remain to be observed.
+KEYBOARD_FOCUS: PASS: current native forward/reverse dialog cycling and Escape return observed;390 final return image shows the original control with visible focus. Desktop/390 actions measure44CSSpx. Synthetic Chat draft stays intact. Native pending/late-result/account-retirement acceptance remains source-only.
+ZOOM_REFLOW: UNVERIFIED: final1536/1366/1024/900 and390 CSS reflow/captures now verified; actual200percent native browser zoom remains unverified because the visible native window does not expose the synthetic Systems tab. No CSS scale or raster resize substitutes for browser zoom.
+REDUCED_MOTION: UNVERIFIED: this follow-up adds no animation; the existing media rules remain. Actual current preference and native behavior remain to be observed.
 STATE_COVERAGE: PASS: original success/refusal, busy decision/no repeat activation, Cancel/Escape and account retirement are tested; no draft preparation, diagnostic scan, action cancellation, execution result or backend success is simulated as customer proof.
 TRUTHFUL_STATE_LABELS: PASS: native PARTIAL Ask First/context-not-attached/no-work warning retained. The canonical command-center.systems-check Mind-context binding remains UNAVAILABLE, blocked by absent SCR-2 workspace subject and SCR-3 enumerated counts; the separately mounted recorded-check UI is partial, not Mind eligibility. CAP009–017/actor availability unchanged; no algorithm or action readiness promotion.
 SOLO_UI: YES: shared original SOLO Systems Check workspace for every eligible existing/future account, no account-specific implementation or provisioning change.
-UNVERIFIED: candidate native desktop/narrow/keyboard/focus/scroll/composer, zoom/assistive technology, final composed static checks, exact-head review/CI, deployment/readback and ordinary role/tenant/cohort/eligibleLive proof remain owed. Full19/nine and one complete founder evaluation remain open.
+UNVERIFIED: native200percent zoom, current reduced-motion/assistive technology and native pending/late-result/scope-retirement states; final review/exact-head CI, deployment/readback and ordinary role/tenant/cohort/eligibleLive/customer proof. All19/nine and one integrated founder evaluation remain open.
 
 OWNER_INTENT: restore usable review exits and preserve the owner's business/conversation context through small safe releases; do not ask for individual product evaluation.
 MUST_NOT_HAPPEN: Escape must not fold global Chat; a still-inert trigger must not receive restoration; an old account's response must not overwrite current UI or release a current pending decision; no click may create new authority.
@@ -26,7 +26,7 @@ MUST_PRESERVE: original approval/decline writer and risk/consent, busy/no-repeat
 ACCEPTANCE_CRITERIA: native Cancel/Escape returns to the original connected control after inert clears, keeps Chat and drafts/scroll intact, consumes busy Escape without another decision, and retires old-account result/focus. Then repeat permitted non-effectful checks on the released authorized SOLO account.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original account epochs and stale UI result negatives are tested; original command approval/decline, runner, RLS, Spine, Trust, LayerC, provider, INT346 and Rail implementations are not edited.
-INTERNAL_BUILD_IDENTITY: branch=codex/e2-systems-dialog-return; runtime-source=71f995881c600d1e37841ea2c98e9e7284efbe95; source-main=a9bd855c14e824e6cb2c905876d45418c452ae57; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record
+INTERNAL_BUILD_IDENTITY: branch=codex/e2-systems-dialog-return; source-base=253997ce3ecd3f65f0c13428505efa2390f56d0c; component-blob=6ee9d5f93ccb104478dbcfd2271d0f1aa4affdb5; styles-blob=73f074c81edda44f4c9b19fae91e1073b84cb07d; incoming-main=03edfad8a4d7829e6d77f513918369f5ce2bbb71; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-systems-dialog-return/oct24-native-confirmation.json
 RELEASE_CHANNEL: development: original-component source repair; normal reviewed production web release follows actual rendered proof and every required exact-head gate.
 RELEASE_CLASSIFICATION: internal-only: bounded interaction/scope repair, no customer capability launch.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement.
@@ -34,14 +34,14 @@ RELEASE_NOTE_REQUIRED: no: sanitized engineering receipts only.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: original native recorded-check UI only; canonical Systems Check Mind-context UNAVAILABLE (SCR-2/SCR-3). Corrected ordinary UI behavior PROOF OWED. Do not represent a source test, pending fixture or browser connection as customer acceptance.
 RELEASE_RECOVERY: position=forward-fix the original workspace; reference=ANT138/dbf6f914 and ANT161/cbf53f89. UI retirement does not cancel, replay, reconcile or establish cessation of an original domain operation.
 
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: final candidate native render blocked by page-control CDP timeout.
+SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e2-systems-dialog-return/oct24-final-1536x770-closed.jpg; actual final-source original shell, neutral synthetic fixture, CSS viewport verified. Original review-return/Chat continuity layout.
+SOLO_1536X770_PAIGE_OPEN: PASS: assets/e2-systems-dialog-return/oct24-final-1536x770-open.jpg; actual final-source original shell, neutral synthetic fixture, CSS viewport verified. Original review-return/Chat continuity layout.
+SOLO_1366X768_PAIGE_CLOSED: PASS: assets/e2-systems-dialog-return/oct24-final-1366x768-closed.jpg; actual final-source original shell, neutral synthetic fixture, CSS viewport verified. Original review-return/Chat continuity layout.
+SOLO_1366X768_PAIGE_OPEN: PASS: assets/e2-systems-dialog-return/oct24-final-1366x768-open.jpg; actual final-source original shell, neutral synthetic fixture, CSS viewport verified. Original review-return/Chat continuity layout.
+SOLO_1024X768_PAIGE_CLOSED: PASS: assets/e2-systems-dialog-return/oct24-final-1024x768-closed.jpg; actual final-source original shell, neutral synthetic fixture, CSS viewport verified. Original review-return/Chat continuity layout.
+SOLO_1024X768_PAIGE_OPEN: PASS: assets/e2-systems-dialog-return/oct24-final-1024x768-open.jpg; actual final-source original shell, neutral synthetic fixture, CSS viewport verified. Original Chat overlay; fold to enter review.
+SOLO_900X1000_PAIGE_CLOSED: PASS: assets/e2-systems-dialog-return/oct24-final-900x1000-closed.jpg; actual final-source original shell, neutral synthetic fixture, CSS viewport verified. Original review-return/Chat continuity layout.
+SOLO_900X1000_PAIGE_OPEN: PASS: assets/e2-systems-dialog-return/oct24-final-900x1000-open.jpg; actual final-source original shell, neutral synthetic fixture, CSS viewport verified. Original Chat overlay; fold to enter review.
 
 ## Scope, behavior and authority
 
@@ -95,3 +95,18 @@ ALG03/06/11/12 retain their canonical Partial/foundation status; ALG13 remains
 Unverified usefulness. This keyboard repair implements no scoring/prediction or
 new algorithm: NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED
 for any claim of new intelligence. The nine catalogue states/access remain unchanged.
+
+### October24 restored native confirmation and scoped touch correction
+
+Current-main03ed composition preserves the full incoming matrix by exact inverse.
+The original component remains unchanged; its original67 tests pass after the
+scoped dialog actions minimum changes36→44CSSpx. Eleven final captures and their
+hashes are committed in the existing UI evidence assets. All screenshots are
+synthetic original-component proof, with no backend/provider or approved action.
+The original Ask First/decision contracts, canonical writers and earlier failures
+remain. Native Confirm was never retried or bypassed. Original200percent/current
+reduced-motion/native pending/scope checks and released customer QA stay owed.
+Applied [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
+control reachability, responsive composition, keyboard/focus and truthful-state
+checks; corrected the observed36px dialog target. No typography/redesign/runtime
+change, algorithm promotion, capability activation or founder acceptance.

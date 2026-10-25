@@ -4,7 +4,9 @@ Current EXP02 continuation: original MMA menu→Finance Overview/VERA and saved
 briefing readback are verified within read-only scope. A continuous keyboard
 focus defect was found in the original pathname-keyed screen boundary; owning
 repair/source window ANT161/cce9dc41 preserves all other shared source. Actual
-SoloApp regression2FAIL/1PASS →41/41 across four original suites; original-shell
+SoloApp regression2FAIL/1PASS →41/41; separate source-drawer/history finding
+1FAIL/3PASS → corrected42/42 across four original suites. Owning tab-change
+cleanup preserves prior drawer retirement and clears stale return focus. Original-shell
 native seven-page keyboard/source-Escape and desktop/narrow synthetic captures
 pass in [the focused evidence](../evidence/ui-delivery/e2-finance-tab-continuity.md).
 Candidate release/readback, native200percent and customer acceptance remain owed.
@@ -19,6 +21,11 @@ current receiving contract and native order before260002. No function invocation
 worker, scan, provider, Chat action or extra grant is authorized by that approval.
 All19/nine, algorithm/catalogue maturity, protected monthly UNKNOWN/UNRETRIED,
 original9/0 and12/0/4 and one final founder evaluation remain separately open.
+Actual authorized Capabilities read/reopen/reload confirms all nine original E02
+descriptions/coverage persist: four Coming Soon, three Limited, two Unverified.
+No state is promoted. The original RLS-scoped paige_skills/useSoloSkills projection
+feeds the existing panel; shared static Access=Unverified gap is routed to EXP01
+in ANT138/95c152c5. A catalogue read is not a capability invocation or acceptance.
 
 Original [#2867 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)
 is maina358554c8cff8bbe0ba52243fb7097508c088c86/tree1cf0156e,

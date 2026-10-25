@@ -1,6 +1,9 @@
 {
   "sourceBase": "005f5d389d9faf98fa4e56ac9f3bb53c1471fd68",
   "oneExpressionOnly": true,
+  "financeCleanupOnly": true,
+  "layoutCaptureSourceHead": "827bf1d3abbdf8a01c11de41f8b53dd73ae40fb5",
+  "postReviewCleanupNativeProof": "source-history-return.json",
   "synthetic": true,
   "actualSoloApp": true,
   "customerAcceptance": false,
@@ -86,7 +89,8 @@
   ],
   "sources": {
     "src/solo/SoloApp.tsx": "523925d9989c5d8919fb00b193bc4f8d53691252dae7bc9920fab51752dc3426",
-    "src/solo/SoloApp.finance-navigation.test.tsx": "23d0c42c60fa79e9d4d923595f7a79e15d9b841d26a9df9d59cfbce2a72c3dcc",
+    "src/solo/finance/FinanceWorkspace.tsx": "91d45a6eb794bcbd1409f421454a1cc59eb620c83c7456cae2e0bba7c68310f8",
+    "src/solo/SoloApp.finance-navigation.test.tsx": "60a68edb09a9368e385c36caac051fd097d4d3e8454a896a1fcaf50169c85b3f",
     "scripts/live-drive/harness/finance-review-mount/main.tsx": "b0ca0c351762f10264171b54a74b014c96eeb1a92a3f958e62a539b6f27c68c7",
     "scripts/live-drive/harness/finance-review-mount/vite.config.ts": "1f1fde85a3dfa0790f96d76374b9374cea819afc2ff1b348b1a9dcc5bb5b5a75",
     "scripts/live-drive/harness/finance-review-mount/route-stubs.tsx": "793473708a09792b53a4133fcd8664c9f9a9fcb8b22bd1d045f11675a4a53708",

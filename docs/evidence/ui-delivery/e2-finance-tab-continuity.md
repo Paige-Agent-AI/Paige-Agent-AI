@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: NO: restores the approved continuous tab keyboard behavior
 FLOW_PROTOTYPE: NOT_REQUIRED: repair of the existing tab interaction, preserving the incumbent visual direction and every original destination.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a permitted SOLO actor navigates every Finance page with arrows/Home/End without focus disappearing into the document or losing the unsent discussion.
 VISUAL_DIRECTION: PASS: original data-first Finance, VERA attribution and shared shell. No CSS, font, icon, money calculation or departmental copy change.
-AUTOMATED_EVIDENCE: PASS: actual SoloApp/Finance/route/boundary regression baseline2FAIL/1PASS; repaired41/41 across four Finance, Settings, boundary-recovery and full-host suites. Tests retain period/history state, original actor/business reset and departmental access refusal. Native-cache/fork-start failures were INVALID setup attempts, not product results; final original tests ran with one worker thread.
+AUTOMATED_EVIDENCE: PASS: actual SoloApp/Finance/route/boundary baseline2FAIL/1PASS; initial41/41. Separate review identified retained source-drawer state on history change, reproduced1FAIL/3PASS. Corrected42/42 across the same four Finance, Settings, boundary-recovery and full-host suites. Tests retain period/history state, actor/business reset and departmental refusal. Native-cache/fork-start attempts were INVALID setup; final tests use one worker thread. Original SOLO parity SP1–SP5 and all eighteen mutation/positive controls pass.
 STATIC_EVIDENCE: PASS: scoped new test and render-adapter lint0 errors/9 development Fast Refresh warnings; Impeccable actual SoloApp0 anti-patterns/3 unchanged legacy color advisories. Hosted exact-head locked install/type/build/security gates remain required before release.
 RENDERED_EVIDENCE: PASS: assets/e2-finance-tab-continuity contains eight required actual SoloApp/Finance layout captures, dark1536/390, denied/loading900 and narrow390 keyboard. These use disclosed neutral inputs and backend-refusing source transports; no customer or provider claim.
-BEHAVIORAL_EVIDENCE: PASS: native-keyboard-trace.json records End→Left→Home→wraparound and every seven-page arrow transition with focus equal to the selected original tab, one panel and unchanged synthetic discussion. source-sheet-return.json records original evidence/Escape returning to the original amount button. narrow-keyboard.json shows focused Profitability entirely within390px after continuous End/Left.
+BEHAVIORAL_EVIDENCE: PASS: native-keyboard-trace.json records End→Left→Home→wraparound and every seven-page transition with focus equal to the selected tab, one panel and unchanged synthetic discussion. source-sheet-return.json records evidence/Escape returning to the original amount button. narrow-keyboard.json shows focused Profitability within390px after continuous End/Left. Post-review source-history-return.json verifies real Chrome Back closes the drawer, returns Banking and keeps the discussion; Edge batch/capture timeouts are excluded.
 AUTHENTICATED_RUNTIME: UNVERIFIED: released MMA menu→Overview/VERA/saved briefing readback passed, but continuous keyboard focus FAILED before this fix. Candidate production/reload readback is still owed; no acceptance inferred from the fixture.
 KEYBOARD_FOCUS: PASS: actual route-host native sequence and narrow reachability above, plus original evidence-Sheet Escape focus. No per-key target refocusing masks the defect; only initial key targets Overview.
 ZOOM_REFLOW: UNVERIFIED: eight exact CSS geometries and390 reflow pass without body overflow; candidate native200percent browser zoom was not established. Native window attempts remained on a different existing tab and were abandoned without typing or editing it. Earlier original Finance200percent evidence is historical, not a new candidate pass.
@@ -22,7 +22,7 @@ UNVERIFIED: final exact-head CI/review, merge/deployment/readback, repaired ordi
 
 OWNER_INTENT: finish the complete premium Finance/EXP02 workflow and all subpages; one integrated founder evaluation after engineering completion.
 MUST_NOT_HAPPEN: no lost keyboard focus, stale actor/business data, hidden final tab, cleared Chat draft, weakened screen-error recovery, extra approval/runtime, invented financial figure or customer acceptance.
-MUST_PRESERVE: every SoloApp byte except the single Finance boundary-key expression, original pathname resetKey, Operations behavior, identity epoch, seven canonical routes, VERA handoff, authority/source readers, original evidence/Rails and Chat sibling.
+MUST_PRESERVE: every SoloApp byte except the single Finance boundary-key expression, original pathname resetKey, Operations behavior, identity epoch, seven routes, VERA handoff, source readers, original evidence/Rails and Chat sibling. Original Finance bytes differ only by the tab-change ephemeral source cleanup; prior source evidence must close when its page is retired.
 ACCEPTANCE_CRITERIA: real ordinary owner can use continuous End/arrows/Home through all seven released pages, inspect original source and Escape back, use Back/Forward, retain the discussion and return after reload. Another actor/account resets protected state. No business effects are initiated.
 MOTION_PURPOSE: NONE: no product motion change.
 PROTECTED_SEAMS: affected screen identity/healthy input retention/accessibility and responsive host: actual routed tests/native proof above; existing failed-screen recovery and identity reset covered. Chat sibling continuity uses a synthetic unsent field only; actual Chat/Live acceptance is separate. Not affected: authentication/account choice, signup/entitlement/billing/provisioning, approval/autonomy, Spine execution, canonical reads/writes/readback, Rail/audit/Memory, Chat transcript/stream/message/thread/popout/history implementation, Live state, Secure Browser/Vault, provider/external effects, durable scheduling/retries/idempotency, privacy/credential handling. No backend or grant change.
@@ -62,3 +62,19 @@ recommendation converted into execution and no receipt manufactured.
 Functional: local repair verified. Visual: original design preserved and rendered.
 Experiential: local keyboard/source return verified, production readback owed.
 Founder Acceptance: NOT_ACCEPTED. No protected monthly retry or new Chat send.
+
+## Review correction and catalogue synchronization
+
+Review fixed one material state finding before publication: the retained Finance
+instance must close old source evidence on history navigation. The owning tab
+effect clears both detail and its return-focus reference. Original42 tests and
+actual Chrome history proof pass. Original13 exact layout captures precede only
+this cleanup; their layout/style source is unchanged, verified by a whole-file
+inverse. A later source-history screenshot timed out and is not counted.
+
+Actual authorized production catalogue read/reopen/reload is recorded, sanitized,
+in assets/e2-finance-tab-continuity/catalogue-readback.json: all nine descriptions
+and coverage states persist (four Coming Soon, three Limited, two Unverified).
+This repair changes none. Access remains Unverified; the shared panel's static
+access presentation is routed to EXP01 in ANT138/95c152c5. The actual reader is
+RLS-scoped paige_skills, not a new list RPC. No invocation, send or Live proof.

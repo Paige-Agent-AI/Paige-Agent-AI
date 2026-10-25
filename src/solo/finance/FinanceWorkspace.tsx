@@ -65,6 +65,7 @@ export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
   ? metrics.phase === "ready" ? metrics.metrics.find(metric => metric.metric_key === (detail.value as SalesMetricBundle).metric_key && metric.evidence_ref === (detail.value as SalesMetricBundle).evidence_ref && Date.parse(metric.reference_expires_at ?? "") > Date.now()) ?? null : null
   : invoices.phase === "ready" && detail.readIdentity === invoices.identity ? invoices.rows.find(row => row.id === (detail.value as InvoiceRecord).id) ?? null : null;
  React.useEffect(() => { if (detail && !shown) setDetail(null); }, [detail, shown]);
+ React.useEffect(() => { evidenceReturn.current = null; setDetail(null); }, [tab]);
  React.useEffect(() => { setDetail(null); setFilter("issued"); setSearch(""); }, [epoch]);
  const currentRows = invoices.rows.filter(row => (filter === "all" || row.status === filter) && `${row.number} ${row.snapshot.memo ?? ""}`.toLowerCase().includes(search.toLowerCase()));
  const Readiness = ({ title, rows }: { title: string; rows: Array<[string,string]> }) => <section className="finance-readiness"><h2>{title}</h2><dl>{rows.map(([name,status]) => <React.Fragment key={name}><dt>{name}</dt><dd>{status}</dd></React.Fragment>)}</dl><button onClick={() => openOwner("settings/integrations")}>Review integrations <ArrowUpRight size={15}/></button></section>;

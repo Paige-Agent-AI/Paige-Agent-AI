@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 // Real SoloApp, boundary, Finance and route hook. Only account/source transports
 // and unrelated departments are doubles; this does not establish customer QA.
-const port = vi.hoisted(() => ({ actor: "test-owner-a", tenant: "test-business-a", metricPhase: "ready" }));
+const port = vi.hoisted(() => ({ actor: "test-owner-a", tenant: "test-business-a", metricPhase: "ready", metrics: [] as unknown[] }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUserId: port.actor,
   activeTenantId: port.tenant, loading: false, accountContextStatus: "ready", isPlatformStaff: false,
   activeTenant: { account_number: "123", name: "Synthetic company", account_type: "standalone", features: { solo_setup_completed: true } } }) }));
@@ -48,14 +48,14 @@ vi.mock("./vibe", () => ({ VibeStudio: () => null }));
 vi.mock("@/components/ui/paige", () => ({ AgentPresenceProvider: ({ children }: React.PropsWithChildren) => children,
   useAgentPresence: () => ({ expandRail: vi.fn(), railExpanded: true }) }));
 vi.mock("@/lib/voice/VoiceDeviceProvider", () => ({ VoiceDeviceProvider: ({ children }: React.PropsWithChildren) => children, useVoiceDevice: () => null }));
-vi.mock("./sales/performance/useSalesPerformanceMetrics", () => ({ useSalesPerformanceMetrics: () => ({ phase: port.metricPhase, metrics: [], retry: vi.fn(), unavailableKeys: {} }) }));
+vi.mock("./sales/performance/useSalesPerformanceMetrics", () => ({ useSalesPerformanceMetrics: () => ({ phase: port.metricPhase, metrics: port.metrics, retry: vi.fn(), unavailableKeys: {} }) }));
 vi.mock("./finance/useFinanceInvoices", () => ({ useFinanceInvoices: () => ({ identity: port.tenant, phase: "ready", rows: [], hasMore: false, readAt: null, retry: vi.fn() }) }));
 vi.mock("./data/useBusinessReview", () => ({ useBusinessReview: () => ({ state: "failed", refresh: vi.fn() }) }));
 import SoloApp from "./SoloApp";
 
 let host: HTMLDivElement, root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-beforeEach(() => { port.actor = "test-owner-a"; port.tenant = "test-business-a"; port.metricPhase = "ready"; sessionStorage.clear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+beforeEach(() => { port.actor = "test-owner-a"; port.tenant = "test-business-a"; port.metricPhase = "ready"; port.metrics = []; sessionStorage.clear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 function Address() {
   const location = useLocation(), navigate = useNavigate();
@@ -99,4 +99,20 @@ it("retains the original departmental refusal rather than exposing finance actio
   port.metricPhase = "denied"; await render();
   expect(host.querySelector('[role="alert"]')?.textContent).toContain("Financial access is restricted");
   expect(host.querySelector(".finance-primary")).toBeNull();
+});
+
+it("closes source evidence on history navigation without restoring a retired page trigger", async () => {
+  port.metrics = [{ metric_key: "sales.receivables.outstanding_current", label: "Original source amount", definition: "Synthetic source only",
+    truth_state: "PARTIAL", evidence_ref: "synthetic-original-reference", reference_expires_at: "2099-01-01T00:00:00Z",
+    values: { kind: "currency_totals", by_currency: [{ currency: "USD", amount_minor: "10000", record_count: 1 }] },
+    coverage: { contributing_count: 1, excluded_count: 0 }, range: { start: "2026-09-01T00:00:00Z", end: "2026-10-01T00:00:00Z", semantics: "current_snapshot" },
+    as_of: "2026-10-01T00:00:00Z", caveats: [], exclusions: [], source_refs: ["synthetic"] }];
+  await render();
+  selected().focus(); await key("ArrowRight"); await key("Home");
+  const trigger = host.querySelector<HTMLButtonElement>(".finance-value")!;
+  await act(async () => trigger.click()); expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  await act(async () => [...host.querySelectorAll("button")].find(button => button.textContent === "Previous address")!.click());
+  expect(selected().textContent).toBe("Banking & Cash");
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(document.activeElement).not.toBe(trigger);
 });

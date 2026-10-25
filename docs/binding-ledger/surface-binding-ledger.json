@@ -1061,11 +1061,11 @@
       "id": "teamhub",
       "consequential": false,
       "intended_capability": {
-        "read": "The caller's own visible conversations: team-visible and private channels they belong to, DMs, threads, mentions and unread counts, inside their own SOLO workspace.",
-        "draft": "Prepare a message, a thread reply or a channel for the caller to send, with up to 5 checked files (10 MB each) attached; preview a task (title, assignee, due date) before it is created in Operations; prefill a PAIGE draft for a specialist, approval or meeting request, which the person sends from PAIGE chat.",
+        "read": "The caller's own visible conversations: team-visible and private channels they belong to, DMs, threads, mentions and unread counts, inside their own SOLO workspace. PAIGE (Chat and Live) reads the same conversations for the asker, with the asker's own JWT through team_hub_list_conversations, team_hub_list_messages and team_hub_search, fresh every turn.",
+        "draft": "Prepare a message, a thread reply or a channel for the caller to send, with up to 5 checked files (10 MB each) attached; preview a task (title, assignee, due date) before it is created in Operations; prefill a PAIGE draft for a specialist, approval or meeting request, which the person sends from PAIGE chat. PAIGE drafts a Team Hub reply as an approval card naming the conversation and the exact text.",
         "auto": "Within the caller's own seat and visible conversations only: post, reply, mention, attach and download files, create or join channels and mark read, as the caller, bounded to their workspace and never crossing to another workspace or a private channel they are not in.",
-        "confirm": "Leaving a private channel confirms its consequence first; Create Task is the one confirmed act and creates a task through Operations' existing writer as the caller; specialist, approval and meeting requests are only prefilled in PAIGE, where its own approval card and delegation check apply.",
-        "prohibited": "Never reveal a private channel's existence, name, members, counts or text to a non-member, including workspace owners; never grant agency, operator or removed people access; never send anything outside the business; never let a Team Hub file reach an outbound email or a document analysis by path; never post a file the server has not checked.",
+        "confirm": "Leaving a private channel confirms its consequence first; Create Task is the one confirmed act and creates a task through Operations' existing writer as the caller; specialist, approval and meeting requests are only prefilled in PAIGE, where its own approval card and delegation check apply. A PAIGE-drafted Team Hub reply is posted under the person's own name only when they approve its card (high risk, never from Live, at most once per card).",
+        "prohibited": "Never reveal a private channel's existence, name, members, counts or text to a non-member, including workspace owners; never grant agency, operator or removed people access; never send anything outside the business; never let a Team Hub file reach an outbound email or a document analysis by path; never post a file the server has not checked. Never store, index or embed Team Hub content for PAIGE, and never let it enter Knowledge, Memory or PAIGE traces.",
         "completion_criterion": "A teammate sends a message in a channel or DM; it is delivered to the conversation's members with an unread count, a mention is shown to the mentioned teammate in that conversation, the message survives reload, and private-channel isolation is verified on a real authenticated SOLO account."
       },
       "surface": "Team Hub (main menu, below Operations)",
@@ -1090,12 +1090,12 @@
           "note": "current_user_tenant_id() plus an active tenant_members seat; canonical SOLO only (standalone, no parent); p_expected_tenant is a fence, never a selector"
         },
         "safe_context": {
-          "status": "none",
-          "note": "Increment 1 adds no Paige context feed; Chat/Live answers about team work arrive in increment 4"
+          "status": "wired",
+          "note": "Increment 4: three read-only Spine capabilities team.hub_list_conversations, team.hub_read_conversation and team.hub_search, offered on canonical SOLO only, dispatched through the asker's JWT client with personaCtx.tenant_id as the p_expected_tenant fence; bodies enter the model only inside an untrusted-data fence, capped, with no storage paths"
         },
         "authority": {
-          "status": "none",
-          "note": "Human-to-human messaging; no Paige act and no Spine key in increment 1. Increment 2 adds none either: Create Task is the caller's own act through Operations' existing writer, and specialist, approval and meeting requests are PAIGE prefill only"
+          "status": "wired",
+          "note": "Increment 4: team.hub_post_reply is high risk (action-risk.ts), so every lane clamps to confirm; it executes only from a claimed operator_card approval token through team_hub_post_message as the caller, idempotent on a request id derived from the card; Live refuses it. Reads are read_only with no approval"
         },
         "governed_write": {
           "status": "wired",
@@ -1113,14 +1113,15 @@
         "mind_eligibility": {
           "axis_a": "BLOCKED",
           "axis_b": "NO",
-          "note": "Message text, file contents and member identity never cross to Mind in increments 1-3"
+          "note": "Message text, file contents and member identity never cross to Mind in increments 1-4"
         },
         "memory_retention": {
-          "status": "n/a"
+          "status": "n/a",
+          "note": "Increment 4: no Team Hub content is retained. Once a person has a Team Hub receipt or reply card, PAIGE writes no automatic memory summary, milestone or extracted fact for them (owner ruling 2026-10-25), and their PAIGE traces are metadata-only"
         }
       },
       "state": "PROOF_OWED",
-      "state_reason": "Increments 1-3 source with disposable-PostgreSQL proofs (increment 2 loads the real plan_assign_task_scoped over fixture doubles of what it stands on; increment 3 adds a storage-schema stub, the file proof and a retirement proof in CI), Node tests of the byte check and the service-role reader guards, and mocked-RPC tests plus a rendered harness; not yet applied to production, the team-hub-file edge function is not deployed, and nothing is driven on an authenticated SOLO account. Files are not malware-scanned (owner decision).",
+      "state_reason": "Increments 1-4 source with disposable-PostgreSQL proofs (increment 2 loads the real plan_assign_task_scoped over fixture doubles; increment 3 adds a storage-schema stub, the file proof and a retirement proof; increment 4 adds the search proof), Node tests of the byte check, the service-role reader guards and the PAIGE Team Hub dispatch and wiring, and mocked-RPC tests plus a rendered harness. Increments 1-3 are applied to production and read back (team-hub-file active); increment 4 is not yet merged; nothing is driven on an authenticated SOLO account. Files are not malware-scanned (owner decision).",
       "evidence_class": [
         "automated_test",
         "rendered_structural",
@@ -1129,9 +1130,10 @@
       "linked": [
         "docs/delivery/exp08-team-hub-collaboration-contract.md",
         "docs/delivery/exp08-team-hub-increment2-work-contract.md",
-        "docs/delivery/exp08-team-hub-increment3-attachments-contract.md"
+        "docs/delivery/exp08-team-hub-increment3-attachments-contract.md",
+        "docs/delivery/exp08-team-hub-increment4-paige-contract.md"
       ],
-      "next_slice": "Increment 4: PAIGE reads and searches Team Hub in Chat and Live, and drafts replies posted only on the person's approval; plus the §32 persisted-apply check, the team-hub-file deploy and an authenticated SOLO drive for increments 1-3, a scheduled stale-file sweep, and the four rendered defects from the increment-3 evidence record.",
+      "next_slice": "An authenticated SOLO drive of increments 1-4 (including a PAIGE read, search, an approved reply and a declined card), the §32 readback of 20271114240008 and 20271114240108, a scheduled stale-file sweep, a Team Hub record-link destination so PAIGE can link to a conversation, and the four rendered defects from the increment-3 evidence record.",
       "sources": [
         "docs/delivery/exp08-team-hub-collaboration-contract.md",
         "docs/doctrine/surface-cards/team.md",
@@ -1140,7 +1142,10 @@
         "supabase/tests/exp08_team_hub_team_work.sql",
         "docs/delivery/exp08-team-hub-increment3-attachments-contract.md",
         "supabase/tests/exp08_team_hub_files.sql",
-        "docs/evidence/ui-delivery/exp08-team-hub-increment3.md"
+        "docs/evidence/ui-delivery/exp08-team-hub-increment3.md",
+        "docs/delivery/exp08-team-hub-increment4-paige-contract.md",
+        "supabase/tests/exp08_team_hub_search.sql",
+        "supabase/functions/_shared/team-hub/chat.ts"
       ]
     },
     {

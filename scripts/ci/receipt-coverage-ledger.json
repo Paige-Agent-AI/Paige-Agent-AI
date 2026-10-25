@@ -1194,6 +1194,12 @@
       "evidence": "paige-ai-chat dispatch (the plan_item_set_client_share branch) records the run via recordCapabilityRun after _shared/planning/scoped-write.ts setPlanItemClientShare returns: capability_succeeded only when a fresh caller-JWT read of plan_items shows client_shared_at in the asked state (a state replay included), capability_refused for a named refusal the database answered (not owner/admin, not linked to a client, reminder or cancelled, client not active, item changed, account type), capability_outcome_unknown when the write may have landed but was not confirmed (including a dispatch that throws). A malformed request is refused before any write and still records a capability_refused run, as does a workspace that no longer matches current_user_tenant_id(); the switch over ClientShareFailure is exhaustive, so no outcome goes unrecorded."
     },
     {
+      "tool": "team_hub_post_reply",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the team_hub_post_reply branch) records the run via recordCapabilityRun after _shared/team-hub/chat.ts postTeamHubReply returns, for every outcome: capability_succeeded when public.team_hub_post_message (caller JWT) returns the stored message, a replayed approval's duplicate:true included; capability_refused for a request refused before any write (no approved card token, a Live turn, malformed arguments, no workspace) or a structured {ok:false} code the definer answered (not_member, unavailable, scope_changed, not_found, invalid, too_long) or a returned PostgREST error; capability_outcome_unknown when the call threw after it may have been sent, or answered without a message id. The detail never carries the text or the conversation."
+    },
+    {
       "tool": "client_portal_access_set",
       "risk": "high",
       "receipt": "emits",

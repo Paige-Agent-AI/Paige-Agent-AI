@@ -2,20 +2,25 @@ import {Inflate} from "npm:fflate@0.8.2";
 import {DOMParser} from "npm:@xmldom/xmldom@0.8.15";
 
 const WORD = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const RELS = "http://schemas.openxmlformats.org/package/2006/relationships";
+const TYPES = "http://schemas.openxmlformats.org/package/2006/content-types";
+const OFFICE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument";
+const MAIN = "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml";
 const MAX_XML = 1024 * 1024;
+const MAX_METADATA = 65536;
 const MAX_ENTRIES = 256;
 const UTF8 = new TextDecoder("utf-8", {fatal: true});
 export class CustomerDocxError extends Error {
-  constructor(readonly code: "invalid_document" | "processing_limit" | "interrupted") {super(code);}
+  constructor(readonly code: "invalid_document" | "processing_limit" | "interrupted" | "unsupported") {super(code);}
 }
 function refuse(code: CustomerDocxError["code"]): never {throw new CustomerDocxError(code);}
 type Member = {offset: number; compressed: number; size: number; crc: number; method: number};
 
-/** Locate one unambiguous original body; never unpack other archive members or
- * resolve relationships, links, external objects, macros, headers or notes.
+/** Index bounded original package members without extracting files or following
+ * external relationships, links, objects, macros, headers or notes.
  * Native caller-JWT/immutable-object authorization stays in the original loader.
  */
-function bodyMember(bytes: Uint8Array): Member {
+function packageMembers(bytes: Uint8Array): Map<string, Member> {
   if (bytes.length < 22) refuse("invalid_document");
   if (bytes.length > 20971520) refuse("processing_limit");
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -29,7 +34,8 @@ function bodyMember(bytes: Uint8Array): Member {
   if (count < 1 || count !== u16(end + 8) || central + centralSize !== end) refuse("invalid_document");
   if (count > MAX_ENTRIES || centralSize > 524288) refuse("processing_limit");
   const names = new Set<string>(), ranges: Array<[number, number]> = [];
-  let at = central, body: Member | null = null;
+  let at = central;
+  const members = new Map<string, Member>();
   const extra = (start: number, length: number) => {
     const limit = start + length;
     while (start < limit) {
@@ -51,8 +57,8 @@ function bodyMember(bytes: Uint8Array): Member {
     const name = UTF8.decode(bytes.subarray(at + 46, at + 46 + nameLength));
     if (name.startsWith("/") || name.includes("\\") || Array.from(name).some(c => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127)
       || name.split("/").some(part => part === "." || part === "..")
-      || names.has(name)) refuse("invalid_document");
-    names.add(name); extra(at + 46 + nameLength, extraLength);
+      || names.has(name.toLowerCase())) refuse("invalid_document");
+    names.add(name.toLowerCase()); extra(at + 46 + nameLength, extraLength);
     if (local + 30 > central || u32(local) !== 0x04034b50 || u16(local + 6) !== flags
       || u16(local + 8) !== method || u16(local + 26) !== nameLength) refuse("invalid_document");
     const localExtra = u16(local + 28), start = local + 30 + nameLength + localExtra;
@@ -61,6 +67,10 @@ function bodyMember(bytes: Uint8Array): Member {
     extra(local + 30 + nameLength, localExtra);
     let finish = start + compressed;
     if (flags & 8) {
+      // Descriptor mode permits zero or matching local fields, never conflicting ones.
+      for (const [offset, expected] of [[14, crc], [18, compressed], [22, size]]) {
+        if (u32(local + offset) !== 0 && u32(local + offset) !== expected) refuse("invalid_document");
+      }
       const descriptor = finish + 4 <= central && u32(finish) === 0x08074b50 ? finish + 4 : finish;
       if (descriptor + 12 > central || u32(descriptor) !== crc || u32(descriptor + 4) !== compressed
         || u32(descriptor + 8) !== size) refuse("invalid_document");
@@ -70,13 +80,11 @@ function bodyMember(bytes: Uint8Array): Member {
     }
     if (ranges.some(([left, right]) => local < right && finish > left)) refuse("invalid_document");
     ranges.push([local, finish]);
-    if (name === "word/document.xml") body = {offset: start, compressed, size, crc, method};
+    members.set(name, {offset: start, compressed, size, crc, method});
     at = next;
   }
-  if (at !== end || !body) refuse("invalid_document");
-  if (body.size < 1) refuse("invalid_document");
-  if (body.size > MAX_XML || body.compressed > 2 * MAX_XML + 4096) refuse("processing_limit");
-  return body;
+  if (at !== end) refuse("invalid_document");
+  return members;
 }
 
 function crc32(bytes: Uint8Array): number {
@@ -130,11 +138,9 @@ function xmlPreflight(xml: string) {
   if (stack.length) refuse("invalid_document");
 }
 
-export async function readCustomerDocxBody(bytes: Uint8Array, signal?: AbortSignal): Promise<string> {
-  const deadline = Date.now() + 10000;
-  const current = () => {if (signal?.aborted) refuse("interrupted"); if (Date.now() >= deadline) refuse("processing_limit");};
-  try {
-    current(); const member = bodyMember(bytes); current();
+async function memberXml(bytes: Uint8Array, member: Member | undefined, limit: number, current: () => void) {
+    current(); if (!member || member.size < 1) refuse("invalid_document");
+    if (member.size > limit || member.compressed > 2 * limit + 4096) refuse("processing_limit");
     const compressed = bytes.subarray(member.offset, member.offset + member.compressed);
     let xmlBytes: Uint8Array;
     if (member.method === 0) {
@@ -143,7 +149,7 @@ export async function readCustomerDocxBody(bytes: Uint8Array, signal?: AbortSign
       let length = 0, finished = false; const chunks: Uint8Array[] = [];
       const inflater = new Inflate((chunk, final) => {
         current(); length += chunk.length;
-        if (length > member.size || length > MAX_XML) refuse("processing_limit");
+        if (length > member.size || length > limit) refuse("processing_limit");
         chunks.push(chunk); finished = final;
       });
       for (let offset = 0; offset < compressed.length; offset += 128) {
@@ -160,8 +166,70 @@ export async function readCustomerDocxBody(bytes: Uint8Array, signal?: AbortSign
     current(); if (crc32(xmlBytes) !== member.crc) refuse("invalid_document");
     const xml = UTF8.decode(xmlBytes); xmlPreflight(xml); current();
     const invalid = () => refuse("invalid_document");
-    const document = new DOMParser({errorHandler: {warning: invalid, error: invalid, fatalError: invalid}})
+    return new DOMParser({errorHandler: {warning: invalid, error: invalid, fatalError: invalid}})
       .parseFromString(xml, "application/xml");
+}
+
+function children(root: Element, namespace: string, name: string): Element[] {
+  const result: Element[] = [];
+  for (const node of Array.from(root.childNodes)) {
+    if (node.nodeType === 8 || (node.nodeType === 3 && !node.textContent?.trim())) continue;
+    const element = node as Element;
+    if (node.nodeType !== 1 || element.namespaceURI !== namespace || element.localName !== name) refuse("invalid_document");
+    result.push(element);
+  }
+  return result;
+}
+
+/** A main part is an OPC relationship, not a filename guess. Only simple internal
+ * package URIs are supported; no URL resolution, network or external object load.
+ */
+function internalPart(target: string): string {
+  const part = target.startsWith("/") ? target.slice(1) : target;
+  if (!part || !part.split("/").every(segment => /^[A-Za-z0-9_.-]+$/.test(segment) && segment !== "." && segment !== "..")) refuse("unsupported");
+  return part;
+}
+
+export async function readCustomerDocxBody(bytes: Uint8Array, signal?: AbortSignal): Promise<string> {
+  const deadline = Date.now() + 10000;
+  const current = () => {if (signal?.aborted) refuse("interrupted"); if (Date.now() >= deadline) refuse("processing_limit");};
+  try {
+    current(); const members = packageMembers(bytes); current();
+    const relationships = (await memberXml(bytes, members.get("_rels/.rels"), MAX_METADATA, current)).documentElement;
+    if (!relationships || relationships.localName !== "Relationships" || relationships.namespaceURI !== RELS) refuse("invalid_document");
+    const ids = new Set<string>(); let main: string | null = null;
+    for (const relation of children(relationships, RELS, "Relationship")) {
+      const id = relation.getAttribute("Id"), type = relation.getAttribute("Type"), target = relation.getAttribute("Target");
+      if (!id || !type || !target || ids.has(id)) refuse("invalid_document");
+      ids.add(id);
+      if (type !== OFFICE) continue;
+      if (main !== null || ![null, "", "Internal"].includes(relation.getAttribute("TargetMode"))) refuse("invalid_document");
+      main = internalPart(target);
+    }
+    if (main === null || !members.has(main)) refuse("invalid_document");
+    const types = (await memberXml(bytes, members.get("[Content_Types].xml"), MAX_METADATA, current)).documentElement;
+    if (!types || types.localName !== "Types" || types.namespaceURI !== TYPES) refuse("invalid_document");
+    const declared = new Set<string>(), extensions = new Set<string>(); let mainType: string | null = null;
+    for (const node of Array.from(types.childNodes)) {
+      if (node.nodeType === 8 || (node.nodeType === 3 && !node.textContent?.trim())) continue;
+      const entry = node as Element;
+      if (node.nodeType !== 1 || entry.namespaceURI !== TYPES) refuse("invalid_document");
+      const contentType = entry.getAttribute("ContentType");
+      if (!contentType) refuse("invalid_document");
+      if (entry.localName === "Override") {
+        const name = entry.getAttribute("PartName");
+        if (!name?.startsWith("/") || declared.has(name.toLowerCase())) refuse("invalid_document");
+        declared.add(name.toLowerCase());
+        if (name.slice(1) === main) mainType = contentType;
+      } else if (entry.localName === "Default") {
+        const extension = entry.getAttribute("Extension");
+        if (!extension || extensions.has(extension.toLowerCase())) refuse("invalid_document");
+        extensions.add(extension.toLowerCase());
+      } else refuse("invalid_document");
+    }
+    if (mainType === null) refuse("invalid_document");
+    if (mainType !== MAIN) refuse("unsupported");
+    const document = await memberXml(bytes, members.get(main), MAX_XML, current);
     const root = document.documentElement;
     if (!root || root.localName !== "document" || root.namespaceURI !== WORD) refuse("invalid_document");
     const bodies = Array.from(root.childNodes).filter(node => node.nodeType === 1

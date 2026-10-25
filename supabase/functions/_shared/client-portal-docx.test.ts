@@ -4,12 +4,21 @@ import {readCustomerFileText, CustomerFileReadError} from "./client-portal-file-
 import type {CustomerFilesContext} from "./client-portal-files-context.ts";
 
 const WORD = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const RELS = "http://schemas.openxmlformats.org/package/2006/relationships";
+const TYPES = "http://schemas.openxmlformats.org/package/2006/content-types";
+const OFFICE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument";
+const MAIN = "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml";
+const relationships = (target = "word/document.xml", more = "", mode = "") =>
+  `<Relationships xmlns="${RELS}"><Relationship Id="main" Type="${OFFICE}" Target="${target}" ${mode}/>${more}</Relationships>`;
+const contentTypes = (part = "/word/document.xml", type = MAIN, more = "") =>
+  `<Types xmlns="${TYPES}"><Override PartName="${part}" ContentType="${type}"/>${more}</Types>`;
+const metadata = () => ({"[Content_Types].xml": strToU8(contentTypes()), "_rels/.rels": strToU8(relationships())});
 const body = (inner: string) => `<w:document xmlns:w="${WORD}"><w:body>${inner}</w:body></w:document>`;
 const paragraph = (text: string) => `<w:p><w:r><w:t>${text}</w:t></w:r></w:p>`;
 const archive = (xml = body(paragraph("Original private notes.")), extra: Record<string, Uint8Array> = {}, level = 6) =>
-  zipSync({"word/document.xml": strToU8(xml), ...extra}, {level: level as 0 | 6});
+  zipSync({"word/document.xml": strToU8(xml), ...metadata(), ...extra}, {level: level as 0 | 6});
 const equal = (a: unknown, b: unknown) => {if (a !== b) throw Error(`Expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);};
-async function rejects(bytes: Uint8Array, code: CustomerDocxError["code"] = "invalid_document", signal?: AbortSignal) {
+async function rejects(bytes: Uint8Array, code: CustomerDocxError["code"] | "unsupported" = "invalid_document", signal?: AbortSignal) {
   try {await readCustomerDocxBody(bytes, signal);} catch (error) {
     if (!(error instanceof CustomerDocxError)) throw error;
     equal(error.code, code); return;
@@ -40,7 +49,11 @@ function streamedArchive() {
   const chunks: Uint8Array[] = [];
   const zip = new Zip((error, data) => {if (error) throw error; chunks.push(data);});
   const file = new ZipDeflate("word/document.xml", {level: 6});
-  zip.add(file); file.push(strToU8(body(paragraph("Streamed original body."))), true); zip.end();
+  zip.add(file); file.push(strToU8(body(paragraph("Streamed original body."))), true);
+  for (const [name, bytes] of Object.entries(metadata())) {
+    const part = new ZipDeflate(name, {level: 6}); zip.add(part); part.push(bytes, true);
+  }
+  zip.end();
   const bytes = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.length, 0)); let offset = 0;
   for (const chunk of chunks) {bytes.set(chunk, offset); offset += chunk.length;}
   return bytes;
@@ -55,6 +68,12 @@ Deno.test("reads the permitted unsigned data-descriptor form", async () => {
   equal(view.getUint32(descriptor, true), 0x08074b50);
   const bytes = new Uint8Array(original.length - 4); bytes.set(original.subarray(0, descriptor));
   bytes.set(original.subarray(descriptor + 4), descriptor); write32(bytes, bytes.length - 22 + 16, directory - 4);
+  const moved = new DataView(bytes.buffer); let entry = directory - 4;
+  while (moved.getUint32(entry, true) === 0x02014b50) {
+    const local = moved.getUint32(entry + 42, true);
+    if (local > descriptor) write32(bytes, entry + 42, local - 4);
+    entry += 46 + moved.getUint16(entry + 28, true) + moved.getUint16(entry + 30, true) + moved.getUint16(entry + 32, true);
+  }
   equal(await readCustomerDocxBody(bytes), "Streamed original body.");
 });
 Deno.test("excludes other archive parts and foreign text from its body-only result", async () => {
@@ -134,6 +153,56 @@ Deno.test("honors an abort queued before XML parsing", async () => {
   try {await rejects(archive(), "interrupted", controller.signal);} finally {clearTimeout(timer);}
 });
 
+Deno.test("reads the declared main part rather than a conventional-name decoy", async () => {
+  const bytes = archive(body(paragraph("Decoy must not be read")), {
+    "document.xml": strToU8(body(paragraph("Declared original body"))),
+    "_rels/.rels": strToU8(relationships("/document.xml")),
+    "[Content_Types].xml": strToU8(contentTypes("/document.xml")),
+  });
+  equal(await readCustomerDocxBody(bytes), "Declared original body");
+});
+Deno.test("accepts a minimal OPC package with a root main part and no conventional filename", async () => {
+  const bytes = zipSync({"document.xml": strToU8(body(paragraph("Minimal original body"))),
+    "_rels/.rels": strToU8(relationships("document.xml")),
+    "[Content_Types].xml": strToU8(contentTypes("/document.xml"))});
+  equal(await readCustomerDocxBody(bytes), "Minimal original body");
+});
+const invalidPackages: Record<string, Record<string, Uint8Array>> = {
+  "missing root relationship": {"_rels/.rels": strToU8(`<Relationships xmlns="${RELS}"/>`)},
+  "external main relationship": {"_rels/.rels": strToU8(relationships("https://untrusted.invalid/body", "", 'TargetMode="External"'))},
+  "duplicate main relationship": {"_rels/.rels": strToU8(relationships("word/document.xml", `<Relationship Id="second" Type="${OFFICE}" Target="other.xml"/>`))},
+  "duplicate relationship identity": {"_rels/.rels": strToU8(relationships("word/document.xml", '<Relationship Id="main" Type="urn:other" Target="other.xml"/>'))},
+  "wrong relationship namespace": {"_rels/.rels": strToU8(relationships().replace(RELS, "urn:other"))},
+  "undeclared main content type": {"[Content_Types].xml": strToU8(`<Types xmlns="${TYPES}"/>`)},
+  "duplicate main content type": {"[Content_Types].xml": strToU8(contentTypes(undefined, undefined, `<Override PartName="/word/document.xml" ContentType="${MAIN}"/>`))},
+  "wrong content-type namespace": {"[Content_Types].xml": strToU8(contentTypes().replace(TYPES, "urn:other"))},
+  "metadata entity": {"_rels/.rels": strToU8('<!DOCTYPE Relationships [<!ENTITY target "word/document.xml">]>' + relationships("&target;"))},
+  "missing declared main part": {"_rels/.rels": strToU8(relationships("missing.xml")), "[Content_Types].xml": strToU8(contentTypes("/missing.xml"))},
+};
+for (const [label, extra] of Object.entries(invalidPackages))
+  Deno.test(`refuses ${label} without returning a decoy reading`, () => rejects(archive(undefined, extra)));
+for (const target of ["../word/document.xml", "word/../document.xml", "word%2Fdocument.xml", "word/document.xml#fragment", "word/document.xml?query"])
+  Deno.test(`does not reinterpret unsupported main URI ${target}`, () =>
+    rejects(archive(undefined, {"_rels/.rels": strToU8(relationships(target))}), "unsupported"));
+Deno.test("refuses a macro-enabled main type rather than claiming ordinary Word coverage", () =>
+  rejects(archive(undefined, {"[Content_Types].xml": strToU8(contentTypes(undefined, "application/vnd.ms-word.document.macroEnabled.main+xml"))}), "unsupported"));
+for (const name of ["[Content_Types].xml", "_rels/.rels"])
+  Deno.test(`bounds actual ${name} metadata separately from the body`, () =>
+    rejects(archive(undefined, {[name]: strToU8(" ".repeat(65537))}), "processing_limit"));
+Deno.test("refuses absent OPC metadata even when conventional body bytes exist", () =>
+  rejects(zipSync({"word/document.xml": strToU8(body(paragraph("Decoy")))})));
+Deno.test("refuses contradictory streaming local CRC metadata", () => {
+  const bytes = streamedArchive(); write32(bytes, 14, 123); return rejects(bytes);
+});
+Deno.test("verifies the actual metadata CRC rather than trusting the directory", () => {
+  const bytes = archive(), view = new DataView(bytes.buffer); let entry = central(bytes);
+  entry += 46 + view.getUint16(entry + 28, true) + view.getUint16(entry + 30, true) + view.getUint16(entry + 32, true);
+  write32(bytes, view.getUint32(entry + 42, true) + 14, 0); write32(bytes, entry + 16, 0);
+  return rejects(bytes);
+});
+Deno.test("rejects case-equivalent OPC member aliases", () =>
+  rejects(archive(undefined, {"WORD/document.xml": strToU8(body(paragraph("Ambiguous alias")))})));
+
 const id = (n: number) => `e0997300-0000-4000-8000-${String(n).padStart(12, "0")}`;
 function admittedWord(bytes: Uint8Array): CustomerFilesContext {
   return {threadId: id(4), intentId: id(5), mode: "bound", snapshot: {version: 1, kind: "customer_private_files",
@@ -165,6 +234,12 @@ Deno.test("original admitted reader never calls malformed Word bytes read or pub
   const bytes = new Uint8Array([1, 2, 3, 4]), context = admittedWord(bytes);
   const result = await readCustomerFileText(context, admittedPorts(context, bytes), readLimits);
   equal(result.files[0].status, "unread"); equal(result.files[0].reason, "invalid_document"); equal(result.referenceText, "");
+});
+Deno.test("unsupported Word package stays unread in the original admitted result", async () => {
+  const bytes = archive(undefined, {"[Content_Types].xml": strToU8(contentTypes(undefined, "application/vnd.ms-word.document.macroEnabled.main+xml"))});
+  const context = admittedWord(bytes), ports = admittedPorts(context, bytes);
+  const result = await readCustomerFileText(context, ports, readLimits);
+  equal(result.files[0].status, "unread"); equal(result.files[0].reason, "unsupported"); equal(result.referenceText, "");
 });
 Deno.test("actual Word result remains withheld when the original final source gate is withdrawn", async () => {
   const bytes = archive(body(paragraph("Must remain private."))), context = admittedWord(bytes);

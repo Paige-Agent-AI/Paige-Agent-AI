@@ -14,6 +14,7 @@ import sys
 import tempfile
 import time
 import tomllib
+from traceback import walk_tb
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -27,6 +28,19 @@ RETRY_SECONDS = 5
 
 class ReadbackError(Exception):
     """Only fixed reason codes leave the verifier; CLI payloads may be sensitive."""
+
+
+def value_error_diagnostic(error, phase):
+    # Only this public helper's static function names/line numbers. Never copy
+    # exception text, source lines, filesystem paths, locals or CLI payloads.
+    allowed = {'main', 'verify', 'invoke', 'listing', 'expected_release',
+               'runtime_closure', 'metadata_for', 'entrypoint_matches',
+               'downloaded_manifest', 'digest', 'normalized', 'cli',
+               'server_unbundle_failed'}
+    sites = [{'function': frame.f_code.co_name, 'line': line}
+             for frame, line in walk_tb(error.__traceback__)
+             if frame.f_code.co_filename == __file__ and frame.f_code.co_name in allowed]
+    return {'category': 'invalid_readback_data', 'phase': phase, 'sites': sites[-8:]}
 
 
 def normalized(data):
@@ -353,6 +367,7 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                 before = listing(isolated)
                 candidates = {}
                 for name in names:
+                    phase = 'metadata_before'
                     try:
                         identity = metadata_for(before, name, expected[name])
                         if identities.get(name) == identity and results[name]['status'] == 'PASS':
@@ -364,6 +379,7 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                         (directory / 'supabase/config.toml').write_text(f'project_id = "{project}"\n', encoding='utf-8')
                         mode = 'api'
                         try:
+                            phase = 'download_api'
                             invoke(['functions', 'download', name, '--use-api'], directory)
                         except ReadbackError as error:
                             if str(error) != 'api_unbundle_failed':
@@ -378,8 +394,10 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                             (directory / 'supabase').mkdir(parents=True)
                             (directory / 'supabase/config.toml').write_text(
                                 f'project_id = "{project}"\n', encoding='utf-8')
+                            phase = 'download_vendor'
                             invoke(['functions', 'download', name, '--use-docker'], directory)
                             mode = 'docker_requested'
+                        phase = 'downloaded_source'
                         manifest = downloaded_manifest(repo, commit, directory, expected[name])
                         results[name] = {'function': name, 'status': 'PASS', 'attempts': attempt,
                                          'download_mode': mode,
@@ -389,19 +407,27 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                                          'files': manifest,
                                          'manifest_sha256': hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()}
                         candidates[name] = identity
-                    except (ReadbackError, UnicodeError, OSError) as error:
+                    except (ReadbackError, UnicodeError, OSError, ValueError) as error:
                         identities.pop(name, None)
-                        reason = str(error) if isinstance(error, ReadbackError) else 'invalid_download_source'
+                        invalid_value = isinstance(error, ValueError) and not isinstance(error, UnicodeError)
+                        reason = str(error) if isinstance(error, ReadbackError) else (
+                            'invalid_readback_data' if invalid_value else 'invalid_download_source')
                         results[name] = {'function': name, 'status': 'FAIL', 'reason': reason, 'attempts': attempt}
+                        if invalid_value:
+                            results[name]['diagnostic'] = value_error_diagnostic(error, phase)
                 after = listing(isolated)
                 for name, identity in candidates.items():
                     try:
                         if metadata_for(after, name, expected[name]) != identity:
                             raise ReadbackError('deployment_changed_during_readback')
                         identities[name] = identity
-                    except ReadbackError as error:
+                    except (ReadbackError, ValueError) as error:
                         identities.pop(name, None)
-                        results[name] = {'function': name, 'status': 'FAIL', 'reason': str(error), 'attempts': attempt}
+                        results[name] = {'function': name, 'status': 'FAIL',
+                                         'reason': str(error) if isinstance(error, ReadbackError) else 'invalid_readback_data',
+                                         'attempts': attempt}
+                        if isinstance(error, ValueError):
+                            results[name]['diagnostic'] = value_error_diagnostic(error, 'metadata_after')
             except ReadbackError as error:
                 # A failed final observation cannot certify even earlier matches.
                 identities.clear()
@@ -450,6 +476,8 @@ def main(argv=None):
     except (ReadbackError, ValueError, OSError) as error:
         report = {'commit': args.expected_commit, 'all_pass': False,
                   'reason': str(error) if isinstance(error, ReadbackError) else 'invalid_readback_input'}
+        if isinstance(error, ValueError):
+            report['diagnostic'] = value_error_diagnostic(error, 'verification_input')
     args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     for row in report.get('functions', []):
         print(f"{row['function']}: {row['status']} ({row.get('reason', 'source/configuration matched')})")

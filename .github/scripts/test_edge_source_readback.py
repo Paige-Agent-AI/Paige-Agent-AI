@@ -206,6 +206,47 @@ class ReleaseFixtures(unittest.TestCase):
         self.mode = 'download-failed'
         self.assert_failed(self.verify(), 'cli_readback_failed')
 
+    def test_invalid_download_value_retains_safe_phase_and_other_original_checks(self):
+        original = self.runner
+        def runner(args, directory, timeout):
+            if args[:3] == ['functions', 'download', 'paige-ai-chat']:
+                raise ValueError('PRIVATE_FIXTURE_AUTH_HEADER_AND_BODY')
+            return original(args, directory, timeout)
+        report = readback.verify(self.repo, self.commit, self.names, runner, self.sleeps.append)
+        self.assert_failed(report, 'invalid_readback_data')
+        row = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')
+        self.assertEqual(row['diagnostic']['phase'], 'download_api')
+        self.assertEqual(next(r for r in report['functions'] if r['function'] == 'crm-command')['status'], 'PASS')
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
+    def test_invalid_vendor_value_does_not_erase_its_read_boundary(self):
+        original = self.runner
+        def runner(args, directory, timeout):
+            if args[:3] == ['functions', 'download', 'paige-ai-chat']:
+                if '--use-api' in args:
+                    raise readback.ReadbackError('api_unbundle_failed')
+                raise ValueError('PRIVATE_FIXTURE_VENDOR_PAYLOAD')
+            return original(args, directory, timeout)
+        report = readback.verify(self.repo, self.commit, self.names, runner, self.sleeps.append)
+        self.assert_failed(report, 'invalid_readback_data')
+        row = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')
+        self.assertEqual(row['diagnostic']['phase'], 'download_vendor')
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
+    def test_invalid_manifest_value_is_not_a_source_match(self):
+        original = readback.downloaded_manifest
+        def manifest(repo, commit, directory, expected):
+            if 'paige-ai-chat' in expected['entrypoint']:
+                raise ValueError('PRIVATE_FIXTURE_SOURCE_PAYLOAD')
+            return original(repo, commit, directory, expected)
+        with patch.object(readback, 'downloaded_manifest', manifest):
+            report = self.verify()
+        self.assert_failed(report, 'invalid_readback_data')
+        row = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')
+        self.assertEqual(row['diagnostic']['phase'], 'downloaded_source')
+        self.assertTrue(all(set(site) == {'function', 'line'} for site in row['diagnostic']['sites']))
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
     def test_failed_final_metadata_observation_cannot_keep_an_old_pass(self):
         self.mode = 'final-list-failed'
         report = self.verify()
@@ -564,6 +605,55 @@ class ReleaseFixtures(unittest.TestCase):
         return subprocess.run([bash, '-e', '-c', script], cwd=self.repo, capture_output=True, text=True,
                               timeout=15, env={**os.environ, 'GITHUB_OUTPUT': 'baseline-output.txt'})
 
+    def run_actual_upload_requirement(self, before, event='push', retired='0'):
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        self.assertIn('- name: Resolve upload necessity', workflow)
+        step = workflow.split('- name: Resolve upload necessity', 1)[1].split('\n      - name:', 1)[0]
+        script = textwrap.dedent(step.split('run: |', 1)[1])
+        for expression, value in {'github.sha': self.commit, 'github.event.before': before,
+                                  'github.event_name': event, 'steps.retired.outputs.count': retired}.items():
+            script = script.replace('${{ ' + expression + ' }}', value)
+        output = self.repo / 'upload-output.txt'
+        output.unlink(missing_ok=True)
+        bash = shutil.which('bash') or (r'C:\Program Files\Git\bin\bash.exe' if os.name == 'nt' else None)
+        self.assertTrue(bash and Path(bash).is_file())
+        result = subprocess.run([bash, '-e', '-c', script], cwd=self.repo, capture_output=True, text=True,
+                                timeout=15, env={**os.environ, 'GITHUB_OUTPUT': str(output)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return dict(line.split('=', 1) for line in output.read_text().splitlines())['required']
+
+    def test_helper_only_recovery_reads_the_full_gap_without_another_upload(self):
+        certified = self.commit
+        self.files['supabase/functions/_shared/authority.ts'] += '// acknowledged but unverified fixture\n'
+        self.recommit()
+        acknowledged = self.commit
+        self.files['readback-correction.txt'] = 'Neutral helper-only fixture\n'
+        self.recommit()
+        self.assertEqual(self.run_actual_upload_requirement(acknowledged), 'false')
+        self.assertIn('paige-ai-chat', self.select_as_workflow(certified))
+        result, calls = self.run_actual_provider_step('Deploy affected functions', upload_required='false')
+        self.assertIsNone(result)
+        self.assertEqual(calls, [])
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        read_step = workflow.split('- name: Verify deployed source', 1)[1].split('env:', 1)[0]
+        self.assertNotIn('steps.upload', read_step, 'Skipped uploads cannot skip original full source proof')
+        tag = workflow.split('- name: Record deployed commit', 1)[1]
+        self.assertIn("steps.readback.outcome == 'success'", tag)
+
+    def test_source_config_manual_unknown_and_retirement_keep_normal_uploads(self):
+        before = self.commit
+        self.files['supabase/functions/_shared/authority.ts'] += '// new function source\n'
+        self.recommit()
+        self.assertEqual(self.run_actual_upload_requirement(before), 'true')
+        before = self.commit
+        self.files['supabase/config.toml'] += '[functions.paige-ai-chat]\nverify_jwt = false\n'
+        self.recommit()
+        self.assertEqual(self.run_actual_upload_requirement(before), 'true')
+        for bad in ['', '0' * 40, 'not-a-commit', 'f' * 40]:
+            self.assertEqual(self.run_actual_upload_requirement(bad), 'true')
+        self.assertEqual(self.run_actual_upload_requirement(self.commit, event='workflow_dispatch'), 'true')
+        self.assertEqual(self.run_actual_upload_requirement(self.commit, retired='1'), 'true')
+
     def test_push_recovery_selects_original_unverified_gap_not_only_event_before(self):
         certified = self.commit
         self.git('remote', 'add', 'origin', str(self.repo))
@@ -795,7 +885,7 @@ class ReleaseFixtures(unittest.TestCase):
         (self.repo / 'retired.txt').write_text('retired-fixture\n', encoding='utf-8', newline='\n')
         return before
 
-    def run_actual_provider_step(self, name, selection='success', retirement='success', job_success=True):
+    def run_actual_provider_step(self, name, selection='success', retirement='success', job_success=True, upload_required=''):
         """Evaluate the actual bounded step condition and execute only its stubbed shell."""
         workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
         step = workflow.split(f'- name: {name}', 1)[1].split('\n      - name:', 1)[0]
@@ -803,6 +893,7 @@ class ReleaseFixtures(unittest.TestCase):
         if not any(status in condition for status in ['always()', 'success()', 'failure()', 'cancelled()']):
             condition = f'({condition}) && success()'  # GitHub's implicit default status check.
         values = {'steps.affected.outcome': selection, 'steps.retired.outcome': retirement,
+                  'steps.upload.outputs.required': upload_required,
                   'steps.affected.outputs.count': '1', 'steps.retired.outputs.count': '1'}
         condition = condition.replace('always()', 'True').replace('success()', str(job_success))
         for key, value in values.items():

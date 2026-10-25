@@ -248,7 +248,8 @@ deno test --allow-import --node-modules-dir=none --allow-read="$REPO/supabase/fu
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-request.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-work.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts" \
-  "$REPO/supabase/functions/_shared/agreements/prepared-signature-credentials.test.ts"
+  "$REPO/supabase/functions/_shared/agreements/prepared-signature-credentials.test.ts" \
+  "$REPO/supabase/functions/_shared/agreements/prepared-seal-completion.test.ts"
 # Dynamic source-test imports do not establish actual SDK type compatibility.
 # Check the original deployed door as well as its private history projection.
 deno check --allow-import --node-modules-dir=none \
@@ -278,7 +279,7 @@ node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofr
 # original gate above remains intact. No hosted Storage or customer proof.
 deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
   --deny-net --deny-write --deny-ffi --deny-sys \
-  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work --prepared-status --prepared-credentials --prepared-message-origin --prepared-signature-completion --prepared-field-signatures
+  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work --prepared-status --prepared-credentials --prepared-message-origin --prepared-signature-completion --prepared-field-signatures --prepared-seal-completion
 
 # Same native cluster, original generic/PPA/recipient/mailbox/unknown-outcome
 # Communications cases against the four actual agreement-extension functions.

@@ -12,14 +12,17 @@ BEGIN
  IF NOT FOUND THEN RAISE EXCEPTION 'Original prepared signing source changed' USING ERRCODE='23514'; END IF;
  FOR expected IN SELECT * FROM (VALUES
   ('public._read_agreement_signing_fields(text)','db2c56efd37ecb7c31b720909d581fbb','db2c56efd37ecb7c31b720909d581fbb',true,true,true,'jsonb',ARRAY['_token_hash']::text[]),
+  ('public._read_prepared_agreement_seal(uuid)','04dc664b0bba6330167736fbaafe765a','04dc664b0bba6330167736fbaafe765a',true,true,true,'jsonb',ARRAY['_agreement']::text[]),
   ('public._paige_commercial_canonical_json(jsonb)','bbfeef876dc866c6d276d2be2662ae74','bbfeef876dc866c6d276d2be2662ae74',true,false,false,'text',ARRAY['v']::text[]),
   ('public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)','3a2fa340fca9838aa9c6737f1e41ae61','d7e9d5d48b46d1b61b3aa30d33b876d4',true,false,true,'jsonb',ARRAY['_token_hash','_agreement_version','_content_sha256','_content_storage_key','_typed_name','_signature_image_png','_consent_read','_consent_esign','_consent_slug','_consent_version','_consent_sha256','_ip','_user_agent']::text[]),
   ('public._paige_preparation_legacy_token_hold()','46c36eb38a54080388b25f7ff315d0b9','fe9a5356e594dce069eaeb1e44de14c9',true,true,false,'trigger',NULL::text[]),
-  ('public._paige_preparation_legacy_effect_hold()','b4581030968e238115700a14da16f9b7','00469e767761696ebe40d80d80bf1a96',true,true,false,'trigger',NULL::text[]),
+  ('public._paige_preparation_legacy_effect_hold()','b4581030968e238115700a14da16f9b7','c5eb4550df13b24f732ed190229e7fdc',true,true,false,'trigger',NULL::text[]),
   ('private.e04_prepared_field_input(jsonb,uuid,timestamp with time zone,jsonb)',NULL,'0568b3cb5ed0d32bdc326c37d76aebaa',false,true,true,'jsonb',ARRAY['_source','_signer','_at','_proposed']::text[]),
   ('private.e04_prepared_signed_fields(public.paige_agreement_signers)',NULL,'0d363d0a4d071c265bbd1526d3dcec6d',false,true,true,'boolean',ARRAY['_candidate']::text[]),
   ('private.e04_prepared_signature_context(public.paige_agreement_signers)',NULL,'f149482a79d4b19b60b536aa90c6aaea',false,true,true,'jsonb',ARRAY['_candidate']::text[]),
-  ('public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text,jsonb)',NULL,'03cac431afd80024397110bc7d5038b7',false,false,true,'jsonb',ARRAY['_token_hash','_agreement_version','_content_sha256','_content_storage_key','_typed_name','_signature_image_png','_consent_read','_consent_esign','_consent_slug','_consent_version','_consent_sha256','_ip','_user_agent','_prepared_fields']::text[])
+  ('public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text,jsonb)',NULL,'03cac431afd80024397110bc7d5038b7',false,false,true,'jsonb',ARRAY['_token_hash','_agreement_version','_content_sha256','_content_storage_key','_typed_name','_signature_image_png','_consent_read','_consent_esign','_consent_slug','_consent_version','_consent_sha256','_ip','_user_agent','_prepared_fields']::text[]),
+  ('private.e04_prepared_completion_record(public.paige_agreements)',NULL,'a8d323fdfeea6a5654dcf8863ae9f249',false,true,false,'jsonb',ARRAY['_candidate']::text[]),
+  ('public._complete_prepared_agreement_seal(uuid,uuid,text,text,text)',NULL,'2c796531b75aa8c618eefe8bd56bdca6',false,true,true,'jsonb',ARRAY['_tenant','_agreement','_source_sha256','_sealed_storage_key','_sealed_sha256']::text[])
  ) AS checks(identity,old_body,own_body,required,definer,service,result_type,argument_names) LOOP
   SELECT * INTO actual FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(expected.identity);
   IF NOT FOUND THEN
@@ -479,6 +482,122 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public._paige_preparation_legacy_token_hold() FROM PUBLIC,anon,authenticated,service_role;
 
+-- Extensions of the original agreement record and audit stream only.
+-- Real renderer/Storage readback precedes this private service boundary.
+CREATE OR REPLACE FUNCTION private.e04_prepared_completion_record(_candidate public.paige_agreements)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE a public.paige_agreements%ROWTYPE; p public.paige_agreement_document_preparations%ROWTYPE;
+ se public.paige_agreement_events%ROWTYPE; ce public.paige_agreement_events%ROWTYPE;
+ source jsonb; n bigint; digest text;
+BEGIN
+ IF _candidate.id IS NULL OR _candidate.status IS DISTINCT FROM 'completed' OR _candidate.completed_at IS NULL
+  OR NOT pg_catalog.isfinite(_candidate.completed_at)
+  OR coalesce(_candidate.sealed_sha256,'') !~ '^[a-f0-9]{64}$'
+  OR coalesce(_candidate.sealed_storage_key,'') !~ ('^'||_candidate.tenant_id::text||'/'||_candidate.id::text||'/sealed-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.pdf$') THEN RETURN NULL; END IF;
+ SELECT * INTO a FROM public.paige_agreements WHERE id=_candidate.id AND tenant_id=_candidate.tenant_id;
+ IF NOT FOUND OR (pg_catalog.to_jsonb(a)-ARRAY['status','completed_at','sealed_storage_key','sealed_sha256','updated_at'])
+  IS DISTINCT FROM (pg_catalog.to_jsonb(_candidate)-ARRAY['status','completed_at','sealed_storage_key','sealed_sha256','updated_at']) THEN RETURN NULL; END IF;
+ SELECT * INTO p FROM public.paige_agreement_document_preparations
+  WHERE agreement_id=a.id AND tenant_id=a.tenant_id AND is_current;
+ IF NOT FOUND OR p.client_id IS DISTINCT FROM a.contact_id OR p.source_version IS DISTINCT FROM a.version
+  OR p.content_storage_key IS DISTINCT FROM a.content_storage_key OR p.document_sha256 IS DISTINCT FROM a.content_sha256 THEN RETURN NULL; END IF;
+ SELECT count(*) INTO n FROM public.paige_agreement_signers WHERE agreement_id=a.id AND tenant_id=a.tenant_id;
+ IF n<1 OR EXISTS(SELECT 1 FROM public.paige_agreement_signers s WHERE s.agreement_id=a.id AND s.tenant_id=a.tenant_id
+  AND (s.status IS DISTINCT FROM 'signed' OR private.e04_prepared_signed_fields(s) IS DISTINCT FROM true
+   OR s.signed_at IS NULL OR _candidate.completed_at<s.signed_at)) THEN RETURN NULL; END IF;
+ SELECT count(*) INTO n FROM public.paige_agreement_events WHERE agreement_id=a.id AND tenant_id=a.tenant_id
+  AND event_type='sealed' AND detail->>'action'='prepared_seal_recorded';
+ IF n<>1 THEN RETURN NULL; END IF;
+ SELECT * INTO se FROM public.paige_agreement_events WHERE agreement_id=a.id AND tenant_id=a.tenant_id
+  AND event_type='sealed' AND detail->>'action'='prepared_seal_recorded';
+ SELECT count(*) INTO n FROM public.paige_agreement_events WHERE agreement_id=a.id AND tenant_id=a.tenant_id
+  AND event_type='completed' AND detail->>'action'='prepared_seal_recorded';
+ IF n<>1 THEN RETURN NULL; END IF;
+ SELECT * INTO ce FROM public.paige_agreement_events WHERE agreement_id=a.id AND tenant_id=a.tenant_id
+  AND event_type='completed' AND detail->>'action'='prepared_seal_recorded';
+ IF se.actor_kind IS DISTINCT FROM 'system' OR ce.actor_kind IS DISTINCT FROM 'system'
+  OR se.actor_user_id IS NOT NULL OR ce.actor_user_id IS NOT NULL OR se.signer_id IS NOT NULL OR ce.signer_id IS NOT NULL
+  OR se.actor_email IS NOT NULL OR ce.actor_email IS NOT NULL OR se.ip IS NOT NULL OR ce.ip IS NOT NULL
+  OR se.user_agent IS NOT NULL OR ce.user_agent IS NOT NULL OR se.id=ce.id OR ce.seq<=se.seq
+  OR se.created_at IS DISTINCT FROM _candidate.completed_at OR ce.created_at IS DISTINCT FROM _candidate.completed_at
+  OR pg_catalog.jsonb_typeof(se.detail) IS DISTINCT FROM 'object' OR pg_catalog.jsonb_typeof(ce.detail) IS DISTINCT FROM 'object'
+  OR (se.detail-ARRAY['action','preparation_id','preparation_sha256','source_sha256','sealed_storage_key','sealed_sha256','presented_sha256'])<>'{}'::jsonb
+  OR NOT(se.detail ?& ARRAY['action','preparation_id','preparation_sha256','source_sha256','sealed_storage_key','sealed_sha256','presented_sha256'])
+  OR (ce.detail-ARRAY['action','preparation_id','source_sha256','sealed_event_id','sealed_sha256'])<>'{}'::jsonb
+  OR NOT(ce.detail ?& ARRAY['action','preparation_id','source_sha256','sealed_event_id','sealed_sha256'])
+  OR se.detail->>'preparation_id' IS DISTINCT FROM p.id::text OR ce.detail->>'preparation_id' IS DISTINCT FROM p.id::text
+  OR se.detail->>'preparation_sha256' IS DISTINCT FROM p.preparation_sha256
+  OR se.detail->>'presented_sha256' IS DISTINCT FROM a.content_sha256
+  OR se.detail->>'sealed_storage_key' IS DISTINCT FROM _candidate.sealed_storage_key
+  OR se.detail->>'sealed_sha256' IS DISTINCT FROM _candidate.sealed_sha256
+  OR ce.detail->>'sealed_sha256' IS DISTINCT FROM _candidate.sealed_sha256
+  OR ce.detail->>'sealed_event_id' IS DISTINCT FROM se.id::text
+  OR coalesce(se.detail->>'source_sha256','') !~ '^[a-f0-9]{64}$'
+  OR ce.detail->>'source_sha256' IS DISTINCT FROM se.detail->>'source_sha256' THEN RETURN NULL; END IF;
+ IF a.status<>'completed' THEN
+  source:=public._read_prepared_agreement_seal(a.id);
+  IF source->>'state' IS DISTINCT FROM 'prepared' THEN RETURN NULL; END IF;
+  digest:=pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(public._paige_commercial_canonical_json(source),'UTF8')),'hex');
+  IF se.detail->>'source_sha256' IS DISTINCT FROM digest THEN RETURN NULL; END IF;
+ ELSIF a.completed_at IS DISTINCT FROM _candidate.completed_at OR a.sealed_storage_key IS DISTINCT FROM _candidate.sealed_storage_key
+  OR a.sealed_sha256 IS DISTINCT FROM _candidate.sealed_sha256 THEN RETURN NULL;
+ END IF;
+ RETURN pg_catalog.jsonb_build_object('state','recorded','agreement_id',a.id,'tenant_id',a.tenant_id,
+  'preparation_id',p.id,'source_sha256',se.detail->'source_sha256','sealed_storage_key',_candidate.sealed_storage_key,
+  'sealed_sha256',_candidate.sealed_sha256,'completed_at',_candidate.completed_at,'sealed_event_id',se.id,'completed_event_id',ce.id);
+EXCEPTION WHEN data_exception THEN RETURN NULL;
+END $$;
+REVOKE ALL ON FUNCTION private.e04_prepared_completion_record(public.paige_agreements) FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE OR REPLACE FUNCTION public._complete_prepared_agreement_seal(
+ _tenant uuid,_agreement uuid,_source_sha256 text,_sealed_storage_key text,_sealed_sha256 text
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE a public.paige_agreements%ROWTYPE; source jsonb; receipt jsonb; source_digest text;
+ preparation uuid; preparation_sha text; act_at timestamptz; sealed_event uuid;
+BEGIN
+ IF _tenant IS NULL OR _agreement IS NULL THEN RAISE EXCEPTION 'Original agreement unavailable' USING ERRCODE='42501'; END IF;
+ SELECT * INTO a FROM public.paige_agreements WHERE id=_agreement AND tenant_id=_tenant FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Original agreement unavailable' USING ERRCODE='42501'; END IF;
+ IF a.status='completed' THEN
+  receipt:=private.e04_prepared_completion_record(a);
+  IF receipt IS NULL THEN RAISE EXCEPTION 'Original completed evidence unavailable' USING ERRCODE='23514'; END IF;
+  RETURN receipt||pg_catalog.jsonb_build_object('replayed',true);
+ END IF;
+ -- Empty evidence can only reconcile the SAME original record, never complete it.
+ IF _source_sha256 IS NULL AND _sealed_storage_key IS NULL AND _sealed_sha256 IS NULL THEN
+  RETURN pg_catalog.jsonb_build_object('state','unavailable','agreement_id',a.id,'tenant_id',a.tenant_id);
+ END IF;
+ IF a.status NOT IN ('sent','viewed','partially_signed') OR a.completed_at IS NOT NULL
+  OR a.sealed_storage_key IS NOT NULL OR a.sealed_sha256 IS NOT NULL
+  OR coalesce(_source_sha256,'') !~ '^[a-f0-9]{64}$' OR coalesce(_sealed_sha256,'') !~ '^[a-f0-9]{64}$'
+  OR coalesce(_sealed_storage_key,'') !~ ('^'||a.tenant_id::text||'/'||a.id::text||'/sealed-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.pdf$') THEN
+  RAISE EXCEPTION 'Original completion source changed' USING ERRCODE='23514'; END IF;
+ source:=public._read_prepared_agreement_seal(a.id);
+ IF source->>'state' IS DISTINCT FROM 'prepared' OR source->>'tenant_id' IS DISTINCT FROM a.tenant_id::text
+  OR source->>'agreement_id' IS DISTINCT FROM a.id::text THEN
+  RAISE EXCEPTION 'Original signing facts unavailable' USING ERRCODE='23514'; END IF;
+ source_digest:=pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(public._paige_commercial_canonical_json(source),'UTF8')),'hex');
+ IF _source_sha256 IS DISTINCT FROM source_digest THEN RAISE EXCEPTION 'Original completion source changed' USING ERRCODE='23514'; END IF;
+ preparation:=(source#>>'{prepared_fields,preparation_id}')::uuid;
+ preparation_sha:=source#>>'{prepared_fields,preparation,preparation_sha256}';
+ act_at:=pg_catalog.clock_timestamp();
+ INSERT INTO public.paige_agreement_events(agreement_id,tenant_id,event_type,actor_kind,detail,created_at)
+  VALUES(a.id,a.tenant_id,'sealed','system',pg_catalog.jsonb_build_object('action','prepared_seal_recorded',
+   'preparation_id',preparation,'preparation_sha256',preparation_sha,'source_sha256',source_digest,
+   'sealed_storage_key',_sealed_storage_key,'sealed_sha256',_sealed_sha256,'presented_sha256',a.content_sha256),act_at)
+  RETURNING id INTO sealed_event;
+ INSERT INTO public.paige_agreement_events(agreement_id,tenant_id,event_type,actor_kind,detail,created_at)
+  VALUES(a.id,a.tenant_id,'completed','system',pg_catalog.jsonb_build_object('action','prepared_seal_recorded',
+   'preparation_id',preparation,'source_sha256',source_digest,'sealed_event_id',sealed_event,'sealed_sha256',_sealed_sha256),act_at);
+ UPDATE public.paige_agreements SET status='completed',completed_at=act_at,
+  sealed_storage_key=_sealed_storage_key,sealed_sha256=_sealed_sha256 WHERE id=a.id AND tenant_id=a.tenant_id RETURNING * INTO a;
+ receipt:=private.e04_prepared_completion_record(a);
+ IF receipt IS NULL THEN RAISE EXCEPTION 'Original completed evidence unavailable' USING ERRCODE='23514'; END IF;
+ RETURN receipt||pg_catalog.jsonb_build_object('replayed',false);
+END $$;
+REVOKE ALL ON FUNCTION public._complete_prepared_agreement_seal(uuid,uuid,text,text,text) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public._complete_prepared_agreement_seal(uuid,uuid,text,text,text) TO service_role;
+
 CREATE OR REPLACE FUNCTION public._paige_preparation_legacy_effect_hold() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE p public.paige_agreement_document_preparations%ROWTYPE; receipt jsonb; expected_commercial jsonb;
@@ -504,6 +623,12 @@ BEGIN
    AND EXISTS(SELECT 1 FROM public.paige_agreement_signers s WHERE s.agreement_id=OLD.id AND s.tenant_id=OLD.tenant_id AND s.status='signed')
    AND NOT EXISTS(SELECT 1 FROM public.paige_agreement_signers s WHERE s.agreement_id=OLD.id AND s.tenant_id=OLD.tenant_id
     AND s.status='signed' AND NOT private.e04_prepared_signed_fields(s)) THEN RETURN NEW; END IF;
+  -- Only an actual original sealed/completed receipt pair and current signed
+  -- facts permit this one completion. No temporary authority marker is used.
+  IF OLD.status IN ('sent','viewed','partially_signed') AND NEW.status='completed'
+   AND (pg_catalog.to_jsonb(NEW)-ARRAY['status','completed_at','sealed_storage_key','sealed_sha256','updated_at'])
+    IS NOT DISTINCT FROM (pg_catalog.to_jsonb(OLD)-ARRAY['status','completed_at','sealed_storage_key','sealed_sha256','updated_at'])
+   AND private.e04_prepared_completion_record(NEW) IS NOT NULL THEN RETURN NEW; END IF;
   RAISE EXCEPTION 'Prepared-document signature requests require the canonical approved send integration' USING ERRCODE='23514'; END IF;
  IF NEW.content_storage_key IS DISTINCT FROM OLD.content_storage_key OR NEW.content_sha256 IS DISTINCT FROM OLD.content_sha256 THEN
   IF OLD.status<>'draft' OR NEW.status<>'draft' OR OLD.content_storage_key IS NOT NULL OR OLD.content_sha256 IS NOT NULL

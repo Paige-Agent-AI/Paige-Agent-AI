@@ -37,7 +37,7 @@ ACCEPTANCE_CRITERIA: A signed-in owner opens a conversation containing a provide
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: affected: truthful state labels (the label derives from the same bounded projection the state machine reads — a read marker is never delivery evidence) — unaffected: the publish door, intake, approval engine, Rail, the send path itself (no send behavior changes), Memory and Mind, and every non-settled pill state
 
-INTERNAL_BUILD_IDENTITY: pending-commit; deployment=local-and-PR-preview; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp03-comms-truth-receipt-labels.md
+INTERNAL_BUILD_IDENTITY: 009bfd5fddaf839b59e3743fb437e2b047322ca1; deployment=local-and-PR-preview; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp03-comms-truth-receipt-labels.md
 RELEASE_CHANNEL: development: source release, no activation
 RELEASE_CLASSIFICATION: internal-only: one truthful label on an internal surface, no coherent owner-visible customer outcome boundary crossed
 CUSTOMER_RELEASE_IDENTITY: none: acceptance and release authority not established

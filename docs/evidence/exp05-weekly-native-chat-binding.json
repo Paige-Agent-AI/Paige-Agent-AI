@@ -694,5 +694,34 @@
       "productionAndCustomerAcceptance": "UNVERIFIED"
     },
     "boundary": "Original read only for consumed approvals/refusals; no replay, native SQL, grants, recurrence, provider or Live activation. Prior review/failure records remain historical."
+  },
+  "ancestryTestReconciliation": {
+    "runtimeHead": "290d5ecbcf6a496bf00cd3b441b2f2ce6d23524c",
+    "chatBlob": "a4bd438a5c5e75ae6f4f6c04dc01518e9432f078",
+    "cause": "The weekly declaration was already a reviewed 125th dependency, but the original ancestry test still expected 124.",
+    "sourceDependencyCount": 125,
+    "previousDependenciesRetained": 124,
+    "priorExactSuite": {
+      "tests": 229,
+      "passed": 228,
+      "failed": 1,
+      "failure": "125 !== 124"
+    },
+    "correctedExactSuite": {
+      "tests": 230,
+      "passed": 230,
+      "failed": 0
+    },
+    "originalObservationSuite": {
+      "tests": 11,
+      "passed": 11,
+      "failed": 0
+    },
+    "repair": "Assert the exact 125 dependencies and weekly declaration membership; add a hostile mutation proving removed weekly confirmation refuses admission.",
+    "runtimeRegistryValidatorPinsAndPermissionsChanged": false,
+    "allOriginalTestsRetained": true,
+    "hostedRequiredCi": "PENDING_NEW_EXACT_HEAD",
+    "productionAndAuthenticatedProof": "UNVERIFIED",
+    "assurance": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE required on final immutable commit; no third-party or customer acceptance."
   }
 }

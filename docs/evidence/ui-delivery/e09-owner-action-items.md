@@ -1,0 +1,62 @@
+# Owner inspection of original customer action items
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: selected original CRM customer → saved action requests/responses → refresh/return or recover a denied/interrupted read; source-bounded proof below.
+PAIGE_UI_DESIGN: PASS: existing People record, pg tokens, record-section hierarchy and original shared Work preserved; installed Flow-by-Flow, Flow Prototype, PAIGE UI design/five modules and Impeccable existing-surface guidance read before implementation. Impeccable upstream https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md . No new shell, palette or component library.
+MATERIAL_FLOW_CHANGE: YES: ordinary SOLO owners lack a mounted, scoped view of original customer action responses.
+FLOW_PROTOTYPE: PASS: isolated synthetic local interaction study before production implementation; loading, empty, populated, consent, denied, interruption/keyboard recovery and business-switch clearing traversed. No business effect. Existing owner October21 implementation discretion authorizes the increment; no founder acceptance inferred.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: Owner checks what was requested of the selected customer and what that customer actually answered.
+VISUAL_DIRECTION: Existing People record section and type/spacing, no new shell or dashboard.
+AUTOMATED_EVIDENCE: PASS: original isolated PostgreSQL runner72 PASS, including6 absent-endpoint positive cases that first failed against the incumbent. Replayed migration twice; actual original owner/current-workspace helpers and legacy reader/customer-response body preservation checked, with explicit synthetic Auth/admin transports. An initial candidate fixture search-path error was corrected by qualifying only its stand-in tables; production authority was unchanged. Mounted component/hook18 PASS covers exact original RPC, nested/identity refusal, scope/late result/sign-out, final actor revalidation, timeout/recovery, consent and truthful states. Existing host regression first126 PASS/2 FAIL found insertion-order regression; production mount was moved after the established Work→Files→Access→Consent sequence, preserving original assertions. Full-schema19 added assertions/234 total and final hosted gates remain UNVERIFIED until run.
+STATIC_EVIDENCE: UNVERIFIED: scoped ESLint and whitespace PASS; pinned offline Impeccable detector exit0. Local full type ratchet fails only4 missing upstream Sales package diagnostics (@mdxeditor/editor/pdfjs-dist); no own file diagnostic, no baseline/dependency/shared-source change. Clean hosted type/build/required CI and final evidence check remain required.
+RENDERED_EVIDENCE: PASS: actual ClientActionItems/useClientActionsOwner under an explicit synthetic Auth/RPC/context boundary and existing source shell CSS inspected at1536/1366/1024/900/390, dock open/closed and narrow dark;16 actual JPEGs, dimensions/format independently verified, measurements in assets/e09-owner-action-items/rendered-checks.json. Natural existing host scroller, no extra product scroll owner. At narrow widths the synthetic dock overlays the record; its keyboard Close returns to the same saved component, not simultaneous record visibility or real Chat proof.
+BEHAVIORAL_EVIDENCE: PASS: actual source state/read Refresh Enter and focus outline, selected-business clearing/return, empty/error/denied/consent/paused inspected. Async interruption/recovery/scope guards run in mounted tests. This is not an authenticated or model/provider execution claim.
+AUTHENTICATED_RUNTIME: UNVERIFIED: owner/client positive and negative production evidence pending.
+KEYBOARD_FOCUS: PASS: semantic headings, original44px refresh with accessible name, native Enter read/visible focus and narrow synthetic-dock Close/return. Whole People keyboard/AT remains owed.
+ZOOM_REFLOW: UNVERIFIED: five source viewport widths show no horizontal overflow, preserve44px refresh and reachable record; actual OS keyboard, native200percent zoom and AT not driven.
+REDUCED_MOTION: PASS: no motion added; original reduced-motion-safe controls retained, no height/layout animation.
+STATE_COVERAGE: PASS: loading, authorized empty, populated, denied, interrupted/recoverable, selected-business change, sign-out, actor mismatch, inactive workspace and client-controlled consent; bounded source evidence only.
+TRUTHFUL_STATE_LABELS: PASS: original action/response facts only; expiry is derived without writing status. Accepted is Customer responded/Accepted, not complete, delivered or read. Exact partial-history limits are disclosed.
+SOLO_UI: YES: existing People record; owner-dock and two authenticated cohorts remain proof owed.
+SOLO_1536X770_PAIGE_CLOSED: PASS: actual component source in original shell-layout boundary, assets/e09-owner-action-items/1536-closed.jpg;920px section/44px refresh/no horizontal overflow; authenticated People owed.
+SOLO_1536X770_PAIGE_OPEN: PASS: assets/e09-owner-action-items/1536-open.jpg, source record and synthetic dock/no horizontal overflow; real PAIGE behavior not mounted.
+SOLO_1366X768_PAIGE_CLOSED: PASS: assets/e09-owner-action-items/1366-closed.jpg, same original component/44px target/no horizontal overflow.
+SOLO_1366X768_PAIGE_OPEN: PASS: assets/e09-owner-action-items/1366-open.jpg, original layout responds to synthetic dock; no Chat/model claim.
+SOLO_1024X768_PAIGE_CLOSED: PASS: assets/e09-owner-action-items/1024-closed.jpg,904px source section/no horizontal overflow.
+SOLO_1024X768_PAIGE_OPEN: PASS: assets/e09-owner-action-items/1024-open.jpg, synthetic overlay follows existing shell CSS and Close returns; record underneath is not claimed visible.
+SOLO_900X1000_PAIGE_CLOSED: PASS: assets/e09-owner-action-items/900-closed.jpg,780px source section/record remains reachable.
+SOLO_900X1000_PAIGE_OPEN: PASS: assets/e09-owner-action-items/900-open.jpg, existing overlay layout/keyboard Close returns to saved source; authenticated dock behavior owed.
+UNVERIFIED: Full release, authenticated owner/customer return, physical phone/AT/zoom, all42/seven/Teach/CAP/ALG and founder acceptance.
+
+## Pre-edit capability routing
+
+1. Outcome: owner inspects the selected customer's original action items and saved responses. This increment is read-only; preparing/submitting new actions remains a required successor.
+2. Domain: EXP09 Client Portal / portfolio family8. CRM identity and Operations shared Work retain their writers. Narrow source lease ANT161/2803ab7c and reply reserve20271114090000; no protected Root/Chat/C0b ownership.
+3. Harness/Gateway: reuse current caller identity, current_user_tenant_id and original _client_portal_access_authorize. LayerA/contact authority exists; LayerC engine exists per October23 correction but is unnecessary for an ordinary read. No act is dispatched.
+4. Spine: customer action-item owner read has no registered key, UNAVAILABLE through Chat/Live in this increment. Existing client.engagement_status is the separate shared-Work read, not a synonym or replacement for these records. Do not invent a registration or claim Chat execution.
+5. Provider: native Supabase database only, no new provider/connection entry, sender, model call or activation. Existing Integration Registry does not prove provider readiness.
+6. Approval/budget/autonomy: read-only, no MUTATION_VERB or new approval channel, no spend. Original action_file/action_advance classify ordinary but are outside this read. A later governed Chat mutation must retain the existing one approval gate; a recipient/version precondition is never authority or approval.
+7. Durable job/event: none. No scheduler/approval inbox/event producer or new action ledger.
+8. Readback: original paige_customer_actions plus exact same-contact paige_customer_responses, bounded closed projection; no private Cura thread, action payload, customer login identity or internal execution details. This read creates no receipt or completion claim.
+9. Surface: existing Clients→Portal PARTIAL; mounted inside original People record, no new surface/state promotion. All eligible current/future standalone SOLO businesses share the same backend authority. Agency/Sub-Accounts stay held.
+10. Proof: actual native overload with original helper/roles and wrong-actor/business/contact/member/service negatives; bounded fields and response binding; source UI lifetime/recovery/keyboard/narrow renders; exact-head review/CI, migration/source and production readback. Customer-side response/reload still needs a legitimate connected customer and permitted consent.
+
+## Preservation and orchestration
+
+Original one-argument list_pending_customer_actions, admin_propose_paige_actions, customer_respond_to_action, their tables/RLS/audit/notifications and original Work remain unchanged. The overload only adds an authorized owner projection; no alternative history or identity registry. Owner authority cannot alter customer consent. Original profiles/current workspace re-resolve at each read; frontend selection is not authority. All example identities are synthetic. Review and production labels remain separate from complete Experience acceptance.
+
+INTERNAL_BUILD_IDENTITY: base=b2d20a99ab1b6b676e612f9d967899f834ffb45a; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114090000_e09_owner_customer_action_read production not deployed); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-owner-action-items.md; exact candidate anchored by PR review.
+RELEASE_CHANNEL: development: original owner-read integration under local/native/source inspection, required release gates remain.
+RELEASE_CLASSIFICATION: internal-only: bounded engineering increment, no named customer release or announcement.
+CUSTOMER_RELEASE_IDENTITY: none: bounded original-record integration; no publication authorization inferred.
+RELEASE_NOTE_REQUIRED: NO: unversioned engineering increment, full integrated founder evaluation remains separate.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: production20271114090000 migration is not deployed and authenticated owner read/return requires that deployment; exact-head hosted type/build/native CI and review are required before release. No whole-Experience LIVE claim.
+RELEASE_RECOVERY: position=reviewed bounded forward-fix preserving originating tables and historical records; reference=docs/doctrine/release-governance-and-customer-update-policy.md
+
+## Rendered findings and disposition
+
+The first390px source inspection found a material spacing defect: the inherited shared heading's18rem horizontal flex basis became a288px vertical height after the original narrow header changed axis. Repaired only this new section at the existing620px breakpoint; remeasurement gives146px complete narrow header and44px refresh. Wider headers remain72px. No shared Work CSS or original scroll layout was modified. Dark source colors246/242/234 and muted172/166/157 on33/29/39 were inspected. Source render is synthetic; no real tenant example/data is committed.
+
+## Orchestration contract and remaining work
+
+Original request: inspect this CRM customer's shared service requests. Entry: existing SOLO People. Specialist/capability: no new dispatch; customer action read is not registered for Chat/Live in this increment. Actor/business/contact: original verified caller, active workspace and CRM relation; authorization is the incumbent internal owner helper. Execution pathway: read-only original native SQL, no ActionAdapter/job/approval. Work identity: original action/response ids; no new receipt is minted by inspection. Recovery: fresh authorized read, clear old data before switching, ignore late replies; never replay a mutation. Result: same People record. Actual production proof remains UNVERIFIED until deployment and ordinary owner read/reload. Customer completing a new permitted assignment, preparation/review/idempotent writer integration and Chat/Live consumption remain required successor outcomes. This read supplies facts, not a claim of algorithm activation, retention scoring or completed ALG01/02/04/12/13 behavior. Full42 outcomes/seven pillars/Teach/seven Capabilities and one integrated founder acceptance remain open.

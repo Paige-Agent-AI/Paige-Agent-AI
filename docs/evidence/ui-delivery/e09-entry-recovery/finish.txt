@@ -1,0 +1,17 @@
+disposition: ship
+Inline finish-review fallback; AUTHOR-REVIEW / LOWER ASSURANCE. Original captures desktop.png and mobile.png inspected; no whole Experience acceptance claim. Code-led narrow hardening, no replacement world or approved-comp claim.
+
+persistence
+PASS: incumbent PRODUCT.md, DESIGN.md and token system retained. Existing product system is authoritative; no new shell, design system or production prototype.
+
+fidelity
+Neutral failure explanation: match. One explicit Reload page control: match. No raw error/account data or destination guess: match. Existing source/data/permissions: preserved. Mineral/Obsidian and actual Schibsted: match in corrected captures. 21px heading follows incumbent ramp. Initial isolated theme-selector omission was corrected before these final captures; the original wrong-theme captures are not evidence.
+
+ceiling
+Reached for this minimal recovery notice. Real phone, assistive technology, authenticated route return and complete shell remain unverified. These captures are actual components with local-only failing module responses, not customer or production proof.
+
+material_fixes
+None in the bounded final notice. Detector zero after the off-ramp 24px heading was corrected. No semantic visual change after captures; trailing blank-line cleanup only.
+
+keep
+One clear recovery action, original work registry, no auto-reload, no authentication mutation or false success.

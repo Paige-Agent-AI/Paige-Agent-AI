@@ -1,0 +1,233 @@
+{
+  "kind": "actual component and original boot, isolated local download refusal, no Auth or customer data",
+  "checks": [
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "width": 1536,
+        "scrollWidth": 1536,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "geometry": {
+        "width": 1366,
+        "scrollWidth": 1366,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "geometry": {
+        "width": 900,
+        "scrollWidth": 900,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "geometry": {
+        "width": 390,
+        "scrollWidth": 390,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "geometry": {
+        "width": 320,
+        "scrollWidth": 320,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "width": 1536,
+        "scrollWidth": 1536,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "geometry": {
+        "width": 1366,
+        "scrollWidth": 1366,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "geometry": {
+        "width": 900,
+        "scrollWidth": 900,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "geometry": {
+        "width": 390,
+        "scrollWidth": 390,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "geometry": {
+        "width": 320,
+        "scrollWidth": 320,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "explicitKeyboardReload": "same address; one reload; genuine local JS import resumes"
+    },
+    {
+      "registeredUnsavedWork": "reload refused"
+    },
+    {
+      "originalBoot": "rejected original main import catches and removes splash without false ready marker"
+    },
+    {
+      "reflow": "200 percent root text, 390px viewport, no horizontal overflow"
+    }
+  ],
+  "externalRequests": [],
+  "sources": [
+    {
+      "file": "src/App.tsx",
+      "sha256": "485bd63111a94c2a762c5a343946b90933c23abd2b09bd17a2ec908db1f81261"
+    },
+    {
+      "file": "src/main.tsx",
+      "sha256": "16776241dff6fcc0e4c9b4e70af597221dbfdfb17c3e31162dc05052a31239f3"
+    },
+    {
+      "file": "src/boot-splash.tsx",
+      "sha256": "af19f0a18f4dc5d7b1c923ffe2abf7c7ef0476d37465ed13371d89a338aed1a1"
+    },
+    {
+      "file": "src/components/app/PageLoadBoundary.tsx",
+      "sha256": "4cd32c9b3ae013d26bda8bf419d532d25f3e110b9d15ccd18809e545085e2a59"
+    },
+    {
+      "file": "src/components/app/page-load-boundary.css",
+      "sha256": "d01339b438bde4e34decff5e2d97605442d98660118b948d09d537685ddfeb3f"
+    }
+  ],
+  "result": "PASS"
+}

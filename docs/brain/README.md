@@ -1,3 +1,27 @@
+## EXP04 original recipient review and decision release — October 25
+
+[#2804](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2804) is recorded in the sole
+[Master §4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reviewed `0b05d508c80a0b0f7623785a2dc7e00e66313dc2`, LOWER `6394495879` / final `6394859439`;
+all10 applicable exact checks/two webSUCCESS, no-schema Preview SKIP, zero inline threads.
+Actual merge `e287c854d2c2d0e64f9da6a9a62d80089bf1c562` / tree `fd9f6f6f2dd9575a369bfc00976f6448b4e99b9a`
+equals the inspected actual7c2054 + reviewed0b05 union. All72 own blobs/239 source inputs/39 JPEGs
+and15949 outside entries exact. Original failed Test12589313030 is retained; semantic AST gates
+and five bypass controls repair it without a test-purpose, baseline or required-check waiver.
+
+Normal production `dpl_82HJ67jMjhxCcBvnBAYtjwTNvgQ9` READY; both canonical and authenticated immutable
+200 exact `e287c854d2c2d0e64f9da6a9a62d80089bf1c562-mvni7q8h` / customerUpdate:null.
+Actual served signingJS `2829a535` / CSS `615c1c8f` and all five original review/decision/recovery
+markers plus44px/focus/consent styles verified07:29UTC. [Actual receipt6394896295](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2804#issuecomment-6394896295).
+No native/affected-Edge, provider, permission, Chat admission or financial activation.
+
+Original ceremony now retains exact document/own-field context and truthful inline decline/recovery;
+73 targeted cases/all142 original assertions and bounded source render/palette/responsive/focus proof.
+Prepared HIGH/sender/token/atomic fields/seal and actual recipient/owner/staff/client/private records/reload,
+full Sales route/cohorts/browser zoom/native AT/Central QA/all12/founder acceptance remain incomplete.
+No catalogue Live, algorithm maturity, real signing/payment/delivery or complete premium-Experience claim.
+Professional document magnification remains O2 work; original token/effect holds remain.
+
 ## EXP04 original decline source release — October 25
 
 [#2802](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2802) is recorded in the sole

@@ -3934,6 +3934,12 @@ result/receipt/reload remain owed. The protected proposal expired unconsumed; no
 replay, catalogue promotion or complete weekly/ZION/automation acceptance is claimed.
 
 
+## EXP05 original ZION evidence in Overview — October25 consumer
+
+Operations Overview gains a deliberate, bounded own-person read of original ZION assignments through existing `agents.list/list_subagents` and caller-JWT `paige-orchestrator` inspection. Original response, original receipt and completed business work remain distinct. The client retains current session/actor/tenant/epoch, close/logout/scope retirement and the original8s read budget; no invocation, approval, job, browser cache, provider or business-record mutation is added.
+
+[Owning flow/source/render evidence](../evidence/ui-delivery/exp05-zion-original-history.md) records46 focused tests, controlled epoch fault21/2 then exact restored46/0, source-bound native Obsidian/Mineral captures and explicit mock boundaries. This is a source implementation; hosted exact-head gates, actual deployment and new authenticated/cohort/reload proof are separately owed. `operations.department` remains PROOF_OWED; existing Helpers/catalogue and algorithm maturity are not promoted. All ten outcomes/E5-CV1–9, actual weekly/automation/delegated execution and one complete founder evaluation remain open.
+
 ## EXP04 original2161 staff Work adoption — October24 current-source reconciliation
 
 Same existing lead/full12/consultant launch scope. Original1a3f6a2c source/evidence retained; current main8d867d833/E05/E09 is authoritative. Existing ItemRelease already mounts original preparation/review with second-person and recorded-only controls. This candidate reuses the original nominated-review queue and browser recovery inspections, preserves that single existing client-release surface, and connects original child guards to current pure shell navigation without render-time feedback. No new Work/source/permission/native/provider/action engine. Fresh source tests/rendered evidence/exact review/CI/production and real roles/reload/client acceptance remain required; no release or acceptance is claimed.

@@ -82,6 +82,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
       - name: EXP02 analytics catalogue guards, replay and read-only permissions in isolated database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/e2_analytics_catalogue.sql
+      - name: EXP02 unused manual Systems purpose, legacy compatibility and unchanged read-only permissions
+        run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/e2_manual_systems_capture.sql
       - name: EXP08 Team Hub storage, workspace isolation, refusals and migration replay in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_collaboration.sql
       - name: EXP08 Team Hub team work, atomic Operations task creation, exactly-once retry and work list isolation in a disposable database

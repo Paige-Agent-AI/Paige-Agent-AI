@@ -267,5 +267,13 @@
     "ALG02": "INCOMPLETE; no signing-to-onboarding or charge authority inferred",
     "ALG12": "PARTIAL source-backed exceptions; complete owner recovery UI owed",
     "ALG13": "UNVERIFIED customer usefulness; no new recommendation or automatic follow-up"
+  },
+  "currentMainComposition": {
+    "head": "ff00d6d7c7dfa6375f168176b3d36fd0423318c5",
+    "tree": "8cc99f092c1091583b8a47549fac2c1dc31d0413",
+    "incoming": "362fd80f90958a3ca8ac5305b9e19c9a5cf0c7ee",
+    "all14FrozenSourceInputsUnchanged": true,
+    "originalRootValuesPreserved": true,
+    "scope": "Incoming E02 release documentation only, no E04 code/native/pin/test change; new exact hosted checks required"
   }
 }

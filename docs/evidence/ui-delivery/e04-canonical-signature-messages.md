@@ -50,3 +50,5 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL: bounded local actual native and shared-handler 
 - **Capabilities:** original specialist/Spine/Chat catalogue stays unchanged. MERIT recommendation is not execution. O1–O12, actual payment/service receipts, secure EXP09 self-service and one complete founder evaluation remain open.
 
 Range whitespace check: two extra blank EOF lines were removed from the original credential evidence and the new source proof module. All content before trailing whitespace is identical; actual native migration and proof function-body identities are unchanged. No assertion, validator or required check was removed.
+
+Current-main composition: ff00d6d7c7dfa6375f168176b3d36fd0423318c5/tree8cc99f092c1091583b8a47549fac2c1dc31d0413 preserves incoming362fd80f9 and all14 reviewed source inputs exactly. Prior source/native results remain bounded; exact new hosted CI/Preview is required.

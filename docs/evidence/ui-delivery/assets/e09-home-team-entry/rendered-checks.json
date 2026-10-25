@@ -1,0 +1,112 @@
+{
+  "scope": "Actual ClientHomeTiles/OnboardingChecklist under synthetic identity/data host, not authenticated AppShell or business execution",
+  "prototypeBeforeImplementation": true,
+  "states": {
+    "savedProfile": "1/2",
+    "missingProfile": "0/2",
+    "messagesEnterDestination": "/app/messages",
+    "profileDestination": "/app/account",
+    "privateQuestionPreservedAcrossMessageNavigation": "I have a question about my work.",
+    "noAutomaticSend": true
+  },
+  "viewports": [
+    {
+      "checklist": null,
+      "draft": "",
+      "goalPromptPresent": false,
+      "messages": {
+        "height": 208,
+        "href": "/app/messages",
+        "text": "MessagesNorthwind StudioTalk with your team about your work, or ask for help.Open messages",
+        "width": 414.3999938964844
+      },
+      "scrollWidth": 1521,
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "checklist": null,
+      "draft": "",
+      "goalPromptPresent": false,
+      "messages": {
+        "height": 208,
+        "href": "/app/messages",
+        "text": "MessagesNorthwind StudioTalk with your team about your work, or ask for help.Open messages",
+        "width": 414.3999938964844
+      },
+      "scrollWidth": 1351,
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "checklist": null,
+      "draft": "",
+      "goalPromptPresent": false,
+      "messages": {
+        "height": 208,
+        "href": "/app/messages",
+        "text": "MessagesNorthwind StudioTalk with your team about your work, or ask for help.Open messages",
+        "width": 414.3999938964844
+      },
+      "scrollWidth": 1009,
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "checklist": null,
+      "draft": "",
+      "goalPromptPresent": false,
+      "messages": {
+        "height": 208,
+        "href": "/app/messages",
+        "text": "MessagesNorthwind StudioTalk with your team about your work, or ask for help.Open messages",
+        "width": 408.8000183105469
+      },
+      "scrollWidth": 885,
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    },
+    {
+      "checklist": null,
+      "draft": "",
+      "goalPromptPresent": false,
+      "messages": {
+        "height": 180,
+        "href": "/app/messages",
+        "text": "MessagesNorthwind StudioTalk with your team about your work, or ask for help.Open messages",
+        "width": 341.6000061035156
+      },
+      "scrollWidth": 375,
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  ],
+  "dark": {
+    "background": "rgba(0, 0, 0, 0)",
+    "color": "rgb(245, 245, 245)",
+    "goalPromptPresent": false,
+    "scrollWidth": 375,
+    "text": "MessagesNorthwind StudioTalk with your team about your work, or ask for help.Open messages",
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "notVerified": [
+    "native iPhone",
+    "assistive technology",
+    "200 percent zoom",
+    "authenticated owner-to-client business actions",
+    "actual source release"
+  ]
+}

@@ -105,17 +105,16 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
       ];
     }
 
-    // Coaching-generic default (every tenant that hasn't opted into funding).
-    // Uses only universal, tenant-agnostic tables (profiles / client_goals /
-    // documents) and real client routes (/app/settings, /app/documents) — the
-    // same ones ClientHomeTiles relies on for coaching clients.
-    return [
+    // Optional customer setup uses the selected CRM profile and original Documents.
+    // Legacy per-user goals are not business-shared Progress and have no customer goal form.
+    // Staff retain the existing three steps; the actual customer Progress/Actions stay on their own pages.
+    const neutralItems: ChecklistItem[] = [
       {
         id: "complete_profile",
         label: "Complete Your Profile",
         description: "Add your name and contact details so we can personalize your experience",
         icon: FileText,
-        route: "/app/settings",
+        route: documentScope ? "/app/account" : "/app/settings",
         check: async () => {
           // The selected customer's saved name lives on the original CRM profile, not platform profiles.
           if (documentScope) return profileSaved;
@@ -170,6 +169,7 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
         },
       },
     ];
+    return documentScope ? neutralItems.filter(item => item.id !== "set_goal") : neutralItems;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- documentScope is keyed by scopeKey
   }, [fundingEnabled, userId, coachName, scopeKey, profileSaved]);
 

@@ -1,3 +1,4 @@
+import { readRecipientSigningFields, RecipientFieldsUnavailable } from "../_shared/agreements/recipient-fields.ts";
 // sign-agreement — the token-gated signing act (INT-163). `verify_jwt = false`.
 //
 // WHAT THIS IS, AND WHAT IT IS NOT. The signer's surface is the owner-approved React route
@@ -7,7 +8,8 @@
 // server-side PDF seal/readback and notification path after an authorized signing act.
 //
 // The page's other calls are RPCs — `peek_agreement_signing` and `decline_agreement_signing` — so
-// this endpoint exists for exactly the one act that needs pdf-lib and the service role.
+// this endpoint retains the signing act and its ordinary token-derived assigned-field read.
+// The read cannot record consent/signature, mint a credential, release native holds or send.
 //
 // THE ONE RULE, unchanged from the rest of the engine: tenant, agreement and signer are read FROM
 // THE TOKEN ROW. No request field names or steers any of them. That is the deliberate inverse of
@@ -177,6 +179,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
   });
   if (!decision.allow) return refuse();
   if (!agreement || agreement.tenant_id !== signer.tenant_id) return refuse();
+
+  if (body.action !== undefined) {
+    if (body.action !== "fields" || Object.keys(body).some(key => !["token","action"].includes(key))) {
+      return json({ok:false,code:"SIGNING_FIELD_REQUEST_INVALID",
+        error:"This field review request is invalid. Reload the original signing link."},400);
+    }
+    if (!decision.canSign) return refuse();
+    try {
+      return json(await readRecipientSigningFields(db as never,tokenHash,{
+        tenant_id:String(signer.tenant_id),agreement_id:String(agreement.id),signer_id:String(signer.id),
+        source_version:agreement.version,document_sha256:agreement.content_sha256,
+        content_storage_key:agreement.content_storage_key,
+      }));
+    } catch (error) {
+      if (error instanceof RecipientFieldsUnavailable && error.refused) return refuse();
+      return json({ok:false,code:"SIGNING_FIELDS_UNAVAILABLE",
+        error:"The assigned fields could not be verified. Reload the agreement before signing."},503);
+    }
+  }
+
   if(signer.status==="signed"||body.check_only===true){
     return verifyOriginalSignature(db,tokenHash,signer,agreement);
   }

@@ -723,5 +723,45 @@
     "hostedRequiredCi": "PENDING_NEW_EXACT_HEAD",
     "productionAndAuthenticatedProof": "UNVERIFIED",
     "assurance": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE required on final immutable commit; no third-party or customer acceptance."
+  },
+  "finalUnitFixtureReconciliation": {
+    "baselineHead": "b59aa7e1b52691e75def444df6de312e07f8e9e3",
+    "hostedRun": 40156903929,
+    "executedVirtualMerge": "3817ffe9c256c4db157a3c69e40c03fedaaddb8d",
+    "attributionArtifact": {
+      "id": 12585043085,
+      "sha256": "7ffadcdce20037b283b3a5387e5f4f6a1d0761f47c7ebf3de4a9b8492d97b785"
+    },
+    "originalHosted": {
+      "total": 21686,
+      "passed": 21676,
+      "failed": 7,
+      "pending": 3
+    },
+    "focusedBefore": {
+      "total": 18,
+      "passed": 11,
+      "failed": 7
+    },
+    "cause": "The authority roster omitted the newly registered weekly draft, and the extracted Sales cancellation fixture omitted the actual weekly scope and selector closure. The caught missing binding is a test-fixture failure, not evidence of a production Sales failure.",
+    "repair": "Retain all legacy authority/decline/refusal assertions; execute the actual selector source with verified real imports and explicit native read recording ports; assert original-only scope and zero foreign-nonce consumption or permission escalation.",
+    "focusedAfter": {
+      "total": 19,
+      "passed": 19,
+      "failed": 0,
+      "exitCode": 0,
+      "completedAt": "2026-10-25T03:57:44.099Z"
+    },
+    "scopedEslint": {
+      "exitCode": 0,
+      "findings": 0
+    },
+    "incompleteAttempts": "Earlier resource-constrained nonzero or partial-suite attempts remain INVALID and supply no passing evidence.",
+    "runtimeRootRegistryGuardPinsSQLPermissionsChanged": false,
+    "allOriginalAssertionsRetained": true,
+    "assurance": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE required on final immutable commit.",
+    "hostedExactHead": "PENDING_NEW_EXACT_HEAD",
+    "productionAndAuthenticatedProof": "UNVERIFIED",
+    "boundary": "Test compatibility only; no production action, provider, recurrence, Live, catalogue or full Experience acceptance."
   }
 }

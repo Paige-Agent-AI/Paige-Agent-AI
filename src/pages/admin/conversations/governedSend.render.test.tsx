@@ -17,7 +17,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GOVERNED_SEND_COLS, SENDING_WINDOW_MS, governedSendView, isApprovableDraft } from "./governedSend";
+import { GOVERNED_SEND_COLS, SENDING_WINDOW_MS, governedEmailReceiptLabel, governedSendView, isApprovableDraft } from "./governedSend";
 import type { MessageRow } from "./inbox-shared";
 
 const db = vi.hoisted(() => ({
@@ -187,6 +187,82 @@ describe("the inbox reads the governed-send state it needs", () => {
     const pull = db.selects.find((s) => s.table === "messages" && s.cols.includes("thread_key"));
     expect(pull?.cols).toContain(GOVERNED_SEND_COLS);
     expect(pull?.cols).not.toMatch(/meta(,|\s*$)/);
+  });
+
+  // Communications truth (EXP03): a settled governed email never reads as plain "Sent".
+  // Only the provider's delivered event says Delivered; sent/read on an accepted operation
+  // say the email service took it and nothing more — the pill says Accepted.
+  it.each([
+    ["delivered", "Delivered"],
+    ["sent", "Accepted"],
+    ["read", "Accepted"],
+  ])("a canonical provider receipt stays truthful after settling: %s reads %s", async (status, label) => {
+    db.messages = [message({
+      status,
+      comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d",
+      comms_email_state: "provider_accepted",
+      provider_message_id: "receipt",
+    })];
+    db.threads = [thread];
+    const host = await mountInbox("/solo/3855/clients/conversations");
+    expect(host.textContent).toContain("Notes from Tuesday's planning call");
+    expect(host.textContent).toContain(label);
+    if (label !== "Delivered") expect(host.textContent).not.toContain("Delivered");
+  });
+
+  it("an ordinary sent email with no governed binding keeps the plain Sent pill", async () => {
+    db.messages = [message({ status: "sent" })];
+    db.threads = [thread];
+    const host = await mountInbox("/solo/3855/clients/conversations");
+    expect(host.textContent).toContain("Sent");
+    expect(host.textContent).not.toContain("Accepted");
+    expect(host.textContent).not.toContain("Delivered");
+  });
+
+  it("a settled operation that was NOT accepted by the provider keeps the plain Sent pill", async () => {
+    db.messages = [message({
+      status: "sent",
+      comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d",
+      comms_email_state: "failed",
+    })];
+    db.threads = [thread];
+    const host = await mountInbox("/solo/3855/clients/conversations");
+    expect(host.textContent).toContain("Sent");
+    expect(host.textContent).not.toContain("Accepted");
+  });
+
+  it("an inbound read message is never relabelled as a receipt", async () => {
+    db.messages = [message({
+      direction: "inbound",
+      status: "read",
+      comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d",
+      comms_email_state: "provider_accepted",
+    })];
+    db.threads = [thread];
+    const host = await mountInbox("/solo/3855/clients/conversations");
+    expect(host.textContent).not.toContain("Accepted");
+    expect(host.textContent).not.toContain("Delivered");
+  });
+});
+
+describe("governedEmailReceiptLabel — the receipt words come from the same bounded projection", () => {
+  const base = {
+    direction: "outbound" as const,
+    comms_email_operation: "op-1",
+    comms_email_state: "provider_accepted",
+  };
+  it("delivered on an accepted operation is the only Delivered", () => {
+    expect(governedEmailReceiptLabel({ ...base, status: "delivered" })).toBe("Delivered");
+  });
+  it("sent and read on an accepted operation are Accepted, never Delivered", () => {
+    expect(governedEmailReceiptLabel({ ...base, status: "sent" })).toBe("Accepted");
+    expect(governedEmailReceiptLabel({ ...base, status: "read" })).toBe("Accepted");
+  });
+  it("non-accepted states, missing bindings, other statuses and inbound rows all read null", () => {
+    expect(governedEmailReceiptLabel({ ...base, comms_email_state: "failed", status: "sent" })).toBeNull();
+    expect(governedEmailReceiptLabel({ ...base, comms_email_operation: null, status: "delivered" })).toBeNull();
+    expect(governedEmailReceiptLabel({ ...base, status: "queued" })).toBeNull();
+    expect(governedEmailReceiptLabel({ ...base, direction: "inbound" as const, status: "delivered" })).toBeNull();
   });
 });
 

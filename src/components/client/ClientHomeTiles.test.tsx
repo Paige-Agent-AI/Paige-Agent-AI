@@ -112,6 +112,20 @@ it("does not present legacy messages as private Cura history or a first-use clai
   expect([...host.querySelectorAll("button")].some(b => b.textContent === "Ask a question")).toBe(true);
 });
 
+it("opens the original business Messages without a legacy goal read or a private Cura prompt", async () => {
+  await render();
+  expect(f.tables).not.toContain("client_goals");
+  expect(host.textContent).not.toContain("Set your first goal");
+  const messages = host.querySelector<HTMLAnchorElement>('a[href="/app/messages"]');
+  expect(messages?.textContent).toContain("Northwind Studio");
+  expect(messages?.textContent).toContain("Open messages");
+  const spy = bookAsked();
+  await act(async () => messages!.click());
+  spy.stop();
+  expect(host.textContent).toContain("Messages page");
+  expect(spy.asked).toEqual([]);
+});
+
 it("preserves the original legacy message count for a known staff viewer", async () => {
   f.brand = null;
   f.messages = 7;
@@ -206,7 +220,7 @@ it("names the business's own agent, never the owner's PAIGE persona", async () =
   ));
   await act(async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); });
   expect(host.textContent).not.toMatch(/paige/i);
-  expect(host.textContent).toContain("Tell Ava what you're working toward. Ava will help you map the path.");
+  expect(host.textContent).not.toContain("Set your first goal");
   expect(host.textContent).toContain("Ask Ava a question anytime.");
 });
 

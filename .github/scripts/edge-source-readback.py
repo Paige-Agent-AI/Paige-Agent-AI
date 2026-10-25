@@ -32,6 +32,19 @@ class ReadbackError(Exception):
     """Only fixed reason codes leave the verifier; CLI payloads may be sensitive."""
 
 
+class SourceMismatch(ReadbackError):
+    """Only immutable repository identity and digests, never downloaded text."""
+    def __init__(self, relative, expected_sha, downloaded_sha, known):
+        super().__init__('deployed_source_mismatch')
+        self.source_identity = {
+            'category': 'source_sha256_mismatch',
+            'source_scope': 'expected_closure' if known else 'additional_repository_source',
+            'expected_sha256': expected_sha, 'downloaded_sha256': downloaded_sha,
+        }
+        if known:
+            self.source_identity['file'] = relative
+
+
 def value_error_diagnostic(error, phase):
     # Only this public helper's static function names/line numbers. Never copy
     # exception text, source lines, filesystem paths, locals or CLI payloads.
@@ -297,12 +310,14 @@ def downloaded_manifest(repo, commit, directory, expected):
             relative = 'supabase/functions/' + path.relative_to(root).as_posix()
             actual[relative] = digest(path.read_bytes())
             # Check every downloaded local file, not only the expected subset.
-            if digest(commit_file(repo, commit, relative)) != actual[relative]:
-                raise ReadbackError('deployed_source_mismatch')
+            repository_sha = digest(commit_file(repo, commit, relative))
+            if repository_sha != actual[relative]:
+                raise SourceMismatch(relative, repository_sha, actual[relative], relative in expected['files'])
     if not set(expected['files']).issubset(actual):
         raise ReadbackError('download_missing_dependency')
-    if any(actual[p] != sha for p, sha in expected['files'].items()):
-        raise ReadbackError('deployed_source_mismatch')
+    for relative, sha in expected['files'].items():
+        if actual[relative] != sha:
+            raise SourceMismatch(relative, sha, actual[relative], True)
     return actual
 
 
@@ -444,7 +459,9 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                         reason = str(error) if isinstance(error, ReadbackError) else (
                             'invalid_readback_data' if invalid_value else 'invalid_download_source')
                         results[name] = {'function': name, 'status': 'FAIL', 'reason': reason, 'attempts': attempt}
-                        if invalid_value:
+                        if isinstance(error, SourceMismatch):
+                            results[name]['diagnostic'] = {**error.source_identity, 'download_mode': mode}
+                        elif invalid_value:
                             results[name]['diagnostic'] = value_error_diagnostic(error, phase)
                 after = listing(isolated)
                 for name, identity in candidates.items():

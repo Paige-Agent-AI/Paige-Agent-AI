@@ -258,7 +258,7 @@ function provenTypeScriptSymbol(capability,role,symbol){
   return false;
 }
 
-const storedReadProof = validateStoredReadBindings(readFileSync(chatSourcePath, "utf8"), readFileSync(join(root, "supabase/functions/_shared/credit-extraction-payload.ts"), "utf8"));
+const storedReadProof = validateStoredReadBindings(readFileSync(chatSourcePath, "utf8"), readFileSync(join(root, "supabase/functions/_shared/credit-extraction-payload.ts"), "utf8"), readFileSync(join(root, "supabase/functions/_shared/paige-orchestration/automation-list-read.ts"), "utf8"));
 const crmReadProof = validateCrmReadBindings(readFileSync(chatSourcePath, "utf8"));
 crmReadProof.findings.push(...validatePipelinePreparationSql(migrations));
 const invitationProof = validateInvitationBindings(readFileSync(chatSourcePath, "utf8"), readFileSync(join(root, "supabase/functions/solo-team-invitations/index.ts"), "utf8"));

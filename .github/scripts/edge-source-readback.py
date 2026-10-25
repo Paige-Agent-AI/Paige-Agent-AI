@@ -262,12 +262,63 @@ def downloaded_manifest(repo, commit, directory, expected):
     return actual
 
 
+def server_unbundle_failed(error):
+    """Recognize only the vendor's explicit server-side bundle retrieval failure.
+
+    This admits another READ method, never an upload, credential or auth change.
+    Keep raw CLI payloads private and reject auth/transport/abnormal termination.
+    """
+    if (not isinstance(error, subprocess.CalledProcessError) or
+            type(error.returncode) is not int or error.returncode != 1):
+        return False
+    output, stderr = error.output or '', error.stderr or ''
+    if any(not isinstance(text, str) or len(text) > 1024 * 1024 for text in (output, stderr)):
+        return False
+    def unique_object(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError('duplicate CLI error field')
+            value[key] = item
+        return value
+
+    if output.strip():
+        try:
+            envelope = json.loads(output, object_pairs_hook=unique_object)
+        except ValueError:
+            return False
+        if (not isinstance(envelope, dict) or set(envelope) != {'_tag', 'error'} or
+                envelope['_tag'] != 'Error' or not isinstance(envelope['error'], dict) or
+                set(envelope['error']) != {'code', 'message'} or
+                envelope['error']['code'] != 'UnknownError' or stderr.strip()):
+            return False
+        message = envelope['error']['message']
+    else:
+        messages = [line.strip() for line in stderr.splitlines()
+                    if line.strip().startswith('Error status ')]
+        if len(messages) != 1:
+            return False
+        message = messages[0]
+    if not isinstance(message, str):
+        return False
+    match = re.fullmatch(r'Error status 500: (\{[^\r\n]*\})', message)
+    if match is None:
+        return False
+    try:
+        return json.loads(match[1], object_pairs_hook=unique_object) == {'message': 'Failed to retrieve function bundle'}
+    except ValueError:
+        return False
+
+
 def cli(args, directory, timeout):
     try:
         return subprocess.run(['supabase', *args, '--workdir', str(directory)], cwd=directory,
                               check=True, capture_output=True, text=True, timeout=timeout).stdout
     except (OSError, subprocess.SubprocessError) as error:
         # Never forward stdout/stderr, exception text, environment, or headers.
+        if (args[:2] == ['functions', 'download'] and '--use-api' in args and
+                server_unbundle_failed(error)):
+            raise ReadbackError('api_unbundle_failed') from error
         raise ReadbackError('cli_readback_failed') from error
 
 
@@ -311,9 +362,27 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                         directory = isolated / f'attempt-{attempt}' / name
                         (directory / 'supabase').mkdir(parents=True)
                         (directory / 'supabase/config.toml').write_text(f'project_id = "{project}"\n', encoding='utf-8')
-                        invoke(['functions', 'download', name, '--use-api'], directory)
+                        mode = 'api'
+                        try:
+                            invoke(['functions', 'download', name, '--use-api'], directory)
+                        except ReadbackError as error:
+                            if str(error) != 'api_unbundle_failed':
+                                raise
+                            if expected[name]['import_map'] is not None:
+                                raise ReadbackError('local_import_map_readback_unverified') from error
+                            # Same pinned vendor CLI and release connection, with a
+                            # fresh extraction tree. This does not certify a local
+                            # build: every actual downloaded source/configuration
+                            # and final provider identity must still match below.
+                            directory = directory / 'docker-readback'
+                            (directory / 'supabase').mkdir(parents=True)
+                            (directory / 'supabase/config.toml').write_text(
+                                f'project_id = "{project}"\n', encoding='utf-8')
+                            invoke(['functions', 'download', name, '--use-docker'], directory)
+                            mode = 'docker_requested'
                         manifest = downloaded_manifest(repo, commit, directory, expected[name])
                         results[name] = {'function': name, 'status': 'PASS', 'attempts': attempt,
+                                         'download_mode': mode,
                                          'version': identity['version'], 'verify_jwt': identity['verify_jwt'],
                                          'entrypoint': expected[name]['entrypoint'],
                                          'archive_sha256': identity.get('ezbr_sha256'),

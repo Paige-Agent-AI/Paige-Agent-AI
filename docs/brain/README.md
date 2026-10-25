@@ -74,6 +74,21 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and existing [EXP04 journey](../delivery/exp04-get-paid-deliver-journey.md) retain exact source/review/CI/deployment/acceptance boundaries. This mechanical closeout adds no product, activation, algorithm/capability maturity, provider/role change, customer version or recursive shipped row. Pending2745/2775 and full O1–O12/one integrated founder evaluation remain open.
 
+## EXP09 Word, returning-customer Home and original requests — source released, October25 UTC
+
+Original2785/8244→main33b6 (Chat533 exact runtime/config),2791/ae3→9fe,
+2793/2c8→29cd,2795/cd352→7bd and2799/002→468e are recorded in the sole
+[Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Original release receipts6391829384/6392412248/6392572878/6393186794/6393337534 retain
+exact review, CI, production identities and boundaries. Existing private files,
+Chat/dirty-work/CRM/navigation/customer actions and response records remain canonical.
+Original owner read adds no writer or private CURA access. Actual files, later-build dirty
+work and returning-customer Home proof are still owed; owner credentials do not
+replace the disconnected customer or bypass browser restrictions. No new
+identity/history/model/Memory/update engine, named release, provider/Live/Research
+activation or catalogue/algorithm promotion. Full42/seven/Teach/owner-client
+journey and one complete founder evaluation remain open.
+
 ## EXP09 private multi-file CURA Chat — October24 source released; customer proof owed
 
 Original [#2765](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2765)

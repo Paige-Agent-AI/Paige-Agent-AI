@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePrivateRequestResult, privateRequestArguments } from "./client-private-request";
+import { parsePrivateRequestHistory, parsePrivateRequestResult, privateHistoryArguments, privateRequestArguments } from "./client-private-request";
 
 const scope = {
   actor: "e09df000-0000-4000-8000-000000000001",
@@ -86,5 +86,53 @@ describe("original private-request native consumer contract (not mounted)", () =
     expect(() => privateRequestArguments({ ...scope, intent: "" })).toThrow();
     expect(() => privateRequestArguments(scope, { title: " \t", body: "Read" })).toThrow();
     expect(() => privateRequestArguments(scope, { title: "Review", body: "x".repeat(4001) })).toThrow();
+  });
+});
+
+const page = (count = 1, more = false) => {
+  const requests = Array.from({ length: count }, (_, index) => ({
+    intent_id: `e09df200-0000-4000-8000-${String(count - index).padStart(12, "0")}`,
+    request: { ...status().request, work_id: `e09df300-0000-4000-8000-${String(count - index).padStart(12, "0")}` },
+  }));
+  const last = requests[requests.length - 1];
+  return { schema_version: 1, actor_id: scope.actor, tenant_id: scope.tenant, contact_id: scope.contact,
+    requests, more, next_cursor: more && requests.length ? { created_at: last.request.created_at, work_id: last.request.work_id } : null,
+    recipient_available: true, missing_is_rejection: false, read_at: time };
+};
+describe("returning-owner original private Work history contract", () => {
+  it("recovers actual Work and intent from the closed source rather than browser state", () => {
+    const value = parsePrivateRequestHistory(page(), scope);
+    expect(value.requests[0].intent_id).toBe(page().requests[0].intent_id);
+    expect(value.requests[0].request.version).toBe(time);
+  });
+  it("keeps the exact last-record cursor, including local offset and microseconds", () => {
+    const value = page(20, true), local = "2026-10-25T05:00:00.123456-04:00";
+    value.requests[value.requests.length - 1].request.created_at = local; value.next_cursor!.created_at = local;
+    const result = parsePrivateRequestHistory(value, scope);
+    expect(privateHistoryArguments(scope, result.next_cursor)._before_created_at).toBe(local);
+    expect(privateHistoryArguments(scope, result.next_cursor)._before_work_id).toBe(value.requests[value.requests.length - 1].request.work_id);
+  });
+  it("allows empty saved history without allowing rejection or an automatic new intent", () => {
+    const result = parsePrivateRequestHistory(page(0), scope);
+    expect(result.requests).toEqual([]); expect(result.missing_is_rejection).toBe(false); expect(result.next_cursor).toBeNull();
+    expect(privateHistoryArguments(scope)).toEqual({ _expected_actor_id: scope.actor, _expected_tenant_id: scope.tenant,
+      _contact_id: scope.contact, _before_created_at: null, _before_work_id: null });
+  });
+  for (const [name, change] of [
+    ["foreign business", { tenant_id: customerAction }], ["foreign actor", { actor_id: customerAction }],
+    ["foreign contact", { contact_id: customerAction }], ["expanded staff data", { payload: { private: true } }],
+    ["empty-as-rejection", { missing_is_rejection: true }], ["incomplete more cursor", { more: true }],
+    ["oversized page", { requests: page(21).requests }], ["duplicate intent", { requests: [...page().requests, ...page().requests] }],
+    ["cursor after final page", { next_cursor: { created_at: time, work_id: work } }],
+  ] as const) it(`rejects ${name}`, () => expect(() => parsePrivateRequestHistory({ ...page(), ...change }, scope)).toThrow());
+  it("rejects a cursor that does not identify the actual last original Work record", () => {
+    const value = page(20, true); value.next_cursor!.work_id = work;
+    expect(() => parsePrivateRequestHistory(value, scope)).toThrow();
+  });
+  it("applies the original prepared/changed privacy rules to every history item", () => {
+    const value = page(); Object.assign(value.requests[0].request, { content_state: "changed", status: "drafted" });
+    expect(() => parsePrivateRequestHistory(value, scope)).toThrow();
+    Object.assign(value.requests[0].request, { title: null, body: null });
+    expect(parsePrivateRequestHistory(value, scope).requests[0].request.body).toBeNull();
   });
 });

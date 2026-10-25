@@ -24,8 +24,11 @@ const words = (x: unknown, max: number): x is string => typeof x === "string" &&
 function closed(row: Record<string, unknown>, fields: string[]) {
   if (Object.keys(row).length !== fields.length || fields.some(key => !Object.prototype.hasOwnProperty.call(row, key))) throw invalid();
 }
+function checkOwnerScope(scope: OwnerActionScope) {
+  if (![scope.actor, scope.tenant, scope.contact].every(uuid)) throw invalid();
+}
 function checkScope(scope: PrivateRequestScope) {
-  if (![scope.actor, scope.tenant, scope.contact, scope.intent].every(uuid)) throw invalid();
+  checkOwnerScope(scope); if (!uuid(scope.intent)) throw invalid();
 }
 /** Closed DTO only, not authority or execution. Original native Auth/Work/CRM
  * checks still decide access. No network request, retry, store, or UI mount here.
@@ -67,4 +70,47 @@ export function privateRequestArguments(scope: PrivateRequestScope, value?: Word
   const title = trim(value.title), body = trim(value.body);
   if (!words(title, 160) || !words(body, 4000)) throw invalid();
   return { ...args, _title: title, _body: body };
+}
+export type PrivateHistoryCursor = { created_at: string; work_id: string };
+export type PrivateRequestHistory = {
+  schema_version: 1; actor_id: string; tenant_id: string; contact_id: string;
+  requests: { intent_id: string; request: SavedRequest }[];
+  more: boolean; next_cursor: PrivateHistoryCursor | null; recipient_available: boolean;
+  missing_is_rejection: false; read_at: string;
+};
+/** A native keyset projection over the same private Work, never a browser ledger.
+ * Missing history is not proof a prior request was rejected or safe to repeat.
+ */
+export function parsePrivateRequestHistory(raw: unknown, scope: OwnerActionScope): PrivateRequestHistory {
+  checkOwnerScope(scope);
+  if (!object(raw)) throw invalid();
+  closed(raw, ["schema_version", "actor_id", "tenant_id", "contact_id", "requests", "more", "next_cursor", "recipient_available", "missing_is_rejection", "read_at"]);
+  if (raw.schema_version !== 1 || raw.actor_id !== scope.actor || raw.tenant_id !== scope.tenant || raw.contact_id !== scope.contact
+    || !Array.isArray(raw.requests) || raw.requests.length > 20 || typeof raw.more !== "boolean"
+    || typeof raw.recipient_available !== "boolean" || raw.missing_is_rejection !== false || !timestamp(raw.read_at)) throw invalid();
+  const intents = new Set<string>(), work = new Set<string>();
+  let last: SavedRequest | null = null;
+  for (const item of raw.requests) {
+    if (!object(item)) throw invalid();
+    closed(item, ["intent_id", "request"]);
+    if (!uuid(item.intent_id) || intents.has(item.intent_id)) throw invalid();
+    const parsed = parsePrivateRequestResult({ schema_version: raw.schema_version, actor_id: raw.actor_id, tenant_id: raw.tenant_id,
+      contact_id: raw.contact_id, intent_id: item.intent_id, found: true, request: item.request,
+      recipient_available: raw.recipient_available, missing_is_rejection: raw.missing_is_rejection, read_at: raw.read_at },
+    { ...scope, intent: item.intent_id }, "status");
+    if (!parsed.request || work.has(parsed.request.work_id)) throw invalid();
+    intents.add(item.intent_id); work.add(parsed.request.work_id); last = parsed.request;
+  }
+  if (raw.more) {
+    if (raw.requests.length !== 20 || !last || !object(raw.next_cursor)) throw invalid();
+    closed(raw.next_cursor, ["created_at", "work_id"]);
+    if (raw.next_cursor.created_at !== last.created_at || raw.next_cursor.work_id !== last.work_id) throw invalid();
+  } else if (raw.next_cursor !== null) throw invalid();
+  return raw as unknown as PrivateRequestHistory;
+}
+export function privateHistoryArguments(scope: OwnerActionScope, cursor: PrivateHistoryCursor | null = null) {
+  checkOwnerScope(scope);
+  if (cursor !== null && (!timestamp(cursor.created_at) || !uuid(cursor.work_id))) throw invalid();
+  return { _expected_actor_id: scope.actor, _expected_tenant_id: scope.tenant, _contact_id: scope.contact,
+    _before_created_at: cursor?.created_at ?? null, _before_work_id: cursor?.work_id ?? null };
 }

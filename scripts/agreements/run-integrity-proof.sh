@@ -253,6 +253,10 @@ deno test --allow-import --node-modules-dir=none --allow-read="$REPO/supabase/fu
 # imported module. Check the actual credential bridge directly as well.
 deno check --allow-import --node-modules-dir=none \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-credentials.ts"
+# The real shared sender must type-check against its actual pinned SDK too;
+# transpiled actual-handler tests do not prove that dependency boundary.
+deno check --allow-import --node-modules-dir=none \
+  "$REPO/supabase/functions/send-message/index.ts"
 # The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
 # runtime already exercised above, with this same fenced native cluster and all
 # 54 original assertions. No transpiled copy or relaxed test is substituted.

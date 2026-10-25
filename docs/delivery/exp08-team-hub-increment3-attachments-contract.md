@@ -175,7 +175,10 @@ All are SECURITY DEFINER with `search_path=''` and return `{ok, code}`. They reu
   - Returns `{ok, state}`.
 - **`team_hub_claim_stale_files(p_uploader)`**
   - Marks the uploader's own unposted (`pending` or `ready`, `message_id IS NULL`) files older than one day as `discarded`, and returns their paths so the edge function can remove the objects. A post locks the same rows `FOR UPDATE` and requires `ready`, so a file is either posted or swept, never both. The same sweep re-offers that uploader's discarded or refused files whose object is still stored, so a removal that failed or timed out is retried rather than left until retirement.
-  - **Known limit:** the sweep runs when that person next finishes an upload. There is no scheduled sweep yet, so a person who never uploads again leaves at most 20 unreadable files until account retirement.
+  - It runs when that person next finishes an upload, and also on a schedule (below), so a person who never uploads again no longer leaves files behind until account retirement.
+- **`team_hub_stale_file_uploaders(p_limit)`** (migration `20271114260008`, added after increment 3)
+  - Service role only. Returns `{ok, uploaders}`: the uploaders who have sweep work now, by exactly the claim's two conditions (an unposted pending or ready file older than a day, or a discarded or refused file whose object is still stored), oldest work first, at most `p_limit` (clamped to 1–200).
+  - It returns ids only. What is marked and which paths are returned stays the claim's job.
 
 ## 5. Edge function `team-hub-file`
 
@@ -191,6 +194,7 @@ All are SECURITY DEFINER with `search_path=''` and return `{ok, code}`. They reu
 
   Returns `{ok, file}` or `{ok:false, code:'rejected', reason}`.
 - **`discard`**: `team_hub_discard_file` with the caller's JWT, then removal by the service role.
+- **Scheduled sweep: edge function `team-hub-file-sweep`** (added after increment 3). pg_cron runs it hourly at minute 41 with the incumbent `x-cron-token` header, so `verify_jwt = false` and the function fails closed unless the caller is the service role or presents a valid cron token. It lists uploaders with `team_hub_stale_file_uploaders(50)`, runs `team_hub_claim_stale_files` for each, and removes the returned paths in batches of at most 100, keeping only canonical `<tenant>/team-hub/<file>` names (`_shared/team-hub/file-paths.ts`, shared with `team-hub-file`). It stops starting new uploaders after 40 seconds and reports counts only: `{ok, uploaders, swept, removed, failed_removals, failed_claims, deferred}`. A failed removal is offered again by the next run.
 - **Response headers:** `Access-Control-Allow-Origin: *` (the house pattern: the bearer JWT is the auth, never a cookie), `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'`.
 - **Logging:** never logs file names or bytes, only reason codes.
 

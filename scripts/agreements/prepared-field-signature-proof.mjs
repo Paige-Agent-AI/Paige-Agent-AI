@@ -22,7 +22,34 @@ export async function provePreparedFieldSignature({sql,read,q,tenant,context,acc
  // Existing production service role already has private-schema USAGE (read-only metadata confirmed); complete the older disposable fixture to the same contract.
  if(!process.argv.includes('--prepared-field-signature-baseline')){
   sql('GRANT USAGE ON SCHEMA private TO service_role;');
-  const migration=read('supabase/migrations/20271114220004_e04_prepared_field_signature.sql');sql(migration);sql(migration);
+  const migration=read('supabase/migrations/20271114220004_e04_prepared_field_signature.sql');
+  const legacy='public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)';
+  const oldMetadata=()=>sql(`SELECT jsonb_agg(jsonb_build_object('id',oid,'body',md5(prosrc),'owner',proowner,'acl',proacl::text,'config',proconfig,'definer',prosecdef) ORDER BY oid)
+   FROM pg_proc WHERE oid IN ('${legacy}'::regprocedure,'public._paige_preparation_legacy_token_hold()'::regprocedure,
+    'public._paige_preparation_legacy_effect_hold()'::regprocedure,'public._read_agreement_signing_fields(text)'::regprocedure,
+    'public._paige_commercial_canonical_json(jsonb)'::regprocedure);`);
+  const before=oldMetadata();
+  const drift=identity=>{
+   const original=sql(`SELECT pg_get_functiondef(${q(identity)}::regprocedure);`),changed=original.replace('BEGIN\n','BEGIN\n -- isolated source-drift control\n');
+   assert.notEqual(changed,original);sql(changed);
+   try{assert.throws(()=>sql(migration),/Original prepared signing source changed/);checks++;}
+   finally{sql(original);}
+  };
+  for(const identity of [legacy,'public._paige_preparation_legacy_token_hold()','public._paige_preparation_legacy_effect_hold()',
+   'public._read_agreement_signing_fields(text)','public._paige_commercial_canonical_json(jsonb)'])drift(identity);
+  check(oldMetadata()===before,'Forward refusal restores every original dependency body, ABI, grant and owner before adoption');
+  sql(migration);sql(migration);
+  drift('public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text,jsonb)');
+  for(const [table,trigger]of [['paige_agreement_signers','trg_paige_preparation_legacy_token_hold'],['paige_agreements','trg_paige_preparation_legacy_effect_hold']]){
+   sql(`ALTER TABLE ${table} DISABLE TRIGGER ${trigger};`);
+   try{assert.throws(()=>sql(migration),/Original prepared signing fence changed/);checks++;}
+   finally{sql(`ALTER TABLE ${table} ENABLE TRIGGER ${trigger};`);}
+  }
+  const helper='private.e04_prepared_field_input(jsonb,uuid,timestamp with time zone,jsonb)';
+  sql(`GRANT EXECUTE ON FUNCTION ${helper} TO authenticated;`);
+  try{assert.throws(()=>sql(migration),/Original prepared signing source changed/);checks++;}
+  finally{sql(`REVOKE EXECUTE ON FUNCTION ${helper} FROM authenticated;`);}
+  sql(migration);
  }
  const receipt=json(native(`SELECT _record_agreement_signature(${q(v.hashes[0].token_hash)},${agreement.version},${q(agreement.sha256)},${q(agreement.key)},'Synthetic Signer',NULL,true,true,'synthetic-consent',1,repeat('a',64),NULL,'synthetic-local-proof',${q(JSON.stringify(prepared))}::jsonb);`));
  check(receipt.state==='recorded'&&receipt.audit_complete===true,'Actual signature, consent and assigned fields must commit atomically');

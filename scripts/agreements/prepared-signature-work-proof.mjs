@@ -80,9 +80,12 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
  const [,changedReply]=await Promise.all([changing,stale]);check(changedReply==='refused','Complete stored approval is rechecked after an observed pending-row wait');
  check(sql(`SELECT count(*) FROM paige_durable_work WHERE intent_id='${altered.operation}';`)==='0','Changed stored words cannot create original Work with an old digest');
  const expiring=await setup(),expiryTag=tag+'expiry';
- sql(`UPDATE paige_pending_confirmations SET expires_at=clock_timestamp()+interval '0.8 seconds' WHERE id='${expiring.pending.confirmation_id}';`);
- const holding=startSession(expiryTag+'holder',`BEGIN;SELECT id FROM paige_agreements WHERE id='${expiring.a.id}' FOR UPDATE;SELECT pg_sleep(1.5);COMMIT;`);sessions++;
+ // Leave a real process-startup window, then keep the SAME original source
+ // lock beyond expiry. The observed wait and act-clock refusal stay required.
+ sql(`UPDATE paige_pending_confirmations SET expires_at=clock_timestamp()+interval '3 seconds' WHERE id='${expiring.pending.confirmation_id}';`);
+ const holding=startSession(expiryTag+'holder',`BEGIN;SELECT id FROM paige_agreements WHERE id='${expiring.a.id}' FOR UPDATE;SELECT pg_sleep(5);COMMIT;`);sessions++;
  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${q(expiryTag+'holder')} AND wait_event='PgSleep');`);
+ check(sql(`SELECT expires_at>clock_timestamp() FROM paige_pending_confirmations WHERE id='${expiring.pending.confirmation_id}';`)==='t','The expiry-race reader begins with a genuinely live original approval');
  const elapsed=startSession(expiryTag+'reader',native(`DO $proof$ BEGIN BEGIN ${register(expiring).replace(/^SELECT\s+/,'PERFORM ')} RAISE EXCEPTION 'Expected act-time approval expiry';EXCEPTION WHEN SQLSTATE '42501' THEN NULL;END;END $proof$;SELECT 'refused';`));sessions++;
  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${q(expiryTag+'reader')} AND wait_event_type='Lock');`);waits++;
  const [,expiredReply]=await Promise.all([holding,elapsed]);check(expiredReply==='refused','Actual clock expiry wins after an observed original source wait');

@@ -4,6 +4,58 @@
 BEGIN;
 SET LOCAL lock_timeout='3s';
 
+DO $guard$
+DECLARE expected record; actual pg_catalog.pg_proc%ROWTYPE; original_owner oid;
+BEGIN
+ SELECT proowner INTO original_owner FROM pg_catalog.pg_proc
+  WHERE oid=pg_catalog.to_regprocedure('public._read_agreement_signing_fields(text)');
+ IF NOT FOUND THEN RAISE EXCEPTION 'Original prepared signing source changed' USING ERRCODE='23514'; END IF;
+ FOR expected IN SELECT * FROM (VALUES
+  ('public._read_agreement_signing_fields(text)','db2c56efd37ecb7c31b720909d581fbb','db2c56efd37ecb7c31b720909d581fbb',true,true,true,'jsonb',ARRAY['_token_hash']::text[]),
+  ('public._paige_commercial_canonical_json(jsonb)','bbfeef876dc866c6d276d2be2662ae74','bbfeef876dc866c6d276d2be2662ae74',true,false,false,'text',ARRAY['v']::text[]),
+  ('public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)','3a2fa340fca9838aa9c6737f1e41ae61','d7e9d5d48b46d1b61b3aa30d33b876d4',true,false,true,'jsonb',ARRAY['_token_hash','_agreement_version','_content_sha256','_content_storage_key','_typed_name','_signature_image_png','_consent_read','_consent_esign','_consent_slug','_consent_version','_consent_sha256','_ip','_user_agent']::text[]),
+  ('public._paige_preparation_legacy_token_hold()','46c36eb38a54080388b25f7ff315d0b9','fe9a5356e594dce069eaeb1e44de14c9',true,true,false,'trigger',NULL::text[]),
+  ('public._paige_preparation_legacy_effect_hold()','b4581030968e238115700a14da16f9b7','00469e767761696ebe40d80d80bf1a96',true,true,false,'trigger',NULL::text[]),
+  ('private.e04_prepared_field_input(jsonb,uuid,timestamp with time zone,jsonb)',NULL,'0568b3cb5ed0d32bdc326c37d76aebaa',false,true,true,'jsonb',ARRAY['_source','_signer','_at','_proposed']::text[]),
+  ('private.e04_prepared_signed_fields(public.paige_agreement_signers)',NULL,'0d363d0a4d071c265bbd1526d3dcec6d',false,true,true,'boolean',ARRAY['_candidate']::text[]),
+  ('private.e04_prepared_signature_context(public.paige_agreement_signers)',NULL,'f149482a79d4b19b60b536aa90c6aaea',false,true,true,'jsonb',ARRAY['_candidate']::text[]),
+  ('public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text,jsonb)',NULL,'03cac431afd80024397110bc7d5038b7',false,false,true,'jsonb',ARRAY['_token_hash','_agreement_version','_content_sha256','_content_storage_key','_typed_name','_signature_image_png','_consent_read','_consent_esign','_consent_slug','_consent_version','_consent_sha256','_ip','_user_agent','_prepared_fields']::text[])
+ ) AS checks(identity,old_body,own_body,required,definer,service,result_type,argument_names) LOOP
+  SELECT * INTO actual FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(expected.identity);
+  IF NOT FOUND THEN
+   IF expected.required THEN RAISE EXCEPTION 'Original prepared signing source changed' USING ERRCODE='23514'; END IF;
+   CONTINUE;
+  END IF;
+  IF (pg_catalog.md5(actual.prosrc) IS DISTINCT FROM expected.own_body
+    AND (expected.old_body IS NULL OR pg_catalog.md5(actual.prosrc) IS DISTINCT FROM expected.old_body))
+   OR actual.proowner IS DISTINCT FROM original_owner OR actual.prosecdef IS DISTINCT FROM expected.definer
+   OR actual.pronargdefaults<>0 OR actual.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+   OR actual.proargnames IS DISTINCT FROM expected.argument_names
+   OR actual.prorettype IS DISTINCT FROM pg_catalog.to_regtype(expected.result_type)
+   OR actual.proleakproof OR actual.proisstrict
+   OR pg_catalog.has_function_privilege('anon',actual.oid,'EXECUTE')
+   OR pg_catalog.has_function_privilege('authenticated',actual.oid,'EXECUTE')
+   OR pg_catalog.has_function_privilege('service_role',actual.oid,'EXECUTE') IS DISTINCT FROM expected.service
+   OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(actual.proacl,pg_catalog.acldefault('f',actual.proowner))) acl
+    WHERE acl.privilege_type='EXECUTE' AND acl.grantee NOT IN (original_owner,'service_role'::regrole::oid)) THEN
+   RAISE EXCEPTION 'Original prepared signing source changed' USING ERRCODE='23514';
+  END IF;
+ END LOOP;
+ FOR expected IN SELECT * FROM (VALUES
+  ('public.paige_agreements','trg_paige_preparation_legacy_effect_hold','public._paige_preparation_legacy_effect_hold()',ARRAY['status','content_storage_key','content_sha256','sealed_storage_key','sealed_sha256']::text[]),
+  ('public.paige_agreement_signers','trg_paige_preparation_legacy_token_hold','public._paige_preparation_legacy_token_hold()',ARRAY['token_hash','token_expires_at','token_revoked_at','status']::text[])
+ ) AS checks(relation,trigger_name,function_name,columns) LOOP
+  IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid=pg_catalog.to_regclass(expected.relation)
+   AND t.tgname=expected.trigger_name AND NOT t.tgisinternal AND t.tgenabled='O' AND t.tgtype=19 AND t.tgnargs=0
+   AND t.tgqual IS NULL AND t.tgfoid=pg_catalog.to_regprocedure(expected.function_name)
+   AND (SELECT pg_catalog.array_agg(a.attname::text ORDER BY item.ordinality)
+     FROM pg_catalog.unnest(t.tgattr::smallint[]) WITH ORDINALITY item(attribute,ordinality)
+     JOIN pg_catalog.pg_attribute a ON a.attrelid=t.tgrelid AND a.attnum=item.attribute) IS NOT DISTINCT FROM expected.columns) THEN
+   RAISE EXCEPTION 'Original prepared signing fence changed' USING ERRCODE='23514';
+  END IF;
+ END LOOP;
+END $guard$;
+
 CREATE OR REPLACE FUNCTION private.e04_prepared_field_input(
  _source jsonb,_signer uuid,_at timestamptz,_proposed jsonb
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$

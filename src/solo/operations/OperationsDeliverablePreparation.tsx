@@ -1,9 +1,10 @@
 import { useEffect,useId,useRef,useState } from "react";
 import { FileCheck2 } from "lucide-react";
-import { readStaffDelivery,writeStaffDelivery,staffDeliveryCaller,type StaffDeliveryScope,type StaffDeliveryRead,type StaffDeliveryAction } from "./operations-delivery-staff";
+import { readStaffDelivery,writeStaffDelivery,staffDeliveryCaller,staffReviewMode,type DeliveryReviewMode,type StaffDeliveryScope,type StaffDeliveryRead,type StaffDeliveryAction } from "./operations-delivery-staff";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 import { readDeliverySourceSessions,readDeliverySourceVersions,deliverySourceCaller,type DeliverySourceSession,type DeliverySourceVersion } from "./operations-delivery-source";
 import { OperationsAssignee } from "./OperationsAssignee";
+import { releaseReviewers } from "./operations-item-release";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { registerAccountSwitchGuard } from "@/lib/auth/accountSwitchGuard";
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/ui/select";
@@ -33,6 +34,7 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
  const mounted=useRef(false),writing=useRef(false),sequence=useRef(0);
  const [refresh,setRefresh]=useState(0),[sources,setSources]=useState<Sources>({key,loading:true,sessions:null,work:null});
  const [sessionId,setSessionId]=useState(""),[artifactId,setArtifactId]=useState(""),[versionId,setVersionId]=useState(""),[reviewerId,setReviewerId]=useState("");
+ const [reviewMode,setReviewMode]=useState<DeliveryReviewMode|undefined>();
  const selection=JSON.stringify([key,sessionId,artifactId]),selectionLive=useRef(selection);selectionLive.current=selection;
  const [versions,setVersions]=useState<Versions>({key:selection,loading:false,versions:null,unsupported:0});
  const [busy,setBusy]=useState(false),[confirming,setConfirming]=useState(false),[hint,setHint]=useState("");
@@ -43,10 +45,10 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
  useEffect(()=>{
   const restored=readDeliveryRecovery(storage,scope);draftScope.current={key,scope};setRecoveryUnavailable(restored.kind==="unavailable");
-  setSessionId("");setArtifactId("");setVersionId("");setReviewerId("");setOutcome(null);setHint("");
+  setSessionId("");setArtifactId("");setVersionId("");setReviewerId("");setReviewMode(undefined);setOutcome(null);setHint("");
   if(restored.kind==="retained"){
    const r=restored.recovery;draftScope.current={key,scope:r.scope};
-   if(r.kind==="draft"&&r.draft.kind==="preparation"){setSessionId(r.draft.sessionId??"");setArtifactId(r.draft.artifactId??"");setVersionId(r.draft.versionId??"");setReviewerId(r.draft.reviewerId??"");}
+   if(r.kind==="draft"&&r.draft.kind==="preparation"){setSessionId(r.draft.sessionId??"");setArtifactId(r.draft.artifactId??"");setVersionId(r.draft.versionId??"");setReviewerId(r.draft.reviewerId??"");setReviewMode(r.draft.reviewMode);}
    else if(r.kind==="attempt"&&r.action.kind==="submit"){intent.current={key,action:r.action,scope:r.scope,unconfirmed:true};setOutcome({key,kind:"unverified",message:"An original submission remains unconfirmed. Inspect its recorded state before another write."});}
    else{setRecoveryUnavailable(true);setHint("An original review or client release is retained. Return to the review inspection before preparing another version.");}
   }else if(restored.kind==="unavailable")setHint("Local recovery is unavailable. Inspect the original work before continuing; no new write is permitted.");
@@ -63,7 +65,7 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
    if(!same())return;
    setSources({key,loading:false,work,sessions:source.kind==="ready"?source.sessions:null});
    const retained=intent.current;
-   if(retained?.unconfirmed&&retained.key===key&&work.kind==="ready"&&work.submissions.some(row=>row.artifact_version_id===retained.action.artifactVersionId&&row.reviewer_user_id===retained.action.reviewerId&&row.submitted_by===scope.actorId&&row.revision_no===retained.action.expectedRevisionNo+1)){
+   if(retained?.unconfirmed&&retained.key===key&&work.kind==="ready"&&work.submissions.some(row=>row.artifact_version_id===retained.action.artifactVersionId&&row.reviewer_user_id===retained.action.reviewerId&&row.submitted_by===scope.actorId&&row.revision_no===retained.action.expectedRevisionNo+1&&staffReviewMode(row.submitted_by,row.reviewer_user_id,row.review_mode)===staffReviewMode(scope.actorId,retained.action.reviewerId,retained.action.reviewMode))){
     retained.unconfirmed=false;if(!clearDeliveryRecovery(storage,scope,{version:1,scope:retained.scope,kind:"attempt",action:retained.action}))setRecoveryUnavailable(true);setOutcome({key,kind:"verified",message:"The original version and reviewer are confirmed in the recorded submission. The earlier request was not confirmed directly."});await refreshLinkedWork();
    }
   })();return()=>{cancelled=true;};
@@ -82,7 +84,8 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[selection,refresh,Boolean(session),Boolean(artifact)]);
  const listed=versions.key===selection&&!versions.loading?versions.versions:null,version=listed?.find(row=>row.id===versionId);
- const membersAvailable=members.filter(row=>row.status==="active"&&row.user_id!==scope.actorId),reviewer=membersAvailable.find(row=>row.user_id===reviewerId);
+ const membersAvailable=releaseReviewers(members,scope.actorId),reviewer=membersAvailable.find(row=>row.user_id===reviewerId);
+ const chosenMode=reviewer?staffReviewMode(scope.actorId,reviewer.user_id,reviewMode):null;
  const latest=data?.submissions[0],release=latest?data?.releases.find(row=>row.submission_id===latest.id):undefined;
  const eligible=Boolean(data)&&(!latest||latest.state==="revision_requested"||release?.state==="client_revision_requested");
  // Why nothing can be prepared right now, from the recorded state itself — never "awaiting a decision" for accepted work.
@@ -93,13 +96,14 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
  const result=outcome?.key===key?outcome:null,unknown=Boolean(intent.current?.unconfirmed),dirty=Boolean(sessionId||artifactId||versionId||reviewerId)&&result?.kind!=="verified";
  const sourceFailed=sources.key===key&&!sources.loading&&(!data||!sessions||Boolean(artifact&&versions.key===selection&&!versions.loading&&listed===null));
  const locked=recoveryChecked!==key||recoveryUnavailable||busy||unknown||result?.kind==="verified"||result?.kind==="refused"||result?.kind==="unverified"||Boolean(sources.loading)||!eligible;
- const canSubmit=!locked&&Boolean(version&&reviewer),needsGuard=busy||dirty||unknown;
+ const canSubmit=!locked&&Boolean(version&&reviewer&&chosenMode),needsGuard=busy||dirty||unknown;
+ useEffect(()=>{if(!canSubmit)setConfirming(false);},[canSubmit]);
  useEffect(()=>{
   if(recoveryChecked!==key||recoveryUnavailable||unknown||!dirty||draftScope.current.key!==key)return;
-  if(!saveDeliveryRecovery(storage,scope,{version:1,scope:draftScope.current.scope,kind:"draft",draft:{kind:"preparation",sessionId:sessionId||null,artifactId:artifactId||null,versionId:versionId||null,reviewerId:reviewerId||null}}))setHint("Local recovery could not be saved. Submission will remain blocked unless its original intent can be retained.");
+  if(!saveDeliveryRecovery(storage,scope,{version:1,scope:draftScope.current.scope,kind:"draft",draft:{kind:"preparation",sessionId:sessionId||null,artifactId:artifactId||null,versionId:versionId||null,reviewerId:reviewerId||null,...(reviewMode?{reviewMode}:{})}}))setHint("Local recovery could not be saved. Submission will remain blocked unless its original intent can be retained.");
  // Never overwrite an uncertain attempt with later browser selections.
  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[key,recoveryChecked,recoveryUnavailable,unknown,dirty,sessionId,artifactId,versionId,reviewerId]);
+ },[key,recoveryChecked,recoveryUnavailable,unknown,dirty,sessionId,artifactId,versionId,reviewerId,reviewMode]);
 
  useBeforeUnloadGuard(needsGuard);
  useEffect(()=>registerAccountSwitchGuard(()=>{if(needsGuard){setHint("Finish or clear this preparation before switching workspaces.");return false;}return true;}),[needsGuard]);
@@ -107,14 +111,14 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
  useEffect(()=>{if(result||hint||sourceFailed)feedback.current?.scrollIntoView?.({block:"center",behavior:"auto"});},[result,hint,sourceFailed]);
  const save=async()=>{
   if(!current()||!confirming||!canSubmit||!version||!reviewer||writing.current)return;
-  const action:Extract<StaffDeliveryAction,{kind:"submit"}>={kind:"submit",artifactVersionId:version.id,reviewerId:reviewer.user_id,expectedRevisionNo:latest?.revision_no??0};
+  const action:Extract<StaffDeliveryAction,{kind:"submit"}>={kind:"submit",artifactVersionId:version.id,reviewerId:reviewer.user_id,expectedRevisionNo:latest?.revision_no??0,...(reviewMode?{reviewMode}:{})};
   const originalScope=draftScope.current.key===key?draftScope.current.scope:scope;
   if(!saveDeliveryRecovery(storage,scope,{version:1,scope:originalScope,kind:"attempt",action})){setConfirming(false);setOutcome({key,kind:"refused",message:"Local recovery could not retain the original submission. No request was sent. Retry recovery before continuing."});return;}
   intent.current={key,action,scope:originalScope,unconfirmed:true};writing.current=true;setBusy(true);setConfirming(false);
   try{const saved=await writeStaffDelivery(staffDeliveryCaller,originalScope,action,current);if(!current())return;
    if(saved.kind==="verified"){intent.current.unconfirmed=false;if(!clearDeliveryRecovery(storage,scope,{version:1,scope:originalScope,kind:"attempt",action}))setRecoveryUnavailable(true);setOutcome({key,kind:"verified",message:"Submission is recorded and verified. Internal review and client acceptance remain separate decisions."});await refreshLinkedWork();}
    else if(saved.kind!=="scope_changed"){
-    if(saved.kind==="refused"||saved.kind==="invalid"){intent.current.unconfirmed=false;if(!clearDeliveryRecovery(storage,scope,{version:1,scope:originalScope,kind:"attempt",action}))setRecoveryUnavailable(true);saveDeliveryRecovery(storage,scope,{version:1,scope:originalScope,kind:"draft",draft:{kind:"preparation",sessionId:sessionId||null,artifactId:artifactId||null,versionId:versionId||null,reviewerId:reviewerId||null}});}
+    if(saved.kind==="refused"||saved.kind==="invalid"){intent.current.unconfirmed=false;if(!clearDeliveryRecovery(storage,scope,{version:1,scope:originalScope,kind:"attempt",action}))setRecoveryUnavailable(true);saveDeliveryRecovery(storage,scope,{version:1,scope:originalScope,kind:"draft",draft:{kind:"preparation",sessionId:sessionId||null,artifactId:artifactId||null,versionId:versionId||null,reviewerId:reviewerId||null,...(reviewMode?{reviewMode}:{})}});}
     setOutcome({key,kind:saved.kind==="refused"||saved.kind==="invalid"?"refused":"unverified",message:saved.kind==="refused"||saved.kind==="invalid"?"Submission was refused. Inspect current work and source access before continuing.":"Submission could not be confirmed. Inspect the original recorded submission before another write."});
    }
   }catch{if(current())setOutcome({key,kind:"unverified",message:"Submission could not be confirmed. Inspect its original recorded state before another write."});}
@@ -129,18 +133,18 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
     <SourcePick label="Studio session" value={sessionId} placeholder="Choose a saved source" disabled={locked} theme={theme} options={sessions.map(row=>({value:row.id,label:row.title}))} onChange={next=>{setSessionId(next);setArtifactId("");setVersionId("");}}/>
     <SourcePick label="Saved work" value={artifactId} placeholder="Choose saved work" disabled={locked||!session} theme={theme} options={(session?.artifacts??[]).map(row=>({value:row.id,label:row.title}))} onChange={next=>{setArtifactId(next);setVersionId("");}}/>
     <SourcePick label="Version" value={versionId} placeholder="Choose the version" disabled={locked||!listed} theme={theme} options={(listed??[]).map(row=>({value:row.id,label:`Version ${row.versionNo} · ${row.title}`}))} onChange={setVersionId}/>
-    <SourcePick label="Reviewer" value={reviewerId} placeholder="Choose a teammate" disabled={locked} theme={theme} options={membersAvailable.map(row=>({value:row.user_id,label:row.full_name||"Team member"}))} onChange={setReviewerId}/>
+    <SourcePick label="Reviewer" value={reviewerId} placeholder="Choose a teammate" disabled={locked} theme={theme} options={membersAvailable.map(row=>({value:row.user_id,label:row.user_id===scope.actorId?`${row.full_name||"You"} · You (owner)`:row.full_name||"Team member"}))} onChange={next=>{setReviewerId(next);setReviewMode(next===scope.actorId?"owner_self_review":undefined);}}/>
    </div>}
    {versions.key===selection&&versions.loading&&<p role="status">Reading saved versions…</p>}
    {versions.key===selection&&versions.unsupported>0&&<p>{versions.unsupported} saved versions cannot be submitted as text deliverables.</p>}
-   {reviewer&&<div className="ops-staff-people"><div><span>Proposed reviewer</span><OperationsAssignee member={reviewer}/></div><p>Reviews before release<br/><span>Studio access is checked on submission.</span></p></div>}
+   {reviewer&&<div className="ops-staff-people"><div><span>Proposed reviewer</span><OperationsAssignee member={reviewer}/></div><p>{chosenMode==="owner_self_review"?"Your owner review comes before release":"Reviews before release"}<br/><span>Access is checked when you submit and review.</span></p></div>}
    {version&&<article aria-label="Exact preparation source"><h3>{version.title}</h3><p>Saved version {version.versionNo}</p><div className="ops-staff-document" tabIndex={0}>{version.body}</div></article>}
    <button type="button" className="ops-staff-primary" disabled={!canSubmit} onClick={e=>{invoker.current=e.currentTarget;setHint("");setConfirming(true);}}>Review submission</button>
   </>}
-  {dirty&&!busy&&!unknown&&<button type="button" onClick={()=>{if(!clearDeliveryRecovery(storage,scope)){setHint("Local recovery could not be cleared. Your preparation is retained.");return;}draftScope.current={key,scope};setSessionId("");setArtifactId("");setVersionId("");setReviewerId("");setHint("");}}>Clear preparation</button>}
+  {dirty&&!busy&&!unknown&&<button type="button" onClick={()=>{if(!clearDeliveryRecovery(storage,scope)){setHint("Local recovery could not be cleared. Your preparation is retained.");return;}draftScope.current={key,scope};setSessionId("");setArtifactId("");setVersionId("");setReviewerId("");setReviewMode(undefined);setHint("");}}>Clear preparation</button>}
   <div ref={feedback} role="status" tabIndex={-1} aria-live="polite">{busy?<p>Submitting and verifying the recorded version...</p>:result?<p>{result.message}</p>:unknown?<p>An earlier submission remains unconfirmed. Return to its original inspection before another write.</p>:sourceFailed?<p>{!data||!sessions?"Current work or saved sources could not be inspected. Refresh before submitting.":"The saved versions could not be inspected. Retry the source read before submitting."}</p>:hint?<p>{hint}</p>:null}
    {!busy&&(sourceFailed||result||unknown||hint)&&<button type="button" onClick={inspect}>{sourceFailed&&!unknown&&!result?"Refresh saved work":"Inspect recorded submission"}</button>}
   </div>
-  <AlertDialog open={confirming&&canSubmit} onOpenChange={setConfirming}><AlertDialogContent className="paige-solo ops-staff-confirm" data-pg={theme} data-theme={theme} onCloseAutoFocus={restoreFocus}><AlertDialogHeader><AlertDialogTitle>Submit this version for internal review?</AlertDialogTitle><AlertDialogDescription>{version?.title} · saved version {version?.versionNo} · {reviewer?.full_name||"Team member"}. This records this exact saved version for your teammate to review. It does not record client acceptance.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep preparing</AlertDialogCancel><AlertDialogAction className="ops-staff-primary" onClick={()=>void save()}>Confirm submission</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+  <AlertDialog open={confirming&&canSubmit} onOpenChange={setConfirming}><AlertDialogContent className="paige-solo ops-staff-confirm" data-pg={theme} data-theme={theme} onCloseAutoFocus={restoreFocus}><AlertDialogHeader><AlertDialogTitle>Submit this version for internal review?</AlertDialogTitle><AlertDialogDescription>{version?.title} · saved version {version?.versionNo} · {reviewer?.full_name||"Team member"}. {chosenMode==="owner_self_review"?"This records this exact saved version for your separate owner review. You will approve or request changes before releasing it to the client.":"This records this exact saved version for your teammate to review."} It does not record client acceptance.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep preparing</AlertDialogCancel><AlertDialogAction className="ops-staff-primary" onClick={()=>void save()}>Confirm submission</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
  </section>;
 }

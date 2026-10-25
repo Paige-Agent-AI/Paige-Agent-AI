@@ -96,10 +96,22 @@ describe("the side doors that forwarded with the service key are internal-only",
 
   it("agreement-send caps sends per workspace before it renders, mints or mails", () => {
     const src = code("supabase/functions/agreement-send/index.ts");
-    const cap = src.indexOf("await overRateLimit(admin, `agreement-send:${tenantId}`");
+    // Private review reads have a separate fail-closed bucket; only the send path may
+    // freeze, mint or mail. Retain the original ordering assertions on that path.
+    const sendStart = src.indexOf("let body: Record<string, unknown> = {};");
+    expect(sendStart).toBeGreaterThan(-1);
+    expect(src.lastIndexOf("let body: Record<string, unknown> = {};")).toBe(sendStart);
+    const review = src.slice(0, sendStart);
+    expect(review).toContain("await overRateLimit(admin, `agreement-review:${tenantId}:${actorId}`, 120, 3600, true)");
+    expect(review).toContain("return reply({ ok: true, review });");
+    const send = src.slice(sendStart);
+    const cap = send.indexOf("await overRateLimit(admin, `agreement-send:${tenantId}`");
     expect(cap).toBeGreaterThan(-1);
-    expect(src.indexOf('from("paige_agreements")')).toBeGreaterThan(cap);
-    expect(src.indexOf("/functions/v1/send-transactional-email")).toBeGreaterThan(cap);
+    expect(send.indexOf('from("paige_agreements")')).toBeGreaterThan(cap);
+    expect(send.indexOf("/functions/v1/send-transactional-email")).toBeGreaterThan(cap);
+    for (const effect of ["await renderPresentedPdf(", "const token = mintSignerToken(", 'from("paige_agreements").update(']) {
+      expect(send.indexOf(effect), effect).toBeGreaterThan(cap);
+    }
   });
 
   it("agreement-send calls the sender as an internal caller, not with the end user's token", () => {

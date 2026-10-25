@@ -1,0 +1,155 @@
+{
+  "sourceBase": "253997ce3ecd3f65f0c13428505efa2390f56d0c",
+  "incomingMain": "03edfad8a4d7829e6d77f513918369f5ce2bbb71",
+  "componentBlob": "6ee9d5f93ccb104478dbcfd2271d0f1aa4affdb5",
+  "stylesBlob": "73f074c81edda44f4c9b19fae91e1073b84cb07d",
+  "method": "Actual supported Edge browser-targeted screenshots of original shell/Systems Check with neutral backend-refusing fixture ports; no image resizing or editing.",
+  "cssViewports": [
+    {
+      "width": 1536,
+      "height": 770
+    },
+    {
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "rasterBoundary": "Actual JPEG dimensions are recorded per file. Fractional device scaling rounds the1536 CSS viewport to1535 raster pixels and390x844 to390x843; these are not resized or cropped proofs.",
+  "observations": [
+    "Original forward/reverse focus cycling; Escape restores Review approval and retains the synthetic Chat draft.",
+    "Desktop and390 decision controls render44CSSpx high after the scoped original rule repair.",
+    "All four requested CSS widths read back exactly and document scrollWidth equals clientWidth.",
+    "At1024/900 the original PAIGE overlay is retained: fold it before review; open-rail screenshots show the retained conversation rather than clicking through its backdrop.",
+    "Viewport restored after checks.",
+    "Native Edge browser menu200percent observed; original dialog428x208CSSpx without internal overflow and two44CSSpx actions. Forward/reverse focus trap and Escape to original connected Review approval observed. Native menu100percent restoration separately verified."
+  ],
+  "unverified": [
+    "current reduced-motion setting and assistive technology",
+    "native pending/late-result/other-account execution states",
+    "authenticated released candidate, roles, tenant isolation, cohorts, eligible Live and full Experience/founder acceptance"
+  ],
+  "invalidExcluded": [
+    "Initial unbound tab compile timeout; no product result.",
+    "Read-only role evaluation timed out, then original DOM observation recovered.",
+    "One tablet click during viewport movement opened Review dismissal; safely cancelled, settled Review approval then verified. No action was confirmed.",
+    "All preliminary36px-button frames are supporting diagnostics only; final files below are after the44px source correction.",
+    "Earlier wrong-native-window screenshot and historical lagged frames remain excluded.",
+    "After current-main composition, development hot reload reset the synthetic draft; no additional draft-retention claim is inferred from the native zoom checkpoint."
+  ],
+  "files": [
+    {
+      "name": "oct24-final-1024x768-closed.jpg",
+      "bytes": 77019,
+      "sha256": "7520f4ddb5225ff5073bbc9fa0e61ffc05d49469e73e10056e80468429479585",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "name": "oct24-final-1024x768-open.jpg",
+      "bytes": 46417,
+      "sha256": "1947a546220efcc2baed987b5112fa5aafe9ced102443ef070a929d9c07ea4e5",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "name": "oct24-final-1366x768-closed.jpg",
+      "bytes": 84304,
+      "sha256": "09d9a4e07b16d942ad49ea869db6fec57db75e02bfc160c5540659557cfdfa08",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "name": "oct24-final-1366x768-open.jpg",
+      "bytes": 95482,
+      "sha256": "b4a8a7fd571b2beb163b8483220e60d52c753c83f6892795956b05f724f5b40a",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "name": "oct24-final-1536-dialog.jpg",
+      "bytes": 66713,
+      "sha256": "a010952d1c1cd23d3a1308ea815006c916162a779b759b4bc8908eb81fa747d6",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "name": "oct24-final-1536x770-closed.jpg",
+      "bytes": 87914,
+      "sha256": "d84d0318b52112a2e7b1fca4dca13aa718d2e64f3b408f745c19e1d3b261a26b",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "name": "oct24-final-1536x770-open.jpg",
+      "bytes": 100108,
+      "sha256": "08f228c1b68c8e73392e420f9a093d7a0d695c6c49ba7dd2384d62459ba3765c",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "name": "oct24-final-390-dialog.jpg",
+      "bytes": 31442,
+      "sha256": "3e1a4e2635a3a887bce8a8b6f3e2cfcb3ea3811da0386e65c42e81b507bbbec9",
+      "width": 390,
+      "height": 843
+    },
+    {
+      "name": "oct24-final-390-return.jpg",
+      "bytes": 42574,
+      "sha256": "b9cd54834642d2c316775a26af45de63f2ef6d8ed05699880a499b5017608e8c",
+      "width": 390,
+      "height": 843
+    },
+    {
+      "name": "oct24-final-900x1000-closed.jpg",
+      "bytes": 95285,
+      "sha256": "e07d84291d1676567feb28223fa1ed6ad7e3c8ab27f6762e32cd096adfb8c69e",
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "name": "oct24-final-900x1000-open.jpg",
+      "bytes": 51570,
+      "sha256": "f3bd3eb7b323e71b3f81130dd0abc6db4761856734b9623da1daa0c9bf1ea815",
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "name": "oct24-native-200-dialog.jpg",
+      "bytes": 30042,
+      "sha256": "4366e6bf44ad2b128b85f3c9079166e4a029706159a141125572ebb1d0340d99",
+      "width": 757,
+      "height": 387
+    },
+    {
+      "name": "oct24-native-200-return.jpg",
+      "bytes": 29570,
+      "sha256": "669a2c20bf7a8a001f15b6d25239040495a14559ba073c71ce1618712d2c6e4f",
+      "width": 757,
+      "height": 387
+    }
+  ],
+  "composedMain": "229fb5e968b1c4106e871bad4e66e7b087c882ae",
+  "zoom": {
+    "nativeMenuPercent": 200,
+    "restoredNativeMenuPercent": 100,
+    "dialogCss": {
+      "width": 428,
+      "height": 208,
+      "buttonHeight": 44
+    },
+    "confirmationSubmitted": false
+  }
+}

@@ -30,7 +30,8 @@ import "./marketing-content.css";
 const DocumentPreview = React.lazy(() => import("@/components/admin/studio/DocumentPreview").then((module) => ({ default: module.DocumentPreview })));
 
 export const LIBRARY_READ_LIMIT = 60;
-const COLUMNS = "id,kind,channel,status,title,body,image_url,size,brief,meta,updated_at";
+export const PIECE_COLUMNS = "id,kind,channel,status,title,body,image_url,size,brief,meta,updated_at";
+const COLUMNS = PIECE_COLUMNS;
 const NO_PIECES: ContentPiece[] = [];
 
 /** The newest saved pieces, or only one kind's, filtered on the server so the cap never hides a kind. */
@@ -131,7 +132,7 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
         : <FilteredGallery key={`${tenantId}:${kind}`} tenantId={tenantId} kind={kind} onOpen={onPiece} onAll={() => onKind("all")}/>}
     </section>}
     <Published published={published} onOpenCapture={onOpenCapture} onRetry={onRetryPublished}/>
-    <p className="mct-foot">Posting, scheduling and a content calendar aren’t connected yet: PAIGE drafts, and you post.</p>
+    <p className="mct-foot">Posting and scheduling aren’t connected yet: PAIGE drafts and plans (see Calendar), and you post.</p>
     {host && piece && access === "allowed" && createPortal(<PiecePreview key={`${tenantId}:${piece}`} tenantId={tenantId} id={piece} known={pieces.find((p) => p.id === piece) ?? null} listPhase={phase} onClose={() => onPiece(null)}/>, host)}
   </div>;
 }

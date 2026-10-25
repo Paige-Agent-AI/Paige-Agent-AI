@@ -22,6 +22,14 @@ interface ChecklistItem {
   check: () => Promise<boolean>;
 }
 
+function readChecklistStorage(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function writeChecklistStorage(key: string, value: string) {
+  try { localStorage.setItem(key, value); } catch { /* Storage can be unavailable; keep the current view usable. */ }
+}
+
 /**
  * `financePortal` (E09 F2, from the /app shell's one answer): the viewer's business is finance-entitled (or the
  * viewer is staff, Q5). The credit-first steps need it AND `funding_readiness`; without it every viewer gets the
@@ -31,6 +39,7 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [checkedScope, setCheckedScope] = useState<string | null>(null);
   const navigate = useNavigate();
   // Credit/funding onboarding steps are opt-in per tenant (§2/§9). Fail-closed:
   // a coaching-generic tenant never sees credit-report/business-credit steps;
@@ -39,11 +48,13 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
   const { enabled: fundingReadiness, loading: featureLoading } = useTenantFeature("funding_readiness");
   const fundingEnabled = fundingReadiness && financePortal;
   // The customer's agent (Cura, or the business's own name for it). Never PAIGE, the owner's COO.
-  const { agentName: coachName, frame } = useCustomerIdentity();
+  const { agentName: coachName, frame, customerName, checking, viewer } = useCustomerIdentity();
   // A customer's own Documents scope (E09 F2): their business and their record there, from the frame — exactly what
   // useClientDocuments reads, so a file they upload on /app/documents ticks this step (§70).
   const documentScope = frame ? { tenant: frame.profile.tenant_id, contact: frame.profile.id, actor: frame.actorId } : null;
   const scopeKey = documentScope ? `${documentScope.tenant}:${documentScope.contact}:${documentScope.actor}` : "";
+  const storageScope = scopeKey || userId;
+  const profileSaved = !!frame && !!customerName?.trim();
 
   const items: ChecklistItem[] = useMemo(() => {
     if (fundingEnabled) {
@@ -106,6 +117,8 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
         icon: FileText,
         route: "/app/settings",
         check: async () => {
+          // The selected customer's saved name lives on the original CRM profile, not platform profiles.
+          if (documentScope) return profileSaved;
           const { data } = await supabase
             .from("profiles")
             .select("full_name")
@@ -158,7 +171,7 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps -- documentScope is keyed by scopeKey
-  }, [fundingEnabled, userId, coachName, scopeKey]);
+  }, [fundingEnabled, userId, coachName, scopeKey, profileSaved]);
 
   const firedStepsRef = useRef<Set<string>>(new Set());
 
@@ -166,12 +179,16 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
     // Wait for the tenant funding flag to resolve before checking, so a funding
     // tenant is never briefly measured against the coaching-generic step set
     // (the flag is fail-closed while loading).
-    if (featureLoading) return;
+    if (featureLoading || checking || viewer === "unknown" || viewer === "inactive") return;
+    let cancelled = false;
+    setLoading(true);
+    setDismissed(false);
 
-    const dismissKey = `onboarding_dismissed_${userId}`;
-    if (localStorage.getItem(dismissKey) === "true") {
+    const dismissKey = `onboarding_dismissed_${storageScope}`;
+    if (readChecklistStorage(dismissKey) === "true") {
       setDismissed(true);
       setLoading(false);
+      setCheckedScope(storageScope);
       return;
     }
 
@@ -186,11 +203,14 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
           }
         })
       );
+      // A slow read belongs to its original customer relationship, never the next selected business.
+      if (cancelled) return;
 
-      // Fire onboarding_step_complete once per newly-completed step (per browser/user).
-      const firedKey = `onboarding_steps_fired_${userId}`;
-      const alreadyFired: string[] = JSON.parse(localStorage.getItem(firedKey) || "[]");
-      const firedSet = new Set(alreadyFired);
+      // Local presentation bookkeeping is scoped to the selected tenant/contact/actor, not business truth.
+      const firedKey = `onboarding_steps_fired_${storageScope}`;
+      let alreadyFired: unknown = [];
+      try { alreadyFired = JSON.parse(readChecklistStorage(firedKey) || "[]"); } catch { /* Ignore corrupt local bookkeeping. */ }
+      const firedSet = new Set(Array.isArray(alreadyFired) ? alreadyFired.filter((id): id is string => typeof id === "string") : []);
       items.forEach((item, idx) => {
         if (results[item.id] && !firedSet.has(item.id)) {
           firedSet.add(item.id);
@@ -202,22 +222,24 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
           });
         }
       });
-      localStorage.setItem(firedKey, JSON.stringify(Array.from(firedSet)));
+      writeChecklistStorage(firedKey, JSON.stringify(Array.from(firedSet)));
 
       setCompleted(results);
       setLoading(false);
+      setCheckedScope(storageScope);
 
       // Auto-dismiss if all complete
       if (Object.values(results).every(Boolean)) {
-        localStorage.setItem(dismissKey, "true");
+        writeChecklistStorage(dismissKey, "true");
         setDismissed(true);
       }
     };
     checkAll();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, fundingEnabled, featureLoading, scopeKey]);
+  }, [userId, fundingEnabled, featureLoading, scopeKey, storageScope, profileSaved, checking, viewer]);
 
-  if (dismissed || loading) return null;
+  if (dismissed || loading || featureLoading || checking || checkedScope !== storageScope || viewer === "unknown" || viewer === "inactive") return null;
 
   const completedCount = Object.values(completed).filter(Boolean).length;
   const progress = (completedCount / items.length) * 100;
@@ -233,9 +255,10 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            aria-label="Dismiss getting started"
+            className="h-11 w-11 text-muted-foreground hover:text-foreground"
             onClick={() => {
-              localStorage.setItem(`onboarding_dismissed_${userId}`, "true");
+              writeChecklistStorage(`onboarding_dismissed_${storageScope}`, "true");
               setDismissed(true);
             }}
           >
@@ -244,7 +267,7 @@ export const OnboardingChecklist = ({ userId, financePortal = false }: { userId:
         </div>
         <div className="flex items-center gap-3 mt-1">
           {/* Track on muted: the Progress default track (--secondary) is near-black in light, so 0/3 read as a full bar (round 3 render). */}
-          <Progress value={progress} className="h-1.5 flex-1 bg-muted" />
+          <Progress aria-label="Getting started progress" value={progress} className="h-1.5 flex-1 bg-muted" />
           <span className="text-xs text-muted-foreground font-medium">{completedCount}/{items.length}</span>
         </div>
       </CardHeader>

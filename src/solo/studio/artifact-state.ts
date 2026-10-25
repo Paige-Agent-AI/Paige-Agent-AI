@@ -9,7 +9,12 @@ import {
 
 export type Device = "desktop" | "phone";
 
-export interface Brand { floor: GrowthPageTheme; name: string | null; logoUrl: string | null }
+export interface Brand {
+  floor: GrowthPageTheme; name: string | null; logoUrl: string | null;
+  /** The tenant's OWN primary color as the portal brand read returned it — null means unset, so a
+   *  surface can say "Paige's default page color" truthfully instead of guessing from the floor. */
+  primaryColor?: string | null;
+}
 
 export type LoadedArtifact =
   | { kind: "form"; form: StudioForm }

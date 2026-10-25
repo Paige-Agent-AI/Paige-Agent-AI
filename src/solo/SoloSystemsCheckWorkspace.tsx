@@ -102,6 +102,13 @@ function Proof({ children, tone = "partial" }: { children: React.ReactNode; tone
   return <span className={`sc-proof sc-proof--${tone}`}>{children}</span>;
 }
 
+function closeDialogOnEscape(event: React.KeyboardEvent<HTMLElement>, close: () => void) {
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  event.stopPropagation();
+  close();
+}
+
 /**
  * "Recent activity" — the tenant-wide Rail, made reachable from the Solo Command Center.
  *
@@ -309,6 +316,8 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const restoreFindingFocus = useRef(false);
   const proposalReturnFocus = useRef<HTMLElement | null>(null);
   const decisionReturnFocus = useRef<HTMLElement | null>(null);
+  const decisionEpoch = useRef(0);
+  const pendingDialogFocus = useRef<{ target: HTMLElement | null; epoch: typeof command.accountEpoch } | null>(null);
   const scrollOwnerRef = useRef<HTMLDivElement | null>(null);
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const proposalRef = useRef<HTMLElement | null>(null);
@@ -399,11 +408,13 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
     setExpanded(false);
     setProposal(false);
     proposalReturnFocus.current = null;
+    pendingDialogFocus.current = null;
     restoreFindingFocus.current = hadInspectionFocus;
     returnFocus.current = hadInspectionFocus ? refreshTrigger.current : null;
   }, [location.key, sourceRequested, systems.loading, systems.isError, systems.run?.id]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    decisionEpoch.current += 1;
     setSelected(null);
     setExpanded(false);
     setProposal(false);
@@ -413,9 +424,12 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
     setDecisionMessage("");
     restoreFindingFocus.current = false;
     returnFocus.current = null;
+    pendingDialogFocus.current = null;
+    return () => { decisionEpoch.current += 1; };
   }, [command.accountEpoch]);
 
   const closeFinding = () => {
+    pendingDialogFocus.current = null;
     setProposal(false);
     setSelected(null);
     setExpanded(false);
@@ -423,14 +437,14 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   };
 
   const closeProposal = () => {
+    pendingDialogFocus.current = { target: proposalReturnFocus.current, epoch: command.accountEpoch };
     setProposal(false);
-    proposalReturnFocus.current?.focus();
   };
 
   const closeDecision = () => {
     if (decisionBusy) return;
+    pendingDialogFocus.current = { target: decisionReturnFocus.current, epoch: command.accountEpoch };
     setDecision(null);
-    decisionReturnFocus.current?.focus();
   };
 
   useEffect(() => {
@@ -448,12 +462,19 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   useLayoutEffect(() => {
     if (scrollOwnerRef.current) scrollOwnerRef.current.inert = Boolean(selected || proposal || decision);
     if (drawerRef.current) drawerRef.current.inert = proposal;
+    // Native browsers refuse focus while the original trigger is inert. Restore
+    // only after the original layer is interactive again and its scope still matches.
+    if (!proposal && !decision && pendingDialogFocus.current) {
+      const { target, epoch } = pendingDialogFocus.current;
+      pendingDialogFocus.current = null;
+      if (epoch === command.accountEpoch && target?.isConnected) target.focus();
+    }
     if (!selected && !proposal && !decision && restoreFindingFocus.current) {
       restoreFindingFocus.current = false;
       const target = returnFocus.current;
       if (target?.isConnected) target.focus();
     }
-  }, [decision, proposal, selected]);
+  }, [command.accountEpoch, decision, proposal, selected]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -501,12 +522,16 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
   const runDecision = async () => {
     if (!decision || decisionBusyRef.current) return;
+    const epoch = decisionEpoch.current;
     decisionBusyRef.current = true;
     setDecisionBusy(true);
     setDecisionMessage(`${decision.action === "approve" ? "Approving" : "Dismissing"} ${decision.item.title}…`);
     const result = decision.action === "approve"
       ? await command.approve(decision.item.id)
       : await command.decline(decision.item.id);
+    // Leaving and returning to the same account still retires the old UI request.
+    // Its original domain operation continues; this is not cancellation or readback.
+    if (epoch !== decisionEpoch.current) return;
     decisionBusyRef.current = false;
     setDecisionBusy(false);
     if (!result.ok) {
@@ -514,8 +539,8 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
       return;
     }
     setDecisionMessage(`${decision.item.title} was ${decision.action === "approve" ? "approved" : "dismissed"}.`);
+    pendingDialogFocus.current = { target: decisionReturnFocus.current, epoch: command.accountEpoch };
     setDecision(null);
-    decisionReturnFocus.current?.focus();
   };
 
   /**
@@ -1050,7 +1075,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
       {decision && (
         <div className="sc-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDecision(); }}>
-          <section ref={decisionRef} className="sc-proposal" role="alertdialog" aria-modal="true" aria-labelledby="decision-title" aria-describedby="decision-description">
+          <section ref={decisionRef} className="sc-proposal" role="alertdialog" aria-modal="true" aria-labelledby="decision-title" aria-describedby="decision-description" onKeyDown={(event) => closeDialogOnEscape(event, closeDecision)}>
             <Proof tone="attention">GOVERNED DECISION</Proof>
             <h2 id="decision-title">{decision.action === "approve" ? "Approve" : "Dismiss"} this item?</h2>
             <p id="decision-description">{decision.item.dept} · {decision.item.title}</p>
@@ -1066,7 +1091,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
       {proposal && (
         <div className="sc-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeProposal(); }}>
-          <section ref={proposalRef} className="sc-proposal" role="alertdialog" aria-modal="true" aria-labelledby="ask-first-title">
+          <section ref={proposalRef} className="sc-proposal" role="alertdialog" aria-modal="true" aria-labelledby="ask-first-title" onKeyDown={(event) => closeDialogOnEscape(event, closeProposal)}>
             <Proof>PARTIAL</Proof><h2 id="ask-first-title">Ask First</h2><p>You can open the one existing PAIGE workspace to discuss this finding.</p><div className="sc-proposal-warning"><AlertTriangle size={17} /> Context has not been attached or prepared. No message will be prefilled or sent, and no work has started.</div><div className="sc-proposal-actions"><button data-initial-focus type="button" className="sc-button sc-button--quiet" onClick={closeProposal}>Cancel</button><button type="button" className="sc-button sc-button--paige" onClick={() => { setProposal(false); openPaige?.(); }}>Open PAIGE workspace</button></div>
           </section>
         </div>

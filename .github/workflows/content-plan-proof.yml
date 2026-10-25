@@ -1,0 +1,35 @@
+name: Content plan proof
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20271113850000_content_plan.sql'
+      - 'supabase/tests/content_plan.sql'
+      - '.github/workflows/content-plan-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-content-plan-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Synthetic fixtures only; the suite's isolated-DB guard refuses any other database.
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: content_plan_contract
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: content_plan_contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: EXP07 row 8 — the plan writes through the owner gate, tenant wall and piece-link check; reads are member-wide and window-bounded; nothing adopts a foreign piece (isolated DB, never production)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/content_plan.sql

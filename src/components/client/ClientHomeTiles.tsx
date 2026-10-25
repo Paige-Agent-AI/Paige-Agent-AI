@@ -108,6 +108,8 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
   useEffect(() => {
     let cancelled = false;
     if (!userId) return;
+    if (brandLoading) { setLoading(true); return; }
+    if (brandError || multipleBusinesses) { setCounts(EMPTY); setLoading(false); return; }
     (async () => {
       setLoading(true);
       const headOnly = { count: "exact" as const, head: true };
@@ -118,7 +120,8 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
         untypedDb.from("client_goals").select("id", headOnly).eq("user_id", userId),
         financePortal ? untypedDb.from("credit_report_uploads").select("id", headOnly).eq("user_id", userId) : none,
         financePortal ? untypedDb.from("funding_journey_applications").select("id", headOnly).eq("user_id", userId) : none,
-        untypedDb.from("chat_messages").select("id", headOnly).eq("user_id", userId),
+        // The customer's private Cura history is read by the original Chat reader, not this legacy table.
+        isCustomer ? none : untypedDb.from("chat_messages").select("id", headOnly).eq("user_id", userId),
       ]);
       if (cancelled) return;
       setCounts({
@@ -132,7 +135,7 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
     return () => {
       cancelled = true;
     };
-  }, [userId, financePortal]);
+  }, [userId, financePortal, isCustomer, brandLoading, brandError, multipleBusinesses]);
 
   // Puts a drafted question in the customer's chat with their agent; they read it and press send.
   const askAgent = (prompt: string) => handOffPaigePrompt(prompt);
@@ -249,7 +252,15 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
       )}
 
       {/* 5. Messages */}
-      {counts.messages && counts.messages > 0 ? (
+      {isCustomer ? (
+        <EmptyTile
+          icon={<MessageSquare className="w-6 h-6" />}
+          title={`Ask ${agentName}`}
+          description={`Ask ${agentName} a question anytime.`}
+          actionLabel="Ask a question"
+          onAction={() => askAgent("I have a question about my work.")}
+        />
+      ) : counts.messages && counts.messages > 0 ? (
         <FilledTile
           icon={<MessageSquare className="w-4 h-4" />}
           title={`Ask ${agentName}`}

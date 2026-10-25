@@ -1,5 +1,166 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October24 evening — original-reference Finance read and reload verified
+
+The originating Sales2768 repair is released in containing production03edfad8a.
+One new authorized, explicitly read-only VERA request returned the ORIGINAL
+receivables measurement matching Finance, preserved exact custom bounds and
+current-snapshot semantics, and explained coverage, source freshness, expiry and
+missing bank/accounting facts. It settled by the42-second observation; the UI
+reported one read step/22s. Reload retained the same saved reply, original step
+badge, workspace and empty composer. No refused reference or unknown monthly work
+was replayed. [Sanitized source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055); ANT52/47e3e3ad-2a66-4af3-9ca5-e2578b184b59.
+
+This is PASS for the bounded RELEASED read/persistence pathway, not undeployed
+Finance2694 UI acceptance, detailed activity inspection, universal roles/cohorts,
+Live, business execution or complete Finance. Earlier actual refusals stay
+historical; original9/0 and12/0/4 denominators are unchanged. No customer amounts,
+reference tokens or account/session metadata are published. All19/nine and one
+complete founder evaluation remain required. Candidate CI/review/release and
+post-deployment rendered acceptance remain separate gates.
+
+## October24 — post-restart current-main confirmation
+
+Windows restart restored local execution. Composed actual main03edfad8a, preserving
+all incoming source and the original Finance product/test/harness blobs. The
+original Sales initialization repair2768 is merged as d53d99e951e0f18ac1a6895598f2e4211e1367e5;
+public production returned03edfad8a-mvn28mxb/customerUpdate:null. This is source
+release evidence, not positive Finance original-reference reacceptance. The earlier
+real refusal/FAIL remains historical and unresolved by this source observation.
+
+Fresh original Finance workspace/invoice/shared metric suites:69PASS/3 in40.30s.
+Sandbox SWC cache refusal occurred before collection; unchanged execution with the
+existing owner-secured cache passed, without permission or source modification.
+Six pre-restart browser200percent captures are now published byte-for-byte with
+hashes; twelve target-bound current-source frames cover all eight required
+viewport/PAIGE states, desktop/narrow error, second synthetic workspace/member
+denial and390px same-metric Escape return. See the existing confirmation JSON.
+Immediate rail-transition captures were INVALID setup evidence: settled1366px
+open uses21px with intact amounts and equal scroll/client widths. No speculative
+UI repair followed. The wrong-target native screenshot is excluded. Error retry
+was exercised in a fixed error fixture; real backend recovery is not claimed.
+
+Functional: original Finance source and current regression proof. Visual: bounded
+current-source synthetic rendering/interaction confirmed. Experiential: complete
+ordinary customer reference/Chat/Live/cohort/recovery proof remains owed. Founder
+Acceptance: NOT_ACCEPTED. All19/nine remain required; no new capability/algorithm,
+provider, approval, execution or Rail claim. Fresh exact-head review/CI and normal
+release/readback remain gates. Historical pending tool/asset/source statements
+below retain their original dated scope.
+
+## October24 — current Finance verification and release boundary
+
+All applicable exact-head checks for parent #2694 at
+`ce6818e620fa8e7b6a58f330ce711ab911eaefc4`, child #2696 at
+`970517f34a957b8360b3df2259f6630c3dba7d83`, and Systems #2690 at
+`61ebfb7f493a933601fe09518a7c80a01fd40eaf` completed successfully;
+their source-only Supabase Preview checks were skipped. Both observed Vercel
+statuses for the Finance parent succeeded. These results belong to those exact
+heads; current-main composition requires new CI and a separate review. No merge,
+candidate deployment or customer acceptance follows from these checks.
+
+Native synthetic Finance verification additionally exercised actual browser
+200percent zoom: unchanged complete monetary strings, the original scroll owner,
+source Sheet reading, Escape focus return to the same metric, and Home/End
+department navigation. Browser zoom was restored to100percent. The native
+environment reported Reduced Motion enabled; existing reduced-motion CSS and
+Sheet/rail/navigation interactions were inspected, without a frame-duration claim.
+The six original zoom captures remain private; publishing and hash-binding those
+assets is still owed while local file/command tools stall. The already committed
+eight required viewport/rail states and320 focus evidence remain valid. The
+subsequent error-fixture load was stopped before inspection and is UNVERIFIED.
+No alternate browser control was used to bypass the physical-Escape stop.
+
+Separate released-customer read/navigation verification traversed all seven
+Finance pages, confirmed VERA attribution and truthful unavailable bank,
+accounting, costs and forecast states, and reloaded Budgeting in the same
+authorized workspace. This proves that bounded released journey, not this
+undeployed presentation or complete Finance acceptance.
+
+One new, explicitly read-only original-reference VERA request settled to
+`metric_read_refused` within35seconds after the first post-send observation;
+the saved refusal survived reload. Original context was not broadened or
+substituted. Positive original-reference review is **FAIL / proof owed**.
+Metadata-only inspection found a later same-series issuance revoking the selected
+reference14ms after issuance, before expiry;22references for11Sales keys were
+issued within94ms, and the source revision differed. Overlapping initial-auth
+issuance is an investigated hypothesis, not a proven root cause or unchanged-data
+claim. EXP04 accepted its original Sales hook/wrapper repair in #2768
+(`2d722bc6633377232b89dc59107377de294d7d1f`, open at this checkpoint).
+EXP02 retains integration and authenticated reacceptance responsibility; canonical
+issuer/revocation/actor/tenant/bounds remain intact. Public receipts:
+[original negative](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6386721064),
+ANT138/db508082, ANT52/8f744841 and ANT161/fa1baeb8.
+
+Functional: presentation source and bounded released reads, positive review FAIL.
+Visual: named synthetic states/zoom/focus only; remaining asset and state proof owed.
+Experiential: negative/refusal/reload verified; positive review and complete
+Chat/Live/cohort/permission/recovery proof incomplete.
+Founder Acceptance: NOT_ACCEPTED; one complete integrated evaluation remains.
+Algorithm Support: ALG03/06/11/12 Partial; ALG13 usefulness/impact Unverified.
+Orchestration Contract: read-only evidence and original conversation only; no
+business action, new approval, provider activation or Rail execution claim.
+CAP009–017 and all19 required outcomes retain their existing evidence states.
+The original CPU-failed monthly operation remains unknown and unretried.
+
+### October24 — bounded Finance native follow-through
+
+Current original Finance55edea4de source now has native desktop/390px Sheet trap
+and exact-control Escape return, bare Overview/query/fragment and Home/End proof.
+Actual1366px-with-Chat and320px red frames exposed split monetary decimals; the
+same candidate groups the original amount and applies documented compact type.
+Original54/four regression cases/lint0 and detector9incumbent/0blocking support
+the correction. Final typography native confirmation/CI/release/current customer
+proof remain owed after control staled/reset. This is O04/O14/O16 source progress,
+not all-seven Finance completion, analytics promotion or founder acceptance.
+
+## October23 — Finance visual direction and additive released negative
+
+Owner requires Overview landing and more useful visual presentation across all
+seven Finance subpages. First bounded local consumer slice: same-account bare
+Finance→Overview replacement preserving query/fragment, supported figures and
+source comparison first, compact unavailable bank/accounting coverage.
+Original inspection, VERA, seven routes, authority and sources remain intact.
+Two actual route failures then53 original cases/four suites PASS; candidate native
+render/keyboard, review/CI/release and ordinary customer proof remain owed.
+[Candidate evidence](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Banking, Debt and remaining financial-readiness presentation remain in sequence.
+
+Released2684 source/merge/deployment/readback remains in6374834566. Additive
+ordinary QA6375398254 proves exact original bounds/reference handoff, truthful
+refusal without substitution and saved reply after reload; not positive original
+reference availability. Later issuance revoked the original before expiry at60s,
+so the existing Sales hook refresh contract remains an EXP04-coordinated consumer
+gap, never a reason to weaken reference authority. Protected monthly CPU-failed
+request stays unretried/unknown with original EXP05 recovery coordination.
+All original19 and CAP009–017 remain required per ANT138/f4c4c060; no renamed
+outcome, new registry, algorithm or catalogue-readiness promotion. Functional,
+Visual, Experiential and Founder Acceptance remain distinct and incomplete.
+
+## October24 — original report consumer, local source only
+
+**Current689 composition:** ROOT00cf86f0 and all46 owning test inputs unchanged; COMPLETE E04C35 source pin/124 dependencies/metadata preserved with same29 reviewed report scalars. Actual original hostile79/79 PASS83.499s. Two provenance prefixes resolved without a ROOT feature or owner-window takeover; fresh exact review/CI/source/customer proof remain owed.
+
+**Hosted typecheck correction:**044 correctly failed TS2550 for Object.hasOwn in the owning test helper. The compatible own-property call preserves the original ES2020 target, actual-import binding and both missing-import negatives; production ROOT/C0b and baselines are unchanged. Fresh owning46/46 PASS68.81s; new exact review/typecheck/CI required. Failed044 is retained, not released.
+
+Current229 addendum: exact parent-onlyde79 missing-import repair received; actual
+import-bound tool construction2FAIL→46PASS/current22946PASS; original79 hostile
+guardsPASS194.984s after reviewed29-field-only renewal. ROOT00cf86f0 preserves
+the released campaign read and all124 incoming dependencies. Final exact review,
+CI/source release and genuine report/artifact/turn/Rail acceptance remain owed.
+Earlier development checkpoint below is historical, not current release proof.
+
+O01/O02/O16/O18 and CAP014/015 continue through the original document tool,
+canonical source selectors/current versions and released840002 durable capture.
+Current-main03ed composition preserves all incoming source; original owning
+reach suite43PASS/1RED →44PASS. [Consumer evidence](../evidence/ui-delivery/e2-report-tool-source-selectors.md)
+keeps review/binding renewal/exact-head CI/deployment and genuine customer report
+settlement/artifact/turn/Rail/reload/retrieval/permissions/recovery/Live separate.
+No new interface, metric store, provider activation or originating writer.
+CAP014/015 stay Unverified; all19/nine, original acceptance denominators and one
+complete founder evaluation remain. The original uncertain monthly work is not
+retried. Shared root order E02→E05→E03 and E04 readiness digest ownership remain.
+
 ## October24 — report source foundation deployed; customer outcome still owed
 
 Original2734/408923cc passed all13 exact checks/two statuses with labeled
@@ -13,6 +174,49 @@ artifact/turn/Rail, saved/reopened evidence, permissions and recovery proof.
 Original CPU-failed monthly operation remains unretried with EXP05; heldE13 stays
 gated. All original19/nine, historical9PASS/0FAIL and12PASS/0FAIL/4BLOCKED, algorithms
 and catalogue maturity remain unchanged; one integrated founder evaluation.
+
+## EXP02 Systems Check dialog return — October23 source candidate
+
+**October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.
+
+**October24 update:** composed main03ed, original67/67 PASS; eleven final native
+synthetic captures now cover eight closed/open layouts and desktop/390 dialog
+focus return. Original dialog actions render44px after a scoped CSS correction.
+See the existing evidence link below for hashes and precise scope. This replaces
+the earlier missing matched-capture boundary; native200percent/current reduced
+motion/pending/scope-retirement, exact-head CI/release and authenticated customer,
+other-role/cohort/Live/full19/nine/founder acceptance remain owed. No approved
+action, real scan, receipt or algorithm maturity is inferred.
+
+Original review dialogs now consume Escape before shared shell shortcuts and
+restore their original control after inert clears. A per-account decision generation
+retires late success/refusal/focus, including A→B→A and unmount, without cancelling
+or settling the original domain operation. Four causal keyboard/inert failures,
+then two late-result scope failures are retained; final106 cases/four original suites
+pass, scoped lint0/current-main build112seconds. Detector0 findings. Native Cancel/
+Escape returns to the original control after inert clears; focus trap, unchanged
+synthetic draft/scroll are verified. Eight DOM geometries have no page overflow,
+but lagging compositor frames are INVALID; complete matching renders/zoom/scope
+and released ordinary proof remain owed. Exact origin access was authorized;
+intermittent browser stalls/reset and read-only synthetic-confirm refusal retained.
+[Evidence](../evidence/ui-delivery/e2-systems-dialog-return.md).
+Functional local / Visual candidate UNVERIFIED / Experiential original defect and
+bounded native return, released proof owed / Founder NOT_ACCEPTED. No shell, runner, approval writer,
+provider, registry, LayerC, Rail or permission change. Native recorded-check UI is
+partial; canonical Systems Check Mind-context stays UNAVAILABLE (SCR-2/SCR-3).
+All19/nine remain mandatory.
+
+Preceding Finance2684 is source-releasedd780fd85e3cfd0c73256847c79f2692a5a399d1a,
+LOWER5634377259/all10 applicable checks/two statuses. Normal2M5h READY/exactmeta;
+public containinga9bd855c-mvlgdzr6/null and unchanged source/six served markers
+verified, exactd780 public intermediate not sampled (receipt6374834566). Same-ref/
+date-range ordinary read/reload is still owed. Original monthly CPU failure and
+unknown claim are preserved; EXP05 recovery ACK ANT11/96c5091a, no retry/reset.
+Earlier candidate sections remain dated historical evidence; historical9/0 and
+12/0/4, algorithms, nine catalogue/access labels, role/cohort/Live and full founder
+acceptance are unchanged.
+
+
 
 ## October24 — source-request report foundation, not customer settlement
 

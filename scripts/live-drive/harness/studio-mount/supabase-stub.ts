@@ -150,7 +150,11 @@ export const supabase = {
       case "rename_studio_session": { const s = sessions.find((x) => x.id === args.p_id); if (s) s.title = String(args.p_title); return { data: s ?? null, error: null }; }
       case "set_studio_session_template": { const s = sessions.find((x) => x.id === args.p_id); if (s) s.is_template = args.p_is_template === true; return { data: s ?? null, error: null }; }
       case "paige_studio_thread_ensure": return { data: `th-${args.p_session_id}`, error: null };
-      case "peek_tenant_portal_brand": return { data: [{ tenant_name: "Northwind Studio", primary_color: "#2F6B55", logo_url: null }], error: null };
+      // `?brand=none` answers the honest-missing path (name/color/logo all unset) for the
+      // EXP06 brand-context line's missing-state frames.
+      case "peek_tenant_portal_brand": return { data: new URLSearchParams(window.location.search).get("brand") === "none"
+        ? [{ tenant_name: null, primary_color: null, logo_url: null }]
+        : [{ tenant_name: "Northwind Studio", primary_color: "#2F6B55", logo_url: null }], error: null };
       case "list_artifact_versions": return { data: args.p_kind === "form" ? versions : versions.slice(0, 1).map((v) => ({ ...v, is_current: true, title: "First draft" })), error: null };
       case "restore_artifact_version": return { data: { id: "f-1" }, error: null };
       case "is_tenant_admin": return { data: true, error: null };

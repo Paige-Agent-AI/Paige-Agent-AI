@@ -1,0 +1,157 @@
+{
+  "scope": "Actual source-native components; synthetic private ports; not authenticated acceptance",
+  "inputs": [
+    {
+      "path": "work/c35-request-prototype/index.html",
+      "sha256": "8efc10658fbdc9e7c25ae79aa16c25cabe1df4d9f5750a4214b9bf4185a7aa12"
+    },
+    {
+      "path": "work/c35-request-prototype/src/main.tsx",
+      "sha256": "0cdf4842c03dc65b73ba216a70189127d3032f21e1ae6f85c6b0025fe70b0892"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "src/solo/sales/AgreementDocumentPreparation.tsx",
+      "sha256": "03a62357c46450cacadd79325facd681acfe230d61de3023074d1e8148bc300c"
+    },
+    {
+      "path": "src/solo/sales-dialog.tsx",
+      "sha256": "8a36536ab86879b0199b19426909e9940aa866c595c96678c7ca4e798f5c768e"
+    },
+    {
+      "path": "src/solo/sales/fixtures/agreement-document-source.json",
+      "sha256": "e9a9a8abe99f3b916334be651e95a7e3a8d10fb941624c3d1042e32779aadb25"
+    },
+    {
+      "path": "work/c35-request-prototype/src/sdk.ts",
+      "sha256": "45be99fe0db732c23a5b5e37f68041d60be56d89610a59967d2bae56ea1ddc14"
+    },
+    {
+      "path": "scripts/proof/e04-prepared-signature-review-ui/prototype.css",
+      "sha256": "db3c026e15853936ba3a62111582a9afffa148269ac7ad3b3bc6f063bbc9740d"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/token.ts",
+      "sha256": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+      "sha256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8"
+    },
+    {
+      "path": "supabase/functions/_shared/comms-email/contract.ts",
+      "sha256": "79c754ab6b261b64cdd93b225b46fb20c65f0ef46c693aea5c2b26b989f440c4"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+      "sha256": "822fb917acf2821a983e43b75177029c75db52fdae655186fbd90599c43ba466"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-signature-review-contract.ts",
+      "sha256": "e62fa5ba26fac4541f406aae915071a2733eab0c6688fef8b57139a5e3514767"
+    },
+    {
+      "path": "src/hooks/useBeforeUnloadGuard.ts",
+      "sha256": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec"
+    },
+    {
+      "path": "src/solo/sales/AgreementDocumentFields.tsx",
+      "sha256": "1b12b8f4aca462d5056479fb2a59c475d0894219c7d410b5fe3c7f55732b1ca8"
+    },
+    {
+      "path": "src/solo/sales/AgreementSigningReview.tsx",
+      "sha256": "ae0a63d597ccac1c30c4c9cafa906c2fb3f530b212cae7b2b05bda7c1fdc154c"
+    },
+    {
+      "path": "src/solo/sales/agreementDocumentApi.ts",
+      "sha256": "395cb9b7dc3c092f17ae55bc51ac7435dd5410b8d13cd49cbea1099160979736"
+    },
+    {
+      "path": "src/solo/sales/agreement-document-fields.css",
+      "sha256": "310de6a0a06912ad99b5ed56f04ec816a982e8d632ccb624fb113791432d1fb4"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+      "sha256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91"
+    },
+    {
+      "path": "src/solo/sales/AgreementSignatureRequest.tsx",
+      "sha256": "81f4ce25439b72722eee92e216831f2c171c0f4f5df18339bd0fcfe415690f2a"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+      "sha256": "50afc63a99351857922c390184c3bdf6f286d0be55f0764d95d30dfb750cf419"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/signing-guard.ts",
+      "sha256": "3997edf2abb0e9064b1e6e89aac68fce9a2aded43caa90b0f3f1b4e167a54ad7"
+    },
+    {
+      "path": "src/solo/sales/AgreementPdfPage.tsx",
+      "sha256": "c4a7189cb71c82add8373add0af36da81a22676a925cb73b2111c9527fa79207"
+    },
+    {
+      "path": "src/solo/sales/agreementDocumentModel.ts",
+      "sha256": "e20769ea15ab97013b48bc6197b624d57d80bfa1b03b89ddf9b12399da3c5766"
+    },
+    {
+      "path": "src/solo/sales/agreement-preparation.css",
+      "sha256": "2cef8ef627b07b309703b67ed32378751229b001015e0390b53866efdb7c44c4"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/retained-document.ts",
+      "sha256": "cee0296f159becaf704d8853b32dc205033dd8f34d6a0dd878e7a1a60e920db0"
+    },
+    {
+      "path": "src/solo/sales/agreementPdfRenderer.ts",
+      "sha256": "fe3465a5190e6b578c5ff97feb4b337facb214ebad9e5126b4a1cbb0a1671e4a"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/contract.ts",
+      "sha256": "0d538a7c9b51f2065a36bae4c70095ec622971202807dc9b97766b9971f01c64"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/model.ts",
+      "sha256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+      "sha256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+      "sha256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/document.ts",
+      "sha256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+      "sha256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/effectuation-command.ts",
+      "sha256": "dbb81094e9b7903e9458533c7e81dad71f4f0fc0d11d51931fdaba36ad26aad1"
+    },
+    {
+      "path": "supabase/functions/_shared/doc-render.ts",
+      "sha256": "06f72d693cd333b18bfab176112f66bd3862f58ac3a29a298f2cdb02fc2b6fe2"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/document-preparation.ts",
+      "sha256": "4164eeb196c1c599e486ac95efdeb21eb9a0287427e9fd8830dc8ac3f4a2b630"
+    },
+    {
+      "path": "supabase/functions/_shared/provider-types.ts",
+      "sha256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631"
+    }
+  ]
+}

@@ -279,7 +279,7 @@ guard. This helper's disjoint existing source tuple can be renewed after exact
 021b7f9e sequential AUTHOR-REVIEW / LOWER ASSURANCE464d7e37, without transferring
 that reservation or E09's following JS window. Only83c7ce93 to307f88e1 and its
 three review-comment lines change. The whole incoming guard is recovered by
-undoing that patch: other126 entries/keys,29dispatches, sender, counts, metadata,
+undoing that patch: all126 keys/125 other values,29dispatches, sender, counts, metadata,
 extractor, validator and hostile tests remain exact. Actual original source and
 Calendar-ancestry guard programs112PASS; no empty module invocation is counted
 as test proof. Current-main composition, aggregate Spine checks, final immutable

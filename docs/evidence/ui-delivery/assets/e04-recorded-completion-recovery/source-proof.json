@@ -1,0 +1,323 @@
+{
+  "recordedAt": "2026-10-25T19:39:32.421Z",
+  "source": "f9666eee9ea6b17fbf8b72e7f85e39b469ca6f40",
+  "tree": "6cddb9d968209c41e34817fd4a72ac107ab1c3eb",
+  "inputs": {
+    "scripts/agreements/run-integrity-proof.sh": {
+      "gitBlob": "376c68fee3a618f508ab5b4b05b9f940e3046fdd",
+      "workingBytesSha256": "72b294125ba40b609bc0335a27ab38cb775c2783e74b92ac40b748752c1590c5"
+    },
+    "src/pages/sign/AgreementSigning.test.tsx": {
+      "gitBlob": "aa6df2908a9ee2201d23e005f8221442d33f24e1",
+      "workingBytesSha256": "fd207bdd0799629eef05a3f73ffa593e478eb61a62d38bfb14c4f46660f880df"
+    },
+    "src/pages/sign/AgreementSigning.tsx": {
+      "gitBlob": "10d350d12980900b10b8e58dcde640868547aac5",
+      "workingBytesSha256": "d1b175a406b8366e132be408bcbd0c97b400aae6e160b7a42a23e352b156d333"
+    },
+    "src/pages/sign/agreement-signing.css": {
+      "gitBlob": "efb5116bb606b66b9fa3f51bee47f696dbb77bc8",
+      "workingBytesSha256": "4de7718381a2da505fec6b6bf722942f5fba41e469589fbdc7eb3d7dfdd57ab7"
+    },
+    "supabase/functions/_shared/agreements/seal.ts": {
+      "gitBlob": "209a0108066f6b7fc86d064d1eac30b33ca4efc1",
+      "workingBytesSha256": "78a06a525141226f6b0a6c99746aecf4894d4f5b12accfae0c115e85147c3052"
+    },
+    "supabase/functions/sign-agreement/completion-recovery.test.ts": {
+      "gitBlob": "b34807362fa44daa309550b5d2d3dbdf43043e4f",
+      "workingBytesSha256": "c4cd293fcbfb0241ed135d0d19904700e9ddceeb2d6d7b0e247f5efaff4f37db"
+    },
+    "supabase/functions/sign-agreement/index.ts": {
+      "gitBlob": "5569ee272966c650a7b2eb253ecee77159ae80ec",
+      "workingBytesSha256": "ace0aa43ccadc977cdcaeafb4b49cd6c87b6972969a8b986dc4fbb3a1cc73211"
+    }
+  },
+  "automated": {
+    "handlerConsumers": {
+      "tests": 114,
+      "steps": 181,
+      "failures": 0,
+      "originalGatePreserved": true,
+      "permissions": "cached/frozen actual SDK, scoped read, net/env/write/run/ffi/sys denied"
+    },
+    "ui": {
+      "files": 2,
+      "tests": 80,
+      "failures": 0
+    },
+    "sdkCheck": 0,
+    "uiLint": 0,
+    "newTestDenoLint": 0,
+    "impeccableDetector": 0,
+    "whitespace": 0,
+    "impeccableDetectorScope": "Initial TSX-only scan; full changed-UI CSS scan subsequently failed side-tab. Final correction and complete rescan are recorded separately, without waiver."
+  },
+  "logs": {
+    "e04-c48-recovery-handler-baseline-1792954870613.log": "1e3bd0923e5df14fa2afc309aaf8a86f767117f75206fdd7915d4eda3f520b76",
+    "e04-c48-combined-final-1792956328212.log": "d4155d37455a8ba33af9c5b3f2f8df1ffbc9d7a01abebad12ca1a87ad4ca389c",
+    "e04-c48-recipient-ui-baseline-1792955096213.log": "3c56c89a9ab66d8e14dab164ef3b73cf2e637b15020d36a93b9b94f4388908cf",
+    "e04-c48-ui-final-1792956741831.log": "0c8eb83bddd3f4ae86ae3a2466bdcf70413de850587153637a8fda7b92c51694",
+    "e04-c48-source-check-1792956395474.log": "ea5322ae18dfb3b11d461dc4765478b2ab8f3551a4e4aad7586678fcb9f664d9",
+    "e04-c48-quality-1792957038776.log": "49131850fa1da6c6f90b8e2c5fce9f72571f3e6e7839bad3cfe0f13a64ce6c06"
+  },
+  "rendered": {
+    "1536-ready.png": "4732e63b85028b0b041ab65f0f35423d9cb660556b63be32f418942d09784d95",
+    "1024-ready.png": "de5c74ecbb9befeac5aa8dc57ebe1899b7b28473d8875d70694ad016458511c5",
+    "900-ready.png": "4e0300a756dba2cc4562699bc6283879a556d8a6e05a091773a4843febe85055",
+    "390-ready.png": "4ee9f55f38d5aab1d6cdf44bb8c21b8fec74beb10eb96baa4ce5ff7ae41746db",
+    "320-ready.png": "606aec3057c920ddc53501503cbc3d18bd1e10cd2db026dc74f7f053e9b41e66",
+    "narrow-completed.png": "4541ec46f4b871a646175690db4c0ae4e1802dd2a4fd09ee2ccaef23feeb1cca",
+    "narrow-uncertain.png": "97e6861bc7094eed6282eec7653a27744e52d2f97cbb6a80d523fa8bf59188ca",
+    "desktop-download-retry.png": "2f3c09b8bbb66b05a3a52255677b2c0b1418c17cd800b01965e6f1ed831b79e6",
+    "desktop-audit-incomplete.png": "52792aa06258962984ed58c86ec3a41aa6e7f68ca2e915df5c4223fa23721924"
+  },
+  "geometry": [
+    {
+      "buttons": [
+        {
+          "height": 46,
+          "text": "Finish completed copy",
+          "width": 193.2875061035156
+        },
+        {
+          "height": 44,
+          "text": "Check recorded status",
+          "width": 126.25
+        }
+      ],
+      "product": [
+        {
+          "class": "ags-wrap",
+          "right": 1090.3999938964844,
+          "width": 660,
+          "x": 430.3999938964844
+        },
+        {
+          "class": "ags-seal",
+          "right": 1074.3999938964844,
+          "width": 628,
+          "x": 446.3999938964844
+        },
+        {
+          "class": "ags-result-actions",
+          "right": 1047.6000061035156,
+          "width": 478.3999938964844,
+          "x": 569.2000122070312
+        }
+      ],
+      "scrollOwner": "HTML",
+      "scrollWidth": 1521,
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "buttons": [
+        {
+          "height": 46,
+          "text": "Finish completed copy",
+          "width": 193.2875061035156
+        },
+        {
+          "height": 44,
+          "text": "Check recorded status",
+          "width": 126.25
+        }
+      ],
+      "product": [
+        {
+          "class": "ags-wrap",
+          "right": 834.4000091552734,
+          "width": 660,
+          "x": 174.40000915527344
+        },
+        {
+          "class": "ags-seal",
+          "right": 818.4000091552734,
+          "width": 628,
+          "x": 190.40000915527344
+        },
+        {
+          "class": "ags-result-actions",
+          "right": 791.6000061035156,
+          "width": 478.3999938964844,
+          "x": 313.20001220703125
+        }
+      ],
+      "scrollOwner": "HTML",
+      "scrollWidth": 1009,
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "buttons": [
+        {
+          "height": 46,
+          "text": "Finish completed copy",
+          "width": 193.2875061035156
+        },
+        {
+          "height": 44,
+          "text": "Check recorded status",
+          "width": 126.25
+        }
+      ],
+      "product": [
+        {
+          "class": "ags-wrap",
+          "right": 772.4000015258789,
+          "width": 660,
+          "x": 112.4000015258789
+        },
+        {
+          "class": "ags-seal",
+          "right": 756.4000091552734,
+          "width": 628,
+          "x": 128.40000915527344
+        },
+        {
+          "class": "ags-result-actions",
+          "right": 729.5999908447266,
+          "width": 478.3999938964844,
+          "x": 251.1999969482422
+        }
+      ],
+      "scrollOwner": "HTML",
+      "scrollWidth": 885,
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    },
+    {
+      "buttons": [
+        {
+          "height": 46,
+          "text": "Finish completed copy",
+          "width": 289.6000061035156
+        },
+        {
+          "height": 44,
+          "text": "Check recorded status",
+          "width": 289.6000061035156
+        }
+      ],
+      "product": [
+        {
+          "class": "ags-wrap",
+          "right": 375.2000122070313,
+          "width": 375.2000122070313,
+          "x": 0
+        },
+        {
+          "class": "ags-seal",
+          "right": 359.20001220703125,
+          "width": 343.20001220703125,
+          "x": 16
+        },
+        {
+          "class": "ags-result-actions",
+          "right": 332.4000053405762,
+          "width": 289.6000061035156,
+          "x": 42.79999923706055
+        }
+      ],
+      "scrollOwner": "HTML",
+      "scrollWidth": 375,
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    },
+    {
+      "buttons": [
+        {
+          "height": 46,
+          "text": "Finish completed copy",
+          "width": 219.1999969482422
+        },
+        {
+          "height": 44,
+          "text": "Check recorded status",
+          "width": 219.1999969482422
+        }
+      ],
+      "product": [
+        {
+          "class": "ags-wrap",
+          "right": 304.8000183105469,
+          "width": 304.8000183105469,
+          "x": 0
+        },
+        {
+          "class": "ags-seal",
+          "right": 288.8000183105469,
+          "width": 272.8000183105469,
+          "x": 16
+        },
+        {
+          "class": "ags-result-actions",
+          "right": 261.99999618530273,
+          "width": 219.1999969482422,
+          "x": 42.79999923706055
+        }
+      ],
+      "scrollOwner": "HTML",
+      "scrollWidth": 305,
+      "viewport": {
+        "height": 800,
+        "width": 320
+      }
+    }
+  ],
+  "browser": {
+    "kind": "Actual production component and CSS, controlled local RPC/functions ports, no production backend",
+    "scenarios": [
+      "ready",
+      "waiting",
+      "audit_incomplete",
+      "completed",
+      "lost_ack",
+      "download_failed",
+      "expired",
+      "read_error"
+    ],
+    "keyboard": "Result heading focus -> Tab -> Finish completed copy -> Enter -> completed heading focus",
+    "download": {
+      "copies": 2,
+      "bytes": 2109,
+      "sha256": "d1d3dd5cb4d57ab39af79a4dc0e450b0df3137a54728c7557687024c522878f6",
+      "matchesOriginalSyntheticTransportFixture": true,
+      "productionStorage": false
+    },
+    "scrollOwner": "HTML",
+    "responsiveWidths": [
+      1536,
+      1366,
+      1024,
+      900,
+      390,
+      320
+    ],
+    "viewportOverrideReset": true,
+    "temporaryServersStopped": true
+  },
+  "limits": [
+    "No ordinary hosted owner/staff/linked-client or cohort proof",
+    "No real signature, consent, provider/customer send, payment, or full Experience acceptance",
+    "Incumbent Deno no-import-prefix failure reproduced from unchanged parent; original inline SDK import retained, no waiver",
+    "Two incumbent seal.ts explicit-any sites unchanged",
+    "Dark preference and reduced-motion runtime emulation not available in browser capability; unchanged original CSS inspected, no new motion"
+  ],
+  "release": {
+    "channel": "development",
+    "merged": false,
+    "deployed": false,
+    "activation": false,
+    "authenticatedAcceptance": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  }
+}

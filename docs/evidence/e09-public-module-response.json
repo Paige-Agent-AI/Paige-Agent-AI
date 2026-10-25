@@ -14,17 +14,300 @@
   "sourceChange": "Only the original SPA fallback source excludes the exact /assets/ prefix. Original special documents, headers and every other config value are retained by a complete config inverse.",
   "sourceProof": {
     "owningSuite": "src/__tests__/static-asset-routing.test.ts",
-    "baseline": {"passed": 14, "failed": 8},
-    "candidate": {"passed": 22, "failed": 0},
+    "baseline": {
+      "passed": 14,
+      "failed": 8
+    },
+    "candidate": {
+      "passed": 22,
+      "failed": 0
+    },
     "failedBaselineCases": "Eight real asset path classes previously matched the original HTML fallback; all ten page entrances and four preservation checks already passed.",
     "interpretation": "Config matching and preservation proof only. Route matching is never customer authorization and is not actual deployed HTTP behavior."
   },
-  "preserved": ["All original auth and legal rewrites", "Every existing security/cache header and deployment setting", "Existing real-asset cache performance", "All original application/backend identity, tenant, customer, consent and commercial gates"],
+  "preserved": [
+    "All original auth and legal rewrites",
+    "Every existing security/cache header and deployment setting",
+    "Existing real-asset cache performance",
+    "All original application/backend identity, tenant, customer, consent and commercial gates"
+  ],
   "execution": "No new server/function/runtime, store, job, provider connection, permission grant, domain, customer account, business action or activation",
   "protectedPreview": "Optional share-link fetch rejected by automatic approval review because it would create or reuse a23-hour access link; no share grant created or alternate access bypass. Existing source/build gates and ordinary public production readback remain the release path.",
   "uiImpact": "No new interface or interaction. Existing page-loading recovery is separately owned by PR2870. No rendered, device, sign-in or full Experience claim from this config-only change.",
   "deliveryState": "NOT_DEPLOYED",
-  "requiredReadback": ["Required exact-head CI and reviewed config accepted by normal Vercel build", "Public missing asset HTTP404 with its actual error cache policy recorded", "Original public /app and special-document entrances still served", "Real built JS/CSS assets retain correct status, MIME and cache", "No false full tenant/customer/founder acceptance"],
+  "requiredReadback": [
+    "Required exact-head CI and reviewed config accepted by normal Vercel build",
+    "Public missing asset HTTP404 with its actual error cache policy recorded",
+    "Original public /app and special-document entrances still served",
+    "Real built JS/CSS assets retain correct status, MIME and cache",
+    "No false full tenant/customer/founder acceptance"
+  ],
   "truthBoundary": "The initiating customer asset/cache/deploy cause is not conclusively identified. Do not claim all caching failure solved or the error cache policy verified until actual platform readback.",
-  "customerReturn": "Earlier actual customer return/history on PR2864 remains separate; this unreleased source is not credited for that result."
+  "customerReturn": "Earlier actual customer return/history on PR2864 remains separate; this unreleased source is not credited for that result.",
+  "missingAssetProductionRelease": {
+    "pr": 2872,
+    "head": "c1ecb8c7646765074604c438a85dfa9f67aa54a3",
+    "merge": "618639db39c67006940e71be271e602424be4b9f",
+    "tree": "840afff204c7e1b63a315d38be0d78c868468733",
+    "parents": [
+      "8da8c14f3f466519f6ce260ec39852eb8af6fb11",
+      "c1ecb8c7646765074604c438a85dfa9f67aa54a3"
+    ],
+    "review": {
+      "kind": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "id": 5645044558
+    },
+    "checks": "10 applicable SUCCESS; Supabase Preview designed SKIP/no native; both web SUCCESS; zero review threads",
+    "union": {
+      "own": 3,
+      "outside": 16236,
+      "result": "PASS"
+    },
+    "deployment": {
+      "id": "dpl_8xfotN67Rpaxpc9mR3vHU18VJvVm",
+      "state": "READY",
+      "environment": "production",
+      "sha": "618639db39c67006940e71be271e602424be4b9f"
+    },
+    "observedUtc": "2026-10-25T20:51:57.211Z",
+    "buildId": "618639db39c67006940e71be271e602424be4b9f-mvoax6mg",
+    "publicReadback": [
+      {
+        "origin": "https://paigeagent.ai",
+        "versionStatus": 200,
+        "expectedVersion": true,
+        "entryStatus": 200,
+        "missing": {
+          "url": "https://paigeagent.ai/assets/e09-absent-module-check.js",
+          "status": 404,
+          "type": "text/plain; charset=utf-8",
+          "cache": "public, max-age=31536000, immutable",
+          "vercelCache": null,
+          "bytes": 79,
+          "hash": "5024edc0ffd033140431b4bb21af6dcb8c482981874987cdd52c72c0d60ef673",
+          "appRoot": false
+        },
+        "freshMissing": {
+          "url": "https://paigeagent.ai/assets/e09-absent-618639db39c6.js",
+          "status": 404,
+          "type": "text/plain; charset=utf-8",
+          "cache": "public, max-age=31536000, immutable",
+          "vercelCache": null,
+          "bytes": 79,
+          "hash": "618f4cb315728dd0160da74f756f7cb79f53566e6f214d75f957d41d3b1b0d3d",
+          "appRoot": false
+        },
+        "realAssets": [
+          {
+            "url": "https://paigeagent.ai/assets/main-BX0sY4da.js",
+            "status": 200,
+            "type": "application/javascript; charset=utf-8",
+            "cache": "public, max-age=31536000, immutable",
+            "vercelCache": "MISS",
+            "bytes": 1263,
+            "hash": "2829564be9ad2b5fe6cc62bcf4eccf4d9132fb9490e4ed6140dd238484991b5e",
+            "appRoot": false
+          },
+          {
+            "url": "https://paigeagent.ai/assets/preload-helper-BxaVoaJg.js",
+            "status": 200,
+            "type": "application/javascript; charset=utf-8",
+            "cache": "public, max-age=31536000, immutable",
+            "vercelCache": "MISS",
+            "bytes": 1727,
+            "hash": "59b13bcccc3fd5793163a278c5f1c396195b0ed41dcfdc897f1e631b79f278e9",
+            "appRoot": false
+          },
+          {
+            "url": "https://paigeagent.ai/assets/query-vendor-DG6j4G5V.js",
+            "status": 200,
+            "type": "application/javascript; charset=utf-8",
+            "cache": "public, max-age=31536000, immutable",
+            "vercelCache": "MISS",
+            "bytes": 47527,
+            "hash": "b5964cb523734101e2a3dca70ff387d5f96298c6757a4163b01d2982a0206fe1",
+            "appRoot": false
+          },
+          {
+            "url": "https://paigeagent.ai/assets/paige-command-mark-DkDmfxtN.css",
+            "status": 200,
+            "type": "text/css; charset=utf-8",
+            "cache": "public, max-age=31536000, immutable",
+            "vercelCache": "MISS",
+            "bytes": 1924,
+            "hash": "7ec9aabb24246aa50580bb01eb6cbad5f58853cd36af4a1520380a5a8496f95c",
+            "appRoot": false
+          }
+        ],
+        "specialPages": [
+          {
+            "url": "https://paigeagent.ai/auth",
+            "status": 200,
+            "type": "text/html; charset=utf-8",
+            "cache": "public, max-age=0, must-revalidate",
+            "vercelCache": "MISS",
+            "bytes": 2028,
+            "hash": "8f396961ef8d8c5220d4b41ed8a029e407659991a1c77f40c77f7a9701dff346",
+            "appRoot": true
+          },
+          {
+            "url": "https://paigeagent.ai/privacy",
+            "status": 200,
+            "type": "text/html; charset=utf-8",
+            "cache": "public, max-age=0, must-revalidate",
+            "vercelCache": "MISS",
+            "bytes": 2285,
+            "hash": "cdc2f9c6f542525366a66c37e10800c4426cf2f698cf7d0ca58975ae1c5bcbd9",
+            "appRoot": true
+          },
+          {
+            "url": "https://paigeagent.ai/sms-terms",
+            "status": 200,
+            "type": "text/html; charset=utf-8",
+            "cache": "public, max-age=0, must-revalidate",
+            "vercelCache": "MISS",
+            "bytes": 2133,
+            "hash": "b298524aa4084046593ffdca9f440cb933fd24e3392c670c98185f85e3c78a1c",
+            "appRoot": true
+          }
+        ]
+      },
+      {
+        "origin": "https://app.paigeagent.ai",
+        "versionStatus": 200,
+        "expectedVersion": true,
+        "entryStatus": 200,
+        "missing": {
+          "url": "https://app.paigeagent.ai/assets/e09-absent-module-check.js",
+          "status": 404,
+          "type": "text/plain; charset=utf-8",
+          "cache": "public, max-age=31536000, immutable",
+          "vercelCache": null,
+          "bytes": 79,
+          "hash": "8d92bf529de0d0ca1a1704b40324b8b3935c7b6476c026560070a647a3c6a4b5",
+          "appRoot": false
+        },
+        "freshMissing": {
+          "url": "https://app.paigeagent.ai/assets/e09-absent-618639db39c6.js",
+          "status": 404,
+          "type": "text/plain; charset=utf-8",
+          "cache": "public, max-age=31536000, immutable",
+          "vercelCache": null,
+          "bytes": 79,
+          "hash": "aeb6a863aaf3692cfae3034e50ee89e1bca90a9a2c0e02a8fad086f2c03b8dcb",
+          "appRoot": false
+        },
+        "realAssets": [
+          {
+            "url": "https://app.paigeagent.ai/assets/main-BX0sY4da.js",
+            "status": 200,
+            "type": "application/javascript; charset=utf-8",
+            "cache": "public, max-age=31536000, immutable",
+            "vercelCache": "HIT",
+            "bytes": 1263,
+            "hash": "2829564be9ad2b5fe6cc62bcf4eccf4d9132fb9490e4ed6140dd238484991b5e",
+            "appRoot": false
+          },
+          {
+            "url": "https://app.paigeagent.ai/assets/preload-helper-BxaVoaJg.js",
+            "status": 200,
+            "type": "application/javascript; charset=utf-8",
+            "cache": "public, max-age=31536000, immutable",
+            "vercelCache": "HIT",
+            "bytes": 1727,
+            "hash": "59b13bcccc3fd5793163a278c5f1c396195b0ed41dcfdc897f1e631b79f278e9",
+            "appRoot": false
+          },
+          {
+            "url": "https://app.paigeagent.ai/assets/query-vendor-DG6j4G5V.js",
+            "status": 200,
+            "type": "application/javascript; charset=utf-8",
+            "cache": "public, max-age=31536000, immutable",
+            "vercelCache": "HIT",
+            "bytes": 47527,
+            "hash": "b5964cb523734101e2a3dca70ff387d5f96298c6757a4163b01d2982a0206fe1",
+            "appRoot": false
+          },
+          {
+            "url": "https://app.paigeagent.ai/assets/paige-command-mark-DkDmfxtN.css",
+            "status": 200,
+            "type": "text/css; charset=utf-8",
+            "cache": "public, max-age=31536000, immutable",
+            "vercelCache": "HIT",
+            "bytes": 1924,
+            "hash": "7ec9aabb24246aa50580bb01eb6cbad5f58853cd36af4a1520380a5a8496f95c",
+            "appRoot": false
+          }
+        ],
+        "specialPages": [
+          {
+            "url": "https://app.paigeagent.ai/auth",
+            "status": 200,
+            "type": "text/html; charset=utf-8",
+            "cache": "public, max-age=0, must-revalidate",
+            "vercelCache": "HIT",
+            "bytes": 2028,
+            "hash": "8f396961ef8d8c5220d4b41ed8a029e407659991a1c77f40c77f7a9701dff346",
+            "appRoot": true
+          },
+          {
+            "url": "https://app.paigeagent.ai/privacy",
+            "status": 200,
+            "type": "text/html; charset=utf-8",
+            "cache": "public, max-age=0, must-revalidate",
+            "vercelCache": "HIT",
+            "bytes": 2285,
+            "hash": "cdc2f9c6f542525366a66c37e10800c4426cf2f698cf7d0ca58975ae1c5bcbd9",
+            "appRoot": true
+          },
+          {
+            "url": "https://app.paigeagent.ai/sms-terms",
+            "status": 200,
+            "type": "text/html; charset=utf-8",
+            "cache": "public, max-age=0, must-revalidate",
+            "vercelCache": "HIT",
+            "bytes": 2133,
+            "hash": "b298524aa4084046593ffdca9f440cb933fd24e3392c670c98185f85e3c78a1c",
+            "appRoot": true
+          }
+        ]
+      }
+    ],
+    "result": "PARTIAL: genuine missing-file404/no app HTML and real JS/CSS/page delivery verified; long cache on404 remains",
+    "authenticatedNewHead": "UNVERIFIED; earlier bounded customer return on2864 stays separate",
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2872#issuecomment-6403116946"
+  },
+  "errorCacheCorrection": {
+    "state": "IMPLEMENTED_LOCAL / NOT_DEPLOYED",
+    "baselineMain": "618639db39c67006940e71be271e602424be4b9f",
+    "observedProblem": "Both public origins return the original assets glob immutable/year-long Cache-Control even on genuine404 responses.",
+    "change": "Remove only the blanket assets Cache-Control rule. Keep the original static serving runtime, #2872 fallback exclusion, every auth/legal rewrite, all security headers and every non-asset cache value.",
+    "tradeoff": "Browser freshness follows the existing provider default rather than the removed year-long blanket rule. Native static CDN caching remains provider-owned. Actual response, CDN hit, conditional ETag and reload behavior must be measured after release; unchanged browser performance is not claimed.",
+    "officialSources": [
+      "https://vercel.com/docs/caching/cache-control-headers",
+      "https://vercel.com/docs/caching/cdn-cache"
+    ],
+    "sourceProof": {
+      "suite": "src/__tests__/static-asset-routing.test.ts",
+      "baseline": {
+        "passed": 22,
+        "failed": 8
+      },
+      "candidate": {
+        "passed": 30,
+        "failed": 0
+      },
+      "negative": "Eight paths actually inherit the year-long blanket rule on the unchanged baseline and refuse that rule on the candidate. All22 original route/config/security preservation cases pass on both.",
+      "wholeConfigInverse": "Restoring only the blanket header and original pre2872 fallback source reproduces complete original config integrity6c1317af6077425bfcbd3c4765dac1c7b837fde585d0c26286d0c29de8f880ff",
+      "invalidRuns": "Two initial local attempts failed before collection with0 tests due to Windows temporary-file rename permission; retained locally as INVALID, not red/green proof. Real subsequent22/8 and30/0 runs use an ordinary workspace-local test temp directory."
+    },
+    "newRuntime": "NONE: no function, build pipeline, middleware, protection, identity or business writer",
+    "requiredProof": [
+      "Exact-head review/required green CI and actual normal deployment",
+      "Both old/fresh missing assets404 without immutable/year-long freshness",
+      "Real JS/CSS200 with correct MIME and actual native cache/ETag/conditional behavior",
+      "Original app/auth/legal entrances and public version readback",
+      "Authenticated client return and complete Experience remain distinct"
+    ]
+  }
 }

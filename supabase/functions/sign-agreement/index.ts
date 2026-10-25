@@ -29,6 +29,7 @@ import { assertDocumentIsRenderable, assertRecipientFieldsRenderable, prepareSig
 import { readRecipientFieldValues } from "../_shared/agreements/field-preparation.ts";
 import { consentEvidenceText, ESIGN_CONSENT_DISCLOSURE } from "../_shared/agreements/disclosure.ts";
 import { sealAndComplete, verifiedCompletedCopy } from "../_shared/agreements/seal.ts";
+import { readPreparedSealSource } from "../_shared/agreements/prepared-seal-source.ts";
 import { notify, ownerNotificationEmail, tenantContactForDisclosure } from "../_shared/agreements/notify.ts";
 
 const corsHeaders = {
@@ -93,7 +94,7 @@ function signatureReceipt(value:unknown,agreementId:string,signerId:string,check
 }
 
 /** No mark, consent or source parameters: this call cannot create an unsigned record. */
-async function verifyOriginalSignature(db:ServiceClient,tokenHash:string,signer:Record<string,unknown>,agreement:Record<string,unknown>,finishExistingAttempt=false):Promise<Response>{
+async function verifyOriginalSignature(db:ServiceClient,tokenHash:string,signer:Record<string,unknown>,agreement:Record<string,unknown>,finishExistingAttempt=false,recoverPrepared=false):Promise<Response>{
   try{
     const {data,error}=await db.rpc("_record_agreement_signature",{
       _token_hash:tokenHash,_agreement_version:null,_content_sha256:null,_content_storage_key:null,
@@ -103,7 +104,7 @@ async function verifyOriginalSignature(db:ServiceClient,tokenHash:string,signer:
     if(error?.code==="42501")return refuse();
     if(error)return verificationPending();
     const receipt=signatureReceipt(data,String(agreement.id),String(signer.id),true);
-    return receipt?await finishRecordedSignature(db,signer,agreement,receipt,!finishExistingAttempt):verificationPending();
+    return receipt?await finishRecordedSignature(db,signer,agreement,receipt,recoverPrepared?false:!finishExistingAttempt,recoverPrepared,recoverPrepared):verificationPending();
   }catch{return verificationPending();}
 }
 
@@ -156,7 +157,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const now = new Date();
 
   const { data: agreement,error:agreementReadError } = await db.from("paige_agreements")
-    .select("id,tenant_id,version,title,body_source,body_markdown,status,expires_at,content_storage_key,content_sha256")
+    .select("id,tenant_id,contact_id,version,title,body_source,body_markdown,status,expires_at,content_storage_key,content_sha256")
     .eq("id", signer.agreement_id).maybeSingle();
   if(agreementReadError)return verificationPending();
 
@@ -182,6 +183,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (!agreement || agreement.tenant_id !== signer.tenant_id) return refuse();
 
   if (body.action !== undefined) {
+    if(body.action==='complete-recorded'){
+      if(Object.keys(body).length!==2||Object.keys(body).some(key=>!['token','action'].includes(key)))return json({ok:false,
+        code:'SIGNING_COMPLETION_REQUEST_INVALID',error:'Check the recorded status before finishing this agreement.'},400);
+      // The original EMPTY-evidence transaction must verify a genuine existing
+      // signature first. It cannot create one, accept new consent or choose a
+      // different agreement. The sealer below is restricted to prepared records.
+      return verifyOriginalSignature(db,tokenHash,signer,agreement,false,true);
+    }
     if (body.action !== "fields" || Object.keys(body).some(key => !["token","action"].includes(key))) {
       return json({ok:false,code:"SIGNING_FIELD_REQUEST_INVALID",
         error:"This field review request is invalid. Reload the original signing link."},400);
@@ -362,11 +371,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 });
 
-async function finishRecordedSignature(db:ServiceClient,signer:Record<string,unknown>,agreement:Record<string,unknown>,receipt:SignatureReceipt,checkOnly=false,preparedAct=false):Promise<Response>{
+async function finishRecordedSignature(db:ServiceClient,signer:Record<string,unknown>,agreement:Record<string,unknown>,receipt:SignatureReceipt,checkOnly=false,preparedAct=false,preparedOnly=false):Promise<Response>{
   const result={ok:true,state:"recorded",signing_id:receipt.signing_id,signer_id:receipt.signer_id,document_title:String(agreement.title),
     signed_at:receipt.signed_at,replayed:receipt.replayed,audit_complete:receipt.audit_complete,
     consented_event_id:receipt.consented_event_id,signed_event_id:receipt.signed_event_id,
-    signed_pdf_path:null,completed:false};
+    signed_pdf_path:null,completed:false,completion_recovery_available:false,
+    completion_state:receipt.outstanding_count>0?'waiting_for_signatures':'verification_pending'};
   // Only the original token-derived field read establishes a prepared act.
   // Its activity is already durable in the original events; external notices
   // require the governed Communications path, never the legacy sender fallback.
@@ -382,16 +392,30 @@ async function finishRecordedSignature(db:ServiceClient,signer:Record<string,unk
     if(receipt.agreement_status==="completed")try{
       const {data:completed,error}=await db.from("paige_agreements")
         .select("status,sealed_storage_key,sealed_sha256").eq("id",agreement.id).eq("tenant_id",signer.tenant_id).maybeSingle();
-      if(!error&&completed&&(await verifiedCompletedCopy(db,completed)).ok)return json({...result,completed:true});
+      if(!error&&completed&&(await verifiedCompletedCopy(db,completed)).ok)return json({...result,completed:true,completion_state:'verified'});
     }catch{/* Retain the actual signature; withhold unverified completion. */}
-    return json({...result,note:"Your signature is recorded. The completed copy could not be verified yet. Ask the sender to check this agreement."});
+    const recovery=receipt.agreement_status!=='completed'&&await preparedCompletionAvailable(db,agreement);
+    return json({...result,completion_recovery_available:recovery,
+      note:"Your signature is recorded. The completed copy could not be verified yet. Ask the sender to check this agreement."});
   }
   try{
-    const sealed=await sealAndComplete(db,String(agreement.id));
-    if(sealed.ok)return json({...result,completed:true});
+    const sealed=await sealAndComplete(db,String(agreement.id),preparedOnly?{preparedOnly:true}:undefined);
+    if(sealed.ok)return json({...result,completed:true,completion_state:'verified'});
     console.warn("[sign-agreement] completed copy not verified",{reason:sealed.reason});
   }catch{console.warn("[sign-agreement] completed copy verification interrupted");}
   return json({...result,note:"Your signature is recorded. The completed copy could not be verified yet. Ask the sender to check this agreement."});
+}
+
+/** Source readiness is an ordinary original-engine read, never completion or
+ * permission to replace a signed document. Act-time checks remain in the SAME
+ * prepared-only sealer and native completion transaction. */
+async function preparedCompletionAvailable(db:ServiceClient,a:Record<string,unknown>):Promise<boolean>{
+  if(typeof a.id!=='string'||typeof a.tenant_id!=='string'||typeof a.contact_id!=='string'
+    ||typeof a.version!=='number'||!Number.isSafeInteger(a.version)||typeof a.content_sha256!=='string'
+    ||!(a.content_storage_key===null||typeof a.content_storage_key==='string'))return false;
+  const source=await readPreparedSealSource(db,{id:a.id,tenant_id:a.tenant_id,contact_id:a.contact_id,version:a.version,
+    content_sha256:a.content_sha256,content_storage_key:a.content_storage_key});
+  return source.kind==='prepared';
 }
 
 /** Tell the business what happened. Never blocks the signer's request. */

@@ -7,6 +7,34 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// §9 / §59 (EXP08 increment 3, re-review N5): this function downloads with the SERVICE ROLE, which
+// bypasses Storage RLS, and the `public.documents` INSERT/UPDATE policies only check
+// `auth.uid() = user_id` — so a user can point their own row at any bucket and path. The download
+// is therefore allowed only where the row's real producers write, which is exactly where Storage's
+// own policies (20251015003902) already let the row owner write:
+//   - bucket `personal-documents` or `business-documents` (DocumentUpload.tsx,
+//     BusinessDocumentsManager.tsx, FinancialDocsSection.tsx — no other code inserts documents rows);
+//   - under the row owner's folder, `<user_id>/...` (every producer builds `${user.id}/...`, and the
+//     buckets' policies require `(storage.foldername(name))[1] = auth.uid()::text`).
+// storage-js puts the path into the request URL unencoded, so anything the URL parser would
+// reinterpret is refused rather than normalised: percent-encodings (Storage's router decodes them),
+// backslashes (a separator to the URL parser), `?` and `#` (they end the object path), control
+// characters (tab/newline are stripped by the URL parser, so `.\t.` would become `..`), a leading
+// `/`, and empty, `.` or `..` segments.
+const ANALYZABLE_DOCUMENT_BUCKETS = ["personal-documents", "business-documents"];
+const DOCUMENT_OWNER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function documentSourceError(bucket: unknown, path: unknown, ownerId: unknown): string | null {
+  if (typeof bucket !== "string" || !ANALYZABLE_DOCUMENT_BUCKETS.includes(bucket)) return "bucket_not_allowed";
+  if (typeof ownerId !== "string" || !DOCUMENT_OWNER_ID.test(ownerId)) return "owner_unresolved";
+  if (typeof path !== "string" || path.length === 0 || path.length > 1024) return "path_not_allowed";
+  if (path.startsWith("/") || /[%\\?#\u0000-\u001f\u007f]/.test(path)) return "path_not_allowed";
+  const segments = path.split("/");
+  if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) return "path_not_allowed";
+  if (segments.length < 2 || segments[0] !== ownerId) return "path_not_owner_folder";
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -70,6 +98,16 @@ serve(async (req) => {
           status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+    }
+
+    // Refuse before anything is written or downloaded: the service-role download below must only
+    // reach a file the row owner could have put there themselves (see documentSourceError).
+    const sourceError = documentSourceError(doc.bucket_name, doc.file_path, doc.user_id);
+    if (sourceError) {
+      console.warn(`[FINANCIAL-ANALYSIS-REFUSED] ${sourceError}`, documentId);
+      return new Response(JSON.stringify({ error: 'This document cannot be analyzed' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Create or update analysis record

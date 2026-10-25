@@ -14,6 +14,21 @@ describe('one confirmed Delete through existing Storage contracts',()=>{
   expect(io.run.mock.calls.map(c=>c[2])).toEqual(['prepare','continue']);expect(io.run.mock.calls[0][3]).toEqual(files);
   expect(io.execute).toHaveBeenCalledExactlyOnceWith('synthetic-a','delete','archive-a','Example','after');
  });
+ it('treats Team Hub files as a file-only cleanup: removes them, then deletes the account',async()=>{
+  const io=fixture(),teamHub={...files,resources:[...files.resources,{tenant_id:'synthetic-a',provider:'team_hub_files',action:'remove_files',object_count:2}]} as ResourcePreview;
+  io.run.mockImplementation(async(_id,operation)=>({tenant_id:'synthetic-a',operation_id:operation,mode:'delete',file_only:true,account_count:1,state:io.run.mock.calls.length<3?'resources_preparing':'resources_ready',
+   results:(['tts_cache','generated_media','team_hub_files'] as const).map(provider=>({provider,state:'verified',provider_status:'removed',reason:null}))} satisfies ResourceReceipt));
+  expect(isEligibleFileReview(preview,teamHub)).toBe(true);
+  expect(await deleteWithEligibleFiles('synthetic-a','archive-a','Example',preview,teamHub,io)).toEqual({state:'deleted'});
+  expect(io.run.mock.calls.map(c=>c[2])).toEqual(['prepare','continue','continue']);
+  expect(io.execute).toHaveBeenCalledExactlyOnceWith('synthetic-a','delete','archive-a','Example','after');
+ });
+ it('stops before deleting the account when Team Hub files are not verified removed',async()=>{
+  const io=fixture(),teamHub={...files,resources:[{tenant_id:'synthetic-a',provider:'team_hub_files',action:'remove_files',object_count:2}]} as ResourcePreview;
+  io.run.mockImplementation(async(_id,operation)=>({tenant_id:'synthetic-a',operation_id:operation,mode:'delete',account_count:1,state:'resources_ready',results:[{provider:'team_hub_files',state:'verified',provider_status:'present',reason:null}]} satisfies ResourceReceipt));
+  await expect(deleteWithEligibleFiles('synthetic-a','archive-a','Example',preview,teamHub,io)).rejects.toBeInstanceOf(AccountFileCleanupError);
+  expect(io.execute).not.toHaveBeenCalled();
+ });
  it.each(['twilio','n8n'])('refuses a %s provider plan rather than executing external effects',async provider=>{
   const io=fixture(),foreign={...files,resources:[{...files.resources[0],provider}]} as ResourcePreview;
   expect(isEligibleFileReview(preview,foreign)).toBe(false);await expect(deleteWithEligibleFiles('synthetic-a','archive-a','Example',preview,foreign,io)).rejects.toBeInstanceOf(AccountRpcError);expect(io.run).not.toHaveBeenCalled();

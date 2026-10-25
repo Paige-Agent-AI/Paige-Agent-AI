@@ -48,11 +48,24 @@ below. The originals stay where they are as history (§58).
     `team_hub_*` tables and functions, SOLO-only). The search above describes the state before
     that PR. It is `PROOF_OWED` until persisted-apply and an authenticated drive; see the
     [collaboration contract](../../delivery/exp08-team-hub-collaboration-contract.md).
-  - **Update, 2026-10-24:** increment 2 adds team work (migration `20271113860008`, not yet
-    merged): `/` commands, a task created in Operations through `plan_assign_task_scoped` with an
+  - **Update, 2026-10-24:** increment 2 adds team work (migration `20271113860008`, PR #2779):
+    `/` commands, a task created in Operations through `plan_assign_task_scoped` with an
     exactly-once link in `team_hub_work_refs`, PAIGE prefill handoffs and the Team work panel.
     Also `PROOF_OWED`; see the
     [increment 2 work contract](../../delivery/exp08-team-hub-increment2-work-contract.md).
+  - **Update, 2026-10-25:** increment 3 adds attachments (migrations `20271114160008` and
+    `20271114160108`, not yet merged).
+    - Limits: up to 5 files of 10 MB each per message or thread reply.
+    - Storage: the private `comms-attachments` bucket at `<tenant>/team-hub/<file_id>`, recorded
+      in `team_hub_files` behind four restrictive storage policies.
+    - Checking: the new `team-hub-file` edge function checks each file's real bytes.
+    - Download: a fresh 60-second attachment URL on every click.
+    - Retirement: a `team_hub_files` provider.
+    - Files are not malware-scanned, and the UI says so.
+    - Not accepted: legacy `.doc`/`.xls` and PowerPoint. Word and Excel files with embedded
+      objects, charts, external links or macros are refused.
+    - Also `PROOF_OWED`, and the edge function is not deployed. See the
+      [increment 3 attachments contract](../../delivery/exp08-team-hub-increment3-attachments-contract.md).
 - **Owner decisions, 2026-10-24.** Answered by the owner in the EXP08 Claude Code session and
   logged in `docs/brain/decision-log.md`. They are approvals to build, not proof that anything
   works.

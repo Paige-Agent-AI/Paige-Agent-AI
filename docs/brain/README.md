@@ -203,6 +203,15 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and existing [EXP04 journey](../delivery/exp04-get-paid-deliver-journey.md) retain exact source/review/CI/deployment/acceptance boundaries. This mechanical closeout adds no product, activation, algorithm/capability maturity, provider/role change, customer version or recursive shipped row. Pending2745/2775 and full O1–O12/one integrated founder evaluation remain open.
 
+
+
+## EXP09 private request recovery — October 25 bounded production release
+
+Original [#2825](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2825) reviewed489f8a58a/all13 exact checks/two webSUCCESS/zero threads, with documented AUTHOR-REVIEW / LOWER ASSURANCE5643270333/5643284660/5643409402, actually mergedb5122f922a030db33dd8d57767f9ced07e07fd1b/treecaecbde7740e6646787f7672bbf1abeb2436a2ba. All incoming Root/Chat/C0b/Work/commercial source was preserved; no shared execution contract was changed. Native146/consumer94/actual hosted286 are bounded source/role/fixture evidence, not authenticated acceptance.
+
+Normal native40198164842/job121183516960 and persisted check SUCCESS; db-live=b512. Production14150009/14150019 each once (13/8statements), exact preparebbbf43/read1701ab/historyad2d source/ABI/postgres/definer/empty path/authenticated-only execute; internal authority7c3eb and original file40349/advance66dc remain unchanged. Exact productionwebdpl_FpX8nKVEVhCxC1WX7rpo3qCGZfC1 READY; both public aliases200/buildb5122f922a030db33dd8d57767f9ced07e07fd1b-mvnvcnva/customerUpdate:null at13:41:58UTC. [Actual receipt6398398005](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2825#issuecomment-6398398005), [original owning packet](../delivery/e09-customer-actions-business-scope.md), [frozen native evidence](../evidence/e09-private-request-native.json).
+
+Functional: private preparation/status/history and its consumer deployed, UNMOUNTED in owner Portal/Chat/Live; approved sharing/customer response remains incomplete. Visual: no new production UI/current rendered claim. Experiential: original same-Work recovery has native/synthetic consumer proof; signed-in owner/client return and recovery remain UNVERIFIED. Founder Acceptance: not requested/not accepted; full42/seven/Teach/seven Capabilities/ALG and one complete evaluation remain open. No provider/business operation, authority or activation change; internal-only, no customer version/announcement. This is the mechanical identity/readback closeout of the preceding release, not another recursively logged increment.
 ## EXP09 original response, invitation and shared-message activity — native/source released, October25 UTC
 
 Original2803/204db/LOWER5641506134/all13+2 green mergedc55ce067f358f41f83572bc9cefa7798c9e07b2f;
@@ -623,13 +632,26 @@ Contract: [Team Hub collaboration contract](../delivery/exp08-team-hub-collabora
 Evidence: [increment 1 record](../evidence/ui-delivery/exp08-team-hub-increment1.md). Owed: the
 §32 persisted-apply check and an authenticated drive on the owner-designated SOLO account.
 
-**Increment 2 (2026-10-24, `PROOF_OWED`, not yet merged):** team work. `/` commands; *Draft a
+**Increment 2 (PR #2779, 2026-10-24, `PROOF_OWED`):** team work. `/` commands; *Draft a
 task* creates one Operations task through `plan_assign_task_scoped` with an exactly-once link in
 `team_hub_work_refs` (migration `20271113860008`); specialist, approval and meeting requests only
 prefill PAIGE; the Team work panel reads status from `plan_items`. Contract:
 [increment 2 work contract](../delivery/exp08-team-hub-increment2-work-contract.md).
 
-**Not built:** attachments, and PAIGE/Knowledge and Chat/Live continuity (increments 3–4).
+**Increment 3 (2026-10-25, `PROOF_OWED`, not yet merged):** attachments, up to 5 files of 10 MB
+each per message, in `comms-attachments` at `<tenant>/team-hub/<file_id>`. Files are recorded in
+`team_hub_files` behind four restrictive storage policies (migration `20271114160008`) and purged
+on retirement by the `team_hub_files` provider (`20271114160108`). The `team-hub-file` edge
+function checks the real bytes, and Download mints a fresh 60-second attachment URL. Files are
+**not malware-scanned**. Legacy `.doc`/`.xls` and PowerPoint are not accepted, and Word or Excel
+files with embedded objects, charts, external links or macros are refused. No scheduled stale-file
+sweep exists. Contract:
+[increment 3 attachments contract](../delivery/exp08-team-hub-increment3-attachments-contract.md).
+Evidence: [increment 3 record](../evidence/ui-delivery/exp08-team-hub-increment3.md), a harness
+render that is not authenticated and lists four open defects.
+
+**Not built:** PAIGE with Team Hub, meaning Chat/Live reads, search and approved reply drafts
+(increment 4). No Team Hub content enters Knowledge or Memory.
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

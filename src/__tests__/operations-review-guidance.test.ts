@@ -24,6 +24,11 @@ describe("Operations review instruction contract", () => {
     expect(guidance).toContain("Do not enumerate the action queue or specialist roster");
     expect(guidance).toContain("Do not repeat a list read with overlapping filters");
   });
+  it("uses one offered bounded agenda without inventing the business zone or hiding partial coverage", () => {
+    const guidance = addressing.OPERATIONS_REVIEW_GUIDANCE;
+    for (const rule of ["read_calendar_agenda at most once", "only when offered", "explicit window", "confirmed business zone", "title previews", "narrower", "read_calendar_booking"]) expect(guidance).toContain(rule);
+    expect(guidance).not.toContain("Read only a known exact booking when needed and offered; otherwise say Calendar coverage is unavailable");
+  });
 
   it("preserves missing-source truth and does not turn a review into an action", () => {
     const guidance = (addressing as unknown as Record<string, string>).OPERATIONS_REVIEW_GUIDANCE ?? "";

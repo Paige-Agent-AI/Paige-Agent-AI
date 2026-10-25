@@ -1,3 +1,50 @@
+## EXP04 original recipient document zoom release — October25
+
+[#2823](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2823) is recorded in the sole
+[Master§4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reviewedfb7e75c1291653da477e89af741f5eb83f474b8d/treeacb2e9d88fc79f20320b21e9aead85290eacba2e;
+AUTHOR-REVIEW / LOWER ASSURANCE6395169047/final6395533498; all10 applicable required checks
+and two web SUCCESS, UI-only Preview SKIP, zero threads. Actual main33b9d7094ad28e4e44381202313652bbc63f7adf
+/tree1e6678a8cc0782a55eebcbf6084368016da2a0ec equals inspectedcfc+fb7 union; all15 own,
+16018 outside entries and28 rendered product hashes exact.
+
+Normal productiondpl_EwgsGnotKdoqgEhwv89yVwYVoy91 READY; canonical/authenticated immutable200
+exact33b9d7094ad28e4e44381202313652bbc63f7adf-mvnkzfr7/customerUpdate:null at08:48UTC.
+Actual served signingJSa84484c9 and valid text/css2f98dd26 verify zoom controls/status,
+scoped paper ink/tint and44px/focus source. [Actual receipt6395590760](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2823#issuecomment-6395590760).
+Six causal RED then79 focused PASS; original33 case expressions/five actual-source JPEGs/33 inputs
+retain answer continuity, fresh review/consent, stale-callback refusal, pan/focus and actual paper contrast.
+
+Production source availability is distinct from authenticated customer signing. No native/Edge/provider,
+permission, Chat admission or financial activation. Prepared HIGH/issuer/atomic fields/seal and actual
+ordinary-role/cohort/reload/receipt/CentralQA, browser zoom/phone/AT/all12/founder acceptance remain open.
+ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; no catalogue Live or customer release identity.
+This mechanical closeout preserves all dated history below and earns no recursive release row.
+
+## EXP04 original recipient review and decision release — October 25
+
+[#2804](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2804) is recorded in the sole
+[Master §4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reviewed `0b05d508c80a0b0f7623785a2dc7e00e66313dc2`, LOWER `6394495879` / final `6394859439`;
+all10 applicable exact checks/two webSUCCESS, no-schema Preview SKIP, zero inline threads.
+Actual merge `e287c854d2c2d0e64f9da6a9a62d80089bf1c562` / tree `fd9f6f6f2dd9575a369bfc00976f6448b4e99b9a`
+equals the inspected actual7c2054 + reviewed0b05 union. All72 own blobs/239 source inputs/39 JPEGs
+and15949 outside entries exact. Original failed Test12589313030 is retained; semantic AST gates
+and five bypass controls repair it without a test-purpose, baseline or required-check waiver.
+
+Normal production `dpl_82HJ67jMjhxCcBvnBAYtjwTNvgQ9` READY; both canonical and authenticated immutable
+200 exact `e287c854d2c2d0e64f9da6a9a62d80089bf1c562-mvni7q8h` / customerUpdate:null.
+Actual served signingJS `2829a535` / CSS `615c1c8f` and all five original review/decision/recovery
+markers plus44px/focus/consent styles verified07:29UTC. [Actual receipt6394896295](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2804#issuecomment-6394896295).
+No native/affected-Edge, provider, permission, Chat admission or financial activation.
+
+Original ceremony now retains exact document/own-field context and truthful inline decline/recovery;
+73 targeted cases/all142 original assertions and bounded source render/palette/responsive/focus proof.
+Prepared HIGH/sender/token/atomic fields/seal and actual recipient/owner/staff/client/private records/reload,
+full Sales route/cohorts/browser zoom/native AT/Central QA/all12/founder acceptance remain incomplete.
+No catalogue Live, algorithm maturity, real signing/payment/delivery or complete premium-Experience claim.
+Professional document magnification remains O2 work; original token/effect holds remain.
+
 ## EXP04 original decline source release — October 25
 
 [#2802](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2802) is recorded in the sole
@@ -672,6 +719,35 @@ older branch. Composed actualmain468e50f6 through c4d0ab80/tree5289e11b preserve
 all five reviewed EXP02 leaves and every incoming change. No SQL/grant/CI/guard
 was altered; all184/7 original controls and scoped lint pass on the composition.
 The original failures remain and fresh exact-head review/CI is required.
+
+## EXP02 original Systems capture mode — October25 development
+
+**October25 actual source release:** [#2813 receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2813#issuecomment-6396748331),
+also recorded in the sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reviewed1b42/LOWER5642231020+5642812783/all11 exact checks+two webSUCCESS;
+actual622c5532/tree91aeaead preserves incomingef732 and all16034 outside entries.
+Normal40186447016 verifies all4 original function sources/configurations;
+artifact12596098700/digestdd9519e2, remote edge-live622c. READYwebdpl_7GHbe5PnzZxqg1qpxidH9zyd2FDx;
+both public200/exact622c-mvnpjgco/null. This supersedes source-release-pending
+statements below only. It supplies no new manual admission, customer scan,
+execution/receipt, catalogue/ALG promotion or full19/nine/founder acceptance.
+Browser/input and protected monthly uncertainty remain preserved.
+
+O07 prepares the original runner to record checks without automatic remediation:
+explicit internal none mode calls neither the core's forge nor file_action;
+existing all/delta/default callers keep their original behavior. Actual mode and
+scope are persisted on the same original run context, never used as authority.
+Unsupported internal options fail closed; no API, role/grant, registry, scheduler,
+approval or customer-scan activation. [Source contract and remaining gates](../evidence/e2-systems-capture-mode.md):
+Initial10RED/13PASS, closed-scope5RED and214/8 source proof are retained.
+Capture readback19RED/31PASS now yields52own+184original=236/8 source PASS:
+none mode confirms original findings before finalization and reads back its run;
+unconfirmed writes retain the known run identity, never replay or grant authority.
+Legacy all/delta/default partial behavior stays unchanged. Composed236/8 in5.06s,
+scoped lint0 and unchanged project type ratchet10/6 pass. Fresh exact review,
+native Deno/CI/full deployed readback remain owed. No UI/customer/ALG or
+Capabilities promotion. Manual purpose/admission/original work+receipt/recovery,
+authenticated isolation/reload and full19/nine/founder acceptance remain required.
 
 ## EXP02 Systems Check dialog return — October23 source candidate
 

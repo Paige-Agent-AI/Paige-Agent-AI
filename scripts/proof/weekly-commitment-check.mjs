@@ -183,6 +183,7 @@ try{
     // Match the incumbent full proof's setup before its UI authorization cases.
     // This mode is already forbidden in CI and uses only this disposable cluster.
     run(source('supabase/migrations/20271113510005_experience05_weekly_authorization_review.sql'));
+    run(source('supabase/migrations/20271114130105_experience05_weekly_control_projection.sql'));
     run("UPDATE paige_automation_triggers SET is_live=true,dark_reason=NULL WHERE key='schedule.weekly_commitment_check';");
     run("SELECT set_tool_autonomy('planning_weekly_commitment_check','auto');",ownerCtx);
     const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource});
@@ -252,6 +253,7 @@ try{
   const authorized=json(`SELECT control_weekly_commitment_check(${literal(automation)},'authorize',1);`,ownerCtx);
   const authorizationMigration='supabase/migrations/20271113510005_experience05_weekly_authorization_review.sql';
   run(source(authorizationMigration));run(source(authorizationMigration));
+
   assert.equal(authorized.state,'live');
   check('schedule authorization leaves canonical permission default confirm',()=>{
     const policy=json("SELECT row_to_json(t) FROM list_tool_autonomy() t WHERE tool_key='planning_weekly_commitment_check';",ownerCtx);
@@ -568,7 +570,28 @@ try{
   const historyPerformance=historyPerformanceProof({run,json,literal,source,owner,tenant,otherOwner,foreign,member,admin,templateEvent:event,migration:historyMigration,onMeasurement:m=>writeFileSync(join(scratch,'history-measurement.json'),JSON.stringify(m,null,2))});
   check('accumulated historical getter indexed performance, role isolation and receipt correlation',()=>assert.equal(historyPerformance.status,'PASS'));
   console.log(JSON.stringify({history_performance:{status:historyPerformance.status,scenarios:historyPerformance.scenarios.map(s=>({seeded_history_rows:s.seeded_history_rows,after_median_ms:s.after_median_ms,assertions:s.assertions}))}}));
-  const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource});
+  // The original history/body invariants run against their historical getter.
+  // Its reviewed forward projection must precede the dependent owner consumer.
+  let legacyGetterDefinition=null;
+  if(!baselineRead){
+    const projectionMigration='supabase/migrations/20271114130105_experience05_weekly_control_projection.sql';
+    const originalGetter=json("SELECT jsonb_build_object('metadata',to_jsonb(p)-'prosrc','source_md5',md5(prosrc)) FROM pg_proc p WHERE oid='public.get_weekly_commitment_checks()'::regprocedure;");
+    legacyGetterDefinition=run("SELECT pg_get_functiondef('public.get_weekly_commitment_checks()'::regprocedure);");
+    run(source(projectionMigration));run(source(projectionMigration));
+    check('explicit control projection replays without changing original getter identity or authority',()=>{
+      const after=json("SELECT jsonb_build_object('metadata',to_jsonb(p)-'prosrc','source_md5',md5(prosrc)) FROM pg_proc p WHERE oid='public.get_weekly_commitment_checks()'::regprocedure;");
+      assert.equal(originalGetter.source_md5,'99218816ce1b8111e80360b1bd9aa189');
+      assert.deepEqual(after.metadata,originalGetter.metadata);
+      assert.equal(after.source_md5,'60d5acc132111d9db7e63d9848c06c47');
+    });
+    check('unknown original getter source cannot be overwritten by the projection repair',()=>{
+      const current=json("SELECT jsonb_build_object('definition',pg_get_functiondef(oid),'prosrc',prosrc) FROM pg_proc WHERE oid='public.get_weekly_commitment_checks()'::regprocedure;");
+      run(current.definition.replace(current.prosrc,()=>current.prosrc+'\n-- isolated source-drift negative\n'));
+      refuses(source(projectionMigration),{},'P0001');
+      run(current.definition);
+    });
+  }
+  const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource,legacyGetterDefinition});
   const retirement=source('supabase/migrations/20270602000504_operator_provider_independent_retirement.sql');
   const archives=source('supabase/migrations/20270602000203_operator_account_archive.sql');
   run(`CREATE FUNCTION operator_preview_account_deletion(uuid) RETURNS jsonb LANGUAGE sql AS $$

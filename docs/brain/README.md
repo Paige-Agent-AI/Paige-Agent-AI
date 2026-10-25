@@ -1,5 +1,25 @@
 ## EXP02 private request foundation released — October25
 
+Current EXP02 continuation: original MMA menu→Finance Overview/VERA and saved
+briefing readback are verified within read-only scope. A continuous keyboard
+focus defect was found in the original pathname-keyed screen boundary; owning
+repair/source window ANT161/cce9dc41 preserves all other shared source. Actual
+SoloApp regression2FAIL/1PASS →41/41 across four original suites; original-shell
+native seven-page keyboard/source-Escape and desktop/narrow synthetic captures
+pass in [the focused evidence](../evidence/ui-delivery/e2-finance-tab-continuity.md).
+Candidate release/readback, native200percent and customer acceptance remain owed.
+
+Private reader #2877 now exactf292c96a752f75d957e52a3ea6edc12ff04de5c0,
+LOWER5645590987: fresh isolated Preview121306752870 succeeds after normal stale
+Preview lifecycle recovery; actual1467 migrations/250102 once/old240202 absent,
+bodyd953/full original ABI/ACL verified. Exact remaining CI/release still owed.
+Approved private claim #2878 exacteee33694f78d910dd8eae1575cb5b3bc95b1af7e
+has13 exact checks/two webSUCCESS; normal release waits for lower reader250102,
+current receiving contract and native order before260002. No function invocation,
+worker, scan, provider, Chat action or extra grant is authorized by that approval.
+All19/nine, algorithm/catalogue maturity, protected monthly UNKNOWN/UNRETRIED,
+original9/0 and12/0/4 and one final founder evaluation remain separately open.
+
 Original [#2867 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)
 is maina358554c8cff8bbe0ba52243fb7097508c088c86/tree1cf0156e,
 reviewed2ef74cdb7/final AUTHOR-REVIEW / LOWER ASSURANCE5645103641/all13 exact

@@ -1,0 +1,7 @@
+{
+  "source": "actual App.tsx SuspenseFallback/PageSuspense source extract; actual boundary and real MemoryRouter; isolated synthetic editor, no Auth/business/backend",
+  "appHash": "1186fcc1218f347d3032b1baa94901b01fa08526d9435f437e527250b74d04e6",
+  "result": "PASS",
+  "draft": "Synthetic unsaved customer draft",
+  "counts": "1/0"
+}

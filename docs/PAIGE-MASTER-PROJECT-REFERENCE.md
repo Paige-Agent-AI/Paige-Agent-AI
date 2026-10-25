@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP02 private manual request foundation.**
+
+| PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |
+| --- | --- | --- | --- |
+| [#2867](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682); reviewed2ef74cdb7d0fb171199ee8eff3e53b10d04da252; maina358554c8cff8bbe0ba52243fb7097508c088c86/tree1cf0156eb4ddc484918f98f5173eaba23468c938 | Private preparation on original Work, fixed manual/tenant/no-action purpose and one attempt. Specific internal function/server-role grant was owner-authorized. No public consumer or scan. | Final AUTHOR-REVIEW / LOWER ASSURANCE5645103641; all13 exact checks/Preview/two webSUCCESS/zero threads. Actual1f614+2ef union preserves16225 outside entries, frozen owning source and complete incoming CI/evidence. Local47 native checkpoints and corrected hosted proof pass; initial failed test transport retained. Normal native40231237484/job121283322585 SUCCESS;20271114240002 once/full1462-version parity, actual body/ABI/server-only ACL verified. Original three contracts and three table owners/RLS/permissions unchanged; no new-function advisory, no global-clear claim. db-live=a358; Edge N/A. Productiondpl_7BdPf2uscEZR5cSTU4gFer9CNFYp READY; both public200/exacta358554c8cff8bbe0ba52243fb7097508c088c86-mvoab511/null at20:35:36UTC. | [Original capture evidence](evidence/e2-systems-capture-mode.md); ANT138/c66e4028. Internal-only, no customer release identity, manual availability or algorithm/catalogue promotion. Original dispatch/result/Rail/recovery and customer acceptance remain owed; all19/nine/founder open. Reviewed forward fix, no applied-history rewrite. |
+
 **2026-10-25 UTC — EXP04 original signature messages, publication and prepared-document completion.**
 
 | Increment | Exact reviewed source and actual production release | Completion boundary |

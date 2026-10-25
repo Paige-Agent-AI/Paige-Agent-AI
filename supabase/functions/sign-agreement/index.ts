@@ -25,7 +25,8 @@ import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 import { sha256Hex } from "../_shared/agreements/token.ts";
 import { verifyRetainedAgreementPdf } from "../_shared/agreements/retained-document.ts";
 import { decideSigningAccess, MAX_BODY_BYTES, TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
-import { assertDocumentIsRenderable, prepareSignatureImage, UnrenderableDocumentError, wouldLoseCharacters } from "../_shared/agreements/document.ts";
+import { assertDocumentIsRenderable, assertRecipientFieldsRenderable, prepareSignatureImage, UnrenderableDocumentError, UnrenderableFieldError, wouldLoseCharacters } from "../_shared/agreements/document.ts";
+import { readRecipientFieldValues } from "../_shared/agreements/field-preparation.ts";
 import { consentEvidenceText, ESIGN_CONSENT_DISCLOSURE } from "../_shared/agreements/disclosure.ts";
 import { sealAndComplete, verifiedCompletedCopy } from "../_shared/agreements/seal.ts";
 import { notify, ownerNotificationEmail, tenantContactForDisclosure } from "../_shared/agreements/notify.ts";
@@ -228,6 +229,47 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const image = await prepareSignatureImage(signatureImage);
   if (!image.ok) return json({ ok: false, code:"SIGNATURE_IMAGE_UNRENDERABLE", error: image.reason }, 400);
 
+  // The form proposes answers, never signer/source authority or a signing date.
+  // Resolve the SAME native token scope and reuse the existing answer/render
+  // policies before the irreversible act. Native14 repeats the actual authority,
+  // order, source and answer validation under the original record locks.
+  let preparedFields:{preparation_id:string;preparation_sha256:string;values:ReturnType<typeof readRecipientFieldValues>}|undefined;
+  let assigned:Awaited<ReturnType<typeof readRecipientSigningFields>>;
+  const invalidAnswers=()=>json({ok:false,code:"SIGNING_FIELD_INPUT_INVALID",
+    error:"Review and complete the assigned fields before signing. Reload the agreement if its preparation changed."},400);
+  const unavailableFields=()=>json({ok:false,code:"SIGNING_FIELDS_UNAVAILABLE",
+    error:"The assigned fields could not be verified. Reload the agreement before signing."},503);
+  try{
+    assigned=await readRecipientSigningFields(db,tokenHash,{
+      tenant_id:String(signer.tenant_id),agreement_id:String(agreement.id),signer_id:String(signer.id),
+      source_version:Number(agreement.version),document_sha256:String(agreement.content_sha256),
+      content_storage_key:typeof agreement.content_storage_key==='string'?agreement.content_storage_key:null,
+    });
+  }catch(error){
+    if(error instanceof RecipientFieldsUnavailable&&error.refused){
+      // A concurrent request may have signed after our first status read. The
+      // original empty-evidence recovery can verify that act under CURRENT token
+      // authority; it cannot mark, resubmit answers, seal or send a notification.
+      return verifyOriginalSignature(db,tokenHash,signer,agreement);
+    }
+    return unavailableFields();
+  }
+  if(assigned.kind==='legacy'){
+    if(['preparation_id','preparation_sha256','field_values'].some(key=>Object.hasOwn(body,key)))return invalidAnswers();
+  }else{
+    if(body.preparation_id!==assigned.preparation_id||body.preparation_sha256!==assigned.preparation_sha256)return invalidAnswers();
+    try{
+      preparedFields={preparation_id:assigned.preparation_id,preparation_sha256:assigned.preparation_sha256,
+        values:readRecipientFieldValues(assigned.fields,body.field_values)};
+    }catch{return invalidAnswers();}
+    try{await assertRecipientFieldsRenderable(assigned.fields,preparedFields.values,typedName,image.base64);}
+    catch(error){
+      if(error instanceof UnrenderableFieldError)return json({ok:false,code:"SIGNING_FIELD_UNRENDERABLE",field_id:error.fieldId,
+        error:"That answer cannot fit in its reviewed field without losing text. Revise it or ask the sender to correct the field before signing."},400);
+      return unavailableFields();
+    }
+  }
+
   // The same question asked of the DOCUMENT. An agreement whose own text cannot be exported would
   // seal to a page of question marks — and `pa_sent_is_frozen_ck` means it could never be corrected
   // — so it is refused before a counterparty binds themselves to it rather than after.
@@ -307,24 +349,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
       _consent_read:consentRead,_consent_esign:consentEsign,_consent_slug:ESIGN_CONSENT_DISCLOSURE.slug,
       _consent_version:ESIGN_CONSENT_DISCLOSURE.version,_consent_sha256:await sha256Hex(consentText),
       _ip:ip==="unknown"?null:ip,_user_agent:(req.headers.get("user-agent")??"").slice(0,500),
+      ...(preparedFields===undefined?{}:{_prepared_fields:preparedFields}),
     });
     if(error?.code==="42501")return refuse();
     if(error?.code==="23514")return json({ok:false,code:"SIGNATURE_REFUSED",error:"That signature could not be confirmed. Reload the agreement or ask the sender to check its current status."},409);
     if(error)return verifyOriginalSignature(db,tokenHash,signer,agreement,true);
     const receipt=signatureReceipt(data,String(agreement.id),String(signer.id),false);
-    return receipt?await finishRecordedSignature(db,signer,agreement,receipt):verificationPending();
+    return receipt?await finishRecordedSignature(db,signer,agreement,receipt,false,preparedFields!==undefined):verificationPending();
   }catch{
     // A lost acknowledgement is reconciled once with EMPTY action evidence. Never resend the mark.
     return verifyOriginalSignature(db,tokenHash,signer,agreement,true);
   }
 });
 
-async function finishRecordedSignature(db:ServiceClient,signer:Record<string,unknown>,agreement:Record<string,unknown>,receipt:SignatureReceipt,checkOnly=false):Promise<Response>{
+async function finishRecordedSignature(db:ServiceClient,signer:Record<string,unknown>,agreement:Record<string,unknown>,receipt:SignatureReceipt,checkOnly=false,preparedAct=false):Promise<Response>{
   const result={ok:true,state:"recorded",signing_id:receipt.signing_id,signer_id:receipt.signer_id,document_title:String(agreement.title),
     signed_at:receipt.signed_at,replayed:receipt.replayed,audit_complete:receipt.audit_complete,
     consented_event_id:receipt.consented_event_id,signed_event_id:receipt.signed_event_id,
     signed_pdf_path:null,completed:false};
-  if(!receipt.replayed){
+  // Only the original token-derived field read establishes a prepared act.
+  // Its activity is already durable in the original events; external notices
+  // require the governed Communications path, never the legacy sender fallback.
+  if(!receipt.replayed&&!preparedAct){
     try{await tellOwner(db,signer,String(agreement.title),"signed");}
     catch{console.warn("[sign-agreement] activity notification not confirmed");}
   }

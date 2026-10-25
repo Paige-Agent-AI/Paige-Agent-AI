@@ -41,15 +41,27 @@ export async function provePreparedConfirmation({sql,read,context,tenant,actor,c
  check(sql("SELECT to_regprocedure('public._issue_prepared_agreement_confirmation(uuid,uuid,jsonb,text,uuid)') IS NOT NULL;")==='t',
   'Actual originating native confirmation writer exists');
  check(snapshot()===before&&originals()===original,'Migration/replay changes no original record, signature/hold/actor/autonomy body or ACL');
- const fixture=async()=>{
+ const fixture=async(options={})=>{
   const a=fresh();
+  if(options.secondSigner)sql(context+`SELECT public.add_agreement_signer('${tenant}','${a.id}','Synthetic second signer','second@example.test','witness',2);`);
   const source=json(`SELECT jsonb_build_object('tenant_id',a.tenant_id,'agreement_id',a.id,'client_id',a.contact_id,
    'version',a.version,'updated_at',a.updated_at,'status',a.status,'signers',(SELECT jsonb_agg(jsonb_build_object('id',s.id,
     'full_name',s.full_name,'email',s.email,'signer_role',s.signer_role,'signing_order',s.signing_order,'status',s.status)
     ORDER BY s.signing_order,s.id) FROM paige_agreement_signers s WHERE s.agreement_id=a.id)) FROM paige_agreements a WHERE a.id='${a.id}';`);
   const signer=source.signers[0],preparation=randomUUID(),connector=randomUUID(),operation=randomUUID(),cycle=randomUUID(),nonce=randomUUID();
-  const document={sha256:'a'.repeat(64),byte_length:1234,pages:[{page:1,crop_x:0,crop_y:0,crop_width:600,crop_height:800,rotation:0,width:600,height:800}]};
-  const prepared=await prepareAgreementFields(source,document,[{id:randomUUID(),signer_id:signer.id,kind:'signature',page:1,x:20,y:20,width:200,height:40,required:true,label:'Signature'}]);
+  const document=options.document??{sha256:'a'.repeat(64),byte_length:1234,pages:[{page:1,crop_x:0,crop_y:0,crop_width:600,crop_height:800,rotation:0,width:600,height:800}]};
+  const fields=source.signers.flatMap((party,index)=>{
+   const base={signer_id:party.id,page:1,x:20,y:20+index*350};
+   return [{...base,id:randomUUID(),kind:'signature',width:200,height:40,required:true,label:'Signature'},
+    ...(options.allFieldTypes?[
+     {...base,id:randomUUID(),kind:'initials',y:base.y+50,width:80,height:24,required:true,label:'Initials'},
+     {...base,id:randomUUID(),kind:'signed_date',y:base.y+90,width:200,height:24,required:true,label:'Signed date'},
+     {...base,id:randomUUID(),kind:'text',y:base.y+130,width:250,height:28,required:true,label:'Requested text'},
+     {...base,id:randomUUID(),kind:'checkbox',y:base.y+170,width:24,height:24,required:true,label:'Explicit answer'},
+     {...base,id:randomUUID(),kind:'text',y:base.y+210,width:250,height:28,required:false,label:'Optional note'},
+    ]:[])];
+  });
+  const prepared=await prepareAgreementFields(source,document,fields);
   assert(prepared.ready_for_review);
   const manifest=canonicalPresentationJson(prepared.manifest),digest=createHash('sha256').update(manifest).digest('hex');
   sql(native(`SELECT public._retain_agreement_document_preparation('${actor}','${tenant}','${a.id}','${client}',${source.version},${q(source.updated_at)},
@@ -57,10 +69,10 @@ export async function provePreparedConfirmation({sql,read,context,tenant,actor,c
   sql(`INSERT INTO channel_connectors VALUES('${connector}','${tenant}','email','sendgrid',true,'active');`);
   const request={agreementId:a.id,expectedTenantId:tenant,operationId:operation,preparationId:preparation,preparationSha256:digest,
    reviewSha256:'b'.repeat(64),source:{client_id:client,version:source.version,updated_at:source.updated_at},title:'Original supplied document',
-   document:{sha256:document.sha256,byte_length:1234,page_count:1},recipients:[{id:signer.id,full_name:signer.full_name,email:signer.email,
-    signer_role:signer.signer_role,signing_order:signer.signing_order,field_count:1}],requestSchemaVersion:1,
+   document:{sha256:document.sha256,byte_length:document.byte_length,page_count:document.pages.length},recipients:source.signers.map(party=>({id:party.id,full_name:party.full_name,email:party.email,
+    signer_role:party.signer_role,signing_order:party.signing_order,field_count:fields.filter(f=>f.signer_id===party.id).length})),requestSchemaVersion:1,
    sender:{connector_id:connector,provider:'sendgrid',from_address:'business@example.test',from_name:null,reply_to:null},
-   messages:[{signer_id:signer.id,to:signer.email,subject:'Please review',body_text:'Synthetic reviewed words',body_html:'<p>Synthetic reviewed words</p>'}]};
+   messages:source.signers.map(party=>({signer_id:party.id,to:party.email,subject:'Please review',body_text:'Synthetic reviewed words',body_html:'<p>Synthetic reviewed words</p>'}))};
   const args={request,request_sha256:createHash('sha256').update(canonicalPresentationJson(request)).digest('hex'),operation_id:operation,
    expected_tenant_id:tenant,approval_subject:'agreement.prepared_signature_request:'+a.id+':'+operation,approval_cycle_nonce:cycle};
   return {a,source,signer,preparation,connector,operation,nonce,args,fp:await confirmFingerprint('agreement_send',args)};

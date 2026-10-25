@@ -584,12 +584,165 @@
       "otherSourcesExact": 124,
       "rootUnchanged": true
     },
-    "review": "Required source review before changing the one helper digest. No Root/29 aggregate/other124 source renewal is permitted by this correction.",
-    "INT336": "Existing first four native-boundary Node scripts pass locally; complete original hosted step remains under investigation, no check waiver.",
+    "review": "Source98b7df6c was separately reviewed before ONE helper digest renewal (ANT161f484fa71); final composition/review/CI remain required.",
+    "INT336": {
+      "old_actual_handler": {
+        "passed": 73,
+        "failed": 2,
+        "reason": "Two old closed-read expectations omitted the newly registered bounded agenda read."
+      },
+      "new_actual_registry": {
+        "passed": 33,
+        "failed": 0
+      },
+      "new_actual_handler": {
+        "passed": 78,
+        "failed": 0
+      },
+      "additional_original_handlers": [
+        {
+          "file": "scripts/int346-runtime-recovery-handler-check.mjs",
+          "status": 0,
+          "summary": [
+            "PASS 78 actual-handler cases / 0 failed; all provider/native ports recorded doubles"
+          ]
+        },
+        {
+          "file": "scripts/proof/calendar-booking-chat.mjs",
+          "status": 0,
+          "summary": [
+            "PASS actual agenda is not offered to an unresolved/ineligible actor: {\"tier\":\"client\"}",
+            "PASS actual agenda is not offered to an unresolved/ineligible actor: {\"classification\":null}",
+            "PASS actual agenda is not offered to an unresolved/ineligible actor: {\"classification\":{\"id\":\"00000000-0000-4000-8000-000000000002\",\"account_type\":\"agency\",\"parent_tenant_id\":null}}",
+            "PASS agenda retires model egress when workspace changes while its original read receipt settles",
+            "RESULT 42 PASS / 0 FAIL"
+          ]
+        },
+        {
+          "file": "scripts/proof/operations-task-chat.mjs",
+          "status": 0,
+          "summary": [
+            "PASS active ordinary Chat persists exact Task read truth: visible-empty",
+            "PASS active ordinary Chat persists exact Task read truth: needs input",
+            "PASS active ordinary Chat persists exact Task read truth: native refusal",
+            "PASS active ordinary Chat persists exact Task read truth: unavailable",
+            "RESULT 39 PASS / 0 FAIL"
+          ]
+        },
+        {
+          "file": "scripts/proof/planning-reminder-chat.mjs",
+          "status": 0,
+          "summary": [
+            "PASS execution uncertainty/regular-mode history is not fresh success [\"historical\"]",
+            "PASS model duplicate calls cannot borrow the native approval owning-call pin",
+            "PASS AUTO reminder preserves its existing direct9arg path without adopting a manual approval",
+            "PASS ordinary Planning read does not enter the reminder adopter",
+            "RESULT 33 PASS / 0 FAIL / 0 SKIP"
+          ]
+        },
+        {
+          "file": "scripts/proof/weekly-draft-chat.mjs",
+          "status": 0,
+          "summary": [
+            "PASS Consumed original changed is inspected without another claim or save",
+            "PASS Consumed original read still refuses a foreign business result without new work",
+            "PASS Missing schedule detail requests clarification without saving or preparing an approval",
+            "PASS An unrelated original reminder decline retains its own durable cancellation",
+            "RESULT 34 PASS / 0 FAIL"
+          ]
+        },
+        {
+          "file": "scripts/proof/planning-reminder-history-status.mjs",
+          "status": 0,
+          "summary": [
+            "PASS malformed original receipt withholds the historical result",
+            "PASS request aborted after resolver withholds the historical result",
+            "PASS strict status transport rejects an attached approval before history or action execution",
+            "PASS repeated explicit status reads remain observations rather than repeated effects",
+            "RESULT 16 PASS / 0 FAIL / 0 SKIP"
+          ]
+        },
+        {
+          "file": "scripts/proof/operations-specialist-history-status.mjs",
+          "status": 0,
+          "summary": [
+            "PASS falseSelector rejects before observation",
+            "PASS missingTurn rejects before observation",
+            "PASS message rejects before observation",
+            "PASS mutative rejects before observation",
+            "RESULT 18 PASS / 0 FAIL / 0 SKIP"
+          ]
+        },
+        {
+          "file": "scripts/proof/e09-cura-history-status.mjs",
+          "status": 0,
+          "summary": [
+            "PASS false selector refuses before observation",
+            "PASS missing origin refuses before observation",
+            "PASS selector on message refuses before observation",
+            "PASS repeated explicit status uses the same original native intent and never submits",
+            "RESULT 20 PASS / 0 FAIL / 0 SKIP"
+          ]
+        },
+        {
+          "file": "scripts/proof/e09-cura-teach-chat.mjs",
+          "status": 0,
+          "summary": []
+        },
+        {
+          "file": "scripts/int1807-observation-handler-check.mjs",
+          "status": 0,
+          "summary": [
+            "PASS status observation composition: unknown readback + lineage-validated non-application record reports confirmed_failure with executor reread and no settlement; reader unavailability stays outcome_unknown"
+          ]
+        },
+        {
+          "file": "scripts/int336-two-tool-check.mjs",
+          "status": 0,
+          "summary": [
+            "PASS actual handler two-tool batch: first native write truth preserved, second not dispatched, no next model, interrupted canonical receipt precedes release"
+          ]
+        }
+      ],
+      "new_fixture_failure": "First held agenda fixture77PASS/1FAIL lacked the original chained PostgREST abortSignal port. Add explicit recording query boundary, preserving production code and every old assertion; no native/production defect inferred."
+    },
     "invalid_tooling": [
       "First new Vitest invocation used unsupported minWorkers and ran no tests; corrected command exited0/125PASS.",
       "Direct module execution of c0b-incumbent-resource-binding has no entry point; exit0 is not validation. Actual exported validator reproduced original29/zero findings, then refused only changed helper."
     ],
-    "boundary": "Type-only source change; emitted runtime bytes identical. Ordinary authenticated read/Rail/reload/panel/provider/Live/full Experience acceptance remains held/owed."
+    "boundary": "Type-only source change; emitted runtime bytes identical. Ordinary authenticated read/Rail/reload/panel/provider/Live/full Experience acceptance remains held/owed.",
+    "source_pin_renewal": {
+      "review": "98b7df6cbce974f316cc6c3c626d9a93953f12d5/f484fa71-0bc0-4ac3-9c28-f438c6f21b20",
+      "from": "e6afa5a476d351286aae66fafa2d2153aaa3e7309ee80828b8cd505b5cf7ed9e",
+      "to": "41e960e069a4f09655b49e7413cd939e19c91ad3ea451952fa1e3aa372953547",
+      "literals": 1,
+      "inverseExact": true,
+      "oldSha": "656b6af11cd61c43b83dd1b6c7ffec9fd68d51ff27821d0f1365052ea2e44278",
+      "newSha": "fefb102379c1a812c38914afd81265ac11c0e6c4cb9fc75409823f6744dd0de8"
+    },
+    "actual_validator": {
+      "findings": [],
+      "tools": 29
+    },
+    "c0b_six": {
+      "tests": 234,
+      "passed": 234,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 143785.8428,
+      "command": {
+        "files": [
+          "scripts/ci/c0b-incumbent-resource-binding.test.mjs",
+          "scripts/ci/c0b-calendar-ancestry.test.mjs",
+          "scripts/ci/c0b-funding-studio-binding.test.mjs",
+          "scripts/ci/c0b-invitation-binding.test.mjs",
+          "scripts/ci/c0b-stored-read-binding.test.mjs",
+          "scripts/ci/c0b-crm-read-binding.test.mjs"
+        ],
+        "status": 0,
+        "signal": null,
+        "elapsedMs": 143891
+      }
+    }
   }
 }

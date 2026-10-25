@@ -1,3 +1,6 @@
+// EXP05 Calendar type-only correction: source review98b7df6cb / ANT161f484fa71
+// AUTHOR-REVIEW / LOWER ASSURANCE before this ONE helper digest renewal. Strict
+// consumer compile125PASS; emitted JS identical. Root/all29/other124 pins exact.
 // EXP05 original-outcome correction: pre-renewal AUTHOR-REVIEW / LOWER ASSURANCE
 // at4710ecc55 / Chat a4bd438a5, ANT161991f5439 / PR6392593760. All29 old
 // scalars reproduced; ONLY enclosing identity[15] changes. All125 source values,
@@ -1064,7 +1067,7 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/paige-turn/control-transport.ts": "aa43597cddb240e6ce5e27f12be91e674ba3bb1235554d75852e4cda69bc0975",
  "supabase/functions/_shared/operations-task-read.ts": "97dea16d6415e8114342904f2270e8257f4e5ea31431192a2e6f7f3e5fa05c4b",
  "supabase/functions/_shared/inbox-intelligence/policy.ts": "12b8711f7ba6bc1acf3c41f8221be74c3ac92699584a48dc36d1e5c2311b21b2",
- "supabase/functions/_shared/calendar-booking-read.ts": "e6afa5a476d351286aae66fafa2d2153aaa3e7309ee80828b8cd505b5cf7ed9e",
+ "supabase/functions/_shared/calendar-booking-read.ts": "41e960e069a4f09655b49e7413cd939e19c91ad3ea451952fa1e3aa372953547",
  "supabase/functions/_shared/solo-classification.ts": "a4a7b91f4c8d36d56548f3096bd6e0ef70cafca12036bd6fb81444f8294e845a",
  "supabase/functions/_shared/paige-spine/domains/calendar_booking.ts": "ce2ab054fe80fe836e89aaf4c42677e52224d7ed01aedc1a2ac07ab5f26d6afe",
  "supabase/functions/_shared/paige-spine/domains/teamAuthorityChatEvidence.ts": "2e513de67adec189f65b7a29df2d8e1943ff3a4366f3833ec3a1534d6300262f",

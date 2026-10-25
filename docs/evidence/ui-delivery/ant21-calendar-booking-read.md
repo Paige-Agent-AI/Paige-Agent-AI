@@ -294,3 +294,7 @@ Calendar dependency values. Exact inverse restores all remaining frozen guard
 bytes,125 paths/123 other source values and all metadata/validator code. Pure
 Operations guidance/start labels grant no authority and add no ancestry exemption.
 See the existing binding evidence JSON for complete derivation/correction history.
+
+### October25 exact hosted correction
+
+Candidate b67 hosted Deno failed with13 new inference diagnostics; immutable artifact12586838391 retained. Type-only source98b7df6c adds checked available-result shapes, strict public-consumer regression and identical emitted JavaScript;125 Calendar tests PASS. Separate AUTHOR-REVIEW / LOWER ASSURANCE ANT161f484fa71 preceded ONE helper digest renewal. Root/all29/other124 pins, extractor and original assertions unchanged. Current six C0b suites234PASS/0FAIL/0SKIP,143785.8428ms. Two stale recovery read expectations reproduced, then original registry33 and actual-handler78 controls pass with bounded agenda positive/foreign/team-refusal/no-effect cases. Explicit PostgREST fixture port correction retained; no production defect inferred from a missing fake method. Original Calendar42/task39/reminder33/weekly34/history/ZION/Portal recording-boundary regressions remain green. No new screen, layout, browser proof, provider/activation or customer acceptance. Required NEW exact-head hosted CI and production full-source proof remain gates; browser stop stays held. Full details and prior failure history remain in exp05-calendar-agenda-binding.json.

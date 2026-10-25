@@ -1,5 +1,31 @@
 # Paige Agent AI — Master Project Reference
 
+> **October24 EXP02 bounded Finance acceptance:** one new original-reference
+> VERA read matches the released Finance measurement and retains its saved reply,
+> source-step badge and original conversation after reload; [sanitized receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055).
+> Prior refusals remain historical. Candidate2694 rendering/release, other roles,
+> Live, full19/nine and founder acceptance remain open. No action or cash claim.
+
+> **October24 EXP02 Finance post-restart — source candidate:** main03edfad8a
+> is composed with unchanged Finance leaves; original Sales repair2768/d53d99e9
+> is merged and containing production03ed was observed. Fresh69/3 regression and
+> bounded synthetic current-shell/error/member/focus evidence pass; original zoom
+> assets are hash-bound. Positive ordinary Finance reference reacceptance remains
+> owed after the earlier FAIL. Candidate CI/review/release, all19/nine and founder
+> acceptance remain separate. [Current Finance record](brain/finance-department.md#october24--post-restart-current-main-confirmation).
+
+> **October24 EXP02 Finance — development and positive-review gap:** parent2694,
+> child2696 and Systems2690 have green applicable CI at their recorded exact
+> heads, not a merged/deployed candidate. Native synthetic viewport, focus and
+> browser200percent proof is bounded separately from released all-seven Finance
+> reads/navigation. The latest original-reference VERA read returned a saved
+> truthful refusal: positive review is FAIL/proof owed. EXP04 owns the pending
+> original Sales lifecycle repair2768; EXP02 owns reacceptance. No reference
+> revocation bypass, provider/Chat action activation or full19/nine acceptance.
+> [Current Finance evidence](evidence/ui-delivery/e2-finance-overview-hierarchy.md#october24--current-finance-verification-and-release-boundary).
+> Previous dated pending/accepted-negative statements retain their historical
+> scope. No Shipped Delivery Log row is added before this candidate merges.
+
 > **October19 EXP02 Finance — local, not released:** one existing business-review
 > composition extends to caller-authorized Finance source facts, using the canonical
 > company/binding/account-source contracts. Exact decimal major amounts and source
@@ -846,6 +872,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 | Increment | Exact release and production proof | Completion boundary |
 | --- | --- | --- |
 | [#2765](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2765), connect private uploads/bulk paste, admitted real-byte reading and original private history | Reviewed8e17244d73df650e0c362c8ccbcd47c995ac28a7 / AUTHOR-REVIEW LOWER5639196694 +5639392449; all11 exact-head checks/two web statusesSUCCESS. Full verify40117385591/120941752403 and native40117385515/120941367476SUCCESS, actual295scope/all294 original assertions retained. Mainbec74b8ecb9c1284e21b6f96ed35581a124b78eb/tree144560adedf1f5418086fcd907a95d58310dca21 preserves actual43e9b4b+8e17244 parents. Exact productiondpl_2YVTP1irHMhcxQUW5jGzq5Xci6BE READY/immutable+public200/buildbec74b8ecb9c1284e21b6f96ed35581a124b78eb-mvmq3xwg/customerUpdate:null. ProductionChat531 ACTIVE/JWTtrue/originalentry/noimportmap, all275 runtime hashes independently exact reviewed source; archive321832e9b80cc6e507908525c752a530d90d1c25304b1400cba239f213ec9d5b. Original810109/all11 native bodies/ABI/owners/ACL/searchpaths/terminal trigger independently match prior verified source. [Original release receipt6389411898](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2765#issuecomment-6389411898). | Automatic Edge40120140274 FAILED413/source5MB and left530 unchanged; official standing-authorized MCP deployed the exact complete275-file reviewed runtime closure already proved in Preview, then production531 source/config readback passed. Normal CLI collected three extra erased-type files; automatic packaging repair OPEN, edge-live NOT advanced, failed job not relabeled green. Mounted upload/bulk paste/PDF-image reading/private history and original same-ID unknown recovery/source guards are source-deployed; ordinary external-client/model/reload/isolation/revocation/physicaliPhone/zoom/AT/full42/seven/Teach/founder proof remains UNVERIFIED. Prior compiled desktop/narrow/light-dark/focus/44px/contrast5.43 evidence is bounded supporting proof. Word remains unpublished local work. No own migration, provider/Research/Live/Knowledge/business activation, identity/privilege or second store/runtime/history; CAP018–024/ALG maturity unchanged. Internal production source increment only, no customer version/announcement or recursive closeout row. |
+
+**2026-10-24/25 UTC — EXP09 original deployment packaging; source and bounded recovery verified.**
+
+| Increment | Exact release and production proof | Completion boundary |
+| --- | --- | --- |
+| [#2776](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2776), bound original CLI recovery of an explicit source-size rejection | Reviewed3bb50528ce320744cec5b586dc17775522901200/LOWER5640094616+5640211505, all10 applicable exact checksSUCCESS/schema-free PreviewSKIPPED/two statusesSUCCESS. General40134197911/120992349032 and native40134197918SUCCESS; app Test21:46:51→22:00:23. Main553f32f7cb7ea5297338b69692d9eb3c9754dfdb/treec210ae53b9ee845fcda9ab5f9d82bdf729f31a3a exactly inspected d90a04f7+3bb union; all five reviewed blobs exact, incoming EXP01Chat/EXP04Sales/EXP05claim/records preserved. Productiondpl_GypzqdzTxirLLbMazVzLPGHBZAqa READY; immutable+public HTTP200/build553f32f7cb7ea5297338b69692d9eb3c9754dfdb-mvmy4p4w/customerUpdate:null. Original automatic Edge40136916896/job121000269907SUCCESS, actual86 protected Python tests/OK in4.376s. [Actual receipt6390125500](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2776#issuecomment-6390125500). | SOURCE PUBLICATION ONLY. Selected/retired0; provider preflight/deploy/readback/tag steps correctlySKIPPED. This initial selected0 run did not prove provider recovery and left edge-lived3617646e494923887b9b9781c470901427a6c8a. Later [original recovery40137959302](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/40137959302)/job121003416943/source216768d8e1eccbaacc39717cd1858bae6087449f is independently SUCCESS: raw logs show API-first Chat→local_requested, agreement→API, complete original source/config PASS for both, then guarded edge-live216. Initial no-op/d361 and original40120140274FAILED remain historical evidence. Exact exit1/size text/same source-project-slug/no-map and actual Docker readiness alone admit one local request; auth/transport/timeout/unknown/abnormal/stale/mapped/local failures cannot authorize helper replay. Original full source/config verifier/JWT/retirement/tag guards preserved. No own migration, credentials/provider client, business effect or activation. Original2765 source531 and later recovery532/signing41 are dated source proof. Word2785 remains a separate open draft; actual customer file/model proof remains owed. No UI/capability/ALG/customer-version promotion; actual customer/model/upload/reload/revoke/phone/full42/seven/Teach/founder outcomes remain owed. This mechanical identity closeout has no recursive feature row. |
+
 
 **2026-10-24 UTC — EXP05 original weekly Chat native scope and recovery prerequisites; source released.**
 

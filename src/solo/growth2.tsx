@@ -23,6 +23,10 @@ import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
 import { FormIntakePanel } from "./form-intake";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { MarketingContent } from "./marketing-content";
+import { ContentCalendar } from "./content-calendar";
+// EXP07 row 8 — the Calendar tab's strip icon, in the strip's own stroke style (kept local: the
+// shared icon table is not this lane's file, and a changed shared file re-opens unrelated scans).
+const CalendarTabIcon=({size=14})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>;
 import { contentKindOf } from "./marketing-content-model";
 import { legacyAdsRoute } from "./ads-routing";
 import { CAPTURE_FILTERS, MarketingOverview } from "./marketing-overview";
@@ -92,8 +96,8 @@ function SurfaceHead({ truthKey, title, description, action }) {
 // owner-authored brief (campaign_briefs / useSoloCampaignBriefs), and each growth-loop stage is a
 // real source fact or an honest absence. `data` supplies the loop-source reads (pipeline, artifacts);
 // keyed by tenant so a workspace switch clears the desk's filters, drawers and pending edits.
-function Campaigns({ data, onRoute, autoOpenBrief, onAutoOpenConsumed }) {
-  return <CampaignOverview key={data.tenantId || "none"} data={data} onRoute={onRoute} autoOpenBrief={autoOpenBrief} onAutoOpenConsumed={onAutoOpenConsumed}/>;
+function Campaigns({ data, onRoute, autoOpenBrief, autoOpenDossierId, onAutoOpenConsumed }) {
+  return <CampaignOverview key={data.tenantId || "none"} data={data} onRoute={onRoute} autoOpenBrief={autoOpenBrief} autoOpenDossierId={autoOpenDossierId} onAutoOpenConsumed={onAutoOpenConsumed}/>;
 }
 
 // Offers: what this business sells. The definition belongs to the Sales lane (owner ruling
@@ -384,7 +388,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   const[tab,setTab]=useSubtabRoute("solo","growth","overview");
   // Commercial addresses resolve to Sales before Marketing readers mount.
   // The owner's order (2026-10-04). Ads left for its own department (owner, 2026-10-10).
-  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
+  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['calendar','Calendar',()=><CalendarTabIcon/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
   const data=useSoloCampaigns();
   const params=useParams();
   const location=useLocation();
@@ -551,11 +555,12 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   const toSales=React.useCallback(()=>{ const account=params.account; if(!account)return; navigate(salesInShell?subtabPath("solo",account,"sales","pipeline"):subtabPath("solo",account,"growth","pipeline")); },[navigate,params.account,salesInShell]);
   let body=<OverviewTab data={data} moved={moved} scrollToCapture={Boolean(moved&&moved!=="missing-form")||captureFilter!=="all"} onDismissMoved={()=>setOverviewQuery({moved:null})} onCanManage={setOverviewCanManage} captureFilter={captureFilter} onCaptureFilter={(filter)=>setOverviewQuery({capture:filter==="all"?null:filter})} onGo={goTo} onCreateBrief={createBrief} onOpenSales={toSales} onOpenForm={openForm} onOpenAsset={openAsset} onOpenContact={openContact} onOpenDeal={openDeal}/>;
   if(redirectTo) body=null;
-  else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} onAutoOpenConsumed={clearBriefRequest}/>;
+  else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} autoOpenDossierId={/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query.get("brief") ?? "") ? query.get("brief") : null} onAutoOpenConsumed={clearBriefRequest}/>;
   else if(tab==="analytics") body=<AnalyticsTab data={data} range={rangeOf(query.get("range")).key} onRange={(range)=>setOverviewQuery({range:range===DEFAULT_RANGE?null:range})} onOpenForm={openForm} onOpenSales={()=>{ if(!params.account) return; if(salesInShell) navigate(subtabPath("solo",params.account,"sales","performance")); else toSales(); }} studioLauncher={<StudioLauncher/>} onOpenEmail={()=>setTab("email")} onOpenRouting={params.account?()=>navigate(`${subtabPath("solo",params.account,"growth","overview")}?capture=form`):null}/>;
   else if(tab==="catalog") body=<Catalog setDetail={setDetail}/>;
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;
   else if(tab==="pipeline") body=<PipelineSurface key={data.tenantId} data={data} setDetail={setDetail} focusDealId={query.get("deal")} onClearFocus={()=>{const next=new URLSearchParams(location.search);next.delete("deal");navigate({pathname:location.pathname,search:next.toString()},{replace:true});}}/>;
+  else if(tab==="calendar") body=<ContentCalendar tenantId={data.tenantId} onOpenPiece={(id)=>{setOverviewQuery({piece:id});goTo("content");}}/>;
   else if(tab==="social") body=<Social data={data} onOpenCompass={openCompass} onOpenPipeline={openPipeline}/>;
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;

@@ -1,3 +1,44 @@
+## EXP02 Finance — October24 released read/persistence PASS
+
+New original-reference VERA read matches Finance and survives reload after the
+originating2768 repair; ANT52/47e3e3ad-2a66-4af3-9ca5-e2578b184b59. This bounded
+released proof preserves prior refusals and historical denominators. Candidate2694
+UI release, detailed activity/roles/Live/full19/nine/founder acceptance stay open.
+[Current Finance record](finance-department.md#october24-evening--original-reference-finance-read-and-reload-verified).
+
+## EXP02 Finance — October24 post-restart
+
+Local execution recovered; actual main03edfad8a preserves the original Sales
+initialization repair2768/d53d99e9. Fresh69/3 original Finance/shared metric tests
+and bounded current-source viewport/error/restricted/390px focus proof pass.
+Six original zoom frames are now hash-bound. [Current Finance record](finance-department.md#october24--post-restart-current-main-confirmation).
+Candidate release/current CI and positive ordinary reference review remain owed;
+all19/nine and one final founder evaluation are unchanged. Earlier dated states
+below are historical.
+
+## EXP02 Finance — October24 current checkpoint
+
+Parent2694, child2696 and Systems2690 applicable exact-head CI is green at the
+dated heads recorded in the [Finance brain](finance-department.md#october24--current-finance-verification-and-release-boundary).
+Native synthetic zoom/focus proof and all-seven released read/navigation evidence
+are separate. The latest original-reference VERA review is FAIL with a persisted
+truthful refusal; EXP04's original Sales lifecycle repair2768 is open.
+Candidate release, positive review/reload and complete19/nine acceptance remain
+owed. Historical superseded pending statements below retain their dated scope.
+No runtime, provider, catalogue or algorithm activation is inferred.
+
+## EXP02 Finance Overview refinement — October23, development only
+
+Owner requests Overview landing and clearer visuals across all seven Finance
+subpages. First bounded original-consumer refinement and current source/QA limits
+are in the existing [Finance brain](finance-department.md#october23--overview-visual-refinement-development-only)
+and [evidence](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Corrected released context handoff/refusal/reload is verified separately;
+EXP04 original reference-continuity repair2728 is now merged; positive
+same-reference customer proof remains owed. Earlier revocation/refusal evidence
+remains historical and is not new post-repair acceptance. Original authority, domain ownership and
+all19/nine remain unchanged. No candidate release or founder acceptance claimed.
+
 ## EXP04 exact preceding source releases — October24
 
 Original [#2741](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2741) reviewedb3c2dc01 (sequential LOWER6386092377/6386513022; all11 checks/two statuses SUCCESS) merged1b4a4a73f88c05a97b7a91ab3b6f09bc3d349ed1/tree6a632f0f, normal webDx6iqVuQKGXJD1Z4thY7qkAgeeXj and original immutable/public1b-mvmlokow/null readback retained. Original prepared-request input remains source-only/unused, with verified sender/exact message/HIGH request/atomic fields missing and original holds intact; no prepared-signing activation.
@@ -42,6 +83,35 @@ Chat/C0b edit lease is RELEASED at this exact source for the existing queued
 owners. CAP018–024 and ALG01/02/04/12/13 maturity and one integrated Founder
 Acceptance remain unchanged; no customer version/announcement or recursive
 product-release credit for this mechanical closeout.
+
+## EXP09 original deployment packaging — October24/25 source and bounded recovery verified
+
+Original2776 reviewed3bb50528ce320744cec5b586dc17775522901200/LOWER5640094616
++5640211505 passed all10 applicable checks/schema-free PreviewSKIPPED/two statuses,
+full general40134197911 and native40134197918. Actual main
+553f32f7cb7ea5297338b69692d9eb3c9754dfdb/treec210ae53b9ee845fcda9ab5f9d82bdf729f31a3a
+equals inspected d90+3bb union; all five blobs and incoming EXP01Chat/EXP04Sales/
+EXP05claim/records preserved. ProductionGyp READY and both immutable/public200,
+build553f-mvmy4p4w/null. [Original receipt6390125500](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2776#issuecomment-6390125500)
+and the sole [Master §4.0 row](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+retain exact identities.
+
+Automatic40136916896/121000269907 actually ran86 Python tests/OK, but selected
+and retired0: all provider/deploy/source-readback/tag steps correctlySKIPPED.
+This initial run proves workflow/source publication, not actual provider recovery.
+The later [original recovery40137959302](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/40137959302),
+job121003416943/source216768d8e1eccbaacc39717cd1858bae6087449f, is independently
+SUCCESS: raw logs show API-first Chat→local_requested, agreement→API, complete
+source/config PASS for both, then guarded edge-live216. Earlier d361/no-op and
+40120140274FAILED remain historical evidence. No raw provider error, secret or
+unknown outcome authorizes replay; import maps retain the existing hold.
+No new provider client, credentials, approval, runtime, job engine or activation.
+Own migration N/A; original2765 runtime531 and later recovery runtime532 are dated
+source proof, not actual customer file reading. Word2785 is a separate open draft;
+actual file/model/return/revoke/phone, all42/seven/Teach and Founder Acceptance
+remain unfinished. UI, catalogue
+and algorithm maturity unchanged; no customer version/publication or recursive
+feature credit for this closeout.
 
 ## EXP05 weekly original approval and recovery — October24 source released
 

@@ -226,7 +226,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(6);
     expect(count("calendar")).toBe(6);
-    expect(count("growth")).toBe(11);
+    expect(count("growth")).toBe(12); // +calendar (EXP07 row 8 planning subtab)
     expect(count("ads")).toBe(5);
     expect(count("sales")).toBe(7);
     expect(count("finance")).toBe(7);
@@ -235,7 +235,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("settings")).toBe(8);
     expect(count("team-hub")).toBe(0);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(73); // Executive extends Command Center; existing departmental destinations remain.
+    expect(total).toBe(74); // +growth/calendar (EXP07 row 8 planning subtab); Executive extends Command Center; existing departmental destinations remain.
     // First sub-tab is the screen's default; the bare Command Center opens Executive.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("executive");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");
@@ -268,6 +268,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     roundTrip("growth", "campaigns", "campaigns");
     roundTrip("growth", "audience", "audience");
     roundTrip("growth", "content", "content");
+    roundTrip("growth", "calendar", "calendar");
     roundTrip("growth", "email", "email");
     roundTrip("growth", "lead-capture", "capture");
     roundTrip("growth", "social", "social");
@@ -283,6 +284,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
       ["campaigns", "Campaigns"],
       ["audience", "Audience"],
       ["content", "Content"],
+      ["calendar", "Calendar"],
       ["social", "Social"],
       ["email", "Email"],
       ["analytics", "Analytics"],

@@ -41,6 +41,20 @@ const content = [
   { id: "mc-7", kind: "image", channel: null, status: "draft", title: "Testimonial card", updated_at: day(11), image_url: "/samples/card.svg", size: "square", body: null, brief: null },
   { id: "mc-11", kind: "image", channel: null, status: "draft", title: "Workshop announcement poster", updated_at: day(12), image_url: "/samples/event.svg", size: "portrait", body: null, brief: "A tall poster for the spring workshop: date, online, free" },
 ];
+// EXP07 row 8 — the content-calendar PLAN. Four entries across the next week: a ready email, a
+// planned post, a site slot with no linked piece (the honest "unspecified" case), and a cancelled
+// ad (strike-through state). `?plan=0` serves none (the empty state). Times are local-clock
+// offsets so the day groupings read naturally in any timezone the drive runs from.
+const hours = (n: number) => new Date(Date.now() + n * 3_600_000).toISOString();
+const plan = new URLSearchParams(window.location.search).get("plan") === "0" ? [] : [
+  { id: "cp-1", content_id: "mc-2", channel: "email_campaign", planned_for: hours(20), note: "Two days before the workshop", status: "ready" },
+  { id: "cp-2", content_id: "mc-4", channel: "social_post", planned_for: hours(28), note: null, status: "planned" },
+  { id: "cp-3", content_id: null, channel: "site", planned_for: hours(76), note: "Swap the hero to the workshop poster", status: "planned" },
+  { id: "cp-4", content_id: "mc-5", channel: "ad_copy", planned_for: hours(120), note: null, status: "cancelled" },
+];
+declare global { interface Window { __planCalls: Array<{ fn: string; args: Record<string, unknown> }> } }
+window.__planCalls = [];
+
 const identity = [{ default_email_sender: "hello@northfield.example", default_email_domain: "northfield.example", default_email_status: "verified" }];
 
 function answer(rows: unknown): Promise<Answer> {
@@ -66,4 +80,18 @@ function from(table: string) {
   return chain;
 }
 
-export const supabase = { from, rpc: () => answer(identity) };
+export const supabase = { from, rpc: (fn: string, args: Record<string, unknown>) => {
+    window.__planCalls.push({ fn, args });
+    if (fn === "content_plan_list") return answer(plan);
+    if (fn === "content_plan_upsert") {
+      let row = plan.find((e) => e.id === args.p_id);
+      if (!row) { row = { id: `cp-new-${plan.length + 1}`, content_id: null, channel: "social_post", planned_for: hours(24), note: null, status: "planned" }; plan.push(row); }
+      row.content_id = (args.p_content_id as string | null) ?? null;
+      row.channel = String(args.p_channel);
+      row.planned_for = String(args.p_planned_for);
+      row.note = (args.p_note as string | null) ?? null;
+      row.status = String(args.p_status);
+      return answer(row);
+    }
+    return answer(identity);
+  } };

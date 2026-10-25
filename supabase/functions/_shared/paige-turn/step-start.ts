@@ -54,6 +54,7 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   campaign_brief_create: "Creating a Campaign Brief",
   campaign_brief_revise: "Revising a Campaign Brief",
   campaign_brief_list: "Checking your campaign briefs",
+  read_campaign_leads: "Checking who that campaign brought in",
   // Booking calendars
   booking_preset_create: "Creating a booking calendar",
   booking_preset_duplicate: "Duplicating a booking calendar",

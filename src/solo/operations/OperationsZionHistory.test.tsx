@@ -4,21 +4,24 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { OperationsZionHistory } from './OperationsZionHistory';
 import type { ZionAssignmentRead } from './zion-assignment-read';
-const port = vi.hoisted(() => ({ read: vi.fn(), changed: null as ((event: string) => void) | null, unsubscribe: vi.fn() }));
+type AuthSnapshot = { user: { id: string; last_sign_in_at?: string } };
+const port = vi.hoisted(() => ({ read: vi.fn(), changed: null as ((event: string, session?: AuthSnapshot | null) => void) | null,
+  initial: null as AuthSnapshot | null, unsubscribe: vi.fn() }));
 vi.mock('./zion-assignment-read', () => ({ readZionAssignments: port.read }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { auth: { onAuthStateChange: (cb: (event: string) => void) => {
-  port.changed = cb; return { data: { subscription: { unsubscribe: port.unsubscribe } } };
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { auth: { onAuthStateChange: (cb: (event: string, session?: AuthSnapshot | null) => void) => {
+  port.changed = cb; cb('INITIAL_SESSION', port.initial); return { data: { subscription: { unsubscribe: port.unsubscribe } } };
 } } } }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const actor = '10000000-0000-4000-8000-000000000001', tenant = '20000000-0000-4000-8000-000000000001';
 const id = '30000000-0000-4000-8000-000000000001', receipt = '40000000-0000-4000-8000-000000000001';
 const entry = { id, specialist: 'zion', recorded_status: 'succeeded' as const, created_at: '2026-10-25T15:12:00Z' };
+const sameSession = () => ({ user: { id: actor, last_sign_in_at: '2026-10-25T14:00:00Z' } });
 const sample: ZionAssignmentRead = { status: 'ready', entries: [entry] };
 const result: ZionAssignmentRead = { status: 'ready', invocation: { ...entry, observed_at: '2026-10-25T15:15:00Z',
   receipt_state: 'conflicting', receipt_id: null, receipt_at: null, response_text: '<script>untrusted original text</script>',
   response_truncated: false, completion_scope: 'specialist_response_only', note: 'response only' } };
 let root: Root, host: HTMLDivElement;
-beforeEach(() => { vi.clearAllMocks(); port.changed = null; port.read.mockResolvedValue(sample);
+beforeEach(() => { vi.clearAllMocks(); port.changed = null; port.initial = sameSession(); port.read.mockResolvedValue(sample);
   host = document.createElement('div'); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 async function render(tenantId = tenant, userId = actor) { await act(async () => root.render(<OperationsZionHistory tenantId={tenantId} userId={userId} />)); }
@@ -78,4 +81,37 @@ it.each(['SIGNED_OUT', 'TOKEN_REFRESHED', 'USER_UPDATED'])('retires private insp
   await render(); await click('Inspect recent work'); await act(async () => port.changed?.(event));
   expect(host.textContent).not.toContain('Response recorded'); expect(port.read).toHaveBeenCalledTimes(1);
   expect(port.read.mock.calls[0][2]()).toBeNull();
+});
+it('preserves a populated original inspection on same-session sign-in notifications without another read', async () => {
+  await render(); await click('Inspect recent work'); port.read.mockResolvedValueOnce(result); await click('Inspect original response');
+  const original = host.textContent, epoch = port.read.mock.calls[1][2]();
+  await act(async () => port.changed?.('SIGNED_IN', sameSession()));
+  expect(host.textContent).toBe(original); expect(port.read).toHaveBeenCalledTimes(2);
+  expect(port.read.mock.calls[1][2]()).toEqual(epoch);
+});
+it('keeps an untouched collapsed section quiet on same-session sign-in notifications', async () => {
+  await render(); await act(async () => port.changed?.('SIGNED_IN', sameSession()));
+  expect(button('Inspect recent work').getAttribute('aria-expanded')).toBe('false');
+  expect(host.textContent).not.toContain('could not be verified'); expect(port.read).not.toHaveBeenCalled();
+});
+it('preserves a held read on same-session sign-in recovery', async () => {
+  let resolve!: (x: ZionAssignmentRead) => void; port.read.mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+  await render(); await click('Inspect recent work'); await act(async () => port.changed?.('SIGNED_IN', sameSession()));
+  expect(port.read.mock.calls[0][2]()).not.toBeNull(); await act(async () => resolve(sample));
+  expect(host.textContent).toContain('Response recorded'); expect(port.read).toHaveBeenCalledTimes(1);
+});
+it.each(['new-login', 'foreign-person', 'missing-metadata'] as const)('retires private results for %s rather than treating it as the same session', async kind => {
+  await render(); await click('Inspect recent work');
+  const session = kind === 'new-login' ? { user: { id: actor, last_sign_in_at: '2026-10-25T16:00:00Z' } }
+    : kind === 'foreign-person' ? { user: { id: tenant, last_sign_in_at: sameSession().user.last_sign_in_at } } : { user: { id: actor } };
+  await act(async () => port.changed?.('SIGNED_IN', session));
+  expect(host.textContent).not.toContain('Response recorded'); expect(port.read.mock.calls[0][2]()).toBeNull();
+  expect(port.read).toHaveBeenCalledTimes(1);
+});
+it('never revives an inspection from a late initial notification after sign-out and reentry', async () => {
+  await render(); await click('Inspect recent work');
+  await act(async () => port.changed?.('SIGNED_OUT', null));
+  await act(async () => { port.changed?.('INITIAL_SESSION', sameSession()); port.changed?.('SIGNED_IN', sameSession()); });
+  expect(host.textContent).not.toContain('Response recorded'); expect(port.read.mock.calls[0][2]()).toBeNull();
+  expect(port.read).toHaveBeenCalledTimes(1);
 });

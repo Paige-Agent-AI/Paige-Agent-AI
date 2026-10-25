@@ -27,13 +27,23 @@ export function OperationsZionHistory({ tenantId, userId }: { tenantId: string; 
   useEffect(() => {
     mounted.current = true;
     lifecycle.current = {};
-    const { data } = supabase.auth.onAuthStateChange(event => {
-      if (event === 'INITIAL_SESSION' || liveScope.current !== scope) return;
+    let signInStamp: string | null = null, observedChange = false;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (liveScope.current !== scope) return;
+      // Reuse the canonical tenant context's genuine-sign-in distinction. This
+      // nonsecret metadata controls retention only; it grants no read authority.
+      const at = session?.user.id === userId ? session.user.last_sign_in_at : null;
+      const stamp = typeof at === 'string' && Number.isFinite(Date.parse(at)) ? at : null;
+      if (event === 'INITIAL_SESSION') { if (!observedChange) signInStamp = stamp; return; }
+      observedChange = true;
+      if (event === 'SIGNED_IN' && stamp !== null && stamp === signInStamp) return;
+      signInStamp = event === 'SIGNED_OUT' ? null : stamp;
       sequence.current++;
-      setSaved({ scope, phase: event === 'SIGNED_OUT' ? 'refused' : 'unavailable' });
+      setSaved(previous => previous.scope !== scope || previous.phase === 'idle' ? { scope, phase: 'idle' }
+        : { scope, phase: event === 'SIGNED_OUT' ? 'refused' : 'unavailable' });
     });
     return () => { mounted.current = false; lifecycle.current = {}; data.subscription.unsubscribe(); };
-  }, [scope]);
+  }, [scope, userId]);
   const request = () => {
     const epoch = ++sequence.current, generation = lifecycle.current, origin = { actorId: userId, tenantId, epoch };
     const current = () => mounted.current && lifecycle.current === generation && liveScope.current === scope && sequence.current === epoch ? origin : null;

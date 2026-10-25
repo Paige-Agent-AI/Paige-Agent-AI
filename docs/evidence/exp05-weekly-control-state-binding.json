@@ -58,5 +58,13 @@
     "causalProof": "Original strict ES2020 claim consumer: TS2322 reproduced before correction, zero diagnostics after. Generated input-module JavaScript is byte-identical to the reviewed prior head.",
     "regressionProof": "140 original binder/review/claim/commit tests PASS, zero failed or skipped. Full native120 and earlier189 composed cases remain separately recorded source proofs; new exact-head CI is required.",
     "boundary": "Preparation only; no approval, recurrence enablement, execution, source-certification or customer acceptance is inferred."
+  },
+  "missingCutoffCorrection": {
+    "finding": "The legacy status parser converted an absent future-control cutoff to explicit null. Unmounted authorization preparation could therefore invent that part of its saved snapshot. The existing native compare-and-authorize still refused a differing actual cutoff; no production execution or exploit is claimed.",
+    "red": "Original read/review36 cases:34 PASS,2 causal FAIL for invented-null status and authorization preparation from missing evidence.",
+    "repair": "Preserve absent cutoff as unknown in the existing optional projection field. Keep legacy status readable and all model-visible projections unchanged; refuse only authorize preparation with unknown cutoff. Explicit null and exact original microseconds remain valid.",
+    "green": "294 original binder/read/review/claim/commit/draft/native-human-control consumer cases PASS,0FAIL,0skip. Strict original claim/review ES2020 graph and scoped lint are checked separately. Current native120 proof remains the earlier independent source-to-native evidence.",
+    "unchanged": "No existing native writer, UI, model intent/schema, permission, approval store, Root/Spine/Kit, provider, trigger or activation change. Required exact-head CI and ordinary customer proof remain separate.",
+    "validation": "Strict ES2020 original claim/review graph0 diagnostics; scoped lint0; unchanged original Spine registry self-test PASS and original231-capability validation PASS, no pin/validator changes."
   }
 }

@@ -35,6 +35,9 @@ export async function prepareWeeklyControlReview(identity: ContextIdentity, deps
   if (target?.schedule_status === "cancelled" && ["configure", "authorize", "resume"].includes(operation)) {
     return { status: "needs_input" as const, reason: "cancelled_definition" };
   }
+  if (operation === "authorize" && target?.future_control_at === undefined) {
+    return { status: "unavailable" as const, reason: "canonical_binding_failed" };
+  }
   const binding = bindWeeklyControlForReview(operation, intent, {
     requestId, process: target ? { id: target.automation_id, revision: target.revision,
       control: { state: target.schedule_status, future_control_at: target.future_control_at ?? null } } : undefined,

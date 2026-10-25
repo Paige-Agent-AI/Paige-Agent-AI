@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { prepareWeeklyControlReview } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-control-review";
+import { readWeeklyCommitmentProjection } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 import type { WeeklyControlOperation } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-control-input";
 
@@ -9,7 +10,7 @@ const identity: ContextIdentity={actorId:actor,tenantId:tenant,workspaceId:tenan
 const schedule={weekday:1,local_time:"09:00",timezone:"America/New_York"};
 function canonical() { return {ok:true,tenant_id:tenant,actor_id:actor,scope:"personal_planning_commitments",read_at:"2026-10-14T20:00:00Z",limit:50,has_more:false,
   business_time_zone:{state:"configured",zone:"America/New_York"},checks:[{automation_id:process,name:"Weekly commitment check",revision:7,
-    schedule_status:"paused",schedule,execution_availability:"held",execution_hold_reason:"paused",next_run_at:null,intended_next_run_at:"2026-10-19T13:00:00Z",
+    schedule_status:"paused",schedule:{...schedule,future_control_at:null},execution_availability:"held",execution_hold_reason:"paused",next_run_at:null,intended_next_run_at:"2026-10-19T13:00:00Z",
     last_run:{event_id:request,act_id:null,scheduled_for:"2026-10-12T13:00:00Z",status:"unknown"},last_verified_run:null}]}; }
 function fixture(data:unknown=canonical()) {
   let current=identity; const calls:string[]=[];
@@ -19,6 +20,24 @@ function fixture(data:unknown=canonical()) {
 const target={automation_id:process};
 
 describe("canonical weekly conversation review without approval or execution",()=>{
+  it("keeps a legacy status readable without inventing a saved null control cutoff",async()=>{
+    const data=canonical();Object.assign(data.checks[0],{schedule});
+    const read=await readWeeklyCommitmentProjection(identity,fixture(data));
+    expect(read.status).toBe("available");
+    expect(read.data?.checks[0].future_control_at).toBeUndefined();
+  });
+  it("cannot prepare authorization when the original status omitted its control cutoff",async()=>{
+    const data=canonical();Object.assign(data.checks[0],{schedule});
+    const f=fixture(data),result=await prepareWeeklyControlReview(identity,f,"authorize",target,request);
+    expect(result).toMatchObject({status:"unavailable",reason:"canonical_binding_failed"});
+    expect(result).not.toHaveProperty("binding");
+    expect(f.calls.every(name=>["current_user_tenant_id","weekly_commitment_owner","get_weekly_commitment_checks"].includes(name))).toBe(true);
+  });
+  it("preserves a genuine explicit null cutoff for exact authorization preparation",async()=>{
+    const result=await prepareWeeklyControlReview(identity,fixture(),"authorize",target,request);
+    expect(result).toMatchObject({status:"review_ready",binding:{args:{
+      _expected_control:{state:"paused",future_control_at:null}}}});
+  });
   it("uses the actual saved control cutoff in authorization preparation and never calls a writer",async()=>{
     const data=canonical(),cutoff="2026-10-23T15:20:10.123456+00:00";
     Object.assign(data.checks[0],{schedule:{...schedule,future_control_at:cutoff}});

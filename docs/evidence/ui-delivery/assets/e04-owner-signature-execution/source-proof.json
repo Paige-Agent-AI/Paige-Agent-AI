@@ -360,6 +360,17 @@
       "steps": 54,
       "result": "PASS",
       "includes": "Both original agreement-send and released C48 sign-agreement HTTP tests; strict frozen/cached/effect flags unchanged"
+    },
+    "legacyFence": {
+      "result": "PASS",
+      "source": "c15a90ba9262132b9f6c27270e69718a097c6245",
+      "baseline": "e04-c51-configured-legacy-causal-1792970758907.log:13 original steps PASS/two new steps FAIL against exact dd926 source; candidate restored in finally",
+      "repaired": "e04-c51-preserved-cap-final-sdk-1792970841979.log",
+      "tests": 137,
+      "steps": 56,
+      "logSha256": "7d46b67c3ad0d79a4fb43136876408b010c47fcf9bd0d4406320c457679fab13",
+      "scope": "Actual handler/pinned SDK and synthetic transport only; no provider effect. Both legacy send/resend reject retained preparations, failed lookup remains held, and no-preparation positive reaches original scoped record lookup.",
+      "incumbentCorrection": "First candidate failed original workspace-cap ordering. Moved the additive read after original readiness/rate gates; every incumbent assertion and strict permission flag retained."
     }
   },
   "limitations": [
@@ -375,7 +386,7 @@
     "shell": "Exact original + own HTTP test + native eligibility flag only",
     "sourceCheckpoint": "84d0ae0cb684b0397e164676d09cbd3d71b26903"
   },
-  "finalRuntimeSource": "354707f40759a9896da7e38e51aa974940a4ea27",
+  "finalRuntimeSource": "c15a90ba9262132b9f6c27270e69718a097c6245",
   "finalSourceFiles": [
     {
       "file": "docs/binding-ledger/surface-binding-ledger.json",
@@ -459,15 +470,16 @@
     },
     {
       "file": "supabase/functions/agreement-send/index.ts",
-      "sha256": "e1c86c818d2ebcec873280a95b3107cf81b402d48f640e719967afedcb54efa1"
+      "sha256": "96376ccbe424d4b87e4eff14616b226f9e0cfb41839215534d8a10afc1b1b4b0"
     },
     {
       "file": "supabase/functions/agreement-send/prepared-command.test.ts",
-      "sha256": "e92cb670939a683dee2b419ae8dcc2461e528ce3282bd672cec661ab13fd3317"
+      "sha256": "19ff0e1aaef9a6423b1c1702ae3decf78e5ea73c6775bff5c0d711bae4fd592f"
     },
     {
       "file": "supabase/migrations/20271114280004_e04_prepared_work_availability.sql",
       "sha256": "c3cb0ed87060af2eec12fb7e7bf63610371b756687e896d08bcf22cbe8f44c80"
     }
-  ]
+  ],
+  "previousRuntimeCheckpoint": "354707f40759a9896da7e38e51aa974940a4ea27"
 }

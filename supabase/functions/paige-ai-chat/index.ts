@@ -17,6 +17,7 @@ import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts"
 import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, weeklyCommitmentStatusToolsForContext, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME, WEEKLY_COMMITMENT_DRAFT_TOOLS, weeklyCommitmentDraftToolsForContext, OWNER_TASK_HISTORY_TOOL_NAME, OWNER_TASK_HISTORY_TOOLS, ownerTaskHistoryToolsForContext } from "../_shared/paige-spine/domains/automations.ts";
 import { prepareWeeklyCommitmentChatResponse } from "../_shared/paige-orchestration/weekly-commitment-read.ts";
 import { readOwnerTaskHistoryForChat } from "../_shared/paige-orchestration/owner-task-history-chat.ts";
+import { readBoundedAutomationList, type AutomationListCaller } from "../_shared/paige-orchestration/automation-list-read.ts";
 import type { OwnerTaskHistoryClients } from "../_shared/paige-orchestration/owner-task-history.ts";
 import { bindWeeklyControlForReview, parseWeeklyControlIntent } from "../_shared/paige-orchestration/weekly-commitment-control-input.ts";
 import { claimWeeklyDraftChatApproval, weeklyDraftNativeArgs } from "../_shared/paige-orchestration/weekly-draft-chat-claim.ts";
@@ -13672,11 +13673,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Couldn't read what's able to start a process right now." }) });
           }
         } else if (tc.function.name === "automation_list") {
-          // Each row carries its RESOLVED posture, not just its stored grant, because the stored
-          // grant is the question the operator asked and the resolved one is the answer. A process
-          // set to `auto` that is actually asking — because the ceiling or one of its own steps
-          // holds it — must not be reported as running unattended (§13).
-          try {
+          // Preserve the existing non-tenant/Operator read; its Experience owns
+          // that contract. This change bounds the shared tenant workspace read.
+          if (callerTier !== "tenant") {
+            try {
             const { data, error } = await supabaseClient
               .from("paige_automations")
               .select("id,name,category,trigger_key,granted_lane,state,created_at")
@@ -13703,6 +13703,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }) });
           } catch (_e) {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Couldn't read this workspace's processes right now." }) });
+          }
+          } else {
+          const automationTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;
+          const automationIdentity = { actorId: user.id, tenantId: automationTenant,
+            scopeEpoch: payloadThreadId ?? validatedData.requestIntentId ?? "current_request" };
+          const currentAutomationIdentity = () => req.signal.aborted || tenantKnowledgeScopeRevoked || customerPortal
+            || scopedClientId || callerTier !== "tenant" ? null
+            : { ...automationIdentity, tenantId: personaCtx?.tenant_id ?? null };
+          const result = await readBoundedAutomationList(automationIdentity, {
+            caller: supabaseClient as unknown as AutomationListCaller, signal: req.signal,
+            currentIdentity: currentAutomationIdentity,
+            revalidateScope: async signal => !signal.aborted && currentAutomationIdentity() !== null
+              && await revalidateTenantKnowledgeScope(true) && !signal.aborted && currentAutomationIdentity() !== null,
+          });
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
           }
         } else if (tc.function.name === "automation_draft") {
           // Drafting never grants autonomy. Reconcile native records before claiming a saved process.

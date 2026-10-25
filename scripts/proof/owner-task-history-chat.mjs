@@ -27,7 +27,7 @@ const queryShapes = [];
 const proto = Object.getPrototypeOf(fake.createClient('', 'anon-key'));
 const originalRpc = proto.rpc;
 proto.rpc = function(name, parameters) {
-  if (name !== 'list_team_bookings' && !['current_user_tenant_id', 'get_team_authority_readiness', 'is_tenant_member', 'is_tenant_admin'].includes(name)) return originalRpc.call(this, name, parameters);
+  if (name !== 'list_team_bookings' && !['current_user_tenant_id', 'get_team_authority_readiness', 'is_tenant_member', 'is_tenant_admin', 'resolve_automation_autonomy'].includes(name)) return originalRpc.call(this, name, parameters);
   const shape = { name, parameters, client: this._kind, operations: [] }; queryShapes.push(shape);
   const promise = originalRpc.call(this, name, parameters);
   const query = { select(value) { shape.operations.push(['select', value]); return query; },
@@ -99,15 +99,17 @@ const check = async (name, run) => { try { await run(); cases.push({ name, statu
   catch (error) { cases.push({ name, status: 'FAIL', error: error.stack }); console.error('FAIL ' + name + ': ' + error.message); } };
 async function execute({ role = 'owner', tier = 'tenant', args = { approval_id: approvalId }, allowed = true,
   shape = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, missingReceipt = false,
-  afterNative, afterReceipt, receiptOk = true, approvalRow = approval(), occurrenceRow = occurrence() } = {}) {
+  afterNative, afterReceipt, receiptOk = true, approvalRow = approval(), occurrenceRow = occurrence(),
+  automation = false, automationRows = [], automationFailure = false, afterAutomation } = {}) {
   receipts.length = 0; modelBodies.length = 0; queryShapes.length = 0; executorState.held = null;
-  modelCalls = 0; readToolUse = { name: 'read_owner_task_act', input: args };
+  modelCalls = 0; readToolUse = { name: automation ? 'automation_list' : 'read_owner_task_act', input: automation ? {} : args };
   let active = tenant;
   const rec = scenario({ tables: {
     profiles: () => [{ active_tenant_id: active }], tenants: shape ? [shape] : [],
     tenant_members: [{ tenant_id: tenant, user_id: actor, role, status: 'active' }],
     paige_approval_queue_v: [approvalRow], paige_act_executions: [occurrenceRow],
     paige_workspace_events: missingReceipt ? [] : [originalReceipt()],
+    paige_automations: automationRows,
   }, rpcs: {
     paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
     paige_chat_interactive_publication_context_v2: { data: true, error: null },
@@ -119,18 +121,24 @@ async function execute({ role = 'owner', tier = 'tenant', args = { approval_id: 
     can_read_owner_task_approval: { data: allowed, error: null },
     read_owner_task_act: () => { if (afterNative) active = afterNative; return { data: native(), error: null }; },
     record_capability_run: () => { if (afterReceipt) active = afterReceipt; return { data: receiptOk, error: receiptOk ? null : { message: 'fixture receipt unavailable' } }; },
+    resolve_automation_autonomy: () => {
+      if (afterAutomation) active = afterAutomation;
+      return automationFailure ? { data: null, error: { message: 'PRIVATE_AUTOMATION_FAILURE' } }
+        : { data: { found: true, state: 'live', granted: 'confirm', effective: 'confirm', capped_by: null, would_run: true, dark: [] }, error: null };
+    },
   } });
-  const response = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Read the original saved task outcome for approval ' + approvalId }] }, id(100 + requestSequence++)));
+  const response = await capturedHandler()(req({ messages: [{ role: 'user', content: automation ? 'Inspect my saved processes. Do not change or run anything.' : 'Read the original saved task outcome for approval ' + approvalId }] }, id(100 + requestSequence++)));
   const wire = await response.text();
   const results = modelBodies.flatMap(body => body.messages ?? []).filter(message => message.role === 'user')
     .flatMap(message => Array.isArray(message.content) ? message.content : []).filter(part => part.type === 'tool_result');
   let value = null;
-  for (const part of results) { try { const parsed = JSON.parse(part.content); if (parsed?.status) value = parsed; } catch {} }
+  for (const part of results) { try { const parsed = JSON.parse(part.content); if (parsed?.status || automation && typeof parsed?.success === 'boolean') value = parsed; } catch {} }
   assert.equal(rec.functions.length, 0, 'no domain/provider function invocation');
   assert.ok(!rec.rpc.some(c => /execute_owner_task|approve_act|reconcile_act|claim|commit_weekly|create_task/.test(c.name)), 'no execution or decision RPC');
   assert.ok(!rec.inserts.some(c => /crm_tasks|paige_act_executions|paige_pending_approvals/.test(c.table)), 'no task, ledger or approval write');
   return { rec, wire, value, offered: modelBodies[0]?.tools?.map(t => t.name) ?? [] };
 }
+if (!process.argv.includes('--automation-list')) {
 await check('ordinary Chat owner reads original Task and Rail evidence with a separate inspection receipt', async () => {
   const r = await execute();
   assert.ok(r.offered.includes('read_owner_task_act'));
@@ -184,5 +192,50 @@ await check('a subsequent distinct Chat request reads the same original operatio
   assert.equal(b.value?.original.originalTask.receiptId, originalReceiptId);
   assert.equal(b.rec.rpc.filter(c => c.name === 'read_owner_task_act').length, 1);
 });
+}
+if (process.argv.includes('--automation-list')) {
+  const processRow = n => ({ id: id(700 + n), tenant_id: tenant, name: `Protected process ${n}`, category: 'general',
+    trigger_key: 'contact.created', granted_lane: 'confirm', state: 'live', created_at: stamp });
+  await check('actual Chat automation inspection uses caller JWT and the original selected business without execution', async () => {
+    const r = await execute({ automation: true, automationRows: [processRow(0)] });
+    assert.equal(r.value?.success, true); assert.equal(r.value.automations[0].readiness, 'resolved');
+    assert.equal(r.value.automations[0].what_actually_happens, 'confirm');
+    assert.equal(r.value.automations[0].would_it_run, true);
+    assert.ok(r.rec.rpc.filter(c => c.name === 'resolve_automation_autonomy').every(c => c.client === 'jwt'));
+    assert.equal(r.rec.rpc.filter(c => c.name === 'resolve_automation_autonomy').length, 1);
+  });
+  await check('actual Chat failed automation resolver remains explicit unavailable readiness without private error', async () => {
+    const r = await execute({ automation: true, automationRows: [processRow(0)], automationFailure: true });
+    assert.equal(r.value?.success, true); assert.equal(r.value.readiness, 'partial');
+    assert.equal(r.value.automations[0].readiness, 'unavailable');
+    assert.equal(r.value.automations[0].would_it_run, null); assert.equal(r.value.automations[0].cannot_fire_because, null);
+    assert.ok(!JSON.stringify(modelBodies).includes('PRIVATE_AUTOMATION_FAILURE'));
+  });
+  await check('actual Chat automation window exposes truncation and resolves at most fifty records', async () => {
+    const r = await execute({ automation: true, automationRows: Array.from({ length: 51 }, (_, n) => processRow(n)) });
+    assert.equal(r.value?.success, true); assert.equal(r.value.coverage.has_more, true);
+    assert.equal(r.rec.rpc.filter(c => c.name === 'resolve_automation_autonomy').length, 50);
+  });
+  await check('actual Chat empty automation source is explicit rather than a fabricated execution result', async () => {
+    const r = await execute({ automation: true }); assert.equal(r.value?.success, true);
+    assert.deepEqual(r.value.automations, []); assert.equal(r.value.coverage.has_more, false);
+  });
+  await check('actual Chat workspace withdrawal suppresses process titles after resolver read', async () => {
+    const r = await execute({ automation: true, automationRows: [processRow(0)], afterAutomation: id(99) });
+    assert.notEqual(r.value?.success, true); assert.ok(!JSON.stringify(modelBodies).includes('Protected process 0'));
+    assert.ok(!r.wire.includes('Protected process 0'));
+  });
+  await check('actual Chat ordinary member retains the existing read lane without granting process control', async () => {
+    const r = await execute({ automation: true, role: 'member', automationRows: [processRow(0)] });
+    assert.equal(r.value?.success, true); assert.equal(r.value.read_only, true);
+    assert.ok(!r.offered.includes('automation_set_grant')); assert.ok(!r.offered.includes('automation_set_state'));
+  });
+  await check('existing Operator admission withholds tenant automation readiness and process control', async () => {
+    const r = await execute({ automation: true, tier: 'operator', automationRows: [processRow(0)] });
+    assert.notEqual(r.value?.success, true);
+    assert.equal(r.rec.rpc.filter(c => c.name === 'resolve_automation_autonomy').length, 0);
+    assert.ok(!r.offered.includes('automation_set_grant')); assert.ok(!r.offered.includes('automation_set_state'));
+  });
+}
 console.log('RESULT ' + cases.filter(c => c.status === 'PASS').length + ' PASS / ' + cases.filter(c => c.status === 'FAIL').length + ' FAIL');
 if (cases.some(c => c.status === 'FAIL')) process.exitCode = 1;

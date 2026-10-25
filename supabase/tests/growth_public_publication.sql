@@ -31,6 +31,9 @@ DO $fixture$ DECLARE owner_id uuid; BEGIN
    INSERT INTO auth.users(id,email) VALUES(owner_id,'pubbrand-fixture-owner@example.invalid');
    INSERT INTO public.user_roles(user_id,role) VALUES(owner_id,'super_admin');
  END IF;
+ -- The tenants guard demands the platform owner for system-workspace features; the fixture
+ -- writes land as that authenticated super-admin, exactly the public_visits.sql pattern.
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('role','authenticated','sub',owner_id)::text,true);
 END $fixture$;
 INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,features) VALUES
  ('b1900700-0000-4000-8000-000000000711','pubbrand-a','Publish Brand A','active','standalone','PBA','{"system_workspace":true}'),

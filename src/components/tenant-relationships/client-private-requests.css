@@ -1,0 +1,38 @@
+.trc-private-request { min-width: 0; margin: 16px 0 20px; padding: 0 0 20px; border-bottom: 1px solid var(--pg-line-soft); color: var(--pg-ink-2); font: inherit; }
+.trc-private-request[hidden] { display: none; }
+.trc-private-title, .trc-private-history-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.trc-private-title h4 { margin: 0; color: var(--pg-ink); font-size: 14px; line-height: 1.4; font-weight: 600; }
+.trc-private-request h5 { margin: 0; color: var(--pg-ink); font-size: 13.5px; line-height: 1.5; font-weight: 600; }
+.trc-private-request p { max-width: 65ch; margin: 8px 0 14px; overflow-wrap: anywhere; }
+.trc-private-request form { display: grid; min-width: 0; gap: 8px; }
+.trc-private-request label { display: flex; min-width: 0; justify-content: space-between; gap: 8px; color: var(--pg-ink); font-size: 13px; font-weight: 600; }
+.trc-private-request label span { flex-shrink: 0; color: var(--pg-muted); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.trc-private-request input, .trc-private-request textarea { box-sizing: border-box; width: 100%; min-width: 0; padding: 10px 12px; margin: 0 0 8px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); background: var(--pg-surface); color: var(--pg-ink); caret-color: var(--pg-violet); font: inherit; font-size: 14px; line-height: 1.55; }
+.trc-private-request input { min-height: 44px; }
+.trc-private-request textarea { min-height: 8rem; resize: vertical; }
+.trc-private-request input:read-only, .trc-private-request textarea:read-only { color: var(--pg-ink-2); }
+.trc-private-request input:focus-visible, .trc-private-request textarea:focus-visible, .trc-private-saved h5:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; }
+.trc-private-request input[aria-invalid="true"], .trc-private-request textarea[aria-invalid="true"] { border-color: var(--pg-negative); }
+.trc-private-request ::selection { background: color-mix(in srgb, var(--pg-violet) 24%, transparent); }
+.trc-private-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.trc-private-request button { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+.trc-private-request button:disabled { cursor: default; opacity: .65; }
+.trc-private-title svg, .trc-private-saved h5 svg, .trc-private-note svg { flex-shrink: 0; width: 15px; height: 15px; }
+.trc-private-note { color: var(--pg-muted); font-size: 12.5px; line-height: 1.55; }
+.trc-private-note:has(svg), .trc-private-saved h5 { display: flex; align-items: flex-start; gap: 7px; }
+.trc-private-saved > strong { display: block; margin-top: 14px; color: var(--pg-ink); font-size: 14px; overflow-wrap: anywhere; }
+.trc-private-saved .trc-action-words { margin-bottom: 14px; }
+.trc-private-feedback { color: var(--pg-ink); }
+.trc-private-history { min-width: 0; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--pg-line-soft); }
+.trc-private-history ul { margin: 4px 0 8px; padding: 0; list-style: none; }
+.trc-private-history li { margin: 0; border-top: 1px solid var(--pg-line-soft); }
+.trc-private-history li:first-child { border-top: 0; }
+.trc-private-history li > button { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 20px; width: 100%; min-height: 44px; padding: 12px 0; border: 0; border-radius: var(--pg-r-chip); background: transparent; color: var(--pg-ink); text-align: left; font: inherit; cursor: pointer; }
+.trc-private-history li > button:hover:not(:disabled) { background: var(--pg-raised); }
+.trc-private-history li > button:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; }
+.trc-private-history li > button > span { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.trc-private-history small, .trc-private-history time { display: block; margin-top: 3px; color: var(--pg-muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
+.trc-private-history time { flex: 0 1 11rem; text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .trc-private-history li > button { flex-wrap: wrap; } .trc-private-history time { flex-basis: 100%; text-align: left; } }
+.trc-private-disclosure { margin: 0 0 14px; }
+.trc-private-disclosure[hidden] { display: none; }

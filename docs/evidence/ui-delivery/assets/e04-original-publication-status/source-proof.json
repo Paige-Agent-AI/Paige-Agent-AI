@@ -1,0 +1,347 @@
+{
+  "capturedAt": "2026-10-25T20:42:55.057Z",
+  "scope": "Engineering evidence only; no hosted customer/provider acceptance",
+  "source": {
+    "nativeFrozenHead": "55f27db2de203d973357fb7ff3e10db1b891b209",
+    "compositionHead": "5ff4431beb11fde049512c54f3d08f2eead3e724",
+    "compositionBase": "a8aaa131631f77eb0eb4da7cfd9d8bbba4884267",
+    "inputs": [
+      {
+        "path": "scripts/agreements/prepared-publication-status-proof.mjs",
+        "sha256": "690a0184e33b0447665dcd7f1f984f9503e1af7e9d57704e6055ce3fcfaa9e43",
+        "gitBlob": "7600d4483d2c1129560e35b787ab3cbf3edfca24",
+        "nativeFrozenBlob": "7600d4483d2c1129560e35b787ab3cbf3edfca24"
+      },
+      {
+        "path": "scripts/agreements/prepared-request-status-proof.mjs",
+        "sha256": "c783c1feb215329bda3328bf9ca89499df2f310418ca38d846ad38c7cbde50bf",
+        "gitBlob": "53a8f40f0de1652988b80fa96125db5e51657761",
+        "nativeFrozenBlob": "53a8f40f0de1652988b80fa96125db5e51657761"
+      },
+      {
+        "path": "scripts/agreements/prepared-signature-completion-proof.mjs",
+        "sha256": "f8dc5b521fff26a28769742b50db360e86a78831e6fc27bb612431e14e4cf79a",
+        "gitBlob": "e7a9f4119805e3ea4d4947930814266bceddab05",
+        "nativeFrozenBlob": "e7a9f4119805e3ea4d4947930814266bceddab05"
+      },
+      {
+        "path": "scripts/agreements/prepared-signature-work-proof.mjs",
+        "sha256": "ffd8307a890a310fcb12e48569982e6e4e30a67f0ebe0f731cbf41ff3c2892e4",
+        "gitBlob": "1ec9891f612ff5ed6a486f4611042c55a4e91c7e",
+        "nativeFrozenBlob": "1ec9891f612ff5ed6a486f4611042c55a4e91c7e"
+      },
+      {
+        "path": "scripts/agreements/run-integrity-proof.sh",
+        "sha256": "df2b9aa78c37182d7a727f4c679f60e92bb95b6043424b3856d3001aca90fee2",
+        "gitBlob": "51301cb4a48f1ce0ca8c7792c0cd9f93f6b9578e",
+        "nativeFrozenBlob": "51301cb4a48f1ce0ca8c7792c0cd9f93f6b9578e"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts",
+        "sha256": "c8796cd11b55e7fbc4904f66a039702b15ce529d5efe1ab3c86777c7b963b30d",
+        "gitBlob": "d6213e11fb246f98c5e98d732f8b63dc5b7851bd",
+        "nativeFrozenBlob": "30c5a470903a98f3f05cac7c629bfcfadc3a55b3"
+      },
+      {
+        "path": "supabase/functions/_shared/agreements/prepared-signature-outcome.ts",
+        "sha256": "59f18d2e5ff0c2dfc58cfdabe9d4b80329b7e2e9b30501085ddb320a10ee508a",
+        "gitBlob": "9a515a85b3ff87368df8a1733b6773033f81e885",
+        "nativeFrozenBlob": "9a515a85b3ff87368df8a1733b6773033f81e885"
+      },
+      {
+        "path": "supabase/migrations/20271114250004_e04_original_publication_status.sql",
+        "sha256": "d04829b2646f7b0ddd419f1ea00433c531d4bf117aa9f13b6b811b11c6410875",
+        "gitBlob": "91d50748c3f1146b6274565ec58919cc6e73c9c8",
+        "nativeFrozenBlob": "91d50748c3f1146b6274565ec58919cc6e73c9c8"
+      }
+    ],
+    "originalReaderInverse": "PASS",
+    "originalTestsRetained": "PASS",
+    "originalWholeCiGateInverse": "PASS"
+  },
+  "native": {
+    "result": "PASS",
+    "log": "e04-c50-publication-status-repaired-1792960016511.log",
+    "logSha256": "6d35a1f21fb47b53f091412ebb427c41b96a7c8da239556acefa0ed4b81bc496",
+    "controls": {
+      "result": "PASS",
+      "checks": 59,
+      "migrationReplay": 2,
+      "concurrentSessions": 6,
+      "observedLockWaits": 3,
+      "preparedWork": {
+        "checks": 57,
+        "migrationReplay": 2,
+        "concurrentSessions": 8,
+        "observedLockWaits": 4,
+        "originalWorkSource": "693340656ec8ec445cd34c25b3d91d80",
+        "proofBodySha256": "0702afa450e321f1e75b3b7dca6b7cc7584c94062f67f43295ce90287732884d",
+        "migrationSha256": "bc9ae257a9174c0c7e09f1896691caf7a4bc6aa3b192db944a733357e87e61a2",
+        "requestStatus": {
+          "checks": 35,
+          "migrationReplay": 2,
+          "currentReaderRetained": false,
+          "migrationSha256": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835",
+          "proofBodySha256": "fd1db267c3dc98aee258efea44f7fa362405252601fcce199c5274435f5de7a4",
+          "scope": "Original private Work history only, not a provider/status transition, signature or acceptance"
+        },
+        "credentials": {
+          "checks": 122,
+          "migrationReplay": 2,
+          "concurrentSessions": 12,
+          "observedLockWaits": 6,
+          "migrationSha256": "b73b69c16bbed55db8fb75dc6adb3cf4f5a3826410190c391e2a7a4ea397cac6",
+          "proofBodySha256": "41a731157e8835de7ef0941ae781c85eb9f64c6c0dd1d129b4b713ae7d9c9528",
+          "scope": "Local original native/source credential proof only; no sending/signing/provider or customer acceptance"
+        },
+        "messageOrigin": {
+          "checks": 41,
+          "admission": {
+            "checks": 47,
+            "concurrentSessions": 4,
+            "observedLockWaits": 2,
+            "completion": {
+              "checks": 34,
+              "concurrentSessions": 4,
+              "observedLockWaits": 2,
+              "originalSignature": "3a2fa340fca9838aa9c6737f1e41ae61",
+              "fieldSignature": {
+                "checks": 50,
+                "concurrentSessions": 4,
+                "observedLockWaits": 2,
+                "sealing": {
+                  "checks": 33,
+                  "sourceSha256": "984b1e108c9c90f7697cb2b37efa9b54773bc4cc60e9c1b721a90da9502ea508",
+                  "sealedSha256": "cf111a73281798cdfb5b55ada9005354513b9c5209327e4472dc5302a91cb5a5",
+                  "sealedByteLength": 4216,
+                  "concurrentSessions": 2,
+                  "observedLockWaits": 1,
+                  "scope": "Real original local PDF/native state with synthetic Auth/provider/storage ports; no hosted Storage or customer acceptance"
+                },
+                "scope": "Original native prepared field/signature transaction with synthetic provider input; not hosted recipient/provider/customer acceptance"
+              },
+              "publicationStatus": {
+                "checks": 28,
+                "migrationReplay": 2,
+                "concurrentSessions": 2,
+                "observedLockWaits": 1,
+                "migrationSha256": "d04829b2646f7b0ddd419f1ea00433c531d4bf117aa9f13b6b811b11c6410875",
+                "proofBodySha256": "47480978069d1bb2321efceb7410e526520f4fdfc541d313ae52c81cb779e1bb",
+                "scope": "Actual isolated native original publication/status only; synthetic provider facts, no hosted/customer/provider execution"
+              },
+              "proofBodySha256": "76c0b22b2ed48a57b95ed237eaf0b9ce3d3e99543e9404162a1d97164328054a",
+              "scope": "Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance"
+            },
+            "proofBodySha256": "cdbd4728fe77064e2ad2fcb8df9af3ab17e82019ea6b76f3b6758e5d826d8093",
+            "scope": "Actual local native canonical message prepare/claim/finalize and synthetic provider facts only; no mounted caller, sender/provider call or authenticated customer acceptance"
+          },
+          "migrationReplay": 2,
+          "migrationSha256": "3b5656b69943363d6735d2cc380b1a1ccd1ff05c05fa21196c16cfb1f4a8915a",
+          "proofBodySha256": "5a3c8be632474aa2dfd9d0701d6642064684359058315d06e3ed8443d086ffca",
+          "scope": "Local private source and original canonical message admission only; provider/customer acceptance and mounted execution remain owed"
+        },
+        "legacySignatureAfterPublication": {
+          "result": "PASS",
+          "checks": 76,
+          "migrationReplay": 0,
+          "engineRetained": true,
+          "concurrentSessions": 8,
+          "observedLockWaits": 4,
+          "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+        },
+        "statusAfterPublication": {
+          "checks": 36,
+          "migrationReplay": 0,
+          "currentReaderRetained": true,
+          "migrationSha256": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835",
+          "proofBodySha256": "fd1db267c3dc98aee258efea44f7fa362405252601fcce199c5274435f5de7a4",
+          "scope": "Original private Work history only, not a provider/status transition, signature or acceptance"
+        },
+        "scope": "Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance"
+      },
+      "proofBodySha256": "6394acca68e526389d49257f8e9f0640742ccaa7ea575487377109138232b028",
+      "migrationSha256": "67ec7e77ce6b5089e312bb55b2b3ed867ba0194e230afeb72b970b5b2fd819d7",
+      "scope": "Original native pending-confirmation prerequisite only. Synthetic mailbox/Storage metadata; no prepared issuer/provider/signature/field effect, activation or customer acceptance."
+    },
+    "otherOriginalControls": {
+      "result": "PASS",
+      "checks": 44,
+      "checked": {
+        "checks": 75,
+        "migrationReplay": 2,
+        "concurrentSessions": 8,
+        "observedLockWaits": 4,
+        "scope": "Checked native preparation and original receipts only; no customer JWT/provider/signature acceptance"
+      },
+      "editability": {
+        "checks": 23,
+        "migrationReplay": 2,
+        "authority": "original reader metadata and floor preserved",
+        "scope": "Original closed editability only; synthetic fixture is not customer acceptance"
+      },
+      "documentPreparations": {
+        "checks": 372,
+        "migrationReplay": 2,
+        "concurrentSessions": 6,
+        "observedLockWaits": 4,
+        "commercial": {
+          "checks": 29,
+          "migrationReplay": 2,
+          "concurrentSessions": 2,
+          "observedLockWaits": 1
+        },
+        "acceptedEvidence": {
+          "checks": 267,
+          "migrationReplay": 2,
+          "ownerRead": {
+            "checks": 27,
+            "concurrentSessions": 2,
+            "observedLockWaits": 1,
+            "scope": "Actual original native package/balance/actor/Rail bodies with synthetic session identity; no hosted customer acceptance"
+          },
+          "effectiveCommercial": {
+            "checks": 184,
+            "catalogue": {
+              "checks": 26,
+              "migrationReplay": 2,
+              "originalRows": 49,
+              "scope": "Actual native catalogue source with synthetic Auth; no hosted/customer/admission or business action proof"
+            },
+            "concurrentSessions": 5,
+            "observedLockWaits": 3,
+            "migrationReplay": 2,
+            "scope": "Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance"
+          },
+          "scope": "Synthetic original native evidence only; metadata PDF hashes are not actual file/provider/customer acceptance"
+        },
+        "scope": "Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance"
+      },
+      "signatureRecord": {
+        "result": "PASS",
+        "checks": 76,
+        "migrationReplay": 2,
+        "engineRetained": false,
+        "concurrentSessions": 8,
+        "observedLockWaits": 4,
+        "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+      },
+      "declineRecord": {
+        "result": "PASS",
+        "checks": 49,
+        "migrationReplay": 2,
+        "forwardGuardRefusals": 1,
+        "concurrentSessions": 14,
+        "observedLockWaits": 7,
+        "scope": "Same original native proof; no hosted decline/customer acceptance or public recovery privilege"
+      },
+      "preparedSealSource": {
+        "result": "PASS",
+        "checks": 51,
+        "migrationReplay": 3,
+        "forwardGuardRefusals": 1,
+        "concurrentSessions": 2,
+        "observedLockWaits": 1,
+        "scope": "Actual local original13 controls plus controlled private metadata projection; no real prepared send/signing/Storage/customer acceptance"
+      },
+      "migrationReplay": 2,
+      "concurrentSessions": 5,
+      "observedLockWaits": 3,
+      "scope": "Original native signer preparation only; no actual JWT/signature/provider/customer acceptance"
+    },
+    "cleanup": {
+      "isolatedDatabases": 0,
+      "server": "stopped"
+    },
+    "productionMigration": "NOT_APPLIED"
+  },
+  "sourceTests": [
+    {
+      "kind": "http-causal-baseline",
+      "exit": 1,
+      "log": "e04-c50-http-causal-baseline-1792960889654.log",
+      "sha256": "a051323f73068b6c441360aa70d95bffbeefc38bb1979c0438cec747a4a4c5a7"
+    },
+    {
+      "kind": "final-status-consumers",
+      "exit": 0,
+      "log": "e04-c50-final-status-consumers-1792960895736.log",
+      "sha256": "24290ba0e2c9a16156e2b67fc30c07e7684fc17b5ea43f850576b3745a78072e"
+    },
+    {
+      "kind": "final-status-check",
+      "exit": 0,
+      "log": "e04-c50-final-status-check-1792960898392.log",
+      "sha256": "40bc9b3d04d3c218ae3eb09f42e472c6c2bac6f865e62919d27f3a9f0900801f"
+    },
+    {
+      "kind": "final-status-module-lint",
+      "exit": 0,
+      "log": "e04-c50-final-status-module-lint-1792960900132.log",
+      "sha256": "2575a1b59e90591280fb03b5c22f783810b1dde862cd5891b5cfc9282a8f77c7"
+    }
+  ],
+  "causalFailures": {
+    "nativeBaseline": "e04-c50-publication-status-baseline-1792958794980.log: missing original provider receipt",
+    "sdkOriginalProjection": "8 passed (9 steps), 2 failed (1 step); retained original projection and actual HTTP-door failures",
+    "firstRepaired": "e04-c50-publication-status-repaired-1792959429159.log: session observation failed; 64-byte tag corrected to56 with added length assertion"
+  },
+  "release": {
+    "review": "PROOF_OWED",
+    "exactHeadCi": "PROOF_OWED",
+    "merge": "NOT_MERGED",
+    "deployment": "NOT_DEPLOYED",
+    "activation": "NOT_ACTIVATED",
+    "authenticated": "UNVERIFIED",
+    "founder": "NOT_ACCEPTED"
+  },
+  "productionPreflight": {
+    "observedAt": "2026-10-25T20:39:00Z",
+    "scope": "Read-only native metadata; no business records or mutation",
+    "metadata": {
+      "latest": "20271114240108",
+      "functions": [
+        {
+          "anon": false,
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": true,
+          "body_md5": "c76fcd36123c7189e9c73b75142c91a2",
+          "defaults": 0,
+          "identity": "_read_prepared_agreement_work(uuid,uuid,uuid,text)",
+          "authenticated": false
+        },
+        {
+          "anon": false,
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": true,
+          "body_md5": "7cdf08ab70430d5b95706695608e6fea",
+          "defaults": 0,
+          "identity": "_read_prepared_agreement_request_status(uuid,uuid,uuid,text)",
+          "authenticated": false
+        },
+        {
+          "anon": false,
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": false,
+          "body_md5": "7bb1989b7dbd714a66dcad9e265d68d4",
+          "defaults": 0,
+          "identity": "private.e04_prepared_publication_record(uuid,uuid,uuid)",
+          "authenticated": false
+        }
+      ],
+      "native_own": 0,
+      "native_parent": 1
+    }
+  }
+}

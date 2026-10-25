@@ -77,6 +77,17 @@ Deno.test('original agreement-send request-status is a private bounded ordinary 
   await import('../../agreement-send/index.ts?prepared-status-proof');
   const invoke=(v:unknown=input(),query='?review=request-status',headers:Record<string,string>={})=>handler(new Request('https://prepared-status.invalid/agreement-send'+query,{method:'POST',headers:{Authorization:'Bearer synthetic-owner','Content-Type':'application/json',...headers},body:JSON.stringify(v)}));
   await t.step('original native status identity returns with private no-store headers',async()=>{const r=await invoke();assert.equal(r.status,200);assert.deepEqual(await r.json(),{ok:true,result:outcome()});assert.equal(r.headers.get('Cache-Control'),'no-store, private');assert.equal(r.headers.get('Vary'),'Authorization');assert.deepEqual(nativeCalls.at(-1)?.args,{_actor:actor,_tenant:tenant,_operation:operation,_request_sha256:'a'.repeat(64)});});
+  await t.step('original HTTP door returns accepted and partial publication receipts without effects',async()=>{
+   try{for(const state of ['provider_accepted','provider_partial']){const expected={...outcome(),state,receipt_id:work};row=expected;const n=nativeCalls.length,r=await invoke();
+    assert.equal(r.status,200);assert.deepEqual(await r.json(),{ok:true,result:expected});assert.equal(nativeCalls.length,n+1);
+    assert.equal(r.headers.get('Cache-Control'),'no-store, private');assert.equal(r.headers.get('Vary'),'Authorization');}}
+   finally{row=outcome();}
+  });
+  await t.step('original HTTP door refuses acceptance without receipt and unsupported delivery claims',async()=>{
+   try{for(const patch of [{state:'provider_accepted',receipt_id:null},{state:'provider_partial',receipt_id:'bad'},
+    {state:'delivered',receipt_id:work},{state:'signed',receipt_id:work},{state:'paid',receipt_id:work}]){row={...outcome(),...patch};const r=await invoke();assert.equal(r.status,503);assert.equal((await r.text()).includes('Synthetic private cause'),false);}}
+   finally{row=outcome();}
+  });
   await t.step('missing original Work is null, never success or resend permission',async()=>{row=null;const r=await invoke();assert.equal(r.status,200);assert.deepEqual(await r.json(),{ok:true,result:null});row=outcome();});
   await t.step('unreadable native outcome remains unavailable with no private error',async()=>{nativeError=true;const r=await invoke();assert.equal(r.status,503);assert.equal((await r.text()).includes('private cause'),false);nativeError=false;});
   await t.step('foreign scope or request-authored approval cannot reach private read',async()=>{const n=nativeCalls.length;assert.equal((await invoke({...input(),tenant_id:work})).status,403);assert.equal((await invoke({...input(),approved:true})).status,400);assert.equal(nativeCalls.length,n);});

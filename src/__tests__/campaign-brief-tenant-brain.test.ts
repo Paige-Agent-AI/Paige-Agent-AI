@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   executeVerifiedCampaignBriefMutation as executeImpl,
   resolveCampaignBriefListContext as resolveImpl,
+  readCampaignBriefLeads as readLeadsImpl,
 } from "../../supabase/functions/_shared/campaign-brief-tenant-brain";
 
 const TENANT = "20000000-0000-4000-8000-000000000001";
@@ -369,3 +370,83 @@ describe("Solo Tenant Brain — verified Campaign Brief mutation", () => {
     expect(recordRun).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("Solo Tenant Brain — campaign leads read (S1e)", () => {
+  const LEADS = {
+    leads: [
+      { submission_id: "50000000-0000-4000-8000-000000000001", attribution: "form_and_tag", contact_name: "A Real Person",
+        pipeline_name: "QA lead", stage_label: "QA lead", deal_status: "open", processing_state: "done" },
+    ],
+    counts: { leads: 1, open: 1, won: 0, lost: 0, failed: 0 },
+  };
+  it("reads through the canonical RPC on the caller's session and returns leads, counts and context", async () => {
+    const caller = port({
+      current_user_tenant_id: { data: TENANT, error: null },
+      get_campaign_brief_leads: { data: LEADS, error: null },
+    });
+    const result = await readLeads({ caller, briefId: BRIEF, observedAt: new Date("2026-10-24T12:00:00.000Z") });
+    expect(result).toMatchObject({
+      ok: true, tenantId: TENANT, briefId: BRIEF,
+      context: { canonicalSource: "public.get_campaign_brief_leads", observedAt: "2026-10-24T12:00:00.000Z" },
+      leads: LEADS.leads, counts: LEADS.counts,
+    });
+    expect(caller.calls).toEqual([
+      ["current_user_tenant_id", {}],
+      ["get_campaign_brief_leads", { _tenant_id: TENANT, _brief_id: BRIEF }],
+    ]);
+  });
+  it("refuses the RPC's own forbidden verdict without rewriting it", async () => {
+    const caller = port({
+      current_user_tenant_id: { data: TENANT, error: null },
+      get_campaign_brief_leads: { data: null, error: { message: 'CAMPAIGN_BRIEF_FORBIDDEN' } },
+    });
+    await expect(readLeads({ caller, briefId: BRIEF })).resolves.toEqual({
+      ok: false, code: "CAMPAIGN_BRIEF_FORBIDDEN", tenantId: TENANT,
+    });
+  });
+  it("maps a missing brief to the canonical NOT_FOUND refusal", async () => {
+    const caller = port({
+      current_user_tenant_id: { data: TENANT, error: null },
+      get_campaign_brief_leads: { data: null, error: { message: 'CAMPAIGN_BRIEF_NOT_FOUND' } },
+    });
+    await expect(readLeads({ caller, briefId: BRIEF })).resolves.toEqual({
+      ok: false, code: "CAMPAIGN_BRIEF_NOT_FOUND", tenantId: TENANT,
+    });
+  });
+  it("fails closed before reading when the active workspace changed", async () => {
+    const caller = port({ current_user_tenant_id: { data: OTHER_TENANT, error: null } });
+    await expect(readLeads({ caller, briefId: BRIEF })).resolves.toEqual({
+      ok: false, code: "ACTIVE_ACCOUNT_CHANGED", tenantId: OTHER_TENANT,
+    });
+    expect(caller.calls).toHaveLength(1);
+  });
+  it("refuses a malformed briefId without any RPC", async () => {
+    const caller = port({});
+    await expect(readLeads({ caller, briefId: "not-a-uuid" })).resolves.toEqual({
+      ok: false, code: "CAMPAIGN_BRIEF_ARGUMENTS_INVALID",
+    });
+    expect(caller.calls).toHaveLength(0);
+  });
+  it("treats a transport failure as unknown, never as an empty answer", async () => {
+    const caller = port({
+      current_user_tenant_id: { data: TENANT, error: null },
+      get_campaign_brief_leads: "throw",
+    });
+    await expect(readLeads({ caller, briefId: BRIEF })).resolves.toEqual({
+      ok: false, code: "CAMPAIGN_BRIEF_LEADS_READ_OUTCOME_UNKNOWN", tenantId: TENANT,
+    });
+  });
+  it("refuses a malformed readback instead of passing it through", async () => {
+    const caller = port({
+      current_user_tenant_id: { data: TENANT, error: null },
+      get_campaign_brief_leads: { data: { leads: "nope" }, error: null },
+    });
+    await expect(readLeads({ caller, briefId: BRIEF })).resolves.toEqual({
+      ok: false, code: "CAMPAIGN_BRIEF_READBACK_INVALID", tenantId: TENANT,
+    });
+  });
+});
+
+function readLeads(input: { caller: ReturnType<typeof port>; briefId: unknown; observedAt?: Date }) {
+  return readLeadsImpl({ caller: input.caller, expectedTenantId: TENANT, briefId: input.briefId, observedAt: input.observedAt });
+}

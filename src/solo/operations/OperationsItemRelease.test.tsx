@@ -65,3 +65,25 @@ it("never offers the signed-in person, or someone not yet active, as their own r
 
 it("forwards the existing close guard and refuses another editable mode while preparation is held",async()=>{let close:(showNotice?:boolean)=>boolean=()=>true;await act(async()=>root.render(<OperationsItemRelease actorId={actor} tenantId="e0924000-0000-4000-8000-0000000000b1" item={item} members={[member(actor),member("e0914000-0000-4000-8000-0000000000b2")]} peopleReady theme="light" registerCloseGuard={guard=>{close=guard;return()=>{close=()=>true;};}}/>));preparation.held=true;expect(close(false)).toBe(false);const review=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Review delivery');await act(async()=>review?.click());expect(host.querySelector('[data-testid="prepare"]')).not.toBeNull();expect(host.querySelector('[data-testid="review"]')).toBeNull();preparation.held=false;expect(close(false)).toBe(true);await act(async()=>review?.click());expect(host.querySelector('[data-testid="prepare"]')).toBeNull();expect(host.querySelector('[data-testid="review"]')).not.toBeNull();});
 it("refreshes the original nomination read only after a verified submission callback",async()=>{const submitted=vi.fn();await act(async()=>root.render(<OperationsItemRelease actorId={actor} tenantId="e0924000-0000-4000-8000-0000000000b1" item={item} members={[member(actor),member("e0914000-0000-4000-8000-0000000000b2")]} peopleReady theme="light" onSubmitted={submitted}/>));expect(submitted).not.toHaveBeenCalled();const confirmed=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Fixture verified submission');await act(async()=>confirmed?.click());expect(submitted).toHaveBeenCalledOnce();expect(host.querySelectorAll('[data-testid="prepare"]')).toHaveLength(1);expect(host.querySelector('[data-testid="review"]')).toBeNull();});
+
+it("offers the active canonical owner one existing inspection for their explicit review", async () => {
+  await render([{ ...member(actor), is_owner: true }]);
+  expect(host.querySelectorAll('[data-testid="prepare"]')).toHaveLength(1);
+  expect(host.querySelector('[data-testid="review"]')).toBeNull();
+  expect(host.textContent).toContain("Review the exact version yourself");
+  expect(host.textContent).not.toContain("needs a second person");
+  const review = Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Review delivery");
+  await act(async () => review?.click());
+  expect(host.querySelector('[data-testid="prepare"]')).toBeNull();
+  expect(host.querySelectorAll('[data-testid="review"]')).toHaveLength(1);
+});
+it("an owner display permission without canonical ownership does not offer self-review", async () => {
+  await render([{ ...member(actor), permission: "owner", is_owner: false }]);
+  expect(host.querySelector('[data-testid="prepare"]')).toBeNull();
+  expect(host.textContent).toContain("second person");
+});
+it("inactive ownership cannot unlock preparation and earlier recorded work stays inspectable", async () => {
+  await render([{ ...member(actor, "inactive"), is_owner: true }]);
+  expect(host.querySelector('[data-testid="prepare"]')).toBeNull();
+  expect(host.querySelector('[data-testid="review"]')?.getAttribute("data-recorded-only")).toBe("true");
+});

@@ -30,10 +30,15 @@ export async function provePreparedFieldSignature({sql,read,q,tenant,context,acc
     'public._paige_commercial_canonical_json(jsonb)'::regprocedure);`);
   const before=oldMetadata();
   const drift=identity=>{
-   const original=sql(`SELECT pg_get_functiondef(${q(identity)}::regprocedure);`),changed=original.replace('BEGIN\n','BEGIN\n -- isolated source-drift control\n');
-   assert.notEqual(changed,original);sql(changed);
+   // Windows psql formats stdout with CRLF. Restore the original LF prosrc,
+   // never change a dependency's fingerprint while round-tripping its DDL.
+   const original=sql(`SELECT pg_get_functiondef(${q(identity)}::regprocedure);`).replaceAll('\r\n','\n');
+   const body=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid=${q(identity)}::regprocedure;`);
+   const changed=original.replace('BEGIN\n','BEGIN\n -- isolated source-drift control\n');
+   assert(changed!==original,'The isolated mutation must alter the function body');sql(changed);
+   assert(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid=${q(identity)}::regprocedure;`)!==body,'The actual native source must differ');
    try{assert.throws(()=>sql(migration),/Original prepared signing source changed/);checks++;}
-   finally{sql(original);}
+   finally{sql(original);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid=${q(identity)}::regprocedure;`),body);}
   };
   for(const identity of [legacy,'public._paige_preparation_legacy_token_hold()','public._paige_preparation_legacy_effect_hold()',
    'public._read_agreement_signing_fields(text)','public._paige_commercial_canonical_json(jsonb)'])drift(identity);

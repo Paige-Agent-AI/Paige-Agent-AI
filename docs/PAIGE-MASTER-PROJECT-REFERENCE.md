@@ -7536,14 +7536,28 @@ Current gaps:
   TEAM HUB destination at `/solo/{n}/team-hub`. It is `PROOF_OWED` until the §32 persisted-apply
   check and an authenticated drive on the owner-designated existing SOLO account. Contract:
   [Team Hub collaboration contract](delivery/exp08-team-hub-collaboration-contract.md).
-- Increment 2 (2026-10-24, not yet merged) adds team work: `/` commands in the composer;
+- Increment 2 (PR #2779, 2026-10-24) adds team work: `/` commands in the composer;
   *Draft a task*, which creates one task in Operations through the existing
   `plan_assign_task_scoped` with an exactly-once link in `team_hub_work_refs` (migration
   `20271113860008`); PAIGE prefill handoffs for specialist, approval and meeting requests (no
   link-back, owner ruling); and the Team work panel, with status read from `plan_items`. It is
   `PROOF_OWED` on the same terms as increment 1. Contract:
   [increment 2 work contract](delivery/exp08-team-hub-increment2-work-contract.md).
-- Still not built: attachments, and PAIGE/Knowledge and Chat/Live continuity (increments 3–4).
+- Increment 3 (2026-10-25, not yet merged) adds attachments: up to 5 files of 10 MB each on a
+  message or thread reply, files-only sends, and a Download that mints a fresh 60-second
+  attachment URL. Files live in the existing private `comms-attachments` bucket at
+  `<tenant>/team-hub/<file_id>`, recorded in `team_hub_files` (migration `20271114160008`) behind
+  four restrictive storage policies, and are purged by a new `team_hub_files` retirement provider
+  (migration `20271114160108`). The new `team-hub-file` edge function checks each file's real
+  bytes. Files are **not malware-scanned** (owner decision), and the UI says so. Against the
+  owner's increment-3 decision, legacy `.doc`/`.xls` and PowerPoint are not accepted, Word and
+  Excel files with embedded objects, charts or external links are refused, and no scheduled
+  stale-file sweep is built. The same build closed an older gap: `analyze-financial-document`
+  could read a file in any bucket by path. It is `PROOF_OWED` on the same terms as increments 1–2,
+  plus the `team-hub-file` deploy. Contract:
+  [increment 3 attachments contract](delivery/exp08-team-hub-increment3-attachments-contract.md).
+- Still not built: PAIGE with Team Hub, meaning Chat/Live reads, search, and approved reply drafts
+  (increment 4). Team Hub content does not enter Knowledge or Memory (owner ruling).
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

@@ -1,0 +1,82 @@
+{
+ "reduced": {
+  "pulse": "none",
+  "chipsAfterEsc": 2,
+  "tabOrder": [
+   {
+    "label": "Remove hold.png",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "Remove ok.pdf",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "Mention someone",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "Attach files (not scanned)",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "PAIGE commands",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "BODY",
+    "focusVisible": false,
+    "outline": "none"
+   }
+  ],
+  "afterRemove": [
+   "hold.png"
+  ],
+  "discardCalls": 1
+ },
+ "normal": {
+  "pulse": "th-pulse",
+  "chipsAfterEsc": 2,
+  "tabOrder": [
+   {
+    "label": "Remove hold.png",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "Remove ok.pdf",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "Mention someone",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "Attach files (not scanned)",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "PAIGE commands",
+    "focusVisible": true,
+    "outline": "solid"
+   },
+   {
+    "label": "BODY",
+    "focusVisible": false,
+    "outline": "none"
+   }
+  ],
+  "afterRemove": [
+   "hold.png"
+  ],
+  "discardCalls": 1
+ }
+}

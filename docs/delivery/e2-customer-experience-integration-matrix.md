@@ -1,5 +1,18 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October24 — original report consumer, local source only
+
+O01/O02/O16/O18 and CAP014/015 continue through the original document tool,
+canonical source selectors/current versions and released840002 durable capture.
+Current-main03ed composition preserves all incoming source; original owning
+reach suite43PASS/1RED →44PASS. [Consumer evidence](../evidence/ui-delivery/e2-report-tool-source-selectors.md)
+keeps review/binding renewal/exact-head CI/deployment and genuine customer report
+settlement/artifact/turn/Rail/reload/retrieval/permissions/recovery/Live separate.
+No new interface, metric store, provider activation or originating writer.
+CAP014/015 stay Unverified; all19/nine, original acceptance denominators and one
+complete founder evaluation remain. The original uncertain monthly work is not
+retried. Shared root order E02→E05→E03 and E04 readiness digest ownership remain.
+
 ## October24 — report source foundation deployed; customer outcome still owed
 
 Original2734/408923cc passed all13 exact checks/two statuses with labeled

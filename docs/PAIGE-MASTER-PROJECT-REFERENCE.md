@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP09 private request preparation and returning-owner recovery; bounded internal release.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2825](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2825), recover the same private original Work after a missing acknowledgment or reload | Reviewed489f8a58a54777360e1f3eabaf830cb7d58a6495; AUTHOR-REVIEW / LOWER ASSURANCE5643270333/5643284660/final5643409402; all13 exact checks/two web statuses SUCCESS/zero inline threads. Actual merge [b5122f922a030db33dd8d57767f9ced07e07fd1b](https://github.com/Paige-Agent-AI/Paige-Agent-AI/commit/b5122f922a030db33dd8d57767f9ced07e07fd1b)/treecaecbde7740e6646787f7672bbf1abeb2436a2ba preserves all16054 incoming outside entries/every11own blob; inverse restores incomingbb566f035c6935f6a31fc904aa0e5552997204e6. Normal migration40198164842/job121183516960 SUCCESS including persisted check; db-live independentlyb512. Production14150009/14150019 once (13/8statements), exact preparebbbf43/read1701ab/historyad2d bodies/ABI/postgres/definer/empty path/auth-only ACL; original internal authority7c3eb and Work40349/66dc unchanged. Productiondpl_FpX8nKVEVhCxC1WX7rpo3qCGZfC1 READY/exactb512; both canonical public aliases200/buildb5122f922a030db33dd8d57767f9ced07e07fd1b-mvnvcnva/customerUpdate:null at13:41:58UTC. [Original release receipt6398398005](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2825#issuecomment-6398398005). | MERGED / NATIVE SOURCE AND PERMISSIONS / WEB BUILD VERIFIED, internal-only. Native146/consumer94/hosted286 support bounded engineering behavior; synthetic Auth/outer ports remain explicit. APIs/consumer are UNMOUNTED; complete exact review/HIGH-approved sharing/customer response and signed-in QA remain incomplete. No affected Edge source, new approval/runtime/store/registry, provider/customer operation, Chat/Live activation or customer release identity. Full42/seven pillars/Teach/seven Capabilities/ALG and one integrated founder evaluation remain open. |
+
 **2026-10-25 UTC — EXP05 verified source recovery, exact weekly state and bounded Calendar read.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

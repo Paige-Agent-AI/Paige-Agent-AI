@@ -20,10 +20,12 @@ TRUTHFUL_STATE_LABELS: PASS: client.portal_request_share remains UNAVAILABLE/not
 SOLO_UI: NO: native/transport-only, tenant-neutral. Existing business data/role/configuration remains scoped; no account allowlist or fixture-based product exception.
 UNVERIFIED: parent release, original full-schema322/exact-head CI/Preview, native forward order/readback, Root common HIGH gate/preview/claim integration, real original owner/client flow, rendered mounted interface and one integrated founder evaluation remain required.
 
-INTERNAL_BUILD_IDENTITY: implementation=189b9bc97c31197cd77cd33d8db207e2b4c1d6a9; final evidence head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114210109 after original14210009 normal apply/readback); edge=NOT_APPLICABLE; evidence=docs/evidence/e09-private-request-publication.json
+INTERNAL_BUILD_IDENTITY: implementation=189b9bc97c31197cd77cd33d8db207e2b4c1d6a9; final evidence head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114230109 after original14230009 normal apply/readback); edge=NOT_APPLICABLE; evidence=docs/evidence/e09-private-request-publication.json
 RELEASE_CHANNEL: development: unmounted same-domain original-caller transport and exact CRM-focus refinement.
 RELEASE_CLASSIFICATION: internal-only: no complete customer outcome or release announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or update.
 RELEASE_NOTE_REQUIRED: no: new mounted shared command remains owed.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: native238/adapter33/scoped app-SDK shape proof; PROOF OWED: parent release, full-schema322/current integration/release and original authenticated customer outcome.
 RELEASE_RECOVERY: position=inspect the same original Work/common claimed proposal/PCA after uncertainty, without a fallback publisher or automatic mutation retry; reference=docs/delivery/e09-customer-actions-business-scope.md
+
+CURRENT_TRUSTED_SOURCE: runtime362764768d3392812dac7968f09b05dc3e8f06b3; native257/0 (all prior238/256 objects exact), transport68/0, source/body/permission/no-write/historical recovery and unknown-forward-source controls PASS. Source RPC only reads exact owner Work/client bindings; common approval remains original and unmounted. Original full-schema322+16=338 is prepared, NOT_RUN hosted; source/current exact-head CI/Preview/release still owed. Prior238/33 and their immutable identities remain historical in focusedOwnerTransport. Whole incoming CI and full322 assertion inverses PASS; original parent SQL byte-exact, current migration23/23.1. No rendered source or visual claim changed.

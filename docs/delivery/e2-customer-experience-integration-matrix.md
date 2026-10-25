@@ -137,6 +137,30 @@ All original19 and CAP009–017 remain required per ANT138/f4c4c060; no renamed
 outcome, new registry, algorithm or catalogue-readiness promotion. Functional,
 Visual, Experiential and Founder Acceptance remain distinct and incomplete.
 
+## October24 — original report consumer, local source only
+
+**Current689 composition:** ROOT00cf86f0 and all46 owning test inputs unchanged; COMPLETE E04C35 source pin/124 dependencies/metadata preserved with same29 reviewed report scalars. Actual original hostile79/79 PASS83.499s. Two provenance prefixes resolved without a ROOT feature or owner-window takeover; fresh exact review/CI/source/customer proof remain owed.
+
+**Hosted typecheck correction:**044 correctly failed TS2550 for Object.hasOwn in the owning test helper. The compatible own-property call preserves the original ES2020 target, actual-import binding and both missing-import negatives; production ROOT/C0b and baselines are unchanged. Fresh owning46/46 PASS68.81s; new exact review/typecheck/CI required. Failed044 is retained, not released.
+
+Current229 addendum: exact parent-onlyde79 missing-import repair received; actual
+import-bound tool construction2FAIL→46PASS/current22946PASS; original79 hostile
+guardsPASS194.984s after reviewed29-field-only renewal. ROOT00cf86f0 preserves
+the released campaign read and all124 incoming dependencies. Final exact review,
+CI/source release and genuine report/artifact/turn/Rail acceptance remain owed.
+Earlier development checkpoint below is historical, not current release proof.
+
+O01/O02/O16/O18 and CAP014/015 continue through the original document tool,
+canonical source selectors/current versions and released840002 durable capture.
+Current-main03ed composition preserves all incoming source; original owning
+reach suite43PASS/1RED →44PASS. [Consumer evidence](../evidence/ui-delivery/e2-report-tool-source-selectors.md)
+keeps review/binding renewal/exact-head CI/deployment and genuine customer report
+settlement/artifact/turn/Rail/reload/retrieval/permissions/recovery/Live separate.
+No new interface, metric store, provider activation or originating writer.
+CAP014/015 stay Unverified; all19/nine, original acceptance denominators and one
+complete founder evaluation remain. The original uncertain monthly work is not
+retried. Shared root order E02→E05→E03 and E04 readiness digest ownership remain.
+
 ## October24 — report source foundation deployed; customer outcome still owed
 
 Original2734/408923cc passed all13 exact checks/two statuses with labeled

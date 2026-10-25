@@ -81,7 +81,7 @@ function scenario(){return fake.setScenario({authUser:{id:actor},tables:{profile
  paige_chat_interactive_publication_context_v2:{data:true,error:null},
  paige_chat_interactive_settle:a=>{receipts.push({role:'assistant',content:a.p_content,bundle_ref:a.p_bundle_ref});return{data:id(9),error:null};},
  }});}
-const reads=new Set(['read_business_metric','get_business_snapshot','read_client_engagement_status','read_business_time_zone','read_calendar_booking','read_calendar_agenda','crm_get_task']);
+const reads=new Set(['read_business_metric','get_business_snapshot','read_client_engagement_status','read_business_time_zone','read_calendar_booking','read_calendar_agenda','crm_get_task','team_hub_conversations','team_hub_read_conversation','team_hub_search']);
 async function execute(tool=null,extras={},content='Explain the current business status',args={}){
  emittedArguments=args;
  calendarQueries.length=0;

@@ -852,6 +852,16 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP04 original signature messages, publication and prepared-document completion.**
+
+| Increment | Exact reviewed source and actual production release | Completion boundary |
+| --- | --- | --- |
+| [#2842](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2842#issuecomment-6402089091), canonical prepared signature messages | Reviewed9f84ef28552d23265d34e6f33f6d18cb58787fae; AUTHOR-REVIEW / LOWER ASSURANCE6401917960; all13exact checks/two webSUCCESS/zero threads. Actual12fde7f248d086504fa4e437a70c580324c43b7e/treef854cc69528552979cfdddb611b9d441ec0bf546 equals inspected receiving union. Native20271114230204 ONCE14statements, normal40224675438/job121263521370SUCCESS; exact source/body/ACL readback. Edge40224675337/job121263413423SUCCESS, exactly2selected, certificate12610417913/ZIPsha cc2d5fb402767087ade996f51da6998843d9115db0bcb501e748d7fc924468e6. Independent API agreement-sendv23/JWTtrue/34of34 and send-messagev156/JWTtrue/47of47 source files exact. READYdpl_DecDbLka7pP7gWoRh1cmAZAe2QMw/exact12fde; bothpublic200/build12fde7f248d086504fa4e437a70c580324c43b7e-mvo7ckxs/customerUpdate:null at19:13:56UTC. | Reuses original canonical Communications and immutable approved agreement/message/Work bindings. Owner-approved one sender integrity renewal only; all other protected bindings retained. Apparent source mismatch was verifier terminal-blank-line normalization and was disproved without changing production. Originating factory UNMOUNTED; no real customer send, provider activation, signature, payment or full12acceptance. Internal-only/no customer version or announcement. |
+| [#2855](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2855#issuecomment-6402277031), original publication receipt | Reviewed6a34a50e333bdeef6e9d2a5f1733d7ad47a2c2c5; AUTHOR-REVIEW / LOWER ASSURANCE6402089662; all13exact checks/two webSUCCESS/zero threads. Actualfb667058d077bcdbcee2ed68d891760a838de8e1/treef4efac2c6cb6d0ab4e83f23dc5f2e07cd007accd equals inspected12fde+6a union. Native20271114230304 ONCE11statements; normal40225878570SUCCESS and exact publication7bb1989b7dbd714a66dcad9e265d68d4/09307978bcbfec308cb580ede532d75e/effectb4581030968e238115700a14da16f9b7/original13ABI3a2fa340fca9838aa9c6737f1e41ae61/ACL readback. ZERO Edge-source delta. Webdpl_6AtswKyhepaRV1jENyHCinbeWdwb READY/exactfb667; public aliases already superseded by#2862 when inspected, so no unobserved exact-publicfb667 claim. | Original local34publication controls/replay2/4sessions/2observed waits and post-publication76legacy controls retained. Canonical provider acceptance may record original sent evidence, delivery_confirmed:false; failed/unknown/foreign/void refuses. Factory UNMOUNTED; no send or signature/payment/service acceptance inferred. Source/native/web only; internal-only/no customer version. |
+| [#2862](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2862#issuecomment-6402277800), prepared fields, signatures and retained completed PDF | Reviewed33a99850c91ecff617b670516497bf1d0d8b20f8; AUTHOR-REVIEW / LOWER ASSURANCE6402168986; all13exact checks/two webSUCCESS/zero threads. Actual0ba4eb474390a8708a0043a3d73a46a41a8518b7/tree77937a767a7e4abb011d116e70b500e255ebe30c equals inspectedfb667+33a union. Native20271114230404 ONCE28statements; all12body/owner/default/path/argument/return/ACL identities exact. Initial40226465812 failed23505duplicate ledger INSERT; full1461local/1461registered/zero pending verified, then original approved attempt2 deploy121269752772/lint121269753785SUCCESS without history repair. Edge40226465975/job121268777047SUCCESS; certificate12611318341/ZIPsha c371add4ea52cda970f82b00881951c65c6be06704ccca0e7327dab1f3b8a07a. Exactly4selected, independent CURRENT source parity: agreement-documentv95/JWTfalse/26of26, agreement-sendv24/JWTtrue/34of34, send-messagev158/JWTtrue/47of47, sign-agreementv46/JWTfalse/24of24. READYdpl_3N1SVxBFyP4dHVYmMrybbbDp9Bc6/exact0ba; bothpublic200/build0ba4eb474390a8708a0043a3d73a46a41a8518b7-mvo85g5d/customerUpdate:null at19:34:01UTC. | Original50field/33real-PDF-completion/post76legacy controls,113consumer tests/163steps and six rendered PDF pages retained. Original13ABI delegates to one canonical14implementation; immutable source/consent/field evidence and atomic original completion. Prepared legacy notifier fallback refused. Factory, authorized notices/reissue, hosted recipient recovery/download and ordinary owner/staff/client/cohort/provider/CentralQA/all12/founder acceptance remain owed. Internal-only/no customer version. |
+
+Original [message](evidence/ui-delivery/e04-canonical-signature-messages.md), [publication](evidence/ui-delivery/e04-prepared-publication-receipts.md) and [field/signature/completion](evidence/ui-delivery/e04-prepared-field-signature.md) evidence retains causal failures and bounded proof. These rows close released source/native/Edge/web identities only. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; catalogue and restricted activation unchanged. No second ledger, signing engine, approval, sender or execution system. Mechanical documentation closeout is not logged recursively.
+
 **2026-10-25 UTC — EXP02 original Work identity bridge.**
 
 | PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |
@@ -7604,7 +7614,7 @@ Current gaps:
   link-back, owner ruling); and the Team work panel, with status read from `plan_items`. It is
   `PROOF_OWED` on the same terms as increment 1. Contract:
   [increment 2 work contract](delivery/exp08-team-hub-increment2-work-contract.md).
-- Increment 3 (2026-10-25, not yet merged) adds attachments: up to 5 files of 10 MB each on a
+- Increment 3 (2026-10-25, merged PR #2839, migrations and `team-hub-file` read back on production) adds attachments: up to 5 files of 10 MB each on a
   message or thread reply, files-only sends, and a Download that mints a fresh 60-second
   attachment URL. Files live in the existing private `comms-attachments` bucket at
   `<tenant>/team-hub/<file_id>`, recorded in `team_hub_files` (migration `20271114160008`) behind
@@ -7615,10 +7625,17 @@ Current gaps:
   Excel files with embedded objects, charts or external links are refused, and no scheduled
   stale-file sweep is built. The same build closed an older gap: `analyze-financial-document`
   could read a file in any bucket by path. It is `PROOF_OWED` on the same terms as increments 1–2,
-  plus the `team-hub-file` deploy. Contract:
+  short of an authenticated drive. Contract:
   [increment 3 attachments contract](delivery/exp08-team-hub-increment3-attachments-contract.md).
-- Still not built: PAIGE with Team Hub, meaning Chat/Live reads, search, and approved reply drafts
-  (increment 4). Team Hub content does not enter Knowledge or Memory (owner ruling).
+- Increment 4 (2026-10-25) adds PAIGE with Team Hub, in Chat and Live: three caller-JWT reads
+  (`team_hub_conversations`, `team_hub_read_conversation`, `team_hub_search`, Spine `team.hub_*`,
+  offered on SOLO only) and `team_hub_post_reply`, posted under the person's own name only from
+  their approval card. Migration `20271114240008` adds the search definer and `20271114240108` lists
+  the reply in the autonomy catalogue. No Team Hub content enters Knowledge or Memory: once a person
+  has read Team Hub through PAIGE their automatic memory summaries stop (owner ruling 2026-10-25),
+  their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld
+  for the rest of a request that carried Team Hub text. `PROOF_OWED`. Contract:
+  [increment 4 PAIGE contract](delivery/exp08-team-hub-increment4-paige-contract.md).
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

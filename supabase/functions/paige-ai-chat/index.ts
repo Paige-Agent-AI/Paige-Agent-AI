@@ -58,6 +58,9 @@ import { prepareCalendarLinkShare, sendCalendarLink, calendarLinkSocialCopy, typ
 import { AGREEMENT_TOOLS } from '../_shared/paige-spine/domains/agreement.ts';
 // E09 Slice 3: share one client-linked work item with that client's portal (high; owner/admin only).
 import { PLANNING_CLIENT_SHARE_TOOLS } from '../_shared/paige-spine/domains/planning_writes.ts';
+// EXP08 Team Hub increment 4: three caller-JWT reads and one approved reply (contract docs/delivery/exp08-team-hub-increment4-paige-contract.md).
+import { TEAM_HUB_READ_TOOLS, TEAM_HUB_POST_TOOLS, TEAM_HUB_READ_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME, TEAM_HUB_CHAT_TOOL_NAMES } from '../_shared/paige-spine/domains/team_hub.ts';
+import { TEAM_HUB_READERS, postTeamHubReply, teamHubPostConfirmSummary, teamHubSessionTainted, COULD_NOT_READ as TEAM_HUB_COULD_NOT_READ, TEAM_HUB_EGRESS_WITHHELD_TOOLS, TEAM_HUB_EGRESS_REFUSAL } from '../_shared/team-hub/chat.ts';
 import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/planning/scoped-write.ts';
 // E09 Slice M: read and change the customer portal menu (update is high; owner/admin only).
 import { PORTAL_MENU_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
@@ -369,7 +372,11 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 // the owner in Setup (set_business_time_zone).
 // Owner restoration (2026-10-17): exact saved-booking read only; original caller JWT,
 // native membership/host visibility, no Calendar write or provider authority.
-const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME, OWNER_TASK_HISTORY_TOOL_NAME]));
+// EXP08 Team Hub increment 4 (owner decision 2026-10-24, docs/brain/decision-log.md, "PAIGE reads Team
+// Hub: APPROVED ... covers Chat and Live"): the three Team Hub reads. Caller JWT through the
+// team_hub_* definers, which re-prove the seat, canonical SOLO and visibility; they write nothing.
+// The reply tool (team_hub_post_reply) is a write and stays withheld here like every other write.
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME, OWNER_TASK_HISTORY_TOOL_NAME, "team_hub_conversations", "team_hub_read_conversation", "team_hub_search"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": `authorization, x-client-info, apikey, content-type, x-client-portal-business, ${CHAT_CONTROL_HEADER}`,
@@ -697,6 +704,14 @@ function describeStep(
     case "read_calendar_booking": return { label: failed ? "Couldn't check that booking" : "Checked that booking", group: "shared" };
     case "crm_get_task": return { label: failed ? "Couldn't check that Task" : "Checked that Task", group: "shared" };
     case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checked your business time zone", group: "shared" };
+    // EXP08 Team Hub increment 4 — a finished step says it finished. The contract's present-tense copy
+    // ("Reading Team Hub", "Searching Team Hub") is the START wording, owned by step-start.ts. A drafted
+    // reply is a card (needs_confirm), never a step; the step is the approved post. These sit above the
+    // one case keyed on an imported constant, so the step-start parity test can evaluate them.
+    case "team_hub_conversations": case "team_hub_read_conversation":
+      return { label: failed ? "Couldn't read Team Hub" : "Read Team Hub", group: "shared" };
+    case "team_hub_search": return { label: failed ? "Couldn't search Team Hub" : "Searched Team Hub", group: "shared" };
+    case "team_hub_post_reply": return { label: failed ? "Couldn't post that Team Hub reply" : "Posted your Team Hub reply", group: "shared" };
     case WEEKLY_COMMITMENT_STATUS_TOOL_NAME: return { label: failed ? "Couldn't check your weekly responsibility" : "Checked your weekly responsibility", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
@@ -2302,13 +2317,28 @@ serve(async (req) => {
         summaryAbort.abort();
         return false;
       };
+      // EXP08 Team Hub increment 4 (contract section 5): a session in which PAIGE read Team Hub writes
+      // NO machine-derived memory. Withheld until proven otherwise, so every write below stays shut if
+      // the check is skipped or fails.
+      let summaryTeamHubWithheld = true;
       const writeSummaryMemory = async (label: string, write: () => PromiseLike<unknown>): Promise<void> => {
+        if (summaryTeamHubWithheld) return;
         if (!(await summaryScopeCurrent())) return;
         summaryWritesAttempted += 1;
         try {
           if (await withinSummary(recordWrite(label, write()))) summaryWritesAcknowledged += 1;
         } catch { /* an interrupted acknowledgement is unconfirmed, not rollback */ }
       };
+      // The transcript and session id are the browser's; the server cannot tell which chat turns they
+      // cover. So the signal is server-recorded instead: this person's Team Hub read receipts (written
+      // before any Team Hub text reached the model) and reply cards, in this workspace, at any time.
+      // Any such row, or any failure to read them, writes nothing and calls no model.
+      summaryTeamHubWithheld = await withinSummary(teamHubSessionTainted(supabase, summaryActorId,
+        [summaryTenantId, summaryCallerTenantId], TEAM_HUB_CHAT_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME)).catch(() => true);
+      if (summaryTeamHubWithheld) {
+        return new Response(JSON.stringify({ code: "SESSION_SUMMARY_WITHHELD", summary: "", memory_write_status: "not_attempted",
+          memory_writes_attempted: 0, memory_writes_acknowledged: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const last20 = sessionMessages.slice(-20);
       // INT-325 (§2/§13): this branch runs BEFORE persona + funding resolution, so it cannot know the
       // tenant's assistant name or offer. The wording stays vertical-neutral and names no persona.
@@ -3390,6 +3420,15 @@ JSON:`;
     // Identity is now known — stamp the turn's trace context (see `traceCtx` at the top of the
     // handler). Every `gatewayCompat` site BELOW this line writes an attributed row from here on.
     traceCtx.tenant_id = personaCtx.tenant_id;
+    // EXP08 Team Hub increment 4 (contract section 5: nothing from Team Hub is stored). A trace row's
+    // excerpts are readable by every member of the workspace, and this turn's messages are the
+    // browser's, so they may carry PAIGE's earlier answers about a DM or a private channel. A person
+    // who has used Team Hub through PAIGE, in any workspace, is traced as metadata only: no prompt or
+    // answer text. Unknown is treated as yes. Receipts only (null): this read never touches the
+    // approval store. The Team Hub branches below set the same policy too.
+    if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id], TEAM_HUB_CHAT_TOOL_NAMES, null).catch(() => true)) {
+      traceCtx.content_policy = "metadata_only";
+    }
 
     // === L8 MEMORY FABRIC — Owner-Ops cross-session SEMANTIC memory (§7/§8/§26/§34) ===
     // STILL DEFERRED to slice 4b (cross-chat memory) — NOT wired here. Slice 4a.3 delivered the
@@ -8974,6 +9013,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant" && !scopedClientId && !customerPortal) toolDefs.push(...PORTAL_ACCESS_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_AGENDA_READ_TOOLS);
+    // EXP08 Team Hub increment 4: read what the asker can see in Team Hub, and draft a reply they approve.
+    // Tenant tier, canonical SOLO account only (Team Hub is a SOLO surface, as the Calendar and Task reads
+    // beside it), never on a client seat or the customer portal. The offer is not the authority:
+    // every team_hub_* definer re-proves the active seat, canonical SOLO and visibility under the
+    // asker's JWT, so any other tier or workspace is refused by the database.
+    if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_READ_TOOLS);
+    if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_POST_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     if (weeklyCommitmentStatusToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS);
     if (weeklyCommitmentDraftToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_DRAFT_TOOLS);
@@ -9599,6 +9645,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       plan_assign_task: "assigning a task",
       plan_update_item: "updating a plan item",
       plan_item_set_client_share: "changing what a client can see",
+      team_hub_conversations: "reading Team Hub", team_hub_read_conversation: "reading Team Hub",
+      team_hub_search: "searching Team Hub", team_hub_post_reply: "posting a reply in Team Hub",
       read_tenant_portal_menu: "checking your clients' portal menu",
       portal_menu_update: "changing your clients' portal menu",
       read_client_portal_access: "checking a client's portal access",
@@ -10254,6 +10302,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "client_portal_access_set":
           // The card names the client (read on the caller's own session) and the reason being approved.
           return portalAccessConfirmSummary(a, await portalAccessClientName(supabaseClient, personaCtx?.tenant_id ?? null, a?.contact_id));
+        case "team_hub_post_reply":
+          // EXP08 Team Hub: the conversation (read on the caller's own session, never the model's
+          // label) and the exact text the person is approving.
+          return await teamHubPostConfirmSummary({ tenantId: callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null, userId: user.id },
+            supabaseClient, a);
         default:
           return `Paige is ${TOOL_LABELS[name] || `running ${name}`}.`;
       }
@@ -11405,6 +11458,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // (including the terminal Unknown-tool branch). Approvals accumulate into
       // the shared queuedApprovals passed in from the loop.
       let documentCallOrdinal = 0;
+      // EXP08 Team Hub increment 4: set by the Team Hub read dispatch once Team Hub text has been handed
+      // to the model in this request. From then on the round loop below withholds the web and Knowledge
+      // tools (TEAM_HUB_EGRESS_WITHHELD_TOOLS) before dispatch, so text read from Team Hub cannot carry a
+      // teammate's private words out of Paige or into the workspace's Knowledge.
+      let teamHubContentCarried = false;
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks) => {
         // Provider-authored tool names cannot cross the customer audience boundary.
         // Future customer actions must be explicitly admitted by their native domain contract.
@@ -18634,6 +18692,73 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             },
           }, historyArgs);
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
+        } else if (TEAM_HUB_READ_TOOL_NAMES.has(tc.function.name)) {
+          // EXP08 Team Hub increment 4 — LAST IN THE CHAIN, so no reviewed incumbent dispatch gains a
+          // dominating condition. Caller JWT only (supabaseClient): every team_hub_* definer re-proves
+          // the active seat, canonical SOLO and visibility for auth.uid() now. The tenant is the
+          // server-resolved persona tenant, sent as p_expected_tenant (a fence, never a selector); any
+          // tenant or person the model sends is ignored by the dispatch, never forwarded.
+          //
+          // THE MARKER COMES FIRST (contract section 5). Before Team Hub text reaches the model, this
+          // read's capability receipt is recorded on the server, keyed on the verified actor and that
+          // tenant; it is what tells the session-summary path to write no memory for this person. If it
+          // cannot be recorded, the content is withheld and the person is told Team Hub could not be read.
+          const hubTenant = callerTier === "tenant" && !scopedClientId && !customerPortal ? personaCtx?.tenant_id ?? null : null;
+          let hubArgs: unknown = null;
+          try { hubArgs = JSON.parse(tc.function.arguments || "{}"); } catch { hubArgs = null; }
+          const read = await TEAM_HUB_READERS[tc.function.name]({ tenantId: hubTenant, userId: user.id }, supabaseClient, hubArgs);
+          // Before any of it reaches the model: no later call in this request traces prompt or answer
+          // text (a trace is readable by every member of the workspace), and the web and Knowledge tools
+          // are withheld for the rest of the request.
+          if (read.carriesContent) { traceCtx.content_policy = "metadata_only"; teamHubContentCarried = true; }
+          let hubEnvelope = read.envelope;
+          if (hubTenant && (read.carriesContent || read.envelope.status === "available")) {
+            let recorded = false;
+            try {
+              recorded = await recordCapabilityRun(supabase, {
+                tenantId: hubTenant, actorId: user.id, capabilityKey: tc.function.name, outcome: "capability_succeeded",
+                runId: await stableRunId([tc.function.name, hubTenant, user.id, `${payloadThreadId ?? ""}:${tc.id}`]),
+                // Never the query, a conversation name or any message text.
+                detail: { channel: "paige_chat", tool: tc.function.name, read_only: true },
+              });
+            } catch (e) { console.error("[paige] Team Hub read receipt unavailable:", (e as Error)?.message); }
+            if (!recorded && read.carriesContent) {
+              hubEnvelope = { status: "unavailable", message: `Tell the person: "${TEAM_HUB_COULD_NOT_READ}" Nothing was read. Do not guess what any conversation says.` };
+            }
+          }
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(hubEnvelope) });
+        } else if (tc.function.name === TEAM_HUB_POST_TOOL_NAME) {
+          // EXP08 Team Hub increment 4 — the approved reply, LAST IN THE CHAIN. `high` in action-risk.ts,
+          // so it reaches here only after the generic confirm gate claimed the person's card and replaced
+          // the arguments with the ones stored on it. Two more fences, here where they cannot be skipped:
+          // a Live turn never posts (a spoken yes is not the card), and only a claimed card's own approval
+          // token can be spent. That token, through teamHubPostRequestId, is the request id, so a
+          // replayed approval posts at most once. Caller JWT: auth.uid() is the author.
+          const hubTenant = callerTier === "tenant" && !scopedClientId && !customerPortal ? personaCtx?.tenant_id ?? null : null;
+          // The reply's text may restate a private conversation: never traced as text from here on.
+          traceCtx.content_policy = "metadata_only";
+          const hubToken = approvalChannel.get(tc.id) === "operator_card"
+            ? [...approvalSpend].find(([, callId]) => callId === tc.id)?.[0] ?? null : null;
+          let hubArgs: unknown = null;
+          try { hubArgs = JSON.parse(tc.function.arguments || "{}"); } catch { hubArgs = null; }
+          let posted: Awaited<ReturnType<typeof postTeamHubReply>>;
+          try {
+            posted = liveRuntimeScope
+              ? { success: false, not_applied: true, reason: "live", error: "A reply is posted only from its card in the chat, never by voice. Nothing was posted." }
+              : await postTeamHubReply({ tenantId: hubTenant, userId: user.id }, supabaseClient, hubArgs, hubToken);
+          } catch (e) {
+            console.error("[paige] Team Hub reply dispatch threw", { reason: e instanceof Error ? e.message : "unknown" });
+            posted = { success: false, outcome_unknown: true, reason: "outcome_unknown",
+              error: "Team Hub did not report back, so it is not known whether the reply was posted.",
+              note: "Tell the person plainly that you could not confirm the reply went out and that they can check the conversation in Team Hub. Do not post it again." };
+          }
+          // Every outcome is recorded, a refusal included; never the text or the conversation.
+          await recordCapabilityRun(supabase, { tenantId: hubTenant, actorId: user.id, capabilityKey: tc.function.name,
+            runId: await stableRunId([tc.function.name, hubTenant, user.id, `${payloadThreadId ?? ""}:${tc.id}`]),
+            outcome: posted.success ? "capability_succeeded" : "outcome_unknown" in posted ? "capability_outcome_unknown" : "capability_refused",
+            detail: { channel: "paige_chat", tool: tc.function.name } });
+          if (!posted.success && "outcome_unknown" in posted) requestExecutionState.needsReview = true;
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(posted) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }
@@ -18777,6 +18902,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         calendar_link_prepare: "calendars", calendar_link_send: "calendars", calendar_link_social_copy: "calendars",
         plan_create: "plans", plan_add_milestone: "plan_items", plan_set_reminder: "plan_items",
         plan_update_item: "plan_items", plan_remove_item: "plan_items", plan_item_set_client_share: "plan_items",
+        // EXP08 Team Hub: the approved reply lands as one row in team_hub_messages.
+        team_hub_post_reply: "team_hub_messages",
         // E09 Slice M: the menu lives in tenants.features.portal_config; the record is the tenant itself.
         portal_menu_update: "tenants",
         // E09 Slice 7: the access state lives on the contact it qualifies.
@@ -18916,6 +19043,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (tool === "action_file") return typeof out?.action_id === "string" && UUID.test(out.action_id) ? out.action_id : null;
         if (tool === "client_portal_invitation_send") return typeof out?.invitation_id === "string" && UUID.test(out.invitation_id) ? out.invitation_id : null;
         if (tool === "automation_draft") return typeof out?.automation_id === "string" && UUID.test(out.automation_id) ? out.automation_id : null;
+        // The posted message the definer returned; never the conversation or an argument.
+        if (tool === "team_hub_post_reply") return out?.posted === true && typeof out?.message_id === "string" && UUID.test(out.message_id) ? out.message_id : null;
         if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
         // The menu's record is the server-resolved tenant, proven by readback; never an argument.
         if (tool === "portal_menu_update") return out?.verified_readback === true && out?.record_locator?.table === "tenants" && typeof out.record_locator.id === "string" && UUID.test(out.record_locator.id) ? out.record_locator.id : null;
@@ -19733,7 +19862,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // wire; `finishedSteps` keeps each call's describeStep answer for the rail label below.
             const finishedSteps = new Map<any, ReturnType<typeof describeStep>>();
             const toolStepHooks = createToolStepHooks(controller, round, continuationsUsed, finishedSteps);
-            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls, queuedApprovals, toolStepHooks);
+            // EXP08 Team Hub increment 4: once Team Hub text is in this request, the web and Knowledge
+            // tools never reach dispatch; each gets its one plain refusal instead (contract section 5).
+            const roundCalls = askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls;
+            const teamHubWithheld = teamHubContentCarried ? roundCalls.filter((tc: any) => TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(String(tc?.function?.name ?? ""))) : [];
+            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(roundCalls.filter((tc: any) => !teamHubWithheld.includes(tc)), queuedApprovals, toolStepHooks);
+            for (const tc of teamHubWithheld) {
+              executed.push(tc);
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(TEAM_HUB_EGRESS_REFUSAL) });
+            }
             // An approved call its card will report as "couldn't confirm" tells the model the same,
             // before the model reads it, so Paige never says "that failed" beside a card that says
             // check first (approval-outcome.ts).

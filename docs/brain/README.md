@@ -1,3 +1,11 @@
+## EXP04 canonical signature messages and prepared completion — October25 production closeout
+
+- [#2842 actual receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2842#issuecomment-6402089091): reviewed9f84ef28552d23265d34e6f33f6d18cb58787fae/LOWER6401917960/all13exact checks/two webSUCCESS/zero threads; actual12fde7f248d086504fa4e437a70c580324c43b7e. Native230204 ONCE14, canonical message/provider/Work bindings, exact two-function deployed source/configuration and READYweb/bothpublic12fde…-mvo7ckxs/null verified. Owner's bounded sender integrity renewal applied; no broader protected change. Factory UNMOUNTED.
+- [#2855 actual receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2855#issuecomment-6402277031): reviewed6a34a50e333bdeef6e9d2a5f1733d7ad47a2c2c5/LOWER6402089662/all13exact checks/two webSUCCESS/zero threads; actualfb667058d077bcdbcee2ed68d891760a838de8e1. Native230304 ONCE11 and exact original publication/body/ACL readback; no Edge delta. READYdpl_6AtswKyhepaRV1jENyHCinbeWdwb/exactfb667; public already superseded at inspection, no invented exact-public claim. Original provider acceptance is distinct from delivery/signing/payment.
+- [#2862 actual receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2862#issuecomment-6402277800): reviewed33a99850c91ecff617b670516497bf1d0d8b20f8/LOWER6402168986/all13exact checks/two webSUCCESS/zero threads; actual0ba4eb474390a8708a0043a3d73a46a41a8518b7. Native230404 ONCE28/all12exact bodies and metadata; initial23505duplicate history retained, full1461/1461parity/zero pending then original attempt2SUCCESS. Independent current source/config readback: documentv95/26files,sendv24/34,messagev158/47,signv46/24 ALLexact, original JWT postures. READYdpl_3N1SVxBFyP4dHVYmMrybbbDp9Bc6; bothpublic0ba…-mvo85g5d/null. Original atomic fields/signature/completion and retained PDF infrastructure released; local50field/33completion/post76legacy/113consumer+163steps/six-page render evidence remains distinct from customer acceptance.
+
+The sole Master4.0 log records exact trees/jobs/artifacts and proof boundaries. Functional: these source/native/Edge/web prerequisites are released. Visual: original PDF evidence inspected, no new React/UI in these three releases. Experiential: originating approved factory, canonical notices/reissue, explicit recipient completion/download/reload and ordinary roles/cohorts/hosted Storage/provider proof remain incomplete. Founder Acceptance: NOT_ACCEPTED; full O1–O12 remains assigned. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; catalogue and activation unchanged. No real send/signature/payment or replacement infrastructure. Historical NOT_APPLIED statements below remain dated evidence, superseded only by these exact release receipts.
+
 ## EXP04 original Work, request history and retained credentials — October25 production closeout
 
 - [#2826 actual receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2826#issuecomment-6398451757): reviewed72e7afd5b6f02105d78b9b3641e0bf6ee52e515c, lower-assurance review6398405229, all13 exact checks/two webSUCCESS/0threads. Mergef41f3a7919f76539e8c71e8b22c0d86235e54c06, native20271114160004 ONCE/9, normal pipeline/readback verified; productiondpl_8AfXkaeToryPh5amvg55tYW4uteD READY and both public200/exact buildf41f3a7919f76539e8c71e8b22c0d86235e54c06-mvnvqtyo/null at2026-10-25T13:46:34Z. Normal Edge40199007258 SUCCESS; zero affected functions, upload/readback skipped. Factory UNMOUNTED. Original consumed approval and exact prepared request register/read the same canonical Work. It does not dispatch a message or establish a signature/payment/service result.
@@ -712,7 +720,7 @@ task* creates one Operations task through `plan_assign_task_scoped` with an exac
 prefill PAIGE; the Team work panel reads status from `plan_items`. Contract:
 [increment 2 work contract](../delivery/exp08-team-hub-increment2-work-contract.md).
 
-**Increment 3 (2026-10-25, `PROOF_OWED`, not yet merged):** attachments, up to 5 files of 10 MB
+**Increment 3 (2026-10-25, `PROOF_OWED`, merged PR #2839; migrations and `team-hub-file` read back on production):** attachments, up to 5 files of 10 MB
 each per message, in `comms-attachments` at `<tenant>/team-hub/<file_id>`. Files are recorded in
 `team_hub_files` behind four restrictive storage policies (migration `20271114160008`) and purged
 on retirement by the `team_hub_files` provider (`20271114160108`). The `team-hub-file` edge
@@ -724,8 +732,14 @@ sweep exists. Contract:
 Evidence: [increment 3 record](../evidence/ui-delivery/exp08-team-hub-increment3.md), a harness
 render that is not authenticated and lists four open defects.
 
-**Not built:** PAIGE with Team Hub, meaning Chat/Live reads, search and approved reply drafts
-(increment 4). No Team Hub content enters Knowledge or Memory.
+**Increment 4 (2026-10-25, `PROOF_OWED`):** PAIGE with Team Hub in Chat and Live. Three
+caller-JWT reads (Spine `team.hub_*`, SOLO offer only) and a reply posted under the person's own
+name only from their approval card; search definer migration `20271114240008`, catalogue
+`20271114240108`. No Team Hub content enters Knowledge or Memory: automatic memory summaries stop
+for anyone who has read Team Hub through PAIGE (owner ruling 2026-10-25), their traces carry no
+text, and web, Knowledge and unattended writes are withheld for the rest of a request that carried
+Team Hub text. Contract:
+[increment 4 PAIGE contract](../delivery/exp08-team-hub-increment4-paige-contract.md).
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

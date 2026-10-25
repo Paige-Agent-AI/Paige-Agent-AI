@@ -32,6 +32,72 @@ function fixture() {
 }
 
 describe('original specialist history through server-stamped turn authority', () => {
+  it('expires a stalled authority read before any query and cannot continue when it arrives late', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const f = fixture(); let release!: (value: boolean) => void, settled: unknown;
+      f.authorize.mockImplementationOnce(() => new Promise<boolean>(resolve => { release = resolve; }));
+      const pending = readOriginalSpecialistHistory(f.input).then(value => { settled = value; return value; });
+      await vi.advanceTimersByTimeAsync(8_000); const atDeadline = settled;
+      release(true); await vi.advanceTimersByTimeAsync(0); await pending;
+      expect(atDeadline).toEqual({ v: 1, status: 'unavailable' });
+      expect(f.queries).toEqual([]); expect(f.inspectOriginal).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+  it('expires a stalled original query without starting later reads after its response', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const f = fixture(), from = f.input.caller.from; let release!: () => void, settled: unknown;
+      const gate = new Promise<void>(resolve => { release = resolve; });
+      f.input.caller.from = table => {
+        const query = from(table), read = query.maybeSingle;
+        if (table === 'paige_chat_threads') query.maybeSingle = async () => { await gate; return read(); };
+        return query;
+      };
+      const pending = readOriginalSpecialistHistory(f.input).then(value => { settled = value; return value; });
+      await vi.advanceTimersByTimeAsync(8_000); const atDeadline = settled;
+      release(); await vi.advanceTimersByTimeAsync(0); await pending;
+      expect(atDeadline).toEqual({ v: 1, status: 'unavailable' });
+      expect(f.queries).toHaveLength(1); expect(f.inspectOriginal).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+  it('expires a stalled invocation inspector without publishing it or rereading its origin late', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const f = fixture(), inspect = f.inspectOriginal.getMockImplementation()!;
+      let release!: () => void, settled: unknown;
+      const gate = new Promise<void>(resolve => { release = resolve; });
+      f.inspectOriginal.mockImplementationOnce(async id => { await gate; return inspect(id); });
+      const pending = readOriginalSpecialistHistory(f.input).then(value => { settled = value; return value; });
+      await vi.advanceTimersByTimeAsync(8_000); const atDeadline = settled;
+      release(); await vi.advanceTimersByTimeAsync(0); await pending;
+      expect(atDeadline).toEqual({ v: 1, status: 'unavailable' });
+      expect(f.queries).toHaveLength(2); expect(f.inspectOriginal).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+  it('shares one elapsed budget across successful stages instead of granting each another eight seconds', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const f = fixture(); let settled: unknown;
+      f.authorize.mockImplementation(async () => { await new Promise(resolve => setTimeout(resolve, 3_000)); return true; });
+      const pending = readOriginalSpecialistHistory(f.input).then(value => { settled = value; return value; });
+      await vi.advanceTimersByTimeAsync(8_000); const atDeadline = settled;
+      await vi.advanceTimersByTimeAsync(60_000); await pending;
+      expect(atDeadline).toEqual({ v: 1, status: 'unavailable' });
+      expect(f.queries).toHaveLength(2); expect(f.inspectOriginal).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+  it('cleans the elapsed-stage timers after an ordinary verified original read', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      expect(await readOriginalSpecialistHistory(fixture().input)).toHaveProperty('status', 'recorded_assignment');
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
   it('reads the original assignment and receipt only; rechecks source without granting continuation', async () => {
     const f = fixture(), r = await readOriginalSpecialistHistory(f.input);
     expect(r).toMatchObject({ v: 1, status: 'recorded_assignment', thread_id: scope.threadId, turn_id: scope.turnId,

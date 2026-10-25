@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-24 UTC — EXP04 original prepared-field seal source; verified source release only.**
+
+| Increment | Exact release and production proof | Completion boundary |
+| --- | --- | --- |
+| [#2745](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2745), read original prepared signing evidence for the existing PDF sealer | Reviewed `c92a7175d4bb843a2e260e1c0b4ba74232960e06`, final sequential AUTHOR-REVIEW / LOWER ASSURANCE6390164224; all13 exact-head checks and two web statuses SUCCESS. Actual main`216768d8e1eccbaacc39717cd1858bae6087449f`/tree`f66604554a9bc0c8327da5ab18d2d972caf4cae7` equals the inspected553+c92 union. Production migration`20271113850009_e04_prepared_seal_source.sql` recorded once; retired850004 absent. Reader body and original13-argument signature body, full ABI/owner/ACL/security/config exact; original14 events retained plus field_values_recorded. Two guarded55P03 attempts retained; third normal native40137478425 deploy121005398994/lint121005430383 SUCCESS after actual blockers cleared, without timeout/SQL/history/grant changes or backend termination. Normal full-range Edge recovery40137959302/121003416943 SUCCESS/edge-live216; Chat532 JWTtrue/275 runtime files and sign-agreement41 JWTfalse/23 files match actual merged Git bytes, original entries/no import maps. Exact production`dpl_4nmCaaVkyUDWUSMnRr78b1aYJNFZ` READY; immutable and public HTTP200/build216768d8e1eccbaacc39717cd1858bae6087449f-mvmyeou6/customerUpdate:null. [Original release receipt6390347222](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2745#issuecomment-6390347222). | Original sealer source consumer only. It requires actual original signatures/consent and atomically retained field facts; missing historical evidence is never reconstructed. Complete exact sender/message HIGH approval/native claim, atomic field producer and recipient ceremony remain unfinished; original token/effect holds intact. Earlier selected-Edge marker failure retained, not relabeled. No provider send, payment, signing activation, catalogue/algorithm promotion or customer release identity/announcement. Ordinary owner/staff/client, reload/revocation/Central QA, ALL12 and integrated founder acceptance remain UNVERIFIED/open. |
+
 **2026-10-24 UTC - EXP05 original weekly Chat claim, commit and decline consumers; source releases only.**
 
 | Increment | Exact release and production proof | Completion boundary |

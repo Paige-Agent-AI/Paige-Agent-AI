@@ -56,7 +56,9 @@ DO $$ BEGIN
 END $$;
 CREATE TABLE IF NOT EXISTS public.tenants (
   id uuid PRIMARY KEY, parent_tenant_id uuid, account_type text NOT NULL DEFAULT 'standalone',
-  features jsonb NOT NULL DEFAULT '{}'::jsonb, slug text);
+  features jsonb NOT NULL DEFAULT '{}'::jsonb, slug text,
+  -- The original presence function reads the row's own last-changed time as `as_of`.
+  updated_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS public.tenant_members (
   tenant_id uuid NOT NULL, user_id uuid NOT NULL, role text NOT NULL, status text NOT NULL DEFAULT 'active',
   joined_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, user_id));
@@ -73,6 +75,7 @@ CREATE TABLE public.paige_social_connections (
   tenant_id uuid not null references public.tenants(id) on delete cascade,
   provider_key text not null,
   provider_profile_key text not null,
+  requested_platform text,
   label text check (label is null or length(btrim(label)) between 1 and 120),
   status text not null default 'setup_required'
     check (status in ('setup_required','authorizing','connected','needs_reauth','disconnected','error')),
@@ -85,6 +88,9 @@ CREATE TABLE public.paige_social_connections (
   updated_at timestamptz not null default now(),
   constraint paige_social_connections_provider_shape check (provider_key ~ '^[a-z][a-z0-9_-]{1,63}$'),
   constraint paige_social_connections_profile_shape check (provider_profile_key ~ '^ps_[0-9a-f]{40}$'),
+  constraint paige_social_connections_requested_platform_shape check (
+    requested_platform is null or requested_platform in ('tiktok','instagram','facebook','linkedin','youtube','x','threads','pinterest','google_business','snapchat')
+  ),
   constraint paige_social_connections_tenant_id_id_key unique (tenant_id,id),
   constraint paige_social_connections_provider_profile_key unique (provider_key,provider_profile_key),
   constraint paige_social_connections_failure_state check ((status='error')=(failure_code is not null))
@@ -184,18 +190,21 @@ INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
 -- Connections: A has instagram connected (verified), x needs_reauth, facebook connected twice
 -- (two profiles: one connected, one disconnected → primary connected, profiles 2), linkedin
 -- error. B has instagram connected — must never reach A's answer.
-INSERT INTO public.paige_social_connections (tenant_id, provider_key, provider_profile_key, label, status, failure_code, last_verified_at) VALUES
-  ('00000000-0000-4000-8000-00000000d0a1', 'instagram', 'ps_1111111111111111111111111111111111111111', 'Alpha Coaching (main)', 'connected', NULL, '2026-10-20T10:00:00Z'),
-  ('00000000-0000-4000-8000-00000000d0a1', 'x',        'ps_2222222222222222222222222222222222222222', 'Alpha Coaching on X', 'needs_reauth', NULL, '2026-10-01T09:00:00Z'),
-  ('00000000-0000-4000-8000-00000000d0a1', 'facebook', 'ps_3333333333333333333333333333333333333333', 'Alpha Coaching page', 'connected', NULL, '2026-10-18T10:00:00Z'),
-  ('00000000-0000-4000-8000-00000000d0a1', 'facebook', 'ps_4444444444444444444444444444444444444444', 'Alpha Coaching (old)', 'disconnected', NULL, NULL),
-  ('00000000-0000-4000-8000-00000000d0a1', 'linkedin', 'ps_5555555555555555555555555555555555555555', NULL, 'error', 'provider_token_expired', NULL);
-INSERT INTO public.paige_social_connections (tenant_id, provider_key, provider_profile_key, label, status, last_verified_at) VALUES
-  ('00000000-0000-4000-8000-00000000d0b1', 'instagram', 'ps_6666666666666666666666666666666666666666', 'Beta (main)', 'connected', '2026-10-19T10:00:00Z');
+INSERT INTO public.paige_social_connections (tenant_id, provider_key, provider_profile_key, requested_platform, label, status, failure_code, last_verified_at) VALUES
+  ('00000000-0000-4000-8000-00000000d0a1', 'upload_post', 'ps_1111111111111111111111111111111111111111', 'instagram', 'Alpha Coaching (main)', 'connected', NULL, '2026-10-20T10:00:00Z'),
+  ('00000000-0000-4000-8000-00000000d0a1', 'upload_post', 'ps_2222222222222222222222222222222222222222', 'x', 'Alpha Coaching on X', 'needs_reauth', NULL, '2026-10-01T09:00:00Z'),
+  ('00000000-0000-4000-8000-00000000d0a1', 'upload_post', 'ps_3333333333333333333333333333333333333333', 'facebook', 'Alpha Coaching page', 'connected', NULL, '2026-10-18T10:00:00Z'),
+  ('00000000-0000-4000-8000-00000000d0a1', 'upload_post', 'ps_4444444444444444444444444444444444444444', 'facebook', 'Alpha Coaching (old)', 'disconnected', NULL, NULL),
+  ('00000000-0000-4000-8000-00000000d0a1', 'upload_post', 'ps_5555555555555555555555555555555555555555', 'linkedin', NULL, 'error', 'provider_token_expired', NULL),
+  -- A legacy connection with no requested_platform: it can never be attributed to a network, so
+  -- it must join NOTHING — every network's readiness stays what its own rows prove.
+  ('00000000-0000-4000-8000-00000000d0a1', 'upload_post', 'ps_7777777777777777777777777777777777777777', NULL, 'Legacy (unscoped)', 'connected', NULL, '2026-10-15T10:00:00Z');
+INSERT INTO public.paige_social_connections (tenant_id, provider_key, provider_profile_key, requested_platform, label, status, last_verified_at) VALUES
+  ('00000000-0000-4000-8000-00000000d0b1', 'upload_post', 'ps_6666666666666666666666666666666666666666', 'instagram', 'Beta (main)', 'connected', '2026-10-19T10:00:00Z');
 
 -- ── The cases ────────────────────────────────────────────────────────────────────────────────────
 DO $$
-DECLARE v jsonb; r record;
+DECLARE v text; r record;
 BEGIN
   -- 1. The owner reads the merged answer.
   v := pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', '',
@@ -229,7 +238,7 @@ BEGIN
     IF r.row_json->>'network' = 'youtube' THEN
       PERFORM pg_temp.chk(r.row_json->>'status' = 'not_recorded' AND r.row_json->>'connection_status' IS NULL
         AND r.row_json->>'connection_profiles' IS NULL,
-        'youtube: absence stays absence — no handle, no connection, NULL readiness');
+        'youtube: absence stays absence — no handle, no connection, NULL readiness, and the legacy unscoped connection joins nothing');
     END IF;
     IF r.row_json->>'network' = 'tiktok' THEN
       PERFORM pg_temp.chk(r.row_json->>'status' = 'not_recorded' AND r.row_json->>'connection_status' IS NULL,
@@ -266,9 +275,8 @@ BEGIN
   PERFORM pg_temp.chk(v LIKE 'err:42501:%', 'anon by a real call: refused: ' || v);
 
   -- 4. Shape: the ten promised OUT columns, EXECUTE grants.
-  PERFORM pg_temp.chk((SELECT count(*) FROM information_schema.columns c
-    JOIN pg_proc p ON p.proname = 'get_social_presence_evidence'
-    WHERE p.oid::regprocedure::text LIKE '%get_social_presence_evidence%' AND c.table_name = 'get_social_presence_evidence') = 10,
+  PERFORM pg_temp.chk((SELECT count(*) = 10 FROM pg_proc p, unnest(p.proargmodes) m
+    WHERE p.oid = 'public.get_social_presence_evidence(uuid)'::regprocedure AND m = 't'),
     'the OUT columns are exactly the ten promised');
   PERFORM pg_temp.chk(has_function_privilege('authenticated', 'public.get_social_presence_evidence(uuid)', 'EXECUTE')
     AND has_function_privilege('service_role', 'public.get_social_presence_evidence(uuid)', 'EXECUTE')

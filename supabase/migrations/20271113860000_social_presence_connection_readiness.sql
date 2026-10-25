@@ -119,40 +119,42 @@ BEGIN
       c.profiles
     FROM unnest(v_networks) AS n
     LEFT JOIN (
-      -- The lifecycle's answer, aggregated per network. The primary status is the most-privileged
-      -- state present; its row supplies label and verified-at. Tenant-scoped to the RESOLVED
-      -- workspace — a cross-tenant connection never reaches another workspace's readiness.
+      -- The lifecycle's answer, aggregated per network (requested_platform — the network the
+      -- connection is FOR; provider_key names the transport, not the network). The primary
+      -- status is the most-privileged state present; its row supplies label and verified-at.
+      -- Tenant-scoped to the RESOLVED workspace, and a legacy row with no requested_platform
+      -- can never be attributed to a network — it joins nothing, which is the honest absence.
       SELECT
-        provider_key,
+        pc.requested_platform AS network_key,
         count(*)::int AS profiles,
-        (array_agg(status ORDER BY CASE status
+        (array_agg(pc.status ORDER BY CASE pc.status
           WHEN 'connected' THEN 1
           WHEN 'authorizing' THEN 2
           WHEN 'needs_reauth' THEN 3
           WHEN 'error' THEN 4
           WHEN 'setup_required' THEN 5
           WHEN 'disconnected' THEN 6
-          ELSE 7 END, updated_at DESC))[1] AS primary_status,
-        (array_agg(label ORDER BY CASE status
+          ELSE 7 END, pc.updated_at DESC))[1] AS primary_status,
+        (array_agg(pc.label ORDER BY CASE pc.status
           WHEN 'connected' THEN 1
           WHEN 'authorizing' THEN 2
           WHEN 'needs_reauth' THEN 3
           WHEN 'error' THEN 4
           WHEN 'setup_required' THEN 5
           WHEN 'disconnected' THEN 6
-          ELSE 7 END, updated_at DESC))[1] AS primary_label,
-        (array_agg(last_verified_at ORDER BY CASE status
+          ELSE 7 END, pc.updated_at DESC))[1] AS primary_label,
+        (array_agg(pc.last_verified_at ORDER BY CASE pc.status
           WHEN 'connected' THEN 1
           WHEN 'authorizing' THEN 2
           WHEN 'needs_reauth' THEN 3
           WHEN 'error' THEN 4
           WHEN 'setup_required' THEN 5
           WHEN 'disconnected' THEN 6
-          ELSE 7 END, updated_at DESC))[1] AS primary_verified_at
-      FROM public.paige_social_connections
-      WHERE tenant_id = v_tenant
-      GROUP BY provider_key
-    ) c ON c.provider_key = n
+          ELSE 7 END, pc.updated_at DESC))[1] AS primary_verified_at
+      FROM public.paige_social_connections pc
+      WHERE pc.tenant_id = v_tenant AND pc.requested_platform IS NOT NULL
+      GROUP BY pc.requested_platform
+    ) c ON c.network_key = n
   LOOP
     RETURN QUERY
     SELECT v_row.n, v_row.status, v_row.handle, v_row.as_of, NULL::text, v_row.tenant_id,

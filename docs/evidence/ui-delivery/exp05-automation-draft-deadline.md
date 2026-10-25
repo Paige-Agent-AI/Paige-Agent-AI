@@ -101,6 +101,24 @@ routing/budgets are unchanged; no algorithm maturity or usefulness claim.
 
 ## Design and complete Experience boundary
 
+### Required-CI finite dependency reconciliation
+
+The original broad C0b job rejected the first candidate at its exact finite
+dependency-count assertion: 126 actual versus 125 expected. The unchanged
+Calendar-ancestry test reproduced that failure on frozen source48604ca8 before
+repair. Its expectation now includes the one reviewed existing deadline helper;
+all earlier source pins and authority assertions remain. A new hostile case
+removes that helper's elapsed/current-request fence and must refuse incumbent
+admission. This changes no runtime, validator, approval or source-acceptance rule.
+The earlier mixed-checkout full local run is diagnostic only; final broad-suite
+and new exact-head hosted results must be recorded separately before release.
+
+Final original broad command `node --test scripts/ci/c0b-*.test.mjs` passes all249
+cases with no skips or checkout/source changes during execution. A whole-file
+inverse restores the original ancestry test by reversing only the count and
+three explicit helper additions; all earlier assertions remain exact. New
+hosted exact-head CI remains required; these are local source/negative controls.
+
 Preserve the existing approved conversational states and PAIGE design system.
 [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
 hardening concerns applied to existing behavior: bounded waiting, honest saved

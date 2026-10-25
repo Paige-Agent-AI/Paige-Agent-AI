@@ -307,6 +307,23 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
               <MarkdownMessage content={session.seedBrief} className="vs-md" />
             </details>
           )}
+          {/* The brand this project's pages actually use (EXP06 row 2): the same anon-safe portal
+              read the published pages theme from, shown with its honest missing states so the owner
+              knows what visitors will see. Read-only — brand facts are set in Setup, not here. */}
+          {session && (
+            <p className="vs-brand-line">
+              <b>Working from your brand</b>
+              {brand.logoUrl && <img className="vs-brand-logo" src={brand.logoUrl} alt="" loading="lazy" />}
+              <span>
+                {brand.name ? brand.name : "No business name yet — add it in Setup"}
+                {" · "}
+                {brand.primaryColor
+                  ? <><i className="vs-brand-swatch" style={{ background: brand.primaryColor }} aria-hidden="true" />your page color</>
+                  : "Paige's default page color"}
+                {!brand.logoUrl && " · no logo yet — pages use your name and color"}
+              </span>
+            </p>
+          )}
           <div className="vs-chat-log" ref={logRef}>
             {chat.loadError && <p className="vs-alert" role="alert">{chat.loadError}</p>}
             {!chat.ready && !chat.loadError && <p className="vs-inspector-note" role="status">Opening the conversation…</p>}

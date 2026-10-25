@@ -9,6 +9,8 @@ test('all 29 reviewed incumbent adapters bind to real dispatch and dependency so
  const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,29);
 });
 const mutations=[
+ ['automation draft elapsed fence removed',s=>s.replace('const draftStage = createWeeklyDraftDeadline(8_000, draftCurrent);','const draftStage = async start => start();')],
+ ['automation draft current request fence removed',s=>s.replace('const draftCurrent = () => !req.signal.aborted && !tenantKnowledgeScopeRevoked && personaCtx?.tenant_id === draftTenant;','const draftCurrent = () => true;')],
  ['zero-work refusal marker broadened after processing',s=>s.replace('let recoveryInputRefused = false;', 'let recoveryInputRefused = true;')],
  ['caller factory changed',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],
@@ -178,6 +180,19 @@ test('rejects retired automation owner-only classification downgrade',()=>{const
 test('rejects missing customer source-context ancestry',()=>{
  const altered=new Map(sources);altered.delete('supabase/functions/_shared/client-portal-assistant-context.ts');
  assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);
+});
+
+test('rejects missing original elapsed-stage utility source',()=>{
+ const path='supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts';
+ assert.equal(typeof sources.get(path),'string'); const altered=new Map(sources);altered.delete(path);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.includes(`incumbent source missing: ${path}`));
+});
+
+test('rejects elapsed-stage utility that can continue after expiry or scope loss',()=>{
+ const path='supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts',raw=sources.get(path);
+ const changed=raw.replace('if (!current() || performance.now() >= expires)','if (false)');
+ assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.includes(`incumbent reviewed source changed: ${path}`));
 });
 test('rejects customer source-context authority widening',()=>{
  const path='supabase/functions/_shared/client-portal-assistant-context.ts',raw=sources.get(path);

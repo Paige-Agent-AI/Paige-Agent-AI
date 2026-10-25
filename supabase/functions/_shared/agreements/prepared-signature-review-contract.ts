@@ -1,3 +1,5 @@
+/** Placeholder only; never a signing credential or evidence of sending. */
+export const PREPARED_SIGNING_LINK_MARKER = "[[PAIGE_AGREEMENT_SIGNING_LINK]]";
 import { object, UUID } from "../sales-collections/primitives.ts";
 import {
   type AgreementFieldIssue,

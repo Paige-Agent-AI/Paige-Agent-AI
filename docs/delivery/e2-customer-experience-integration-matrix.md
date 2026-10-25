@@ -139,6 +139,17 @@ Visual, Experiential and Founder Acceptance remain distinct and incomplete.
 
 ## October24 — original report consumer, local source only
 
+**Current689 composition:** ROOT00cf86f0 and all46 owning test inputs unchanged; COMPLETE E04C35 source pin/124 dependencies/metadata preserved with same29 reviewed report scalars. Actual original hostile79/79 PASS83.499s. Two provenance prefixes resolved without a ROOT feature or owner-window takeover; fresh exact review/CI/source/customer proof remain owed.
+
+**Hosted typecheck correction:**044 correctly failed TS2550 for Object.hasOwn in the owning test helper. The compatible own-property call preserves the original ES2020 target, actual-import binding and both missing-import negatives; production ROOT/C0b and baselines are unchanged. Fresh owning46/46 PASS68.81s; new exact review/typecheck/CI required. Failed044 is retained, not released.
+
+Current229 addendum: exact parent-onlyde79 missing-import repair received; actual
+import-bound tool construction2FAIL→46PASS/current22946PASS; original79 hostile
+guardsPASS194.984s after reviewed29-field-only renewal. ROOT00cf86f0 preserves
+the released campaign read and all124 incoming dependencies. Final exact review,
+CI/source release and genuine report/artifact/turn/Rail acceptance remain owed.
+Earlier development checkpoint below is historical, not current release proof.
+
 O01/O02/O16/O18 and CAP014/015 continue through the original document tool,
 canonical source selectors/current versions and released840002 durable capture.
 Current-main03ed composition preserves all incoming source; original owning
@@ -163,6 +174,49 @@ artifact/turn/Rail, saved/reopened evidence, permissions and recovery proof.
 Original CPU-failed monthly operation remains unretried with EXP05; heldE13 stays
 gated. All original19/nine, historical9PASS/0FAIL and12PASS/0FAIL/4BLOCKED, algorithms
 and catalogue maturity remain unchanged; one integrated founder evaluation.
+
+## EXP02 Systems Check dialog return — October23 source candidate
+
+**October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.
+
+**October24 update:** composed main03ed, original67/67 PASS; eleven final native
+synthetic captures now cover eight closed/open layouts and desktop/390 dialog
+focus return. Original dialog actions render44px after a scoped CSS correction.
+See the existing evidence link below for hashes and precise scope. This replaces
+the earlier missing matched-capture boundary; native200percent/current reduced
+motion/pending/scope-retirement, exact-head CI/release and authenticated customer,
+other-role/cohort/Live/full19/nine/founder acceptance remain owed. No approved
+action, real scan, receipt or algorithm maturity is inferred.
+
+Original review dialogs now consume Escape before shared shell shortcuts and
+restore their original control after inert clears. A per-account decision generation
+retires late success/refusal/focus, including A→B→A and unmount, without cancelling
+or settling the original domain operation. Four causal keyboard/inert failures,
+then two late-result scope failures are retained; final106 cases/four original suites
+pass, scoped lint0/current-main build112seconds. Detector0 findings. Native Cancel/
+Escape returns to the original control after inert clears; focus trap, unchanged
+synthetic draft/scroll are verified. Eight DOM geometries have no page overflow,
+but lagging compositor frames are INVALID; complete matching renders/zoom/scope
+and released ordinary proof remain owed. Exact origin access was authorized;
+intermittent browser stalls/reset and read-only synthetic-confirm refusal retained.
+[Evidence](../evidence/ui-delivery/e2-systems-dialog-return.md).
+Functional local / Visual candidate UNVERIFIED / Experiential original defect and
+bounded native return, released proof owed / Founder NOT_ACCEPTED. No shell, runner, approval writer,
+provider, registry, LayerC, Rail or permission change. Native recorded-check UI is
+partial; canonical Systems Check Mind-context stays UNAVAILABLE (SCR-2/SCR-3).
+All19/nine remain mandatory.
+
+Preceding Finance2684 is source-releasedd780fd85e3cfd0c73256847c79f2692a5a399d1a,
+LOWER5634377259/all10 applicable checks/two statuses. Normal2M5h READY/exactmeta;
+public containinga9bd855c-mvlgdzr6/null and unchanged source/six served markers
+verified, exactd780 public intermediate not sampled (receipt6374834566). Same-ref/
+date-range ordinary read/reload is still owed. Original monthly CPU failure and
+unknown claim are preserved; EXP05 recovery ACK ANT11/96c5091a, no retry/reset.
+Earlier candidate sections remain dated historical evidence; historical9/0 and
+12/0/4, algorithms, nine catalogue/access labels, role/cohort/Live and full founder
+acceptance are unchanged.
+
+
 
 ## October24 — source-request report foundation, not customer settlement
 

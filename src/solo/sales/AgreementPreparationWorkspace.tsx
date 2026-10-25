@@ -90,7 +90,7 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
   const accessEpoch = React.useRef({ allowed, value: 0 });
   if (accessEpoch.current.allowed !== allowed) accessEpoch.current = { allowed, value: accessEpoch.current.value + 1 };
   const visibleClients = clientsReady && clientsReadable ? clients : [];
-  const exit = useSalesDraftExit(documentOpen?documentGuard.draft:signer ? signer.draft : correction ? { title:correction.title, clientId:correction.original.contact_id, body:correction.body } : { title, clientId, body }, busy, onClose, {
+  const exit = useSalesDraftExit(documentOpen?{fields:documentGuard.draft,invitations:documentGuard.signatureDraft??null}:signer ? signer.draft : correction ? { title:correction.title, clientId:correction.original.contact_id, body:correction.body } : { title, clientId, body }, busy, onClose, {
     uncertain: (documentOpen&&documentGuard.uncertain)||signer?.state === 'unconfirmed' || correction?.state === 'unconfirmed' || (agreementId === 'new' && !originalFresh.current && !foundOriginal),
     recordedDraftFound: foundOriginal !== null,
   });
@@ -111,7 +111,7 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
   };
   const beginDocument=()=>{
     if(!allowed||!record||recordEpoch.current!==accessEpoch.current.value||signerRequestId)return;
-    documentSeen.current=documentRequestId;exit.adoptBaseline([]);setDocumentGuard({draft:[],busy:false,uncertain:Boolean(documentRequestId)});setDocumentOpen(true);
+    documentSeen.current=documentRequestId;exit.adoptBaseline({fields:[],invitations:null});setDocumentGuard({draft:[],busy:false,uncertain:Boolean(documentRequestId)});setDocumentOpen(true);
   };
 
   const retireCorrection = () => {
@@ -357,7 +357,7 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
   },[allowed,tenantId,phase,visibleRecord,signerRequestId,signer,adoptDraftBaseline]);
   React.useEffect(()=>{
     if(!allowed||phase!=='record'||!visibleRecord||!documentRequestId||documentOpen||signer||documentSeen.current===documentRequestId)return;
-    documentSeen.current=documentRequestId;adoptDraftBaseline([]);setDocumentGuard({draft:[],busy:false,uncertain:true});setDocumentOpen(true);
+    documentSeen.current=documentRequestId;adoptDraftBaseline({fields:[],invitations:null});setDocumentGuard({draft:[],busy:false,uncertain:true});setDocumentOpen(true);
   },[allowed,phase,visibleRecord,documentRequestId,documentOpen,signer,adoptDraftBaseline]);
   const currentClient = visibleClients.find(client => client.id === (agreement?.contact_id ?? clientId));
   const savedStatus = agreement ? signingPreparationLabel(agreement.status, agreement.expires_at) : null;
@@ -391,7 +391,7 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     {phase==='record' && signer && <AgreementSignerPreparation key={signerEpoch.current} session={signer} clientName={visibleClients.find(client=>client.id===signer.original.agreement.contact_id)?.name ?? 'Client details are not loaded'} onChange={patch=>setSigner(value=>value?.state==='editing'&&!value.command?{...value,draft:{...value.draft,...patch}}:value)} onSave={()=>{void saveSigner();}} onRecover={()=>{void recoverSigner();}} onReturn={()=>exit.request(()=>returnFromSigner())}/>}
     {phase==='record'&&agreement&&documentOpen&&activeUserId&&<React.Suspense fallback={<p role="status">Opening document preparation…</p>}><AgreementDocumentPreparation tenantId={tenantId} actorId={activeUserId} agreementId={agreement.id} requestId={documentRequestId}
       authorityKey={`${tenantId}:${activeUserId}:${accessEpoch.current.value}`} isCurrent={()=>allowed&&accessEpoch.current.allowed&&exit.alive.current}
-      resume={documentGuard} onGuard={(value,baseline)=>{setDocumentGuard(value);if(baseline)exit.adoptBaseline(baseline);}}
+      resume={documentGuard} onGuard={(value,baseline)=>{setDocumentGuard(value);if(baseline)exit.adoptBaseline({fields:baseline,invitations:null});}}
       onRetainRequest={retainDocumentRequest} onRequest={exit.request} onReturn={returnFromDocument}
       onAddSigners={()=>{if(documentGuard.uncertain||!retainDocumentRequest(null))return;setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});beginSigner();}}
       onAccessRefused={()=>{documentSeen.current=documentRequestId;setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});exit.adoptBaseline({title:'',clientId:'',body:''});recordEpoch.current=-1;setRecord(null);setPhase('error');setMessage('Agreement access could not be confirmed. Recheck the original business and record.');onRefresh();}}

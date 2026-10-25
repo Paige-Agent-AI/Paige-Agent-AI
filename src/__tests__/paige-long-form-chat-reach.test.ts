@@ -57,8 +57,8 @@ const plannedReport={...reportMetadata,metric_requests:[{
   metric_key:'sales.invoices.issued_amount',metric_version:currentMetricVersion('sales.invoices.issued_amount'),
 }]};
 
-function originalDocumentTool() {
-  const source=ts.createSourceFile('chat.ts',chat,ts.ScriptTarget.Latest,true);
+function originalDocumentTool(text=chat) {
+  const source=ts.createSourceFile('chat.ts',text,ts.ScriptTarget.Latest,true);
   const tools=walk(source,n=>ts.isObjectLiteralExpression(n)&&n.properties.some(p=>
     ts.isPropertyAssignment(p)&&p.name.getText(source)==='name'
       &&ts.isStringLiteral(p.initializer)&&p.initializer.text==='document_generate'));
@@ -66,11 +66,35 @@ function originalDocumentTool() {
   const code=ts.transpileModule(`const tool=${tools[0].getText(source)};`,{
     compilerOptions:{target:ts.ScriptTarget.ES2022},
   }).outputText;
-  return new Function('BUSINESS_METRIC_KEYS','MARKETING_METRIC_KEYS','currentMetricVersion',
-    `${code};return tool;`)(BUSINESS_METRIC_KEYS,MARKETING_METRIC_KEYS,currentMetricVersion);
+  // Bind only exports actually imported by the production module. Supplying every
+  // helper unconditionally hid a real startup ReferenceError in the original tool.
+  const modules:Record<string,Record<string,unknown>>={
+    '../_shared/analytics-metrics/keys.ts':{BUSINESS_METRIC_KEYS,MARKETING_METRIC_KEYS},
+    '../_shared/analytics-metrics/metric-contract.ts':{currentMetricVersion},
+  };
+  const bindings:Record<string,unknown>={};
+  for(const declaration of source.statements.filter(ts.isImportDeclaration)) {
+    if(!ts.isStringLiteral(declaration.moduleSpecifier))continue;
+    const exports=modules[declaration.moduleSpecifier.text];
+    const names=declaration.importClause?.namedBindings;
+    if(!exports||!names||!ts.isNamedImports(names)||declaration.importClause?.isTypeOnly)continue;
+    for(const specifier of names.elements)if(!specifier.isTypeOnly) {
+      const name=(specifier.propertyName??specifier.name).text;
+      if(Object.prototype.hasOwnProperty.call(exports,name))bindings[specifier.name.text]=exports[name];
+    }
+  }
+  return new Function(...Object.keys(bindings),`${code};return tool;`)(...Object.values(bindings));
 }
 
 describe("durable long-form Chat reach", () => {
+  it.each(['keys.ts','metric-contract.ts'])('refuses original tool construction without its real %s import',module=>{
+    const source=ts.createSourceFile('chat.ts',chat,ts.ScriptTarget.Latest,true);
+    const declaration=source.statements.filter(ts.isImportDeclaration).find(node=>
+      ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text.endsWith('/'+module));
+    expect(declaration).toBeDefined();
+    const missing=chat.slice(0,declaration!.getFullStart())+chat.slice(declaration!.end);
+    expect(()=>originalDocumentTool(missing)).toThrow(ReferenceError);
+  });
   it('offers source-bound reviews through the original document tool',()=>{
     const tool=chat.slice(chat.indexOf('name: "document_generate"'),chat.indexOf('name: "growth_list"'));
     expect(tool).toContain('"business_review"');

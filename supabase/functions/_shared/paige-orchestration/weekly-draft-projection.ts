@@ -54,6 +54,21 @@ const nextStep = {
   unknown: "reconcile_original_record",
 } as const;
 
+/** Inspect-only references from an already authorized native read/claim result.
+ * Keep these separate from model prose and the private approval selector/token.
+ * The native request is the Rail run identity; the receipt is a different row.
+ * This projection neither verifies a receipt independently nor grants replay.
+ */
+export function weeklyDraftRecordReference(raw: unknown,
+  scope: WeeklyDraftScope & Readonly<{ threadId: string }>, confirmationId: string) {
+  if (!object(scope) || !Object.prototype.hasOwnProperty.call(scope, "threadId") || !uuid(scope.threadId)
+    || !uuid(confirmationId)) return null;
+  const state = parseWeeklyDraftState(raw, scope);
+  if (!state || state.confirmationId !== confirmationId || !["saved", "changed"].includes(state.phase)
+    || !state.automationId || !state.receiptId) return null;
+  return Object.freeze({ automationId: state.automationId, runId: state.requestId, receiptId: state.receiptId });
+}
+
 /** Minimized context for the future Chat consumer of the SAME native command.
  * Callers still owe authenticated owner/current-scope/native readback checks.
  * Parsing JSON is not authentication, receipt verification or permission to act.

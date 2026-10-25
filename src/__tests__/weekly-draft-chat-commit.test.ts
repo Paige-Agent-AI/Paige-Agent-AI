@@ -92,6 +92,9 @@ describe("original weekly Chat save after native claim and existing Kit decision
     const result = await commitWeeklyDraftChatApproval(caller(state), options());
     expect(result).toMatchObject({ status: "observed", context: { phase: "changed" } });
     expect(result).not.toHaveProperty("record");
+    expect(result).toMatchObject({ recordReference: { automationId: process, runId: request, receiptId: receipt } });
+    if (result.status === "observed") for (const id of [process, request, receipt, confirmation])
+      expect(JSON.stringify(result.context)).not.toContain(id);
   });
   it.each(["scope", "abort"])("suppresses a late completion after %s retirement", async mode => {
     let resolve!: (reply: Reply) => void, current = true;
@@ -131,6 +134,7 @@ describe("original weekly Chat save after native claim and existing Kit decision
     const result = await commitWeeklyDraftChatApproval(db, options());
     expect(result).toMatchObject({ status: "observed", context: { phase }, retryAllowed: false });
     expect(result).not.toHaveProperty("record");
+    expect(result).toHaveProperty("recordReference", null);
     expect(db.rpc.mock.calls.map(call => call[0])).toEqual(["commit_weekly_commitment_chat_draft", "read_weekly_commitment_chat_draft"]);
   });
   it("keeps native authority refusals terminal without trying a privileged fallback", async () => {

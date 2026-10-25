@@ -540,7 +540,7 @@ function ChannelTelemetryPanel({ channels, onRecord, canManage, notPermitted, ha
         <>
           <ul className="social-channels">
             {channels.map((channel) => (
-              <li key={channel.network}>
+              <li key={channel.network} data-connection={channel.connection?.status ?? "none"}>
                 <div className="social-channel-id">
                   <span className="social-channel-dot" aria-hidden="true" />
                   <div>
@@ -552,12 +552,22 @@ function ChannelTelemetryPanel({ channels, onRecord, canManage, notPermitted, ha
                   <Figure value={channel.reach.value} />
                   <small>{channel.reach.note}</small>
                 </div>
+                {/* EXP07 row 9 — the readiness line: what the connection lifecycle proves about
+                    this channel, in one sentence, present whether or not a connection exists. */}
+                <p className="social-channel-readiness" data-state={channel.connection?.status ?? "none"}>
+                  {channel.connectionNote}
+                  {channel.connection?.status === "connected" && channel.connection.verifiedAt
+                    ? ` Last verified ${new Date(channel.connection.verifiedAt).toLocaleDateString()}.`
+                    : ""}
+                  {channel.connection?.label ? ` (${channel.connection.label})` : ""}
+                </p>
               </li>
             ))}
           </ul>
           <p className="social-panel-foot">
-            These are what you told PAIGE. No provider is connected, so no audience, engagement or
-            placement number exists for any of them.
+            {channels.some((c) => c.connection?.status === "connected")
+              ? "Some of these are connected. A connection is consent to read the account — no audience, engagement or placement number exists for any of them, and posting stays off."
+              : "These are what you told PAIGE. No provider is connected, so no audience, engagement or placement number exists for any of them."}
           </p>
         </>
       )}
@@ -680,6 +690,7 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
     const artifacts = campaigns.artifacts ?? [];
     return {
       handles: social.handles,
+      connections: social.connections,
       publishedOutputs: artifacts.length,
       approvalGatedForms: artifacts.filter((artifact) => String(artifact.routingState || "").includes("approval-gated")).length,
       formsNeedingRepair: artifacts.filter((artifact) => (artifact.recentDispatches?.failed ?? 0) > 0).length,
@@ -705,7 +716,7 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
       handlesUnknown: Boolean(social.handlesUnknown),
     };
   }, [
-    social.handles, social.handlesUnknown,
+    social.handles, social.connections, social.handlesUnknown,
     campaigns.artifacts, campaigns.submissions, campaigns.phase,
     pending.items, waitingUnread,
   ]);
@@ -759,7 +770,7 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
   const nextMove = buildNextMove(input);
   const kpis = buildKpis(input);
   const stages = buildPipeline(input);
-  const channels = buildChannels(social.handles);
+  const channels = buildChannels(social.handles, social.connections);
 
   return (
     <div className="social-page">

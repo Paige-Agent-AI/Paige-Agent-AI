@@ -29,6 +29,21 @@ export type SocialPresenceRow = {
   as_of: string | null;
   reason: string | null;
   tenant_id: string | null;
+  // EXP07 row 9 — the connection lifecycle's readiness answer for this network (null = no
+  // connection row; the capture-only handle remains the whole truth).
+  connection_status: string | null;
+  connection_label: string | null;
+  connection_verified_at: string | null;
+  connection_profiles: number | null;
+};
+
+/** One network's connection readiness as the presence read proved it (EXP07 row 9). */
+export type SocialConnectionReadiness = {
+  network: string;
+  status: "connected" | "authorizing" | "needs_reauth" | "error" | "setup_required" | "disconnected";
+  label: string | null;
+  verifiedAt: string | null;
+  profiles: number;
 };
 
 export type SocialWriteResult =
@@ -40,6 +55,8 @@ export type SocialCommandState = {
   phase: "resolving" | "loading" | "ready" | "error" | "unavailable";
   /** Accounts this workspace has recorded, in the platform's network order. */
   handles: SocialHandle[];
+  /** Each network's connection readiness, as the same governed presence read proved it (EXP07 row 9). */
+  connections: SocialConnectionReadiness[];
   /** True only for an owner or admin — the same predicate the write's own gate uses. */
   canManage: boolean;
   /** When the workspace record last changed. Never a per-account timestamp; none is recorded. */
@@ -79,6 +96,7 @@ function safeWriteMessage(code?: string): string {
  */
 export function classifyPresence(rows: SocialPresenceRow[]): {
   handles: SocialHandle[];
+  connections: SocialConnectionReadiness[];
   refused: boolean;
   unreadable: boolean;
 } {
@@ -109,18 +127,35 @@ export function classifyPresence(rows: SocialPresenceRow[]): {
       handle: (row.handle as string).trim(),
     }));
 
-  return { handles, refused, unreadable };
+  // Readiness is read from the SAME rows: an 'unavailable' row carries none (the refusal leaks
+  // nothing), and any other row carries its connection answer or its absence. A read the page was
+  // not shown (unreadable) yields no readiness either — an unknown connection is stated as none
+  // shown, never guessed from the handle.
+  const READINESS = new Set(["connected", "authorizing", "needs_reauth", "error", "setup_required", "disconnected"]);
+  const connections: SocialConnectionReadiness[] = unreadable
+    ? []
+    : rows
+        .filter((row) => row.status !== "unavailable" && row.connection_status && READINESS.has(row.connection_status))
+        .map((row) => ({
+          network: row.network,
+          status: row.connection_status as SocialConnectionReadiness["status"],
+          label: typeof row.connection_label === "string" && row.connection_label.trim() ? row.connection_label.trim() : null,
+          verifiedAt: typeof row.connection_verified_at === "string" ? row.connection_verified_at : null,
+          profiles: typeof row.connection_profiles === "number" && row.connection_profiles > 0 ? row.connection_profiles : 1,
+        }));
+  return { handles, connections, refused, unreadable };
 }
 
 export function useSocialCommand(): SocialCommandState {
   const { activeTenantId, accountContextLoading } = useTenantContext();
   const [refreshKey, setRefreshKey] = useState(0);
   const [state, setState] = useState<
-    Pick<SocialCommandState, "tenantId" | "phase" | "handles" | "canManage" | "recordChangedAt" | "notPermitted" | "handlesUnknown" | "authorityUnknown">
+    Pick<SocialCommandState, "tenantId" | "phase" | "handles" | "connections" | "canManage" | "recordChangedAt" | "notPermitted" | "handlesUnknown" | "authorityUnknown">
   >({
     tenantId: activeTenantId ?? null,
     phase: accountContextLoading ? "resolving" : "loading",
     handles: [],
+    connections: [],
     canManage: false,
     recordChangedAt: null,
     notPermitted: false,
@@ -144,7 +179,7 @@ export function useSocialCommand(): SocialCommandState {
       return () => { cancelled = true; };
     }
     if (!activeTenantId) {
-      setState({ tenantId: null, phase: "unavailable", handles: [], canManage: false, recordChangedAt: null, notPermitted: false, handlesUnknown: false, authorityUnknown: false });
+      setState({ tenantId: null, phase: "unavailable", handles: [], connections: [], canManage: false, recordChangedAt: null, notPermitted: false, handlesUnknown: false, authorityUnknown: false });
       return () => { cancelled = true; };
     }
 
@@ -179,7 +214,7 @@ export function useSocialCommand(): SocialCommandState {
       if (cancelled || identity.current !== opened) return;
 
       if (presence.error) {
-        setState({ tenantId: activeTenantId, phase: "error", handles: [], canManage: false, recordChangedAt: null, notPermitted: false, handlesUnknown: false, authorityUnknown: false });
+        setState({ tenantId: activeTenantId, phase: "error", handles: [], connections: [], canManage: false, recordChangedAt: null, notPermitted: false, handlesUnknown: false, authorityUnknown: false });
         return;
       }
 
@@ -188,11 +223,11 @@ export function useSocialCommand(): SocialCommandState {
       // divergence the Chat adapter guards, arriving here through the same resolver.
       const foreign = rows.some((row) => row.tenant_id && row.tenant_id !== activeTenantId);
       if (foreign) {
-        setState({ tenantId: activeTenantId, phase: "error", handles: [], canManage: false, recordChangedAt: null, notPermitted: false, handlesUnknown: false, authorityUnknown: false });
+        setState({ tenantId: activeTenantId, phase: "error", handles: [], connections: [], canManage: false, recordChangedAt: null, notPermitted: false, handlesUnknown: false, authorityUnknown: false });
         return;
       }
 
-      const { handles, refused, unreadable } = classifyPresence(rows);
+      const { handles, connections, refused, unreadable } = classifyPresence(rows);
       if (role.error) {
         console.error("[social-command] membership read failed; treating authority as unknown", role.error);
       }
@@ -201,6 +236,7 @@ export function useSocialCommand(): SocialCommandState {
         tenantId: activeTenantId,
         phase: "ready",
         handles,
+        connections,
         // The same predicate the server's own gate uses (`is_tenant_admin`), so the form is offered
         // to exactly the callers the write will accept rather than to everyone who can see it.
         canManage: memberRole === "owner" || memberRole === "admin",

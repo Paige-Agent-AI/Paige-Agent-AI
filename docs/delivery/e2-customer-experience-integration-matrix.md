@@ -1,5 +1,108 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October24 evening — original-reference Finance read and reload verified
+
+The originating Sales2768 repair is released in containing production03edfad8a.
+One new authorized, explicitly read-only VERA request returned the ORIGINAL
+receivables measurement matching Finance, preserved exact custom bounds and
+current-snapshot semantics, and explained coverage, source freshness, expiry and
+missing bank/accounting facts. It settled by the42-second observation; the UI
+reported one read step/22s. Reload retained the same saved reply, original step
+badge, workspace and empty composer. No refused reference or unknown monthly work
+was replayed. [Sanitized source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055); ANT52/47e3e3ad-2a66-4af3-9ca5-e2578b184b59.
+
+This is PASS for the bounded RELEASED read/persistence pathway, not undeployed
+Finance2694 UI acceptance, detailed activity inspection, universal roles/cohorts,
+Live, business execution or complete Finance. Earlier actual refusals stay
+historical; original9/0 and12/0/4 denominators are unchanged. No customer amounts,
+reference tokens or account/session metadata are published. All19/nine and one
+complete founder evaluation remain required. Candidate CI/review/release and
+post-deployment rendered acceptance remain separate gates.
+
+## October24 — post-restart current-main confirmation
+
+Windows restart restored local execution. Composed actual main03edfad8a, preserving
+all incoming source and the original Finance product/test/harness blobs. The
+original Sales initialization repair2768 is merged as d53d99e951e0f18ac1a6895598f2e4211e1367e5;
+public production returned03edfad8a-mvn28mxb/customerUpdate:null. This is source
+release evidence, not positive Finance original-reference reacceptance. The earlier
+real refusal/FAIL remains historical and unresolved by this source observation.
+
+Fresh original Finance workspace/invoice/shared metric suites:69PASS/3 in40.30s.
+Sandbox SWC cache refusal occurred before collection; unchanged execution with the
+existing owner-secured cache passed, without permission or source modification.
+Six pre-restart browser200percent captures are now published byte-for-byte with
+hashes; twelve target-bound current-source frames cover all eight required
+viewport/PAIGE states, desktop/narrow error, second synthetic workspace/member
+denial and390px same-metric Escape return. See the existing confirmation JSON.
+Immediate rail-transition captures were INVALID setup evidence: settled1366px
+open uses21px with intact amounts and equal scroll/client widths. No speculative
+UI repair followed. The wrong-target native screenshot is excluded. Error retry
+was exercised in a fixed error fixture; real backend recovery is not claimed.
+
+Functional: original Finance source and current regression proof. Visual: bounded
+current-source synthetic rendering/interaction confirmed. Experiential: complete
+ordinary customer reference/Chat/Live/cohort/recovery proof remains owed. Founder
+Acceptance: NOT_ACCEPTED. All19/nine remain required; no new capability/algorithm,
+provider, approval, execution or Rail claim. Fresh exact-head review/CI and normal
+release/readback remain gates. Historical pending tool/asset/source statements
+below retain their original dated scope.
+
+## October24 — current Finance verification and release boundary
+
+All applicable exact-head checks for parent #2694 at
+`ce6818e620fa8e7b6a58f330ce711ab911eaefc4`, child #2696 at
+`970517f34a957b8360b3df2259f6630c3dba7d83`, and Systems #2690 at
+`61ebfb7f493a933601fe09518a7c80a01fd40eaf` completed successfully;
+their source-only Supabase Preview checks were skipped. Both observed Vercel
+statuses for the Finance parent succeeded. These results belong to those exact
+heads; current-main composition requires new CI and a separate review. No merge,
+candidate deployment or customer acceptance follows from these checks.
+
+Native synthetic Finance verification additionally exercised actual browser
+200percent zoom: unchanged complete monetary strings, the original scroll owner,
+source Sheet reading, Escape focus return to the same metric, and Home/End
+department navigation. Browser zoom was restored to100percent. The native
+environment reported Reduced Motion enabled; existing reduced-motion CSS and
+Sheet/rail/navigation interactions were inspected, without a frame-duration claim.
+The six original zoom captures remain private; publishing and hash-binding those
+assets is still owed while local file/command tools stall. The already committed
+eight required viewport/rail states and320 focus evidence remain valid. The
+subsequent error-fixture load was stopped before inspection and is UNVERIFIED.
+No alternate browser control was used to bypass the physical-Escape stop.
+
+Separate released-customer read/navigation verification traversed all seven
+Finance pages, confirmed VERA attribution and truthful unavailable bank,
+accounting, costs and forecast states, and reloaded Budgeting in the same
+authorized workspace. This proves that bounded released journey, not this
+undeployed presentation or complete Finance acceptance.
+
+One new, explicitly read-only original-reference VERA request settled to
+`metric_read_refused` within35seconds after the first post-send observation;
+the saved refusal survived reload. Original context was not broadened or
+substituted. Positive original-reference review is **FAIL / proof owed**.
+Metadata-only inspection found a later same-series issuance revoking the selected
+reference14ms after issuance, before expiry;22references for11Sales keys were
+issued within94ms, and the source revision differed. Overlapping initial-auth
+issuance is an investigated hypothesis, not a proven root cause or unchanged-data
+claim. EXP04 accepted its original Sales hook/wrapper repair in #2768
+(`2d722bc6633377232b89dc59107377de294d7d1f`, open at this checkpoint).
+EXP02 retains integration and authenticated reacceptance responsibility; canonical
+issuer/revocation/actor/tenant/bounds remain intact. Public receipts:
+[original negative](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6386721064),
+ANT138/db508082, ANT52/8f744841 and ANT161/fa1baeb8.
+
+Functional: presentation source and bounded released reads, positive review FAIL.
+Visual: named synthetic states/zoom/focus only; remaining asset and state proof owed.
+Experiential: negative/refusal/reload verified; positive review and complete
+Chat/Live/cohort/permission/recovery proof incomplete.
+Founder Acceptance: NOT_ACCEPTED; one complete integrated evaluation remains.
+Algorithm Support: ALG03/06/11/12 Partial; ALG13 usefulness/impact Unverified.
+Orchestration Contract: read-only evidence and original conversation only; no
+business action, new approval, provider activation or Rail execution claim.
+CAP009–017 and all19 required outcomes retain their existing evidence states.
+The original CPU-failed monthly operation remains unknown and unretried.
+
 ### October24 — bounded Finance native follow-through
 
 Current original Finance55edea4de source now has native desktop/390px Sheet trap
@@ -33,6 +136,20 @@ request stays unretried/unknown with original EXP05 recovery coordination.
 All original19 and CAP009–017 remain required per ANT138/f4c4c060; no renamed
 outcome, new registry, algorithm or catalogue-readiness promotion. Functional,
 Visual, Experiential and Founder Acceptance remain distinct and incomplete.
+
+## October24 — report source foundation deployed; customer outcome still owed
+
+Original2734/408923cc passed all13 exact checks/two statuses with labeled
+AUTHOR-REVIEW / LOWER ASSURANCE5638380473 and merged d3617646e494923887b9b9781c470901427a6c8a.
+Normal native840002 and selected Chat530/worker57 source/permissions are verified;
+[actual release6385101081](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2734#issuecomment-6385101081) and the sole Master4.0 row hold exact identities.
+Original2675 closeout2685 is merged11e4 with verified web/public readback. No new
+customer report or recovery acceptance is inferred. The next original Chat schema
+consumer needs the current E09/E05 source lease, then genuine usable report,
+artifact/turn/Rail, saved/reopened evidence, permissions and recovery proof.
+Original CPU-failed monthly operation remains unretried with EXP05; heldE13 stays
+gated. All original19/nine, historical9PASS/0FAIL and12PASS/0FAIL/4BLOCKED, algorithms
+and catalogue maturity remain unchanged; one integrated founder evaluation.
 
 ## October24 — source-request report foundation, not customer settlement
 

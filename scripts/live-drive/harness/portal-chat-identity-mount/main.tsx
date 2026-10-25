@@ -72,3 +72,14 @@ createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </StrictMode>,
 );
+
+if(params.get("files")==="1"){
+ const toolbar=document.createElement("div");toolbar.setAttribute("aria-label","Synthetic file test controls");toolbar.className="fixed bottom-0 right-0 z-50 flex gap-1 bg-background p-1 text-foreground";
+ for(const mode of ["Bulk paste","Choose files","Hide test controls","Reset fixture"]){const button=document.createElement("button");button.textContent=mode;button.className="min-h-11 rounded border border-border px-2 text-xs";button.onclick=()=>{
+  if(mode==="Hide test controls"){toolbar.remove();return;}
+  if(mode==="Reset fixture"){localStorage.removeItem("e09-cura-file-render-fixture-v1");location.reload();return;}
+  const transfer=new DataTransfer();for(let i=1;i<=5;i++)transfer.items.add(new File(["fixture file "+i],"Consulting engagement notes for the next customer session "+i+".pdf",{type:"application/pdf"}));
+  if(mode==="Bulk paste"){document.querySelector("textarea")?.dispatchEvent(new ClipboardEvent("paste",{clipboardData:transfer,bubbles:true,cancelable:true}));}
+  else{const input=document.querySelector<HTMLInputElement>('input[aria-label="Choose private files for this message"]');if(input){input.files=transfer.files;input.dispatchEvent(new Event("change",{bubbles:true}));}}
+ };toolbar.append(button);}document.body.append(toolbar);
+}

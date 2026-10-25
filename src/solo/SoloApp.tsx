@@ -28,6 +28,7 @@ import { AdsWorkspace } from "./AdsWorkspace";
 import { SalesWorkspace } from "./SalesWorkspace";
 import { FinanceWorkspace } from "./finance/FinanceWorkspace";
 import { OperationsRoute } from "./operations/OperationsRoute";
+import { TeamHubWorkspace } from "./team-hub/TeamHubWorkspace";
 import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
 import { soloAnalyticsCompatibility } from "./analytics-routing";
 import { Marketplace } from "./marketplace";
@@ -380,12 +381,14 @@ React.useEffect(()=>{clearPaigeClientScope();clearPaigePublicPresenceScope()},[a
 // is short enough to fit. Off this list the screen host is `overflow:auto` and
 // becomes the one deliberate vertical scroll owner, which is what every other
 // document-flow route in this shell already does.
-const full=screenRoute==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';
+// Team Hub is on the list: like Operations it owns its scroll regions (conversation list,
+// stream, thread drawer) inside a host that fills the frame exactly.
+const full=screenRoute==='operations'||route==='teamhub'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';
 const accountContext=resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id});
 const accountEpochKey=activeTenantId??'resolving';
 // Ads (its own department below Marketing) reads the active workspace like every Marketing screen.
 const adsScreen=<AdsWorkspace key={accountEpochKey} tenantId={activeTenantId??null} businessName={accountContext.accountName}/>;
-const screens={operations:<OperationsRoute key={accountEpochKey} openPaige={openPaige} onNavigationGuardChange={registerOperationsGuard}/>,finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,ads:adsScreen,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
+const screens={operations:<OperationsRoute key={accountEpochKey} openPaige={openPaige} onNavigationGuardChange={registerOperationsGuard}/>,teamhub:<TeamHubWorkspace key={accountEpochKey} openPaige={openPaige} onOpenTeamSettings={urlDriven?()=>navigate(`${branchPath('solo',urlAccount,'settings')}/team`):undefined}/>,finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,ads:adsScreen,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
 const settingsActive=urlBranchSlug==='settings'?(urlSplat.split('/')[1]||'setup'):(legacySettingsDestination||'setup');
 const contextualNavigation=route==='settings'&&urlDriven?{
   label:'Settings',

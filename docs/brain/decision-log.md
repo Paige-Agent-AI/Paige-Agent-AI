@@ -2,10 +2,41 @@
 
 ## October24 — EXP08 Team Hub owner decisions
 
+- **EXP08 Team Hub increment 4, PAIGE with Team Hub (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
+  - **PAIGE reads Team Hub: APPROVED for any active member, for what they can see.**
+    - Covers Chat and Live.
+    - Read-only and fresh every turn, always with the asker's own identity through the existing `team_hub_*` definers.
+    - Nothing is stored, indexed or embedded.
+    - Read-only Spine capabilities `team.hub_*`. This touches the PAIGE chat code (Chat lane) under this approval.
+  - **Search: APPROVED.** One additive EXP08 search function that searches only conversations the asker can see.
+  - **Saving to Knowledge or Memory: NOT in increment 4.** No Team Hub content enters Knowledge or Memory. Knowledge is tenant-wide today, so a DM or private-channel save would leak.
+  - **PAIGE posting into Team Hub: APPROVED only with the person's approval.**
+    - PAIGE may draft a reply into a Team Hub conversation the person can post in.
+    - It is posted under the person's own name only after the person approves it, through the existing approval path.
+    - It is never sent autonomously.
+- **EXP08 Team Hub increment 3, attachments (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
+  - **Storage: APPROVED. Reuse the existing private `comms-attachments` bucket, with access locked down.**
+    - Files live under a Team Hub path.
+    - One additive EXP08 file-record table.
+    - Restrictive `storage.objects` policies, so only current members of the conversation can upload or read.
+    - Signed links last 60 seconds.
+    - The Team Hub prefix is added to account-retirement purge.
+    - No new bucket. The server-only (edge function) variant was not chosen.
+  - **Scanning: ship WITHOUT malware scanning.** The platform has no scanner. Mitigations:
+    - safe file types only (PDF, images, Office documents, text and CSV);
+    - up to 10 MB each and 5 per message;
+    - the server checks each file's real type against its stored object metadata;
+    - downloads open as attachments, not inline.
+  - Both the screen and the docs say plainly that files are not scanned.
+- **EXP08 Team Hub increment 2 (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
+  - **Link storage: APPROVED.** Add one additive EXP08 table, `team_hub_work_refs`, so that one Team Hub message references one EXP05 Work record. It copies no status, title, assignee or due date. Tasks are created only through Operations' existing `plan_assign_task_scoped`.
+  - **PAIGE chat link-back: SKIPPED for now.** `/PAIGE` specialist, approval and meeting requests pre-fill PAIGE, and the person sends from there. Automatic link-back from PAIGE chat waits for a separate EXP05/Chat change. Team Hub never calls the delegation endpoint directly.
+  - Contract: [increment 2](../delivery/exp08-team-hub-increment2-work-contract.md).
 - **EXP08 Team Hub design and storage approved (owner, 2026-10-24, answered in the EXP08 Claude Code session).**
   - **Design and behavior: APPROVED.** Interactive prototype v2 is approved for production and frozen under §28.
   - **Collaboration storage: APPROVED.** Team channels, members, messages, threads, mentions and read markers may be added as reviewed, additive migrations with tenant and channel-membership enforcement. Isolation must be proven before release.
   - These are approvals to build, not runtime proof. Neither authorizes ownership transfer, an external send or a provider connection. Source: [Team surface card](../doctrine/surface-cards/team.md).
+- **EXP08 Team Hub increment 1 built (PR #2764, 2026-10-24).** Channels, private channels, DMs, threads, @people mentions and read markers on additive `team_hub_*` storage (migration `20271113850008`), SOLO-only, with seat-scoped isolation proven in a disposable-database proof wired into CI. `PROOF_OWED` until persisted-apply and an authenticated drive. Specialists, `/PAIGE`, the work panel and attachments are later increments.
 
 ## October20 — current-main composition preparation; NOT RELEASED
 

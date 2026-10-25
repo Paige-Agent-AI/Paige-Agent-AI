@@ -153,6 +153,9 @@ function useClientDocumentsConsumer(purpose?: PrivateDocumentPurpose) {
     const l=life.current;l.alive=true;let listening=true;
     if(applied.current!==requestedKey){applied.current=requestedKey;setEpoch(viewEpoch.current);setScope(null);setFiles([]);setSummary(null);setMore(false);setReading(false);setUpload(idle());setNotice("");setPhase("loading");}
     if(interrupted.current){interrupted.current=false;setUpload({kind:"uncertain",id:l.candidate?.id??null,notice:"Your access was checked again. Check this upload's saved status before continuing."});}
+    // An unmounted private purpose has no identity/thread to observe. Do not
+    // subscribe the owner surface to an unused private-file consumer.
+    if(privateMode&&!privateAllowed){void refresh();return()=>{listening=false;l.alive=false;++l.epoch;++l.read;};}
     const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
       if(!listening||!l.alive)return;
       if(l.signedOut&&event!=="SIGNED_IN")return;
@@ -165,7 +168,7 @@ function useClientDocumentsConsumer(purpose?: PrivateDocumentPurpose) {
     const focus=()=>{if(l.alive&&scopeAlive()&&!l.signedOut&&!l.writing)void refresh();};
     window.addEventListener("focus",focus);void refresh();
     return()=>{listening=false;l.alive=false;++l.epoch;++l.read;subscription.unsubscribe();window.removeEventListener("focus",focus);};
-  },[refresh,retire,requestedKey,enabled,scopeAlive]);
+  },[refresh,retire,requestedKey,enabled,scopeAlive,privateMode,privateAllowed]);
   useEffect(() => {
     if (!scope) return;
     const channel = supabase.channel(privateMode?`client-private-files-${scope.contact}-${privateThread}`:`client-documents-${scope.contact}`)
@@ -271,7 +274,10 @@ function useClientDocumentsConsumer(purpose?: PrivateDocumentPurpose) {
     try {
       const deadline = Date.now() + 20_000; const access=await verifiedAccess(deadline,currentScope,current);
       const status = await inspect(candidate, deadline,access.authorization); if (!current()) return;
-      if (status.file?.upload_state === "ready" && status.object) {if (!await confirm(candidate, deadline,access.authorization)) throw new Error("Unconfirmed upload");}
+      if (status.file?.upload_state === "ready" && status.object) {
+        if (!await confirm(candidate, deadline,access.authorization)) throw new Error("Unconfirmed upload");
+        return privateMode ? candidate.id : undefined;
+      }
       else {await verifiedAccess(deadline, currentScope,current); if (current()) {
         l.recoveryAllowed = true;
         setUpload({kind: status.object ? "finish" : "retry", id: candidate.id,
@@ -297,11 +303,21 @@ function useClientDocumentsConsumer(purpose?: PrivateDocumentPurpose) {
   const retrieve = useCallback(async (row: PortalDocument): Promise<DocumentLinks | null> => {
     const l = life.current, expected = l.scope, generation = l.epoch;
     const listed = l.files.find(f => f.id === row.id);
-    if (!l.alive || !scopeAlive() || l.signedOut || !expected || row.state !== "ready" || !listed || listed.storage_path !== row.storage_path) return null;
+    if (!l.alive || !scopeAlive() || l.signedOut || !expected || row.state !== "ready" || (!privateMode && (!listed || listed.storage_path !== row.storage_path))) return null;
     try {
       const deadline = Date.now() + 20_000;
       const access=await verifiedAccess(deadline,expected,()=>l.alive&&scopeAlive()&&!l.signedOut&&l.epoch===generation);
       if (!l.alive || l.epoch !== generation) return null;
+      if(privateMode){
+        const status=await wait(fileRpc("client_portal_chat_file_status",{p_file_id:row.id,p_tenant_id:expected.tenant,
+          p_thread_id:privateThread},expected,access.authorization),deadline);
+        if(status.error)throw new Error("This private file could not be verified. Try again.");
+        const checked=readCustomerChatFileStatus(status.data,expected,row.id);
+        if(!checked.object_verified||checked.file?.upload_state!=="ready"
+          ||checked.file.storage_path!==row.storage_path||checked.file.original_filename!==row.filename)
+          throw new Error("This private file is no longer available.");
+        await verifiedAccess(deadline,expected,()=>l.alive&&scopeAlive()&&!l.signedOut&&l.epoch===generation);
+      }
       const bucket = supabase.storage.from("client-files").setHeader("Authorization",access.authorization);
       const [view, download] = await wait(Promise.all([
         bucket.createSignedUrl(row.storage_path, DOCUMENT_LINK_SECONDS),
@@ -319,7 +335,7 @@ function useClientDocumentsConsumer(purpose?: PrivateDocumentPurpose) {
       if (error instanceof AccessFailure) {retire("unavailable", error.message); return null;}
       throw error;
     }
-  }, [retire, verifiedAccess,scopeAlive]);
+  }, [retire, verifiedAccess,scopeAlive,privateMode,privateThread]);
   const isCurrent=useCallback((expected:number)=>life.current.alive&&scopeAlive()&&!life.current.signedOut&&viewEpoch.current===expected&&dataGeneration.current===origin.current.generation&&!!life.current.scope,[scopeAlive]);
   const masked=!scopeAlive()||dataGeneration.current!==origin.current.generation;
   return {phase:!privateAllowed?"unavailable" as const:masked?"loading" as const:phase,files:masked?[]:files,summary:masked?null:summary,scope:masked?null:scope,more:masked?false:more,reading:masked?enabled:reading,notice:!privateAllowed?"Your private conversation could not be verified.":masked?"":notice,upload:privateMode&&masked?idle():upload,epoch:Math.max(epoch,viewEpoch.current),refresh,transfer,checkUpload,stopWaiting,retrieve,isCurrent};

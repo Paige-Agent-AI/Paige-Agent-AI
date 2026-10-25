@@ -1,0 +1,766 @@
+{
+  "baseline": "4c86a87dac31bd1d18c5729dfd7bb0b57e24273c",
+  "guardBlob": "abac717f229f2318827d6bb7dc371bbb5a75b585",
+  "originalSourceCount": 125,
+  "sourceChanges": [
+    {
+      "path": "supabase/functions/_shared/calendar-booking-read.ts",
+      "before": "22fd2716f66c9bd87fb3c91cdd7a9f0d8a3586396a1e47374182fe2a3e553c2f",
+      "after": "e6afa5a476d351286aae66fafa2d2153aaa3e7309ee80828b8cd505b5cf7ed9e"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-spine/domains/calendar_booking.ts",
+      "before": "69f388de84dd13b73d0951531bcee85a9ff7e37dc59524bb24d3ce3d657bb755",
+      "after": "ce2ab054fe80fe836e89aaf4c42677e52224d7ed01aedc1a2ac07ab5f26d6afe"
+    }
+  ],
+  "contracts": 29,
+  "bindings": {
+    "comms_setup_calling": {
+      "before": "36f771ca8f39a707f8bd6d01bcbb8c9366c5dcf977f033284721bc6966cfad66",
+      "after": "2859cf0839799a8a09c8b8a644ee65fa03055b35f54e807727a43b5e756769d6",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "calendar_book_meeting": {
+      "before": "0c637554174ec30c40001a2af97402f13c5d9dac59d2592ed2e95491f4fef801",
+      "after": "60c69d155340449d3cd99e36c9beacc3536ddf2eaab2da8f1ff9839235d8bfa5",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "calendar_link_send": {
+      "before": "84005bec2b896baadb5df4052d1394382e7b0bcf84b6aaf181be82a84c82b8ee",
+      "after": "2c2a2b1847b69a818431107057f4332680b6e5b85039795bd037582d563c42dc",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "propose_business_brief_update": {
+      "before": "643eb423f67e15d3ec9841e80eea4179e973740839776e3f5433092947547c50",
+      "after": "edbe81b0c1398ca16d7d40b4dd997914652601875f168495389d5a0ffec80eb5",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "update_business_profile": {
+      "before": "5f3aee2d2064a1801892ee99810f406da3fa0d2015ac0b5f50e8325e75a3516b",
+      "after": "98ca7cd3d660b5e9030ceb0cf2a784e5f35dc7c1a651dcca183fc5abdc374347",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "capability_status": {
+      "before": "8cd9b805dc5cf80dbfdba3770cc7971adc0206b7a85a38eab89f2bbbb0c29942",
+      "after": "b90af047cc83f16be5a2dd0eec14905f26279b3063445ff4289e06be0e076175",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "improvement_propose": {
+      "before": "0cfe911746a10e541b4da8c407138890c99f72284c628b6875185bab7f111825",
+      "after": "b5f88c0d3404ea1d118c08b86abe6c23525d8bee3e9ccd3d3fd98a781587a6ee",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "improvement_decide": {
+      "before": "fc8ef9e23049902f771150dd1712c7a6b7658f2b15579b0ec20e19b5636d479d",
+      "after": "466dc9f8e246f15d69da622140f731ea7bb0713941fe065f00b331174a17b067",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "list_subagents": {
+      "before": "a7d81bae1e125df6643b2e9e2aa47d02839247f199ff356ffe3b229ce8fe6714",
+      "after": "169e62d724022a4a86f6ca7fac4cb72e80ef339bf722823c67616cd1dd4d3b69",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "delegate_to_subagent": {
+      "before": "a7d81bae1e125df6643b2e9e2aa47d02839247f199ff356ffe3b229ce8fe6714",
+      "after": "169e62d724022a4a86f6ca7fac4cb72e80ef339bf722823c67616cd1dd4d3b69",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "forge_subagent": {
+      "before": "8e2d46b227d109f774160b56d1b3ea69319782d00ce8a94843348e264e52f8e3",
+      "after": "b264bd1264f26c5e57e74406f2a4a353e1677ec70813a99fa6623d04030d3af4",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "author_event_kind": {
+      "before": "4c55d21a7299b18c95676d7c03eb24a0511b4a70c5c59786e203aaec471c33e8",
+      "after": "fed10ac2e9eb64e6dd86c0893a07374f52ab69313d0ea9bd907a561a79e86d52",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "crm_add_note": {
+      "before": "03411d9aa5c404d1b64cc13ce40693c3fed570dd3cc55a0697555759b01c9b82",
+      "after": "a8ab78ed142b17d478ae2c5def714b708d852b754dc7282952e789b7098a1c34",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "crm_file_document": {
+      "before": "8d2f3d07c0f17e78acd262858ee0906a081769b6ae162c54bcc2f1def7ea42fb",
+      "after": "a90ee030cce89fb7dd706f0e0061f7e8f986997d340a480f71d70cf728cde18c",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "update_client_data": {
+      "before": "9bb95f39e4ee355f83baa935020ea7a66bb124d8838fab39b1b7428a13699674",
+      "after": "7abdb5f8a1f02b6f85a1f429c5477628e4761452278c2246a5c979d980181a2b",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "pipeline_configure": {
+      "before": "142553f857e4f3d138fefff439ecfcea2a6c1e655703144aa1d274e408dd2817",
+      "after": "e73be85aed4ec92004843f9d1a11060e0956370b156998d993655d7a6b25eb69",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "deep_research": {
+      "before": "76c9cc541ec72cc6b607068550f530e7e4f166bdfcc8545ad9bdbe92f4cce286",
+      "after": "0b80d69ca6789a3b6cbec4a028e2a874584ca5deacfb8b95feefc8a5d3517bec",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "web_search": {
+      "before": "2b54ebed2993da5c91660cdb472b1b16036ec463d732b4f961b5542f475ed452",
+      "after": "287388ec6491f74230677990e3ca9d4b882c7db99c8449864d0d81cd93ae9f74",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "web_fetch": {
+      "before": "8a6cc733f1235f2b14cc833e1cda5d964ede2bbf09eeed7a58c58b9c894f1018",
+      "after": "ed9f84169721bd0280bcdd00eecdfcf579540f86a83fc472733dccc0c8f133c8",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "save_to_knowledge_base": {
+      "before": "9293e9ac01b7d6f4def3d66b4208ef5a106015824855b61f3b682529438b2be3",
+      "after": "4a8095be8cc42ee8b4cb7585184cd071a832fc797951117e88fa9f760244b21c",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "automation_draft": {
+      "before": "7ff1e04ba5c1f934dd125eb562425a19eff0bb25a0b72778999aadc6be376b78",
+      "after": "372a364f39c10bb2096ba1b291fe56e9765909567fb8f155bce8a1783f20fc6a",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "comms_connection_summary": {
+      "before": "0d938ed3c4cfa4fd0cc9f5dd12b0c1363e9a0660e6c068ba19e91dbf81288c0a",
+      "after": "b57aea51615fabdc31650401c601e1dd74d8da519d09ec701f473dee7f60191e",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "comms_registration_status": {
+      "before": "f96cbf46576a305c3128ebf7791ff31bfc651ab127d07a392beca71a500ec256",
+      "after": "c7ce457a3392adbc79e8e1a342450430a77d3109587204faed835192c8f42d29",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "comms_list_numbers": {
+      "before": "ac6ff539f751eb7688ac1111fe49069be330c3f99c73171c463efd26e46cc1e4",
+      "after": "a8f5a53594574579153104b8db9c291baefec16e21b459a86066331d808a8767",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "comms_search_numbers": {
+      "before": "c8becb45d9c973f07012ddec003744e122634066c4c29372760389147bb1aaab",
+      "after": "f99e21e4627d20d57fe980420a7ee254fa5d26b2448d7f538ba546dbf422b44b",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "comms_buy_number": {
+      "before": "e5db4496d4539874c5bfc4c9fc5a1eef3580344abf86673595eb28aeefcf7e57",
+      "after": "217e6d1f2d579ff35519e24f7c71fe459da277d80fc1e1bbba75242096b42dea",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "comms_draft_registration": {
+      "before": "3fb79e9539ef90a954e73e66c7e0f6df5e26f8af60e1787a4b964e9cf4433587",
+      "after": "4674dec355b556f57a74e2a32a9cc0aa8058c2d58e2c2c6f4fe2dc08519b5fa5",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "comms_name_number": {
+      "before": "daffdb974f857394f588e16ca770e71fe96146543b7bf40fe107bdc3cd6125d2",
+      "after": "f1327c8f7d46cdcf082679d9af0fe289753104f90386235cef7f2d625c4e1042",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    },
+    "comms_set_primary_number": {
+      "before": "b54868a08860b54839c11f2f48cff79b045dad7e644af30dd78fb0078bf3c012",
+      "after": "e69f8881370367bcee5a68def2ea68b2aab8bed23d5189831ae98aaade740d42",
+      "components": {
+        "identity": {
+          "beforeCount": 33,
+          "afterCount": 33,
+          "indices": [
+            15
+          ]
+        }
+      }
+    }
+  },
+  "diagnosticCorrection": "Official extractor returns only fingerprint/imports. Initial missing-array comparison was INVALID; this instrumented private diagnostic asserts every array exists and reproduces original and official candidate fingerprints before inspecting component differences. Product extractor unchanged.",
+  "channel": "development",
+  "sourceChatBlob": "d55b8e95e7a06230d2f0530b8fe3209b2017b412",
+  "review": {
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "state": "PRE_RENEWAL_SOURCE_REVIEW_RECORDED"
+  },
+  "verification": {
+    "native": {
+      "passed": 35,
+      "failed": 0,
+      "fixtureRows": 100002,
+      "cleanup": "database dropped and cluster stopped",
+      "productionNativeBodyMD5MatchesSource": true
+    },
+    "focusedIntegration": {
+      "passed": 243,
+      "suites": 6,
+      "failed": 0
+    },
+    "actualHandler": {
+      "originalPassed": 28,
+      "initialNew": {
+        "passed": 32,
+        "failed": 9
+      },
+      "finalPassed": 42,
+      "failed": 0,
+      "ports": "recording Auth/native/provider; not production or real HTTP/Auth"
+    },
+    "kit": {
+      "scan": "288/296 baseline entries remain; no new bypass",
+      "selfTest": "40 core cases plus all original Calendar/Task/weekly and11 agenda controls pass"
+    },
+    "typeRatchet": {
+      "exitCode": 0,
+      "baseline": 10,
+      "current": 6,
+      "new": 0
+    },
+    "scopedEslint": {
+      "exitCode": 0,
+      "findings": 0
+    },
+    "production": "NOT_DEPLOYED",
+    "authenticatedAndReload": "UNVERIFIED",
+    "activation": "NONE",
+    "founderAcceptance": "NOT_REQUESTED",
+    "rootEslint": {
+      "baseline": 407,
+      "candidate": 407,
+      "newSemanticFindings": []
+    },
+    "c0bOriginalSixSuites": {
+      "passed": 234,
+      "failed": 0,
+      "exitCode": 0,
+      "originalRetained": 230,
+      "additionalRestrictiveCases": 4
+    },
+    "guidanceAndProgress": {
+      "initial": {
+        "total": 15,
+        "passed": 12,
+        "failed": 3
+      },
+      "final": {
+        "total": 28,
+        "passed": 28,
+        "failed": 0,
+        "suites": 3,
+        "exitCode": 0
+      },
+      "intermediate": "27/28; new trace fixture omitted real content/message envelope, corrected to original strict transport; no production failure inferred"
+    }
+  },
+  "boundary": "All29 aggregate fingerprints change ONLY at enclosing identity[15]. Every protected branch, dominating control, other identity, helper and import is identical. Only these29 scalars and the two reviewed source digests may renew after immutable review. Retain all125 paths/123 other values, C0b extractor/validator/metadata, native SQL/ACL and existing effect/activation boundaries. Narrow Kit construction recognizer changes are separately reviewed with all hostile controls; no baseline expansion.",
+  "catalogue": {
+    "canonicalKey": "calendar.agenda_read",
+    "sourceMaturity": "PARTIAL",
+    "genericOperationsRecipes": "Not promoted by supporting read",
+    "deployedPanelAndAccountAvailability": "UNVERIFIED"
+  },
+  "preRenewalReview": {
+    "head": "8d811f8393f95d2e6f0cbc5ce99226d17e5fe1d1",
+    "linear": "73fa1612-3a34-4df1-92e2-107b1b0385c9",
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE"
+  },
+  "renewal": {
+    "dispatchScalars": 29,
+    "sourceDigests": 2,
+    "otherSourcesUnchanged": 123,
+    "pathCount": 125,
+    "inverseRestoresExactFrozenGuard": true,
+    "validatorAndMetadataChanged": false
+  },
+  "finalHeadCi": "PENDING_NEW_EXACT_HEAD",
+  "hosted_typing_correction": {
+    "inspected_head": "b67e2ac450c62b4e0dd3e277bfd5e3f08a1b0dad",
+    "hosted_deno": {
+      "artifact": 12586838391,
+      "sha256": "d396739b3088c2a824e53aaf77b1bb7e2b9e090b6565536ce5f07541b43035af",
+      "base": "468e50f6461517e43e5381ae2c2423332cf818cd",
+      "baseline_diagnostics": 9,
+      "candidate_diagnostics": 22,
+      "new_errors": 13,
+      "scope": "Generic return inference in Calendar helper and its existing exact-ID/agenda consumers; not permission/provider/native failure."
+    },
+    "local_strict_compile": {
+      "before": 11,
+      "after": 0,
+      "removed": [
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'view' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'window' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'shown_count' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'has_more' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'has_more' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'has_more' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        }
+      ],
+      "added": [],
+      "emittedRuntimeIdentical": true,
+      "sha": "8c94d90960c8376f1be0488ee25c4e4ca16b68eaf55dae5395202f3550487600"
+    },
+    "public_consumer_unit": {
+      "actual_tests": 125,
+      "passed": 125,
+      "failed": 0,
+      "new_test": "Strictly compile exact-ID and agenda consumer fields; no emit/business execution"
+    },
+    "lint": 0,
+    "pre_renewal": {
+      "originalFindings": [],
+      "originalTools": 29,
+      "candidateFindings": [
+        "incumbent reviewed source changed: supabase/functions/_shared/calendar-booking-read.ts"
+      ],
+      "originalDigest": "e6afa5a476d351286aae66fafa2d2153aaa3e7309ee80828b8cd505b5cf7ed9e",
+      "candidateDigest": "41e960e069a4f09655b49e7413cd939e19c91ad3ea451952fa1e3aa372953547",
+      "otherSourcesExact": 124,
+      "rootUnchanged": true
+    },
+    "review": "Source98b7df6c was separately reviewed before ONE helper digest renewal (ANT161f484fa71); final composition/review/CI remain required.",
+    "INT336": {
+      "old_actual_handler": {
+        "passed": 73,
+        "failed": 2,
+        "reason": "Two old closed-read expectations omitted the newly registered bounded agenda read."
+      },
+      "new_actual_registry": {
+        "passed": 33,
+        "failed": 0
+      },
+      "new_actual_handler": {
+        "passed": 78,
+        "failed": 0
+      },
+      "additional_original_handlers": [
+        {
+          "file": "scripts/int346-runtime-recovery-handler-check.mjs",
+          "status": 0,
+          "summary": [
+            "PASS 78 actual-handler cases / 0 failed; all provider/native ports recorded doubles"
+          ]
+        },
+        {
+          "file": "scripts/proof/calendar-booking-chat.mjs",
+          "status": 0,
+          "summary": [
+            "PASS actual agenda is not offered to an unresolved/ineligible actor: {\"tier\":\"client\"}",
+            "PASS actual agenda is not offered to an unresolved/ineligible actor: {\"classification\":null}",
+            "PASS actual agenda is not offered to an unresolved/ineligible actor: {\"classification\":{\"id\":\"00000000-0000-4000-8000-000000000002\",\"account_type\":\"agency\",\"parent_tenant_id\":null}}",
+            "PASS agenda retires model egress when workspace changes while its original read receipt settles",
+            "RESULT 42 PASS / 0 FAIL"
+          ]
+        },
+        {
+          "file": "scripts/proof/operations-task-chat.mjs",
+          "status": 0,
+          "summary": [
+            "PASS active ordinary Chat persists exact Task read truth: visible-empty",
+            "PASS active ordinary Chat persists exact Task read truth: needs input",
+            "PASS active ordinary Chat persists exact Task read truth: native refusal",
+            "PASS active ordinary Chat persists exact Task read truth: unavailable",
+            "RESULT 39 PASS / 0 FAIL"
+          ]
+        },
+        {
+          "file": "scripts/proof/planning-reminder-chat.mjs",
+          "status": 0,
+          "summary": [
+            "PASS execution uncertainty/regular-mode history is not fresh success [\"historical\"]",
+            "PASS model duplicate calls cannot borrow the native approval owning-call pin",
+            "PASS AUTO reminder preserves its existing direct9arg path without adopting a manual approval",
+            "PASS ordinary Planning read does not enter the reminder adopter",
+            "RESULT 33 PASS / 0 FAIL / 0 SKIP"
+          ]
+        },
+        {
+          "file": "scripts/proof/weekly-draft-chat.mjs",
+          "status": 0,
+          "summary": [
+            "PASS Consumed original changed is inspected without another claim or save",
+            "PASS Consumed original read still refuses a foreign business result without new work",
+            "PASS Missing schedule detail requests clarification without saving or preparing an approval",
+            "PASS An unrelated original reminder decline retains its own durable cancellation",
+            "RESULT 34 PASS / 0 FAIL"
+          ]
+        },
+        {
+          "file": "scripts/proof/planning-reminder-history-status.mjs",
+          "status": 0,
+          "summary": [
+            "PASS malformed original receipt withholds the historical result",
+            "PASS request aborted after resolver withholds the historical result",
+            "PASS strict status transport rejects an attached approval before history or action execution",
+            "PASS repeated explicit status reads remain observations rather than repeated effects",
+            "RESULT 16 PASS / 0 FAIL / 0 SKIP"
+          ]
+        },
+        {
+          "file": "scripts/proof/operations-specialist-history-status.mjs",
+          "status": 0,
+          "summary": [
+            "PASS falseSelector rejects before observation",
+            "PASS missingTurn rejects before observation",
+            "PASS message rejects before observation",
+            "PASS mutative rejects before observation",
+            "RESULT 18 PASS / 0 FAIL / 0 SKIP"
+          ]
+        },
+        {
+          "file": "scripts/proof/e09-cura-history-status.mjs",
+          "status": 0,
+          "summary": [
+            "PASS false selector refuses before observation",
+            "PASS missing origin refuses before observation",
+            "PASS selector on message refuses before observation",
+            "PASS repeated explicit status uses the same original native intent and never submits",
+            "RESULT 20 PASS / 0 FAIL / 0 SKIP"
+          ]
+        },
+        {
+          "file": "scripts/proof/e09-cura-teach-chat.mjs",
+          "status": 0,
+          "summary": []
+        },
+        {
+          "file": "scripts/int1807-observation-handler-check.mjs",
+          "status": 0,
+          "summary": [
+            "PASS status observation composition: unknown readback + lineage-validated non-application record reports confirmed_failure with executor reread and no settlement; reader unavailability stays outcome_unknown"
+          ]
+        },
+        {
+          "file": "scripts/int336-two-tool-check.mjs",
+          "status": 0,
+          "summary": [
+            "PASS actual handler two-tool batch: first native write truth preserved, second not dispatched, no next model, interrupted canonical receipt precedes release"
+          ]
+        }
+      ],
+      "new_fixture_failure": "First held agenda fixture77PASS/1FAIL lacked the original chained PostgREST abortSignal port. Add explicit recording query boundary, preserving production code and every old assertion; no native/production defect inferred."
+    },
+    "invalid_tooling": [
+      "First new Vitest invocation used unsupported minWorkers and ran no tests; corrected command exited0/125PASS.",
+      "Direct module execution of c0b-incumbent-resource-binding has no entry point; exit0 is not validation. Actual exported validator reproduced original29/zero findings, then refused only changed helper."
+    ],
+    "boundary": "Type-only source change; emitted runtime bytes identical. Ordinary authenticated read/Rail/reload/panel/provider/Live/full Experience acceptance remains held/owed.",
+    "source_pin_renewal": {
+      "review": "98b7df6cbce974f316cc6c3c626d9a93953f12d5/f484fa71-0bc0-4ac3-9c28-f438c6f21b20",
+      "from": "e6afa5a476d351286aae66fafa2d2153aaa3e7309ee80828b8cd505b5cf7ed9e",
+      "to": "41e960e069a4f09655b49e7413cd939e19c91ad3ea451952fa1e3aa372953547",
+      "literals": 1,
+      "inverseExact": true,
+      "oldSha": "656b6af11cd61c43b83dd1b6c7ffec9fd68d51ff27821d0f1365052ea2e44278",
+      "newSha": "fefb102379c1a812c38914afd81265ac11c0e6c4cb9fc75409823f6744dd0de8"
+    },
+    "actual_validator": {
+      "findings": [],
+      "tools": 29
+    },
+    "c0b_six": {
+      "tests": 234,
+      "passed": 234,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 143785.8428,
+      "command": {
+        "files": [
+          "scripts/ci/c0b-incumbent-resource-binding.test.mjs",
+          "scripts/ci/c0b-calendar-ancestry.test.mjs",
+          "scripts/ci/c0b-funding-studio-binding.test.mjs",
+          "scripts/ci/c0b-invitation-binding.test.mjs",
+          "scripts/ci/c0b-stored-read-binding.test.mjs",
+          "scripts/ci/c0b-crm-read-binding.test.mjs"
+        ],
+        "status": 0,
+        "signal": null,
+        "elapsedMs": 143891
+      }
+    }
+  },
+  "hostedClosedReadCompatibility": {
+    "head": "e3fc79eb0047d7410055c9a9a68af7d89248c932",
+    "run": 40165915017,
+    "artifact": 12589075788,
+    "artifactSha256": "8c37ff4d7a6070caf85d262e4b88c60a78077dbcb5b81b111c715b196698efd0",
+    "totals": {
+      "total": 21776,
+      "passed": 21772,
+      "failed": 1,
+      "pending": 3
+    },
+    "cause": "Original E04 PRE1 assertion retained exact-booking/Task closed-read set and omitted the separately reviewed bounded agenda; actual original wrapper reproduced only that assertion.",
+    "repair": "Only the finite reviewed-read expectation and explanatory wording change; every other original proof byte is preserved. No E04 production/approval/fingerprint/dispatch/uncertainty/successor-brake change.",
+    "green": "Original actual E04 shared wrapper1PASS/0FAIL, including its9 original checks and actual production-handler safety cases.",
+    "coordination": "ANT161539bc8c0",
+    "sourceSha256": "ec133b78f5ea08b7952f6ca0b50eddb2ce9dbd5c376e498d03bea4f3b628861f",
+    "remaining": "New exact-head CI, actual source-certification recovery and ordinary customer proof remain required."
+  }
+}

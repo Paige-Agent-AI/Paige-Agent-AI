@@ -6,9 +6,9 @@
 //   1. reads the applicable rows of the operator-authored catalog (paige_systems_check_registry),
 //   2. dispatches each check to its runner module (keyed by runner_key — modules land next phase),
 //   3. writes ONE paige_systems_check_run row + one paige_systems_check_finding per check (service-role),
-//   4. on each 'fail' forges the drafted fix (prompt-forge) and files a 'systems.remediate' action onto
-//      the action bus (file_action), routed to the finding's owning department, and links the finding's
-//      resolution_action_id back to the filed action.
+//   4. when remediation is selected, on each 'fail' forges the drafted fix (prompt-forge), files a
+//      'systems.remediate' action onto the action bus (file_action) at the finding's owning department,
+//      and links the finding's resolution_action_id back to the filed action.
 //
 // SEAMS REUSED (§18 — never forked):
 //   • forge()        (./prompt-forge.ts)        — the §26 remediation drafter.
@@ -20,7 +20,9 @@
 // HONESTY / FAIL-LOUD (§13/§32): every check that THROWS is recorded status='error' with the error class
 //   in evidence — NEVER a silent pass. A missing runner is likewise an 'error' finding (fail-loud), not a
 //   skip. forge/file_action failures are caught, logged, and never abort the scan — the finding is still
-//   written. No fabricated pass, no fabricated action_id.
+//   written in the existing remediation modes. Capture-only confirms the original records before
+//   reporting completion; an unconfirmed result keeps its known run identity for reconciliation.
+//   No fabricated pass, no fabricated action_id and no automatic replay.
 //
 // §9/§51 TENANT ISOLATION: the caller resolves tenantId from the JWT (or the cron/service context),
 //   NEVER from the request body (§588). Every finding/run insert sets tenant_id EXPLICITLY. file_action
@@ -138,8 +140,9 @@ export interface RunSystemsCheckOptions {
    *  enabled catalog (onboarding / scheduled). */
   runnerKeys?: string[];
   /** 'all' (default) files a remediation action for every fail. 'delta' files only for a fail that is NEW
-   *  or newly-degraded vs the tenant's previous run (the 'scheduled' flavor's noise-control). */
-  actionFiling?: "all" | "delta";
+   *  or newly-degraded vs the tenant's previous run. 'none' captures original checks/findings without
+   *  remediation drafts or actions; it grants no authority to run a check. Existing callers stay unchanged. */
+  actionFiling?: "all" | "delta" | "none";
   /** Test seam: override the dispatch map (defaults to the shared SYSTEMS_CHECK_DISPATCH registry). */
   dispatch?: Record<string, CheckRunner>;
 }
@@ -158,6 +161,16 @@ export interface RunSystemsCheckSummary {
     finding_id: string;
     resolution_action_id: string | null;
   }>;
+}
+
+type CaptureReadbackPhase = "finding_write" | "finding_readback" | "run_finalize" | "run_readback";
+
+/** A known original run owes reconciliation. This never proves absence or permits replay. */
+export class SystemsCheckCaptureUnconfirmed extends Error {
+  constructor(readonly runId: string, readonly reason: CaptureReadbackPhase) {
+    super("SYSTEMS_CHECK_CAPTURE_UNCONFIRMED");
+    this.name = "SystemsCheckCaptureUnconfirmed";
+  }
 }
 
 // ── Token resolution ───────────────────────────────────────────────────────────────────────────
@@ -198,7 +211,10 @@ function priorityForSeverity(severity: RegistryRow["severity"]): "low" | "normal
  */
 export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<RunSystemsCheckSummary> {
   const { admin, tenantId, scanFlavor } = opts;
-  const scope: ScanScope = opts.scope ?? "tenant";
+  const scope: ScanScope = opts.scope === undefined ? "tenant" : opts.scope;
+  if (scope !== "tenant" && scope !== "operator") {
+    throw new Error("SYSTEMS_CHECK_INVALID_SCOPE");
+  }
   // §9/§51/§53 scope invariant (fail-loud §32): a tenant scan MUST carry a tenant; an operator scan MUST
   // NOT — so an operator run can never accidentally write a tenant_id, and a tenant run can never scan
   // tenant-less. Enforced here, before anything is read or written.
@@ -210,7 +226,10 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   }
 
   const dispatch = opts.dispatch ?? SYSTEMS_CHECK_DISPATCH;
-  const actionFiling = opts.actionFiling ?? "all";
+  const actionFiling = opts.actionFiling === undefined ? "all" : opts.actionFiling;
+  if (!["all", "delta", "none"].includes(actionFiling)) {
+    throw new Error("SYSTEMS_CHECK_INVALID_ACTION_FILING");
+  }
 
   // Resolve the display name for the remediation brief's business-name token (§15 — no placeholder). For a
   // tenant scan this is the tenant's name; for an operator scan there is no tenant, so use a platform label
@@ -342,7 +361,8 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
       // divergence the column exists to prevent.
       selected_runner_keys:
         opts.runnerKeys && opts.runnerKeys.length > 0 ? opts.runnerKeys : null,
-      triggered_by: { ...(opts.triggeredBy ?? {}), scope },  // scope carried in audit (run table has no scope col)
+      // Actual mode/scope override context labels; they describe this capture, never authorize it.
+      triggered_by: { ...(opts.triggeredBy ?? {}), scope, action_filing: actionFiling },
     })
     .select("id")
     .single();
@@ -350,6 +370,14 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     throw new Error(`SYSTEMS_CHECK_RUN_INSERT_FAILED: ${runErr?.message ?? "no row returned"}`);
   }
   const runId = (runRow as { id: string }).id;
+
+  async function captureIo<T>(operation: () => PromiseLike<T>, phase: CaptureReadbackPhase): Promise<T> {
+    try { return await operation(); }
+    catch (error) {
+      if (actionFiling === "none") throw new SystemsCheckCaptureUnconfirmed(runId, phase);
+      throw error;
+    }
+  }
 
   const ctx: CheckRunContext = { admin, tenantId, tenantName, scanFlavor, scope };
   const summary: RunSystemsCheckSummary = {
@@ -408,7 +436,8 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     // condition as filing — only a NEW / newly-degraded fail drafts (and files). A chronically-failing
     // tenant does NOT re-forge a fresh draft on every scheduled tick; its original fail already carries
     // the draft + the queued action. In 'all' mode every fail still drafts.
-    const shouldDraft = result.status === "fail" &&
+    // An explicit capture excludes remediation. This is not a paused draft or a permission decision.
+    const shouldDraft = actionFiling !== "none" && result.status === "fail" &&
       (actionFiling !== "delta" || prevStatus[row.check_id] !== "fail"); // delta: only NEW/newly-degraded
     // The tenant action bus (paige_actions) is tenant-scoped BY CONSTRUCTION (tenant_id NOT NULL, RLS
     // tenant-member gated, and file_action RAISEs ACTION_NO_TENANT on a null tenant). An operator-scope
@@ -453,7 +482,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
 
     // 3) Insert the finding (service-role; the SOLE writer of this table, §37). tenant_id EXPLICIT (§9);
     //    department_id denormalized from the registry row for §16 routing history.
-    const { data: findingRow, error: findErr } = await admin
+    const { data: findingRow, error: findErr } = await captureIo(() => admin
       .from("paige_systems_check_finding")
       .insert({
         run_id: runId,
@@ -467,7 +496,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
         department_id: row.department ?? null,
       })
       .select("id")
-      .single();
+      .single(), "finding_write");
     if (findErr || !findingRow) {
       // A finding-insert failure is loud but must not abort the whole scan — record and continue (§13).
       console.error(`[systems-check] finding insert failed for ${row.check_id}:`, findErr?.message);
@@ -526,17 +555,71 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     });
   }
 
-  // 5) Patch the run row with the final counts + completion time.
-  const { error: patchErr } = await admin
+  // Only the new capture-only purpose requires strict original-record readback.
+  // Existing remediation callers retain their original partial-write behavior.
+  if (actionFiling === "none") {
+    if (summary.findings.some(finding => !finding.finding_id)) {
+      throw new SystemsCheckCaptureUnconfirmed(runId, "finding_write");
+    }
+    let findingRead = admin.from("paige_systems_check_finding")
+      .select("id,tenant_id,run_id,check_id,status,paige_drafted_fix,resolution_action_id")
+      .eq("run_id", runId);
+    findingRead = scope === "operator" ? findingRead.is("tenant_id", null) : findingRead.eq("tenant_id", tenantId);
+    const { data, error } = await captureIo(() => findingRead, "finding_readback");
+    const expected = new Map(summary.findings.map(finding => [finding.check_id, finding]));
+    const observedIds = new Set<string>();
+    const verified = !error && Array.isArray(data) && data.length === summary.check_count
+      && expected.size === summary.check_count && data.every(value => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+        const row = value as Record<string, unknown>;
+        const original = typeof row.check_id === "string" ? expected.get(row.check_id) : undefined;
+        if (!original || observedIds.has(original.finding_id) || row.id !== original.finding_id
+          || row.run_id !== runId || row.tenant_id !== tenantId || row.status !== original.status
+          || !["pass", "fail", "skip", "error"].includes(String(row.status))
+          || row.paige_drafted_fix !== null || row.resolution_action_id !== null) return false;
+        observedIds.add(original.finding_id);
+        return true;
+      });
+    if (!verified) throw new SystemsCheckCaptureUnconfirmed(runId, "finding_readback");
+  }
+
+  // 5) Patch the original run with final counts + completion time. Capture-only
+  // refuses an acknowledgement that cannot be confirmed at the same source.
+  const completedAt = new Date().toISOString();
+  let finalize = admin
     .from("paige_systems_check_run")
     .update({
-      completed_at: new Date().toISOString(),
+      completed_at: completedAt,
       check_count: summary.check_count,
       pass_count: summary.pass_count,
       fail_count: summary.fail_count,
     })
     .eq("id", runId);
-  if (patchErr) console.error("[systems-check] run finalize failed:", patchErr.message);
+  if (actionFiling === "none") {
+    finalize = scope === "operator" ? finalize.is("tenant_id", null) : finalize.eq("tenant_id", tenantId);
+  }
+  const { error: patchErr } = await captureIo(() => finalize, "run_finalize");
+  if (patchErr) {
+    console.error("[systems-check] run finalize failed:", patchErr.message);
+    if (actionFiling === "none") throw new SystemsCheckCaptureUnconfirmed(runId, "run_finalize");
+  }
+
+  if (actionFiling === "none") {
+    let runRead = admin.from("paige_systems_check_run")
+      .select("id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by")
+      .eq("id", runId);
+    runRead = scope === "operator" ? runRead.is("tenant_id", null) : runRead.eq("tenant_id", tenantId);
+    const { data, error } = await captureIo(() => runRead.maybeSingle(), "run_readback");
+    const row = data as Record<string, unknown> | null;
+    const audit = row?.triggered_by as Record<string, unknown> | null;
+    if (error || !row || Array.isArray(row) || row.id !== runId || row.tenant_id !== tenantId
+      || row.scan_flavor !== scanFlavor || row.check_count !== summary.check_count
+      || row.pass_count !== summary.pass_count || row.fail_count !== summary.fail_count
+      || typeof row.completed_at !== "string" || new Date(row.completed_at).getTime() !== new Date(completedAt).getTime()
+      || !audit || Array.isArray(audit) || audit.scope !== scope || audit.action_filing !== "none") {
+      throw new SystemsCheckCaptureUnconfirmed(runId, "run_readback");
+    }
+  }
 
   return summary;
 }

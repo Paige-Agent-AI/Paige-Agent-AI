@@ -1805,3 +1805,21 @@ synthetic Visual support, bounded Experiential proof and NOT_ACCEPTED founder
 status remain distinct. All 19/nine, populated sources, roles/tenant/cohorts/Live
 and the protected CPU-failed original report/recovery remain open. No readiness,
 provider, permission, algorithm, catalogue or consequential activation.
+
+## October25 — O07 original capture prerequisite, development only
+
+The [original Systems core source slice](../evidence/e2-systems-capture-mode.md)
+adds an explicit internal capture choice with no remediation forge/file_action;
+existing default/all/delta calls remain. Original runs/findings carry actual mode
+and scope; unsupported internal choices fail before reads/effects. No new API,
+role/grant, manual flavor/admission, queue, registry or execution authority.
+Initial30 owning+184 original controls,214/8 are retained as source history.
+Readback19RED/31PASS now yields52own+184original=236/8 source PASS; none mode
+confirms original findings/run and retains the known identity on unconfirmed
+persistence, without replay, new authority or legacy caller behavior changes.
+Composed source236/8 passes in5.06s, scoped lint0 and project type ratchet10/6;
+fresh exact review/native Deno/CI/source release remain owed; no authenticated
+or rendered proof follows. The required manual scan/corrective outcome stays incomplete until
+existing Spine/Harness/Trust/Layer C/work/receipt and original-run recovery are
+connected and verified. All19/nine and one final founder evaluation remain open;
+no activation, provider spend, new QA account or browser-control bypass.

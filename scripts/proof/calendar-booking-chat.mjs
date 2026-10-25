@@ -32,6 +32,9 @@ proto.rpc = function(name, parameters) {
   const promise = originalRpc.call(this, name, parameters);
   const query = { select(value) { shape.operations.push(['select', value]); return query; },
     eq(key, value) { shape.operations.push(['eq', key, value]); return query; },
+    neq(key, value) { shape.operations.push(['neq', key, value]); return query; },
+    gt(key, value) { shape.operations.push(['gt', key, value]); return query; },
+    order(key, value) { shape.operations.push(['order', key, value]); return query; },
     limit(value) { shape.operations.push(['limit', value]); return query; },
     abortSignal(signal) { shape.signal = signal; return query; }, then: promise.then.bind(promise) };
   return query;
@@ -83,9 +86,9 @@ const booking = () => ({ id: bookingId, tenant_id: tenant, calendar_id: id(21), 
 const cases = [];
 const check = async (name, run) => { try { await run(); cases.push({ name, status: 'PASS' }); console.log('PASS ' + name); }
   catch (error) { cases.push({ name, status: 'FAIL', error: error.stack }); console.error('FAIL ' + name + ': ' + error.message); } };
-async function execute({ role = 'owner', args = { booking_id: bookingId }, result = { data: [booking()], error: null }, afterRead, tenantResult = tenant, nativeMember = true, nativeAdmin = true, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, activeProtocol = false } = {}) {
+async function execute({ role = 'owner', tool = 'read_calendar_booking', args = { booking_id: bookingId }, result = { data: [booking()], error: null }, afterRead, afterReceipt, tenantResult = tenant, nativeMember = true, nativeAdmin = true, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, activeProtocol = false } = {}) {
   receipts.length = 0; modelBodies.length = 0; queryShapes.length = 0; executorState.held = null;
-  modelCalls = 0; readToolUse = { name: 'read_calendar_booking', input: args };
+  modelCalls = 0; readToolUse = { name: tool, input: args };
   let active = tenant; let classificationRow = classification;
   const rec = scenario({ tables: { profiles: () => [{ active_tenant_id: active }], tenants: () => classificationRow ? [classificationRow] : [] }, rpcs: {
     ...(activeProtocol ? { paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
@@ -95,6 +98,7 @@ async function execute({ role = 'owner', args = { booking_id: bookingId }, resul
     current_user_tenant_id: { data: tenantResult, error: null },
     list_team_bookings: () => { if (afterRead) active = afterRead; if (afterClassification) classificationRow = afterClassification; return result; },
     is_tenant_member: { data: nativeMember, error: null }, is_tenant_admin: { data: nativeAdmin, error: null },
+    ...(afterReceipt ? { record_capability_run: () => { active = afterReceipt; return { data: true, error: null }; } } : {}),
   } });
   const response = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Read saved booking ' + bookingId }] }, id(100 + cases.length)));
   const wire = await response.text();
@@ -103,7 +107,7 @@ async function execute({ role = 'owner', args = { booking_id: bookingId }, resul
   for (const part of tools) { try { const parsed = JSON.parse(part.content); if (parsed?.status) value = parsed; } catch {} }
   if (activeProtocol && ['available', 'needs_input', 'refused', 'unavailable'].includes(value?.status)) {
     assert.deepEqual(receipts.at(-1)?.bundle_ref?.interactive?.effects,
-      [{ tool: 'read_calendar_booking', outcome: value.status === 'available' ? 'reported_success' : 'reported_failure' }],
+      [{ tool, outcome: value.status === 'available' ? 'reported_success' : 'reported_failure' }],
       'the actual settled receipt must describe the read, including visible-empty and native refusal');
   }
   return { rec, wire, value, shapes: [...queryShapes], offered: modelBodies[0]?.tools?.map(t => t.name) ?? [] };
@@ -166,6 +170,52 @@ for (const [label, options] of [
   assert.ok(!r.wire.includes("couldn't confirm whether the change went through"));
   assert.equal(r.rec.functions.length, 0);
   assert.ok(!r.rec.rpc.some(c => /create.*booking|execute_crm|send_|approve/.test(c.name)));
+});
+const agendaArgs = { from: '2026-10-17T00:00:00Z', to: '2026-10-18T00:00:00Z' };
+await check('actual agenda Chat reads the bounded native window with one original read receipt', async () => {
+  const r = await execute({ tool: 'read_calendar_agenda', args: agendaArgs, activeProtocol: true });
+  assert.ok(r.offered.includes('read_calendar_agenda')); assert.equal(r.value?.status, 'available');
+  assert.equal(r.value.bookings[0].id, bookingId); assert.equal(r.value.bookings[0].title_preview, booking().title);
+  const native = r.shapes.filter(c => c.name === 'list_team_bookings'); assert.equal(native.length, 1);
+  assert.equal(native[0].client, 'jwt');
+  assert.deepEqual(native[0].parameters, { _from: '2026-10-17T00:00:00.000Z', _to: '2026-10-18T00:00:00.000Z', _host_ids: [actor], _tenant_id: tenant, _booking_id: null });
+  assert.deepEqual(native[0].operations.slice(1), [['neq', 'booking_kind', 'class_seat'], ['gt', 'end_at', '2026-10-17T00:00:00.000Z'], ['order', 'start_at', { ascending: true }], ['order', 'id', { ascending: true }], ['limit', 51]]);
+  const runs = r.rec.rpc.filter(c => c.name === 'record_capability_run'); assert.equal(runs.length, 1);
+  assert.equal(runs[0].args._capability_key, 'calendar.agenda_read');
+  assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'calendar', record_id: null }]);
+  assert.equal(r.rec.functions.length, 0);
+});
+for (const [label, options, expected] of [
+  ['empty', { result: { data: [], error: null } }, 'available'],
+  ['invalid range', { args: { ...agendaArgs, to: 'invalid' } }, 'needs_input'],
+  ['tenant override', { args: { ...agendaArgs, tenant_id: tenant } }, 'needs_input'],
+  ['native refusal', { nativeMember: false }, 'refused'],
+  ['native uncertainty', { result: { data: null, error: { code: '57014' } } }, 'unavailable'],
+  ['team authority refused', { args: { ...agendaArgs, view: 'team' }, nativeAdmin: false }, 'refused'],
+  ['foreign row', { result: { data: [{ ...booking(), tenant_id: id(99) }], error: null } }, 'unavailable'],
+]) await check('actual agenda closed-read result remains truthful: ' + label, async () => {
+  const r = await execute({ tool: 'read_calendar_agenda', args: agendaArgs, activeProtocol: true, ...options });
+  assert.equal(r.value?.status, expected); assert.ok(!r.wire.includes('"destination":"calendar"'));
+  assert.ok(!r.rec.rpc.some(c => /create.*booking|execute_crm|send_|approve/.test(c.name))); assert.equal(r.rec.functions.length, 0);
+});
+await check('actual agenda workspace switch suppresses the old result without a receipt, retry or disclosure', async () => {
+  const r = await execute({ tool: 'read_calendar_agenda', args: agendaArgs, afterRead: id(99), activeProtocol: true });
+  assert.equal(r.value, null); assert.ok(!JSON.stringify(modelBodies).includes('Neutral saved meeting'));
+  assert.ok(!r.wire.includes('Neutral saved meeting')); assert.ok(!r.wire.includes('"destination":"calendar"'));
+  assert.equal(r.shapes.filter(c => c.name === 'list_team_bookings').length, 1);
+  assert.equal(r.rec.rpc.filter(c => c.name === 'record_capability_run').length, 0); assert.equal(r.rec.functions.length, 0);
+});
+for (const options of [{ role: null }, { tier: 'client' }, { classification: null }, { classification: { id: tenant, account_type: 'agency', parent_tenant_id: null } }]) await check('actual agenda is not offered to an unresolved/ineligible actor: ' + JSON.stringify(options), async () => {
+  const r = await execute({ tool: 'read_calendar_agenda', args: agendaArgs, ...options });
+  assert.ok(!r.offered.includes('read_calendar_agenda')); assert.ok(!r.shapes.some(c => c.name === 'list_team_bookings'));
+  assert.ok(!JSON.stringify(modelBodies).includes('Neutral saved meeting')); assert.equal(r.rec.functions.length, 0);
+});
+await check('agenda retires model egress when workspace changes while its original read receipt settles', async () => {
+  const r = await execute({ tool: 'read_calendar_agenda', args: agendaArgs, afterReceipt: id(99), activeProtocol: true });
+  assert.equal(r.value, null); assert.ok(!JSON.stringify(modelBodies).includes('Neutral saved meeting'));
+  assert.ok(!r.wire.includes('Neutral saved meeting')); assert.ok(!r.wire.includes('"destination":"calendar"'));
+  assert.equal(r.shapes.filter(c => c.name === 'list_team_bookings').length, 1);
+  assert.equal(r.rec.rpc.filter(c => c.name === 'record_capability_run').length, 1); assert.equal(r.rec.functions.length, 0);
 });
 console.log('RESULT ' + cases.filter(c => c.status === 'PASS').length + ' PASS / ' + cases.filter(c => c.status === 'FAIL').length + ' FAIL');
 if (cases.some(c => c.status === 'FAIL')) process.exitCode = 1;

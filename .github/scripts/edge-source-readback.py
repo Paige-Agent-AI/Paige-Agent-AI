@@ -10,6 +10,7 @@ import errno
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -298,11 +299,53 @@ def metadata_for(rows, name, expected):
     return {key: row.get(key) for key in ('id', 'slug', 'status', 'version', 'verify_jwt', 'entrypoint_path', 'import_map_path', 'ezbr_sha256')}
 
 
-def downloaded_manifest(repo, commit, directory, expected):
+def compiled_sources(repo, commit, sources, timeout, cache_directory):
+    """Exact vendor emission of trusted Git bytes, never downloaded code."""
+    helper = '.github/scripts/edge-source-emit.ts'
+    lock = '.github/scripts/edge-source-emit.lock'
+    for relative in (helper, lock):
+        commit_file(repo, commit, relative)
+    payload = {'version': 1, 'files': [
+        {'path': path, 'source': source.decode('utf-8')}
+        for path, source in sorted(sources.items())]}
+    # No provider token, other secrets, filesystem, process or environment
+    # permission enters this compiler. Imports are externalized, never fetched.
+    environment = {key: os.environ[key] for key in ('PATH', 'SystemRoot', 'SYSTEMROOT', 'TEMP', 'TMP')
+                   if key in os.environ}
+    environment.update(DENO_DIR=str(cache_directory), DENO_NO_UPDATE_CHECK='1')
+    try:
+        result = subprocess.run([
+            'deno', 'run', '--no-prompt', '--no-config', '--frozen',
+            '--lock=' + str(repo / lock), '--allow-net=jsr.io', str(repo / helper)],
+            input=json.dumps(payload), text=True, encoding='utf-8',
+            cwd=repo, env=environment, capture_output=True, check=True,
+            timeout=timeout)
+        if len(result.stdout) > 1024 * 1024:
+            raise ValueError('compiler result budget')
+        output = json.loads(result.stdout)
+        if (not isinstance(output, dict) or set(output) != {'version', 'compiler', 'files'} or
+                type(output['version']) is not int or output['version'] != 1 or
+                output['compiler'] != '@deno/emit@0.46.0' or not isinstance(output['files'], list) or
+                len(output['files']) != len(sources)):
+            raise ValueError('compiler envelope')
+        emitted = {}
+        for row in output['files']:
+            if (not isinstance(row, dict) or set(row) != {'path', 'source_sha256', 'sha256'} or
+                    not isinstance(row['path'], str) or row['path'] not in sources or row['path'] in emitted or
+                    row['source_sha256'] != hashlib.sha256(sources[row['path']]).hexdigest() or
+                    not isinstance(row['sha256'], str) or not re.fullmatch('[0-9a-f]{64}', row['sha256'])):
+                raise ValueError('compiler identity')
+            emitted[row['path']] = row['sha256']
+        return emitted
+    except (OSError, subprocess.SubprocessError, ValueError, UnicodeError) as error:
+        raise ReadbackError('expected_compiler_failed') from error
+
+
+def downloaded_manifest(repo, commit, directory, expected, compiler=None, emitted=None):
     root = directory / 'supabase/functions'
     if not root.is_dir() or root.is_symlink():
         raise ReadbackError('download_missing_source')
-    actual = {}
+    actual, mismatched = {}, {}
     for path in sorted(root.rglob('*')):
         if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
             raise ReadbackError('unsafe_download_path')
@@ -310,14 +353,31 @@ def downloaded_manifest(repo, commit, directory, expected):
             relative = 'supabase/functions/' + path.relative_to(root).as_posix()
             actual[relative] = digest(path.read_bytes())
             # Check every downloaded local file, not only the expected subset.
-            repository_sha = digest(commit_file(repo, commit, relative))
+            source = commit_file(repo, commit, relative)
+            repository_sha = digest(source)
             if repository_sha != actual[relative]:
-                raise SourceMismatch(relative, repository_sha, actual[relative], relative in expected['files'])
+                mismatched[relative] = source
     if not set(expected['files']).issubset(actual):
         raise ReadbackError('download_missing_dependency')
-    for relative, sha in expected['files'].items():
-        if actual[relative] != sha:
-            raise SourceMismatch(relative, sha, actual[relative], True)
+    # API downloads retain the original source contract. Only the explicit
+    # vendor fallback may contain emitted JS under the original .ts filename.
+    compiled = {}
+    if mismatched and compiler is not None:
+        try:
+            compiled = compiler(mismatched)
+        except (ReadbackError, OSError) as error:
+            if str(error) == 'verification_budget_exhausted':
+                raise
+            # An unavailable compiler never turns a source mismatch into proof.
+    for relative, source in mismatched.items():
+        if compiled.get(relative) != actual[relative]:
+            error = SourceMismatch(relative, digest(source), actual[relative], relative in expected['files'])
+            if relative in compiled:
+                error.source_identity['expected_emitted_sha256'] = compiled[relative]
+            raise error
+        if emitted is not None:
+            emitted[relative] = {'compiler': '@deno/emit@0.46.0',
+                                 'source_sha256': digest(source), 'sha256': actual[relative]}
     return actual
 
 
@@ -405,6 +465,14 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
     cleanup = {}
     with readback_scratch(cleanup) as temporary:
         isolated = Path(temporary)
+        def expected_compilation(sources):
+            remaining = deadline - clock()
+            if remaining <= 0:
+                raise ReadbackError('verification_budget_exhausted')
+            result = compiled_sources(repo, commit, sources, min(60, remaining), isolated / 'compiler-cache')
+            if clock() >= deadline:
+                raise ReadbackError('verification_budget_exhausted')
+            return result
         # Minimal nonsecret config; never copy auth state or overwrite checkout.
         (isolated / 'supabase').mkdir()
         (isolated / 'supabase/config.toml').write_text(f'project_id = "{project}"\n', encoding='utf-8')
@@ -444,7 +512,12 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                             invoke(['functions', 'download', name, '--use-docker'], directory)
                             mode = 'docker_requested'
                         phase = 'downloaded_source'
-                        manifest = downloaded_manifest(repo, commit, directory, expected[name])
+                        emitted = {}
+                        if mode == 'docker_requested':
+                            manifest = downloaded_manifest(repo, commit, directory, expected[name],
+                                                           expected_compilation, emitted)
+                        else:
+                            manifest = downloaded_manifest(repo, commit, directory, expected[name])
                         results[name] = {'function': name, 'status': 'PASS', 'attempts': attempt,
                                          'download_mode': mode,
                                          'version': identity['version'], 'verify_jwt': identity['verify_jwt'],
@@ -452,6 +525,8 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                                          'archive_sha256': identity.get('ezbr_sha256'),
                                          'files': manifest,
                                          'manifest_sha256': hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()}
+                        if emitted:
+                            results[name]['emitted_files'] = emitted
                         candidates[name] = identity
                     except (ReadbackError, UnicodeError, OSError, ValueError) as error:
                         identities.pop(name, None)
@@ -489,7 +564,7 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                 break
     report = {'commit': commit, 'selected': names, 'all_pass': all(r['status'] == 'PASS' for r in results.values()),
             'normalization': 'UTF-8; CRLF to LF; retain one terminal LF',
-            'proof_boundary': 'Selected deployed source/configuration only; not business execution or customer acceptance',
+            'proof_boundary': 'Selected deployed source or exact vendor-emitted runtime/configuration only; not business execution or customer acceptance',
               'functions': list(results.values())}
     if cleanup:
         report['scratch_cleanup'] = cleanup

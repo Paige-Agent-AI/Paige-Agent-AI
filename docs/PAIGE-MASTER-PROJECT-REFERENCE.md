@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP02 original manual Work history reader.**
+
+| PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |
+| --- | --- | --- | --- |
+| [#2877](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521); reviewedf292c96a752f75d957e52a3ea6edc12ff04de5c0; main6683bfb7cf1f0179922cc7c84840c6a0f3a5799c/tree9a286b3e9ac9fe6f07ef4debf4f1a35c947a75bf | Original12-field Work reader extended for exact manual purpose/current Metric authority. Whole other-kind source/metadata retained; historical reads do not widen active-only creation. No new reader/grant/scan/writer. | AUTHOR-REVIEW / LOWER ASSURANCE5645590987/all13 exact checks/Preview/two webSUCCESS/zero threads/renewed E05 receiving9cd8952b. Actual79768362+f292 union preserves16,274 incoming outside entries/frozen native+proof/whole CI+evidence inverses. Local31 checkpoints/causal3FAIL5PASS→8PASS/sixteen incumbent comparisons/original47 factory regressions retained. Normal native40241921677/job121315482302 SUCCESS/db-live6683;250102 once/current frontier at readback,1467 versions; bodyd953ea9965f31193d3dbf2f184114730/original12-field ABI/postgres/stable definer/empty search_path/auth-only ACL exact, anon denied; separate260002 absent. READYdpl_BTNcv7Wp3rjSUbjcpmG5LCs7VWS9/both public200/exact6683bfb7cf1f0179922cc7c84840c6a0f3a5799c-mvof6mtm/null22:51:45UTC; Edge N/A. | [Original capture evidence](evidence/e2-systems-capture-mode.md), ANT138/c16561b0. Internal-only/no customer version/announcement. Manual request/scan/result/Rail/recovery/customer proof remain incomplete; manual capability/ALG/catalogue unchanged. Full19/nine/founder open; original9/0+12/0/4/monthly UNKNOWN/UNRETRIED retained. Forward correction only, no reset/include-all/applied-history rewrite. |
+
 **2026-10-25 UTC — EXP05 bounded original ZION result inspection.**
 
 | Increment | Exact reviewed source and observed production release | Completion boundary |

@@ -563,6 +563,18 @@ async function privatePublicationCandidateProof(env) {
   try{assert.throws(()=>sql(read(migrationFile)),/changed/);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),changed);}
   finally{sql(saved.definition);}
  });
+ for(const file of ['supabase/tests/exp03_lead_reply_draft.sql','supabase/tests/paige_email_sendgrid_receipts.sql']){
+  const source=read(file),helper=source.match(/CREATE FUNCTION pg_temp\.check_true\([\s\S]*?END \$\$;/)?.[0];
+  const inverse=source.match(/DO \$e09_advance_inverse\$[\s\S]*?END \$e09_advance_inverse\$;/)?.[0];
+  assert(helper&&inverse,'Original Communications assertion and exact native inverse required: '+file);
+  check('Original Communications composition inverse executes on current native Work: '+file,()=>sql(helper+'\n'+inverse));
+  check('Communications composition inverse rejects any additional native source change: '+file,()=>{
+   const saved=JSON.parse(sql(`SELECT jsonb_build_object('definition',pg_get_functiondef(oid),'body',prosrc) FROM pg_proc WHERE oid='${advanceSig}'::regprocedure`));
+   sql(saved.definition.replace(saved.body,()=>saved.body+'\n-- controlled unreviewed forward body\n'));
+   try{assert.throws(()=>sql(helper+'\n'+inverse),/FAIL: E09 exact private-kind guard inverse/);}
+   finally{sql(saved.definition);}
+  });
+ }
  check('Unrelated original record-only Work execution still uses the original advance branch',()=>{
   sql(`INSERT INTO public.paige_action_kinds(slug,label,executor,requires_approval,default_autonomy_lane,enabled)
    VALUES('proof.e09_unrelated','Unrelated native proof','record_only',false,'confirm',true)`);

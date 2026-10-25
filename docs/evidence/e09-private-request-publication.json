@@ -1331,5 +1331,70 @@
     "sourceInputsUnchanged": true,
     "incomingOutsideOwnPathsPreserved": 16173,
     "earlierComparison": "NOT_COMPLETED: default child-process output buffer too small; same tree read rerun with explicit 16MiB buffer; no source adjustment"
+  },
+  "commsComposition": {
+    "generatedAt": "2026-10-25T16:22:59.467Z",
+    "runtimeCommit": "5d4b5fd8a89d3de1697d93a0fb01713dabab747b",
+    "sourceBlobs": {
+      "scripts/proof/e09-consumer-invite.mjs": "3c94717ea97e9c2204274d03379ac23b80fa8815",
+      "scripts/proof/e09-private-request.mjs": "c1e4eb9242d445c1682cf053e07aa683ab45cd6a",
+      "supabase/migrations/20271114210009_e09_approved_private_request_publication.sql": "da026bb90e7073ea9b8b977ccc176917d39b1008",
+      "supabase/tests/customer_portal_access.sql": "9b3e65a65b4c95861a7ceb51836de61ada3d496a",
+      "supabase/tests/exp03_lead_reply_draft.sql": "3cae2f96e8cbc85e5224c4b9586ccbf20ce3d843",
+      "supabase/tests/paige_email_sendgrid_receipts.sql": "bf9cb74ce8541ed2c954a2fa04224e169afddc8b"
+    },
+    "passed": 227,
+    "failed": 0,
+    "allOriginal223CaseObjectsPreserved": true,
+    "first146CaseObjectsPreserved": true,
+    "newControls": [
+      {
+        "name": "Original Communications composition inverse executes on current native Work: supabase/tests/exp03_lead_reply_draft.sql",
+        "status": "PASS"
+      },
+      {
+        "name": "Communications composition inverse rejects any additional native source change: supabase/tests/exp03_lead_reply_draft.sql",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Communications composition inverse executes on current native Work: supabase/tests/paige_email_sendgrid_receipts.sql",
+        "status": "PASS"
+      },
+      {
+        "name": "Communications composition inverse rejects any additional native source change: supabase/tests/paige_email_sendgrid_receipts.sql",
+        "status": "PASS"
+      }
+    ],
+    "reportSHA256": "7ac57cb8bdea9a42b2c18e503535ad13cfb7a62ba3d9f6e07756b9e6392d1163",
+    "cleanup": {
+      "command": "pg_ctl",
+      "exitCode": 0,
+      "stopped": true
+    },
+    "hostedPredecessor": {
+      "head": "b991f356695485e7d97edc03538bb4806cc20d13",
+      "workflowRun": 40209005467,
+      "job": 121216006819,
+      "overall": "FAIL",
+      "originalS7Plan321": "SUCCESS step98",
+      "accessDoors": "SUCCESS step99",
+      "privateNative": "SUCCESS step110",
+      "failures": [
+        {
+          "step": 54,
+          "file": "supabase/tests/exp03_lead_reply_draft.sql",
+          "line": 130,
+          "error": "fixture begins with all six exact reviewed current origin-admission bodies"
+        },
+        {
+          "step": 56,
+          "file": "supabase/tests/paige_email_sendgrid_receipts.sql",
+          "line": 79,
+          "error": "fixture begins with all six exact reviewed current origin-admission bodies"
+        }
+      ]
+    },
+    "repair": "Only each current advance scalar and an added whole-prosrc inverse. All original test bytes restored by that exact patch inverse. Five other pins, snapshots, historical replays, current admissions and rollback retained. No Communications runtime/provider change.",
+    "newHeadCI": "NOT_RUN; required exact-head repeat; predecessor native successes are not inherited release gates"
   }
 }

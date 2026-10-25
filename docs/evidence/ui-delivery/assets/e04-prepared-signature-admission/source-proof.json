@@ -1,5 +1,5 @@
 {
-  "sourceHead": "6c8b87c6a0504b136728bb149807a976a6104b27",
+  "sourceHead": "769d035df145aae57ba241313c0e4c33e759b3c8",
   "scope": "Unmounted originating agreement.send canonical confirmation prerequisite. Actual local native functions and synthetic mailbox/Storage/session identity; no production/customer/provider activation or outcome.",
   "sourceTests": {
     "passed": 101,
@@ -135,6 +135,10 @@
     {
       "path": "supabase/migrations/20271114140004_e04_prepared_request_confirmation.sql",
       "sha256": "67ec7e77ce6b5089e312bb55b2b3ed867ba0194e230afeb72b970b5b2fd819d7"
+    },
+    {
+      "path": "scripts/agreements/run-integrity-proof.sh",
+      "sha256": "05565e7088e6ddcb3cb8d4ffd29fda82d144a932b238387b82f61f3038845fbd"
     }
   ],
   "toolingFailuresRetained": [
@@ -159,5 +163,11 @@
     "atomic assigned-field/signature/seal producer and genuine retained bytes",
     "EXP09 authorized signing/download/status consumers",
     "all twelve commercial-to-delivery outcomes and ordinary-role reload/recovery"
-  ]
+  ],
+  "originalHostedInvocation": {
+    "path": "scripts/agreements/run-integrity-proof.sh",
+    "sourceSha256": "05565e7088e6ddcb3cb8d4ffd29fda82d144a932b238387b82f61f3038845fbd",
+    "change": "Only --prepared-confirmation appended to the original FULL native invocation; every original flag/other invocation byte-inverse exact",
+    "shellSyntaxExit": 0
+  }
 }

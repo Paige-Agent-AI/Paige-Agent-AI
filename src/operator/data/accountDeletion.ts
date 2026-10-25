@@ -1,4 +1,4 @@
-import { AccountRpcError, executeLifecycle, previewAccountDeletion, previewRetirementResources, runRetirementResources,
+import { AccountRpcError, executeLifecycle, isFileProvider, previewAccountDeletion, previewRetirementResources, runRetirementResources,
   type LifecyclePreview, type LifecycleReceipt, type ResourcePreview, type ResourceReceipt } from './accountControls';
 
 // Coordinate the existing journal and Storage API inside the confirmed Delete flow.
@@ -11,7 +11,7 @@ export function isEligibleFileReview(preview: LifecyclePreview, files: ResourceP
   return Boolean(preview.storage_count && preview.data_version && preview.version && files.execution_available && files.version
     && files.mode === 'delete' && files.tenant_id === preview.tenant_id && sameScope(preview, files)
     && files.resources.length > 0 && files.resources.length <= 50
-    && files.resources.every(r => ['tts_cache','generated_media'].includes(r.provider)));
+    && files.resources.every(r => isFileProvider(r.provider)));
 }
 export async function reviewDeletionFiles(preview: LifecyclePreview): Promise<ResourcePreview | null> {
   if (preview.execution_available || !preview.storage_count) return null;
@@ -41,7 +41,7 @@ export async function deleteWithEligibleFiles(id: string, archive: string, confi
   }
   if (result.state !== 'resources_ready' || result.mode !== 'delete' || result.operation_id !== operation || result.tenant_id !== id
     || result.account_count !== reviewed.accounts.length || !result.results.length
-    || result.results.some(r => !['tts_cache','generated_media'].includes(r.provider) || r.state !== 'verified' || r.provider_status !== 'removed')) throw new AccountFileCleanupError(operation);
+    || result.results.some(r => !isFileProvider(r.provider) || r.state !== 'verified' || r.provider_status !== 'removed')) throw new AccountFileCleanupError(operation);
   let after: LifecyclePreview;
   try { after = await io.preview(id); } catch { throw new AccountFileCleanupError(operation); }
   if (!after.execution_available || after.data_version !== reviewed.data_version || after.archive_operation_id !== archive

@@ -31,5 +31,5 @@ jobs:
       PGDATABASE: social_presence_connection_readiness_contract
     steps:
       - uses: actions/checkout@v4
-      - name: EXP07 row 9 — presence + connection readiness merge through the one governed read: owner/admin-gated as before, client refused with no readiness leaked, tenant wall proven, absence stays absence (isolated DB, never production)
+      - name: "EXP07 row 9 — presence + connection readiness merge through the one governed read (owner/admin-gated as before, client refused with no readiness leaked, tenant wall proven, absence stays absence; isolated DB, never production)"
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/social_presence_connection_readiness.sql

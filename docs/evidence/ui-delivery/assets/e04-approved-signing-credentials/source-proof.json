@@ -110,5 +110,20 @@
       "freshHostedCi": "PROOF_OWED",
       "customerAcceptance": "UNVERIFIED"
     }
+  },
+  "finalReceiving": {
+    "at": "2026-10-25T14:55:06.783Z",
+    "sourceHead": "78329e72a287437ffb5430037214b7c2dd367b60",
+    "sourceTree": "9ca424e29364d1f3c86e18a17e0289a5224fe35b",
+    "main": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2",
+    "allNineOwningSourceBlobsEqualOriginal0601": true,
+    "wholeBothGateInverses": true,
+    "source126": "Current126 PASS/21 steps; direct actual credential/outcome/handler SDK strict PASS",
+    "checks": "Scoped lint0/UI guard0/migration no collision/actual ACL4baseline+12 PASS before clean peer-only receiving merge",
+    "native122": "Source-identical original122/replay2/12sessions/6observed waits retained; no new native run claimed",
+    "native17": "C43 actually merged fd295d; normal pipeline/readback still pending",
+    "native18": "NOT_APPLIED",
+    "newExactCi": "PROOF_OWED",
+    "acceptance": "UNVERIFIED"
   }
 }

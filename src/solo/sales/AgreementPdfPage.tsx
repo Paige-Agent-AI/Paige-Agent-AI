@@ -8,6 +8,7 @@ type Props={
   bytes:Uint8Array;document:DocumentDescriptor;pageNumber:number;authorityKey:string;canView:boolean;
   zoom:'fit'|number;onReady:(ready:{page:number;sha256:string;zoom:'fit'|number}|null)=>void;onRetry:()=>void;
   onDocumentClick?:(event:React.MouseEvent<HTMLDivElement>,page:DocumentPage)=>void;
+  purpose?:'preparation'|'signing';
   children?:React.ReactNode;
 };
 /** Owning workspace supplies ONE leave guard and actual scoped bytes. This view
@@ -20,7 +21,7 @@ export function AgreementPdfPage(props:Props){
     return <div className="e04-pdf-notice" role="alert">This document version could not be verified.</div>;
   return <ScopedPdfPage key={`${props.authorityKey}:${props.document.sha256}`} {...props}/>;
 }
-function ScopedPdfPage({bytes,document,pageNumber,zoom,onReady,onRetry,onDocumentClick,children}:Props){
+function ScopedPdfPage({bytes,document,pageNumber,zoom,onReady,onRetry,onDocumentClick,children,purpose='preparation'}:Props){
   const [pdf,setPdf]=React.useState<PDFDocumentProxy|null>(null);
   const [phase,setPhase]=React.useState<'loading'|'rendering'|'ready'|'error'>('loading');
   const [text,setText]=React.useState('');
@@ -77,7 +78,7 @@ function ScopedPdfPage({bytes,document,pageNumber,zoom,onReady,onRetry,onDocumen
   },[pdf,renderWidth,pageNumber,currentPage,document.sha256,zoom]);
   return <div className="e04-pdf-view">
     <div ref={well} className="e04-pdf-well" tabIndex={0} role="region" aria-label="Scrollable document page" aria-busy={phase!=='error'&&!pageReady}>
-      {phase==='error'?<div className="e04-pdf-notice" role="alert"><FileWarning size={24} aria-hidden="true"/><h3>Document preview unavailable</h3><p>The exact document could not be verified or displayed. No fields can be placed on this preview.</p><button onClick={onRetry}><RefreshCw size={16} aria-hidden="true"/>Reload original document</button></div>:
+      {phase==='error'?<div className="e04-pdf-notice" role="alert"><FileWarning size={24} aria-hidden="true"/><h3>Document preview unavailable</h3><p>The exact document could not be verified or displayed. {purpose==='signing'?'Signing stays unavailable until the original page is available.':'No fields can be placed on this preview.'}</p><button onClick={onRetry}><RefreshCw size={16} aria-hidden="true"/>Reload original document</button></div>:
         <div className="e04-pdf-paper" data-rendered-page={pageReady?pageNumber:undefined} data-rendered-zoom={pageReady?zoom:undefined} style={{width:zoom==='fit'?'100%':renderWidth,aspectRatio:`${currentPage.width} / ${currentPage.height}`}} onClick={event=>{if(pageReady)onDocumentClick?.(event,currentPage);}}>
           <canvas key={pageNumber} ref={canvas} style={{visibility:pageReady?'visible':'hidden'}} aria-label={`Document page ${pageNumber}`} role="img"/>
           {pageReady?children:<div className="e04-pdf-progress" role="status"><Loader2 size={22} aria-hidden="true"/><span>{phase==='loading'?'Verifying document…':'Preparing page…'}</span></div>}

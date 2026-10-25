@@ -323,6 +323,15 @@
     },
     "exactReceivedCorrection": "de79e7052f80125b453946058ced9d21f182ba5d"
   },
+  "typeCompatibilityCorrection": {
+    "failedHead": "044b67f0db72feabf8ee7a8fe466cccaa6c599ee",
+    "hostedDiagnostic": "TS2550 Object.hasOwn is unavailable under the original ES2020 library",
+    "change": "Equivalent Object.prototype.hasOwnProperty.call in the owning import-binding test helper only",
+    "targetAndBaselineUnchanged": true,
+    "productionAndGuardUnchanged": true,
+    "owningTests": { "passed": 46, "failed": 0, "durationSeconds": 68.81 },
+    "freshTypecheckAndHostedCi": "required"
+  },
   "currentComposition": {
     "base": "689299de34a99ec95ca48861df6e1845e1ece8db",
     "priorReviewedHead": "f076519c6b928bee5b7ce9d0aa4967fd1e015e29",

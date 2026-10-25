@@ -124,3 +124,14 @@ Existing E05/E03/E08 writer windows and original source owners are preserved.
 No original report tool, source selector, budget, provider or execution semantics
 change in this composition. New exact final review/CI and source/customer release
 remain required; f076 hosted results are historical for their exact source.
+
+## Hosted typecheck correction — original ES2020 target retained
+
+Exact044 hosted typecheck correctly rejected Object.hasOwn in the owning test
+helper (TS2550). Replace only that ownership check with
+Object.prototype.hasOwnProperty.call; the same actual-production-import binding
+and both missing-import negative controls remain. No target/library, baseline,
+assertion, production ROOT or C0b source changed. Fresh original46/46 owning
+tests PASS68.81s. The prior79-case guard result retains identical guard, ROOT,
+dependency and guard-test inputs. Fresh typecheck, final exact-head review and
+hosted CI remain required; failed044 is never a release gate success.

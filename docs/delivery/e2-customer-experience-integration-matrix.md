@@ -141,6 +141,8 @@ Visual, Experiential and Founder Acceptance remain distinct and incomplete.
 
 **Current689 composition:** ROOT00cf86f0 and all46 owning test inputs unchanged; COMPLETE E04C35 source pin/124 dependencies/metadata preserved with same29 reviewed report scalars. Actual original hostile79/79 PASS83.499s. Two provenance prefixes resolved without a ROOT feature or owner-window takeover; fresh exact review/CI/source/customer proof remain owed.
 
+**Hosted typecheck correction:**044 correctly failed TS2550 for Object.hasOwn in the owning test helper. The compatible own-property call preserves the original ES2020 target, actual-import binding and both missing-import negatives; production ROOT/C0b and baselines are unchanged. Fresh owning46/46 PASS68.81s; new exact review/typecheck/CI required. Failed044 is retained, not released.
+
 Current229 addendum: exact parent-onlyde79 missing-import repair received; actual
 import-bound tool construction2FAIL→46PASS/current22946PASS; original79 hostile
 guardsPASS194.984s after reviewed29-field-only renewal. ROOT00cf86f0 preserves

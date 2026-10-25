@@ -80,7 +80,7 @@ function originalDocumentTool(text=chat) {
     if(!exports||!names||!ts.isNamedImports(names)||declaration.importClause?.isTypeOnly)continue;
     for(const specifier of names.elements)if(!specifier.isTypeOnly) {
       const name=(specifier.propertyName??specifier.name).text;
-      if(Object.hasOwn(exports,name))bindings[specifier.name.text]=exports[name];
+      if(Object.prototype.hasOwnProperty.call(exports,name))bindings[specifier.name.text]=exports[name];
     }
   }
   return new Function(...Object.keys(bindings),`${code};return tool;`)(...Object.values(bindings));

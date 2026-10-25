@@ -210,7 +210,7 @@
   "sources": [
     {
       "file": "src/App.tsx",
-      "sha256": "485bd63111a94c2a762c5a343946b90933c23abd2b09bd17a2ec908db1f81261"
+      "sha256": "1186fcc1218f347d3032b1baa94901b01fa08526d9435f437e527250b74d04e6"
     },
     {
       "file": "src/main.tsx",
@@ -222,7 +222,7 @@
     },
     {
       "file": "src/components/app/PageLoadBoundary.tsx",
-      "sha256": "4cd32c9b3ae013d26bda8bf419d532d25f3e110b9d15ccd18809e545085e2a59"
+      "sha256": "dfa71ef9a4e461ba4683bc861b20c43d2ff193d8d22bbd7b24b047e1aa80cb78"
     },
     {
       "file": "src/components/app/page-load-boundary.css",

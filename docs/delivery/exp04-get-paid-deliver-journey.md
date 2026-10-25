@@ -1,3 +1,28 @@
+## C36 originating recipient signing — current local implementation
+
+Owner intent remains complete O1–O12 and professional Agreements. This EXTENDS the original token ceremony and REPAIRS its missing assigned-field integration; it creates no new signing, document, payment, approval or Portal engine.
+
+Pre-edit capability and experience contract:
+
+1. Client reviews the exact retained PDF and only their assigned fields, explicitly confirms the original consents, signs once, and can recover the original recorded result. Completion and payment remain separate claims.
+2. EXP04 owns the originating Sales/Agreements records and public signing route. EXP09 consumes the approved token/document/result contract through ANT-163; no Portal interface or relationship writer is copied.
+3. Existing Spine/Gateway, Trust, Harness, Kit, Layer C and Rail remain authoritative. Ordinary token reads/rendering do not become event-to-action jobs. The prepared HIGH send/native claim and atomic field writer remain unfinished.
+4. Existing registered key is agreement.send (tool agreement_send, HIGH/external_effect, public.issue_agreement_signing_link). Prepared consequential admission is UNAVAILABLE until its exact sender/messages/revision/claim contract is integrated. No new Live/catalogue claim.
+5. Existing PAIGE Email/SendGrid readiness is a prerequisite for a legitimate send; listed is not connected. This local read/ceremony work makes no provider call, token mint, send or charge.
+6. Owner-approved original exact request must consume canonical approval with current actor/tenant/customer/role/source. A signature is not payment authorization; owner-reviewed delivery still requires a separate client decision.
+7. Original agreement/signers/preparations/events, native signature transaction and sealer are the only source of truth. No scheduler, secondary event log, sender, ledger or execution store.
+8. Native signature/consent/atomic field facts, actual completed copy and existing operation/Rail/provider receipts establish outcomes. A failed read cannot establish absence of an earlier signature; recovery uses the original token/check_only door only.
+9. Existing public /sign/:token is extended using original AgreementPdfPage/renderer and .ags tokens; default owner preparation rendering stays intact. No new owner/Portal navigation or surface maturity promotion. Binding-ledger eligibility/activation is unchanged.
+10. Current proof is local/source/synthetic ports only. Authenticated owner/staff/linked-client, real approved delivery/consent, retained completed file, revocation/reload and complete O1–O12/Central QA/founder evaluation remain UNVERIFIED.
+
+Flow Prototype v4 selected under standing delegated routine UI authority: separate AUTHOR-REVIEW / LOWER ASSURANCE, not founder or non-author acceptance. Rendered native PDF/own fields, five widths, light/dark, consent invalidation, uniform refusal and recorded/completed/unknown/check-only transitions inspected. Page-button focus and false no-signature wording were rejected and corrected. Mock/copy files remain private; product reuses the original renderer/ceremony.
+
+Local source: browser contract15 and original/new ceremony36 cases PASS; original canonical field/actual-handler21 tests127 steps PASS with runtime permissions denied. Those are bounded local proof, never provider/customer acceptance. Fresh current type/native and original-source rendering verification continue. Initial environment/fixture/frame/ES2020 findings remain retained; no compiler baseline, constraint, test count or native hold is weakened. Existing canonical field display constructor is shared across private projection and browser parsing; no made-up signer identity is introduced.
+
+Next coherent integration: native atomic field facts alongside original signature/consent, exact approved send/claim and canonical Communications outcome, then client/effective-terms/obligation/invoice/payment/delivery/collections/self-service proofs. Original prepared token/effect holds stay until proper governed replacement is reviewed and proven. ALG01/12 PARTIAL, ALG02 incomplete, ALG13 usefulness UNVERIFIED. The full Experience is not finished by this local slice.
+
+Earlier dated source checkpoints follow unchanged.
+
 
 ### C25 current-frontier continuation — October24, source not released
 

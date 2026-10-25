@@ -1,5 +1,5 @@
 import { object, UUID } from "../sales-collections/primitives.ts";
-import { readAgreementPdfDocument, readAssignedFields, type AgreementField } from "./field-preparation.ts";
+import { readAgreementPdfDocument, readRecipientDisplayFields, type AgreementField } from "./field-preparation.ts";
 
 type RecipientSource = {
   tenant_id: string; agreement_id: string; signer_id: string; source_version: number;
@@ -41,16 +41,10 @@ export async function readRecipientSigningFields(db: Db, tokenHash: string, expe
   let document: ReturnType<typeof readAgreementPdfDocument>;
   try { document = readAgreementPdfDocument(r.document); } catch { return fail(); }
   if (document.sha256 !== expected.document_sha256) return fail();
-  let assigned: AgreementField[];
+  let fields: Omit<AgreementField,"signer_id">[];
   try {
-    const own = r.fields.map(value => {
-      if (!closed(value,["id","kind","page","x","y","width","height","required","label"])) return fail();
-      return {...value,signer_id:expected.signer_id};
-    });
-    assigned = readAssignedFields(document,new Set([expected.signer_id]),own);
+    fields=readRecipientDisplayFields(document,r.fields);
   } catch { return fail(); }
-  const fields = assigned.map(({id,kind,page,x,y,width,height,required,label}) =>
-    ({id,kind,page,x,y,width,height,required,label}));
   if (!fields.some(f=>f.kind === "signature")) return fail();
   // Only this recipient's assigned display fields leave the private RPC. The
   // native allow-list omits all other recipients, internal source keys and words.

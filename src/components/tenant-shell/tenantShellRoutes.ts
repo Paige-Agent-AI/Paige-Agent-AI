@@ -4,6 +4,7 @@ import {
   ChartNoAxesCombined,
   Landmark,
   Megaphone,
+  MessagesSquare,
   Store,
   Settings,
   Sparkles,
@@ -16,6 +17,7 @@ import {
 type TenantDestination =
   | "command"
   | "operations"
+  | "teamhub"
   | "clients"
   | "campaigns"
   | "ads"
@@ -56,6 +58,7 @@ const AGENCY_ACTING_CHILD_ROUTE_PATTERN = /^\/agency\/([^/]+)\/sub\/(\d+)(?:\/|$
 const TENANT_BRANCHES: Record<TenantBranch, { slug: string; aliases: string[] }> = {
   command: { slug: "command-center", aliases: ["paige", "trust-compass", "automations"] },
   operations: { slug: "operations", aliases: [] },
+  teamhub: { slug: "team-hub", aliases: [] },
   clients: { slug: "clients", aliases: ["client-support", "billing"] },
   calendar: { slug: "calendar", aliases: [] },
   campaigns: { slug: "growth", aliases: [] },
@@ -160,6 +163,9 @@ export const TENANT_SHELL_DESTINATIONS: TenantShellDestination[] = [
 const SOLO_SHELL_DESTINATIONS: TenantShellDestination[] = [
   { id: "command", label: "Command Center", href: "", icon: Sparkles, aliases: [""] },
   { id: "operations", label: "Operations", href: "", icon: BriefcaseBusiness, aliases: [] },
+  // EXP08: teammates' channels, DMs and threads, directly below Operations. Solo only; Agency and
+  // Sub-account shells are held. `/team` keeps resolving to Settings → Team (invitations live there).
+  { id: "teamhub", label: "Team Hub", href: "", icon: MessagesSquare, aliases: [] },
   {
     id: "clients",
     label: "Clients",

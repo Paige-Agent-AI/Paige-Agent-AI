@@ -23,6 +23,8 @@ on:
       - "supabase/config.toml"
       - ".github/workflows/deploy-edge-functions.yml"
       - ".github/scripts/edge-source-readback.py"
+      - ".github/scripts/edge-deploy.py"
+      - ".github/scripts/test_edge_source_readback.py"
   # A credential rotation or a stranded retirement must not wait for the next
   # functions-touching merge — an operator can drive a deploy directly.
   workflow_dispatch: {}
@@ -222,10 +224,11 @@ jobs:
           while IFS= read -r fn; do
             [ -z "$fn" ] && continue
             echo "::group::deploy $fn"
-            # Use the vendor's server-side builder. The Docker upload omitted a
-            # configured deno.json even though it reported success. Keep strict
-            # source/config readback below: this flag is not release evidence.
-            if supabase functions deploy "$fn" --project-ref "$ref" --use-api; then
+            # Keep API first and the original readback. Only an exact API
+            # source-limit rejection may request one local vendor CLI build;
+            # mapped functions and uncertain/auth failures never use fallback.
+            if python3 .github/scripts/edge-deploy.py \
+              --expected-commit "${{ github.sha }}" --function "$fn"; then
               echo "✓ deployed $fn"
             else
               echo "::error::failed to deploy $fn"

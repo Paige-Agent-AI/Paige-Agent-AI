@@ -26,7 +26,10 @@ export function useSalesPerformanceMetrics(epoch: string | null | undefined, ran
   const current = useRef(identity);
   current.current = identity;
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange(() => {
+    const { data } = supabase.auth.onAuthStateChange(event => {
+      // This subscription's initial observation is not an actor transition.
+      // Reissuing here would supersede the original mount's review references.
+      if (event === "INITIAL_SESSION") return;
       current.current = "authentication changed";
       setAuthRevision(value => value + 1);
     });

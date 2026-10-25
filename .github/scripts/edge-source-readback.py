@@ -5,6 +5,8 @@ Uses only the release CLI's existing authentication. Downloads never touch the
 checkout. This is source identity, not a business-action/worker-cessation proof.
 """
 import argparse
+from contextlib import contextmanager
+import errno
 import hashlib
 import importlib.util
 import json
@@ -30,17 +32,58 @@ class ReadbackError(Exception):
     """Only fixed reason codes leave the verifier; CLI payloads may be sensitive."""
 
 
+class SourceMismatch(ReadbackError):
+    """Only immutable repository identity and digests, never downloaded text."""
+    def __init__(self, relative, expected_sha, downloaded_sha, known):
+        super().__init__('deployed_source_mismatch')
+        self.source_identity = {
+            'category': 'source_sha256_mismatch',
+            'source_scope': 'expected_closure' if known else 'additional_repository_source',
+            'expected_sha256': expected_sha, 'downloaded_sha256': downloaded_sha,
+        }
+        if known:
+            self.source_identity['file'] = relative
+
+
 def value_error_diagnostic(error, phase):
     # Only this public helper's static function names/line numbers. Never copy
     # exception text, source lines, filesystem paths, locals or CLI payloads.
     allowed = {'main', 'verify', 'invoke', 'listing', 'expected_release',
                'runtime_closure', 'metadata_for', 'entrypoint_matches',
                'downloaded_manifest', 'digest', 'normalized', 'cli',
-               'server_unbundle_failed'}
+               'server_unbundle_failed', 'readback_scratch'}
     sites = [{'function': frame.f_code.co_name, 'line': line}
              for frame, line in walk_tb(error.__traceback__)
              if frame.f_code.co_filename == __file__ and frame.f_code.co_name in allowed]
     return {'category': 'invalid_readback_data', 'phase': phase, 'sites': sites[-8:]}
+
+
+def os_error_diagnostic(error, phase):
+    diagnostic = value_error_diagnostic(error, phase)
+    diagnostic['category'] = 'readback_os_error'
+    if isinstance(error.errno, int) and 0 <= error.errno <= 4095:
+        diagnostic['errno'] = error.errno
+    return diagnostic
+
+
+@contextmanager
+def readback_scratch(cleanup):
+    # This object creates its own unique directory, never a caller-selected
+    # deletion target. Only nonsecret config and downloaded source live here.
+    # Docker unbundling can leave nested files the hosted runner cannot remove.
+    # Do not escalate privileges or let that cleanup erase source observations.
+    temporary = tempfile.TemporaryDirectory(prefix='paige-edge-readback-')
+    try:
+        yield temporary.name
+    finally:
+        try:
+            temporary.cleanup()
+        except PermissionError as error:
+            if error.errno not in (errno.EACCES, errno.EPERM):
+                raise
+            # Best-effort cleanup only, after inspection. The ephemeral job owns
+            # the remainder. This does not handle setup/read/validation errors.
+            cleanup.update(status='incomplete', reason='permission_denied')
 
 
 def normalized(data):
@@ -267,12 +310,14 @@ def downloaded_manifest(repo, commit, directory, expected):
             relative = 'supabase/functions/' + path.relative_to(root).as_posix()
             actual[relative] = digest(path.read_bytes())
             # Check every downloaded local file, not only the expected subset.
-            if digest(commit_file(repo, commit, relative)) != actual[relative]:
-                raise ReadbackError('deployed_source_mismatch')
+            repository_sha = digest(commit_file(repo, commit, relative))
+            if repository_sha != actual[relative]:
+                raise SourceMismatch(relative, repository_sha, actual[relative], relative in expected['files'])
     if not set(expected['files']).issubset(actual):
         raise ReadbackError('download_missing_dependency')
-    if any(actual[p] != sha for p, sha in expected['files'].items()):
-        raise ReadbackError('deployed_source_mismatch')
+    for relative, sha in expected['files'].items():
+        if actual[relative] != sha:
+            raise SourceMismatch(relative, sha, actual[relative], True)
     return actual
 
 
@@ -357,7 +402,8 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
         except (ValueError, TypeError) as error:
             raise ReadbackError('invalid_metadata_response') from error
 
-    with tempfile.TemporaryDirectory(prefix='paige-edge-readback-') as temporary:
+    cleanup = {}
+    with readback_scratch(cleanup) as temporary:
         isolated = Path(temporary)
         # Minimal nonsecret config; never copy auth state or overwrite checkout.
         (isolated / 'supabase').mkdir()
@@ -413,7 +459,9 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                         reason = str(error) if isinstance(error, ReadbackError) else (
                             'invalid_readback_data' if invalid_value else 'invalid_download_source')
                         results[name] = {'function': name, 'status': 'FAIL', 'reason': reason, 'attempts': attempt}
-                        if invalid_value:
+                        if isinstance(error, SourceMismatch):
+                            results[name]['diagnostic'] = {**error.source_identity, 'download_mode': mode}
+                        elif invalid_value:
                             results[name]['diagnostic'] = value_error_diagnostic(error, phase)
                 after = listing(isolated)
                 for name, identity in candidates.items():
@@ -439,10 +487,13 @@ def verify(repo, commit, names, runner=cli, sleeper=time.sleep, clock=time.monot
                 sleeper(RETRY_SECONDS)
             elif clock() >= deadline:
                 break
-    return {'commit': commit, 'selected': names, 'all_pass': all(r['status'] == 'PASS' for r in results.values()),
+    report = {'commit': commit, 'selected': names, 'all_pass': all(r['status'] == 'PASS' for r in results.values()),
             'normalization': 'UTF-8; CRLF to LF; retain one terminal LF',
             'proof_boundary': 'Selected deployed source/configuration only; not business execution or customer acceptance',
-            'functions': list(results.values())}
+              'functions': list(results.values())}
+    if cleanup:
+        report['scratch_cleanup'] = cleanup
+    return report
 
 
 def main(argv=None):
@@ -478,7 +529,11 @@ def main(argv=None):
                   'reason': str(error) if isinstance(error, ReadbackError) else 'invalid_readback_input'}
         if isinstance(error, ValueError):
             report['diagnostic'] = value_error_diagnostic(error, 'verification_input')
+        elif isinstance(error, OSError):
+            report['diagnostic'] = os_error_diagnostic(error, 'verification_input')
     args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    if report.get('scratch_cleanup'):
+        print('::warning::Source-inspection scratch cleanup was incomplete; see the verification report.')
     for row in report.get('functions', []):
         print(f"{row['function']}: {row['status']} ({row.get('reason', 'source/configuration matched')})")
     if not report['all_pass']:

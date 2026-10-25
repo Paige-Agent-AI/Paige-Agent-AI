@@ -852,6 +852,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP04 original recipient document and inline decision; bounded interface release.**
+
+| Increment | Exact source and normal production proof | Completion boundary |
+| --- | --- | --- |
+| [#2804](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2804), original token ceremony with exact retained PDF/own fields, fresh consent and inline decline/recovery | Reviewed `0b05d508c80a0b0f7623785a2dc7e00e66313dc2` / tree `6e7a9ffbfe6b8c67f53837c527e75c40862507fb`; separate AUTHOR-REVIEW / LOWER ASSURANCE `6394495879` / final `6394859439`; all10 applicable exact checks + two web SUCCESS, schema-free Preview SKIPPED by design and zero inline threads. Actual normal merge `e287c854d2c2d0e64f9da6a9a62d80089bf1c562` / tree `fd9f6f6f2dd9575a369bfc00976f6448b4e99b9a`, parents actual7c2054 + reviewed0b05; all72 own blobs,239 captured input entries,39 original JPEGs and15949 outside entries exact. Normal production `dpl_82HJ67jMjhxCcBvnBAYtjwTNvgQ9` READY; canonical and authenticated immutable200 exact `e287c854d2c2d0e64f9da6a9a62d80089bf1c562-mvni7q8h` / customerUpdate:null; served signingJS `2829a535` / CSS `615c1c8f`, five review/decision/recovery markers and44px/focus/consent styles read back07:29UTC. [Actual receipt6394896295](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2804#issuecomment-6394896295). | Fresh73 targeted cases,142 original assertion expressions preserved; failed full-Test attribution12589313030 retained, executable AST gate/five bypass repair and required checks passed without a waiver. Original source/palette/desktop/narrow/keyboard/focus/default-caller evidence stays bounded to synthetic ports. Fresh native prerequisites/ACLs exact; no native/affected-Edge or consequential activation. Prepared HIGH/sender/token/atomic fields/seal remains unavailable. Actual recipient/owner/staff/client, full Sales-route/cohort/zoom/native AT, provider/native receipts/reload, Central QA, all O1–O12 and one complete founder evaluation remain incomplete/unverified. |
+
+No original signing engine, financial record, sender or Portal was replaced. This records the bounded source interface, not a signed/paid/sent customer outcome, algorithm maturity or catalogue Live status. Professional document magnification remains an O2 refinement; original signing/effect holds remain.
+
 **2026-10-25 UTC — EXP04 original recipient decline; verified native correctness release.**
 
 | Increment | Exact release and production proof | Completion boundary |

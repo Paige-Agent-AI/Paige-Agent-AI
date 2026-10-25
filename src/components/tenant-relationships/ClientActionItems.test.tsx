@@ -100,6 +100,12 @@ it("rechecks the authenticated actor before publishing a read", async () => {
   f.user.mockResolvedValueOnce({ data: { user: { id: actor } }, error: null }).mockResolvedValue({ data: { user: { id: other } }, error: null });
   await mount(); expect(host.textContent).toContain("could not be verified"); expect(host.textContent).not.toContain("Which section first?");
 });
+it("revalidates authority on return and clears saved details after membership revocation", async () => {
+  await mount(); expect(host.textContent).toContain("Which section first?");
+  f.rpc.mockResolvedValue({ data: null, error: { code: "42501" } });
+  await act(async () => window.dispatchEvent(new Event("focus"))); await flush();
+  expect(host.textContent).toContain("could not be verified"); expect(host.textContent).not.toContain("Which section first?");
+});
 it("does not read through a resolving or failed workspace", async () => {
   f.context.accountContextLoading = true; await mount(); expect(f.rpc).not.toHaveBeenCalled(); expect(host.textContent).toContain("Checking your workspace");
   f.context.accountContextLoading = false; f.context.accountContextStatus = "error"; await mount();

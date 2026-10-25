@@ -90,8 +90,11 @@ export function useClientActionsOwner(scope: OwnerActionScope) {
         ++currentLife.read; setData(null); setPhase("refused");
       }
     });
+    const focus = () => { void refresh(); };
+    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
+    window.addEventListener("focus", focus); document.addEventListener("visibilitychange", visible);
     void refresh();
-    return () => { currentLife.alive = false; ++currentLife.read; subscription.unsubscribe(); };
+    return () => { currentLife.alive = false; ++currentLife.read; subscription.unsubscribe(); window.removeEventListener("focus", focus); document.removeEventListener("visibilitychange", visible); };
   }, [refresh, actor]);
   return { phase, data, refresh };
 }

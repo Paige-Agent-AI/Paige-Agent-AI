@@ -1,0 +1,5375 @@
+{
+ "frames": [
+  {
+   "name": "ev-1536x770-closed-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 789,
+    "max": 789
+   },
+   "hubW": 1320,
+   "cols": "232px 1088px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)"
+   ]
+  },
+  {
+   "name": "ev-1536x770-closed-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 789,
+    "max": 789
+   },
+   "hubW": 1320,
+   "cols": "232px 1088px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1536x770-open-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 789,
+    "max": 789
+   },
+   "hubW": 921,
+   "cols": "212px 709px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1536x770-open-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 789,
+    "max": 789
+   },
+   "hubW": 921,
+   "cols": "212px 709px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1366x768-closed-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 791,
+    "max": 791
+   },
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1366x768-closed-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 791,
+    "max": 791
+   },
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1366x768-open-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 791,
+    "max": 791
+   },
+   "hubW": 954,
+   "cols": "212px 742px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1366x768-open-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 791,
+    "max": 791
+   },
+   "hubW": 954,
+   "cols": "212px 742px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1024x768-closed-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 791,
+    "max": 791
+   },
+   "hubW": 952,
+   "cols": "212px 740px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1024x768-closed-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 791,
+    "max": 791
+   },
+   "hubW": 952,
+   "cols": "212px 740px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1024x768-open-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 791,
+    "max": 791
+   },
+   "hubW": 952,
+   "cols": "212px 740px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-1024x768-open-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 791,
+    "max": 791
+   },
+   "hubW": 952,
+   "cols": "212px 740px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-900x1000-closed-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 598,
+    "max": 598
+   },
+   "hubW": 828,
+   "cols": "212px 616px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-900x1000-closed-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 598,
+    "max": 598
+   },
+   "hubW": 828,
+   "cols": "212px 616px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-900x1000-open-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 598,
+    "max": 598
+   },
+   "hubW": 828,
+   "cols": "212px 616px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-900x1000-open-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 598,
+    "max": 598
+   },
+   "hubW": 828,
+   "cols": "212px 616px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 101
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-390-files-dark",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 994,
+    "max": 994
+   },
+   "hubW": 330,
+   "cols": "330px",
+   "view": "conv",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-390-files-light",
+   "scrolledToEndByHarness": true,
+   "streamBeforeScroll": {
+    "top": 994,
+    "max": 994
+   },
+   "hubW": 330,
+   "cols": "330px",
+   "view": "conv",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-unpinned-1536-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1320,
+   "cols": "232px 1088px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-unpinned-390-light",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 330,
+   "cols": "330px",
+   "view": "conv",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-390-chipstates-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 330,
+   "cols": "330px",
+   "view": "conv",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "cover-option-b.jpg",
+     "state": "uploading",
+     "text": "Uploading…",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    },
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "Q4-forecast.xlsx",
+     "state": "failed",
+     "text": "Upload didn't finish",
+     "retry": true
+    },
+    {
+     "name": "installer.exe",
+     "state": "refused",
+     "text": "That file type isn't allowed",
+     "retry": false
+    },
+    {
+     "name": "Board-recording-notes.pdf",
+     "state": "refused",
+     "text": "Over 10 MB",
+     "retry": false
+    },
+    {
+     "name": "Proposal-with-macros.docx",
+     "state": "refused",
+     "text": "Files with macros can't be shared here",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "You can attach PDFs, images (PNG, JPEG, WEBP, GIF), Word .docx, Excel .xlsx, text and CSV files. Older .doc and .xls files and PowerPoint can't be attached.",
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 5 files. File refused: That file type isn't allowed. File refused: Over 10 MB. Upload didn't finish. Retry is available. File ready. File refused: Files with macros can't be shared here"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "cover-option-b.jpg",
+     "mime": "image/jpeg",
+     "size": 2600000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Q4-forecast.xlsx",
+     "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Proposal-with-macros.docx",
+     "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "image/jpeg",
+     "size": 2600000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000003",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000004",
+     "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000005",
+     "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000003"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000005"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-chipstates-1366-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "cover-option-b.jpg",
+     "state": "uploading",
+     "text": "Uploading…",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    },
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "Q4-forecast.xlsx",
+     "state": "failed",
+     "text": "Upload didn't finish",
+     "retry": true
+    },
+    {
+     "name": "installer.exe",
+     "state": "refused",
+     "text": "That file type isn't allowed",
+     "retry": false
+    },
+    {
+     "name": "Board-recording-notes.pdf",
+     "state": "refused",
+     "text": "Over 10 MB",
+     "retry": false
+    },
+    {
+     "name": "Proposal-with-macros.docx",
+     "state": "refused",
+     "text": "Files with macros can't be shared here",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "You can attach PDFs, images (PNG, JPEG, WEBP, GIF), Word .docx, Excel .xlsx, text and CSV files. Older .doc and .xls files and PowerPoint can't be attached.",
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 5 files. File refused: That file type isn't allowed. File refused: Over 10 MB. Upload didn't finish. Retry is available. File ready. File refused: Files with macros can't be shared here"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "cover-option-b.jpg",
+     "mime": "image/jpeg",
+     "size": 2600000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Q4-forecast.xlsx",
+     "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Proposal-with-macros.docx",
+     "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "image/jpeg",
+     "size": 2600000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000003",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000004",
+     "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000005",
+     "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000003"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000005"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-chipstates-1366-light",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "cover-option-b.jpg",
+     "state": "uploading",
+     "text": "Uploading…",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    },
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "Q4-forecast.xlsx",
+     "state": "failed",
+     "text": "Upload didn't finish",
+     "retry": true
+    },
+    {
+     "name": "installer.exe",
+     "state": "refused",
+     "text": "That file type isn't allowed",
+     "retry": false
+    },
+    {
+     "name": "Board-recording-notes.pdf",
+     "state": "refused",
+     "text": "Over 10 MB",
+     "retry": false
+    },
+    {
+     "name": "Proposal-with-macros.docx",
+     "state": "refused",
+     "text": "Files with macros can't be shared here",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "You can attach PDFs, images (PNG, JPEG, WEBP, GIF), Word .docx, Excel .xlsx, text and CSV files. Older .doc and .xls files and PowerPoint can't be attached.",
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 5 files. File refused: That file type isn't allowed. File refused: Over 10 MB. Upload didn't finish. Retry is available. File ready. File refused: Files with macros can't be shared here"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "cover-option-b.jpg",
+     "mime": "image/jpeg",
+     "size": 2600000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Q4-forecast.xlsx",
+     "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Proposal-with-macros.docx",
+     "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "image/jpeg",
+     "size": 2600000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000003",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000004",
+     "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000005",
+     "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000003"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000005"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-refusedreasons-1366-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Proposal-with-macros.docx",
+     "state": "refused",
+     "text": "Files with macros can't be shared here",
+     "retry": false
+    },
+    {
+     "name": "renamed-report.pdf",
+     "state": "refused",
+     "text": "Its contents don't match its type",
+     "retry": false
+    },
+    {
+     "name": "Org-chart-with-chart.docx",
+     "state": "refused",
+     "text": "Files with embedded objects or charts can't be shared here yet",
+     "retry": false
+    },
+    {
+     "name": "Pricing-linked-sheet.xlsx",
+     "state": "refused",
+     "text": "Files that pull in content from elsewhere can't be shared here",
+     "retry": false
+    },
+    {
+     "name": "Truncated-contract.docx",
+     "state": "refused",
+     "text": "This file looks damaged",
+     "retry": false
+    },
+    {
+     "name": "Sixth-file.pdf",
+     "state": "refused",
+     "text": "5 files per message",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Remove refused files to send",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 5 files. File refused: 5 files per message. File refused: Files with macros can't be shared here. File refused: Its contents don't match its type. File refused: Files with embedded objects or charts can't be shared here yet. File refused: Files that pull in content from elsewhere can't be shared here. File refused: This file looks damaged"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Proposal-with-macros.docx",
+     "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "renamed-report.pdf",
+     "mime": "application/pdf",
+     "size": 30000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Org-chart-with-chart.docx",
+     "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 120000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Pricing-linked-sheet.xlsx",
+     "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 52000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Truncated-contract.docx",
+     "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 8000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "application/pdf",
+     "size": 30000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000003",
+     "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 120000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000004",
+     "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 52000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000005",
+     "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 8000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000003"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000004"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000005"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-refusedreasons-1366-light",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "renamed-report.pdf",
+     "state": "refused",
+     "text": "Its contents don't match its type",
+     "retry": false
+    },
+    {
+     "name": "installer.exe",
+     "state": "refused",
+     "text": "That file type isn't allowed",
+     "retry": false
+    },
+    {
+     "name": "Board-recording-notes.pdf",
+     "state": "refused",
+     "text": "Over 10 MB",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "You can attach PDFs, images (PNG, JPEG, WEBP, GIF), Word .docx, Excel .xlsx, text and CSV files. Older .doc and .xls files and PowerPoint can't be attached.",
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Remove refused files to send",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 1 file. File refused: That file type isn't allowed. File refused: Over 10 MB. File refused: Its contents don't match its type"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "renamed-report.pdf",
+     "mime": "application/pdf",
+     "size": 30000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 30000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-failedretry-after-1366-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Q4-forecast.xlsx",
+     "state": "ready",
+     "text": "47 KB · Ready",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": true
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 1 file. Upload didn't finish. Retry is available.",
+    "Uploading 1 file. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Q4-forecast.xlsx",
+     "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000,
+     "upsert": false
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Q4-forecast.xlsx",
+     "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-disclosure-1366-light",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": true
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 1 file. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-disclosure-1366-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": true
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 1 file. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-filesonly-1366-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Brightline-intake-notes.pdf, PDF, 277 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Kickoff-agenda.txt, Text file, 1 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [],
+   "notes": [],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": false
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready",
+    "Message sent"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Kickoff-agenda.txt",
+     "mime": "text/plain",
+     "size": 1400
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "text/plain",
+     "size": 1400,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    },
+    {
+     "rpc": "team_hub_post_message",
+     "body": "",
+     "p_file_ids": [
+      "9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+      "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+     ]
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-filesonly-1366-light",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Brightline-intake-notes.pdf, PDF, 277 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Kickoff-agenda.txt, Text file, 1 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [],
+   "notes": [],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": false
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready",
+    "Message sent"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Kickoff-agenda.txt",
+     "mime": "text/plain",
+     "size": 1400
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "text/plain",
+     "size": 1400,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    },
+    {
+     "rpc": "team_hub_post_message",
+     "body": "",
+     "p_file_ids": [
+      "9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+      "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+     ]
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-downloadfailed-1366-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": "Couldn't get the file. Try again."
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [],
+   "notes": [],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": false
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Couldn't get the file. Try again."
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e01",
+     "seconds": 60,
+     "download": "Kickoff-cover-brief.pdf"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-downloadfailed-1366-light",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": "Couldn't get the file. Try again."
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [],
+   "notes": [],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": false
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Couldn't get the file. Try again."
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e01",
+     "seconds": 60,
+     "download": "Kickoff-cover-brief.pdf"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-state-download-1366-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 1062px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [],
+   "notes": [],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": false
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e01",
+     "seconds": 60,
+     "download": "Kickoff-cover-brief.pdf"
+    }
+   ],
+   "navigated": [
+    "https://storage.harness.invalid/t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e01?token=t&download=Kickoff-cover-brief.pdf"
+   ],
+   "errors": []
+  },
+  {
+   "name": "ev-state-threadchip-1366-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 1294,
+   "cols": "232px 722px 340px",
+   "view": "list",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": false
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [
+    {
+     "t": "INPUT",
+     "h": 22,
+     "w": 121
+    }
+   ],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 1 file. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-zoom200-1280-chips-light",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 580,
+   "cols": "580px",
+   "view": "conv",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 2 files. File ready"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000001"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-zoom200-1280-filerows-light",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 580,
+   "cols": "580px",
+   "view": "conv",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [],
+   "notes": [],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": false,
+    "ready": false
+   },
+   "hint": "@ to mention · / for PAIGE",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  },
+  {
+   "name": "ev-zoom200-1280-chipstates-dark",
+   "scrolledToEndByHarness": false,
+   "streamBeforeScroll": null,
+   "hubW": 580,
+   "cols": "580px",
+   "view": "conv",
+   "fileRows": [
+    {
+     "label": "Kickoff-cover-brief.pdf, PDF, 1.8 MB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "cover-option-a.png, PNG image, 403 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": true,
+     "error": null
+    },
+    {
+     "label": "Brightline-welcome-packet-v3.docx, Word document, 94 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    },
+    {
+     "label": "Q4-kickoff-budget.xlsx, Excel workbook, 23 KB",
+     "describedBy": "th-file-disclosure",
+     "thumb": null,
+     "error": null
+    }
+   ],
+   "chips": [
+    {
+     "name": "cover-option-b.jpg",
+     "state": "uploading",
+     "text": "Uploading…",
+     "retry": false
+    },
+    {
+     "name": "kickoff-whiteboard.png",
+     "state": "checking",
+     "text": "Checking…",
+     "retry": false
+    },
+    {
+     "name": "Brightline-intake-notes.pdf",
+     "state": "ready",
+     "text": "277 KB · Ready",
+     "retry": false
+    },
+    {
+     "name": "Q4-forecast.xlsx",
+     "state": "failed",
+     "text": "Upload didn't finish",
+     "retry": true
+    },
+    {
+     "name": "installer.exe",
+     "state": "refused",
+     "text": "That file type isn't allowed",
+     "retry": false
+    },
+    {
+     "name": "Board-recording-notes.pdf",
+     "state": "refused",
+     "text": "Over 10 MB",
+     "retry": false
+    },
+    {
+     "name": "Proposal-with-macros.docx",
+     "state": "refused",
+     "text": "Files with macros can't be shared here",
+     "retry": false
+    }
+   ],
+   "notes": [
+    "You can attach PDFs, images (PNG, JPEG, WEBP, GIF), Word .docx, Excel .xlsx, text and CSV files. Older .doc and .xls files and PowerPoint can't be attached.",
+    "Files aren't scanned for viruses. Only open files from people you trust."
+   ],
+   "disclosureSr": "Files aren't scanned for viruses. Only open files from people you trust.",
+   "composerButtons": [
+    "Mention someone",
+    "Attach files (not scanned)",
+    "PAIGE commands",
+    "Send"
+   ],
+   "paperclip": {
+    "label": "Attach files (not scanned)",
+    "title": "Attach files (not scanned)",
+    "accept": ".pdf,.png,.jpg,.jpeg,.webp,.gif,.docx,.xlsx,.txt,.csv"
+   },
+   "send": {
+    "disabled": true,
+    "ready": false
+   },
+   "hint": "Uploading files…",
+   "actButtons": [],
+   "goldUse": [],
+   "small": [],
+   "overflow": false,
+   "hubOverflow": false,
+   "announced": [
+    "Uploading 5 files. File refused: That file type isn't allowed. File refused: Over 10 MB. Upload didn't finish. Retry is available. File ready. File refused: Files with macros can't be shared here"
+   ],
+   "fileLog": [
+    {
+     "storage": "createSignedUrl",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/3d1f0a6e-8c42-4b7a-9e15-0a2b4c6d8e02",
+     "seconds": 60,
+     "download": null
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "cover-option-b.jpg",
+     "mime": "image/jpeg",
+     "size": 2600000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "kickoff-whiteboard.png",
+     "mime": "image/png",
+     "size": 1250000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Brightline-intake-notes.pdf",
+     "mime": "application/pdf",
+     "size": 284000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Q4-forecast.xlsx",
+     "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000
+    },
+    {
+     "rpc": "team_hub_begin_file",
+     "name": "Proposal-with-macros.docx",
+     "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000001",
+     "type": "image/jpeg",
+     "size": 2600000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000002",
+     "type": "image/png",
+     "size": 1250000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000003",
+     "type": "application/pdf",
+     "size": 284000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000004",
+     "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 48000,
+     "upsert": false
+    },
+    {
+     "storage": "upload",
+     "bucket": "comms-attachments",
+     "path": "t-harness/team-hub/9c7e2b10-4d3a-4f6e-8a1b-000000000005",
+     "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     "size": 64000,
+     "upsert": false
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000002"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000003"
+    },
+    {
+     "fn": "team-hub-file",
+     "action": "finish",
+     "expected_tenant": "t-harness",
+     "file_id": "9c7e2b10-4d3a-4f6e-8a1b-000000000005"
+    }
+   ],
+   "navigated": [],
+   "errors": []
+  }
+ ],
+ "refusalMatrix": [
+  {
+   "via": "finish rejected",
+   "code": "mismatch",
+   "fate": "reject:mismatch",
+   "file": "case-1.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Its contents don't match its type"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "type_mismatch",
+   "fate": "reject:type_mismatch",
+   "file": "case-2.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Its contents don't match its type"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "unrecognised",
+   "fate": "reject:unrecognised",
+   "file": "case-3.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Its contents don't match its type"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "legacy_office",
+   "fate": "reject:legacy_office",
+   "file": "case-4.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Older Word and Excel files can't be shared here. Save it as .docx or .xlsx"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "macro_content",
+   "fate": "reject:macro_content",
+   "file": "case-5.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Files with macros can't be shared here"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "embedded_content",
+   "fate": "reject:embedded_content",
+   "file": "case-6.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Files with embedded objects or charts can't be shared here yet"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "external_content",
+   "fate": "reject:external_content",
+   "file": "case-7.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Files that pull in content from elsewhere can't be shared here"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "dde_field",
+   "fate": "reject:dde_field",
+   "file": "case-8.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Files that pull in content from elsewhere can't be shared here"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "malformed_document",
+   "fate": "reject:malformed_document",
+   "file": "case-9.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "This file looks damaged"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "oversized_document",
+   "fate": "reject:oversized_document",
+   "file": "case-10.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "There's too much inside this file to check"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "size_mismatch",
+   "fate": "reject:size_mismatch",
+   "file": "case-11.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "The upload didn't match the file. Attach it again"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "object_mismatch",
+   "fate": "reject:object_mismatch",
+   "file": "case-12.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "The upload didn't match the file. Attach it again"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "metadata_mismatch",
+   "fate": "reject:metadata_mismatch",
+   "file": "case-13.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "The upload didn't match the file. Attach it again"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "too_large",
+   "fate": "reject:too_large",
+   "file": "case-14.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Over 10 MB"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "empty",
+   "fate": "reject:empty",
+   "file": "case-15.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "That file is empty"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "not_allowed",
+   "fate": "reject:not_allowed",
+   "file": "case-16.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "That file type isn't allowed"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "rejected",
+   "fate": "reject:rejected",
+   "file": "case-17.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "That file couldn't be checked"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish rejected",
+   "code": "some_future_code",
+   "fate": "reject:some_future_code",
+   "file": "case-18.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "That file couldn't be checked"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "begin refused",
+   "code": "too_large",
+   "fate": "begin:too_large",
+   "file": "case-19.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Over 10 MB"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "begin refused",
+   "code": "limit_reached",
+   "fate": "begin:limit_reached",
+   "file": "case-20.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Too many unsent files. Send or remove some first"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "begin refused",
+   "code": "invalid",
+   "fate": "begin:invalid",
+   "file": "case-21.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "That file type isn't allowed"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "begin refused",
+   "code": "rejected",
+   "fate": "begin:rejected",
+   "file": "case-22.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "That file couldn't be checked"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "begin refused",
+   "code": "not_found",
+   "fate": "begin:not_found",
+   "file": "case-23.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "It can't be attached here any more"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish refused",
+   "code": "invalid",
+   "fate": "finish:invalid",
+   "file": "case-24.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "It can't be attached here any more"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "finish refused",
+   "code": "not_found",
+   "fate": "finish:not_found",
+   "file": "case-25.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "It can't be attached here any more"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "precheck",
+   "code": "type (.exe)",
+   "file": "tool.exe",
+   "chip": {
+    "state": "refused",
+    "text": "That file type isn't allowed"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "precheck",
+   "code": "type (.doc)",
+   "file": "legacy.doc",
+   "chip": {
+    "state": "refused",
+    "text": "That file type isn't allowed"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "precheck",
+   "code": "type (.pptx)",
+   "file": "deck.pptx",
+   "chip": {
+    "state": "refused",
+    "text": "That file type isn't allowed"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "precheck",
+   "code": "too_large",
+   "file": "big.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "Over 10 MB"
+   },
+   "unavailable": false
+  },
+  {
+   "via": "precheck",
+   "code": "empty",
+   "file": "empty.pdf",
+   "chip": {
+    "state": "refused",
+    "text": "That file is empty"
+   },
+   "unavailable": false
+  }
+ ]
+}

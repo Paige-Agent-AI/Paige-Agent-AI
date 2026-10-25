@@ -3,12 +3,13 @@ import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { env } from 'node:process';
 import ts from 'typescript';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { databaseAnswered, OUTCOME_UNKNOWN_NOTE } from '../../supabase/functions/_shared/approval-outcome';
 import { interactiveEffect, interactiveReceiptContext } from '../../supabase/functions/_shared/paige-turn/interactive';
 import { runEventActs, type EngineDb } from '../../supabase/functions/_shared/paige-orchestration/engine';
 import { executeApprovedLayerCAct, type ApproveExecutorDb } from '../../supabase/functions/_shared/paige-orchestration/approve-executor';
 import { nativeAdapter } from '../../supabase/functions/_shared/paige-orchestration/native-adapter';
+import { createWeeklyDraftDeadline } from '../../supabase/functions/_shared/paige-orchestration/weekly-draft-deadline';
 const source = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const ast = ts.createSourceFile('chat.ts', source, ts.ScriptTarget.Latest, true);
 let branch: ts.Statement | undefined;
@@ -21,25 +22,26 @@ function visit(n: ts.Node) {
 visit(ast);
 if (!branch) throw new Error('Canonical automation draft dispatch missing');
 const code = ts.transpileModule(`async function dispatch(tc, supabaseClient, personaCtx, user, toolResults,
-  databaseAnswered, OUTCOME_UNKNOWN_NOTE, requestExecutionState) ${branch.getText(ast)}`,
+  databaseAnswered, OUTCOME_UNKNOWN_NOTE, requestExecutionState, createWeeklyDraftDeadline, req, tenantKnowledgeScopeRevoked) ${branch.getText(ast)}`,
 { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const dispatch = new Function(`${code}; return dispatch;`)();
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const actor = id(1), tenant = id(2), process = id(3), version = '2026-10-15T16:00:00.123456Z';
 const input = { name: 'Fixture process', trigger_key: 'contact.created', steps: [{ action_kind: 'crm.advance_journey_stage', config: { stage: 'review', nested: { b: 2, a: 1 } } }] };
 type Row = Record<string, unknown>;
-async function drive(fault = '', args: object = input) {
+async function drive(fault = '', args: object = input, onStage?: (name: string) => void | Promise<void>, signal = new AbortController().signal) {
   const state = { processes: [] as Row[], acts: [] as Row[], writes: [] as { table: string; op: string; filters: unknown[] }[], reads: [] as string[] };
   const recovery = { needsReview: false }, outputs: Array<{ content: string }> = [];
   let scopeReads = 0;
-  const caller = { rpc: async (name: string) => name === 'current_user_tenant_id'
+  const caller = { rpc: async (name: string) => { await onStage?.(`rpc:${name}`); return name === 'current_user_tenant_id'
     ? { data: fault === 'wrong-scope' || fault === 'scope-after-create' && ++scopeReads > 2 ? id(99) : tenant, error: null }
     : fault === 'posture-throws' ? Promise.reject(new TypeError('response lost'))
-    : fault === 'posture-unavailable' ? { data: null, error: { code: 'PGRST000' } } : { data: { effective: 'confirm', dark: [], can_fire: false }, error: null },
+    : fault === 'posture-unavailable' ? { data: null, error: { code: 'PGRST000' } } : { data: { effective: 'confirm', dark: [], can_fire: false }, error: null }; },
   from(table: string) {
     let op = 'read', value: unknown, columns = '', single = false;
     const filters: Array<[string, unknown]> = [];
     const execute = async () => {
+      await onStage?.(`${table}:${op}`);
       if (op !== 'read') state.writes.push({ table, op, filters }); else state.reads.push(table);
       if (table === 'paige_automation_triggers') return { data: { key: input.trigger_key, is_live: true, dark_reason: null }, error: null };
       const rows = table === 'paige_automations' ? state.processes : state.acts;
@@ -72,10 +74,121 @@ async function drive(fault = '', args: object = input) {
     return q;
   } };
   await dispatch({ id: 'draft-call', function: { name: 'automation_draft', arguments: JSON.stringify(args) } }, caller, { tenant_id: tenant }, { id: actor }, outputs,
-    databaseAnswered, OUTCOME_UNKNOWN_NOTE, recovery);
+    databaseAnswered, OUTCOME_UNKNOWN_NOTE, recovery, createWeeklyDraftDeadline, { signal }, false);
   expect(outputs).toHaveLength(1);
   return { state, result: JSON.parse(outputs[0].content), recovery };
 }
+/** Delay an actual original handler port, then release it after the elapsed
+ * budget. No replacement writer, response stub or provider is invoked. */
+async function delayedDraft(stage: string, fault = '') {
+  vi.useFakeTimers();
+  let release!: () => void, entered = false, settled = false;
+  const gate = new Promise<void>(resolve => { release = resolve; }), stages: string[] = [];
+  const pending = drive(fault, input, name => {
+    stages.push(name);
+    if (name === stage && !entered) { entered = true; return gate; }
+  }).then(result => { settled = true; return result; });
+  try {
+    await vi.advanceTimersByTimeAsync(0);
+    expect(entered).toBe(true);
+    await vi.advanceTimersByTimeAsync(8_001);
+    const settledAtDeadline = settled, requestsAtDeadline = [...stages];
+    release();
+    const finished = await pending;
+    await vi.advanceTimersByTimeAsync(0);
+    return { settledAtDeadline, requestsAtDeadline, requestsAfterRelease: [...stages], ...finished };
+  } finally { release(); try { await pending; } finally { vi.useRealTimers(); } }
+}
+
+describe('automation draft elapsed budget and late replies', () => {
+  it('does not reset the total eight-second budget for each awaited stage', async () => {
+    vi.useFakeTimers();
+    const stages: string[] = []; let settled = false;
+    const pending = drive('', input, name => {
+      stages.push(name); return new Promise<void>(resolve => setTimeout(resolve, 2_000));
+    }).then(result => { settled = true; return result; });
+    try {
+      await vi.advanceTimersByTimeAsync(8_001);
+      expect(settled).toBe(true);
+      const r = await pending;
+      expect(r.result).toMatchObject({ success: false, outcome_unknown: true, execution_started: false });
+      expect(stages).not.toContain('paige_automation_acts:insert');
+      expect(r.state.writes).toHaveLength(1);
+    } finally { try { await vi.runAllTimersAsync(); await pending; } finally { vi.useRealTimers(); } }
+  });
+
+  it('does not write after request cancellation during preflight', async () => {
+    const request = new AbortController();
+    const r = await drive('', input, name => { if (name === 'paige_automation_triggers:read') request.abort(); }, request.signal);
+    expect(r.result).toMatchObject({ success: false, not_applied: true });
+    expect(r.state.writes).toHaveLength(0);
+  });
+
+  it('does not publish optional readiness after cancellation of an already saved request', async () => {
+    const request = new AbortController();
+    const r = await drive('', input, name => { if (name === 'rpc:resolve_automation_autonomy') request.abort(); }, request.signal);
+    expect(r.result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process });
+    expect(r.recovery.needsReview).toBe(true);
+    expect(r.state.processes).toHaveLength(1); expect(r.state.acts).toHaveLength(1);
+    expect(r.state.writes).toHaveLength(2);
+  });
+
+  it.each(['rpc:current_user_tenant_id', 'paige_automation_triggers:read'])('expires before a write when %s is delayed; late completion cannot resume it', async stage => {
+    const r = await delayedDraft(stage);
+    expect(r.settledAtDeadline).toBe(true);
+    expect(r.result).toMatchObject({ success: false, not_applied: true, execution_started: false });
+    expect(r.state.writes).toHaveLength(0);
+    expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
+  });
+
+  it('retains unknown creation after its reply expires and never starts late steps or cleanup', async () => {
+    const r = await delayedDraft('paige_automations:insert');
+    expect(r.settledAtDeadline).toBe(true);
+    expect(r.result).toMatchObject({ success: false, outcome_unknown: true, execution_started: false });
+    expect(r.recovery.needsReview).toBe(true);
+    expect(r.state.processes).toHaveLength(1);
+    expect(r.state.acts).toHaveLength(0);
+    expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
+    expect(r.state.writes).toHaveLength(1);
+  });
+
+  it('retains the original ID when steps finish after expiry; no replay or cleanup follows', async () => {
+    const r = await delayedDraft('paige_automation_acts:insert');
+    expect(r.settledAtDeadline).toBe(true);
+    expect(r.result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process, execution_started: false });
+    expect(r.state.processes).toHaveLength(1); expect(r.state.acts).toHaveLength(1);
+    expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
+    expect(r.state.writes).toHaveLength(2);
+  });
+
+  it('does not turn a late readback into a verified save', async () => {
+    const r = await delayedDraft('paige_automations:read');
+    expect(r.settledAtDeadline).toBe(true);
+    expect(r.result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process });
+    expect(r.result.verified_readback).not.toBe(true);
+    expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
+    expect(r.state.writes).toHaveLength(2);
+  });
+
+  it('bounds optional readiness without discarding an already verified saved draft', async () => {
+    const r = await delayedDraft('rpc:resolve_automation_autonomy');
+    expect(r.settledAtDeadline).toBe(true);
+    expect(r.result).toMatchObject({ success: true, verified_readback: true, state: 'draft', granted: 'confirm', readiness: 'unverified', what_it_would_do: null, execution_started: false });
+    expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
+    expect(r.state.writes).toHaveLength(2);
+  });
+
+  it('never calls a late compensation acknowledgement proof of non-application', async () => {
+    const r = await delayedDraft('paige_automations:delete', 'step-fail');
+    expect(r.settledAtDeadline).toBe(true);
+    expect(r.result).toMatchObject({ success: false, outcome_unknown: true, automation_id: process });
+    expect(r.result.not_applied).not.toBe(true);
+    expect(r.recovery.needsReview).toBe(true);
+    expect(r.requestsAfterRelease).toEqual(r.requestsAtDeadline);
+    expect(r.state.writes.filter(w => w.op === 'delete')).toHaveLength(1);
+  });
+});
+
 describe('automation draft exact configuration and recovery', () => {
   it('offers the native task action and human review path instead of a bare task tool or model activation', () => {
     let declaration: ts.ObjectLiteralExpression | undefined;

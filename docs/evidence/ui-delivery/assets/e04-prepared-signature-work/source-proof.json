@@ -78,5 +78,23 @@
     "Generic legacy trial/past_due Work cohort gap open",
     "No issuer/dispatch/atomic fields/signature/seal integration or activation",
     "All12/CentralQA/founder acceptance open"
-  ]
+  ],
+  "currentMainComposition": {
+    "at": "2026-10-25T12:12:07.794Z",
+    "head": "c261d700a10208b55829a09d2e2ddad6551760e5",
+    "tree": "2bf7a0f28504c9a37a1eeb157c23b409b38a8752",
+    "incomingMain": "31e25a98c0d653c7c49abefbc96ea78c7893a03b",
+    "originalReviewedHead": "db608d739b8859785e914bbe2543bd7c9d33609d",
+    "frozenOriginalInputsExact": 8,
+    "sourceCases": 108,
+    "httpSteps": 13,
+    "directStrict": 0,
+    "unitLog": "e04-c41-current-unit-1792930146816.log",
+    "strictLog": "e04-c41-current-strict-1792930258305.log",
+    "native": "Original56/replay2/eight sessions/four observed waits retained at identical frozen source; no new local native run claimed",
+    "production": "NOT_MERGED_NOT_APPLIED",
+    "order": "ACTUAL14140004 -> E09 14150009+14150019 -> own14160004 -> 14170004/14180004/14190004",
+    "activation": "NONE",
+    "factory": "UNMOUNTED"
+  }
 }

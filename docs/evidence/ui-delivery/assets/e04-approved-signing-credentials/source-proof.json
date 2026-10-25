@@ -72,5 +72,58 @@
     "mountedCaller": "UNAVAILABLE",
     "customerAcceptance": "UNVERIFIED",
     "founderAcceptance": "NOT_REQUESTED"
+  },
+  "currentReceiving": {
+    "at": "2026-10-25T14:44:24.079Z",
+    "sourceHead": "408ab3183ac0e57ca9b57f7b95088fb8240eafb1",
+    "sourceTree": "828df745ba9f365c3fc04fe5c9daf6329acbf4e9",
+    "updatedOriginalParent": "72ccaa695a54695452eb8b2c2e6b562426cde9c4",
+    "receivingMain": "f41f3a7919f76539e8c71e8b22c0d86235e54c06",
+    "originalRuntimeNativeProofBlobsExact": 9,
+    "combinedGate": {
+      "incomingC43WholeInverse": true,
+      "originalC44WholeInverse": true,
+      "reason": "One genuine existing-gate conflict; both direct strict gates and every original command/test/flag retained"
+    },
+    "inputs": {
+      "scripts/agreements/document-preparations-proof.mjs": "e28d8bbac375ac3651f0c1c52285e2faba13163d0279be2976cee8628af3b970",
+      "scripts/agreements/prepared-confirmation-proof.mjs": "d1c0039c1209edf13420eb4e64cb91d0349fdf97f1800f369f03ff5c8b08302a",
+      "scripts/agreements/prepared-credentials-commercial-fixture.mjs": "1acbb75c2781d6caa083e3c0895fb4e4a434516c7bef4e08becfc940b0196a0a",
+      "scripts/agreements/prepared-signature-credentials-proof.mjs": "3f1cbb7fcd3385a7c9cdc47a047feae6ad36853c30e21ab49c88e4306354c1a9",
+      "scripts/agreements/prepared-signature-work-proof.mjs": "c7021e06a968311edc76912e457afcbe37ab8df29469ba2453164f35e802f689",
+      "scripts/agreements/run-integrity-proof.sh": "c1467fee7ffa2f5fe1f82929da8a8a2173d19f980980e2157b1024a9b267d496",
+      "scripts/agreements/signer-preparation-integrity-proof.mjs": "ead454d40cdbd4fc9fa4e8803067c84e41cc806e4416423e236c7c3ec420e5a0",
+      "supabase/functions/_shared/agreements/prepared-signature-credentials.test.ts": "e5edd6fefe452bfc799d088f00ed93f701b90bb5d0f54252fec46db3cf9840f0",
+      "supabase/functions/_shared/agreements/prepared-signature-credentials.ts": "221c7a4ca08ad91f37699f9b94af20e4db8d7ca06b091945139273a64a21a1e3",
+      "supabase/migrations/20271114180004_e04_approved_signing_credentials.sql": "b73b69c16bbed55db8fb75dc6adb3cf4f5a3826410190c391e2a7a4ea397cac6"
+    },
+    "sourceProof": {
+      "currentCases": 126,
+      "steps": 21,
+      "unit": "e04-c44-current-unit-1792938602757.log",
+      "actualSdkStrict": "e04-c44-current-concrete-strict-1792939197817.log",
+      "native": "Original122/replay2/12sessions/6OBSERVEDwaits at source-identical0601 retained; no new native run claimed"
+    },
+    "release": {
+      "native17": "NOT_APPLIED; original C43 new exactCI required",
+      "native18": "NOT_APPLIED",
+      "freshHostedCi": "PROOF_OWED",
+      "customerAcceptance": "UNVERIFIED"
+    }
+  },
+  "finalReceiving": {
+    "at": "2026-10-25T14:55:06.783Z",
+    "sourceHead": "78329e72a287437ffb5430037214b7c2dd367b60",
+    "sourceTree": "9ca424e29364d1f3c86e18a17e0289a5224fe35b",
+    "main": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2",
+    "allNineOwningSourceBlobsEqualOriginal0601": true,
+    "wholeBothGateInverses": true,
+    "source126": "Current126 PASS/21 steps; direct actual credential/outcome/handler SDK strict PASS",
+    "checks": "Scoped lint0/UI guard0/migration no collision/actual ACL4baseline+12 PASS before clean peer-only receiving merge",
+    "native122": "Source-identical original122/replay2/12sessions/6observed waits retained; no new native run claimed",
+    "native17": "C43 actually merged fd295d; normal pipeline/readback still pending",
+    "native18": "NOT_APPLIED",
+    "newExactCi": "PROOF_OWED",
+    "acceptance": "UNVERIFIED"
   }
 }

@@ -68,9 +68,9 @@ SELECT p.oid AS function_oid, pg_get_functiondef(p.oid) AS definition, e.expecte
   'cost',p.procost,'rows',p.prorows) AS metadata
 FROM (VALUES
  ('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure,'66dcedb5e40dd43a54373c0e0ded1884'),
- ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'34fe39ac8f870cbcc6887f3e2fc3a8e0'),
- ('public.read_comms_email_send_binding(uuid)'::regprocedure,'b1afe7cd33a951738c2f49c6660a5023'),
- ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'b457bccb225454101baba2355ee6baa6'),
+ ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'8da3b64c24552123b973db96a74ab986'),
+ ('public.read_comms_email_send_binding(uuid)'::regprocedure,'6bc0d581e141cfaf0221002d71564eaa'),
+ ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'7b1173ff7d53da5836e33c2d77366c77'),
  ('public.paige_guard_send_approval_requires_governed_send()'::regprocedure,'0018e0f9a1b5c63b836cb4ef72558332'),
  ('public._lead_reply_record_send(uuid,uuid,uuid)'::regprocedure,'f0ecd87330486f154d5ffec709a5b579')
 ) AS e(function_oid,expected_md5) JOIN pg_proc p ON p.oid=e.function_oid;

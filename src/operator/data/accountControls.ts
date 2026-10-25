@@ -15,8 +15,18 @@ export type DeletionPreview = LifecyclePreview;
 export type LifecycleAction = 'archive' | 'restore' | 'delete';
 export type LifecycleReceipt = { tenant_id: string; operation_id: string; state: 'archived'|'restored'|'deleted'; account_count: number; external_cleanup_pending?: boolean };
 export type ResourceMode = 'archive'|'delete';
-export type ResourcePreview = LifecyclePreview & {mode:ResourceMode;resources:{provider:'twilio'|'n8n'|'tts_cache'|'generated_media';tenant_id:string;action:'suspend'|'close'|'disconnect'|'remove_cache'|'remove_media';external_retention?:boolean;object_count?:number}[]};
-export type ResourceReceipt = {tenant_id:string;operation_id:string;mode:ResourceMode;file_only?:boolean;state:'resources_preparing'|'resources_ready'|'resources_unknown'|'resources_failed';account_count:number;results:{provider:'twilio'|'n8n'|'tts_cache'|'generated_media';state:'verified'|'blocked'|'unknown';provider_status:string|null;reason:string|null}[]};
+/**
+ * Storage providers whose retirement is file removal and nothing else (a file-only cleanup), with the
+ * one action the server declares for each. The strings are the retirement migrations' own.
+ */
+export const FILE_PROVIDER_ACTIONS = { tts_cache: 'remove_cache', generated_media: 'remove_media', team_hub_files: 'remove_files' } as const;
+export type FileProvider = keyof typeof FILE_PROVIDER_ACTIONS;
+export const isFileProvider = (provider: unknown): provider is FileProvider =>
+  typeof provider === 'string' && Object.prototype.hasOwnProperty.call(FILE_PROVIDER_ACTIONS, provider);
+type ResourceProvider = 'twilio'|'n8n'|FileProvider;
+const RESOURCE_PROVIDERS: readonly string[] = ['twilio','n8n',...Object.keys(FILE_PROVIDER_ACTIONS)];
+export type ResourcePreview = LifecyclePreview & {mode:ResourceMode;resources:{provider:ResourceProvider;tenant_id:string;action:'suspend'|'close'|'disconnect'|typeof FILE_PROVIDER_ACTIONS[FileProvider];external_retention?:boolean;object_count?:number}[]};
+export type ResourceReceipt = {tenant_id:string;operation_id:string;mode:ResourceMode;file_only?:boolean;state:'resources_preparing'|'resources_ready'|'resources_unknown'|'resources_failed';account_count:number;results:{provider:ResourceProvider;state:'verified'|'blocked'|'unknown';provider_status:string|null;reason:string|null}[]};
 export class AccountRpcError extends Error {
   constructor(message: string, public readonly code?: string,public readonly beforeExecution=false) { super(message); }
 }
@@ -125,17 +135,17 @@ export function parseResourceReceipt(id:string, operation:string|null, row:unkno
     || (r.file_only !== undefined && typeof r.file_only !== 'boolean')
     ||!['archive','delete'].includes(r.mode)||!['resources_preparing','resources_ready','resources_unknown','resources_failed'].includes(r.state)
     ||!Number.isSafeInteger(r.account_count)||r.account_count<1||!Array.isArray(r.results)
-    ||!r.results.every(v=>v&&['twilio','n8n','tts_cache','generated_media'].includes(v.provider)&&['verified','blocked','unknown'].includes(v.state)
+    ||!r.results.every(v=>v&&RESOURCE_PROVIDERS.includes(v.provider)&&['verified','blocked','unknown'].includes(v.state)
       &&(v.reason===null||isString(v.reason))&&(v.provider_status===null||isString(v.provider_status)))
-    ||(r.state==='resources_ready'&&(!r.results.length||r.results.some(v=>v.state!=='verified'||(['tts_cache','generated_media'].includes(v.provider)?r.mode!=='delete'||v.provider_status!=='removed':v.provider==='n8n'?v.provider_status!=='disconnected':!(r.mode==='delete'?['closed']:['suspended','closed']).includes(v.provider_status??''))))))throw new Error('Provider outcome is unknown. Read the operation.');
+    ||(r.state==='resources_ready'&&(!r.results.length||r.results.some(v=>v.state!=='verified'||(isFileProvider(v.provider)?r.mode!=='delete'||v.provider_status!=='removed':v.provider==='n8n'?v.provider_status!=='disconnected':!(r.mode==='delete'?['closed']:['suspended','closed']).includes(v.provider_status??''))))))throw new Error('Provider outcome is unknown. Read the operation.');
   return r;
 }
 export async function previewRetirementResources(id:string,mode:ResourceMode):Promise<ResourcePreview> {
   const row=await rpc('operator_preview_retirement_resources',{_tenant_id:id,_mode:mode});
   const p=parseAccountDeletionPreview(id,row) as ResourcePreview;
-  if(p.mode!==mode||!Array.isArray(p.resources)||!p.resources.every(r=>r&&['twilio','n8n','tts_cache','generated_media'].includes(r.provider)&&p.accounts.some(a=>a.id===r.tenant_id)
-    &&r.action===(r.provider==='tts_cache'?'remove_cache':r.provider==='generated_media'?'remove_media':r.provider==='n8n'?'disconnect':mode==='archive'?'suspend':'close')
-    &&(!['tts_cache','generated_media'].includes(r.provider)||mode==='delete'&&Number.isSafeInteger(r.object_count)&&(r.object_count??0)>0&&(r.object_count??0)<=100))
+  if(p.mode!==mode||!Array.isArray(p.resources)||!p.resources.every(r=>r&&RESOURCE_PROVIDERS.includes(r.provider)&&p.accounts.some(a=>a.id===r.tenant_id)
+    &&r.action===(isFileProvider(r.provider)?FILE_PROVIDER_ACTIONS[r.provider]:r.provider==='n8n'?'disconnect':mode==='archive'?'suspend':'close')
+    &&(!isFileProvider(r.provider)||mode==='delete'&&Number.isSafeInteger(r.object_count)&&(r.object_count??0)>0&&(r.object_count??0)<=100))
     ||new Set(p.resources.map(r=>r.provider+':'+r.tenant_id)).size!==p.resources.length)throw new Error('Provider scope could not be verified. Refresh the review.');
   return p;
 }

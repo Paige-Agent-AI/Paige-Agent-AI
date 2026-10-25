@@ -192,14 +192,24 @@
       "pixelWidth": 375,
       "pixelHeight": 811,
       "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "390-authority-retired.jpg",
+      "bytes": 34828,
+      "sha256": "35d6c349a0a8e59b66beb6172b7070e73ecdd0c5c7dc744617a75858b234bf40",
+      "pixelWidth": 390,
+      "pixelHeight": 843,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
     }
   ],
   "proof": {
     "ui": {
-      "file": "e04-c51-final-focus-ui-1792969153063.log",
-      "tests": 203,
+      "file": "e04-c51-authority-focus-final-1792970068708.log",
+      "tests": 204,
       "files": 4,
-      "result": "PASS"
+      "result": "PASS",
+      "causalAuthority": "e04-c51-current-authority-baseline-1792969802623.log:45PASS/1FAIL; original access retirement not called",
+      "correction": "Canonical late ACCESS_UNVERIFIED routes through existing retirement; private content cleared, truthful recovery heading focused"
     },
     "sdk": {
       "file": "e04-c51-original-sdk-canonical-cwd-1792969043313.log",
@@ -343,6 +353,13 @@
       "antiPatterns": 0,
       "incumbentAdvisories": 4,
       "suppressions": false
+    },
+    "composedSdk": {
+      "file": "e04-c51-composed-original-sdk-1792969667444.log",
+      "tests": 137,
+      "steps": 54,
+      "result": "PASS",
+      "includes": "Both original agreement-send and released C48 sign-agreement HTTP tests; strict frozen/cached/effect flags unchanged"
     }
   },
   "limitations": [
@@ -357,5 +374,100 @@
     "ownBlobsPreserved": 43,
     "shell": "Exact original + own HTTP test + native eligibility flag only",
     "sourceCheckpoint": "84d0ae0cb684b0397e164676d09cbd3d71b26903"
-  }
+  },
+  "finalRuntimeSource": "354707f40759a9896da7e38e51aa974940a4ea27",
+  "finalSourceFiles": [
+    {
+      "file": "docs/binding-ledger/surface-binding-ledger.json",
+      "sha256": "8218fd515486e91741f941177a508186bd76a04f93cd9ed34064a7677fe320fb"
+    },
+    {
+      "file": "docs/integration-registry/README.md",
+      "sha256": "86708c157b738adeba2cfed9e1e1b211f6c585a00b5facf98c92759ac325ab15"
+    },
+    {
+      "file": "docs/integration-registry/integration-capability-registry.json",
+      "sha256": "6b1e369a798eb1f3b29721a9998b94ad68455d34a3b71c0e9baf5f907b711953"
+    },
+    {
+      "file": "scripts/agreements/prepared-confirmation-proof.mjs",
+      "sha256": "24bc745778069925414cc17680e986124670895782a4d579146a10fe71a22482"
+    },
+    {
+      "file": "scripts/agreements/prepared-work-eligibility-proof.mjs",
+      "sha256": "947b6bbeb5674d9f1ec4be4b07eba4352573fab9aa01474fe45a3227703ebcdf"
+    },
+    {
+      "file": "scripts/agreements/run-integrity-proof.sh",
+      "sha256": "9446f980413e4f11d40a776928a1a4fddeda124991659965e786ece07e359d33"
+    },
+    {
+      "file": "src/solo/sales-dialog.test.tsx",
+      "sha256": "e3620dd04a38dddb7ade4ce485fb4205c94ac41de42ef1a8b351da19d517b07f"
+    },
+    {
+      "file": "src/solo/sales-dialog.tsx",
+      "sha256": "f351013d8046362b5296f7f235c0dd79b0ce257ed3ba216444bb405972ffa571"
+    },
+    {
+      "file": "src/solo/sales-ops.tsx",
+      "sha256": "d830b5b1e4b35ee1598617de1e39df28a216f530f05c19e35dc9cdadb7c0bfbf"
+    },
+    {
+      "file": "src/solo/sales/AgreementDocumentFields.tsx",
+      "sha256": "6a79c73e82baf2efb4aeb9c50033a4df143e5fec563f898996b0e69eeefa3118"
+    },
+    {
+      "file": "src/solo/sales/AgreementDocumentPreparation.test.tsx",
+      "sha256": "3502b8e3211df01cf01fbd62510ec7ff9a8a3b4d25fc5975d2bcf54e3544ad60"
+    },
+    {
+      "file": "src/solo/sales/AgreementDocumentPreparation.tsx",
+      "sha256": "c3a24820861f7bda49b308c614ca35ea9e955672a7cc53440b426c01b14caa83"
+    },
+    {
+      "file": "src/solo/sales/AgreementPreparationWorkspace.tsx",
+      "sha256": "1be9daeca8a38209971be1f507252631a95ad594c637bd37957b034b4e498cf6"
+    },
+    {
+      "file": "src/solo/sales/AgreementSignatureExecution.tsx",
+      "sha256": "f75b197fe0604d6af1c9c52d4f6777e877be7df6782af341f7e25a0f3c4e01e9"
+    },
+    {
+      "file": "src/solo/sales/AgreementSignatureRequest.tsx",
+      "sha256": "9325395fb22cd6cdac3c6aaee09408cd7a4a3b34546a1f93161731ed481676a4"
+    },
+    {
+      "file": "src/solo/sales/AgreementSigningReview.tsx",
+      "sha256": "9bfba014546546eafe12754c64b4e4d8b84e2b70bdffb0e6e015f1453589f6a9"
+    },
+    {
+      "file": "src/solo/sales/agreement-document-fields.css",
+      "sha256": "ad97ff05655e0e5a13cf7a70488ee5e171dbfa11126c76c920ce9ad73e192087"
+    },
+    {
+      "file": "src/solo/sales/agreementDocumentApi.test.ts",
+      "sha256": "6e3aa13b5e3779155dc21411862454b77ca16bd905e891a809fbf6558e09b7b6"
+    },
+    {
+      "file": "src/solo/sales/agreementDocumentApi.ts",
+      "sha256": "bcf48cdb27e66c27ed0fad57f2b9604bb123b0cc75904245c0095bbed9c94978"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/prepared-signature-originating.ts",
+      "sha256": "78acb073fbfc32c47a585c4efa56413ef115d05fbc9d67edec8d258ff2941016"
+    },
+    {
+      "file": "supabase/functions/agreement-send/index.ts",
+      "sha256": "e1c86c818d2ebcec873280a95b3107cf81b402d48f640e719967afedcb54efa1"
+    },
+    {
+      "file": "supabase/functions/agreement-send/prepared-command.test.ts",
+      "sha256": "e92cb670939a683dee2b419ae8dcc2461e528ce3282bd672cec661ab13fd3317"
+    },
+    {
+      "file": "supabase/migrations/20271114280004_e04_prepared_work_availability.sql",
+      "sha256": "c3cb0ed87060af2eec12fb7e7bf63610371b756687e896d08bcf22cbe8f44c80"
+    }
+  ]
 }

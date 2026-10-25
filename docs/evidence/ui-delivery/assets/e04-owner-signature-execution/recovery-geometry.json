@@ -31,5 +31,16 @@
     "pageWidth": 375,
     "tag": "INPUT",
     "width": 390
+  },
+  {
+    "at": "2026-10-25T23:14:52.829Z",
+    "case": "withdrawn-current-authority-controlled",
+    "clientWidth": 390,
+    "focus": "Signing document",
+    "height": 844,
+    "journal": "READ original preparation (controlled)\nREAD retained synthetic PDF (controlled)\nREAD exact saved review (controlled)\nREAD sending identities (controlled)\nCHECK complete content (controlled)\nPREPARE original approval (controlled; NO provider)",
+    "pageWidth": 390,
+    "privateRecipientVisible": false,
+    "width": 390
   }
 ]

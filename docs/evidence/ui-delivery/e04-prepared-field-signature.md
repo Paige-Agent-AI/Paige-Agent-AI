@@ -15,12 +15,12 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: synthetic native roles and controlled transpo
 KEYBOARD_FOCUS: NOT_APPLICABLE: no control or focus implementation changes; complete customer-path keyboard proof remains owed.
 ZOOM_REFLOW: NOT_APPLICABLE: no responsive component changes; PDF geometry is covered separately, desktop/narrow recipient proof remains owed.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
-STATE_COVERAGE: PASS: prepared/legacy, required and foreign answers, renderability refusal, current/retired credential, source drift, consent, ordering, replay, missing evidence, unknown acknowledgement, true/false checkbox, native completion rollback and two genuine concurrent completions.
+STATE_COVERAGE: PASS: prepared/legacy, required and foreign answers, renderability refusal, current/retired credential, source drift, consent, ordering, replay, missing evidence refusal, lost-acknowledgement recovery, true/false checkbox, native completion rollback and two genuine concurrent completions.
 TRUTHFUL_STATE_LABELS: PASS: signature recorded, completed copy verified and notification not requested remain distinct. No delivered/viewed/payment/service completion or customer acceptance inference.
 FINISH_REVIEW: PROOF_OWED: final sequential AUTHOR-REVIEW / LOWER ASSURANCE and hosted exact-head CI/current receiving/release readback. No fresh independent or Central QA result is asserted.
 SOLO_UI: NO: no new UI component or Chat/Live admission. The existing recipient backend changes only after normal release; originating prepared send remains unmounted.
 UNVERIFIED: final CI/release, canonical originating factory, actual hosted Storage/provider facts, authorized notices/reissue, explicit completed-copy retry UI, ordinary linked-client/owner/staff return and all O1–O12/founder acceptance.
-INTERNAL_BUILD_IDENTITY: source=36d86b1336da0bc0d95ab97d799056661c1250a6; environment=development; deployment=NOT_DEPLOYED; migrations=PROOF_OWED(20271114230404); edge=PROOF_OWED; evidence=assets/e04-prepared-field-signature/source-proof.json.
+INTERNAL_BUILD_IDENTITY: source=36d86b1336da0bc0d95ab97d799056661c1250a6; environment=development; deployment=NOT_DEPLOYED; migrations=PROOF_OWED(20271114230404); edge=PROOF_OWED(original signing door and every selected transitive importer readback); evidence=assets/e04-prepared-field-signature/source-proof.json.
 RELEASE_CHANNEL: development: originating prepared signing remains unactivated.
 RELEASE_CLASSIFICATION: internal-only: no provider activation or customer release announcement.
 CUSTOMER_RELEASE_IDENTITY: none: the owner evaluates the complete integrated Experience later.

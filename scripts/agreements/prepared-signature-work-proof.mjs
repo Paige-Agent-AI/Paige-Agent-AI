@@ -93,6 +93,11 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
  const retired=startSession(revokeTag+'reader',native(`DO $proof$ BEGIN BEGIN ${register(revoked).replace(/^SELECT\s+/,'PERFORM ')} RAISE EXCEPTION 'Expected committed role refusal';EXCEPTION WHEN SQLSTATE '42501' THEN NULL;END;END $proof$;SELECT 'refused';`));sessions++;
  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${q(revokeTag+'reader')} AND wait_event_type='Lock');`);waits++;
  try{const [,revokedReply]=await Promise.all([revoking,retired]);check(revokedReply==='refused','Committed role revocation wins after an observed actor lock wait');check(sql(`SELECT count(*) FROM paige_durable_work WHERE intent_id='${revoked.operation}';`)==='0','Retired owner creates no Work or effect');}finally{sql(`UPDATE tenant_members SET role='owner' WHERE user_id='${actor}' AND tenant_id='${tenant}';`);}
+ let requestStatus=null;
+ if(process.argv.includes('--prepared-status')){
+  const {provePreparedRequestStatus}=await import('./prepared-request-status-proof.mjs');
+  requestStatus=await provePreparedRequestStatus({sql,read,quote,tenant,actor,setup,register});
+ }
  check(originals()===stamp,'Original metadata remains exact after all controls');
- return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};
+ return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),requestStatus,scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};
 }

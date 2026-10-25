@@ -1,3 +1,43 @@
+## EXP04 delivery and Agreements source releases — October25
+
+Three original releases are now recorded in the sole
+[Master§4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log):
+
+- [#2775](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2775): reviewed8714f12cb2236be72b1f774d1159eec250f61348,
+  AUTHOR-REVIEW / LOWER ASSURANCE5640912481; all13 exact checks/two web statuses
+  SUCCESS. Mainad7e92e0a1501a83b464770483909fb328216a05; native860009 once,
+  seven changed functions/full source and permission metadata exact; six unchanged
+  functions preserved. Webdpl_6eK2RVaWEvaeS4q2b4UkSwttg7h3 READY and immutable/public200
+  exactad7-mvn553ud/null. Owner review of their own exact saved submission is
+  permitted; staff/admin self-review remains refused and a separate client
+  decision remains required. [Actual receipt6391930705](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2775#issuecomment-6391930705).
+- [#2784](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2784): reviewed0a42704fc4eb3972a2f9f3222efb9c53c9ac5c51,
+  LOWER5641050041; all11 exact checks/two web statuses SUCCESS.
+  Mainbda8c220a185eaa3f733302ca57dfc5c9836dcc7; normal Edge40152900122 verifies
+  seven original functions/175 runtime entries, independent configuration and
+  five changed-module comparisons exact. Webdpl_3GZmVcbb4AkXD1UbEpQwQeQadZM7 READY,
+  immutable/public200 exactbda-mvn6n695/null and actual document lazy source
+  verified. Exact sender/message review stays NOT_SENT; no HIGH request,
+  token or provider effect. [Actual receipt6392320164](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2784#issuecomment-6392320164).
+- [#2798](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2798): reviewed64f3e57fc2efc70c302c5d7f85d7eaa8a78855fc,
+  LOWER6393182667; all13 exact checks/two web statuses SUCCESS.
+  Main2a6c8b92841e011019562fb1cdcd0c9f90f6562e; native870004 once/private reader
+  full body and permissions exact. Normal Edge40160089712 verifies three selected
+  closures; independent sign-agreement44 configuration and three changed modules
+  exact. Webdpl_EXh8PrC2txwpMPYCA8hdYhuzKS6b READY; immutable/public200
+  exact2a6c-mvnar88c/null. This is only an existing-token own-field/source read,
+  with no mounted recipient UI or prepared-signing execution.
+  [Actual receipt6393256626](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2798#issuecomment-6393256626).
+
+Original signature/effect holds and all O1–O12 remain intact. Bounded synthetic
+rendered/source/native proof is not ordinary owner/staff/linked-client acceptance.
+Authenticated reload/revocation, CentralQA and the integrated founder evaluation
+remain open. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; no algorithm
+or capability promotion, provider/role activation, customer release or announcement.
+Readback identities are historical release evidence. Current draft repairs and
+recipient UI are excluded. This mechanical closeout changes no product or policy
+and earns no recursive shipped row; all existing Brain history is preserved below.
+
 ## EXP04 original prepared-field seal source — October24 release closeout
 
 Original [#2745](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2745)

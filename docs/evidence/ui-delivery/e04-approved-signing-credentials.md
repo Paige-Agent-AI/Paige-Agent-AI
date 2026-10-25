@@ -51,4 +51,3 @@ RELEASE_RECOVERY: position=forward-fix; reference=original consumed confirmation
 - Native SQL is newly scaffolded forward source only; no production DDL, signing/customer/provider action, applied-history rewrite or include-all workaround occurred.
 
 ALG-01: bounded exact identity/hash reconciliation and duplicate prevention PARTIAL. ALG-12: refusal/interruption/unknown-outcome recovery PARTIAL, with actual operational monitoring unverified. ALG-02 onboarding/completion remains incomplete. ALG-13 useful source-backed follow-up remains UNVERIFIED. Original Algorithm Register and capabilities maturity remain unchanged. This does not close O1–O12 or the complete professional Agreements Experience.
-

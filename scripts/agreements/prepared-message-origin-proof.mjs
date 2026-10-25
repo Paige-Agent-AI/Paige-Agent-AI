@@ -64,4 +64,3 @@ export async function provePreparedMessageOrigin({sql,read,quote,tenant,actor,se
  const admission=await provePreparedMessageAdmission({sql,read,q,tenant,actor,approved,governance,origin,startSession,observe,commercial,context});
  return {checks,admission,migrationReplay:2,migrationSha256:createHash('sha256').update(migration).digest('hex'),proofBodySha256:createHash('sha256').update(provePreparedMessageOrigin.toString()).digest('hex'),scope:'Local private source and original canonical message admission only; provider/customer acceptance and mounted execution remain owed'};
 }
-

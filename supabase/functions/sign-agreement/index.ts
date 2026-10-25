@@ -355,19 +355,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if(error?.code==="23514")return json({ok:false,code:"SIGNATURE_REFUSED",error:"That signature could not be confirmed. Reload the agreement or ask the sender to check its current status."},409);
     if(error)return verifyOriginalSignature(db,tokenHash,signer,agreement,true);
     const receipt=signatureReceipt(data,String(agreement.id),String(signer.id),false);
-    return receipt?await finishRecordedSignature(db,signer,agreement,receipt):verificationPending();
+    return receipt?await finishRecordedSignature(db,signer,agreement,receipt,false,preparedFields!==undefined):verificationPending();
   }catch{
     // A lost acknowledgement is reconciled once with EMPTY action evidence. Never resend the mark.
     return verifyOriginalSignature(db,tokenHash,signer,agreement,true);
   }
 });
 
-async function finishRecordedSignature(db:ServiceClient,signer:Record<string,unknown>,agreement:Record<string,unknown>,receipt:SignatureReceipt,checkOnly=false):Promise<Response>{
+async function finishRecordedSignature(db:ServiceClient,signer:Record<string,unknown>,agreement:Record<string,unknown>,receipt:SignatureReceipt,checkOnly=false,preparedAct=false):Promise<Response>{
   const result={ok:true,state:"recorded",signing_id:receipt.signing_id,signer_id:receipt.signer_id,document_title:String(agreement.title),
     signed_at:receipt.signed_at,replayed:receipt.replayed,audit_complete:receipt.audit_complete,
     consented_event_id:receipt.consented_event_id,signed_event_id:receipt.signed_event_id,
     signed_pdf_path:null,completed:false};
-  if(!receipt.replayed){
+  // Only the original token-derived field read establishes a prepared act.
+  // Its activity is already durable in the original events; external notices
+  // require the governed Communications path, never the legacy sender fallback.
+  if(!receipt.replayed&&!preparedAct){
     try{await tellOwner(db,signer,String(agreement.title),"signed");}
     catch{console.warn("[sign-agreement] activity notification not confirmed");}
   }

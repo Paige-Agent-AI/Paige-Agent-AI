@@ -32,6 +32,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       const request=new Request(input,init),url=new URL(request.url);
       assert.equal(url.origin,'https://synthetic.invalid');
       if(url.pathname==='/rest/v1/rpc/check_public_rate_limit')return json(true);
+      if(url.pathname==='/rest/v1/rpc/_read_agreement_signing_fields'){assert.deepEqual(await request.json(),{_token_hash:await sha256Hex('a'.repeat(64))});return json({kind:'legacy'});}
       if(url.pathname==='/rest/v1/rpc/_read_prepared_agreement_seal'){
         preparedSourceReads++;assert.deepEqual(await request.json(),{_agreement:agreementId});
         return preparedSourceFailure?json({message:'Synthetic source unavailable',code:'SYNTHETIC_READ'},503)
@@ -85,6 +86,19 @@ Deno.test('the signing handler verifies the retained presentation before any ter
     const pdfDigest=await sha256Hex(bytes),textDigest=await sha256Hex(body);
     const base={id:agreementId,tenant_id:tenant,version:1,title:'Synthetic agreement',body_source:'paige',body_markdown:body,status:'sent',expires_at:'2099-10-15T00:00:00Z',content_storage_key:'synthetic/presented.pdf',content_sha256:pdfDigest};
     const invoke=(patch:Record<string,unknown>={})=>handler(new Request('https://synthetic.invalid/sign-agreement',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'a'.repeat(64),typed_name:'Synthetic Signer',consent_read:true,consent_esign:true,...patch})}));
+
+    await t.step('recipient field review is an ordinary token-derived read and cannot create a signature',async()=>{
+      agreement=base;storage=new Response(new Uint8Array(bytes).buffer);terminalWrites=0;notices=0;nativeInputs.length=0;
+      const reply=await invoke({action:'fields',typed_name:undefined,consent_read:undefined,consent_esign:undefined}),result=await reply.json();
+      assert.equal(reply.status,200);assert.equal(result.kind,'legacy');
+      assert.equal(terminalWrites,0);assert.equal(notices,0);assert.equal(nativeInputs.length,0);
+    });
+    await t.step('recipient field read refuses request-authored source or signer identity',async()=>{
+      agreement=base;terminalWrites=0;notices=0;
+      const reply=await invoke({action:'fields',typed_name:undefined,consent_read:undefined,consent_esign:undefined,tenant_id:'foreign',signer_id:signerId});
+      assert.equal(reply.status,400);assert.equal((await reply.json()).code,'SIGNING_FIELD_REQUEST_INVALID');assert.equal(terminalWrites,0);assert.equal(notices,0);
+    });
+
     agreement=base;storage=new Response(new Uint8Array(bytes).buffer);terminalWrites=0;
     assert.equal((await invoke()).status,409,'an eligible token with verified presented bytes reaches the synthetic write boundary');
     assert.equal(terminalWrites,1);

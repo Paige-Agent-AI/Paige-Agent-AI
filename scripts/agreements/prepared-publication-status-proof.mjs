@@ -39,7 +39,8 @@ export async function provePreparedPublicationStatus({sql,read,q,tenant,actor,fi
  check(json(native(status(full))).receipt_id===fullReceipt.receipt_id&&sql(`SELECT status FROM paige_agreements WHERE id='${full.a.id}';`)==='voided','Historical provider acceptance survives void without reviving access or changing current agreement status');
  sql(`UPDATE tenant_members SET role='member' WHERE tenant_id='${tenant}' AND user_id='${actor}';`);
  try{refused(status(full));}finally{sql(`UPDATE tenant_members SET role='owner' WHERE tenant_id='${tenant}' AND user_id='${actor}';`);}
- const concurrent=await acceptedFixture(),tag='e04_publication_status_'+randomUUID().replaceAll('-','');
+ const concurrent=await acceptedFixture(),tag='e04_pub_status_'+randomUUID().replaceAll('-','');
+ check([tag+'publisher',tag+'reader'].every(name=>Buffer.byteLength(name,'utf8')<64),'Exact fenced session names fit PostgreSQL application_name without truncation');
  const holding=startSession(tag+'publisher','BEGIN;SET LOCAL ROLE service_role;'+publish(concurrent)+'SELECT pg_sleep(1.5);COMMIT;');sessions++;
  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${q(tag+'publisher')} AND wait_event='PgSleep');`);
  const waiting=startSession(tag+'reader',native(status(concurrent)));sessions++;

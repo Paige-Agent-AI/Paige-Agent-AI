@@ -125,5 +125,127 @@
     "native18": "NOT_APPLIED",
     "newExactCi": "PROOF_OWED",
     "acceptance": "UNVERIFIED"
+  },
+  "productionReleaseOct25": {
+    "recordedAt": "2026-10-25T16:04:14.244Z",
+    "reviewedHead": "ad450fdfaa279e3dd72fc3738f096a82b215aab1",
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE 6399613137",
+    "exactChecks": "13 SUCCESS +2web SUCCESS +0threads",
+    "merge": "72a2c69c2551917f12b4aa6902af6a526b6cb390",
+    "tree": "cce268c87bd2a4514c5106a486e150a545f8be5c",
+    "native": {
+      "version": "20271114180004",
+      "count": 1,
+      "statements": 20,
+      "run": 40207787714,
+      "job": 121212461816,
+      "evidence": {
+        "functions": [
+          {
+            "anon": false,
+            "args": "",
+            "auth": false,
+            "body": "7e634cc60a69a2eaa11fa5b01722cb4e",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": 0,
+            "identity": "_paige_preparation_legacy_effect_hold()"
+          },
+          {
+            "anon": false,
+            "args": "",
+            "auth": false,
+            "body": "46c36eb38a54080388b25f7ff315d0b9",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": 0,
+            "identity": "_paige_preparation_legacy_token_hold()"
+          },
+          {
+            "anon": false,
+            "args": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text",
+            "auth": false,
+            "body": "78228993b63b007430bb9d7f5213270b",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": 0,
+            "identity": "private.e04_prepared_issuance_record(uuid,uuid,uuid,text)"
+          },
+          {
+            "anon": false,
+            "args": "_tenant uuid, _agreement uuid, _preparation uuid",
+            "auth": false,
+            "body": "38ec7e5cac3bcfb27e75bfce7c2e965c",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": 0,
+            "identity": "private.e04_prepared_issuance_write(uuid,uuid,uuid)"
+          },
+          {
+            "anon": false,
+            "args": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text",
+            "auth": false,
+            "body": "35117989911f1368790d9c34756fdc8b",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": true,
+            "defaults": 0,
+            "identity": "_read_prepared_agreement_credentials(uuid,uuid,uuid,text)"
+          },
+          {
+            "anon": false,
+            "args": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text, _credentials jsonb",
+            "auth": false,
+            "body": "8fd508a93c8817678ca07035a21e225b",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": true,
+            "defaults": 0,
+            "identity": "_issue_prepared_agreement_credentials(uuid,uuid,uuid,text,jsonb)"
+          }
+        ],
+        "migration": {
+          "count": 1,
+          "statements": 20
+        }
+      }
+    },
+    "edge": "Normal Edge40207787726/job121212350551 SUCCESS with zero affected functions; upload/readback/tag correctly skipped. Factory UNMOUNTED.",
+    "web": {
+      "id": "dpl_4qFSUFQm5gYnBvaYjFn6Wreh5EAx",
+      "environment": "production",
+      "state": "READY",
+      "sha": "72a2c69c2551917f12b4aa6902af6a526b6cb390",
+      "canonicalPublicStatus": 200,
+      "build": "72a2c69c2551917f12b4aa6902af6a526b6cb390-mvnzrew2",
+      "customerUpdate": null,
+      "observedAt": "2026-10-25T15:39:17Z"
+    },
+    "scope": "Retained exact document and one-way credential commitments only. Raw credentials remain transient; no sent/viewed/signed/sealed/payment or client-delivery completion is inferred.",
+    "authenticatedAcceptance": "UNVERIFIED",
+    "founderAcceptance": "OPEN for complete O1–O12",
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2834#issuecomment-6399654510"
   }
 }

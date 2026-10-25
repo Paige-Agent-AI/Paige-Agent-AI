@@ -1,0 +1,402 @@
+[
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "light",
+    "open": false,
+    "documentHeight": 770,
+    "documentWidth": 1536,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 1464,
+      "height": 704.4000244140625,
+      "overflowY": "hidden",
+      "scrollWidth": 1464,
+      "width": 1464
+    },
+    "mode": "closed",
+    "pdfReady": "1",
+    "themeTags": [
+      "light",
+      "light",
+      "light"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": false
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "light",
+    "open": true,
+    "documentHeight": 770,
+    "documentWidth": 1536,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 942,
+      "height": 704.4000244140625,
+      "overflowY": "hidden",
+      "scrollWidth": 942,
+      "width": 941.7625122070312
+    },
+    "mode": "open",
+    "pdfReady": "1",
+    "themeTags": [
+      "light",
+      "light",
+      "light"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": true
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "dark",
+    "open": false,
+    "documentHeight": 770,
+    "documentWidth": 1536,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 1464,
+      "height": 704.4000244140625,
+      "overflowY": "hidden",
+      "scrollWidth": 1464,
+      "width": 1464
+    },
+    "mode": "closed",
+    "pdfReady": "1",
+    "themeTags": [
+      "dark",
+      "dark",
+      "dark"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": false
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "dark",
+    "open": true,
+    "documentHeight": 770,
+    "documentWidth": 1536,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 942,
+      "height": 704.4000244140625,
+      "overflowY": "hidden",
+      "scrollWidth": 942,
+      "width": 941.7625122070312
+    },
+    "mode": "open",
+    "pdfReady": "1",
+    "themeTags": [
+      "dark",
+      "dark",
+      "dark"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": true
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "light",
+    "open": false,
+    "documentHeight": 768,
+    "documentWidth": 1366,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 1294,
+      "height": 702,
+      "overflowY": "hidden",
+      "scrollWidth": 1294,
+      "width": 1294.4000244140625
+    },
+    "mode": "closed",
+    "pdfReady": "1",
+    "themeTags": [
+      "light",
+      "light",
+      "light"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": false
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "light",
+    "open": true,
+    "documentHeight": 768,
+    "documentWidth": 1366,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 830,
+      "height": 702,
+      "overflowY": "hidden",
+      "scrollWidth": 830,
+      "width": 829.8250122070312
+    },
+    "mode": "open",
+    "pdfReady": "1",
+    "themeTags": [
+      "light",
+      "light",
+      "light"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": true
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "dark",
+    "open": false,
+    "documentHeight": 768,
+    "documentWidth": 1366,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 1294,
+      "height": 702,
+      "overflowY": "hidden",
+      "scrollWidth": 1294,
+      "width": 1294.4000244140625
+    },
+    "mode": "closed",
+    "pdfReady": "1",
+    "themeTags": [
+      "dark",
+      "dark",
+      "dark"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": false
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "dark",
+    "open": true,
+    "documentHeight": 768,
+    "documentWidth": 1366,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 830,
+      "height": 702,
+      "overflowY": "hidden",
+      "scrollWidth": 830,
+      "width": 829.8250122070312
+    },
+    "mode": "open",
+    "pdfReady": "1",
+    "themeTags": [
+      "dark",
+      "dark",
+      "dark"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": true
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "light",
+    "open": false,
+    "documentHeight": 768,
+    "documentWidth": 1024,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 952,
+      "height": 702,
+      "overflowY": "hidden",
+      "scrollWidth": 952,
+      "width": 952
+    },
+    "mode": "closed",
+    "pdfReady": "1",
+    "themeTags": [
+      "light",
+      "light",
+      "light"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": false
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "light",
+    "open": true,
+    "documentHeight": 768,
+    "documentWidth": 1024,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 952,
+      "height": 702,
+      "overflowY": "hidden",
+      "scrollWidth": 952,
+      "width": 952
+    },
+    "mode": "open",
+    "pdfReady": "1",
+    "themeTags": [
+      "light",
+      "light",
+      "light"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": true
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "dark",
+    "open": false,
+    "documentHeight": 768,
+    "documentWidth": 1024,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 952,
+      "height": 702,
+      "overflowY": "hidden",
+      "scrollWidth": 952,
+      "width": 952
+    },
+    "mode": "closed",
+    "pdfReady": "1",
+    "themeTags": [
+      "dark",
+      "dark",
+      "dark"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": false
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "dark",
+    "open": true,
+    "documentHeight": 768,
+    "documentWidth": 1024,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 952,
+      "height": 702,
+      "overflowY": "hidden",
+      "scrollWidth": 952,
+      "width": 952
+    },
+    "mode": "open",
+    "pdfReady": "1",
+    "themeTags": [
+      "dark",
+      "dark",
+      "dark"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": true
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "light",
+    "open": false,
+    "documentHeight": 1000,
+    "documentWidth": 900,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 828,
+      "height": 934,
+      "overflowY": "hidden",
+      "scrollWidth": 828,
+      "width": 828
+    },
+    "mode": "closed",
+    "pdfReady": "1",
+    "themeTags": [
+      "light",
+      "light",
+      "light"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": false
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "light",
+    "open": true,
+    "documentHeight": 1000,
+    "documentWidth": 900,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 828,
+      "height": 934,
+      "overflowY": "hidden",
+      "scrollWidth": 828,
+      "width": 828
+    },
+    "mode": "open",
+    "pdfReady": "1",
+    "themeTags": [
+      "light",
+      "light",
+      "light"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": true
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "dark",
+    "open": false,
+    "documentHeight": 1000,
+    "documentWidth": 900,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 828,
+      "height": 934,
+      "overflowY": "hidden",
+      "scrollWidth": 828,
+      "width": 828
+    },
+    "mode": "closed",
+    "pdfReady": "1",
+    "themeTags": [
+      "dark",
+      "dark",
+      "dark"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": false
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "dark",
+    "open": true,
+    "documentHeight": 1000,
+    "documentWidth": 900,
+    "main": {
+      "ariaHidden": null,
+      "clientWidth": 828,
+      "height": 934,
+      "overflowY": "hidden",
+      "scrollWidth": 828,
+      "width": 828
+    },
+    "mode": "open",
+    "pdfReady": "1",
+    "themeTags": [
+      "dark",
+      "dark",
+      "dark"
+    ],
+    "sourcePresent": true,
+    "canonicalChat": true
+  }
+]

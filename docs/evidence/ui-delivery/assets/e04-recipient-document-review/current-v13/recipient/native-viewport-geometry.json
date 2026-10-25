@@ -1,0 +1,155 @@
+{
+  "scope": "Native viewport captures only; full-page captures can invalidate a responsive canvas during capture and are excluded from PDF-pixel proof.",
+  "rows": [
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "canvas": {
+        "backingHeight": 809,
+        "backingWidth": 626,
+        "height": 808.9750366210938,
+        "visible": "visible",
+        "width": 625.125
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 1521
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "canvas": {
+        "backingHeight": 809,
+        "backingWidth": 626,
+        "height": 808.9750366210938,
+        "visible": "visible",
+        "width": 625.125
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 1521
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "canvas": {
+        "backingHeight": 809,
+        "backingWidth": 626,
+        "height": 808.9750366210938,
+        "visible": "visible",
+        "width": 625.125
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 1351
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "canvas": {
+        "backingHeight": 809,
+        "backingWidth": 626,
+        "height": 808.9750366210938,
+        "visible": "visible",
+        "width": 625.125
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 1351
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "canvas": {
+        "backingHeight": 719,
+        "backingWidth": 556,
+        "height": 718.3624877929688,
+        "visible": "visible",
+        "width": 555.1000366210938
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 1009
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "canvas": {
+        "backingHeight": 719,
+        "backingWidth": 556,
+        "height": 718.3624877929688,
+        "visible": "visible",
+        "width": 555.1000366210938
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 1009
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "canvas": {
+        "backingHeight": 1046,
+        "backingWidth": 809,
+        "height": 1045.6375732421875,
+        "visible": "visible",
+        "width": 808
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 885
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "canvas": {
+        "backingHeight": 1046,
+        "backingWidth": 809,
+        "height": 1045.6375732421875,
+        "visible": "visible",
+        "width": 808
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 885
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "canvas": {
+        "backingHeight": 406,
+        "backingWidth": 314,
+        "height": 405.8250122070313,
+        "visible": "visible",
+        "width": 313.6000061035156
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 375
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "canvas": {
+        "backingHeight": 406,
+        "backingWidth": 314,
+        "height": 405.8250122070313,
+        "visible": "visible",
+        "width": 313.6000061035156
+      },
+      "focus": "Scrollable document page",
+      "renderedPage": "1",
+      "scrollWidth": 375
+    }
+  ]
+}

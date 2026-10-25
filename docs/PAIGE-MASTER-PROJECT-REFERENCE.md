@@ -1,5 +1,31 @@
 # Paige Agent AI — Master Project Reference
 
+> **October24 EXP02 bounded Finance acceptance:** one new original-reference
+> VERA read matches the released Finance measurement and retains its saved reply,
+> source-step badge and original conversation after reload; [sanitized receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055).
+> Prior refusals remain historical. Candidate2694 rendering/release, other roles,
+> Live, full19/nine and founder acceptance remain open. No action or cash claim.
+
+> **October24 EXP02 Finance post-restart — source candidate:** main03edfad8a
+> is composed with unchanged Finance leaves; original Sales repair2768/d53d99e9
+> is merged and containing production03ed was observed. Fresh69/3 regression and
+> bounded synthetic current-shell/error/member/focus evidence pass; original zoom
+> assets are hash-bound. Positive ordinary Finance reference reacceptance remains
+> owed after the earlier FAIL. Candidate CI/review/release, all19/nine and founder
+> acceptance remain separate. [Current Finance record](brain/finance-department.md#october24--post-restart-current-main-confirmation).
+
+> **October24 EXP02 Finance — development and positive-review gap:** parent2694,
+> child2696 and Systems2690 have green applicable CI at their recorded exact
+> heads, not a merged/deployed candidate. Native synthetic viewport, focus and
+> browser200percent proof is bounded separately from released all-seven Finance
+> reads/navigation. The latest original-reference VERA read returned a saved
+> truthful refusal: positive review is FAIL/proof owed. EXP04 owns the pending
+> original Sales lifecycle repair2768; EXP02 owns reacceptance. No reference
+> revocation bypass, provider/Chat action activation or full19/nine acceptance.
+> [Current Finance evidence](evidence/ui-delivery/e2-finance-overview-hierarchy.md#october24--current-finance-verification-and-release-boundary).
+> Previous dated pending/accepted-negative statements retain their historical
+> scope. No Shipped Delivery Log row is added before this candidate merges.
+
 > **October19 EXP02 Finance — local, not released:** one existing business-review
 > composition extends to caller-authorized Finance source facts, using the canonical
 > company/binding/account-source contracts. Exact decimal major amounts and source
@@ -825,6 +851,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 > **Established login workspace choice + stale-checkout recovery — shipped (2026-09-13).** PR #1219 (`4bc9cf771e992614701d6f4e1b94f1d5c3d513d6`) restores the existing server-derived account/workspace card after every fresh login for any identity with an active direct membership, including one-workspace legacy and promotional Solo identities. Multiple memberships remain separately selectable; Platform remains an explicit authorized peer context. Stale Solo intent and `/welcome?checkout=success|recovery` can no longer override established access, and one-workspace users are not silently auto-entered. The current production descendant `c287a4f86ad42f35903a7dc297012514e1480c8a` contains the repair unchanged; Vercel is `READY`, `solo-beta-enrollment-status` is deployed, and current `edge-live` `d33f67180f2a55691e55dec39fd807610d71fc63` is a descendant of the hotfix with no scoped Edge drift. Authenticated legacy/promotional sign-in, card selection, persisted switching, refresh, and repeat-login proof remain `PROOF OWED`; no Stripe, billing, entitlement, tenant, membership, migration, or unsupported-enrollment behavior changed. Authority: [login workspace-choice recovery evidence](evidence/ui-delivery/login-workspace-choice-recovery.md).
 
 ### 4.0 Shipped Delivery Log
+
+**2026-10-24 UTC - EXP05 original weekly Chat claim, commit and decline consumers; source releases only.**
+
+| Increment | Exact release and production proof | Completion boundary |
+| --- | --- | --- |
+| [#2766](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2766), preserve the original weekly approval claim | Reviewed `add90a50809b0f5e7f50f113a75bb9f40e33aa2a`, sequential AUTHOR-REVIEW / LOWER ASSURANCE6386482207/6386634598; all11 exact-head checks including genuine Preview and both web statuses SUCCESS. Main `a0530ddfbccd8b3585e8f6f34e76fbedabf0395b`, parents77b88428+add90/tree`c850fe766c83e05ca68c196c3f03a525619993e0` equals the reviewed tree; three owning files exact. Production `dpl_AT7LUhy94ovicxKPhDRWgW1psKbM` READY/exact main; both public HTTP200/builda0530ddfbccd8b3585e8f6f34e76fbedabf0395b-mvmnj8o4/customerUpdate:null observed17:09:07-08UTC. Normal Edge40114657649/job120933343982 SUCCESS, but returned step detail was absent: no new Edge version/archive/tag inferred. No own SQL. [Release receipt6387134613](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2766#issuecomment-6387134613), [owning evidence](evidence/exp05-weekly-chat-native-claim.md). | One caller-JWT native claim-response adapter remains unadmitted; only unchanged original stored arguments may reach the existing Kit. Saved/changed/declined/unknown are observations, never generic-CAS fallback or new permission. Actual33 owning/297 combined local cases, scoped ES2020/lint and124 unchanged live dependency pins are source proof. No new callable Chat/Live capability, business record, recurrence, ZION approval reuse, provider/role activation, catalogue/algorithm promotion or customer announcement. Original claim/Kit/commit/record/Rail/reload and full EXP05 acceptance remain PROOF OWED. |
+| [#2772](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2772), save and recover the exact original weekly draft | Reviewed `02fac985cd81648799295b8ecc234c8c9070f987`, sequential AUTHOR-REVIEW / LOWER ASSURANCE6389681296/6389921701; all10 applicable exact-head checks/two web statuses SUCCESS, schema-free Preview actually SKIPPED/no branch. Main `75f344d9bb35ba62e12610ceaf4af13c25b634bd`, parents286404fd+02fac/tree`dcfc72eaa9dbc35842dd3204135f58e8624a0e18`; four reviewed owning blobs unchanged, incoming E04/E09 source retained. Production `dpl_923qtf5z1oCtGdhSSeBF6bEUiDTy` READY/exact75f; both public final HTTP200/75f344d9bb35ba62e12610ceaf4af13c25b634bd-mvmxhosd/null21:48UTC. Normal Edge40135640623/job120996458036 SUCCESS with no affected live importer and deploy/readback/marker legitimately SKIPPED; no own SQL/new function version. [Receipt6389955250](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2772#issuecomment-6389955250). | Fixed native commit/readback consumer only: fresh same-turn native claim, existing Kit decision over the unchanged five stored arguments, exact original actor/tenant/thread/runtime and remaining budget. One write and at most one original read; no replay or generic fallback.117 local cases/four suites PASS; initial TS2307/TS2493 failure and cancelled red run retained/repaired. Automatic review quota failure is UNAVAILABLE, never a passing non-author review. Chat binding remains UNAVAILABLE/unadmitted; original native definition/Rail, authenticated reload/cohort/negative proof, weekly execution, ZION, separate Live and full ten outcomes/E5-CV1-9/founder acceptance remain owed. No activation or customer version/announcement. |
+| [#2777](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2777), preserve the original weekly refusal and uncertain-result recovery | Reviewed `9ce7e77f8c4e7a8beca995df8537e3f71a05f0d5`, final sequential AUTHOR-REVIEW / LOWER ASSURANCE6390305952; all11 required exact-head checks/genuine Preview and two web statuses SUCCESS. Main `52adfd1f42b51772adfe04be98a01066a51487eb`, parents216768d8+9ce7/tree`78769e316bfe4f83a861efa9ada0d7db90d94eac`; exactly three reviewed blobs, all20 incoming E01/E09/E04 paths and both independent CI additions retained. Production `dpl_ApUQNXav2eZ4JRXRMcLgB2qnaYCo` READY/exact52adfd; both public final HTTP200/52adfd1f42b51772adfe04be98a01066a51487eb-mvmyxese/null22:28UTC. Normal Edge40138528801/job121005123705 SUCCESS/86 verification tests OK; zero affected/retired entries and provider/deploy/readback/tag steps legitimately SKIPPED. Fresh original19 native/canonical full metadata exact; no own SQL/new Edge version. [Receipt6390332208](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2777#issuecomment-6390332208). | Original native decline/audit and one original read share the remaining deadline. A saved-race result is observed, never called declined; pending/expired/foreign/contradictory/stopped/unknown results cannot mint another decision or repeat a write.29 owning cases are included in146/five-suite local proof, not added twice; full required hosted tests pass. Automatic review remains quota-unavailable, not non-author assurance. Helper remains unadmitted: native decline before generic cancellation and native claim before generic CAS still require the original coordinated Chat bridge. No Trust renewal, recurrence/provider/Live activation, expired consent replay, new approval/execution system, catalogue/algorithm promotion, authenticated customer acceptance or customer announcement. All ten outcomes/E5-CV1-9 and universal SOLO record/Rail/reload/tenant proof remain open. |
 
 **2026-10-24 UTC — EXP04 original prepared-request source and Sales initialization repair; exact preceding release identities.**
 

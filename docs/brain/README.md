@@ -1,3 +1,44 @@
+## EXP02 Finance — October24 released read/persistence PASS
+
+New original-reference VERA read matches Finance and survives reload after the
+originating2768 repair; ANT52/47e3e3ad-2a66-4af3-9ca5-e2578b184b59. This bounded
+released proof preserves prior refusals and historical denominators. Candidate2694
+UI release, detailed activity/roles/Live/full19/nine/founder acceptance stay open.
+[Current Finance record](finance-department.md#october24-evening--original-reference-finance-read-and-reload-verified).
+
+## EXP02 Finance — October24 post-restart
+
+Local execution recovered; actual main03edfad8a preserves the original Sales
+initialization repair2768/d53d99e9. Fresh69/3 original Finance/shared metric tests
+and bounded current-source viewport/error/restricted/390px focus proof pass.
+Six original zoom frames are now hash-bound. [Current Finance record](finance-department.md#october24--post-restart-current-main-confirmation).
+Candidate release/current CI and positive ordinary reference review remain owed;
+all19/nine and one final founder evaluation are unchanged. Earlier dated states
+below are historical.
+
+## EXP02 Finance — October24 current checkpoint
+
+Parent2694, child2696 and Systems2690 applicable exact-head CI is green at the
+dated heads recorded in the [Finance brain](finance-department.md#october24--current-finance-verification-and-release-boundary).
+Native synthetic zoom/focus proof and all-seven released read/navigation evidence
+are separate. The latest original-reference VERA review is FAIL with a persisted
+truthful refusal; EXP04's original Sales lifecycle repair2768 is open.
+Candidate release, positive review/reload and complete19/nine acceptance remain
+owed. Historical superseded pending statements below retain their dated scope.
+No runtime, provider, catalogue or algorithm activation is inferred.
+
+## EXP02 Finance Overview refinement — October23, development only
+
+Owner requests Overview landing and clearer visuals across all seven Finance
+subpages. First bounded original-consumer refinement and current source/QA limits
+are in the existing [Finance brain](finance-department.md#october23--overview-visual-refinement-development-only)
+and [evidence](../evidence/ui-delivery/e2-finance-overview-hierarchy.md).
+Corrected released context handoff/refusal/reload is verified separately;
+EXP04 original reference-continuity repair2728 is now merged; positive
+same-reference customer proof remains owed. Earlier revocation/refusal evidence
+remains historical and is not new post-repair acceptance. Original authority, domain ownership and
+all19/nine remain unchanged. No candidate release or founder acceptance claimed.
+
 ## EXP04 exact preceding source releases — October24
 
 Original [#2741](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2741) reviewedb3c2dc01 (sequential LOWER6386092377/6386513022; all11 checks/two statuses SUCCESS) merged1b4a4a73f88c05a97b7a91ab3b6f09bc3d349ed1/tree6a632f0f, normal webDx6iqVuQKGXJD1Z4thY7qkAgeeXj and original immutable/public1b-mvmlokow/null readback retained. Original prepared-request input remains source-only/unused, with verified sender/exact message/HIGH request/atomic fields missing and original holds intact; no prepared-signing activation.
@@ -61,6 +102,30 @@ Exact5XRe READY and both public77b-mvmlvuip/null observed16:23:55–56UTC. Norma
 Edge40111131429 succeeded with zero affected/retired entries and no deployment.
 The original browser parser/transport is preserved; the new bound native recovery
 reader and model projection remain unadmitted. No new SQL belongs to this reader.
+
+Original claim #2766 (reviewedadd90, all11/twoSUCCESS, permitted sequential
+AUTHOR-REVIEW / LOWER ASSURANCE) merged `a0530ddfbccd8b3585e8f6f34e76fbedabf0395b`;
+exact AT7L READY and both publica053-mvmnj8o4/null were observed17:09UTC.
+Original commit/readback #2772 (reviewed02fac, all10/twoSUCCESS; Preview actually
+SKIPPED) merged `75f344d9bb35ba62e12610ceaf4af13c25b634bd`; exact923q READY
+and both public75f-mvmxhosd/null were observed21:48UTC. Original native decline
+#2777 (reviewed9ce, all11/genuine Preview/twoSUCCESS, LOWER6390305952) merged
+`52adfd1f42b51772adfe04be98a01066a51487eb`; exactApUQ READY and both
+public52adfd-mvmyxese/null were observed22:28UTC. All reviewed owning blobs and
+incoming E01/E09/E04 implementations are retained. Normal Edge jobs succeeded;
+2772/2777 selected no live importer and correctly skipped deploy/readback/tag,
+while2766 returned no step detail and supports no new Edge-version claim.
+No own SQL belongs to these consumers; original19 native/canonical metadata remain
+exact. Automatic review usage failure is unavailable assurance, never a source
+finding or passing non-author review. Exact identities and source-only boundaries
+are in the sole Master4.0 rows and original receipts
+[6387134613](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2766#issuecomment-6387134613),
+[6389955250](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2772#issuecomment-6389955250),
+[6390332208](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2777#issuecomment-6390332208).
+The fixed native consumers remain unadmitted. Ordinary Chat still needs its
+original native claim before generic CAS, exact stored-argument Kit/commit,
+native decline before generic cancellation and original-only recovery integration.
+No capability/algorithm/customer status or complete Experience acceptance changes.
 
 See the sole [Master4.0 shipped rows](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log),
 [actual production readback](../evidence/exp05-weekly-chat-source-production-readback.json),

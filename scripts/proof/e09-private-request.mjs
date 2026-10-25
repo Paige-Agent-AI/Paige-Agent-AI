@@ -702,11 +702,11 @@ function focusedPublicationProof({sql,check,assert,read,prepare,publish,snapshot
    const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);assert.throws(()=>sql(read('supabase/migrations/20271114230009_e09_approved_private_request_publication.sql')),/source changed/);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
   });
  }
- const sourceProof=publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit});
+ const sourceProof=publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit,read});
  return {baseline:focusBaseline,migration:file,originalSource:'81e21f92abe3d552f89d98c8d7b3b9d3',sourceProof,outerOwnerChat:'NOT_MOUNTED_OR_PROVEN',productionOperation:false};
 }
 
-function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit}){
+function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit,read}){
  const f=prepare(),sig='public.read_client_portal_request_share_source(uuid,uuid,uuid,uuid)';
  const statement=(o={})=>{const x={expected:f.other,tenant:f.tenant,contact:f.contact,work:f.request.work_id,...o};return `SELECT public.read_client_portal_request_share_source(${lit(x.expected)},${lit(x.tenant)},${lit(x.contact)},${lit(x.work)})`;};
  const invoke=(o={})=>{const actor=o.actor===undefined?f.other:o.actor,role=o.role??'authenticated';const out=sql(`BEGIN;SELECT set_config('test.actor',${lit(actor??'')},true);SET LOCAL ROLE ${role};${statement(o)};COMMIT;`);return JSON.parse(out.split('\n').find(x=>x.startsWith('{')));};
@@ -738,6 +738,14 @@ function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit})
   const m=JSON.parse(sql(`SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig) FROM pg_proc WHERE oid='${sig}'::regprocedure`));
   assert.equal(m.owner,'postgres');assert.equal(m.definer,true);assert.deepEqual(m.config,['search_path=""']);
   assert.equal(sql(`SELECT has_function_privilege('authenticated','${sig}','EXECUTE')`),'t');for(const role of ['anon','service_role'])assert.equal(sql(`SELECT has_function_privilege('${role}','${sig}','EXECUTE')`),'f');
+ });
+ check('Sharing-source replay refuses an unknown forward body without overwriting it',()=>{
+  const original=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
+  const changed=original.replace('DECLARE intent_id uuid;','DECLARE /* unreviewed forward control */ intent_id uuid;');assert.notEqual(changed,original);
+  try{sql(changed);const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);
+   assert.throws(()=>sql(read('supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql')),/source changed/);
+   assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
+  }finally{sql(original);}
  });
  const shared=publish(f);
  check('Already-shared source returns the same canonical identity and no new proposal or content',()=>{

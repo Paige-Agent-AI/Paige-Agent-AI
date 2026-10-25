@@ -11,15 +11,21 @@ import {
   parseConversationList,
   parseMessagePage,
   parsePosted,
+  parseTaskReads,
+  parseTaskRequested,
   parseThreadPage,
+  parseWorkList,
   refreshLeavesGap,
   refusalMessage,
+  TASK_COMMAND_TEXT,
   type TeamHubChannelSummary,
   type TeamHubMessage,
   type TeamHubMessagePage,
   type TeamHubOverview,
   type TeamHubRefusal,
   type TeamHubResult,
+  type TeamHubTaskRead,
+  type TeamHubWorkItem,
 } from "./team-hub-contract";
 
 /**
@@ -41,6 +47,12 @@ import {
  * A refresh reads the newest page only. If that page has more behind it and is entirely newer
  * than what is held, the held list is replaced and "Load earlier messages" offered, so a long
  * absence never leaves a silent hole in the stream.
+ *
+ * Increment 2 (docs/delivery/exp08-team-hub-increment2-work-contract.md): `requestTask` is the one
+ * new write, through `team_hub_request_task`, with the same pending and Retry semantics as a post
+ * (one client request id per attempt, reused by Retry, so Operations never gets a second task).
+ * Status is never stored here: `readTaskStatuses` reads the original `plan_items` rows by id through
+ * the caller's own RLS, and an id the read doesn't return is `unreadable` — never guessed.
  */
 
 export const REFRESH_INTERVAL_MS = 15_000;
@@ -60,6 +72,12 @@ export interface StreamState {
   olderFailed: boolean;
   /** The message the "new" divider sits above, fixed when the conversation was opened. */
   dividerBefore: string | null;
+  /**
+   * The newest message a listed page returned. A refresh is joined to this, not to the newest
+   * held message: a message just sent is appended locally and says nothing about what was read
+   * between the last page and it.
+   */
+  listedNewest?: TeamHubMessage | null;
 }
 
 export interface ThreadState {
@@ -72,9 +90,22 @@ export interface ThreadState {
   hasMore: boolean;
   loadingOlder: boolean;
   olderFailed: boolean;
+  /** As on StreamState: the newest reply a listed page returned, never a locally appended one. */
+  listedNewest?: TeamHubMessage | null;
+}
+
+/** What a task request asks Operations for; kept with the attempt so Retry sends the same thing. */
+export interface TaskDraft {
+  title: string;
+  assigneeId: string;
+  /** An instant (end of the chosen day), or null for no due date. */
+  dueAt: string | null;
 }
 
 export interface PendingMessage {
+  /** Increment 2: a task request is pending exactly like a message, and recovers the same way. */
+  kind: "message" | "task";
+  task?: TaskDraft;
   localId: string;
   /** Generated once per message attempt and reused by Retry, so the server never stores it twice. */
   clientRequestId: string;
@@ -86,9 +117,14 @@ export interface PendingMessage {
 }
 
 export type SendOutcome =
-  | { kind: "sent"; duplicate: boolean }
-  | { kind: "refused"; message: string; body: string }
+  | { kind: "sent"; duplicate: boolean; messageId: string }
+  | { kind: "refused"; message: string; body: string; task?: TaskDraft }
   | { kind: "failed" };
+
+export interface WorkState {
+  status: "idle" | "loading" | "ready" | "unavailable";
+  items: TeamHubWorkItem[];
+}
 
 export type ActionOutcome<T = true> = { ok: true; value: T; message?: undefined } | { ok: false; message: string; value?: undefined };
 
@@ -129,13 +165,17 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const [thread, setThread] = useState<ThreadState | null>(null);
   const [pending, setPending] = useState<PendingMessage[]>([]);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine !== false);
+  const [work, setWork] = useState<WorkState>({ status: "idle", items: [] });
+  const [taskReads, setTaskReads] = useState<Record<string, TeamHubTaskRead>>({});
 
   // Latest values for async continuations; a response for a conversation that is no
   // longer open is dropped instead of painted over the one that is.
-  const live = useRef({ activeId, stream, thread, overview, status });
-  live.current = { activeId, stream, thread, overview, status };
+  const live = useRef({ activeId, stream, thread, overview, status, work, taskReads });
+  live.current = { activeId, stream, thread, overview, status, work, taskReads };
   const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  // Set on every setup, not only at creation: React StrictMode runs setup, cleanup, setup in
+  // development, and a ref left false after that first cleanup would drop every response.
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const tenantRefresh = useRef(options.onTenantRefresh);
   tenantRefresh.current = options.onTenantRefresh;
   const onIncoming = useRef(options.onIncoming);
@@ -161,7 +201,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   /** Refusals that end the whole hub are handled here, for every call alike. */
   const settle = useCallback(<T,>(result: TeamHubResult<T>): TeamHubResult<T> => {
     if (!alive.current || result.kind !== "refused") return result;
-    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); };
+    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); };
     if (result.code === "unavailable" && !unavailableRetried.current) {
       // The account type may have been read from a stale workspace context. Re-read it once and ask
       // again before settling on "not available for this account type".
@@ -201,7 +241,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (result.kind === "ok") {
       const held = mode === "open" || live.current.stream?.channelId !== channelId ? [] : live.current.stream.messages;
       const heldIds = new Set(held.map((message) => message.id));
-      report.gap = mode === "refresh" && refreshLeavesGap(held, top, result.value.has_more);
+      const anchor = mode === "open" ? null : live.current.stream?.listedNewest ?? null;
+      report.gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, result.value.has_more);
       report.incoming = mode === "refresh" ? top.filter((message) => !heldIds.has(message.id) && message.author_user_id !== meId).length : 0;
       report.newestId = newestOf(report.gap ? top : [...held, ...top])?.id ?? null;
     }
@@ -212,10 +253,12 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         const held = mode === "open" ? [] : base?.messages ?? [];
         // A refresh that can't be joined to what is held replaces it (keeping anything newer than
         // the page, such as a message just sent) and offers the earlier messages instead.
-        const gap = mode === "refresh" && refreshLeavesGap(held, top, page.has_more);
+        const anchor = mode === "open" ? null : base?.listedNewest ?? null;
+        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, page.has_more);
         const pageNewest = newestOf(top);
         const kept = gap && pageNewest ? held.filter((message) => compareMessages(message, pageNewest) > 0) : held;
         const messages = mergeMessages(kept, top);
+        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? null : newestOf([...(anchor ? [anchor] : []), ...top]) ?? null;
         return {
           channelId,
           status: "ready",
@@ -227,6 +270,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
           loadingOlder: false,
           olderFailed: false,
           dividerBefore: mode === "open" ? newDividerBefore(messages, unreadAtOpen, meId) : base?.dividerBefore ?? null,
+          listedNewest,
         };
       }
       if (result.kind === "refused" && result.code === "not_found") {
@@ -271,13 +315,15 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         const page = result.value;
         const held = mode === "open" ? [] : current.replies;
         // Same rule as the stream: a newest page that can't be joined to the held replies replaces them.
-        const gap = mode === "refresh" && refreshLeavesGap(held, page.replies, page.has_more);
+        const anchor = mode === "open" ? null : current.listedNewest ?? null;
+        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], page.replies, page.has_more);
         const pageNewest = newestOf(page.replies);
         const kept = gap && pageNewest ? held.filter((reply) => compareMessages(reply, pageNewest) > 0) : held;
         // Newest-first from the server; mergeMessages keeps them oldest → newest for reading.
         const replies = mergeMessages(kept, page.replies);
+        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? null : newestOf([...(anchor ? [anchor] : []), ...page.replies]) ?? null;
         return {
-          channelId, rootId, status: "ready", root: page.root, replies,
+          channelId, rootId, status: "ready", root: page.root, replies, listedNewest,
           // A refresh that joins the held replies decides nothing about what lies above them.
           hasMore: gap ? true : mode === "refresh" ? current.hasMore : page.has_more,
           loadingOlder: false, olderFailed: false,
@@ -289,6 +335,54 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     });
     return incoming;
   }, [call, settle]);
+
+  /**
+   * Read each task's original Operations record by id, through the caller's own RLS (as Operations'
+   * `createOperationsWork` reads back). A held answer stays on screen while it is read again; an id
+   * the read doesn't return is `unreadable`, and a failed read says so instead of keeping a guess.
+   */
+  const readTaskStatuses = useCallback(async (ids: string[]) => {
+    const wanted = [...new Set(ids.filter((id) => typeof id === "string" && id))];
+    if (!wanted.length) return;
+    setTaskReads((current) => {
+      const next = { ...current };
+      for (const id of wanted) if (!next[id]) next[id] = { state: "loading" };
+      return next;
+    });
+    for (let start = 0; start < wanted.length; start += 100) {
+      const chunk = wanted.slice(start, start + 100);
+      let answer: RpcAnswer;
+      try {
+        const { data, error } = await supabase.from("plan_items")
+          .select("id,title,status,assigned_to_user_id,due_at,updated_at")
+          .eq("tenant_id", tenantId)
+          .in("id", chunk);
+        answer = { data, error };
+      } catch (error) {
+        answer = { data: null, error };
+      }
+      if (!alive.current) return;
+      const reads = parseTaskReads(answer.data, answer.error, chunk, new Date().toISOString());
+      setTaskReads((current) => ({ ...current, ...reads }));
+    }
+  }, [tenantId]);
+
+  /** The links behind the Team work panel; their statuses are read from Operations right after. */
+  const listWork = useCallback(async (mode: "open" | "refresh" = "open") => {
+    if (mode === "open") setWork((current) => ({ status: current.status === "ready" ? "ready" : "loading", items: current.items }));
+    const answer = await call("team_hub_list_work", { p_limit: 50 });
+    const result = settle(parseWorkList(answer.data, answer.error));
+    if (!alive.current) return;
+    if (result.kind === "ok") {
+      setWork({ status: "ready", items: result.value });
+      void readTaskStatuses(result.value.map((item) => item.work_id));
+    } else if (!(result.kind === "refused" && ENDS_HUB.has(result.code))) {
+      // A failed background re-list keeps the last good list; a first load says it couldn't.
+      setWork((current) => mode === "refresh" && current.status === "ready" ? current : { status: "unavailable", items: [] });
+    }
+  }, [call, settle, readTaskStatuses]);
+
+  const closeWork = useCallback(() => setWork({ status: "idle", items: [] }), []);
 
   const runRefresh = useCallback(async () => {
     const answer = await call("team_hub_list_conversations", {});
@@ -313,6 +407,11 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         if (onScreen) { newMessages = load.incoming; orMore = load.gap; }
       }
       const newReplies = openThread && openThread.status === "ready" ? await loadThread(openThread.channelId, openThread.rootId, "refresh") : 0;
+      // Statuses are read again from Operations on every refresh, so a card never goes stale silently.
+      if (live.current.work.status !== "idle") await listWork("refresh");
+      const shown = [...(live.current.stream?.messages ?? []), ...(live.current.thread?.replies ?? [])]
+        .map((message) => message.work_ref?.id).filter((id): id is string => Boolean(id));
+      void readTaskStatuses(shown);
       // The hub's one live region says how many arrived; the stream itself is not a live region.
       const text = incomingAnnouncement(newMessages, tabVisible ? newReplies : 0, orMore);
       if (text && alive.current) onIncoming.current?.(text);
@@ -321,7 +420,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       if (live.current.overview) setRefreshFailed(true);
       else setStatus("unavailable");
     }
-  }, [call, settle, tenantId, loadStream, loadThread, markRead]);
+  }, [call, settle, tenantId, loadStream, loadThread, markRead, listWork, readTaskStatuses]);
 
   /**
    * A background refresh (focus, reconnect, interval) is skipped while one is running.
@@ -419,14 +518,27 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
 
   const deliver = useCallback(async (attempt: PendingMessage): Promise<SendOutcome> => {
     setPending((current) => current.map((item) => item.localId === attempt.localId ? { ...item, status: "sending" } : item));
-    const answer = await call("team_hub_post_message", {
-      p_channel_id: attempt.channelId,
-      p_body: attempt.body,
-      p_client_request_id: attempt.clientRequestId,
-      p_parent_message_id: attempt.parentId,
-      p_mention_ids: attempt.mentionIds,
-    });
-    const result = settle(parsePosted(answer.data, answer.error));
+    const isTask = attempt.kind === "task" && attempt.task;
+    const answer = isTask
+      ? await call("team_hub_request_task", {
+        p_channel_id: attempt.channelId,
+        p_title: attempt.task!.title,
+        p_assignee: attempt.task!.assigneeId,
+        p_due_at: attempt.task!.dueAt,
+        p_client_request_id: attempt.clientRequestId,
+        p_parent_message_id: attempt.parentId,
+      })
+      : await call("team_hub_post_message", {
+        p_channel_id: attempt.channelId,
+        p_body: attempt.body,
+        p_client_request_id: attempt.clientRequestId,
+        p_parent_message_id: attempt.parentId,
+        p_mention_ids: attempt.mentionIds,
+      });
+    const parsed = isTask ? parseTaskRequested(answer.data, answer.error) : parsePosted(answer.data, answer.error);
+    // For a task, the server's `unavailable` also means Operations refused (PLAN_FORBIDDEN, contract
+    // §4), so it stays a task refusal here; the next list read still settles a workspace that isn't SOLO.
+    const result = isTask && parsed.kind === "refused" && parsed.code === "unavailable" ? parsed : settle(parsed);
     if (!alive.current) return { kind: "failed" };
     if (result.kind === "ok") {
       const message = result.value.message;
@@ -452,7 +564,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
           ? { ...conversation, joined: true, last_message_at: message.created_at }
           : conversation),
       });
-      return { kind: "sent", duplicate: result.value.duplicate };
+      if (message.work_ref) void readTaskStatuses([message.work_ref.id]);
+      return { kind: "sent", duplicate: result.value.duplicate, messageId: message.id };
     }
     if (result.kind === "refused") {
       setPending((current) => current.filter((item) => item.localId !== attempt.localId));
@@ -460,14 +573,15 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         if (attempt.parentId) setThread((current) => current && current.rootId === attempt.parentId ? { ...current, status: "not_found" } : current);
         else setStream((current) => current && current.channelId === attempt.channelId ? { ...current, status: "not_found", messages: [], channel: null } : current);
       }
-      return { kind: "refused", message: refusalMessage(result.code, "send"), body: attempt.body };
+      return { kind: "refused", message: refusalMessage(result.code, isTask ? "task" : "send"), body: attempt.body, task: attempt.task };
     }
     setPending((current) => current.map((item) => item.localId === attempt.localId ? { ...item, status: "failed" } : item));
     return { kind: "failed" };
-  }, [call, settle]);
+  }, [call, settle, readTaskStatuses]);
 
   const send = useCallback((input: { channelId: string; parentId: string | null; body: string; mentionIds: string[] }) => {
     const attempt: PendingMessage = {
+      kind: "message",
       localId: newRequestId(),
       clientRequestId: newRequestId(),
       channelId: input.channelId,
@@ -479,6 +593,35 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     setPending((current) => [...current, attempt]);
     return deliver(attempt);
   }, [deliver]);
+
+  /**
+   * Create one task in Operations from this conversation. Like a post, the attempt keeps one client
+   * request id and Retry reuses it, so a lost answer can never become a second task.
+   */
+  const requestTask = useCallback((input: { channelId: string; parentId: string | null; task: TaskDraft }) => {
+    const attempt: PendingMessage = {
+      kind: "task",
+      task: { title: input.task.title.trim(), assigneeId: input.task.assigneeId, dueAt: input.task.dueAt },
+      localId: newRequestId(),
+      clientRequestId: newRequestId(),
+      channelId: input.channelId,
+      parentId: input.parentId,
+      body: TASK_COMMAND_TEXT,
+      mentionIds: [],
+      status: "sending",
+    };
+    setPending((current) => [...current, attempt]);
+    return deliver(attempt);
+  }, [deliver]);
+
+  // Every message whose task hasn't been read yet is read once it is shown (later refreshes re-read).
+  const shownWorkIds = useMemo(() => [...(stream?.messages ?? []), ...(thread?.replies ?? []), ...(thread?.root ? [thread.root] : [])]
+    .map((message) => message.work_ref?.id).filter((id): id is string => Boolean(id)).sort().join(","), [stream, thread]);
+  useEffect(() => {
+    if (!shownWorkIds) return;
+    const unread = shownWorkIds.split(",").filter((id) => !live.current.taskReads[id]);
+    if (unread.length) void readTaskStatuses(unread);
+  }, [shownWorkIds, readTaskStatuses]);
 
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
@@ -585,6 +728,12 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     loadEarlierReplies,
     closeThread,
     send,
+    requestTask,
+    work,
+    listWork,
+    closeWork,
+    taskReads,
+    readTaskStatuses,
     retry,
     discard,
     createChannel,

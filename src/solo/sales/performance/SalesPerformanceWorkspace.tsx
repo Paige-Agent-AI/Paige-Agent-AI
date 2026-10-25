@@ -10,7 +10,9 @@ export function SalesPerformanceWorkspace({ epoch, onNavigate }: { epoch?: strin
   const [actorRevision, setActorRevision] = React.useState(0);
   const queryClient = useQueryClient();
   React.useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange(() => {
+    const { data } = supabase.auth.onAuthStateChange(event => {
+      // Keep the initial mounted read; its subscription has observed no change.
+      if (event === "INITIAL_SESSION") return;
       // Legacy references are actor-bound even when workspace stays the same.
       queryClient.removeQueries({ predicate: query => ["analytics-evidence", "analytics-evidence-revalidation"].includes(String(query.queryKey[0])) && query.queryKey[3] === epoch });
       setActorRevision(value => value + 1);

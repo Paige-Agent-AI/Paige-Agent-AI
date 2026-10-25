@@ -1,0 +1,414 @@
+{
+  "schema_version": 1,
+  "scope": "C25 original prepared-field seal SOURCE CONSUMER, not a prepared signing execution or customer acceptance receipt",
+  "source_parent": "5edfd057773ac56fd49112ba4b6a0ffa08e6322b",
+  "functional": "LOCAL_SOURCE_ONLY",
+  "review": "PENDING",
+  "exact_head_ci": "PENDING",
+  "merge": "NOT_MERGED",
+  "deployment": "NOT_DEPLOYED",
+  "activation": "NOT_ACTIVATED",
+  "authenticated_acceptance": "UNVERIFIED",
+  "founder_acceptance": "NOT_REQUESTED",
+  "native": {
+    "result": "PASS",
+    "checks": 51,
+    "migrationReplay": 3,
+    "forwardGuardRefusals": 1,
+    "concurrentSessions": 2,
+    "observedLockWaits": 1,
+    "scope": "Actual local original13 controls plus controlled private metadata projection; no real prepared send/signing/Storage/customer acceptance",
+    "original_signature13_body_md5_actual_local": "3a2fa340fca9838aa9c6737f1e41ae61",
+    "log_sha256": "787df95d3d3a0ffefff7b56de0e8a7a0f258c21e1159127dc184cc9d4cf9f399",
+    "original_control_results": {
+      "checks": 44,
+      "checked": {
+        "checks": 75,
+        "migrationReplay": 2,
+        "concurrentSessions": 8,
+        "observedLockWaits": 4,
+        "scope": "Checked native preparation and original receipts only; no customer JWT/provider/signature acceptance"
+      },
+      "editability": {
+        "checks": 23,
+        "migrationReplay": 2,
+        "authority": "original reader metadata and floor preserved",
+        "scope": "Original closed editability only; synthetic fixture is not customer acceptance"
+      },
+      "documentPreparations": {
+        "checks": 188,
+        "migrationReplay": 2,
+        "concurrentSessions": 6,
+        "observedLockWaits": 4,
+        "commercial": {
+          "checks": 29,
+          "migrationReplay": 2,
+          "concurrentSessions": 2,
+          "observedLockWaits": 1
+        },
+        "acceptedEvidence": {
+          "checks": 83,
+          "migrationReplay": 2,
+          "ownerRead": {
+            "checks": 27,
+            "concurrentSessions": 2,
+            "observedLockWaits": 1,
+            "scope": "Actual original native package/balance/actor/Rail bodies with synthetic session identity; no hosted customer acceptance"
+          },
+          "scope": "Synthetic original native evidence only; metadata PDF hashes are not actual file/provider/customer acceptance"
+        },
+        "scope": "Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance"
+      },
+      "signatureRecord": {
+        "result": "PASS",
+        "checks": 76,
+        "migrationReplay": 2,
+        "concurrentSessions": 8,
+        "observedLockWaits": 4,
+        "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+      }
+    }
+  },
+  "strict_deno": {
+    "cases": 86,
+    "steps": 62,
+    "failed": 0,
+    "log_sha256": "50c64d0e00fefc58241c072416dfa5081f047249f1d7ce2dcd4e4711220aec65",
+    "scope": "Real original PDF renderer/private-read fixture/retained-copy race tests and intercepted original signing handler. No provider network/environment access."
+  },
+  "visual": "NOT_APPLICABLE: no frontend/UI change; original renderer and six retained C14 rendered page images are byte-exact. No fresh C25 screenshot or physical-device claim.",
+  "source_files": [
+    {
+      "path": "supabase/migrations/20271113850004_e04_prepared_seal_source.sql",
+      "sha256": "90d7f1d7e17791e872ea4a5208f172e35e4d9fbdf1309efd2f07819a10e75d25",
+      "lf_sha256": "90d7f1d7e17791e872ea4a5208f172e35e4d9fbdf1309efd2f07819a10e75d25"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-seal-source.ts",
+      "sha256": "9ac3dc09869a2e62892480555a0774eb2db5a3b105531e67f1739af6c24aa0ea",
+      "lf_sha256": "9ac3dc09869a2e62892480555a0774eb2db5a3b105531e67f1739af6c24aa0ea"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-seal-source.test.ts",
+      "sha256": "b62b964d01b01a90c054ef8f2ea82ff16847c64d4aea155ccdb50a867b4586f6",
+      "lf_sha256": "b62b964d01b01a90c054ef8f2ea82ff16847c64d4aea155ccdb50a867b4586f6"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/seal.ts",
+      "sha256": "900b21ccc9a341248d98d351b37627c1dcc91404d183980589f74e7dced4e8fe",
+      "lf_sha256": "900b21ccc9a341248d98d351b37627c1dcc91404d183980589f74e7dced4e8fe"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/seal-readback.test.ts",
+      "sha256": "4dcadf209c6baa857b465139ebda7c040d036408b50668ab9c75da5ef9d68973",
+      "lf_sha256": "4dcadf209c6baa857b465139ebda7c040d036408b50668ab9c75da5ef9d68973"
+    },
+    {
+      "path": "supabase/functions/sign-agreement/preflight.test.ts",
+      "sha256": "c62c19fdbdd17eab265dcfd353f7fc86400bbb5c2d46354bfe4db0213cd2d976",
+      "lf_sha256": "c62c19fdbdd17eab265dcfd353f7fc86400bbb5c2d46354bfe4db0213cd2d976"
+    },
+    {
+      "path": "scripts/agreements/prepared-seal-source-proof.mjs",
+      "sha256": "ce4b07b55a52b1e465e6423536ae3c4cde5f234fa9cd7bfaf10078f5da4f954a",
+      "lf_sha256": "ce4b07b55a52b1e465e6423536ae3c4cde5f234fa9cd7bfaf10078f5da4f954a"
+    },
+    {
+      "path": "scripts/agreements/signer-preparation-integrity-proof.mjs",
+      "sha256": "4502faebc0440586196dd437b50ccaf2c3649be5f7d6fa9125e0464ac3f810d8",
+      "lf_sha256": "4502faebc0440586196dd437b50ccaf2c3649be5f7d6fa9125e0464ac3f810d8"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "4c6e1c1e2fecbb3a4713141ea4236e3eba1a5df97cfca250892f5abf87f0a2af",
+      "lf_sha256": "4c6e1c1e2fecbb3a4713141ea4236e3eba1a5df97cfca250892f5abf87f0a2af"
+    },
+    {
+      "path": "scripts/agreements/run-integrity-proof.sh",
+      "sha256": "418e0a03e9e0f20e0e9a794551c331247c2e4deff29e0dae35043bc8bfc89987",
+      "lf_sha256": "418e0a03e9e0f20e0e9a794551c331247c2e4deff29e0dae35043bc8bfc89987"
+    }
+  ],
+  "verified_unchanged": [
+    {
+      "path": "supabase/functions/_shared/agreements/document.ts",
+      "sha256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e",
+      "git_parent_sha256": "c5934979ef6b68c0c40a741fc65d1a372aeaf958b0bef2cd3dae8acf1915df9e",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/field-preparation.ts",
+      "sha256": "822fb917acf2821a983e43b75177029c75db52fdae655186fbd90599c43ba466",
+      "git_parent_sha256": "822fb917acf2821a983e43b75177029c75db52fdae655186fbd90599c43ba466",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/owner-preparation.ts",
+      "sha256": "0d0c901424ed4da708242404fe5125559807a9ccb2c5b4036e016dfb125a711f",
+      "git_parent_sha256": "0d0c901424ed4da708242404fe5125559807a9ccb2c5b4036e016dfb125a711f",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "supabase/functions/sign-agreement/index.ts",
+      "sha256": "16270b73aaef0c2ccb2d1ffedb5f257e65dbe74cfa99917f8b9bff9e978f8774",
+      "git_parent_sha256": "16270b73aaef0c2ccb2d1ffedb5f257e65dbe74cfa99917f8b9bff9e978f8774",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "supabase/migrations/20271113530004_e04_atomic_original_signature.sql",
+      "sha256": "9e0245f9d43bba60e746e9c6d40205e3d376554ab3d76424a3aaa6590ac6a9d9",
+      "git_parent_sha256": "9e0245f9d43bba60e746e9c6d40205e3d376554ab3d76424a3aaa6590ac6a9d9",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "supabase/migrations/20271113300004_agreement_document_preparation_versions.sql",
+      "sha256": "76d3e389d7126d63ab20a3df88d8f39da7787fd80af5277ef4265b5b3fb637d0",
+      "git_parent_sha256": "76d3e389d7126d63ab20a3df88d8f39da7787fd80af5277ef4265b5b3fb637d0",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "supabase/functions/send-message/index.ts",
+      "sha256": "09ac024a8b928d70452676ece2279e6fd51f93c36cad9e7a8403c6b4888d97ba",
+      "git_parent_sha256": "09ac024a8b928d70452676ece2279e6fd51f93c36cad9e7a8403c6b4888d97ba",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "supabase/functions/_shared/paige-spine/domains/agreement.ts",
+      "sha256": "9dd9250d64339409d22605ea624576dab40bc816f2d58d3440d61f75c8e0acc5",
+      "git_parent_sha256": "9dd9250d64339409d22605ea624576dab40bc816f2d58d3440d61f75c8e0acc5",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/receipt.json",
+      "sha256": "059b1b16e3f63b38bdc613f63ae81934a1a6d5fc61f9341f7ebc776694f99c5c",
+      "git_parent_sha256": "059b1b16e3f63b38bdc613f63ae81934a1a6d5fc61f9341f7ebc776694f99c5c",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/render-inspection.json",
+      "sha256": "e9c5adf119ee7513dd296d82e1372f3f0c8709cdfb2856ac8e1d0d165582f261",
+      "git_parent_sha256": "b5596d20d0adf1691e6d55e4f5ff1852b1ef4f7f8f37b4a648b1644ed58c636e",
+      "comparison": "TEXT_LF_EQUIVALENT_WINDOWS_CHECKOUT_CRLF",
+      "byte_exact_to_parent": false
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/presented.pdf",
+      "sha256": "049930cba1fdfa54b1cae00dec3126abc110fd9504d5b71b7ad62e09475c1096",
+      "git_parent_sha256": "049930cba1fdfa54b1cae00dec3126abc110fd9504d5b71b7ad62e09475c1096",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/sealed.pdf",
+      "sha256": "6392897d2829e5df3cb48233c1e20d2f50e48d50fad5ef8e19b27b300865cfa2",
+      "git_parent_sha256": "6392897d2829e5df3cb48233c1e20d2f50e48d50fad5ef8e19b27b300865cfa2",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/pdfium-1.png",
+      "sha256": "d77e2c2b4499cdd850dcd54fc4e17c3d28dff50e042ffaaf1f8ea355d24cce42",
+      "git_parent_sha256": "d77e2c2b4499cdd850dcd54fc4e17c3d28dff50e042ffaaf1f8ea355d24cce42",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/pdfium-2.png",
+      "sha256": "e934e6006675c975b19f2d0766c6e23683acf89377327b4b111608b4e7ffd1ee",
+      "git_parent_sha256": "e934e6006675c975b19f2d0766c6e23683acf89377327b4b111608b4e7ffd1ee",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/pdfium-3.png",
+      "sha256": "d77e2c2b4499cdd850dcd54fc4e17c3d28dff50e042ffaaf1f8ea355d24cce42",
+      "git_parent_sha256": "d77e2c2b4499cdd850dcd54fc4e17c3d28dff50e042ffaaf1f8ea355d24cce42",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/pdfium-4.png",
+      "sha256": "e934e6006675c975b19f2d0766c6e23683acf89377327b4b111608b4e7ffd1ee",
+      "git_parent_sha256": "e934e6006675c975b19f2d0766c6e23683acf89377327b4b111608b4e7ffd1ee",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/pdfium-5.png",
+      "sha256": "956cff83dc7210d31221ce92f2f8dac6522255d1f1a2ca4d7f5a4205d3b87f85",
+      "git_parent_sha256": "956cff83dc7210d31221ce92f2f8dac6522255d1f1a2ca4d7f5a4205d3b87f85",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-prepared-field-sealing/pdfium-6.png",
+      "sha256": "16ffe26b912036e48c61eb313354683a7b5b5631404073b5a4467bcdccc51fcc",
+      "git_parent_sha256": "16ffe26b912036e48c61eb313354683a7b5b5631404073b5a4467bcdccc51fcc",
+      "comparison": "BYTE_EXACT",
+      "byte_exact_to_parent": true
+    }
+  ],
+  "required_remaining": [
+    "Original HIGH complete approved sender/recipient/message/source binding",
+    "Atomic original native assigned-answer writer using actual signature/consent receipts",
+    "Exact approved-source replacement of selected token/effect holds after complete proof",
+    "Native/API/web ordered releases and actual source readback",
+    "Owner/staff/linked-client provider-consented/revocation/reload/Central QA and complete O1–O12 founder evaluation"
+  ],
+  "algorithm_support": {
+    "ALG-01": "PARTIAL source reconciliation, not production customer proof",
+    "ALG-02": "Progression still incomplete",
+    "ALG-12": "PARTIAL refusal/uncertain-source support; production monitoring unverified",
+    "ALG-13": "Recommendation usefulness UNVERIFIED"
+  },
+  "orchestration": "Original token-authorized signing native transaction -> deterministic original sealer; no new Layer C dispatch, approval, sender, ledger, scheduler or registered capability. Consequential prepared execution remains UNAVAILABLE.",
+  "currentParentContinuity": {
+    "at": "2026-10-24T12:39:39.165Z",
+    "parent": "6dff5ced4118242d5a3290656b3eb2fc5fd6ad37",
+    "original": "1e5bb0cb675d3b3e951b8edb23d177557ef362f5",
+    "allNineOriginalOwningSourceTestNativeProofFilesExact": true,
+    "wholeIncomingChatC0bUIAndRecordsExact": true,
+    "noNewPinRenewal": true,
+    "wholeIncomingCIOnlyOwningTest": true,
+    "wholeIncomingJournalInverse": true,
+    "actualLower820004Release": 6384139888,
+    "ownNative": "850004 NOT_DEPLOYED; order830004→840002→850004→860005 retained",
+    "originalNativeSignature13BodyUnchanged": true,
+    "tokenEffectAndPreparedSendHoldsUnchanged": true,
+    "actualAtomicFieldProducer": "MISSING",
+    "freshTestsReviewCIAndColdPreview": "86strict/62handler PASS; final exact review, new required CI and source-current cold Preview OWED; old51 native checks/replays remain dated support",
+    "customerAcceptance": "UNVERIFIED",
+    "freshStrictDeno": {
+      "handlerSteps": 62,
+      "diagnostics": "Initial85/17 with handler missing-cache; original local frozen-cache missing transitive records; private inspection incorrectly assumed ignored local lock was tracked. All retained INVALID_SETUP, no claim those failures passed.",
+      "dependencyScope": "Original ignored local deno.lock redirects unversioned SDK URL to2.117.3, not a tracked product pin. Private expanded copy preserves every original entry plus11 transitive integrity records; original root hash614f9e55 unchanged. No product source, tracked lock, test, CI or native permission change.",
+      "runtime": "cached-only and strict types; net/env/read/write/run/FFI/sys denied",
+      "cases": 86,
+      "seconds": 24
+    }
+  },
+  "current_parent_checkpoint": {
+    "at": "2026-10-24T16:19:00.948Z",
+    "source_tested": "0b078b6a8b398fdb48760ef5ab8560da8b9d743e",
+    "current_source_before_evidence": "38c594615dd82906c09861446f9c312611e6c74f",
+    "actual_main": "1b4a4a73f88c05a97b7a91ab3b6f09bc3d349ed1",
+    "source_blobs": {
+      "scripts/agreements/prepared-seal-source-proof.mjs": "af8f79850ce5ba4dd7b9b4f87851e092cbcd3ffe",
+      "scripts/agreements/signer-preparation-integrity-proof.mjs": "cbaf096fab92b702b269df51ea320aaf19851302",
+      "supabase/functions/_shared/agreements/prepared-seal-source.ts": "3a106cd531742258c15e41c4cb75c67fc2ac7904",
+      "supabase/functions/_shared/agreements/prepared-seal-source.test.ts": "3332e40467af9141c4a064912ec3919dd87de04f",
+      "supabase/functions/_shared/agreements/seal.ts": "54083021ad071154f9034aa692d141661b154210",
+      "supabase/functions/_shared/agreements/seal-readback.test.ts": "f43197e521d4eed22c3f850e67822c2c68d17545",
+      "supabase/functions/sign-agreement/preflight.test.ts": "dffcdb1338edfe2d054e3fb454a9548fe4501b5c",
+      "supabase/migrations/20271113850004_e04_prepared_seal_source.sql": "a33dc8ace5062e101af7fe8e803a4c507d3c2c6a"
+    },
+    "strict": {
+      "cases": 44,
+      "steps": 45,
+      "result": "PASS",
+      "runtime_permissions": "Network/environment/read/write/run/FFI/system denied; cached/frozen private test lock only"
+    },
+    "native": {
+      "result": "PASS",
+      "checks": 51,
+      "migrationReplay": 3,
+      "forwardGuardRefusals": 1,
+      "concurrentSessions": 2,
+      "observedLockWaits": 1,
+      "scope": "Actual local original13 controls plus controlled private metadata projection; no real prepared send/signing/Storage/customer acceptance",
+      "original_controls": {
+        "result": "PASS",
+        "checks": 44,
+        "checked": {
+          "checks": 75,
+          "migrationReplay": 2,
+          "concurrentSessions": 8,
+          "observedLockWaits": 4,
+          "scope": "Checked native preparation and original receipts only; no customer JWT/provider/signature acceptance"
+        },
+        "editability": {
+          "checks": 23,
+          "migrationReplay": 2,
+          "authority": "original reader metadata and floor preserved",
+          "scope": "Original closed editability only; synthetic fixture is not customer acceptance"
+        },
+        "documentPreparations": {
+          "checks": 188,
+          "migrationReplay": 2,
+          "concurrentSessions": 6,
+          "observedLockWaits": 4,
+          "commercial": {
+            "checks": 29,
+            "migrationReplay": 2,
+            "concurrentSessions": 2,
+            "observedLockWaits": 1
+          },
+          "acceptedEvidence": {
+            "checks": 83,
+            "migrationReplay": 2,
+            "ownerRead": {
+              "checks": 27,
+              "concurrentSessions": 2,
+              "observedLockWaits": 1,
+              "scope": "Actual original native package/balance/actor/Rail bodies with synthetic session identity; no hosted customer acceptance"
+            },
+            "scope": "Synthetic original native evidence only; metadata PDF hashes are not actual file/provider/customer acceptance"
+          },
+          "scope": "Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance"
+        },
+        "signatureRecord": {
+          "result": "PASS",
+          "checks": 76,
+          "migrationReplay": 2,
+          "concurrentSessions": 8,
+          "observedLockWaits": 4,
+          "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+        },
+        "preparedSealSource": {
+          "result": "PASS",
+          "checks": 51,
+          "migrationReplay": 3,
+          "forwardGuardRefusals": 1,
+          "concurrentSessions": 2,
+          "observedLockWaits": 1,
+          "scope": "Actual local original13 controls plus controlled private metadata projection; no real prepared send/signing/Storage/customer acceptance"
+        },
+        "migrationReplay": 2,
+        "concurrentSessions": 5,
+        "observedLockWaits": 3,
+        "scope": "Original native signer preparation only; no actual JWT/signature/provider/customer acceptance"
+      },
+      "log_sha256": "787df95d3d3a0ffefff7b56de0e8a7a0f258c21e1159127dc184cc9d4cf9f399",
+      "cleanup": "Owned cluster verified empty and stopped"
+    },
+    "setup": "First sandbox loopback socket permission denial executed no tests. Same original fenced runner and source succeeded after actual task-cluster identity/empty-scope verification; no timeout/role/assertion/permission gate weakened.",
+    "boundary": "Dated original86/62 remains separate. Current44/45 plus actual native51 do not prove prepared sending, atomic field producer, actual recipient/customer/private Storage, production deployment, ordinary auth, CentralQA/full12/founder acceptance."
+  },
+  "source_order_reconciliation": {
+    "actual_main": "fb710fa2c823d01f875256063c5ebdb1b017ed89",
+    "production_read": "2026-10-24 20:53 UTC",
+    "actual_frontier": "20271113850008",
+    "original_850004_count": 0,
+    "retired_never_production_source": "20271113850004_e04_prepared_seal_source.sql",
+    "current_native_source": "20271113850009_e04_prepared_seal_source.sql",
+    "native_git_blob": "a33dc8ace5062e101af7fe8e803a4c507d3c2c6a",
+    "native_sql": "UNCHANGED",
+    "owner_following_slot": "20271113860004",
+    "ci": "Whole current main plus one original named strict prepared-seal test; inverse exact",
+    "proof_loader": "Only filename changes; inverse exact",
+    "previous_records": "All original nested fields/pins and captures retained as dated evidence",
+    "managed_preview": "Original owned nonpersistent17bea750/mud verified zero records; normal same-PR lifecycle renewal; new source proof owed",
+    "release": "NOT_DEPLOYED",
+    "activation": "NOT_ACTIVATED",
+    "authenticated_acceptance": "UNVERIFIED"
+  }
+}

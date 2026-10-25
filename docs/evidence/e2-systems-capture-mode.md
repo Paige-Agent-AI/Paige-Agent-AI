@@ -149,3 +149,30 @@ uncertainty, provider/action activation and browser holds remain preserved.
 Recovery is an ordinary reviewed source forward-fix/revert. Activating a new
 customer scan and replaying an uncertain business operation are separate matters;
 neither is authorized by merging this unused internal option.
+
+## October25 — initial capture identity, development successor
+
+The original #2813 release above retained a known identity after finding/finalize
+uncertainty but could lose it with the first run acknowledgement. This successor
+allocates a standard UUID for the existing run.id only in internal none mode,
+before its one original INSERT. Missing, malformed, mismatched, failed or thrown
+acknowledgements return SystemsCheckCaptureUnconfirmed with that same identity
+and run_insert phase. No check dispatch, finding write, finalization, automatic
+reconciliation or replay follows an unconfirmed start. Allocation failure sends
+no run write. Tenant/operator scope validation and the original catalog remain.
+
+The identity does not prove insertion or absence, confer read/actor authority,
+or establish idempotency/exactly-once behavior. A future authorized consumer must
+still correlate original Work, reauthorize original source reads and reconcile
+the uncertain result. Default/all/delta retain database-assigned IDs, original
+initial errors and remediation behavior. No caller/API/manual flavor, schema,
+provider, registry, queue, receipt engine or consequential activation is added.
+
+Failing-first actual-core controls produced8FAIL/54PASS against the unchanged
+release, then62PASS after the correction; subsequent allocation/operator/legacy
+controls and final verification are recorded in the successor PR. This is local
+source proof, not native released-source or authenticated manual-scan acceptance.
+Functional: development. Visual: N/A. Experiential: original manual flow/Work/
+receipt still incomplete. Founder Acceptance: NOT_ACCEPTED; all19/nine and the
+single integrated founder evaluation remain required. Catalogue and algorithms
+are unchanged; protected monthly UNKNOWN/UNRETRIED is never replayed.

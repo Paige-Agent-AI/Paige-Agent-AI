@@ -22,6 +22,7 @@ import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
 
 export type SystemsCheckScope = "tenant" | "operator";
@@ -166,6 +167,7 @@ const readableTimestamp = (value: unknown) => typeof value === "string" && Numbe
 
 export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?: string | null }): SystemsCheckSnapshot {
   const { activeTenantId, activeUserId, accountContextStatus, activeTenant } = useTenantContext();
+  const { soloStandalone, loading: tierLoading } = useTierFeatures();
   const qc = useQueryClient();
   const scopeKey = scope === "tenant" ? (activeTenantId ?? "none") : "operator";
 
@@ -221,7 +223,7 @@ export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?
   const recordId = readRecordLinks([{ destination: "systems_check", record_id: options?.findingId }])[0]?.record_id;
   const recordEnabled = scope === "tenant" && accountContextStatus === "ready"
     && !!activeUserId && !!activeTenantId && activeTenant?.id === activeTenantId
-    && activeTenant.account_type === "standalone" && !!recordId;
+    && soloStandalone && !tierLoading && !!recordId;
   const recordedQuery = useQuery({
     queryKey: ["systems_check", scope, scopeKey, "recorded", activeUserId ?? "none", recordId ?? "none"],
     enabled: recordEnabled,

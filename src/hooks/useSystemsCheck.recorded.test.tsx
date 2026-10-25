@@ -44,7 +44,7 @@ async function waitFor(check: () => void) {
   } }
 }
 beforeEach(() => {
-  h.context = { activeTenantId: TENANT, activeUserId: 'actor-a', accountContextStatus: 'ready', activeTenant: { id: TENANT, account_type: 'standalone' } };
+  h.context = { activeTenantId: TENANT, activeUserId: 'actor-a', accountContextStatus: 'ready', loading: false, isPlatformStaff: false, activeTenant: { id: TENANT, account_type: 'standalone', parent_tenant_id: null } };
   h.reads.length = 0; h.held = null; h.error = null; h.result = recorded();
   h.rpc.mockReset().mockResolvedValue({ data: current, error: null });
   h.from.mockReset().mockImplementation(table => {
@@ -109,6 +109,9 @@ describe('original recorded Systems Check source', () => {
     { accountContextStatus: 'signed_out' }, { accountContextStatus: 'error' },
     { activeTenant: { id: OTHER, account_type: 'standalone' } },
     { activeTenant: { id: TENANT, account_type: 'agency' } },
+    { activeTenant: { id: TENANT, account_type: 'standalone', parent_tenant_id: OTHER } },
+    { isPlatformStaff: true, activeTenantId: null, activeTenant: null }, { loading: true },
+    { activeTenant: { id: TENANT, account_type: null } },
   ])('does not read before the original SOLO identity is ready %#', async change => {
     h.context = { ...h.context, ...change }; render();
     await waitFor(() => expect(result.recordedFinding?.state).toBe('unavailable'));

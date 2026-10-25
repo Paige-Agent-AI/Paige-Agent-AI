@@ -508,7 +508,9 @@ reference, original run and readable timestamps bind the optional result; missin
 withheld, failed and retired reads remain distinct from current health or actions.
 No SQL/grant, current UI, Spine/Chat admission, scan, approval or Rail writer changes.
 [Source and proof boundary](../evidence/e2-recorded-finding-source.md):152/6 source
-tests PASS, type/review/CI/release pending. Historical customer/UI acceptance and
+tests passed initially; corrected canonical eligibility now184/7 PASS, with all
+original negatives retained and fresh exact review/type/CI/release pending. No
+new tier rule or guard exception. Historical customer/UI acceptance and
 all19/nine/founder remain owed; browser/input stop is held. Original source2787
 is separately merged2f04941f/web+Chat535 verified, not report/customer acceptance.
 Queued Master2694/2690/2696/2787 closeouts remain unclaimed as complete.

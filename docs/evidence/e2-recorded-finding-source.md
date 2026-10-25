@@ -67,7 +67,19 @@ without weakening existing tests. Final152/152 PASS across6 suites in8.25s:
 source selection, strict reference/context/response binding, errors, refresh,
 unfinished records and late actor/account results with read cancellation. Default
 current RPC arguments, projection and result shape are unchanged. Scoped lint0;
-original project type ratchet remains running, not claimed green early.
+original c730 project type ratchet subsequently PASS(baseline10/current6), as did
+its hosted typecheck. These dated results do not substitute for successor CI.
+
+Hosted c730 correctly failed the tier guard for the inline account-type compare.
+The optional source now consumes the unchanged `useTierFeatures().soloStandalone`
+and loading contract. No guard exemption, feature-map edit or grant change.
+Two additional source failures reproduce parented/in-progress contexts
+(2FAIL/36PASS); the operator fixture is aligned to the existing operator context
+with no active workspace, not a new role policy. Every original negative remains.
+Final184/184 PASS across7 suites in7.50s:38 owning and146 original/shared-tier
+controls. Final exact-head type/CI and final review remain required. SOLO parity
+guard and all original mutation controls passed on the preceding source; no
+identity, role or provider claim follows from those static controls.
 
 Functional: foundation locally verified, not released. Visual: no UI change or new consumer.
 Experiential: current UI still honestly cannot resolve older finding links.

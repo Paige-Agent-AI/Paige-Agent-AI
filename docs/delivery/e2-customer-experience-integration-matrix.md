@@ -4,8 +4,10 @@
 
 O6/O14 adds only an opt-in read to the original Systems hook over existing RLS
 records. All default consumers and current snapshot health remain unchanged;
-no current UI uses the extension.152/6 source tests PASS, scoped lint0; type,
-exact review/CI/release remain pending. [Owning proof and routing](../evidence/e2-recorded-finding-source.md).
+no current UI uses the extension. Initial152/6 source cases passed; hosted tier
+guard caught the inline compare. Unchanged canonical eligibility/loading helper
+now applies, all original negatives retained;184/7 PASS. Fresh type/review/CI/release
+remain pending. [Owning proof and routing](../evidence/e2-recorded-finding-source.md).
 Original report2787 is independently reconciled as released2f04941f/web+Chat535;
 actual report/document/turn/Rail/retrieval/reload acceptance remains owed.
 Four exact Master closeouts remain queued. All19/nine/ALG/founder obligations

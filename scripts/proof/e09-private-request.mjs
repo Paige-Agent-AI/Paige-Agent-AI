@@ -2,8 +2,12 @@
 // Bus bodies execute; local Auth/role/autonomy and nonexecuted graph are ports.
 // Full-schema customer_portal_access.sql remains the normative role/trigger proof.
 import { createHash } from 'node:crypto';
-export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,spawn,exe,args,transcripts}) {
+import { execFileSync } from 'node:child_process';
+export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,spawn,exe,args,transcripts}) {
  const read=file=>fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n');
+ const nativeMigration=historyBaseline
+  ?execFileSync('git',['show','ba786f11b52c71b4ed87e7eb7a022b5aaa376e18:supabase/migrations/20271114150009_e09_private_request_preparation.sql'],{cwd:root,encoding:'utf8'}).replaceAll('\r\n','\n')
+  :read('supabase/migrations/20271114150009_e09_private_request_preparation.sql');
  const original=(file,name)=>{
   const source=read(file),start=source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
   const end=source.indexOf('END $function$;',start)+'END $function$;'.length;
@@ -64,7 +68,7 @@ export async function privateRequestProof({sql,check,assert,fs,root,path,fixture
  assert.equal(before.file_action,'40349ee33cf5f77ef6fc228087fdc67f','Current original file_action body required');
  assert.equal(before.advance_action,'66dcedb5e40dd43a54373c0e0ded1884','Current original advance_action body required');
  assert.equal(before._client_portal_access_authorize,'7c3eb55c866321fed052ae742b75e42d','Original Portal owner authority required');
- if(!baseline)sql(read('supabase/migrations/20271114150009_e09_private_request_preparation.sql'));
+ if(!baseline)sql(nativeMigration);
  const f=fixture();
  sql(`INSERT INTO public.profiles(user_id,active_tenant_id) VALUES('${f.other}','${f.tenant}');
   INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner)VALUES('${f.tenant}','${f.other}','owner','active',true);
@@ -247,15 +251,15 @@ export async function privateRequestProof({sql,check,assert,fs,root,path,fixture
    sql(`UPDATE public.paige_actions SET customer_action_id='${action}' WHERE id='${first.request.work_id}'`);
    try{assert.throws(status,/PORTAL_REQUEST_SOURCE_CHANGED/);}finally{sql(`UPDATE public.paige_actions SET customer_action_id=NULL WHERE id='${first.request.work_id}'`);}
   });
-  const migration=read('supabase/migrations/20271114150009_e09_private_request_preparation.sql');
-  const ownSigs=['read_client_portal_request_draft(uuid,uuid,uuid,uuid)','prepare_client_portal_request(uuid,uuid,uuid,uuid,text,text)'];
+  const migration=nativeMigration;
+  const ownSigs=['read_client_portal_request_draft(uuid,uuid,uuid,uuid)','prepare_client_portal_request(uuid,uuid,uuid,uuid,text,text)',...(!historyBaseline?['list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)']:[])];
   sql(`CREATE TABLE public.proof_private_sources AS SELECT oid,proname,prosrc,pg_get_functiondef(oid) definition
    FROM pg_proc WHERE oid IN('public.${fileSig}'::regprocedure,'public.${advanceSig}'::regprocedure,
     'public._client_portal_access_authorize(uuid,uuid,boolean)'::regprocedure,${ownSigs.map(s=>`'public.${s}'::regprocedure`).join(',')})`);
   check('Replaying the same migration preserves original Work, source metadata and private history',()=>{
    const before=snapshot();sql(migration);assert.equal(snapshot(),before);assert.equal(nativeMetadata(),nativeBefore);assert.equal(prepare().replayed,true);
   });
-  for(const name of ['file_action','advance_action','_client_portal_access_authorize','read_client_portal_request_draft','prepare_client_portal_request'])check('Migration refuses unknown forward '+name+' without overwriting it',()=>{
+  for(const name of ['file_action','advance_action','_client_portal_access_authorize','read_client_portal_request_draft','prepare_client_portal_request',...(!historyBaseline?['list_client_portal_request_drafts']:[])])check('Migration refuses unknown forward '+name+' without overwriting it',()=>{
    sql(`DO $proof$ DECLARE x record;BEGIN SELECT * INTO x FROM public.proof_private_sources WHERE proname='${name}';
     EXECUTE replace(x.definition,x.prosrc,x.prosrc||E'\n-- controlled forward source\n');END $proof$`);
    const changed=sql(`SELECT md5(prosrc) FROM pg_proc WHERE proname='${name}'`);
@@ -270,10 +274,105 @@ export async function privateRequestProof({sql,check,assert,fs,root,path,fixture
   sql('DROP TABLE public.proof_private_sources');
   check('Native source ABI, OID, owner, grants, search path and body are all preserved',()=>assert.equal(nativeMetadata(),nativeBefore));
   check('Private preparation and every refusal create no customer action, response, notice or approval',()=>assert.equal(customerSnapshot(),customerBefore));
+  await privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked});
  }
  check('Original native file, advance and Portal authority remain byte-exact',()=>assert.deepEqual(fingerprints(),before));
- return {baseline,originalFingerprints:before,canonicalReplayFileHash:replayFileHash,
+ return {baseline,historyBaseline,baselineSource:historyBaseline?'ba786f11b52c71b4ed87e7eb7a022b5aaa376e18':null,originalFingerprints:before,canonicalReplayFileHash:replayFileHash,
   migration:'20271114150009_e09_private_request_preparation.sql',
-  migrationNormalizedSHA256:createHash('sha256').update(read('supabase/migrations/20271114150009_e09_private_request_preparation.sql')).digest('hex'),
+  migrationNormalizedSHA256:createHash('sha256').update(nativeMigration).digest('hex'),
   fixture:'synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority',customerPublication:'NOT_RUN',fullSchema:'PROOF_OWED'};
+}
+
+async function privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked}) {
+ const lit=x=>x===null?'NULL':`'${String(x).replaceAll("'","''")}'`;
+ const history=(options={})=>{
+  const x={actor:f.other,expected:f.other,tenant:f.tenant,contact:f.contact,beforeTime:null,beforeId:null,role:'authenticated',...options};
+  return asActor(`SELECT public.list_client_portal_request_drafts(${lit(x.expected)},${lit(x.tenant)},${lit(x.contact)},${lit(x.beforeTime)},${lit(x.beforeId)})`,x.actor,x.role);
+ };
+ const start=snapshot(),customerBefore=customerSnapshot();let sample;
+ check('Returning owner discovers original private requests without a browser-stored intent',()=>{
+  sample=history();assert.equal(sample.schema_version,1);assert.equal(sample.actor_id,f.other);assert.equal(sample.tenant_id,f.tenant);assert.equal(sample.contact_id,f.contact);
+  assert.equal(sample.missing_is_rejection,false);assert(sample.requests.some(x=>x.request.work_id===first.request.work_id&&x.intent_id==='e09df000-0000-4000-8000-000000000001'));
+  assert(!JSON.stringify(sample).includes('HIDDEN_SENTINEL'));assert.equal(snapshot(),start);
+ });
+ if(historyBaseline||!sample)return;
+ check('History API keeps the same authenticated-only empty-path native contract',()=>{
+  const r=JSON.parse(sql("SELECT jsonb_build_object('auth',has_function_privilege('authenticated','public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)','EXECUTE'),'anon',has_function_privilege('anon','public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)','EXECUTE'),'service',has_function_privilege('service_role','public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)','EXECUTE'),'config',(SELECT proconfig FROM pg_proc WHERE oid='public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)'::regprocedure))"));
+  assert.equal(r.auth,true);assert.equal(r.anon,false);assert.equal(r.service,false);assert.deepEqual(r.config,['search_path=""']);
+ });
+ for(const [name,options]of[
+  ['wrong actor',{expected:f.actor}],['missing actor',{expected:null}],['wrong business',{tenant:f.foreign}],
+  ['customer identity',{actor:f.actor,expected:f.actor}],['service',{role:'service_role'}],['anonymous',{role:'anon',actor:null}],
+  ['partial time cursor',{beforeTime:'2026-10-25T10:00:00Z'}],['partial ID cursor',{beforeId:first.request.work_id}],
+  ['infinite cursor',{beforeTime:'infinity',beforeId:first.request.work_id}]
+ ])check('Private Work history refuses '+name+' without effects',()=>{const before=snapshot();assert.throws(()=>history(options));assert.equal(snapshot(),before);});
+ check('Private Work history cannot widen missing original Work standing',()=>{
+  sql(`DELETE FROM public.user_roles WHERE user_id='${f.other}'`);try{assert.throws(history);}finally{sql(`INSERT INTO public.user_roles(user_id,role)VALUES('${f.other}','admin')`);}
+ });
+ check('Malformed original intent metadata fails closed instead of inventing a replacement identity',()=>{
+  sql(`UPDATE public.paige_actions SET payload=jsonb_set(payload,'{client_portal_private_request,intent_id}','"invalid-intent"') WHERE id='${first.request.work_id}'`);
+  try{assert.throws(history,/PORTAL_REQUEST_SOURCE_CHANGED/);}finally{sql(`UPDATE public.paige_actions SET payload=jsonb_set(payload,'{client_portal_private_request,intent_id}','"e09df000-0000-4000-8000-000000000001"') WHERE id='${first.request.work_id}'`);}
+ });
+ check('History uses the original changed-content projection rather than showing old prepared words',()=>{
+  sql(`UPDATE public.paige_actions SET draft_content='{"body":"Changed elsewhere"}',status='drafted' WHERE id='${first.request.work_id}'`);
+  try{const x=history().requests.find(x=>x.request.work_id===first.request.work_id);assert(x);assert.equal(x.request.content_state,'changed');assert.equal(x.request.body,null);assert.equal(x.request.title,null);}
+  finally{sql(`UPDATE public.paige_actions SET draft_content=NULL,status='assigned' WHERE id='${first.request.work_id}'`);}
+ });
+ const concurrentIntent='e09df000-0000-4000-8000-000000000040';
+ const pending=launch(`BEGIN;SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;
+  SELECT public.prepare_client_portal_request('${f.other}','${f.tenant}','${f.contact}','${concurrentIntent}','Review the guide','Read it.');`,'history_prepare');
+ let waiting;
+ try{
+  await waitFor(()=>sql("SELECT count(*) FROM pg_stat_activity WHERE application_name='e09_private_history_prepare' AND state='idle in transaction'")==='1');
+  waiting=launch(`BEGIN;SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;
+   SELECT public.list_client_portal_request_drafts('${f.other}','${f.tenant}','${f.contact}');COMMIT;`,'history_wait');waiting.child.stdin.end();
+  await waitFor(()=>locked('history_wait'));
+ }finally{pending.child.stdin.end('COMMIT;\n');}
+ const prepared=await pending.done,listed=await waiting.done;
+ check('Reload history waits for the original pending preparation and reads its committed Work once',()=>{
+  assert.equal(prepared.code,0,prepared.err);assert.equal(listed.code,0,listed.err);
+  const row=prepared.result.at(-1),matches=listed.result.at(-1).requests.filter(x=>x.intent_id===concurrentIntent);
+  assert.equal(matches.length,1);assert.equal(matches[0].request.work_id,row.request.work_id);
+ });
+ const beforeRevocation=snapshot();
+ const holder=launch(`BEGIN;SELECT 1 FROM public.clients WHERE id='${f.contact}' FOR UPDATE;`,'history_contact');
+ let revoked;
+ try{
+  await waitFor(()=>sql("SELECT count(*) FROM pg_stat_activity WHERE application_name='e09_private_history_contact' AND state='idle in transaction'")==='1');
+  revoked=launch(`BEGIN;SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;
+   SELECT public.list_client_portal_request_drafts('${f.other}','${f.tenant}','${f.contact}');COMMIT;`,'history_revoked');revoked.child.stdin.end();
+  await waitFor(()=>locked('history_revoked'));
+  sql(`UPDATE public.tenant_members SET status='inactive' WHERE tenant_id='${f.tenant}' AND user_id='${f.other}'`);
+ }finally{holder.child.stdin.end('COMMIT;\n');await holder.done;}
+ const refused=await revoked.done;
+ check('History rechecks revoked membership after waiting before returning any private page',()=>{
+  assert.notEqual(refused.code,0);assert.equal(refused.result.length,0);assert.equal(snapshot(),beforeRevocation);
+ });
+ sql(`UPDATE public.tenant_members SET status='active' WHERE tenant_id='${f.tenant}' AND user_id='${f.other}'`);
+ const h=fixture();
+ sql(`INSERT INTO public.profiles(user_id,active_tenant_id)VALUES('${h.other}','${h.tenant}');
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner)VALUES('${h.tenant}','${h.other}','owner','active',true);
+  INSERT INTO public.user_roles(user_id,role)VALUES('${h.other}','admin')`);
+ const selected={actor:h.other,expected:h.other,tenant:h.tenant,contact:h.contact};
+ check('A new legitimate owner scope has empty history without implying a rejected request',()=>{
+  const r=history(selected);assert.deepEqual(r.requests,[]);assert.equal(r.more,false);assert.equal(r.next_cursor,null);assert.equal(r.missing_is_rejection,false);
+ });
+ check('Foreign CRM record is refused by the history reader even when a real Work ID is known',()=>assert.throws(()=>history({contact:h.contact,beforeTime:'2026-10-25T10:00:00Z',beforeId:first.request.work_id})));
+ const made=[];for(let i=1;i<=21;i++)made.push(invoke({...selected,intent:`e09df100-0000-4000-8000-${String(i).padStart(12,'0')}`}));
+ sql(`UPDATE public.paige_actions SET created_at='2026-10-25T10:00:00.123456Z' WHERE tenant_id='${h.tenant}' AND created_by='${h.other}'`);
+ check('Original Work keyset pages preserve all tied timestamps and IDs once, without browser state',()=>{
+  const firstPage=history(selected);assert.equal(firstPage.requests.length,20);assert.equal(firstPage.more,true);
+  assert.equal(firstPage.next_cursor.created_at,firstPage.requests.at(-1).request.created_at);
+  assert.match(firstPage.next_cursor.created_at,/\.123456(?:Z|[+-])/);
+  assert.equal(Date.parse(firstPage.next_cursor.created_at),Date.parse('2026-10-25T10:00:00.123456Z'));
+  const second=history({...selected,beforeTime:firstPage.next_cursor.created_at,beforeId:firstPage.next_cursor.work_id});
+  assert.equal(second.requests.length,1);assert.equal(second.more,false);assert.equal(second.next_cursor,null);
+  const ids=[...firstPage.requests,...second.requests].map(x=>x.request.work_id);assert.equal(new Set(ids).size,21);
+  assert.deepEqual([...ids].sort(),made.map(x=>x.request.work_id).sort());
+ });
+ check('History cursor is a filter, never authority to view another actor or business',()=>{
+  const other=history({...selected,beforeTime:'2099-01-01',beforeId:first.request.work_id});assert.equal(other.requests.length,20);
+  assert(!JSON.stringify(other).includes(first.request.work_id));assert(other.requests.every(x=>made.some(y=>y.request.work_id===x.request.work_id)));
+ });
+ check('Returning history and pagination never create customer actions, notices, approvals or responses',()=>assert.equal(customerSnapshot(),customerBefore));
 }

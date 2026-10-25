@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(268);
+SELECT plan(286);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -700,6 +700,44 @@ UPDATE public.tenant_members SET status='inactive' WHERE user_id='e0917000-0000-
 SELECT is(pg_temp.private_request(_read=>true)->>'sqlstate','42501','revocation invalidates private status even when a Work identity exists');
 UPDATE public.tenant_members SET status='active' WHERE user_id='e0917000-0000-4000-8000-000000000001' AND tenant_id='e0927000-0000-4000-8000-000000000001';
 SELECT is(pg_temp.private_request(_read=>true)#>>'{request,work_id}',(SELECT result#>>'{request,work_id}' FROM private_request_result),'returning authorized owner recovers the same original Work after interruption');
+
+-- 19. A returning owner discovers the SAME private Work without a browser nonce.
+CREATE FUNCTION pg_temp.private_history(_actor uuid DEFAULT 'e0917000-0000-4000-8000-000000000001',
+ _tenant uuid DEFAULT 'e0927000-0000-4000-8000-000000000001',
+ _contact uuid DEFAULT 'e0937000-0000-4000-8000-0000000000cd',
+ _expected uuid DEFAULT 'e0917000-0000-4000-8000-000000000001',
+ _before_time timestamptz DEFAULT NULL,_before_id uuid DEFAULT NULL,_role text DEFAULT 'authenticated')
+RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(_actor,format('SELECT public.list_client_portal_request_drafts(%L,%L,%L,%L,%L)',
+  _expected,_tenant,_contact,_before_time,_before_id),_role)
+$$;
+CREATE TEMP TABLE private_history_before AS SELECT
+ (SELECT count(*) FROM public.paige_actions) work,(SELECT count(*) FROM public.audit_logs) audits,
+ (SELECT count(*) FROM public.paige_customer_actions) actions,(SELECT count(*) FROM public.notifications) notices;
+CREATE TEMP TABLE private_history_read AS SELECT pg_temp.private_history() result;
+SELECT ok(has_function_privilege('authenticated','public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)','EXECUTE'),'private history is authenticated-only');
+SELECT is((SELECT jsonb_array_length(result->'requests') FROM private_history_read),1,'returning owner discovers the original private request');
+SELECT is((SELECT result#>>'{requests,0,request,work_id}' FROM private_history_read),(SELECT result#>>'{request,work_id}' FROM private_request_result),'history has the same original Work identity');
+SELECT is((SELECT result#>>'{requests,0,intent_id}' FROM private_history_read),'e0959000-0000-4000-8000-000000000010','original intent is recovered from original Work, not a browser registry');
+SELECT is((SELECT result#>>'{requests,0,request,version}' FROM private_history_read),(SELECT result#>>'{request,version}' FROM private_request_result),'original private version remains exact');
+SELECT is((SELECT result->>'missing_is_rejection' FROM private_history_read),'false','history never turns an empty page into a rejected request');
+SELECT is((SELECT result->>'more' FROM private_history_read),'false','single saved request does not invent more history');
+SELECT is((SELECT result->'next_cursor' FROM private_history_read),'null'::jsonb,'last page has no replacement cursor');
+SELECT ok((SELECT result::text NOT LIKE '%payload%' AND result::text NOT LIKE '%assigned_subagent_slug%'
+ AND result::text NOT LIKE '%linked_user_id%' FROM private_history_read),'history exposes no arbitrary Work payload, routing or login identity');
+SELECT is(pg_temp.private_history(_expected=>'e0917000-0000-4000-8000-000000000002')->>'sqlstate','42501','history expected actor is a comparison, not authority');
+SELECT is(pg_temp.private_history(_tenant=>'e0927000-0000-4000-8000-000000000002')->>'sqlstate','42501','history refuses another current business');
+SELECT is(pg_temp.private_history(_contact=>'e0937000-0000-4000-8000-0000000000ce')->>'sqlstate','42501','history refuses another business CRM record');
+SELECT is(pg_temp.private_history(_actor=>'e0917000-0000-4000-8000-00000000000c',_expected=>'e0917000-0000-4000-8000-00000000000c')->>'sqlstate','42501','customer cannot list private owner requests');
+SELECT is(pg_temp.private_history(_role=>'anon')->>'sqlstate','42501','anonymous history is unavailable');
+SELECT is(pg_temp.private_history(_role=>'service_role')->>'sqlstate','42501','service cannot substitute for owner history');
+SELECT is(pg_temp.private_history(_before_time=>now())->>'sqlstate','22023','half a keyset cursor refuses');
+SELECT is(pg_temp.private_history(_before_time=>'infinity',_before_id=>'e0959000-0000-4000-8000-000000000010')->>'sqlstate','22023','unbounded cursor timestamp refuses');
+SELECT ok((SELECT b.work=(SELECT count(*) FROM public.paige_actions) AND b.audits=(SELECT count(*) FROM public.audit_logs)
+ AND b.actions=(SELECT count(*) FROM public.paige_customer_actions) AND b.notices=(SELECT count(*) FROM public.notifications)
+ FROM private_history_before b),'history and every refusal write no Work, audit, customer action or notice');
 
 SELECT * FROM finish();
 ROLLBACK;

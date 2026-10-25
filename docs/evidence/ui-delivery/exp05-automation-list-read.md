@@ -31,7 +31,7 @@ OWNER_INTENT: PAIGE and ZION can inspect ongoing work within existing limits and
 MUST_NOT_HAPPEN: no process mutation, activation, approval, execution, provider call, business-result replay or false completion
 MUST_PRESERVE: original automations.list/read-only member lane, caller JWT/RLS/resolve_automation_autonomy, original non-tenant code and all other shared Chat sources
 ACCEPTANCE_CRITERIA: a current eligible customer can inspect a bounded selected-workspace process window, see unavailable readiness honestly, retain original definitions and return without duplicate work
-INTERNAL_BUILD_IDENTITY: reviewed-source=fd11620d092acb77b7ab7ce93764c6e9f8d82e1f; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(bounded-automation-list); evidence=docs/evidence/ui-delivery/exp05-automation-list-read.md
+INTERNAL_BUILD_IDENTITY: reviewed-source=db30f7928daa09c0623724ffae7c37b0477c8c46; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(bounded-automation-list); evidence=docs/evidence/ui-delivery/exp05-automation-list-read.md
 RELEASE_CHANNEL: development: source and protected recording-port proof only
 RELEASE_CLASSIFICATION: internal-only: no customer version, announcement, activation or complete Experience claim
 CUSTOMER_RELEASE_IDENTITY: none: internal reliability improvement without a separately approved customer release identity
@@ -59,6 +59,9 @@ type narrowing defects were corrected before publication; an invalid positive
 Operator fixture was corrected to preserve the actual original admission rather
 than force privileges. The original non-tenant try/catch is byte-identical,
 SHA256848f030704511f730766aaf8bdf8806cada6001e34f6be213b7091502d4fe67b.
+Provider readiness and execution history are explicitly not checked/read, in
+both the model-facing fields and explanatory note. Resolving permissions and
+trigger configuration does not establish either missing evidence class.
 
 ## Orchestration Contract and catalogue synchronization
 

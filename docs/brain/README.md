@@ -1,3 +1,11 @@
+## EXP04 exact preceding source releases — October24
+
+Original [#2741](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2741) reviewedb3c2dc01 (sequential LOWER6386092377/6386513022; all11 checks/two statuses SUCCESS) merged1b4a4a73f88c05a97b7a91ab3b6f09bc3d349ed1/tree6a632f0f, normal webDx6iqVuQKGXJD1Z4thY7qkAgeeXj and original immutable/public1b-mvmlokow/null readback retained. Original prepared-request input remains source-only/unused, with verified sender/exact message/HIGH request/atomic fields missing and original holds intact; no prepared-signing activation.
+
+Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) revieweda5e5984e (sequential LOWER6389425023/6389733892; all10 applicable checks+two statuses SUCCESS, schema-free Preview SKIPPED) merged d53d99e951e0f18ac1a6895598f2e4211e1367e5/tree2f176875 exactly. WebcpgpMJPHC1ZVHT4GqYwBj1w22GaE and immutable authenticated-MCP/publicd53-mvmwsq4f/null verified. The two INITIAL_SESSION guards retain original references and every material Auth/native revocation boundary. Protected original-reference customer FAIL remains open pending fresh authorized reacceptance; no ref replay or customer PASS is inferred. [Receipt6389808952](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768#issuecomment-6389808952).
+
+[Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and existing [EXP04 journey](../delivery/exp04-get-paid-deliver-journey.md) retain exact source/review/CI/deployment/acceptance boundaries. This mechanical closeout adds no product, activation, algorithm/capability maturity, provider/role change, customer version or recursive shipped row. Pending2745/2775 and full O1–O12/one integrated founder evaluation remain open.
+
 ## EXP09 private multi-file CURA Chat — October24 source released; customer proof owed
 
 Original [#2765](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2765)
@@ -79,6 +87,30 @@ Exact5XRe READY and both public77b-mvmlvuip/null observed16:23:55–56UTC. Norma
 Edge40111131429 succeeded with zero affected/retired entries and no deployment.
 The original browser parser/transport is preserved; the new bound native recovery
 reader and model projection remain unadmitted. No new SQL belongs to this reader.
+
+Original claim #2766 (reviewedadd90, all11/twoSUCCESS, permitted sequential
+AUTHOR-REVIEW / LOWER ASSURANCE) merged `a0530ddfbccd8b3585e8f6f34e76fbedabf0395b`;
+exact AT7L READY and both publica053-mvmnj8o4/null were observed17:09UTC.
+Original commit/readback #2772 (reviewed02fac, all10/twoSUCCESS; Preview actually
+SKIPPED) merged `75f344d9bb35ba62e12610ceaf4af13c25b634bd`; exact923q READY
+and both public75f-mvmxhosd/null were observed21:48UTC. Original native decline
+#2777 (reviewed9ce, all11/genuine Preview/twoSUCCESS, LOWER6390305952) merged
+`52adfd1f42b51772adfe04be98a01066a51487eb`; exactApUQ READY and both
+public52adfd-mvmyxese/null were observed22:28UTC. All reviewed owning blobs and
+incoming E01/E09/E04 implementations are retained. Normal Edge jobs succeeded;
+2772/2777 selected no live importer and correctly skipped deploy/readback/tag,
+while2766 returned no step detail and supports no new Edge-version claim.
+No own SQL belongs to these consumers; original19 native/canonical metadata remain
+exact. Automatic review usage failure is unavailable assurance, never a source
+finding or passing non-author review. Exact identities and source-only boundaries
+are in the sole Master4.0 rows and original receipts
+[6387134613](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2766#issuecomment-6387134613),
+[6389955250](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2772#issuecomment-6389955250),
+[6390332208](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2777#issuecomment-6390332208).
+The fixed native consumers remain unadmitted. Ordinary Chat still needs its
+original native claim before generic CAS, exact stored-argument Kit/commit,
+native decline before generic cancellation and original-only recovery integration.
+No capability/algorithm/customer status or complete Experience acceptance changes.
 
 See the sole [Master4.0 shipped rows](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log),
 [actual production readback](../evidence/exp05-weekly-chat-source-production-readback.json),
@@ -302,8 +334,13 @@ Contract: [Team Hub collaboration contract](../delivery/exp08-team-hub-collabora
 Evidence: [increment 1 record](../evidence/ui-delivery/exp08-team-hub-increment1.md). Owed: the
 §32 persisted-apply check and an authenticated drive on the owner-designated SOLO account.
 
-**Not built:** a team `/PAIGE` palette, specialist requests through EXP05 Work, the Team work
-panel, attachments, Knowledge and Chat/Live continuity (increments 2–4).
+**Increment 2 (2026-10-24, `PROOF_OWED`, not yet merged):** team work. `/` commands; *Draft a
+task* creates one Operations task through `plan_assign_task_scoped` with an exactly-once link in
+`team_hub_work_refs` (migration `20271113860008`); specialist, approval and meeting requests only
+prefill PAIGE; the Team work panel reads status from `plan_items`. Contract:
+[increment 2 work contract](../delivery/exp08-team-hub-increment2-work-contract.md).
+
+**Not built:** attachments, and PAIGE/Knowledge and Chat/Live continuity (increments 3–4).
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

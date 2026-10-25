@@ -21,12 +21,13 @@ import { renderPresentedPdf, sealAgreementPdf, UnrenderableDocumentError, Unrend
 import { expiryFromNow, mintSignerToken, RETRIEVAL_TOKEN_TTL_DAYS, sha256Hex } from "./token.ts";
 import { notify, ownerNotificationEmail } from "./notify.ts";
 import { verifyRetainedAgreementPdf } from "./retained-document.ts";
+import { readPreparedSealSource, type SealSourceDb } from "./prepared-seal-source.ts";
 
 export type SealOutcome =
   | { ok: true; sealedSha256: string; sealedKey: string }
   | { ok: false; reason: "not_ready" | "already_sealed" | "missing_presented" | "render_failed" | "storage_failed" | "verify_failed" | "unrenderable_name"; detail: string };
 
-interface Db {
+interface Db extends SealSourceDb {
   from: (t: string) => any;
   storage: { from: (b: string) => any };
 }
@@ -57,7 +58,7 @@ export async function verifiedCompletedCopy(db: Db, record: {
 
 export async function sealAndComplete(db: Db, agreementId: string): Promise<SealOutcome> {
   const { data: agreement, error: readError } = await db.from("paige_agreements")
-    .select("id,tenant_id,title,status,body_source,body_markdown,content_storage_key,content_sha256,sealed_sha256,sealed_storage_key")
+    .select("id,tenant_id,contact_id,version,title,status,body_source,body_markdown,content_storage_key,content_sha256,sealed_sha256,sealed_storage_key")
     .eq("id", agreementId).maybeSingle();
 
   if (readError || !agreement) return { ok: false, reason: "not_ready", detail: "agreement unavailable" };
@@ -68,20 +69,28 @@ export async function sealAndComplete(db: Db, agreementId: string): Promise<Seal
     return { ok: false, reason: "missing_presented", detail: "no frozen document to seal" };
   }
 
-  const { count: outstanding } = await db.from("paige_agreement_signers")
-    .select("id", { count: "exact", head: true }).eq("agreement_id", agreementId).neq("status", "signed");
-  if ((outstanding ?? 1) > 0) return { ok: false, reason: "not_ready", detail: "signatures outstanding" };
+  const preparedSource=await readPreparedSealSource(db,agreement);
+  if(preparedSource.kind==='unavailable')return {ok:false,reason:'not_ready',detail:'original preparation and signing evidence could not be verified'};
 
-  const { data: signers } = await db.from("paige_agreement_signers")
-    .select("full_name,email,signer_role,signing_order,status,typed_name,signed_at,esign_consent_at,esign_consent_slug,esign_consent_version,signing_ip,signing_user_agent,signature_image_png")
+  const { count: outstanding,error:outstandingError } = await db.from("paige_agreement_signers")
+    .select("id", { count: "exact", head: true }).eq("agreement_id", agreementId).neq("status", "signed");
+  if (outstandingError||!Number.isSafeInteger(outstanding)||outstanding!==0) return { ok: false, reason: "not_ready", detail: "signatures outstanding or unverified" };
+
+  const { data: signers,error:signersError } = await db.from("paige_agreement_signers")
+    .select("id,full_name,email,signer_role,signing_order,status,typed_name,signed_at,esign_consent_at,esign_consent_slug,esign_consent_version,signing_ip,signing_user_agent,signature_image_png")
     .eq("agreement_id", agreementId).order("signing_order", { ascending: true });
 
   // Ordered by (created_at, seq) so two renderings of the same history can never disagree.
-  const { data: events } = await db.from("paige_agreement_events")
+  const { data: events,error:eventsError } = await db.from("paige_agreement_events")
     .select("event_type,created_at,actor_kind,actor_email,ip,seq")
     .eq("agreement_id", agreementId).order("created_at", { ascending: true }).order("seq", { ascending: true });
 
-  const { data: tenant } = await db.from("tenants").select("name").eq("id", agreement.tenant_id).maybeSingle();
+  const { data: tenant,error:tenantError } = await db.from("tenants").select("name").eq("id", agreement.tenant_id).maybeSingle();
+  if(signersError||eventsError||tenantError||!Array.isArray(signers)||signers.length===0
+    ||signers.some((s:Record<string,unknown>)=>s.status!=='signed')||!Array.isArray(events)
+    ||typeof tenant?.name!=='string'||!tenant.name.trim()){
+    return {ok:false,reason:'not_ready',detail:'original signing record and history could not be verified'};
+  }
 
   // ── WHAT THE SIGNER WAS SHOWN, and how we know ────────────────────────────────────────────────
   // There are two freeze paths and they freeze different media, so this reads whichever one applies
@@ -142,7 +151,9 @@ export async function sealAndComplete(db: Db, agreementId: string): Promise<Seal
       agreementId: agreement.id,
       tenantName: tenant?.name ?? "",
       sealedAtIso: new Date().toISOString(),
-      parties: (signers ?? []).map((s: Record<string, unknown>) => ({
+      ...(preparedSource.kind==='prepared'?{preparedFields:preparedSource.fields}:{}),
+      parties: (preparedSource.kind==='prepared'?preparedSource.signers:(signers ?? [])).map((s: Record<string, unknown>) => ({
+        signerId:typeof s.id==='string'?s.id:undefined,
         fullName: String(s.full_name ?? ""),
         email: String(s.email ?? ""),
         role: String(s.signer_role ?? ""),

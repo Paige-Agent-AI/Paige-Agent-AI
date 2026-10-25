@@ -6,15 +6,15 @@ import fixture from './fixtures/agreement-document-source.json';
 import {prepareAgreementFields} from '../../../supabase/functions/_shared/agreements/field-preparation';
 import {prepareCommercialPresentation,commercialPresentationText} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
 import {assembleFixedRepaymentSchedule} from '../../../supabase/functions/_shared/sales-collections/model';
-import type {AgreementDocumentView,AgreementDocumentCommand,AgreementCommercialReview} from './agreementDocumentApi';
+import type {AgreementDocumentView,AgreementDocumentCommand,AgreementCommercialReview,AgreementSignatureReference} from './agreementDocumentApi';
 import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
 import {projectPreparedSignatureReview} from '../../../supabase/functions/_shared/agreements/prepared-signature-review-contract';
 import type {AssignedField} from './agreementDocumentModel';
 import {useSalesDraftExit} from '../sales-dialog';
-const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),sources:vi.fn(),review:vi.fn(),signing:vi.fn(),senders:vi.fn(),requestReview:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
+const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),sources:vi.fn(),review:vi.fn(),signing:vi.fn(),senders:vi.fn(),requestReview:vi.fn(),submit:vi.fn(),recovery:vi.fn(),signatureRetained:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{}}));
-vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history,readAgreementCommercialSources:ports.sources,readAgreementCommercialReview:ports.review,readAgreementSigningReview:ports.signing,readAgreementSigningSenders:ports.senders,readAgreementSignatureRequest:ports.requestReview}));
-vi.mock('./AgreementDocumentFields',()=>({AgreementDocumentFields:(props:{canEdit:boolean;source:unknown;document:unknown;bytes:Uint8Array;fields:AssignedField[];savedPreparationSha:string;onChange:(fields:AssignedField[])=>void;onSave:(value:Awaited<ReturnType<typeof prepareAgreementFields>>)=>void})=><div data-field-inspector data-editable={props.canEdit} data-saved-fields-sha={props.savedPreparationSha}>
+vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history,readAgreementCommercialSources:ports.sources,readAgreementCommercialReview:ports.review,readAgreementSigningReview:ports.signing,readAgreementSigningSenders:ports.senders,readAgreementSignatureRequest:ports.requestReview,submitAgreementSignatureRequest:ports.submit,readAgreementSignatureRecovery:ports.recovery}));
+vi.mock('./AgreementDocumentFields',()=>({AgreementDocumentFields:(props:{canEdit:boolean;lockedReason?:string;source:unknown;document:unknown;bytes:Uint8Array;fields:AssignedField[];savedPreparationSha:string;onChange:(fields:AssignedField[])=>void;onSave:(value:Awaited<ReturnType<typeof prepareAgreementFields>>)=>void})=><div data-field-inspector data-editable={props.canEdit} data-saved-fields-sha={props.savedPreparationSha}><p>{props.lockedReason}</p>
   <span data-displayed-byte-length>{props.bytes.length}</span><span>{props.fields.length} proposed fields</span><button disabled={!props.canEdit} onClick={()=>props.onChange([...props.fields,{id:'f1111111-0000-4000-8000-000000000001',signer_id:fixture.signers[0].id,kind:'signature',page:1,x:20,y:20,width:120,height:40,required:true,label:'Signature'}])}>Place controlled field</button>
   <button disabled={!props.canEdit} onClick={()=>{ports.fieldWork=prepareAgreementFields(props.source,props.document,props.fields).then(props.onSave);}}>Save controlled fields</button></div>}));
 import {AgreementDocumentPreparation,type DocumentGuard} from './AgreementDocumentPreparation';
@@ -29,16 +29,16 @@ async function writeReply(command:AgreementDocumentCommand,source=record.source,
   next.source=structuredClone(source);next.preparation={...next.preparation,id:command.request_id,revision_no:2,event_id:crypto.randomUUID(),source_version:source.version,source_updated_at:source.updated_at,manifest:prepared.manifest,preparation_sha256:prepared.preparation_sha256,document_sha256:document.sha256,document_byte_length:document.byte_length};
   return {ok:true,value:{view:next,receipt:{state:'recorded',historical_receipt:true,id:next.preparation.id,event_id:next.preparation.event_id,revision_no:2,document_sha256:document.sha256,preparation_sha256:prepared.preparation_sha256,is_selected:true}}};
 }
-function Harness({requestId=null,resume={draft:[],busy:false,uncertain:false}}:{requestId?:string|null;resume?:DocumentGuard}){
-  const [guard,setGuard]=React.useState<DocumentGuard>(resume);const exit=useSalesDraftExit({fields:guard.draft,invitations:guard.signatureDraft??null},guard.busy,ports.return,{uncertain:guard.uncertain});
+function Harness({requestId=null,resume={draft:[],busy:false,uncertain:false},signatureReference=null}:{requestId?:string|null;resume?:DocumentGuard;signatureReference?:AgreementSignatureReference|null}){
+  const [guard,setGuard]=React.useState<DocumentGuard>(resume),[signature,setSignature]=React.useState(signatureReference);const exit=useSalesDraftExit({fields:guard.draft,invitations:guard.signatureDraft??null},guard.busy,ports.return,{uncertain:guard.uncertain,uncertainKind:guard.signatureUncertain?'signature_request':undefined});
   const adoptBaseline=exit.adoptBaseline;
   React.useLayoutEffect(()=>{adoptBaseline([]);},[adoptBaseline]);
   return <><AgreementDocumentPreparation tenantId={fixture.source.tenant_id} actorId={actor} agreementId={fixture.source.agreement_id} requestId={requestId} authorityKey="controlled" isCurrent={()=>current&&exit.alive.current}
-    resume={guard} onGuard={(next,baseline)=>{setGuard(next);if(baseline)exit.adoptBaseline({fields:baseline,invitations:null});}}
-    onRetainRequest={id=>{if(!ports.retained(id))return false;ports.checkpoints.push(id??'');return true;}}
+    resume={guard} onGuard={(next,baseline)=>{setGuard(next);if(baseline)exit.adoptBaseline({fields:baseline,invitations:next.signatureDraft??null});}}
+    onRetainRequest={id=>{if(!ports.retained(id))return false;ports.checkpoints.push(id??'');return true;}} signatureReference={signature} onRetainSignatureRequest={reference=>{if(ports.signatureRetained(reference)!==true)return false;setSignature(reference);return true;}}
     onRequest={exit.request} onReturn={ports.return} onAddSigners={vi.fn()} onAccessRefused={ports.refused}/>{exit.confirmation}</>;
 }
-async function mount(requestId:string|null=null,resume?:DocumentGuard){host=document.createElement('div');document.body.append(host);root=createRoot(host);await act(async()=>root.render(<Harness requestId={requestId} resume={resume}/>));}
+async function mount(requestId:string|null=null,resume?:DocumentGuard,signatureReference?:AgreementSignatureReference){host=document.createElement('div');document.body.append(host);root=createRoot(host);await act(async()=>root.render(<Harness requestId={requestId} resume={resume} signatureReference={signatureReference}/>));}
 function button(name:string){const found=[...host.querySelectorAll<HTMLButtonElement>('button')].find(b=>b.textContent?.trim()===name);if(!found)throw Error('Expected '+name);return found;}
 async function click(name:string){await act(async()=>button(name).click());}
 beforeEach(async()=>{vi.stubGlobal('crypto',webcrypto);vi.clearAllMocks();ports.checkpoints.length=0;ports.fieldWork=null;current=true;ports.retained.mockReturnValue(true);ports.pdf.mockResolvedValue({ok:true,value:Uint8Array.from(Buffer.from(fixture.bytes,'base64'))});
@@ -241,6 +241,7 @@ it('shows the actual complete checked request, restores focus and keeps approval
   expect(host.textContent).toContain('Approval, sending, delivery and signatures have not occurred.');
   expect(host.textContent).not.toContain('[[PAIGE_AGREEMENT_SIGNING_LINK]]');
   await click('Edit invitations');expect(host.textContent).not.toContain('Request checked · not sent');
+  expect(document.activeElement).toBe(host.querySelector('input[aria-label="Invitation subject"]'));
   expect(ports.save).not.toHaveBeenCalled();expect(ports.requestReview).toHaveBeenCalledOnce();
 });
 it('keeps separate client and business messages when the active recipient changes',async()=>{
@@ -251,4 +252,85 @@ it('keeps separate client and business messages when the active recipient change
   await act(async()=>setControl(host.querySelector('textarea')!,'Business signer invitation.'));
   await act(async()=>setControl(host.querySelector('select[aria-label="Invitation recipient"]')!,fixture.signers[0].id));
   expect((host.querySelector('textarea') as HTMLTextAreaElement).value).toBe('Client invitation with requested details.');
+});
+
+async function checkedInvitations(){
+  const review=await openInvitations();await chooseSender();ports.signatureRetained.mockReturnValue(true);
+  ports.requestReview.mockImplementation(async(_ctx,_review,sender,draft)=>good({kind:'prepared_signature_request_review',tool:'agreement_send',approval:'not_requested',execution:'unavailable',request_sha256:'a'.repeat(64),args:{
+    agreementId:review.request.agreement_id,expectedTenantId:review.request.tenant_id,operationId:draft.operation_id,preparationId:review.request.preparation_id,
+    preparationSha256:review.request.preparation_sha256,reviewSha256:review.review_sha256,source:review.request.expected_source,title:review.title,document:review.document,recipients:review.signers,requestSchemaVersion:1,
+    sender:{connector_id:sender.connector_id,provider:'sendgrid',from_address:sender.from_address,from_name:'Controlled Studio',reply_to:null},
+    messages:draft.messages.map((m:{signer_id:string;subject:string;body_text:string})=>({...m,to:review.signers.find(s=>s.id===m.signer_id)!.email,body_html:'unused in this view'}))}}));
+  ports.submit.mockImplementation(async(_ctx,wire,approved)=>good(approved?{kind:'prepared_signature_request_result',state:'provider_accepted',tenant_id:fixture.source.tenant_id,actor_id:actor,
+    operation_id:wire.args.operationId,request_sha256:wire.request_sha256,agreement_id:fixture.source.agreement_id,work_id:request,receipt_id:event}:
+    {state:'approval_required',capability:'agreement_send',fingerprint:'b'.repeat(16),operation_id:wire.args.operationId,request_sha256:wire.request_sha256,summary:'Review these exact invitations.',expires_at:'2099-12-01T12:00:00Z'}));
+  await click('Check complete request');return review;
+}
+it('requires a retained return reference and deliberate canonical approval before sending',async()=>{
+  await checkedInvitations();expect(ports.submit).not.toHaveBeenCalled();ports.signatureRetained.mockReturnValue(false);
+  await click('Prepare approval');expect(ports.submit).not.toHaveBeenCalled();expect(host.textContent).toContain('return reference');
+  ports.signatureRetained.mockReturnValue(true);await click('Prepare approval');expect(ports.submit).toHaveBeenCalledOnce();
+  expect(ports.submit.mock.calls[0][2]).toBeUndefined();expect(ports.signatureRetained).toHaveBeenCalledWith({operation_id:ports.submit.mock.calls[0][1].args.operationId,request_sha256:'a'.repeat(64)});
+  expect(host.textContent).toContain('Review before sending');expect(host.textContent).not.toContain('Signature completed');
+  await click('Approve and send signing requests');expect(ports.submit).toHaveBeenCalledTimes(2);expect(ports.submit.mock.calls[1][2]).toBe('b'.repeat(16));
+  expect(host.textContent).toContain('Email provider accepted the requests');expect(host.textContent).toContain('does not confirm delivery');expect(host.textContent).toContain(event);
+});
+it('keeps an interrupted approved attempt guarded and reads the original receipt without another send',async()=>{
+  await checkedInvitations();await click('Prepare approval');ports.submit.mockResolvedValueOnce({ok:false,reason:'unconfirmed',message:'Check the original request.'});
+  await click('Approve and send signing requests');expect(host.textContent).toContain('Verification pending');
+  const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+  const wire=ports.submit.mock.calls[0][1];ports.recovery.mockResolvedValue(good({kind:'prepared_signature_request_result',state:'provider_partial',tenant_id:fixture.source.tenant_id,actor_id:actor,
+    operation_id:wire.args.operationId,request_sha256:wire.request_sha256,agreement_id:fixture.source.agreement_id,work_id:request,receipt_id:event}));
+  await click('Check original request');expect(ports.submit).toHaveBeenCalledTimes(2);expect(ports.recovery).toHaveBeenCalledOnce();expect(host.textContent).toContain('Some requests were accepted');
+  expect([...host.querySelectorAll('button')].some(b=>b.textContent?.includes('Approve and send'))).toBe(false);
+});
+
+it('keeps history available for a noneditable signed-request source without opening another approval',async()=>{
+  record.can_edit=false;record.can_prepare=false;record.source.status='sent';ports.read.mockResolvedValue(good(record));
+  const reference={operation_id:request,request_sha256:'a'.repeat(64)};
+  ports.recovery.mockResolvedValue(good({kind:'prepared_signature_request_result',state:'provider_accepted',tenant_id:fixture.source.tenant_id,actor_id:actor,
+    ...reference,agreement_id:fixture.source.agreement_id,work_id:request,receipt_id:event}));
+  await mount(null,undefined,reference);expect(host.textContent).toContain('Email provider accepted the requests');expect(host.textContent).toContain(event);
+  expect(ports.recovery.mock.calls[0][1]).toEqual(reference);expect(ports.submit).not.toHaveBeenCalled();expect(ports.signing).not.toHaveBeenCalled();
+  expect(host.querySelector('[data-field-inspector]')?.getAttribute('data-editable')).toBe('false');
+});
+it('returns keyboard focus to original history when an uncertain request disables a fresh review',async()=>{
+  await checkedInvitations();await click('Prepare approval');ports.submit.mockResolvedValueOnce({ok:false,reason:'unconfirmed',message:'Check the original request.'});await click('Approve and send signing requests');
+  const wire=ports.submit.mock.calls[0][1];ports.recovery.mockResolvedValue(good({kind:'prepared_signature_request_result',state:'outcome_unknown',tenant_id:fixture.source.tenant_id,actor_id:actor,
+    operation_id:wire.args.operationId,request_sha256:wire.request_sha256,agreement_id:fixture.source.agreement_id,work_id:request,receipt_id:null}));
+  await click('Back to document');expect(host.querySelectorAll('[role=alertdialog]')).toHaveLength(1);expect(host.textContent).toContain('Leaving does not cancel the signing request.');
+  await click('Leave and check later');expect(document.activeElement?.textContent).toBe('Original signing request');expect(button('Review saved signing request').disabled).toBe(true);
+  expect(host.textContent).toContain('The original request needs verification');expect(ports.recovery).toHaveBeenCalledOnce();expect(ports.submit).toHaveBeenCalledTimes(2);
+});
+it('cannot double-dispatch a batched approval click',async()=>{
+  await checkedInvitations();await click('Prepare approval');
+  await act(async()=>{button('Approve and send signing requests').click();button('Approve and send signing requests').click();});expect(ports.submit).toHaveBeenCalledTimes(2);
+});
+it('shows a genuine expired review without issuing another approval or automatic action',async()=>{
+  await checkedInvitations();ports.submit.mockImplementationOnce(async(_ctx,wire)=>good({state:'approval_required',capability:'agreement_send',fingerprint:'b'.repeat(16),
+    operation_id:wire.args.operationId,request_sha256:wire.request_sha256,summary:'Original expired review.',expires_at:'2000-01-01T00:00:00Z'}));
+  await click('Prepare approval');expect(host.textContent).toContain('This approval review expired');expect(button('Approve and send signing requests').disabled).toBe(true);
+  expect(ports.submit).toHaveBeenCalledOnce();expect(ports.recovery).not.toHaveBeenCalled();
+});
+
+it('unlocks a fresh review only after the original native reader confirms expiry',async()=>{
+  await checkedInvitations();ports.submit.mockImplementationOnce(async(_ctx,wire)=>good({state:'approval_required',capability:'agreement_send',fingerprint:'b'.repeat(16),
+    operation_id:wire.args.operationId,request_sha256:wire.request_sha256,summary:'Original expired review.',expires_at:'2000-01-01T00:00:00Z'}));
+  await click('Prepare approval');const wire=ports.submit.mock.calls[0][1];ports.recovery.mockResolvedValue(good({kind:'prepared_signature_request_review_recovery',state:'review_unavailable',reason:'expired',operation_id:wire.args.operationId,request_sha256:wire.request_sha256}));
+  await click('Check original request');expect(host.textContent).toContain('Approval review expired');expect(button('Edit invitations').disabled).toBe(false);
+  await click('Edit invitations');expect(host.textContent).not.toContain('Review before sending');expect(ports.submit).toHaveBeenCalledOnce();
+  expect(document.activeElement).toBe(host.querySelector('input[aria-label="Invitation subject"]'));
+  await click('Check complete request');expect(ports.requestReview.mock.calls.at(-1)![3].operation_id).not.toBe(wire.args.operationId);expect(ports.submit).toHaveBeenCalledOnce();
+});
+
+it('checks a distinct operation after leaving an issued review to refresh the sending identity',async()=>{
+  await checkedInvitations();await click('Prepare approval');const original=ports.submit.mock.calls[0][1].args.operationId;
+  await click('Refresh email identities');await click('Check complete request');
+  expect(ports.requestReview.mock.calls.at(-1)![3].operation_id).not.toBe(original);expect(ports.submit).toHaveBeenCalledOnce();
+});
+
+it('shows an actual canonical refusal without claiming a send or automatic retry',async()=>{
+  await checkedInvitations();ports.submit.mockResolvedValueOnce(good({state:'refused',code:'CAPABILITY_UNAVAILABLE'}));
+  await click('Prepare approval');expect(host.textContent).toContain('Request refused');expect(host.textContent).not.toContain('Email provider accepted');
+  expect(ports.submit).toHaveBeenCalledOnce();expect(ports.recovery).not.toHaveBeenCalled();
 });

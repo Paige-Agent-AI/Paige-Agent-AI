@@ -12,7 +12,7 @@ type Obj=Record<string,unknown>;
 type State={f:Awaited<ReturnType<typeof fixture>>;body:Obj;role:string;provider:boolean;lane:string;calls:string[];
  pending:Obj|null;workRow:Obj|null;credentials:Obj|null;outcome:Obj|null;child:Obj|null;providerOutcome:string;callbackOutcome:string;
  writes:{approval:number;claim:number;audit:number;work:number;credentials:number;message:number;provider:number;publication:number};
- auditFails:boolean;claimLost:boolean;retireAfterProvider:boolean;callbackLost:boolean};
+ auditFails:boolean;claimLost:boolean;retireAfterProvider:boolean;callbackLost:boolean;switchDuringOuterAuth:boolean};
 let current:State;
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 const nativeError=(code='42501')=>json({code,message:'Controlled private cause'},403);
@@ -31,7 +31,9 @@ async function transport(input:RequestInfo|URL,init?:RequestInit):Promise<Respon
  }
  if(url.pathname.startsWith('/rest/v1/rpc/')){
   const name=url.pathname.slice('/rest/v1/rpc/'.length),a=await req.json();
-  if(['current_user_tenant_id','is_tenant_admin','read_paige_agreement_preparation'].includes(name))return json((await s.f.caller.rpc(name,a)).data);
+  if(['current_user_tenant_id','is_tenant_admin','read_paige_agreement_preparation'].includes(name)){
+   const r=await s.f.caller.rpc(name,a);if(name==='is_tenant_admin'&&s.switchDuringOuterAuth){s.switchDuringOuterAuth=false;s.f.state.activeTenant=work;}return json(r.data);
+  }
   if(name==='_read_agreement_document_preparation')return json((await s.f.service.rpc(name,a)).data);
   if(name==='check_public_rate_limit')return json(true);
   if(name==='is_tenant_admin_as')return json(s.role==='owner'||s.role==='admin');
@@ -42,7 +44,7 @@ async function transport(input:RequestInfo|URL,init?:RequestInit):Promise<Respon
   if(name==='_read_prepared_agreement_request_status'){
    assert.deepEqual(a,{_actor:actor,_tenant:tenant,_operation:operation,_request_sha256:s.body.expected_request_sha256});return json(s.outcome);
   }
-  if(name==='_read_prepared_agreement_confirmation')return json(s.pending?{state:'proposed',confirmation_id:confirmation,expires_at:new Date(Date.now()+600000).toISOString(),args:s.pending.args}:null);
+  if(name==='_read_prepared_agreement_confirmation')return json(s.pending?{state:s.pending.consumed?'consumed':'proposed',confirmation_id:confirmation,expires_at:new Date(Date.now()+600000).toISOString(),args:s.pending.args}:null);
   if(name==='_issue_prepared_agreement_confirmation'){
    s.writes.approval++;s.pending={args:a._args,fingerprint:a._fingerprint,issued:a._request_nonce,consumed:false};return json({expires_at:new Date(Date.now()+600000).toISOString()});
   }
@@ -111,7 +113,7 @@ async function transport(input:RequestInfo|URL,init?:RequestInit):Promise<Respon
 async function arrange(){
  const f=await fixture();await executeOwnerPreparation(prepare(),f.caller,f.service);await executeOwnerPreparation(save(),f.caller,f.service);
  current={f,body:{},role:'owner',provider:true,lane:'confirm',calls:[],pending:null,workRow:null,credentials:null,outcome:null,child:null,
-  providerOutcome:'provider_accepted',callbackOutcome:'provider_accepted',writes:{approval:0,claim:0,audit:0,work:0,credentials:0,message:0,provider:0,publication:0},auditFails:false,claimLost:false,retireAfterProvider:false,callbackLost:false};
+  providerOutcome:'provider_accepted',callbackOutcome:'provider_accepted',writes:{approval:0,claim:0,audit:0,work:0,credentials:0,message:0,provider:0,publication:0},auditFails:false,claimLost:false,retireAfterProvider:false,callbackLost:false,switchDuringOuterAuth:false};
  const review={tenant_id:tenant,agreement_id:agreement,preparation_id:next,preparation_sha256:String(f.rows.get(next)!.preparation_sha256),expected_source:{client_id:client,version:1,updated_at:at}};
  const saved=await readPreparedSignatureReview(review,f.caller,f.service,actor);
  const initial={operation_id:operation,review,expected_review_sha256:saved.review_sha256,connector_id:connector,
@@ -129,6 +131,7 @@ Deno.test('original owner prepared command uses concrete governed execution',asy
   Deno.env.get=name=>({SUPABASE_URL:origin,SUPABASE_ANON_KEY:'synthetic-anon',SUPABASE_SERVICE_ROLE_KEY:'synthetic-service',SENDGRID_MAIL_SEND_API_KEY:'synthetic-configured'} as Record<string,string>)[name];
   globalThis.fetch=transport;await import('./index.ts?original-prepared-command-proof');
   const invoke=(extra:Obj={},query='?command=prepared-request')=>handler(new Request(origin+'/agreement-send'+query,{method:'POST',headers:{Authorization:'Bearer synthetic-owner','Content-Type':'application/json'},body:JSON.stringify({...current.body,...extra})}));
+  const recover=(extra:Obj={})=>handler(new Request(origin+'/agreement-send?review=request-recovery',{method:'POST',headers:{Authorization:'Bearer synthetic-owner','Content-Type':'application/json'},body:JSON.stringify({tenant_id:tenant,agreement_id:agreement,operation_id:operation,expected_request_sha256:current.body.expected_request_sha256,...extra})}));
   await t.step('exact original request proposes HIGH approval without Work, credentials or sending',async()=>{
    const s=await arrange(),r=await invoke(),v=await r.json();assert.equal(r.status,200);assert.equal(v.result.state,'approval_required');assert.equal(v.result.request_sha256,s.body.expected_request_sha256);
    assert.equal(r.headers.get('Cache-Control'),'no-store, private');assert.equal(r.headers.get('Vary'),'Authorization');assert.equal(s.writes.approval,1);assert.equal(s.writes.work+s.writes.credentials+s.writes.message+s.writes.provider,0);
@@ -167,6 +170,24 @@ Deno.test('original owner prepared command uses concrete governed execution',asy
   await t.step('query and body governance cannot fall through into legacy sending',async()=>{
    const s=await arrange();for(const query of ['?command=prepared-request&command=prepared-request','?command=prepared-request&review=prepared-request','?command=other'])assert.equal((await invoke({},query)).status,400);
    const v=await(await invoke({actor_id:work,approved:true})).json();assert.equal(v.result.state,'refused');assert.equal(s.writes.provider+s.writes.approval,0);
+  });
+  await t.step('return restores the exact unconsumed review from original confirmation records without writes',async()=>{
+   const s=await arrange();await invoke();const before={...s.writes},r=await recover();assert.equal(r.status,200);const v=await r.json();
+   assert.equal(v.result.kind,'prepared_signature_request_review_recovery');assert.equal(v.result.state,'review_available');assert.deepEqual(v.result.command,s.body);
+   assert.equal(v.result.review.request_sha256,s.body.expected_request_sha256);assert.deepEqual(s.writes,before);assert(!Object.hasOwn(v.result,'fingerprint'));
+  });
+  await t.step('return to committed provider history precedes current provider readiness and cannot send',async()=>{
+   const s=await arrange(),proposal=await(await invoke()).json();const original=(await(await invoke({approved_fingerprint:proposal.result.fingerprint})).json()).result;
+   s.provider=false;const before={...s.writes},r=await recover();assert.equal(r.status,200);assert.deepEqual((await r.json()).result,original);assert.deepEqual(s.writes,before);
+  });
+  await t.step('consumed review without Work cannot be reissued and changed source cannot be reconstructed as approved',async()=>{
+   let s=await arrange(),proposal=await(await invoke()).json();s.claimLost=true;await invoke({approved_fingerprint:proposal.result.fingerprint});const before={...s.writes};
+   const r=await recover();assert.equal(r.status,200);const result=(await r.json()).result;assert.equal(result.state,'review_unavailable');assert.equal(result.reason,'consumed');assert(!Object.hasOwn(result,'command'));assert.deepEqual(s.writes,before);
+   s=await arrange();await invoke();s.f.original.version++;const counts={...s.writes};assert.equal((await recover()).status,409);assert.deepEqual(s.writes,counts);
+  });
+  await t.step('a business switch cannot pair the initial authority with another business recovery target',async()=>{
+   const s=await arrange();s.switchDuringOuterAuth=true;const r=await recover({tenant_id:work});assert.equal(r.status,400);
+   assert.equal(s.calls.filter(c=>c.includes('/rpc/_read_prepared_agreement_request_status')).length,0);assert.equal(s.writes.provider+s.writes.claim+s.writes.approval,0);
   });
  }finally{Deno.serve=old.serve;Deno.env.get=old.env;globalThis.fetch=old.fetch;}
 });

@@ -5,9 +5,10 @@ import {AGREEMENT_SEND} from '../paige-spine/domains/agreement.ts';
 import {commsProviderExecutionAllowed} from '../comms-provider-boundary.ts';
 import {commsEmailContentDigest} from '../comms-email/contract.ts';
 import {canonicalPresentationJson} from './preparation-json.ts';
+import {sha256Hex} from './token.ts';
 import {admitPreparedSignatureRequest,preparedSignatureConfirmationStore,type PreparedSignatureCommandPorts} from './prepared-signature-command.ts';
 import {readExactPreparedSignatureRequest,type PreparedSignatureEmailPorts} from './prepared-signature-request.ts';
-import {readPreparedSignatureOutcome} from './prepared-signature-outcome.ts';
+import {readPreparedSignatureOutcome,PreparedSignatureStatusUnavailable} from './prepared-signature-outcome.ts';
 import {preparedSignatureWorkStore} from './prepared-signature-work.ts';
 import {preparedSignatureCredentialStore} from './prepared-signature-credentials.ts';
 import type {OwnerPreparationCaller,OwnerPreparationService} from './owner-preparation.ts';
@@ -26,6 +27,47 @@ type Context={caller:OwnerPreparationCaller;service:PreparedSignatureOriginServi
 type Review=Awaited<ReturnType<typeof readExactPreparedSignatureRequest>>;
 const uuid=(v:unknown):v is string=>typeof v==='string'&&UUID.test(v)&&v===v.toLowerCase();
 const fail=():never=>{throw Error('ORIGINAL_SIGNATURE_REQUEST_RECONCILIATION_REQUIRED');};
+
+/** Ordinary read over the ORIGINAL confirmation or Work. A reload stores only
+ * opaque operation/digest references; private messages are recovered here under
+ * current native authority and their exact original source is checked again.
+ * No approval is issued/renewed/claimed, and no credential or provider is used. */
+export async function recoverOriginalPreparedSignatureRequest(value:unknown,ctx:Context){
+ try{value=structuredClone(value);}catch{throw new PreparedSignatureStatusUnavailable('INVALID');}
+ if(!object(value)||value.tenant_id!==ctx.tenantId||!uuid(value.operation_id))throw new PreparedSignatureStatusUnavailable('INVALID');
+ const original=await readPreparedSignatureOutcome(value,ctx.caller,ctx.service,ctx.actorId);
+ if(original!==null)return original;
+ // The original reader has already checked the closed input and current JWT.
+ const operation=value.operation_id,expected=value.expected_request_sha256;
+ const row=await ctx.service.rpc('_read_prepared_agreement_confirmation',{_actor:ctx.actorId,_tenant:ctx.tenantId,_operation:operation});
+ const latest=()=>readPreparedSignatureOutcome(value,ctx.caller,ctx.service,ctx.actorId);
+ if(row.error)throw new PreparedSignatureStatusUnavailable('UNAVAILABLE');
+ if(row.data===null)return await latest();
+ const p=row.data;
+ if(!object(p)||!uuid(p.confirmation_id)||typeof p.expires_at!=='string'||!Number.isFinite(Date.parse(p.expires_at))
+  ||typeof p.state!=='string'||!['proposed','consumed','expired','unverified'].includes(p.state)||!object(p.args)
+  ||Object.keys(p.args).sort().join(',')!=='approval_cycle_nonce,approval_subject,expected_tenant_id,operation_id,request,request_sha256'
+  ||p.args.expected_tenant_id!==ctx.tenantId||p.args.operation_id!==operation||p.args.request_sha256!==expected
+  ||p.args.approval_subject!=='agreement.prepared_signature_request:'+value.agreement_id+':'+operation||!uuid(p.args.approval_cycle_nonce)
+  ||!object(p.args.request)||p.args.request.agreementId!==value.agreement_id||p.args.request.expectedTenantId!==ctx.tenantId
+  ||p.args.request.operationId!==operation||await sha256Hex(canonicalPresentationJson(p.args.request))!==expected)
+  throw new PreparedSignatureStatusUnavailable('UNAVAILABLE');
+ if(p.state!=='proposed'){
+  const current=await latest();if(current!==null)return current;
+  return {kind:'prepared_signature_request_review_recovery' as const,state:'review_unavailable' as const,
+   operation_id:operation,request_sha256:expected,reason:p.state as 'consumed'|'expired'|'unverified'};
+ }
+ const a=p.args.request;
+ if(!object(a.sender)||!Array.isArray(a.messages)||!a.messages.every(object))throw new PreparedSignatureStatusUnavailable('UNAVAILABLE');
+ const command={operation_id:operation,review:{tenant_id:ctx.tenantId,agreement_id:value.agreement_id,preparation_id:a.preparationId,
+   preparation_sha256:a.preparationSha256,expected_source:a.source},expected_review_sha256:a.reviewSha256,connector_id:a.sender.connector_id,
+  messages:a.messages.map(m=>({signer_id:m.signer_id,subject:m.subject,body_text:m.body_text})),expected_request_sha256:expected};
+ const review=await readExactPreparedSignatureRequest(command,ctx.caller,ctx.source,ctx.actorId,ctx.email);
+ if(canonicalPresentationJson(review.args)!==canonicalPresentationJson(a))throw new PreparedSignatureStatusUnavailable('UNAVAILABLE');
+ const current=await latest();if(current!==null)return current;
+ return {kind:'prepared_signature_request_review_recovery' as const,state:'review_available' as const,
+  operation_id:operation,request_sha256:expected,command,review};
+}
 
 /** Originating Sales adapter over the existing gate, confirmations, Work,
  * signer credentials and canonical message sender. No alternative provider,

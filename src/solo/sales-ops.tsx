@@ -1743,6 +1743,10 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const agreementBusiness = new URLSearchParams(location.search).get("agreement_business");
   const agreementSignerRequest = new URLSearchParams(location.search).get("agreement_signer_request");
   const agreementDocumentRequest = new URLSearchParams(location.search).get("agreement_document_request");
+  const signatureSearch=new URLSearchParams(location.search);
+  const agreementSignatureReference=signatureSearch.has('agreement_signature_request')||signatureSearch.has('agreement_signature_digest')?{
+    operation_id:signatureSearch.getAll('agreement_signature_request').length===1?signatureSearch.get('agreement_signature_request')??'':'',
+    request_sha256:signatureSearch.getAll('agreement_signature_digest').length===1?signatureSearch.get('agreement_signature_digest')??'':''}:null;
   const templateSelection = new URLSearchParams(location.search).get("agreement_templates");
   const templateRequest = new URLSearchParams(location.search).get("template_request");
   const templateBusiness = new URLSearchParams(location.search).get("template_business");
@@ -1752,7 +1756,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const clearTemplateNavigation = (query) => { for (const key of ["agreement_templates", "template_request", "template_business", "template_source"]) query.delete(key); };
   const openTemplateVersion = (id) => {
     const query = new URLSearchParams(location.search); clearTemplateNavigation(query);
-    for (const key of ["agreement", "agreement_request", "agreement_business", "agreement_template", "agreement_signer_request", "agreement_document_request"]) query.delete(key);
+    for (const key of ["agreement", "agreement_request", "agreement_business", "agreement_template", "agreement_signer_request", "agreement_document_request", "agreement_signature_request", "agreement_signature_digest"]) query.delete(key);
     query.set("agreement_templates", id);
     navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash }, { replace: templateSelection === "new" });
   };
@@ -1765,7 +1769,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
     if (!canStartAgreement) return;
     const request = crypto.randomUUID(); freshTemplateRequests.current.add(request);
     const query = new URLSearchParams(location.search); clearTemplateNavigation(query);
-    for (const key of ["agreement", "agreement_request", "agreement_business", "agreement_template", "agreement_signer_request", "agreement_document_request"]) query.delete(key);
+    for (const key of ["agreement", "agreement_request", "agreement_business", "agreement_template", "agreement_signer_request", "agreement_document_request", "agreement_signature_request", "agreement_signature_digest"]) query.delete(key);
     query.set("agreement_templates", "new"); query.set("template_request", request); query.set("template_business", signings.tenantId);
     if (sourceId) query.set("template_source", sourceId);
     navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash });
@@ -1777,7 +1781,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const openAgreementDocument = (id) => {
     setDetail(null);
     const query = new URLSearchParams(location.search);
-    clearTemplateNavigation(query); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request");
+    clearTemplateNavigation(query); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request"); query.delete("agreement_signature_request"); query.delete("agreement_signature_digest");
     query.set("agreement", id); query.delete("agreement_request"); query.delete("agreement_business");
     signings.retry();
     navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash }, { replace: selectedAgreement === "new" });
@@ -1788,7 +1792,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
     freshAgreementRequests.current.add(request);
     setDetail(null); setEditor(null); setEditing(null);
     const query = new URLSearchParams(location.search);
-    clearTemplateNavigation(query); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request");
+    clearTemplateNavigation(query); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request"); query.delete("agreement_signature_request"); query.delete("agreement_signature_digest");
     if (templateVersionId) query.set("agreement_template", templateVersionId);
     query.set("agreement", "new"); query.set("agreement_request", request); query.set("agreement_business", signings.tenantId);
     navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash });
@@ -1796,7 +1800,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const closeAgreementDocument = () => {
     const query = new URLSearchParams(location.search);
     freshAgreementRequests.current.delete(agreementRequest);
-    query.delete("agreement"); query.delete("agreement_request"); query.delete("agreement_business"); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request");
+    query.delete("agreement"); query.delete("agreement_request"); query.delete("agreement_business"); query.delete("agreement_template"); query.delete("agreement_signer_request"); query.delete("agreement_document_request"); query.delete("agreement_signature_request"); query.delete("agreement_signature_digest");
     navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
   };
   // The Sales-internal view lives in a Sales-local `?view=` param — deep-linkable and testable,
@@ -2332,9 +2336,13 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
           documentRequestId={agreementDocumentRequest} onDocumentRequestRetained={(id) => {
             const query = new URLSearchParams(location.search);
             if (id) { query.set("agreement_document_request", id); query.set("agreement_business", signings.tenantId); }
-            else { query.delete("agreement_document_request"); query.delete("agreement_business"); }
+            else { query.delete("agreement_document_request"); if(!query.has('agreement_signature_request'))query.delete("agreement_business"); }
             const target = { pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash };
             return { url: `${target.pathname}${target.search}${target.hash}`, replace: () => navigate(target, { replace: true }) };
+          }}
+          signatureReference={agreementSignatureReference} onSignatureRequestRetained={reference=>{
+            const query=new URLSearchParams(location.search);query.set('agreement_signature_request',reference.operation_id);query.set('agreement_signature_digest',reference.request_sha256);query.set('agreement_business',signings.tenantId);
+            const target={pathname:location.pathname,search:`?${query.toString()}`,hash:location.hash};return {url:`${target.pathname}${target.search}${target.hash}`,replace:()=>navigate(target,{replace:true})};
           }}
           onOpenRecord={openAgreementDocument} onClose={closeAgreementDocument} onOpenClients={onOpenClients} onOpenTemplate={openTemplateVersion}
           signings={signings} onRefresh={() => { signings.retry(); agreements.retry(); }} />

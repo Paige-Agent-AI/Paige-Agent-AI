@@ -178,6 +178,131 @@ class ReleaseFixtures(unittest.TestCase):
         self.assertEqual(row['status'], 'FAIL')
         self.assertEqual(row['reason'], reason)
 
+    def test_source_mismatch_reports_only_known_source_identity_and_hashes(self):
+        self.mode = 'stale-chat'
+        report = self.verify()
+        self.assert_failed(report, 'deployed_source_mismatch')
+        row = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')
+        path = 'supabase/functions/_shared/authority.ts'
+        self.assertEqual(row['diagnostic'], {
+            'category': 'source_sha256_mismatch', 'source_scope': 'expected_closure',
+            'file': path, 'download_mode': 'api',
+            'expected_sha256': readback.digest(self.files[path].encode()),
+            'downloaded_sha256': readback.digest(b'export const owner = "old fixture";\n'),
+        })
+        self.assertNotIn('fixture owner', json.dumps(report))
+        self.assertNotIn('old fixture', json.dumps(report))
+        self.assertNotIn(str(self.repo), json.dumps(report))
+        self.assertEqual(next(r for r in report['functions'] if r['function'] == 'crm-command')['status'], 'PASS')
+
+    def test_additional_repository_mismatch_does_not_publish_unexpected_download_names(self):
+        path = 'supabase/functions/optional/unused.ts'
+        self.files[path] = 'export const original = "PRIVATE_FIXTURE_ORIGINAL";\n'
+        self.recommit()
+        self.mode = 'tracked-extra'
+        original = self.runner
+        def runner(args, directory, timeout):
+            result = original(args, directory, timeout)
+            if args[:3] == ['functions', 'download', 'paige-ai-chat']:
+                (directory / path).write_text('PRIVATE_FIXTURE_DOWNLOADED\n', encoding='utf-8')
+            return result
+        report = readback.verify(self.repo, self.commit, self.names, runner, self.sleeps.append)
+        self.assert_failed(report, 'deployed_source_mismatch')
+        diagnostic = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')['diagnostic']
+        self.assertEqual(diagnostic['source_scope'], 'additional_repository_source')
+        self.assertNotIn('file', diagnostic)
+        self.assertNotIn(path, json.dumps(diagnostic))
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
+    def test_unknown_download_name_does_not_gain_source_identity_diagnostics(self):
+        self.mode = 'extra-untracked'
+        report = self.verify()
+        self.assertFalse(report['all_pass'])
+        self.assertTrue(all('diagnostic' not in row for row in report['functions']))
+        self.assertNotIn('untracked.ts', json.dumps(report))
+
+    @contextlib.contextmanager
+    def cleanup_failure(self, error):
+        original = tempfile.TemporaryDirectory
+        created = []
+        def factory(*args, **kwargs):
+            temporary = original(*args, **kwargs)
+            if kwargs.get('prefix') == 'paige-edge-readback-':
+                cleanup = temporary.cleanup
+                def fail():
+                    raise error
+                temporary.cleanup = fail
+                created.append(cleanup)
+            return temporary
+        with patch.object(readback.tempfile, 'TemporaryDirectory', factory):
+            try:
+                yield
+            finally:
+                # Each saved callable belongs to its original generated test
+                # temporary directory. Never remove a caller-computed path.
+                for cleanup in created:
+                    cleanup()
+
+    def test_permission_cleanup_preserves_verified_source_and_reports_scratch(self):
+        with self.cleanup_failure(PermissionError(13, 'PRIVATE_FIXTURE_PERMISSION_PATH')):
+            report = self.verify()
+        self.assertTrue(report['all_pass'])
+        self.assertTrue(all(row['status'] == 'PASS' for row in report['functions']))
+        self.assertEqual(report['scratch_cleanup'], {'status': 'incomplete', 'reason': 'permission_denied'})
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
+    def test_permission_cleanup_cannot_launder_a_source_mismatch(self):
+        self.mode = 'stale-chat'
+        with self.cleanup_failure(PermissionError(13, 'PRIVATE_FIXTURE_PERMISSION_PATH')):
+            report = self.verify()
+        self.assert_failed(report, 'deployed_source_mismatch')
+        self.assertEqual(next(r for r in report['functions'] if r['function'] == 'crm-command')['status'], 'PASS')
+        self.assertEqual(report['scratch_cleanup']['status'], 'incomplete')
+
+    def test_other_cleanup_os_error_is_not_ignored(self):
+        with self.cleanup_failure(OSError(5, 'PRIVATE_FIXTURE_IO_PATH')):
+            with self.assertRaises(OSError):
+                self.verify()
+
+    def test_permission_without_known_errno_is_not_ignored(self):
+        with self.cleanup_failure(PermissionError('PRIVATE_FIXTURE_UNKNOWN_PATH')):
+            with self.assertRaises(PermissionError):
+                self.verify()
+
+    def test_temporary_setup_os_error_remains_a_failure(self):
+        with patch.object(readback.tempfile, 'TemporaryDirectory', side_effect=OSError(24, 'PRIVATE_FIXTURE_SETUP_PATH')):
+            with self.assertRaises(OSError):
+                self.verify()
+        self.assertEqual(self.calls, [])
+
+    def test_source_permission_failure_is_not_a_cleanup_warning_or_pass(self):
+        original = self.runner
+        def runner(args, directory, timeout):
+            if args[:3] == ['functions', 'download', 'paige-ai-chat']:
+                raise PermissionError(13, 'PRIVATE_FIXTURE_SOURCE_PATH')
+            return original(args, directory, timeout)
+        report = readback.verify(self.repo, self.commit, self.names, runner, self.sleeps.append)
+        self.assert_failed(report, 'invalid_download_source')
+        self.assertNotIn('scratch_cleanup', report)
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
+    def test_outer_os_failure_has_only_safe_errno_and_static_sites(self):
+        selected = self.repo / 'selected-fixture.txt'
+        selected.write_text('\n'.join(self.names) + '\n', encoding='utf-8')
+        output = self.repo / 'report-fixture.json'
+        with patch.object(readback, 'verify', side_effect=OSError(5, 'PRIVATE_FIXTURE_OS_PATH')), contextlib.redirect_stdout(io.StringIO()):
+            status = readback.main(['--repo', str(self.repo), '--expected-commit', self.commit,
+                                    '--functions', str(selected), '--report', str(output)])
+        report = json.loads(output.read_text(encoding='utf-8'))
+        self.assertEqual(status, 1)
+        self.assertFalse(report['all_pass'])
+        self.assertEqual(report['reason'], 'invalid_readback_input')
+        self.assertEqual(report['diagnostic']['category'], 'readback_os_error')
+        self.assertEqual(report['diagnostic']['errno'], 5)
+        self.assertEqual(report['diagnostic']['phase'], 'verification_input')
+        self.assertTrue(all(set(site) == {'function', 'line'} for site in report['diagnostic']['sites']))
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
     def test_unchanged_valid_source_and_same_version_pass(self):
         report = self.verify()
         self.assertTrue(report['all_pass'])

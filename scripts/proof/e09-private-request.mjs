@@ -660,7 +660,7 @@ async function privatePublicationCandidateProof(env) {
 }
 
 function focusedPublicationProof({sql,check,assert,read,prepare,publish,snapshot,lit,focusBaseline}) {
- const file='supabase/migrations/20271114210109_e09_owner_focused_request_publication.sql';
+ const file='supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql';
  const sig='public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)';
  const original=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
  const metadata=()=>sql(`SELECT jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'definer',prosecdef,'config',proconfig,
@@ -699,7 +699,7 @@ function focusedPublicationProof({sql,check,assert,read,prepare,publish,snapshot
   check('Focus refinement preserves native ABI, OID, owner, grants and search path',()=>assert.equal(metadata(),beforeMetadata));
   check('The exact same focus migration replays without native data changes',()=>{const before=snapshot();sql(read(file));assert.equal(snapshot(),before);});
   check('Original publication migration refuses to overwrite its new forward implementation',()=>{
-   const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);assert.throws(()=>sql(read('supabase/migrations/20271114210009_e09_approved_private_request_publication.sql')),/source changed/);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
+   const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);assert.throws(()=>sql(read('supabase/migrations/20271114230009_e09_approved_private_request_publication.sql')),/source changed/);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
   });
  }
  const sourceProof=publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit});

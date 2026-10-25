@@ -1,4 +1,4 @@
--- CLI scaffold 20261025160253; adjacent forward-only E09 slot after14210009.
+-- CLI scaffold 20261025160253; adjacent forward-only E09 slot after14230009.
 -- A selected CRM focus is not a customer persona. Real owner authority, exact
 -- original common approval and all native source/access checks stay mandatory.
 BEGIN;

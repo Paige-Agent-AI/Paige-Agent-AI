@@ -5,9 +5,11 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,spawn,exe,args,transcripts}) {
  const read=file=>fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n');
+ const preparationFile='supabase/migrations/20271114150009_e09_private_request_preparation.sql';
+ const historyFile='supabase/migrations/20271114150019_e09_private_request_history.sql';
  const nativeMigration=historyBaseline
   ?execFileSync('git',['show','ba786f11b52c71b4ed87e7eb7a022b5aaa376e18:supabase/migrations/20271114150009_e09_private_request_preparation.sql'],{cwd:root,encoding:'utf8'}).replaceAll('\r\n','\n')
-  :read('supabase/migrations/20271114150009_e09_private_request_preparation.sql');
+  :read(preparationFile)+'\n'+read(historyFile);
  const original=(file,name)=>{
   const source=read(file),start=source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
   const end=source.indexOf('END $function$;',start)+'END $function$;'.length;
@@ -279,7 +281,10 @@ export async function privateRequestProof({sql,check,assert,fs,root,path,fixture
  check('Original native file, advance and Portal authority remain byte-exact',()=>assert.deepEqual(fingerprints(),before));
  return {baseline,historyBaseline,baselineSource:historyBaseline?'ba786f11b52c71b4ed87e7eb7a022b5aaa376e18':null,originalFingerprints:before,canonicalReplayFileHash:replayFileHash,
   migration:'20271114150009_e09_private_request_preparation.sql',
-  migrationNormalizedSHA256:createHash('sha256').update(nativeMigration).digest('hex'),
+  migrationNormalizedSHA256:createHash('sha256').update(read(preparationFile)).digest('hex'),
+  historyMigration:historyBaseline?null:'20271114150019_e09_private_request_history.sql',
+  historyMigrationNormalizedSHA256:historyBaseline?null:createHash('sha256').update(read(historyFile)).digest('hex'),
+  appliedMigrationOrder:baseline?[]:['20271114150009',...(!historyBaseline?['20271114150019']:[])],
   fixture:'synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority',customerPublication:'NOT_RUN',fullSchema:'PROOF_OWED'};
 }
 

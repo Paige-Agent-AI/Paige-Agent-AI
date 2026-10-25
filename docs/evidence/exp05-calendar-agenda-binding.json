@@ -762,5 +762,109 @@
     "coordination": "ANT161539bc8c0",
     "sourceSha256": "ec133b78f5ea08b7952f6ca0b50eddb2ce9dbd5c376e498d03bea4f3b628861f",
     "remaining": "New exact-head CI, actual source-certification recovery and ordinary customer proof remain required."
+  },
+  "productionRelease20261025": {
+    "pr": 2805,
+    "reviewedHead": "09c8fc4087c9e4b64c3863ac50beb57f929988ea",
+    "merge": "30b998e6c43fc8c7ffa4703331f14f0b90951705",
+    "tree": "9ac2c635e010c715dfd9ea5eec6b106f40c74a59",
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "original": 5641907183,
+      "composition": 5642825898
+    },
+    "ci": {
+      "success": 11,
+      "webStatusesSuccess": 2,
+      "actualPreview": "SUCCESS"
+    },
+    "composition": {
+      "main": "622c5532a91284cad60cfb343fd5bbc94e44fd8a",
+      "all22OwningBlobsUnchanged": true,
+      "allOtherIncomingPathsPreserved": true,
+      "unitCases": 156,
+      "actualHandlerRecordingPortCases": 42,
+      "spineCapabilities": 232,
+      "kit": "PASS / NO_NEW_BYPASS"
+    },
+    "sourceRun": 40186732340,
+    "sourceJob": 121149007051,
+    "artifact": 12596094363,
+    "artifactSha256": "139c3c83f9fe0765877a96b2753a54092947a1426deb1efa92ff9f8340ffa5ee",
+    "source": {
+      "commit": "30b998e6c43fc8c7ffa4703331f14f0b90951705",
+      "allPass": true,
+      "functions": [
+        {
+          "name": "execute-approval",
+          "version": 181,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 119,
+          "emittedFiles": 0,
+          "archiveSha256": "7b2fe3b775f9a00c20b20b9b4959fc8d2103bc9d915e8bff64f8c98a3390e055"
+        },
+        {
+          "name": "paige-ai-chat",
+          "version": 539,
+          "status": "PASS",
+          "downloadMode": "docker_requested",
+          "files": 283,
+          "emittedFiles": 283,
+          "archiveSha256": "01e7109d3f8d2c6f03afefb590c28338b0e3957746bd876601fe60e2c9f14455"
+        },
+        {
+          "name": "paige-native-event-dispatch",
+          "version": 263,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 116,
+          "emittedFiles": 0,
+          "archiveSha256": "b6d9c4d4165b1ba5b029fc73b1f1d001f5d88d3bba1e36f236c624ea5797b09a"
+        },
+        {
+          "name": "paige-orchestrator",
+          "version": 131,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 127,
+          "emittedFiles": 0,
+          "archiveSha256": "7c99019eadae348754f478e62484d0cb2c81ad5fe8606dec51d2f83f8263fb96"
+        }
+      ],
+      "scratchCleanup": {
+        "status": "incomplete",
+        "reason": "permission_denied"
+      }
+    },
+    "web": {
+      "observedAt": "2026-10-25T10:59:45.884Z",
+      "expected": "30b998e6c43fc8c7ffa4703331f14f0b90951705",
+      "deployment": "dpl_BJ8daChe1UsJcmGhHWqvPCxz6WZ3",
+      "results": [
+        {
+          "url": "https://paigeagent.ai/version.json",
+          "status": 200,
+          "body": {
+            "buildId": "30b998e6c43fc8c7ffa4703331f14f0b90951705-mvnpp1h8",
+            "customerUpdate": null
+          }
+        },
+        {
+          "url": "https://app.paigeagent.ai/version.json",
+          "status": 200,
+          "body": {
+            "buildId": "30b998e6c43fc8c7ffa4703331f14f0b90951705-mvnpp1h8",
+            "customerUpdate": null
+          }
+        }
+      ],
+      "exact": true
+    },
+    "capabilityStatus": "PARTIAL technical read seam; actual panel/ordinary role/cohort/current native result/read Rail/reload remain proof owed. No eleven-Operations recipe or algorithm maturity promotion.",
+    "ownMigration": "NOT_APPLICABLE",
+    "releaseChannel": "production",
+    "customerReleaseIdentity": null,
+    "boundary": "Source/review/CI/production identity only. Ordinary owner authority, original business result/Rail, reload/recovery, equivalent existing/new SOLO cohorts, deployed Capabilities panel, separate Live, full ten outcomes/E5-CV1–9 and founder acceptance remain unverified. No trigger, provider, spend, external send or customer announcement is activated."
   }
 }

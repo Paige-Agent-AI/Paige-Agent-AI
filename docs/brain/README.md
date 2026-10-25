@@ -735,6 +735,17 @@ The original failures remain and fresh exact-head review/CI is required.
 
 ## EXP02 original Systems capture mode — October25 development
 
+**October25 actual source release:** [#2813 receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2813#issuecomment-6396748331),
+also recorded in the sole [Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reviewed1b42/LOWER5642231020+5642812783/all11 exact checks+two webSUCCESS;
+actual622c5532/tree91aeaead preserves incomingef732 and all16034 outside entries.
+Normal40186447016 verifies all4 original function sources/configurations;
+artifact12596098700/digestdd9519e2, remote edge-live622c. READYwebdpl_7GHbe5PnzZxqg1qpxidH9zyd2FDx;
+both public200/exact622c-mvnpjgco/null. This supersedes source-release-pending
+statements below only. It supplies no new manual admission, customer scan,
+execution/receipt, catalogue/ALG promotion or full19/nine/founder acceptance.
+Browser/input and protected monthly uncertainty remain preserved.
+
 O07 prepares the original runner to record checks without automatic remediation:
 explicit internal none mode calls neither the core's forge nor file_action;
 existing all/delta/default callers keep their original behavior. Actual mode and

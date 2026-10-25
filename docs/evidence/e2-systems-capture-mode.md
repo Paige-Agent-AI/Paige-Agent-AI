@@ -1,5 +1,33 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — verified source release
+
+Reviewed `1b42e9ac8d6bea71f42244e0be124f9f27ea4b47`, LOWER5642231020/final5642812783;
+all11 exact-head checks/two webSUCCESS/zero threads. Actual main
+`622c5532a91284cad60cfb343fd5bbc94e44fd8a`, tree91aeaead, equals the actual
+ef732d23+reviewed1b42 union. E05 weekly landed after the earlier prospective
+62b55 proof: all16034 actual incoming outside entries, whole Brain/matrix inverse
+and owning core/test/evidence blobs are exact. Both original guarded builder
+checkouts confirm all4 complete native source/configuration closures equal reviewed
+source. An initial cross-checkout proof invocation correctly refused; only the
+private diagnostic framing was repaired, never the original identity guard.
+
+Normal Edge40186447016/job121148128184 deploy/source/config/tag steps SUCCESS.
+Original artifact12596098700 independently downloaded; ZIP SHA256
+dd9519e2808a70caaaeb51c832cafedc84b3330678ea15384da09e3e686181d5,
+exact622c/all4PASS via original API: change135/onboarding138/operator140/scheduled141.
+Original JWT/entry/no-map configuration preserved; remote edge-live622c.
+Normal webdpl_7GHbe5PnzZxqg1qpxidH9zyd2FDx READY; both public hosts200 at10:54UTC,
+exact622c5532a91284cad60cfb343fd5bbc94e44fd8a-mvnpjgco/customerUpdate:null.
+[Sanitized release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2813#issuecomment-6396748331); Master4.0 is the sole shipped log.
+
+Functional: SOURCE_RELEASED. Visual: no UI change. Experiential: manual scan and
+corrective outcome remain incomplete. Founder Acceptance: NOT_ACCEPTED. This
+supersedes dated NOT_MERGED/NOT_DEPLOYED/source-CI-pending statements below only.
+No new provider, permission, manual scan, Work/Spine/admission, Chat/Live action,
+Rails execution receipt, catalogue/ALG maturity or customer acceptance. Full19/nine,
+monthly UNKNOWN/UNRETRIED and input/activation/ordinary customer proof remain open.
+
 O07 prerequisite, development only. The original `runSystemsCheck` remains the
 sole registry/dispatch/run/finding writer. No customer entry selects the new mode;
 this is not an activated manual scan, a verified repair or a completed O07 outcome.

@@ -720,6 +720,24 @@ all five reviewed EXP02 leaves and every incoming change. No SQL/grant/CI/guard
 was altered; all184/7 original controls and scoped lint pass on the composition.
 The original failures remain and fresh exact-head review/CI is required.
 
+## EXP02 original Systems capture mode — October25 development
+
+O07 prepares the original runner to record checks without automatic remediation:
+explicit internal none mode calls neither the core's forge nor file_action;
+existing all/delta/default callers keep their original behavior. Actual mode and
+scope are persisted on the same original run context, never used as authority.
+Unsupported internal options fail closed; no API, role/grant, registry, scheduler,
+approval or customer-scan activation. [Source contract and remaining gates](../evidence/e2-systems-capture-mode.md):
+Initial10RED/13PASS, closed-scope5RED and214/8 source proof are retained.
+Capture readback19RED/31PASS now yields52own+184original=236/8 source PASS:
+none mode confirms original findings before finalization and reads back its run;
+unconfirmed writes retain the known run identity, never replay or grant authority.
+Legacy all/delta/default partial behavior stays unchanged. Composed236/8 in5.06s,
+scoped lint0 and unchanged project type ratchet10/6 pass. Fresh exact review,
+native Deno/CI/full deployed readback remain owed. No UI/customer/ALG or
+Capabilities promotion. Manual purpose/admission/original work+receipt/recovery,
+authenticated isolation/reload and full19/nine/founder acceptance remain required.
+
 ## EXP02 Systems Check dialog return — October23 source candidate
 
 **October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.

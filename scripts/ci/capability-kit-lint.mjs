@@ -152,6 +152,17 @@ export function businessSnapshotReadDoorBound(resolver) {
 // adapter qualify. This does not clear risk debt, arbitrary list_* tools or effects.
 const CALENDAR_BOOKING_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/calendar_booking.ts";
 const CALENDAR_BOOKING_ADAPTER_FILE = "supabase/functions/_shared/calendar-booking-read.ts";
+function calendarChatReadBranch(resolver, tool) {
+  const source = resolver.sourceFile(path.join(ROOT, "supabase/functions/paige-ai-chat/index.ts"));
+  if (!source) return null;
+  const branches = [];
+  const visit = node => {
+    if (ts.isIfStatement(node) && node.expression.getText(source) === `tc.function.name === "${tool}"` && ts.isBlock(node.thenStatement)) branches.push(node.thenStatement);
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return branches.length === 1 ? branches[0].getText(source).replace(/\s+/g, "") : null;
+}
 function calendarBookingReadDoorBound(resolver) {
   const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
   const chat = read("supabase/functions/paige-ai-chat/index.ts");
@@ -159,24 +170,47 @@ function calendarBookingReadDoorBound(resolver) {
   const classification = read("supabase/functions/_shared/solo-classification.ts");
   const compact = value => value.replace(/\s+/g, "");
   const mounted = compact(chat), native = compact(adapter);
+  const branch = calendarChatReadBranch(resolver, "read_calendar_booking");
   return chat.includes('from "../_shared/calendar-booking-read.ts"')
     && chat.includes('from "../_shared/paige-spine/domains/calendar_booking.ts"')
     && mounted.includes('toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS)')
     && mounted.includes('accountShape:calendarBookingAccountShape')
-    && mounted.includes('constcalendarIdentity:ContextIdentity={actorId:user.id,tenantId:turnScopeTenantId,workspaceId:turnScopeTenantId')
-    && mounted.includes('awaitreadCalendarBooking(calendarIdentity,{caller:supabaseClientasunknownasCalendarBookingReadCaller,')
-    && mounted.includes('revalidateScope:()=>revalidateTenantKnowledgeScope(true),signal:req.signal')
+    && branch !== null
+    && branch.includes('constcalendarIdentity:ContextIdentity={actorId:user.id,tenantId:turnScopeTenantId,workspaceId:turnScopeTenantId')
+    && branch.includes('awaitreadCalendarBooking(calendarIdentity,{caller:supabaseClientasunknownasCalendarBookingReadCaller,')
+    && branch.includes('revalidateScope:()=>revalidateTenantKnowledgeScope(true),signal:req.signal')
     && mounted.includes('awaitreadCalendarAccountShape(supabaseClientasunknownasCalendarBookingReadCaller,turnScopeTenantId,req.signal)')
     && native.includes('deps.caller.auth.getUser()')
     && native.includes('rpc("current_user_tenant_id")')
     && native.includes('constbefore=awaitauth()') && native.includes('constafter=awaitauth()')
     && native.includes('readCalendarAccountShape(deps.caller,tenantId,abort.signal)')
     && native.includes('deps.caller.rpc("list_team_bookings",{_from:"-infinity",_to:"infinity",_host_ids:null,_tenant_id:tenantId,_booking_id:bookingId})')
-    && native.includes('.select(COLUMNS.join(",")).eq("id",bookingId).limit(2).abortSignal(abort.signal)')
+    && native.includes('awaitselect({tenantId,actorId:origin.actorId,signal:abort.signal,wait,rpc})')
+    && native.includes('.select(COLUMNS.join(",")).eq("id",bookingId).limit(2).abortSignal(signal)')
     && native.includes('caller.from("tenants").select("id,account_type,parent_tenant_id").eq("id",tenantId).limit(2).abortSignal(abort.signal)')
     && native.includes('row.id!==tenantId') && native.includes('row.parent_tenant_id!==null')
     && native.includes('!isSoloStandalone({account_type:row.account_type,parent_tenant_id:null})')
     && compact(classification).includes('return!c.parent_tenant_id&&c.account_type==="standalone";');
+}
+
+function calendarAgendaReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text.replace(/\s+/g, "") ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts"), native = read(CALENDAR_BOOKING_ADAPTER_FILE);
+  const branch = calendarChatReadBranch(resolver, "read_calendar_agenda");
+  return calendarBookingReadDoorBound(resolver)
+    && branch !== null
+    && chat.includes('if(callerTier==="tenant"&&calendarBookingAccountShape==="solo"&&calendarBookingRole&&!scopedClientId&&!customerPortal)toolDefs.push(...CALENDAR_AGENDA_READ_TOOLS)')
+    && branch.includes('constcalendarIdentity:ContextIdentity={actorId:user.id,tenantId:turnScopeTenantId,workspaceId:turnScopeTenantId,role:calendarBookingRole,accountShape:calendarBookingAccountShape,actAsClientId:scopedClientId??null,')
+    && branch.includes('awaitreadCalendarAgenda(calendarIdentity,{caller:supabaseClientasunknownasCalendarBookingReadCaller,')
+    && branch.includes('currentIdentity:()=>req.signal.aborted||tenantKnowledgeScopeRevoked||customerPortal||callerTier!=="tenant"')
+    && branch.includes('revalidateScope:()=>revalidateTenantKnowledgeScope(true),signal:req.signal')
+    && branch.includes('JSON.stringify(calendarAgendaForModel(result))')
+    && native.includes('deps.caller.rpc("list_team_bookings",{_from:from,_to:to,_host_ids:view==="mine"?[actorId]:null,_tenant_id:tenantId,_booking_id:null})')
+    && native.includes('.select(AGENDA_COLUMNS.join(",")).neq("booking_kind","class_seat").gt("end_at",from).order("start_at",{ascending:true}).order("id",{ascending:true}).limit(51).abortSignal(signal)')
+    && native.includes('Date.parse(to)-Date.parse(from)>32*86_400_000')
+    && native.includes('if(team){constadmin=awaitrpc("is_tenant_admin",{_tenant:tenantId})')
+    && native.includes('if(team||selected.otherHost){constadmin=awaitrpc("is_tenant_admin",{_tenant:tenantId})')
+    && native.includes('encoder.encode(JSON.stringify(next)).byteLength>12000');
 }
 
 // The canonical Operations reader is deliberately not renamed into public.read_*.
@@ -328,6 +362,8 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='calendar.booking_read'&&owner.name.text==='CALENDAR_BOOKING_READ_CAPABILITY'
                   && calendarBookingReadDoorBound(resolver))readTools.set('read_calendar_booking',owner.name.text);
+                if(identity&&literalProperty(identity,'id')==='calendar.agenda_read'&&owner.name.text==='CALENDAR_AGENDA_READ_CAPABILITY'
+                  && calendarAgendaReadDoorBound(resolver))readTools.set('read_calendar_agenda',owner.name.text);
               }
               else if(operation==='public.operations_crm_work_read'&&relative(file)===CRM_TASK_DECLARATION_FILE){
                 const identity=nestedProperties(sections,'identity',sourceFile);
@@ -1448,6 +1484,27 @@ function runSelfTest() {
     if(from!==null){const original=texts.get(file);const changed=original.replace(from,to);if(changed===original)throw Error('Calendar negative did not mutate '+name);texts.set(file,changed);}
     const names=collectDeclaredCapabilityNames([calendarFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
     const tool=file===null?calendarTool.replace('CALENDAR_BOOKING_READ_CAPABILITY.input','{type:"object"}'):calendarTool;
+    const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  const agendaTool='const tool={name:"read_calendar_agenda",description:"Read only",parameters:CALENDAR_AGENDA_READ_CAPABILITY.input};';
+  for(const [name,file,from,to,expected] of [
+    ['agenda exact bounded caller door',calendarFile,null,null,false],
+    ['agenda wrong declaration',calendarFile,'identity: { id: "calendar.agenda_read"','identity: { id: "calendar.other"',true],
+    ['agenda mutation cannot clear',calendarFile,'required: ["from", "to"] }),\n  effect: "read"','required: ["from", "to"] }),\n  effect: "mutation"',true],
+    ['agenda unmounted',calendarChat,'toolDefs.push(...CALENDAR_AGENDA_READ_TOOLS)','toolDefs.push(...OTHER_TOOLS)',true],
+    ['agenda service caller',calendarChat,'await readCalendarAgenda(calendarIdentity, {\n            caller: supabaseClient','await readCalendarAgenda(calendarIdentity, {\n            caller: supabase',true],
+    ['agenda model scope despite intact exact-reader scope',calendarChat,'} else if (tc.function.name === "read_calendar_agenda") {\n          const calendarIdentity: ContextIdentity = {\n            actorId: user.id, tenantId: turnScopeTenantId','} else if (tc.function.name === "read_calendar_agenda") {\n          const calendarIdentity: ContextIdentity = {\n            actorId: user.id, tenantId: args.tenant_id',true],
+    ['agenda missing own-host filter',calendarAdapter,'_host_ids: view === "mine" ? [actorId] : null','_host_ids: null',true],
+    ['agenda missing final team recheck',calendarAdapter,'if (team || selected.otherHost)','if (selected.otherHost)',true],
+    ['agenda unbounded window',calendarAdapter,'Date.parse(to) - Date.parse(from) > 32 * 86_400_000','false',true],
+    ['agenda bypassed model budget',calendarAdapter,'encoder.encode(JSON.stringify(next)).byteLength > 12000','false',true],
+    ['agenda unrelated payload',null,null,null,true],
+  ]){
+    const texts=new Map(calendarSources);
+    if(from!==null){const original=texts.get(file);if(original.split(from).length!==2)throw Error('Agenda negative must mutate exactly one source: '+name);texts.set(file,original.replace(from,to));}
+    const names=collectDeclaredCapabilityNames([calendarFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const tool=file===null?agendaTool.replace('CALENDAR_AGENDA_READ_CAPABILITY.input','{type:"object"}'):agendaTool;
     const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
     if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
   }

@@ -24,6 +24,9 @@ import { FormIntakePanel } from "./form-intake";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { MarketingContent } from "./marketing-content";
 import { ContentCalendar } from "./content-calendar";
+// EXP07 row 8 — the Calendar tab's strip icon, in the strip's own stroke style (kept local: the
+// shared icon table is not this lane's file, and a changed shared file re-opens unrelated scans).
+const CalendarTabIcon=({size=14})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>;
 import { contentKindOf } from "./marketing-content-model";
 import { legacyAdsRoute } from "./ads-routing";
 import { CAPTURE_FILTERS, MarketingOverview } from "./marketing-overview";
@@ -385,7 +388,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   const[tab,setTab]=useSubtabRoute("solo","growth","overview");
   // Commercial addresses resolve to Sales before Marketing readers mount.
   // The owner's order (2026-10-04). Ads left for its own department (owner, 2026-10-10).
-  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['calendar','Calendar',()=><Ic.calendar size={14}/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
+  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['calendar','Calendar',()=><CalendarTabIcon/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
   const data=useSoloCampaigns();
   const params=useParams();
   const location=useLocation();

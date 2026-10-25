@@ -7,7 +7,7 @@ import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
  * work item would not offer.
  *   1. the business is a standalone, top-level business (owner decision D3; the server refuses the rest);
  *   2. the work is client work inside a project, with a row version (canReleaseItem);
- *   3. someone other than the person releasing can review it (owner decision D2; the server refuses self-review).
+ *   3. an active teammate or the active canonical business owner can review the exact version (server checks authority).
  */
 export type ReleaseItem = Pick<PlanItem, "id" | "plan_id" | "contact_id" | "updated_at">;
 
@@ -19,7 +19,7 @@ export function canReleaseItem(item: ReleaseItem | null | undefined): item is Re
   return Boolean(item?.plan_id && item.contact_id && item.updated_at && Number.isFinite(Date.parse(item.updated_at)));
 }
 
-/** People who could review a release by this actor: active, and not the actor. */
+/** UI affordance only: active teammates or the actor with canonical is_owner; the writer rechecks authority. */
 export function releaseReviewers(members: TeamMemberRecord[], actorId: string | null | undefined): TeamMemberRecord[] {
-  return members.filter(member => member.status === "active" && Boolean(actorId) && member.user_id !== actorId);
+  return members.filter(member => member.status === "active" && Boolean(actorId) && (member.user_id !== actorId || member.is_owner === true));
 }

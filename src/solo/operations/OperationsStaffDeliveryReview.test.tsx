@@ -91,3 +91,41 @@ it("pure shell queries hold a dirty review without publishing feedback; explicit
  expect(host.textContent).toContain("Clear the unsaved review note explicitly before closing.");
  expect(writeStaffDelivery).not.toHaveBeenCalled();
 });
+
+const ownerSubmission = { ...submission, submitted_by: scope.actorId, review_mode: "owner_self_review" as const };
+const ownerMember = { membership_id: id(40), user_id: scope.actorId, full_name: "Delivery owner", email: null, avatar_url: null,
+  status: "active", permission: "member", is_owner: true, job_title: null, responsibilities: null, last_sign_in_at: null };
+async function ownerReview() {
+  vi.mocked(readStaffDelivery).mockResolvedValue({ kind: "ready", submissions: [ownerSubmission], releases: [] });
+  await act(async () => root.render(<OperationsStaffDeliveryReview scope={scope} members={[ownerMember]} />));
+}
+it("shows pending owner review and requires an explicit review before separate release", async () => {
+  await ownerReview(); expect(host.textContent).toContain("Owner review pending");
+  expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Release for client review")).toBe(false);
+  await click("Approve internally");
+  expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("records your owner review");
+  await click("Keep reviewing"); expect(writeStaffDelivery).not.toHaveBeenCalled();
+  const approved = { ...ownerSubmission, state: "approved" as const, reviewed_by: scope.actorId, reviewed_at: "2026-10-24T13:00:00Z", updated_at: "2026-10-24T13:00:00Z" };
+  vi.mocked(writeStaffDelivery).mockResolvedValue({ kind: "verified", readback: { kind: "ready", submissions: [approved], releases: [] } });
+  vi.mocked(readStaffDelivery).mockResolvedValue({ kind: "ready", submissions: [approved], releases: [] });
+  await click("Approve internally"); await click("Confirm internal approval");
+  expect(writeStaffDelivery).toHaveBeenCalledWith(expect.anything(), scope, { kind: "review", submission: ownerSubmission, decision: "approved", note: null }, expect.any(Function));
+  expect(host.textContent).toContain("Owner review recorded");
+  expect(button("Release for client review").disabled).toBe(false);
+  expect(host.textContent).not.toContain("Client acceptance recorded");
+  expect(writeStaffDelivery).toHaveBeenCalledOnce();
+});
+it("an admin label cannot act as the owner reviewer, and the original submission remains visible", async () => {
+  vi.mocked(readStaffDelivery).mockResolvedValue({ kind: "ready", submissions: [ownerSubmission], releases: [] });
+  await act(async () => root.render(<OperationsStaffDeliveryReview scope={scope} members={[{ ...ownerMember, is_owner: false, permission: "admin" }]} />));
+  expect(host.textContent).toContain("Owner review pending");
+  expect(host.textContent).toContain("unavailable with your current team access");
+  expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Approve internally")).toBe(false);
+  expect(writeStaffDelivery).not.toHaveBeenCalled();
+});
+it("losing ownership while a review dialog is open prevents its confirmation", async () => {
+  await ownerReview(); await click("Approve internally");
+  await act(async () => root.render(<OperationsStaffDeliveryReview scope={scope} members={[{ ...ownerMember, is_owner: false }]} />));
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+  expect(writeStaffDelivery).not.toHaveBeenCalled();
+});

@@ -1,5 +1,5 @@
-import {parseStaffSubmissions,type StaffDeliveryScope,type StaffDeliveryAction,type StaffSubmission} from "./operations-delivery-staff";
-export type DeliveryUiDraft={kind:"preparation";sessionId:string|null;artifactId:string|null;versionId:string|null;reviewerId:string|null}|{kind:"review";submission:StaffSubmission;note:string};
+import {parseStaffSubmissions,staffReviewMode,type DeliveryReviewMode,type StaffDeliveryScope,type StaffDeliveryAction,type StaffSubmission} from "./operations-delivery-staff";
+export type DeliveryUiDraft={kind:"preparation";sessionId:string|null;artifactId:string|null;versionId:string|null;reviewerId:string|null;reviewMode?:DeliveryReviewMode}|{kind:"review";submission:StaffSubmission;note:string};
 export type DeliveryRecovery={version:1;scope:StaffDeliveryScope;kind:"draft";draft:DeliveryUiDraft}|{version:1;scope:StaffDeliveryScope;kind:"attempt";action:StaffDeliveryAction};
 export type RecoveryStorage=Pick<Storage,"getItem"|"setItem"|"removeItem">;
 const object=(v:unknown):Record<string,unknown>|null=>v&&typeof v==="object"&&!Array.isArray(v)?v as Record<string,unknown>:null;
@@ -24,16 +24,16 @@ function submission(value:unknown,scope:StaffDeliveryScope):StaffSubmission|null
 function parseDraft(value:unknown,scope:StaffDeliveryScope):DeliveryUiDraft|null{
  const r=object(value);if(!r)return null;
  if(r.kind==="preparation"){
-  if([r.sessionId,r.artifactId,r.versionId,r.reviewerId].some(v=>v!==null&&!uuid(v))||r.reviewerId===scope.actorId)return null;
-  return{kind:"preparation",sessionId:r.sessionId as string|null,artifactId:r.artifactId as string|null,versionId:r.versionId as string|null,reviewerId:r.reviewerId as string|null};
+  if([r.sessionId,r.artifactId,r.versionId,r.reviewerId].some(v=>v!==null&&!uuid(v))||(r.reviewerId===null?r.reviewMode!==undefined:!staffReviewMode(scope.actorId,r.reviewerId,r.reviewMode)))return null;
+  return{kind:"preparation",sessionId:r.sessionId as string|null,artifactId:r.artifactId as string|null,versionId:r.versionId as string|null,reviewerId:r.reviewerId as string|null,...(r.reviewMode===undefined?{}:{reviewMode:staffReviewMode(scope.actorId,r.reviewerId,r.reviewMode)!})};
  }
  const row=submission(r.submission,scope);
  return r.kind==="review"&&row?.state==="in_review"&&row.reviewer_user_id===scope.actorId&&typeof r.note==="string"&&r.note.length<=4000?{kind:"review",submission:row,note:r.note}:null;
 }
 function parseAction(value:unknown,scope:StaffDeliveryScope):StaffDeliveryAction|null{
  const r=object(value);if(!r)return null;
- if(r.kind==="submit")return uuid(r.artifactVersionId)&&uuid(r.reviewerId)&&r.reviewerId!==scope.actorId&&Number.isSafeInteger(r.expectedRevisionNo)&&Number(r.expectedRevisionNo)>=0?
-  {kind:"submit",artifactVersionId:r.artifactVersionId,reviewerId:r.reviewerId,expectedRevisionNo:Number(r.expectedRevisionNo)}:null;
+ if(r.kind==="submit")return uuid(r.artifactVersionId)&&uuid(r.reviewerId)&&staffReviewMode(scope.actorId,r.reviewerId,r.reviewMode)&&Number.isSafeInteger(r.expectedRevisionNo)&&Number(r.expectedRevisionNo)>=0?
+  {kind:"submit",artifactVersionId:r.artifactVersionId,reviewerId:r.reviewerId,expectedRevisionNo:Number(r.expectedRevisionNo),...(r.reviewMode===undefined?{}:{reviewMode:staffReviewMode(scope.actorId,r.reviewerId,r.reviewMode)!})}:null;
  const row=submission(r.submission,scope);if(!row)return null;
  if(r.kind==="release")return row.state==="approved"?{kind:"release",submission:row}:null;
  if(r.kind!=="review"||row.state!=="in_review"||row.reviewer_user_id!==scope.actorId||typeof r.decision!=="string"||!["approved","revision_requested"].includes(r.decision)||!(r.note===null||typeof r.note==="string"&&r.note.length<=4000)||r.decision==="revision_requested"&&!(typeof r.note==="string"&&r.note.trim()))return null;

@@ -478,6 +478,51 @@ cases; original MCP governed-door/destructive guards and self-tests retained.
 Source preparation only: no instructions/provider/activation or authenticated
 ZION result, historical acceptance or full ten-outcome/E5/founder closure.
 
+
+
+## EXP02 Systems Check dialog return — October23 source candidate
+
+**October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.
+
+**October24 restored confirmation:** current-main03ed is composed; original
+component6ee9d5f9 is retained and its dialog-action CSS minimum improves36→44px.
+Original67/67 tests pass in34.52s. Eleven final original-shell captures now include
+all eight desktop/narrow closed/open layouts, desktop/390 dialogs and390 visible
+focus return, with exact hashes/raster dimensions in the linked evidence. Chat
+draft and original Escape/focus return are observed. These replace the earlier
+missing matched-render claim only; previous failures and the dated results below
+remain historical. Native200percent/current reduced-motion/pending/scope-retirement,
+exact-head review/CI/release and authenticated customer/Live/cohort/full19/nine/
+founder proof remain owed. No action, authority or readiness promotion.
+
+Original review dialogs now consume Escape before shared shell shortcuts and
+restore their original control after inert clears. A per-account decision generation
+retires late success/refusal/focus, including A→B→A and unmount, without cancelling
+or settling the original domain operation. Four causal keyboard/inert failures,
+then two late-result scope failures are retained; final106 cases/four original suites
+pass, scoped lint0/current-main build112seconds. Detector0 findings. Native Cancel/
+Escape returns to the original control after inert clears; focus trap, unchanged
+synthetic draft/scroll are verified. Eight DOM geometries have no page overflow,
+but lagging compositor frames are INVALID; complete matching renders/zoom/scope
+and released ordinary proof remain owed. Exact origin access was authorized;
+intermittent browser stalls/reset and read-only synthetic-confirm refusal retained.
+[Evidence](../evidence/ui-delivery/e2-systems-dialog-return.md).
+Functional local / Visual candidate UNVERIFIED / Experiential original defect and
+bounded native return, released proof owed / Founder NOT_ACCEPTED. No shell, runner, approval writer,
+provider, registry, LayerC, Rail or permission change. Native recorded-check UI is
+partial; canonical Systems Check Mind-context stays UNAVAILABLE (SCR-2/SCR-3).
+All19/nine remain mandatory.
+
+Preceding Finance2684 is source-releasedd780fd85e3cfd0c73256847c79f2692a5a399d1a,
+LOWER5634377259/all10 applicable checks/two statuses. Normal2M5h READY/exactmeta;
+public containinga9bd855c-mvlgdzr6/null and unchanged source/six served markers
+verified, exactd780 public intermediate not sampled (receipt6374834566). Same-ref/
+date-range ordinary read/reload is still owed. Original monthly CPU failure and
+unknown claim are preserved; EXP05 recovery ACK ANT11/96c5091a, no retry/reset.
+Earlier candidate sections remain dated historical evidence; historical9/0 and
+12/0/4, algorithms, nine catalogue/access labels, role/cohort/Live and full founder
+acceptance are unchanged.
+
 ## EXP02 Finance specialist attribution — October23 source released
 
 Owner Oct23 standard is canonical in the existing

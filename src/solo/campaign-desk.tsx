@@ -201,7 +201,7 @@ function Readiness({ brief, links, onRoute }) {
   );
 }
 
-export default function CampaignOverview({ data, onRoute, autoOpenBrief = false, onAutoOpenConsumed = undefined }) {
+export default function CampaignOverview({ data, onRoute, autoOpenBrief = false, autoOpenDossierId = null, onAutoOpenConsumed = undefined }) {
   const briefsState = useSoloCampaignBriefs();
   const rawAssets = useCampaignAssets(briefsState.tenantId);
   // Experience 03 S1b: where a form's leads go now depends on its campaign link and the campaign's pipeline,
@@ -321,6 +321,18 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
     }
     onAutoOpenConsumed?.();
   }, [autoOpenBrief, worst, canManage, onAutoOpenConsumed]);
+  // S1e — a Chat answer or shared link lands here with `?brief=<id>`. Open that campaign's
+  // dossier once the reads are ready (the server read behind it redacts member views itself),
+  // then hand the request back so a refresh or Back does not reopen it. An id this workspace
+  // does not have is consumed silently — the address asked for something that is not there.
+  const dossierRequestConsumed = React.useRef(null);
+  React.useEffect(() => {
+    if (!autoOpenDossierId || worst !== "ready") return;
+    if (dossierRequestConsumed.current === autoOpenDossierId) return;
+    dossierRequestConsumed.current = autoOpenDossierId;
+    if (briefs.some((b) => b.id === autoOpenDossierId)) openDrawer("dossier", autoOpenDossierId);
+    onAutoOpenConsumed?.();
+  }, [autoOpenDossierId, worst, briefs, onAutoOpenConsumed]);
   if (worst === "resolving")
     return <div className="campaigns-state" role="status"><span className="campaigns-spinner"/>Resolving this account’s Campaigns workspace…</div>;
   if (worst === "unavailable")

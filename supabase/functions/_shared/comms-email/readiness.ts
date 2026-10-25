@@ -149,6 +149,24 @@ const contactName = (row: ObjectValue): string => {
   return typeof row.entity_name === "string" && row.entity_name.trim() ? row.entity_name.trim() : "this contact";
 };
 
+/** Original tenant/mailbox/provider sender list, shared by domain-specific recipient workflows.
+ * This read does not prove sender readiness, permission to send or any provider effect.
+ * Failures throw; an unavailable query must never masquerade as an empty list. */
+export async function listCommsEmailSenders(
+  admin: CommsEmailAdmin,
+  input: { tenantId: string; actorUserId?: string | null },
+  providers: readonly string[] = BASE_EMAIL_PROVIDERS,
+): Promise<{ connector_id: string; from_address: string }[]> {
+  const listed = await admin.from("channel_connectors").select("id,tenant_id,provider,from_address,active,status,mailbox_class,mailbox_owner_user_id")
+    .eq("tenant_id", input.tenantId).eq("channel_type", "email").eq("active", true).eq("status", "active");
+  if (listed.error || !Array.isArray(listed.data)) throw new Error("sender_read_failed");
+  const senders = (listed.data as unknown[]).map(object)
+    .filter((c) => senderAllowed(c, input.tenantId, input.actorUserId) && typeof c.id === "string" && providers.includes(String(c.provider)) && normalizeCommsEmailAddress(c.from_address))
+    .map((c) => ({ connector_id: (c.id as string).toLowerCase(), from_address: normalizeCommsEmailAddress(c.from_address)! }))
+    .sort((a, b) => a.from_address.localeCompare(b.from_address) || a.connector_id.localeCompare(b.connector_id));
+  return senders;
+}
+
 /**
  * Who the email goes to and who it comes from, resolved on the server — never from model prose.
  * Recipient: the contact's PRIMARY email from public.client_contact_methods, the same source
@@ -179,13 +197,7 @@ export async function resolveCommsEmailParties(
     if (c.id !== input.connectorId || !senderAllowed(c, input.tenantId, input.actorUserId)) return { kind: "sender_missing", contactName: name, recipient };
     return { kind: "resolved", contactId: input.contactId, contactName: name, recipient, connectorId: input.connectorId, fromAddress: normalizeCommsEmailAddress(c.from_address) };
   }
-  const listed = await admin.from("channel_connectors").select("id,tenant_id,provider,from_address,active,status,mailbox_class,mailbox_owner_user_id")
-    .eq("tenant_id", input.tenantId).eq("channel_type", "email").eq("active", true).eq("status", "active");
-  if (listed.error || !Array.isArray(listed.data)) throw new Error("sender_read_failed");
-  const senders = (listed.data as unknown[]).map(object)
-    .filter((c) => senderAllowed(c, input.tenantId, input.actorUserId) && typeof c.id === "string" && providers.includes(String(c.provider)) && normalizeCommsEmailAddress(c.from_address))
-    .map((c) => ({ connector_id: (c.id as string).toLowerCase(), from_address: normalizeCommsEmailAddress(c.from_address)! }))
-    .sort((a, b) => a.from_address.localeCompare(b.from_address) || a.connector_id.localeCompare(b.connector_id));
+  const senders = await listCommsEmailSenders(admin, input, providers);
   if (!senders.length) return { kind: "sender_missing", contactName: name, recipient };
   if (senders.length > 1) return { kind: "sender_choice_required", contactName: name, recipient, senders };
   return { kind: "resolved", contactId: input.contactId, contactName: name, recipient, connectorId: senders[0].connector_id, fromAddress: senders[0].from_address };

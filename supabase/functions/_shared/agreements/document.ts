@@ -25,7 +25,7 @@
 
 import { normaliseFormatting, renderDoc, sanitizeWinAnsi } from "../doc-render.ts";
 import { sha256Hex } from "./token.ts";
-import {prepareAgreementFieldInput,type AgreementFieldInput,type AgreementFieldPreparation,type CommercialAgreementFieldPreparation} from './field-preparation.ts';
+import {prepareAgreementFieldInput,type AgreementField,type AgreementFieldAnswer,type AgreementFieldInput,type AgreementFieldPreparation,type CommercialAgreementFieldPreparation} from './field-preparation.ts';
 import {canonicalPresentationJson} from './preparation-json.ts';
 import {checkSignatureImage,type SignatureImageCheck} from './signing-guard.ts';
 
@@ -43,6 +43,55 @@ export async function prepareSignatureImage(raw:unknown):Promise<SignatureImageC
     return image;
   }catch{
     return {ok:false,reason:'That drawn signature cannot be retained. Draw it again, or type your name instead.'};
+  }
+}
+
+type PreparedFontMetrics={widthOfTextAtSize(text:string,size:number):number};
+function fitPreparedFieldText(field:Pick<AgreementField,'width'|'height'>,value:string,face:PreparedFontMetrics):{size:number;lines:string[]}|null{
+  if(wouldLoseCharacters(value))return null;
+  const normalized=normaliseFormatting(value).replace(/\r\n?/g,'\n').replace(/\t/g,'    ');
+  // Shared by preflight and the original seal: no truncation, no text below6pt,
+  // and no drawing outside the exact reviewed field.
+  for(let size=12;size>=6;size-=0.5){
+    const lines:string[]=[];let tooWide=false;
+    for(const paragraph of normalized.split('\n')){
+      let line='',width=0;
+      for(const char of paragraph){const glyphWidth=face.widthOfTextAtSize(char,size);if(glyphWidth>field.width-4){tooWide=true;break;}
+        if(width+glyphWidth>field.width-4){lines.push(line);line='';width=0;}line+=char;width+=glyphWidth;}
+      if(tooWide)break;lines.push(line);
+    }
+    if(!tooWide&&lines.length*size*1.25<=field.height-4)return {size,lines};
+  }
+  return null;
+}
+
+export class UnrenderableFieldError extends Error{
+  constructor(readonly fieldId:string){super('AGREEMENT_PREPARED_FIELD_UNRENDERABLE');}
+}
+/** No mark or document is retained here. The same fonts, fitting and image
+ * geometry as the final seal must succeed BEFORE the irreversible native act. */
+export async function assertRecipientFieldsRenderable(fields:readonly Omit<AgreementField,'signer_id'>[],answers:readonly AgreementFieldAnswer[],typedName:string,imageBase64:string|null):Promise<void>{
+  const {PDFDocument,StandardFonts}=await import(PDFLIB_SPEC),pdf=await PDFDocument.create();
+  const font=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);
+  let image:Awaited<ReturnType<typeof pdf.embedPng>>|undefined;
+  for(const field of fields){
+    const answer=answers.find(answer=>answer.field_id===field.id);
+    if(!answer&&field.kind!=='signed_date')continue;
+    if(field.kind==='checkbox'){
+      if(Math.min(14,field.width-4,field.height-4)<6)throw new UnrenderableFieldError(field.id);
+      continue;
+    }
+    if(field.kind==='signature'&&imageBase64!==null){
+      image??=await pdf.embedPng(imageBase64);
+      const scale=Math.min((field.width-4)/image.width,(field.height-4)/image.height);
+      if(!Number.isFinite(scale)||scale<=0)throw new UnrenderableFieldError(field.id);
+      continue;
+    }
+    // Native UTC dates have six fractional digits; Helvetica's digits share a
+    // width. This checks geometry only and never supplies the recorded date.
+    const value=field.kind==='signature'?`/s/ ${typedName}`:field.kind==='signed_date'?'2000-01-01T00:00:00.000000Z':String(answer!.value);
+    const face=field.kind==='signature'||field.kind==='initials'?bold:font;
+    if(!fitPreparedFieldText(field,value,face))throw new UnrenderableFieldError(field.id);
   }
 }
 
@@ -184,7 +233,8 @@ export async function inspectUploadedPdf(
 export function isOwnedByTenant(path: string, tenantId: string | null): boolean {
   if (!path || !tenantId) return false;
   // No percent-encoding, no backslashes, no control characters — nothing a parser could rewrite.
-  if (/[%\\]/.test(path) || /[\u0000-\u001f\u007f]/.test(path)) return false;
+  if (/[%\\]/.test(path)) return false;
+  for(const char of path){const code=char.charCodeAt(0);if(code<32||code===127)return false;}
   const segments = path.split("/");
   if (segments.length < 2) return false;
   if (segments[0] !== tenantId) return false;
@@ -431,20 +481,8 @@ export async function sealAgreementPdf(input: {
           }
           const value=field.kind==='signature'?`/s/ ${party.typedName}`:String(answer.value);
           if(wouldLoseCharacters(value))return invalidPreparedSeal();
-          const normalized=normaliseFormatting(value).replace(/\r\n?/g,'\n').replace(/\t/g,'    '),face=field.kind==='signature'||field.kind==='initials'?bold:font;
-          let fitted:{size:number;lines:string[]}|undefined;
-          // Wrap every character without truncation; never shrink below6pt or
-          // stamp outside the reviewed field. Preflight must run before signing.
-          for(let size=12;size>=6&&!fitted;size-=0.5){
-            const lines:string[]=[];let tooWide=false;
-            for(const paragraph of normalized.split('\n')){
-              let line='',width=0;
-              for(const char of paragraph){const glyphWidth=face.widthOfTextAtSize(char,size);if(glyphWidth>field.width-4){tooWide=true;break;}
-                if(width+glyphWidth>field.width-4){lines.push(line);line='';width=0;}line+=char;width+=glyphWidth;}
-              if(tooWide)break;lines.push(line);
-            }
-            if(!tooWide&&lines.length*size*1.25<=field.height-4)fitted={size,lines};
-          }
+          const face=field.kind==='signature'||field.kind==='initials'?bold:font;
+          const fitted=fitPreparedFieldText(field,value,face);
           if(!fitted)return invalidPreparedSeal();
           const fittedText=fitted;
           fittedText.lines.forEach((line,index)=>{if(line)page.drawText(line,{x:field.x+2,y:descriptor.height-field.y-2-fittedText.size-index*fittedText.size*1.25,size:fittedText.size,font:face,color:ink});});

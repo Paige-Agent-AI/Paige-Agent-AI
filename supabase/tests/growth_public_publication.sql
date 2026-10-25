@@ -38,13 +38,13 @@ DO $fixture$ DECLARE owner_id uuid; n_super bigint; BEGIN
    INSERT INTO auth.users(id,email) VALUES(owner_id,'pubbrand-fixture-owner@example.invalid');
    INSERT INTO public.user_roles(user_id,role) VALUES(owner_id,'super_admin');
  END IF;
- -- The tenants guard demands the platform owner for system-workspace features; the fixture
- -- writes land as that authenticated super-admin, exactly the public_visits.sql pattern.
- PERFORM set_config('request.jwt.claims',jsonb_build_object('role','authenticated','sub',owner_id)::text,true);
+ -- Plain standalone workspaces (no system-workspace features): the tenants insert needs no
+ -- platform-owner claims, and memberships below take the guard's trusted no-JWT path.
+ NULL;
 END $fixture$;
 INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,features) VALUES
- ('b1900700-0000-4000-8000-000000000711','pubbrand-a','Publish Brand A','active','standalone','PBA','{"system_workspace":true}'),
- ('b1900700-0000-4000-8000-000000000712','pubbrand-b','Publish Brand B','active','standalone','PBB','{"system_workspace":true}');
+ ('b1900700-0000-4000-8000-000000000711','pubbrand-a','Publish Brand A','active','standalone','PBA','{}'),
+ ('b1900700-0000-4000-8000-000000000712','pubbrand-b','Publish Brand B','active','standalone','PBB','{}');
 -- Memberships are written by the trusted server path (no auth.uid): the #614 consent guard
 -- neutralizes any foreign-active seat minted by a signed-in caller, which is exactly right —
 -- a person's active membership is their own consent, not a fixture's.

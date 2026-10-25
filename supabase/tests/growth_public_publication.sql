@@ -117,7 +117,11 @@ SELECT pg_temp.as_anon();
 SET LOCAL ROLE anon;
 SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000711','never-published'))->0 IS NULL,'a draft page never appears to a visitor');
 SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007a3',NULL,NULL))=1,'the form is live while its page is live');
-SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000712','workshop'))->0 IS NULL,'one workspace''s page never answers another workspace''s visitor');
+DO $wall$ DECLARE seen jsonb; BEGIN
+ SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000712','workshop') INTO seen;
+ RAISE NOTICE 'WALL-DIAG tenant-b workshop read=%', seen;
+ PERFORM pg_temp.require_true(jsonb_array_length(seen)=0,'one workspace''s page never answers another workspace''s visitor');
+END $wall$;
 RESET ROLE;
 
 -- 4. UNPUBLISH REMOVES IT FROM THE PUBLIC READ, KEEPING THE WORK.

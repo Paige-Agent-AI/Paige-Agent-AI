@@ -1,5 +1,5 @@
 {
-  "scope": "actual shared banner and guard; synthetic composer host, no authenticated or physical-device proof",
+  "scope": "Actual shared banner and hook; synthetic composer. Full-page capture after active-tab viewport/DOM verification. No authenticated owner, physical phone or backend claim.",
   "geometry": [
     {
       "focus": "Send",

@@ -1,0 +1,202 @@
+[
+  {
+    "buttons": [
+      {
+        "height": 46,
+        "text": "Finish completed copy",
+        "width": 193.2875061035156
+      },
+      {
+        "height": 44,
+        "text": "Check recorded status",
+        "width": 126.25
+      }
+    ],
+    "product": [
+      {
+        "class": "ags-wrap",
+        "right": 1090.3999938964844,
+        "width": 660,
+        "x": 430.3999938964844
+      },
+      {
+        "class": "ags-seal",
+        "right": 1074.3999938964844,
+        "width": 628,
+        "x": 446.3999938964844
+      },
+      {
+        "class": "ags-result-actions",
+        "right": 1047.6000061035156,
+        "width": 478.3999938964844,
+        "x": 569.2000122070312
+      }
+    ],
+    "scrollOwner": "HTML",
+    "scrollWidth": 1521,
+    "viewport": {
+      "height": 770,
+      "width": 1536
+    }
+  },
+  {
+    "buttons": [
+      {
+        "height": 46,
+        "text": "Finish completed copy",
+        "width": 193.2875061035156
+      },
+      {
+        "height": 44,
+        "text": "Check recorded status",
+        "width": 126.25
+      }
+    ],
+    "product": [
+      {
+        "class": "ags-wrap",
+        "right": 834.4000091552734,
+        "width": 660,
+        "x": 174.40000915527344
+      },
+      {
+        "class": "ags-seal",
+        "right": 818.4000091552734,
+        "width": 628,
+        "x": 190.40000915527344
+      },
+      {
+        "class": "ags-result-actions",
+        "right": 791.6000061035156,
+        "width": 478.3999938964844,
+        "x": 313.20001220703125
+      }
+    ],
+    "scrollOwner": "HTML",
+    "scrollWidth": 1009,
+    "viewport": {
+      "height": 768,
+      "width": 1024
+    }
+  },
+  {
+    "buttons": [
+      {
+        "height": 46,
+        "text": "Finish completed copy",
+        "width": 193.2875061035156
+      },
+      {
+        "height": 44,
+        "text": "Check recorded status",
+        "width": 126.25
+      }
+    ],
+    "product": [
+      {
+        "class": "ags-wrap",
+        "right": 772.4000015258789,
+        "width": 660,
+        "x": 112.4000015258789
+      },
+      {
+        "class": "ags-seal",
+        "right": 756.4000091552734,
+        "width": 628,
+        "x": 128.40000915527344
+      },
+      {
+        "class": "ags-result-actions",
+        "right": 729.5999908447266,
+        "width": 478.3999938964844,
+        "x": 251.1999969482422
+      }
+    ],
+    "scrollOwner": "HTML",
+    "scrollWidth": 885,
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    }
+  },
+  {
+    "buttons": [
+      {
+        "height": 46,
+        "text": "Finish completed copy",
+        "width": 289.6000061035156
+      },
+      {
+        "height": 44,
+        "text": "Check recorded status",
+        "width": 289.6000061035156
+      }
+    ],
+    "product": [
+      {
+        "class": "ags-wrap",
+        "right": 375.2000122070313,
+        "width": 375.2000122070313,
+        "x": 0
+      },
+      {
+        "class": "ags-seal",
+        "right": 359.20001220703125,
+        "width": 343.20001220703125,
+        "x": 16
+      },
+      {
+        "class": "ags-result-actions",
+        "right": 332.4000053405762,
+        "width": 289.6000061035156,
+        "x": 42.79999923706055
+      }
+    ],
+    "scrollOwner": "HTML",
+    "scrollWidth": 375,
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  {
+    "buttons": [
+      {
+        "height": 46,
+        "text": "Finish completed copy",
+        "width": 219.1999969482422
+      },
+      {
+        "height": 44,
+        "text": "Check recorded status",
+        "width": 219.1999969482422
+      }
+    ],
+    "product": [
+      {
+        "class": "ags-wrap",
+        "right": 304.8000183105469,
+        "width": 304.8000183105469,
+        "x": 0
+      },
+      {
+        "class": "ags-seal",
+        "right": 288.8000183105469,
+        "width": 272.8000183105469,
+        "x": 16
+      },
+      {
+        "class": "ags-result-actions",
+        "right": 261.99999618530273,
+        "width": 219.1999969482422,
+        "x": 42.79999923706055
+      }
+    ],
+    "scrollOwner": "HTML",
+    "scrollWidth": 305,
+    "viewport": {
+      "height": 800,
+      "width": 320
+    }
+  }
+]

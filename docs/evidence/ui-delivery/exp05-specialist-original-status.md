@@ -284,3 +284,39 @@ extractor, validator and hostile tests remain exact. Actual original source and
 Calendar-ancestry guard programs112PASS; no empty module invocation is counted
 as test proof. Current-main composition, aggregate Spine checks, final immutable
 review, exact-head CI, merge and production readback are still required.
+
+## October25 - original-result budget production source receipt
+
+The preceding NOT RELEASED checkpoints remain dated history. Actual #2866
+merged9d8bdb79df49fca174d01ba30141c256ceacd025 after reviewed2f2938b3a0a48ecc8f91ab2c2c3fa1cbba1d8252,
+LOWER5644914592/all11 exact checks/two webSUCCESS. [Original production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2866#issuecomment-6403059382)
+and the sole Master4.0 row retain exact source, workflow, artifact and web identities.
+Normal Edge40231463272 succeeded; all287 Chat546 immutable-source/pinned-emitter
+bindings passed the original verifier. Containing Chat547/all289 bindings and
+the unchanged owning helper were separately checked at actuala8aaa1316, with
+current provider archive/config equality. Containing Edge40231481257 attempt1
+failed nav-pull-profile and skipped its marker. Normal attempt2/job121287555470
+subsequently succeeded at20:54:29UTC. Artifact12613144544 ZIP digest
+9ffa6c94b606b4e6cfea34bbadd2568959782a912734a7fbbd6aa249327dbfac was
+verified before parsing: all23 entriesPASS; Chat547 files/archive exactly equal
+the previously source-bound289-entry manifest. This supersedes that narrow
+release hold and preserves the initial failure, not a waiver or customer proof.
+Both public aliases were observed on containinga8 at20:39:37UTC, not exact9d8.
+
+Functional: one existing8s budget covers the helper's sequential authority,
+thread, turn and invocation reads; sticky withdrawal and late-result refusal
+remain. This does not cover earlier enclosing-route preflight, cancel an issued
+read, replay an operation or prove production CPU recovery. Visual: no JSX,
+layout, navigation, copy or focus change. Experiential: authenticated original
+response/receipt/full-request timing/reload and equivalent eligible cohorts remain
+PROOF OWED; return to a signed-in shell is not this result proof. Scratch cleanup
+remains incomplete/permission_denied; direct source connector returned
+INVALID_ARGUMENT and no independent local Deno compilation is claimed.
+Founder Acceptance: NOT_ACCEPTED for the full integrated Experience.
+
+Orchestration remains the explicit original caller-JWT agents.list inspection;
+no new LayerC dispatch, work/approval/receipt store or provider effect. ALG-01
+preserves original identity and no replay; ALG-12/13 retain truthful limitations
+without maturity promotion. Catalogue/operations.department stays PROOF_OWED;
+no delegation, recurrence, automation or Live activation. Full ten outcomes,
+original E5-CV1–9 and historical acceptance obligations are unchanged.

@@ -1,5 +1,32 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — private request foundation actually released
+
+Original [#2867](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)
+reviewed2ef74cdb7d0fb171199ee8eff3e53b10d04da252/final LOWER5645103641,
+all13 exact checks/Preview/two webSUCCESS/zero threads, actually merged
+a358554c8cff8bbe0ba52243fb7097508c088c86/tree1cf0156eb4ddc484918f98f5173eaba23468c938.
+Actual parent1f614+2ef union preserves16225 outside entries, both frozen owning
+source blobs and complete incoming CI/evidence inverses. Local47 checkpoints
+and corrected hosted native proof pass; initial failed test transport is retained.
+
+Normal native40231237484/job121283322585 SUCCESS. Migration20271114240002 is
+applied once; all1462 versions/hash match source. Actual body37ddc854dcc05a10ab450fe5dfd8e3a6,
+ABI/defaults/owner/config and server-only permissions match. Original creator,
+identity trigger and Metric actor predicate source/owner/ACL/config are unchanged;
+all three table owners/RLS/permissions are unchanged. No new-function advisory;
+broader existing advisories are not claimed clear. db-live=a358; Edge N/A.
+Productiondpl_7BdPf2uscEZR5cSTU4gFer9CNFYp READY. Both public hosts200/exact
+a358554c8cff8bbe0ba52243fb7097508c088c86-mvoab511/customerUpdatenull at20:35:36UTC.
+
+The development section below is now SOURCE_RELEASED only at its bounded private
+preparation level. Functional prerequisite released; Visual N/A; Experiential
+manual admission/dispatch/result/Rail/recovery incomplete; Founder NOT_ACCEPTED.
+No customer scan, provider/action activation or availability promotion. Original
+9/0+12/0/4/all19/nine/monthly uncertainty remain intact. The sole Master4.0 row
+records the preceding release; this closeout adds no recursive row. Prefer a
+reviewed forward fix, never applied-history rewrite.
+
 ## October25 — approved private request foundation, development
 
 O07/O19 intended outcome: an explicit manual Systems request eventually returns
@@ -435,3 +462,80 @@ callable manual capture and canonical result/receipt/recovery remain INCOMPLETE.
 Founder Acceptance: NOT_ACCEPTED; all19/nine and original9/0+12/0/4 preserved.
 ALG03/06/11/12/13 and CAP009–017 readiness are unchanged. No model/provider,
 customer scan, business action or protected monthly retry was performed.
+
+## October25 — current-authority read of the original manual Work request
+
+O07/O14 prerequisite only: EXTEND the existing EXP05-owned
+`get_paige_durable_work(uuid)` with one explicit manual-Systems branch. Original
+UUID, twelve projected fields, function OID/ABI/owner/ACL/config and all planner
+attributes remain unchanged. The complete non-Systems definition is preserved
+by exact source inverse, including the original Knowledge and other caller
+branches. No new callable, grant, table, job, worker, receipt or provider.
+
+The closed kind/capability pair, exact tenant/manual/none payload, original
+scope epoch and one-attempt ceiling must agree. Both reserved pair sides refuse
+fallback. Current JWT/workspace and actual canonical Metric actor authority
+remain mandatory; only eligible standalone parentless SOLO Owner/Admin may read
+this purpose. Historical active/trial/past_due requests follow the existing
+Metric read policy; this does not broaden active-only request admission. An
+Operator helper positive cannot replace current Metric authority. Payload,
+authority context, intent, lease and dispatch markers are not added to projection.
+
+`node scripts/proof/e2-manual-systems-work-read.mjs <isolated-port>` uses the
+original disposable PostgreSQL fixture, actual Work creator/current identity
+trigger, original Knowledge authority and canonical Metric predicates. Genuine
+new-flow suitability baseline3PASS/5FAIL becomes8PASS/0FAIL after applying the
+actual migration. Final native31 checkpoints include sixteen incumbent
+caller/kind/permission comparisons, raw-profile/Auth/member/cohort negatives,
+closed-purpose/foreign refusals, anonymous execute denial, exact metadata,
+every-other-function preservation, DDL replay/drift refusal and whole-row
+immutability including cancellation/uncertainty. The initial clone used the RPC
+return name instead of the original idempotency column; that fixture setup run
+is INVALID, never a source finding. The corrected thirty-check run and final
+expanded thirty-one-check run are distinct retained observations.
+
+Auth table shapes/current-user extraction and surrounding Operator helpers are
+controlled fixture boundaries, not real customer authentication or Operator
+acceptance. Existing protected native suites and fresh required exact-head CI
+remain required. EXP05 receiving ACK ANT161/a4b1cdb2 permits this bounded source
+window and requires exact candidate/slot/proofs for final receiving inspection
+before release. Proposed forward migration20271114240202 was CLI-scaffolded;
+native/source frontier and conflicts must be rechecked before merge.
+
+Zero projected rows are privacy-safe unavailable, never proof that a request
+does not exist, failed or can be restarted. Transport errors remain unknown.
+Original Work status is neither a completed Systems run nor a Rail receipt.
+No public caller/consumer, dispatch, scan or corrective action is activated.
+Future claim/runner/result/Rail and interruption/recovery proof remain owed.
+
+Functional: local read prerequisite. Visual: N/A, no customer UI delta.
+Experiential: complete manual Systems journey INCOMPLETE. Founder Acceptance:
+NOT_ACCEPTED. ALG03/06/11/12/13 maturity, Systems binding and CAP009–017 readiness
+unchanged; manual Spine capability remains UNAVAILABLE/unregistered. Original
+9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved; all19/nine remain open. No customer
+release identity, activation, provider effect or protected monthly retry.
+
+### Forward-only release reconciliation — October25
+
+The predecessor4e40 received all13 required checks including Preview, but was not
+merged: E04's actual native250004 release overtook the unapplied240202 slot.
+Only this owning migration was renamed to20271114250102; exact SQL SHA256
+`f6e20aa766584b72c0c0c1edfd14e22530c2898a6f4975342b9a05850c50786c`
+and native bodyd953ea9965f31193d3dbf2f184114730 remain unchanged. Current main9eb3
+composition and a fresh31-check native proof pass, with the updated fixture path.
+Fresh exact-head review/CI/Preview and source-contract receiving inspection govern
+release; predecessor green is historical only. No include-all, production history
+repair/reset, grant, invocation or acceptance waiver.
+
+### Preview lifecycle reconciliation — October25
+
+Exact a2c986fd Preview failed because this isolated PR database retained the old
+240202 entry after the safe forward rename to250102. Guarded branch readback
+confirmed the owning nonpersistent, no-data PR branch, zero Auth users and zero
+Work rows. The supported rebase returned success; immediate history still showed
+the old slot. Closing and reopening the same draft at the same head retired that
+disposable Preview through its normal lifecycle. A fresh check is required, not
+borrowed from the predecessor. Current main005f5d389d9faf98fa4e56ac9f3bb53c1471fd68
+is composed, including E08 native250008 before this reader250102. SQL/proof bytes
+and the complete other-kind reader remain fixed. No production history repair,
+reset, include-all, second applier, native invocation or activation is performed.

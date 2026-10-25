@@ -88,6 +88,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/e2_manual_systems_capture.sql
       - name: EXP02 private Systems request, original Work replay, current authority and concurrent preparation
         run: node scripts/proof/e2-manual-systems-work.mjs 5432
+      - name: EXP02 original manual Work read, current authority, closed purpose and incumbent compatibility
+        run: node scripts/proof/e2-manual-systems-work-read.mjs 5432
       - name: EXP08 Team Hub storage, workspace isolation, refusals and migration replay in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_collaboration.sql
       - name: EXP08 Team Hub team work, atomic Operations task creation, exactly-once retry and work list isolation in a disposable database
@@ -96,6 +98,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_files.sql
       - name: EXP08 Team Hub search, visible-now isolation, literal matching, refusals and authenticated-only grant in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_search.sql
+      - name: EXP08 Team Hub read and search performance, byte-identical results across the call matrix, index use at volume
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_read_performance.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback

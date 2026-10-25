@@ -53,5 +53,17 @@
     "ordinary recipient acceptance",
     "prepared signing/send activation",
     "full12/Central QA/founder acceptance"
-  ]
+  ],
+  "aclGuardContinuation": {
+    "priorHead": "8efa0e5833e1d3fdb5f6cbc2a0a3c6711dca488e",
+    "priorDirectWindowsInvocation": "INVALID_TOOLING_MODULE_ENTRY_DID_NOT_EXECUTE",
+    "exportedRunBaseline": "FAIL_ORIGINAL_SIGNATURE_ACL_GUARD",
+    "correction": "SINGLE_DOCUMENTED_ORIGINAL_EXTERNAL_RECIPIENT_ACL_RATIONALE_COMMENT",
+    "nativeFunctionBodyUnchanged": true,
+    "wholePriorSQLInverseExact": true,
+    "guardBaselineAssertionsUnchanged": true,
+    "originalExportedRun": "PASS_4_OF_4_BASELINE_NO_NEW_GRANT",
+    "originalSelfTests": "PASS_12_OF_12_UNCHANGED_CASES",
+    "fullNativeBodyMD5": "0e6103f6efe199f0e4e6eb88aa0eea1a"
+  }
 }

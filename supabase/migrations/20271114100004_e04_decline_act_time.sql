@@ -1,6 +1,7 @@
 -- Preserve the original signing engine and public recipient-token contract.
 -- Lock in the same parent-before-signer order as the original signature writer,
 -- then validate CURRENT authority. No new signing/approval/event store or grant.
+-- definer-anon-exempt: preserves the original token-authorized external-recipient contract from 20270404000000; CREATE OR REPLACE retains its explicit anon/authenticated-only ACL, not default PUBLIC access. Identity comes only from a 256-bit credential hash, is revalidated under both original locks, and all invalid credentials receive the same refusal. No new signature, role grant or recovery permission.
 BEGIN;
 SET LOCAL lock_timeout='5s';
 

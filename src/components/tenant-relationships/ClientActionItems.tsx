@@ -1,6 +1,7 @@
 import { RefreshCw } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useClientActionsOwner, type OwnerActionScope, type OwnerCustomerAction } from "@/hooks/useClientActionsOwner";
+import { ClientPrivateRequests } from "./ClientPrivateRequests";
 import "./client-shared-work.css";
 import "./client-action-items.css";
 
@@ -29,6 +30,7 @@ function ClientActionItemsScope({ scope, clientName }: { scope: OwnerActionScope
       <h3 id="trc-action-items-title">Customer action items</h3><p>Requests shared with {clientName} and their saved responses.</p>
     </div><button type="button" className="trc-shared-refresh" aria-label="Refresh customer action items" disabled={read.phase === "loading"} onClick={() => void read.refresh()}><RefreshCw aria-hidden="true" /> Refresh</button></header>
     <div className="trc-action-body" aria-busy={read.phase === "loading" || undefined}>
+      <ClientPrivateRequests scope={scope} clientName={clientName} ownerPhase={read.phase} />
       {read.phase === "loading" && <p role="status">Checking saved action items…</p>}
       {read.phase === "refused" && <p role="alert">Your access to these action items could not be verified.</p>}
       {read.phase === "error" && <p role="alert">Saved action items could not be loaded. Check your connection and refresh.</p>}

@@ -1,5 +1,31 @@
 # Paige Agent AI — Master Project Reference
 
+> **October24 EXP02 bounded Finance acceptance:** one new original-reference
+> VERA read matches the released Finance measurement and retains its saved reply,
+> source-step badge and original conversation after reload; [sanitized receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055).
+> Prior refusals remain historical. Candidate2694 rendering/release, other roles,
+> Live, full19/nine and founder acceptance remain open. No action or cash claim.
+
+> **October24 EXP02 Finance post-restart — source candidate:** main03edfad8a
+> is composed with unchanged Finance leaves; original Sales repair2768/d53d99e9
+> is merged and containing production03ed was observed. Fresh69/3 regression and
+> bounded synthetic current-shell/error/member/focus evidence pass; original zoom
+> assets are hash-bound. Positive ordinary Finance reference reacceptance remains
+> owed after the earlier FAIL. Candidate CI/review/release, all19/nine and founder
+> acceptance remain separate. [Current Finance record](brain/finance-department.md#october24--post-restart-current-main-confirmation).
+
+> **October24 EXP02 Finance — development and positive-review gap:** parent2694,
+> child2696 and Systems2690 have green applicable CI at their recorded exact
+> heads, not a merged/deployed candidate. Native synthetic viewport, focus and
+> browser200percent proof is bounded separately from released all-seven Finance
+> reads/navigation. The latest original-reference VERA read returned a saved
+> truthful refusal: positive review is FAIL/proof owed. EXP04 owns the pending
+> original Sales lifecycle repair2768; EXP02 owns reacceptance. No reference
+> revocation bypass, provider/Chat action activation or full19/nine acceptance.
+> [Current Finance evidence](evidence/ui-delivery/e2-finance-overview-hierarchy.md#october24--current-finance-verification-and-release-boundary).
+> Previous dated pending/accepted-negative statements retain their historical
+> scope. No Shipped Delivery Log row is added before this candidate merges.
+
 > **October19 EXP02 Finance — local, not released:** one existing business-review
 > composition extends to caller-authorized Finance source facts, using the canonical
 > company/binding/account-source contracts. Exact decimal major amounts and source

@@ -248,12 +248,28 @@ describe("a conversation named instead of identified", () => {
 });
 
 describe("once Team Hub text is in a request, nothing carries it out or into Knowledge (contract section 5)", () => {
-  it("names exactly the web and Knowledge tools, and refuses in plain words without retrying", () => {
-    assert.deepEqual([...TEAM_HUB_EGRESS_WITHHELD_TOOLS].sort(), ["deep_research", "knowledge_update", "save_to_knowledge_base", "web_fetch"]);
+  it("withholds the web and Knowledge tools, and refuses in plain words without retrying", () => {
+    for (const tool of ["web_fetch", "deep_research", "save_to_knowledge_base", "knowledge_update"]) {
+      assert.equal(TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(tool), true, tool);
+    }
     assert.equal(TEAM_HUB_EGRESS_REFUSAL.success, false);
     assert.equal(TEAM_HUB_EGRESS_REFUSAL.not_applied, true);
     assert.match(TEAM_HUB_EGRESS_REFUSAL.error, /next message/);
     assert.ok(Object.isFrozen(TEAM_HUB_EGRESS_REFUSAL));
+  });
+  it("withholds every write that could run unattended, and leaves card-only writes and reads alone", () => {
+    // ordinary writes can sit on an auto lane: a note or a task could copy a private message into a
+    // record the whole workspace reads, with nobody looking first.
+    for (const tool of ["crm_add_note", "crm_create_task"]) assert.equal(TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(tool), true, tool);
+    // high and owner-only writes always show the person a card, the Team Hub reply among them.
+    for (const tool of ["team_hub_post_reply", "knowledge_delete", "automation_set_grant"]) {
+      assert.equal(TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(tool), false, tool);
+    }
+    // reads and unclassified tools are not writes.
+    for (const tool of ["team_hub_search", "team_hub_read_conversation", "web_search", "crm_get_task"]) {
+      assert.equal(TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(tool), false, tool);
+    }
+    assert.match(TEAM_HUB_EGRESS_REFUSAL.error, /approval card/);
   });
 });
 
@@ -343,6 +359,14 @@ describe("the memory fence reads only server-recorded rows, and fails closed", (
     assert.equal(await tainted(s), true);
     assert.deepEqual(s.queries.find((q) => q.table === "paige_pending_confirmations")!.filters,
       [["in", "tenant_id", [TENANT]], ["eq", "user_id", ME], ["eq", "tool_name", "team_hub_post_reply"]]);
+  });
+  it("with no card tool named it reads the receipts alone and never the approval store", async () => {
+    const s = service((q) => ({ data: q.table === "paige_workspace_events" ? [{ id: "e" }] : [], error: null }));
+    assert.equal(await teamHubSessionTainted(s, ME, [TENANT], TEAM_HUB_CHAT_TOOL_NAMES, null), true);
+    assert.ok(!s.queries.some((q) => q.table === "paige_pending_confirmations"));
+    const clean = service(() => ({ data: [], error: null }));
+    assert.equal(await teamHubSessionTainted(clean, ME, [TENANT], TEAM_HUB_CHAT_TOOL_NAMES, null), false);
+    assert.ok(!clean.queries.some((q) => q.table === "paige_pending_confirmations"));
   });
   it("no Team Hub use leaves the summary path alone", async () => {
     assert.equal(await tainted(service(() => ({ data: [], error: null }))), false);

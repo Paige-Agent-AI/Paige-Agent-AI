@@ -629,7 +629,7 @@ task* creates one Operations task through `plan_assign_task_scoped` with an exac
 prefill PAIGE; the Team work panel reads status from `plan_items`. Contract:
 [increment 2 work contract](../delivery/exp08-team-hub-increment2-work-contract.md).
 
-**Increment 3 (2026-10-25, `PROOF_OWED`, not yet merged):** attachments, up to 5 files of 10 MB
+**Increment 3 (2026-10-25, `PROOF_OWED`, merged PR #2839; migrations and `team-hub-file` read back on production):** attachments, up to 5 files of 10 MB
 each per message, in `comms-attachments` at `<tenant>/team-hub/<file_id>`. Files are recorded in
 `team_hub_files` behind four restrictive storage policies (migration `20271114160008`) and purged
 on retirement by the `team_hub_files` provider (`20271114160108`). The `team-hub-file` edge
@@ -641,8 +641,14 @@ sweep exists. Contract:
 Evidence: [increment 3 record](../evidence/ui-delivery/exp08-team-hub-increment3.md), a harness
 render that is not authenticated and lists four open defects.
 
-**Not built:** PAIGE with Team Hub, meaning Chat/Live reads, search and approved reply drafts
-(increment 4). No Team Hub content enters Knowledge or Memory.
+**Increment 4 (2026-10-25, `PROOF_OWED`):** PAIGE with Team Hub in Chat and Live. Three
+caller-JWT reads (Spine `team.hub_*`, SOLO offer only) and a reply posted under the person's own
+name only from their approval card; search definer migration `20271114170008`, catalogue
+`20271114180008`. No Team Hub content enters Knowledge or Memory: automatic memory summaries stop
+for anyone who has read Team Hub through PAIGE (owner ruling 2026-10-25), their traces carry no
+text, and web, Knowledge and unattended writes are withheld for the rest of a request that carried
+Team Hub text. Contract:
+[increment 4 PAIGE contract](../delivery/exp08-team-hub-increment4-paige-contract.md).
 
 **Owner decisions, 2026-10-24:**
 - The Team Hub design (prototype v2) is approved and frozen under §28.

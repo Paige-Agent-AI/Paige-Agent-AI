@@ -1,5 +1,15 @@
 # Decision Log — chronological one-liners
 
+## October25 — EXP08 Team Hub increment 4 built, and increment 3 merged
+
+- **EXP08 Team Hub increment 4, memory summaries (owner, 2026-10-25, answered in the EXP08 Claude Code session).** A session-summary request carries a browser-held transcript the server cannot tie to individual chat turns, so no time window can keep Team Hub text out of an automatic summary. **Ruled: stop automatic summaries for good.** Once a person has used Team Hub through PAIGE, PAIGE writes no automatic session summary, milestone or extracted fact for them again, in any workspace they hold or held a seat in. Explicit "remember" requests are unaffected. This narrows a shipped capability on purpose (§58), signed off by the owner.
+- **EXP08 Team Hub increment 4 built: PAIGE with Team Hub (2026-10-25, `PROOF_OWED`).** Built against the owner's increment-4 decision (October24, below) and the ruling above. Contract: [increment 4](../delivery/exp08-team-hub-increment4-paige-contract.md).
+  - **What shipped in source:** three caller-JWT reads (`team_hub_conversations`, `team_hub_read_conversation`, `team_hub_search`; Spine `team.hub_*`, read-only, member seat, SOLO offer only) and `team_hub_post_reply` (`high`, posted under the person's own name only from their approval card, never from Live, at most once per card). Migration `20271114170008` adds `team_hub_search`; `20271114180008` lists the reply in the autonomy catalogue.
+  - **Consequences of "nothing stored", recorded for the owner:** PAIGE's model traces are readable by every workspace member, so a request carrying Team Hub text, and every later request by a person who has read Team Hub, is traced metadata-only (no prompt or answer text). Once Team Hub text is in a request, web fetch, deep research, Knowledge saves and every write that could run without an approval card are withheld until the person's next message.
+  - **Known gap:** in a later message a person can still approve a Knowledge or note card whose text came from Team Hub; only prompt guidance discourages it.
+  - **Found, outside this work, not changed:** `calendar.agenda_read` and `automations.owner_task_history` send dotted capability keys that `record_capability_run` rejects, so those receipts are never written and the task-history read may fail closed. Checked against migrations only.
+- **EXP08 Team Hub increment 3 merged (PR #2839, `416927eb8`, 2026-10-25).** `deploy-migrations` and `deploy-edge-functions` succeeded; production holds `20271114160008` and `20271114160108`, the table, policies, functions and retirement provider, and `team-hub-file` is active. Authenticated drive still owed.
+
 ## October25 — EXP08 Team Hub increment 3 built
 
 - **EXP08 Team Hub increment 3 built: attachments (2026-10-25, not yet merged, `PROOF_OWED`).** Built against the owner's increment-3 decision below. Contract: [increment 3](../delivery/exp08-team-hub-increment3-attachments-contract.md). Evidence: [increment 3 record](../evidence/ui-delivery/exp08-team-hub-increment3.md).

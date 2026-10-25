@@ -1,6 +1,6 @@
 # EXP08 Team Hub increment 4: PAIGE with Team Hub contract
 
-Status: in build, `PROOF_OWED`. Owner decisions recorded 2026-10-24 (decision log, "EXP08 Team Hub
+Status: built and reviewed, `PROOF_OWED` (§32 persisted apply and an authenticated drive are owed). Owner decisions recorded 2026-10-24 (decision log, "EXP08 Team Hub
 increment 4, PAIGE with Team Hub"):
 
 - **Reads approved:** PAIGE reads Team Hub for any active member, limited to what that member can
@@ -52,6 +52,10 @@ Increments 1–3 are in [collaboration](exp08-team-hub-collaboration-contract.md
    - No match: *Nothing in the conversations you can see mentions that.*
    - Database unavailable: *I couldn't read Team Hub just now.*
 
+   - A name PAIGE can't place: she asks which conversation, listing the ones the asker can see.
+     A DM can be named by one whole word of the teammate's name (*my DM with Sam*); two matches
+     are offered as a choice. *I can't see that conversation* is used only when the database says so.
+
    PAIGE never guesses content it did not read.
 
 ## 3. Tools and Spine capabilities
@@ -67,7 +71,8 @@ selector. Model-supplied tenant or user ids are never honoured.
 | `team_hub_search` | `team.hub_search` | `public.team_hub_search` (new) | read, `read_only` |
 | `team_hub_post_reply` | `team.hub_post_reply` | `public.team_hub_post_message` | write, always confirmed |
 
-- **Seat:** the member seat for all four.
+- **Seat:** the member seat for all four. The offer is made only on a canonical SOLO account
+  (`calendarBookingAccountShape === "solo"`, like the neighbouring Calendar and Task reads).
 - **Conversations read:** returns conversations and people. The definer already omits emails.
 - **Read conversation:** takes `conversation_id` (from the list or a search hit), an optional
   `thread_id`, and `limit ≤ 30`, newest window first.
@@ -89,12 +94,21 @@ selector. Model-supplied tenant or user ids are never honoured.
 - **Conversational (degraded) mode:** the three reads join `CONVERSATIONAL_ADMITTED_READ_TOOLS`,
   citing the 2026-10-24 owner decision. The post tool is withheld there like every other write.
 - **Receipts:** each available read records `recordCapabilityRun` with outcome
-  `capability_succeeded`, keyed on its Spine key, through the existing seam.
-  - The approved post goes through the existing confirmation receipt.
-  - Model content never includes record links. The person gets a link to the conversation in Team
-    Hub.
-- **Steps:** `describeStep` copy: *Reading Team Hub* / *Searching Team Hub* / *Drafting a Team Hub
-  reply*.
+  `capability_succeeded` through the existing seam, before any Team Hub text reaches the model. If
+  the receipt cannot be recorded, the person is told Team Hub couldn't be read.
+  - The receipt is keyed on the chat tool name, not the Spine key: `record_capability_run` refuses
+    dotted keys (`20270107000000_receipt_correlation_and_detail.sql`), as it already does for the
+    engagement and booking reads. The run id includes the actor.
+  - The approved post records its own receipt with a stable run id.
+  - There is no link into a Team Hub conversation: `paige-turn/record-links.ts` has no Team Hub
+    destination and Team Hub has no per-conversation route. PAIGE names the conversation instead.
+- **Steps:** in-progress copy in `paige-turn/step-start.ts` (*Reading Team Hub*, *Searching Team
+  Hub*, *Posting your Team Hub reply*) and finished copy in `describeStep` (*Read Team Hub*,
+  *Searched Team Hub*, *Posted your Team Hub reply*). An approval card is not a step, so the
+  draft itself has no step line.
+- **Catalogue:** migration `20271114180008_exp08_team_hub_reply_catalogue.sql` lists the reply in
+  `list_tool_autonomy` (category Team), so the owner can see it and turn it off. Its `high` risk
+  clamps the lane to confirm whatever is stored.
 
 ## 4. The search definer (migration `20271114170008_exp08_team_hub_search.sql`)
 
@@ -112,9 +126,12 @@ selector. Model-supplied tenant or user ids are never honoured.
 - **Returned fields:** message id, conversation id, conversation label, thread root, author display
   name, time, and a snippet of at most 240 characters. No email, no storage path.
 - **No index and no new storage:** a sequential, bounded scan over the asker's visible conversations.
-  - The work is bounded because the visibility join runs first.
+  - The scan is bounded by the workspace's message volume: the visibility helper runs per row, so
+    the planner may read a workspace's messages before filtering them.
   - It is honestly slower than an index at scale. That is a known limit, because an index or
     embedding would store or index content, which the owner excluded.
+- **Names:** an author or DM party without an active seat in the workspace is *Former teammate*,
+  never their current profile name.
 - **Proof:** `supabase/tests/exp08_team_hub_search.sql`, mutation-tested and wired into CI. It
   must show:
   - a non-member cannot find a private channel's message;
@@ -137,20 +154,40 @@ selector. Model-supplied tenant or user ids are never honoured.
   Proof shows a Team Hub-reading session leaves no memory row.
 - **What is not Team Hub content:** an explicit "remember that…" in the asker's own words is their
   own text. It stays governed by the existing explicit-signal path.
+- **As built (owner ruling 2026-10-25, decision log):** a summary request carries a browser-held
+  transcript the server cannot tie to individual turns, so no time window is enforceable. Once a
+  person has any Team Hub read or reply card recorded, in any workspace they hold or held a seat
+  in, PAIGE writes **no** automatic session summary, milestone or extracted fact for them again.
+  The check is server-derived (`paige_workspace_events` receipts and the reply's confirmation
+  rows) and fails closed. Explicit "remember" requests are unaffected.
+- **Traces:** PAIGE's model traces (`paige_llm_trace`) are readable by every member of a workspace.
+  So a request that carries Team Hub text, and every later request by a person who has read Team
+  Hub, is traced metadata-only: no prompt or answer text is stored.
+- **Nothing carries it out in the same request:** once Team Hub text has entered a request,
+  `web_fetch`, `deep_research`, `save_to_knowledge_base`, `knowledge_update` and every write that
+  could run without the person's approval card (risk `ordinary`) are withheld until the person's
+  next message, each with a plain refusal. Writes that always need a card (`high`, `owner_only`),
+  the Team Hub reply among them, still show the card.
+- **Known gap:** in a later message, a person can still approve a Knowledge or note card whose
+  text came from Team Hub. Only the prompt guidance discourages it.
 
 ## 6. Coordination and pinned files
 
 - **Window:** requested in Linear ANT-161 (2026-10-25).
 - **Files changed:**
-  - `paige-ai-chat/index.ts`, `_shared/action-risk.ts` and `scripts/ci/c0b-incumbent-resource-binding.mjs`;
+  - `paige-ai-chat/index.ts`, `_shared/action-risk.ts`, `_shared/paige-turn/step-start.ts` (step
+    copy only) and `scripts/ci/c0b-incumbent-resource-binding.mjs`;
   - new files: `_shared/paige-spine/domains/team_hub.ts`, its registry entry, `_shared/team-hub/chat.ts`
-    with tests, the migration and the proof.
+    with tests, migrations `20271114170008` (search) and `20271114180008` (catalogue), and the proof;
+  - lint and test updates that pin the read sets: `action-risk-lint.mjs`, `capability-kit-lint.mjs`,
+    `int346-runtime-recovery-handler-check.mjs`, `e2-2-conversational-read-admission.test.ts`, and
+    `receipt-coverage-ledger.json`.
 - **C0b:**
   - The 29 Chat dispatch fingerprints are renewed with base reproduction, showing that only the
     identity set changed.
   - The `action-risk.ts` digest is renewed.
   - Nothing else in C0b changes.
-- **Untouched:** contracts.ts, governedExecution.ts, workspace-authority.ts, the paige-turn files,
+- **Untouched:** contracts.ts, governedExecution.ts, workspace-authority.ts, the other paige-turn files,
   the Live relay and session functions, and the capability-discovery `authorityGateSites` count.
 
 ## 7. Not in increment 4

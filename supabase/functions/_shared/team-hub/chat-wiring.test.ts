@@ -116,7 +116,7 @@ describe("Team Hub text is never traced as text (contract section 5; a trace is 
   });
   it("a person who has used Team Hub is traced as metadata only from the start of every turn, before any model call", () => {
     const stamp = CHAT.indexOf("    traceCtx.tenant_id = personaCtx.tenant_id;\n");
-    const check = CHAT.indexOf("if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id], TEAM_HUB_CHAT_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME).catch(() => true)) {\n      traceCtx.content_policy = \"metadata_only\";", stamp);
+    const check = CHAT.indexOf("if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id], TEAM_HUB_CHAT_TOOL_NAMES, null).catch(() => true)) {\n      traceCtx.content_policy = \"metadata_only\";", stamp);
     assert.ok(stamp >= 0 && check > stamp && check - stamp < 1200, "the check follows the identity stamp directly");
     for (const site of ['traceFor("thread-summary-fold")', 'traceFor("turn-classify")', 'trace: traceFor("chat")', 'traceFor("chat-tool-loop")']) {
       const at = CHAT.indexOf(site);

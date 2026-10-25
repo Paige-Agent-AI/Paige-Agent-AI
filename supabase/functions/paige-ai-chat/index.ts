@@ -3423,8 +3423,9 @@ JSON:`;
     // excerpts are readable by every member of the workspace, and this turn's messages are the
     // browser's, so they may carry PAIGE's earlier answers about a DM or a private channel. A person
     // who has used Team Hub through PAIGE, in any workspace, is traced as metadata only: no prompt or
-    // answer text. Unknown is treated as yes. The Team Hub branches below set the same policy too.
-    if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id], TEAM_HUB_CHAT_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME).catch(() => true)) {
+    // answer text. Unknown is treated as yes. Receipts only (null): this read never touches the
+    // approval store. The Team Hub branches below set the same policy too.
+    if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id], TEAM_HUB_CHAT_TOOL_NAMES, null).catch(() => true)) {
       traceCtx.content_policy = "metadata_only";
     }
 

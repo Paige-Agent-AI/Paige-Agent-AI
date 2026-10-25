@@ -382,7 +382,7 @@ Inside Team Hub, a teammate types `/` for four commands. *Draft a task* creates 
 
 Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
-### EXP08 Team Hub increment 3: attachments (migrations `20271114160008` and `20271114160108`, 2026-10-25; not yet merged)
+### EXP08 Team Hub increment 3: attachments (migrations `20271114160008` and `20271114160108`, 2026-10-25; merged PR #2839)
 
 Inside Team Hub, a teammate attaches up to 5 files (10 MB each) to a message or thread reply with the paperclip or by dropping them, sees each file's state on a chip, and can send files with no text. Everyone who can see the conversation now gets a Download that mints a fresh 60-second signed URL served as an attachment. Files are **not malware-scanned** (owner decision); the paperclip and every file row say so.
 - Types: PDF, PNG, JPEG, WEBP, GIF, `.docx`, `.xlsx`, `.txt`, `.csv`. The `team-hub-file` edge function checks each file's real bytes. Word and Excel files with macros, embedded objects or charts, ActiveX, external templates or data links, or DDE fields are refused. Legacy `.doc`/`.xls` and PowerPoint are not accepted.
@@ -408,7 +408,28 @@ Inside Team Hub, a teammate attaches up to 5 files (10 MB each) to a message or 
 - Mocked-RPC Vitest suites.
 - A rendered harness at the four SOLO viewports, PAIGE closed and open, both themes, plus the phone (structural, not live): `docs/evidence/ui-delivery/exp08-team-hub-increment3.md`. It reports four layout and announcement defects that are still open.
 
-Authenticated runtime is `UNVERIFIED`, and the `team-hub-file` edge function is not deployed. Binding-ledger state: `teamhub` = `PROOF_OWED`.
+Authenticated runtime is `UNVERIFIED`. Production holds both migrations and the active `team-hub-file` edge function (read back 2026-10-25). Binding-ledger state: `teamhub` = `PROOF_OWED`.
+
+### EXP08 Team Hub increment 4: PAIGE with Team Hub (migrations `20271114170008` and `20271114180008`, 2026-10-25)
+
+In the one PAIGE chat, typed or Live, an active SOLO member can ask PAIGE what's new in Team Hub, to catch them up on a conversation or thread, or to search the conversations they can see. PAIGE reads with the asker's own JWT through the `team_hub_*` definers, fresh every turn; nothing is stored or indexed. PAIGE can draft a reply, and it is posted under the person's own name only when they approve the card (never from Live, at most once per card). No Team Hub content enters Knowledge or Memory: once a person has read Team Hub through PAIGE, their automatic memory summaries stop (owner ruling 2026-10-25), their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld for the rest of any request that carried Team Hub text.
+
+§61 exception, unchanged: only SOLO gets Team Hub, so the tools are offered only on a canonical SOLO account. The contract is `docs/delivery/exp08-team-hub-increment4-paige-contract.md`.
+
+| Tier | PAIGE reads and searches Team Hub | PAIGE drafts a Team Hub reply (card) |
+|---|---|---|
+| God / Operator | ✗ not offered; no seat means `not_member` | ✗ |
+| Agency / Enterprise | ✗ not offered; held (`unavailable`) | ✗ |
+| Standalone (Solo) | ✓ active seats, conversations they can see now | ✓ only after the person approves the card |
+| Sub-account | ✗ not offered; held (`unavailable`) | ✗ |
+| Client | ✗ not offered (client seat and customer portal never get the tools) | ✗ |
+| Anonymous | ✗ (no grant) | ✗ |
+
+**Evidence:**
+- Disposable-PostgreSQL proof `supabase/tests/exp08_team_hub_search.sql` (14 PASS, mutation-tested), in CI.
+- Node tests `_shared/team-hub/chat.test.ts` and `chat-wiring.test.ts`, mutation-tested, in CI.
+
+Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
 ### E09 C1 — announcements to customers through the one campaign system (branch `e09-c1`, migration `20271111060000`, 2026-10-19; not yet merged)
 

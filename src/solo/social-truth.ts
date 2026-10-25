@@ -168,12 +168,30 @@ export type SocialPipelineStage = {
   tone: "neutral" | "attention" | "positive" | "failing";
 };
 
+/** The connection lifecycle's own vocabulary (EXP07 row 9) — never translated at the source. */
+export type SocialConnectionStatus = "connected" | "authorizing" | "needs_reauth" | "error" | "setup_required" | "disconnected";
+
+/** One network's readiness as the governed presence read proved it. */
+export type SocialChannelConnection = {
+  status: SocialConnectionStatus;
+  /** The connected identity's own label, when the lifecycle recorded one. */
+  label: string | null;
+  /** When the provider last verified it, ISO. Null when it has never been verified. */
+  verifiedAt: string | null;
+  /** How many profiles exist for this network (the primary is what `status` describes). */
+  profiles: number;
+};
+
 export type SocialChannelCard = {
   network: string;
   label: string;
   handle: string;
   reach: SocialValue<number>;
   detail: string;
+  /** The connection readiness for this network, or null when no connection row exists (EXP07 row 9). */
+  connection: SocialChannelConnection | null;
+  /** The readiness line in the owner's words — present whether or not a connection exists. */
+  connectionNote: string;
 };
 
 export type SocialInsight = {
@@ -197,6 +215,8 @@ export const LANE_COPY: Record<"auto" | "confirm" | "off", string> = {
 /** Inputs the surface has actually read. Every field is a real tenant-scoped read or an absence. */
 export type SocialCommandInput = {
   handles: SocialHandle[];
+  /** Each network's connection readiness, from the same governed presence read (EXP07 row 9). */
+  connections: Array<SocialChannelConnection & { network: string }>;
   /** Published pages + active funnels + active forms, from `useSoloCampaigns`. */
   publishedOutputs: number;
   /** Forms whose routing is approval-gated — work genuinely held for a person. */
@@ -428,14 +448,39 @@ export function buildPipeline(input: SocialCommandInput): SocialPipelineStage[] 
  * performance, so `reach` is absent on every card, always — there is no branch in which a declared
  * handle produces a number. That is the point: the card is a record, drawn as a record.
  */
-export function buildChannels(handles: SocialHandle[]): SocialChannelCard[] {
-  return handles.map((handle) => ({
-    network: handle.network,
-    label: handle.label,
-    handle: handle.handle,
-    reach: absent("No provider is connected to this account, so no audience or performance number reaches you."),
-    detail: "On record",
-  }));
+/**
+ * What each connection state says to the owner. The states are the lifecycle's own; the sentences
+ * are the surface's. A connection NEVER produces a figure — `reach` stays absent in every branch
+ * (the contract test pins this) — and `connected` explicitly says what it does not grant.
+ */
+const CONNECTION_COPY: Record<SocialConnectionStatus, string> = {
+  connected: "Connected. This is consent to read the account, not to publish: posting and audience numbers stay off until you turn them on.",
+  authorizing: "Authorization is in progress. Nothing can be posted from it yet.",
+  needs_reauth: "This connection needs you to sign in again before anything can read or post on the account.",
+  error: "This connection is in an error state. Reconnect it from Settings → Integrations before planning anything against it.",
+  setup_required: "This connection still needs its one-time setup finished before it can read anything.",
+  disconnected: "This connection was disconnected. The account on record stays on record; nothing is connected.",
+};
+
+export function buildChannels(handles: SocialHandle[], connections: Array<SocialChannelConnection & { network: string }> = []): SocialChannelCard[] {
+  const readiness = new Map(connections.map((c) => [c.network, c]));
+  return handles.map((handle) => {
+    const connection = readiness.get(handle.network) ?? null;
+    const reachNote = connection?.status === "connected"
+      ? "Connected, but no audience or performance number reaches you while analytics stay off."
+      : "No provider is connected to this account, so no audience or performance number reaches you.";
+    return {
+      network: handle.network,
+      label: handle.label,
+      handle: handle.handle,
+      reach: absent(reachNote),
+      detail: connection ? CONNECTION_COPY[connection.status] : "On record",
+      connection,
+      connectionNote: connection
+        ? `${CONNECTION_COPY[connection.status]}${connection.profiles > 1 ? ` (${connection.profiles} profiles — the state shown is the best one.)` : ""}`
+        : "On record, not connected. Connecting a channel is a Settings → Integrations action you take yourself.",
+    };
+  });
 }
 
 /** The desks whose filed work belongs on a growth surface. Slugs are the seeded §16 department set. */

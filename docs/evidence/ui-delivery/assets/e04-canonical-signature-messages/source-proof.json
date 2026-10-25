@@ -275,5 +275,91 @@
     "all14FrozenSourceInputsUnchanged": true,
     "originalRootValuesPreserved": true,
     "scope": "Incoming E02 release documentation only, no E04 code/native/pin/test change; new exact hosted checks required"
+  },
+  "requiredCiRemediation": {
+    "at": "2026-10-25T14:18:51.467Z",
+    "sourceHead": "ef9c05463111ced6bcd8f9a6012fd5e7dfdf1732",
+    "sourceTree": "b0ef704263d482c8e4748ca8f402d0d96d545264",
+    "main": "f41f3a7919f76539e8c71e8b22c0d86235e54c06",
+    "failedExactHead": "d126fdd8ae8595972eaf122b97228a170c599214",
+    "failedJob": 121181966502,
+    "failure": "Only the two original SQL fixtures stale three current producer body expectations each. Expected negative-domain controls were not additional regressions.",
+    "reviewedFix": {
+      "at": "2026-10-25T14:08:11.670Z",
+      "parent": "d126fdd8ae8595972eaf122b97228a170c599214",
+      "currentComposition": "5e5242c9440c37ab18ceade0e28fb2bb0df17cce",
+      "reviewBeforeRenewal": "Four actual producer whole inverses and original generic/admission controls retained; native change explicitly reviewed, no generated baseline/old-or-new allowance",
+      "map": [
+        [
+          "34fe39ac8f870cbcc6887f3e2fc3a8e0",
+          "8da3b64c24552123b973db96a74ab986"
+        ],
+        [
+          "b1afe7cd33a951738c2f49c6660a5023",
+          "6bc0d581e141cfaf0221002d71564eaa"
+        ],
+        [
+          "b457bccb225454101baba2355ee6baa6",
+          "7b1173ff7d53da5836e33c2d77366c77"
+        ]
+      ],
+      "rows": [
+        {
+          "file": "supabase/tests/exp03_lead_reply_draft.sql",
+          "onlyThreeExpectedCurrentProducerLiterals": true,
+          "wholeOriginalInverse": true,
+          "allSixExactAssertionsAndMetadataRestorationRetained": true
+        },
+        {
+          "file": "supabase/tests/paige_email_sendgrid_receipts.sql",
+          "onlyThreeExpectedCurrentProducerLiterals": true,
+          "wholeOriginalInverse": true,
+          "allSixExactAssertionsAndMetadataRestorationRetained": true
+        }
+      ],
+      "proof": "Original exact hosted SQL programs still required; not locally executed against a partial schema"
+    },
+    "all13OtherRuntimeNativeInputsExact": 13,
+    "wholeOriginalInverses": 10,
+    "entireIncomingPinFileInverse": true,
+    "sourceInputs": {
+      "scripts/agreements/prepared-signature-work-proof.mjs": "cd1919de6f8471c67253902aabb324c2e634fe2e3184ebe5e3de27a9e748215d",
+      "scripts/agreements/run-integrity-proof.sh": "c5b4d0a0b9b0570d3e1bc0b1ca956f52bfb18eb3fe60ab3879d531379dfe5de1",
+      "scripts/sql/comms-email-send-concurrency-proof.mjs": "69a06d7d60f685819cdbe5b1f498f55603af53a2e78984224cb5d4c9b947bb43",
+      "scripts/ci/c0b-incumbent-resource-binding.mjs": "faeb3418b423636cae97feba39c13ea3bf969531235ae468e4297712a4086207",
+      "supabase/functions/_shared/agreements/prepared-signature-request.ts": "eb7898c76d846d29031f66b65506e6ab447372d9852b0114e877ed1bb4e19559",
+      "supabase/functions/_shared/comms-email/send-message-sendgrid-door.test.ts": "1abf9c747cf315fd71a34da6b4891e3ba121c727798d56218f540d6344bfcc12",
+      "supabase/functions/_shared/comms-email/send-message-sendgrid.test.ts": "d89f8c11da8c9b0be70d2574ccf8b120447dddd05e2effaf8f4ca0ec8f1d37b5",
+      "supabase/functions/_shared/comms-email/send-message.test.ts": "bafea843ff8d23c07e1f12d1e584de368eeb18d202b35117448a61eca7b1151e",
+      "supabase/functions/send-message/index.ts": "c5d583a2cda9138e7ee3b6f56962d21c195ab5444160a4accdad3b2f940b15b4",
+      "scripts/agreements/prepared-message-admission-fixture.mjs": "bc95a0f285c6a1ff46b229f721f9919402e4de21471298c669e6a0b12e755da9",
+      "scripts/agreements/prepared-message-admission-proof.mjs": "1f04cb2726ea09ef263025664fc2cbea12300873db8062f342ef0c94a7e5b93a",
+      "scripts/agreements/prepared-message-origin-proof.mjs": "ed08289734726ad44a678187b96395fd026921c46b1044846092d640b0587f04",
+      "supabase/functions/_shared/agreements/prepared-signature-message.ts": "dc1ddb65072634998debf472cd2dd371be041c52c0704433ebe99b8b69027498",
+      "supabase/migrations/20271114190004_e04_agreement_message_origin.sql": "3b5656b69943363d6735d2cc380b1a1ccd1ff05c05fa21196c16cfb1f4a8915a"
+    },
+    "checks": {
+      "spine": {
+        "result": "e04-c45-ci-current-spine-1792937420829-result.json",
+        "log": "e04-c45-ci-current-spine-1792937420829.log",
+        "exit": 0
+      },
+      "spineHostile": {
+        "result": "e04-c45-ci-current-hostile-1792937448618-result.json",
+        "log": "e04-c45-ci-current-hostile-1792937448618.log",
+        "exit": 0
+      },
+      "bindings": {
+        "result": "e04-c45-ci-current-bindings-1792937489667-result.json",
+        "log": "e04-c45-ci-current-bindings-1792937489667.log",
+        "exit": 0,
+        "cases": 244
+      }
+    },
+    "sourceBoundary": "No runtime/native/ACL/validator/assertion/scenario/rollback change in this remediation. Existing whole sender and four native inverses retain all original generic behavior.",
+    "originalSqlPrograms": "HOSTED_PROOF_OWED; not claimed executed on a partial local schema",
+    "exactHostedCi": "PROOF_OWED",
+    "native14190004": "NOT_APPLIED",
+    "customerAcceptance": "UNVERIFIED"
   }
 }

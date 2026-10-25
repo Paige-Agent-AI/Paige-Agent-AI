@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP02 original Work identity bridge.**
+
+| PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |
+| --- | --- | --- | --- |
+| [#2859](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2859#issuecomment-6401587673); reviewed178b31a03ae7d6a07fb95081f661c354da36cf4f; main7ce948051bdf6ec1458f54466c9384d9069e7690/tree80426f307b7c8a585c0313973ba8c55b82956fdd | Internal manual capture may retain its original Work identity in the original run and existing backlink. Current callers and legacy behavior remain unchanged. | Final AUTHOR-REVIEW / LOWER ASSURANCE5644669779; all11 exact checks/two webSUCCESS/0threads. Actual5c970+178 union preserves16180 outside entries, both frozen code/test files and incoming evidence. Local same-harness released23FAIL/74PASS, prior4FAIL/93PASS, final97PASS; additional26 regression cases/scoped lint0. Hosted project types pass; timed-out local full type check remains UNVERIFIED. Exact native Deno artifact12609451155 retains3 baseline diagnostics/0new per function, not zero-error typing. Normal Edge40221927180/job121255158493 SUCCESS; independently read API certificate12608634444 SHA256ab2b731fd4485bcce34f68e4014fa56a8f0f86ab5b34019790da99652b34a81a matches all159 source entries/four configs. No migration. Productiondpl_82pwQuaeCLQxxW1vTsU5hc3H2o8o READY; both public200/exact7ce948051bdf6ec1458f54466c9384d9069e7690-mvo644lo/null at18:37:41UTC. | [Original capture evidence](evidence/e2-systems-capture-mode.md), ANT138/a589773d. Internal-only, no customer release identity/announcement or manual activation. Full original Work consumer/result/receipt/recovery and authenticated outcome remain owed; all19/nine/founder acceptance open. Forward fix through reviewed source; historical evidence retained. |
+
 **2026-10-25 UTC — EXP02 unused manual Systems purpose.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

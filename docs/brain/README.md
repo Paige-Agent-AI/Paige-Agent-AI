@@ -6,6 +6,22 @@
 
 Source/native/web readback only; ordinary owner/staff/client/cohort/reload/Central QA and full O1–O12/founder acceptance remain UNVERIFIED. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; catalogue and restricted activation unchanged. No new sender, approval, ledger, execution runtime, provider/customer operation or recursive closeout row. Historical source/failure evidence below remains intact; this supersedes only the three earlier NOT_APPLIED/NOT_RELEASED statements at their stated release level.
 
+## EXP02 original Work identity bridge released — October25
+
+Original [#2859](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2859#issuecomment-6401587673) is actually released at
+7ce948051bdf6ec1458f54466c9384d9069e7690/tree80426f30, reviewed178b31a03,
+final AUTHOR-REVIEW / LOWER ASSURANCE5644669779/all11 exact checks/two webSUCCESS.
+The sole Master4.0 row records the actual preserved union, independently read
+four-function source certificate12608634444 and READYweb/two exact public readbacks.
+Native schema N/A. Current callers remain unchanged; no customer manual scan is offered.
+
+Functional: internal identity prerequisite released. Visual: no UI delta; private
+request prototype remains REVISE and is not customer evidence. Experiential:
+canonical Work consumer, original result/Rail receipt/recovery/reload proof remain
+incomplete. Founder Acceptance: NOT_ACCEPTED; original9/0 and12/0/4 preserved,
+all19/nine continue. ALG03/06/11/12/13 and catalogue readiness unchanged. Protected
+monthly uncertainty remains UNKNOWN/UNRETRIED. No new runtime, provider or activation.
+
 ## EXP02 unused manual Systems purpose released — October25
 
 Original [#2853 release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2853#issuecomment-6400618979)

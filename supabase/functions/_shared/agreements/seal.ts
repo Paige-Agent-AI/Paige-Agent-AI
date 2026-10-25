@@ -22,9 +22,10 @@ import { expiryFromNow, mintSignerToken, RETRIEVAL_TOKEN_TTL_DAYS, sha256Hex } f
 import { notify, ownerNotificationEmail } from "./notify.ts";
 import { verifyRetainedAgreementPdf } from "./retained-document.ts";
 import { readPreparedSealSource, type SealSourceDb } from "./prepared-seal-source.ts";
+import {object,UUID} from '../sales-collections/primitives.ts';
 
 export type SealOutcome =
-  | { ok: true; sealedSha256: string; sealedKey: string }
+  | { ok: true; sealedSha256: string; sealedKey: string; notificationState?:'not_requested' }
   | { ok: false; reason: "not_ready" | "already_sealed" | "missing_presented" | "render_failed" | "storage_failed" | "verify_failed" | "unrenderable_name"; detail: string };
 
 interface Db extends SealSourceDb {
@@ -212,6 +213,11 @@ export async function sealAndComplete(db: Db, agreementId: string): Promise<Seal
     return { ok: false, reason: "verify_failed", detail: "stored document does not match what was sealed" };
   }
 
+  if(preparedSource.kind==='prepared'){
+    return recordPreparedCompletion(db,{tenantId:String(agreement.tenant_id),agreementId,
+      preparationId:preparedSource.fields.preparation_id,sourceSha256:preparedSource.sourceSha256,sealedKey,sealedSha256});
+  }
+
   // THE COMPLETION WRITE IS THE CONCURRENCY GUARD, and `.select("id")` is what makes it one.
   // The read-then-write check at the top of this function has no atomicity: two final signatures
   // landing together both see `sealed_sha256` NULL, both render, and both upload under distinct
@@ -274,6 +280,63 @@ export async function sealAndComplete(db: Db, agreementId: string): Promise<Seal
   });
 
   return { ok: true, sealedSha256, sealedKey };
+}
+
+type PreparedCompletionInput={tenantId:string;agreementId:string;preparationId:string;sourceSha256:string;sealedKey:string;sealedSha256:string};
+type PreparedCompletionReceipt={state:'recorded';replayed:boolean;agreement_id:string;tenant_id:string;preparation_id:string;
+ source_sha256:string;sealed_storage_key:string;sealed_sha256:string;completed_at:string;sealed_event_id:string;completed_event_id:string};
+const completionKey=(key:unknown,input:PreparedCompletionInput):key is string=>typeof key==='string'&&
+ key.startsWith(input.tenantId+'/'+input.agreementId+'/sealed-')&&
+ /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.pdf$/.test(key.slice((input.tenantId+'/'+input.agreementId+'/sealed-').length));
+function preparedCompletionReceipt(value:unknown,input:PreparedCompletionInput,readOnly=false):PreparedCompletionReceipt|null{
+ if(!object(value))return null;
+ const keys=['state','replayed','agreement_id','tenant_id','preparation_id','source_sha256','sealed_storage_key','sealed_sha256','completed_at','sealed_event_id','completed_event_id'];
+ if(Object.keys(value).length!==keys.length||!keys.every(key=>Object.hasOwn(value,key))||value.state!=='recorded'
+  ||typeof value.replayed!=='boolean'||readOnly&&value.replayed!==true
+  ||value.agreement_id!==input.agreementId||value.tenant_id!==input.tenantId||value.preparation_id!==input.preparationId
+  ||value.source_sha256!==input.sourceSha256||!completionKey(value.sealed_storage_key,input)
+  ||typeof value.sealed_sha256!=='string'||! /^[a-f0-9]{64}$/.test(value.sealed_sha256)
+  ||typeof value.completed_at!=='string'||!/^\d{4}-\d{2}-\d{2}T/.test(value.completed_at)||!Number.isFinite(Date.parse(value.completed_at))
+  ||typeof value.sealed_event_id!=='string'||!UUID.test(value.sealed_event_id)
+  ||typeof value.completed_event_id!=='string'||!UUID.test(value.completed_event_id)||value.sealed_event_id===value.completed_event_id
+  ||(!value.replayed&&(value.sealed_storage_key!==input.sealedKey||value.sealed_sha256!==input.sealedSha256))
+  ||(value.sealed_storage_key===input.sealedKey&&value.sealed_sha256!==input.sealedSha256))return null;
+ return value as PreparedCompletionReceipt;
+}
+
+/** One original completion call, then at most one EMPTY-evidence reconciliation.
+ * An uncertain result never causes a second completion or candidate deletion.
+ * Only a verified immutable winning record permits cleaning up our losing file.
+ */
+async function recordPreparedCompletion(db:Db,input:PreparedCompletionInput):Promise<SealOutcome>{
+ const unavailable=():SealOutcome=>({ok:false,reason:'verify_failed',detail:'the original completed copy and audit receipt could not be verified'});
+ const rpc=typeof db.rpc==='function'?db.rpc.bind(db):null;
+ if(!rpc||!UUID.test(input.tenantId)||!UUID.test(input.agreementId)||!UUID.test(input.preparationId)
+  ||! /^[a-f0-9]{64}$/.test(input.sourceSha256)||! /^[a-f0-9]{64}$/.test(input.sealedSha256)||!completionKey(input.sealedKey,input))return unavailable();
+ let receipt:PreparedCompletionReceipt|null=null;
+ try{
+  const response=await rpc('_complete_prepared_agreement_seal',{_tenant:input.tenantId,_agreement:input.agreementId,
+   _source_sha256:input.sourceSha256,_sealed_storage_key:input.sealedKey,_sealed_sha256:input.sealedSha256});
+  if(!response.error)receipt=preparedCompletionReceipt(response.data,input);
+ }catch{/* Reconcile the original record below without another act. */}
+ if(!receipt)try{
+  const response=await rpc('_complete_prepared_agreement_seal',{_tenant:input.tenantId,_agreement:input.agreementId,
+   _source_sha256:null,_sealed_storage_key:null,_sealed_sha256:null});
+  if(!response.error)receipt=preparedCompletionReceipt(response.data,input,true);
+ }catch{/* Unknown remains unknown; never delete a possibly committed copy. */}
+ if(!receipt)return unavailable();
+ const verified=await verifiedCompletedCopy(db,{status:'completed',sealed_storage_key:receipt.sealed_storage_key,sealed_sha256:receipt.sealed_sha256});
+ if(verified.ok===false)return verified;
+ if(receipt.sealed_storage_key!==input.sealedKey){
+  try{
+   const removed=await db.storage.from('paige-agreements').remove([input.sealedKey]);
+   if(removed.error)console.warn('[agreements] unreferenced candidate cleanup not confirmed');
+  }catch{console.warn('[agreements] unreferenced candidate cleanup interrupted');}
+ }
+ // Preserve the signing credentials and original legal record. Prepared copy
+ // notices require their canonical authorized message path; no blind token
+ // rotation, legacy-provider fallback or successful-send claim is made here.
+ return {...verified,notificationState:'not_requested'};
 }
 
 async function deliverCompletionNotices(

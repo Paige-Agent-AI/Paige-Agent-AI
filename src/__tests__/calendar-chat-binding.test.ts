@@ -31,6 +31,11 @@ describe("Calendar later-read shared integration", () => {
   it("has exactly one real Chat dispatch branch consuming the shared reader", () => {
     expect(branches).toHaveLength(1); expect(branches[0].getText(ast)).toContain("readCalendarBooking(");
   });
+  it("registers one separate bounded agenda read without changing the exact-ID contract", () => {
+    const capabilities = PAIGE_SPINE_CAPABILITIES.filter(c => c.key === "calendar.agenda_read");
+    expect(capabilities).toHaveLength(1);
+    expect(capabilities[0]).toMatchObject({ maturity: "PARTIAL", action: { chatTool: "read_calendar_agenda", classification: "read", executor: "public.list_team_bookings", seatAuthority: "member", approvalAuthority: "none", riskPolicyKey: "read_only" } });
+  });
   it("the existing reference grammar and route map retain a Calendar department link only", () => {
     const links = readRecordLinks([{ destination: "calendar", record_id: "00000000-0000-4000-8000-000000000003", url: "https://foreign.invalid" }]);
     expect(links).toEqual([{ destination: "calendar", record_id: null }]);

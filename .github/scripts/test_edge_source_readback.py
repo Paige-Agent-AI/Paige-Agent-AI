@@ -21,6 +21,18 @@ SPEC.loader.exec_module(readback)
 
 
 class WorkflowContract(unittest.TestCase):
+    def test_pinned_expected_compiler_precedes_each_mandatory_contract_suite(self):
+        for path, marker in [('.github/workflows/ci.yml', '- name: Edge release source'),
+                             ('.github/workflows/deploy-edge-functions.yml', '- name: Test deployed-source')]:
+            workflow = (ROOT / path).read_text(encoding='utf-8')
+            setup = workflow.split('- name: Setup expected-source compiler', 1)[1].split(marker, 1)[0]
+            self.assertIn('uses: denoland/setup-deno@v2', setup)
+            self.assertIn('deno-version: v2.1.4', setup)
+            self.assertNotIn('continue-on-error', setup)
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        for path in ['.github/scripts/edge-source-emit.ts', '.github/scripts/edge-source-emit.lock']:
+            self.assertIn('"' + path + '"', workflow.split('workflow_dispatch:', 1)[0])
+
     def test_no_false_live_tag_after_an_unverified_upload(self):
         workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
         marker = '- name: Verify deployed source'
@@ -177,6 +189,49 @@ class ReleaseFixtures(unittest.TestCase):
         row = next(r for r in report['functions'] if r['function'] == function)
         self.assertEqual(row['status'], 'FAIL')
         self.assertEqual(row['reason'], reason)
+
+    def test_source_mismatch_reports_only_known_source_identity_and_hashes(self):
+        self.mode = 'stale-chat'
+        report = self.verify()
+        self.assert_failed(report, 'deployed_source_mismatch')
+        row = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')
+        path = 'supabase/functions/_shared/authority.ts'
+        self.assertEqual(row['diagnostic'], {
+            'category': 'source_sha256_mismatch', 'source_scope': 'expected_closure',
+            'file': path, 'download_mode': 'api',
+            'expected_sha256': readback.digest(self.files[path].encode()),
+            'downloaded_sha256': readback.digest(b'export const owner = "old fixture";\n'),
+        })
+        self.assertNotIn('fixture owner', json.dumps(report))
+        self.assertNotIn('old fixture', json.dumps(report))
+        self.assertNotIn(str(self.repo), json.dumps(report))
+        self.assertEqual(next(r for r in report['functions'] if r['function'] == 'crm-command')['status'], 'PASS')
+
+    def test_additional_repository_mismatch_does_not_publish_unexpected_download_names(self):
+        path = 'supabase/functions/optional/unused.ts'
+        self.files[path] = 'export const original = "PRIVATE_FIXTURE_ORIGINAL";\n'
+        self.recommit()
+        self.mode = 'tracked-extra'
+        original = self.runner
+        def runner(args, directory, timeout):
+            result = original(args, directory, timeout)
+            if args[:3] == ['functions', 'download', 'paige-ai-chat']:
+                (directory / path).write_text('PRIVATE_FIXTURE_DOWNLOADED\n', encoding='utf-8')
+            return result
+        report = readback.verify(self.repo, self.commit, self.names, runner, self.sleeps.append)
+        self.assert_failed(report, 'deployed_source_mismatch')
+        diagnostic = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')['diagnostic']
+        self.assertEqual(diagnostic['source_scope'], 'additional_repository_source')
+        self.assertNotIn('file', diagnostic)
+        self.assertNotIn(path, json.dumps(diagnostic))
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
+    def test_unknown_download_name_does_not_gain_source_identity_diagnostics(self):
+        self.mode = 'extra-untracked'
+        report = self.verify()
+        self.assertFalse(report['all_pass'])
+        self.assertTrue(all('diagnostic' not in row for row in report['functions']))
+        self.assertNotIn('untracked.ts', json.dumps(report))
 
     @contextlib.contextmanager
     def cleanup_failure(self, error):
@@ -1117,6 +1172,176 @@ class ReleaseFixtures(unittest.TestCase):
         self.files['supabase/functions/_shared/authority.ts'] += '// recovery source\n'
         self.recommit()
         self.assertEqual(self.run_actual_tag_guard(before).returncode, 0)
+
+
+class CompiledRuntimeFixtures(unittest.TestCase):
+    def setUp(self):
+        self.fixture = ReleaseFixtures('test_frontend_runtime_import_is_rejected_before_provider_io')
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.path = 'supabase/functions/_shared/authority.ts'
+        self.source = 'export const owner: string = "fixture owner";\n'
+        self.code = 'export const owner = "fixture owner";\n'
+        self.fixture.files[self.path] = self.source
+        self.fixture.recommit()
+        self.compiled = {self.path: readback.digest(self.code.encode())}
+
+    def verify(self, *, api=False, code=None, compiler=None, clock=None):
+        fixture = self.fixture
+        original = fixture.runner
+        def runner(args, directory, timeout):
+            if args[:3] == ['functions', 'download', 'paige-ai-chat']:
+                if '--use-api' in args and not api:
+                    raise readback.ReadbackError('api_unbundle_failed')
+                result = original([*args[:3], '--use-api', *args[4:]], directory, timeout)
+                if (directory / self.path).exists():
+                    (directory / self.path).write_text(self.code if code is None else code, encoding='utf-8')
+                return result
+            return original(args, directory, timeout)
+        with patch.object(readback, 'compiled_sources', create=True,
+                          **({'side_effect': compiler} if compiler else {'return_value': self.compiled})) as emit:
+            kwargs = {'clock': clock} if clock else {}
+            result = readback.verify(fixture.repo, fixture.commit, fixture.names, runner, fixture.sleeps.append, **kwargs)
+        return result, emit
+
+    def test_exact_emitted_expected_bytes_certify_only_vendor_download(self):
+        report, emit = self.verify()
+        self.assertTrue(report['all_pass'], 'Actual compiled bytes must match the deterministic expected compilation')
+        self.assertEqual(emit.call_count, 1)
+        self.assertGreater(emit.call_args.args[3], 0)
+        self.assertLessEqual(emit.call_args.args[3], 60)
+        row = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')
+        self.assertEqual(row['emitted_files'][self.path], {
+            'compiler': '@deno/emit@0.46.0', 'source_sha256': readback.digest(self.source.encode()),
+            'sha256': readback.digest(self.code.encode()),
+        })
+        sources = emit.call_args.args[2]
+        self.assertEqual(sources, {self.path: self.source.encode()})
+        self.assertNotIn(self.code, sources.values(), 'The compiler must never receive downloaded executable code')
+
+    def test_api_source_mismatch_cannot_request_compilation(self):
+        report, emit = self.verify(api=True)
+        self.fixture.assert_failed(report, 'deployed_source_mismatch')
+        emit.assert_not_called()
+
+    def test_altered_executable_literal_or_added_statement_stays_refused(self):
+        for code in [self.code.replace('fixture owner', 'foreign owner'), self.code + 'globalThis.changed = true;\n',
+                     self.code + '//# sourceMappingURL=data:application/json;base64,e30=\n']:
+            report, _ = self.verify(code=code)
+            self.fixture.assert_failed(report, 'deployed_source_mismatch')
+            self.assertNotIn('foreign owner', json.dumps(report))
+
+    def test_compiler_completion_after_original_deadline_cannot_certify(self):
+        now = [0]
+        def compiler(*args):
+            now[0] = readback.MAX_SECONDS + 1
+            return self.compiled
+        report, emit = self.verify(compiler=compiler, clock=lambda: now[0])
+        self.fixture.assert_failed(report, 'verification_budget_exhausted')
+        self.assertEqual(emit.call_count, 1)
+
+    def test_unavailable_or_untrusted_compiler_is_never_source_proof(self):
+        for error in [OSError('PRIVATE_FIXTURE_CREDENTIAL'),
+                      readback.ReadbackError('expected_compiler_failed')]:
+            def compiler(*args):
+                raise error
+            report, _ = self.verify(compiler=compiler)
+            self.fixture.assert_failed(report, 'deployed_source_mismatch')
+            self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
+    def test_compilation_does_not_hide_configuration_or_identity_failure(self):
+        self.fixture.rows[0]['verify_jwt'] = False
+        report, emit = self.verify()
+        self.fixture.assert_failed(report, 'jwt_configuration_mismatch')
+        emit.assert_not_called()
+        self.fixture.rows[0]['verify_jwt'] = True
+        self.fixture.mode = 'changing-version'
+        report, _ = self.verify()
+        self.fixture.assert_failed(report, 'deployment_changed_during_readback')
+
+    def test_missing_dependency_and_unknown_file_stay_refused(self):
+        for mode, reason in [('missing-dependency', 'download_missing_dependency'),
+                             ('extra-untracked', 'immutable_source_unavailable')]:
+            self.fixture.mode = mode
+            report, emit = self.verify()
+            self.fixture.assert_failed(report, reason)
+            emit.assert_not_called()
+
+    def compiler_fixture(self):
+        for relative in ['.github/scripts/edge-source-emit.ts', '.github/scripts/edge-source-emit.lock']:
+            self.fixture.files[relative] = (ROOT / relative).read_text(encoding='utf-8')
+        self.fixture.recommit()
+        return readback.compiled_sources(
+            self.fixture.repo, self.fixture.commit, {self.path: self.source.encode()},
+            60, self.fixture.repo / 'compiler-cache')
+
+    def test_real_frozen_vendor_compiler_matches_the_expected_executable_bytes(self):
+        # Mandatory real compiler leg, no optional skip or downloaded source.
+        self.assertEqual(self.compiler_fixture(), self.compiled)
+
+    def test_compilation_does_not_execute_source_or_fetch_its_imports(self):
+        self.source = ('import "https://unapproved.example.invalid/never-read.ts";\n'
+                       'throw new Error("source must never execute");\n'
+                       'export const owner: string = "fixture owner";\n')
+        result = self.compiler_fixture()
+        self.assertEqual(set(result), {self.path})
+        self.assertRegex(result[self.path], '^[0-9a-f]{64}$')
+
+    def test_compiler_process_has_no_provider_credentials_or_effect_permissions(self):
+        self.compiler_fixture()
+        response = {'version': 1, 'compiler': '@deno/emit@0.46.0', 'files': [{
+            'path': self.path, 'source_sha256': readback.hashlib.sha256(self.source.encode()).hexdigest(),
+            'sha256': self.compiled[self.path]}]}
+        with patch.dict(os.environ, {'SUPABASE_ACCESS_TOKEN': 'PRIVATE_FIXTURE_CREDENTIAL'}), \
+                patch.object(readback.subprocess, 'run', return_value=subprocess.CompletedProcess(
+                    [], 0, json.dumps(response), '')) as run, \
+                patch.object(readback, 'commit_file', return_value=b'verified helper fixture'):
+            result = readback.compiled_sources(self.fixture.repo, self.fixture.commit,
+                                               {self.path: self.source.encode()}, 17,
+                                               self.fixture.repo / 'compiler-cache')
+        self.assertEqual(result, self.compiled)
+        args, kwargs = run.call_args.args[0], run.call_args.kwargs
+        self.assertIn('--frozen', args)
+        self.assertIn('--no-prompt', args)
+        self.assertIn('--no-config', args)
+        self.assertIn('--allow-net=jsr.io', args)
+        self.assertFalse(any(arg == '-A' or arg.startswith(('--allow-read', '--allow-write',
+                                                         '--allow-run', '--allow-env', '--allow-ffi')) for arg in args))
+        self.assertNotIn('SUPABASE_ACCESS_TOKEN', kwargs['env'])
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(kwargs['env']))
+        self.assertEqual(kwargs['timeout'], 17)
+
+    def test_stale_helper_or_frozen_lock_refuses_before_compiler_process(self):
+        self.compiler_fixture()
+        for relative in ['.github/scripts/edge-source-emit.ts', '.github/scripts/edge-source-emit.lock']:
+            path = self.fixture.repo / relative
+            original = path.read_bytes()
+            path.write_bytes(original + b'\nchanged\n')
+            with patch.object(readback.subprocess, 'run', wraps=subprocess.run) as run:
+                with self.assertRaisesRegex(readback.ReadbackError, 'checkout_differs_from_commit'):
+                    readback.compiled_sources(self.fixture.repo, self.fixture.commit,
+                                              {self.path: self.source.encode()}, 60,
+                                              self.fixture.repo / 'compiler-cache')
+            self.assertFalse(any(call.args[0][0] == 'deno' for call in run.call_args_list))
+            path.write_bytes(original)
+
+    def test_invalid_compiler_output_never_certifies_expected_bytes(self):
+        row = {'path': self.path, 'source_sha256': readback.hashlib.sha256(self.source.encode()).hexdigest(),
+               'sha256': self.compiled[self.path]}
+        envelope = {'version': 1, 'compiler': '@deno/emit@0.46.0', 'files': [row]}
+        invalid = ['not json', {**envelope, 'version': True}, {**envelope, 'compiler': 'unpinned'},
+                   {**envelope, 'files': []}, {**envelope, 'files': [row, row]},
+                   {**envelope, 'files': [{**row, 'path': 'foreign.ts'}]},
+                   {**envelope, 'files': [{**row, 'source_sha256': '0' * 64}]},
+                   {**envelope, 'files': [{**row, 'sha256': None}]}]
+        for output in invalid:
+            with patch.object(readback, 'commit_file', return_value=b'verified helper fixture'), \
+                    patch.object(readback.subprocess, 'run', return_value=subprocess.CompletedProcess(
+                        [], 0, output if isinstance(output, str) else json.dumps(output), '')):
+                with self.assertRaisesRegex(readback.ReadbackError, 'expected_compiler_failed'):
+                    readback.compiled_sources(self.fixture.repo, self.fixture.commit,
+                                              {self.path: self.source.encode()}, 1,
+                                              self.fixture.repo / 'compiler-cache')
 
 
 class RepositoryRuntimeContracts(unittest.TestCase):

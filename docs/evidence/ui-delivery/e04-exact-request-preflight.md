@@ -41,3 +41,7 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL:74 source cases/13steps prove the original read 
 RELEASE_RECOVERY: position=forward-fix; reference=original agreement-send private review and original prepared holds; no native migration, stored historical edit or permission change.
 
 The actual Kit decision binds declared HIGH risk/effect/receipt and delegates the original governed gate. Its current invoice adapter already carries a fully validated command wrapper. The Sales HTTP agreement request can reuse this same declaration without changing ROOT or the model schema. A native claim, current authorization and actual canonical approval are still adapter obligations; immutable snapshots and TypeScript shapes never establish them. The original shared Chat and send-message boundaries stay held pending their own integration disposition.
+
+## Current-main release refresh — October25
+
+Original reviewed2e565 remains retained. Current compositioned118e95f94596728a53d852fe15fc48d301a24a/tree99e882b3 preserves incoming main622c5532a in full and all three original runtime/test Git blobs exactly. Fresh actual strict source74PASS/13HTTPsteps; no test/permission/SDK/lock changes. Earlier source gate cleared through original2831 and subsequent normal source readback; this does not establish this private reader's affected importer or customer operation. Final exact-head review/CI, normal Edge/web/source readback and full12/authenticated acceptance remain required. No new UI/native/approval/provider/admission or catalogue activation.

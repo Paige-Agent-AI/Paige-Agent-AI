@@ -6,7 +6,7 @@ import {catalogueDeclarations} from '../ci/tool-catalogue-lint.mjs';
  * Runs actual canonical proposal schema/integrity, native draft and stable Rail functions.
  * Auth/current-tenant/Trust fixture boundary is inherited from the existing proof.
  */
-export async function weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource}) {
+export async function weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource,legacyGetterDefinition=null}) {
   const ctx={actor:owner,tenant,role:'authenticated'};
   const migration='supabase/migrations/20271112130000_experience05_confirmed_weekly_draft.sql';
   const eventsBefore=run('SELECT count(*) FROM paige_native_events;');
@@ -320,6 +320,28 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   // production activation and must not be mistaken for a dark fixture here.
   dropAck=false;
   const authId=json(`SELECT draft_weekly_commitment_check(${literal(randomUUID())},'Synthetic exact weekly authorization',1,'09:00','UTC');`,ctx).automation_id;
+  if(legacyGetterDefinition){
+    const projectedGetter=run("SELECT pg_get_functiondef('public.get_weekly_commitment_checks()'::regprocedure);");
+    const originalState=()=>json(`SELECT jsonb_build_object('definition',to_jsonb(a),'audit_count',(SELECT count(*) FROM audit_logs),'event_count',(SELECT count(*) FROM paige_native_events)) FROM paige_automations a WHERE id=${literal(authId)};`);
+    const beforeLegacy=originalState(),callsBeforeLegacy=controlCalls;
+    try{
+      // Restore the ACTUAL saved historical getter only in this disposable DB.
+      // Never synthesize a null in the caller or weaken its refusal contract.
+      run(legacyGetterDefinition);
+      assert.equal(run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.get_weekly_commitment_checks()'::regprocedure;"),'99218816ce1b8111e80360b1bd9aa189');
+      const legacyRead=await readWeeklyOwner(scope,caller,()=>scope);assert.equal(legacyRead.status,'ready');
+      const legacyReview=legacyRead.snapshot.checks.find(c=>c.automation_id===authId);assert(legacyReview);
+      const refused=await controlWeeklyOwner(scope,legacyReview,'authorize',caller,()=>scope);
+      check('actual legacy getter remains readable but cannot authorize unknown control evidence or write work',()=>{
+        assert.equal(legacyReview.future_control_at,undefined);
+        assert.equal(refused.status,'unavailable');assert.equal(controlCalls,callsBeforeLegacy);
+        assert.deepEqual(originalState(),beforeLegacy);
+      });
+    }finally{
+      run(projectedGetter);
+      assert.equal(run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.get_weekly_commitment_checks()'::regprocedure;"),'60d5acc132111d9db7e63d9848c06c47');
+    }
+  }
   const authRead=await readWeeklyOwner(scope,caller,()=>scope);assert.equal(authRead.status,'ready');
   const authReview=authRead.snapshot.checks.find(c=>c.automation_id===authId);assert(authReview);
   const callsBeforeAuth=controlCalls;

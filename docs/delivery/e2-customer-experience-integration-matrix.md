@@ -1805,3 +1805,35 @@ synthetic Visual support, bounded Experiential proof and NOT_ACCEPTED founder
 status remain distinct. All 19/nine, populated sources, roles/tenant/cohorts/Live
 and the protected CPU-failed original report/recovery remain open. No readiness,
 provider, permission, algorithm, catalogue or consequential activation.
+
+## October25 — O07 original capture prerequisite, development only
+
+The [original Systems core source slice](../evidence/e2-systems-capture-mode.md)
+adds an explicit internal capture choice with no remediation forge/file_action;
+existing default/all/delta calls remain. Original runs/findings carry actual mode
+and scope; unsupported internal choices fail before reads/effects. No new API,
+role/grant, manual flavor/admission, queue, registry or execution authority.
+Initial30 owning+184 original controls,214/8 are retained as source history.
+Readback19RED/31PASS now yields52own+184original=236/8 source PASS; none mode
+confirms original findings/run and retains the known identity on unconfirmed
+persistence, without replay, new authority or legacy caller behavior changes.
+Composed source236/8 passes in5.06s, scoped lint0 and project type ratchet10/6;
+fresh exact review/native Deno/CI/source release remain owed; no authenticated
+or rendered proof follows. The required manual scan/corrective outcome stays incomplete until
+existing Spine/Harness/Trust/Layer C/work/receipt and original-run recovery are
+connected and verified. All19/nine and one final founder evaluation remain open;
+no activation, provider spend, new QA account or browser-control bypass.
+
+## October25 — original capture prerequisite source released
+
+[#2813 actual receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2813#issuecomment-6396748331): reviewed1b42/LOWER5642231020+5642812783,
+all11 exact checks/two webSUCCESS/zero threads → actual622c5532/tree91aeaead.
+Actual incomingef732 (E05 weekly) and all16034 outside entries/whole doc inverses
+are preserved. Original guarded builders confirm all4 complete source/config
+closures equal reviewed source; no identity guard was changed. Normal Edge40186447016/
+job121148128184 verifies all4, artifact12596098700/digestdd9519e2/remote edge-live622c.
+READYwebdpl_7GHbe5PnzZxqg1qpxidH9zyd2FDx and both public200/exact622c-mvnpjgco/null.
+Functional source prerequisite only; no UI/rendered/customer scan, permission/cohort,
+manual work/receipt, Chat/Live or O07/O19 completion. Historical9/0 and12/0/4,
+all19/nine, original ALG/catalogue readiness, monthly UNKNOWN/UNRETRIED, input and
+activation controls and one final founder evaluation remain open.

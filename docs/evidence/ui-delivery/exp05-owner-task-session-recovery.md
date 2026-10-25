@@ -1,7 +1,7 @@
 # EXP05 — retain original automation inspection during routine session recovery
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: returning ordinary SOLO owner keeps the same original process/history/result and pending or inconclusive decision across routine session recovery. Original genuine-session retirement and current native authority remain mandatory.
+FLOW_BY_FLOW: PASS: returning ordinary SOLO owner retains the original inspection and in-flight decision; existing flow contract docs/delivery/experience-05-weekly-commitment-check.md and source checks docs/evidence/exp05-owner-task-session-recovery.json. Genuine-session retirement and current native authority remain mandatory.
 PAIGE_UI_DESIGN: PASS: incumbent Operate, original Operations/Settings controls and routed design/accessibility/quality guidance retained. Only the existing hook's auth-event discrimination and owning tests change; no JSX/CSS/widget/route or new visual state.
 MATERIAL_FLOW_CHANGE: NO: repair unintended loss of an existing inspection/decision. No new action, approval, transition choice, presentation or persistence system.
 FLOW_PROTOTYPE: NOT_REQUIRED: existing process/history flow and approved native controls remain unchanged; actual original React UI with its real corrected hook is tested, not a substitute interface.
@@ -35,7 +35,7 @@ MUST_PRESERVE: original actor/tenant/epoch/deadline, current caller/native autho
 ACCEPTANCE_CRITERIA: routine same-person/sign-in retains exact original UI/read/control identity without new request; genuine session/scope changes synchronously retire it and late responses cannot revive it. Original server authority and business effects are unchanged.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original caller/data and server/native writers unchanged; no Root/risk/C0b, database, registry, provider, orchestration, approval or other Experience source edited.
-INTERNAL_BUILD_IDENTITY: base709c181c13e45ae59288a2c0631ed0a616e9d09f; candidate hashes=docs/evidence/exp05-owner-task-session-recovery.json; exact reviewed head/tree in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record
+INTERNAL_BUILD_IDENTITY: base=709c181c13e45ae59288a2c0631ed0a616e9d09f; composed-main=79768362f1b5bdb70205682d53cfee950bfc9bca; candidate hashes=docs/evidence/exp05-owner-task-session-recovery.json; exact reviewed head/tree in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record
 RELEASE_CHANNEL: development: bounded hook correction, ordinary production web release only after required final-head gates.
 RELEASE_CLASSIFICATION: internal-only: prelaunch recovery repair, no complete Experience or customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated EXP05 and founder acceptance remain outstanding.

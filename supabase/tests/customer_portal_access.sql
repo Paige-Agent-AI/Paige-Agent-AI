@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(321);
+SELECT plan(322);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -812,6 +812,10 @@ SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000001',format(
 SELECT ok((SELECT b.actions=(SELECT count(*) FROM public.paige_customer_actions) AND b.notices=(SELECT count(*) FROM public.notifications)
  AND b.domain_audits=(SELECT count(*) FROM public.paige_audit_log) AND b.work_audits=(SELECT count(*) FROM public.audit_logs)
  FROM publication_before b),'all publication refusals leave original customer records, notices and audits unchanged');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET scoped_client_id='e0937000-0000-4000-8000-0000000000ee' WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate',
+ '42501','owner approval with another selected CRM focus refuses');
+UPDATE public.paige_pending_confirmations SET scoped_client_id='e0937000-0000-4000-8000-0000000000ef'
+ WHERE id='e0959000-0000-4000-8000-000000000022';
 CREATE TEMP TABLE publication_result AS SELECT pg_temp.share_request() result;
 SELECT is((SELECT result->>'status' FROM publication_result),'shared','exact approved native publication reaches the real customer record');
 SELECT is((SELECT result->>'work_id' FROM publication_result),(SELECT result#>>'{request,work_id}' FROM publication_request),'publication keeps the original private Work identity');

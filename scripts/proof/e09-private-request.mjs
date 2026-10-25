@@ -3,7 +3,7 @@
 // Full-schema customer_portal_access.sql remains the normative role/trigger proof.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,publicationBaseline=false,publicationCandidate=false,spawn,exe,args,transcripts}) {
+export async function privateRequestProof({sql,check,assert,fs,root,path,fixture,baseline,historyBaseline=false,publicationBaseline=false,publicationCandidate=false,focusCandidate=false,focusBaseline=false,spawn,exe,args,transcripts}) {
  const read=file=>fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n');
  const preparationFile='supabase/migrations/20271114150009_e09_private_request_preparation.sql';
  const historyFile='supabase/migrations/20271114150019_e09_private_request_history.sql';
@@ -279,7 +279,7 @@ export async function privateRequestProof({sql,check,assert,fs,root,path,fixture
   await privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked});
  }
  check('Original native file, advance and Portal authority remain byte-exact',()=>assert.deepEqual(fingerprints(),before));
- const publication=publicationBaseline?privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot}):publicationCandidate?await privatePublicationCandidateProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot,spawn,exe,args,transcripts}):null;
+ const publication=publicationBaseline?privatePublicationBaselineProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot}):publicationCandidate?await privatePublicationCandidateProof({sql,check,assert,fixture,asActor,invoke,read,customerSnapshot,spawn,exe,args,transcripts,focusCandidate,focusBaseline}):null;
  return {baseline,historyBaseline,baselineSource:historyBaseline?'ba786f11b52c71b4ed87e7eb7a022b5aaa376e18':null,originalFingerprints:before,canonicalReplayFileHash:replayFileHash,
   migration:'20271114150009_e09_private_request_preparation.sql',
   migrationNormalizedSHA256:createHash('sha256').update(read(preparationFile)).digest('hex'),
@@ -640,10 +640,57 @@ async function privatePublicationCandidateProof(env) {
   assert.equal(replayRace.results.at(-1).customer_action_id,shared.customer_action_id);assert.equal(responseRace.results.at(-1).ok,true);
   assert.equal(sql(`SELECT count(*) FROM public.paige_customer_responses WHERE action_id='${shared.customer_action_id}'`),'1');
  });
+ const focus=env.focusCandidate?focusedPublicationProof({...env,prepare,publish,statement,snapshot,lit}):null;
  return {migration: migrationFile,advanceBeforeSHA256:createHash('sha256').update(advanceBefore).digest('hex'),
   originalPublisher:setup.publisherHash,outerApproval:'SYNTHETIC_TRUSTED_ISSUER_AND_AUTONOMY_PORT; NOT_REAL_CHAT_APPROVAL',
   observedLockWaits:waits,responseReplayWaited:replayWaited,authenticatedCustomer:'NOT_RUN',productionOperation:false,
-  sourceFingerprints:JSON.parse(sql(`SELECT jsonb_object_agg(proname,md5(prosrc)) FROM pg_proc WHERE oid IN('${advanceSig}'::regprocedure,'public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)'::regprocedure)`))};
+  ...(focus?{focus}:{}),sourceFingerprints:JSON.parse(sql(`SELECT jsonb_object_agg(proname,md5(prosrc)) FROM pg_proc WHERE oid IN('${advanceSig}'::regprocedure,'public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)'::regprocedure)`))};
+}
+
+function focusedPublicationProof({sql,check,assert,read,prepare,publish,snapshot,lit,focusBaseline}) {
+ const file='supabase/migrations/20271114210109_e09_owner_focused_request_publication.sql';
+ const sig='public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)';
+ const original=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');
+ const metadata=()=>sql(`SELECT jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'definer',prosecdef,'config',proconfig,
+  'args',pg_get_function_arguments(oid),'result',pg_get_function_result(oid)) FROM pg_proc WHERE oid='${sig}'::regprocedure`);
+ const beforeMetadata=metadata();if(!focusBaseline)sql(read(file));
+ const f=prepare();sql(`UPDATE public.paige_pending_confirmations SET scoped_client_id='${f.contact}' WHERE id='${f.invite}'`);let shared;
+ check('Actual owner with this approved CRM focus publishes the same request without clearing focus',()=>{
+  shared=publish(f);assert.equal(shared.status,'shared');assert.equal(shared.work_id,f.request.work_id);
+ });
+ const g=prepare();sql(`UPDATE public.paige_pending_confirmations SET scoped_client_id='${g.contact}',thread_id='${g.invite}' WHERE id='${g.invite}'`);
+ check('Owner-focused approval remains bound to its original conversation',()=>{
+  const before=snapshot();assert.throws(()=>publish(g));assert.equal(snapshot(),before);
+ });
+ check('Exact original thread and CRM focus can execute together for the authorized owner',()=>{
+  const r=publish(g,{thread:g.invite});assert.equal(r.status,'shared');assert.equal(r.work_id,g.request.work_id);
+ });
+ const h=prepare();sql(`UPDATE public.paige_pending_confirmations SET scoped_client_id='${f.contact}' WHERE id='${h.invite}'`);
+ check('A different approved CRM focus still refuses before customer effects',()=>{
+  const before=snapshot();assert.throws(()=>publish(h),/PORTAL_REQUEST_APPROVAL_UNAVAILABLE/);assert.equal(snapshot(),before);
+ });
+ check('CRM focus never grants the customer the business owner role',()=>{
+  const before=snapshot();assert.throws(()=>publish(f,{actor:f.actor,expected:f.actor}));assert.equal(snapshot(),before);
+ });
+ check('Owner call without a CRM focus remains compatible after the refinement',()=>{
+  const plain=prepare(),r=publish(plain);assert.equal(r.status,'shared');assert.equal(r.work_id,plain.request.work_id);
+ });
+ if(shared)check('Same owner-focused claim reconciles the original customer record once',()=>{
+  const before=snapshot(),again=publish(f);assert.equal(again.replayed,true);assert.equal(again.customer_action_id,shared.customer_action_id);assert.equal(snapshot(),before);
+ });
+ if(!focusBaseline){
+  const old='OR proposal.thread_id IS DISTINCT FROM _thread_id OR proposal.scoped_client_id IS NOT NULL';
+  const next='OR proposal.thread_id IS DISTINCT FROM _thread_id\n  OR (proposal.scoped_client_id IS NOT NULL AND proposal.scoped_client_id IS DISTINCT FROM v_contact_id)';
+  check('Focus refinement inverse restores the entire original native publication implementation',()=>{
+   const now=sql(`SELECT pg_get_functiondef('${sig}'::regprocedure)`).replaceAll('\r\n','\n');assert.equal(now.split(next).length,2);assert.equal(now.replace(next,old),original);
+  });
+  check('Focus refinement preserves native ABI, OID, owner, grants and search path',()=>assert.equal(metadata(),beforeMetadata));
+  check('The exact same focus migration replays without native data changes',()=>{const before=snapshot();sql(read(file));assert.equal(snapshot(),before);});
+  check('Original publication migration refuses to overwrite its new forward implementation',()=>{
+   const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);assert.throws(()=>sql(read('supabase/migrations/20271114210009_e09_approved_private_request_publication.sql')),/source changed/);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
+  });
+ }
+ return {baseline:focusBaseline,migration:file,originalSource:'81e21f92abe3d552f89d98c8d7b3b9d3',outerOwnerChat:'NOT_MOUNTED_OR_PROVEN',productionOperation:false};
 }
 
 async function privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked}) {

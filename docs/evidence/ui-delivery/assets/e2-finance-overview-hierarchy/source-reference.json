@@ -1,0 +1,48 @@
+{
+  "evidence_class": "SYNTHETIC_NATIVE_PRE_FOCUS_REPAIR_SUPPORT_ONLY",
+  "source": "19dff555e54cf53c2c74d486aec7ea84a9ee5ee6",
+  "sources": [
+    {
+      "path": "src/solo/finance/FinanceWorkspace.tsx",
+      "sha256": "04477b77f2fe10eec96380b3cac86f4772677659d8cd2a90a10e8b7d77c371b4"
+    },
+    {
+      "path": "src/solo/finance/finance.css",
+      "sha256": "0634033c78d1f1e5789c87e082af913d3bc080315da2840211bd6a636088d0a4"
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/stubs.tsx",
+      "sha256": "010568c02f6c4b12c1821b4648c194f33ecaa3021cb4ac1526de934d9c8330f5"
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/main.tsx",
+      "sha256": "d85f4bc9c206d0b843ac32b6f847192fa65397a5a8a008b69729544306d6b55e"
+    }
+  ],
+  "frames": [
+    {
+      "file": "pre-focus-1536-closed.jpg",
+      "sha256": "8884c55b711489c73377795366069e8fff4107dcbbcbcbffb22e073ae80b1e60",
+      "altered": false
+    },
+    {
+      "file": "pre-focus-1536-open.jpg",
+      "sha256": "1c0330cb98f3af74be0d472a7be3d28507555e74c6f933f91ab226ff38c0183e",
+      "altered": false
+    },
+    {
+      "file": "pre-focus-900-closed.jpg",
+      "sha256": "10a1ef179c1b9c0978aa3c67d3990df16a0a619450c0c49ded2323ab310569e8",
+      "altered": false
+    }
+  ],
+  "account_class": "neutral development-only fixture",
+  "backend": "refused",
+  "purpose": "Original Finance layout, font and source distinctions before the subsequent focus repair.",
+  "exclusions": [
+    "authenticated customer acceptance",
+    "provider readiness",
+    "final repaired keyboard return",
+    "all-eight-frame final signoff"
+  ]
+}

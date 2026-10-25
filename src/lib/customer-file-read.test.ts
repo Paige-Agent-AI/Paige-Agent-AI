@@ -5,6 +5,14 @@ import {afterEach, test, vi} from "vitest";
 import {readCustomerFileText, CustomerFileReadError} from "../../supabase/functions/_shared/client-portal-file-read.ts";
 import type {CustomerFilesContext} from "../../supabase/functions/_shared/client-portal-files-context.ts";
 
+// These existing tests isolate the original admission/source/provider adapter.
+// The new parser and default Word adapter run with their actual pinned packages
+// in client-portal-docx.test.ts under Deno; this mock is not parser proof.
+vi.mock("../../supabase/functions/_shared/client-portal-docx.ts", () => {
+  class CustomerDocxError extends Error {readonly code = "invalid_document";}
+  return {CustomerDocxError, readCustomerDocxBody: vi.fn(async () => {throw new CustomerDocxError();})};
+});
+
 afterEach(() => vi.unstubAllGlobals());
 const id = (n: number) => `e0997200-0000-4000-8000-${String(n).padStart(12, "0")}`;
 function fixture(mimes = ["application/pdf", "image/png"]): CustomerFilesContext {
@@ -38,11 +46,11 @@ test("uses the existing extractor with actual bytes and fences only its readable
   assert.ok(result.files.every(f => f.sha256.length === 64));
 });
 
-test("unsupported Office bytes, preflight refusal and empty extraction are explicitly unread", async () => {
+test("malformed Office bytes, preflight refusal and empty extraction are explicitly unread", async () => {
   const context = fixture(["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/pdf"]), p = ports(context);
   p.preflight.mockResolvedValue(false);
   const refused = await readCustomerFileText(context, p, limits);
-  assert.deepEqual(refused.files.map(f => [f.status, f.reason]), [["unread", "unsupported"], ["unread", "processing_limit"]]);
+  assert.deepEqual(refused.files.map(f => [f.status, f.reason]), [["unread", "invalid_document"], ["unread", "processing_limit"]]);
   assert.equal(refused.referenceText, ""); assert.equal(p.invokeModel.mock.calls.length, 0);
   assert.equal(p.preflight.mock.calls.length, 1);
   const empty = ports(); empty.invokeModel.mockResolvedValue("   ");

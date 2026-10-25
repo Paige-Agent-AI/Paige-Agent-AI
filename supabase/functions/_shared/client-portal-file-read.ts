@@ -2,6 +2,7 @@ import {extractAttachmentText, bytesToBase64, type ModelInvoker} from "./attachm
 import {fenceUploadedFileText} from "./untrusted-fence.ts";
 import {loadCustomerFileInputs, CustomerFileInputError, type CustomerFileBytes} from "./client-portal-file-input.ts";
 import type {CustomerFilesContext} from "./client-portal-files-context.ts";
+import {readCustomerDocxBody, CustomerDocxError} from "./client-portal-docx.ts";
 
 type Ports = Parameters<typeof loadCustomerFileInputs>[1] & {
   /** The existing handler's processor limits; storage capacity is not model capacity. */
@@ -12,7 +13,7 @@ type Ports = Parameters<typeof loadCustomerFileInputs>[1] & {
 };
 type Limits = {byteBudget: number; timeoutMs: number; maxTextChars: number};
 type FileResult = {fileId: string; filename: string; sha256: string; status: "read" | "unread";
-  reason: "unsupported" | "processing_limit" | "empty" | null};
+  reason: "unsupported" | "processing_limit" | "invalid_document" | "body_text_only" | "empty" | null};
 export class CustomerFileReadError extends Error {
   readonly code: string;
   constructor(code: string) {super(code); this.code = code;}
@@ -56,20 +57,32 @@ export async function readCustomerFileText(context: CustomerFilesContext, ports:
     for (const input of inputs) {
       await assertCurrent();
       const base = {fileId: input.file.id, filename: input.file.filename, sha256: input.sha256};
-      if (!["application/pdf", "image/png", "image/jpeg"].includes(input.file.mime)) {
+      const word = input.file.mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      if (!word && !["application/pdf", "image/png", "image/jpeg"].includes(input.file.mime)) {
         results.push({...base, status: "unread", reason: "unsupported"}); continue;
       }
-      const allowed = await ports.preflight(input); await assertCurrent();
-      if (allowed !== true) {results.push({...base, status: "unread", reason: "processing_limit"}); continue;}
-      const text = await extractAttachmentText({base64: bytesToBase64(input.bytes),
-        mimeType: input.file.mime, fileName: input.file.filename}, (system, parts) =>
-          ports.invokeModel(system, parts, {assertCurrent, signal: controller.signal}));
+      let text: string | null;
+      if (word) {
+        try {text = await readCustomerDocxBody(input.bytes, controller.signal);}
+        catch (error) {
+          await assertCurrent();
+          if (!(error instanceof CustomerDocxError) || error.code === "interrupted") throw error;
+          results.push({...base, status: "unread", reason: error.code}); continue;
+        }
+        if (text) text = "WORD COVERAGE: document body text only; images, headers and notes were not read.\n" + text;
+      } else {
+        const allowed = await ports.preflight(input); await assertCurrent();
+        if (allowed !== true) {results.push({...base, status: "unread", reason: "processing_limit"}); continue;}
+        text = await extractAttachmentText({base64: bytesToBase64(input.bytes),
+          mimeType: input.file.mime, fileName: input.file.filename}, (system, parts) =>
+            ports.invokeModel(system, parts, {assertCurrent, signal: controller.signal}));
+      }
       await assertCurrent();
       if (!text) {results.push({...base, status: "unread", reason: "empty"}); continue;}
       characters += text.length;
       if (characters > limits.maxTextChars) fail("CUSTOMER_FILES_TEXT_LIMIT");
       blocks.push(fenceUploadedFileText(input.file.filename, text, {maxLen: limits.maxTextChars}));
-      results.push({...base, status: "read", reason: null});
+      results.push({...base, status: "read", reason: word ? "body_text_only" : null});
     }
     await assertCurrent();
     return {files: results, referenceText: blocks.join("")};

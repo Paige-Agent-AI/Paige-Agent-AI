@@ -99,6 +99,15 @@ function adsFunnelReadDoorBound(resolver) {
 // prove the specific mount and both ends of its scope binding, not any edge read.
 const BUSINESS_SNAPSHOT_DECLARATION_FILE='supabase/functions/_shared/paige-spine/domains/business-review.ts';
 const BUSINESS_SNAPSHOT_ADAPTER_FILE='supabase/functions/_shared/paige-context/business-review-chat.ts';
+function campaignLeadsReadDoorBound(resolver) {
+  // The read rides the EXISTING campaign-brief chain: the domain's tool array is spread into the
+  // Chat mount, and the dispatch calls the shared helper on the caller's own session (never the
+  // service role) — the same construction the campaign_brief_* tools use.
+  const chat=resolver.sourceFile(path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts'))?.text??'';
+  return chat.includes('...CAMPAIGN_BRIEF_TOOLS')
+    && chat.includes('readCampaignBriefLeads({ caller: supabaseClient');
+}
+
 export function businessSnapshotReadDoorBound(resolver) {
   const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
   const adapter=read(BUSINESS_SNAPSHOT_ADAPTER_FILE);
@@ -302,7 +311,15 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 if(identity&&literalProperty(identity,'id')==='ads.lead_funnel'&&owner.name.text==='ADS_LEAD_FUNNEL_READ_CAPABILITY'
                   && adsFunnelReadDoorBound(resolver))readTools.set('get_pipeline_lead_funnel',owner.name.text);
               }
-              else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)===BUSINESS_SNAPSHOT_DECLARATION_FILE){
+              else if(operation==='public.get_campaign_brief_leads'&&relative(file)==='supabase/functions/_shared/paige-spine/domains/campaigns.ts'){
+                // EXP03 S1e: the campaign leads read. The RPC's get_* name predates the read_* naming
+                // heuristic; admit this exact read tuple and schema only when the actual caller-JWT
+                // door and the existing campaign-brief tool mount are bound; never clear risk debt.
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='campaign.leads'&&owner.name.text==='CAMPAIGN_LEADS_READ_CAPABILITY'
+                  &&campaignLeadsReadDoorBound(resolver))readTools.set('read_campaign_leads',owner.name.text);
+            }
+            else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)===BUSINESS_SNAPSHOT_DECLARATION_FILE){
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='business.operating_snapshot'&&owner.name.text==='BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY'
                   && businessSnapshotReadDoorBound(resolver))readTools.set('get_business_snapshot',owner.name.text);

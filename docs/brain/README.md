@@ -3956,8 +3956,11 @@ broader authority or late proof. [Original source/production receipt](https://gi
 the sole Master4.0 row and [original status evidence](../evidence/ui-delivery/exp05-specialist-original-status.md#october25---original-result-budget-production-source-receipt)
 record reviewed2f293/LOWER5644914592/all11 gates, actual9d8bdb79, successful
 own Edge40231463272 and immutable-source readback. Containing Chat547 source is
-verified separately; its whole E08 Edge run remains FAIL at nav-pull-profile,
-not a waived global release or asserted customer failure. Both public aliases
+verified separately. Initial E08 Edge attempt1 failed nav-pull-profile readback;
+normal attempt2/job121287555470 subsequently succeeded at20:54:29UTC.
+Digest-verified artifact12613144544 has all23 selected entriesPASS and the
+identical previously source-bound Chat547 files/archive. The original failure
+is retained, not waived or converted into a customer failure. Both public aliases
 were observed on containinga8, not exact-public9d8.
 
 Functional source deployed; Visual unchanged; original authenticated result,

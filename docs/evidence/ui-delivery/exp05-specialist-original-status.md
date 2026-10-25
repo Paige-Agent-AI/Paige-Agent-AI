@@ -294,8 +294,13 @@ and the sole Master4.0 row retain exact source, workflow, artifact and web ident
 Normal Edge40231463272 succeeded; all287 Chat546 immutable-source/pinned-emitter
 bindings passed the original verifier. Containing Chat547/all289 bindings and
 the unchanged owning helper were separately checked at actuala8aaa1316, with
-current provider archive/config equality. The containing whole Edge workflow
-40231481257 remains FAIL at nav-pull-profile; no global success or marker is inferred.
+current provider archive/config equality. Containing Edge40231481257 attempt1
+failed nav-pull-profile and skipped its marker. Normal attempt2/job121287555470
+subsequently succeeded at20:54:29UTC. Artifact12613144544 ZIP digest
+9ffa6c94b606b4e6cfea34bbadd2568959782a912734a7fbbd6aa249327dbfac was
+verified before parsing: all23 entriesPASS; Chat547 files/archive exactly equal
+the previously source-bound289-entry manifest. This supersedes that narrow
+release hold and preserves the initial failure, not a waiver or customer proof.
 Both public aliases were observed on containinga8 at20:39:37UTC, not exact9d8.
 
 Functional: one existing8s budget covers the helper's sequential authority,

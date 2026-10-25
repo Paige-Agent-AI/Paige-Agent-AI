@@ -1837,3 +1837,27 @@ Functional source prerequisite only; no UI/rendered/customer scan, permission/co
 manual work/receipt, Chat/Live or O07/O19 completion. Historical9/0 and12/0/4,
 all19/nine, original ALG/catalogue readiness, monthly UNKNOWN/UNRETRIED, input and
 activation controls and one final founder evaluation remain open.
+
+## October25 — read-only resumption and original-finding UI candidate
+
+Owner renewed existing SOLO read-only QA. Finance menu→Overview, all seven pages,
+original source-sheet Escape/focus and Profitability route/figures/empty-composer
+reload passed bounded checks; [sanitized original receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2696#issuecomment-6398632354),
+ANT-52 ad4f5ed1. Populated company sources, negative roles/tenants/cohorts, native
+zoom/AT/physical mobile and exact tab-to-deployment binding remain unverified.
+Two CSS layouts were inspected; raw raster mismatches are not exact-raster passes.
+All nine catalogue entries were read with their original3Limited/4ComingSoon/
+2Unverified coverage and all9AccessUnverified. No capability/algorithm promotion.
+
+Existing #2817 O06/O14 candidate consumes the released exact reader, keeps older
+evidence separate from current health and offers no action from historical data.
+[Owning rendered evidence](../evidence/ui-delivery/e2-recorded-finding-review.md)
+records13 neutral browser states, original keyboard/return/retry paths, required
+CSS widths/PAIGE states, narrow drawer reachability and the selected44px return
+target. Fresh202/9 source controls pass on current-main composition. This is
+development/synthetic proof; final review/CI, merge/deployment, authenticated
+history/isolation/cohort/reload and founder acceptance remain separate obligations.
+Read-only analysis/inspection produces no Layer C execution or Rail result.
+All19 required outcomes, nine analytics, historical9/0 and16-case12/0/4 remain;
+ALG03/06/11/12 Partial,ALG13 usefulness Unverified and original monthly
+UNKNOWN/UNRETRIED stay unchanged. No provider/spend/Live/consequential activation.

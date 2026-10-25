@@ -1,0 +1,28 @@
+{
+  "source": "src/solo/SoloSystemsCheckWorkspace.tsx",
+  "sourceSha256": "2c361525e04909a426fabf156fe5d7816bf3df7dea9dca7c954b12318ec8195b",
+  "stylesheetSourceSha256": "61a2f53608549c56c205d8b4f1684efea3251acf5d7d17fdcea575544010a240",
+  "importOnlyAliases": 4,
+  "productionLogicExact": true,
+  "verifiedAt": "2026-10-25T14:20:24.518Z",
+  "entrySha256": "09f8a4e8810fcca7b0b8709e8e431a737d0d3fbf78d5c19a570f2ee9e75cd87a",
+  "hashes": [
+    {
+      "name": "index-adrI41Gy.js",
+      "sha256": "bcb0b7fdef3294a67c085e06e12d9bd01fdc26a25c7fbeafa26317439dabfe5b"
+    },
+    {
+      "name": "index-BUJfK_kK.css",
+      "sha256": "8ca1d7d200dd5fbe27ebf1d0ed4b9f965b77f7415d232866697787418391cfd0"
+    },
+    {
+      "name": "SoloPaigeWorkspace-CiWi7fCY.js",
+      "sha256": "94873057bf83f6e0378895996b00297c3c6e3b86177e289eb994cddfb6275509"
+    },
+    {
+      "name": "SoloPaigeWorkspace-CVosoJw4.css",
+      "sha256": "e539cf57695e78af221520c31e872a0cf97d7a85678cdea0157d2940c4527d0c"
+    }
+  ],
+  "boundary": "Compilation class only; actual browser observations are recorded separately. Neutral synthetic ports; no customer/backend acceptance."
+}

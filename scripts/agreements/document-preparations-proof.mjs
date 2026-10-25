@@ -6,7 +6,7 @@ import {prepareAgreementFields,prepareCommercialAgreementFields} from '../../sup
 import {canonicalPresentationJson} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
 
-export async function proveDocumentPreparations({sql,read,context,tenant,actor,client,fresh,quote,startSession,observe}){
+export async function proveDocumentPreparations({sql,read,context,tenant,actor,client,fresh,quote,startSession,observe,onCommercialFixture}){
  let checks=0;const check=(v,message)=>{assert(v,message);checks++;};
  const value=v=>v===null?'NULL':quote(v);
  const json=statement=>JSON.parse(sql(statement));
@@ -162,6 +162,7 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
    return {p:{...base,manifest:canonicalPresentationJson(prepared.manifest),digest:prepared.preparation_sha256,
     commercial:prepared.manifest.commercial.payload_digest},terms,invoice,input};
   };
+  onCommercialFixture?.(makeCommercial);
   const c=await makeCommercial(),cp=c.p,sourceBefore=stamp(cp.source.agreement_id);
   const financialState=()=>sql(`SELECT jsonb_build_object('terms',to_jsonb(t),'invoice',to_jsonb(i)) FROM tenant_client_agreements t,paige_invoices i WHERE t.id='${c.terms}' AND i.id='${c.invoice}';`);
   const financialBefore=financialState(),cr=run(cp);

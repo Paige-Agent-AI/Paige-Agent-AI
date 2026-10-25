@@ -673,6 +673,14 @@ if (chatSrc.includes('...PLANNING_CLIENT_SHARE_TOOLS')) {
   if (!shareTools.length) throw new Error('Planning client-share catalog could not be parsed');
   importedTools.push(...shareTools);
 }
+// EXP08 Team Hub increment 4: the approved Team Hub reply enters Chat through its domain catalog, the same way.
+if (chatSrc.includes('...TEAM_HUB_POST_TOOLS')) {
+  if (!/import\s*\{[^}]*TEAM_HUB_POST_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/team_hub\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Team Hub catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/team_hub.ts', 'utf8');
+  const hubTools = [...source.matchAll(/\bname:\s*"(team_hub_post_reply)"/g)].map(m => m[1]);
+  if (hubTools.length !== 1) throw new Error('Team Hub catalog could not be parsed');
+  importedTools.push(...hubTools);
+}
 // E09 Slice M: the customer portal menu tools enter Chat through their domain catalog, the same way.
 if (chatSrc.includes('...PORTAL_MENU_TOOLS')) {
   if (!/import\s*\{[^}]*PORTAL_MENU_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/client_portal\.ts['"]/.test(chatSrc)) throw new Error('Unresolved portal menu catalog import');

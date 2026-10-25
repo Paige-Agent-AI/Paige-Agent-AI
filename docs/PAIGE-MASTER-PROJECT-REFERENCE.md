@@ -7620,7 +7620,7 @@ Current gaps:
   link-back, owner ruling); and the Team work panel, with status read from `plan_items`. It is
   `PROOF_OWED` on the same terms as increment 1. Contract:
   [increment 2 work contract](delivery/exp08-team-hub-increment2-work-contract.md).
-- Increment 3 (2026-10-25, not yet merged) adds attachments: up to 5 files of 10 MB each on a
+- Increment 3 (2026-10-25, merged PR #2839, migrations and `team-hub-file` read back on production) adds attachments: up to 5 files of 10 MB each on a
   message or thread reply, files-only sends, and a Download that mints a fresh 60-second
   attachment URL. Files live in the existing private `comms-attachments` bucket at
   `<tenant>/team-hub/<file_id>`, recorded in `team_hub_files` (migration `20271114160008`) behind
@@ -7631,10 +7631,17 @@ Current gaps:
   Excel files with embedded objects, charts or external links are refused, and no scheduled
   stale-file sweep is built. The same build closed an older gap: `analyze-financial-document`
   could read a file in any bucket by path. It is `PROOF_OWED` on the same terms as increments 1–2,
-  plus the `team-hub-file` deploy. Contract:
+  short of an authenticated drive. Contract:
   [increment 3 attachments contract](delivery/exp08-team-hub-increment3-attachments-contract.md).
-- Still not built: PAIGE with Team Hub, meaning Chat/Live reads, search, and approved reply drafts
-  (increment 4). Team Hub content does not enter Knowledge or Memory (owner ruling).
+- Increment 4 (2026-10-25) adds PAIGE with Team Hub, in Chat and Live: three caller-JWT reads
+  (`team_hub_conversations`, `team_hub_read_conversation`, `team_hub_search`, Spine `team.hub_*`,
+  offered on SOLO only) and `team_hub_post_reply`, posted under the person's own name only from
+  their approval card. Migration `20271114240008` adds the search definer and `20271114240108` lists
+  the reply in the autonomy catalogue. No Team Hub content enters Knowledge or Memory: once a person
+  has read Team Hub through PAIGE their automatic memory summaries stop (owner ruling 2026-10-25),
+  their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld
+  for the rest of a request that carried Team Hub text. `PROOF_OWED`. Contract:
+  [increment 4 PAIGE contract](delivery/exp08-team-hub-increment4-paige-contract.md).
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

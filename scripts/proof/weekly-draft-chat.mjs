@@ -97,9 +97,9 @@ const nativeState = phase => ({ok: true, actor_id: actor, tenant_id: tenant, thr
   confirmation_id: proposal, request_id: requestId, phase, read_at: new Date().toISOString(),
   expires_at: new Date(Date.now()+600000).toISOString(), summary: 'Neutral exact draft only',
   draft: {name: 'Neutral weekly responsibility', weekday: 1, local_time: '09:00', timezone: 'America/New_York'},
-  confirmation_token: null, automation_id: ['saved','changed'].includes(phase)?automationId:null,
-  revision: phase==='changed'?2:phase==='saved'?1:null,
-  process_state: phase==='changed'?'paused':phase==='saved'?'draft':null,
+  confirmation_token: null, automation_id: ['saved','saved_unreceipted','changed'].includes(phase)?automationId:null,
+  revision: phase==='changed'?2:['saved','saved_unreceipted'].includes(phase)?1:null,
+  process_state: phase==='changed'?'paused':['saved','saved_unreceipted'].includes(phase)?'draft':null,
   receipt_id: ['saved','changed'].includes(phase)?receiptId:null, recurrence_authorized: false});
 async function driveWeekly(options={}) {
   modelBodies=[]; modelRound=0; forbiddenNetwork=[];
@@ -162,7 +162,8 @@ async function driveWeekly(options={}) {
       if(options.declineLost)throw Error('PRIVATE_DECLINE_LOST_ACK');
       return{data:nativeState(options.saveWon?'saved':'declined'),error:null};
     },
-    read_weekly_commitment_chat_draft:()=>({data:nativeState(options.readPhase??(options.declined?'declined':'saved')),error:null}),
+    read_weekly_commitment_chat_draft:()=>({data:{...nativeState(options.readPhase??(options.declined?'declined':'saved')),
+      ...(options.foreignRead?{tenant_id:id(99)}:{})},error:null}),
   }});
   const response=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{
     method:'POST',headers:{Authorization:'Bearer test-original-jwt','Content-Type':'application/json'},
@@ -178,7 +179,9 @@ async function driveWeekly(options={}) {
   const values=modelBodies.flatMap(b=>b.messages??[]).filter(m=>m.role==='user')
     .flatMap(m=>Array.isArray(m.content)?m.content:[]).filter(p=>p.type==='tool_result')
     .flatMap(p=>{try{return[JSON.parse(p.content)];}catch{return[];}});
-  return{rec,wire,values,settled,state,token,args,status:response.status,approvalOutcomes,confirmations,offered:modelBodies.filter(b=>b.stream).flatMap(b=>b.tools??[]),
+  const originalObservations=modelBodies.flatMap(b=>typeof b.system==='string'?b.system.split('\n'):[])
+    .flatMap(line=>{try{const value=JSON.parse(line);return value.data_kind==='original_weekly_draft'?[value]:[];}catch{return[];}});
+  return{rec,wire,values,originalObservations,settled,state,token,args,status:response.status,approvalOutcomes,confirmations,offered:modelBodies.filter(b=>b.stream).flatMap(b=>b.tools??[]),
     calls:name=>rec.rpc.filter(c=>c.name===name),
     genericCAS:()=>state.timeline.filter(c=>c.kind==='query'&&c.op==='update')};
 }
@@ -190,11 +193,21 @@ function noFallback(r){
   assert.equal(r.calls('dispatch_automation').length,0,'Saving a draft never runs it');
   assert.ok(!r.wire.includes('PRIVATE_'),'Do not expose private native errors');
 }
+function originalReferences(r) {
+  const effect=r.settled.at(-1)?.bundle_ref?.interactive?.effects?.find(e=>e.tool==='weekly_commitment_draft');
+  assert.equal(effect?.run_id,requestId,'Persist the original native request, never the receipt row as its run identity');
+  assert.deepEqual(effect?.record_refs,[{kind:'automation',id:automationId}],'Later sessions need the same canonical definition reference');
+  assert.ok(!JSON.stringify(effect).includes(proposal),'Do not persist the private approval selector as an outcome');
+  assert.ok(!JSON.stringify(effect).includes(r.token),'Do not persist approval credentials as an outcome');
+}
 async function check(name,fn){try{await fn();resultRows.push({name,status:'PASS'});console.log('PASS '+name);}
 catch(e){resultRows.push({name,status:'FAIL',error:e.message});console.log('FAIL '+name+': '+e.message);}}
 await check('Exact stored approval reaches one original-JWT native claim and one commit, with no generic CAS',async()=>{
   const r=await driveWeekly();
   assert.equal(r.status,200,'The complete original Chat exchange must return normally');
+  assert.equal(r.settled.at(-1)?.bundle_ref?.turn_state?.state,'FINAL','A completed original save must persist a final turn, not a recovery hold');
+  assert.equal(r.settled.at(-1)?.bundle_ref?.paige_resume?.approval_outcome?.actions.find(a=>a.fingerprint===r.token)?.outcome,'ran','Later-session approval summary must agree with the emitted card');
+  originalReferences(r);
   assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,1,'Original native Chat claim not reached');
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,1,'Original native Chat commit not reached');
   noFallback(r);
@@ -317,6 +330,45 @@ await check('Re-emitted approved intent does not save twice or mint a replacemen
 await check('Already-consumed original approval cannot commit or mint a replacement',async()=>{
   const r=await driveWeekly({consumed:true,observed:'saved',modelTools:[{name:'weekly_commitment_draft',args:intentArgs}]});
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
+  assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0,'Consumed original needs only its existing read transport');
+  assert.equal(r.calls('read_weekly_commitment_chat_draft').length,1,'Recover the original saved outcome, not a new preparation');
+  assert.ok(r.values.some(v=>v.original_outcome?.phase==='saved'&&v.original_outcome?.definition_is_current==='saved_draft'),'Return the original receipt-verified state through its canonical privacy-preserving projection');
+  assert.equal(r.calls('read_weekly_commitment_chat_draft')[0]?.args._confirmation_id,proposal);
+  assert.equal(r.calls('read_weekly_commitment_chat_draft')[0]?.args._expected_thread_id,thread);
+  originalReferences(r);
+  noFallback(r);
+});
+for(const phase of ['saved','unknown'])await check('A late decline observes original '+phase+' without claiming a new refusal',async()=>{
+  const r=await driveWeekly({consumed:true,declined:true,readPhase:phase});
+  assert.equal(r.calls('read_weekly_commitment_chat_draft').length,1,'Read the original outcome even when the approval was already consumed');
+  assert.equal(r.calls('decline_weekly_commitment_chat_draft').length,0,'Do not repeat a native decision on a consumed original');
+  assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0);
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
+  assert.ok(r.originalObservations.some(o=>o.phase===phase),'The existing conversation must receive the actual original state');
+  noFallback(r);
+});
+for(const phase of ['unknown','saved_unreceipted','declined','changed'])await check('Consumed original '+phase+' is inspected without another claim or save',async()=>{
+  const r=await driveWeekly({consumed:true,readPhase:phase,modelTools:[{name:'weekly_commitment_draft',args:intentArgs}]});
+  assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0);
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
+  assert.equal(r.calls('read_weekly_commitment_chat_draft').length,1);
+  const result=r.values.find(v=>v.original_outcome?.phase===phase);
+  assert.ok(result,'Retain the actual original state, not a fresh preparation or false no-save claim');
+  if(phase==='changed') {
+    assert.equal(result.original_outcome.definition_is_current,'historical');
+    originalReferences(r);
+  } else {
+    assert.notEqual(result.success,true,'Unverified or declined original work cannot be reported successful');
+    assert.equal(result.automation_id,undefined,'No fabricated verified resource/receipt');
+  }
+  noFallback(r);
+});
+await check('Consumed original read still refuses a foreign business result without new work',async()=>{
+  const r=await driveWeekly({consumed:true,foreignRead:true,modelTools:[{name:'weekly_commitment_draft',args:intentArgs}]});
+  assert.equal(r.calls('read_weekly_commitment_chat_draft').length,1);
+  assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0);
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
+  assert.ok(!r.values.some(v=>v.original_outcome?.phase==='saved'||v.automation_id===automationId));
   noFallback(r);
 });
 await check('Missing schedule detail requests clarification without saving or preparing an approval',async()=>{

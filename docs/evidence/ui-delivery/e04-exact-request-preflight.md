@@ -1,0 +1,43 @@
+# Exact prepared signature-request recheck
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: original Sales invitation review -> complete reviewed request digest -> original private agreement-send read -> original document/sender/recipient/message revalidation -> same request or truthful source_changed refusal. Full EXP04 O1–O12 remains assigned; this read never authorizes execution.
+PAIGE_UI_DESIGN: PASS: current project router and shared tokens/components remain unchanged. This bounded backend contract preserves the existing request-review/recovery surface; no replacement screen, Portal or shell.
+MATERIAL_FLOW_CHANGE: NO: optional exact-request precondition on the same authenticated read. Existing initial five-field request and sender-choice reads, authorization, rate limits and legacy send behavior remain intact. No new approval, send or signing flow is admitted.
+FLOW_PROTOTYPE: NOT_REQUIRED: existing read/check/refusal interaction is preserved; no new frontend interaction, modal, navigation or consequential action.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized business owner/admin can recheck the exact request already reviewed without silently adopting a changed sender, invitation or operation.
+VISUAL_DIRECTION: NOT_APPLICABLE: no frontend, layout, visual asset or design-system edit. Existing Sales request-review presentation remains the consumer.
+AUTOMATED_EVIDENCE: PASS: original67 cases/12 nested steps retained; seven missing-contract REDs become74PASS. Additional actual original-handler RED400vs200 becomes74PASS/13steps, including unchanged review200 and changed complete request409. Cached dependencies/frozen existing lock and denied provider/network/run/env/ffi/sys permissions retained. Initial task-root invocation failed workspace-lock setup before tests; INVALID_TOOLING, corrected only by original checkout cwd.
+STATIC_EVIDENCE: PASS: [source proof](assets/e04-exact-request-preflight/source-proof.json). Three owning source/test paths only. Whole original request helper/tests inverse exact before handler mounting; later handler case is additive, no original assertion removed. Original bounded parser/authentication/native actor/workspace/owner-admin/anonymous/tier/rate/privacy guards remain. No request-authored authority or approval accepted.
+RENDERED_EVIDENCE: UNVERIFIED: new server refusal prose has not been browser-rendered. No changed frontend or new layout exists; prior invitation screenshots are historical and are not borrowed as final-source proof. Actual source handler transport tests verify the precise response/state separately.
+RESPONSIVE_EVIDENCE: NOT_APPLICABLE: no frontend/CSS/renderer change. Existing owner workspace and recipient responsiveness require their own owning records and authentic route/cohort proof.
+INTERACTION_EVIDENCE: PASS: original actual-handler transport verifies optional exact digest through the same private read door, unchanged request200, changed invitation409, no approval/native/send/provider effects, and all prior refusal/recovery controls. This is source engineering evidence only.
+BEHAVIORAL_EVIDENCE: PASS: changed valid sender/message/operation cannot renew the reviewed request; expected digest and the entire request are captured before asynchronous reads. Malformed digests and extra approval/actor/governance keys are refused before private reads. Source, sender and original actor are still revalidated through the existing reader.
+AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary owner/staff/client/recipient session or actual provider/signature/receipt/reload acceptance. Full prepared execution remains unavailable; no new QA business, signer impersonation or real communication.
+KEYBOARD_FOCUS: NOT_APPLICABLE: no changed control, focus behavior or frontend interaction.
+ZOOM_REFLOW: NOT_APPLICABLE: no frontend/renderer change. Actual browser zoom proof is not inferred from source tests.
+REDUCED_MOTION: NOT_APPLICABLE: no motion or frontend change.
+STATE_COVERAGE: PASS: unchanged initial private request read; exact-request recheck success; changed source/sender/message/operation refusal; invalid input; withdrawn actor/scope; suppressed recipient; unavailable provider/readiness/limiter; source failure; existing legacy send cap. Tests never send or record signing evidence.
+TRUTHFUL_STATE_LABELS: PASS: result retains approval:not_requested and execution:unavailable. Matching request digest is neither authorization nor a confirmation fingerprint, request claim, provider result, consent, signature or payment receipt.
+IMPECCABLE: PASS: [mandatory guidance](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md) harden/clarify/operate principles applied to existing error/recovery contract. Original components/tokens unchanged. No premium visual or full Experience completion claim.
+FINISH_REVIEW: PASS: sequential AUTHOR-REVIEW / LOWER ASSURANCE of bounded original-reader reuse, strict captured input, exact request binding, original-handler controls and evidence boundaries. Final exact-head receipt/hosted CI/release remain separate gates. No non-author review claim.
+TRUTH_CHECK: PASS: canonical agreement.send HIGH/Kit, approval store, native claims, governed sender, original signature13 and field/seal evidence remain the required subsequent integration. This preflight cannot release prepared token/effect holds or activate any Chat/provider path.
+SOLO_UI: NO: backend private-read refinement only; original Sales review UI/CSS/navigation remain unchanged. No Portal, shared PDF or tenant-specific implementation.
+UNVERIFIED: hosted final exact-head CI, affected Edge release/source/config readback, production web identity, ordinary authenticated account/role/cohort operation and later-session continuity. Full prepared HIGH/native sender/token/atomic fields, all O1–O12/CentralQA/founder acceptance remain open.
+
+OWNER_INTENT: preserve the exact document, recipients, sender and message revision reviewed before any future consequential approval or send.
+MUST_NOT_HAPPEN: silently adopt changed valid request facts; accept an approval boolean/client actor/governance; treat a matching digest as permission; mint a token or send a message from a read.
+MUST_PRESERVE: original agreement/signature/consent/evidence, current native holds, canonical approval/store/risk/receipt architecture, original67 cases/12steps, private read guards and legacy behavior.
+ACCEPTANCE_CRITERIA: original authenticated read can optionally require its exact previous complete-request digest; same request returns its unchanged read-only envelope, changed or malformed request refuses, and no effectful path is reached.
+MOTION_PURPOSE: NONE: backend only.
+PROTECTED_SEAMS: original token/effect holds, ROOT/C0b/Spine/Kit/action-risk, approval channels, canonical send-message/provider/history, Portal and native financial/Operations records. No shared writer edits.
+
+INTERNAL_BUILD_IDENTITY: source=197d4b4c4d4bdabcc22514d984417de67e2c5211; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=agreement-send source implementation only; evidence=assets/e04-exact-request-preflight/source-proof.json.
+RELEASE_CHANNEL: development: read-only contract increment, production release not yet observed.
+RELEASE_CLASSIFICATION: internal-only: prerequisite source safety, no complete prepared execution or customer announcement.
+CUSTOMER_RELEASE_IDENTITY: none: full integrated Experience remains unaccepted.
+RELEASE_NOTE_REQUIRED: NO: no individual founder slice evaluation or customer publication.
+RELEASE_TRUTH_BOUNDARY: PARTIAL:74 source cases/13steps prove the original read contract and exact-request precondition within synthetic transports; PROOF OWED: hosted gates/affected Edge/web/source readback and ordinary customer operation; UNAVAILABLE: complete prepared consequential integration; UNVERIFIED: all12/CentralQA/founder acceptance.
+RELEASE_RECOVERY: position=forward-fix; reference=original agreement-send private review and original prepared holds; no native migration, stored historical edit or permission change.
+
+The actual Kit decision binds declared HIGH risk/effect/receipt and delegates the original governed gate. Its current invoice adapter already carries a fully validated command wrapper. The Sales HTTP agreement request can reuse this same declaration without changing ROOT or the model schema. A native claim, current authorization and actual canonical approval are still adapter obligations; immutable snapshots and TypeScript shapes never establish them. The original shared Chat and send-message boundaries stay held pending their own integration disposition.

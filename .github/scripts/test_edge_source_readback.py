@@ -178,6 +178,49 @@ class ReleaseFixtures(unittest.TestCase):
         self.assertEqual(row['status'], 'FAIL')
         self.assertEqual(row['reason'], reason)
 
+    def test_source_mismatch_reports_only_known_source_identity_and_hashes(self):
+        self.mode = 'stale-chat'
+        report = self.verify()
+        self.assert_failed(report, 'deployed_source_mismatch')
+        row = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')
+        path = 'supabase/functions/_shared/authority.ts'
+        self.assertEqual(row['diagnostic'], {
+            'category': 'source_sha256_mismatch', 'source_scope': 'expected_closure',
+            'file': path, 'download_mode': 'api',
+            'expected_sha256': readback.digest(self.files[path].encode()),
+            'downloaded_sha256': readback.digest(b'export const owner = "old fixture";\n'),
+        })
+        self.assertNotIn('fixture owner', json.dumps(report))
+        self.assertNotIn('old fixture', json.dumps(report))
+        self.assertNotIn(str(self.repo), json.dumps(report))
+        self.assertEqual(next(r for r in report['functions'] if r['function'] == 'crm-command')['status'], 'PASS')
+
+    def test_additional_repository_mismatch_does_not_publish_unexpected_download_names(self):
+        path = 'supabase/functions/optional/unused.ts'
+        self.files[path] = 'export const original = "PRIVATE_FIXTURE_ORIGINAL";\n'
+        self.recommit()
+        self.mode = 'tracked-extra'
+        original = self.runner
+        def runner(args, directory, timeout):
+            result = original(args, directory, timeout)
+            if args[:3] == ['functions', 'download', 'paige-ai-chat']:
+                (directory / path).write_text('PRIVATE_FIXTURE_DOWNLOADED\n', encoding='utf-8')
+            return result
+        report = readback.verify(self.repo, self.commit, self.names, runner, self.sleeps.append)
+        self.assert_failed(report, 'deployed_source_mismatch')
+        diagnostic = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')['diagnostic']
+        self.assertEqual(diagnostic['source_scope'], 'additional_repository_source')
+        self.assertNotIn('file', diagnostic)
+        self.assertNotIn(path, json.dumps(diagnostic))
+        self.assertNotIn('PRIVATE_FIXTURE', json.dumps(report))
+
+    def test_unknown_download_name_does_not_gain_source_identity_diagnostics(self):
+        self.mode = 'extra-untracked'
+        report = self.verify()
+        self.assertFalse(report['all_pass'])
+        self.assertTrue(all('diagnostic' not in row for row in report['functions']))
+        self.assertNotIn('untracked.ts', json.dumps(report))
+
     @contextlib.contextmanager
     def cleanup_failure(self, error):
         original = tempfile.TemporaryDirectory

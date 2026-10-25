@@ -1,5 +1,5 @@
 // Isolated SQL proof only. Auth identity is a fixture; no remote connection is accepted.
-// The team_hub_files storage retirement provider (20271113870009), EXP08 Team Hub increment 3 §6.
+// The team_hub_files storage retirement provider (20271114150009), EXP08 Team Hub increment 3 §6.
 // The fixture below is operator-provider-retirement.mjs's canonical isolated lifecycle fixture with
 // its cached-audio and generated-media cases enabled (the chain this provider re-emits from), copied
 // rather than imported because that file runs its own lifecycle on import. Keep the two in step.
@@ -146,7 +146,7 @@ try {
   EXECUTE left(body,at+length(anchor)-1)||'''team_hub_channels'',''team_hub_messages'',''team_hub_files'','||substr(body,at+length(anchor));
  END $$;
  INSERT INTO storage.buckets VALUES('comms-attachments',false);`);
- const m=await readFile('supabase/migrations/20271113870009_exp08_team_hub_files_retirement.sql','utf8');await db.exec(m);await db.exec(m);
+ const m=await readFile('supabase/migrations/20271114150009_exp08_team_hub_files_retirement.sql','utf8');await db.exec(m);await db.exec(m);
  // The trigger is created by the storage-owning role in production; mirror the fixture's ownership split.
  await db.exec(`GRANT EXECUTE ON FUNCTION guard_operator_retired_team_hub_files() TO fixture_trigger_migrator; SET ROLE fixture_trigger_migrator;
   CREATE OR REPLACE TRIGGER a01_operator_retired_team_hub_files BEFORE INSERT OR UPDATE ON storage.objects FOR EACH ROW EXECUTE FUNCTION public.guard_operator_retired_team_hub_files(); RESET ROLE;`);
@@ -182,7 +182,7 @@ try {
   `INSERT INTO storage.objects(id,bucket_id,name) VALUES(gen_random_uuid(),'comms-attachments','${th}/Team-Hub/${f3}')`,
   `INSERT INTO storage.objects(id,bucket_id,name) VALUES(gen_random_uuid(),'comms-attachments','${th}/TEAM-HUB/${f3}')`,
   // The two-segment name is inside the prefix (split_part(name,'/',2)), the rule the storage
-  // policies of 20271113870008 share, so browsers cannot create it; one that exists still refuses.
+  // policies of 20271114150008 share, so browsers cannot create it; one that exists still refuses.
   `ALTER TABLE storage.objects DISABLE TRIGGER USER; INSERT INTO storage.objects(id,bucket_id,name) VALUES(gen_random_uuid(),'comms-attachments','${th}/team-hub')`,
   `ALTER TABLE storage.objects DISABLE TRIGGER USER; INSERT INTO storage.objects(id,bucket_id,name) VALUES(gen_random_uuid(),'comms-attachments','${th}/team-hub/${f3}/nested')`,
   `ALTER TABLE storage.objects DISABLE TRIGGER USER; INSERT INTO storage.objects(id,bucket_id,name) VALUES(gen_random_uuid(),'comms-attachments','${th}/team-hub/${f3.toUpperCase()}')`,

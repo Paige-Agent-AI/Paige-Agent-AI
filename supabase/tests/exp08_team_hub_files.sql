@@ -294,7 +294,7 @@ ROLLBACK;
 
 \ir ../migrations/20271113850008_exp08_team_hub_collaboration.sql
 \ir ../migrations/20271113860008_exp08_team_hub_team_work.sql
-\ir ../migrations/20271113870008_exp08_team_hub_files.sql
+\ir ../migrations/20271114150008_exp08_team_hub_files.sql
 
 -- Replay: a second apply of increment 3 must be a no-op on every object the three increments own,
 -- on the storage policies, and on the retirement policy.
@@ -316,7 +316,7 @@ UNION ALL
 SELECT 'policy:'||p.oid::regprocedure::text, concat_ws('|', p.proacl::text, md5(p.prosrc))
 FROM pg_proc p WHERE p.oid='public.operator_retirement_disposition(text)'::regprocedure;
 CREATE TEMP TABLE replay_before AS SELECT * FROM replay_state;
-\ir ../migrations/20271113870008_exp08_team_hub_files.sql
+\ir ../migrations/20271114150008_exp08_team_hub_files.sql
 \o
 DO $$ BEGIN
  IF (SELECT count(*) FROM replay_before WHERE k LIKE 'rel:%')<>6 OR (SELECT count(*) FROM replay_before WHERE k LIKE 'storage-policy:%')<>8 THEN
@@ -409,7 +409,7 @@ DO $$ BEGIN
    OR has_function_privilege('anon','public.operator_retirement_disposition(text)','EXECUTE') THEN
   RAISE EXCEPTION 'FAIL: patching the retirement policy widened its grants'; END IF;
 END $$;
-\set a10_block `sed -n '/^-- A10:/,/^END \$\$;$/p' supabase/migrations/20271113870008_exp08_team_hub_files.sql`
+\set a10_block `sed -n '/^-- A10:/,/^END \$\$;$/p' supabase/migrations/20271114150008_exp08_team_hub_files.sql`
 SELECT set_config('fixture.a10_block',:'a10_block',false) IS NOT NULL AS a10_loaded \gset
 BEGIN;
 CREATE OR REPLACE FUNCTION public.operator_retirement_disposition(_table text)

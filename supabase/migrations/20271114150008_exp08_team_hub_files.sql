@@ -115,7 +115,7 @@ GRANT EXECUTE ON FUNCTION public._team_hub_file_can_read(text) TO authenticated;
 -- Restrictive policies are AND-ed with every permissive one. On any object outside the Team Hub
 -- prefix each is true, so Inbox attachments in the same bucket behave exactly as before. The
 -- prefix is the second path segment, split_part(name,'/',2)='team-hub', exactly the rule the
--- retirement manifest and guard (20271113870009) use, so every layer agrees on what a Team Hub
+-- retirement manifest and guard (20271114150009) use, so every layer agrees on what a Team Hub
 -- object is: the two-segment name <tenant>/team-hub is inside it and refused, not left for any
 -- member to create and block retirement with. The segment is case-sensitive everywhere. The
 -- coalesce keeps a NULL name outside the prefix.

@@ -7525,9 +7525,9 @@ Current gaps:
 - Increment 3 (2026-10-25, not yet merged) adds attachments: up to 5 files of 10 MB each on a
   message or thread reply, files-only sends, and a Download that mints a fresh 60-second
   attachment URL. Files live in the existing private `comms-attachments` bucket at
-  `<tenant>/team-hub/<file_id>`, recorded in `team_hub_files` (migration `20271113870008`) behind
+  `<tenant>/team-hub/<file_id>`, recorded in `team_hub_files` (migration `20271114150008`) behind
   four restrictive storage policies, and are purged by a new `team_hub_files` retirement provider
-  (migration `20271113870009`). The new `team-hub-file` edge function checks each file's real
+  (migration `20271114150009`). The new `team-hub-file` edge function checks each file's real
   bytes. Files are **not malware-scanned** (owner decision), and the UI says so. Against the
   owner's increment-3 decision, legacy `.doc`/`.xls` and PowerPoint are not accepted, Word and
   Excel files with embedded objects, charts or external links are refused, and no scheduled

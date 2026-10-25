@@ -1,0 +1,129 @@
+{
+  "recordedAt": "2026-10-25T15:07:22.330Z",
+  "executedSourceHead": "5e444082958f72080c6e8c78a1fb65ee354adbbc",
+  "inputs": {
+    "supabase/migrations/20271114200004_e04_prepared_signing_completion.sql": "0d39fc3e17e8c6a1dabba74b9e9f050ed59d6cff0f940d8b97fb4afc1bc9b469",
+    "scripts/agreements/prepared-signature-completion-proof.mjs": "62d58687577ad82fcc703ad91f3a4f464e8dfd377bbaba1a6f18af48d8a6b303",
+    "scripts/agreements/prepared-message-admission-proof.mjs": "c36554499392d5b92298a0b7374ad3c1bd5b26c0854664eba645872b1d455d2b",
+    "scripts/agreements/prepared-signature-work-proof.mjs": "8972b92335e5261f13bb4f61e6cb054b3c3c1ff32422fc9d364c80313bcc96b0",
+    "scripts/agreements/signer-preparation-integrity-proof.mjs": "43ec5eab207ee6a72c28ca5856b7249ad3c5f31281b6e07a634989efa2499a87",
+    "scripts/agreements/signature-record-proof.mjs": "b0ef416dd88373648d137211dfa81ea033d62a54941d50fbe6a5a8a93c592669",
+    "scripts/agreements/run-integrity-proof.sh": "9628c3fa538ccd64a5a532af937c2e455af5adc03765d7afa32ece48a4f0869c"
+  },
+  "native": {
+    "at": "2026-10-25T15:00:41.245Z",
+    "sourceHead": "5e444082958f72080c6e8c78a1fb65ee354adbbc",
+    "exit": 0,
+    "log": "e04-c46-completion-repaired-1792939921768.log",
+    "native": {
+      "preparedConfirmation": {
+        "result": "PASS",
+        "checks": 59,
+        "migrationReplay": 2,
+        "concurrentSessions": 6,
+        "observedLockWaits": 3,
+        "preparedWork": {
+          "checks": 56,
+          "migrationReplay": 2,
+          "concurrentSessions": 8,
+          "observedLockWaits": 4,
+          "originalWorkSource": "693340656ec8ec445cd34c25b3d91d80",
+          "proofBodySha256": "3e684e170c63662e8177cfcfd88ae002f0b827e6345db2cd40edef30775c6d87",
+          "migrationSha256": "bc9ae257a9174c0c7e09f1896691caf7a4bc6aa3b192db944a733357e87e61a2",
+          "requestStatus": {
+            "checks": 35,
+            "migrationReplay": 2,
+            "migrationSha256": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835",
+            "proofBodySha256": "2f0dad7540e6dfc5fd5907fb24defb57d46c69fb690ab08eacff9ed586ce1710",
+            "scope": "Original private Work history only, not a provider/status transition, signature or acceptance"
+          },
+          "credentials": {
+            "checks": 122,
+            "migrationReplay": 2,
+            "concurrentSessions": 12,
+            "observedLockWaits": 6,
+            "migrationSha256": "b73b69c16bbed55db8fb75dc6adb3cf4f5a3826410190c391e2a7a4ea397cac6",
+            "proofBodySha256": "41a731157e8835de7ef0941ae781c85eb9f64c6c0dd1d129b4b713ae7d9c9528",
+            "scope": "Local original native/source credential proof only; no sending/signing/provider or customer acceptance"
+          },
+          "messageOrigin": {
+            "checks": 41,
+            "admission": {
+              "checks": 47,
+              "concurrentSessions": 4,
+              "observedLockWaits": 2,
+              "completion": {
+                "checks": 34,
+                "concurrentSessions": 4,
+                "observedLockWaits": 2,
+                "originalSignature": "3a2fa340fca9838aa9c6737f1e41ae61",
+                "proofBodySha256": "ea58e2000e5fec1a52e17e0503ade8b8edd5da6c69545f4a30efd229080099e2",
+                "scope": "Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance"
+              },
+              "proofBodySha256": "f180bbc5261ca96b526cd665477ce186470104e4b7f5de6973ff0efc88c1c703",
+              "scope": "Actual local native canonical message prepare/claim/finalize and synthetic provider facts only; no mounted caller, sender/provider call or authenticated customer acceptance"
+            },
+            "migrationReplay": 2,
+            "migrationSha256": "3b5656b69943363d6735d2cc380b1a1ccd1ff05c05fa21196c16cfb1f4a8915a",
+            "proofBodySha256": "02590d45396e5c5a6c86fec6db8b50fca3aeae50f3c5459988bf7ac7aba337cb",
+            "scope": "Local private source and original canonical message admission only; provider/customer acceptance and mounted execution remain owed"
+          },
+          "legacySignatureAfterPublication": {
+            "result": "PASS",
+            "checks": 76,
+            "migrationReplay": 2,
+            "concurrentSessions": 8,
+            "observedLockWaits": 4,
+            "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+          },
+          "scope": "Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance"
+        },
+        "proofBodySha256": "ab054a5553f5869447225f9c1a0618ce3d3b3aca4a95ba593ff72e18172c9e63",
+        "migrationSha256": "67ec7e77ce6b5089e312bb55b2b3ed867ba0194e230afeb72b970b5b2fd819d7",
+        "scope": "Original native pending-confirmation prerequisite only. Synthetic mailbox/Storage metadata; no prepared issuer/provider/signature/field effect, activation or customer acceptance."
+      }
+    },
+    "cleanup": true,
+    "productionNative": "NOT_APPLIED",
+    "scope": "Original local native proof with synthetic provider input, not customer acceptance"
+  },
+  "receiving": {
+    "at": "2026-10-25T15:05:11.804Z",
+    "sourceHead": "5e444082958f72080c6e8c78a1fb65ee354adbbc",
+    "allPreviouslyExecutedNativeMigrationAndProofInputsExact": true,
+    "inputs": 1489,
+    "securityPin": "UNMODIFIED; HUMAN APPROVAL PENDING",
+    "ci": "Only additional optional phase flag; original commands/assertions/flags retained"
+  },
+  "baseline": {
+    "at": "2026-10-25T13:52:05.781Z",
+    "log": "e04-c46-completion-baseline-1792935554794.log",
+    "result": "FAIL_EXPECTED_NEW_CONTRACT",
+    "boundary": "NEW native publication handoff absent after original HIGH/Work/credential + actual canonical prepare/claim/finalize with synthetic provider input. Not a production incident or authenticated customer reproduction.",
+    "previous": {
+      "messageSource": 41,
+      "messageAdmission": 47,
+      "credentials": 122,
+      "allOriginalGroupsReached": true
+    },
+    "completionChecksBeforeMissingContract": 5,
+    "cleanup": "0 isolated databases; task-owned cluster stopped",
+    "migration": "NOT_CREATED/NOT_APPLIED"
+  },
+  "sourceReview": "Final composed review pending; AUTHOR-REVIEW / LOWER ASSURANCE only",
+  "release": {
+    "channel": "development",
+    "native": "20271114200004 NOT_APPLIED",
+    "edge": "UNMOUNTED",
+    "ci": "PROOF_OWED",
+    "securityPin": "EXPLICIT HUMAN APPROVAL PENDING AFTER AUTO_REVIEW REJECTION",
+    "customerAcceptance": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "algorithms": {
+    "ALG01": "PARTIAL: original provider/Rail reconciliation, exact receipt and duplicate prevention",
+    "ALG02": "INCOMPLETE: onboarding and commercial/service completion",
+    "ALG12": "PARTIAL: uncertainty/refusal/recovery; operational monitoring unverified",
+    "ALG13": "UNVERIFIED: usefulness of source-backed next steps"
+  }
+}

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import * as candidate from "./prepared-signature-request.ts";
+import * as commandCandidate from "./prepared-signature-command.ts";
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
 import {
   executeOwnerPreparation,
@@ -1006,4 +1007,160 @@ Deno.test("sender choices reject forged tenant and sender inputs before private 
   const x = await requestSeed(), before = x.state.reads.length;
   await assert.rejects(senderChoices()(x.input, x.f.caller, x.f.service, actor, x.emailPorts), refuses("INVALID_REQUEST"));
   assert.equal(x.state.reads.length, before);
+});
+
+
+// Real canonical HIGH decision; only transport/native-store ports are synthetic.
+async function commandFixture() {
+  const x=await requestSeed(),reviewed=await x.run();
+  const input={...x.input,expected_request_sha256:reviewed.request_sha256};
+  let pending:Record<string,unknown>|null=null;
+  const calls:string[]=[],state={authorized:true,available:true,audit:true,claimed:true,original:null as unknown};
+  const ports={
+    async authorizeCurrent(){calls.push('authorize');return state.authorized?{actorId:actor,tenantId:tenant,role:'owner',principal:'person'}:null;},
+    async availability(){return state.available?'needs_approval':'unavailable';},
+    async autonomy(){return 'auto';},
+    async readOriginalOutcome(){calls.push('read-original');return state.original;},
+    async readCurrentRequest(value:unknown){calls.push('read-current');return exactRequestReader()(value,x.f.caller,x.f.service,actor,x.emailPorts);},
+    pending:{
+      async find(){return pending;},
+      async issue(value:{args:Record<string,unknown>}){calls.push('issue');pending=structuredClone(value.args);return {expires_at:'2027-01-01T00:10:00Z'};},
+      async claim(value:{requestNonce:string}){calls.push('claim');if(!state.claimed)return null;const found=pending;pending=null;return found?{confirmation_id:operation,request_nonce:value.requestNonce,args:found}:null;},
+    },
+    async audit(){calls.push('audit');return state.audit?operation:null;},
+    async executeOriginal(){calls.push('execute-original');},
+    nonce:()=>crypto.randomUUID(),
+  };
+  const fn=(commandCandidate as unknown as {admitPreparedSignatureRequest?:(input:unknown,ports:unknown)=>Promise<Record<string,unknown>>}).admitPreparedSignatureRequest;
+  assert.equal(typeof fn,'function','Missing original HIGH adapter for the complete prepared request');
+  return {x,input,ports,calls,state,run:(body:unknown=input)=>fn!(body,ports),pending:()=>pending,setPending:(value:Record<string,unknown>)=>{pending=value;}};
+}
+Deno.test('prepared command clamps auto to the original HIGH approval and never executes a draft',async()=>{
+  const f=await commandFixture(),result=await f.run();
+  assert.equal(result.state,'approval_required');
+  assert.match(String(result.fingerprint),/^[a-f0-9]{16}$/);
+  assert(f.pending());assert(!f.calls.includes('claim')&&!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command refuses unavailable source capability without issuing approval',async()=>{
+  const f=await commandFixture();f.state.available=false;
+  const result=await f.run();assert.equal(result.state,'refused');
+  assert(!f.calls.includes('issue')&&!f.calls.includes('claim')&&!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command never fabricates a claim from a submitted fingerprint',async()=>{
+  const f=await commandFixture(),proposal=await f.run();f.state.claimed=false;
+  const result=await f.run({...f.input,approved_fingerprint:proposal.fingerprint});
+  assert.equal(result.state,'refused');assert(!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command cannot spend a stored claim against a different reviewed message',async()=>{
+  const f=await commandFixture(),proposal=await f.run(),saved=structuredClone(f.pending()!);
+  const command=saved.request as Record<string,unknown>;
+  (command.messages as Array<Record<string,unknown>>)[0].subject='Different stored subject';
+  f.setPending(saved);
+  const result=await f.run({...f.input,approved_fingerprint:proposal.fingerprint});
+  assert.equal(result.state,'refused');assert(!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command requires the original decision audit before consequential execution',async()=>{
+  const f=await commandFixture(),proposal=await f.run();f.state.audit=false;
+  const result=await f.run({...f.input,approved_fingerprint:proposal.fingerprint});
+  assert.equal(result.state,'refused');assert(!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command trusts original readback, never a successful execution callback',async()=>{
+  const f=await commandFixture(),proposal=await f.run();
+  const result=await f.run({...f.input,approved_fingerprint:proposal.fingerprint});
+  assert.equal(f.calls.filter(x=>x==='execute-original').length,1);
+  assert.equal(result.state,'outcome_unknown');
+  assert(f.calls.lastIndexOf('audit')<f.calls.indexOf('execute-original'));
+  assert(f.calls.lastIndexOf('read-original')>f.calls.indexOf('execute-original'));
+});
+Deno.test('prepared command denies a withdrawn actor and request-authored approval authority',async()=>{
+  const f=await commandFixture();f.state.authorized=false;
+  assert.equal((await f.run()).state,'refused');assert(!f.calls.includes('read-current'));
+  f.state.authorized=true;
+  for(const extra of [{approved:true},{actor_user_id:actor},{governance:{approved:true}}]){
+    assert.equal((await f.run({...f.input,...extra})).state,'refused');
+  }
+  assert(!f.calls.includes('issue')&&!f.calls.includes('execute-original'));
+});
+
+
+const originalCommandResult=(f:Awaited<ReturnType<typeof commandFixture>>)=>({
+  kind:'prepared_signature_request_result',tenant_id:tenant,actor_id:actor,
+  agreement_id:agreement,operation_id:f.input.operation_id,request_sha256:f.input.expected_request_sha256,
+  work_id:next,receipt_id:operation,state:'provider_accepted',private_payload:'never expose this source detail',
+});
+Deno.test('prepared command returns only original bounded historical readback without another admission',async()=>{
+  const f=await commandFixture();f.state.original=originalCommandResult(f);f.state.available=false;
+  const result=await f.run();assert.equal(result.state,'provider_accepted');
+  assert(!('private_payload' in result));
+  assert(!f.calls.includes('read-current')&&!f.calls.includes('issue')&&!f.calls.includes('claim')&&!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command rejects foreign original result and missing provider receipt without a new attempt',async()=>{
+  for(const variant of ['tenant','receipt']){
+    const f=await commandFixture(),value=originalCommandResult(f);
+    if(variant==='tenant')value.tenant_id=operation;else value.receipt_id='not-a-receipt';
+    f.state.original=value;
+    assert.equal((await f.run()).state,'outcome_unknown');
+    assert(!f.calls.includes('read-current')&&!f.calls.includes('issue')&&!f.calls.includes('execute-original'));
+  }
+});
+Deno.test('prepared command treats unreadable original work as unknown and never proposes a second attempt',async()=>{
+  const f=await commandFixture();f.ports.readOriginalOutcome=async()=>{throw Error('private database failure');};
+  const result=await f.run();assert.equal(result.state,'outcome_unknown');
+  assert(!JSON.stringify(result).includes('private database failure'));
+  assert(!f.calls.includes('read-current')&&!f.calls.includes('issue')&&!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command preserves pending approval when current capability becomes unavailable',async()=>{
+  const f=await commandFixture(),proposal=await f.run();f.state.available=false;
+  const result=await f.run({...f.input,approved_fingerprint:proposal.fingerprint});
+  assert.equal(result.state,'refused');assert(f.pending());
+  assert(!f.calls.includes('claim')&&!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command refuses malformed live cycles instead of silently renewing them',async()=>{
+  for(const key of ['approval_cycle_nonce','approval_subject']){
+    const f=await commandFixture();await f.run();const saved=structuredClone(f.pending()!);saved[key]='changed';f.setPending(saved);
+    const before=f.calls.filter(x=>x==='issue').length;
+    assert.equal((await f.run()).state,'refused');
+    assert.equal(f.calls.filter(x=>x==='issue').length,before);assert(!f.calls.includes('execute-original'));
+  }
+});
+Deno.test('prepared command rechecks actor after its decision audit before executing',async()=>{
+  const f=await commandFixture(),proposal=await f.run();
+  f.ports.audit=async()=>{f.calls.push('audit');f.state.authorized=false;return operation;};
+  assert.equal((await f.run({...f.input,approved_fingerprint:proposal.fingerprint})).state,'refused');
+  assert(!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command captures original actor scope rather than following an asynchronously mutated alias',async()=>{
+  const f=await commandFixture(),scope={actorId:actor,tenantId:tenant,role:'owner',principal:'person'};
+  f.ports.authorizeCurrent=async()=>scope;
+  f.ports.availability=async()=>{scope.tenantId=operation;return 'needs_approval';};
+  assert.equal((await f.run()).state,'refused');assert(!f.calls.includes('issue')&&!f.calls.includes('claim'));
+});
+Deno.test('prepared command cannot use a reviewed digest after the original actor loses source access',async()=>{
+  const f=await commandFixture(),proposal=await f.run();f.x.f.state.admin=false;
+  assert.equal((await f.run({...f.input,approved_fingerprint:proposal.fingerprint})).state,'refused');
+  assert(!f.calls.includes('claim')&&!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command recovers a lost callback acknowledgement only from original receipt readback',async()=>{
+  const f=await commandFixture(),proposal=await f.run();
+  f.ports.executeOriginal=async()=>{f.calls.push('execute-original');f.state.original=originalCommandResult(f);throw Error('lost acknowledgement');};
+  const result=await f.run({...f.input,approved_fingerprint:proposal.fingerprint});
+  assert.equal(result.state,'provider_accepted');assert(!('private_payload' in result));
+  assert.equal(f.calls.filter(x=>x==='execute-original').length,1);
+});
+
+Deno.test('prepared command withholds historical readback when actor access retires during its native read',async()=>{
+  const f=await commandFixture();
+  f.ports.readOriginalOutcome=async()=>{f.state.authorized=false;return originalCommandResult(f);};
+  assert.equal((await f.run()).state,'refused');
+  assert(!f.calls.includes('issue')&&!f.calls.includes('execute-original'));
+});
+Deno.test('prepared command withholds a late result after execution without claiming that the effect was refused',async()=>{
+  const f=await commandFixture(),proposal=await f.run();
+  f.ports.readOriginalOutcome=async()=>{
+    if(!f.calls.includes('execute-original'))return null;
+    f.state.authorized=false;return originalCommandResult(f);
+  };
+  const result=await f.run({...f.input,approved_fingerprint:proposal.fingerprint});
+  assert.equal(result.state,'outcome_unknown');assert(!('work_id' in result));
+  assert.equal(f.calls.filter(x=>x==='execute-original').length,1);
 });

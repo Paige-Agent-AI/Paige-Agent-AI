@@ -1,0 +1,74 @@
+[
+  {
+    "file": "product-1536-closed-drawer.jpg",
+    "cssWidth": 1536,
+    "cssHeight": 770,
+    "rasterWidth": 1535,
+    "rasterHeight": 770,
+    "sha256": "4656f9f84b00667baadc279ae672ce1637a642d2fd19b485b6b939f99966db89"
+  },
+  {
+    "file": "product-1536-open.jpg",
+    "cssWidth": 1536,
+    "cssHeight": 770,
+    "rasterWidth": 1535,
+    "rasterHeight": 770,
+    "sha256": "e2ee802cbd55ce7092125b8c0102d3f9228902a2fc1f405ec8efb1d629d24274"
+  },
+  {
+    "file": "product-1366-closed-drawer.jpg",
+    "cssWidth": 1366,
+    "cssHeight": 768,
+    "rasterWidth": 1366,
+    "rasterHeight": 768,
+    "sha256": "3e5edc1d683260c87654127078b5dd91b55fb2aef0f8bdd245185871e346751b"
+  },
+  {
+    "file": "product-1366-open.jpg",
+    "cssWidth": 1366,
+    "cssHeight": 768,
+    "rasterWidth": 1366,
+    "rasterHeight": 768,
+    "sha256": "8438ab4a42d88c10bca4f025f84fd486d7fc59111aac5253d13ff760b76491b2"
+  },
+  {
+    "file": "product-1024-closed-drawer.jpg",
+    "cssWidth": 1024,
+    "cssHeight": 768,
+    "rasterWidth": 1024,
+    "rasterHeight": 768,
+    "sha256": "bda341f5fe656c2b5ea6ff5310632c0b24c0f1165e994da0f9bcbc9b334df50e"
+  },
+  {
+    "file": "product-1024-open.jpg",
+    "cssWidth": 1024,
+    "cssHeight": 768,
+    "rasterWidth": 1024,
+    "rasterHeight": 768,
+    "sha256": "09efccaf8f80bc33426336146e526a141cf52f8de241d26c8aab42aa621bc9f1"
+  },
+  {
+    "file": "product-900-closed-drawer.jpg",
+    "cssWidth": 900,
+    "cssHeight": 1000,
+    "rasterWidth": 900,
+    "rasterHeight": 1000,
+    "sha256": "d07a4105a7408626a98e0106d08aa6ed1d304839e3a39082239fc892139976c5"
+  },
+  {
+    "file": "product-900-open.jpg",
+    "cssWidth": 900,
+    "cssHeight": 1000,
+    "rasterWidth": 900,
+    "rasterHeight": 1000,
+    "sha256": "40e2d9ab8f2917d062dd965f05486e568d2b0669ac84296c1297395d494b222c"
+  },
+  {
+    "file": "product-390-closed-drawer.jpg",
+    "cssWidth": 390,
+    "cssHeight": 844,
+    "rasterWidth": 390,
+    "rasterHeight": 843,
+    "sha256": "4d2badec98d3f00694d4eb6ac71487743c619d46b886368c4415b22c28cc53d6"
+  }
+]

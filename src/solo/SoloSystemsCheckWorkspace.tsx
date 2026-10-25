@@ -35,6 +35,14 @@ const label = (value: string | null | undefined) =>
 
 const isUnavailable = (finding: SystemsCheckFinding) => finding.status === "skip" || finding.status === "error";
 const isResolved = (finding: SystemsCheckFinding) => Boolean(finding.resolved_at);
+
+// Presentation consistency, never authority: independently returned reads may
+// describe different revisions of the same finding. Keep preparation on the
+// current returned result/decision rather than treating matching IDs as proof.
+const sameFindingState = (finding: SystemsCheckFinding, current: SystemsCheckFinding | undefined) =>
+  !!current && finding.id === current.id && finding.run_id === current.run_id
+  && finding.status === current.status && finding.resolved_at === current.resolved_at
+  && finding.resolution === current.resolution && finding.resolution_action_id === current.resolution_action_id;
 type EvidenceState = "attention" | "confirmed" | "unavailable" | "resolved";
 
 const evidenceFilter = (finding: SystemsCheckFinding): EvidenceState => {
@@ -291,7 +299,6 @@ function AttentionItem({
 export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspaceId }: Props) {
   const command = useCommandCenter();
   const activity = useSoloActivityFeed(workspaceId);
-  const systems = useSystemsCheck("tenant");
   const resolvedAccount = resolveTenantAccountContext(accountContext);
   const account = useParams().account ?? "";
   const location = useLocation();
@@ -300,11 +307,13 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const sourceRequested = sourceValues.length > 0;
   const sourceId = sourceValues.length === 1
     ? readRecordLinks([{ destination: "systems_check", record_id: sourceValues[0] }])[0]?.record_id : null;
+  const systems = useSystemsCheck("tenant", { findingId: sourceId });
   sourceQuery.delete("finding");
   const remainingSearch = sourceQuery.toString();
   const businessReview = routeLinkTarget({ destination: "executive", record_id: null }, "solo", account);
   const [openArea, setOpenArea] = useState<string | null>(null);
   const [selected, setSelected] = useState<SystemsCheckFinding | null>(null);
+  const [recordedSelection, setRecordedSelection] = useState<SystemsCheckFinding | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [proposal, setProposal] = useState(false);
   const [decision, setDecision] = useState<{ item: CommandApproval; action: "approve" | "decline" } | null>(null);
@@ -313,6 +322,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const returnFocus = useRef<HTMLElement | null>(null);
   const refreshTrigger = useRef<HTMLButtonElement | null>(null);
   const sourceWasRequested = useRef(false);
+  const linkedInspectionActive = useRef(false);
   const restoreFindingFocus = useRef(false);
   const proposalReturnFocus = useRef<HTMLElement | null>(null);
   const decisionReturnFocus = useRef<HTMLElement | null>(null);
@@ -333,15 +343,31 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const confirmedFindings = currentFindings.filter((finding) => evidenceFilter(finding) === "confirmed");
   const completedAt = systems.run?.completed_at ? new Date(systems.run.completed_at) : null;
   const hasCompletedRun = !!completedAt && !Number.isNaN(completedAt.getTime());
-  // The URL selects only evidence already returned by the original scoped snapshot.
-  // It grants no broader finding lookup, historical access or action authority.
-  const linkedFinding = !systems.loading && !systems.isError && hasCompletedRun && sourceId
-    ? currentFindings.find(finding => finding.id.toLowerCase() === sourceId) : null;
+  // The optional original-record read has its own current actor/tenant/RLS binding.
+  // Historical evidence never replaces the health snapshot or grants action authority.
+  const originalRead = systems.recordedFinding;
+  const linkedFinding = sourceId && originalRead?.state === "ready"
+    && originalRead.finding.id.toLowerCase() === sourceId
+    && originalRead.finding.run_id === originalRead.run.id ? originalRead.finding : null;
+  const linkedRun = linkedFinding && originalRead?.state === "ready" ? originalRead.run : null;
+  const linkedIsCurrent = !!linkedFinding && !systems.loading && !systems.isError && hasCompletedRun
+    && !!linkedRun?.completed_at && new Date(linkedRun.completed_at).getTime() === completedAt?.getTime()
+    && linkedFinding.run_id === systems.run?.id
+    && sameFindingState(linkedFinding, currentFindings.find(finding => finding.id === linkedFinding.id));
+  const linkedAt = linkedRun?.completed_at ?? linkedRun?.started_at;
+  const selectedIsCurrent = !!selected && !systems.loading && !systems.isError && hasCompletedRun
+    && selected.run_id === systems.run?.id
+    && sameFindingState(selected, currentFindings.find(finding => finding.id === selected.id))
+    && (!recordedSelection || (linkedIsCurrent && recordedSelection === linkedFinding));
+  // Withhold a retired/changed original copy in this render, before effects run.
+  const selectedReadUnavailable = !!selected && !!recordedSelection && recordedSelection !== linkedFinding;
+  const selectedIsHistorical = !!recordedSelection && !selectedIsCurrent;
+  const selectedCanPrepare = selectedIsCurrent && !selectedReadUnavailable;
+  const visibleProposal = proposal && selectedCanPrepare;
   const linkedMessage = !sourceId ? "This source reference is not valid. Clear the selection to continue."
-    : systems.loading ? "Reading the linked finding…"
-      : systems.isError ? "The linked finding could not be read. Refresh current data to retry."
-        : !hasCompletedRun ? "No completed check is available for this source."
-          : "The linked finding is not in the last completed check. It may be older or unavailable in this workspace.";
+    : originalRead?.state === "loading" ? "Reading the original finding…"
+      : originalRead?.state === "error" ? "The original finding could not be read. Refresh records to retry."
+        : "The original finding is unavailable in this workspace. Refresh records or clear the selection.";
   /**
    * WHY the picture is incomplete, computed BEFORE the flag that announces it — because the flag
    * used to be the only thing computed, and the sentence beside it was written for just one of the
@@ -398,13 +424,30 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const selectedEvidence = projectEvidence(selected?.evidence ?? null);
 
   useLayoutEffect(() => {
+    if (!proposal || selectedCanPrepare) return;
+    setProposal(false);
+    proposalReturnFocus.current = null;
+    // Reuse the original deferred focus restore, after the drawer is no longer
+    // inert. No new action, confirmation or automatic retry is prepared here.
+    pendingDialogFocus.current = {
+      target: drawerRef.current?.querySelector<HTMLElement>("[data-initial-focus]") ?? null,
+      epoch: command.accountEpoch,
+    };
+  }, [proposal, selectedCanPrepare, command.accountEpoch]);
+
+  useLayoutEffect(() => {
     const wasRequested = sourceWasRequested.current;
     sourceWasRequested.current = sourceRequested;
     if (!sourceRequested && !wasRequested) return;
     // Back, a new source, a new run or a failed/pending reread must retire old inspection.
-    const hadInspectionFocus = Boolean(drawerRef.current?.contains(document.activeElement)
+    // The render guard may already have removed a withdrawn proposal's DOM.
+    // Retain the explicit linked inspection intent for a stable focus exit.
+    const hadInspectionFocus = Boolean(linkedInspectionActive.current
+      || drawerRef.current?.contains(document.activeElement)
       || proposalRef.current?.contains(document.activeElement));
+    linkedInspectionActive.current = false;
     setSelected(null);
+    setRecordedSelection(null);
     setExpanded(false);
     setProposal(false);
     proposalReturnFocus.current = null;
@@ -415,7 +458,9 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
   useLayoutEffect(() => {
     decisionEpoch.current += 1;
+    linkedInspectionActive.current = false;
     setSelected(null);
+    setRecordedSelection(null);
     setExpanded(false);
     setProposal(false);
     setDecision(null);
@@ -429,9 +474,11 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   }, [command.accountEpoch]);
 
   const closeFinding = () => {
+    linkedInspectionActive.current = false;
     pendingDialogFocus.current = null;
     setProposal(false);
     setSelected(null);
+    setRecordedSelection(null);
     setExpanded(false);
     restoreFindingFocus.current = true;
   };
@@ -449,43 +496,44 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
 
   useEffect(() => {
     if (selected) drawerRef.current?.querySelector<HTMLElement>("[data-initial-focus]")?.focus();
-  }, [selected]);
+  }, [selected, selectedReadUnavailable]);
 
   useEffect(() => {
-    if (proposal) proposalRef.current?.querySelector<HTMLElement>("[data-initial-focus]")?.focus();
-  }, [proposal]);
+    if (visibleProposal) proposalRef.current?.querySelector<HTMLElement>("[data-initial-focus]")?.focus();
+  }, [visibleProposal]);
 
   useEffect(() => {
     if (decision) decisionRef.current?.querySelector<HTMLElement>("[data-initial-focus]")?.focus();
   }, [decision]);
 
   useLayoutEffect(() => {
-    if (scrollOwnerRef.current) scrollOwnerRef.current.inert = Boolean(selected || proposal || decision);
-    if (drawerRef.current) drawerRef.current.inert = proposal;
+    if (scrollOwnerRef.current) scrollOwnerRef.current.inert = Boolean(selected || visibleProposal || decision);
+    if (drawerRef.current) drawerRef.current.inert = visibleProposal;
     // Native browsers refuse focus while the original trigger is inert. Restore
     // only after the original layer is interactive again and its scope still matches.
-    if (!proposal && !decision && pendingDialogFocus.current) {
+    if (!visibleProposal && !decision && pendingDialogFocus.current) {
       const { target, epoch } = pendingDialogFocus.current;
       pendingDialogFocus.current = null;
       if (epoch === command.accountEpoch && target?.isConnected) target.focus();
     }
-    if (!selected && !proposal && !decision && restoreFindingFocus.current) {
+    if (!selected && !visibleProposal && !decision && restoreFindingFocus.current) {
       restoreFindingFocus.current = false;
       const target = returnFocus.current;
       if (target?.isConnected) target.focus();
+      else refreshTrigger.current?.focus();
     }
-  }, [command.accountEpoch, decision, proposal, selected]);
+  }, [command.accountEpoch, decision, visibleProposal, selected]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (proposal) closeProposal();
+        if (visibleProposal) closeProposal();
         else if (decision) closeDecision();
         else if (selected) closeFinding();
         return;
       }
       if (event.key !== "Tab") return;
-      const container = proposal ? proposalRef.current : decision ? decisionRef.current : selected ? drawerRef.current : null;
+      const container = visibleProposal ? proposalRef.current : decision ? decisionRef.current : selected ? drawerRef.current : null;
       if (!container) return;
       const focusable = [...container.querySelectorAll<HTMLElement>("button:not([disabled]), [href], [tabindex]:not([tabindex='-1'])")];
       if (!focusable.length) return;
@@ -508,7 +556,9 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
     activity.refresh();
   };
 
-  const openFinding = (finding: SystemsCheckFinding, trigger: HTMLElement) => {
+  const openFinding = (finding: SystemsCheckFinding, trigger: HTMLElement, recorded = false) => {
+    linkedInspectionActive.current = recorded;
+    setRecordedSelection(recorded ? finding : null);
     returnFocus.current = trigger;
     setSelected(finding);
     setExpanded(false);
@@ -748,11 +798,14 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
               </div>
               <div aria-live="polite">
                 {linkedFinding ? <>
-                  <div className="sc-item-t"><h3>{findingTitle(linkedFinding)}</h3><FindingPill finding={linkedFinding} /></div>
+                  <div className="sc-item-t"><h3>{findingTitle(linkedFinding)}</h3>{linkedIsCurrent ? <FindingPill finding={linkedFinding} /> : <Proof tone="stale">Recorded {label(linkedFinding.status)}</Proof>}</div>
                   {linkedFinding.paige_interpretation && <p>{linkedFinding.paige_interpretation}</p>}
-                  <p className="sc-linked-date">From the last completed check · <time dateTime={systems.run!.completed_at!}>{completedAt!.toLocaleString()}</time></p>
-                  <button type="button" className="sc-button sc-button--paige" onClick={event => openFinding(linkedFinding, event.currentTarget)}>Inspect linked evidence</button>
-                </> : <p>{linkedMessage}</p>}
+                  <p className="sc-linked-date">{linkedIsCurrent ? "From the last completed check" : "Original recorded check"} · {linkedRun?.completed_at ? "Recorded" : "Started; completion not recorded"} {linkedAt && <time dateTime={linkedAt}>{new Date(linkedAt).toLocaleString()}</time>}</p>
+                  <button type="button" className="sc-button sc-button--paige" onClick={event => openFinding(linkedFinding, event.currentTarget, true)}>{linkedIsCurrent ? "Inspect linked evidence" : "Inspect original finding"}</button>
+                </> : <>
+                  <p>{linkedMessage}</p>
+                  {sourceId && <button type="button" className="sc-button sc-button--quiet" disabled={originalRead?.state === "loading"} onClick={refresh}>Refresh records</button>}
+                </>}
               </div>
             </section>
           )}
@@ -1057,19 +1110,33 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
       </div>
 
       {selected && (
-        <div ref={drawerRef} className={`sc-drawer ${expanded ? "is-expanded" : ""}`} role="dialog" aria-modal={proposal ? undefined : true} aria-hidden={proposal || undefined} aria-label={expanded ? "Expanded finding details" : "Finding details"}>
+        <div ref={drawerRef} className={`sc-drawer ${selectedIsHistorical ? "is-recorded" : ""} ${expanded ? "is-expanded" : ""}`} role="dialog" aria-modal={visibleProposal ? undefined : true} aria-hidden={visibleProposal || undefined} aria-label={expanded ? "Expanded finding details" : "Finding details"}>
+          {selectedReadUnavailable ? <>
+            <div className="sc-drawer-head">
+              <h2>Original finding</h2>
+              <button data-initial-focus type="button" className="sc-icon-button" onClick={closeFinding} aria-label="Close finding details"><X size={19} /><span className="sr-only">Close finding details</span></button>
+            </div>
+            <p className="sc-recorded-read-state" role="status">{originalRead?.state === "loading"
+              ? "Reading the original record…"
+              : originalRead?.state === "ready"
+                ? "The original record changed. Close this view to inspect the current recorded evidence."
+                : "The original record is unavailable. Close this view to retry or return."}</p>
+          </> : <>
           <div className="sc-drawer-head"><div><span className="sc-kicker">{label(selected.domain)} · {label(selected.severity_at_finding)}</span><h2>{findingTitle(selected)}</h2></div><div><button data-initial-focus type="button" className="sc-icon-button" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "Return to drawer" : "Expand"}><ArrowUpRight size={18} /> <span>{expanded ? "Return" : "Expand"}</span></button><button type="button" className="sc-icon-button" onClick={closeFinding} aria-label="Close finding details"><X size={19} /></button></div></div>
           <div className="sc-drawer-body">
             <div className="sc-evidence-meta"><Proof tone={isResolved(selected) ? "resolved" : selected.status === "pass" ? "live" : "attention"}>{isResolved(selected) ? "Resolved" : label(selected.status)}</Proof><span>Recorded {new Date(selected.created_at).toLocaleString()}</span></div>
-            <section><h3>Signal</h3><p>{findingTitle(selected)} · {evidenceStateLabel(evidenceFilter(selected))}</p></section>
+            <section><h3>{selectedIsHistorical ? "Recorded result" : "Signal"}</h3><p>{findingTitle(selected)} · {selectedIsHistorical ? label(selected.status) : evidenceStateLabel(evidenceFilter(selected))}</p></section>
             <section><h3>Evidence and provenance</h3><p>Persisted finding {selected.id} from Systems Check run {selected.run_id}.</p>{selectedEvidence.rows.length ? <dl>{selectedEvidence.rows.map(([key, value]) => <React.Fragment key={key}><dt>{label(key)}</dt><dd>{value}</dd></React.Fragment>)}</dl> : <p>No presentation-safe evidence fields are available.</p>}{selectedEvidence.hasSuppressed && <p>Additional evidence is retained but not displayed here.</p>}</section>
             <section><h3>Impact</h3><p>{selected.paige_interpretation || "No PAIGE interpretation is attached to this persisted finding."}</p></section>
-            {isResolved(selected)
+            {selectedIsHistorical || !selectedIsCurrent
+              ? <section><h3>Read-only recorded evidence</h3><p>Inspect the latest reading before deciding what to do next. This record does not authorize a repair or approval.</p><button type="button" className="sc-button sc-button--quiet" onClick={closeFinding}>Back to original source</button></section>
+              : isResolved(selected)
               ? <section><h3>Recommended next step</h3><p>No additional work is being recommended from this resolved record.</p></section>
               : <section><h3>Recommended next step</h3><p>{draftedFixText(selected.paige_drafted_fix) || "Review this finding with PAIGE before any work is prepared or executed."}</p><button type="button" className="sc-button sc-button--paige" onClick={(event) => { proposalReturnFocus.current = event.currentTarget; setProposal(true); }}><Bot size={16} /> Put PAIGE to work</button></section>}
-            <section><h3>Owner decision</h3><p>{selected.resolved_at ? selected.resolution || "A resolution is recorded without an attached decision summary." : "No owner decision is recorded for this finding."}</p></section>
-            <section><h3>Durable outcome</h3><p>{selected.resolved_at ? `Resolved ${new Date(selected.resolved_at).toLocaleString()}${selected.resolution_action_id ? ` · Action ${selected.resolution_action_id}` : ""}.` : "No durable outcome is recorded on the tenant rail."}</p></section>
+            <section><h3>Owner decision</h3><p>{selected.resolution ? `${selected.resolution}${selected.resolved_at ? ` · Recorded ${new Date(selected.resolved_at).toLocaleString()}` : " · decision time not returned"}` : selected.resolved_at ? "A resolution is recorded without an attached decision summary." : "No owner decision is recorded for this finding."}</p></section>
+            <section><h3>Recorded outcome</h3><p>{selected.resolved_at ? `Resolution recorded ${new Date(selected.resolved_at).toLocaleString()}${selected.resolution_action_id ? ` · Action ${selected.resolution_action_id} (linked record)` : ""}.` : "No resolution outcome is attached to this finding."}</p></section>
           </div>
+          </>}
         </div>
       )}
 
@@ -1089,7 +1156,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
         </div>
       )}
 
-      {proposal && (
+      {visibleProposal && (
         <div className="sc-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeProposal(); }}>
           <section ref={proposalRef} className="sc-proposal" role="alertdialog" aria-modal="true" aria-labelledby="ask-first-title" onKeyDown={(event) => closeDialogOnEscape(event, closeProposal)}>
             <Proof>PARTIAL</Proof><h2 id="ask-first-title">Ask First</h2><p>You can open the one existing PAIGE workspace to discuss this finding.</p><div className="sc-proposal-warning"><AlertTriangle size={17} /> Context has not been attached or prepared. No message will be prefilled or sent, and no work has started.</div><div className="sc-proposal-actions"><button data-initial-focus type="button" className="sc-button sc-button--quiet" onClick={closeProposal}>Cancel</button><button type="button" className="sc-button sc-button--paige" onClick={() => { setProposal(false); openPaige?.(); }}>Open PAIGE workspace</button></div>

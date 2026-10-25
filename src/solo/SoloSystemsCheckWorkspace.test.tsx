@@ -139,8 +139,12 @@ describe("Solo Systems Check workspace", () => {
 
   const sourceId = "e2000000-0000-4000-8000-000000000001";
   const sourceEntry = `/solo/7100001/command-center/systems-check?keep=1&finding=${sourceId}#evidence`;
+  const currentSource = (patch: Record<string, unknown> = {}) => {
+    const original = { ...finding, id: sourceId, ...patch };
+    return { ...baseSystems, findings: [original], recordedFinding: { state: "ready", finding: original, run: baseSystems.run } };
+  };
   it("offers explicit source inspection in the original drawer and returns keyboard focus", () => {
-    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    harness.systems.mockReturnValue(currentSource());
     render(sourceEntry);
     const context = host.querySelector('[aria-labelledby="sc-linked-title"]');
     expect(context?.textContent).toContain("Payment connection needs attention");
@@ -159,14 +163,15 @@ describe("Solo Systems Check workspace", () => {
   });
 
   it.each([
-    { loading: true, message: "Reading the linked finding" },
+    { loading: true, message: "Reading the original finding" },
     { isError: true, message: "could not be read" },
-    { run: null, message: "No completed check" },
-    { run: { ...baseSystems.run, completed_at: null }, message: "No completed check" },
-    { findings: [{ ...finding, id: sourceId, run_id: "older-run" }], message: "not in the last completed check" },
-    { findings: [], message: "not in the last completed check" },
+    { run: null, message: "unavailable in this workspace" },
+    { run: { ...baseSystems.run, completed_at: null }, message: "unavailable in this workspace" },
+    { findings: [{ ...finding, id: sourceId, run_id: "older-run" }], message: "unavailable in this workspace" },
+    { findings: [], message: "unavailable in this workspace" },
   ])("withholds linked source evidence when its current scoped read cannot support it: %j", patch => {
-    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }], ...patch });
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }], ...patch,
+      recordedFinding: { state: patch.loading ? "loading" : patch.isError ? "error" : "unavailable" } });
     render(sourceEntry);
     const context = host.querySelector('[aria-labelledby="sc-linked-title"]');
     expect(context?.textContent).toContain(patch.message);
@@ -193,15 +198,15 @@ describe("Solo Systems Check workspace", () => {
   });
 
   it("retires an inspected linked source during reread and shows only its returned resolution", () => {
-    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    harness.systems.mockReturnValue(currentSource());
     render(sourceEntry);
     act(() => button("Inspect linked evidence")!.click());
     expect(host.querySelector('[role="dialog"]')).not.toBeNull();
-    harness.systems.mockReturnValue({ ...baseSystems, loading: true, findings: [{ ...finding, id: sourceId }] });
+    harness.systems.mockReturnValue({ ...currentSource(), loading: true, recordedFinding: { state: "loading" } });
     render(sourceEntry);
     expect(host.querySelector('[role="dialog"]')).toBeNull();
     expect(host.querySelector('[aria-labelledby="sc-linked-title"]')?.textContent).not.toContain(finding.paige_interpretation);
-    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId, resolved_at: "2026-08-27T18:00:00Z" }] });
+    harness.systems.mockReturnValue(currentSource({ resolved_at: "2026-08-27T18:00:00Z" }));
     render(sourceEntry);
     expect(host.querySelector('[aria-labelledby="sc-linked-title"]')?.textContent).toContain("Resolved");
     expect(host.querySelector('[role="dialog"]')).toBeNull();
@@ -209,12 +214,12 @@ describe("Solo Systems Check workspace", () => {
   });
 
   it("retires the original Ask First presentation when a linked source becomes unreadable", () => {
-    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    harness.systems.mockReturnValue(currentSource());
     render(sourceEntry);
     act(() => button("Inspect linked evidence")!.click());
     act(() => button("Put PAIGE to work")!.click());
     expect(host.querySelector('[aria-labelledby="ask-first-title"]')).not.toBeNull();
-    harness.systems.mockReturnValue({ ...baseSystems, isError: true, findings: [{ ...finding, id: sourceId }] });
+    harness.systems.mockReturnValue({ ...currentSource(), isError: true, recordedFinding: { state: "error" } });
     render(sourceEntry);
     expect(host.querySelector('[aria-labelledby="ask-first-title"]')).toBeNull();
     expect(host.querySelector('[role="dialog"]')).toBeNull();
@@ -531,7 +536,8 @@ describe("Solo Systems Check workspace", () => {
     expect(host.textContent).toContain("Persisted finding finding-1 from Systems Check run run-1");
     expect(host.textContent).toContain("Recommended next step");
     expect(host.textContent).toContain("No owner decision is recorded");
-    expect(host.textContent).toContain("No durable outcome is recorded on the tenant rail");
+    expect(host.textContent).toContain("No resolution outcome is attached to this finding");
+    expect(host.textContent).not.toContain("No durable outcome is recorded on the tenant rail");
     act(() => button("Expand")?.click());
     expect(host.querySelector('[role="dialog"]')?.getAttribute("aria-label")).toBe("Expanded finding details");
     act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })));

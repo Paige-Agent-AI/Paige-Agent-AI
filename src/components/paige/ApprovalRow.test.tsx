@@ -46,6 +46,25 @@ describe("shared approval row reports canonical outcomes", () => {
     expect(text()).not.toContain("Drafted by your Paige team");
     expect(m.invoke).not.toHaveBeenCalled();
   });
+  it.each([
+    ["owner.lead_followup","Lead reply"],["client.followup","Follow-up reply"],["owner.followup_email","Follow-up email"],
+  ])("labels %s with words the owner reads, never the raw queue key",async (category,label)=>{
+    row={...row,id:"44444444-4444-4444-8444-444444444444",contact_id:"22222222-2222-4222-8222-222222222222",category};
+    act(()=>root.render(<MemoryRouter initialEntries={["/solo/123/overview"]}><ApprovalRow a={row} showDecline onResolved={resolved}/></MemoryRouter>));
+    expect(text()).toContain(label);
+    expect(text()).not.toContain(category.replace("_"," "));
+  });
+  it("explains plainly that a legacy client.followup is decline-only here",async ()=>{
+    row={...row,id:"44444444-4444-4444-8444-444444444444",contact_id:"22222222-2222-4222-8222-222222222222",category:"client.followup"};
+    act(()=>root.render(<MemoryRouter initialEntries={["/solo/123/overview"]}><ApprovalRow a={row} showDecline onResolved={resolved}/></MemoryRouter>));
+    expect(text()).toContain("can only be declined here");
+    expect(button("Approve")).toBeUndefined();
+  });
+  it("a governed lead reply carries no decline-only note — it is reviewed and approved in Conversations",async ()=>{
+    row={...row,id:"44444444-4444-4444-8444-444444444444",contact_id:"22222222-2222-4222-8222-222222222222",category:"owner.lead_followup"};
+    act(()=>root.render(<MemoryRouter initialEntries={["/solo/123/overview"]}><ApprovalRow a={row} showDecline onResolved={resolved}/></MemoryRouter>));
+    expect(text()).not.toContain("can only be declined here");
+  });
   it.each(["owner.lead_followup","client.followup","owner.followup_email"])("routes %s to the exact existing composer without executing",async category=>{
     row={...row,id:"44444444-4444-4444-8444-444444444444",contact_id:"22222222-2222-4222-8222-222222222222",category};
     act(()=>root.render(<MemoryRouter initialEntries={["/solo/123/overview"]}><ApprovalRow a={row} showDecline onResolved={resolved}/></MemoryRouter>));

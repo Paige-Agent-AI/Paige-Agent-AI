@@ -1,5 +1,22 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — initial capture identity source released
+
+Successor [#2847](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2847#issuecomment-6399705002)
+is actually mergedc908539817d029c4b745b8518c24a16fa2c11795/tree7ace2fa2 after
+reviewede1fdf874/LOWER5643768520+5643912963/correction6399644574, all11 exact
+checks/two webSUCCESS/zero threads. Actual72a2+e1 union/all16174 outside entries,
+three owning blobs and four original source/config closures are exact.
+Normal Edge40208009138/job121213021865 and independently checked API certificate
+12604896678/SHA256a6b2df9981237bf08c3601c8ce79bc4baee523ef8a29c3a671396342d87ab241
+verify159 returned source entries across all four closures/configs. Certified
+edge-livec908 and READYwebdpl_9Tt77RbWUXj18d2W2sRfG2SCribp/both public exact
+c908-mvnzv71o/null passed. The sole Master4.0 row holds complete identities.
+Functional: source prerequisite RELEASED; Visual N/A; Experiential manual scan/
+Work/receipt and Founder Acceptance remain open. Initial UUID preservation grants
+no persistence/absence/idempotency or retry authority; no activation or monthly replay.
+The development successor text below is retained as historical source evidence.
+
 ## October25 — verified source release
 
 Reviewed `1b42e9ac8d6bea71f42244e0be124f9f27ea4b47`, LOWER5642231020/final5642812783;
@@ -149,3 +166,30 @@ uncertainty, provider/action activation and browser holds remain preserved.
 Recovery is an ordinary reviewed source forward-fix/revert. Activating a new
 customer scan and replaying an uncertain business operation are separate matters;
 neither is authorized by merging this unused internal option.
+
+## October25 — initial capture identity, development successor
+
+The original #2813 release above retained a known identity after finding/finalize
+uncertainty but could lose it with the first run acknowledgement. This successor
+allocates a standard UUID for the existing run.id only in internal none mode,
+before its one original INSERT. Missing, malformed, mismatched, failed or thrown
+acknowledgements return SystemsCheckCaptureUnconfirmed with that same identity
+and run_insert phase. No check dispatch, finding write, finalization, automatic
+reconciliation or replay follows an unconfirmed start. Allocation failure sends
+no run write. Tenant/operator scope validation and the original catalog remain.
+
+The identity does not prove insertion or absence, confer read/actor authority,
+or establish idempotency/exactly-once behavior. A future authorized consumer must
+still correlate original Work, reauthorize original source reads and reconcile
+the uncertain result. Default/all/delta retain database-assigned IDs, original
+initial errors and remediation behavior. No caller/API/manual flavor, schema,
+provider, registry, queue, receipt engine or consequential activation is added.
+
+Failing-first actual-core controls produced8FAIL/54PASS against the unchanged
+release, then62PASS after the correction; subsequent allocation/operator/legacy
+controls and final verification are recorded in the successor PR. This is local
+source proof, not native released-source or authenticated manual-scan acceptance.
+Functional: development. Visual: N/A. Experiential: original manual flow/Work/
+receipt still incomplete. Founder Acceptance: NOT_ACCEPTED; all19/nine and the
+single integrated founder evaluation remain required. Catalogue and algorithms
+are unchanged; protected monthly UNKNOWN/UNRETRIED is never replayed.

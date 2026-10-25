@@ -76,6 +76,8 @@ jobs:
           supabase/functions/_shared/operator-retirement-handler.test.mjs
           supabase/functions/_shared/team-hub-file-type.test.ts
           supabase/functions/send-message/attachment-validation.test.mjs
+          supabase/functions/analyze-financial-document/document-source.test.mjs
+          supabase/functions/subagent-email-composer/attachment-path.test.mjs
       - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
       - name: EXP02 analytics catalogue guards, replay and read-only permissions in isolated database

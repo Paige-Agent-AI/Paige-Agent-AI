@@ -143,9 +143,19 @@ type Detection = { mime: TeamHubFileMime | null; reason: TeamHubFileRefusal | nu
 export const TEAM_HUB_MAX_INFLATED_BYTES = 50 * 1024 * 1024;
 
 /**
+ * Compressed bytes handed to the decompressor at a time. Deflate expands at most about 1032:1, so
+ * no single piece can produce more than about 4 MB of output. That bound matters because Deno's
+ * DecompressionStream returns ALL the output of one written chunk as one chunk: writing the whole
+ * entry at once would inflate a 1 MB bomb to 1 GB before the ceiling below could be checked.
+ */
+export const TEAM_HUB_INFLATE_PIECE_BYTES = 4096;
+
+/**
  * One entry's uncompressed bytes, or null when it is not stored (0) or deflated (8), its bytes do
  * not come to exactly its recorded size, or inflating it would pass what is left of the ceiling.
- * Inflation stops at the first byte over, so a ZIP bomb never expands in memory.
+ * The compressed bytes are fed in small pieces and the output is read between them, so inflation
+ * stops within one piece of the first byte over and a ZIP bomb never expands in memory, on Deno
+ * and on Node alike.
  */
 async function inflateEntry(bytes: Uint8Array, entry: ZipEntry, budget: { left: number }): Promise<Uint8Array | null> {
   if (entry.size > budget.left) return null;
@@ -158,19 +168,34 @@ async function inflateEntry(bytes: Uint8Array, entry: ZipEntry, budget: { left: 
     const limit = Math.min(entry.size, budget.left);
     const chunks: Uint8Array[] = [];
     let total = 0;
+    const stream = new DecompressionStream("deflate-raw");
+    const writer = stream.writable.getWriter();
+    const reader = stream.readable.getReader();
+    // The writer waits on each piece, and a piece is only taken once the output before it has been
+    // read, so at most one piece is ever in flight. Cancelling the reader errors the writer too.
+    const feeding = (async () => {
+      for (let at = 0; at < raw.length; at += TEAM_HUB_INFLATE_PIECE_BYTES) {
+        await writer.write(raw.subarray(at, Math.min(at + TEAM_HUB_INFLATE_PIECE_BYTES, raw.length)));
+      }
+      await writer.close();
+    })();
+    feeding.catch(() => {});
     try {
-      const reader = new Blob([raw]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
         total += value.length;
         if (total > limit) {
           await reader.cancel().catch(() => {});
+          await writer.abort().catch(() => {});
           return null;
         }
         chunks.push(value);
       }
+      await feeding;
     } catch {
+      await reader.cancel().catch(() => {});
+      await writer.abort().catch(() => {});
       return null;
     }
     if (total !== entry.size) return null;
@@ -213,11 +238,33 @@ function decodeEntities(value: string): string {
  * The markup with comments and processing instructions removed and each CDATA section turned into
  * the escaped text it stands for, in one left-to-right pass, so text that only looks like a tag can
  * never open, end or hide a field. Null when one of them is left unterminated.
+ *
+ * Linear by construction: each search for a terminator starts where the construct opens and the
+ * scan resumes after it, and the first missing terminator ends the pass. (A regex that retried every
+ * unterminated `<!--` to the end of the text took quadratic time on a part of a few hundred KB.)
  */
 function markupOnly(xml: string): string | null {
   const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const cleaned = xml.replace(/<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<\?[\s\S]*?\?>/g,
-    (whole, cdata: string | undefined) => whole.startsWith("<![CDATA[") ? escape(cdata ?? "") : "");
+  const constructs = [
+    { open: "<!--", close: "-->", keep: false },
+    { open: "<![CDATA[", close: "]]>", keep: true },
+    { open: "<?", close: "?>", keep: false },
+  ];
+  const parts: string[] = [];
+  let copied = 0;
+  for (let at = xml.indexOf("<"); at >= 0; at = xml.indexOf("<", at)) {
+    const construct = constructs.find((candidate) => xml.startsWith(candidate.open, at));
+    if (!construct) { at++; continue; }
+    const body = at + construct.open.length;
+    const close = xml.indexOf(construct.close, body);
+    if (close < 0) return null;
+    parts.push(xml.slice(copied, at));
+    if (construct.keep) parts.push(escape(xml.slice(body, close)));
+    copied = at = close + construct.close.length;
+  }
+  parts.push(xml.slice(copied));
+  const cleaned = parts.join("");
+  // Removing one construct can join the text either side into a new opener (`<<!---->!--`).
   return /<!--|<!\[CDATA\[|<\?/.test(cleaned) ? null : cleaned;
 }
 

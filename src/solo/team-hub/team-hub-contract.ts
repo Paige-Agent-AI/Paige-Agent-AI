@@ -834,20 +834,72 @@ export function fileKind(mime: TeamHubFileMime): TeamHubFileKind {
 }
 export const isImageMime = (mime: string) => mime.startsWith("image/");
 
-/** Why a chip can't be attached. Each maps to one plain sentence (§7). */
-export type TeamHubFileRefusal = "type" | "too_large" | "count" | "rejected" | "empty" | "name" | "limit" | "gone";
+/**
+ * Why a chip can't be attached. Each maps to one plain sentence (§7). `rejected` is the check's
+ * refusal when its reason isn't one of the known ones (or isn't known here at all).
+ */
+export type TeamHubFileRefusal =
+  | "type" | "too_large" | "count" | "empty" | "name" | "limit" | "gone"
+  | "mismatch" | "legacy_office" | "macros" | "embedded" | "external" | "damaged" | "dense" | "changed" | "rejected";
 
 export function fileRefusalMessage(reason: TeamHubFileRefusal): string {
   switch (reason) {
     case "type": return "That file type isn't allowed";
     case "too_large": return "Over 10 MB";
     case "count": return `${TEAM_HUB_FILES_PER_MESSAGE} files per message`;
-    case "rejected": return "Its contents don't match its type";
     case "empty": return "That file is empty";
     case "name": return "That file name can't be used";
     case "limit": return "Too many unsent files. Send or remove some first";
     case "gone": return "It can't be attached here any more";
+    case "mismatch": return "Its contents don't match its type";
+    case "legacy_office": return "Older Word and Excel files can't be shared here. Save it as .docx or .xlsx";
+    case "macros": return "Files with macros can't be shared here";
+    case "embedded": return "Files with embedded objects or charts can't be shared here yet";
+    case "external": return "Files that pull in content from elsewhere can't be shared here";
+    case "damaged": return "This file looks damaged";
+    case "dense": return "There's too much inside this file to check";
+    case "changed": return "The upload didn't match the file. Attach it again";
+    case "rejected": return "That file couldn't be checked";
   }
+}
+
+/**
+ * The chip's reason for a `team-hub-file` rejection, from the reason code the check returned
+ * (`_shared/team-hub-file-type.ts` for the bytes, `team_hub_file_verdict` for the stored object).
+ * A code not listed here says only that the file couldn't be checked, never a guessed cause.
+ */
+export function rejectionReason(code: unknown): TeamHubFileRefusal {
+  switch (code) {
+    case "mismatch": case "type_mismatch": case "unrecognised": return "mismatch";
+    case "legacy_office": return "legacy_office";
+    case "macro_content": return "macros";
+    case "embedded_content": return "embedded";
+    case "external_content": case "dde_field": return "external";
+    case "malformed_document": return "damaged";
+    case "oversized_document": return "dense";
+    case "size_mismatch": case "object_mismatch": case "metadata_mismatch": return "changed";
+    case "too_large": return "too_large";
+    case "empty": return "empty";
+    case "not_allowed": return "type";
+    default: return "rejected";
+  }
+}
+
+/** An unposted file is swept a day after its record was made (§3, `team_hub_claim_stale_files`). */
+export const TEAM_HUB_FILE_UNSENT_TTL_MS = 24 * 60 * 60 * 1000;
+export const TEAM_HUB_FILE_EXPIRED = "Not sent. A file may have expired. Remove it and attach it again.";
+
+/**
+ * The composer's words when a message with files is refused. `invalid` with files is said as a file
+ * that may have expired when one was started a day or more ago (the sweep's age), or when nobody was
+ * mentioned (then a file is the likely cause). It stays "may": the server doesn't say which check failed.
+ */
+export function postRefusalMessage(code: TeamHubRefusal | "no_answer", files: ReadonlyArray<{ begunAt: number | null }>, mentions: number, now = Date.now()): string {
+  if (code === "invalid" && files.length) {
+    const old = files.some((file) => file.begunAt !== null && now - file.begunAt >= TEAM_HUB_FILE_UNSENT_TTL_MS);
+    if (old || mentions === 0) return TEAM_HUB_FILE_EXPIRED;
+  }
+  return refusalMessage(code, "send");
 }
 
 /**
@@ -901,7 +953,7 @@ export function parseBegunFile(data: unknown, error: unknown, expectedTenant: st
 
 export type TeamHubFinish =
   | { kind: "ready" }
-  | { kind: "rejected" }
+  | { kind: "rejected"; reason: TeamHubFileRefusal }
   | { kind: "refused"; code: TeamHubRefusal }
   /** No usable answer, or the bytes weren't there yet (`not_uploaded`): Retry may still succeed. */
   | { kind: "failed" };
@@ -913,7 +965,7 @@ export function parseFinished(data: unknown, error: unknown, fileId: string): Te
     const file = data.file;
     return isRow(file) && file.id === fileId && file.state === "ready" ? { kind: "ready" } : { kind: "failed" };
   }
-  if (data.ok === false && data.code === "rejected") return { kind: "rejected" };
+  if (data.ok === false && data.code === "rejected") return { kind: "rejected", reason: rejectionReason(data.reason) };
   if (data.ok === false && isRefusal(data.code)) return { kind: "refused", code: data.code };
   return { kind: "failed" };
 }

@@ -22,6 +22,7 @@ import {
   parseThreadPage,
   parseWorkList,
   refreshLeavesGap,
+  postRefusalMessage,
   refusalMessage,
   TASK_COMMAND_TEXT,
   type TeamHubChannelSummary,
@@ -158,6 +159,8 @@ export interface AttachmentChip {
   /** The server's record, once `team_hub_begin_file` made it. */
   fileId: string | null;
   path: string | null;
+  /** When this browser first had the record (ms). An unposted file is swept a day after it was made. */
+  begunAt: number | null;
   /** Kept for Retry; never sent anywhere but the record's own path. */
   file: File | null;
 }
@@ -636,7 +639,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (record.kind === "unavailable") { fail(); return; }
     const { id, path, state } = record.value;
     if (removed()) { discardFile(id); return; }
-    patch({ fileId: id, path });
+    patch({ fileId: id, path, begunAt: chip.begunAt ?? Date.now() });
     // A retry can find the record already decided.
     if (state === "ready") { patch({ state: "ready", file: null }); onAttachment.current?.("File ready"); return; }
     if (state === "rejected") { refuse("rejected"); return; }
@@ -661,7 +664,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (!alive.current) return;
     if (removed()) { discardFile(id); return; }
     if (finished.kind === "ready") { patch({ state: "ready", file: null }); onAttachment.current?.("File ready"); return; }
-    if (finished.kind === "rejected") { refuse("rejected"); return; }
+    if (finished.kind === "rejected") { refuse(finished.reason); return; }
     if (finished.kind === "refused") {
       if (ENDS_HUB.has(finished.code)) { settle({ kind: "refused", code: finished.code }); return; }
       refuse(finished.code === "invalid" ? "gone" : beginRefusalReason(finished.code));
@@ -684,7 +687,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       return {
         localId: newRequestId(), clientRequestId: newRequestId(), channelId, name: file.name, size: file.size,
         mime: fileTypeFor(file.name, file.type)?.mime ?? null, state: reason ? "refused" : "uploading", reason,
-        fileId: null, path: null, file: reason ? null : file,
+        fileId: null, path: null, begunAt: null, file: reason ? null : file,
       };
     });
     setScopeChips(scope, (current) => [...current, ...chips]);
@@ -791,7 +794,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         if (attempt.parentId) setThread((current) => current && current.rootId === attempt.parentId ? { ...current, status: "not_found" } : current);
         else setStream((current) => current && current.channelId === attempt.channelId ? { ...current, status: "not_found", messages: [], channel: null } : current);
       }
-      return { kind: "refused", message: refusalMessage(result.code, isTask ? "task" : "send"), body: attempt.body, task: attempt.task };
+      const message = isTask ? refusalMessage(result.code, "task") : postRefusalMessage(result.code, attempt.files, attempt.mentionIds.length);
+      return { kind: "refused", message, body: attempt.body, task: attempt.task };
     }
     setPending((current) => current.map((item) => item.localId === attempt.localId ? { ...item, status: "failed" } : item));
     return { kind: "failed" };

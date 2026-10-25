@@ -1709,6 +1709,55 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
     expect(sendButton(host).disabled).toBe(true);
   });
 
+  it("says why the check refused each file, from the reason it returned, and claims no cause it wasn't given (N6)", async () => {
+    const reasons: Record<string, unknown> = { "f-1": "macro_content", "f-2": "legacy_office", "f-3": "dde_field", "f-4": "embedded_content", "f-5": "brand_new_code" };
+    finishAnswer = (id) => ({ ok: false, code: "rejected", reason: reasons[id] });
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Macro.docx", ""), fileFor("Renamed.xlsx", ""), fileFor("Linked.docx", ""), fileFor("Chart.docx", ""), fileFor("Odd.pdf", "application/pdf")]);
+    await flush();
+    const said = chips(host).map((chip) => chip.textContent);
+    expect(said[0]).toContain("Files with macros can't be shared here");
+    expect(said[1]).toContain("Older Word and Excel files can't be shared here. Save it as .docx or .xlsx");
+    expect(said[2]).toContain("Files that pull in content from elsewhere can't be shared here");
+    expect(said[3]).toContain("Files with embedded objects or charts can't be shared here yet");
+    expect(said[4]).toContain("That file couldn't be checked");
+    expect(said.join(" ")).not.toContain("Its contents don't match its type");
+    expect(chips(host).every((chip) => chip.dataset.state === "refused")).toBe(true);
+    expect(liveRegion(host).textContent).toBe("File refused: That file couldn't be checked");
+  });
+
+  it("says a file may have expired when a message with a day-old file is refused (N6)", async () => {
+    db.override.team_hub_post_message = () => ({ ok: false, code: "invalid" });
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf")]);
+    await flush();
+    // A day later the sweep has taken it; the chip still says Ready, since nothing told this tab.
+    const later = Date.now() + 86_400_000;
+    vi.spyOn(Date, "now").mockReturnValue(later);
+    await type(composer(host), "@Dan");
+    await press(composer(host), "Enter");
+    await type(composer(host), "@Dana Reyes see attached");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(posts()[0].params.p_mention_ids).toEqual(["u-dana"]);
+    expect(host.querySelector(".th-composer-wrap .th-error")?.textContent).toBe("Not sent. A file may have expired. Remove it and attach it again.");
+    expect(chips(host)[0].textContent).toContain("Ready");
+  });
+
+  it("keeps the mention wording when a message with a fresh file and a mention is refused (N6)", async () => {
+    db.override.team_hub_post_message = () => ({ ok: false, code: "invalid" });
+    const { host } = await mount();
+    await pick(fileInput(host), [fileFor("Brief.pdf", "application/pdf")]);
+    await flush();
+    await type(composer(host), "@Dan");
+    await press(composer(host), "Enter");
+    await type(composer(host), "@Dana Reyes see attached");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(posts()[0].params.p_mention_ids).toEqual(["u-dana"]);
+    expect(host.querySelector(".th-composer-wrap .th-error")?.textContent).toBe("Not sent. Everyone you mention must be on the team and able to see this conversation.");
+  });
+
   it("refuses the 6th file, a file over 10 MB and a .doc before any upload starts", async () => {
     gates.upload = deferred();
     const { host } = await mount();
@@ -1837,6 +1886,8 @@ describe("attachments: the composer (increment 3, mocked RPC)", () => {
     expect(posts()[0].params.p_file_ids).toEqual(["f-1"]);
     expect(composer(host).value).toBe("See attached");
     expect(chips(host)[0].textContent).toContain("Ready");
+    // Nobody was mentioned, so a file is what's left to refuse (N6).
+    expect(host.querySelector(".th-composer-wrap .th-error")?.textContent).toBe("Not sent. A file may have expired. Remove it and attach it again.");
   });
 
   it("retries a lost send with the same request id and the same files", async () => {

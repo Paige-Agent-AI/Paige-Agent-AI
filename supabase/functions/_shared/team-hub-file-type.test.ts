@@ -7,6 +7,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { deflateRawSync } from "node:zlib";
+import { spawnSync } from "node:child_process";
+import process from "node:process";
 import { detectTeamHubFileType, teamHubFileVerdict, zipEntryNames } from "./team-hub-file-type.ts";
 
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -389,6 +391,65 @@ describe("inflating Word and Excel parts is bounded and fails closed", () => {
       globalThis.DecompressionStream = Real;
     }
   });
+  // Deno's DecompressionStream (the edge runtime) returns ALL the output of one written chunk as one
+  // chunk; Node's splits it. So a bound that holds on Node can fail on Deno. These two tests pin the
+  // property that makes the ceiling hold on both: compressed bytes go in small pieces.
+  const withDecompressor = async (make: (Real: typeof DecompressionStream) => typeof DecompressionStream, run: () => Promise<void>) => {
+    const Real = globalThis.DecompressionStream;
+    globalThis.DecompressionStream = make(Real);
+    try { await run(); } finally { globalThis.DecompressionStream = Real; }
+  };
+  // The bomb is the first part in the archive, so it is the first part inflated: the stand-in below
+  // answers every part with filler, and must meet the bomb before any other part is refused.
+  const lyingBomb = () => zip([{ name: "word/document.xml", data: new Uint8Array(60 * 1024 * 1024).fill(0x20), deflate: true, declaredSize: 1024 },
+    ...docxEntries(true).filter((entry) => entry.name !== "word/document.xml")]);
+  it("a decompressor that answers each written chunk in one piece (as Deno's does) still never holds a bomb", async () => {
+    // A stand-in with Deno's shape at deflate's worst ratio: each written chunk comes back as ONE
+    // chunk of 1032 bytes per compressed byte. Writing the whole entry at once would hand back 60 MB
+    // in a single read; in 4 KiB pieces no read is over ~4 MB and the refusal comes on the first.
+    let produced = 0, largest = 0;
+    await withDecompressor(() => class {
+      readable: ReadableStream<Uint8Array>; writable: WritableStream<Uint8Array>;
+      constructor() {
+        const pass = new TransformStream<Uint8Array, Uint8Array>({
+          transform(chunk, controller) {
+            const out = new Uint8Array(chunk.length * 1032).fill(0x20);
+            produced += out.length; largest = Math.max(largest, out.length);
+            controller.enqueue(out);
+          },
+        });
+        this.readable = pass.readable; this.writable = pass.writable;
+      }
+    } as unknown as typeof DecompressionStream, async () => {
+      assert.equal(await refusal(lyingBomb()), "malformed_document");
+    });
+    assert.ok(produced > 0, "the stand-in was used");
+    assert.ok(largest <= 4096 * 1032, `one read handed back ${largest} bytes`);
+    assert.ok(produced <= 2 * 4096 * 1032, `inflated ${produced} bytes before stopping`);
+  });
+  it("compressed bytes reach the real decompressor in pieces of at most 4 KiB, and a part spanning many pieces still reads whole", async () => {
+    let largestWrite = 0, writes = 0;
+    await withDecompressor((Real) => class {
+      readable: ReadableStream<Uint8Array>; writable: WritableStream<Uint8Array>;
+      constructor(format: "deflate-raw") {
+        const inner = new Real(format);
+        this.readable = inner.readable;
+        const tap = new TransformStream<Uint8Array, Uint8Array>({
+          transform(chunk, controller) { writes++; largestWrite = Math.max(largestWrite, chunk.length); controller.enqueue(chunk); },
+        });
+        tap.readable.pipeTo(inner.writable).catch(() => {});
+        this.writable = tap.writable;
+      }
+    } as unknown as typeof DecompressionStream, async () => {
+      // Pseudo-random words compress poorly, so this part is well over 4 KiB compressed.
+      let seed = 7;
+      const words = Array.from({ length: 30000 }, () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed.toString(36); });
+      const bytes = withDocument(`<w:p><w:r><w:t>${words.join(" ")}</w:t></w:r></w:p>`);
+      await accepted(bytes);
+    });
+    assert.ok(writes > 10, `only ${writes} writes reached the decompressor`);
+    assert.ok(largestWrite <= 4096, `a ${largestWrite}-byte piece reached the decompressor`);
+  });
   it("a part whose deflate stream is corrupt, or whose method is neither stored nor deflate, is refused", async () => {
     const corrupt = docxWith([{ name: "word/_rels/document.xml.rels", data: RELS, method: 8, body: new Uint8Array([0xff, 0xff, 0xff, 0xff]) }]);
     assert.equal(await refusal(corrupt), "malformed_document");
@@ -401,6 +462,31 @@ describe("inflating Word and Excel parts is bounded and fails closed", () => {
     for (const data of [rels('<Relationship Id="rId1" Type="x" Target="y'), `<!DOCTYPE r [<!ENTITY e "External">]>${rels('<Relationship Id="rId1" Type="x" TargetMode="&e;"/>')}`,
       rels('<!-- an unterminated comment <Relationship Id="rId1" TargetMode="External"/>'), rels("<Relationship Id=rId1/>")]) {
       assert.equal(await refusal(docxWith([{ name: "word/_rels/settings.xml.rels", data, deflate: true }])), "malformed_document", data);
+    }
+  });
+});
+
+describe("stripping comments, processing instructions and CDATA is linear and fails closed", () => {
+  it("removing a construct cannot join its neighbours into a new opener", async () => {
+    assert.equal(await refusal(withDocument("<w:p/><<!-- x -->!-- hidden <w:p/>")), "malformed_document");
+    assert.equal(await refusal(withDocument("<w:p/><<?pi?>?hidden <w:p/>")), "malformed_document");
+    await accepted(withDocument("<w:p><w:r><w:t><![CDATA[a < b > c & d]]></w:t></w:r></w:p><!-- note --><?pi x?>"));
+  });
+  it("a 2 MB part made of unterminated openers is refused at once, not after quadratic work", () => {
+    // A regex that rescans to the end of the text for every unterminated `<!--` takes minutes on this
+    // (measured: 0.2 MB already took 4 s); the linear pass takes milliseconds. A child process with a
+    // hard deadline is used because a blocked event loop cannot time itself out.
+    const module = new URL("./team-hub-file-type.ts", import.meta.url).href;
+    const script = `import { teamHubFileVerdict } from ${JSON.stringify(module)};
+      const chunks = []; for await (const chunk of process.stdin) chunks.push(chunk);
+      const verdict = await teamHubFileVerdict(new Uint8Array(Buffer.concat(chunks)), ${JSON.stringify(DOCX)});
+      process.stdout.write(String(verdict.reason));`;
+    for (const opener of ["<!--", "<?", "<![CDATA["]) {
+      const bytes = withDocument(opener.repeat(Math.ceil((2 * 1024 * 1024) / opener.length)));
+      const child = spawnSync(process.execPath, [...process.execArgv.filter((flag) => !flag.startsWith("--test")), "--input-type=module", "-e", script],
+        { input: bytes, encoding: "utf8", timeout: 20_000 });
+      assert.equal(child.signal, null, `${opener}: still running at the 20 s deadline`);
+      assert.equal(child.stdout, "malformed_document", `${opener}: ${child.stderr}`);
     }
   });
 });

@@ -38,6 +38,10 @@ import {
   beginRefusalReason,
   filePrecheck,
   fileRefusalMessage,
+  postRefusalMessage,
+  rejectionReason,
+  TEAM_HUB_FILE_EXPIRED,
+  TEAM_HUB_FILE_UNSENT_TTL_MS,
   fileSizeLabel,
   fileTypeFor,
   parseBegunFile,
@@ -489,7 +493,8 @@ describe("attachments (increment 3 contract)", () => {
   it("says each refusal in the contract's words", () => {
     expect(fileRefusalMessage("type")).toBe("That file type isn't allowed");
     expect(fileRefusalMessage("too_large")).toBe("Over 10 MB");
-    expect(fileRefusalMessage("rejected")).toBe("Its contents don't match its type");
+    expect(fileRefusalMessage("mismatch")).toBe("Its contents don't match its type");
+    expect(fileRefusalMessage("rejected")).toBe("That file couldn't be checked");
     expect(fileRefusalMessage("count")).toBe("5 files per message");
     expect(beginRefusalReason("too_large")).toBe("too_large");
     expect(beginRefusalReason("limit_reached")).toBe("limit");
@@ -518,9 +523,59 @@ describe("attachments (increment 3 contract)", () => {
     expect(parseFinished({ ok: true, file: { id: FILE, state: "ready" } }, null, FILE)).toEqual({ kind: "ready" });
     expect(parseFinished({ ok: true, file: { id: "other", state: "ready" } }, null, FILE)).toEqual({ kind: "failed" });
     expect(parseFinished({ ok: true, file: { id: FILE, state: "pending" } }, null, FILE)).toEqual({ kind: "failed" });
-    expect(parseFinished({ ok: false, code: "rejected", reason: "type_mismatch" }, null, FILE)).toEqual({ kind: "rejected" });
+    expect(parseFinished({ ok: false, code: "rejected", reason: "type_mismatch" }, null, FILE)).toEqual({ kind: "rejected", reason: "mismatch" });
+    expect(parseFinished({ ok: false, code: "rejected", reason: "macro_content" }, null, FILE)).toEqual({ kind: "rejected", reason: "macros" });
+    expect(parseFinished({ ok: false, code: "rejected" }, null, FILE)).toEqual({ kind: "rejected", reason: "rejected" });
     expect(parseFinished({ ok: false, code: "not_uploaded" }, null, FILE)).toEqual({ kind: "failed" });
     expect(parseFinished({ ok: false, code: "not_found" }, null, FILE)).toEqual({ kind: "refused", code: "not_found" });
     expect(parseFinished(null, { name: "FunctionsHttpError" }, FILE)).toEqual({ kind: "failed" });
+  });
+
+  it("says why the check refused a file in plain words, for every reason code the check returns (N6)", () => {
+    const said = (code: unknown) => fileRefusalMessage(rejectionReason(code));
+    // The bytes check (_shared/team-hub-file-type.ts) and the edge function's own size check.
+    expect(said("mismatch")).toBe("Its contents don't match its type");
+    expect(said("unrecognised")).toBe("Its contents don't match its type");
+    expect(said("legacy_office")).toBe("Older Word and Excel files can't be shared here. Save it as .docx or .xlsx");
+    expect(said("macro_content")).toBe("Files with macros can't be shared here");
+    expect(said("embedded_content")).toBe("Files with embedded objects or charts can't be shared here yet");
+    expect(said("external_content")).toBe("Files that pull in content from elsewhere can't be shared here");
+    expect(said("dde_field")).toBe("Files that pull in content from elsewhere can't be shared here");
+    expect(said("malformed_document")).toBe("This file looks damaged");
+    expect(said("oversized_document")).toBe("There's too much inside this file to check");
+    expect(said("too_large")).toBe("Over 10 MB");
+    expect(said("empty")).toBe("That file is empty");
+    expect(said("not_allowed")).toBe("That file type isn't allowed");
+    expect(said("size_mismatch")).toBe("The upload didn't match the file. Attach it again");
+    // The database's own verdict (team_hub_file_verdict) and the edge function's fallback.
+    expect(said("type_mismatch")).toBe("Its contents don't match its type");
+    expect(said("object_mismatch")).toBe("The upload didn't match the file. Attach it again");
+    expect(said("metadata_mismatch")).toBe("The upload didn't match the file. Attach it again");
+    // Anything else claims no cause.
+    for (const unknown of ["rejected", "something_new", "", null, undefined, 7, { reason: "mismatch" }]) {
+      expect(said(unknown)).toBe("That file couldn't be checked");
+    }
+    // No internal word reaches a person.
+    const words = ["mismatch", "legacy_office", "macro_content", "embedded_content", "external_content", "dde_field", "malformed_document", "oversized_document", "size_mismatch", "x"].map(said).join(" ");
+    expect(words).not.toMatch(/\b(?:DDE|OLE|VBA)\b|macro project|_/i);
+  });
+
+  it("says a refused message's file may have expired, and only when that can be the cause (N6)", () => {
+    const now = 10 * TEAM_HUB_FILE_UNSENT_TTL_MS;
+    const fresh = { begunAt: now - 60_000 };
+    const old = { begunAt: now - TEAM_HUB_FILE_UNSENT_TTL_MS };
+    expect(TEAM_HUB_FILE_EXPIRED).toBe("Not sent. A file may have expired. Remove it and attach it again.");
+    // A file started a day ago was swept: said even when people were mentioned.
+    expect(postRefusalMessage("invalid", [fresh, old], 2, now)).toBe(TEAM_HUB_FILE_EXPIRED);
+    // No mentions: a file is what's left to refuse.
+    expect(postRefusalMessage("invalid", [fresh], 0, now)).toBe(TEAM_HUB_FILE_EXPIRED);
+    expect(postRefusalMessage("invalid", [{ begunAt: null }], 0, now)).toBe(TEAM_HUB_FILE_EXPIRED);
+    // Fresh files and a mention: the mention rule is the likelier cause, as before.
+    expect(postRefusalMessage("invalid", [fresh], 1, now)).toBe("Not sent. Everyone you mention must be on the team and able to see this conversation.");
+    expect(postRefusalMessage("invalid", [{ begunAt: now - TEAM_HUB_FILE_UNSENT_TTL_MS + 1 }], 1, now)).toBe("Not sent. Everyone you mention must be on the team and able to see this conversation.");
+    // Without files, or for any other refusal, nothing about files.
+    expect(postRefusalMessage("invalid", [], 0, now)).toBe("Not sent. Everyone you mention must be on the team and able to see this conversation.");
+    expect(postRefusalMessage("too_long", [old], 0, now)).toBe("Messages can be up to 8,000 characters.");
+    expect(postRefusalMessage("no_answer", [old], 0, now)).toBe("Not sent. Your message is kept here.");
   });
 });

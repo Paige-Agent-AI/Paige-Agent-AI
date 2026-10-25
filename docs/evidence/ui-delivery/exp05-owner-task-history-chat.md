@@ -43,6 +43,10 @@ RELEASE_RECOVERY: position=reviewed forward increment preserving original native
 
 ## Orchestration Contract
 
+This backend increment has visible-flow impact through the existing Chat answer
+and progress labels. It changes neither the human controls nor their layout;
+the original UI evidence gate must still inspect this attestation.
+
 The original `automations.owner_task_history` read uses `read_owner_task_act`.
 Its only model argument is the original saved approval UUID. Actor, tenant,
 role, SOLO classification and context epoch come from the server. The original

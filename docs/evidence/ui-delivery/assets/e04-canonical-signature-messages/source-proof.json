@@ -361,5 +361,57 @@
     "exactHostedCi": "PROOF_OWED",
     "native14190004": "NOT_APPLIED",
     "customerAcceptance": "UNVERIFIED"
+  },
+  "approvedSenderReceivingOct25": {
+    "recordedAt": "2026-10-25T16:45:51.198Z",
+    "sourceHead": "457ebee4279f16421fd3267ff21209d9d1744b6d",
+    "incoming": "61dc461991fff2aaf5b7925bca1f4cecab17b895",
+    "ownerApproval": "Explicit Yes for exact one-entry2eea-to2405 renewal plus four review-comment lines; original conversation",
+    "protectedScope": "Only existing sender source tuple; all other126-source entries,29 dispatches, extractor/validator/counts/Root/risk/registry preserved",
+    "wholeInverses": [
+      "entire incoming security file",
+      "entire incoming E08 sender",
+      "entire original reviewed C45 sender",
+      "four native Comms functions",
+      "original gate",
+      "request bridge",
+      "Work proof",
+      "Comms compatibility proof"
+    ],
+    "checks": [
+      {
+        "name": "consumers",
+        "exit": 0,
+        "log": "e04-c45-approved-consumers-1792946583412.log"
+      },
+      {
+        "name": "attachments",
+        "exit": 0,
+        "log": "e04-c45-approved-attachments-1792946583423.log"
+      },
+      {
+        "name": "bindings",
+        "exit": 0,
+        "log": "e04-c45-approved-bindings-1792946583428.log"
+      },
+      {
+        "name": "spine",
+        "exit": 0,
+        "log": "e04-c45-approved-spine-1792946583435.log"
+      },
+      {
+        "name": "concrete-sdk",
+        "exit": 0,
+        "log": "e04-c45-approved-concrete-sdk-1792946583440.log"
+      },
+      {
+        "name": "original-unit",
+        "exit": 0,
+        "log": "e04-c45-approved-original-unit-1792946585075.log"
+      }
+    ],
+    "review": "Sequential AUTHOR-REVIEW / LOWER ASSURANCE; fresh exact-head hosted CI remains owed",
+    "native": "Production read-only frontier180004 and all five incumbent Comms bodies unchanged; native190004 not applied",
+    "activation": "NONE; no customer/provider send, signature, payment or acceptance"
   }
 }

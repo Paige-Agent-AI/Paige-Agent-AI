@@ -1,3 +1,5 @@
+import { createWeeklyDraftDeadline } from '../paige-orchestration/weekly-draft-deadline.ts';
+
 interface OriginalQuery {
   select(columns: string): OriginalQuery;
   eq(column: string, value: unknown): OriginalQuery;
@@ -62,9 +64,12 @@ export async function readOriginalSpecialistHistory(input: {
       try { withdrawn ||= currentCallback() !== true; } catch { withdrawn = true; }
       return !withdrawn;
     };
+    // One elapsed read budget, below the existing ten-second physical UI wait.
+    // A late read may finish, but it cannot start another query or publish proof.
+    const stage = createWeeklyDraftDeadline(8_000, current);
     const permitted = async () => {
       if (!current()) return false;
-      withdrawn ||= await authorize() !== true;
+      withdrawn ||= await stage(authorize) !== true;
       return current();
     };
     if (![actorId, tenantId, threadId, intentId, turnId].every(uuid) || !await permitted()) return unavailable();
@@ -76,9 +81,9 @@ export async function readOriginalSpecialistHistory(input: {
       .eq('id', turnId).eq('thread_id', threadId).eq('interactive_intent_id', intentId).maybeSingle();
     const ownedThread = (row: unknown) => object(row) && row.id === threadId && row.tenant_id === tenantId
       && row.caller_user_id === actorId && row.audience === 'workspace' && row.is_archived === false;
-    const thread = await readThread();
+    const thread = await stage(readThread);
     if (!await permitted() || thread.error || !ownedThread(thread.data)) return unavailable();
-    const receipt = await readTurn(), turn = receipt.data;
+    const receipt = await stage(readTurn), turn = receipt.data;
     if (!await permitted() || receipt.error || !object(turn) || turn.id !== turnId || turn.thread_id !== threadId
       || turn.role !== 'assistant' || turn.interactive_intent_id !== intentId || turn.interactive_actor_id !== actorId
       || turn.interactive_tenant_id !== tenantId || typeof turn.interactive_terminal_state !== 'string'
@@ -105,13 +110,13 @@ export async function readOriginalSpecialistHistory(input: {
     const results: NonNullable<ReturnType<typeof originalObservation>>[] = [];
     for (const id of [...ids].slice(0, 3)) {
       if (!await permitted()) return unavailable();
-      const observed = originalObservation(await inspectOriginal(id), id, terminalAt);
+      const observed = originalObservation(await stage(() => inspectOriginal(id)), id, terminalAt);
       if (!await permitted() || !observed) return unavailable();
       results.push(observed);
     }
-    const finalThread = await readThread();
+    const finalThread = await stage(readThread);
     if (!await permitted() || finalThread.error || !ownedThread(finalThread.data)) return unavailable();
-    const finalTurn = await readTurn();
+    const finalTurn = await stage(readTurn);
     if (!await permitted() || finalTurn.error || stable(finalTurn.data) !== stable(turn)) return unavailable();
     return { v: 1 as const, status: 'recorded_assignment' as const, thread_id: threadId, turn_id: turnId,
       origin_intent_id: intentId, tenant_id: tenantId!, read_only: true as const, new_effect_possible: false as const,

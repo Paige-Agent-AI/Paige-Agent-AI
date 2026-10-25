@@ -266,6 +266,33 @@ describe("canonical exact Calendar booking reader", () => {
 describe("bounded original Calendar agenda", () => {
   const window = { from: "2026-10-17T00:00:00Z", to: "2026-10-18T00:00:00Z" };
   const core = () => Object.fromEntries(Object.entries(record()).filter(([key]) => key !== "guest_name"));
+  const modelProjection = () => {
+    const value = (calendarRead as Record<string, unknown>).calendarAgendaForModel;
+    expect(typeof value).toBe("function");
+    return value as (result: Awaited<ReturnType<typeof calendarRead.readCalendarAgenda>>) => Record<string, unknown>;
+  };
+  it("bounds the actual model projection honestly without changing original record titles", async () => {
+    const f = fixture(); f.responses.list_team_bookings.data = Array.from({ length: 50 }, (_, n) => ({ ...record(), id: id(100 + n), title: "🧭".repeat(1024) }));
+    const result = await f.agenda(), before = structuredClone(result), model = modelProjection()(result);
+    expect(model).toMatchObject({ status: "available", source_shown_count: 50, source_has_more: false, has_more: true });
+    expect(new TextEncoder().encode(JSON.stringify(model)).byteLength).toBeLessThanOrEqual(12000);
+    const rows = model.bookings as Record<string, unknown>[];
+    expect(rows.length).toBeGreaterThan(0); expect(rows.length).toBeLessThan(50);
+    expect(model.shown_count).toBe(rows.length); expect(model.omitted_from_model).toBe(50 - rows.length);
+    for (const row of rows) { expect(row.title_preview).toBe("🧭".repeat(120)); expect(row.title_truncated).toBe(true); expect(row).not.toHaveProperty("title"); }
+    expect(result).toEqual(before);
+  });
+  it("keeps short original names as explicit previews and preserves visible empty coverage", async () => {
+    const f = fixture(), result = await f.agenda(), model = modelProjection()(result);
+    expect(model).toMatchObject({ shown_count: 1, source_shown_count: 1, omitted_from_model: 0, has_more: false, bookings: [{ id: record().id, title_preview: record().title, title_truncated: false }] });
+    f.responses.list_team_bookings.data = [];
+    expect(modelProjection()(await f.agenda())).toMatchObject({ status: "available", bookings: [], shown_count: 0, source_shown_count: 0, has_more: false });
+  });
+  it("never converts an input refusal or unavailable read into an available model projection", async () => {
+    const f = fixture(), input = await f.agenda({ from: "invalid" }); expect(modelProjection()(input)).toBe(input);
+    f.responses.list_team_bookings = { data: null, error: { code: "57014" } };
+    const unknown = await f.agenda(); expect(modelProjection()(unknown)).toBe(unknown);
+  });
   it("uses the same native reader with the server tenant, own host and bounded stable projection", async () => {
     const f = fixture();
     expect(await f.agenda()).toMatchObject({ status: "available", view: "mine", bookings: [core()], shown_count: 1, has_more: false });

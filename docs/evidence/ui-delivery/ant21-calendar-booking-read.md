@@ -219,3 +219,55 @@ receipt/reload and ordinary authorized cohort proof owed. Founder Acceptance: no
 requested/accepted. Immutable review, coordinated binding renewal, exact-head CI
 and production readback remain required. Full ten outcomes/E5-CV1-9, Builder, ZION,
 actual recurring execution/recovery and separate Live remain unfinished.
+
+
+### October25 continuation - bounded governed Chat consumer, still development
+
+The preceding preparation checkpoint is retained. The current local source also
+registers calendar.agenda_read and offers read_calendar_agenda through the same
+SOLO/native-role/current-caller boundary as the original exact-ID read. Both use
+the existing Gateway/Kit/Harness and record_capability_run. Native reads use the
+caller JWT; the existing service client only records the read Rail. This changes
+no booking, schedule, invitation, provider, approval, runtime activation or Live
+permission. A native read receipt is not a booking-execution receipt.
+
+The model gets explicit title_preview/title_truncated, original booking IDs,
+source_shown_count/source_has_more and omitted_from_model. UTF8 output is capped
+at12000bytes, even with50 maximal Unicode names; original names/read rows remain
+unchanged. Missing preview rows require native Calendar or narrower-window
+inspection. No silent title change or claim of complete/conflict-free availability.
+
+Original28 full-handler cases remain. Additive agenda controls reproduced32PASS/
+9RED before wiring, then42PASS/0FAIL with the actual production handler and explicit
+recording Auth/native/provider ports. Actual caller/body, one native lookup, one
+canonical read Rail, closed-read settlement, empty/refused/unavailable results,
+role/classification and both pre-receipt/post-receipt workspace-switch egress are
+covered. A changed workspace suppresses the old result; it is not a fabricated
+refusal from the previous workspace. This is not real HTTP/Auth/customer proof.
+
+Owning unit121PASS/3RED ->124PASS bounds the preview and preserves the original
+read. Six focused Calendar/admission/C0b-registration/interactive/weekly suites
+pass243/243. Original application type ratchet exits0/baseline10/current6/no new.
+The unsupported date-time declaration was corrected to existing supported bounded
+strings with strict RFC3339 runtime validation; no Kit schema was expanded.
+Static offer discovery required separate explicit array pushes, retaining the
+old offer. The narrow Kit recognizer now checks each actual Calendar AST branch,
+so a valid agenda branch cannot mask a broken original exact-reader scope or
+callback. All original Calendar/Task/weekly hostile controls plus11 new agenda
+controls pass; full anti-bypass scan retains288/296 baseline/no new debt. Actual
+source ancestry remains held until immutable review and exact derived renewal.
+
+Catalogue: the eleven assigned generic Operations recipes, including Weekly
+Priorities Plan/Capacity Review, are not promoted by this supporting read.
+The canonical key has PARTIAL maturity and bounded description; technical Chat
+binding is not authenticated customer Live status. Deployed panel availability,
+permissions/cohort behavior, receipt persistence and reload are PROOF OWED.
+No separate catalogue/status engine or shared-panel UI change is introduced.
+
+Source routing is documented in ANT161/c4892412: E03 explicitly released its root
+window/no further claim, E04 explicitly holds no broad root lease, E08 only the
+disjoint sender digest/provenance. No receiving ACK/domain transfer is invented.
+This bounded Calendar turn preserves every adjacent source and releases after
+immutable review/pins. Parent2792 release, exact-head CI, full production source/
+configuration readback, genuine owner record/Rail/reload/isolation and separate
+Live remain required. Browser stops and full EXP05/founder acceptance stay open.

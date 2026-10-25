@@ -19,7 +19,7 @@ describe("E2-2 admission set (ANT-23)", () => {
     // pin the raw text itself.
     // E4-S2 (2026-10-13) widened it deliberately, by the recorded determination in
     // docs/delivery/e2-1-readonly-admission-determination.md and its independent security review.
-    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME');
+    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME');
   });
 
   it("the set is declared ReadonlySet and its comment forbids widening without an owner-recorded change", () => {
@@ -70,6 +70,7 @@ describe("E2-2 prompt block stays truthful", () => {
     expect(block).not.toMatch(/you have NO tools/);
     expect(block).toMatch(/get_business_snapshot/);
     expect(block).toMatch(/read_business_metric/);
+    expect(block).toMatch(/read_calendar_agenda for a bounded saved Calendar window/);
     expect(block).toMatch(/A lookup is a read: it changes nothing and grants no action authority/);
   });
 });

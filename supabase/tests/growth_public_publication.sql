@@ -61,25 +61,25 @@ SELECT pg_temp.as_server();
 -- draft form (the exact shape growth_page_save writes; growth_forms names its display column
 -- `name`, not title), and a second page that stays a draft.
 INSERT INTO public.growth_forms(id,tenant_id,slug,name,status) VALUES
- ('b1900700-0000-4000-8000-0000000007f1','b1900700-0000-4000-8000-000000000711','workshop-signup','Workshop signup','draft');
+ ('b1900700-0000-4000-8000-0000000007a3','b1900700-0000-4000-8000-000000000711','workshop-signup','Workshop signup','draft');
 INSERT INTO public.growth_pages(id,tenant_id,slug,title,status,draft_blocks_json,draft_seo_json) VALUES
- ('b1900700-0000-4000-8000-0000000007p1','b1900700-0000-4000-8000-000000000711','workshop','Referral workshop','draft',
+ ('b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000711','workshop','Referral workshop','draft',
   '[{"type":"hero","title":"Turn clients into a referral engine"},{"type":"embedded_form","form_slug":"workshop-signup"}]'::jsonb,
   '{"description":"One plan you can run on Monday."}'::jsonb),
- ('b1900700-0000-4000-8000-0000000007p2','b1900700-0000-4000-8000-000000000711','never-published','Still private','draft',
+ ('b1900700-0000-4000-8000-0000000007a2','b1900700-0000-4000-8000-000000000711','never-published','Still private','draft',
   '[{"type":"hero","title":"Not for visitors yet"}]'::jsonb,NULL);
 
 -- 1. AUTHORITY: the stored call refuses a person who is not this workspace's owner/admin.
 SELECT pg_temp.require_error(
-  $$SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007p1','b1900700-0000-4000-8000-000000000722')$$,
+  $$SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000722')$$,
   'GROWTH_FORBIDDEN','a foreign workspace owner cannot drive another workspace''s publish');
 
 -- 2. FAILED PUBLICATION STAYS PRIVATE: a page with an unresolved placeholder refuses and nothing
 --    becomes public (the door's truthfulness, at the stored call it runs).
 UPDATE public.growth_pages SET draft_blocks_json='[{"type":"hero","title":"Come on [ADD_DATE]"}]'::jsonb
- WHERE id='b1900700-0000-4000-8000-0000000007p2';
+ WHERE id='b1900700-0000-4000-8000-0000000007a2';
 SELECT pg_temp.require_error(
-  $$SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007p2','b1900700-0000-4000-8000-000000000721')$$,
+  $$SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a2','b1900700-0000-4000-8000-000000000721')$$,
   'GROWTH_UNRESOLVED_PLACEHOLDER','a placeholder page refuses to publish');
 SELECT pg_temp.as_anon();
 SET LOCAL ROLE anon;
@@ -91,7 +91,7 @@ RESET ROLE;
 --    seo byte-equal, status published — with the page's signup form going live with it.
 SELECT pg_temp.as_server();
 DO $publish$ DECLARE reply jsonb; served jsonb; BEGIN
- SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007p1','b1900700-0000-4000-8000-000000000721') INTO reply;
+ SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721') INTO reply;
  PERFORM pg_temp.require_true((reply->>'url')='/p/pubbrand-a/workshop','the door''s stored call returns the public address');
  PERFORM pg_temp.require_true((reply->>'status')='published','the stored call answers published');
  -- The real anonymous read, as the anon role so the RLS policy applies.
@@ -105,31 +105,31 @@ DO $publish$ DECLARE reply jsonb; served jsonb; BEGIN
    'the visitor''s blocks are byte-equal to the approved draft');
  PERFORM pg_temp.require_true((served->0->'seo'->>'description')='One plan you can run on Monday.','the visitor''s page carries the approved SEO description');
  -- The embed frame's own anonymous entry: the page's signup form answers growth_public_form.
- PERFORM pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007f1',NULL,NULL))=1,
+ PERFORM pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007a3',NULL,NULL))=1,
    'the page''s embedded form answers the public form read');
  RESET ROLE;
 END $publish$;
 SELECT pg_temp.as_anon();
 SET LOCAL ROLE anon;
 SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000711','never-published'))->0 IS NULL,'a draft page never appears to a visitor');
-SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007f1',NULL,NULL))=1,'the form is live while its page is live');
+SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007a3',NULL,NULL))=1,'the form is live while its page is live');
 SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000712','workshop'))->0 IS NULL,'one workspace''s page never answers another workspace''s visitor');
 RESET ROLE;
 
 -- 4. UNPUBLISH REMOVES IT FROM THE PUBLIC READ, KEEPING THE WORK.
 SELECT pg_temp.as_server();
 DO $unpublish$ DECLARE reply jsonb; BEGIN
- SELECT public.growth_page_unpublish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007p1','b1900700-0000-4000-8000-000000000721') INTO reply;
+ SELECT public.growth_page_unpublish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721') INTO reply;
  PERFORM set_config('request.jwt.claims','{"role":"anon"}',true);
  SET LOCAL ROLE anon;
  PERFORM pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000711','workshop'))->0 IS NULL,'after unpublish the visitor finds nothing');
  RESET ROLE;
 END $unpublish$;
 SELECT pg_temp.as_server();
-SELECT pg_temp.require_true((SELECT status FROM public.growth_pages WHERE id='b1900700-0000-4000-8000-0000000007p1')='draft','unpublish kept the work as a draft');
+SELECT pg_temp.require_true((SELECT status FROM public.growth_pages WHERE id='b1900700-0000-4000-8000-0000000007a1')='draft','unpublish kept the work as a draft');
 SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claims','{"role":"anon"}',true);
-SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007f1',NULL,NULL))=0,'the unpublished page''s form no longer answers the public read');
+SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007a3',NULL,NULL))=0,'the unpublished page''s form no longer answers the public read');
 RESET ROLE;
 
 -- 5. RESTORE AN EARLIER VERSION, REPUBLISH: the visitor then receives the restored content.
@@ -138,22 +138,22 @@ RESET ROLE;
 --    are the saved jsonb itself, the shape to_jsonb(row.*) produces) and republishes.
 SELECT pg_temp.as_server();
 UPDATE public.growth_pages SET draft_blocks_json='[{"type":"hero","title":"v2 - bring a friend"}]'::jsonb
- WHERE id='b1900700-0000-4000-8000-0000000007p1';
+ WHERE id='b1900700-0000-4000-8000-0000000007a1';
 INSERT INTO public.studio_sessions(id,tenant_id,owner_user_id,title,seed_brief,status) VALUES
- ('b1900700-0000-4000-8000-0000000007s1','b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-000000000721','Referral workshop','A workshop page','building');
+ ('b1900700-0000-4000-8000-0000000007a4','b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-000000000721','Referral workshop','A workshop page','building');
 INSERT INTO public.studio_artifact_versions(id,tenant_id,session_id,kind,lineage_id,version_no,is_current,snapshot,title) VALUES
- ('b1900700-0000-4000-8000-0000000007v1','b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007s1','page','b1900700-0000-4000-8000-0000000007p1',1,false,
+ ('b1900700-0000-4000-8000-0000000007a5','b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a4','page','b1900700-0000-4000-8000-0000000007a1',1,false,
   jsonb_build_object('draft_blocks_json','[{"type":"hero","title":"Turn clients into a referral engine"},{"type":"embedded_form","form_slug":"workshop-signup"}]'::jsonb),'Referral workshop'),
- ('b1900700-0000-4000-8000-0000000007v2','b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007s1','page','b1900700-0000-4000-8000-0000000007p1',2,true,
+ ('b1900700-0000-4000-8000-0000000007a6','b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a4','page','b1900700-0000-4000-8000-0000000007a1',2,true,
   jsonb_build_object('draft_blocks_json','[{"type":"hero","title":"v2 - bring a friend"}]'::jsonb),'Referral workshop');
-SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007p1','b1900700-0000-4000-8000-000000000721');
+SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721');
 SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claims','{"role":"anon"}',true);
 SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000711','workshop')->0->'blocks'->0->>'title')='v2 - bring a friend','the visitor first receives v2');
 RESET ROLE;
 SELECT pg_temp.as_server();
-SELECT public.restore_artifact_version('b1900700-0000-4000-8000-0000000007v1','b1900700-0000-4000-8000-000000000711');
-SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007p1','b1900700-0000-4000-8000-000000000721');
+SELECT public.restore_artifact_version('b1900700-0000-4000-8000-0000000007a5','b1900700-0000-4000-8000-000000000711');
+SELECT public.growth_page_publish('b1900700-0000-4000-8000-000000000711','b1900700-0000-4000-8000-0000000007a1','b1900700-0000-4000-8000-000000000721');
 SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claims','{"role":"anon"}',true);
 SELECT pg_temp.require_true((SELECT pg_temp.anon_page('b1900700-0000-4000-8000-000000000711','workshop')->0->'blocks')::text=

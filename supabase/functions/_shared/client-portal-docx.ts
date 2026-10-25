@@ -1,6 +1,3 @@
-import {Inflate} from "npm:fflate@0.8.2";
-import {DOMParser} from "npm:@xmldom/xmldom@0.8.15";
-
 const WORD = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const RELS = "http://schemas.openxmlformats.org/package/2006/relationships";
 const TYPES = "http://schemas.openxmlformats.org/package/2006/content-types";
@@ -141,6 +138,13 @@ function xmlPreflight(xml: string) {
 async function memberXml(bytes: Uint8Array, member: Member | undefined, limit: number, current: () => void) {
     current(); if (!member || member.size < 1) refuse("invalid_document");
     if (member.size > limit || member.compressed > 2 * limit + 4096) refuse("processing_limit");
+    // Load the existing pinned parsers only for an admitted Word read. Ordinary
+    // Chat/schema inspection must not load a Deno npm runtime through Node's
+    // offline handler loader. No loader stub, runtime alias or gate waiver.
+    const [{Inflate}, {DOMParser}] = await Promise.all([
+      import("npm:fflate@0.8.2"), import("npm:@xmldom/xmldom@0.8.15"),
+    ]);
+    current();
     const compressed = bytes.subarray(member.offset, member.offset + member.compressed);
     let xmlBytes: Uint8Array;
     if (member.method === 0) {

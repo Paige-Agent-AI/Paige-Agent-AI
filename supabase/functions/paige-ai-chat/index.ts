@@ -14,8 +14,10 @@ import { readCalendarAccountShape, readCalendarBooking, readCalendarAgenda, cale
 import { CALENDAR_BOOKING_READ_TOOLS, CALENDAR_AGENDA_READ_TOOLS } from "../_shared/paige-spine/domains/calendar_booking.ts";
 import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/operations-task-read.ts";
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
-import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, weeklyCommitmentStatusToolsForContext, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME, WEEKLY_COMMITMENT_DRAFT_TOOLS, weeklyCommitmentDraftToolsForContext } from "../_shared/paige-spine/domains/automations.ts";
+import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, weeklyCommitmentStatusToolsForContext, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME, WEEKLY_COMMITMENT_DRAFT_TOOLS, weeklyCommitmentDraftToolsForContext, OWNER_TASK_HISTORY_TOOL_NAME, OWNER_TASK_HISTORY_TOOLS, ownerTaskHistoryToolsForContext } from "../_shared/paige-spine/domains/automations.ts";
 import { prepareWeeklyCommitmentChatResponse } from "../_shared/paige-orchestration/weekly-commitment-read.ts";
+import { readOwnerTaskHistoryForChat } from "../_shared/paige-orchestration/owner-task-history-chat.ts";
+import type { OwnerTaskHistoryClients } from "../_shared/paige-orchestration/owner-task-history.ts";
 import { bindWeeklyControlForReview, parseWeeklyControlIntent } from "../_shared/paige-orchestration/weekly-commitment-control-input.ts";
 import { claimWeeklyDraftChatApproval, weeklyDraftNativeArgs } from "../_shared/paige-orchestration/weekly-draft-chat-claim.ts";
 import { commitWeeklyDraftChatApproval } from "../_shared/paige-orchestration/weekly-draft-chat-commit.ts";
@@ -365,7 +367,7 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 // the owner in Setup (set_business_time_zone).
 // Owner restoration (2026-10-17): exact saved-booking read only; original caller JWT,
 // native membership/host visibility, no Calendar write or provider authority.
-const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME]));
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME, OWNER_TASK_HISTORY_TOOL_NAME]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": `authorization, x-client-info, apikey, content-type, x-client-portal-business, ${CHAT_CONTROL_HEADER}`,
@@ -689,6 +691,7 @@ function describeStep(
     // read_business_metric's wording is Exp02's and is deliberately not set here (no Exp02 sign-off).
     case "read_client_engagement_status": return { label: failed ? "Couldn't check where that client stands" : "Checked where that client stands", group: "shared" };
     case "read_calendar_agenda": return { label: failed ? "Couldn't check that Calendar window" : "Checked that Calendar window", group: "shared" };
+    case "read_owner_task_act": return { label: failed ? "Couldn't check the original task outcome" : "Checked the original task outcome", group: "shared" };
     case "read_calendar_booking": return { label: failed ? "Couldn't check that booking" : "Checked that booking", group: "shared" };
     case "crm_get_task": return { label: failed ? "Couldn't check that Task" : "Checked that Task", group: "shared" };
     case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checked your business time zone", group: "shared" };
@@ -8972,6 +8975,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     if (weeklyCommitmentStatusToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS);
     if (weeklyCommitmentDraftToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_DRAFT_TOOLS);
+    if (ownerTaskHistoryToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...OWNER_TASK_HISTORY_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
     // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
@@ -18564,6 +18568,47 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 detail: { channel: "paige_chat", tool: tc.function.name, scope: "personal_planning_commitments", read_only: true } });
             } catch (e) { console.error("[paige] Weekly status read receipt unavailable:", (e as Error)?.message); }
           }
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
+        } else if (tc.function.name === OWNER_TASK_HISTORY_TOOL_NAME) {
+          const historyTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;
+          const historyIdentity: ContextIdentity = { actorId: user.id, tenantId: historyTenant, workspaceId: historyTenant,
+            role: taskReadRole, accountShape: calendarBookingAccountShape, actAsClientId: scopedClientId ?? null,
+            scopeEpoch: payloadThreadId ?? validatedData.requestIntentId ?? "current_request" };
+          let historyRetired = false;
+          const currentHistoryIdentity = () => req.signal.aborted || tenantKnowledgeScopeRevoked || historyRetired
+            || customerPortal || callerTier !== "tenant" ? null
+            : { ...historyIdentity, tenantId: personaCtx?.tenant_id ?? null, workspaceId: personaCtx?.tenant_id ?? null };
+          const revalidateHistoryScope = async (signal: AbortSignal) => {
+            if (signal.aborted || !currentHistoryIdentity() || scopedClientId
+              || !["owner", "admin"].includes(taskReadRole ?? "") || calendarBookingAccountShape !== "solo") return false;
+            if (!(await revalidateTenantKnowledgeScope(true))) return false;
+            if (signal.aborted || !currentHistoryIdentity()) return false;
+            const historyAuthority = await loadTeamAuthorityForChat({ rpc: (name, args) => supabaseClient.rpc(name, args).abortSignal(signal) }, historyTenant);
+            if (signal.aborted || !currentHistoryIdentity()) return false;
+            if (historyAuthority.status === "unavailable") throw new Error("Original task authority unconfirmed");
+            const seats = historyAuthority.status === "available" ? historyAuthority.rows.filter(row => row.fact_key === "viewer_permission") : [];
+            if (seats.length !== 1 || seats[0].status !== "available" || seats[0].value !== taskReadRole) {
+              historyRetired = true; return false;
+            }
+            const shape = await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller, historyTenant, signal);
+            if (shape.status === "unavailable") throw new Error("Original task classification unconfirmed");
+            if (shape.status !== "available") historyRetired = true;
+            return !signal.aborted && currentHistoryIdentity() !== null;
+          };
+          let historyArgs: unknown = null;
+          try { historyArgs = JSON.parse(tc.function.arguments || "{}"); } catch { /* exact parser refuses */ }
+          const result = await readOwnerTaskHistoryForChat(historyIdentity, {
+            caller: supabaseClient as unknown as OwnerTaskHistoryClients["caller"],
+            service: supabase as unknown as OwnerTaskHistoryClients["service"],
+            currentIdentity: currentHistoryIdentity, revalidateScope: revalidateHistoryScope, signal: req.signal,
+            recordRead: async signal => {
+              const runId = await stableRunId([tc.function.name, historyTenant, `${payloadThreadId ?? ""}:${tc.id}`]);
+              if (signal.aborted || !await revalidateHistoryScope(signal) || signal.aborted) return false;
+              return await recordCapabilityRun(supabase, { tenantId: historyTenant, actorId: user.id,
+                capabilityKey: "automations.owner_task_history", outcome: "capability_succeeded", runId,
+                detail: { channel: "paige_chat", tool: tc.function.name, read_only: true, scope: "original_task_history" } });
+            },
+          }, historyArgs);
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });

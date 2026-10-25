@@ -22,9 +22,9 @@ it("retains the checked original history result for the actual Chat consumer", (
       void [approval, readAt, current];
     }
   `;
-  const options: ts.CompilerOptions = { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext,
+  const options: ts.CompilerOptions = { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.ESNext,
     moduleResolution: ts.ModuleResolutionKind.Bundler, allowImportingTsExtensions: true,
-    noEmit: true, strict: true, skipLibCheck: true, types: [], lib: ["lib.es2022.d.ts", "lib.dom.d.ts"] };
+    noEmit: true, strict: true, skipLibCheck: true, types: [], lib: ["lib.es2020.d.ts", "lib.dom.d.ts"] };
   const host = ts.createCompilerHost(options), read = host.readFile, exists = host.fileExists;
   host.readFile = name => path.resolve(name) === fixturePath ? source : read(name);
   host.fileExists = name => path.resolve(name) === fixturePath || exists(name);
@@ -173,5 +173,38 @@ describe("original owner-task history Chat adapter", () => {
     const r = await readOwnerTaskHistoryForChat(f.identity, f.deps, input()); expect(r.status).toBe("unavailable"); expect(JSON.stringify(r)).not.toContain("private fixture payload");
     const g = fixture(), abort = new AbortController(); abort.abort(); g.deps.signal = abort.signal;
     expect((await readOwnerTaskHistoryForChat(g.identity, g.deps, input())).status).toBe("unavailable"); expect(g.calls).toEqual([]);
+  });
+});
+
+
+describe("Chat read receipt remains separate from original Task proof", () => {
+  it.each([true, false])("reports the read receipt truthfully without replacing the original %s", async recorded => {
+    const f = fixture(), record = vi.fn(async (signal: AbortSignal) => { expect(signal.aborted).toBe(false); return recorded; });
+    f.deps.recordRead = record;
+    const result = await readOwnerTaskHistoryForChat(f.identity, f.deps, input());
+    expect(record).toHaveBeenCalledOnce();
+    expect(result).toMatchObject({ status: "available", read_receipt: recorded ? "recorded" : "unverified",
+      original: { originalTask: { state: "verified", receiptId: id(11), runId } } });
+  });
+  it("withholds the original result after context withdrawal during the read receipt", async () => {
+    const f = fixture(); f.deps.recordRead = async () => { f.setCurrent(null); return true; };
+    const result = await readOwnerTaskHistoryForChat(f.identity, f.deps, input());
+    expect(result.status).toBe("refused"); expect(result).not.toHaveProperty("original");
+  });
+  it("revalidates server authority after the read receipt", async () => {
+    const f = fixture(); f.deps.recordRead = async () => { f.retireScope(); return true; };
+    const result = await readOwnerTaskHistoryForChat(f.identity, f.deps, input());
+    expect(result.status).toBe("refused"); expect(result).not.toHaveProperty("original");
+  });
+  it("bounds a receipt that never acknowledges within the original total deadline", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "performance"] });
+    const f = fixture(); let release: ((v: boolean) => void) | undefined;
+    f.deps.recordRead = () => new Promise<boolean>(resolve => { release = resolve; });
+    const pending = readOwnerTaskHistoryForChat(f.identity, f.deps, input());
+    await vi.advanceTimersByTimeAsync(8001);
+    const result = await pending;
+    expect(result.status).toBe("unavailable"); expect(result).not.toHaveProperty("original");
+    const count = f.calls.length; release?.(true); await Promise.resolve();
+    expect(f.calls).toHaveLength(count);
   });
 });

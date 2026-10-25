@@ -163,7 +163,7 @@ export interface RunSystemsCheckSummary {
   }>;
 }
 
-type CaptureReadbackPhase = "finding_write" | "finding_readback" | "run_finalize" | "run_readback";
+type CaptureReadbackPhase = "run_insert" | "finding_write" | "finding_readback" | "run_finalize" | "run_readback";
 
 /** A known original run owes reconciliation. This never proves absence or permits replay. */
 export class SystemsCheckCaptureUnconfirmed extends Error {
@@ -340,9 +340,16 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   // are patched at the end. Readers have twice been written against "all three are patched at the
   // end", which is false and makes check_count look untrustworthy when it is the one column that
   // is not.
-  const { data: runRow, error: runErr } = await admin
+  // Keep the original identity even if the first acknowledgement is lost. This
+  // is an existing run row, never an idempotency grant, an absent-write claim or
+  // permission to replay. Legacy remediation keeps its database-assigned ID.
+  const captureRunId = actionFiling === "none" ? crypto.randomUUID() : null;
+  let runInsert: { data: unknown; error: { message?: string } | null };
+  try {
+    runInsert = await admin
     .from("paige_systems_check_run")
     .insert({
+      ...(captureRunId ? { id: captureRunId } : {}),
       tenant_id: tenantId,                 // EXPLICIT (§9); NULL for an operator scan (§53 tenant-less)
       scan_flavor: scanFlavor,
       check_count: rows.length,
@@ -366,10 +373,19 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     })
     .select("id")
     .single();
+  } catch (error) {
+    if (captureRunId) throw new SystemsCheckCaptureUnconfirmed(captureRunId, "run_insert");
+    throw error;
+  }
+  const { data: runRow, error: runErr } = runInsert;
+  if (captureRunId && (runErr || !runRow || typeof runRow !== "object" || Array.isArray(runRow)
+    || (runRow as { id?: unknown }).id !== captureRunId)) {
+    throw new SystemsCheckCaptureUnconfirmed(captureRunId, "run_insert");
+  }
   if (runErr || !runRow) {
     throw new Error(`SYSTEMS_CHECK_RUN_INSERT_FAILED: ${runErr?.message ?? "no row returned"}`);
   }
-  const runId = (runRow as { id: string }).id;
+  const runId = captureRunId ?? (runRow as { id: string }).id;
 
   async function captureIo<T>(operation: () => PromiseLike<T>, phase: CaptureReadbackPhase): Promise<T> {
     try { return await operation(); }

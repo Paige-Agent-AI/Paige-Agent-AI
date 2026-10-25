@@ -140,7 +140,9 @@ function containsAscii(bytes: Uint8Array, needle: string): boolean {
 type Detection = { mime: TeamHubFileMime | null; reason: TeamHubFileRefusal | null };
 
 /** Total bytes the check will inflate for one document. A real 10 MB Office file is far below it. */
-export const TEAM_HUB_MAX_INFLATED_BYTES = 50 * 1024 * 1024;
+// 12 MB of inspected XML is far beyond any real document's relationships, content types and word/*.xml
+// text (media is never inflated), and keeps the linear walk well inside the edge CPU budget.
+export const TEAM_HUB_MAX_INFLATED_BYTES = 12 * 1024 * 1024;
 
 /**
  * Compressed bytes handed to the decompressor at a time. Deflate expands at most about 1032:1, so
@@ -432,7 +434,11 @@ function wordFieldRefusal(xml: string): TeamHubFileRefusal | null {
       } else if (DDE.test(text)) return "dde_field";
       continue;
     }
-    const kind = (tag.attributes.get("fldchartype") ?? [])[0]?.trim();
+    // Exactly one field type, as for a relationship's Type: two values under different prefixes could
+    // be read one way here and another way by Word.
+    const kinds = tag.attributes.get("fldchartype") ?? [];
+    if (kinds.length > 1) return "malformed_document";
+    const kind = kinds[0]?.trim();
     const field = open[open.length - 1];
     if (kind === "begin") {
       if (field && !field.separated && !field.worded) field.computedKeyword = true;

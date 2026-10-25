@@ -352,14 +352,14 @@ describe("Word and Excel content that runs or loads something without a macro", 
 });
 
 describe("inflating Word and Excel parts is bounded and fails closed", () => {
-  it("a document whose parts would inflate past 50 MB is refused before anything is inflated", async () => {
+  it("a document whose parts would inflate past 12 MB is refused before anything is inflated", async () => {
     const bytes = zip([...docxEntries(true).filter((entry) => entry.name !== "word/document.xml"),
-      { name: "word/document.xml", data: new Uint8Array(51 * 1024 * 1024).fill(0x20), deflate: true }]);
+      { name: "word/document.xml", data: new Uint8Array(13 * 1024 * 1024).fill(0x20), deflate: true }]);
     assert.ok(bytes.length < 10 * 1024 * 1024, "the bomb fits under the upload cap");
     assert.equal(await refusal(bytes), "oversized_document");
   });
-  it("several parts that together pass 50 MB are refused", async () => {
-    const big = new Uint8Array(26 * 1024 * 1024).fill(0x20);
+  it("several parts that together pass 12 MB are refused", async () => {
+    const big = new Uint8Array(7 * 1024 * 1024).fill(0x20);
     const bytes = docxWith([{ name: "word/header1.xml", data: big, deflate: true }, { name: "word/footer1.xml", data: big, deflate: true }]);
     assert.equal(await refusal(bytes), "oversized_document");
   });
@@ -542,5 +542,16 @@ describe("reading field instructions and attributes is linear", () => {
     const pair = '<w:fldChar w:fldCharType="begin"/><w:fldChar w:fldCharType="end"/>';
     const bytes = withDocument('<w:fldChar w:fldCharType="begin"/><w:instrText>x' + " ".repeat(4 * MB) + "</w:instrText>" + repeatTo(pair, 4 * MB));
     assert.equal(reasonWithinDeadline(bytes, "nested after blank"), "null");
+  });
+});
+
+describe("a field marker has exactly one type", () => {
+  it("a fldChar carrying two field types under different prefixes is refused", async () => {
+    const two = `<w:p xmlns:x="urn:x"><w:r><w:fldChar x:fldCharType="separate" w:fldCharType="begin"/></w:r>` +
+      `<w:r><w:instrText>DDEAUTO c:\\\\x.exe</w:instrText></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>`;
+    assert.equal(await refusal(withDocument(two)), "malformed_document");
+  });
+  it("an ordinary field with one type per marker is still read", async () => {
+    await accepted(withDocument(ddeRun("PAGE")));
   });
 });

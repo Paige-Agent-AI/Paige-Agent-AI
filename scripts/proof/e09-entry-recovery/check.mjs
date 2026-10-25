@@ -25,3 +25,4 @@ await page.goto(`${origin}/?mode=boot`);await page.getByRole('heading',{name:'Th
 await page.goto(`${origin}/?flow=error`);await page.getByRole('heading',{name:'This page couldn’t open'}).waitFor();await page.evaluate(()=>{document.documentElement.style.fontSize='32px';});assert(await page.getByRole('button',{name:'Reload page'}).isVisible());assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));report.checks.push({reflow:'200 percent root text, 390px viewport, no horizontal overflow'});
 assert.equal(report.externalRequests.length,0);report.result='PASS';writeFileSync(path.join(out,'result.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({result:report.result,checks:report.checks.length,external:report.externalRequests.length,output:out}));
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
+await import('./navigation.mjs');

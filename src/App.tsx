@@ -160,7 +160,7 @@ const SuspenseFallback = () => (
 
 const PageSuspense = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  return <PageLoadBoundary key={location.pathname}>
+  return <PageLoadBoundary resetKey={location.pathname}>
     <React.Suspense fallback={<SuspenseFallback />}>{children}</React.Suspense>
   </PageLoadBoundary>;
 };

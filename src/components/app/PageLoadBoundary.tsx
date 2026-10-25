@@ -21,8 +21,13 @@ export function PageLoadFailure({reload = () => window.location.reload()}: {relo
 }
 
 /** Preserve providers/navigation outside this route; failure never becomes a blank root. */
-export class PageLoadBoundary extends Component<{children: ReactNode}, {failed: boolean}> {
-  state = {failed: false};
+export class PageLoadBoundary extends Component<{children: ReactNode; resetKey?: string}, {failed: boolean; resetKey?: string}> {
+  state = {failed: false, resetKey: this.props.resetKey};
+  static getDerivedStateFromProps(props: {resetKey?: string}, state: {resetKey?: string}) {
+    // A new destination may recover a FAILED screen. A React key here would
+    // also remount healthy shared children and discard their in-progress work.
+    return props.resetKey !== state.resetKey ? {failed: false, resetKey: props.resetKey} : null;
+  }
   static getDerivedStateFromError() { return {failed: true}; }
   render() { return this.state.failed ? <PageLoadFailure /> : this.props.children; }
 }

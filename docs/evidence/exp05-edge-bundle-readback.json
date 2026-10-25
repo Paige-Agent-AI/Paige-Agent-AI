@@ -292,5 +292,183 @@
       "Calendar/Task parent/deployment/authenticated/receipt/reload proof",
       "Physical browser/input hold, separate Live, complete ten/E5/Builder/ZION/algorithms/founder acceptance"
     ]
+  },
+  "compiledRuntimeVerification": {
+    "base": "783a7c2527b3940a870d7b0d14c92089699ed313",
+    "channel": "engineering-only; no customer update",
+    "actualPriorRelease": {
+      "pr": 2827,
+      "merge": "81968e5a03766d9d9bd9d0746d63c7a62fb2d22c",
+      "run": 40180199618,
+      "artifact": 12593572875,
+      "artifactSha256": "b51636ff05a99793423bb254e9c0829611d38a7220e45f13c13167ad53339853",
+      "allPass": false,
+      "knownFile": "supabase/functions/_shared/action-risk.ts",
+      "sourceSha256": "e2cc4ae0724c65e6d1b52b24af7462df468dbba36a175739119461b3fc9c595a",
+      "downloadedSha256": "ca9d94d96855ca24f5dca7f7af695d2b4b7793469b21c85f0d6cf7d03539a008",
+      "downloadMode": "docker_requested",
+      "edgeLive": "NOT ADVANCED"
+    },
+    "calibration": {
+      "reproducer": "@deno/emit@0.46.0 default options, frozen JSR package integrity",
+      "source": "immutable original Git module, not downloaded code",
+      "matchesActualDownloadedSha256": true,
+      "actualProviderCompilerVersion": "UNVERIFIED; exact expected output bytes, not a version guess",
+      "fullExpectedClosure": {
+        "modules": 283,
+        "sourceBytes": 4735251,
+        "elapsedMilliseconds": 3065,
+        "actualWholeProviderReadback": "STILL OWED"
+      }
+    },
+    "repair": "Original API source contract unchanged. After the original exact server-unbundle refusal and fresh Docker read only, require each differing file to equal the exact pinned compilation of its immutable expected Git source. Retain every expected and additional repository file, no normalization/AST/source-map waiver or local-build-only certification.",
+    "compilerBoundary": "Frozen helper and lock must match target commit; compiler receives expected Git bytes only, no provider credentials, filesystem/process/environment permissions or source execution; imports externalized. Strict output identities and original global deadline, max60s compiler subprocess. Failure never certifies.",
+    "tests": {
+      "causal": {
+        "cases": 6,
+        "passed": 3,
+        "failed": 3,
+        "log": "private work/compiled-readback-focused-red.log"
+      },
+      "full": {
+        "cases": 122,
+        "failed": 0,
+        "skipped": 0,
+        "seconds": 149.486,
+        "log": "private work/compiled-readback-full-second.log"
+      },
+      "intermediate": "First full122 retained one original four-argument manifest test-driver TypeError; preserved the original API four-argument call and reran full original suite, no assertion waived. One missing-dependency wrapper restoration and type-only frozen-lock finding corrected; require-await fixed with Promise.resolve.",
+      "strictCompilerCheck": "PASS/frozen",
+      "compilerLint": "PASS",
+      "originalRetirement": {
+        "cases": 21,
+        "failed": 0,
+        "log": "private work/compiled-readback-retirement.log"
+      }
+    },
+    "sourceSha256": {
+      ".github/scripts/edge-source-readback.py": "84f8a57beed783191013afc6073c666aaa66f71bfc320fb961b5693099dba838",
+      ".github/scripts/test_edge_source_readback.py": "d53c3954c3f2f05f2e5fb0f1a2bc7caef2cdd300836a2cdb7a071e3a12ce0fd9",
+      ".github/scripts/edge-source-emit.ts": "29743761643f2f4725f7461bd1516ec363b7c73c8a2879aebe6f00bc041cf0ad",
+      ".github/scripts/edge-source-emit.lock": "99997230be56cf5cb9faad0c095126545b66f1ac280af42503b016a73f0a9f46",
+      ".github/workflows/ci.yml": "07b538e27beca96c3ea7443c8fdcc886eedfb396f7d2db731a47a61bdd1889ad",
+      ".github/workflows/deploy-edge-functions.yml": "a3787d7749d693414ea1c50819d3c71dc77ef3296ba807809e60bf56d73d6ecf"
+    },
+    "unchanged": "Business/domain source, source normalizer, JWT/config, CLI/API-first and exact500 fallback, original closure selection, metadata/identity race, overall budget/attempts, credential authority, uploads/retirements/tag gates, Spine/Harness/Trust/Rail/activation, catalogue and algorithm maturity.",
+    "functional": "SOURCE IMPLEMENTED and local122 proof only; exact review/CI/release/actual full source certificate remain owed",
+    "visual": "No customer UI change or browser/control operation",
+    "experiential": "Calendar/Task/weekly/Builder/ZION, ordinary authorized cohort approvals/records/Rails/reload/recovery and separate Live remain distinct proof obligations",
+    "founderAcceptance": "NOT REQUESTED; one full EXP05 evaluation remains later"
+  },
+  "productionRelease20261025": {
+    "pr": 2831,
+    "reviewedHead": "c102b96af2a37515bdd0d4176d3ab7c497944065",
+    "merge": "62b55cc10aa4911ef23d16cc16b97edefa412988",
+    "tree": "eec2a0af318f62b5b60d5b3352675eaeb18c5205",
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "receipt": 5642666210
+    },
+    "ci": {
+      "success": 10,
+      "skipped": 1,
+      "webStatusesSuccess": 2
+    },
+    "run": 40185963823,
+    "job": 121146684649,
+    "artifact": 12595723054,
+    "artifactSha256": "8b49082639e733412b3dd7480586806b87d0d6c1a21d84ea5e47b6fd8f7e06bd",
+    "duplicateUploads": "SKIPPED",
+    "source": {
+      "commit": "62b55cc10aa4911ef23d16cc16b97edefa412988",
+      "allPass": true,
+      "functions": [
+        {
+          "name": "execute-approval",
+          "version": 179,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 119,
+          "emittedFiles": 0,
+          "archiveSha256": "b83a1bcf96c1e3bf01f2f5f2fd278cf8fcb7ea5b8a000070d85af8ed5af85722"
+        },
+        {
+          "name": "paige-ai-chat",
+          "version": 537,
+          "status": "PASS",
+          "downloadMode": "docker_requested",
+          "files": 283,
+          "emittedFiles": 283,
+          "archiveSha256": "49d8ea9731ea029600e8c3b4d4f78732a69c04a7d5e8397de7ec37ea38cab2fb"
+        },
+        {
+          "name": "paige-business-review",
+          "version": 80,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 32,
+          "emittedFiles": 0,
+          "archiveSha256": "8852bacef8b11b51cd98ce71cacc348bc59f9728c485a9f60bdef9dd4aa4cafb"
+        },
+        {
+          "name": "paige-native-event-dispatch",
+          "version": 260,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 116,
+          "emittedFiles": 0,
+          "archiveSha256": "f91a97c6620cdbda3078fc5e74cd000136103c908bef1f09c841f8982ee65ad7"
+        },
+        {
+          "name": "paige-orchestrator",
+          "version": 129,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 127,
+          "emittedFiles": 0,
+          "archiveSha256": "9b0f13bbbda49f350aa8299514ff4b927676bca859d98af30fe7cc30a5b9c758"
+        },
+        {
+          "name": "weekly-commitment-command",
+          "version": 20,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 18,
+          "emittedFiles": 0,
+          "archiveSha256": "1d5e605e5af98a8749e70f50fd7bbbd7518eadfeae6ba473baf30e408bbccb1e"
+        }
+      ],
+      "scratchCleanup": {
+        "status": "incomplete",
+        "reason": "permission_denied"
+      }
+    },
+    "web": {
+      "observedAt": "2026-10-25T10:48:41.241Z",
+      "deployment": "dpl_jan4uRcPTEym162HpdvuZNc2PfeB",
+      "expected": "62b55cc10aa4911ef23d16cc16b97edefa412988",
+      "results": [
+        {
+          "url": "https://paigeagent.ai/version.json",
+          "status": 200,
+          "body": {
+            "buildId": "62b55cc10aa4911ef23d16cc16b97edefa412988-mvnpaaq4",
+            "customerUpdate": null
+          }
+        },
+        {
+          "url": "https://app.paigeagent.ai/version.json",
+          "status": 200,
+          "body": {
+            "buildId": "62b55cc10aa4911ef23d16cc16b97edefa412988-mvnpaaq4",
+            "customerUpdate": null
+          }
+        }
+      ]
+    },
+    "priorFailure": "Original2827/run40180199618 failed full source verification and remains historical; this later actual complete certificate does not rewrite it. Exact trusted-source emission, not a comparison waiver.",
+    "releaseChannel": "production",
+    "customerReleaseIdentity": null,
+    "boundary": "Source/review/CI/production identity only. Ordinary owner authority, original business result/Rail, reload/recovery, equivalent existing/new SOLO cohorts, deployed Capabilities panel, separate Live, full ten outcomes/E5-CV1–9 and founder acceptance remain unverified. No trigger, provider, spend, external send or customer announcement is activated."
   }
 }

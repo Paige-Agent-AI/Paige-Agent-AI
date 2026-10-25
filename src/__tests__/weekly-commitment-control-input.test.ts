@@ -9,9 +9,36 @@ const schedule = { weekday: 1, local_time: "09:00", timezone: "America/New_York"
 const operations: WeeklyControlOperation[] = ["draft", "configure", "authorize", "pause", "resume", "cancel"];
 const intent = (operation: WeeklyControlOperation) => operation === "draft" ? { name: "Weekly commitment check", ...schedule }
   : operation === "configure" ? { automation_id: processId, ...schedule } : { automation_id: processId };
-const facts = { requestId, process: { id: processId, revision: 3 } };
+const control = { state: "paused", future_control_at: "2026-10-23T15:20:10.123456+00:00" };
+const facts = { requestId, process: { id: processId, revision: 3, control } };
 
 describe("unregistered weekly review inputs and canonical RPC bindings", () => {
+  it("binds authorization to the original exact control snapshot without normalizing microseconds", () => {
+    const result = bindWeeklyControlForReview("authorize", intent("authorize"), facts);
+    expect(result).toEqual({ rpc: "control_weekly_commitment_check", args: {
+      _automation_id: processId, _action: "authorize", _expected_revision: 3, _expected_control: control,
+    } });
+    expect(Object.isFrozen(result?.args._expected_control)).toBe(true);
+    expect(result?.args._expected_control).not.toBe(control);
+    expect(facts.process.control.future_control_at).toBe("2026-10-23T15:20:10.123456+00:00");
+  });
+  it("refuses absent, ineligible or malformed authorization snapshots rather than falling back to three arguments", () => {
+    const invalid = [undefined, null, {}, { state: "scheduled", future_control_at: null },
+      { state: "cancelled", future_control_at: null }, { state: "paused" },
+      { state: "paused", future_control_at: false }, { state: "paused", future_control_at: "not-an-instant" }];
+    for (const snapshot of invalid) {
+      const server = { requestId, process: { id: processId, revision: 3, control: snapshot } };
+      expect(bindWeeklyControlForReview("authorize", intent("authorize"), server as never)).toBeNull();
+    }
+    expect(bindWeeklyControlForReview("authorize", intent("authorize"),
+      { process: { id: processId, revision: 3, control: { state: "requested", future_control_at: null } } }))
+      .toMatchObject({ args: { _expected_control: { state: "requested", future_control_at: null } } });
+  });
+  it("does not accept the expected control snapshot from model intent", () => {
+    for (const key of ["_expected_control", "control", "future_control_at", "state"]) {
+      expect(bindWeeklyControlForReview("authorize", { ...intent("authorize"), [key]: control }, facts)).toBeNull();
+    }
+  });
   it.each(operations)("%s uses the existing closed Kit schema without authority fields", operation => {
     const schema = WEEKLY_CONTROL_REVIEW_INPUTS[operation];
     expect(isCapabilityInputSchema(schema)).toBe(true);
@@ -50,6 +77,7 @@ describe("unregistered weekly review inputs and canonical RPC bindings", () => {
   it.each(["authorize", "pause", "resume", "cancel"] as const)("%s fixes the RPC action rather than consuming an action enum", operation => {
     expect(bindWeeklyControlForReview(operation, intent(operation), facts)).toEqual({ rpc: "control_weekly_commitment_check", args: {
       _automation_id: processId, _action: operation, _expected_revision: 3,
+      ...(operation === "authorize" ? { _expected_control: control } : {}),
     } });
     expect(bindWeeklyControlForReview(operation, { ...intent(operation), action: "authorize" }, facts)).toBeNull();
   });

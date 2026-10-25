@@ -1,0 +1,59 @@
+{
+  "codeHead": "197d4b4c4d4bdabcc22514d984417de67e2c5211",
+  "scope": "Original private read precondition only; no approval or provider/native effect",
+  "source": [
+    {
+      "path": "supabase/functions/agreement-send/index.ts",
+      "blob": "81650152aaeeda63f4024613b16884d30e373df8"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-signature-request.ts",
+      "blob": "4fd436839e9d1aa106a21b2eb9a7be82e29c4431"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-signature-request.test.ts",
+      "blob": "64088c6655f874697f9211f6ffe03fa7b1bf85db"
+    }
+  ],
+  "tests": {
+    "original": 67,
+    "originalSteps": 12,
+    "missingContractRed": 7,
+    "repaired": 74,
+    "originalHandlerAdditionalRed": 1,
+    "repairedSteps": 13,
+    "assertionsWeakened": false,
+    "initialWrongCwd": "INVALID_TOOLING_FROZEN_WORKSPACE_LOCK_NO_TESTS_RAN"
+  },
+  "release": {
+    "source": "IMPLEMENTED_LOCALLY",
+    "review": "FINAL_EXACT_HEAD_OWED",
+    "ci": "OWED",
+    "merge": "NOT_MERGED",
+    "deployment": "NOT_DEPLOYED",
+    "activation": "NONE",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "OPEN"
+  },
+  "excluded": [
+    "new approval channel or grant",
+    "prepared token/effect hold release",
+    "real send, payment or signature",
+    "ordinary roles/cohorts/CentralQA/full12 acceptance"
+  ],
+  "currentMainComposition": {
+    "recordedAt": "2026-10-25T10:59:33.732Z",
+    "head": "ed118e95f94596728a53d852fe15fc48d301a24a",
+    "tree": "99e882b3fa963040353ce22fd5f202afa69ea059",
+    "incomingMain": "622c5532a91284cad60cfb343fd5bbc94e44fd8a",
+    "originalReviewedHead": "2e565836efc46ca9a98058362f918ea79ceecc40",
+    "threeOriginalSourceBlobsExact": true,
+    "sourceCases": 74,
+    "httpSteps": 13,
+    "log": "e04-c39-current-main-1792925866246.log",
+    "inputProof": "e04-c39-current-main-1792925866246-result.json",
+    "priorSharedGate": "Actual source certificate/readback cleared; own affected-importer proof remains owed",
+    "native": "NO_OWN_MIGRATION",
+    "release": "NOT_MERGED_NOT_DEPLOYED"
+  }
+}

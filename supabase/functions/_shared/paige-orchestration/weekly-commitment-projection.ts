@@ -129,7 +129,7 @@ export function parseWeeklyCommitmentSnapshot(raw: unknown, tenant: string, acto
       execution_availability: c.execution_availability as WeeklyCheck["execution_availability"],
       execution_hold_reason: typeof c.execution_hold_reason === "string" ? c.execution_hold_reason.slice(0, 160) : null,
       next_run_at: c.next_run_at as string | null, intended_next_run_at: c.intended_next_run_at as string | null,
-      future_control_at: (s.future_control_at as string | null | undefined) ?? null,
+      future_control_at: s.future_control_at as string | null | undefined,
       last_run: last, last_verified_run: past,
     });
   }

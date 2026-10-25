@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: exact permitted older findings can be inspected indep
 FLOW_PROTOTYPE: UNVERIFIED: private original-component state model is source-tested/compiled, unserved and unrendered. The physical Escape/input stop prevents its real traversal; no prototype acceptance or waiver is asserted.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible signed-in business owner inspects the exact source behind prepared work, then returns to the original discussion.
 VISUAL_DIRECTION: PASS: preserve incumbent Mineral/Obsidian typography, original linked-source row and drawer/full-width expansion; no new dashboard, banner, modal engine or Chat shell.
-AUTOMATED_EVIDENCE: PASS: owning30 and original204 cases,234PASS/9 suites,5.10s; actual production component and existing scoped-hook/navigation/prepared-work contracts, synthetic ports only.
-STATIC_EVIDENCE: UNVERIFIED: renewed current-main composition, scoped lint/type/build and exact-logic private proof are being checked for the read-consistency successor. Earlier ea6 source checks remain historical, not new-head proof.
+AUTOMATED_EVIDENCE: PASS: owning30 and original204 cases,234PASS/9 suites,5.44s on composed source; actual production component and existing scoped-hook/navigation/prepared-work contracts, synthetic ports only.
+STATIC_EVIDENCE: PASS: composed-source scoped ESLint0, unchanged type ratchet10baseline/6current, actual app build1m37s. Exact-logic private proof is compiled/unserved/unrendered, source SHA2562c361525; no previous-head check is substituted for these source results.
 RENDERED_EVIDENCE: UNVERIFIED: no new browser, native capture or server started under the preserved physical input stop. Prior captures cannot prove this changed source.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: DOM source interactions cover exact source, history/current distinction, expanded drawer, Escape/focus exit, query/hash preservation, changed/withdrawn reads and account retirement; native behavior remains untested.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no customer drive under the input stop; ordinary eligible SOLO roles, tenant negatives, second legitimate cohort, reload/return and actual Capabilities presentation still require authorized proof.
@@ -87,9 +87,20 @@ An already open preparation also retires if only the original run metadata
 changes while the same finding object remains. Reuse the original deferred focus
 restore after removing inert state; do not create a second recovery channel.
 The original current-list path remains independent of historical availability.
-Final234 source controls pass, including204 incumbent controls; renewed composed
-source lint/type/build proof is required. No native, rendered, permission or
-customer acceptance follows from this source correction.
+Current main5f7fbd0c51e58709a6ab8ee2b361392a21cf1a57 is composed at
+44f906ab7ab8e0eb479c128b62dc13658adbfce0/tree4974c23d. All six owning
+source/evidence blobs remain exact to the reviewed correction; all16017 incoming
+entries outside those paths, including the entire Master/Brain/Root/C0b, remain
+exact. This is an owning development-branch composition, not a merge to main.
+Final234 source controls pass, including204 incumbent controls, with lint0,
+unchanged type ratchet10/6 and full app build1m37s. The renewed private entry graph
+proves current source SHA2562c361525 with four import-only aliases and four actual
+referenced assets. Its synthetic read port retains immutable identity across
+ordinary rerenders and changes identity on explicit refresh or fixture changes;
+this models a source port, not native authorization. No server/browser was opened.
+No native, rendered, permission or customer acceptance follows from this source
+correction. Exact-final review and fresh hosted CI remain separately required;
+the material prototype/input gate remains held.
 
 ## Capabilities, algorithms and orchestration
 

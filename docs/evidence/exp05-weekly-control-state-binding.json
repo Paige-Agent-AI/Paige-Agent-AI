@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "outcome": "Future weekly authorization reviews retain the exact original saved control state and cutoff for the existing native compare-and-authorize writer.",
+  "base": "5f7fbd0c51e58709a6ab8ee2b361392a21cf1a57",
+  "channel": "development",
+  "classification": "unmounted preparation correction",
+  "native": {
+    "signature": "public.control_weekly_commitment_check(uuid,text,integer,jsonb)",
+    "migration": "20271113510005",
+    "definitionMd5": "3d5cec453ab3f4ada403e8d2a14ec976",
+    "acl": "postgres and authenticated only; no public/anon/service_role grant",
+    "observation": "Read-only catalog inspected; current native function compares original state/cutoff after acquiring the process lock. No business RPC invoked."
+  },
+  "defect": "Original future preparation bound only revision to the old three-argument authorize call; unchanged revision could span different paused control snapshots.",
+  "repair": "Require a current requested/paused canonical control snapshot, preserve exact original microsecond cutoff, freeze the minimized copy and prepare the existing four-argument call. Model intent cannot supply the state/cutoff. Missing or ineligible canonical facts cannot fall back to the weaker overload.",
+  "red": {
+    "total": 68,
+    "passed": 63,
+    "failed": 5,
+    "report": "private work/weekly-review-state-red.json",
+    "boundary": "Five causal controls on actual original pure binder/read-review modules; not a production action reproduction."
+  },
+  "green": {
+    "total": 189,
+    "passed": 189,
+    "failed": 0,
+    "skipped": 0,
+    "report": "private work/weekly-review-state-composed.json",
+    "includes": [
+      "original two binder/review suites68",
+      "original native human future controls53",
+      "original draft command30",
+      "original Chat draft commit38"
+    ]
+  },
+  "compile": "Strict ES2020 closure and scoped ESLint passed.",
+  "unchanged": [
+    "All six intent schemas and model argument keys",
+    "Draft/configure/pause/resume/cancel RPC arguments",
+    "Native SQL and original human UI",
+    "Root/Spine/Kit/Trust/admission/source pins",
+    "Scheduler/worker/approval/Rail/provider systems"
+  ],
+  "orchestrationContract": "Existing canonical read -> exact future review only. No confirmation issuance/claim, Layer C dispatch, authorization grant, schedule enablement, work execution or receipt is created.",
+  "algorithmSupport": "ALG-01 exact state/reconciliation preparation; no maturity or effectiveness promotion. ALG-08 native original schedule retained; other algorithms unchanged.",
+  "capabilityStatus": "No new offer, catalogue entry or Live promotion. This preparation remains unmounted; weekly Chat authorization/execution, activation and authenticated acceptance are still owed.",
+  "functional": "Local source preparation proof only; required exact-head review/CI/merge/deployment/readback remain separate.",
+  "visual": "N/A no UI/layout/control change; browser/input hold remains.",
+  "experiential": "No new action can execute from this source. Ordinary eligible owner approval/native result/original Rail/reload and full ten/E5 cases remain unverified.",
+  "founderAcceptance": "NOT REQUESTED; one complete integrated EXP05 evaluation remains later."
+}

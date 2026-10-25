@@ -36,7 +36,8 @@ export async function prepareWeeklyControlReview(identity: ContextIdentity, deps
     return { status: "needs_input" as const, reason: "cancelled_definition" };
   }
   const binding = bindWeeklyControlForReview(operation, intent, {
-    requestId, process: target ? { id: target.automation_id, revision: target.revision } : undefined,
+    requestId, process: target ? { id: target.automation_id, revision: target.revision,
+      control: { state: target.schedule_status, future_control_at: target.future_control_at ?? null } } : undefined,
   });
   if (!binding) return { status: "unavailable" as const, reason: "canonical_binding_failed" };
   const proposed = "weekday" in intent

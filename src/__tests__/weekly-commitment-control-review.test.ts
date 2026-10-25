@@ -19,6 +19,30 @@ function fixture(data:unknown=canonical()) {
 const target={automation_id:process};
 
 describe("canonical weekly conversation review without approval or execution",()=>{
+  it("uses the actual saved control cutoff in authorization preparation and never calls a writer",async()=>{
+    const data=canonical(),cutoff="2026-10-23T15:20:10.123456+00:00";
+    Object.assign(data.checks[0],{schedule:{...schedule,future_control_at:cutoff}});
+    const f=fixture(data),result=await prepareWeeklyControlReview(identity,f,"authorize",target,request);
+    expect(result).toMatchObject({status:"review_ready",binding:{rpc:"control_weekly_commitment_check",args:{
+      _automation_id:process,_action:"authorize",_expected_revision:7,
+      _expected_control:{state:"paused",future_control_at:cutoff}}},review:{authorization:"not_granted_by_review"}});
+    expect(f.calls.every(name=>["current_user_tenant_id","weekly_commitment_owner","get_weekly_commitment_checks"].includes(name))).toBe(true);
+  });
+  it("distinguishes two paused control snapshots even when the definition revision is unchanged",async()=>{
+    const first=canonical(),second=canonical();
+    Object.assign(first.checks[0],{schedule:{...schedule,future_control_at:"2026-10-23T15:20:10.123456+00:00"}});
+    Object.assign(second.checks[0],{schedule:{...schedule,future_control_at:"2026-10-23T15:20:10.123457+00:00"}});
+    const a=await prepareWeeklyControlReview(identity,fixture(first),"authorize",target,request);
+    const b=await prepareWeeklyControlReview(identity,fixture(second),"authorize",target,request);
+    expect(a).toMatchObject({binding:{args:{_expected_revision:7,_expected_control:{future_control_at:"2026-10-23T15:20:10.123456+00:00"}}}});
+    expect(b).toMatchObject({binding:{args:{_expected_revision:7,_expected_control:{future_control_at:"2026-10-23T15:20:10.123457+00:00"}}}});
+  });
+  it("does not prepare authorization for an already scheduled definition",async()=>{
+    const data=canonical();data.checks[0].schedule_status="scheduled";
+    const result=await prepareWeeklyControlReview(identity,fixture(data),"authorize",target,request);
+    expect(result.status).toBe("unavailable");
+    expect(result).not.toHaveProperty("binding");
+  });
   it.each([1,2] as const)("carries v%s deadline semantics without private source content",async version=>{
     const data=canonical(),stamp="2026-10-12T13:00:00Z";
     Object.assign(data.checks[0],{last_verified_run:{event_id:request,act_id:actor,correlation_ref:"weekly-source-fixture",scheduled_for:stamp,status:"completed",

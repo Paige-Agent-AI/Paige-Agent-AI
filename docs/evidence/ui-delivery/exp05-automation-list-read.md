@@ -7,25 +7,25 @@ MATERIAL_FLOW_CHANGE: NO: improve the existing read; no new action, approval, de
 FLOW_PROTOTYPE: NOT_REQUIRED: existing conversational inspection and existing failure states; no new human control
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: equivalent eligible existing/future SOLO owners and members inspect saved processes without enabling or executing them
 VISUAL_DIRECTION: PASS: preserve existing PAIGE design system and Chat components; no typography, banners, styling or motion changes
-AUTOMATED_EVIDENCE: PASS: 49 source/registration/binding cases including actual Automation Chat7 and unchanged original Task Chat16 recording-port scenarios;23 stored-read and79 incumbent hostile controls; original Spine232 and self-test
+AUTOMATED_EVIDENCE: PASS: original 49 source/registration/binding cases and final 76 source/reader/binding cases including actual Automation Chat7 and unchanged original Task Chat16 recording-port scenarios;23 stored-read and79 incumbent hostile controls; original Spine232 and self-test
 STATIC_EVIDENCE: PASS: strict ES2020 helper/test compile and changed-source ESLint; all other Chat source and125 dependency pins exact;29 incumbent scalar inverses retain extractor/metadata and change only identity15
-RENDERED_EVIDENCE: UNVERIFIED: browser/physical-input stop remains held; no alternate browser control used
+RENDERED_EVIDENCE: UNVERIFIED: no rendered result for this unmerged read repair; morning permission permits existing signed-in read-only inspection, not sending Chat requests or actions
 BEHAVIORAL_EVIDENCE: PASS: original actual Chat handler with recording ports; total timeout, four-way concurrency, empty/limited source, unavailable readiness, withheld foreign scope and no action dispatch; not real customer authentication
 AUTHENTICATED_RUNTIME: UNVERIFIED: no current ordinary customer read, production read trace or reload proof; no provider or recurring activation
-KEYBOARD_FOCUS: UNVERIFIED: existing controls unchanged; browser/input stop held
-ZOOM_REFLOW: UNVERIFIED: existing layout unchanged; browser/input stop held
+KEYBOARD_FOCUS: UNVERIFIED: existing controls unchanged; no changed-path rendered read response
+ZOOM_REFLOW: UNVERIFIED: existing layout unchanged; no changed-path rendered read response
 REDUCED_MOTION: NOT_APPLICABLE: no motion change
 STATE_COVERAGE: PASS: authorized/empty/partial/unavailable/refused, malformed source, changed workspace, late replies, interrupted reads and explicit truncation; no optimistic execution result
 TRUTHFUL_STATE_LABELS: PASS: stored live state and would_it_run are not execution evidence; unavailable readiness has null reasons; canonical capability remains PARTIAL
 SOLO_UI: YES: original Chat progress and response only; one shared tenant-neutral implementation
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no layout change; browser/input stop held
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no layout change; browser/input stop held
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no layout change; browser/input stop held
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no layout change; browser/input stop held
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no layout change; browser/input stop held
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no layout change; browser/input stop held
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no layout change; browser/input stop held
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no layout change; browser/input stop held
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no layout change; no changed-path rendered response
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no layout change; no changed-path rendered response
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no layout change; no changed-path rendered response
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no layout change; no changed-path rendered response
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no layout change; no changed-path rendered response
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no layout change; no changed-path rendered response
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no layout change; no changed-path rendered response
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no layout change; no changed-path rendered response
 UNVERIFIED: required hosted exact-head CI, deployed Edge source/configuration/web identity, ordinary authenticated roles/cohorts/coverage/reload, Capabilities panel, separate Live and full EXP05/founder acceptance
 OWNER_INTENT: PAIGE and ZION can inspect ongoing work within existing limits and report actual readiness without invented running activity
 MUST_NOT_HAPPEN: no process mutation, activation, approval, execution, provider call, business-result replay or false completion
@@ -77,7 +77,7 @@ maturity and its existing read admission. The original eleven Operations recipes
 including `automation_opportunity_scan` and `workflow_design_draft`, retain their
 separate planning/draft contracts and availability. Inspection is not a workflow
 execution or provider-readiness test. No catalogue row is promoted Live; actual
-panel verification remains owed under the browser stop. ALG-01 preserves no-repeat
+panel verification remains owed. ALG-01 preserves no-repeat
 readback; ALG-12/13 gain truthful unavailable/coverage inputs only. ALG-02/03/08/10/11,
 OpenAI-primary routing, Anthropic fallback and all budgets remain unchanged.
 

@@ -20,10 +20,12 @@ TRUTHFUL_STATE_LABELS: PASS: clients.portal remains PARTIAL. Proposed client.por
 SOLO_UI: NO: backend-native-only change, tenant-neutral implementation; no SOLO UI source or reference-account conditional.
 UNVERIFIED: original full-schema321, final-head review/required CI/Preview, merge, deployment/readback, shared canonical Chat/Portal/eligible Live integration, authenticated owner/client journey and one complete founder evaluation remain separate requirements.
 
-INTERNAL_BUILD_IDENTITY: implementation=5d4b5fd8a89d3de1697d93a0fb01713dabab747b; native API unchanged from ddcd7ac7842bf219341d215c341bc1bec039249a; final evidence head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114210009 exact-head normal apply and readback); edge=NOT_APPLICABLE; evidence=docs/evidence/e09-private-request-publication.json
+INTERNAL_BUILD_IDENTITY: implementation=5d4b5fd8a89d3de1697d93a0fb01713dabab747b; native API unchanged from ddcd7ac7842bf219341d215c341bc1bec039249a; final evidence head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114230009 exact-head normal apply and readback); edge=NOT_APPLICABLE; evidence=docs/evidence/e09-private-request-publication.json
 RELEASE_CHANNEL: development: unmounted original Work publication domain contract, synthetic native evidence only.
 RELEASE_CLASSIFICATION: internal-only: no completed customer outcome or customer release identity.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version, announcement or update.
 RELEASE_NOTE_REQUIRED: no: original-domain prerequisite, no mounted new customer workflow.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: native publication/reconciliation built and locally verified; PROOF OWED: exact-head hosted replay, deployment and full original owner/client entry-to-result integration.
 RELEASE_RECOVERY: position=forward-fix through original Work/common proposal/PCA and original status readback, never automatic replacement or duplicate publication; reference=docs/delivery/e09-customer-actions-business-scope.md
+
+FRONTIER_RECOVERY: current main bbee composed; SQL byte-exact, original native227/0 and all case objects preserved at4e8e3d4af. Filename/source-path correction only; no rendered interface, activation or authenticated result is claimed. Fresh final exact-head gates remain mandatory.

@@ -3,7 +3,7 @@
   "outcome": "Future weekly authorization reviews retain the exact original saved control state and cutoff for the existing native compare-and-authorize writer.",
   "base": "5f7fbd0c51e58709a6ab8ee2b361392a21cf1a57",
   "channel": "development",
-  "classification": "unmounted preparation correction",
+  "classification": "Existing native owner-read projection and unmounted preparation correction",
   "native": {
     "signature": "public.control_weekly_commitment_check(uuid,text,integer,jsonb)",
     "migration": "20271113510005",
@@ -37,7 +37,7 @@
   "unchanged": [
     "All six intent schemas and model argument keys",
     "Draft/configure/pause/resume/cancel RPC arguments",
-    "Native SQL and original human UI",
+    "Original native mutation writers and original human UI",
     "Root/Spine/Kit/Trust/admission/source pins",
     "Scheduler/worker/approval/Rail/provider systems"
   ],
@@ -66,5 +66,31 @@
     "green": "294 original binder/read/review/claim/commit/draft/native-human-control consumer cases PASS,0FAIL,0skip. Strict original claim/review ES2020 graph and scoped lint are checked separately. Current native120 proof remains the earlier independent source-to-native evidence.",
     "unchanged": "No existing native writer, UI, model intent/schema, permission, approval store, Root/Spine/Kit, provider, trigger or activation change. Required exact-head CI and ordinary customer proof remain separate.",
     "validation": "Strict ES2020 original claim/review graph0 diagnostics; scoped lint0; unchanged original Spine registry self-test PASS and original231-capability validation PASS, no pin/validator changes."
+  },
+  "initialClassification": "unmounted preparation correction",
+  "nativeProjectionRepair": {
+    "migration": "20271114130105_experience05_weekly_control_projection.sql",
+    "status": "LOCAL / NOT_APPLIED",
+    "actualParent": "20271114130009",
+    "beforeSourceMd5": "99218816ce1b8111e80360b1bd9aa189",
+    "afterSourceMd5": "60d5acc132111d9db7e63d9848c06c47",
+    "finding": "Actual native source-to-review proof returned canonical_binding_failed: a fresh native requested definition omits future_control_at from trigger_config, while the full read remains available. The current getter passes that config verbatim; the original native writer treats its absent cutoff as null.",
+    "repair": "Expose an explicit null in the ORIGINAL getter schedule JSON when the canonical stored key is absent. Preserve exact existing non-null JSON values; no data backfill, new writer or authority. Compare known original body, replace one expression, preserve every pg_proc field except prosrc and original function identity/grants. Replay is inert and unknown source refuses.",
+    "sourceEvidence": "Read-only production getter body exactly matches original20271030000000 sourceMD5; postgres/STABLE/definer/empty path/authenticated-only. Local diagnostic and original failed native attempts retained privately.",
+    "scopeCorrection": {
+      "field": "unchanged[2]",
+      "former": "Native SQL and original human UI",
+      "current": "Original native mutation writers and original human UI",
+      "reason": "The forward read projection now changes native read-only SQL; original mutations and UI remain unchanged."
+    },
+    "proof": {
+      "status": "PASS",
+      "cases": 124,
+      "reportSha256": "5f65e815a7076b81b82fa567f08b6b09fb5b65c4239a3621458a9eabf244452a",
+      "includes": "Complete unchanged original native checks plus exact getter metadata/replay/source-drift refusal and five actual full source getter/read/review/native cases. Later pause40001, original authorization audit once, legacy read available and missing transport evidence refused.",
+      "boundary": "Isolated original PostgreSQL fixture, not ordinary platform authentication/Chat approval/recurrence/provider effect. Existing performance/body-invariance checks run before the intentional read projection update; new bounded read/review/native cases run after it.",
+      "retainedFailures": "Original full-review RED from omitted native null; first new native driver used two raw SQL columns instead of one JSON envelope; next run applied the projection before the incumbent original-body performance invariant. Corrected only driver envelope and dependency sequence; all assertions, original metadata/source guards, timeouts, permissions and fixtures retained.",
+      "cleanup": "Original result artifact records fixture_service_role.restoration_verified=true; final transcript confirms original role posture restored. Original finally stops the disposable cluster and drops its database. No production/provider/customer effect."
+    }
   }
 }

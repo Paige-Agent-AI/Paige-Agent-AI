@@ -246,7 +246,8 @@ deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-ru
 deno test --allow-import --node-modules-dir=none --allow-read="$REPO/supabase/functions/_shared/agreements" \
   --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-request.test.ts" \
-  "$REPO/supabase/functions/_shared/agreements/prepared-signature-work.test.ts"
+  "$REPO/supabase/functions/_shared/agreements/prepared-signature-work.test.ts" \
+  "$REPO/supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts"
 # The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
 # runtime already exercised above, with this same fenced native cluster and all
 # 54 original assertions. No transpiled copy or relaxed test is substituted.
@@ -262,6 +263,6 @@ node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofr
 # original gate above remains intact. No hosted Storage or customer proof.
 deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
   --deny-net --deny-write --deny-ffi --deny-sys \
-  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work
+  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work --prepared-status
 
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

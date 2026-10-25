@@ -1,4 +1,5 @@
 import { object } from "../_shared/sales-collections/primitives.ts";
+import { readPreparedSignatureOutcome, PreparedSignatureStatusUnavailable } from "../_shared/agreements/prepared-signature-outcome.ts";
 import { prepareSignatureRequestReview, readExactPreparedSignatureRequest, readPreparedSignatureSenders, PreparedSignatureRequestUnavailable,
   type PreparedSignatureEmailPorts } from "../_shared/agreements/prepared-signature-request.ts";
 import { PreparedSignatureReviewUnavailable } from "../_shared/agreements/prepared-signature-review.ts";
@@ -106,7 +107,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       result.headers.set("X-Content-Type-Options", "nosniff");
       return result;
     };
-    if (!["prepared-request", "senders"].includes(reviewUrl.searchParams.get("review") ?? "") ||
+    if (!["prepared-request", "senders", "request-status"].includes(reviewUrl.searchParams.get("review") ?? "") ||
       reviewUrl.searchParams.getAll("review").length !== 1 ||
       [...reviewUrl.searchParams.keys()].some(key => key !== "review")) {
       return reply({ ok: false, code: "invalid_request",
@@ -122,6 +123,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
     try {
       const input = await readBoundedOwnerPreparationJson(req);
+      if (reviewUrl.searchParams.get("review") === "request-status") {
+        const result = await readPreparedSignatureOutcome(input,
+          caller as unknown as OwnerPreparationCaller,
+          { rpc: (name, args) => admin.rpc(name, args) }, actorId);
+        return reply({ ok: true, result });
+      }
       if (!object(input) || !object(input.review)) {
         return reply({ ok: false, code: "invalid_request",
           error: "Choose the exact saved document and recipient messages to review." }, 400);
@@ -152,6 +159,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       return reply({ ok: true, review });
     } catch (error) {
+      if (error instanceof PreparedSignatureStatusUnavailable) {
+        const status = { INVALID: 400, ACCESS_UNVERIFIED: 403, UNAVAILABLE: 503 }[error.code];
+        return reply({ ok: false, code: { INVALID: "invalid_request", ACCESS_UNVERIFIED: "access_unverified", UNAVAILABLE: "request_status_unverified" }[error.code],
+          error: "The original agreement request status could not be verified. Keep its reference and check again; do not create another request." }, status);
+      }
       if (error instanceof PreparedSignatureRequestUnavailable) {
         const response = {
           INVALID_REQUEST: { status: 400, code: "invalid_request", error: "Choose the original saved agreement and request." },

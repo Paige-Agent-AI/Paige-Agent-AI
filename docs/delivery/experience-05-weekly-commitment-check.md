@@ -1,5 +1,32 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October24 — original native Chat integration baseline, development
+
+Current main `da794029f82e57ae6b8403005dcd2436d67f769a` preserves the
+released native weekly claim/commit/decline consumers and original owner UI.
+The actual Chat offer and consumer are still missing; helper publication is not
+an authenticated saved draft, authorized recurrence or completed weekly check.
+The original real-handler recording ports now specify 17 cases in
+`scripts/proof/weekly-draft-chat.mjs`. All 17 are **EXPECTED_RED** against this
+unchanged handler because its real weekly tool/native path is not admitted.
+These are acceptance obligations, not 17 new production findings or passing
+security tests. Original reminder handler baseline33/33 remains distinct.
+
+REUSE the original declaration, exact native approval/Kit/commit, original-only
+read recovery, canonical definition and stable Rail. EXTEND the existing Chat
+connection only after its recorded E02 source handoff; preserve E03's following
+window and E04's disjoint source pin. Repeated preparation must retain the
+original stored request UUID, including across turns. No generic CAS, replacement
+proposal, second commit or owner-UI writer may follow a selected native approval
+or unknown outcome. Source proof must exercise interruption and foreign results.
+
+ANT-11/147/161 retain the current Experience ownership and source coordination.
+The sole Master shipped rows and actual original PR receipts retain release
+identities; this is an implementation checkpoint, not another release log.
+`automations.weekly_commitment_draft` remains UNAVAILABLE to Chat/Live; recurrence,
+original E5-CV1–9, all ten outcomes, equivalent current/new SOLO cohorts and final
+founder acceptance remain unverified. Original historical registers are preserved.
+
 ## October23 — original weekly receipt correlation, development
 
 REPAIR the existing native weekly ActionAdapter: success must carry the same

@@ -322,5 +322,26 @@
       "durationSeconds": 68.11
     },
     "exactReceivedCorrection": "de79e7052f80125b453946058ced9d21f182ba5d"
+  },
+  "currentComposition": {
+    "base": "689299de34a99ec95ca48861df6e1845e1ece8db",
+    "priorReviewedHead": "f076519c6b928bee5b7ce9d0aa4967fd1e015e29",
+    "rootUnchanged": true,
+    "incomingBaselineRootBlob": "34b55fed24a5fd4608054a0a83974d00bdfadab5",
+    "candidateChatBlob": "00cf86f001c67679f51466c8aeef59ef12b4a38e",
+    "incomingGuardBlob": "9d86139b1a494fe88cc1c47ba07f4fc34d18ce81",
+    "derivedReportFields": 29,
+    "allOtherIncomingGuardBytesExact": true,
+    "pinsChangedByExp02": 0,
+    "incomingDependencyPinsPreserved": 124,
+    "incomingE04ReadinessPinPreserved": true,
+    "currentGuardSha256": "032a4ccd75e86db18fd88d182298bbb637d2bd795aec825aec9e7b2970e2dd82",
+    "guardTests": {
+      "passed": 79,
+      "failed": 0,
+      "durationMs": 83498.9116
+    },
+    "method": "Full incoming guard plus same29 reviewed AST-addressed report scalar values and own provenance; exact inverse restores every incoming byte.",
+    "originalOwningTestInputsExact": true
   }
 }

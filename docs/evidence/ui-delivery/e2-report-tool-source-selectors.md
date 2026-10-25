@@ -33,7 +33,7 @@ MUST_PRESERVE: original reference input, all nine legacy draft types, strict nat
 ACCEPTANCE_CRITERIA: normal authorized request creates one original bounded work identity; original permitted evidence settles into the original private artifact/conversation; source limitations and truthful state remain after reload and authorized retrieval; negative roles/tenants and interruption/recovery are proven separately.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: canonical metric keys/current versions, caller-JWT original submission, native840002 source capture, original current authority and uncertainty controls; C0b extractor/validator/metadata/hostile tests unchanged; E04 dependency-digest reservation retained.
-INTERNAL_BUILD_IDENTITY: source-base=ba7eeb2ca3860f11c60a06c40f72034cc9f6f634; incoming-main=229fb5e968b1c4106e871bad4e66e7b087c882ae; exact final head in PR review; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat); evidence=ANT138/99c911da.
+INTERNAL_BUILD_IDENTITY: source-base=18f88cf515f3c568197cbe59ca9ec772c7ceea78; incoming-main=689299de34a99ec95ca48861df6e1845e1ece8db; exact final head in PR review; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat); evidence=ANT138/99c911da.
 RELEASE_CHANNEL: development: not merged, deployed or activated.
 RELEASE_CLASSIFICATION: internal-only: bounded original report consumer integration, no customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no founder-approved customer release identity.
@@ -108,3 +108,19 @@ lookup before any write; its prematurely started guard run was stopped/INVALID
 setup, never a product pass/fail or a weakened control. Final exact-head review,
 hosted CI, original Edge readback and genuine report acceptance remain separate.
 CAP014/015 stay Unverified; protected monthly work remains unknown/unretried.
+
+## Current689 integration — E04 source pin preserved
+
+Actual main689 includes E04C35 and the separately released Systems return repair.
+Only the two independent C0b prefix provenances conflict. The resolved module
+preserves COMPLETE incoming E04 readiness/source digest and every metadata,
+extractor, validator and other source byte; only the SAME29 report scalars plus
+own provenance differ by exact inverse. Incoming baseline ROOT34b55fed remains
+byte-identical to229 and report ROOT00cf86f0 remains unchanged from reviewedf076.
+All original owning46-case inputs/dependencies are exact, so that passed source
+proof is retained without another redundant run. Actual current689 unmodified
+original hostile guard79/79 PASS83.499s, with all124 incoming dependency pins.
+Existing E05/E03/E08 writer windows and original source owners are preserved.
+No original report tool, source selector, budget, provider or execution semantics
+change in this composition. New exact final review/CI and source/customer release
+remain required; f076 hosted results are historical for their exact source.

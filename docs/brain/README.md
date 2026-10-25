@@ -168,6 +168,8 @@ remain owed. This mechanical identity closeout adds no product or recursive row.
 
 ## EXP02 original report source requests — October24 source released
 
+**Current689 composition:** ROOT00cf86f0 and all46 owning test inputs unchanged; COMPLETE E04C35 source pin/124 dependencies/metadata preserved with same29 reviewed report scalars. Actual original hostile79/79 PASS83.499s. Two provenance prefixes resolved without a ROOT feature or owner-window takeover; fresh exact review/CI/source/customer proof remain owed.
+
 **Current229 correction:** E05 actual-handler proof found a missing canonical key import before release; exact parent-onlyde79 is incorporated, with actual import-bound2FAIL→46PASS/current composition46PASS and original79 hostile guardsPASS. ROOT00cf86f0 preserves the released campaign read; inverse proves only two canonical imports/original tool differ,29 derived scalars and all124 incoming dependencies preserved. Final exact review/CI/source/customer proof remains owed; no readiness or protected replay.
 
 **Earlier f4d consumer checkpoint (superseded):** draft [#2787](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2787) exposes the original released selector contract on the existing document tool. Original44/44 owning tests and79/79 unmodified hostile guards pass after a separately reviewed29-literal renewal; all124 dependency pins/SOURCES remain exact. Exact final CI, normal source release and genuine report/artifact/turn/Rail/reload/retrieval/recovery/customer proof remain owed. No provider/admission activation or original uncertain monthly replay; CAP014/015 stay Unverified, all19/nine and founder acceptance open. Earlier source-release paragraphs below retain their dated production boundary.

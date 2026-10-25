@@ -1889,5 +1889,35 @@
       "focus": "Keep reviewing",
       "panelWithinViewport": true
     }
+  },
+  "hostedCiRemediation": {
+    "failedCandidate": "d23db0aa8f0312af2723729c6ba41c981fd5e195",
+    "run": 40167115284,
+    "job": 121090330280,
+    "executedWorkflowSha": "7c8cb563d55ba610e38550afc91df5185f21a507",
+    "attributionArtifact": {
+      "id": 12589313030,
+      "sha256": "709487e1313bc8f6df8bb71f7787d8fdf1055606b0da5415f03e850cac8b5574"
+    },
+    "actualResult": {
+      "total": 21802,
+      "passed": 21798,
+      "failed": 1,
+      "historicalPending": 3,
+      "todo": 0
+    },
+    "onlyFailure": "agreement-signing-viewed-document.test.ts: original literal document-viewer expressions did not describe the newly compositional prepared/legacy and decision gates",
+    "repair": "Original wiring test now inspects executable TypeScript AST: both document modes, all original signing/consent predicates, pointer and keyboard controls and data-locked. Five actual gate-expression bypass counterfactuals must fail. No runtime change, test removal, baseline/timeout/lockfile/CI waiver.",
+    "localResult": {
+      "targetedCases": 73,
+      "passed": 73,
+      "sourceModelCasesUnchanged": 63,
+      "wiringCases": 10,
+      "eslintExit": 0,
+      "originalTypeRatchetExit": 0,
+      "typeBaseline": 10,
+      "currentTypes": 6
+    },
+    "requiredNext": "Fresh final exact-head hosted checks remain owed; the failed run is retained, never relabelled green."
   }
 }

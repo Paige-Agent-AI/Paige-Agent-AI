@@ -1148,12 +1148,16 @@ export function SignatureSender({ signings, signing, clientName, agreedLabel, te
   const [unconfirmed, setUnconfirmed] = React.useState(false);
   const [showLink, setShowLink] = React.useState(false);
   const resultRef = React.useRef(null);
+  const noticeRef = React.useRef<HTMLSpanElement>(null);
   // Interaction fence only. Durable duplicate prevention belongs to the original sender.
   const working = React.useRef(false);
   const alive = React.useRef(true);
   React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   React.useEffect(() => { firstRef.current?.focus(); }, []);
   React.useEffect(() => { if (sent || unconfirmed) resultRef.current?.focus(); }, [sent, unconfirmed]);
+  React.useLayoutEffect(() => {
+    if (!busy && notice && !sent && !unconfirmed) noticeRef.current?.focus();
+  }, [busy, notice, sent, unconfirmed]);
 
   // The approved act names the person. A single-word first name where there is one, the whole
   // label where there is not, and never an empty string in the middle of a button.
@@ -1345,7 +1349,7 @@ export function SignatureSender({ signings, signing, clientName, agreedLabel, te
         </div>
 
         <footer className="so-editor-foot">
-          <span role={notice ? "alert" : "status"} className="so-editor-note" data-tone={notice ? "bad" : "plain"}>
+          <span ref={noticeRef} tabIndex={notice ? -1 : undefined} role={notice ? "alert" : "status"} className="so-editor-note" data-tone={notice ? "bad" : "plain"}>
             {notice || (busy ? "Checking the original request…" : unconfirmed ? "Return to the original agreement to verify the outcome." : sent
               ? "Inspect the agreement and its history for the recorded result."
               : link

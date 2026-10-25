@@ -294,23 +294,43 @@ type SigningsData = {
 };
 
 /**
- * The error sentence an edge function actually sent, dug out of the thrown transport error.
- *
- * `supabase.functions.invoke` rejects on any non-2xx and hands back `{ data: null, error }`, with
- * the original `Response` on `error.context`. Without this, every deliberate refusal a function
- * writes is discarded and the human gets a generic sentence instead of the one that tells them
- * what to do.
+ * One closed refusal from the ORIGINAL SDK response, not provider error prose.
+ * Bounded reads never establish rollback or invite a retry of uncertain work.
  */
 async function refusalMessage(error: unknown): Promise<string | null> {
-  const context = (error as { context?: unknown } | null | undefined)?.context;
-  const response = context as Response | undefined;
-  if (!response || typeof response.clone !== "function") return null;
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    // Cloned so this never consumes a body another caller may still read.
-    const body = await response.clone().json() as { error?: unknown } | null;
-    return toText(body?.error);
+    const response = (error as { context?: unknown } | null | undefined)?.context;
+    if (!(response instanceof Response) || response.status !== 409
+      || response.headers.get("Content-Type")?.split(";", 1)[0].trim().toLowerCase() !== "application/json") return null;
+    reader = response.clone().body?.getReader();
+    if (!reader) return null;
+    const source = reader;
+    const read = async () => {
+      let text = "", bytes = 0;
+      const decoder = new TextDecoder();
+      while (true) {
+        const part = await source.read();
+        if (part.done) break;
+        bytes += part.value.length;
+        if (bytes > 2048) return null;
+        text += decoder.decode(part.value, { stream: true });
+      }
+      const body = JSON.parse(text + decoder.decode());
+      return body?.ok === false && body.code === "PREPARED_DOCUMENT_REVIEW_REQUIRED"
+        ? "Open the saved signing document to inspect the original request and receipts. Review there before another send."
+        : null;
+    };
+    return await Promise.race([read(), new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), 1500); })]);
   } catch {
     return null;
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+    if (reader) {
+      void reader.cancel().catch(() => {});
+      try { reader.releaseLock(); } catch { /* A timed-out cloned stream must not block recovery. */ }
+    }
   }
 }
 
@@ -587,7 +607,11 @@ export function useSoloAgreementSignings(): SigningsState {
       });
       if(!current())return uncertain();
       const payload=(data??{}) as {ok?:unknown;sent?:unknown;notDelivered?:unknown;failed?:unknown;warning?:unknown};
-      if(error||payload.ok!==true)return uncertain();
+      if (error || payload.ok !== true) {
+        const refusal = await refusalMessage(error);
+        if (!current()) return uncertain();
+        return refusal ? { ok: false, state: "refused", message: refusal } : uncertain();
+      }
       const list=(value:unknown):string[]|null=>{
         if(!Array.isArray(value)||value.length>100)return null;
         const names=value.map(x=>toText(x)??toText((x as {email?:unknown}|null)?.email));

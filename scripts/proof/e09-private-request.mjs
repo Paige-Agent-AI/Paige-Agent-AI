@@ -702,7 +702,52 @@ function focusedPublicationProof({sql,check,assert,read,prepare,publish,snapshot
    const hash=sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`);assert.throws(()=>sql(read('supabase/migrations/20271114210009_e09_approved_private_request_publication.sql')),/source changed/);assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),hash);
   });
  }
- return {baseline:focusBaseline,migration:file,originalSource:'81e21f92abe3d552f89d98c8d7b3b9d3',outerOwnerChat:'NOT_MOUNTED_OR_PROVEN',productionOperation:false};
+ const sourceProof=publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit});
+ return {baseline:focusBaseline,migration:file,originalSource:'81e21f92abe3d552f89d98c8d7b3b9d3',sourceProof,outerOwnerChat:'NOT_MOUNTED_OR_PROVEN',productionOperation:false};
+}
+
+function publicationSourceProof({sql,check,assert,prepare,publish,snapshot,lit}){
+ const f=prepare(),sig='public.read_client_portal_request_share_source(uuid,uuid,uuid,uuid)';
+ const statement=(o={})=>{const x={expected:f.other,tenant:f.tenant,contact:f.contact,work:f.request.work_id,...o};return `SELECT public.read_client_portal_request_share_source(${lit(x.expected)},${lit(x.tenant)},${lit(x.contact)},${lit(x.work)})`;};
+ const invoke=(o={})=>{const actor=o.actor===undefined?f.other:o.actor,role=o.role??'authenticated';const out=sql(`BEGIN;SELECT set_config('test.actor',${lit(actor??'')},true);SET LOCAL ROLE ${role};${statement(o)};COMMIT;`);return JSON.parse(out.split('\n').find(x=>x.startsWith('{')));};
+ let source;
+ check('Actual owner reads exact original Work/customer source without a model-authored binding',()=>{
+  const before=snapshot();source=invoke();assert.equal(source.source_state,'prepared');assert.deepEqual(source.args,f.approved);assert.equal(source.customer_action_id,null);assert.equal(snapshot(),before);
+ });
+ if(!source)return {source:'ABSENT_OR_FAILED',notExecuted:'remaining source controls',productionOperation:false};
+ check('Read-only sharing source exposes no private intent, claim, arbitrary payload or role data',()=>{
+  assert.deepEqual(Object.keys(source).sort(),['schema_version','actor_id','tenant_id','contact_id','work_id','source_state','args','customer_action_id','read_at'].sort());
+  for(const hidden of [f.intent,'confirmation_id','claimed_in_request','private_reasoning','payload'])assert(!JSON.stringify(source).includes(hidden));
+ });
+ for(const [name,options]of [
+  ['another actor comparison',{expected:f.actor}],['another active business',{tenant:f.foreign}],['foreign CRM contact',{contact:f.actor}],
+  ['foreign original Work',{work:f.actor}],['a customer principal',{actor:f.actor,expected:f.actor}],
+  ['anonymous principal',{actor:null,role:'anon'}],['service identity',{role:'service_role'}]
+ ])check('Sharing-source reader refuses '+name+' without writes',()=>{const before=snapshot();assert.throws(()=>invoke(options));assert.equal(snapshot(),before);});
+ for(const [name,change]of [
+  ['paused access',`UPDATE public.clients SET portal_access_state='paused' WHERE id='${f.contact}'`],
+  ['client consent off',`UPDATE public.clients SET paige_shared_context_consent=false WHERE id='${f.contact}'`],
+  ['no joined customer',`UPDATE public.clients SET linked_user_id=NULL WHERE id='${f.contact}'`],
+  ['revoked member',`UPDATE public.tenant_members SET status='inactive' WHERE user_id='${f.other}' AND tenant_id='${f.tenant}'`],
+  ['lost Work standing',`DELETE FROM public.user_roles WHERE user_id='${f.other}'`],
+  ['changed private source',`UPDATE public.paige_actions SET draft_content='{}' WHERE id='${f.request.work_id}'`]
+ ])check('Sharing-source readiness refuses '+name+' without approving or publishing',()=>{
+  const before=snapshot();assert.throws(()=>sql(`BEGIN;${change};SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;${statement()};ROLLBACK;`));assert.equal(snapshot(),before);
+ });
+ check('Source reader has the exact Auth-only, postgres definer and empty-path boundary',()=>{
+  const m=JSON.parse(sql(`SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig) FROM pg_proc WHERE oid='${sig}'::regprocedure`));
+  assert.equal(m.owner,'postgres');assert.equal(m.definer,true);assert.deepEqual(m.config,['search_path=""']);
+  assert.equal(sql(`SELECT has_function_privilege('authenticated','${sig}','EXECUTE')`),'t');for(const role of ['anon','service_role'])assert.equal(sql(`SELECT has_function_privilege('${role}','${sig}','EXECUTE')`),'f');
+ });
+ const shared=publish(f);
+ check('Already-shared source returns the same canonical identity and no new proposal or content',()=>{
+  const before=snapshot(),r=invoke();assert.equal(r.source_state,'shared');assert.equal(r.args,null);assert.equal(r.customer_action_id,shared.customer_action_id);assert.equal(snapshot(),before);
+ });
+ check('Owner historical readback survives client pause without granting the client access',()=>{
+  sql(`UPDATE public.clients SET portal_access_state='paused',paige_shared_context_consent=false WHERE id='${f.contact}'`);
+  const before=snapshot(),r=invoke();assert.equal(r.source_state,'shared');assert.equal(r.customer_action_id,shared.customer_action_id);assert.equal(r.args,null);assert.equal(snapshot(),before);
+ });
+ return {function:sig,sourceBody:sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${sig}'::regprocedure`),readOnly:true,approval:'NOT_ISSUED',productionOperation:false};
 }
 
 async function privateHistoryProof({sql,check,assert,fixture,f,first,invoke,asActor,snapshot,customerSnapshot,historyBaseline,launch,waitFor,locked}) {

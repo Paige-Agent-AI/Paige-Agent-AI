@@ -25,6 +25,54 @@ const receiptFields=['schema_version','actor_id','tenant_id','contact_id','work_
 const refused=():Result=>({success:false,outcome:'refused'});
 const unknown=():Result=>({success:false,outcome:'outcome_unknown'});
 
+type SourceArguments={_expected_actor_id:string;_expected_tenant_id:string;_contact_id:string;_work_id:string};
+type SourceDependencies={current:()=>boolean;caller:{auth:Dependencies['caller']['auth'];
+ rpc:(name:'read_client_portal_request_share_source',args:SourceArguments)=>PromiseLike<{data:unknown;error:unknown}>;
+}};
+type PublicationTarget={expected_tenant_id:string;contact_id:string;work_id:string;version:string;title:string;body:string;recipient_user_id:string;access_version:string|null};
+type SourceResult={success:false;outcome:'source_unavailable'}|
+ {success:true;outcome:'prepared';args:Readonly<PublicationTarget>}|
+ {success:true;outcome:'already_shared';work_id:string;customer_action_id:string};
+const sourceFields=['schema_version','actor_id','tenant_id','contact_id','work_id','source_state','args','customer_action_id','read_at']as const;
+
+/** Source preparation only. Native source data is NOT approval; the original
+ * shared gate must issue and claim its own exact stored call before execution.
+ */
+export async function preparePortalRequestPublication(
+ deps:SourceDependencies,scope:PortalPublicationScope,input:unknown
+):Promise<SourceResult>{
+ const unavailable=():SourceResult=>({success:false,outcome:'source_unavailable'});
+ try{
+  if(!object(scope)||!object(input)||!exact(input,['contact_id','work_id']))return unavailable();
+  const s={...scope},i={...input};
+  if(s.audience!=='owner'||!uuid(s.actorId)||!uuid(s.tenantId)||!nullableUuid(s.threadId)||!nullableUuid(s.clientId)
+   ||!uuid(i.contact_id)||!uuid(i.work_id)||(s.clientId!==null&&s.clientId!==i.contact_id))return unavailable();
+  const current=()=>deps.current()&&same(scope,s)&&same(input,i);
+  const actorCurrent=async()=>{
+   if(!current())return false;
+   const auth=await deps.caller.auth.getUser();return current()&&!auth.error&&auth.data.user?.id===s.actorId;
+  };
+  if(!await actorCurrent()||!current())return unavailable();
+  const response=await deps.caller.rpc('read_client_portal_request_share_source',{
+   _expected_actor_id:s.actorId,_expected_tenant_id:s.tenantId,_contact_id:i.contact_id,_work_id:i.work_id,
+  });
+  if(!await actorCurrent()||!current()||response.error)return unavailable();
+  const r=response.data;
+  if(!object(r)||!exact(r,sourceFields)||r.schema_version!==1||r.actor_id!==s.actorId||r.tenant_id!==s.tenantId
+   ||r.contact_id!==i.contact_id||r.work_id!==i.work_id||!time(r.read_at))return unavailable();
+  if(r.source_state==='shared'){
+   if(r.args!==null||!uuid(r.customer_action_id))return unavailable();
+   return {success:true,outcome:'already_shared',work_id:i.work_id,customer_action_id:r.customer_action_id};
+  }
+  if(r.source_state!=='prepared'||r.customer_action_id!==null||!object(r.args))return unavailable();
+  const t={...r.args};
+  if(!exact(t,targetFields)||t.expected_tenant_id!==s.tenantId||t.contact_id!==i.contact_id||t.work_id!==i.work_id
+   ||!uuid(t.recipient_user_id)||!time(t.version)||!(t.access_version===null||time(t.access_version))
+   ||!words(t.title,160)||!words(t.body,4000))return unavailable();
+  return {success:true,outcome:'prepared',args:Object.freeze(t as PublicationTarget)};
+ }catch{return unavailable();}
+}
+
 export async function executePortalRequestPublication(
  deps:Dependencies,scope:PortalPublicationScope,stored:unknown,claim:PortalPublicationClaim
 ):Promise<Result>{

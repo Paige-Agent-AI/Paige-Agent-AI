@@ -989,6 +989,81 @@ RESET ROLE;
 \echo 'PASS: the stale sweep is service-role only and discards only that uploader''s day-old unposted files, pending or ready; posted files stay'
 
 ---------------------------------------------------------------------------------------------
+-- 11b. The scheduled sweep (migration 20271114260008): who has sweep work now, by exactly the claim's
+-- own two conditions, for the hourly team-hub-file-sweep function to loop through the claim above.
+---------------------------------------------------------------------------------------------
+\ir ../migrations/20271114260008_exp08_team_hub_stale_file_sweep.sql
+\o /dev/null
+-- An independent statement of who has work: a day-old unposted pending/ready file, or a discarded or
+-- refused file whose object is still stored. Oldest work first, then by id.
+CREATE FUNCTION pg_temp.expected_uploaders() RETURNS jsonb LANGUAGE sql SECURITY DEFINER AS $$
+ SELECT coalesce(jsonb_agg(u ORDER BY first_at, u),'[]'::jsonb) FROM (
+  SELECT f.uploaded_by AS u, min(f.created_at) AS first_at FROM public.team_hub_files f
+  LEFT JOIN storage.objects o ON o.bucket_id='comms-attachments' AND o.name=f.storage_path
+  WHERE (f.message_id IS NULL AND f.state<>'discarded' AND f.state<>'rejected' AND now()-f.created_at>=interval '1 day')
+     OR (f.state IN ('discarded','rejected') AND o.id IS NOT NULL)
+  GROUP BY f.uploaded_by) w $$;
+SELECT pg_temp.check(EXISTS(SELECT 1 FROM pg_proc p WHERE p.oid='public.team_hub_stale_file_uploaders(int)'::regprocedure
+   AND p.prosecdef AND p.proconfig=ARRAY['search_path=""'] AND p.prorettype='jsonb'::regtype)
+  AND NOT has_function_privilege('anon','public.team_hub_stale_file_uploaders(int)','EXECUTE')
+  AND NOT has_function_privilege('authenticated','public.team_hub_stale_file_uploaders(int)','EXECUTE')
+  AND has_function_privilege('service_role','public.team_hub_stale_file_uploaders(int)','EXECUTE'),
+ 'sweep list: a jsonb SECURITY DEFINER door for the service role only');
+SELECT pg_temp.act(:'u1'); SET ROLE authenticated;
+SELECT pg_temp.check(pg_temp.denied('SELECT public.team_hub_stale_file_uploaders(50)'), 'sweep list: authenticated has no EXECUTE');
+RESET ROLE;
+SELECT pg_temp.act(:'u1');
+SELECT pg_temp.check(public.team_hub_stale_file_uploaders(50)=jsonb_build_object('ok',false,'code','not_allowed'),
+ 'sweep list: refused in the body without a service-role JWT');
+-- The age boundary: u1's pending file is 23 hours old, under a day, so it is not yet sweep work; the
+-- other owner's pending file is 25 hours old, so it is.
+RESET ROLE;
+UPDATE public.team_hub_files SET created_at=now()-interval '23 hours' WHERE id=:'fresh';
+-- A refused file whose object is still stored is sweep work at any age: a fresh refusal of u2's,
+-- with its object left in place as if the removal had failed.
+SELECT pg_temp.act(:'u2'); SET ROLE authenticated;
+SELECT public.team_hub_begin_file(:'ta',:'general','refused-kept.pdf',:'pdf',1000,gen_random_uuid())#>'{file}' AS rk \gset
+SELECT pg_temp.check(pg_temp.put((:'rk'::jsonb)->>'path',:'u2',1000,:'pdf'), 'sweep list: setup: u2 uploads');
+SELECT pg_temp.service();
+SELECT pg_temp.check(public.team_hub_file_verdict(((:'rk'::jsonb)->>'id')::uuid,:'u2',:'pdf',false,'macro_found')->>'state'='rejected',
+ 'sweep list: setup: u2''s file is refused');
+RESET ROLE;
+SELECT pg_temp.check(pg_temp.sees((:'rk'::jsonb)->>'path'), 'sweep list: setup: the refused file''s object is still stored');
+SELECT uploaded_by AS stale_owner FROM public.team_hub_files WHERE client_request_id='60000000-0000-4000-8000-000000000013' \gset
+SELECT pg_temp.service();
+SELECT public.team_hub_stale_file_uploaders(50) AS sweep_list \gset
+RESET ROLE;
+SELECT pg_temp.check((:'sweep_list'::jsonb)->'uploaders'=pg_temp.expected_uploaders()
+  AND (:'sweep_list'::jsonb)->'uploaders' @> to_jsonb(ARRAY[:'stale_owner'])
+  AND NOT (:'sweep_list'::jsonb)->'uploaders' @> to_jsonb(ARRAY[:'u1'])
+  AND (:'sweep_list'::jsonb)->'uploaders' @> to_jsonb(ARRAY[:'u2']),
+ 'sweep list: exactly the uploaders with work; the owner of a day-old pending file and of a refused file still stored are listed; an uploader whose work was all swept, and whose old file was posted, is not');
+-- u1's fresh ready file becomes day-old: u1 now has work, and is oldest, so it comes first and a limit of 1 keeps it.
+UPDATE public.team_hub_files SET created_at=now()-interval '3 days' WHERE id=:'fnew';
+SELECT pg_temp.service();
+SELECT pg_temp.check((public.team_hub_stale_file_uploaders(50)->'uploaders')->>0=:'u1'
+  AND public.team_hub_stale_file_uploaders(1)=jsonb_build_object('ok',true,'uploaders',jsonb_build_array(:'u1'))
+  AND jsonb_array_length(public.team_hub_stale_file_uploaders(0)->'uploaders')=1
+  AND jsonb_array_length(public.team_hub_stale_file_uploaders(-7)->'uploaders')=1,
+ 'sweep list: oldest work first; the limit is honoured and clamped to at least one');
+-- The sweep then claims it: the file is discarded and its path offered; u1 stays listed while the object is stored.
+SELECT pg_temp.check(public.team_hub_claim_stale_files(:'u1')=jsonb_build_object('ok',true,'paths',jsonb_build_array(pg_temp.path(:'fnew'))),
+ 'sweep: the claim for a listed uploader returns the stale file''s path');
+SELECT pg_temp.check(public.team_hub_stale_file_uploaders(50)->'uploaders' @> to_jsonb(ARRAY[:'u1']),
+ 'sweep list: an uploader whose removal has not happened yet stays listed, so a failed removal is retried');
+RESET ROLE;
+DELETE FROM storage.objects o WHERE o.bucket_id='comms-attachments' AND o.name=pg_temp.path(:'fnew');
+SELECT pg_temp.service();
+SELECT public.team_hub_stale_file_uploaders(50) AS sweep_after \gset
+RESET ROLE;
+SELECT pg_temp.check(NOT (:'sweep_after'::jsonb)->'uploaders' @> to_jsonb(ARRAY[:'u1'])
+  AND (:'sweep_after'::jsonb)->'uploaders'=pg_temp.expected_uploaders()
+  AND (pg_temp.file(:'fnew')).state='discarded' AND (pg_temp.file(:'fpost')).state='ready',
+ 'sweep list: once the object is removed the uploader drops off; a posted file is never swept');
+SELECT pg_temp.check(to_regnamespace('cron') IS NULL, 'sweep schedule: a database without pg_cron applies the migration and skips the schedule');
+\echo 'PASS: the scheduled sweep lists exactly the uploaders the claim would act on, oldest first, service role only; the claim and removal then clear them'
+
+---------------------------------------------------------------------------------------------
 -- 12. Increment 2 still works on the replaced post door.
 ---------------------------------------------------------------------------------------------
 SELECT pg_temp.act(:'u1'); SET ROLE authenticated;

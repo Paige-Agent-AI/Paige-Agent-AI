@@ -1,0 +1,82 @@
+{
+  "synthetic": true,
+  "actualSoloApp": true,
+  "steps": [
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-forecast",
+      "panels": 1,
+      "selected": "finance-tab-forecast",
+      "nextKey": "ArrowLeft"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-profitability",
+      "panels": 1,
+      "selected": "finance-tab-profitability",
+      "nextKey": "Home"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-overview",
+      "panels": 1,
+      "selected": "finance-tab-overview",
+      "nextKey": "ArrowLeft"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-forecast",
+      "panels": 1,
+      "selected": "finance-tab-forecast",
+      "nextKey": "ArrowRight"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-overview",
+      "panels": 1,
+      "selected": "finance-tab-overview",
+      "nextKey": "ArrowRight"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-banking",
+      "panels": 1,
+      "selected": "finance-tab-banking",
+      "nextKey": "ArrowRight"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-debt",
+      "panels": 1,
+      "selected": "finance-tab-debt",
+      "nextKey": "ArrowRight"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-receivables",
+      "panels": 1,
+      "selected": "finance-tab-receivables",
+      "nextKey": "ArrowRight"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-expenses",
+      "panels": 1,
+      "selected": "finance-tab-expenses",
+      "nextKey": "ArrowRight"
+    },
+    {
+      "conversation": "Keep this discussion while I review Finance.",
+      "focus": "finance-tab-profitability",
+      "panels": 1,
+      "selected": "finance-tab-profitability",
+      "nextKey": "ArrowRight"
+    },
+    {
+      "focus": "finance-tab-forecast",
+      "selected": "finance-tab-forecast",
+      "nextKey": null
+    }
+  ],
+  "customerAcceptance": false
+}

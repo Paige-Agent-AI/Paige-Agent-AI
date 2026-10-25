@@ -1,5 +1,47 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — unapplied claim moves forward after actual260008
+
+Claim #2878 exact08efd1e54e9ee68e58cdcbaa4a099d67468334c3 earned all13 required
+checks/Preview/two webSUCCESS and E05 receiving108ca435. It was not merged after
+the legitimate E08 main15970/native260008 release overtook its unapplied260002.
+Production readback confirms260008 current and own260002 absent. Only the
+never-applied E02 filename and owning proof path move to20271114290002, after
+known pending E09/E04 slots270009/280004; normal current-main composition and
+fresh exact-head review/CI/Preview/native readback remain required. The approved
+75-line SQL SHA2564fba913a01659da82f4a3dbb167adc37b80c16b7ca5945de4bd6597b7af96da4,
+function/ABI/server-only grant and other-kind/default factory proof are unchanged.
+Current mainece619ca includes the actual lower reader/Finance/closeout/E05/E08/E09
+source; all incoming content must be preserved. Prior checks stay historical.
+No reset/include-all/applied-history repair or invocation/worker/scan/public/Chat/
+provider activation; all19/nine/founder and protected monthly UNKNOWN stay open.
+
+## October25 — original manual Work history read actually released
+
+[#2877 production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521)
+records reviewedf292c96a752f75d957e52a3ea6edc12ff04de5c0/LOWER5645590987,
+all13 exact checks/Preview/two webSUCCESS/zero threads and renewed E05 receiving
+ANT161/9cd8952b. Actual6683bfb7cf1f0179922cc7c84840c6a0f3a5799c/tree9a286b3e9ac9fe6f07ef4debf4f1a35c947a75bf
+matches actual79768362+f292 parents and inspected union: frozen native/proof,
+16,274 outside entries and whole incoming CI/evidence inverses exact.
+
+Normal deploy-migrations40241921677/job121315482302 SUCCESS/db-live6683.
+Authoritative readback:250102 once/current frontier,1467 recorded versions;
+bodyd953ea9965f31193d3dbf2f184114730/original12-field ABI/postgres/SQL stable
+definer/empty search_path/authenticated-only ACL, anon denied. Claim260002 absent.
+READYdpl_BTNcv7Wp3rjSUbjcpmG5LCs7VWS9/both public200/exact6683bfb7cf1f0179922cc7c84840c6a0f3a5799c-mvof6mtm/null22:51:45UTC;
+Edge N/A. Local31 checkpoints/causal3FAIL5PASS→8PASS/sixteen incumbent comparisons
+and original47 factory regressions retain their bounded engineering proof class.
+No customer invocation or receipt inferred. Retired unapplied240202 was safely
+forward-renamed; guarded disposable Preview recovery produced250102 once/retired
+version zero, with no production reset/include-all/history rewrite/second applier.
+
+Functional bounded history reader RELEASED; Visual N/A; Experiential manual
+request/scan/original result/Rail/recovery/customer proof INCOMPLETE; Founder
+NOT_ACCEPTED. Historical reads do not widen creation. No new grant/invocation,
+scan/activation/catalogue/algorithm promotion. All19/nine/9/0+12/0/4 and protected
+monthly UNKNOWN/UNRETRIED retained. Later proposal/CI text below is dated history.
+
 ## October25 — private request foundation actually released
 
 Original [#2867](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)

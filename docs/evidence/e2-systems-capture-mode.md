@@ -514,3 +514,15 @@ NOT_ACCEPTED. ALG03/06/11/12/13 maturity, Systems binding and CAP009–017 readi
 unchanged; manual Spine capability remains UNAVAILABLE/unregistered. Original
 9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved; all19/nine remain open. No customer
 release identity, activation, provider effect or protected monthly retry.
+
+### Forward-only release reconciliation — October25
+
+The predecessor4e40 received all13 required checks including Preview, but was not
+merged: E04's actual native250004 release overtook the unapplied240202 slot.
+Only this owning migration was renamed to20271114250102; exact SQL SHA256
+`f6e20aa766584b72c0c0c1edfd14e22530c2898a6f4975342b9a05850c50786c`
+and native bodyd953ea9965f31193d3dbf2f184114730 remain unchanged. Current main9eb3
+composition and a fresh31-check native proof pass, with the updated fixture path.
+Fresh exact-head review/CI/Preview and source-contract receiving inspection govern
+release; predecessor green is historical only. No include-all, production history
+repair/reset, grant, invocation or acceptance waiver.

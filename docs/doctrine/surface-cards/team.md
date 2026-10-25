@@ -66,8 +66,8 @@ below. The originals stay where they are as history (§58).
       objects, charts, external links or macros are refused.
     - Also `PROOF_OWED` until an authenticated drive. See the
       [increment 3 attachments contract](../../delivery/exp08-team-hub-increment3-attachments-contract.md).
-  - **Update, 2026-10-25:** increment 4 adds PAIGE with Team Hub (migrations `20271114230208` and
-    `20271114230308`).
+  - **Update, 2026-10-25:** increment 4 adds PAIGE with Team Hub (migrations `20271114240008` and
+    `20271114240108`).
     - Reads: in Chat and Live, PAIGE lists, reads and searches the conversations the asker can see,
       with the asker's own JWT, fresh every turn. Nothing is stored or indexed.
     - Reply: drafted by PAIGE, posted under the person's own name only from their approval card.

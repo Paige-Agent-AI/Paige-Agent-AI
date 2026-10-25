@@ -304,11 +304,11 @@ UNION ALL SELECT 'trigger:'||t.tgrelid::regclass::text||'.'||t.tgname, pg_get_tr
 UNION ALL SELECT 'fn:'||p.oid::regprocedure::text, concat_ws('|', p.proacl::text, md5(p.prosrc))
 FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname NOT IN ('team_hub_search','_team_hub_search_snippet');
 CREATE TEMP TABLE search_before AS SELECT * FROM search_state;
-\ir ../migrations/20271114230208_exp08_team_hub_search.sql
+\ir ../migrations/20271114240008_exp08_team_hub_search.sql
 CREATE TEMP TABLE search_once AS
 SELECT p.oid::regprocedure::text AS k, concat_ws('|', p.proacl::text, p.prosecdef::text, p.proconfig::text, p.provolatile::text, md5(p.prosrc)) AS v
 FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('team_hub_search','_team_hub_search_snippet');
-\ir ../migrations/20271114230208_exp08_team_hub_search.sql
+\ir ../migrations/20271114240008_exp08_team_hub_search.sql
 DO $$ BEGIN
  IF EXISTS(SELECT k,v FROM search_before EXCEPT SELECT k,v FROM search_state)
    OR EXISTS(SELECT k,v FROM search_state EXCEPT SELECT k,v FROM search_before) THEN

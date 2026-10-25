@@ -7614,7 +7614,7 @@ Current gaps:
 - Increment 4 (2026-10-25) adds PAIGE with Team Hub, in Chat and Live: three caller-JWT reads
   (`team_hub_conversations`, `team_hub_read_conversation`, `team_hub_search`, Spine `team.hub_*`,
   offered on SOLO only) and `team_hub_post_reply`, posted under the person's own name only from
-  their approval card. Migration `20271114230208` adds the search definer and `20271114230308` lists
+  their approval card. Migration `20271114240008` adds the search definer and `20271114240108` lists
   the reply in the autonomy catalogue. No Team Hub content enters Knowledge or Memory: once a person
   has read Team Hub through PAIGE their automatic memory summaries stop (owner ruling 2026-10-25),
   their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld

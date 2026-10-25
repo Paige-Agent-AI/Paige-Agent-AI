@@ -710,8 +710,8 @@ render that is not authenticated and lists four open defects.
 
 **Increment 4 (2026-10-25, `PROOF_OWED`):** PAIGE with Team Hub in Chat and Live. Three
 caller-JWT reads (Spine `team.hub_*`, SOLO offer only) and a reply posted under the person's own
-name only from their approval card; search definer migration `20271114230208`, catalogue
-`20271114230308`. No Team Hub content enters Knowledge or Memory: automatic memory summaries stop
+name only from their approval card; search definer migration `20271114240008`, catalogue
+`20271114240108`. No Team Hub content enters Knowledge or Memory: automatic memory summaries stop
 for anyone who has read Team Hub through PAIGE (owner ruling 2026-10-25), their traces carry no
 text, and web, Knowledge and unattended writes are withheld for the rest of a request that carried
 Team Hub text. Contract:

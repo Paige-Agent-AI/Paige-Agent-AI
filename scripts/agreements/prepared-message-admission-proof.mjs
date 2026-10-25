@@ -93,7 +93,7 @@ export async function provePreparedMessageAdmission({sql,read,q,tenant,actor,app
   assert.equal(checks,47,'All original canonical message controls must precede signing completion');
   console.log(JSON.stringify({checkpoint:'Original complete message admission before signing completion',checks}));
   const {provePreparedSignatureCompletion}=await import('./prepared-signature-completion-proof.mjs');
-  completion=await provePreparedSignatureCompletion({sql,read,q,tenant,actor,fixture,put,claim,finalize});
+  completion=await provePreparedSignatureCompletion({sql,read,q,tenant,actor,fixture,put,claim,finalize,context,startSession,observe});
  }
  return {checks,concurrentSessions:sessions,observedLockWaits:waits,completion,proofBodySha256:createHash('sha256').update(provePreparedMessageAdmission.toString()).digest('hex'),scope:'Actual local native canonical message prepare/claim/finalize and synthetic provider facts only; no mounted caller, sender/provider call or authenticated customer acceptance'};
 }

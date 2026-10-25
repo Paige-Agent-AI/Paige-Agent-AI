@@ -72,7 +72,7 @@ describe("readActions", () => {
       row("a6", "evaluated", { observed_result: { summary: "Twelve" }, evaluation: { verdict: "met" }, evidence: { basis: "approval" } }),
     ] }).actions;
     expect(removeWarning(waiting)).toMatch(/stays in Approvals/);
-    expect(removeWarning(planned)).toMatch(/will still come to you for approval/);
+    expect(removeWarning(planned)).toMatch(/preparing it for approval stays your choice/);
     expect(removeWarning(planned)).not.toMatch(/Approvals/);
     // A record-only step never "runs"; another kind already approved may.
     expect(removeWarning(approved)).not.toMatch(/run/);
@@ -126,7 +126,7 @@ describe("readActions", () => {
   });
 
   it("names every refusal token the writer and its guard raise, read from the migrations themselves", () => {
-    const sql = ["20271021200000_int298_campaign_brief_actions.sql", "20271022100000_int298_process_scope_and_action_truth.sql"]
+    const sql = ["20271021200000_int298_campaign_brief_actions.sql", "20271022100000_int298_process_scope_and_action_truth.sql", "20271115010000_exp03_campaign_step_prepare.sql"]
       .map((file) => readFileSync(`supabase/migrations/${file}`, "utf8")).join("\n");
     const tokens = [...new Set(sql.match(/'CAMPAIGN_[A-Z_]+'/g)!.map((token) => token.slice(1, -1)))];
     expect(tokens.length).toBeGreaterThanOrEqual(20);
@@ -137,6 +137,7 @@ describe("readActions", () => {
   it("names the common refusals in words a person can act on", () => {
     expect(actionMessageFor("CAMPAIGN_ACTION_NOT_PROVEN")).toMatch(/without a run or an approval/);
     expect(actionMessageFor("CAMPAIGN_ACTION_NOT_FINISHED")).toMatch(/hasn't finished/);
+    expect(actionMessageFor("CAMPAIGN_ACTION_NOT_PLANNED")).toMatch(/still planned/);
     expect(actionMessageFor("CAMPAIGN_ACTION_BUS_REFUSED")).toMatch(/Nothing was planned/);
     expect(actionMessageFor("CAMPAIGN_BRIEF_FORBIDDEN")).toMatch(/Only owners and admins/);
     expect(actionMessageFor("CAMPAIGN_ACTION_TACTIC_INVALID")).toMatch(/tactic/);
@@ -170,6 +171,35 @@ describe("useCampaignActions", () => {
     expect(write[1]).toMatchObject({ _tenant_id: TENANT, _actor_kind: "human", _idempotency_key: "plan-key-1",
       _command: { type: "plan_action", briefId: "b1", title: "Host the open hour", tactic: "Launch event", family: "event", dueAt: "2031-03-01", expectedResult: { summary: "Ten guests" } } });
     expect(state.actions.map((action) => action.actionId)).toEqual(["a1", "a2"]);
+  });
+
+  it("prepares a planned step through the writer and counts it only once the read shows the approval", async () => {
+    let actions = [row("a1", "planned")];
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "get_campaign_brief_actions") return { data: { can_manage: true, actions }, error: null };
+      actions = [row("a1", "approval_required")];
+      return { data: { ok: true, outcome: "prepared", lifecycle: "approval_required", message: "Prepared. It's waiting in your approvals now." }, error: null };
+    });
+    await mount();
+    let result: { ok: boolean; message: string } | undefined;
+    await act(async () => { result = await state.prepare("b1", "a1"); });
+    expect(result?.ok).toBe(true);
+    const write = rpc.mock.calls.find(([name]) => name === "configure_campaign_brief_actions")!;
+    // A fresh key every call: a re-prepare after a decline must never replay a cached answer.
+    expect(write[1]).toMatchObject({ _tenant_id: TENANT, _actor_kind: "human", _command: { type: "prepare_action", briefId: "b1", actionId: "a1" } });
+    expect(typeof write[1]._idempotency_key).toBe("string");
+    expect(state.actions[0].lifecycle).toBe("approval_required");
+  });
+
+  it("does not claim a prepare the read does not show", async () => {
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "get_campaign_brief_actions") return { data: { can_manage: true, actions: [row("a1", "planned")] }, error: null };
+      return { data: { ok: true, outcome: "prepared", lifecycle: "approval_required" }, error: null };
+    });
+    await mount();
+    let result: { ok: boolean; message: string } | undefined;
+    await act(async () => { result = await state.prepare("b1", "a1"); });
+    expect(result).toEqual({ ok: false, message: "The change was sent but the campaign doesn't show it yet. Reload to check." });
   });
 
   it("a slow older readback never draws over a newer one", async () => {
@@ -221,6 +251,7 @@ describe("useCampaignActions", () => {
       row("a1", "completed", { evidence: { basis: "approval" } }),
       row("a2", "recorded", { evidence: { basis: "recorded" } }),
       row("a3", "outcome_observed", { observed_result: { summary: "Five" } }),
+      row("a4", "planned"),
     ];
     rpc.mockImplementation(async () => ({ data: { can_manage: true, actions }, error: null }));
     function Owner() { return <CampaignActions tenantId={TENANT} briefId="b1" onToast={() => {}}/>; }
@@ -232,6 +263,9 @@ describe("useCampaignActions", () => {
     expect(stepText("a2").textContent).not.toContain("Record the result");
     expect(stepText("a2").textContent).toContain("Marked done, nothing shows it ran");
     expect(stepText("a3").textContent).toContain("Judge it");
+    // A planned step offers its governed bridge to approval; a finished one never does.
+    expect(stepText("a4").textContent).toContain("Prepare for approval");
+    expect(stepText("a1").textContent).not.toContain("Prepare for approval");
     // Nothing here promises a PAIGE ability the chat does not have yet (6c).
     expect(host.textContent).not.toMatch(/Ask PAIGE/);
     act(() => root.unmount()); host.remove();

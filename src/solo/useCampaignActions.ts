@@ -1,7 +1,7 @@
 // Campaigns: the steps that carry each campaign out (INT-298 MBC slices 5–6). Reads and writes Marketing
 // Actions through their governed RPCs (contract: docs/delivery/marketing-action-contract.md):
 // `get_campaign_brief_actions` for every campaign's steps with the lifecycle the server derives from the
-// action bus, and `configure_campaign_brief_actions` to plan, remove, record a result or judge it.
+// action bus, and `configure_campaign_brief_actions` to plan, prepare, remove, record a result or judge it.
 //
 // TRUTH BOUNDARY (§13/§70). The lifecycle is the server's, never inferred here. A step is "done" only when a
 // run or an approval stands behind it; one marked done with neither reads as recorded and takes no result.
@@ -55,6 +55,8 @@ export type CampaignActionsState = {
   readonly actions: readonly CampaignAction[];
   readonly retry: () => void;
   readonly plan: (briefId: string, input: PlanInput) => Promise<Result>;
+  /** Ask the server to draft a planned step so it opens its approval. Nothing is sent or published. */
+  readonly prepare: (briefId: string, actionId: string) => Promise<Result>;
   readonly remove: (briefId: string, actionId: string) => Promise<Result>;
   readonly recordOutcome: (briefId: string, actionId: string, summary: string, value: number | null) => Promise<Result>;
   readonly evaluate: (briefId: string, actionId: string, verdict: Verdict, note: string | null) => Promise<Result>;
@@ -124,7 +126,7 @@ export function removeWarning(action: Pick<CampaignAction, "observed" | "verdict
   else if (action.observed) parts.push("Its recorded result goes with it.");
   const recordOnly = action.actionKind === RECORD_ONLY_KIND;
   if (action.lifecycle === "approval_required") parts.push("The action stays in Approvals; decline it there if you don't want it.");
-  else if (action.lifecycle === "planned" || action.lifecycle === "prepared") parts.push("The action stays on your list and will still come to you for approval.");
+  else if (action.lifecycle === "planned" || action.lifecycle === "prepared") parts.push("The action stays on your list; preparing it for approval stays your choice.");
   else if ((action.lifecycle === "approved" || action.lifecycle === "scheduled") && !recordOnly) parts.push("It is already approved, so it may still run.");
   else parts.push("The action itself is unchanged.");
   return parts.join(" ");
@@ -143,6 +145,7 @@ export function actionMessageFor(detail: string): string {
   if (has("CAMPAIGN_ACTION_ALREADY_EVALUATED")) return "That result has already been judged, so it stays as it is.";
   if (has("CAMPAIGN_ACTION_BUS_REFUSED")) return "The action list didn't accept this step from your account. Nothing was planned.";
   if (has("CAMPAIGN_ACTION_IN_OTHER_CAMPAIGN")) return "That step already belongs to another campaign. Nothing was changed.";
+  if (has("CAMPAIGN_ACTION_NOT_PLANNED")) return "Only a step still planned can be prepared for approval. Reload to see where it stands. Nothing was changed.";
   if (has("CAMPAIGN_ACTION_NOT_LINKED") || has("CAMPAIGN_ACTION_NOT_FOUND")) return "That step is no longer part of this campaign. Reload to see the latest.";
   if (has("CAMPAIGN_BRIEF_NOT_FOUND")) return "That campaign is no longer available in this workspace. Nothing was changed.";
   if (has("CAMPAIGN_BRIEF_FORBIDDEN")) return "Only owners and admins can change a campaign's steps, and the server refused the change.";
@@ -265,6 +268,10 @@ export function useCampaignActions(tenantId: string | null, briefId: string | nu
     ...(input.dueAt ? { dueAt: input.dueAt } : {}),
     ...(input.expected?.trim() ? { expectedResult: { summary: input.expected.trim() } } : {}),
   }, (next, data) => Boolean(find(next, briefId, data.action_id)), input.key), [write]);
+  // Preparing asks the bus's own writer to draft the step, which opens its approval; confirmed only
+  // when the readback shows that approval waiting (or the step already past it).
+  const prepare = useCallback((briefId: string, actionId: string) => write({ type: "prepare_action", briefId, actionId },
+    (next) => find(next, briefId, actionId)?.lifecycle === "approval_required"), [write]);
   const remove = useCallback((briefId: string, actionId: string) => write({ type: "unlink_action", briefId, actionId },
     (next) => !find(next, briefId, actionId)), [write]);
   const recordOutcome = useCallback((briefId: string, actionId: string, summary: string, value: number | null) => write({
@@ -275,5 +282,5 @@ export function useCampaignActions(tenantId: string | null, briefId: string | nu
   }, (next) => find(next, briefId, actionId)?.verdict === verdict), [write]);
 
   // No workspace to read means nothing can load; say so rather than spin.
-  return { ...state, phase: tenantId ? state.phase : "error", retry, plan, remove, recordOutcome, evaluate };
+  return { ...state, phase: tenantId ? state.phase : "error", retry, plan, prepare, remove, recordOutcome, evaluate };
 }

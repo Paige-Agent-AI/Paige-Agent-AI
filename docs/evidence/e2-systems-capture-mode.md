@@ -1,5 +1,78 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — approved private request foundation, development
+
+O07/O19 intended outcome: an explicit manual Systems request eventually returns
+its original result, evidence and recoverable status. This increment prepares the
+original Work request only. The owner explicitly authorized this bounded internal
+function and existing server-role grant in the original coding conversation;
+ANT161/3e338a62 records the receiving boundary. The earlier source hold is retained
+in ANT161/4dd4f99b, not treated as implicit authority. Nothing here runs a scan.
+
+### Capability routing and orchestration contract
+
+1. EXP02 owns this Systems consumer; EXP05 retains generic Work and its dispatcher.
+   The change adds one adjacent migration, its native proof and two CI lines.
+2. Existing authority/current workspace and evidence contracts remain canonical.
+   No generic creator, identity trigger, worker, Gateway, risk or Root source changes.
+3. Manual Systems remains **UNAVAILABLE** in Spine; the internal Work metadata is
+   not registration, provider readiness or a customer-callable capability.
+4. Native PAIGE source only: no external provider, connection, spend or activation.
+5. Preparation is private server-only, for a currently eligible ordinary SOLO
+   owner/admin. The current generic Work contract admits active tenants only;
+   trial/past-due execution is not claimed. Authority snapshots never grant access.
+6. The original Work creator receives a caller-stable intent, fixed tenant/manual/
+   no-action payload and one-attempt ceiling. No scheduler, queue or second store.
+7. Only original Work identity, actual status/version and replay flag return.
+   No terminal result, Rail receipt, completed check or execution is manufactured.
+8. No public admission, claim, dispatch, cancellation handler or settlement path
+   is introduced. Repeated preparation preserves cancelled and uncertain work;
+   it never reopens it or creates a second request for a lost acknowledgement.
+9. The Systems surface's existing binding-ledger state is unchanged. Existing
+   recorded-result reads retain their separate bounded contract. No UI delta.
+10. Consumer activation still owes original dispatch/settlement/current-authority,
+    result/receipt, interruption, authorized customer and cohort/reload proofs.
+    A later corrective business action requires its original domain writer and gate.
+
+### Source, native proof and remaining release gates
+
+Source baseline561be9987004e4cf28fefd4d79e5b179a9065f78. Proposed migration
+20271114240002 follows the actual native230404 frontier; fresh source/history
+parity and lower-owner ordering remain mandatory before merge and deployment.
+The original generic creator, current thread-detach identity trigger and Metric
+actor predicate are used unchanged in the disposable PostgreSQL proof. Their
+actual production function-body hashes, owners and metadata were read and match
+the inspected source. No production Work, tenant, customer or check is created.
+
+The native program exercises genuine role denial, current workspace/actor/thread
+scope, replay, missing context, cancelled/unknown preservation, duplicate DDL
+refusal and bounded lock failure. Two real server-role connections must share one
+original request. Authority changes during real waits must be denied after the
+wait; function-local timeout must restore its caller's setting. Original contract
+source/owner/configuration/ACL remain unchanged. Cleanup targets only the proof's
+validated disposable database on loopback. This is not two-worker dispatch proof.
+
+Historical proof correction: a setting assertion initially read psql's final
+COMMIT tag. It now reads the explicitly named JSON setting; no source guard or
+expected permission was weakened. Review also found the fixture's older identity
+trigger; the proof now installs the actual current trigger before taking its
+unchanged-contract snapshot. Earlier43-checkpoint passes are retained at their
+stated source; the final exact-head result is recorded in the PR receipt.
+The final local program passes47 checkpoints, including two actual concurrent
+factory connections, six observed native lock waits and the bounded timeout.
+Native syntax/behavior proof is not authenticated customer acceptance.
+
+Functional: LOCAL, release pending. Visual: N/A for this unconsumed private
+function; prior synthetic prototype/focus correction is not product acceptance.
+Experiential: original request-to-result/receipt/recovery remains incomplete.
+Founder Acceptance: NOT_ACCEPTED. Original9/0 and12/0/4 remain historical; all19
+outcomes and nine analytics capabilities continue. ALG03/06/11/12 remain partial
+at their canonical maturity; ALG13 usefulness remains UNVERIFIED. No analytics,
+catalogue or manual-readiness promotion; protected monthly UNKNOWN/UNRETRIED.
+Required final author-review, exact-head CI/Preview, normal release, actual native
+ABI/ACL/source and production readback are still gates. Prefer a reviewed forward
+fix; never rewrite applied history or replay an uncertain customer operation.
+
 ## October25 — original Work identity bridge actually released
 
 Original [#2859](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2859#issuecomment-6401587673) reviewed178b31a03ae7d6a07fb95081f661c354da36cf4f,

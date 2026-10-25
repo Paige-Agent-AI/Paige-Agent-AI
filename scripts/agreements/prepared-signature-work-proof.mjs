@@ -3,7 +3,7 @@ import {createHash,randomUUID} from 'node:crypto';
 
 // ORIGINAL directory-fenced disposable Agreements DB; actual native Work,
 // actor/source/confirmation. Surrounding sessions, audit/mail/Storage are synthetic.
-export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fixture,issue,claim,startSession,observe}) {
+export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fixture,issue,claim,startSession,observe,fresh,context,client,makeCommercial}) {
  const q=quote,native=s=>'SET ROLE service_role;'+s;
  let checks=0,sessions=0,waits=0;
  const check=(v,m)=>{assert(v,m);checks++;};
@@ -99,5 +99,11 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
   requestStatus=await provePreparedRequestStatus({sql,read,quote,tenant,actor,setup,register});
  }
  check(originals()===stamp,'Original metadata remains exact after all controls');
- return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),requestStatus,scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};
+ let credentials=null;
+ if(process.argv.includes('--prepared-credentials')){
+  console.log(JSON.stringify({checkpoint:'Original Work and request-status controls before credential issuance',workChecks:checks,statusChecks:requestStatus?.checks}));
+  const {provePreparedSignatureCredentials}=await import('./prepared-signature-credentials-proof.mjs');
+  credentials=await provePreparedSignatureCredentials({sql,read,quote,tenant,actor,setup,register,startSession,observe,fresh,context,client,makeCommercial,issue,claim});
+ }
+ return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),requestStatus,credentials,scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};
 }

@@ -1,48 +1,48 @@
-# EXP02 original Systems finding review — development, release held
+# EXP02 original Systems finding review — rendered development candidate
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: ANT-161 pre-edit228af772-e645-428d-901e-189ff9673be0; original prepared-work reference to scoped finding, existing drawer, refresh/clear and original return.
 PAIGE_UI_DESIGN: PASS: original Solo Systems workspace/tokens; existing five-module intent, visual, interaction, protected-seam and release contracts inspected.
 MATERIAL_FLOW_CHANGE: YES: exact permitted older findings can be inspected independently of the last completed health snapshot.
-FLOW_PROTOTYPE: UNVERIFIED: private original-component state model is source-tested/compiled, unserved and unrendered. The physical Escape/input stop prevents its real traversal; no prototype acceptance or waiver is asserted.
+FLOW_PROTOTYPE: PASS: original-component synthetic prototype actually compiled, served and traversed after renewed owner read-only/local authorization; ANT-138 a51f63ac-70fe-4282-9fc7-61fd4e8a88ed selects the flow under standing creative-control delegation, not founder acceptance or a waiver. Thirteen explicit states, four required CSS widths/PAIGE states, drawer/expanded exits, retry, Tab/Escape/focus and query/hash recovery inspected. Native zoom/AT/customer proof remain distinct.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible signed-in business owner inspects the exact source behind prepared work, then returns to the original discussion.
 VISUAL_DIRECTION: PASS: preserve incumbent Mineral/Obsidian typography, original linked-source row and drawer/full-width expansion; no new dashboard, banner, modal engine or Chat shell.
-AUTOMATED_EVIDENCE: PASS: owning30 and original204 cases,234PASS/9 suites,5.44s on composed source; actual production component and existing scoped-hook/navigation/prepared-work contracts, synthetic ports only.
-STATIC_EVIDENCE: PASS: composed-source scoped ESLint0, unchanged type ratchet10baseline/6current, actual app build1m37s. Exact-logic private proof is compiled/unserved/unrendered, source SHA2562c361525; no previous-head check is substituted for these source results.
-RENDERED_EVIDENCE: UNVERIFIED: no new browser, native capture or server started under the preserved physical input stop. Prior captures cannot prove this changed source.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: DOM source interactions cover exact source, history/current distinction, expanded drawer, Escape/focus exit, query/hash preservation, changed/withdrawn reads and account retirement; native behavior remains untested.
-AUTHENTICATED_RUNTIME: UNVERIFIED: no customer drive under the input stop; ordinary eligible SOLO roles, tenant negatives, second legitimate cohort, reload/return and actual Capabilities presentation still require authorized proof.
-KEYBOARD_FOCUS: UNVERIFIED: source-level focus return/withdrawal assertions pass; native Tab containment, keyboard, screen reader and focus visibility remain untested.
-ZOOM_REFLOW: UNVERIFIED: actual200 percent/narrow reachability and the original scroll owners have not been inspected for this source.
-REDUCED_MOTION: UNVERIFIED: no animation added; original reduced-motion drawer rules retained, native preference behavior not newly tested.
+AUTOMATED_EVIDENCE: PASS: fresh current-main composition passes202 tests/9 owning and surrounding suites in42.62s; original234/9 source history retained below. Actual component, scoped-record reader, canonical links, prepared-work and incumbent Systems contracts; synthetic ports are not backend permissions.
+STATIC_EVIDENCE: PASS: current composed application build3m24s and unchanged type ratchet10baseline/6current pass. Original-component SHA2562c361525 and product stylesheet SHA25661a2f536 bind the renewed compiled entry graph; the browser observed its exact index-adrI41Gy.js/index-BUJfK_kK.css. Separate scoped lint/detector results are recorded in the final review; no previous-head CI is inherited.
+RENDERED_EVIDENCE: PASS: assets/e2-recorded-finding-review/prototype-observations.json and original JPEGs record actual browser rendering of source SHA2562c361525, original stylesheet and the selected44px target correction; four required CSS widths with PAIGE closed/open plus390/320 drawer reflow, Mineral/Obsidian. Raw raster dimensions are recorded separately; no image resizing or exact-raster/native claim.
+BEHAVIORAL_EVIDENCE: PASS: thirteen synthetic states traversed; older/unfinished/conflicting evidence stays read-only, error refresh recovers, current Ask First cancels without action, expanded/Escape/Tab/focus and clear-query/hash exits pass. Synthetic draft survives fold/viewport. Withdrawal/account retirement remain covered by actual-component source controls, not claimed as authenticated role tests.
+AUTHENTICATED_RUNTIME: UNVERIFIED: this consumer is not deployed; source-bound prototype uses neutral ports. Ordinary eligible SOLO roles, tenant negatives, second legitimate cohort, released history/current/read-reload and actual Capabilities presentation still require authorized proof. Renewed Finance QA is a separate earlier release.
+KEYBOARD_FOCUS: PASS: actual browser Shift+Tab/Tab wrap, initial Expand focus, Escape return, current Cancel focus and clear-to-Refresh observed. At390/320, PageDown reaches the last outcome inside the original drawer scroll owner. Screen-reader/physical-device proof remains UNVERIFIED.
+ZOOM_REFLOW: UNVERIFIED: actual320/390 CSS reflow and final outcome reachability inspected without root horizontal overflow; native200percent zoom not run because the bound native window did not display the local proof. No keyboard action was sent to that different page; no simulated reflow is called native zoom.
+REDUCED_MOTION: PASS: existing rule under browser media emulation produced animation:none and transition0.00001s; emulation restored. Native OS preference/physical-device behavior not verified; no motion added.
 STATE_COVERAGE: PASS: source controls exercise old/current/unfinished, loading/error/withheld, malformed/duplicate/mismatched source, changed record/account, close/expand/refresh/clear and ordinary navigation. These are not authenticated permission tests.
 TRUTHFUL_STATE_LABELS: PASS: recorded failure is not current urgency; unfinished run is not complete; refresh never scans; a finding's decision/resolution does not establish a Rail execution or a causal business improvement.
 SOLO_UI: YES: shared eligible SOLO implementation; no account-specific branch or special customer data.
-UNVERIFIED: material prototype/rendered/native/role/cohort/production/reload proof remains held. Do not mark ready, merge or deploy this consumer until the applicable gates are genuinely met.
+UNVERIFIED: final current-head review/CI/release/readback, authenticated customer older/current/permission/cohort/reload proof, native zoom, AT and physical mobile remain owed. Selected synthetic prototype is not customer or founder acceptance; required checks may not be waived.
 
 OWNER_INTENT: Existing full19 mandate and creative authority; O06/O14 exact departmental source inspection with readable evidence, original context and safe return. PAIGE remains the original conversational interface.
 MUST_NOT_HAPPEN: do not replace current health with an old failure; expose a retired copy; imply an absent Rail outcome; submit a scan/approval/action; alter Chat, underlying records, permissions or another Experience's source.
 MUST_PRESERVE: original exact-ID/RLS hook, canonical link parser, current reading/approved decision flow, original drawer and expanded mode, shell scroll owners, query/hash, neutral error states and native source writers.
 ACCEPTANCE_CRITERIA: an authorized actor can inspect the correct old/current source and timestamp; withheld/error states are truthful; old records provide no action control; changed identity/read removes former content; close/back/reload retain conversation and context at all required viewports.
 MOTION_PURPOSE: no new motion; preserve the existing drawer relationship and reduced-motion rule, with actual behavior still unverified.
-PROTECTED_SEAMS: affected source inspection/privacy/isolation retirement, current decision presentation, navigation/focus and responsive geometry;225 source tests pass, native/customer proof owed. Authentication/account choice and SOLO classification reused, not changed. Billing/provisioning, Spine execution, original domain writes, Rail/Memory, Chat stream/transcript/popout/history, Live, Secure Browser/Vault, provider/external effects and job scheduling/retries are not modified. No new authority, executor or store.
+PROTECTED_SEAMS: affected source inspection/privacy/isolation retirement, current decision presentation, navigation/focus and responsive geometry;202 fresh source tests pass, authenticated/native proof remains separately owed. Authentication/account choice and SOLO classification reused, not changed. Billing/provisioning, Spine execution, original domain writes, Rail/Memory, Chat stream/transcript/popout/history, Live, Secure Browser/Vault, provider/external effects and job scheduling/retries are not modified. No new authority, executor or store.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e2-recorded-finding-review; incoming-main=5f7fbd0c51e58709a6ab8ee2b361392a21cf1a57; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=src/solo/SoloSystemsCheckWorkspace.recorded.test.tsx
-RELEASE_CHANNEL: development: held source preparation, no customer-reachable release.
+INTERNAL_BUILD_IDENTITY: source-base=02a0c20535019b59e80d35322ebae57268e76cc0; branch=codex/e2-recorded-finding-review; incoming-main=98cf0ff783d0427e7ccf4862e796b5417a8417d5; final-head=exact PR review/CI receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-recorded-finding-review/product-observations.json
+RELEASE_CHANNEL: development: source-bound rendered candidate, no customer-reachable release.
 RELEASE_CLASSIFICATION: internal-only: incomplete review consumer, no usable-outcome or customer release claim.
 CUSTOMER_RELEASE_IDENTITY: none: owner evaluation and complete Experience acceptance remain separate.
 RELEASE_NOTE_REQUIRED: NO: not a customer release or announcement.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: historical review consumer is locally source-tested, not rendered, released or customer-accepted.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: historical review consumer has source/synthetic rendered proof; released-source, authenticated permission/reload and founder acceptance remain unverified.
 RELEASE_RECOVERY: position=ordinary reviewed source forward-fix/revert; reference=ANT-138 original O06/O14 evidence, never a scan or uncertain operation replay.
 
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: input stop; no new capture.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: input stop; no new capture.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: input stop; no new capture.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: input stop; no new capture.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: input stop; no new capture.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: input stop; no new capture.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: input stop; no new capture.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: input stop; no new capture.
+SOLO_1536X770_PAIGE_CLOSED: PASS: prototype-1536-closed.jpg; observed CSS1536x770/root1536, original scroll owner.
+SOLO_1536X770_PAIGE_OPEN: PASS: prototype-1536-open.jpg; original docked conversation and source controls remain usable.
+SOLO_1366X768_PAIGE_CLOSED: PASS: prototype-1366-closed.jpg; observed CSS1366x768/root1366.
+SOLO_1366X768_PAIGE_OPEN: PASS: prototype-1366-open.jpg; original docked conversation, no root overflow.
+SOLO_1024X768_PAIGE_CLOSED: PASS: prototype-1024-closed.jpg; observed CSS1024x768/root1024, existing compact navigation.
+SOLO_1024X768_PAIGE_OPEN: PASS: prototype-1024-open.jpg; original overlay, existing fold returns to source and preserves draft.
+SOLO_900X1000_PAIGE_CLOSED: PASS: prototype-900-closed.jpg; observed CSS900x1000/root900.
+SOLO_900X1000_PAIGE_OPEN: PASS: prototype-900-open.jpg; original overlay/fold behavior, source context preserved. CSS viewport observations, not native-device or exact-raster claims.
 
 ## Source findings and verification history
 
@@ -113,6 +113,55 @@ inspection is a read, not a Layer C dispatch. Current approval/execution writers
 Spine/Harness/Trust/Rails and their activation controls are unchanged. No receipt
 or completed work is fabricated by inspecting a record.
 
-Functional: development source verified. Visual: native/rendered proof held.
-Experiential: original interaction source tested, customer continuity unverified.
+Functional: development source verified. Visual: bounded actual browser rendering verified, native zoom/AT/device proof owed.
+Experiential: original source and synthetic browser interactions verified, customer continuity unverified.
 Founder Acceptance: all19/nine and one integrated evaluation remain open.
+
+## October25 resumed source-bound prototype
+
+The dated unserved/input-stop paragraphs above remain history. The owner explicitly
+resumed read-only checks after the restart. Existing main98cf0ff7 is composed at
+02a0c205/treeeca336e4: all six owning blobs and16067 outside incoming entries
+were verified exactly. This is a development composition, not a production merge.
+The actual component's logic/markup SHA2562c361525 is unchanged; only four import
+aliases connect neutral ports. The actual entry graph is compiled and served;
+old unreferenced assets cannot satisfy its source check. No backend/model/provider,
+scan, approval, live message or original protected monthly request is invoked.
+
+Sequential design/interaction review selected the existing source row and roomy
+drawer/expanded mode, preserving current health, original PAIGE and scroll owners.
+Thirteen actual browser states are in the observations index. Body contrast is
+5.37:1 Mineral and7.40:1 Obsidian; narrow body is16px. One finding was corrected:
+the new original-source return target measured36px, then44px in the prototype.
+Only that selector is ported to the original stylesheet; the private proposed
+override is removed. Existing icon targets remain44px. Final product-style build
+and rendered source binding are recorded separately from the earlier proposal.
+
+Final product-style recapture is `product-observations.json`: all four required
+CSS widths with the drawer and PAIGE open, plus390px original drawer, bound to
+the actual compiled component and original stylesheet without private product
+CSS overrides. Every returned drawer button measures at least44x44px; final
+narrow Escape restores the trigger and keyboard reaches the last outcome.
+`product-rasters.json` stores unmodified JPEG sizes and digests. The1536 CSS
+captures have1535 raster columns and390x844 CSS has390x843 raster pixels;
+1366/1024/900 rasters match their requested CSS dimensions. This is explicit
+geometry, not a rescaled image or blanket exact-raster/native claim.
+
+Browser keyboard passed Tab/reverse wrap, original Escape focus, current Ask First
+Cancel, clear-query/hash preservation and stable Refresh focus. At390/320,
+PageDown reaches the last recorded outcome in `.sc-drawer-body`; the page keeps
+`.sc-scroll-owner`. Drawer inspection never creates a repair/approval/receipt.
+All examples are neutral synthetic records, not test tenants. Raw JPEGs retain
+their original raster dimensions; transitional/earlier proposal captures are not
+substituted for final evidence. Native200percent zoom, AT, physical mobile,
+authenticated role/tenant/cohort and production read/reload remain unverified.
+
+Applied [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
+Operate, harden and craft-floor checks to the actual rendered flow: information
+hierarchy, body contrast,16px narrow type,44px changed controls, safe status copy,
+original containers/scroll owners, keyboard exits and recoverable source states.
+Scoped detector exits0 with0 blocking/29 advisory findings; all are existing
+stylesheet type/radius values outside its documented ramp, not new permission
+or execution findings. The selected correction does not replace the design
+system or broaden this slice into a workspace redesign. Scoped ESLint exits0.
+Sequential finish review is AUTHOR-REVIEW / LOWER ASSURANCE, never non-author.

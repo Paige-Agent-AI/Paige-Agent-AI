@@ -7,15 +7,15 @@ MATERIAL_FLOW_CHANGE: NO: connect the already approved native weekly draft-save 
 FLOW_PROTOTYPE: NOT_REQUIRED: original weekly draft/approval/native panel flow and existing Chat card remain the approved interaction; this change connects their canonical consumer.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible ordinary standalone SOLO owner prepares and explicitly saves one private weekly definition without authorizing or enabling future work.
 VISUAL_DIRECTION: PASS: original compact Mineral/Obsidian Chat and Operations tokens/components remain unchanged; no banner, tab, motion or layout addition.
-AUTOMATED_EVIDENCE: PASS: actual unchanged handler with existing recording ports passes 26 runtime cases; original reminder proof remains 33/33; domain eligibility/schema suite passes 17/17. Counts overlap neither native authority nor authenticated evidence and are not a completion score.
+AUTOMATED_EVIDENCE: PASS: actual original handler with existing recording ports passes34 runtime cases after genuine consumed-state failures; six adjacent owning suites174/174, corrected parent imported-tool suite46/46 and original reminder33/33 PASS. Counts overlap neither native authority nor authenticated evidence and are not a completion score.
 STATIC_EVIDENCE: UNVERIFIED: source/Kit construction inspected; Kit lint passes unchanged 288/296 debt baseline. Exact immutable review, composed-main fingerprint/dependency proof and hosted checks remain required before release.
 RENDERED_EVIDENCE: PASS: actual original React approval-card renderer includes review, saved and uncertain weekly scenes; current compiled CSS, desktop1536x770 Mineral and narrow390x844 Obsidian pixels/DOM inspected in assets/exp05-weekly-native-chat/. This is a synthetic standalone frame, not customer or full-shell proof.
-BEHAVIORAL_EVIDENCE: PASS: offline actual-handler26 cases and original real React card transitions preserve exact summary, completion and no-retry uncertainty. Connected ordinary authenticated/native behavior remains owed.
+BEHAVIORAL_EVIDENCE: PASS: offline actual-handler34 cases and original real React card transitions preserve exact summary, completion and no-retry uncertainty. Connected ordinary authenticated/native behavior remains owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in request, native claim, persisted private definition or original Rail from this candidate has been produced.
 KEYBOARD_FOCUS: PASS: native synthetic card Tab from Approve reaches Not now without activation; original React interaction verified. Full authenticated shell keyboard path remains owed.
 ZOOM_REFLOW: UNVERIFIED: no responsive layout changed; no new viewport certification claimed.
 REDUCED_MOTION: UNVERIFIED: no motion source changed; no new rendered certification claimed.
-STATE_COVERAGE: UNVERIFIED: scripts/proof/weekly-draft-chat.mjs covers26 recording-port cases across original prepare, approval, save, decline, uncertainty and refusal. This candidate is not deployed; no ordinary owner workflow has been exercised against its source.
+STATE_COVERAGE: UNVERIFIED: scripts/proof/weekly-draft-chat.mjs covers34 recording-port cases across original prepare, approval, save, decline, uncertainty and refusal. This candidate is not deployed; no ordinary owner workflow has been exercised against its source.
 TRUTHFUL_STATE_LABELS: PASS: a verified draft-save receipt proves only the private definition; no authorization, enablement, occurrence, delivered reminder, completed task or active ZION execution is inferred.
 SOLO_UI: NO: backend conversational connection only, consuming the unchanged original SOLO Chat card and native inspection surfaces.
 OWNER_INTENT: Restore complete universal SOLO Operations using original governed systems and ordinary safe increments, with one final integrated founder evaluation.
@@ -23,7 +23,7 @@ MUST_NOT_HAPPEN: Generic CAS consumes weekly approval before native claim; model
 MUST_PRESERVE: Original actor/tenant/thread binding, caller JWT, stopped/superseded checks, runtime identity, native owner/lane checks, five-round/twelve-tool/360000ms limits, all existing domain writers and Rails.
 ACCEPTANCE_CRITERIA: Original stored five native arguments reach one claim and one save after exact approval; native record and original receipt match; decline, expiry, duplicate, revocation, scope change, Stop and uncertain response produce no generic or repeat effect; original state can be inspected later.
 PROTECTED_SEAMS: Shared Chat offer, frozen input schema, approval selection/decline, canonical registry and native weekly consumer are affected. No shared execution engine, SQL function, grant, provider, Live or recurring trigger is changed.
-INTERNAL_BUILD_IDENTITY: base sha=de79e7052f80125b453946058ced9d21f182ba5d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat candidate); evidence=docs/evidence/ui-delivery/exp05-weekly-native-chat.md
+INTERNAL_BUILD_IDENTITY: base sha=4710ecc5540584b76e814246f44ee4bd5b4d8f77; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat candidate); evidence=docs/evidence/ui-delivery/exp05-weekly-native-chat.md
 RELEASE_CHANNEL: development: composed source, review and required exact-head CI are not yet complete.
 RELEASE_CLASSIFICATION: internal-only: bounded restoration of an existing approved private draft-save workflow.
 CUSTOMER_RELEASE_IDENTITY: none: complete Experience evaluation and customer publication remain owner-reserved.
@@ -107,3 +107,18 @@ under concurrent local compilation. This failure is retained, not waived or
 reported green. The original native SQL/functions are unchanged in this Chat
 slice. Focused existing draft-command proof and a quiet timing recheck remain
 required, alongside full hosted required checks before release.
+
+## October25 original-outcome correction - development only
+
+Consumed approvals and late declines now read the same original native outcome with
+zero new claim/commit/decline; original definition/request references persist through
+the existing effect vocabulary. Changed records stay historical, and unknown or
+unreceipted results stay unknown. The original commit no-record/completion assertions
+remain unchanged: historical inspection uses separate recordReference metadata.
+The source review is explicitly AUTHOR-REVIEW / LOWER ASSURANCE at immutable4710ecc55
+before renewal (ANT161/991f5439; PR comment6392593760). All29 original bindings differ
+only at enclosing identity[15]; all125 current dependency values and existing controls
+are retained. Genuine RED and one worker-start failure are preserved; the unchanged
+thread-pool suite passes174. Prior rendered component/CSS captures remain bounded
+synthetic evidence, not new runtime/customer proof. Final exact-head CI, production,
+ordinary owner record/Rail/reload and universal cohort acceptance remain owed.

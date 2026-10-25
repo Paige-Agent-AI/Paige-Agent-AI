@@ -78,5 +78,10 @@ export async function provePreparedSignatureCompletion({sql,read,q,tenant,actor,
  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${q(voidTag+'reader')} AND wait_event_type='Lock');`);waits++;
  const [,answer]=await Promise.all([holder,reader]);check(answer==='refused'&&count(raced)==='0','Observed concurrent void wins without a false sent record');
  check(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid=to_regprocedure('public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)');")===originalSignature,'Original signature engine is unchanged after all publication controls');
- return {checks,concurrentSessions:sessions,observedLockWaits:waits,originalSignature,proofBodySha256:createHash('sha256').update(provePreparedSignatureCompletion.toString()).digest('hex'),scope:'Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance'};
+ let fieldSignature=null;
+ if(process.argv.includes('--prepared-field-signatures')){
+  const {provePreparedFieldSignature}=await import('./prepared-field-signature-proof.mjs');
+  fieldSignature=await provePreparedFieldSignature({sql,q,acceptedFixture,publish});
+ }
+ return {checks,concurrentSessions:sessions,observedLockWaits:waits,originalSignature,fieldSignature,proofBodySha256:createHash('sha256').update(provePreparedSignatureCompletion.toString()).digest('hex'),scope:'Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance'};
 }

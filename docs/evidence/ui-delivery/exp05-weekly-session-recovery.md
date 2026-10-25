@@ -5,7 +5,7 @@ FLOW_BY_FLOW: PASS: existing owner resumes a weekly proposal/review/control. Ori
 PAIGE_UI_DESIGN: PASS: existing Operate, compact weekly controls, native form/focus and all routed design/accessibility checks retained; no JSX, CSS, label, route or new state.
 MATERIAL_FLOW_CHANGE: NO: correct unintended retirement of an original review or unsaved proposal; no new action or transition.
 FLOW_PROTOTYPE: NOT_REQUIRED: no new flow or interface. Original mounted React components and original hook exercise existing states with disclosed closed Auth/domain ports.
-PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: current eligible ordinary SOLO owner returns without losing typed work, original saved evidence or the pending/unknown decision hold.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: current eligible ordinary SOLO owner returns without losing typed work, original saved inspection or the busy/inconclusive control hold.
 VISUAL_DIRECTION: PASS: original Mineral/Obsidian composition and native control geometry unchanged; no redesign or new pixel claim.
 AUTOMATED_EVIDENCE: PASS: original mounted source50PASS/7FAIL becomes57PASS/0FAIL; surrounding14-file regression373PASS/0FAIL. All original cases retained;21 added cases cover retention and genuine-change negatives.
 STATIC_EVIDENCE: PASS: scoped ESLint/diff check; actual strict base and candidate both FAIL with the same14 inherited context/generated-database diagnostics, zero new. Required hosted type/build/CI remain separate gates.

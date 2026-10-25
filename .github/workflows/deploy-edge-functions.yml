@@ -141,6 +141,26 @@ jobs:
           # `latest` resolved to at pin time, so behaviour is unchanged.
           version: 2.116.0
 
+      # A helper-only recovery inspects the already deployed source, without
+      # repeating acknowledged uploads. This NEVER selects/certifies source:
+      # edge-live still selects the full gap and the original proof/tag gates run.
+      # Unknown predecessors, manual recovery and retirements keep normal upload.
+      - name: Resolve upload necessity
+        id: upload
+        run: |
+          required=true
+          before="${{ github.event.before }}"
+          after="${{ github.sha }}"
+          if [ "${{ github.event_name }}" = "push" ] &&
+             [[ "$before" =~ ^[0-9a-f]{40}$ ]] &&
+             [ "${{ steps.retired.outputs.count }}" = "0" ] &&
+             git cat-file -e "${before}^{commit}" 2>/dev/null &&
+             git merge-base --is-ancestor "$before" "$after" &&
+             git diff --quiet "$before" "$after" -- supabase/functions supabase/config.toml; then
+            required=false
+          fi
+          echo "required=$required" >> "$GITHUB_OUTPUT"
+
       # ONE cheap authenticated probe BEFORE any deploy or delete, so a rejected
       # credential fails with a single actionable error instead of N deploy 401s.
       # This is the exact failure mode of 2026-09-19 (run 35408262875): the secret
@@ -203,7 +223,7 @@ jobs:
           exit $fail
 
       - name: Deploy affected functions
-        if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0'
+        if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0' && steps.upload.outputs.required != 'false'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |

@@ -48,30 +48,27 @@ jobs:
       - name: Test deployed-source verification contract
         run: python3 -B -m unittest discover -s .github/scripts -p test_edge_source_readback.py -v
 
-      # The deployment baseline. Push: the event's before-SHA. Manual dispatch:
-      # the edge-live tag — the repository's declared last-known-deployed edge
-      # state. HEAD^ would be VACUOUS for recovery: a dispatch on a main whose
-      # prior merge already carried the retirement resolves zero changed
-      # function files, skips the retired-set computation entirely, and strands
-      # the retirement again (the exact 2026-09-19 closeout class of failure).
+      # Both push and manual recovery start at the original certified release.
+      # event.before may itself be an unverified upload: using it skips that
+      # source gap on a later helper-only push. HEAD^ also strands retirements.
+      # Fetch the real anchor and refuse older/foreign targets before provider I/O.
       - name: Resolve deployment baseline
         id: baseline
         run: |
           after="${{ github.sha }}"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            git fetch -q --force origin "refs/tags/edge-live:refs/tags/edge-live" 2>/dev/null || true
-            if ! before="$(git rev-parse refs/tags/edge-live 2>/dev/null)" || [ -z "$before" ]; then
-              echo "::error::workflow_dispatch resolves its baseline from the edge-live tag, which is missing — a manual recovery cannot know what production last received."
-              exit 1
-            fi
-            echo "manual dispatch: reconciling edge-live ($before) → HEAD ($after)"
-          else
-            before="${{ github.event.before }}"
-            # First push / force-push / unknown parent → fall back to this commit's parent.
-            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
-              before="$(git rev-parse "${after}^" 2>/dev/null || echo "$after")"
-            fi
+          if ! git fetch -q --force origin "refs/tags/edge-live:refs/tags/edge-live"; then
+            echo "::error::Cannot refresh the certified Edge baseline; no provider operation is authorized."
+            exit 1
           fi
+          if ! before="$(git rev-parse --verify 'refs/tags/edge-live^{commit}' 2>/dev/null)"; then
+            echo "::error::Missing or noncommit certified Edge baseline; no provider operation is authorized."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$before" "$after"; then
+            echo "::error::Target does not descend from the certified Edge release; no provider operation is authorized."
+            exit 1
+          fi
+          echo "reconciling certified edge-live ($before) → target ($after)"
           echo "before=$before" >> "$GITHUB_OUTPUT"
           echo "after=$after" >> "$GITHUB_OUTPUT"
 

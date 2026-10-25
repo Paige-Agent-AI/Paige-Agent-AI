@@ -408,6 +408,110 @@ class ReleaseFixtures(unittest.TestCase):
         self.assertEqual(kwargs['cwd'], self.repo)
         self.assertNotIn('env', kwargs, 'Inherit the same existing release connection; never extract a token')
 
+    def test_exact_server_unbundle_failure_has_only_a_fixed_reason(self):
+        message = 'Error status 500: {"message":"Failed to retrieve function bundle"}'
+        envelope = json.dumps({'_tag': 'Error', 'error': {'code': 'UnknownError', 'message': message}})
+        for stdout, stderr in [('', message), (envelope, '')]:
+            with self.subTest(stdout=bool(stdout)):
+                error = subprocess.CalledProcessError(1, ['supabase'], output=stdout, stderr=stderr)
+                with patch.object(readback.subprocess, 'run', side_effect=error):
+                    with self.assertRaisesRegex(readback.ReadbackError, '^api_unbundle_failed$'):
+                        readback.cli(['functions', 'download', 'paige-ai-chat', '--use-api'], self.repo, 1)
+                    with self.assertRaisesRegex(readback.ReadbackError, '^cli_readback_failed$'):
+                        readback.cli(['functions', 'list'], self.repo, 1)
+                    with self.assertRaisesRegex(readback.ReadbackError, '^cli_readback_failed$'):
+                        readback.cli(['functions', 'download', 'paige-ai-chat', '--use-docker'], self.repo, 1)
+
+    def test_auth_uncertainty_and_reflected_unbundle_text_never_admit_docker(self):
+        message = 'Error status 500: {"message":"Failed to retrieve function bundle"}'
+        errors = [subprocess.TimeoutExpired('supabase', 1), OSError('test-private-header')]
+        errors += [subprocess.CalledProcessError(code, ['supabase'], output=out, stderr=err)
+                   for code, out, err in [
+                       (-1, '', message), (2, '', message),
+                       (1, '', message.replace('500', '403')),
+                       (1, '', message.replace('500', '401')),
+                       (1, '', message.replace('500', '429')),
+                       (1, '', message.replace('500', '502')),
+                       (1, message, ''), (1, '', 'reflected: ' + message),
+                       (1, '', message + '\n' + message),
+                       (1, '', message + '\nError status 403: denied'),
+                       (1, '', message.replace('bundle"}', 'bundle","extra":true}')),
+                       (1, '', message.replace('{"message":', '{"message":"other","message":')),
+                       (1, json.dumps({'message': message}), ''),
+                       (1, '', message + 'x' * (1024 * 1024)),
+                   ]]
+        for error in errors:
+            with self.subTest(error=type(error).__name__, code=getattr(error, 'returncode', None)):
+                with patch.object(readback.subprocess, 'run', side_effect=error):
+                    with self.assertRaisesRegex(readback.ReadbackError, '^cli_readback_failed$'):
+                        readback.cli(['functions', 'download', 'paige-ai-chat', '--use-api'], self.repo, 1)
+
+    def verify_with_server_unbundle_failure(self):
+        self.recovery_calls = []
+        def runner(args, directory, timeout):
+            self.recovery_calls.append((args, directory, timeout))
+            if args[:3] == ['functions', 'download', 'paige-ai-chat']:
+                if args[3] == '--use-api':
+                    raise readback.ReadbackError('api_unbundle_failed')
+                self.assertEqual(args[3], '--use-docker')
+                self.assertEqual((directory / 'supabase/config.toml').read_text(),
+                                 'project_id = "test-project"\n')
+                # Supply the original file fixture at the real downloader boundary.
+                # No mocked acceptance: the unchanged manifest/race verifier runs.
+                return self.runner([*args[:3], '--use-api', *args[4:]], directory, timeout)
+            return self.runner(args, directory, timeout)
+        return readback.verify(self.repo, self.commit, self.names, runner, self.sleeps.append)
+
+    def test_vendor_download_recovery_requires_original_full_source_and_metadata(self):
+        report = self.verify_with_server_unbundle_failure()
+        self.assertTrue(report['all_pass'])
+        chat = next(r for r in report['functions'] if r['function'] == 'paige-ai-chat')
+        self.assertEqual(chat['download_mode'], 'docker_requested')
+        self.assertIn('supabase/functions/_shared/authority.ts', chat['files'])
+        calls = [c for c in self.recovery_calls if c[0][:2] == ['functions', 'download']]
+        self.assertEqual([c[0][3] for c in calls], ['--use-api', '--use-docker', '--use-api'])
+        self.assertNotEqual(calls[0][1], calls[1][1], 'Never mix partial API and Docker trees')
+        for args, directory, timeout in calls:
+            self.assertEqual(args[-2:], ['--project-ref', 'test-project'])
+            self.assertFalse(directory.is_relative_to(self.repo))
+            self.assertGreater(timeout, 0)
+            self.assertLessEqual(timeout, 60)
+            self.assertNotIn('deploy', args)
+            self.assertNotIn('--no-verify-jwt', args)
+
+    def test_recovered_download_cannot_hide_source_or_identity_failure(self):
+        for mode, reason in [('stale-chat', 'deployed_source_mismatch'),
+                             ('empty-download', 'download_missing_source'),
+                             ('missing-dependency', 'download_missing_dependency'),
+                             ('extra-untracked', 'immutable_source_unavailable'),
+                             ('changing-version', 'deployment_changed_during_readback')]:
+            with self.subTest(mode=mode):
+                self.mode = mode
+                self.assert_failed(self.verify_with_server_unbundle_failure(), reason)
+                self.assertLessEqual(sum(c[0][3] == '--use-docker' for c in self.recovery_calls
+                                         if c[0][:2] == ['functions', 'download']), readback.MAX_ATTEMPTS)
+
+    def test_unproved_import_map_cannot_select_local_download_recovery(self):
+        self.files['supabase/functions/paige-ai-chat/deno.json'] = '{"imports":{}}\n'
+        self.recommit()
+        self.rows[0]['import_map_path'] = 'file:///app/supabase/functions/paige-ai-chat/deno.json'
+        report = self.verify_with_server_unbundle_failure()
+        self.assert_failed(report, 'local_import_map_readback_unverified')
+        self.assertFalse(any('--use-docker' in c[0] for c in self.recovery_calls))
+
+    def test_recovery_deadline_does_not_start_a_second_read(self):
+        times = iter([0, 0, 0] + [readback.MAX_SECONDS + 1] * 20)
+        calls = []
+        def runner(args, directory, timeout):
+            calls.append(args)
+            if args[:2] == ['functions', 'download']:
+                raise readback.ReadbackError('api_unbundle_failed')
+            return self.runner(args, directory, timeout)
+        report = readback.verify(self.repo, self.commit, self.names, runner,
+                                 self.sleeps.append, lambda: next(times))
+        self.assertFalse(report['all_pass'])
+        self.assertFalse(any('--use-docker' in args for args in calls))
+
     def test_helper_main_returns_nonzero_and_writes_truthful_partial_report(self):
         selected = self.repo / 'affected.txt'
         selected.write_text('\n'.join(self.names) + '\n', encoding='utf-8')
@@ -448,6 +552,53 @@ class ReleaseFixtures(unittest.TestCase):
             bash = r'C:\Program Files\Git\bin\bash.exe'
         self.assertTrue(bash and Path(bash).is_file(), 'Actual tag-guard fixture requires existing Bash')
         return subprocess.run([bash, '-e', '-c', script], cwd=self.repo, capture_output=True, text=True, timeout=15)
+
+    def run_actual_deployment_baseline(self, event_before):
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        step = workflow.split('- name: Resolve deployment baseline', 1)[1].split('- name: Compute changed function files', 1)[0]
+        script = textwrap.dedent(step.split('run: |', 1)[1])
+        script = script.replace('${{ github.sha }}', self.commit).replace('${{ github.event.before }}', event_before)
+        script = script.replace('${{ github.event_name }}', 'push')
+        bash = shutil.which('bash') or (r'C:\Program Files\Git\bin\bash.exe' if os.name == 'nt' else None)
+        self.assertTrue(bash and Path(bash).is_file())
+        return subprocess.run([bash, '-e', '-c', script], cwd=self.repo, capture_output=True, text=True,
+                              timeout=15, env={**os.environ, 'GITHUB_OUTPUT': 'baseline-output.txt'})
+
+    def test_push_recovery_selects_original_unverified_gap_not_only_event_before(self):
+        certified = self.commit
+        self.git('remote', 'add', 'origin', str(self.repo))
+        self.files['supabase/functions/_shared/authority.ts'] += '// unverified upload\n'
+        self.recommit()
+        unverified = self.commit
+        self.files['readback-fix.txt'] = 'Source-only helper correction fixture\n'
+        self.recommit()
+        result = self.run_actual_deployment_baseline(unverified)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        output = (self.repo / 'baseline-output.txt').read_text().splitlines()
+        self.assertIn(f'before={certified}', output)
+        self.assertIn(f'after={self.commit}', output)
+        selected = self.select_as_workflow(certified)
+        self.assertIn('paige-ai-chat', selected)
+        self.assertEqual(self.run_actual_tag_guard(certified).returncode, 0)
+
+    def test_baseline_rejects_missing_noncommit_foreign_and_unfetchable_anchors(self):
+        certified = self.commit
+        self.git('remote', 'add', 'origin', str(self.repo))
+        blob = self.git('rev-parse', f'{self.commit}:supabase/config.toml').strip()
+        foreign = self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid',
+                           'commit-tree', self.git('rev-parse', 'HEAD^{tree}').strip(), '-m', 'Foreign anchor').strip()
+        for anchor in [None, blob, foreign]:
+            with self.subTest(anchor=anchor):
+                self.git('tag', '-f', 'edge-live', certified)
+                self.git('tag', '-d', 'edge-live')
+                if anchor:
+                    self.git('tag', 'edge-live', anchor)
+                (self.repo / 'baseline-output.txt').unlink(missing_ok=True)
+                self.assertNotEqual(self.run_actual_deployment_baseline(self.commit).returncode, 0)
+                self.assertFalse((self.repo / 'baseline-output.txt').exists())
+        self.git('tag', '-f', 'edge-live', certified)
+        self.git('remote', 'remove', 'origin')
+        self.assertNotEqual(self.run_actual_deployment_baseline(self.commit).returncode, 0)
 
     def select_as_workflow(self, before):
         """Execute the actual selection shell, graph and helper; never invokes a provider."""

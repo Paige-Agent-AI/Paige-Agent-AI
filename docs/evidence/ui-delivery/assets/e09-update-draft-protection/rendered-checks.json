@@ -1,0 +1,95 @@
+{
+  "scope": "actual shared banner and guard; synthetic composer host, no authenticated or physical-device proof",
+  "geometry": [
+    {
+      "focus": "Send",
+      "hit": "Send",
+      "inputFont": "16px",
+      "notice": false,
+      "reducedMotion": true,
+      "scroll": 1536,
+      "send": {
+        "h": 44,
+        "w": 63.67499923706055,
+        "x": 1020.3250122070312,
+        "y": 686.4000244140625
+      },
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "focus": "Send",
+      "hit": "Send",
+      "inputFont": "16px",
+      "notice": false,
+      "reducedMotion": true,
+      "scroll": 1366,
+      "send": {
+        "h": 44,
+        "w": 63.67499923706055,
+        "x": 935.5250244140624,
+        "y": 684
+      },
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "focus": "Send",
+      "hit": "Send",
+      "inputFont": "16px",
+      "notice": false,
+      "reducedMotion": true,
+      "scroll": 1024,
+      "send": {
+        "h": 44,
+        "w": 63.67499923706055,
+        "x": 764.3250122070312,
+        "y": 684
+      },
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "focus": "Send",
+      "hit": "Send",
+      "inputFont": "16px",
+      "notice": false,
+      "reducedMotion": true,
+      "scroll": 900,
+      "send": {
+        "h": 44,
+        "w": 63.67499923706055,
+        "x": 702.3250122070312,
+        "y": 916
+      },
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "focus": "Send",
+      "hit": "Send",
+      "inputFont": "16px",
+      "notice": false,
+      "reducedMotion": true,
+      "scroll": 390,
+      "send": {
+        "h": 44,
+        "w": 63.67499923706055,
+        "x": 306.7250061035156,
+        "y": 760
+      },
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

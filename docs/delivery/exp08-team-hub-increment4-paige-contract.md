@@ -125,11 +125,19 @@ selector. Model-supplied tenant or user ids are never honoured.
   - Query length is 2–200 after trimming; anything else returns `{ok:false, code:'invalid'}`.
 - **Returned fields:** message id, conversation id, conversation label, thread root, author display
   name, time, and a snippet of at most 240 characters. No email, no storage path.
-- **No index and no new storage:** a sequential, bounded scan over the asker's visible conversations.
-  - The scan is bounded by the workspace's message volume: the visibility helper runs per row, so
-    the planner may read a workspace's messages before filtering them.
-  - It is honestly slower than an index at scale. That is a known limit, because an index or
-    embedding would store or index content, which the owner excluded.
+- **No text index and no new storage.** No message text is indexed or embedded anywhere.
+  - *As built in increment 4:* a sequential, bounded scan. The visibility helper ran per row, so
+    the planner read a workspace's messages before filtering them (4.3–4.8 s at 1M messages).
+  - *Read-performance slice (migration `20271114250008`):* visibility is resolved once per call,
+    and messages are read newest first through a btree index over `(tenant_id, created_at, id)`.
+    The index holds ids and times only, no text, so the owner's "nothing indexed" exclusion of
+    content still holds. Measured at 1M messages: 2–4 ms for a common word, about 1.8 s for a rare
+    one. A text (trigram) index would make rare words fast too, but it indexes content, so it is
+    not built and needs an owner ruling.
+  - The same migration gives `team_hub_list_messages` a partial index over
+    `(channel_id, created_at, id) WHERE parent_message_id IS NULL` and takes the page before
+    building JSON (0.75–1.6 s → 2–3 ms). The output of both functions is byte-identical, proven by
+    `supabase/tests/exp08_team_hub_read_performance.sql`.
 - **Names:** an author or DM party without an active seat in the workspace is *Former teammate*,
   never their current profile name.
 - **Proof:** `supabase/tests/exp08_team_hub_search.sql`, mutation-tested and wired into CI. It

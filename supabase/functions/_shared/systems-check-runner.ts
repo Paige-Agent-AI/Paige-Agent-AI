@@ -651,7 +651,9 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
 
   if (actionFiling === "none") {
     let runRead = admin.from("paige_systems_check_run")
-      .select("id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by" + (manualCaptureRunId ? ",work_id" : ""))
+      .select(manualCaptureRunId
+        ? "id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by,work_id"
+        : "id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by")
       .eq("id", runId);
     runRead = scope === "operator" ? runRead.is("tenant_id", null) : runRead.eq("tenant_id", tenantId);
     const { data, error } = await captureIo(() => runRead.maybeSingle(), "run_readback");

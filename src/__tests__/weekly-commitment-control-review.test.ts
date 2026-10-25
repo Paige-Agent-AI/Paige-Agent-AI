@@ -20,6 +20,30 @@ function fixture(data:unknown=canonical()) {
 const target={automation_id:process};
 
 describe("canonical weekly conversation review without approval or execution",()=>{
+  it("prepares resume with the exact native paused cutoff and no write",async()=>{
+    const data=canonical(),cutoff="2026-10-23T15:20:10.123456+00:00";
+    Object.assign(data.checks[0],{schedule:{...schedule,future_control_at:cutoff}});
+    const f=fixture(data),result=await prepareWeeklyControlReview(identity,f,"resume",target,request);
+    expect(result).toMatchObject({status:"review_ready",binding:{rpc:"control_weekly_commitment_check",args:{
+      _automation_id:process,_action:"authorize",_expected_revision:7,
+      _expected_control:{state:"paused",future_control_at:cutoff}}},
+      review:{operation:"resume",authorization:"not_granted_by_review",future_only:true}});
+    expect(f.calls.every(name=>["current_user_tenant_id","weekly_commitment_owner","get_weekly_commitment_checks"].includes(name))).toBe(true);
+  });
+  it("cannot prepare resume from a legacy read without its saved cutoff",async()=>{
+    const data=canonical();Object.assign(data.checks[0],{schedule});
+    const result=await prepareWeeklyControlReview(identity,fixture(data),"resume",target,request);
+    expect(result).toMatchObject({status:"unavailable",reason:"canonical_binding_failed"});
+    expect(result).not.toHaveProperty("binding");
+  });
+  it("cannot prepare resume for a requested or already scheduled responsibility",async()=>{
+    for(const state of ["requested","scheduled"]){
+      const data=canonical();data.checks[0].schedule_status=state;
+      const result=await prepareWeeklyControlReview(identity,fixture(data),"resume",target,request);
+      expect(result.status).toBe("unavailable");
+      expect(result).not.toHaveProperty("binding");
+    }
+  });
   it("keeps a legacy status readable without inventing a saved null control cutoff",async()=>{
     const data=canonical();Object.assign(data.checks[0],{schedule});
     const read=await readWeeklyCommitmentProjection(identity,fixture(data));
@@ -91,7 +115,7 @@ describe("canonical weekly conversation review without approval or execution",()
   it.each(["authorize","pause","resume","cancel"] as const)("%s reviews the exact saved schedule without approval authority",async operation=>{
     const f=fixture();const r=await prepareWeeklyControlReview(identity,f,operation,target,request);
     expect(r).toMatchObject({status:"review_ready",review:{operation,proposed_schedule:schedule,revision:7,authorization:"not_granted_by_review",execution_availability:"held"},
-      binding:{rpc:"control_weekly_commitment_check",args:{_automation_id:process,_action:operation,_expected_revision:7}}});
+      binding:{rpc:"control_weekly_commitment_check",args:{_automation_id:process,_action:operation==="resume"?"authorize":operation,_expected_revision:7}}});
     expect(f.calls).not.toEqual(expect.arrayContaining(["control_weekly_commitment_check","record_capability_run"]));
   });
   it("returns fresh changed revision on a subsequent conversation without a memory store",async()=>{

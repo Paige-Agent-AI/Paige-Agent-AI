@@ -3986,3 +3986,7 @@ bound, issued-read cancellation, CPU-incident closure, action/recurrence/Live or
 catalogue/algorithm promotion is claimed. The complete ten-outcome Experience,
 E5-CV1–9, universal SOLO cohorts and founder acceptance remain open. This is
 mechanical source-release accounting, not another delivery log or activation.
+
+## EXP05 routine automation session recovery — October25 source correction
+
+The existing native Operations/Settings process hook must not discard original history or a pending/inconclusive control on routine same-session SIGNED_IN. Reuse canonical nonsecret actor/sign-in metadata for retention only; genuine session/scope changes still retire synchronously and original caller/native CAS remain authority. Actual hook causal38/4 becomes228/0 across five owning data/hook/UI files, including original native component/result/link preservation and all negative controls. [Source and proof limits](../evidence/ui-delivery/exp05-owner-task-session-recovery.md) retain strict base/candidate15 inherited failures/zero new, unchanged native markup/styles and actual pre-release ordinary-owner original Task/receipt/reload retrieval separately from corrected deployment acceptance. No Root lease, runtime, writer, provider, capability/catalogue/algorithm maturity or full-Experience closure; exact review/CI/deployment/current authenticated return still owed.

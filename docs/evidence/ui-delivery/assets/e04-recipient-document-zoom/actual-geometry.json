@@ -1,0 +1,182 @@
+[
+  {
+    "answers": [
+      {
+        "checked": false,
+        "type": "text",
+        "value": "Controlled approver"
+      },
+      {
+        "checked": false,
+        "type": "text",
+        "value": "CC"
+      },
+      {
+        "checked": false,
+        "type": "radio",
+        "value": "on"
+      },
+      {
+        "checked": true,
+        "type": "radio",
+        "value": "on"
+      }
+    ],
+    "focused": true,
+    "pin": {
+      "background": "rgba(180, 155, 235, 0.3)",
+      "border": "0.8px solid rgb(91, 63, 214)",
+      "color": "rgb(48, 35, 92)"
+    },
+    "resetHeight": 44,
+    "scrollWidth": 1521,
+    "well": {
+      "scrollWidth": 1252,
+      "width": 653
+    },
+    "width": 1521,
+    "zoom": "2",
+    "zoomHeight": 44,
+    "spec": {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "zoom": "2"
+    }
+  },
+  {
+    "answers": [
+      {
+        "checked": false,
+        "type": "text",
+        "value": "Controlled approver"
+      },
+      {
+        "checked": false,
+        "type": "text",
+        "value": "CC"
+      },
+      {
+        "checked": false,
+        "type": "radio",
+        "value": "on"
+      },
+      {
+        "checked": true,
+        "type": "radio",
+        "value": "on"
+      }
+    ],
+    "focused": true,
+    "pin": {
+      "background": "rgba(180, 155, 235, 0.3)",
+      "border": "0.8px solid rgb(138, 114, 245)",
+      "color": "rgb(48, 35, 92)"
+    },
+    "resetHeight": 44,
+    "scrollWidth": 1521,
+    "well": {
+      "scrollWidth": 1252,
+      "width": 653
+    },
+    "width": 1521,
+    "zoom": "2",
+    "zoomHeight": 44,
+    "spec": {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "zoom": "2"
+    }
+  },
+  {
+    "answers": [
+      {
+        "checked": false,
+        "type": "text",
+        "value": "Controlled approver"
+      },
+      {
+        "checked": false,
+        "type": "text",
+        "value": "CC"
+      },
+      {
+        "checked": false,
+        "type": "radio",
+        "value": "on"
+      },
+      {
+        "checked": true,
+        "type": "radio",
+        "value": "on"
+      }
+    ],
+    "focused": true,
+    "pin": {
+      "background": "rgba(180, 155, 235, 0.3)",
+      "border": "0.8px solid rgb(138, 114, 245)",
+      "color": "rgb(48, 35, 92)"
+    },
+    "resetHeight": 44,
+    "scrollWidth": 375,
+    "well": {
+      "scrollWidth": 946,
+      "width": 326
+    },
+    "width": 375,
+    "zoom": "1.5",
+    "zoomHeight": 44,
+    "spec": {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "zoom": "1.5"
+    }
+  },
+  {
+    "answers": [
+      {
+        "checked": false,
+        "type": "text",
+        "value": "Controlled approver"
+      },
+      {
+        "checked": false,
+        "type": "text",
+        "value": "CC"
+      },
+      {
+        "checked": false,
+        "type": "radio",
+        "value": "on"
+      },
+      {
+        "checked": true,
+        "type": "radio",
+        "value": "on"
+      }
+    ],
+    "focused": true,
+    "pin": {
+      "background": "rgba(180, 155, 235, 0.3)",
+      "border": "0.8px solid rgb(91, 63, 214)",
+      "color": "rgb(48, 35, 92)"
+    },
+    "resetHeight": 44,
+    "scrollWidth": 375,
+    "well": {
+      "scrollWidth": 946,
+      "width": 326
+    },
+    "width": 375,
+    "zoom": "1.5",
+    "zoomHeight": 44,
+    "spec": {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "zoom": "1.5"
+    }
+  }
+]

@@ -1,5 +1,5 @@
 import { object } from "../_shared/sales-collections/primitives.ts";
-import { prepareSignatureRequestReview, readPreparedSignatureSenders, PreparedSignatureRequestUnavailable,
+import { prepareSignatureRequestReview, readExactPreparedSignatureRequest, readPreparedSignatureSenders, PreparedSignatureRequestUnavailable,
   type PreparedSignatureEmailPorts } from "../_shared/agreements/prepared-signature-request.ts";
 import { PreparedSignatureReviewUnavailable } from "../_shared/agreements/prepared-signature-review.ts";
 import { OwnerPreparationUnavailable, type OwnerPreparationService,
@@ -140,7 +140,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
         },
       };
       const readReview = reviewUrl.searchParams.get("review") === "senders"
-        ? readPreparedSignatureSenders : prepareSignatureRequestReview;
+        ? readPreparedSignatureSenders
+        : Object.prototype.hasOwnProperty.call(input, "expected_request_sha256")
+        ? readExactPreparedSignatureRequest : prepareSignatureRequestReview;
       const review = await readReview(input,
         caller as unknown as OwnerPreparationCaller, service, actorId, {
           admin: admin as unknown as PreparedSignatureEmailPorts["admin"],
@@ -153,7 +155,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (error instanceof PreparedSignatureRequestUnavailable) {
         const response = {
           INVALID_REQUEST: { status: 400, code: "invalid_request", error: "Choose the original saved agreement and request." },
-          REVIEW_CHANGED: { status: 409, code: "source_changed", error: "The saved document or recipients changed. Review the current preparation." },
+          REVIEW_CHANGED: { status: 409, code: "source_changed", error: "The saved agreement request changed. Review its document, recipients, sender and messages again." },
           FIELD_CORRECTIONS_REQUIRED: { status: 422, code: "fields_incomplete", error: "Complete the required signer fields before preparing this request." },
           MESSAGE_INVALID: { status: 400, code: "message_invalid", error: "Review each signer's subject and message. Keep the secure signing link included, and remove private signing links pasted from earlier requests." },
           SENDER_UNVERIFIED: { status: 422, code: "sender_unverified", error: "Email sending could not be verified for this request. Check your email connection or try the review again later." },

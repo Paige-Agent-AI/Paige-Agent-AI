@@ -432,6 +432,61 @@ const reviewBuilder = () => {
   assert.equal(typeof fn, "function", "Missing original sender-and-message request review");
   return fn!;
 };
+const exactRequestReader = () => {
+  const fn = (candidate as unknown as { readExactPreparedSignatureRequest?: ReviewBuilder })
+    .readExactPreparedSignatureRequest;
+  assert.equal(typeof fn, "function", "Missing exact reviewed-request preflight before consequential admission");
+  return fn!;
+};
+// The canonical approval/execution integration must never silently adopt a new
+// message, sending identity or operation after this complete request was reviewed.
+Deno.test("exact request preflight reuses the original reviewed document and messages without issuing approval", async () => {
+  const x = await requestSeed(), reviewed = await x.run(), before = effects(x.f);
+  const result = await exactRequestReader()({ ...x.input, expected_request_sha256: reviewed.request_sha256 },
+    x.f.caller, x.f.service, actor, x.emailPorts);
+  assert.deepEqual(result, reviewed);
+  assert.equal(result.approval, "not_requested");
+  assert.equal(result.execution, "unavailable");
+  assert.deepEqual(effects(x.f), before);
+});
+for (const change of ["message", "sender", "operation"] as const) {
+  Deno.test("exact request preflight refuses a newly valid " + change + " instead of renewing the reviewed request", async () => {
+    const x = await requestSeed(), reviewed = await x.run(), before = effects(x.f);
+    if (change === "message") x.input.messages[0].body_text = "A different valid message\n" + signingLinkMarker;
+    if (change === "sender") x.state.connector.from_name = "Changed business display name";
+    if (change === "operation") x.input.operation_id = next;
+    await assert.rejects(() => exactRequestReader()({ ...x.input, expected_request_sha256: reviewed.request_sha256 },
+      x.f.caller, x.f.service, actor, x.emailPorts), refuses("REVIEW_CHANGED"));
+    assert.deepEqual(effects(x.f), before);
+  });
+}
+Deno.test("exact request preflight captures its whole request and expected digest before asynchronous reads", async () => {
+  const x = await requestSeed(), reviewed = await x.run();
+  const input = { ...x.input, expected_request_sha256: reviewed.request_sha256 };
+  x.f.state.onDownload = () => {
+    input.expected_request_sha256 = "0".repeat(64);
+    input.messages[0].subject = "Changed during the read";
+  };
+  const result = await exactRequestReader()(input, x.f.caller, x.f.service, actor, x.emailPorts);
+  assert.deepEqual(result, reviewed);
+});
+Deno.test("exact request digest cannot introduce request-authored approval or authority", async () => {
+  const x = await requestSeed(), reviewed = await x.run(), before = { ...x.f.calls };
+  for (const extra of [{ approved: true }, { governance: { approved_fingerprint: reviewed.request_sha256 } },
+    { actor_user_id: actor }, { approval_cycle_nonce: operation }]) {
+    await assert.rejects(() => exactRequestReader()({ ...x.input, expected_request_sha256: reviewed.request_sha256, ...extra },
+      x.f.caller, x.f.service, actor, x.emailPorts), refuses("INVALID_REQUEST"));
+  }
+  assert.deepEqual(x.f.calls, before);
+});
+Deno.test("exact request preflight refuses malformed or missing request digests before private reads", async () => {
+  const x = await requestSeed(), before = { ...x.f.calls };
+  for (const hash of [undefined, null, "A".repeat(64), "a".repeat(63), "a".repeat(65)]) {
+    await assert.rejects(() => exactRequestReader()({ ...x.input, expected_request_sha256: hash },
+      x.f.caller, x.f.service, actor, x.emailPorts), refuses("INVALID_REQUEST"));
+  }
+  assert.deepEqual(x.f.calls, before);
+});
 async function requestSeed() {
   const seed = await seeded();
   const signerId = seed.packet.signers[0].id;
@@ -869,6 +924,26 @@ Deno.test("original agreement-send mounts private request review before legacy p
     });
     await t.step("no caller credential cannot reach original authority reads", async () => {
       assert.equal((await invoke(x.input, "?review=prepared-request", { Authorization: "" })).status, 401);
+    });
+    await t.step("the original private read rechecks the exact reviewed request without admitting a send", async () => {
+      const initial = await invoke();
+      assert.equal(initial.status, 200);
+      const original = await initial.json();
+      const exact = { ...x.input, expected_request_sha256: original.review.request_sha256 };
+      const verified = await invoke(exact);
+      assert.equal(verified.status, 200, "The original review door must consume complete-request preflight");
+      const current = await verified.json();
+      assert.deepEqual(current, original);
+      assert.equal(current.review.approval, "not_requested");
+      assert.equal(current.review.execution, "unavailable");
+      try {
+        x.input.messages[0].subject = "A different valid invitation";
+        const changed = await invoke(exact);
+        assert.equal(changed.status, 409);
+        assert.equal((await changed.json()).code, "source_changed");
+        assert.deepEqual(effects(x.f), before);
+        assert.deepEqual(unexpected, []);
+      } finally { x.input.messages[0].subject = exact.messages[0].subject = "Please review your service agreement"; }
     });
     assert.deepEqual(unexpected, []);
     assert.deepEqual(effects(x.f), before);

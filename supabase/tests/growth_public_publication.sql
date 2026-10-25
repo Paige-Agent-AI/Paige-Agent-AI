@@ -69,19 +69,14 @@ INSERT INTO public.growth_pages(id,tenant_id,slug,title,status,draft_blocks_json
  ('b1900700-0000-4000-8000-0000000007a2','b1900700-0000-4000-8000-000000000711','never-published','Still private','draft',
   '[{"type":"hero","title":"Not for visitors yet"}]'::jsonb,NULL);
 
--- TEMPORARY DIAGNOSTICS (removed before merge): why does the owner actor fail the authority check?
-DO $diag$ DECLARE m boolean; BEGIN
- RAISE NOTICE 'DIAG auth.uid()=%', auth.uid();
- RAISE NOTICE 'DIAG auth.role()=%', auth.role();
- RAISE NOTICE 'DIAG claims=%', current_setting('request.jwt.claims', true);
- SELECT EXISTS (SELECT 1 FROM public.tenant_members
-    WHERE tenant_id='b1900700-0000-4000-8000-000000000711'
-      AND user_id='b1900700-0000-4000-8000-000000000721'
-      AND status='active' AND role IN ('owner','admin')) INTO m;
- RAISE NOTICE 'DIAG member-exists=%', m;
- SELECT count(*)::boolean INTO m FROM public.tenant_members WHERE tenant_id='b1900700-0000-4000-8000-000000000711';
- RAISE NOTICE 'DIAG any-members-for-tenant=%', m;
- SELECT to_jsonb(t) INTO m FROM public.tenants t WHERE t.id='b1900700-0000-4000-8000-000000000711' IS NULL;
+-- TEMPORARY DIAGNOSTICS (removed before merge): why does the member check miss?
+DO $diag$ DECLARE j jsonb; BEGIN
+ SELECT coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) INTO j FROM public.tenant_members x WHERE x.tenant_id='b1900700-0000-4000-8000-000000000711';
+ RAISE NOTICE 'DIAG rows-for-tenant=%', j;
+ SELECT jsonb_agg(jsonb_build_object('col',column_name,'type',udt_name)) INTO j FROM information_schema.columns WHERE table_schema='public' AND table_name='tenant_members';
+ RAISE NOTICE 'DIAG columns=%', j;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('tg',tgname,'fn',pg_get_functiondef(tgfoid))) ,'[]'::jsonb) INTO j FROM pg_trigger WHERE tgrelid='public.tenant_members'::regclass AND NOT tgisinternal;
+ RAISE NOTICE 'DIAG triggers=%', j;
 END $diag$;
 
 -- 1. AUTHORITY: the stored call refuses a person who is not this workspace's owner/admin.

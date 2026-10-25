@@ -1,34 +1,9 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Auto-recover from stale chunk errors after a new deploy.
-// When index.html is cached but references hashed JS chunks that no longer
-// exist, dynamic imports throw "Failed to fetch dynamically imported module".
-// We reload once (guarded by sessionStorage) to pick up the fresh index.html.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic accepts any lazy component
-const lazyWithReload = <T extends React.ComponentType<any>>(
-  factory: () => Promise<{ default: T }>
-) =>
-  React.lazy(async () => {
-    try {
-      const mod = await factory();
-      try { sessionStorage.removeItem("__chunk_reload__"); } catch { /* best-effort cleanup */ }
-      return mod;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic-import error is untyped
-    } catch (err: any) {
-      const msg = String(err?.message || err);
-      if (
-        /Failed to fetch dynamically imported module|Importing a module script failed|Unexpected end of input|ChunkLoadError|Loading chunk/i.test(msg) &&
-        !sessionStorage.getItem("__chunk_reload__")
-      ) {
-        sessionStorage.setItem("__chunk_reload__", "1");
-        window.location.reload();
-        // Return a never-resolving promise while the page reloads.
-        return new Promise<{ default: T }>(() => {});
-      }
-      throw err;
-    }
-  });
+// A failed route stays recoverable; only an explicit user action reloads.
+const lazyPage = React.lazy;
+import { PageLoadBoundary } from "@/components/app/PageLoadBoundary";
 import { ThemeProvider } from "next-themes";
 import { embeddedFormTheme, isFormOnBusinessSite } from "@/hooks/useEmbedHeight";
 import { Toaster } from "@/components/ui/toaster";
@@ -56,105 +31,105 @@ import { PlatformUpdateBanner } from "./components/PlatformUpdateBanner";
 import Auth from "./pages/Auth";
 import InvoiceDocument from "./pages/InvoiceDocument";
 import PaymentReturn from "./pages/PaymentReturn";
-const OperatorEntry = lazyWithReload(() => import("@/operator/OperatorEntry"));
-const JoinPlatform = lazyWithReload(() => import("./pages/JoinPlatform"));
-const McpOAuthCallback = lazyWithReload(() => import("./pages/McpOAuthCallback"));
-const ZapierOAuthCallback = lazyWithReload(() => import("./pages/ZapierOAuthCallback"));
-const BookingPage = lazyWithReload(() => import("./pages/BookingPage"));
-const ManageBooking = lazyWithReload(() => import("./pages/ManageBooking"));
-const PaigeHome = lazyWithReload(() => import("./pages/PaigeHome"));
-const Onboarding = lazyWithReload(() => import("./pages/Onboarding"));
-const McpAuthorize = lazyWithReload(() => import("./pages/McpAuthorize"));
-const JoinWorkspace = lazyWithReload(() => import("./pages/JoinWorkspace"));
-const AgreementSigning = lazyWithReload(() => import("./pages/sign/AgreementSigning"));
-const PortalGateway = lazyWithReload(() => import("./pages/PortalGateway"));
-const TenantStorefront = lazyWithReload(() => import("./pages/public/TenantStorefront"));
-const GrowthPageRenderer = lazyWithReload(() => import("./pages/public/GrowthPageRenderer"));
-const GrowthFormRenderer = lazyWithReload(() => import("./pages/public/GrowthFormRenderer"));
-const GrowthFunnelRenderer = lazyWithReload(() => import("./pages/public/GrowthFunnelRenderer"));
+const OperatorEntry = lazyPage(() => import("@/operator/OperatorEntry"));
+const JoinPlatform = lazyPage(() => import("./pages/JoinPlatform"));
+const McpOAuthCallback = lazyPage(() => import("./pages/McpOAuthCallback"));
+const ZapierOAuthCallback = lazyPage(() => import("./pages/ZapierOAuthCallback"));
+const BookingPage = lazyPage(() => import("./pages/BookingPage"));
+const ManageBooking = lazyPage(() => import("./pages/ManageBooking"));
+const PaigeHome = lazyPage(() => import("./pages/PaigeHome"));
+const Onboarding = lazyPage(() => import("./pages/Onboarding"));
+const McpAuthorize = lazyPage(() => import("./pages/McpAuthorize"));
+const JoinWorkspace = lazyPage(() => import("./pages/JoinWorkspace"));
+const AgreementSigning = lazyPage(() => import("./pages/sign/AgreementSigning"));
+const PortalGateway = lazyPage(() => import("./pages/PortalGateway"));
+const TenantStorefront = lazyPage(() => import("./pages/public/TenantStorefront"));
+const GrowthPageRenderer = lazyPage(() => import("./pages/public/GrowthPageRenderer"));
+const GrowthFormRenderer = lazyPage(() => import("./pages/public/GrowthFormRenderer"));
+const GrowthFunnelRenderer = lazyPage(() => import("./pages/public/GrowthFunnelRenderer"));
 import NotFound from "./pages/NotFound";
 
 // Everything else is lazy-loaded for a smaller initial bundle
-const AppShell = lazyWithReload(() => import("./pages/AppShell"));
-const CreditIntelligence = lazyWithReload(() => import("./pages/CreditIntelligence"));
-const FundingMatches = lazyWithReload(() => import("./pages/FundingMatches"));
-const FundingJourney = lazyWithReload(() => import("./pages/FundingJourney"));
-const FinancialProfile = lazyWithReload(() => import("./pages/FinancialProfile"));
+const AppShell = lazyPage(() => import("./pages/AppShell"));
+const CreditIntelligence = lazyPage(() => import("./pages/CreditIntelligence"));
+const FundingMatches = lazyPage(() => import("./pages/FundingMatches"));
+const FundingJourney = lazyPage(() => import("./pages/FundingJourney"));
+const FinancialProfile = lazyPage(() => import("./pages/FinancialProfile"));
 // Agency Operator side (§9) — its own top-level shell, peer to the God console.
 // AgencyEntry (§65 R0-slice-2) dispatches `/agency/*`: a numeric first segment
 // (/agency/{account}/…) → the new URL-driven AgencyApp shell; anything else → the
 // legacy AgencyLayout board (gated on server-proven agency-manager eligibility).
-const AgencyEntry = lazyWithReload(() => import("./agency/AgencyEntry"));
+const AgencyEntry = lazyPage(() => import("./agency/AgencyEntry"));
 // Sub-account operator side (§65 R3c-i) — the same AgencyApp shell (mode=
 // "subaccount"), its own top-level address (/business/{account}), peer to
 // /agency and the canonical tenant shells.
-const BusinessEntry = lazyWithReload(() => import("./business/BusinessEntry"));
+const BusinessEntry = lazyPage(() => import("./business/BusinessEntry"));
 // Tenant-account redesign prototype — local representative data only; no backend seams.
-const TenantRedesign = lazyWithReload(() => import("./prototype/TenantRedesign"));
+const TenantRedesign = lazyPage(() => import("./prototype/TenantRedesign"));
 // Solo operator side (§65 R3d-i) — the SoloApp shell, its own top-level
 // address (/solo/{account}), peer to /business and /agency.
-const SoloEntry = lazyWithReload(() => import("./solo/SoloEntry"));
-const ChooseAccount = lazyWithReload(() => import("./pages/ChooseAccount"));
-const ResetPassword = lazyWithReload(() => import("./pages/ResetPassword"));
-const AffiliateApply = lazyWithReload(() => import("./pages/AffiliateApply"));
-const BrokerApply = lazyWithReload(() => import("./pages/BrokerApply"));
-const BrokerWorkspace = lazyWithReload(() => import("./pages/broker/BrokerWorkspace"));
-const BrokerOverview = lazyWithReload(() => import("./pages/broker/BrokerOverview"));
-const BrokerClients = lazyWithReload(() => import("./pages/broker/BrokerClients"));
-const BrokerSettings = lazyWithReload(() => import("./pages/broker/BrokerSettings"));
-const BrokerComingSoon = lazyWithReload(() => import("./pages/broker/BrokerComingSoon"));
-const BrokerCommissions = lazyWithReload(() => import("./pages/broker/BrokerCommissions"));
-const BrokerMCC = lazyWithReload(() => import("./pages/broker/BrokerMCC"));
-const BrokerSessions = lazyWithReload(() => import("./pages/broker/BrokerSessions"));
-const BrokerPaigeSession = lazyWithReload(() => import("./pages/broker/BrokerPaigeSession"));
-const BrokerTeam = lazyWithReload(() => import("./pages/broker/BrokerTeam"));
-const AcceptBrokerInvite = lazyWithReload(() => import("./pages/broker/AcceptBrokerInvite"));
-const Unsubscribe = lazyWithReload(() => import("./pages/Unsubscribe"));
-const Terms = lazyWithReload(() => import("./pages/Terms"));
-const Privacy = lazyWithReload(() => import("./pages/Privacy"));
-const SmsTerms = lazyWithReload(() => import("./pages/SmsTerms"));
-const LegalDoc = lazyWithReload(() => import("./pages/LegalDoc"));
-const About = lazyWithReload(() => import("./pages/About"));
-const Pricing = lazyWithReload(() => import("./pages/Pricing"));
-const Welcome = lazyWithReload(() => import("./pages/Welcome"));
-const Blog = lazyWithReload(() => import("./pages/Blog"));
+const SoloEntry = lazyPage(() => import("./solo/SoloEntry"));
+const ChooseAccount = lazyPage(() => import("./pages/ChooseAccount"));
+const ResetPassword = lazyPage(() => import("./pages/ResetPassword"));
+const AffiliateApply = lazyPage(() => import("./pages/AffiliateApply"));
+const BrokerApply = lazyPage(() => import("./pages/BrokerApply"));
+const BrokerWorkspace = lazyPage(() => import("./pages/broker/BrokerWorkspace"));
+const BrokerOverview = lazyPage(() => import("./pages/broker/BrokerOverview"));
+const BrokerClients = lazyPage(() => import("./pages/broker/BrokerClients"));
+const BrokerSettings = lazyPage(() => import("./pages/broker/BrokerSettings"));
+const BrokerComingSoon = lazyPage(() => import("./pages/broker/BrokerComingSoon"));
+const BrokerCommissions = lazyPage(() => import("./pages/broker/BrokerCommissions"));
+const BrokerMCC = lazyPage(() => import("./pages/broker/BrokerMCC"));
+const BrokerSessions = lazyPage(() => import("./pages/broker/BrokerSessions"));
+const BrokerPaigeSession = lazyPage(() => import("./pages/broker/BrokerPaigeSession"));
+const BrokerTeam = lazyPage(() => import("./pages/broker/BrokerTeam"));
+const AcceptBrokerInvite = lazyPage(() => import("./pages/broker/AcceptBrokerInvite"));
+const Unsubscribe = lazyPage(() => import("./pages/Unsubscribe"));
+const Terms = lazyPage(() => import("./pages/Terms"));
+const Privacy = lazyPage(() => import("./pages/Privacy"));
+const SmsTerms = lazyPage(() => import("./pages/SmsTerms"));
+const LegalDoc = lazyPage(() => import("./pages/LegalDoc"));
+const About = lazyPage(() => import("./pages/About"));
+const Pricing = lazyPage(() => import("./pages/Pricing"));
+const Welcome = lazyPage(() => import("./pages/Welcome"));
+const Blog = lazyPage(() => import("./pages/Blog"));
 
 // BTF workspace surface removed — consumer /app dashboard is the single client home. (Sprint 211.b cleanup)
-const OnboardLayout = lazyWithReload(() => import("./pages/onboard/OnboardLayout"));
-const OnboardStep1 = lazyWithReload(() => import("./pages/onboard/Step1Welcome"));
-const OnboardStep2 = lazyWithReload(() => import("./pages/onboard/Step2Agreement"));
+const OnboardLayout = lazyPage(() => import("./pages/onboard/OnboardLayout"));
+const OnboardStep1 = lazyPage(() => import("./pages/onboard/Step1Welcome"));
+const OnboardStep2 = lazyPage(() => import("./pages/onboard/Step2Agreement"));
 // Onboarding is now two gates (welcome + agreement); everything past agreement
 // happens inside /workspace under Paige. The old Step3-6 (payment/intake/docs/
 // complete) were dead — OnboardLayout aliases those paths to /app so they never
 // rendered — and carried hardcoded §2 funding content. Removed in the final
 // wiring audit. If a paid-onboarding step returns, build it Playbook-driven.
-const AcceptInvite = lazyWithReload(() => import("./pages/AcceptInvite"));
+const AcceptInvite = lazyPage(() => import("./pages/AcceptInvite"));
 
 // Lazy-load existing dashboard sections for /app/* routes
-const RepositioningNotice = lazyWithReload(() => import("./components/dashboard/RepositioningNotice").then(m => ({ default: m.RepositioningNotice })));
-const LearningVault = lazyWithReload(() => import("./pages/app/Resources"));
-const CourseViewer = lazyWithReload(() => import("./pages/CourseViewer"));
-const BusinessInfrastructureAssessment = lazyWithReload(() => import("./components/dashboard/business-profile/BusinessInfrastructureAssessment").then(m => ({ default: m.BusinessInfrastructureAssessment })));
-const ProfileSettings = lazyWithReload(() => import("./components/dashboard/ProfileSettings").then(m => ({ default: m.ProfileSettings })));
-const AffiliateTracking = lazyWithReload(() => import("./components/dashboard/AffiliateTracking").then(m => ({ default: m.AffiliateTracking })));
-const Support = lazyWithReload(() => import("./pages/Support"));
-const MyAgreements = lazyWithReload(() => import("./pages/MyAgreements"));
+const RepositioningNotice = lazyPage(() => import("./components/dashboard/RepositioningNotice").then(m => ({ default: m.RepositioningNotice })));
+const LearningVault = lazyPage(() => import("./pages/app/Resources"));
+const CourseViewer = lazyPage(() => import("./pages/CourseViewer"));
+const BusinessInfrastructureAssessment = lazyPage(() => import("./components/dashboard/business-profile/BusinessInfrastructureAssessment").then(m => ({ default: m.BusinessInfrastructureAssessment })));
+const ProfileSettings = lazyPage(() => import("./components/dashboard/ProfileSettings").then(m => ({ default: m.ProfileSettings })));
+const AffiliateTracking = lazyPage(() => import("./components/dashboard/AffiliateTracking").then(m => ({ default: m.AffiliateTracking })));
+const Support = lazyPage(() => import("./pages/Support"));
+const MyAgreements = lazyPage(() => import("./pages/MyAgreements"));
 // E09 Slice A — a customer's Sales Agreements; everyone else still gets MyAgreements there, unchanged (§58).
-const ClientAgreements = lazyWithReload(() => import("./pages/app/Agreements"));
-const ClientApprovals = lazyWithReload(() => import("./pages/ClientApprovals"));
-const ActionItems = lazyWithReload(() => import("./pages/app/ActionItems"));
-const ClientDocuments = lazyWithReload(() => import("./pages/app/ClientDocuments"));
-const ClientMessages = lazyWithReload(() => import("./pages/app/Messages"));
-const ClientSessions = lazyWithReload(() => import("./pages/app/Sessions"));
-const ClientProgress = lazyWithReload(() => import("./pages/app/Progress"));
-const ClientPayments = lazyWithReload(() => import("./pages/app/Billing"));
-const ClientPaymentsInvoice = lazyWithReload(() => import("./pages/app/BillingInvoice"));
-const Planning = lazyWithReload(() => import("./pages/app/Planning"));
+const ClientAgreements = lazyPage(() => import("./pages/app/Agreements"));
+const ClientApprovals = lazyPage(() => import("./pages/ClientApprovals"));
+const ActionItems = lazyPage(() => import("./pages/app/ActionItems"));
+const ClientDocuments = lazyPage(() => import("./pages/app/ClientDocuments"));
+const ClientMessages = lazyPage(() => import("./pages/app/Messages"));
+const ClientSessions = lazyPage(() => import("./pages/app/Sessions"));
+const ClientProgress = lazyPage(() => import("./pages/app/Progress"));
+const ClientPayments = lazyPage(() => import("./pages/app/Billing"));
+const ClientPaymentsInvoice = lazyPage(() => import("./pages/app/BillingInvoice"));
+const Planning = lazyPage(() => import("./pages/app/Planning"));
 // #244 — the canonical "About Your Paige Team" directory. ONE component, scope prop
 // per route (tenant here; operator in Admin.tsx; agency in AgencyLayout.tsx).
-const PaigeTeamDirectory = lazyWithReload(() => import("./pages/PaigeTeamDirectory"));
-const GoogleCalendarCallback = lazyWithReload(() => import("./pages/GoogleCalendarCallback"));
-const GmailCallback = lazyWithReload(() => import("./pages/GmailCallback"));
+const PaigeTeamDirectory = lazyPage(() => import("./pages/PaigeTeamDirectory"));
+const GoogleCalendarCallback = lazyPage(() => import("./pages/GoogleCalendarCallback"));
+const GmailCallback = lazyPage(() => import("./pages/GmailCallback"));
 
 // Bounces a signed-in-but-incomplete signup (no lane/agreement/workspace yet) to
 // the /onboarding gate. Not lazy — it's a thin wrapper around the app shells.
@@ -183,9 +158,12 @@ const SuspenseFallback = () => (
   </div>
 );
 
-const PageSuspense = ({ children }: { children: React.ReactNode }) => (
-  <React.Suspense fallback={<SuspenseFallback />}>{children}</React.Suspense>
-);
+const PageSuspense = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  return <PageLoadBoundary key={location.pathname}>
+    <React.Suspense fallback={<SuspenseFallback />}>{children}</React.Suspense>
+  </PageLoadBoundary>;
+};
 
 // RETIRED 2026-09-06 (owner architecture decision): there is NO floating Paige chat anywhere.
 // The floating support-style widget (FloatingChatbot) used to render globally, gated by a
@@ -216,7 +194,7 @@ function SignupRedirect() {
 
 // /render-frame — the DB-free page paige-browser screenshots for the §33 critique loop. Like /invoice it
 // short-circuits BEFORE every provider: no auth, tenant context, router, analytics or Supabase reads.
-const RenderFrame = lazyWithReload(() => import("./pages/public/RenderFrame"));
+const RenderFrame = lazyPage(() => import("./pages/public/RenderFrame"));
 const isRenderFramePath = (pathname: string) => /^\/render-frame\/?$/i.test(pathname);
 
 const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <PaymentReturn /> : /^\/invoice\/?$/i.test(window.location.pathname) ? <InvoiceDocument /> : isRenderFramePath(window.location.pathname) ? (

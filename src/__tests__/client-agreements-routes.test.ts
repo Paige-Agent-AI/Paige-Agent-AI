@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 // is not a customer), and /app/agreements/platform keeps every customer's path to the PaigeAgent terms they accepted
 // (§58). The signing page stays the frozen /sign/:token route (§28).
 const app = readFileSync(resolve("src/App.tsx"), "utf8");
-const lazyTarget = (name: string) => new RegExp(`const ${name} = lazyWithReload\\(\\(\\) => import\\("([^"]+)"\\)\\)`).exec(app)?.[1];
+const lazyTarget = (name: string) => new RegExp(`const ${name} = lazyPage\\(\\(\\) => import\\("([^"]+)"\\)\\)`).exec(app)?.[1];
 const routeElement = (path: string) => new RegExp(`<Route path="${path.replace(/[/:]/g, (c) => `\\${c}`)}" element={<PageSuspense><(\\w+) /></PageSuspense>} />`).exec(app)?.[1];
 
 describe("customer agreements routes", () => {

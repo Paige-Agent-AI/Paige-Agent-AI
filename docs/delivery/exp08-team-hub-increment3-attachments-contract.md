@@ -48,14 +48,17 @@ The server checks each file's real type:
 | JPEG | .jpg .jpeg | image/jpeg | FF D8 FF |
 | WEBP | .webp | image/webp | `RIFF` + `WEBP` at offset 8 |
 | GIF | .gif | image/gif | `GIF87a` / `GIF89a` |
-| Word | .docx | application/vnd.openxmlformats-officedocument.wordprocessingml.document | ZIP `PK\x03\x04`; contains entries `[Content_Types].xml` and `word/document.xml`; contains no `vbaProject.bin` |
-| Excel | .xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | ZIP `PK\x03\x04`; contains entries `[Content_Types].xml` and `xl/workbook.xml`; contains no `vbaProject.bin` |
+| Word | .docx | application/vnd.openxmlformats-officedocument.wordprocessingml.document | ZIP `PK\x03\x04`; contains entries `[Content_Types].xml` and `word/document.xml`; refused if it contains a macro project (`vbaProject*`), an `activeX/`, `embeddings/` or `customUI/` entry, a `.bin` part other than printer settings, an external relationship other than a hyperlink, or an internal OLE/package/control/macro relationship, or a DDE/DDEAUTO field in any `word/*.xml` part. Parts are inflated in small pieces under a 50 MB ceiling, and any part that does not inflate cleanly refuses the file |
+| Excel | .xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | ZIP `PK\x03\x04`; contains entries `[Content_Types].xml` and `xl/workbook.xml`; refused if it contains a macro project (`vbaProject*`), an `activeX/`, `embeddings/` or `customUI/` entry, a `.bin` part other than printer settings, an external relationship other than a hyperlink, or an internal OLE/package/control/macro relationship, or an `xl/externalLinks/` entry or externalLink relationship. Parts are inflated in small pieces under a 50 MB ceiling, and any part that does not inflate cleanly refuses the file |
 | Text | .txt | text/plain | valid UTF-8, no NUL byte |
 | CSV | .csv | text/csv | valid UTF-8, no NUL byte |
 
 **Not allowed, stated in the UI:**
 - **Legacy `.doc` / `.xls` (OLE).** They can carry macros, and nothing here can inspect that without scanning.
 - **PowerPoint.** The shared bucket does not accept it, and widening the bucket would also change Inbox uploads.
+- **Word or Excel files with embedded objects (including charts), external templates or data links, or macros.** The check above refuses them, and the chip says so in plain words.
+
+**Not inspected:** Excel data connections, cell-level DDE formulas, CSV formula injection, and INCLUDETEXT/INCLUDEPICTURE fields. The "not scanned" disclosure covers them.
 - Anything else.
 
 ## 2. Storage
@@ -66,7 +69,7 @@ The server checks each file's real type:
   - `file_id` is the `team_hub_files.id` uuid. The server builds the path and the client never chooses it.
 - **Restrictive `storage.objects` policies.**
   - They apply `TO authenticated` and are AND-ed with the existing permissive `comms_attach member *` policies.
-  - Each one applies only when `bucket_id = 'comms-attachments' AND (storage.foldername(name))[2] = 'team-hub'`. For every other object, each policy is `true`.
+  - Each one applies only when `bucket_id = 'comms-attachments' AND split_part(name,'/',2) = 'team-hub'`, the same rule the retirement manifest and guard use. For every other object, each policy is `true`. The two-segment name `<tenant>/team-hub` is inside the prefix and refused. The segment match is case-sensitive, and Team Hub objects are always lowercase.
 
   | Policy | On the Team Hub prefix |
   |---|---|
@@ -90,7 +93,13 @@ The server checks each file's real type:
     - its channel is visible to the caller now.
 
     A person removed from a private channel loses read access at once.
-- **Email exclusion.** `send-message` refuses any attachment path that starts with `<tenant>/team-hub/`. A Team Hub file can never be attached to an outbound email by path.
+- **Service-role readers refuse Team Hub objects.** Storage percent-decodes object names, so an encoded path is refused, never decoded.
+  - `send-message` refuses any attachment path containing `%`, or whose first folder after `<tenant>/` is `team-hub` in any case.
+  - `subagent-email-composer` reads only `<tenant>/<single filename>`. Before its service-role download, it refuses `%`, `\` and a filename of `team-hub` in any case.
+  - `analyze-financial-document` downloads only from the buckets and owner folders its real producers use (pre-existing gap closed in this increment).
+  - `team-hub-file` downloads only the path pinned by its own row.
+
+  A Team Hub file can never be attached to, or read into, an outbound email or analysis by path.
 
 ## 3. Table `team_hub_files` (additive)
 
@@ -165,7 +174,8 @@ All are SECURITY DEFINER with `search_path=''` and return `{ok, code}`. They reu
     It then sets `ready` and `checked_at`. Otherwise it sets `rejected` with the reason.
   - Returns `{ok, state}`.
 - **`team_hub_claim_stale_files(p_uploader)`**
-  - Marks the uploader's own `pending` files older than one day as `discarded`, and returns their paths so the edge function can remove the objects.
+  - Marks the uploader's own unposted (`pending` or `ready`, `message_id IS NULL`) files older than one day as `discarded`, and returns their paths so the edge function can remove the objects. A post locks the same rows `FOR UPDATE` and requires `ready`, so a file is either posted or swept, never both.
+  - **Known limit:** the sweep runs when that person next finishes an upload. There is no scheduled sweep yet, so a person who never uploads again leaves at most 20 unreadable files until account retirement.
 
 ## 5. Edge function `team-hub-file`
 
@@ -181,7 +191,7 @@ All are SECURITY DEFINER with `search_path=''` and return `{ok, code}`. They reu
 
   Returns `{ok, file}` or `{ok:false, code:'rejected', reason}`.
 - **`discard`**: `team_hub_discard_file` with the caller's JWT, then removal by the service role.
-- **Response headers:** `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`.
+- **Response headers:** `Access-Control-Allow-Origin: *` (the house pattern: the bearer JWT is the auth, never a cookie), `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'`.
 - **Logging:** never logs file names or bytes, only reason codes.
 
 ## 6. Account retirement
@@ -234,7 +244,8 @@ The composer gains a paperclip button between @ and /. It has a hidden file inpu
 Mutation-tested.
 
 **Unit tests:**
-- the sniff module, with real minimal byte fixtures for every allowed type plus mismatches (a docx that contains `vbaProject.bin`, an OLE `.doc`, a NUL byte in text, a renamed executable);
+- the sniff module, with real minimal byte fixtures for every allowed type plus mismatches (a docx that contains `vbaProject.bin`, an OLE `.doc`, a NUL byte in text, a renamed executable, a docx with a remote attachedTemplate, an external hyperlink (accepted), `embeddings/oleObject1.bin`, a DDEAUTO field, an xlsx with externalLinks, percent-encoded part names, and ZIP-bomb, corrupt-deflate and size-lie parts);
+- the service-role reader guards: `send-message`, `subagent-email-composer` and `analyze-financial-document`;
 - the `send-message` exclusion;
 - the retirement provider (manifest and handler tests).
 

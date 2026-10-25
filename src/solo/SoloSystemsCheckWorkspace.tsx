@@ -35,6 +35,14 @@ const label = (value: string | null | undefined) =>
 
 const isUnavailable = (finding: SystemsCheckFinding) => finding.status === "skip" || finding.status === "error";
 const isResolved = (finding: SystemsCheckFinding) => Boolean(finding.resolved_at);
+
+// Presentation consistency, never authority: independently returned reads may
+// describe different revisions of the same finding. Keep preparation on the
+// current returned result/decision rather than treating matching IDs as proof.
+const sameFindingState = (finding: SystemsCheckFinding, current: SystemsCheckFinding | undefined) =>
+  !!current && finding.id === current.id && finding.run_id === current.run_id
+  && finding.status === current.status && finding.resolved_at === current.resolved_at
+  && finding.resolution === current.resolution && finding.resolution_action_id === current.resolution_action_id;
 type EvidenceState = "attention" | "confirmed" | "unavailable" | "resolved";
 
 const evidenceFilter = (finding: SystemsCheckFinding): EvidenceState => {
@@ -343,14 +351,19 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
     && originalRead.finding.run_id === originalRead.run.id ? originalRead.finding : null;
   const linkedRun = linkedFinding && originalRead?.state === "ready" ? originalRead.run : null;
   const linkedIsCurrent = !!linkedFinding && !systems.loading && !systems.isError && hasCompletedRun
-    && linkedFinding.run_id === systems.run?.id && currentFindings.some(finding => finding.id === linkedFinding.id);
+    && !!linkedRun?.completed_at && new Date(linkedRun.completed_at).getTime() === completedAt?.getTime()
+    && linkedFinding.run_id === systems.run?.id
+    && sameFindingState(linkedFinding, currentFindings.find(finding => finding.id === linkedFinding.id));
   const linkedAt = linkedRun?.completed_at ?? linkedRun?.started_at;
   const selectedIsCurrent = !!selected && !systems.loading && !systems.isError && hasCompletedRun
-    && selected.run_id === systems.run?.id && currentFindings.some(finding => finding.id === selected.id);
+    && selected.run_id === systems.run?.id
+    && sameFindingState(selected, currentFindings.find(finding => finding.id === selected.id))
+    && (!recordedSelection || (linkedIsCurrent && recordedSelection === linkedFinding));
   // Withhold a retired/changed original copy in this render, before effects run.
   const selectedReadUnavailable = !!selected && !!recordedSelection && recordedSelection !== linkedFinding;
   const selectedIsHistorical = !!recordedSelection && !selectedIsCurrent;
-  const visibleProposal = proposal && !selectedReadUnavailable;
+  const selectedCanPrepare = selectedIsCurrent && !selectedReadUnavailable;
+  const visibleProposal = proposal && selectedCanPrepare;
   const linkedMessage = !sourceId ? "This source reference is not valid. Clear the selection to continue."
     : originalRead?.state === "loading" ? "Reading the original finding…"
       : originalRead?.state === "error" ? "The original finding could not be read. Refresh records to retry."
@@ -411,11 +424,16 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const selectedEvidence = projectEvidence(selected?.evidence ?? null);
 
   useLayoutEffect(() => {
-    if (!selectedReadUnavailable) return;
+    if (!proposal || selectedCanPrepare) return;
     setProposal(false);
     proposalReturnFocus.current = null;
-    pendingDialogFocus.current = null;
-  }, [selectedReadUnavailable]);
+    // Reuse the original deferred focus restore, after the drawer is no longer
+    // inert. No new action, confirmation or automatic retry is prepared here.
+    pendingDialogFocus.current = {
+      target: drawerRef.current?.querySelector<HTMLElement>("[data-initial-focus]") ?? null,
+      epoch: command.accountEpoch,
+    };
+  }, [proposal, selectedCanPrepare, command.accountEpoch]);
 
   useLayoutEffect(() => {
     const wasRequested = sourceWasRequested.current;

@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: exact permitted older findings can be inspected indep
 FLOW_PROTOTYPE: UNVERIFIED: private original-component state model is source-tested/compiled, unserved and unrendered. The physical Escape/input stop prevents its real traversal; no prototype acceptance or waiver is asserted.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible signed-in business owner inspects the exact source behind prepared work, then returns to the original discussion.
 VISUAL_DIRECTION: PASS: preserve incumbent Mineral/Obsidian typography, original linked-source row and drawer/full-width expansion; no new dashboard, banner, modal engine or Chat shell.
-AUTOMATED_EVIDENCE: PASS: owning22 and original204 cases,226PASS/9 suites,37.59s; actual production component and existing scoped-hook/navigation/prepared-work contracts, synthetic ports only.
-STATIC_EVIDENCE: PASS: final scoped ESLint0; unchanged type ratchet10baseline/6current, no new errors; actual final application Vite build PASS2m. Renewed private proof compilation preserves every production logic/markup byte with four import-only aliases; compiled is not rendered.
+AUTOMATED_EVIDENCE: PASS: owning30 and original204 cases,234PASS/9 suites,5.10s; actual production component and existing scoped-hook/navigation/prepared-work contracts, synthetic ports only.
+STATIC_EVIDENCE: UNVERIFIED: renewed current-main composition, scoped lint/type/build and exact-logic private proof are being checked for the read-consistency successor. Earlier ea6 source checks remain historical, not new-head proof.
 RENDERED_EVIDENCE: UNVERIFIED: no new browser, native capture or server started under the preserved physical input stop. Prior captures cannot prove this changed source.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: DOM source interactions cover exact source, history/current distinction, expanded drawer, Escape/focus exit, query/hash preservation, changed/withdrawn reads and account retirement; native behavior remains untested.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no customer drive under the input stop; ordinary eligible SOLO roles, tenant negatives, second legitimate cohort, reload/return and actual Capabilities presentation still require authorized proof.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: an authorized actor can inspect the correct old/current sou
 MOTION_PURPOSE: no new motion; preserve the existing drawer relationship and reduced-motion rule, with actual behavior still unverified.
 PROTECTED_SEAMS: affected source inspection/privacy/isolation retirement, current decision presentation, navigation/focus and responsive geometry;225 source tests pass, native/customer proof owed. Authentication/account choice and SOLO classification reused, not changed. Billing/provisioning, Spine execution, original domain writes, Rail/Memory, Chat stream/transcript/popout/history, Live, Secure Browser/Vault, provider/external effects and job scheduling/retries are not modified. No new authority, executor or store.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e2-recorded-finding-review; base=4337929a044215cb23f2b1c3ac182fd2574f4357; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=src/solo/SoloSystemsCheckWorkspace.recorded.test.tsx
+INTERNAL_BUILD_IDENTITY: branch=codex/e2-recorded-finding-review; incoming-main=5f7fbd0c51e58709a6ab8ee2b361392a21cf1a57; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=src/solo/SoloSystemsCheckWorkspace.recorded.test.tsx
 RELEASE_CHANNEL: development: held source preparation, no customer-reachable release.
 RELEASE_CLASSIFICATION: internal-only: incomplete review consumer, no usable-outcome or customer release claim.
 CUSTOMER_RELEASE_IDENTITY: none: owner evaluation and complete Experience acceptance remain separate.
@@ -66,12 +66,30 @@ caught that recovery defect, then all226/226 passed. Linked record state is clea
 on close, source retirement and account changes. Final original type ratchet10/6
 and scoped ESLint0 pass with no baseline/guard/authority change.
 
-No database/provider/model/customer operation was invoked. The exact final app
-build passes in2m. The renewed private actual-component proof preserves all logic
+No database/provider/model/customer operation was invoked. The original ea6 app
+build passed in2m. Its private actual-component proof preserved all logic
 and markup bytes, changing only four import aliases; preparation itself edits no
 production source. Its actual entry graph verifies source SHA256c229567f with four
 referenced compiled assets, not old unreferenced files. It remains unserved and
 unrendered. Native geometry, appearance and behavior remain unverified.
+
+## Independent-read consistency successor
+
+The exact-record and latest-snapshot reads can settle at different times. Matching
+run/finding IDs alone did not establish consistent completion, result or recorded
+decision. Seven actual-component counterexamples failed before the correction;
+23 other owning cases passed. Require the same completed instant and matching
+returned status/resolution/action-reference state before presenting an original
+source as current or offering current preparation. Equivalent UTC timestamp
+spellings remain supported. This is presentation consistency, never authority.
+
+An already open preparation also retires if only the original run metadata
+changes while the same finding object remains. Reuse the original deferred focus
+restore after removing inert state; do not create a second recovery channel.
+The original current-list path remains independent of historical availability.
+Final234 source controls pass, including204 incumbent controls; renewed composed
+source lint/type/build proof is required. No native, rendered, permission or
+customer acceptance follows from this source correction.
 
 ## Capabilities, algorithms and orchestration
 

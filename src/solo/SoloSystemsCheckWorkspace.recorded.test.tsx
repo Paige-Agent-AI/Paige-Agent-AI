@@ -104,6 +104,42 @@ describe("Recorded Systems finding inspection through the original workspace", (
     render(`/solo/1234567/command-center/systems-check?finding=${currentId}`);
     expect(source()?.textContent).toContain("From the last completed check"); expect(source()?.querySelector("time")?.dateTime).toBe(nowAt);
   });
+  const inconsistentReads: Array<[string, Partial<SystemsCheckFinding>, Partial<Extract<RecordedFindingRead, { state: "ready" }>["run"]>]> = [
+    ["unfinished original run", {}, { completed_at: null }],
+    ["different completion time", {}, { completed_at: oldAt }],
+    ["changed result", { status: "pass" }, {}],
+    ["changed resolution time", { resolved_at: nowAt }, {}],
+    ["changed decision", { resolution: "deferred" }, {}],
+    ["changed action reference", { resolution_action_id: "e2000000-0000-4000-8000-000000000008" }, {}],
+  ];
+  it.each(inconsistentReads)("keeps %s separate from current preparation even when record IDs match", (_name, findingPatch, runPatch) => {
+    record = { state: "ready", finding: { ...finding, id: currentId, run_id: "current-run", created_at: nowAt, ...findingPatch },
+      run: { id: "current-run", started_at: nowAt, completed_at: nowAt, ...runPatch } };
+    render(`/solo/1234567/command-center/systems-check?finding=${currentId}`);
+    expect(source()?.textContent).not.toContain("From the last completed check");
+    const trigger = inspect(); expect(dialog()?.textContent).toContain("Read-only recorded evidence");
+    expect(dialog()?.textContent).not.toContain("Put PAIGE to work"); expect(host.textContent).toContain("2 checks");
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    expect(document.activeElement).toBe(trigger);
+  });
+  it("compares the completed instant without depending on timestamp spelling", () => {
+    record = { state: "ready", finding: { ...finding, id: currentId, run_id: "current-run", created_at: nowAt },
+      run: { id: "current-run", started_at: nowAt, completed_at: nowAt.replace("Z", "+00:00") } };
+    render(`/solo/1234567/command-center/systems-check?finding=${currentId}`);
+    expect(source()?.textContent).toContain("From the last completed check");
+    act(() => button("Inspect linked evidence")!.click()); expect(dialog()?.textContent).toContain("Put PAIGE to work");
+  });
+  it("retires preparation when only the shared original run metadata changes", () => {
+    const original = { ...finding, id: currentId, run_id: "current-run", created_at: nowAt };
+    record = { state: "ready", finding: original, run: { id: "current-run", started_at: nowAt, completed_at: nowAt } };
+    render(`/solo/1234567/command-center/systems-check?finding=${currentId}`);
+    act(() => button("Inspect linked evidence")!.click()); act(() => button("Put PAIGE to work")!.click());
+    expect(host.querySelector('[aria-labelledby="ask-first-title"]')).not.toBeNull();
+    record = { state: "ready", finding: original, run: { id: "current-run", started_at: nowAt, completed_at: null } };
+    render(); expect(host.querySelector('[aria-labelledby="ask-first-title"]')).toBeNull();
+    expect(dialog()?.textContent).toContain("Read-only recorded evidence");
+    expect(dialog()?.contains(document.activeElement)).toBe(true);
+  });
   it.each(["unavailable", "loading", "error"] as const)("withdraws open original content on %s and keeps a focus exit", state => {
     render(); inspect(); record = { state }; render();
     expect(dialog()?.textContent).not.toContain("Original interpretation"); expect(dialog()?.textContent).not.toContain("disconnected");

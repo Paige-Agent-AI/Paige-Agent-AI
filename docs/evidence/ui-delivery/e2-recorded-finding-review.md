@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: original-component synthetic prototype actually compiled, 
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible signed-in business owner inspects the exact source behind prepared work, then returns to the original discussion.
 VISUAL_DIRECTION: PASS: preserve incumbent Mineral/Obsidian typography, original linked-source row and drawer/full-width expansion; no new dashboard, banner, modal engine or Chat shell.
 AUTOMATED_EVIDENCE: PASS: fresh current-main composition passes202 tests/9 owning and surrounding suites in42.62s; original234/9 source history retained below. Actual component, scoped-record reader, canonical links, prepared-work and incumbent Systems contracts; synthetic ports are not backend permissions.
-STATIC_EVIDENCE: PASS: current composed application build3m24s and unchanged type ratchet10baseline/6current pass. Original-component SHA2562c361525 and product stylesheet SHA25661a2f536 bind the renewed compiled entry graph; the browser observed its exact index-adrI41Gy.js/index-BUJfK_kK.css. Separate scoped lint/detector results are recorded in the final review; no previous-head CI is inherited.
+STATIC_EVIDENCE: PASS: source b16a4944 application build3m24s and unchanged type ratchet10baseline/6current pass. Original-component SHA2562c361525 and product stylesheet SHA25661a2f536 bind the renewed compiled entry graph; browser observed exact index-adrI41Gy.js/index-BUJfK_kK.css. Current-main receiving preserves those source/visual dependencies; new exact-head hosted CI remains required and no previous-head CI is inherited.
 RENDERED_EVIDENCE: PASS: assets/e2-recorded-finding-review/prototype-observations.json and original JPEGs record actual browser rendering of source SHA2562c361525, original stylesheet and the selected44px target correction; four required CSS widths with PAIGE closed/open plus390/320 drawer reflow, Mineral/Obsidian. Raw raster dimensions are recorded separately; no image resizing or exact-raster/native claim.
 BEHAVIORAL_EVIDENCE: PASS: thirteen synthetic states traversed; older/unfinished/conflicting evidence stays read-only, error refresh recovers, current Ask First cancels without action, expanded/Escape/Tab/focus and clear-query/hash exits pass. Synthetic draft survives fold/viewport. Withdrawal/account retirement remain covered by actual-component source controls, not claimed as authenticated role tests.
 AUTHENTICATED_RUNTIME: UNVERIFIED: this consumer is not deployed; source-bound prototype uses neutral ports. Ordinary eligible SOLO roles, tenant negatives, second legitimate cohort, released history/current/read-reload and actual Capabilities presentation still require authorized proof. Renewed Finance QA is a separate earlier release.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: an authorized actor can inspect the correct old/current sou
 MOTION_PURPOSE: no new motion; preserve the existing drawer relationship and reduced-motion rule, with actual behavior still unverified.
 PROTECTED_SEAMS: affected source inspection/privacy/isolation retirement, current decision presentation, navigation/focus and responsive geometry;202 fresh source tests pass, authenticated/native proof remains separately owed. Authentication/account choice and SOLO classification reused, not changed. Billing/provisioning, Spine execution, original domain writes, Rail/Memory, Chat stream/transcript/popout/history, Live, Secure Browser/Vault, provider/external effects and job scheduling/retries are not modified. No new authority, executor or store.
 
-INTERNAL_BUILD_IDENTITY: source-base=02a0c20535019b59e80d35322ebae57268e76cc0; branch=codex/e2-recorded-finding-review; incoming-main=98cf0ff783d0427e7ccf4862e796b5417a8417d5; final-head=exact PR review/CI receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-recorded-finding-review/product-observations.json
+INTERNAL_BUILD_IDENTITY: source-base=02a0c20535019b59e80d35322ebae57268e76cc0; branch=codex/e2-recorded-finding-review; incoming-main=416927eb81783b16308f8ec755a501d2636e7dde; final-head=exact PR review/CI receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-recorded-finding-review/product-observations.json
 RELEASE_CHANNEL: development: source-bound rendered candidate, no customer-reachable release.
 RELEASE_CLASSIFICATION: internal-only: incomplete review consumer, no usable-outcome or customer release claim.
 CUSTOMER_RELEASE_IDENTITY: none: owner evaluation and complete Experience acceptance remain separate.
@@ -165,3 +165,10 @@ stylesheet type/radius values outside its documented ramp, not new permission
 or execution findings. The selected correction does not replace the design
 system or broaden this slice into a workspace redesign. Scoped ESLint exits0.
 Sequential finish review is AUTHOR-REVIEW / LOWER ASSURANCE, never non-author.
+
+Current-main receiving: actual E08 main416927eb is composed normally into the
+same branch. Its original native14160008/14160108, sender/C0b, workflow and all
+other source are preserved. Original Systems component/stylesheet/hook and
+shared shell/tokens/index CSS are unchanged from the inspected candidate; no
+new UI logic, rendering claim or source-owner takeover. The final exact-head
+review and NEW hosted CI replace earlier green and remain required before release.

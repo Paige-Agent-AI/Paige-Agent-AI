@@ -9,3 +9,4 @@
 .ags-answer-label .ags-readonly-label{font-weight:600}.ags-readonly-label>span{display:block;font:400 11px/1.5 var(--font);color:var(--ink-2)}
 
 .ags-review-recovery{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.ags-review-recovery>button{min-height:44px}
+.ags-answer fieldset label{font:400 14px/1.5 var(--font)}.ags-decision-row{display:flex;justify-content:flex-end;margin-top:12px}.ags-decision-row>.ags-decline{min-height:44px}.ags-decision-row>.ags-decline:disabled{opacity:.55;cursor:default}

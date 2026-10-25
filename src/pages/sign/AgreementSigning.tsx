@@ -200,6 +200,8 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   const [consentRead, setConsentRead] = useState(false);
   const [consentEsign, setConsentEsign] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [busyAction,setBusyAction]=useState<'sign'|'check'|'decline'|null>(null);
+  const [declineUnconfirmed,setDeclineUnconfirmed]=useState(false);
   const [fieldMode,setFieldMode]=useState<'review'|'legacy'>('review');
   const [preparedReview,setPreparedReview]=useState<ReviewedRecipientFields|null>(null);
   const signatureInput=useRef<HTMLInputElement>(null);
@@ -289,10 +291,11 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   }, [phase, row?.document_body, evaluate,fieldMode]);
 
   const named = mode === "type" ? typed.trim().length > 1 : !!drawn;
-  const canSign = docGateOpen && named && consentRead && consentEsign && !busy;
+  const canSign = docGateOpen && named && consentRead && consentEsign && !busy && !declineUnconfirmed;
 
   const sign = async (checkOnly=false) => {
     if (busy||(!checkOnly&&!canSign)) return;
+    setBusyAction(checkOnly?'check':'sign');
     setBusy(true);
     setFailure(null);
     try {
@@ -332,15 +335,17 @@ function AgreementSigningCeremony({ token }: { token: string }) {
     } catch {
       setPhase("verification_pending");
     } finally {
+      setBusyAction(null);
       setBusy(false);
       if(checkOnly)resultHeading.current?.focus();
     }
   };
 
   const decline = async () => {
-    if (busy) return;
+    if (busy||declineUnconfirmed) return;
     const reason = window.prompt("If you'd like, say briefly why. This is recorded for the business.");
     if (reason === null) return;
+    setBusyAction('decline');
     setBusy(true);
     setFailure(null);
     try {
@@ -351,13 +356,16 @@ function AgreementSigningCeremony({ token }: { token: string }) {
       const acknowledged = data !== null && typeof data === "object" && !Array.isArray(data)
         && (data as { ok?: unknown }).ok === true;
       if (error || !acknowledged) {
+        setDeclineUnconfirmed(true);
         setFailure("Declining could not be confirmed. Reload this page or ask the business to verify the recorded status before trying again.");
         return;
       }
       setPhase("declined");
     } catch {
+      setDeclineUnconfirmed(true);
       setFailure("Declining could not be confirmed. Reload this page or ask the business to verify the recorded status before trying again.");
     } finally {
+      setBusyAction(null);
       setBusy(false);
     }
   };
@@ -563,8 +571,8 @@ function AgreementSigningCeremony({ token }: { token: string }) {
             )}
           </div>
 
-          <div style={docGateOpen&&!busy ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}>
-            <fieldset disabled={!docGateOpen||busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+          <div style={docGateOpen&&!busy&&!declineUnconfirmed ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}>
+            <fieldset disabled={!docGateOpen||busy||declineUnconfirmed} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <div ref={signatureChoices} className="ags-tabs" role="group" aria-label="How to sign">
               <button type="button" aria-pressed={mode === "type"} onClick={() => setMode("type")}>Type it</button>
               <button type="button" aria-pressed={mode === "draw"} onClick={() => setMode("draw")}>Draw it</button>
@@ -600,24 +608,20 @@ function AgreementSigningCeremony({ token }: { token: string }) {
               </label>
             </div>
 
-            {failure && (
-              <div className="ags-alert" role="alert">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
-                <p>{failure}</p>
-              </div>
-            )}
-
             <div className="ags-acts">
               <button className="ags-sign" disabled={!canSign} onClick={()=>void sign()}>
-                {busy ? "Recording your signature…" : "Sign agreement"}
-              </button>
-              <span style={{ flex: 1 }} />
-              <button type="button" className="ags-decline" onClick={decline} disabled={busy}>
-                I don't agree to these terms
+                {busyAction==='sign' ? "Recording your signature…" : "Sign agreement"}
               </button>
             </div>
             </fieldset>
           </div>
+        </div>
+
+        {failure && <div className="ags-alert" role="alert"><p>{failure}</p></div>}
+        <div className="ags-decision-row" aria-live="polite" aria-atomic="true">
+          <button type="button" className="ags-decline" onClick={decline} disabled={busy||declineUnconfirmed}>
+            {busyAction==='decline'?"Recording your decision…":"I don't agree to these terms"}
+          </button>
         </div>
 
         <p className="ags-legal">

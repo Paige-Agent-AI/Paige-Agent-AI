@@ -208,6 +208,43 @@ it('cancels a decline without submitting a decision',async()=>{
   await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==="I don't agree to these terms")!.click());
   expect(fixture.rpc).toHaveBeenCalledTimes(1);expect(host.querySelector('iframe')).not.toBeNull();
 });
+it('allows a genuine decline without filling or accepting the prepared signing answers',async()=>{
+  prepareOwn();fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data:{ok:true},error:null});
+  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic decline before acceptance');await render();
+  expect(signButton().disabled).toBe(true);expect(button('Continue to signature').disabled).toBe(true);
+  const control=button("I don't agree to these terms");expect(control.disabled).toBe(false);
+  await act(async()=>control.click());
+  expect(host.querySelector('h2')?.textContent).toBe('You declined this agreement');
+  expect(fixture.rpc).toHaveBeenLastCalledWith('decline_agreement_signing',{_token:token,_reason:'Synthetic decline before acceptance'});
+  expect(fixture.invoke.mock.calls.filter(([name])=>name==='sign-agreement')).toHaveLength(0);
+});
+it('exposes unconfirmed decline feedback even while prepared signing remains locked',async()=>{
+  prepareOwn();fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data:{ok:false},error:null});
+  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic unconfirmed decline');await render();
+  const control=button("I don't agree to these terms");expect(control.disabled).toBe(false);
+  await act(async()=>control.click());
+  expect(host.querySelector('[role=alert]')?.textContent).toContain('Declining could not be confirmed');
+  expect(host.querySelector('[role=alert]')?.closest('[aria-hidden=true]')).toBeNull();
+  expect(host.textContent).not.toContain('You declined this agreement');expect(signButton().disabled).toBe(true);
+});
+it('labels a pending decline as a decision without claiming a signature is being recorded',async()=>{
+  let resolve!:(value:{data:{ok:boolean};error:null})=>void;
+  fixture.rpc.mockImplementation((name:string)=>name==='peek_agreement_signing'?Promise.resolve({data:[row()],error:null}):new Promise(r=>{resolve=r;}));
+  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic pending decline');await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+  await act(async()=>button("I don't agree to these terms").click());
+  expect(host.textContent).not.toContain('Recording your signature');expect(button('Recording your decision…').disabled).toBe(true);
+  await act(async()=>resolve({data:{ok:true},error:null}));expect(host.querySelector('h2')?.textContent).toBe('You declined this agreement');
+});
+it('holds both decisions after an unconfirmed decline instead of submitting another act',async()=>{
+  fixture.rpc.mockImplementation(async(name:string)=>name==='peek_agreement_signing'?{data:[row()],error:null}:{data:{ok:false},error:null});
+  vi.spyOn(window,'prompt').mockReturnValueOnce('Synthetic uncertain decision');await render();act(()=>host.querySelector('iframe')!.dispatchEvent(new Event('load')));
+  act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input=>input.click()));expect(signButton().disabled).toBe(false);
+  await act(async()=>button("I don't agree to these terms").click());
+  expect(signButton().disabled).toBe(true);expect(button("I don't agree to these terms").disabled).toBe(true);
+  await act(async()=>{signButton().click();button("I don't agree to these terms").click();});
+  expect(fixture.rpc.mock.calls.filter(([name])=>name==='decline_agreement_signing')).toHaveLength(1);
+  expect(fixture.invoke.mock.calls.filter(([name])=>name==='sign-agreement')).toHaveLength(0);
+});
 it.each([false,null,undefined,0,'true'])('requires an explicitly valid peek before showing the ceremony: %s',async(is_valid)=>{
   fixture.rpc.mockResolvedValue({data:[{...row(),is_valid}],error:null});
   await render();

@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-25T20:05:35.368Z",
+  "source": "dbc0bb9f517514573d3c34c2415e2012137e866f",
+  "tree": "da50e6381e868be476f10bbb6dc6891c524bc5aa",
+  "correction": "Original new warning border-left2px corrected to standard uniform1px error outline. No CSS suppression, detector/config/baseline change.",
+  "sixBehaviorInputsExactTo": "f9666eee9ea6b17fbf8b72e7f85e39b469ca6f40",
+  "cssBlob": "689bdc24f4e0493065e52408982a5313719709f8",
+  "wholeChangedUiDetector": {
+    "exit": 0,
+    "files": [
+      "AgreementSigning.tsx",
+      "AgreementSigning.test.tsx",
+      "agreement-signing.css"
+    ],
+    "log": "e04-c48-impeccable-corrected-1792958620707.log",
+    "logSha256": "29c31dfb0547c2b68cfd0661734f3936591a5b492cda4e830dd814728ab06cbe"
+  },
+  "localProjectTypeRatchet": {
+    "exit": 0,
+    "baseline": 10,
+    "current": 6,
+    "baselineChanged": false,
+    "log": "e04-c48-typecheck-1792957412519.log"
+  },
+  "captures": {
+    "final-desktop-download-retry.png": "f50ee60f2716a62be6ece094a2ea33b059a3937c0c032a308a68ff069fd789e1",
+    "final-narrow-uncertain.png": "bb6deb0b315b4b10ac5ec83ada666eec8366f5886740d1666402d5cb4f780424"
+  },
+  "rendered": "Actual original component with controlled local transport; desktop1366 download failure and mobile390 uncertain recovery; status/keyboard behavior retained. No hosted customer acceptance.",
+  "temporaryServerStopped": true,
+  "viewportReset": true,
+  "release": "NOT_RELEASED; exact final review and CI/readback owed"
+}

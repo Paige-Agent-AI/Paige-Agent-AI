@@ -186,6 +186,11 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   const [recoveredTitle,setRecoveredTitle] = useState<string|null>(null);
   const [recordedAt,setRecordedAt] = useState<string|null>(null);
   const [unavailableChecked,setUnavailableChecked] = useState(false);
+  const [completionAvailable,setCompletionAvailable]=useState(false);
+  const [completionState,setCompletionState]=useState('verification_pending');
+  const [copyState,setCopyState]=useState<'idle'|'ready'|'failed'>('idle');
+  const retired=useRef(false);
+  useEffect(()=>{retired.current=false;return()=>{retired.current=true;};},[]);
 
   const [read, setRead] = useState(false);
   // The uploaded document's frozen bytes, streamed by agreement-document through this signer's
@@ -208,7 +213,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   const actionInFlight=useRef(false);
   useEffect(()=>{if(declineOpen)declineReasonInput.current?.focus();},[declineOpen]);
   const cancelDecline=()=>{if(busy||actionInFlight.current)return;setDeclineOpen(false);requestAnimationFrame(()=>declineOpener.current?.focus());};
-  const [busyAction,setBusyAction]=useState<'sign'|'check'|'decline'|null>(null);
+  const [busyAction,setBusyAction]=useState<'sign'|'check'|'decline'|'complete'|'download'|null>(null);
   const [declineUnconfirmed,setDeclineUnconfirmed]=useState(false);
   useEffect(()=>{if(declineUnconfirmed)declineFeedback.current?.focus();},[declineUnconfirmed]);
   const [fieldMode,setFieldMode]=useState<'review'|'legacy'>('review');
@@ -302,15 +307,17 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   const named = mode === "type" ? typed.trim().length > 1 : !!drawn;
   const canSign = docGateOpen && named && consentRead && consentEsign && !busy && !declineOpen && !declineUnconfirmed;
 
-  const sign = async (checkOnly=false) => {
-    if (busy||actionInFlight.current||declineOpen||(!checkOnly&&!canSign)) return;
+  const sign = async (checkOnly=false,completeRecorded=false) => {
+    if (busy||actionInFlight.current||declineOpen||(!checkOnly&&!completeRecorded&&!canSign)||(completeRecorded&&!completionAvailable)) return;
+    const preserveRecorded=phase==='signature_recorded'||phase==='completed';
     actionInFlight.current=true;
-    setBusyAction(checkOnly?'check':'sign');
+    setBusyAction(completeRecorded?'complete':checkOnly?'check':'sign');
     setBusy(true);
     setFailure(null);
+    if(completeRecorded)setCompletionAvailable(false);
     try {
       const { data, error } = await supabase.functions.invoke("sign-agreement", {
-        body: checkOnly?{token,check_only:true}:{
+        body: completeRecorded?{token,action:'complete-recorded'}:checkOnly?{token,check_only:true}:{
           token,
           typed_name: mode === "type" ? typed.trim() : typed.trim() || (row?.signer_display_name ?? ""),
           signature_image_base64: mode === "draw" ? drawn : null,
@@ -321,34 +328,66 @@ function AgreementSigningCeremony({ token }: { token: string }) {
         },
       });
       const {payload,status}=await signingReply(data,error);
+      if(retired.current)return;
       // A lost response is not permission to submit again. The receipt and a
       // check-only request both use the same original record; no optimistic success.
       if(status===404){setUnavailableChecked(true);setPhase("refused");return;}
       const recorded=!error&&payload?.ok===true&&payload.state==="recorded"
         &&typeof payload.signed_at==="string"&&Number.isFinite(Date.parse(payload.signed_at))
         &&typeof payload.audit_complete==="boolean"&&(payload.audit_complete||payload.replayed===true)
-        &&(!checkOnly||payload.replayed===true);
+        &&(!(checkOnly||completeRecorded)||payload.replayed===true);
       if(!recorded){
         const correctable=["SIGNER_NAME_REQUIRED","SIGNER_NAME_TOO_LONG","SIGNER_NAME_UNRENDERABLE",
           "SIGNATURE_IMAGE_UNRENDERABLE","SIGNING_CONSENT_REQUIRED","SIGNING_DOCUMENT_UNRENDERABLE",
-          "SIGNING_DOCUMENT_UNVERIFIED","SIGNING_SENDER_UNAVAILABLE"].includes(String(payload?.code));
-        if(!checkOnly&&correctable&&typeof payload?.error==="string"){
+          "SIGNING_DOCUMENT_UNVERIFIED","SIGNING_SENDER_UNAVAILABLE",
+          "SIGNING_FIELD_INPUT_INVALID","SIGNING_FIELD_UNRENDERABLE"].includes(String(payload?.code));
+        if(!checkOnly&&!completeRecorded&&correctable&&typeof payload?.error==="string"){
           setFailure(payload.error.slice(0,400));return;
+        }
+        if(preserveRecorded){
+          setCompletionAvailable(false);setFailure('Your signature remains recorded. The completed copy could not be verified. Check its recorded status before trying again.');return;
         }
         setPhase("verification_pending");
         return;
       }
       setAuditComplete(payload.audit_complete===true);
       setRecordedAt(String(payload.signed_at));
+      setCompletionState(payload.completed===true?'verified':payload.completion_state==='waiting_for_signatures'?'waiting_for_signatures':'verification_pending');
+      setCompletionAvailable(payload.audit_complete===true&&payload.completed!==true&&payload.completion_recovery_available===true&&payload.completion_state==='verification_pending');
       if(typeof payload.document_title==="string")setRecoveredTitle(payload.document_title);
       setPhase(payload.completed===true&&payload.audit_complete===true?"completed":"signature_recorded");
     } catch {
-      setPhase("verification_pending");
+      if(retired.current)return;
+      if(preserveRecorded){setCompletionAvailable(false);setFailure('Your signature remains recorded. The completed copy could not be verified. Check its recorded status before trying again.');}
+      else setPhase("verification_pending");
     } finally {
       setBusyAction(null);
       setBusy(false);
       actionInFlight.current=false;
-      if(checkOnly)resultHeading.current?.focus();
+      if(checkOnly||completeRecorded)resultHeading.current?.focus();
+    }
+  };
+
+  const downloadCopy=async()=>{
+    if(phase!=='completed'||busy||actionInFlight.current)return;
+    actionInFlight.current=true;setBusy(true);setBusyAction('download');setCopyState('idle');setFailure(null);
+    let objectUrl:string|null=null;
+    try{
+      const {data,error}=await supabase.functions.invoke(`agreement-document?token=${encodeURIComponent(token)}`,{method:'GET'});
+      if(retired.current)return;
+      const {status}=await signingReply(data,error);
+      if(status===404){setUnavailableChecked(true);setPhase('refused');return;}
+      // The original server door verifies the actual completed bytes and hash.
+      // JSON/HTML/error responses must never be downloaded as an agreement.
+      if(error||!(data instanceof Blob)||!data.size||data.type.split(';')[0]!=='application/pdf'){setCopyState('failed');return;}
+      objectUrl=URL.createObjectURL(data);
+      const link=document.createElement('a');link.href=objectUrl;link.download='completed-agreement.pdf';link.rel='noopener';
+      document.body.append(link);link.click();link.remove();setCopyState('ready');
+    }catch{if(!retired.current)setCopyState('failed');}
+    finally{
+      if(objectUrl)URL.revokeObjectURL(objectUrl);
+      actionInFlight.current=false;
+      if(!retired.current){setBusy(false);setBusyAction(null);resultHeading.current?.focus();}
     }
   };
 
@@ -477,10 +516,26 @@ function AgreementSigningCeremony({ token }: { token: string }) {
               {recordedAt&&<p>Recorded {new Date(recordedAt).toLocaleString()}</p>}
               <p>
                 {phase === "completed"
-                  ? "Your signature, the exact document you reviewed and the completed retained copy are recorded together. Ask the business for access to your copy if you have not received it."
-                  : "The agreement has not been confirmed complete. Ask the business for its current status and completed retained copy."}
+                  ? "Your signature, the exact document you reviewed and the completed retained copy are recorded together. You can download that same copy."
+                  : completionState==='waiting_for_signatures'?"Other signatures are still outstanding. The agreement is not complete."
+                  : "The completed copy has not been confirmed yet. Check its recorded status or ask the business for help."}
               </p>
-              {!auditComplete&&<p role="alert">The consent and signing history could not be fully verified. Ask the sender to review this agreement.</p>}
+              {!auditComplete&&<p className="ags-result-warning" role="alert">The consent and signing history could not be fully verified. Ask the sender to review this agreement.</p>}
+              {failure&&<p className="ags-result-warning" role="alert">{failure}</p>}
+              {copyState==='failed'&&<p className="ags-result-warning" role="alert">The completed copy could not be downloaded. Try again or ask the business for access. Your signature and completion remain recorded.</p>}
+              <div className="ags-result-actions">
+                {phase==='completed'?<button className="ags-sign" disabled={busy} onClick={()=>void downloadCopy()}>
+                  {busyAction==='download'?'Preparing your download…':copyState==='failed'?'Try download again':'Download completed copy'}
+                </button>:<>
+                  {(completionAvailable||busyAction==='complete')&&<button className="ags-sign" disabled={busy} onClick={()=>void sign(false,true)}>{busyAction==='complete'?'Saving completed copy…':'Finish completed copy'}</button>}
+                  <button className={completionAvailable||busyAction==='complete'?'ags-decline':'ags-sign'} disabled={busy} onClick={()=>void sign(true)}>
+                    {busyAction==='check'?'Checking recorded status…':'Check recorded status'}
+                  </button>
+                </>}
+              </div>
+              {(busy||completionAvailable||copyState==='ready')&&<p role="status" aria-live="polite">
+                {busyAction==='complete'?'Saving and verifying the copy using the signatures already on record.':busyAction==='check'?'Checking the existing record. No signature is being submitted.':busyAction==='download'?'Obtaining your original completed copy.':copyState==='ready'?'Your completed copy is ready to save.':'Uses the signatures already on record. You will not sign again.'}
+              </p>}
             </div>
           </div>
         </div>

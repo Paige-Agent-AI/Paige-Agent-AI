@@ -1,0 +1,8 @@
+{
+  "source": "actual App.tsx SuspenseFallback/PageSuspense source extract; actual boundary and real MemoryRouter; isolated synthetic editor, no Auth/business/backend",
+  "appHash": "485bd63111a94c2a762c5a343946b90933c23abd2b09bd17a2ec908db1f81261",
+  "result": "FAIL",
+  "draft": "",
+  "counts": "2/1",
+  "failure": "Original healthy shared child draft was lost\n+ actual - expected\n\n+ ''\n- 'Synthetic unsaved customer draft'\n"
+}

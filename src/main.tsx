@@ -105,12 +105,6 @@ async function cleanupServiceWorkers() {
 
 cleanupServiceWorkers();
 
-// Clear the stale-chunk reload guard once the app successfully boots, so the
-// auto-reload recovery can run again on the next deploy.
-window.addEventListener("load", () => {
-  try { sessionStorage.removeItem("__chunk_reload__"); } catch { /* ignore */ }
-});
-
 // A form page in a sandbox that hides its origin: framed in a business's site builder block, or a tab opened from one
 // (which inherits the sandbox). The app can't run there (every provider reads storage the browser refuses it, and the
 // intake refuses an address-less origin), so the visitor gets the form's address to open instead of a blank page.

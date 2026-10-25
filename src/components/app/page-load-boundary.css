@@ -1,0 +1,29 @@
+.page-load-failure {
+  box-sizing: border-box;
+  display: grid;
+  min-block-size: 60vh;
+  padding: 32px 24px;
+  place-items: center;
+  background: var(--pg-canvas, Canvas);
+  color: var(--pg-ink, CanvasText);
+  font-family: var(--pg-font-ui, system-ui, sans-serif);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.page-load-failure__content { inline-size: 100%; max-inline-size: 28rem; }
+.page-load-failure h1 { margin: 0 0 12px; font-size: 21px; line-height: 1.3; font-weight: 600; }
+.page-load-failure p { margin: 0 0 24px; }
+.page-load-failure button {
+  min-block-size: 44px;
+  padding: 10px 20px;
+  border: 1px solid currentColor;
+  border-radius: var(--pg-r-chip, 8px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.page-load-failure button:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 4px; }
+.page-load-failure button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.page-load-failure button:disabled { cursor: default; border-style: dashed; }
+.page-load-failure .page-load-failure__pending { margin: 16px 0 0; }

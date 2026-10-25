@@ -46,3 +46,15 @@ ALG-01 gains bounded original-intent deduplication/readback proof; ALG-12 gains 
 ## Current-main release refresh — October25
 
 Original revieweddb608/native56 evidence remains retained. Normal compositionc261d700a10208b55829a09d2e2ddad6551760e5/tree2bf7a0f28504c9a37a1eeb157c23b409b38a8752 preserves actual main31e25a98c0d653c7c49abefbc96ea78c7893a03b and all8 original source/native/proof/CI inputs exactly. Fresh actual108 strict cases/13HTTPsteps and direct strict0 pass, without test/permission/lock/SDK/baseline changes. The prior confirmation prerequisite is now genuinely production14140004; E09 14150009+14150019 still precedes own14160004. New exact-head CI/review and normal ordered native/Edge/web/readback remain required; original old green/native proof are not relabeled as a new current run. Original Work alone is not provider/signature/payment success. No factory mount, Root/Portal/shared writer or activation change; full12/ordinary roles/cohorts/reload/CentralQA/founder acceptance remain open.
+
+## Actual production release — October25
+
+This dated section supersedes only earlier source-stage NOT_APPLIED/NOT_RELEASED statements; the original proof history and customer-verification limits remain intact.
+
+Reviewed `72e7afd5b6f02105d78b9b3641e0bf6ee52e515c`; sequential AUTHOR-REVIEW / LOWER ASSURANCE6398405229; all13 exact checks/two webSUCCESS/0threads. Actual merge`f41f3a7919f76539e8c71e8b22c0d86235e54c06`, tree`44322dd8626f0935188d92be3ea042ca32a44942`. Native`20271114160004` genuinely ONCE/9; normal run40199007347/job121186064728 Push/PERSISTED/record-commit SUCCESS, exact source/ABI/owner/default/ACL verified.
+
+Normal Edge40199007258 SUCCESS; zero affected functions, upload/readback skipped. Factory UNMOUNTED.
+
+Production `dpl_8AfXkaeToryPh5amvg55tYW4uteD` READY/exact merge; both canonical public200/build`f41f3a7919f76539e8c71e8b22c0d86235e54c06-mvnvqtyo`/customerUpdate:null at2026-10-25T13:46:34Z. [Actual release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2826#issuecomment-6398451757). Original consumed approval and exact prepared request register/read the same canonical Work. It does not dispatch a message or establish a signature/payment/service result.
+
+Source/native/web readback only; ordinary owner/staff/client/cohort/reload/Central QA and full O1–O12/founder acceptance remain UNVERIFIED. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; catalogue and restricted activation unchanged. Mechanical closeout does not create another runtime release or activation.

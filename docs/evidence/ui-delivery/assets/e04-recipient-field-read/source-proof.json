@@ -65,9 +65,20 @@
     "migrationReplay": 2,
     "concurrentSessions": 2,
     "observedLockWaits": 1,
-    "allOriginalChecks": "PASS_SEPARATE_NESTED_COUNTS_NOT_SUMMED",
     "clusterCleanup": "VERIFIED_EMPTY_STOPPED",
-    "sourceOnly": true
+    "sourceOnly": true,
+    "originalSelectedSuites": {
+      "outer": 44,
+      "checked": 75,
+      "editability": 23,
+      "documentPreparations": 188,
+      "commercialNested": 29,
+      "acceptedEvidenceNested": 83,
+      "ownerReadNested": 27,
+      "signatureRecord": 76,
+      "preparedSealSource": 51
+    },
+    "localFlagBoundary": "--effective-commercial was not selected in this local run; unchanged original CI retains it and must pass"
   },
   "production": {
     "observedFrontier": "20271113860009",

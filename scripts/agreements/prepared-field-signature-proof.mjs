@@ -25,5 +25,6 @@ export async function provePreparedFieldSignature({sql,read,q,acceptedFixture,pu
  const receipt=json(native(`SELECT _record_agreement_signature(${q(v.hashes[0].token_hash)},${agreement.version},${q(agreement.sha256)},${q(agreement.key)},'Synthetic Signer',NULL,true,true,'synthetic-consent',1,repeat('a',64),NULL,'synthetic-local-proof',${q(JSON.stringify(prepared))}::jsonb);`));
  check(receipt.state==='recorded'&&receipt.audit_complete===true,'Actual signature, consent and assigned fields must commit atomically');
  check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${v.a.id}' AND signer_id='${signer.signer_id}' AND event_type='field_values_recorded';`)==='1','One exact original field receipt, never a separate execution ledger');
+ console.log(JSON.stringify({checkpoint:'Original prepared-field signature transaction',checks,scope:'Synthetic native fixture only; full original regression and customer acceptance remain separate'}));
  return{checks,scope:'Original native prepared field/signature transaction with synthetic provider input; not hosted recipient/provider/customer acceptance'};
 }

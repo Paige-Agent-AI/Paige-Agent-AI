@@ -198,9 +198,8 @@ BEGIN
   OR s.token_hash IS NULL OR s.token_revoked_at IS NOT NULL OR s.token_expires_at IS NULL
   OR s.token_expires_at<=pg_catalog.clock_timestamp() THEN
   RAISE EXCEPTION 'Original signing record is unavailable' USING ERRCODE='42501'; END IF;
- IF s.status IN ('pending','viewed') THEN RETURN public._read_agreement_signing_fields(s.token_hash); END IF;
  SELECT * INTO a FROM public.paige_agreements WHERE id=s.agreement_id AND tenant_id=s.tenant_id;
- IF NOT FOUND OR s.status<>'signed' OR a.status NOT IN ('sent','viewed','partially_signed','completed')
+ IF NOT FOUND OR s.status NOT IN ('pending','viewed','signed') OR a.status NOT IN ('sent','viewed','partially_signed','completed')
   OR (a.status<>'completed' AND a.expires_at IS NOT NULL AND a.expires_at<=pg_catalog.clock_timestamp()) THEN
   RAISE EXCEPTION 'Original signing record is unavailable' USING ERRCODE='23514'; END IF;
  SELECT * INTO p FROM public.paige_agreement_document_preparations
@@ -210,6 +209,10 @@ BEGIN
    RAISE EXCEPTION 'Original prepared source is unavailable' USING ERRCODE='23514'; END IF;
   RETURN pg_catalog.jsonb_build_object('kind','legacy','tenant_id',a.tenant_id,'agreement_id',a.id,'signer_id',s.id);
  END IF;
+ -- Pending prepared records disclose only the kind here. The canonical writer
+ -- first preserves ALL original consent/document/order refusal semantics, then
+ -- calls the incumbent token-derived reader immediately before the actual act.
+ IF s.status IN ('pending','viewed') THEN RETURN pg_catalog.jsonb_build_object('kind','prepared'); END IF;
  IF NOT private.e04_prepared_signed_fields(s) THEN
   RAISE EXCEPTION 'Original prepared signature evidence is unavailable' USING ERRCODE='23514'; END IF;
  RETURN pg_catalog.jsonb_build_object('kind','prepared','tenant_id',a.tenant_id,'agreement_id',a.id,'signer_id',s.id,

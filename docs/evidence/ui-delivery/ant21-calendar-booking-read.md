@@ -271,3 +271,26 @@ This bounded Calendar turn preserves every adjacent source and releases after
 immutable review/pins. Parent2792 release, exact-head CI, full production source/
 configuration readback, genuine owner record/Rail/reload/isolation and separate
 Live remain required. Browser stops and full EXP05/founder acceptance stay open.
+
+
+Final consumer review correction: the former exact-booking-only Operations advice
+would prevent the new tool from helping Run My Week. The original PAIGE/ZION
+guidance now allows one offered agenda read with explicit window/confirmed business
+zone and honest shown/title-preview limits, keeping every core-read/three-priority/
+no-repeat/no-action rule and exact-ID fallback. The existing progress label starts
+with "Checking" and reports unavailable as a failed lookup, never a finished action.
+Actual guidance/trace tests15:12PASS/3RED, then all28/three suites PASS. One new
+trace test initially omitted the real content/message envelope; corrected fixture
+uses the original strict envelope, with no production failure inference.
+
+The six original C0b suites now pass234/234 (230 retained plus4 restrictive agenda
+mutants), exit0. Exact official extraction reproduced every old scalar and current
+candidate. A first private comparison incorrectly treated unavailable component
+arrays as equal and is INVALID; corrected diagnostic requires arrays and confirms
+all29 aggregate changes are ONLY enclosing identity[15]. Branches, dominating
+controls, other identities, helpers and imports remain equal. Immutable8d811f8393/
+Rootd55b8e95 review ANT161/73fa1612 precedes renewal of only29 scalar literals and2
+Calendar dependency values. Exact inverse restores all remaining frozen guard
+bytes,125 paths/123 other source values and all metadata/validator code. Pure
+Operations guidance/start labels grant no authority and add no ancestry exemption.
+See the existing binding evidence JSON for complete derivation/correction history.

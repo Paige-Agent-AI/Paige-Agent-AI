@@ -399,7 +399,7 @@
   "sourceChatBlob": "d55b8e95e7a06230d2f0530b8fe3209b2017b412",
   "review": {
     "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
-    "state": "IMMUTABLE_SOURCE_REVIEW_REQUIRED_BEFORE_RENEWAL"
+    "state": "PRE_RENEWAL_SOURCE_REVIEW_RECORDED"
   },
   "verification": {
     "native": {
@@ -446,6 +446,28 @@
       "baseline": 407,
       "candidate": 407,
       "newSemanticFindings": []
+    },
+    "c0bOriginalSixSuites": {
+      "passed": 234,
+      "failed": 0,
+      "exitCode": 0,
+      "originalRetained": 230,
+      "additionalRestrictiveCases": 4
+    },
+    "guidanceAndProgress": {
+      "initial": {
+        "total": 15,
+        "passed": 12,
+        "failed": 3
+      },
+      "final": {
+        "total": 28,
+        "passed": 28,
+        "failed": 0,
+        "suites": 3,
+        "exitCode": 0
+      },
+      "intermediate": "27/28; new trace fixture omitted real content/message envelope, corrected to original strict transport; no production failure inferred"
     }
   },
   "boundary": "All29 aggregate fingerprints change ONLY at enclosing identity[15]. Every protected branch, dominating control, other identity, helper and import is identical. Only these29 scalars and the two reviewed source digests may renew after immutable review. Retain all125 paths/123 other values, C0b extractor/validator/metadata, native SQL/ACL and existing effect/activation boundaries. Narrow Kit construction recognizer changes are separately reviewed with all hostile controls; no baseline expansion.",
@@ -454,5 +476,19 @@
     "sourceMaturity": "PARTIAL",
     "genericOperationsRecipes": "Not promoted by supporting read",
     "deployedPanelAndAccountAvailability": "UNVERIFIED"
-  }
+  },
+  "preRenewalReview": {
+    "head": "8d811f8393f95d2e6f0cbc5ce99226d17e5fe1d1",
+    "linear": "73fa1612-3a34-4df1-92e2-107b1b0385c9",
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE"
+  },
+  "renewal": {
+    "dispatchScalars": 29,
+    "sourceDigests": 2,
+    "otherSourcesUnchanged": 123,
+    "pathCount": 125,
+    "inverseRestoresExactFrozenGuard": true,
+    "validatorAndMetadataChanged": false
+  },
+  "finalHeadCi": "PENDING_NEW_EXACT_HEAD"
 }

@@ -39,8 +39,8 @@ RELEASE_CHANNEL: development: source implementation and bounded local proof; no 
 RELEASE_CLASSIFICATION: internal-only: incremental existing governed customer-service integration; complete Experience remains open.
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved release name/version or publication.
 RELEASE_NOTE_REQUIRED: no: internal engineering increment, not the complete integrated founder-ready Experience.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source integration; PROOF OWED hosted gates/deployment/authenticated journey. All42 outcomes/seven pillars/Teach CURA/CAP018–024/ALG-01/02/04/12/13 and founder acceptance remain open.
-RELEASE_RECOVERY: position=forward-fix original source and reconcile the same Work/approval; never duplicate uncertain effects or remove applied migrations; reference=docs/delivery/e09-customer-actions-business-scope.md
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source integration with bounded local proof; PROOF OWED: hosted gates/deployment/authenticated journey. All42 outcomes/seven pillars/Teach CURA/CAP018–024/ALG-01/02/04/12/13 and founder acceptance remain open.
+RELEASE_RECOVERY: position=forward-fix original source and reconcile the same Work/approval without duplicating uncertain effects or removing applied migrations; reference=docs/delivery/e09-customer-actions-business-scope.md
 
 ## Scope, sources and orchestration contract
 

@@ -16,6 +16,7 @@ const f = vi.hoisted(() => ({
   actions: { open: [] as unknown[], loading: false, error: null as string | null },
   applications: 0,
   creditPulls: 0,
+  messages: 0,
   brand: null as null | { tenant_id: string; tenant_name: string },
   brandLoading: false,
   multiple: false,
@@ -25,7 +26,7 @@ const f = vi.hoisted(() => ({
 vi.mock("@/integrations/supabase/client", () => {
   const counted = (table: string) => {
     f.tables.push(table);
-    const result = { count: table === "funding_journey_applications" ? f.applications : table === "credit_report_uploads" ? f.creditPulls : 0, error: null };
+    const result = { count: table === "funding_journey_applications" ? f.applications : table === "credit_report_uploads" ? f.creditPulls : table === "chat_messages" ? f.messages : 0, error: null };
     const chain: Record<string, unknown> = {};
     chain.select = () => chain; chain.eq = () => chain; chain.neq = () => chain;
     chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve(result).then(resolve);
@@ -92,7 +93,7 @@ const sessionReads = () => f.rpc.mock.calls.filter(c => c[0] === "client_portal_
 
 beforeEach(() => {
   vi.clearAllMocks();
-  f.applications = 0; f.creditPulls = 0; f.brandLoading = false; f.multiple = false; f.tables = [];
+  f.applications = 0; f.creditPulls = 0; f.messages = 0; f.brandLoading = false; f.multiple = false; f.tables = [];
   f.docs = { state: "ready", shared: 0, fromYou: 0, awaitingReview: 0, awaitingReviewMore: false }; f.docsEnabled = [];
   f.actions = { open: [], loading: false, error: null };
   f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 0, done: 0, open: 0, overdue: 0 }), error: null });
@@ -101,6 +102,43 @@ beforeEach(() => {
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.useRealTimers(); });
+
+it("does not present legacy messages as private Cura history or a first-use claim", async () => {
+  f.messages = 7;
+  await render();
+  expect(f.tables).not.toContain("chat_messages");
+  expect(host.textContent).not.toContain("in your thread");
+  expect(host.textContent).not.toContain("Send your first message");
+  expect([...host.querySelectorAll("button")].some(b => b.textContent === "Ask a question")).toBe(true);
+});
+
+it("opens the original business Messages without a legacy goal read or a private Cura prompt", async () => {
+  await render();
+  expect(f.tables).not.toContain("client_goals");
+  expect(host.textContent).not.toContain("Set your first goal");
+  const messages = host.querySelector<HTMLAnchorElement>('a[href="/app/messages"]');
+  expect(messages?.textContent).toContain("Northwind Studio");
+  expect(messages?.textContent).toContain("Open messages");
+  const spy = bookAsked();
+  await act(async () => messages!.click());
+  spy.stop();
+  expect(host.textContent).toContain("Messages page");
+  expect(spy.asked).toEqual([]);
+});
+
+it("preserves the original legacy message count for a known staff viewer", async () => {
+  f.brand = null;
+  f.messages = 7;
+  await act(async () => root.render(<MemoryRouter><CustomerIdentityProvider
+    state={{ frame: null, phase: "not-client", staff: true, staffAssistantName: "Paige" }}>
+    <ClientHomeTiles userId="u1" />
+  </CustomerIdentityProvider></MemoryRouter>));
+  await act(async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); });
+  expect(f.tables).toContain("chat_messages");
+  expect(host.textContent).toContain("Ask Paige");
+  expect(host.textContent).toContain("7");
+  expect(host.textContent).toContain("in your thread");
+});
 
 it("shows the customer's next session and opens Sessions", async () => {
   await render();
@@ -161,10 +199,10 @@ it("never says 'your coach', and the Ask tile says only what its action does", a
   expect(host.textContent).toContain("Ask Cura a question anytime.");
   expect(host.textContent).not.toMatch(/start a thread with/i);
   const spy = bookAsked();
-  const send = Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Send your first message")!;
+  const send = Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Ask a question")!;
   await act(async () => send.click());
   spy.stop();
-  expect(spy.asked).toEqual(["Hi Cura — I'd like to introduce myself."]);
+  expect(spy.asked).toEqual(["I have a question about my work."]);
 });
 
 // Owner ruling 2026-10-19: the customer's agent is Cura (or the business's own name for it), assigned
@@ -182,7 +220,7 @@ it("names the business's own agent, never the owner's PAIGE persona", async () =
   ));
   await act(async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); });
   expect(host.textContent).not.toMatch(/paige/i);
-  expect(host.textContent).toContain("Tell Ava what you're working toward. Ava will help you map the path.");
+  expect(host.textContent).not.toContain("Set your first goal");
   expect(host.textContent).toContain("Ask Ava a question anytime.");
 });
 
@@ -308,7 +346,7 @@ it("matches the neighbouring tiles' 36px buttons, with a 44px touch target", asy
   await render();
   const all = Array.from(host.querySelectorAll("button"));
   // The Documents tile is a link tile now (E09 Slice 4); the Messages empty tile is the 36px neighbour.
-  const neighbour = all.find(b => b.textContent === "Send your first message")!;
+  const neighbour = all.find(b => b.textContent === "Ask a question")!;
   expect(neighbour.className).toMatch(/(^| )h-9( |$)/);
   for (const label of ["Book a session", "Message Northwind Studio"]) {
     const b = all.find(x => x.textContent?.trim() === label)!;

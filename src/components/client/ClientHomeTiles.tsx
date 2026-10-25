@@ -74,8 +74,8 @@ const EMPTY: Counts = {
 /**
  * Client-view home tiles. Zero seeded content — each tile renders real counts
  * or a single-action EmptyTile CTA that routes to the flow that produces
- * the missing data. Six tiles: Goals, Progress (or Credit), Sessions (or Funding),
- * Documents, Messages, Next Steps.
+ * the missing data. Customer tiles: business Messages, Progress (or Credit), Sessions (or Funding),
+ * Documents, private Cura questions, Next Steps. Staff retain their legacy Goals tile.
  */
 export function ClientHomeTiles({ userId, financePortal = false }: {
   userId: string;
@@ -108,6 +108,8 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
   useEffect(() => {
     let cancelled = false;
     if (!userId) return;
+    if (brandLoading) { setLoading(true); return; }
+    if (brandError || multipleBusinesses) { setCounts(EMPTY); setLoading(false); return; }
     (async () => {
       setLoading(true);
       const headOnly = { count: "exact" as const, head: true };
@@ -115,10 +117,11 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
       // Credit and funding are counted only for a finance-entitled business (E09 F2); otherwise not asked at all.
       const none = Promise.resolve({ count: 0 });
       const [goals, credit, apps, msgs] = await Promise.all([
-        untypedDb.from("client_goals").select("id", headOnly).eq("user_id", userId),
+        isCustomer ? none : untypedDb.from("client_goals").select("id", headOnly).eq("user_id", userId),
         financePortal ? untypedDb.from("credit_report_uploads").select("id", headOnly).eq("user_id", userId) : none,
         financePortal ? untypedDb.from("funding_journey_applications").select("id", headOnly).eq("user_id", userId) : none,
-        untypedDb.from("chat_messages").select("id", headOnly).eq("user_id", userId),
+        // The customer's private Cura history is read by the original Chat reader, not this legacy table.
+        isCustomer ? none : untypedDb.from("chat_messages").select("id", headOnly).eq("user_id", userId),
       ]);
       if (cancelled) return;
       setCounts({
@@ -132,7 +135,7 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
     return () => {
       cancelled = true;
     };
-  }, [userId, financePortal]);
+  }, [userId, financePortal, isCustomer, brandLoading, brandError, multipleBusinesses]);
 
   // Puts a drafted question in the customer's chat with their agent; they read it and press send.
   const askAgent = (prompt: string) => handOffPaigePrompt(prompt);
@@ -165,8 +168,18 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* E09 Slice A — one quiet line, only while an agreement waits for this customer's signature (D-A5). */}
       <AgreementsWaitingLine enabled={isCustomer} />
-      {/* 1. Goals */}
-      {counts.goals && counts.goals > 0 ? (
+      {/* 1. The original business conversation; private Cura questions stay in their own tile below. */}
+      {isCustomer ? (
+        <LinkTile
+          to="/app/messages"
+          testId="business-messages-tile"
+          icon={<MessageSquare className="w-4 h-4" aria-hidden="true" />}
+          title="Messages"
+          headline={businessName}
+          detail="Talk with your team about your work, or ask for help."
+          openLabel="Open messages"
+        />
+      ) : counts.goals && counts.goals > 0 ? (
         <FilledTile
           icon={<Target className="w-4 h-4" />}
           title="Your Goals"
@@ -249,7 +262,15 @@ export function ClientHomeTiles({ userId, financePortal = false }: {
       )}
 
       {/* 5. Messages */}
-      {counts.messages && counts.messages > 0 ? (
+      {isCustomer ? (
+        <EmptyTile
+          icon={<MessageSquare className="w-6 h-6" />}
+          title={`Ask ${agentName}`}
+          description={`Ask ${agentName} a question anytime.`}
+          actionLabel="Ask a question"
+          onAction={() => askAgent("I have a question about my work.")}
+        />
+      ) : counts.messages && counts.messages > 0 ? (
         <FilledTile
           icon={<MessageSquare className="w-4 h-4" />}
           title={`Ask ${agentName}`}

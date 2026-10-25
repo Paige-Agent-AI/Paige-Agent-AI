@@ -363,15 +363,15 @@ export async function loadImage(id: string): Promise<StudioImage> {
 }
 
 /** The tenant's brand floor, through the same anon-safe read the published pages use. */
-export async function loadBrand(tenantSlug: string): Promise<{ floor: GrowthPageTheme; name: string | null; logoUrl: string | null }> {
-  if (!tenantSlug) return { floor: buildGrowthBrandFloor(null), name: null, logoUrl: null };
+export async function loadBrand(tenantSlug: string): Promise<{ floor: GrowthPageTheme; name: string | null; logoUrl: string | null; primaryColor: string | null }> {
+  if (!tenantSlug) return { floor: buildGrowthBrandFloor(null), name: null, logoUrl: null, primaryColor: null };
   try {
     const { data, error } = await rpc("peek_tenant_portal_brand", { _slug: tenantSlug });
     if (error) throw error;
     const row = (Array.isArray(data) ? data[0] : data) as Record<string, string | null> | undefined;
-    return { floor: buildGrowthBrandFloor(row ?? null), name: row?.tenant_name ?? null, logoUrl: row?.logo_url ?? null };
+    return { floor: buildGrowthBrandFloor(row ?? null), name: row?.tenant_name ?? null, logoUrl: row?.logo_url ?? null, primaryColor: row?.primary_color ?? null };
   } catch {
-    return { floor: buildGrowthBrandFloor(null), name: null, logoUrl: null };
+    return { floor: buildGrowthBrandFloor(null), name: null, logoUrl: null, primaryColor: null };
   }
 }
 

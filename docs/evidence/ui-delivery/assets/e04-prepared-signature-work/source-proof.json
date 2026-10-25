@@ -1,0 +1,100 @@
+{
+  "sourceHead": "95bf703064fa2d87d9047a0cb33ffdcb7c7e8d3f",
+  "parent": "a1e5d18898ddb5434d6d1ef92238ade2ff0979a4",
+  "status": "LOCAL_SOURCE_VERIFIED_NOT_MOUNTED",
+  "migration": "20271114160004",
+  "production": "NOT_APPLIED",
+  "native": {
+    "checks": 56,
+    "migrationReplay": 2,
+    "concurrentSessions": 8,
+    "observedLockWaits": 4,
+    "originalWorkSource": "693340656ec8ec445cd34c25b3d91d80",
+    "proofBodySha256": "eea009dee2830363a1aff7bc229637e1bf9113851cc79052e2f51e1121a46b99",
+    "migrationSha256": "bc9ae257a9174c0c7e09f1896691caf7a4bc6aa3b192db944a733357e87e61a2",
+    "scope": "Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance"
+  },
+  "originalConfirmation": 59,
+  "originalWorkSource": "693340656ec8ec445cd34c25b3d91d80",
+  "originalConfirmationControlsInverse": true,
+  "originalShellControlsInverse": true,
+  "original101TestsExact": true,
+  "strictDeno": {
+    "total": 108,
+    "original": 101,
+    "added": 7,
+    "httpSteps": 13,
+    "failed": 0
+  },
+  "red": {
+    "native": "Missing original domain registration after all incumbent controls; actual deployed Work source exact",
+    "wire": "7 causal missing concrete bridge failures",
+    "invalidTooling": "Initial pg_ctl pipe setup and two Deno invocation setups retained separately; not product RED"
+  },
+  "cleanup": {
+    "remainingIsolatedDatabases": 0,
+    "taskClusterStopped": true
+  },
+  "checks": {
+    "lint": 0,
+    "shellSyntax": 0,
+    "definer": 0,
+    "acl": 0,
+    "migrationVersions": 0
+  },
+  "inputs": [
+    {
+      "path": "scripts/agreements/prepared-confirmation-proof.mjs",
+      "sha256": "dabfecc3a43303ffe887be78fbb3cedb8dabb86a869099e4dddbec12e7e294e6"
+    },
+    {
+      "path": "scripts/agreements/run-integrity-proof.sh",
+      "sha256": "5e84d45734f7511205e7d2c84adcca995368da9d6f0f313316acd589c0f11546"
+    },
+    {
+      "path": "scripts/agreements/prepared-signature-work-proof.mjs",
+      "sha256": "7194fa9afe1bce99c851e0176df68b37b119f3c568427b6ffc0f3134ad0d3de3"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-signature-work.ts",
+      "sha256": "fb0ac350ee0cbcea559927dfd7fa067c4532f3303acc6ca70d2c10160798a098"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-signature-work.test.ts",
+      "sha256": "fccc5bc30f76effa9d5eb66dba4b08f1c9176554274bc71175376cb21a93ed5c"
+    },
+    {
+      "path": "supabase/migrations/20271114160004_e04_prepared_signature_work.sql",
+      "sha256": "bc9ae257a9174c0c7e09f1896691caf7a4bc6aa3b192db944a733357e87e61a2"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/prepared-signature-request.test.ts",
+      "sha256": "8415cd5fa9c78edef719d3f91c16f81cd563edadbe772257191a250ccc4975b0"
+    }
+  ],
+  "limits": [
+    "No actual auth/session/Storage/provider proof",
+    "Source-only original audit references do not grant permission",
+    "Generic legacy trial/past_due Work cohort gap open",
+    "No issuer/dispatch/atomic fields/signature/seal integration or activation",
+    "All12/CentralQA/founder acceptance open"
+  ],
+  "currentMainComposition": {
+    "at": "2026-10-25T12:12:07.794Z",
+    "head": "c261d700a10208b55829a09d2e2ddad6551760e5",
+    "tree": "2bf7a0f28504c9a37a1eeb157c23b409b38a8752",
+    "incomingMain": "31e25a98c0d653c7c49abefbc96ea78c7893a03b",
+    "originalReviewedHead": "db608d739b8859785e914bbe2543bd7c9d33609d",
+    "frozenOriginalInputsExact": 8,
+    "sourceCases": 108,
+    "httpSteps": 13,
+    "directStrict": 0,
+    "unitLog": "e04-c41-current-unit-1792930146816.log",
+    "strictLog": "e04-c41-current-strict-1792930258305.log",
+    "native": "Original56/replay2/eight sessions/four observed waits retained at identical frozen source; no new local native run claimed",
+    "production": "NOT_MERGED_NOT_APPLIED",
+    "order": "ACTUAL14140004 -> E09 14150009+14150019 -> own14160004 -> 14170004/14180004/14190004",
+    "activation": "NONE",
+    "factory": "UNMOUNTED"
+  }
+}

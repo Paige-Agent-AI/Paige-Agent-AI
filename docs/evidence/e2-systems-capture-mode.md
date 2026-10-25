@@ -435,3 +435,55 @@ callable manual capture and canonical result/receipt/recovery remain INCOMPLETE.
 Founder Acceptance: NOT_ACCEPTED; all19/nine and original9/0+12/0/4 preserved.
 ALG03/06/11/12/13 and CAP009–017 readiness are unchanged. No model/provider,
 customer scan, business action or protected monthly retry was performed.
+
+## October25 — proposed private manual dispatch gate, release held
+
+O07 preparation after the original request/read prerequisites: one private native
+`_start_manual_systems_check_work(uuid)` over the original Work row. This is a
+concrete DEVELOPMENT proposal; the new server-role grant requires explicit owner
+authorization before production release. The earlier preparation-function grant
+does not approve this grant. No customer scan or public admission is requested.
+
+The function discovers immutable original identities, pins current Auth/profile/
+standalone active tenant/Owner-or-Admin membership/optional workspace thread in
+the same order as preparation, then locks the original Work row. It rechecks the
+closed manual pair/payload/epoch/authority labels, one attempt, actual lease time
+and native dispatch marker. Only one original dispatch CAS can succeed. The
+original attempt stays one; no new identity or restart. Duplicate, expired,
+unknown, cancelled or currently unauthorized work is refused without a state
+write. The bounded five-minute execution lease is original Work state, not a
+second scheduler. No generic/document/Knowledge writer or grant is changed.
+
+The existing PostgreSQL proof's optional `--manual-dispatch` mode retains its
+original47 checkpoints, then verifies38 claim checkpoints: real absent-function
+baseline, server-only ACL, duplicate-DDL refusal, exact original tuple, same-row
+lost-ACK refusal, eligibility/role/foreign-purpose negatives, seven observed
+native claim waits across two actual sessions, current authority after waits,
+expiry during a held row lock, three-second timeout and caller-setting restore.
+One further actual wait with only the row lock removed deliberately exposes
+duplicate admission; the repaired concurrency assertion rejects that outcome.
+The correct definition is restored before final metadata/no-scan checks. First
+37-check and final38-check runs are distinct local observations; neither is
+production activation or authenticated customer evidence. Surrounding modeled
+Auth/Operator fixture boundaries remain explicitly bounded.
+
+| Orchestration contract | This proposal |
+| --- | --- |
+| Request/entry | Future deliberate manual Systems check; no entry point admitted |
+| Source/context | Original Work actor/tenant/thread and current canonical Metric authority |
+| Capability/specialist | Manual Spine remains UNAVAILABLE/unregistered; no specialist runtime |
+| Adapter | Original Work dispatch marker, one per original attempt; no worker mode added |
+| Authority/risk | Private native permission proposal only; new grant held for owner approval |
+| Original writer | Existing Work row only; original Systems runner remains sole run/finding writer |
+| Identity/receipt | Same original Work/run UUID; no result, completion or Rail receipt produced |
+| Recovery | Duplicate/unknown/expired refusal; never replay to discover what happened |
+| Verified result | Local native CAS and negative control only; no domain execution proof |
+| Visible feedback | Existing safe Work read only; a claim is not a completed business check |
+
+Functional: LOCAL proposal; required exact-head review/CI and privileged release
+authorization remain owed. Visual: N/A/no UI delta. Experiential: original
+consumer/result/receipt/recovery and authorized ordinary SOLO scan proof remain
+INCOMPLETE. Founder Acceptance: NOT_ACCEPTED. ALG03/06/11/12/13 and CAP009–017
+readiness unchanged; concurrency safety is not a predictive-intelligence claim.
+All19/nine and historical9/0+12/0/4 preserved. No provider expense/activation,
+worker, timer, approval, correction, customer release name or monthly retry.

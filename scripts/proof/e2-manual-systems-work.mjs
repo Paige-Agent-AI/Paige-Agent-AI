@@ -161,7 +161,86 @@ try{
  const blocked=await fixture.holdArchive('UPDATE public.profiles SET active_tenant_id=active_tenant_id WHERE user_id=$1',[ids.actor],{manualRelease:true});
  try{deny(()=>call(),'55P03');}finally{blocked.release(false);}await blocked.completed;
  assert.equal(fixture.run('SELECT count(*)FROM public.paige_systems_check_run'),'0');assert.equal(originalShape(),shape);assertions++;
- console.log(JSON.stringify({pass:true,nativeCaseCheckpoints:assertions,actualNativeCreatorSha256:createHash('sha256').update(creator).digest('hex'),originalNativeMetadataUnchanged:true,originalWorkOnly:true,simultaneousFactoryConnections:2,observedLockWaits:6,boundedLockTimeoutProven:true,dispatchOrCustomerScan:false,productionAcceptance:false}));
+ let manualDispatchProof;
+ if(process.argv.includes('--manual-dispatch')){
+  const source=read('supabase/migrations/20271114260002_e02_manual_systems_dispatch.sql'),names=[];
+  const startKey='public._start_manual_systems_check_work(uuid)';
+  const fresh=(thread=ids.thread)=>decode(call(randomUUID(),ids.actor,ids.tenant,thread)).work_id;
+  const row=id=>fixture.run('SELECT row_to_json(w)::text FROM public.paige_durable_work w WHERE id=$1',[id]);
+  const begin=id=>as('service_role','SELECT row_to_json(r)FROM public._start_manual_systems_check_work($1)r',[id]);
+  const test=(name,fn)=>{fn();names.push(name);};
+  const refused=(id,code,reason)=>{const before=row(id);assert.throws(()=>begin(id),e=>e.code===code&&(!reason||e.message.includes(reason)));assert.equal(row(id),before);names.push(reason??code);};
+  test('real absent-contract baseline',()=>assert.throws(()=>begin(randomUUID()),e=>e.code==='42883'));
+  const old=originalShape();fixture.run(source);test('original contracts unchanged',()=>assert.equal(originalShape(),old));
+  test('server-only bounded function metadata',()=>assert.deepEqual(decode(fixture.run(`SELECT json_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig,'anon',has_function_privilege('anon',oid,'EXECUTE'),'auth',has_function_privilege('authenticated',oid,'EXECUTE'),'server',has_function_privilege('service_role',oid,'EXECUTE'))FROM pg_proc WHERE oid='${startKey}'::regprocedure`)),{owner:'postgres',definer:true,config:['search_path=""','lock_timeout=3s'],anon:false,auth:false,server:true}));
+  const installed=fixture.run(`SELECT md5(prosrc)||'|'||proacl::text FROM pg_proc WHERE oid='${startKey}'::regprocedure`);
+  test('duplicate DDL refused without replacement',()=>{assert.throws(()=>fixture.run(source),e=>e.code==='42723');assert.equal(fixture.run(`SELECT md5(prosrc)||'|'||proacl::text FROM pg_proc WHERE oid='${startKey}'::regprocedure`),installed);});
+  const id=fresh(),prior=JSON.parse(row(id)),started=decode(begin(id)),after=JSON.parse(row(id));
+  test('same original identity and fixed payload',()=>assert.deepEqual(started,{work_id:id,work_status:'claimed',server_idempotency_key:prior.idempotency_key,tenant_id:ids.tenant,initiating_user_id:ids.actor,thread_id:ids.thread,attempt_count:1,request_payload:payload}));
+  test('single native CAS, same attempt and bounded lease',()=>{assert.equal(after.dispatch_started_attempt,1);assert.equal(after.version,prior.version+1);assert.equal(after.attempt_count,1);assert.equal(after.max_attempts,1);assert.ok(new Date(after.lease_until)-new Date(after.heartbeat_at)<=300001);assert.ok(new Date(after.lease_until)>new Date(prior.lease_until));});
+  for(const k of ['id','tenant_id','initiating_user_id','intent_id','thread_id','idempotency_key','request_payload','authority_context','scope_epoch','claimed_at','created_at'])assert.deepEqual(after[k],prior[k],k);
+  refused(id,'55000','SYSTEMS_WORK_ALREADY_DISPATCHED'); // Lost ACK never means retry the scan.
+  test('explicitly unthreaded preparation supported',()=>assert.equal(decode(begin(fresh(null))).thread_id,null));
+  for(const role of ['anon','authenticated'])test(role+' execute refusal',()=>assert.throws(()=>as(role,'SELECT *FROM public._start_manual_systems_check_work($1)',[fresh()]),e=>e.code==='42501'));
+  refused(null,'22023');refused(randomUUID(),'42501');
+  for(const [table,column,value,where,target,restore]of [
+   ['public.profiles','active_tenant_id',ids.second,'user_id',ids.actor,ids.tenant],
+   ['public.tenants','status','trial','id',ids.tenant,'active'],
+   ['public.tenants','account_type','agency','id',ids.tenant,'standalone'],
+   ['public.tenants','parent_tenant_id',ids.second,'id',ids.tenant,null],
+   ['public.tenant_members','role','member','user_id',ids.actor,'owner'],
+   ['public.tenant_members','status','inactive','user_id',ids.actor,'active'],
+   ['auth.users','banned_until','2099-01-01','id',ids.actor,null],
+   ['auth.users','deleted_at','2099-01-01','id',ids.actor,null],
+   ['public.paige_chat_threads','audience','customer','id',ids.thread,'workspace'],
+   ['public.paige_chat_threads','is_archived','true','id',ids.thread,'false'],
+  ]){const w=fresh();fixture.run(`UPDATE ${table} SET ${column}=$1 WHERE ${where}=$2`,[value,target]);try{refused(w,'42501');}finally{fixture.run(`UPDATE ${table} SET ${column}=$1 WHERE ${where}=$2`,[restore,target]);}}
+  const payloadless=fixture.run('SELECT id FROM public.paige_durable_work WHERE intent_id=$1',[foreignIntent]);refused(payloadless,'42501');
+  const ceiling=fresh();fixture.run('UPDATE public.paige_durable_work SET max_attempts=2 WHERE id=$1',[ceiling]);refused(ceiling,'42501');
+  for(const status of ['cancelled','outcome_unknown']){const w=fresh();fixture.run("UPDATE public.paige_durable_work SET status=$1,terminal_outcome=CASE WHEN $1='cancelled' THEN '{\"cancelled\":true}'::jsonb END,settled_at=CASE WHEN $1='cancelled' THEN now() END WHERE id=$2",[status,w]);refused(w,'55000');}
+  const expired=fresh();fixture.run("UPDATE public.paige_durable_work SET lease_until=clock_timestamp()-interval '1second' WHERE id=$1",[expired]);refused(expired,'55000');
+  // A second native session waits on the original row, then observes the first
+  // transaction's committed dispatch marker and refuses a duplicate execution.
+  const shared=fresh(),h=await fixture.holdArchive('SET LOCAL ROLE service_role;'+sql('SELECT *FROM public._start_manual_systems_check_work($1)',[shared]),[],{manualRelease:true});
+  const label='e2_systems_cas_'+randomUUID().replaceAll('-',''),second=asyncNative(sql('SET ROLE service_role;SELECT *FROM public._start_manual_systems_check_work($1)',[shared]),label);
+  try{await observedWait(label);}finally{h.release();}await h.completed;const duplicate=await second;
+  test('two native claimers, one dispatch marker',()=>{assert.notEqual(duplicate.code,0);assert.match(duplicate.err,/55000:.*SYSTEMS_WORK_ALREADY_DISPATCHED/);assert.equal(JSON.parse(row(shared)).dispatch_started_attempt,1);});
+  // Causal negative control: removing only the original-row lock admits BOTH
+  // native callers. The repaired assertion above would reject that result.
+  const replace=source.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION');
+  assert.equal(replace.split('FOR UPDATE;').length,2);
+  try{
+   fixture.run(replace.replace('FOR UPDATE;',';'));
+   const w=fresh(),held=await fixture.holdArchive('SET LOCAL ROLE service_role;'+sql('SELECT *FROM public._start_manual_systems_check_work($1)',[w]),[],{manualRelease:true});
+   const label='e2_systems_unsafe_'+randomUUID().replaceAll('-',''),pending=asyncNative(sql('SET ROLE service_role;SELECT *FROM public._start_manual_systems_check_work($1)',[w]),label);
+   try{await observedWait(label);}finally{held.release();}await held.completed;
+   const unsafe=await pending;test('row-lock removal control exposes duplicate admission',()=>assert.equal(unsafe.code,0,unsafe.err));
+  }finally{fixture.run(replace);}
+  let claimWaits=1;
+  for(const [table,column,value,where,target,restore]of [
+   ['public.profiles','active_tenant_id',ids.second,'user_id',ids.actor,ids.tenant],
+   ['public.tenants','status','inactive','id',ids.tenant,'active'],
+   ['public.tenant_members','role','member','user_id',ids.actor,'owner'],
+   ['auth.users','banned_until','2099-01-01','id',ids.actor,null],
+   ['public.paige_chat_threads','audience','customer','id',ids.thread,'workspace'],
+  ]){
+   const w=fresh(),before=row(w),h=await fixture.holdArchive(`UPDATE ${table} SET ${column}=$1 WHERE ${where}=$2`,[value,target],{manualRelease:true});
+   const label='e2_systems_claim_'+randomUUID().replaceAll('-',''),pending=asyncNative(sql('SET ROLE service_role;SELECT *FROM public._start_manual_systems_check_work($1)',[w]),label);
+   try{await observedWait(label);claimWaits++;}finally{h.release();}await h.completed;
+   try{const denied=await pending;test('current authority after actual claim lock wait',()=>{assert.notEqual(denied.code,0);assert.match(denied.err,/42501:.*SYSTEMS_WORK_UNAVAILABLE/);assert.equal(row(w),before);});}finally{fixture.run(`UPDATE ${table} SET ${column}=$1 WHERE ${where}=$2`,[restore,target]);}
+  }
+  const timed=fresh();fixture.run("UPDATE public.paige_durable_work SET lease_until=clock_timestamp()+interval '1second' WHERE id=$1",[timed]);
+  const timedBefore=row(timed),hTime=await fixture.holdArchive('UPDATE public.paige_durable_work SET version=version WHERE id=$1',[timed],{manualRelease:true});
+  const timeLabel='e2_systems_time_'+randomUUID().replaceAll('-',''),timeRead=asyncNative(sql('SET ROLE service_role;SELECT *FROM public._start_manual_systems_check_work($1)',[timed]),timeLabel);
+  try{await observedWait(timeLabel);claimWaits++;await new Promise(r=>setTimeout(r,1100));}finally{hTime.release();}await hTime.completed;
+  const late=await timeRead;test('expiry during row wait uses actual time',()=>{assert.notEqual(late.code,0);assert.match(late.err,/55000:.*SYSTEMS_WORK_NOT_CLAIMABLE/);assert.equal(row(timed),timedBefore);});
+  const timeoutWork=fresh(),hTimeout=await fixture.holdArchive('UPDATE public.profiles SET active_tenant_id=active_tenant_id WHERE user_id=$1',[ids.actor],{manualRelease:true});
+  try{refused(timeoutWork,'55P03');}finally{hTimeout.release(false);}await hTimeout.completed;
+  const settingWork=fresh();test('caller timeout restored after bounded claim',()=>assert.deepEqual(decode(fixture.run("BEGIN;SET LOCAL lock_timeout='9s';SELECT *FROM public._start_manual_systems_check_work($1);SELECT json_build_object('restored_timeout',current_setting('lock_timeout'));COMMIT",[settingWork])),{restored_timeout:'9s'}));
+  test('no original scan/result or unrelated contract change',()=>{assert.equal(fixture.run('SELECT count(*)FROM public.paige_systems_check_run'),'0');assert.equal(originalShape(),old);});
+  manualDispatchProof={checkpoints:names.length,nativeSessions:2,observedClaimWaits:claimWaits,unsafeControlObservedWaits:1,rowLockRemovalDetected:true,migrationSha256:createHash('sha256').update(source).digest('hex'),grantAndRelease:'OWNER_APPROVAL_REQUIRED',workerOrScan:false};
+ }
+ console.log(JSON.stringify({pass:true,nativeCaseCheckpoints:assertions,actualNativeCreatorSha256:createHash('sha256').update(creator).digest('hex'),originalNativeMetadataUnchanged:true,originalWorkOnly:true,simultaneousFactoryConnections:2,observedLockWaits:6,boundedLockTimeoutProven:true,dispatchOrCustomerScan:false,productionAcceptance:false,...(manualDispatchProof?{manualDispatchProof}:{})}));
 }finally{
  await fixture.close();assert.match(fixture.database,/^operator_account_lifecycle_proof_[0-9_]+$/);
  fixture.role='';fixture.run('DROP DATABASE '+fixture.database,[],'postgres');

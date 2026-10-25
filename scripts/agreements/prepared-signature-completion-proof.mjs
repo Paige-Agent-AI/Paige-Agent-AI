@@ -21,7 +21,7 @@ export async function provePreparedSignatureCompletion({sql,read,q,tenant,actor,
   FROM paige_agreements a JOIN paige_agreement_document_preparations p ON p.agreement_id=a.id AND p.is_current WHERE a.id='${v.a.id}';`);
  check(before.status==='draft'&&before.signed===0&&before.field_receipts===0,'Message acceptance alone cannot invent publication, signature or field evidence');
  if(!process.argv.includes('--prepared-signature-completion-baseline')){
-  const migration=read('supabase/migrations/20271114200004_e04_prepared_signing_completion.sql');sql(migration);sql(migration);
+  const migration=read('supabase/migrations/20271114230304_e04_prepared_signing_completion.sql');sql(migration);sql(migration);
  }
  // Causal baseline must reach this genuine missing native effect transition
  // AFTER the exact original consumed approval/Work/credential/message result.

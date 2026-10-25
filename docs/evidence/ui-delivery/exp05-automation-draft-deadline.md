@@ -1,5 +1,42 @@
 # EXP05 - bounded draft save and original uncertain outcome
 
+## October25 15:34UTC - actual production release; customer action proof owed
+
+This dated checkpoint supplies the released identity for the original development
+fields below; their earlier evidence and limitations remain historical, not
+rewritten. Reviewed846b33c55c39179a2af1702b430a3280d11a3e37,
+AUTHOR-REVIEW / LOWER ASSURANCE5643723169, all11 exact-head checks/Preview and both
+web statuses SUCCESS, zero unresolved threads, merged480627ac5bdc3ad92e4524d70ebaa23e56520ed9.
+Actual treed7da83c258daef43f4dc19c129260b6480731165 matches the inspected union:
+all six reviewed owning blobs and all16134 incoming outside entries exact.
+
+Normal Edge40206859995/job121209549454 SUCCESS. Artifact12603484998 ZIP SHA256
+a9ac026f0724757042da0f92706bfec1d8c5e196b85932b96576da87dc0c6b75 was independently
+verified before parsing. Chat542/JWTtrue has all287 exact Git source/emitted closure
+entries; actual provider archive922eedfdc61683f96b179ad9af18a7175dc66edde31b1a42f7e87a24a91ddb5e
+and version/config match. Scratch cleanup is INCOMPLETE/permission_denied, not
+reported clean. An initial independent collector incorrectly stripped extra
+terminal LF; using the unchanged original verifier's removesuffix rule corrects
+that collector error without changing source or certificate acceptance.
+
+Exact production Verceldpl_GdFCvnGzMTfGovKvxkhMb1RWWrxm READY, canonical aliases
+and bothpublic200/build480627ac5bdc3ad92e4524d70ebaa23e56520ed9-mvnzcgjf/null were
+read back15:31:02UTC. [Original production receipt6399571871](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2845#issuecomment-6399571871).
+Native migration NOT_APPLICABLE. No activation or customer announcement.
+
+Human-authorized read-only ordinary owner inspection confirms canonical
+Operations/overview navigation, resolved weekly inspection, held recurrence,
+unchanged historical internal booking after reload and booking-inspector Escape
+focus return. All11 Operations catalogue recipes still display Listed/Unverified.
+These observations do not exercise the changed save response, new approval,
+draft/Rail creation, a second cohort, isolation negatives or Live. Functional
+deployment is verified; changed-path Visual/Experiential acceptance, complete
+Builder/weekly/ZION/ten outcomes/E5 and Founder Acceptance remain PROOF OWED.
+ALG01 preserves original identity/no-repeat uncertainty; ALG12/13 gain bounded
+truthful failure inputs only. No algorithm maturity or catalogue promotion.
+Recovery remains a reviewed forward correction preserving original records,
+approvals and receipts, with original inspection instead of uncertain replay.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: src/__tests__/automation-chat-draft-recovery.test.ts; exact approved process, original caller/workspace preflight, draft/ordered acts, native readback and bounded reconciliation as mapped below; ANT161290bfac2
 PAIGE_UI_DESIGN: PASS: docs/evidence/ui-delivery/exp05-automation-draft-deadline.md; existing Chat progress, saved/refused/unconfirmed presentation and reentry; original control, layout, navigation, input and approval preserved

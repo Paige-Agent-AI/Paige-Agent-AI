@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseWeeklyDraftState, weeklyDraftModelContext } from "../../supabase/functions/_shared/paige-orchestration/weekly-draft-projection";
+import { parseWeeklyDraftState, weeklyDraftModelContext, weeklyDraftRecordReference } from "../../supabase/functions/_shared/paige-orchestration/weekly-draft-projection";
 
 const actor = "11111111-1111-4111-8111-111111111111", tenant = "22222222-2222-4222-8222-222222222222";
 const confirmation = "33333333-3333-4333-8333-333333333333", request = "44444444-4444-4444-8444-444444444444";
@@ -34,6 +34,31 @@ describe("original weekly draft model-context boundary", () => {
       authority: "not_granted_by_projection" });
     expect(JSON.stringify(result)).not.toContain(process);
     expect(JSON.stringify(result)).not.toContain(receipt);
+  });
+  it.each(["saved", "changed"])("retains original %s resource references separately from model prose", phase => {
+    const raw = phase === "saved" ? saved() : { ...saved(), phase, revision: 2, process_state: "paused" };
+    const record = weeklyDraftRecordReference(raw, scope, confirmation);
+    expect(record).toEqual({ automationId: process, runId: request, receiptId: receipt });
+    expect(Object.isFrozen(record)).toBe(true);
+    expect(record).not.toHaveProperty("token");
+    expect(record).not.toHaveProperty("confirmationId");
+    expect(record).not.toHaveProperty("retryAllowed");
+    for (const id of [process, request, receipt, confirmation, token])
+      expect(JSON.stringify(weeklyDraftModelContext(raw, scope))).not.toContain(id);
+  });
+  it.each([
+    { ...saved(), phase: "saved_unreceipted", receipt_id: null },
+    { ...saved(), phase: "changed", revision: 2, receipt_id: null },
+    { ...native(), phase: "unknown", confirmation_token: null },
+    native(), { ...saved(), receipt_id: "not-a-receipt" },
+  ])("does not create inspect references without a matching original receipt", raw => {
+    expect(weeklyDraftRecordReference(raw, scope, confirmation)).toBeNull();
+  });
+  it("refuses foreign confirmation, actor, business and conversation references", () => {
+    expect(weeklyDraftRecordReference(saved(), scope, process)).toBeNull();
+    for (const key of ["actorId", "tenantId", "threadId"])
+      expect(weeklyDraftRecordReference(saved(), { ...scope, [key]: process }, confirmation)).toBeNull();
+    expect(weeklyDraftRecordReference(saved(), { actorId: actor, tenantId: tenant } as typeof scope, confirmation)).toBeNull();
   });
   it("marks a changed definition historical rather than presenting the old schedule as its current state", () => {
     expect(weeklyDraftModelContext({ ...saved(), phase: "changed", revision: 3, process_state: "live", recurrence_authorized: null }, scope))

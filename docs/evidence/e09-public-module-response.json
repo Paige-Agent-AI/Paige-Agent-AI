@@ -1,0 +1,30 @@
+{
+  "scope": "Existing web delivery: do not replace a missing public application asset with the SPA document",
+  "baselineMain": "7d7663962eddb72f4d96a9650f6d5e23b8a079b2",
+  "baselineConfigIntegrity": "6c1317af6077425bfcbd3c4765dac1c7b837fde585d0c26286d0c29de8f880ff",
+  "observedPublicBaseline": {
+    "path": "/assets/e09-absent-module-check.js",
+    "httpStatus": 200,
+    "contentType": "text/html; charset=utf-8",
+    "cacheControl": "public, max-age=31536000, immutable",
+    "containsAppRoot": true,
+    "bytes": 12034,
+    "customerData": "NONE: public static document only"
+  },
+  "sourceChange": "Only the original SPA fallback source excludes the exact /assets/ prefix. Original special documents, headers and every other config value are retained by a complete config inverse.",
+  "sourceProof": {
+    "owningSuite": "src/__tests__/static-asset-routing.test.ts",
+    "baseline": {"passed": 14, "failed": 8},
+    "candidate": {"passed": 22, "failed": 0},
+    "failedBaselineCases": "Eight real asset path classes previously matched the original HTML fallback; all ten page entrances and four preservation checks already passed.",
+    "interpretation": "Config matching and preservation proof only. Route matching is never customer authorization and is not actual deployed HTTP behavior."
+  },
+  "preserved": ["All original auth and legal rewrites", "Every existing security/cache header and deployment setting", "Existing real-asset cache performance", "All original application/backend identity, tenant, customer, consent and commercial gates"],
+  "execution": "No new server/function/runtime, store, job, provider connection, permission grant, domain, customer account, business action or activation",
+  "protectedPreview": "Optional share-link fetch rejected by automatic approval review because it would create or reuse a23-hour access link; no share grant created or alternate access bypass. Existing source/build gates and ordinary public production readback remain the release path.",
+  "uiImpact": "No new interface or interaction. Existing page-loading recovery is separately owned by PR2870. No rendered, device, sign-in or full Experience claim from this config-only change.",
+  "deliveryState": "NOT_DEPLOYED",
+  "requiredReadback": ["Required exact-head CI and reviewed config accepted by normal Vercel build", "Public missing asset HTTP404 with its actual error cache policy recorded", "Original public /app and special-document entrances still served", "Real built JS/CSS assets retain correct status, MIME and cache", "No false full tenant/customer/founder acceptance"],
+  "truthBoundary": "The initiating customer asset/cache/deploy cause is not conclusively identified. Do not claim all caching failure solved or the error cache policy verified until actual platform readback.",
+  "customerReturn": "Earlier actual customer return/history on PR2864 remains separate; this unreleased source is not credited for that result."
+}

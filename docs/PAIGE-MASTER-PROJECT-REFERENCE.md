@@ -852,6 +852,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP05 exact source-mismatch diagnostics; source/web released, whole Edge certificate failed.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2827](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2827), identify the differing expected source without publishing downloaded content | Reviewed `cf1eea01bd5fbc5f68315f53a42ea504e9a2cdde` / tree `59d2acfbb8c1fee0dd56b24519613facdc5adc5b`; AUTHOR-REVIEW / LOWER ASSURANCE5642296971 and final6395867452, ten applicable exact checks/two web SUCCESS, schema-free Preview SKIPPED, zero threads. Actual main `81968e5a03766d9d9bd9d0746d63c7a62fb2d22c` / tree `17fed9ba4294dffb27d5840d9697f2b21d5feb67` matches inspected33b9+cf1 union. Production `dpl_GCpKZsvioYCsMfKA9PX24t5Mo2B1` READY; both public versions200/exact `81968e5a03766d9d9bd9d0746d63c7a62fb2d22c-mvnmajm7` / customerUpdate:null at09:31:35UTC. Normal Edge40180199618/job121129436839 skipped duplicate uploads; artifact12593572875/SHA256 `b51636ff05a99793423bb254e9c0829611d38a7220e45f13c13167ad53339853` retained the actual failed certificate. [Original production receipt6396062780](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2827#issuecomment-6396062780). | SOURCE MERGED / WEB READBACK VERIFIED / FULL EDGE VERIFICATION FAILED. Five selected functions matched; Chat's known `_shared/action-risk.ts` differed on Docker read: expected `e2cc4ae0724c65e6d1b52b24af7462df468dbba36a175739119461b3fc9c595a`, downloaded `ca9d94d96855ca24f5dca7f7af695d2b4b7793469b21c85f0d6cf7d03539a008`. The certified tag did not advance. Scratch cleanup remained independently incomplete/permission_denied. No business source, native migration, permission, provider or activation changed. |
+
+The diagnostic retains trusted repository identity/digests only, never downloaded code, unexpected private names or raw CLI payloads. Later pinned compilation reproduces that one downloaded module exactly in candidate#2831; this neither rewrites the failed run nor certifies the other actual files. Whole selected source/runtime/configuration proof, dependent Calendar/Task/weekly releases, ordinary authenticated results, separate Live and complete EXP05 acceptance remain owed. No customer version, catalogue status or algorithm maturity promotion; no recursive mechanical-closeout entry.
+
 **2026-10-25 UTC — EXP04 recipient document magnification; verified source/web release.**
 
 | Increment | Exact reviewed source and production readback | Completion boundary |

@@ -141,3 +141,5 @@
 .sc-ready-open{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left;text-decoration:underline;text-decoration-color:var(--pg-line-strong);text-underline-offset:2px}
 .sc-ready-open:hover{text-decoration-color:var(--pg-gold)}
 .sc-area-b,.sc-ready-open,.sc-area-check .sc-button{min-height:44px}
+.sc-drawer .sc-icon-button{min-height:44px;min-width:44px}.sc-linked-date{font-variant-numeric:tabular-nums}.sc-recorded-read-state{padding:24px 16px;color:var(--pg-muted);font-size:14px;line-height:1.6}.sc-drawer.is-recorded .sc-drawer-body p,.sc-drawer.is-recorded .sc-drawer-body dt,.sc-drawer.is-recorded .sc-drawer-body dd{font-size:14px}.sc-drawer.is-recorded .sc-drawer-body h3{font-size:12px}
+@container solo-systems-check (max-width:560px){.sc-drawer.is-recorded .sc-drawer-body p,.sc-drawer.is-recorded .sc-drawer-body dt,.sc-drawer.is-recorded .sc-drawer-body dd{font-size:16px}.sc-drawer.is-recorded .sc-drawer-body dl{grid-template-columns:1fr}.sc-drawer.is-recorded .sc-drawer-body dd{margin-block-end:8px}}

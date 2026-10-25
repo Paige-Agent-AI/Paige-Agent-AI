@@ -2,7 +2,7 @@
 // Boundary ports record synthetic Supabase/provider traffic only; no network, signed
 // JWT, native authority, native effect, future delivery or customer acceptance proof.
 import assert from 'node:assert/strict';
-import { writeFileSync, readFileSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -97,8 +97,10 @@ const nativeState = phase => ({ok: true, actor_id: actor, tenant_id: tenant, thr
   confirmation_id: proposal, request_id: requestId, phase, read_at: new Date().toISOString(),
   expires_at: new Date(Date.now()+600000).toISOString(), summary: 'Neutral exact draft only',
   draft: {name: 'Neutral weekly responsibility', weekday: 1, local_time: '09:00', timezone: 'America/New_York'},
-  confirmation_token: null, automation_id: phase==='saved'?automationId:null, revision: phase==='saved'?1:null,
-  process_state: phase==='saved'?'draft':null, receipt_id: phase==='saved'?receiptId:null, recurrence_authorized: false});
+  confirmation_token: null, automation_id: ['saved','changed'].includes(phase)?automationId:null,
+  revision: phase==='changed'?2:phase==='saved'?1:null,
+  process_state: phase==='changed'?'paused':phase==='saved'?'draft':null,
+  receipt_id: ['saved','changed'].includes(phase)?receiptId:null, recurrence_authorized: false});
 async function driveWeekly(options={}) {
   modelBodies=[]; modelRound=0; forbiddenNetwork=[];
   const args=exactArgs(), tool='weekly_commitment_draft';
@@ -131,7 +133,7 @@ async function driveWeekly(options={}) {
     weekly_commitment_owner:()=>({data:!options.member&&state.tenant===tenant,error:null}),
     resolve_tool_autonomy:{data:options.off?'off':'confirm',error:null},
     resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},
-    resolve_tool_autonomy_many:{data:[],error:null},
+    resolve_tool_autonomy_many:a=>({data:a._tool_keys.map(tool_key=>({tool_key,mode:options.off?'off':'confirm'})),error:null}),
     get_paige_persona_context:()=>({data:[{tenant_id:state.tenant,tenant_name:null,playbook_config:null,playbook_slug:null,
       funding_enabled:false,brand:null}],error:null}),
     paige_chat_interactive_begin_v2:{data:{status:'accepted',turn_id:id(15)},error:null},
@@ -144,6 +146,7 @@ async function driveWeekly(options={}) {
     record_capability_run:{data:id(17),error:null},
     claim_weekly_commitment_chat_draft:()=>{
       if(options.claimLost)throw Error('PRIVATE_CLAIM_LOST_ACK');
+      if(options.expired)return{data:null,error:{code:'42501',message:'PRIVATE_EXPIRED_APPROVAL'}};
       if(options.afterClaim==='scope')state.tenant=id(99);
       if(options.afterClaim==='stop')state.stopped=true;
       if(options.afterClaim==='abort')controller.abort();
@@ -165,13 +168,16 @@ async function driveWeekly(options={}) {
     method:'POST',headers:{Authorization:'Bearer test-original-jwt','Content-Type':'application/json'},
     body:JSON.stringify({messages:[{role:'user',content:options.fresh?'Prepare only a private weekly responsibility draft for Monday at 09:00 America/New_York; do not enable or run it.':options.declined?'Not now for this stored weekly draft.':'Approved: save only this exact weekly definition as an unapproved draft.'}],
       threadId:thread,requestIntentId:intent,interactive:{kind:'message'},
-      ...(options.fresh?{}:options.declined?{declinedConfirmations:[token]}:{approvedConfirmations:[token]})}),signal:controller.signal}));
+      ...(options.fresh?{}:options.declined?{declinedConfirmations:[token]}:{approvedConfirmations:[options.legacyToken?fingerprint:token]})}),signal:controller.signal}));
   const wire=await response.text();
+  const confirmations=wire.split('\n').filter(line=>line.startsWith('data: ')).flatMap(line=>{
+    try { const frame=JSON.parse(line.slice(6));return frame.paige_confirm?[frame.paige_confirm]:[]; } catch { return []; }
+  });
   assert.deepEqual(forbiddenNetwork,[],'No network/provider transport may escape the existing offline ports');
   const values=modelBodies.flatMap(b=>b.messages??[]).filter(m=>m.role==='user')
     .flatMap(m=>Array.isArray(m.content)?m.content:[]).filter(p=>p.type==='tool_result')
     .flatMap(p=>{try{return[JSON.parse(p.content)];}catch{return[];}});
-  return{rec,wire,values,settled,state,token,args,offered:modelBodies.filter(b=>b.stream).flatMap(b=>b.tools??[]),
+  return{rec,wire,values,settled,state,token,args,status:response.status,confirmations,offered:modelBodies.filter(b=>b.stream).flatMap(b=>b.tools??[]),
     calls:name=>rec.rpc.filter(c=>c.name===name),
     genericCAS:()=>state.timeline.filter(c=>c.kind==='query'&&c.op==='update')};
 }
@@ -187,6 +193,7 @@ async function check(name,fn){try{await fn();resultRows.push({name,status:'PASS'
 catch(e){resultRows.push({name,status:'FAIL',error:e.message});console.log('FAIL '+name+': '+e.message);}}
 await check('Exact stored approval reaches one original-JWT native claim and one commit, with no generic CAS',async()=>{
   const r=await driveWeekly();
+  assert.equal(r.status,200,'The complete original Chat exchange must return normally');
   assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,1,'Original native Chat claim not reached');
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,1,'Original native Chat commit not reached');
   noFallback(r);
@@ -202,6 +209,7 @@ await check('Exact stored approval reaches one original-JWT native claim and one
 });
 await check('Decline uses original native refusal before generic consumption and never commits',async()=>{
   const r=await driveWeekly({declined:true});
+  assert.equal(r.status,200,'A recorded decline cannot hide a later startup failure');
   assert.equal(r.calls('decline_weekly_commitment_chat_draft').length,1,'Original native Chat decline not reached');
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
   assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0);noFallback(r);
@@ -216,6 +224,7 @@ for(const phase of ['saved','changed','declined','unknown'])await check('Native 
   const r=await driveWeekly({observed:phase});
   assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,1);
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);noFallback(r);
+  assert.ok(r.values.some(v=>v.original_outcome?.phase===phase),'Preserve the actual original phase, not an unavailable substitute');
 });
 await check('Lost native claim never becomes generic CAS, fresh commit or replacement proposal',async()=>{
   const r=await driveWeekly({claimLost:true});
@@ -245,7 +254,9 @@ await check('Fresh request prepares exactly five native stored args with a serve
   assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0);
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
   assert.equal(r.calls('dispatch_automation').length,0);
-  assert.ok(r.values.some(v=>v.needs_confirm===true),'Original surface approval must be required');
+  assert.equal(r.status,200);
+  assert.equal(r.confirmations.length,1,'Use the ACTUAL existing paige_confirm surface frame');
+  assert.equal(r.confirmations[0].tool,'weekly_commitment_draft');
 });
 await check('Duplicate same-round preparation reuses the original exact proposal/request identity',async()=>{
   const r=await driveWeekly({fresh:true,modelTools:[{name:'weekly_commitment_draft',args:intentArgs},
@@ -264,7 +275,7 @@ await check('Returning exact draft request reuses the original pending proposal 
   assert.equal(r.state.proposals[0].args._request_id,requestId,'Keep exact original server identity across requests');
   assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0);
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
-  assert.ok(r.values.some(v=>v.needs_confirm===true&&v.confirm_fingerprint===r.token));
+  assert.ok(r.confirmations.some(v=>v.fingerprint===r.token));
 });
 await check('Model-supplied native request identity cannot prepare a different approval',async()=>{
   const r=await driveWeekly({fresh:true,modelTools:[{name:'weekly_commitment_draft',args:{...intentArgs,_request_id:id(99)}}]});
@@ -272,7 +283,7 @@ await check('Model-supplied native request identity cannot prepare a different a
   assert.equal(r.rec.inserts.filter(c=>c.table==='paige_pending_confirmations'&&!c.update&&!c.upsert).length,0);
   assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,0);
   assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
-  assert.ok(!r.values.some(v=>v.needs_confirm===true));
+  assert.equal(r.confirmations.length,0);
 });
 for(const afterClaim of ['scope','stop','abort'])await check('Original '+afterClaim+' retirement after claim never commits or falls through',async()=>{
   const r=await driveWeekly({afterClaim});
@@ -285,10 +296,39 @@ await check('Foreign native result cannot be represented as a verified saved dra
   assert.ok(!r.values.some(v=>JSON.stringify(v).includes(receiptId)),'Never expose foreign receipt as verified success');
   noFallback(r);
 });
-const output={evidenceClass:'PRIVATE RED preparation: actual current handler, existing offline recording ports',
+for(const mode of ['off','foreignProposal','member','legacyToken','expired'])await check('Original '+mode+' refusal never saves, substitutes or reproposes',async()=>{
+  const r=await driveWeekly({[mode]:true,modelTools:[{name:'weekly_commitment_draft',args:intentArgs}]});
+  if(mode==='member')assert.ok(!r.offered.some(t=>t.name==='weekly_commitment_draft'));
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
+  noFallback(r);
+  assert.equal(r.confirmations.length,0,'A refusal cannot create a replacement card');
+});
+await check('Re-emitted approved intent does not save twice or mint a replacement after the native success',async()=>{
+  const r=await driveWeekly({modelTools:[{name:'weekly_commitment_draft',args:intentArgs},
+    {name:'weekly_commitment_draft',args:{...intentArgs}}]});
+  assert.equal(r.calls('claim_weekly_commitment_chat_draft').length,1);
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,1);
+  noFallback(r);
+});
+await check('Already-consumed original approval cannot commit or mint a replacement',async()=>{
+  const r=await driveWeekly({consumed:true,observed:'saved',modelTools:[{name:'weekly_commitment_draft',args:intentArgs}]});
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
+  noFallback(r);
+});
+await check('Missing schedule detail requests clarification without saving or preparing an approval',async()=>{
+  const {timezone:missing,...incomplete}=intentArgs;void missing;
+  const r=await driveWeekly({fresh:true,modelTools:[{name:'weekly_commitment_draft',args:incomplete}]});
+  assert.ok(r.offered.some(t=>t.name==='weekly_commitment_draft'));
+  assert.ok(r.values.some(v=>v.needs_input===true&&v.not_applied===true));
+  assert.equal(r.confirmations.length,0);
+  assert.equal(r.calls('commit_weekly_commitment_chat_draft').length,0);
+  noFallback(r);
+});
+const output={evidenceClass:'Development runtime proof: actual current handler, existing offline recording ports',
   sourceSHA256:createHash('sha256').update(readFileSync(path.join(root,'supabase/functions/paige-ai-chat/index.ts'))).digest('hex'),
   passed:resultRows.filter(r=>r.status==='PASS').length,failed:resultRows.filter(r=>r.status==='FAIL').length,cases:resultRows,
   boundary:'No native authentication/effects, provider traffic, customer success, release or acceptance is proven by this offline harness.'};
+mkdirSync(path.join(root,'work'),{recursive:true});
 writeFileSync(path.join(root,'work/weekly-draft-chat-result.json'),JSON.stringify(output,null,2)+'\n');
 console.log('RESULT '+output.passed+' PASS / '+output.failed+' FAIL');
 if(output.failed)process.exitCode=1;

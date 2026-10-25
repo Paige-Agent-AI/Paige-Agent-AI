@@ -793,3 +793,26 @@ The original future-control review now retains its unsaved proposal across an un
 Review correction: saved PostgreSQL CET/GMT/EST zones and newer server time zones now retain their original validity through the shared pure projection helper; the original actual-Node consumer import is repaired. Six zone regressions and the hosted import failure were reproduced before correction, not waived. Actual native configure/audit/readback/stale/lost-ack proof passes36 cases without activation; existing uniqueness remains enforced after correcting duplicate synthetic fixture names. Source883 native recapture includes349 pinned product inputs/177 explicit ports/zero transforms and current CET review/save. Ordinary authenticated schedule persistence, live recurrence and founder acceptance remain UNVERIFIED.
 
 October19 continuation: real handler→installed public SDK→receiver review atd434 reproduced a second P2. HTTP401/403 produces FunctionsHttpError/data:null, while the receiver previously reported unavailable after successfully rechecking the current workspace. Preserve the sealed REVISE receipt SHA256279611bac3ab4ff507b1e7fc29acaa093d724bf0c13fbf6d773b8c9927d57a07. A narrow correction recognizes only that canonical SDK error class with an original native Response401/403, after unchanged post-response authority/deadline checks, and returns refused. HTTP400/404/409/500, relay/network failure, name-only errors and non-Response contexts remain unavailable. No error body is consumed, copied or treated as authorization; there is no retry, writer or permission change. Actual handler/SDK causal regressions fail401/403 before correction and pass afterward; the complete126 protected tests across3owning suites pass with the existing network-denial guard unchanged. Existing native43-case evidence predates this correction and is not relabeled a new run. Final correction review, exact-head CI, deployment and authentic customer behavior remain separate obligations.
+
+### October 24 continuation - original weekly draft Chat consumer, development
+
+The original 17-case RED preparation is preserved above as a historical checkpoint.
+Current original-handler recording-port proof passes 25 cases; unchanged reminder
+proof passes 33/33 and original offer/schema eligibility passes 17/17. These are
+local tests with explicit fake authentication/provider/native boundaries, never
+customer execution or recurring acceptance. No denominator closure is inferred.
+
+The existing owner-only native claim, Kit commit and decline transports are now
+connected ahead of generic confirmation consumption. Exact stored arguments,
+server request identity, fresh native owner/Trust facts and the original runtime
+are retained. A stopped executor is explicitly re-read before commit. Unknown
+acknowledgements allow only the original outcome read; no fallback CAS, repeated
+save, replacement approval, provider or recurring activation is permitted.
+
+Actual handler execution also exposed missing canonical metric-key imports in the
+unreleased E02 parent. The exact one-line correction was separately handed back
+through ANT-161 as de79e7052f80125b453946058ced9d21f182ba5d; E02 acknowledged
+the parent release hold. Incoming EXP03 and EXP04 source must be composed, then
+immutable review, scalar/dependency proof, full required exact-head CI, actual
+production source/native record/Rail and ordinary authenticated recovery remain
+owed. See exp05-weekly-native-chat.md for the full truthful flow boundary.

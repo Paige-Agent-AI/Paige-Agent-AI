@@ -19,15 +19,15 @@ export const WEEKLY_COMMITMENT_DRAFT_CAPABILITY = defineCapability({
   receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
   outcome: { projector: "capability-record" },
 });
-// Prepared metadata only. The incumbent registry requires a real LIVE Chat binding
-// for mutations; do not register this or invent a tool name before admission review.
+// Chat binding is the exact native draft consumer, not recurring execution.
+// Source admission, production proof and complete Experience acceptance are separate.
 export const WEEKLY_COMMITMENT_DRAFT = {
   key: "automations.weekly_commitment_draft", domain: "automations", owner: "experience-05",
-  humanSurface: "PAIGE / Clients Calendar weekly responsibility", readiness: "none", selfDescribe: false,
-  action: { classification: "mutate", executor: "public.commit_weekly_commitment_draft", riskPolicyKey: "ordinary",
+  humanSurface: "PAIGE / Clients Calendar weekly responsibility", readiness: "none", selfDescribe: true,
+  action: { classification: "mutate", executor: "public.commit_weekly_commitment_chat_draft", chatTool: "weekly_commitment_draft", seatAuthority: "door-seat", riskPolicyKey: "ordinary",
     approvalAuthority: "chat-canonical", idempotency: "Exact canonical stored proposal, native unique request and stable Rail receipt; unknown reads never replay." },
   outcome: { kinds: ["capability_run"], projector: "public.record_capability_run", railVisibility: "owner_internal" },
-  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 
 // Original owner-only read contract. Chat consumes this below through its current
@@ -93,7 +93,7 @@ export function weeklyCommitmentStatusToolsForContext(context: { callerTier: str
  */
 export const WEEKLY_COMMITMENT_DRAFT_TOOL_NAME = "weekly_commitment_draft";
 export const WEEKLY_COMMITMENT_DRAFT_TOOLS = [{ type: "function" as const, function: {
-  name: WEEKLY_COMMITMENT_DRAFT_TOOL_NAME,
+  name: "weekly_commitment_draft",
   description: "Prepare a private weekly commitment-check draft for the workspace owner. Ask for its name, ISO weekday, local time and explicit time zone. Saving requires exact approval and does not authorize, enable or execute recurring work. Use read_weekly_commitment_status to inspect original saved work; do not reconstruct or repeat an uncertain save.",
   parameters: WEEKLY_COMMITMENT_DRAFT_CAPABILITY.input,
 } }];

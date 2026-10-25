@@ -23,6 +23,22 @@ Deno.test('original outcome preserves missing and uncertain history without repo
  h.setRow({...outcome(),state:'outcome_unknown'});assert.deepEqual(await read(input(),h.caller,h.service,actor),{...outcome(),state:'outcome_unknown'});
  h.setRow(null,new Error('Synthetic private server detail'));await rejects(()=>read(input(),h.caller,h.service,actor));
 });
+Deno.test('original outcome retains provider acceptance only with its original native publication receipt',async()=>{
+ const h=harness(),read=reader(),receipt='11111111-0000-4000-8000-000000000005';
+ for(const state of ['provider_accepted','provider_partial']){
+  const expected={...outcome(),state,receipt_id:receipt};h.setRow(expected);
+  assert.deepEqual(await read(input(),h.caller,h.service,actor),expected);
+ }
+ assert.equal(h.calls.filter(c=>c.name.startsWith('_')).length,2);
+});
+Deno.test('original publication states cannot erase or invent a receipt',async()=>{
+ const h=harness(),read=reader(),receipt='11111111-0000-4000-8000-000000000005';
+ for(const patch of [{state:'provider_partial',receipt_id:null},{state:'provider_accepted',receipt_id:'bad'},
+  {state:'prepared',receipt_id:receipt},{state:'outcome_unknown',receipt_id:receipt},
+  {state:'delivered',receipt_id:receipt},{state:'signed',receipt_id:receipt},{state:'paid',receipt_id:receipt}]){
+  h.setRow({...outcome(),...patch});await rejects(()=>read(input(),h.caller,h.service,actor));
+ }
+});
 Deno.test('original outcome refuses provider/signature/payment claims and foreign or extra projections',async()=>{
  const h=harness(),read=reader();for(const patch of [{state:'provider_accepted'},{state:'not_sent'},{state:'paid'},{receipt_id:work},{actor_id:work},{tenant_id:work},{agreement_id:work},{operation_id:work},{request_sha256:'0'.repeat(64)},{work_id:'bad'},{raw_token:'private'},{state:new String('prepared')}]){h.setRow({...outcome(),...patch});await rejects(()=>read(input(),h.caller,h.service,actor));}
 });

@@ -852,6 +852,26 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP05 bounded original ZION result inspection.**
+
+| Increment | Exact reviewed source and observed production release | Completion boundary |
+| --- | --- | --- |
+| [#2866](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2866), original specialist-history read budget | Reviewed2f2938b3a0a48ecc8f91ab2c2c3fa1cbba1d8252/treec8e538d2c8a16ecaaba72870737e2d4d84a185ce; AUTHOR-REVIEW / LOWER ASSURANCE5644914592; all11 exact checks/Preview/two webSUCCESS/zero threads. Actual9d8bdb79df49fca174d01ba30141c256ceacd025/tree31dc3d287f80c5e3cd9cd86c14bd8976f5c99cec preserves the inspected incoming union. Normal Edge40231463272/job121283905849SUCCESS; digest-verified artifact12613935180/ZIPsha ef0dfcc89de06090de820e73510d08e516fdf001ecfc26bf3349c216d61e98ed, all287 Chat546 immutable-source/compiler bindings and JWT configuration verified. Exact webdpl_A3JMtZYzuxVXeDaEVeWQbquSyPpR READY, but both public aliases had advanced to containinga8aaa131631f77eb0eb4da7cfd9d8bbba4884267-mvoaf3va/null at20:39:37UTC; exact-public9d8 was not observed. Containing Chat547 certificatePASS/all289 bindings and current provider archive/config matched; own helper unchanged. Containing Edge40231481257 attempt1 initiallyFAIL at nav-pull-profile/marker skipped; normal attempt2/job121287555470 subsequentlySUCCESS at20:54:29UTC. Digest-verified artifact12613144544/ZIPsha9ffa6c94b606b4e6cfea34bbadd2568959782a912734a7fbbd6aa249327dbfac has all23 entriesPASS; Chat547 files/archive exactly equal the already source-bound289-entry manifest. Initial failure retained, not waived. [Production receipt6403059382](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2866#issuecomment-6403059382). | SOURCE/SELECTED EDGE VERIFIED. Existing original authorized history reads share one8s budget; late completion cannot continue or publish proof. Earlier enclosing-route preflight is outside this helper; no cancellation of an issued read or historical CPU-incident closure. Scratch cleanup INCOMPLETE/permission_denied; no independent local Deno compile/direct connector source re-download. Authenticated original-result/full-request/reload/cohort/isolation and separate Live proof remain owed. No action, recurrence, delegation, provider, catalogue or algorithm activation; no full ten/E5-CV1–9/Builder/ZION or founder acceptance. Internal-only production repair; no customer release identity or announcement. |
+
+**2026-10-25 UTC — EXP05 exact-state weekly resume preparation.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2856](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2856), original paused-state review binding | Reviewed8e96600a5f309225895338183b262ed627a67dc5/tree856a151b63b0fef3949d052c7e1f06acc05e85a8; AUTHOR-REVIEW / LOWER ASSURANCE5644304573; all11 exact checks/Preview/two webSUCCESS/zero threads. Actual21307aad3085df70c44c97d5cfc46ce64d1c3373/tree9c74c246a1d1fd86d97d502c2524164f3daaf4f8 matches inspected union. Original native128/216unit/strict/lint0 pass; earlier native latency failure is retained. Normal Edge40218150786/job121243688211SUCCESS; artifact12608382363/SHA256c04b3985c7634fda28827e53cf6b6283a2580708109fd836802cda0053c50ad9 independently checked before parsing. Original immutable-source/config verifier binds all667 entries, including287 pinned-emitter Chat entries. Certificate approval183/Chat543/dispatcher266/orchestrator133/weekly25; subsequent actual dispatcher267/weekly26 source116+18 and individual configurations separately match that certificate. READYdpl_9C2AWCiCLkcaQLhfNzKGvKK4sMNB; both public200/exact21307aad3085df70c44c97d5cfc46ce64d1c3373-mvo4f30a/customerUpdate:null at17:49:52UTC. [Production receipt6402021835](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2856#issuecomment-6402021835). | SOURCE/WEB/SELECTED EDGE VERIFIED. Only exact paused state and original null/raw cutoff prepare the existing four-argument human authorization writer; legacy three-argument API, native writers, ACL and input schemas stay intact. Resume Chat/Live remains UNAVAILABLE/unadmitted; no SQL, recurring/provider/Live activation or new owner action/occurrence/Rail proof. Scratch cleanup remains INCOMPLETE/permission_denied; no independent local Deno compile. Existing catalogue/algorithm maturity, full ten outcomes/E5-CV1–9/Builder/ZION/cohort and founder acceptance remain open. Internal-only source repair, no customer release identity or announcement. |
+
+This mechanical closeout records the preceding delivery only and is not logged recursively.
+
+**2026-10-25 UTC — EXP02 private manual request foundation.**
+
+| PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |
+| --- | --- | --- | --- |
+| [#2867](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682); reviewed2ef74cdb7d0fb171199ee8eff3e53b10d04da252; maina358554c8cff8bbe0ba52243fb7097508c088c86/tree1cf0156eb4ddc484918f98f5173eaba23468c938 | Private preparation on original Work, fixed manual/tenant/no-action purpose and one attempt. Specific internal function/server-role grant was owner-authorized. No public consumer or scan. | Final AUTHOR-REVIEW / LOWER ASSURANCE5645103641; all13 exact checks/Preview/two webSUCCESS/zero threads. Actual1f614+2ef union preserves16225 outside entries, frozen owning source and complete incoming CI/evidence. Local47 native checkpoints and corrected hosted proof pass; initial failed test transport retained. Normal native40231237484/job121283322585 SUCCESS;20271114240002 once/full1462-version parity, actual body/ABI/server-only ACL verified. Original three contracts and three table owners/RLS/permissions unchanged; no new-function advisory, no global-clear claim. db-live=a358; Edge N/A. Productiondpl_7BdPf2uscEZR5cSTU4gFer9CNFYp READY; both public200/exacta358554c8cff8bbe0ba52243fb7097508c088c86-mvoab511/null at20:35:36UTC. | [Original capture evidence](evidence/e2-systems-capture-mode.md); ANT138/c66e4028. Internal-only, no customer release identity, manual availability or algorithm/catalogue promotion. Original dispatch/result/Rail/recovery and customer acceptance remain owed; all19/nine/founder open. Reviewed forward fix, no applied-history rewrite. |
+
 **2026-10-25 UTC — EXP04 original signature messages, publication and prepared-document completion.**
 
 | Increment | Exact reviewed source and actual production release | Completion boundary |
@@ -7643,8 +7663,12 @@ Current gaps:
   the reply in the autonomy catalogue. No Team Hub content enters Knowledge or Memory: once a person
   has read Team Hub through PAIGE their automatic memory summaries stop (owner ruling 2026-10-25),
   their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld
-  for the rest of a request that carried Team Hub text. `PROOF_OWED`. Contract:
+  for the rest of a request that carried Team Hub text. Merged #2860 (`a8aaa1316`); migrations
+  and `paige-ai-chat` read back on production. `PROOF_OWED`. Contract:
   [increment 4 PAIGE contract](delivery/exp08-team-hub-increment4-paige-contract.md).
+- Team Hub read performance (migration `20271114250008`): opening a conversation and searching cost
+  the page, not the workspace (measured 0.75–4.8 s → 2–4 ms at 1M messages; rare-word search
+  ~1.8 s). Two btree indexes over ids and times only, no message text; output byte-identical.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

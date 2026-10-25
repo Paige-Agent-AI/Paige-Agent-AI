@@ -145,7 +145,10 @@ it.each([false,undefined,true])('reports recorded signature separately from comp
   expect(document.activeElement).toBe(host.querySelector('h2'));
   expect(host.textContent).not.toContain('a copy is on its way');expect(host.textContent).not.toContain('has been told');
   expect(fixture.invoke).toHaveBeenCalledWith('sign-agreement',{body:{token,typed_name:'Synthetic Signer',signature_image_base64:null,consent_read:true,consent_esign:true}});
-  expect(host.querySelector('.ags-sign')).toBeNull();
+  // Primary styling now also serves safe status/download actions. Hold the
+  // original no-resigning contract by exact action identity, not its CSS class.
+  expect(signButton()).toBeUndefined();
+  expect([...host.querySelectorAll('button')].map(b=>b.textContent)).toEqual([completed===true?'Download completed copy':'Check recorded status']);
 });
 it.each([null,{ok:'true'},{ok:1},{ok:true},signingReceipt({signed_at:null}),signingReceipt({audit_complete:'true'})])('keeps an unknown/malformed signing outcome unconfirmed: %s',async(data)=>{
   fixture.invoke.mockImplementation(async(name:string)=>name==='sign-agreement'?{data,error:null}:{data:new Blob(['%PDF-1.7\nsynthetic component transport'],{type:'application/pdf'}),error:null});
@@ -365,4 +368,66 @@ it('locks zoom and fit reset during the original in-flight signature and never r
  prepareOwn();await render();await completeAnswers();await changeZoom('2');await act(async()=>button('Continue to signature').click());let finish!:(v:unknown)=>void;fixture.invoke.mockImplementation(()=>new Promise(r=>{finish=r;}));act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(i=>i.click()));await act(async()=>signButton().click());
  expect(zoomControl().disabled).toBe(true);expect(button('Fit width').disabled).toBe(true);await changeZoom('1');expect(lastPdf().zoom).toBe(2);expect(fixture.invoke.mock.calls.filter(([name])=>name==='sign-agreement')).toHaveLength(1);
  await act(async()=>finish({data:null,error:new Error('Synthetic acknowledgement lost')}));expect(host.textContent).toContain('Signing is not yet confirmed');
+});
+
+const mountRecorded=async(patch:Record<string,unknown>={})=>{
+ fixture.rpc.mockResolvedValue({data:[{...row(),is_valid:false}],error:null});
+ fixture.invoke.mockResolvedValue({data:signingReceipt({replayed:true,completed:false,completion_state:'verification_pending',completion_recovery_available:true,...patch}),error:null});
+ await render();await act(async()=>button('Check recorded status').click());
+};
+it('offers explicit prepared completion only after original read-only status establishes it',async()=>{
+ await mountRecorded();expect(host.querySelector('h2')?.textContent).toBe('Your signature is recorded');
+ expect(button('Finish completed copy')).toBeDefined();expect(fixture.invoke).toHaveBeenCalledExactlyOnceWith('sign-agreement',{body:{token,check_only:true}});
+ fixture.invoke.mockResolvedValue({data:signingReceipt({replayed:true,completed:true,completion_state:'verified',completion_recovery_available:false}),error:null});
+ await act(async()=>button('Finish completed copy').click());expect(fixture.invoke).toHaveBeenLastCalledWith('sign-agreement',{body:{token,action:'complete-recorded'}});
+ expect(host.querySelector('h2')?.textContent).toBe('Signed and completed');expect(button('Download completed copy')).toBeDefined();expect(document.activeElement).toBe(host.querySelector('h2'));
+});
+it('does not offer completion while other signatures or original history remain unverified',async()=>{
+ await mountRecorded({completion_state:'waiting_for_signatures',completion_recovery_available:false});
+ expect(button('Finish completed copy')).toBeUndefined();expect(button('Check recorded status')).toBeDefined();expect(host.textContent).toContain('Other signatures');
+});
+it('keeps a recorded signature through an uncertain completion and checks before another attempt',async()=>{
+ await mountRecorded();fixture.invoke.mockRejectedValue(new Error('Controlled lost reply'));
+ await act(async()=>button('Finish completed copy').click());expect(host.querySelector('h2')?.textContent).toBe('Your signature is recorded');
+ expect(button('Finish completed copy')).toBeUndefined();expect(button('Check recorded status')).toBeDefined();expect(signButton()).toBeUndefined();expect(fixture.invoke).toHaveBeenCalledTimes(2);
+ fixture.invoke.mockResolvedValue({data:signingReceipt({replayed:true,completed:true,completion_state:'verified'}),error:null});
+ await act(async()=>button('Check recorded status').click());expect(fixture.invoke).toHaveBeenLastCalledWith('sign-agreement',{body:{token,check_only:true}});expect(host.querySelector('h2')?.textContent).toBe('Signed and completed');
+});
+it('a failed status read preserves the signature already verified in this ceremony',async()=>{
+ await mountRecorded({completion_recovery_available:false});fixture.invoke.mockRejectedValue(new Error('Controlled read unavailable'));
+ await act(async()=>button('Check recorded status').click());expect(host.querySelector('h2')?.textContent).toBe('Your signature is recorded');expect(signButton()).toBeUndefined();
+});
+it('one explicit completion remains one request while it is pending',async()=>{
+ await mountRecorded();let finish!:(v:unknown)=>void;fixture.invoke.mockImplementation(()=>new Promise(r=>{finish=r;}));
+ await act(async()=>{button('Finish completed copy').click();button('Finish completed copy').click();});
+ expect(fixture.invoke).toHaveBeenCalledTimes(2);expect([...host.querySelectorAll<HTMLButtonElement>('button')].every(b=>b.disabled)).toBe(true);
+ await act(async()=>finish({data:signingReceipt({replayed:true,completed:true,completion_state:'verified'}),error:null}));expect(host.querySelector('h2')?.textContent).toBe('Signed and completed');
+});
+it('a retired credential closes recovery without disclosing the old private agreement',async()=>{
+ await mountRecorded();fixture.invoke.mockResolvedValue({data:null,error:{context:new Response('{}',{status:404})}});
+ await act(async()=>button('Finish completed copy').click());expect(host.querySelector('h2')?.textContent).toBe('This signing link is no longer available');expect(button('Download completed copy')).toBeUndefined();
+});
+it('downloads only through the original token document door after verified completion',async()=>{
+ const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});await mountRecorded({completed:true,completion_state:'verified',completion_recovery_available:false});
+ fixture.invoke.mockResolvedValue({data:new Blob([Uint8Array.from(atob(documentFixture.bytes),c=>c.charCodeAt(0))],{type:'application/pdf'}),error:null});
+ await act(async()=>button('Download completed copy').click());expect(fixture.invoke).toHaveBeenLastCalledWith('agreement-document?token='+token,{method:'GET'});
+ expect(click).toHaveBeenCalledTimes(1);expect(fixture.create).toHaveBeenCalledTimes(1);expect(host.querySelector('h2')?.textContent).toBe('Signed and completed');expect(host.textContent).toContain('ready to save');
+});
+it('a failed download retains verified completion and supports the same original read again',async()=>{
+ const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});await mountRecorded({completed:true,completion_state:'verified',completion_recovery_available:false});
+ fixture.invoke.mockResolvedValue({data:new Blob(['not a PDF'],{type:'text/html'}),error:null});
+ await act(async()=>button('Download completed copy').click());expect(host.querySelector('h2')?.textContent).toBe('Signed and completed');expect(click).not.toHaveBeenCalled();expect(button('Try download again')).toBeDefined();
+ fixture.invoke.mockResolvedValue({data:new Blob(['%PDF-1.7 controlled transport'],{type:'application/pdf'}),error:null});
+ await act(async()=>button('Try download again').click());expect(click).toHaveBeenCalledTimes(1);expect(fixture.invoke).toHaveBeenLastCalledWith('agreement-document?token='+token,{method:'GET'});
+});
+it('retires a late completed-copy download before another credential can initiate it',async()=>{
+ const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});await mountRecorded({completed:true,completion_state:'verified',completion_recovery_available:false});
+ let late!:(v:unknown)=>void;fixture.invoke.mockImplementation(()=>new Promise(r=>{late=r;}));await act(async()=>button('Download completed copy').click());
+ await act(async()=>router.navigate('/sign/'+nextToken));await act(async()=>late({data:new Blob(['%PDF-1.7 controlled transport'],{type:'application/pdf'}),error:null}));
+ expect(click).not.toHaveBeenCalled();expect(fixture.create).not.toHaveBeenCalled();expect(host.querySelector('h2')?.textContent).toBe('This signing link is no longer available');
+});
+for(const code of ['SIGNING_FIELD_INPUT_INVALID','SIGNING_FIELD_UNRENDERABLE'])it('keeps exact answers editable after a known non-acting field refusal: '+code,async()=>{
+ prepareOwn();await render();await completeAnswers();act(()=>host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(i=>i.click()));
+ fixture.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify({ok:false,code,error:'Correct this assigned answer.'}),{status:400})}});
+ await act(async()=>signButton().click());expect(host.querySelector<HTMLInputElement>('#field-'+ownText)?.value).toBe('Controlled Contact');expect(host.querySelector('[role=alert]')?.textContent).toContain('Correct this assigned answer');expect(signButton()).toBeDefined();expect(host.textContent).not.toContain('Signing is not yet confirmed');
 });

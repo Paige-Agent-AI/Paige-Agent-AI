@@ -1,5 +1,5 @@
 import {expect,it,vi} from 'vitest';
-import {preparePortalRequestCommand} from '../../supabase/functions/_shared/client-portal-request-command';
+import {preparePortalRequestCommand,portalRequestConfirmSummary} from '../../supabase/functions/_shared/client-portal-request-command';
 import type {PortalPublicationScope} from '../../supabase/functions/_shared/client-portal-request-publication';
 
 const actor='e09e0000-0000-4000-8000-000000000001',tenant='e09e0000-0000-4000-8000-000000000002',contact='e09e0000-0000-4000-8000-000000000003',work='e09e0000-0000-4000-8000-000000000004',recipient='e09e0000-0000-4000-8000-000000000005',action='e09e0000-0000-4000-8000-000000000006';
@@ -18,8 +18,15 @@ it('preserves all exact native words, version and original identities for review
  const f=setup();f.args.body='😀'.repeat(3998)+'\nZ';const result=await preparePortalRequestCommand(f.deps,f.scope,f.input);
  expect(result.state).toBe('prepared');if(result.state!=='prepared')throw Error('Expected source');
  expect(result.args).toEqual(f.args);expect(Object.isFrozen(result.args)).toBe(true);expect(result.summary).toContain(f.args.body);
- expect(result.summary).toContain(`Exact version: ${version}`);expect(result.summary).toContain(`Portal recipient: ${recipient}`);
+ expect(result.args.version).toBe(version);expect(result.args.recipient_user_id).toBe(recipient);
+ expect(result.summary).not.toContain(version);expect(result.summary).not.toContain(recipient);expect(result.summary).not.toContain(work);
  expect(result.summary).toContain('does not mark the work complete');expect(f.rpc.mock.calls.map(x=>x[0])).toEqual(['read_client_portal_request_share_source']);
+});
+it('names the original CRM client without displaying internal identifiers or changing approved words',()=>{
+ const f=setup();const summary=portalRequestConfirmSummary(f.args,'Jordan Rivera');
+ expect(summary).toContain('with Jordan Rivera in their customer portal');expect(summary).toContain(f.args.title);expect(summary).toContain(f.args.body);
+ for(const id of[actor,tenant,contact,work,recipient])expect(summary).not.toContain(id);
+ expect(portalRequestConfirmSummary(f.args,' ')).toContain('with this client');
 });
 it('returns receipt-backed original shared identities without another review proposal or execution',async()=>{
  const f=setup();f.rpc.mockResolvedValue({data:{...f.raw,source_state:'shared',args:null,customer_action_id:action},error:null});

@@ -13,7 +13,8 @@ const documents = process.argv.includes('--documents');
 const privateRequestBaseline = process.argv.includes('--private-request-baseline');
 const privateRequestHistoryBaseline = process.argv.includes('--private-request-history-baseline');
 const privateRequestPublicationBaseline = process.argv.includes('--private-request-publication-baseline');
-const privateRequest = process.argv.includes('--private-request') || privateRequestBaseline || privateRequestHistoryBaseline || privateRequestPublicationBaseline;
+const privateRequestPublication = process.argv.includes('--private-request-publication');
+const privateRequest = process.argv.includes('--private-request') || privateRequestBaseline || privateRequestHistoryBaseline || privateRequestPublicationBaseline || privateRequestPublication;
 const ownerActions = process.argv.includes('--owner-actions') || privateRequest;
 const actionActTimeBaseline = process.argv.includes('--action-act-time-baseline');
 const actionActTime = process.argv.includes('--action-act-time') || actionActTimeBaseline;
@@ -403,7 +404,7 @@ try {
  }
  if(messageActivity){const {messageActivityProof}=await import('./e09-message-activity.mjs');messageActivityEvidence=await messageActivityProof({sql,check,assert,fs,root,path,fixture,baseline:messageActivityBaseline});}
  if(ownerActions){const {ownerActionReadProof}=await import('./e09-owner-customer-actions.mjs');ownerActionReadProof({sql,check,assert,fs,root,path,fixture});}
- if(privateRequest){const {privateRequestProof}=await import('./e09-private-request.mjs');privateRequestEvidence=await privateRequestProof({sql,check,assert,fs,root,path,fixture,spawn,exe,args,transcripts,baseline:privateRequestBaseline,historyBaseline:privateRequestHistoryBaseline,publicationBaseline:privateRequestPublicationBaseline});}
+ if(privateRequest){const {privateRequestProof}=await import('./e09-private-request.mjs');privateRequestEvidence=await privateRequestProof({sql,check,assert,fs,root,path,fixture,spawn,exe,args,transcripts,baseline:privateRequestBaseline,historyBaseline:privateRequestHistoryBaseline,publicationBaseline:privateRequestPublicationBaseline,publicationCandidate:privateRequestPublication});}
  if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
  const report={mode:documents?'documents-candidate':actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(documents?{documentMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108150000_e09_customer_documents.sql')).digest('hex'),physicalStorage:'NOT_RUN',realtimeTransport:'NOT_RUN'}:{}),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};
@@ -411,7 +412,7 @@ try {
  if(actionActTime){report.mode=actionActTimeBaseline?'action-act-time-baseline':'action-act-time-candidate';report.actionActTime=actionActTimeEvidence;}
  if(inviteActTime){report.mode=inviteActTimeBaseline?'invite-act-time-baseline':'invite-act-time-candidate';report.inviteActTime=inviteActTimeEvidence;}
  if(messageActivity){report.mode=messageActivityBaseline?'message-activity-baseline':'message-activity-candidate';report.messageActivity={source:'original S7 Portal RPCs and original Rail writer, exact production fingerprints',threadTriggers:'NOT_RECONSTRUCTED; full-schema original suite remains required',authenticatedCustomer:'NOT_RUN',...messageActivityEvidence};}
- if(privateRequest){report.mode=privateRequestPublicationBaseline?'private-request-publication-baseline':privateRequestHistoryBaseline?'private-request-history-baseline':privateRequestBaseline?'private-request-baseline':'private-request-candidate';report.privateRequest=privateRequestEvidence;}
+ if(privateRequest){report.mode=privateRequestPublication?'private-request-publication-candidate':privateRequestPublicationBaseline?'private-request-publication-baseline':privateRequestHistoryBaseline?'private-request-history-baseline':privateRequestBaseline?'private-request-baseline':'private-request-candidate';report.privateRequest=privateRequestEvidence;}
  fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline||actionActTimeBaseline||inviteActTimeBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
  console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
  if(failed.length)process.exitCode=1;

@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(286);
+SELECT plan(321);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -738,6 +738,105 @@ SELECT is(pg_temp.private_history(_before_time=>'infinity',_before_id=>'e0959000
 SELECT ok((SELECT b.work=(SELECT count(*) FROM public.paige_actions) AND b.audits=(SELECT count(*) FROM public.audit_logs)
  AND b.actions=(SELECT count(*) FROM public.paige_customer_actions) AND b.notices=(SELECT count(*) FROM public.notifications)
  FROM private_history_before b),'history and every refusal write no Work, audit, customer action or notice');
+
+-- 20. Approved private Work publication. Actual full-schema roles, common
+-- proposal table/RLS, original publisher, access/consent guards and response
+-- writer. These trusted proposal fixtures do NOT prove human Chat approval.
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
+ ('e0917000-0000-4000-8000-000000000031','authenticated','authenticated','test-e09-share-customer@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ ('e0917000-0000-4000-8000-000000000032','authenticated','authenticated','test-e09-share-other@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
+ ('e0937000-0000-4000-8000-0000000000ef','e0927000-0000-4000-8000-000000000001','e0917000-0000-4000-8000-000000000031','e0917000-0000-4000-8000-000000000001','Test','Sharing customer','active'),
+ ('e0937000-0000-4000-8000-0000000000ee','e0927000-0000-4000-8000-000000000001','e0917000-0000-4000-8000-000000000032','e0917000-0000-4000-8000-000000000001','Test','Other sharing customer','active');
+DO $$ BEGIN PERFORM pg_temp.as_user('e0917000-0000-4000-8000-000000000031',
+ $q$SELECT public.client_portal_set_shared_context_consent(true,'e0927000-0000-4000-8000-000000000001')$q$); END $$;
+SELECT ok((SELECT paige_shared_context_consent FROM public.clients WHERE id='e0937000-0000-4000-8000-0000000000ef'),'publication fixture uses the real customer-controlled consent writer');
+CREATE TEMP TABLE publication_request AS SELECT pg_temp.private_request(
+ _contact=>'e0937000-0000-4000-8000-0000000000ef',_intent=>'e0959000-0000-4000-8000-000000000021') result;
+SELECT is((SELECT result#>>'{request,content_state}' FROM publication_request),'prepared','current private preparation still works after the ordinary publication fence');
+INSERT INTO public.paige_pending_confirmations(id,user_id,tenant_id,tool_name,fingerprint,args,summary,
+ server_issued_at,issued_in_request,consumed_at,claimed_in_request,expires_at)
+ SELECT 'e0959000-0000-4000-8000-000000000022','e0917000-0000-4000-8000-000000000001',
+ 'e0927000-0000-4000-8000-000000000001','client_portal_request_share','0123456789abcdef',
+ jsonb_build_object('expected_tenant_id',c.tenant_id,'contact_id',c.id,'work_id',r.result#>>'{request,work_id}',
+  'version',r.result#>>'{request,version}','title',r.result#>>'{request,title}','body',r.result#>>'{request,body}',
+  'recipient_user_id',c.linked_user_id,'access_version',c.portal_access_changed_at),
+ 'Share the exact saved request with this customer',clock_timestamp(),
+ 'e0959000-0000-4000-8000-000000000023',clock_timestamp(),'e0959000-0000-4000-8000-000000000024',clock_timestamp()+interval '5 minutes'
+ FROM publication_request r,public.clients c WHERE c.id='e0937000-0000-4000-8000-0000000000ef';
+CREATE FUNCTION pg_temp.share_request(
+ _actor uuid DEFAULT 'e0917000-0000-4000-8000-000000000001',_role text DEFAULT 'authenticated',
+ _tenant uuid DEFAULT 'e0927000-0000-4000-8000-000000000001',
+ _confirmation uuid DEFAULT 'e0959000-0000-4000-8000-000000000022',
+ _fingerprint text DEFAULT '0123456789abcdef',_claim uuid DEFAULT 'e0959000-0000-4000-8000-000000000024')
+ RETURNS jsonb LANGUAGE sql AS $$ SELECT pg_temp.as_user(_actor,format(
+ 'SELECT public.share_client_portal_request(%L,%L,%L,%L,%L,NULL)',_actor,_tenant,_confirmation,_fingerprint,_claim),_role) $$;
+CREATE FUNCTION pg_temp.share_mutation(_sql text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE result jsonb;
+BEGIN
+ BEGIN
+  EXECUTE _sql;result:=pg_temp.share_request();
+  RAISE EXCEPTION USING ERRCODE='ZX009',MESSAGE='rollback only this synthetic mutation';
+ EXCEPTION WHEN SQLSTATE 'ZX009' THEN NULL; END;
+ RETURN result;
+END $$;
+CREATE TEMP TABLE publication_before AS SELECT
+ (SELECT count(*) FROM public.paige_customer_actions) actions,(SELECT count(*) FROM public.notifications) notices,
+ (SELECT count(*) FROM public.paige_audit_log) domain_audits,(SELECT count(*) FROM public.audit_logs) work_audits;
+SELECT ok(has_function_privilege('authenticated','public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)','EXECUTE'),'approved publisher requires the original owner JWT, never a service or anonymous surrogate');
+SELECT ok(NOT has_table_privilege('authenticated','public.paige_pending_confirmations','INSERT')
+ AND NOT has_table_privilege('authenticated','public.paige_pending_confirmations','UPDATE'),'browser cannot manufacture the common trusted approval evidence');
+SELECT is(pg_temp.share_request(_actor=>'e0917000-0000-4000-8000-000000000031')->>'sqlstate','42501','customer has no owner publication authority');
+SELECT is(pg_temp.share_request(_actor=>'e0917000-0000-4000-8000-000000000005')->>'sqlstate','42501','a plain member with global admin label cannot publish owner Work');
+SELECT is(pg_temp.share_request(_tenant=>'e0927000-0000-4000-8000-000000000002')->>'sqlstate','42501','another selected business cannot redeem this customer request');
+SELECT is(pg_temp.share_request(_confirmation=>NULL)->>'sqlstate','42501','there is no publication without the original proposal');
+SELECT is(pg_temp.share_request(_fingerprint=>'fedcba9876543210')->>'sqlstate','42501','a different stored-call fingerprint refuses');
+SELECT is(pg_temp.share_request(_claim=>'e0959000-0000-4000-8000-000000000023')->>'sqlstate','42501','the issuing request cannot redeem its own proposal');
+SELECT is(pg_temp.share_request(_role=>'service_role')->>'sqlstate','42501','service cannot assume owner identity to publish');
+SELECT is(pg_temp.share_request(_role=>'anon')->>'sqlstate','42501','anonymous publication is unavailable');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET consumed_at=NULL WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate','42501','unclaimed proposal refuses');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET server_issued_at=NULL WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate','42501','legacy or browser-authored proposal refuses');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET expires_at=consumed_at+interval '1 microsecond' WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate','42501','fresh publication cannot execute an expired proposal');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET args=jsonb_set(args,'{body}','"Other words"') WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate','55000','approval cannot replace the original exact customer words');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET args=jsonb_set(args,'{version}','"2000-01-01T00:00:00Z"') WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate','55000','approval cannot use an obsolete original Work version');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET args=jsonb_set(args,'{recipient_user_id}','"e0917000-0000-4000-8000-000000000032"') WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate','42501','approval cannot silently target a replacement login');
+SELECT is(pg_temp.share_mutation($q$UPDATE public.paige_pending_confirmations SET args=args||'{"payload":{"private":true}}' WHERE id='e0959000-0000-4000-8000-000000000022'$q$)->>'sqlstate','42501','arbitrary internal payload is not an approved publishing argument');
+SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000001',format(
+ 'SELECT public.advance_action(p_action_id=>%L,p_to_status=>%L)',(SELECT result#>>'{request,work_id}' FROM publication_request),'drafted'))->>'sqlstate',
+ '42501','ordinary drafted entry refuses the private-publication kind before effects');
+SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000001',format(
+ 'SELECT public.advance_action(p_action_id=>%L,p_to_status=>%L)',(SELECT result#>>'{request,work_id}' FROM publication_request),'executing'))->>'sqlstate',
+ '42501','ordinary executing entry refuses the private-publication kind before effects');
+SELECT ok((SELECT b.actions=(SELECT count(*) FROM public.paige_customer_actions) AND b.notices=(SELECT count(*) FROM public.notifications)
+ AND b.domain_audits=(SELECT count(*) FROM public.paige_audit_log) AND b.work_audits=(SELECT count(*) FROM public.audit_logs)
+ FROM publication_before b),'all publication refusals leave original customer records, notices and audits unchanged');
+CREATE TEMP TABLE publication_result AS SELECT pg_temp.share_request() result;
+SELECT is((SELECT result->>'status' FROM publication_result),'shared','exact approved native publication reaches the real customer record');
+SELECT is((SELECT result->>'work_id' FROM publication_result),(SELECT result#>>'{request,work_id}' FROM publication_request),'publication keeps the original private Work identity');
+SELECT is((SELECT payload_json FROM public.paige_customer_actions WHERE id=(SELECT (result->>'customer_action_id')::uuid FROM publication_result)),
+ '{}'::jsonb,'customer action receives no private intent, approval or internal Work metadata');
+SELECT is((SELECT action_type FROM public.paige_customer_actions WHERE id=(SELECT (result->>'customer_action_id')::uuid FROM publication_result)),
+ 'recommendation','original publisher gets its real action type, never the dotted Work kind');
+SELECT is((SELECT count(*) FROM public.notifications WHERE user_id='e0917000-0000-4000-8000-000000000031'
+ AND metadata->>'action_id'=(SELECT result->>'customer_action_id' FROM publication_result)),1::bigint,'original publisher notifies the exact joined customer once');
+SELECT is(pg_temp.share_request()->>'replayed','true','returning same claim reconciles the original result');
+SELECT is(pg_temp.share_request()->>'customer_action_id',(SELECT result->>'customer_action_id' FROM publication_result),'retry never creates a replacement customer action');
+SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000032',format(
+ 'SELECT jsonb_build_object(''count'',count(*)) FROM public.paige_customer_actions WHERE id=%L',
+ (SELECT result->>'customer_action_id' FROM publication_result)))->>'count','0','another real customer role cannot read this action through RLS');
+SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000031',format(
+ 'SELECT public.customer_respond_to_action(%L,''completed'',NULL,%L)',a.id,a.updated_at))->>'ok','true',
+ 'the actual client completes the same published action through the original versioned writer')
+ FROM public.paige_customer_actions a WHERE a.id=(SELECT (result->>'customer_action_id')::uuid FROM publication_result);
+SELECT is((SELECT result->>'client_response' FROM public.paige_actions WHERE id=(SELECT (result->>'work_id')::uuid FROM publication_result)),
+ 'completed','customer completion returns to the same original Work record');
+SELECT is(pg_temp.owner_actions(_contact=>'e0937000-0000-4000-8000-0000000000ef')#>>'{actions,0,responses,0,response_type}',
+ 'completed','owner returning projection sees the same canonical customer response');
+SELECT is(pg_temp.share_request()->>'replayed','true','publication retry after customer response is still historical, never another send');
+SELECT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=(SELECT (result->>'customer_action_id')::uuid FROM publication_result)),
+ 1::bigint,'one customer response survives publication reconciliation');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -104,3 +104,30 @@ The original convergence case plus existing adapter/binding suites pass
 56/56 with zero skipped. This is a test-contract correction, not a production
 repair or accepted customer result. New exact-head review/CI, parent release,
 production readback and all authenticated/Live/full-Experience proof remain owed.
+
+## Additive actual-native Chat projection proof — October 25
+
+The released Chat projection now runs inside the original Layer C disposable
+history proof, against its same real caller-RLS queue, sealed companion, native
+Task result and original Rail. Eight added cases retain all 43 original controls:
+51 passed, zero failed. The original source is an exact subsequence; no prior
+assertion, timeout, role policy, native function or fixture bootstrap was removed.
+
+The added cases correlate the same occurrence, Task and receipt; preserve an
+unverified inspection receipt separately; withhold private output after epoch
+retirement; stop before native lookup when outer scope is refused; reject a
+stale administrator after native member revocation; retain the original actor
+for a later authorized administrator; refuse a foreign selected business; and
+keep the original result unconfirmed after original-actor revocation. The
+existing full task/result/Rail/approval/ledger snapshot remains identical after
+repeated reads. The owned disposable PostgreSQL server stopped successfully.
+
+Reproduce with `node --import ./scripts/knowledge-scope/register.mjs scripts/proof/layer-c-native-vertical.mjs --owner-task-approval-visibility`.
+Actual result SHA256:
+`5d4e27e39e4c906d91a1a520d1d401d09fcca0c8fa1e7a2fa27ca30633513fac`.
+Auth, outer Team/account-shape scope and inspection-receipt delivery remain
+explicit fixture ports. This proves the real Chat projection against selected
+native database contracts, not the complete Chat HTTP/Team/Model path, full
+Supabase schema, ordinary customer authentication, rendered UI, Live or founder
+acceptance. No runtime source, provider, catalogue availability, activation,
+algorithm maturity or full EXP05 acceptance changes in this proof-only slice.

@@ -26,10 +26,10 @@ const captureUuid = vi.fn((): ReturnType<Crypto['randomUUID']> => RUN);
 const PRIOR = 'b4000000-0000-4000-8000-00000000a002';
 const MANUAL_PRIOR = 'b4000000-0000-4000-8000-00000000a003';
 const ACTION = 'b4000000-0000-4000-8000-00000000c001';
-type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; filters: unknown[][] };
+type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; selected?: string; filters: unknown[][] };
 type Result = { data: unknown; error: { message: string } | null };
 type Query = {
-  select(): Query; insert(payload: Record<string, unknown>): Query; update(payload: Record<string, unknown>): Query;
+  select(columns?: string): Query; insert(payload: Record<string, unknown>): Query; update(payload: Record<string, unknown>): Query;
   eq(...args: unknown[]): Query; neq(...args: unknown[]): Query; not(...args: unknown[]): Query; is(...args: unknown[]): Query;
   in(...args: unknown[]): Query; order(...args: unknown[]): Query; limit(...args: unknown[]): Query;
   maybeSingle(): Promise<Result>; single(): Promise<Result>; then(fulfilled: (result: Result) => unknown): Promise<unknown>;
@@ -60,7 +60,7 @@ function fixture(statuses: string[] = ['fail'], options: {
           return { data: selected.map(row => Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'status'))), error: null };
         }
         if (table === 'paige_systems_check_run' && call.operation === 'read') {
-          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'id' && item[2] === RUN)) {
+          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'id' && item[2] === (savedRun?.id ?? RUN))) {
             const manualExcluded = call.filters.some(item => item[0] === 'neq' && item[1] === 'scan_flavor' && item[2] === 'manual');
             return { data: options.manualBaseline && !manualExcluded ? { id: MANUAL_PRIOR } : options.previous ? { id: PRIOR } : null, error: null };
           }
@@ -68,7 +68,7 @@ function fixture(statuses: string[] = ['fail'], options: {
           return { data: savedRun ? { ...savedRun, ...options.runReadPatch } : null, error: null };
         }
         if (table === 'paige_systems_check_finding' && call.operation === 'read') {
-          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === RUN)) {
+          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === (savedRun?.id ?? RUN))) {
             const manual = call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === MANUAL_PRIOR);
             return { data: rows.map(row => ({ check_id: row.check_id, status: manual ? options.manualBaseline : options.previous })), error: null };
           }
@@ -78,9 +78,11 @@ function fixture(statuses: string[] = ['fail'], options: {
         }
         if (call.operation === 'insert' && table === 'paige_systems_check_run') {
           if (options.insertError) return { data: null, error: { message: 'Write unavailable' } };
-          savedRun = { ...call.payload, id: RUN, completed_at: null };
+          // The original table accepts an explicitly supplied primary key. Keep
+          // this native INSERT behavior separate from any worker's authority.
+          savedRun = { ...call.payload, id: call.payload?.id ?? RUN, completed_at: null };
           if (options.runInsertLostAck) throw new Error('Synthetic acknowledgement lost after run insert');
-          return { data: Object.prototype.hasOwnProperty.call(options, 'runInsertResponse') ? options.runInsertResponse : { id: RUN }, error: null };
+          return { data: Object.prototype.hasOwnProperty.call(options, 'runInsertResponse') ? options.runInsertResponse : { id: savedRun.id }, error: null };
         }
         if (call.operation === 'insert' && table === 'paige_systems_check_finding') {
           if (options.findingError) return { data: null, error: { message: 'Finding write unavailable' } };
@@ -100,7 +102,7 @@ function fixture(statuses: string[] = ['fail'], options: {
         throw new Error('Unbound original source operation: ' + table);
       };
       const query: Query = {
-        select() { return query; }, insert(payload: Record<string, unknown>) { call.operation = 'insert'; call.payload = payload; return query; }, update(payload: Record<string, unknown>) { call.operation = 'update'; call.payload = payload; return query; },
+        select(columns?: string) { call.selected = columns; return query; }, insert(payload: Record<string, unknown>) { call.operation = 'insert'; call.payload = payload; return query; }, update(payload: Record<string, unknown>) { call.operation = 'update'; call.payload = payload; return query; },
         eq(...args: unknown[]) { call.filters.push(['eq', ...args]); return query; }, neq(...args: unknown[]) { call.filters.push(['neq', ...args]); return query; }, not(...args: unknown[]) { call.filters.push(['not', ...args]); return query; }, is(...args: unknown[]) { call.filters.push(['is', ...args]); return query; },
         in(...args: unknown[]) { call.filters.push(['in', ...args]); return query; }, order(...args: unknown[]) { call.filters.push(['order', ...args]); return query; }, limit(...args: unknown[]) { call.filters.push(['limit', ...args]); return query; },
         maybeSingle: async () => answer(), single: async () => answer(), then: (fulfilled: (result: Result) => unknown) => Promise.resolve(answer()).then(fulfilled),
@@ -335,5 +337,68 @@ describe('Existing remediation contracts remain active at their original ports',
     const h = fixture(['fail'], { scope: 'operator' }); const result = await h.execute();
     expect(result.actions_filed).toBe(0); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
     expect(h.inserted('paige_systems_check_finding')[0].payload).toMatchObject({ tenant_id: null, paige_drafted_fix: { source: 'operator_registry_brief', operator_scope: true } });
+  });
+});
+
+describe('Internal original-Work identity binding, never caller authority', () => {
+  it('uses the supplied original Work UUID for the one insert and every original readback', async () => {
+    const h = fixture(['fail', 'pass']);
+    const result = await h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR });
+    expect(result).toMatchObject({ run_id: PRIOR, check_count: 2, actions_filed: 0 });
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1);
+    expect(h.inserted('paige_systems_check_run')[0].payload).toMatchObject({id:PRIOR,work_id:PRIOR});
+    expect(h.persisted().run?.id).toBe(PRIOR);
+    expect(h.persisted().findings.every(f => f.run_id === PRIOR)).toBe(true);
+    const reads = h.calls.filter(c => c.operation === 'read' && ['paige_systems_check_run','paige_systems_check_finding'].includes(c.table));
+    expect(reads).toHaveLength(2);
+    expect(reads[0].filters).toContainEqual(['eq', 'run_id', PRIOR]);
+    expect(reads[1].filters).toContainEqual(['eq', 'id', PRIOR]);
+    expect(reads[1].selected?.split(',')).toContain('work_id');
+    expect(captureUuid).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
+  });
+  it.each([null, 17, {}, '', 'not-a-uuid', RUN + 'x', PRIOR.toUpperCase(), 'b4000000-0000-0000-8000-00000000a002', 'b4000000-0000-4000-0000-00000000a002'])('rejects malformed internal identity before any I/O: %j', async id => {
+    const h = fixture(['fail']);
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: id })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_ID_INVALID');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
+  it.each([
+    { scanFlavor: 'onboarding', actionFiling: 'none' },
+    { scanFlavor: 'scheduled', actionFiling: 'none' },
+    { scanFlavor: 'change_triggered', actionFiling: 'none' },
+    { scanFlavor: 'manual' }, { scanFlavor: 'manual', actionFiling: 'delta' },
+    { scanFlavor: 'manual', actionFiling: 'none', scope: 'operator', tenantId: null },
+  ])('refuses an internal manual identity in every other execution context: %j', async extra => {
+    const h = fixture(['fail']);
+    await expect(h.execute({ ...extra, manualCaptureRunId: PRIOR })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_ID_CONTEXT');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(h.rpcs).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
+  it('does not take an identity from audit labels or invent an authoritative Work claim', async () => {
+    const h = fixture(['pass']);
+    expect(await h.execute({ scanFlavor: 'manual', actionFiling: 'none', triggeredBy: { manualCaptureRunId: PRIOR, work_id: PRIOR } })).toMatchObject({ run_id: RUN });
+    expect(captureUuid).toHaveBeenCalledTimes(1); expect(h.rpcs).toEqual([]);
+    expect(h.inserted('paige_systems_check_run')[0].payload).not.toHaveProperty('work_id');
+  });
+  it.each([
+    ['run_insert', { runInsertLostAck: true }],
+    ['finding_write', { findingWriteLostAck: true }],
+    ['run_finalize', { finalizeLostAck: true }],
+  ] as const)('retains the same original Work/run identity after uncertain %s', async (reason, options) => {
+    const h = fixture(['pass'], options);
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR })).rejects.toMatchObject({ name: 'SystemsCheckCaptureUnconfirmed', runId: PRIOR, reason });
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.persisted().run?.id).toBe(PRIOR);
+    expect(captureUuid).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+    if (reason === 'run_insert') { expect(h.dispatched).toEqual([]); expect(h.persisted().findings).toEqual([]); expect(h.updated('paige_systems_check_run')).toEqual([]); }
+  });
+  it('does not dispatch, inspect another run or retry when the original insert refuses', async () => {
+    const h = fixture(['pass'], { insertError: true });
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR })).rejects.toMatchObject({ name: 'SystemsCheckCaptureUnconfirmed', runId: PRIOR, reason: 'run_insert' });
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.dispatched).toEqual([]);
+    expect(h.calls.filter(c => c.operation === 'read' && c.table === 'paige_systems_check_run')).toEqual([]);
+    expect(h.updated('paige_systems_check_run')).toEqual([]); expect(captureUuid).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+  it.each([null,undefined,ACTION])('refuses missing or mismatched canonical Work correlation in the original readback: %j', async workId => {
+    const h=fixture(['pass'],{runReadPatch:{work_id:workId}});
+    await expect(h.execute({scanFlavor:'manual',actionFiling:'none',manualCaptureRunId:PRIOR})).rejects.toMatchObject({name:'SystemsCheckCaptureUnconfirmed',runId:PRIOR,reason:'run_readback'});
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1);expect(captureUuid).not.toHaveBeenCalled();expect(h.rpcs).toEqual([]);
   });
 });

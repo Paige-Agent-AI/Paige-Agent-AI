@@ -80,3 +80,27 @@ Visual: existing components unchanged; rendered/viewport evidence unverified.
 Experiential: protected handler reads/refusals/reentry verified on recording ports;
 ordinary authenticated continuity and the full ten/E5 cases remain open.
 Founder Acceptance: not requested or claimed.
+
+## Hosted convergence correction
+
+Original exact-head `affea21d` run40172761446 retained 21,868 passed,
+one failed and three pending tests. Attribution artifact12590994248 SHA256
+`657dbfeafcb92c1244330780424f41fba5e7bc1c0ab73a8dd935ad818e13beae`
+identifies the incumbent canonical read-registration convergence case.
+Local unchanged reproduction was six passed/one failed: the frozen pre-tool
+roster expected the newly registered `read_owner_task_act` not to require an
+admin gate, while its reviewed native contract correctly requires an active
+owner/admin seat.
+
+The original test now explicitly covers this new reader, as it already does
+for other post-roster registrations. It asserts the exact original native
+executor, read-only/no-approval classification, door-seat requirement, hidden
+self-description and PARTIAL maturity. All eight shared authority combinations
+require the existing seat predicate, including refusal for a seatless Operator.
+Every incumbent frozen-roster assertion is unchanged. No product authority,
+Root source, registry, fingerprint, baseline, validator or source pin changes.
+
+The original convergence case plus existing adapter/binding suites pass
+56/56 with zero skipped. This is a test-contract correction, not a production
+repair or accepted customer result. New exact-head review/CI, parent release,
+production readback and all authenticated/Live/full-Experience proof remain owed.

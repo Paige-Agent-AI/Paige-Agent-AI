@@ -89,6 +89,26 @@ it("a resumed lost acceptance response is checked after remount without a second
   await remount();expect(host.textContent).toBe("Portal destination");
   expect(f.rpc.mock.calls.filter(([name])=>name==="accept_tenant_invite")).toHaveLength(1);
 });
+it("an invitation that expires during acceptance reconciles without retrying the write or opening the portal",async()=>{
+  f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};
+  const original=f.rpc.getMockImplementation()!;let expired=false;
+  f.rpc.mockImplementation(async(name:string,...args:unknown[])=>{
+    if(name==="accept_tenant_invite"){expired=true;return{data:null,error:{code:"P0001",message:"invite has expired"}};}
+    if(name==="peek_tenant_invite"&&expired)return{data:[{tenant_id:tenant,kind:"consumer",is_valid:false,invited_email:"recipient@tests.invalid"}],error:null};
+    return original(name,...args);
+  });
+  await render();await click("Open your portal");
+  expect(host.textContent).toContain("We couldn’t confirm acceptance");
+  expect(host.querySelector("h1")?.textContent).toBe("Check your invitation");
+  await click("Check acceptance");
+  expect(host.textContent).toContain("This invitation is unavailable");
+  expect(host.textContent).toContain("No new access has been granted here");
+  expect(document.activeElement).toBe(host.querySelector("h1"));
+  await remount();expect(host.textContent).toContain("This invitation is unavailable");
+  expect(f.rpc.mock.calls.filter(([name])=>name==="accept_tenant_invite")).toHaveLength(1);
+  expect(f.rpc.mock.calls.some(([name])=>name==="client_portal_self_profile")).toBe(false);
+  expect(host.textContent).not.toContain("Portal destination");
+});
 it("a signup error retires saved intent before the browser returns",async()=>{
   f.signUp.mockResolvedValue({data:{user:null,session:null},error:{status:500}});
   await render();await click("Create your account");await input('#customer-password','test-password-123');await click("I agree to the Terms and Privacy Policy");await click("Create account and join");

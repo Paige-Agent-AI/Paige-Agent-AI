@@ -3,7 +3,7 @@
 -- the current-workspace admin; idempotent retries; cross-business, wrong-role and anonymous refusal;
 -- portal rows land in the canonical inbox thread; email history is never projected to the customer.
 BEGIN;
-SELECT plan(63);
+SELECT plan(83);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0914100-0000-4000-8000-000000000001','authenticated','authenticated','portal-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0914100-0000-4000-8000-000000000002','authenticated','authenticated','portal-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -168,6 +168,52 @@ SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
  $q$SELECT public.client_portal_send_message(E'\n\t \r\n','e0954100-0000-4000-8000-000000000020')$q$)->>'error','INVALID_BODY','whitespace-only body (newlines/tabs) refused');
 
 -- Rate limit: 20 new customer messages per relationship per minute.
+-- Activity reuses the same original messages and original client-lens reader.
+SELECT is((SELECT count(*) FROM public.paige_client_events e JOIN public.messages m ON e.ref_table='messages' AND e.ref_id=m.id
+ WHERE m.channel_type='portal' AND m.contact_id='e0934100-0000-4000-8000-000000000001'),3::bigint,'Portal activity: each saved shared message has its original Rail reference');
+SELECT is((SELECT count(*) FROM (SELECT e.ref_id FROM public.paige_client_events e JOIN public.messages m ON e.ref_table='messages' AND e.ref_id=m.id
+ WHERE m.channel_type='portal' GROUP BY e.ref_id HAVING count(*)<>1) x),0::bigint,'Portal activity: retries and conflicts never duplicate activity');
+SELECT is((SELECT count(*) FROM public.paige_client_events e JOIN public.messages m ON e.ref_table='messages' AND e.ref_id=m.id
+ WHERE m.channel_type='portal' AND (e.tenant_id IS DISTINCT FROM m.tenant_id OR e.contact_id IS DISTINCT FROM m.contact_id)),0::bigint,'Portal activity: exact canonical business and customer binding');
+SELECT is((SELECT count(*) FROM public.paige_client_events WHERE ref_table='messages' AND event_kind='comms.inbound'
+ AND actor_type='client' AND actor_user_id='e0914100-0000-4000-8000-000000000003' AND surface='client_portal'
+ AND audience='both' AND visibility='client_visible'),2::bigint,'Portal activity: customer message and help have truthful actual actor and audience');
+SELECT is((SELECT count(*) FROM public.paige_client_events WHERE ref_table='messages' AND event_kind='comms.outbound'
+ AND actor_type='owner_staff' AND actor_user_id='e0914100-0000-4000-8000-000000000001' AND surface='client_portal'
+ AND audience='both' AND visibility='client_visible'),1::bigint,'Portal activity: business reply retains actual actor and permitted audience');
+SELECT is((SELECT count(*) FROM public.paige_client_events WHERE ref_table='messages'
+ AND (payload<>'{}'::jsonb OR summary IS NOT NULL OR title NOT IN('Message sent','Message from your team') OR actor_agent_slug IS NOT NULL)),0::bigint,'Portal activity: no message body, private Cura history or fabricated specialist');
+SELECT is((SELECT count(*) FROM public.audit_logs a JOIN public.paige_client_events e ON a.entity_id=e.id AND a.user_id=e.actor_user_id
+ WHERE a.action='paige_rail_event' AND e.ref_table='messages'),3::bigint,'Portal activity: original Rail audit retains actual attribution');
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',$q$SELECT count(*)::text::jsonb FROM public.get_client_rail(
+ p_contact_id=>'e0934100-0000-4000-8000-000000000001',p_limit=>50,p_lens=>'client') r WHERE r.surface='client_portal' AND r.event_kind IN('comms.inbound','comms.outbound')$q$),'3'::jsonb,'Portal activity: original customer history reload sees the three saved shared messages');
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',$q$SELECT count(*)::text::jsonb FROM public.get_client_rail(
+ p_contact_id=>'e0934100-0000-4000-8000-000000000001',p_limit=>50,p_lens=>'client') r
+ WHERE r.actor_user_id IS NOT NULL OR r.from_department IS NOT NULL OR r.to_department IS NOT NULL OR r.payload<>'{}'::jsonb OR r.ref_table IS NOT NULL OR r.ref_id IS NOT NULL$q$),'0'::jsonb,'Portal activity: original client lens withholds staff identity, internal departments, payload and refs');
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000004',$q$SELECT to_jsonb(r) FROM public.get_client_rail(
+ p_contact_id=>'e0934100-0000-4000-8000-000000000001',p_limit=>50,p_lens=>'client') r$q$)->>'sqlstate','42501','Portal activity: other business customer cannot read this history');
+SELECT is(pg_temp.as_user(NULL,$q$SELECT to_jsonb(r) FROM public.get_client_rail(
+ p_contact_id=>'e0934100-0000-4000-8000-000000000001',p_limit=>50,p_lens=>'client') r$q$,'anon')->>'sqlstate','42501','Portal activity: anonymous history refused');
+CREATE FUNCTION pg_temp.e09_portal_activity_snapshot() RETURNS jsonb LANGUAGE sql AS $$
+ SELECT jsonb_build_object('messages',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.messages x),
+ 'events',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.paige_client_events x),
+ 'audit',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.audit_logs x),
+ 'notices',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM public.notifications x));
+$$;
+CREATE TEMP TABLE e09_portal_activity_before AS SELECT pg_temp.e09_portal_activity_snapshot() AS snapshot;
+CREATE FUNCTION pg_temp.e09_refuse_portal_rail_audit() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN IF NEW.action='paige_rail_event' THEN RAISE EXCEPTION 'synthetic original Rail audit refusal'; END IF; RETURN NEW; END $$;
+CREATE TRIGGER e09_refuse_portal_rail_audit BEFORE INSERT ON public.audit_logs FOR EACH ROW EXECUTE FUNCTION pg_temp.e09_refuse_portal_rail_audit();
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',$q$SELECT public.client_portal_send_message(
+ 'Audit must refuse this message','e0954100-0000-4000-8000-000000900001')$q$)->>'sqlstate','P0001','Portal activity: original customer Rail audit refusal propagates');
+SELECT is(pg_temp.e09_portal_activity_snapshot(),(SELECT snapshot FROM e09_portal_activity_before),'Portal activity: failed customer Rail audit rolls back original message and activity');
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000001',$q$SELECT public.comms_portal_reply(
+ 'e0924100-0000-4000-8000-000000000001','e0934100-0000-4000-8000-000000000001','Audit must refuse this reply','e0954100-0000-4000-8000-000000900002')$q$)->>'sqlstate','P0001','Portal activity: original business Rail audit refusal propagates');
+SELECT is(pg_temp.e09_portal_activity_snapshot(),(SELECT snapshot FROM e09_portal_activity_before),'Portal activity: failed business Rail audit rolls back message, notice and activity');
+DROP TRIGGER e09_refuse_portal_rail_audit ON public.audit_logs;
+DROP FUNCTION pg_temp.e09_refuse_portal_rail_audit();
+
+-- Rate limit: 20 new customer messages per relationship per minute (original cases).
 DO $$BEGIN FOR i IN 1..18 LOOP
  PERFORM pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
   format($q$SELECT public.client_portal_send_message('burst %s',%L)$q$, i, ('e0954100-0000-4000-8000-0000000001'||lpad(i::text,2,'0'))::uuid));
@@ -184,6 +230,21 @@ SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000002',
  $q$SELECT public.comms_portal_reply('e0924100-0000-4000-8000-000000000002','e0934100-0000-4000-8000-000000000002','hi','e0954100-0000-4000-8000-000000000201')$q$)->>'error','WORKSPACE_INACTIVE','inactive business cannot post portal replies');
 
 -- Deleting a customer keeps retained portal history (contact_id SET NULL) and does not fail.
+SELECT is((SELECT count(*) FROM public.paige_client_events WHERE ref_table='messages' AND event_kind='comms.inbound'
+ AND contact_id='e0934100-0000-4000-8000-000000000001'),20::bigint,'Portal activity: each permitted customer post creates one saved activity');
+SELECT is((SELECT count(*) FROM public.paige_client_events WHERE ref_table='messages' AND event_kind='comms.outbound'
+ AND contact_id='e0934100-0000-4000-8000-000000000001'),1::bigint,'Portal activity: retries and rate refusals create no extra reply activity');
+SELECT ok(NOT EXISTS(SELECT m.id FROM public.messages m LEFT JOIN public.paige_client_events e ON e.ref_table='messages' AND e.ref_id=m.id
+ WHERE m.channel_type='portal' AND m.contact_id='e0934100-0000-4000-8000-000000000001' GROUP BY m.id HAVING count(e.id)<>1),'Portal activity: original persisted message and event stay one to one');
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',$q$SELECT count(*)::text::jsonb FROM public.get_client_rail(
+ p_contact_id=>'e0934100-0000-4000-8000-000000000001',p_limit=>50,p_lens=>'client') r WHERE r.surface='client_portal' AND r.event_kind IN('comms.inbound','comms.outbound')$q$),'21'::jsonb,'Portal activity: returning customer reads actual saved activity after retries and refusals');
+SELECT ok((SELECT bool_and(pg_get_userbyid(proowner)='postgres' AND prosecdef AND proconfig=ARRAY['search_path=public, pg_temp']
+ AND has_function_privilege('authenticated',oid,'EXECUTE') AND has_function_privilege('service_role',oid,'EXECUTE') AND NOT has_function_privilege('anon',oid,'EXECUTE'))
+ FROM pg_proc WHERE oid IN('public.client_portal_send_message(text,uuid,text,uuid)'::regprocedure,'public.comms_portal_reply(uuid,uuid,text,uuid)'::regprocedure))
+ AND (SELECT md5(prosrc)='d30a77a8908d3ddab03fd17b882b6d0b' FROM pg_proc WHERE oid='public.client_portal_send_message(text,uuid,text,uuid)'::regprocedure)
+ AND (SELECT md5(prosrc)='12123877ad1df9570869815aca0666bc' FROM pg_proc WHERE oid='public.comms_portal_reply(uuid,uuid,text,uuid)'::regprocedure),'Portal activity: exact original signatures, permissions and reviewed bodies');
+
+-- Original retained-history deletion checks.
 SELECT lives_ok($q$DELETE FROM public.clients WHERE id='e0934100-0000-4000-8000-000000000001'$q$,'a customer with portal messages can still be deleted');
 SELECT is((SELECT count(*) FROM public.messages WHERE channel_type='portal' AND contact_id IS NULL AND tenant_id='e0924100-0000-4000-8000-000000000001'),21::bigint,'their portal rows are orphaned, not lost');
 

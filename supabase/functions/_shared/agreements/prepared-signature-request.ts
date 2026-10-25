@@ -285,6 +285,34 @@ export async function prepareSignatureRequestReview(
 }
 
 
+/** Re-read the COMPLETE originally reviewed request before the canonical gate
+ * admits a consequential attempt. A still-valid but different sender/message or
+ * operation is a new review, never a reason to silently renew its fingerprint.
+ * This is only preflight: the one approval gate, current execution authority,
+ * original native claim and governed sender must still do their own work.
+ * Its digest is not an approval, permission, durable claim or receipt. */
+export async function readExactPreparedSignatureRequest(
+  value: unknown, caller: OwnerPreparationCaller, service: OwnerPreparationService,
+  expectedActorId: string, ports: PreparedSignatureEmailPorts,
+) {
+  let copy: unknown;
+  try { copy = structuredClone(value); } catch { return fail("INVALID_REQUEST"); }
+  const keys = ["operation_id", "review", "expected_review_sha256", "connector_id",
+    "messages", "expected_request_sha256"];
+  if (!object(copy) || Object.keys(copy).length !== keys.length ||
+    Object.keys(copy).some(key => !keys.includes(key)) ||
+    typeof copy.expected_request_sha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(copy.expected_request_sha256)) return fail("INVALID_REQUEST");
+  const expected = copy.expected_request_sha256;
+  const reviewed = await prepareSignatureRequestReview({
+    operation_id: copy.operation_id, review: copy.review,
+    expected_review_sha256: copy.expected_review_sha256,
+    connector_id: copy.connector_id, messages: copy.messages,
+  }, caller, service, expectedActorId, ports);
+  if (reviewed.request_sha256 !== expected) return fail("REVIEW_CHANGED");
+  return reviewed;
+}
+
 /** Authorized sender metadata for the same exact saved request. These choices
  * are a read, not sender approval or proof of delivery. Unlike the generic
  * email party resolver, this preserves agreement witnesses/business signers. */

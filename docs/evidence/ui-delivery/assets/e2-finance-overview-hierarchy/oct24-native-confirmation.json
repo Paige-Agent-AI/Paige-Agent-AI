@@ -285,8 +285,8 @@
       },
       {
         "file": "oct24-confirmed-390-escape-focus.jpg",
-        "bytes": 15711,
-        "sha256": "6a0af1183da9a11da780360c7fa963494a59291aceb61444572a12a15e872375"
+        "bytes": 35899,
+        "sha256": "8d88c48feb0a383a42027a84a14946cc94c858aa3162082ec3af6f443171976d"
       }
     ],
     "proof": [
@@ -295,7 +295,7 @@
       "Second synthetic workspace/member denial has no VERA review control",
       "390px original Sheet Escape restores the same connected metric control"
     ],
-    "diagnostics": "Immediate transition frames and unsupported animation-observer attempts are INVALID capture diagnostics. Settled1366 open measures21px, all three amount scrollWidth/clientWidth equal; no source repair was required. Native app screenshot mismatched target and was excluded; only target-bound browser captures are accepted.",
+    "diagnostics": "Immediate transition frames and unsupported animation-observer attempts are INVALID capture diagnostics. Settled1366 open measures21px, all three amount scrollWidth/clientWidth equal; no source repair was required. Native app screenshot mismatched target and was excluded; only target-bound browser captures are accepted. The first390px close frame still showed the outgoing overlay and was replaced before final review by the fully closed state: dialog count0, same connected control focused and focus-visible.",
     "boundary": "Synthetic rendering/interaction only, no backend/authorization or customer acceptance. Real Chat/Live/cohort/current Finance original-reference acceptance stays separate."
   }
 }

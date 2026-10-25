@@ -50,6 +50,7 @@ const mount = async (state: CustomerIdentityState, financePortal = false, userId
         <Routes>
           <Route path="/app" element={<OnboardingChecklist userId={userId} financePortal={financePortal} />} />
           <Route path="/app/documents" element={<p>Documents page</p>} />
+          <Route path="/app/account" element={<p>Customer profile and consent page</p>} />
           <Route path="/app/credit" element={<p>Credit page</p>} />
         </Routes>
       </MemoryRouter>
@@ -60,11 +61,34 @@ const mount = async (state: CustomerIdentityState, financePortal = false, userId
 const uploadRow = () => [...host.querySelectorAll("button")].find((b) => b.textContent?.includes("Upload Your First Document"));
 
 describe("saved customer identity and relationship bookkeeping", () => {
+  it("offers customer profile and Documents steps, never the unconnected legacy goal step", async () => {
+    await mount(customer);
+    expect(host.textContent).not.toContain("Set Your First Goal");
+    expect(host.textContent).toMatch(/1\/2/);
+    expect(f.reads.some(r => r.table === "client_goals")).toBe(false);
+  });
+
+  it("opens the original relationship profile when the customer's name is missing", async () => {
+    const unnamed = { ...customer, frame: { ...customer.frame!, profile: { ...customer.frame!.profile,
+      first_name: "", last_name: "", entity_name: null } } } as CustomerIdentityState;
+    await mount(unnamed);
+    const profile = [...host.querySelectorAll("button")].find(b => b.textContent?.includes("Complete Your Profile"))!;
+    await act(async () => profile.click());
+    expect(host.textContent).toBe("Customer profile and consent page");
+  });
+
+  it("finishes the optional customer checklist only from both saved original results", async () => {
+    f.counts.client_files = 1;
+    await mount(customer);
+    expect(host.textContent).toBe("");
+    expect(localStorage.getItem(`onboarding_dismissed_${TENANT}:${CONTACT}:${ACTOR}`)).toBe("true");
+  });
+
   it("recognizes the saved CRM name without querying the legacy platform profile", async () => {
     await mount(customer);
     const profile = [...host.querySelectorAll("button")].find(b => b.textContent?.includes("Complete Your Profile"));
     expect(profile?.disabled).toBe(true);
-    expect(host.textContent).toMatch(/1\/3/);
+    expect(host.textContent).toMatch(/1\/2/);
     expect(f.reads.some(r => r.table === "profiles")).toBe(false);
   });
 
@@ -82,9 +106,9 @@ describe("saved customer identity and relationship bookkeeping", () => {
       tenant_id: "e0f20000-0000-4000-8000-00000000000b", first_name: "", last_name: "", entity_name: null },
       brand: { ...customer.frame!.brand, tenant_id: "e0f20000-0000-4000-8000-00000000000b" } } } as CustomerIdentityState;
     await mount(other);
-    expect(host.textContent).toMatch(/0\/3/);
+    expect(host.textContent).toMatch(/0\/2/);
     await act(async () => { settle({ count: 1, error: null }); for (let i = 0; i < 12; i++) await Promise.resolve(); });
-    expect(host.textContent).toMatch(/0\/3/);
+    expect(host.textContent).toMatch(/0\/2/);
     expect(uploadRow()?.disabled).toBe(false);
   });
 
@@ -113,13 +137,13 @@ describe("saved customer identity and relationship bookkeeping", () => {
   it("ignores corrupt scoped bookkeeping without losing the saved-profile result", async () => {
     localStorage.setItem(`onboarding_steps_fired_${TENANT}:${CONTACT}:${ACTOR}`, "{");
     await mount(customer);
-    expect(host.textContent).toMatch(/1\/3/);
+    expect(host.textContent).toMatch(/1\/2/);
   });
 
   it("keeps the saved-profile result usable when local storage is blocked", async () => {
     const read = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("Synthetic storage refusal"); });
     const write = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Synthetic storage refusal"); });
-    try { await mount(customer); expect(host.textContent).toMatch(/1\/3/); }
+    try { await mount(customer); expect(host.textContent).toMatch(/1\/2/); }
     finally { read.mockRestore(); write.mockRestore(); }
   });
 });
@@ -136,11 +160,13 @@ describe("the document step", () => {
 
   it("ticks once the customer has saved one upload (§70: the step can be completed)", async () => {
     f.counts.client_files = 1;
-    await mount(customer);
+    const unnamed = { ...customer, frame: { ...customer.frame!, profile: { ...customer.frame!.profile,
+      first_name: "", last_name: "", entity_name: null } } } as CustomerIdentityState;
+    await mount(unnamed);
     const row = uploadRow()!;
     expect(row.disabled).toBe(true);
     expect(row.querySelector("p")?.className).toContain("line-through");
-    expect(host.textContent).toMatch(/2\/3/);
+    expect(host.textContent).toMatch(/1\/2/);
   });
 
   it("a viewer with no customer frame keeps the legacy count, unchanged (§58)", async () => {
@@ -148,6 +174,9 @@ describe("the document step", () => {
     const legacy = f.reads.find((r) => r.table === "documents");
     expect(legacy?.filters).toEqual([["user_id", ACTOR]]);
     expect(f.reads.some((r) => r.table === "client_files")).toBe(false);
+    expect(f.reads.some((r) => r.table === "client_goals")).toBe(true);
+    expect(host.textContent).toContain("Set Your First Goal");
+    expect(host.textContent).toMatch(/0\/3/);
   });
 });
 

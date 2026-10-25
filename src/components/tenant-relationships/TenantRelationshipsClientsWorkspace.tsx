@@ -40,6 +40,7 @@ import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsE
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { ClientStanding } from "./ClientStanding";
 import { ClientSharedWork } from "./ClientSharedWork";
+import { ClientActionItems } from "./ClientActionItems";
 import { ClientFiles } from "./ClientFiles";
 import { ClientCommunicationState } from "./ClientCommunicationState";
 import { ClientPortalAccess } from "./ClientPortalAccess";
@@ -708,6 +709,7 @@ function ClientRecord({
         {portalAccess && <ClientPortalAccess key={`access:${person.id}`} person={person} onOpenPortal={portalAccess.openPortal} onChanged={portalAccess.onChanged} onAccessChange={(state, joined) => setAccess({ state, joined })} />}
         {/* E09 Slice 6: how this client can be reached, read-only, from the one consent derivation. Same gate as standing. Slice 7 round 3: re-read when the access state changes. */}
         {standing && <ClientCommunicationState key={`reach:${person.id}`} contactId={person.id} clientName={person.name} account={standing.account} accessState={access.state} />}
+        {standing && <ClientActionItems contactId={person.id} clientName={person.name} />}
         <section className="trc-record-section">
           <header><div><span>Overview</span><h3>Relationship overview</h3></div><ProofPill>Standard fields · PARTIAL</ProofPill></header>
           <dl className="trc-facts">

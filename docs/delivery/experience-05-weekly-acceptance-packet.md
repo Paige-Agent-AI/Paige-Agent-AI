@@ -1,5 +1,33 @@
 # Weekly Internal Commitment Check — protected acceptance handoff
 
+## October25 15:34UTC - original draft recovery deployed; read-only QA boundary
+
+Original Automation draft repair#2845 is reviewed846b33c55c39179a2af1702b430a3280d11a3e37
+(AUTHOR-REVIEW / LOWER ASSURANCE5643723169), all11 exact-head checks/Preview and
+both web statuses SUCCESS, merged480627ac5bdc3ad92e4524d70ebaa23e56520ed9.
+Actual Edge Chat542/JWTtrue/full287 source-emitted closure and exact production
+web/bothpublic480627-mvnzcgjf are verified. The sole Master4.0 row and
+[owning source/release evidence](../evidence/ui-delivery/exp05-automation-draft-deadline.md)
+retain certificate, original failure/review, cleanup warning and recovery boundaries.
+No native, recurrence, provider or Live activation belongs to this increment.
+
+Renewed human read-only permission allowed genuine ordinary-owner inspection:
+Operations opens canonical Overview, weekly inspection resolves no registered
+responsibility/no proposals/recurrence unavailable, and missing business time zone
+holds the Work week rather than inventing a boundary. A previously authorized
+protected internal booking retains its original schedule/status after full reload;
+Escape closes inspection and restores event focus. All11 Operations recipes
+remain Listed/Unverified. The temporary QA tab was closed. No new question,
+approval, business mutation, provider or schedule change was performed.
+
+Both available signed-in sessions currently resolve the same business; a browser
+profile label is not a second eligible cohort. These are bounded historical record,
+navigation, reload, keyboard and catalogue observations, not new draft execution,
+E5-CV1–9 closure, foreign-role/tenant/new-account or Live proof. Preserve every
+original case below. Complete weekly execution, Builder lifecycle, ZION return,
+meaningful privacy-scoped attention, universal SOLO proof and one integrated
+founder evaluation remain owed; no algorithm maturity is promoted.
+
 ## October25 - bounded process inspection released; original owner history readback
 
 #2840 is production source/config/web verified at b437bc39f4d9bac358252442ed6ffe2de57f53dd after all exact-head gates and documented lower-assurance author review. Original caller-JWT/RLS process inspection and native readiness resolver remain authoritative. Four concurrent lookups share one8s deadline and bounded output; unavailable readiness is explicit. Native schema, approvals, execution, recurrence, providers, OpenAI-primary routing and Anthropic fallback are unchanged. Exact deployment, certificate digest, source identities and retained cleanup warning are in Master4.0 and the existing Edge evidence. No customer release identity or catalogue promotion.

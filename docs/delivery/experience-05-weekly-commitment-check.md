@@ -1,5 +1,26 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October25 - exact paused resume preparation, not admitted
+
+REPAIR the existing future weekly control review. Five causal failures with all71
+incumbent cases passing show that resume used a revision-only legacy call rather
+than the original current-state/cutoff authorization. Only paused definitions with
+known exact control evidence now prepare the SAME four-argument compare-and-authorize
+writer, preserving raw microseconds and original process/revision. This review does
+not authorize, resume, enable or execute work; future Chat/Live admission is absent.
+
+Six source suites216PASS, strict ES2020 and scoped lint pass; original C0b ancestry29
+and whole-source/test/native inverses retain existing contracts. At this source
+checkpoint the full original native program with3 additional resume cases is
+IN_PROGRESS; its final result remains required in the original PR receipt. Earlier full native
+baseline stopped at the first new causal case after122 PASS and restored original
+fixture role posture. No native writer/SQL/ACL, Root/source pin/registry, UI, public
+input schema, live draft, provider or scheduler change. Actual current-owner exact
+approval/audit/reload, recurrence, Builder/ZION/notices, universal SOLO/Live and all
+ten outcomes/E5-CV1-9 remain owed. [Original state-binding evidence](../evidence/exp05-weekly-control-state-binding.json)
+records exact proof and unchanged capability/algorithm maturity. One complete
+founder evaluation remains later; no routine intermediate test is requested.
+
 ## October24 — original native Chat integration baseline, development
 
 Current main `da794029f82e57ae6b8403005dcd2436d67f769a` preserves the

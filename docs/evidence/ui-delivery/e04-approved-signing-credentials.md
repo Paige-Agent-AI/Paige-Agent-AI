@@ -57,3 +57,15 @@ Current October25 receiving composition: 408ab3183ac0e57ca9b57f7b95088fb8240eafb
 ### Current receiving composition — 2026-10-25 14:56 UTC
 
 Normal merge of actual main `fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2` retains incoming EXP05/EXP09 closeouts and EXP08 attachments byte-for-byte. Owning credential runtime/native/proof source stays exact to `0601dd7`; both whole parent gate inverses retain all commands, assertions and strict checks. Current 126 cases/21 steps, concrete credential/outcome/handler SDK strict check, scoped lint, UI guard, migration collision and ACL controls pass. The native 122-case proof is retained source-identical historical evidence, not a new run. C43 is actually merged at `fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2`; its deployment/readback and then native18 remain separate gates. Fresh exact-head CI, customer operation and full Experience acceptance remain owed.
+
+## Actual production release — October25
+
+This dated section supersedes only earlier source-stage NOT_APPLIED/NOT_RELEASED statements; the original proof history and customer-verification limits remain intact.
+
+Reviewed `ad450fdfaa279e3dd72fc3738f096a82b215aab1`; sequential AUTHOR-REVIEW / LOWER ASSURANCE6399613137; all13 exact checks/two webSUCCESS/0threads. Actual merge`72a2c69c2551917f12b4aa6902af6a526b6cb390`, tree`cce268c87bd2a4514c5106a486e150a545f8be5c`. Native`20271114180004` genuinely ONCE/20; normal run40207787714/job121212461816 Push/PERSISTED/record-commit SUCCESS, exact source/ABI/owner/default/ACL verified.
+
+Normal Edge40207787726/job121212350551 SUCCESS with zero affected functions; upload/readback/tag correctly skipped. Factory UNMOUNTED.
+
+Production `dpl_4qFSUFQm5gYnBvaYjFn6Wreh5EAx` READY/exact merge; both canonical public200/build`72a2c69c2551917f12b4aa6902af6a526b6cb390-mvnzrew2`/customerUpdate:null at2026-10-25T15:39:17Z. [Actual release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2834#issuecomment-6399654510). Retained exact document and one-way credential commitments only. Raw credentials remain transient; no sent/viewed/signed/sealed/payment or client-delivery completion is inferred.
+
+Source/native/web readback only; ordinary owner/staff/client/cohort/reload/Central QA and full O1–O12/founder acceptance remain UNVERIFIED. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; catalogue and restricted activation unchanged. Mechanical closeout does not create another runtime release or activation.

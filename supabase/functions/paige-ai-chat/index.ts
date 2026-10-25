@@ -12821,6 +12821,34 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (autoMode === "confirm") {
             const risk = classifyAction(tc.function.name);
 
+
+            // FAIL CLOSED. A write with no classification does not run — not as ordinary, not as
+            // high, not at all. CI refuses the change that would create this state, so reaching it
+            // means something got past CI, and the safe answer to that is to stop rather than to
+            // pick a class. There is no approval path out of here: the fix is to classify the tool.
+            if (risk === "unclassified") {
+              console.error("[paige] unclassified mutation refused", JSON.stringify({ tool: tc.function.name }));
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+                success: false,
+                error: "This action has no risk classification, so it cannot be run. Tell the operator plainly that you cannot do this one and that it needs looking at — do not try a different way round it.",
+              }) });
+              continue;
+            }
+
+            // NOT A CHAT ACTION AT ALL. `owner_only` is not "needs stronger approval" — no approval
+            // reaches it, because the decision is about how much authority Paige herself holds and
+            // an assistant that can be talked into more authority has no ceiling. It lives in
+            // Settings, where a person changes it deliberately rather than at the end of a
+            // conversation Paige was steering.
+            if (risk === "owner_only") {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+                success: false,
+                error: "This is the operator's decision to make in their settings, not something you can do from a conversation — it changes how much you are allowed to do on your own. Say so plainly, tell them where it lives, and do not ask them to approve it here.",
+                reason: riskReason(tc.function.name),
+              }) });
+              continue;
+            }
+
             if (tc.function.name===PORTAL_REQUEST_SHARE_TOOL) {
               traceCtx.content_policy='metadata_only';
               // Reuse the existing private-content egress fence. Source words
@@ -12858,33 +12886,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 tc.function.arguments=JSON.stringify(gateArgs);
                 portalRequestPreparedSummary=portalRequestConfirmSummary(prepared.args,clientName);
               }
-            }
-
-            // FAIL CLOSED. A write with no classification does not run — not as ordinary, not as
-            // high, not at all. CI refuses the change that would create this state, so reaching it
-            // means something got past CI, and the safe answer to that is to stop rather than to
-            // pick a class. There is no approval path out of here: the fix is to classify the tool.
-            if (risk === "unclassified") {
-              console.error("[paige] unclassified mutation refused", JSON.stringify({ tool: tc.function.name }));
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                success: false,
-                error: "This action has no risk classification, so it cannot be run. Tell the operator plainly that you cannot do this one and that it needs looking at — do not try a different way round it.",
-              }) });
-              continue;
-            }
-
-            // NOT A CHAT ACTION AT ALL. `owner_only` is not "needs stronger approval" — no approval
-            // reaches it, because the decision is about how much authority Paige herself holds and
-            // an assistant that can be talked into more authority has no ceiling. It lives in
-            // Settings, where a person changes it deliberately rather than at the end of a
-            // conversation Paige was steering.
-            if (risk === "owner_only") {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                success: false,
-                error: "This is the operator's decision to make in their settings, not something you can do from a conversation — it changes how much you are allowed to do on your own. Say so plainly, tell them where it lives, and do not ask them to approve it here.",
-                reason: riskReason(tc.function.name),
-              }) });
-              continue;
             }
 
             const fp = await confirmFingerprint(tc.function.name, confirmationArgs(gateArgs));

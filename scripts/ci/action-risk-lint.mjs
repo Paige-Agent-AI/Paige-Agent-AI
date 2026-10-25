@@ -172,6 +172,30 @@ export function portalInvitationCatalogTools(chat,aggregate,domain){
   return tools;
 }
 
+/** Discover the new domain array only through its actual original import/mount.
+ * This grants no action and adds no exemption; malformed/aliased catalogs fail. */
+export function portalRequestCatalogTools(chat,domain){
+  const parse=(text)=>ts.createSourceFile('portal.ts',text,ts.ScriptTarget.Latest,true);
+  const caller=parse(chat),source=parse(domain),symbol='PORTAL_REQUEST_SHARE_TOOLS';
+  const require=(ok)=>{if(!ok)throw Error('Customer request lost its original imported/mounted domain catalog');};
+  require(!caller.parseDiagnostics.length&&!source.parseDiagnostics.length);
+  const unwrap=n=>n&&(ts.isAsExpression(n)||ts.isParenthesizedExpression(n)||ts.isSatisfiesExpression(n))?unwrap(n.expression):n;
+  const imported=caller.statements.filter(ts.isImportDeclaration).some(n=>n.moduleSpecifier.text==='../_shared/paige-spine/domains/client_portal.ts'
+    &&n.importClause?.namedBindings&&ts.isNamedImports(n.importClause.namedBindings)
+    &&n.importClause.namedBindings.elements.some(e=>!e.propertyName&&e.name.text===symbol));
+  const mounts=astNodes(caller,n=>ts.isCallExpression(n)&&ts.isPropertyAccessExpression(n.expression)
+    &&n.expression.expression.getText(caller)==='toolDefs'&&n.expression.name.text==='push'
+    &&n.arguments.some(a=>ts.isSpreadElement(a)&&ts.isIdentifier(unwrap(a.expression))&&unwrap(a.expression).text===symbol));
+  require(imported&&mounts.length===1);
+  const declarations=astNodes(source,n=>ts.isVariableDeclaration(n)&&ts.isIdentifier(n.name)&&n.name.text===symbol);
+  require(declarations.length===1);const declaration=declarations[0],array=unwrap(declaration.initializer);
+  require(declaration.parent.flags&ts.NodeFlags.Const);require(ts.isArrayLiteralExpression(array)&&array.elements.length===1);
+  const field=(n,key)=>{n=unwrap(n);require(n&&ts.isObjectLiteralExpression(n)&&!n.properties.some(ts.isSpreadAssignment));
+    const rows=n.properties.filter(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)===key);require(rows.length===1);return unwrap(rows[0].initializer);};
+  const name=field(field(array.elements[0],'function'),'name');require(ts.isStringLiteral(name)&&name.text==='client_portal_request_share');
+  return[name.text];
+}
+
 /**
  * The canonical keys the MCP door points at, read from its capability policy. That file holds no
  * classification of its own — it is a tool-name → key mapping — so this only asks WHICH keys are
@@ -387,6 +411,19 @@ function selfTest() {
   };
   let bad = 0;
   const portalChat=fs.readFileSync(CHAT,'utf8'),portalAggregate=fs.readFileSync('supabase/functions/_shared/comms-email/chat.ts','utf8'),portalDomain=fs.readFileSync('supabase/functions/_shared/client-portal-invitation/chat.ts','utf8');
+  const requestChat="import { PORTAL_REQUEST_SHARE_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts'; toolDefs.push(...PORTAL_REQUEST_SHARE_TOOLS as any);";
+  const requestDomain="export const PORTAL_REQUEST_SHARE_TOOLS=[{type:'function',function:{name:'client_portal_request_share'}}]as const;";
+  bad+=ok('customer request follows actual imported mounted domain array',portalRequestCatalogTools(requestChat,requestDomain).join()==='client_portal_request_share');
+  for(const[label,chat,domain]of[
+    ['missing mount',requestChat.replace('toolDefs.push','other.push'),requestDomain],
+    ['comment-only mount',requestChat.replace('toolDefs.push','//toolDefs.push'),requestDomain],
+    ['foreign import',requestChat.replace('domains/client_portal.ts','domains/other.ts'),requestDomain],
+    ['aliased import',requestChat.replace('{ PORTAL_REQUEST_SHARE_TOOLS }','{ OTHER as PORTAL_REQUEST_SHARE_TOOLS }'),requestDomain],
+    ['wrong domain name',requestChat,requestDomain.replace('client_portal_request_share','other_share')],
+    ['duplicate row',requestChat,requestDomain.replace('}}]',"}},{type:'function',function:{name:'client_portal_request_share'}}]")],
+    ['mutable declaration',requestChat,requestDomain.replace('export const','export let')],
+    ['malformed source',requestChat,requestDomain+'{'],
+  ]){let refused=false;try{portalRequestCatalogTools(chat,domain)}catch{refused=true}bad+=ok('customer request refuses '+label,refused);}
   bad+=ok('customer invitation follows its actual mounted domain catalog',portalInvitationCatalogTools(portalChat,portalAggregate,portalDomain).join()==='client_portal_invitation_send');
   for(const [label,chat,aggregate,domain]of[
     ['missing shared catalog mount',portalChat.replace('toolDefs.push(...COMMS_EMAIL_TOOLS','toolDefs.push(...OTHER_TOOLS'),portalAggregate,portalDomain],
@@ -696,6 +733,9 @@ if (chatSrc.includes('...PORTAL_ACCESS_TOOLS')) {
   const accessTools = [...source.matchAll(/\bname:\s*'(read_client_portal_access|client_portal_access_set)'/g)].map(m => m[1]);
   if (accessTools.length !== 2) throw new Error('Portal access catalog could not be parsed');
   importedTools.push(...accessTools);
+}
+if (chatSrc.includes('...PORTAL_REQUEST_SHARE_TOOLS')) {
+  importedTools.push(...portalRequestCatalogTools(chatSrc,fs.readFileSync('supabase/functions/_shared/paige-spine/domains/client_portal.ts','utf8')));
 }
 if (chatSrc.includes('...GROWTH_FORM_TOOLS')) {
   if (!/import\s*\{[^}]*GROWTH_FORM_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/growth_form\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Growth Form catalog import');

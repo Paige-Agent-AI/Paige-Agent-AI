@@ -1,0 +1,68 @@
+{
+ "zoom-7chips": {
+  "before": {
+   "top": 1133,
+   "max": 1133,
+   "client": 172
+  },
+  "after": {
+   "top": 1134,
+   "max": 1285,
+   "client": 20
+  },
+  "geo": {
+   "innerH": 400,
+   "sendBottom": 655,
+   "composerH": 520,
+   "composerOverflowY": "visible",
+   "trayOverflowY": "visible",
+   "trayMaxH": "none",
+   "scrollers": [],
+   "docScroll": false
+  }
+ },
+ "1536-2chips": {
+  "before": {
+   "top": 575,
+   "max": 715,
+   "client": 532
+  },
+  "after": {
+   "top": 575,
+   "max": 789,
+   "client": 458
+  },
+  "geo": {
+   "innerH": 770,
+   "sendBottom": 749,
+   "composerH": 169,
+   "composerOverflowY": "visible",
+   "trayOverflowY": "visible",
+   "trayMaxH": "none",
+   "scrollers": [],
+   "docScroll": false
+  }
+ },
+ "390-2chips": {
+  "before": {
+   "top": 771,
+   "max": 931,
+   "client": 616
+  },
+  "after": {
+   "top": 771,
+   "max": 1074,
+   "client": 473
+  },
+  "geo": {
+   "innerH": 844,
+   "sendBottom": 825,
+   "composerH": 237,
+   "composerOverflowY": "visible",
+   "trayOverflowY": "visible",
+   "trayMaxH": "none",
+   "scrollers": [],
+   "docScroll": false
+  }
+ }
+}

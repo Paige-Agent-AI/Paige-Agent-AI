@@ -268,15 +268,33 @@ function markupOnly(xml: string): string | null {
   return /<!--|<!\[CDATA\[|<\?/.test(cleaned) ? null : cleaned;
 }
 
-/** Text content of an element: tags dropped, entities decoded. */
-const characterData = (raw: string) => decodeEntities(raw.replace(/<[^>]*>/g, ""));
+/**
+ * Text content of an element: tags dropped, entities decoded. A tag runs from a `<` to the next `>`,
+ * and a `<` with no `>` after it stays as text, exactly as `/<[^>]*>/g` would read it, but in one
+ * left-to-right pass: that regex rescanned to the end for every `<` with no `>`, which made a few
+ * hundred KB of `<` take tens of seconds.
+ */
+function characterData(raw: string): string {
+  const parts: string[] = [];
+  let copied = 0;
+  for (let open = raw.indexOf("<"); open >= 0; open = raw.indexOf("<", copied)) {
+    const close = raw.indexOf(">", open + 1);
+    if (close < 0) break;
+    parts.push(raw.slice(copied, open));
+    copied = close + 1;
+  }
+  parts.push(raw.slice(copied));
+  return decodeEntities(parts.join(""));
+}
 
 type StartTag = { local: string; attributes: Map<string, string[]>; end: number; selfClosing: boolean };
 
 /**
  * Every start tag whose local name (any namespace prefix, any case) is in `locals`, with its
  * attributes keyed by lower-cased local name and entity-decoded. Values are read quote to quote, so a
- * `>` inside a value cannot hide the attributes after it. Null when such a tag does not parse.
+ * `>` inside a value cannot hide the attributes after it. Null when such a tag does not parse, or
+ * when it repeats an attribute name, which XML forbids. Two names that differ only in prefix (`a`,
+ * `x:a`) are both kept under one key, so a caller that wants exactly one value can see there are two.
  */
 function startTags(xml: string, locals: ReadonlySet<string>): StartTag[] | null {
   const tags: StartTag[] = [];
@@ -286,6 +304,7 @@ function startTags(xml: string, locals: ReadonlySet<string>): StartTag[] | null 
     const local = match[1].toLowerCase();
     if (!locals.has(local)) continue;
     const attributes = new Map<string, string[]>();
+    const written = new Set<string>();
     let at = match.index + match[0].length;
     let selfClosing = false;
     for (;;) {
@@ -307,8 +326,13 @@ function startTags(xml: string, locals: ReadonlySet<string>): StartTag[] | null 
       if (close < 0) return null;
       const value = xml.slice(at + 1, close);
       if (value.includes("<")) return null;
+      if (written.has(name[0])) return null;
+      written.add(name[0]);
       const key = name[0].slice(name[0].indexOf(":") + 1).toLowerCase();
-      attributes.set(key, [...(attributes.get(key) ?? []), decodeEntities(value)]);
+      // Appended in place: copying the list on every repeat made one tag of repeated names quadratic.
+      const values = attributes.get(key);
+      if (values) values.push(decodeEntities(value));
+      else attributes.set(key, [decodeEntities(value)]);
       at = close + 1;
     }
     tags.push({ local, attributes, end: at, selfClosing });
@@ -375,10 +399,19 @@ function wordFieldRefusal(xml: string): TeamHubFileRefusal | null {
   if (!tags) return "malformed_document";
   // Every piece of instruction text is kept, before or after the field's separator, so the check
   // fails closed; a nested field counts as computing the keyword only before any instruction text.
-  type Field = { instruction: string; computedKeyword: boolean; separated: boolean };
+  // `worded` records whether any instruction text so far is more than whitespace, so a nested begin
+  // need not re-trim the whole instruction (re-trimming it for every nested begin was quadratic).
+  type Field = { instruction: string; worded: boolean; computedKeyword: boolean; separated: boolean };
   const open: Field[] = [];
   const refused = (field: Field) => field.computedKeyword || DDE.test(field.instruction);
+  const closing = /<\/(?:[A-Za-z_][\w.-]*:)?instrText\s*>/gi;
+  // Where the last instruction text ended. instrText holds only text, so a field tag that starts
+  // before that point sits inside it; for a second instrText that would mean two opens sharing one
+  // close. Each close is therefore searched for only after the previous one, which keeps the whole
+  // walk linear (searching from every open to a shared close at the end was quadratic).
+  let textEnd = -1;
   for (const tag of tags) {
+    if (tag.end <= textEnd) return "malformed_document";
     if (tag.local === "fldsimple") {
       if ((tag.attributes.get("instr") ?? []).some((instruction) => DDE.test(instruction))) return "dde_field";
       continue;
@@ -386,22 +419,24 @@ function wordFieldRefusal(xml: string): TeamHubFileRefusal | null {
     if (tag.local === "instrtext") {
       let text = "";
       if (!tag.selfClosing) {
-        const closing = /<\/(?:[A-Za-z_][\w.-]*:)?instrText\s*>/gi;
         closing.lastIndex = tag.end;
         const close = closing.exec(xml);
         if (!close) return "malformed_document";
+        textEnd = close.index;
         text = characterData(xml.slice(tag.end, close.index));
       }
       const field = open[open.length - 1];
-      if (field) field.instruction += text;
-      else if (DDE.test(text)) return "dde_field";
+      if (field) {
+        field.instruction += text;
+        if (!field.worded && /\S/.test(text)) field.worded = true;
+      } else if (DDE.test(text)) return "dde_field";
       continue;
     }
     const kind = (tag.attributes.get("fldchartype") ?? [])[0]?.trim();
     const field = open[open.length - 1];
     if (kind === "begin") {
-      if (field && !field.separated && field.instruction.trim() === "") field.computedKeyword = true;
-      open.push({ instruction: "", computedKeyword: false, separated: false });
+      if (field && !field.separated && !field.worded) field.computedKeyword = true;
+      open.push({ instruction: "", worded: false, computedKeyword: false, separated: false });
     } else if (kind === "separate") {
       if (field) field.separated = true;
     } else if (kind === "end") {

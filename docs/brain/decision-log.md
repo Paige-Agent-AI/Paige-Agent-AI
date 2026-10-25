@@ -1,5 +1,56 @@
 # Decision Log — chronological one-liners
 
+## October25 — EXP08 Team Hub increment 3 built
+
+- **EXP08 Team Hub increment 3 built: attachments (2026-10-25, not yet merged, `PROOF_OWED`).** Built against the owner's increment-3 decision below. Contract: [increment 3](../delivery/exp08-team-hub-increment3-attachments-contract.md). Evidence: [increment 3 record](../evidence/ui-delivery/exp08-team-hub-increment3.md).
+  - **What shipped in source:**
+    - Migration `20271113870008` adds the `team_hub_files` table (RLS on, no policies, no browser grants, A10 `delete`) and four `AS RESTRICTIVE` `storage.objects` policies on `comms-attachments` at `<tenant>/team-hub/<file_id>`.
+    - The same migration adds `team_hub_begin_file`, `team_hub_file_for_check`, `team_hub_discard_file`, the service-role `team_hub_file_verdict` and `team_hub_claim_stale_files`, and replaces `team_hub_post_message` with a version that takes a trailing `p_file_ids`. The old 6-argument call from `team_hub_request_task` still resolves.
+    - Migration `20271113870009` adds the `team_hub_files` retirement provider. The operator deletion UI reads it (`FILE_PROVIDER_ACTIONS`).
+    - The new `team-hub-file` edge function checks each file's real bytes (`_shared/team-hub-file-type.ts`).
+    - Service-role reader guards in `send-message`, `subagent-email-composer` and `analyze-financial-document`.
+    - UI: paperclip and drop, file chips with their states and plain-word refusals, file rows with Download, and the not-scanned disclosure.
+    - CI steps for the file proof, the retirement proof and the new Node tests.
+  - **Review rounds and what they caught:**
+    - **Round 1, security and compliance reviews (FIX-FIRST).**
+      - HIGH: a percent-encoded path (`<tenant>/team-hub%2F<id>`) passed `subagent-email-composer`'s check, and Storage decodes the name, so its service-role download could read a Team Hub file into an email draft. This was a §37 caller-inventory miss.
+        - Fix: refuse `%`, `\` and a `team-hub` filename before the download. `send-message` now refuses `%` as well.
+      - The upload ignored the declared type, because storage-js drops `contentType` for a File body. A Windows CSV and untyped files could never attach.
+        - Fix: upload a `File` carrying the declared MIME.
+      - Smaller fixes:
+        - a stale `send-message` digest pin in `c0b-incumbent-resource-binding`;
+        - the policies and the retirement code used different prefix rules (`foldername` against `split_part`);
+        - the operator UI could not parse the new provider, so an account with Team Hub files could not be deleted;
+        - the retirement proof was not in CI;
+        - Word and Excel were checked only for `vbaProject.bin`, missing DDE fields, external relationships, ActiveX and embedded objects;
+        - unposted ready files were not swept;
+        - lazily loaded thumbnails could outlive their 60-second link;
+        - `application/octet-stream` Office files were refused;
+        - the hint wording was wrong;
+        - the edge function accepted only two origins.
+    - **Round 2, re-review (FIX-FIRST).**
+      - The Deno inflation bound was not enforced: a 1 MB docx that inflates to 1 GiB peaked near 1 GB of memory on Deno before it was refused, because Deno's DecompressionStream returned a whole chunk at once.
+        - Fix: feed the decompressor in small pieces. Re-measured at about 70–116 MB peak, refused within 50 ms.
+      - `markupOnly` was quadratic.
+      - The composer test was not in CI, and the contract text was stale.
+      - A HIGH gap older than this work: `analyze-financial-document` downloaded `documents.bucket_name`/`file_path` with the service role, and `documents` rows only check `user_id`. A user could point a row at any bucket, including another tenant's Team Hub file.
+        - Fix: the function now accepts only `personal-documents` and `business-documents`, under the row owner's folder, and refuses traversal and encoded forms.
+      - Refusal copy now names the real reason.
+    - **Round 3, re-check.** The inflation, analyzer and copy fixes hold. Three more parsers in `_shared/team-hub-file-type.ts` were quadratic on a file of about 1 KB, and each ended in accept: the `instrText` closing search, the `characterData` regex, and copying repeated attributes.
+      - Fixed in the final round with 2 MB timing tests (63/63 Node tests pass). An independent re-check of that fix is owed.
+  - **Deviations from the owner's increment-3 decision, stated plainly:**
+    - Legacy `.doc`/`.xls` are not accepted, because they can carry macros that nothing here can inspect.
+    - PowerPoint is not accepted, because the shared bucket's allow-list does not include it and widening it would change Inbox uploads.
+    - Word and Excel files with embedded objects (including charts), external templates or data links, macros or DDE fields are refused, so an ordinary Word file with a chart cannot be shared yet.
+    - No scheduled stale-file sweep is built. The sweep runs only when the same person next finishes an upload, so a person who never uploads again leaves at most 20 unreadable files until account retirement.
+    - Not inspected, and covered only by the "not scanned" disclosure: Excel data connections, cell-level DDE formulas, CSV formula injection, and INCLUDETEXT/INCLUDEPICTURE fields.
+  - **Owed:**
+    - the §32 persisted-apply check for both migrations, and the `team-hub-file` deploy plus the changed `send-message`, `subagent-email-composer`, `analyze-financial-document` and `operator-account-retirement` functions;
+    - an authenticated drive of every contract §1 flow on the owner-designated SOLO account, including a removed private-channel member losing read at once;
+    - the four rendered defects from the evidence record: the stream unpins when chips are added, the chip tray does not reflow at 200% zoom, file names squeeze on the phone, and announcements overwrite each other;
+    - a scheduled sweep;
+    - the owner's call on the deviations above.
+
 ## October24 — EXP08 Team Hub owner decisions
 
 - **EXP08 Team Hub increment 4, PAIGE with Team Hub (owner, 2026-10-24, answered in the EXP08 Claude Code session).**

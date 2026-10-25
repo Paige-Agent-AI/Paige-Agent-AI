@@ -382,6 +382,34 @@ Inside Team Hub, a teammate types `/` for four commands. *Draft a task* creates 
 
 Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
+### EXP08 Team Hub increment 3: attachments (migrations `20271113870008` and `20271113870009`, 2026-10-25; not yet merged)
+
+Inside Team Hub, a teammate attaches up to 5 files (10 MB each) to a message or thread reply with the paperclip or by dropping them, sees each file's state on a chip, and can send files with no text. Everyone who can see the conversation now gets a Download that mints a fresh 60-second signed URL served as an attachment. Files are **not malware-scanned** (owner decision); the paperclip and every file row say so.
+- Types: PDF, PNG, JPEG, WEBP, GIF, `.docx`, `.xlsx`, `.txt`, `.csv`. The `team-hub-file` edge function checks each file's real bytes. Word and Excel files with macros, embedded objects or charts, ActiveX, external templates or data links, or DDE fields are refused. Legacy `.doc`/`.xls` and PowerPoint are not accepted.
+- Storage: the existing private `comms-attachments` bucket at `<tenant>/team-hub/<file_id>`, a path the server builds. One new table, `team_hub_files`: RLS on, no policies, no browser grants, A10 disposition `delete`. Four `AS RESTRICTIVE` storage policies limit that prefix: upload only to the caller's own pending path, read only for current conversation viewers, no update, no delete. These also keep platform-owner and agency standing out. A person removed from a private channel loses read at once.
+- Service-role readers: `send-message`, `subagent-email-composer` and `analyze-financial-document` refuse Team Hub and percent-encoded paths, so a Team Hub file can't reach an outbound email or an analysis by path.
+- Retirement: a new `team_hub_files` storage provider purges `<tenant>/team-hub/*` on account deletion, and the operator deletion UI reads it.
+- Not built: a scheduled sweep of unposted files. The sweep runs only when the same person next finishes an upload.
+
+§61 exception, unchanged from increment 1: only SOLO gets Team Hub; Agency, Enterprise and Sub-account stay held. The contract is `docs/delivery/exp08-team-hub-increment3-attachments-contract.md`.
+
+| Tier | Attachments (attach, see, download) |
+|---|---|
+| God / Operator | ✗ no menu item; no seat means `not_member`; the restrictive policies also refuse platform-owner standing on Team Hub objects |
+| Agency / Enterprise | ✗ held (`unavailable`); agency standing is refused on Team Hub objects |
+| Standalone (Solo) | ✓ for active seats, own workspace and conversations they can see now |
+| Sub-account | ✗ held (`unavailable`) |
+| Client | ✗ (no seat) |
+| Anonymous | ✗ (no grant) |
+
+**Evidence:**
+- Disposable-PostgreSQL proofs: `supabase/tests/exp08_team_hub_files.sql` over a minimal `storage` schema stub, and `scripts/proof/operator-team-hub-files-retirement.mjs`. Both run in CI.
+- Node tests: the byte check, and the guards in `send-message`, `subagent-email-composer` and `analyze-financial-document`.
+- Mocked-RPC Vitest suites.
+- A rendered harness at the four SOLO viewports, PAIGE closed and open, both themes, plus the phone (structural, not live): `docs/evidence/ui-delivery/exp08-team-hub-increment3.md`. It reports four layout and announcement defects that are still open.
+
+Authenticated runtime is `UNVERIFIED`, and the `team-hub-file` edge function is not deployed. Binding-ledger state: `teamhub` = `PROOF_OWED`.
+
 ### E09 C1 — announcements to customers through the one campaign system (branch `e09-c1`, migration `20271111060000`, 2026-10-19; not yet merged)
 
 The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) gains a "Customer portal" chip; the database gains the `portal` audience key, rule-key checks, and owner Q1 (Updates turned on, for promotions/announcements/newsletters to current or former portal-linked contacts, at plan and at send). Availability follows the existing campaign seams unchanged (`_email_caller_tenant`: owner/admin of the active business; `_email_paige_tenant` refuses agency accounts; Growth is not offered to Agency, §61 exception). §61 default: no new exception — the portal audience is part of campaigns, wherever campaigns already are.

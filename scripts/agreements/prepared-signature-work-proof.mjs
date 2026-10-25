@@ -27,8 +27,8 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
  check(originals()===stamp,'Migration/replay preserves original Work/signature/authority/hold metadata');
  const metadata=json("SELECT jsonb_agg(jsonb_build_object('name',proname,'definer',prosecdef,'config',proconfig,'defaults',pronargdefaults,'service',has_function_privilege('service_role',oid,'EXECUTE'),'anon',has_function_privilege('anon',oid,'EXECUTE'),'authenticated',has_function_privilege('authenticated',oid,'EXECUTE')) ORDER BY proname) FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN ('_read_prepared_agreement_work','_register_prepared_agreement_work');");
  check(metadata.length===2&&metadata.every(m=>m.definer&&m.defaults===0&&m.service&&!m.anon&&!m.authenticated&&m.config?.includes('search_path=""')),'New exact native ABI is service-only with empty search path and no defaults');
- const setup=async()=>{
-  const v=await fixture();json(native(issue(v)));const nonce=randomUUID(),pending=json(native(claim(v,nonce))),audit=randomUUID();
+ const setup=async(options)=>{
+  const v=await fixture(options);json(native(issue(v)));const nonce=randomUUID(),pending=json(native(claim(v,nonce))),audit=randomUUID();
   const payload={capability:'agreement_send',decision:'execute',risk:'high',lane_effective:'confirm',operation_id:v.operation,request_sha256:v.args.request_sha256};
   sql(`INSERT INTO paige_audit_log(id,actor_user_id,actor_role,tenant_id,action,target_type,target_id,payload) VALUES('${audit}','${actor}','sales:owner','${tenant}','sales.agreement_signature_request_governed_decision','agreement','${v.a.id}',${q(JSON.stringify(payload))}::jsonb);`);
   return {...v,pending,nonce,audit};

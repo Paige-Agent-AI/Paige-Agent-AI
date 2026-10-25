@@ -1,0 +1,87 @@
+{
+  "runtimeCommit": "075c7dc6aec6b0b3dbce7e8e7e556b97cd719333",
+  "parent": "02902badb898aef1ba67708a56c9c2ac658869f7",
+  "channel": "development",
+  "sourceHashes": {
+    "src/solo/sales-ops.tsx": "c8bf057c889cecb638d686edcc1f8a61e0bf9935f6cf611e832c0a212bd1a104",
+    "src/solo/useSoloAgreementSignings.ts": "6a92504eb6a5a3548623f240ab659df8ac8c6db1d71dd6eb9f7d9b086b04a3a0",
+    "src/solo/useSoloAgreementSignings.send.test.tsx": "b9f1836aaf4e175c7c4ff348c9459c334a71fd6eaa82ffb367267bca060c94b1",
+    "supabase/functions/_shared/agreements/chat-write.ts": "13d0abe99ebf86464bdb3c5dabe9b9b815af7235c8c88cdf82bec85e6b84ee42",
+    "supabase/functions/_shared/agreements/chat-write.test.ts": "46fcffc958a1f2bfa3ddb6345e11520e75271b5ef91a41bb3c8eb99077df56b7"
+  },
+  "verification": {
+    "ui": {
+      "tests": 43,
+      "files": 3,
+      "result": "PASS"
+    },
+    "chat": {
+      "tests": 15,
+      "result": "PASS"
+    },
+    "owningTypes": "PASS",
+    "scopedLint": "PASS",
+    "designCLI": "impeccable4.1.0 exit0 with no captured count; actual rendered/manual review separate"
+  },
+  "causalBaselines": {
+    "owner": "12 PASS / 1 FAIL against original classification",
+    "chat": "14 PASS / 1 FAIL against original classification"
+  },
+  "captures": [
+    {
+      "file": "1366-refused.jpg",
+      "sha256": "bceb20d1ab29a29e1f7113d5f76811d7517bb843df1fedf9d81e36ac412a049a",
+      "pixels": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "file": "390-refused.jpg",
+      "sha256": "08facb0861ee38678d3de0b29bd17f151de2c8f7ebf6b8cd1b14d4cd79781f03",
+      "pixels": {
+        "width": 390,
+        "height": 843
+      }
+    }
+  ],
+  "behavior": {
+    "desktop": "Verified original panel/hook409 public refusal, alert focus, Back return focus to opener.",
+    "narrow": "390x844, no page overflow, original dialog owns available height, all44px controls reachable, alert focus; Tab continues to original next control, Back returns opener focus.",
+    "source": "Actual original SignatureSender and actual original hook; only original Auth/context/transport controlled. Canonical styles, no copied customer component.",
+    "effects": "Controlled409; no backend/provider, payment, signature, email or production mutation.",
+    "captureCorrection": "First desktop capture was taken in the same tool invocation as Back; closed-panel frame excluded and replaced by separately observed refusal capture."
+  },
+  "limits": [
+    "No ordinary authenticated owner/staff/linked-client acceptance",
+    "No full Solo shell/PAIGE open/second legitimate cohort",
+    "No browser zoom/media preference/assistive-technology proof",
+    "No Chat admission, provider activation, send, payment or founder acceptance"
+  ],
+  "logs": [
+    {
+      "file": "e04-c53-guidance-owner-baseline-1792971296950.txt",
+      "sha256": "d4a64764570ff8795d939798d234966d26969edd917c17475be16d5c8bbe04aa"
+    },
+    {
+      "file": "e04-c53-guidance-chat-baseline-1792971389269.txt",
+      "sha256": "736354ff13f5682b2f29414a1c975ba1fe571f82a33943968a461c2938d10361"
+    },
+    {
+      "file": "e04-c53-final-tests-1792972449329.txt",
+      "sha256": "5bc5ddd23058934e97615f4d47dd81def969ab00ddd872538453821b1ac395d4"
+    },
+    {
+      "file": "e04-c53-final-chat-1792972449378.txt",
+      "sha256": "9af0f72f492946667cc2f73e576137d8618b2e348d5cf859222bb1293903fcdb"
+    },
+    {
+      "file": "e04-c53-final-types-1792972449286.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "e04-c53-final-lint-1792972449309.txt",
+      "sha256": "aa3677335601b73f14f6a98ccf5619df521b8438b821ac080bc4e1857c4a5546"
+    }
+  ]
+}

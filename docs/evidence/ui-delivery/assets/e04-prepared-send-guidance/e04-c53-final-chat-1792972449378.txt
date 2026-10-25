@@ -1,0 +1,105 @@
+Check supabase/functions/_shared/agreements/chat-write.test.ts
+running 15 tests from ./supabase/functions/_shared/agreements/chat-write.test.ts
+creates through the one governed seam, and says it CREATED ... ok (5ms)
+revision without an approved source timestamp refuses instead of overwriting ... ok (1ms)
+a bad id is refused BEFORE the seam is called, so no write is attempted ... ok (15ms)
+no active workspace refuses without calling anything ... ok (1ms)
+every refusal is mapped by code, and NO database text reaches the result ...
+------- output -------
+[agreement_draft] save refused {
+  code: "40001",
+  message: "someone else changed this agreement while you were editing it"
+}
+[agreement_draft] save refused {
+  code: "42501",
+  message: "only an owner or admin may draft an agreement with a client"
+}
+[agreement_draft] save refused { code: "42501", message: "that client is not in this workspace" }
+[agreement_draft] save refused {
+  code: "23514",
+  message: "this agreement has already been sent; draft a new one rather than changing it"
+}
+[agreement_draft] save refused { code: "23514", message: "give this agreement a title" }
+[agreement_draft] save refused {
+  code: "23514",
+  message: "an agreement needs a body before it can be saved"
+}
+[agreement_draft] save refused {
+  code: "XX000",
+  message: "internal engine detail nobody outside should read"
+}
+----- output end -----
+every refusal is mapped by code, and NO database text reaches the result ... ok (41ms)
+a resolved call with NO row is never reported as a success ...
+------- output -------
+[agreement_draft] save returned no row
+[agreement_draft] save returned no row
+[agreement_draft] save returned no row
+[agreement_draft] save returned no row
+[agreement_draft] save returned no row
+----- output end -----
+a resolved call with NO row is never reported as a success ... ok (1ms)
+a write transport failure has an unknown outcome and forbids blind retry ...
+------- output -------
+[agreement_draft] save threw { reason: "socket hang up" }
+----- output end -----
+a write transport failure has an unknown outcome and forbids blind retry ... ok (11ms)
+titles and bodies are trimmed, and whitespace-only is refused ... ok (836µs)
+sends, and reports recipients rather than a bare success ... ok (662µs)
+counts BOTH failed and notDelivered — collapsing them would under-report ... ok (379µs)
+a 2xx with NOBODY emailed is not a send ...
+------- output -------
+[agreement_send] completed with no recipient { notDelivered: 1 }
+[agreement_send] completed with no recipient { notDelivered: 0 }
+[agreement_send] completed with no recipient { notDelivered: 0 }
+----- output end -----
+a 2xx with NOBODY emailed is not a send ... ok (87ms)
+each refusal maps to the remedy that actually applies ...
+------- output -------
+[agreement_send] refused {
+  status: 403,
+  error: "Only an owner or admin can send an agreement for signature."
+}
+[agreement_send] refused { status: 404, error: "That agreement is not in this workspace." }
+[agreement_send] refused {
+  status: 409,
+  error: "This agreement is already sent. Draft a new one rather than resending this."
+}
+[agreement_send] refused {
+  status: 409,
+  error: "Add a contact email for your workspace before sending."
+}
+[agreement_send] refused { status: 400, error: "Add at least one signer before sending." }
+[agreement_send] refused {
+  status: 422,
+  error: "The uploaded document could not be read, so nothing was sent."
+}
+[agreement_send] refused {
+  status: 502,
+  error: "The document could not be stored, so nothing was sent."
+}
+[agreement_send] refused {
+  status: 409,
+  error: "The document stored for this agreement is not the file that was uploaded, so nothing was sent. Create a new agreement from that document and send that instead."
+}
+[agreement_send] refused {
+  status: 502,
+  error: "No signer could be reached, so this agreement is still a draft."
+}
+[agreement_send] refused { status: 500, error: "boom" }
+----- output end -----
+each refusal maps to the remedy that actually applies ... ok (1ms)
+a prepared signing document refusal preserves the original review instead of proposing another agreement ...
+------- output -------
+[agreement_send] refused { status: 409, error: "Synthetic private cause." }
+----- output end -----
+a prepared signing document refusal preserves the original review instead of proposing another agreement ... ok (3ms)
+an unknown outcome NEVER invites a blind retry ...
+------- output -------
+[agreement_send] send threw { reason: "socket hang up" }
+----- output end -----
+an unknown outcome NEVER invites a blind retry ... ok (854µs)
+a bad id or no workspace refuses BEFORE anything is sent ... ok (486µs)
+
+ok | 15 passed | 0 failed (400ms)
+

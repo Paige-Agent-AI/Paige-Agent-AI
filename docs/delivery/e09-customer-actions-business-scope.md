@@ -256,3 +256,7 @@ RELEASE_CHANNEL: development: original caller transport/focus compatibility, sha
 RELEASE_CLASSIFICATION: internal-only; no customer name/version/update/announcement or capability/algorithm promotion
 RELEASE_CLAIMS: native238/adapter33/scoped app type/lint VERIFIED_LOCAL; full-schema322/Root integration/production/customer acceptance PROOF_OWED
 RELEASE_RECOVERY: same original Work/claimed proposal/PCA; no automatic replacement, confirmation reissue, fallback publisher or mutation retry
+
+### Final production-frontier composition
+
+Actual production advanced to20271114220002 before release. Current main bbee3e1d40071b7fce95228cb3cca633ab0008f7 is composed normally; only the never-production-applied own candidate moves from14210009 to14230009. SQL blob da026bb90e7073ea9b8b977ccc176917d39b1008 is byte-exact; the proof path inverse restores the entire prior script. Fresh original native227/0 at4e8e3d4af4e6317017da3bd738b63598bb197bf4 retains every prior227 case object and verified own-cluster stop0. All incoming non-owning source is preserved. No include-all, reset, history rewrite, shared Root/risk/C0b/registry change, activation or customer claim. Earlier06df exact CI/Preview13 and both web statuses were green, but new final-head review/CI/Preview and ordinary production apply/readback remain mandatory. Historical evidence remains intact in the original JSON; frontierRecovery supplies current placement.

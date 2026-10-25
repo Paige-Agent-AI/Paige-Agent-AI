@@ -403,7 +403,7 @@ async function privatePublicationCandidateProof(env) {
  sql(`CREATE TABLE public.proof_publication_autonomy(lane text);INSERT INTO public.proof_publication_autonomy VALUES('confirm');
   CREATE FUNCTION public.resolve_tool_autonomy(uuid,text) RETURNS text LANGUAGE sql STABLE AS $$
    SELECT lane FROM public.proof_publication_autonomy WHERE $2='client_portal_request_share'$$;`);
- const migrationFile='supabase/migrations/20271114210009_e09_approved_private_request_publication.sql';
+ const migrationFile='supabase/migrations/20271114230009_e09_approved_private_request_publication.sql';
  const advanceSig='public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)';
  const advanceBefore=sql(`SELECT pg_get_functiondef('${advanceSig}'::regprocedure)`).replaceAll('\r\n','\n');
  const metadata=()=>sql(`SELECT jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,

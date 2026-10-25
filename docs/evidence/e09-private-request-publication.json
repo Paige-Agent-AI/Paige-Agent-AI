@@ -1471,5 +1471,34 @@
       "customer": "OWNER_DEFERRED",
       "founder": "NOT_REQUESTED"
     }
+  },
+  "frontierRecovery": {
+    "generatedAt": "2026-10-25T17:16:13.764Z",
+    "runtimeCommit": "4e8e3d4af4e6317017da3bd738b63598bb197bf4",
+    "incomingMain": "bbee3e1d40071b7fce95228cb3cca633ab0008f7",
+    "migration": "supabase/migrations/20271114230009_e09_approved_private_request_publication.sql",
+    "nativeBlob": "da026bb90e7073ea9b8b977ccc176917d39b1008",
+    "proofBlob": "40429de93e77cbfff7c88bf3c3fd18734225ad26",
+    "nativeSqlByteExactToReviewed06df": true,
+    "proofOnlyPathInverse": true,
+    "originalAll227CaseObjectsPreserved": true,
+    "passed": 227,
+    "failed": 0,
+    "reportSHA256": "1910f1f8cea00835b4ff70ebb215a0181305605675279ec9fa83d43c9dc17bba",
+    "cleanup": {
+      "command": "pg_ctl",
+      "exitCode": 0,
+      "stopped": true
+    },
+    "incomingOutsideOwningPathsPreserved": 16174,
+    "prior06dfChecks": "13_SUCCESS; both Vercel SUCCESS; zero threads; superseded head requires fresh CI",
+    "fullSchemaPlan": 321,
+    "productionFrontierObserved": "20271114220002",
+    "productionCandidateCountObserved": 0,
+    "productionApply": "NOT_RUN",
+    "reason": "Only never-production-applied own candidate reordered after actual production frontier; no include-all or history edit",
+    "customerActivation": "NOT_REGISTERED_OR_MOUNTED",
+    "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+    "founderAcceptance": "NOT_REQUESTED"
   }
 }

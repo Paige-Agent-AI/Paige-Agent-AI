@@ -1,5 +1,19 @@
 # Weekly Internal Commitment Check — protected acceptance handoff
 
+## October25 11:00UTC — production verification follow-on; acceptance still open
+
+This dated follow-on preserves the earlier checkpoint and every original acceptance row. Actual source/native/web details are in the original Master§4.0 and owning evidence; source releases do not close complete outcomes.
+
+- #2831 merged62b55: original full6-function source/config certificate and exact public web verified; failed2827 history and cleanup warning retained.
+- #2824 mergedef732: original guarded14130105 applied/read back, unchanged OID/authority and expected getter source hash; exact production web identity and full selected5 source certificate verified.
+- #2805 merged30b998: bounded Calendar agenda through existing caller-JWT/Spine/Harness/read Rail; full selected4 source certificate, exact web and both public versions verified. No booking/provider effect or capacity inference.
+- #2832 nowee927b540: reviewed composed owner preflight; original full native125 retains all124 prior cases plus actual legacy-getter no-write refusal. Prior hosted failure retained; new exact-head CI/release remains pending.
+- #2820 nowf0fdc0536 on30b998: all12 original owning blobs preserved,208 source+16 actual-handler recording-port cases and Spine/Kit pass; reviewed, new exact-head hosted CI/release pending.
+
+E02 explicitly released the unused shared Chat reservation in LinearANT161; incoming Systems source is preserved. E04 sender and E09 client/native authority remain separate. Current native predecessor14130105 is verified, not permission to skip later owners' gates. The original Solo notification retirement forbids an Operator-bell, new inbox/store or external-email/SMS substitute for E5-CV8; its source-owned contextual producer/presentation remains unavailable until properly integrated.
+
+Continue the full ten outcomes and E5-CV1–9: genuine authorized weekly/ZION execution, Automation Builder lifecycle, monitoring/meaningful attention and original-operation recovery still need implementation/proof as mapped above and below. Ordinary eligible existing/new SOLO cohorts, original records/approvals/Rails/reload/isolation, deployed Capabilities state and separate Live remain unverified under existing browser/input and effect controls. No case, algorithm maturity or catalogue status is promoted; one complete founder evaluation remains later.
+
 ## October25 — current EXP05 outcome checkpoint; full acceptance still open
 
 This is an additive checkpoint in the original acceptance packet, not a second tracker or a replacement inventory. EXP05 owns the complete Operations / Run My Week Experience, Workflow Automation Builder and governed ZION integration for every equally eligible current/future SOLO business. Preserve all original E5-CV1–9 text and historical evidence below. Original18/25/50 restoration IDs remain preserved in their existing reconciliation; unresolved receiving-lead acknowledgments stay unresolved. They are not current EXP05 completion counts.

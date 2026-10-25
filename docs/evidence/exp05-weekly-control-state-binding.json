@@ -92,5 +92,113 @@
       "retainedFailures": "Original full-review RED from omitted native null; first new native driver used two raw SQL columns instead of one JSON envelope; next run applied the projection before the incumbent original-body performance invariant. Corrected only driver envelope and dependency sequence; all assertions, original metadata/source guards, timeouts, permissions and fixtures retained.",
       "cleanup": "Original result artifact records fixture_service_role.restoration_verified=true; final transcript confirms original role posture restored. Original finally stops the disposable cluster and drops its database. No production/provider/customer effect."
     }
+  },
+  "productionRelease20261025": {
+    "pr": 2824,
+    "reviewedHead": "ce133a8bd08746205d5bad28418e9ec5d0f9d2f6",
+    "merge": "ef732d23c5053d4e2452dae62d57d53dfb2680e1",
+    "tree": "30d68fb0cea02ab8918d53fbd06013a79fbe3173",
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "receipt": 5642495471
+    },
+    "ci": {
+      "success": 13,
+      "webStatusesSuccess": 2
+    },
+    "migration": {
+      "version": "20271114130105",
+      "statements": 4,
+      "run": 40186310099,
+      "job": 121147837109,
+      "status": "APPLIED / READ_BACK",
+      "getterOid": "305612",
+      "sourceMd5": "60d5acc132111d9db7e63d9848c06c47",
+      "owner": "postgres",
+      "volatility": "STABLE",
+      "securityDefiner": true,
+      "searchPath": "empty",
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "metadataPreserved": true
+    },
+    "sourceRun": 40186310137,
+    "sourceJob": 121147729011,
+    "artifact": 12596367775,
+    "artifactSha256": "6faec5a75048894ce2e9a4a96315a86eee55ff1dbad486f00db11e519a429ec3",
+    "source": {
+      "commit": "ef732d23c5053d4e2452dae62d57d53dfb2680e1",
+      "allPass": true,
+      "functions": [
+        {
+          "name": "execute-approval",
+          "version": 180,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 119,
+          "emittedFiles": 0,
+          "archiveSha256": "25b49df4e87478425d3d527488c5e1ab012327afee81433a8ce82a89c4bfa3e7"
+        },
+        {
+          "name": "paige-ai-chat",
+          "version": 538,
+          "status": "PASS",
+          "downloadMode": "docker_requested",
+          "files": 283,
+          "emittedFiles": 283,
+          "archiveSha256": "90884a5998d359201168d48f4fc3cc99cdda1be20c44161084141451c63dd514"
+        },
+        {
+          "name": "paige-native-event-dispatch",
+          "version": 261,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 116,
+          "emittedFiles": 0,
+          "archiveSha256": "35f017a9f5e46a5141c9902ffb310630671df127cb440f72276c26f5f7f9da36"
+        },
+        {
+          "name": "paige-orchestrator",
+          "version": 130,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 127,
+          "emittedFiles": 0,
+          "archiveSha256": "d8955d4d7bd41b66e4937388a15b945c81577d3e76c014421f839b8790475720"
+        },
+        {
+          "name": "weekly-commitment-command",
+          "version": 21,
+          "status": "PASS",
+          "downloadMode": "api",
+          "files": 18,
+          "emittedFiles": 0,
+          "archiveSha256": "9e3824fb1d67452eef7a070449714d2e39201f150687d1c588b76e0757a7cc15"
+        }
+      ],
+      "scratchCleanup": {
+        "status": "incomplete",
+        "reason": "permission_denied"
+      }
+    },
+    "web": {
+      "deployment": "dpl_533Tmvr66b7Ev4ZjARqcbgvFcNK4",
+      "state": "READY",
+      "commit": "ef732d23c5053d4e2452dae62d57d53dfb2680e1",
+      "publicVersionAtExactMerge": "NOT_CAPTURED; later descendant30b public identity verified separately"
+    },
+    "dependentChild": {
+      "pr": 2832,
+      "head": "ee927b54005486fb16666b4bd883610a5eecf6d8",
+      "status": "REVIEWED / NEW_CI_PENDING",
+      "nativeCases": 125,
+      "all124PriorCasesRetained": true,
+      "priorHostedFailure": "e463/job121140863240 retained; original driver ordering corrected without changing the controller/native writer"
+    },
+    "releaseChannel": "production",
+    "customerReleaseIdentity": null,
+    "boundary": "Source/review/CI/production identity only. Ordinary owner authority, original business result/Rail, reload/recovery, equivalent existing/new SOLO cohorts, deployed Capabilities panel, separate Live, full ten outcomes/E5-CV1–9 and founder acceptance remain unverified. No trigger, provider, spend, external send or customer announcement is activated."
   }
 }

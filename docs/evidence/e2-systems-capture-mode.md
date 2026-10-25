@@ -519,3 +519,18 @@ INCOMPLETE. Founder Acceptance: NOT_ACCEPTED. ALG03/06/11/12/13 and CAP009–017
 readiness unchanged; concurrency safety is not a predictive-intelligence claim.
 All19/nine and historical9/0+12/0/4 preserved. No provider expense/activation,
 worker, timer, approval, correction, customer release name or monthly retry.
+
+### Specific owner grant approval received — October25
+
+Direct human approval, also verified in the Coordinator's actual owner message,
+is received in ANT138/ce7a6f00. It applies only to the exact75-line
+`_start_manual_systems_check_work(uuid)` definition and existing service-role
+EXECUTE grant, SQL SHA256
+`4fba913a01659da82f4a3dbb167adc37b80c16b7ca5945de4bd6597b7af96da4`.
+This supersedes the preceding grant-pending status at this decision boundary.
+Normal review, exact-head CI/Preview, E05 receiving inspection, forward migration
+ordering, safe production application and actual readback remain required.
+No invocation, scan, worker/scheduler/provider/spend/public or Chat admission,
+additional role/table grant, test waiver or founder acceptance is authorized.
+The unapplied260002 slot remains after actual E04 native250004; the original
+reader's unapplied slot is moving to250102 and retains prior release order.

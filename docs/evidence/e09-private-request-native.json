@@ -741,5 +741,57 @@
     "forwardHistory": "20271114150019",
     "productionApply": "NOT_APPLIED",
     "resetOrIncludeAll": "NOT_USED"
-  }
+  },
+  "compositionHistory": [
+    {
+      "generatedAt": "2026-10-25T12:49:42.973458+00:00",
+      "sourceCommit": "279077a2fad46c2cf74f035de0da398f90d0d05d",
+      "incomingMain": "46499f0e3c899450a1dbcde9ef8609f809c22705",
+      "evidenceClass": "synthetic-native-and-consumer-current-main-composition",
+      "sourceBlobs": {
+        "scripts/proof/e09-consumer-invite.mjs": "a219a635ac6b4aa9e3df7ec1c5001cf0b5ffbe21",
+        "scripts/proof/e09-private-request.mjs": "151359d3e8f97421e9ef4c8850040ad6e2773099",
+        "supabase/migrations/20271114150009_e09_private_request_preparation.sql": "11fefc091a463eeba506ba73e11e061a29ccbb0a",
+        "supabase/migrations/20271114150019_e09_private_request_history.sql": "a2fbc4ddc21de469d4618dea13601e45fb521509",
+        "supabase/tests/customer_portal_access.sql": "2ccbf788feaf1000c41a79cb5728be7ccac502f4",
+        "src/lib/client-private-request.ts": "a35442e65920a0799c4ee35ba7ca6966b1962609",
+        "src/lib/client-private-request.test.ts": "6beac9a79a3f049e8ec179d70cadb3d987e74f9f",
+        "src/hooks/useClientPrivateRequest.ts": "97cb6051918f7df8507d9f163d183a967d99338e",
+        "src/hooks/useClientPrivateRequest.test.tsx": "a9c13b78b2991b4196e9c221b9aa629dbce907e0"
+      },
+      "native": {
+        "passed": 146,
+        "failed": 0,
+        "reportSHA256": "a05066cf0520cfddad8e604113f1a7bbb949fbf643c310b33d7c5632e14ca807",
+        "fullSupabaseReplay": false,
+        "authenticatedAcceptance": false,
+        "fixture": "synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority",
+        "appliedMigrationOrder": [
+          "20271114150009",
+          "20271114150019"
+        ]
+      },
+      "consumer": {
+        "passed": 94,
+        "failed": 0,
+        "hookCases": 34,
+        "existingDTOCases": 41,
+        "originalOwnerCases": 19,
+        "ports": "synthetic Auth/RPC; actual React hook lifecycle; no product UI mount"
+      },
+      "types": {
+        "actualProjectOptionsScopedDiagnostics": 0,
+        "additionalStrictScopedDiagnostics": 0,
+        "wholeCurrentApplication": "PROOF_OWED in new exact-head CI; earlier local four absent unchanged Sales dependencies remain not waived"
+      },
+      "guards": {
+        "originalSignatureBaselineRemaining": 4,
+        "originalSignatureSelfTests": 12,
+        "migrationVersions": 1449,
+        "newImplicitGrants": 0
+      },
+      "migrationHistory": "Both own already-Preview-applied migration blobs exactly preserved from f796; no reset/include-all/history rewrite",
+      "releaseBoundary": "Unmerged/unmounted; new exact review/CI/Preview/normal release/readback required; no customer/publication/provider/founder proof"
+    }
+  ]
 }

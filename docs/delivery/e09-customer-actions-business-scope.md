@@ -131,3 +131,19 @@ RELEASE_CHANNEL: local-development: unmounted original private-request consumer
 RELEASE_CLASSIFICATION: internal-only; no customer release name/version, update or announcement
 RELEASE_CLAIMS: focused consumer VERIFIED_LOCAL; full native/owner interface connection and exact-head release PROOF_OWED; customer/founder acceptance UNVERIFIED
 RELEASE_RECOVERY: unknown acknowledgment uses original same-intent status only; missing is not rejection; scope/access changes retire private state; no mutation replay or publication
+
+## Current-main release composition — 2026-10-25
+
+The previous parent2825/f796 completed all13 exact-head checks SUCCESS, including actual hosted286 and canonical provisioning. Both native predecessors are now genuinely released: production catalog at12:44UTC confirms14130105 and14140004 once/frontier14140004, own50009/5019 absent, original file40349/advance66dced/access7c3eb unchanged. E04 receiving6e0ce1b0 authorizes the sequence handoff, not a publication/customer effect. The earlier source/order holds are not claimed as current blockers; the successor must earn its own exact-head checks and normal release/readback.
+
+Runtime279077a2fad46c2cf74f035de0da398f90d0d05d composes actual main46499f0e3c899450a1dbcde9ef8609f809c22705 and the already reviewed localcf4b8f48e consumer into the SAME coherent2825 preparation/recovery increment. It preserves incoming Chat/Root/C0b/Work/Agreements/source-verifier changes; no protected source edit or publisher lease is assumed. Both already-Preview-applied own migration files remain byte-exact from f796. There is no include-all, reset, applied-history rewrite, new registry/runtime or customer-facing activation.
+
+Fresh original loopback native program146PASS/0FAIL and actual consumer94PASS/0FAIL (34hook,41DTO,19original owner) pass on that composed source. Both actual project-options and additional strict scoped graphs have0 diagnostics; these are not whole-application type passes. Original signature guard retains4/4 baseline entries with12self-tests, no new implicit grants; original collision guard1449 versions passes. Native/consumer ports retain their explicitly synthetic Auth/scope/outer graph boundaries. The existing generated evidence adds a composition record while preserving every earlier root value and invalid-attempt disposition. New exact-head full CI/hosted286/Preview/source/permission readback remain required; the old green head is not inherited.
+
+Functional: private native preparation/status/history and consumer built/locally verified, unmounted, not yet released. Visual: no new product interface/current rendered claim. Experiential: original same-Work recovery is tested; exact review/authorized sharing/customer response remains incomplete, with protected publisher34d24ea7 still unleased. Acceptance: customer reconnect remains deferred, authenticated original owner/client journey and complete42/seven/Teach/CAP/ALG/founder evaluation remain open. No messages, approvals, records, provider activation or browser/native-input action was performed during composition.
+
+INTERNAL_BUILD_IDENTITY: implementation=279077a2fad46c2cf74f035de0da398f90d0d05d; deployment=NOT_DEPLOYED; environment=development; migrations=20271114150009/20271114150019_NOT_APPLIED; edge=NOT_APPLICABLE; evidence=docs/evidence/e09-private-request-native.json
+RELEASE_CHANNEL: development: original Work private preparation and recovery, unmounted consumer
+RELEASE_CLASSIFICATION: internal-only; no customer release name/version, update or announcement
+RELEASE_CLAIMS: native146/consumer94/scoped graphs/guards VERIFIED_LOCAL; successor exact CI/Preview/merge/deploy/readback PROOF_OWED; full owner/client/share flow NOT_CONNECTED
+RELEASE_RECOVERY: atomic native preparation, original same-intent status/history after uncertainty, no automatic mutation replay; preserve source/version/authority guards and original customer consent

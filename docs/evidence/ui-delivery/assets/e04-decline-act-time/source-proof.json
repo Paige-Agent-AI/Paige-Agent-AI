@@ -1,0 +1,41 @@
+{
+  "scope": "Original native decline repair; no customer/UI/provider acceptance",
+  "codeHead": "f0ca11dff2a6f0691145c7291c769737b08b45c0",
+  "source": [
+    {
+      "path": "scripts/agreements/run-integrity-proof.sh",
+      "blob": "ab2883007d50f423e5634e3afac35df0f24a125b"
+    },
+    {
+      "path": "scripts/agreements/signer-preparation-integrity-proof.mjs",
+      "blob": "686e2b02f227e1637c4a19d7f08aad084a138404"
+    },
+    {
+      "path": "scripts/agreements/decline-record-proof.mjs",
+      "blob": "dc5b9f766e71f3d3a666b7259aa3fc4a510dc4cd"
+    },
+    {
+      "path": "supabase/migrations/20271114100004_e04_decline_act_time.sql",
+      "blob": "e2d975791b4e63caa9ba5330a65bbf3cbfd0fce7"
+    }
+  ],
+  "proof": {
+    "focusedDecline": 49,
+    "signatureRecordOriginal": 76,
+    "outerOriginal": 44,
+    "countersNestedNeverSummed": true,
+    "replay": 2,
+    "sessions": 14,
+    "observedWaits": 7,
+    "forwardGuardRefusal": 1,
+    "baseline": "CAUSAL_RED_RETAINED",
+    "fullSuite": "PROOF_OWED_ORIGINAL_WAIT_FAILURE_RETAINED_CURRENT_RERUN_IN_PROGRESS"
+  },
+  "notClaimed": [
+    "rendered new decline UI",
+    "production/native release",
+    "ordinary recipient acceptance",
+    "prepared signing/send activation",
+    "full12/Central QA/founder acceptance"
+  ]
+}

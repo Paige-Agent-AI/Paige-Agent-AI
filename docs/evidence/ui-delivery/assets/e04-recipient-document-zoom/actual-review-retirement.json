@@ -1,0 +1,48 @@
+{
+  "panning": {
+    "focus": "Scrollable document page",
+    "pageScrollWidth": 375,
+    "pageWidth": 375,
+    "scrollLeft": 40,
+    "scrollWidth": 946,
+    "width": 326
+  },
+  "afterZoom": {
+    "answers": [
+      {
+        "checked": false,
+        "type": "text",
+        "value": "Controlled approver"
+      },
+      {
+        "checked": false,
+        "type": "text",
+        "value": "CC"
+      },
+      {
+        "checked": false,
+        "type": "radio",
+        "value": "on"
+      },
+      {
+        "checked": true,
+        "type": "radio",
+        "value": "on"
+      }
+    ],
+    "consents": [
+      {
+        "checked": false,
+        "disabled": true
+      },
+      {
+        "checked": false,
+        "disabled": true
+      }
+    ],
+    "continueEnabled": true,
+    "locked": "true",
+    "text": "Zoom changed. Your answers are kept. Continue to signature when you are ready.",
+    "zoom": "1"
+  }
+}

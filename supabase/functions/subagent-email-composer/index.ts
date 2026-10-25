@@ -39,6 +39,25 @@ const COMMS_ATTACH_BUCKET = "comms-attachments";
 const MAX_ATTACHMENTS = 3;                        // bound: a few files, never a flood
 const MAX_ATTACH_BYTES = 10 * 1024 * 1024;        // 10MB/file — matches the bucket ceiling
 
+/**
+ * §9 PATH GUARD — why an attachment path is refused, or null. The object key MUST be exactly
+ * `${callerTenant}/<single filename>`. The strict single-segment shape (not just first-segment
+ * equality) also rejects `..`/`//` traversal and any nested path. Two refusals close the route to
+ * EXP08 Team Hub files, which share this bucket under `<tenant>/team-hub/` and may only be read by
+ * the conversation's members — the service-role download below would bypass that:
+ *   - any `%`: Storage's router percent-decodes the object name, so `team-hub%2F<id>` (one literal
+ *     segment here) is read as `team-hub/<id>`. Inbox keys are `[\w.-]` only, so no real key has one;
+ *   - a filename of `team-hub` in any case, the folder itself.
+ * Every refusal is a CODE, never the path, so a caller can log it.
+ */
+function attachmentPathRefusal(path: string, callerTenantId: string): string | null {
+  const rest = path.startsWith(callerTenantId + "/") ? path.slice(callerTenantId.length + 1) : null;
+  if (rest === null || rest.length === 0 || rest.includes("/") || path.includes("..")) return "not_tenant_file";
+  if (path.includes("%") || path.includes("\\")) return "encoded_path";
+  if (rest.toLowerCase() === "team-hub") return "team_hub_file";
+  return null;
+}
+
 type Tone =
   | "professional"
   | "warm"
@@ -286,15 +305,11 @@ Deno.serve(async (req) => {
     } else {
       const extracted: string[] = [];
       for (const path of attachmentPaths.slice(0, MAX_ATTACHMENTS)) {
-        // §9 PATH GUARD — the object key MUST be exactly `${callerTenant}/<single filename>`.
-        // Strict single-segment shape (not just first-segment equality) ALSO rejects `..`/`//`
-        // traversal and any nested path, so a caller can only ever reach objects under their OWN
-        // tenant prefix — defense-in-depth even though Supabase's literal-key storage would 404 a
-        // traversal attempt anyway (verifier §9 hardening).
-        const rest =
-          path.startsWith(callerTenantId + "/") ? path.slice(callerTenantId.length + 1) : null;
-        if (rest === null || rest.length === 0 || rest.includes("/") || path.includes("..")) {
-          console.warn("[email-composer] rejected attachment (§9): key is not `${tenant}/<file>`.");
+        // §9 PATH GUARD (attachmentPathRefusal): checked BEFORE any service-role read, so a caller
+        // can only ever reach an Inbox object under their OWN tenant prefix, never a Team Hub file.
+        const refusal = attachmentPathRefusal(path, callerTenantId);
+        if (refusal) {
+          console.warn(`[email-composer] rejected attachment (§9): ${refusal}.`);
           attachmentsSkipped++;
           continue;
         }

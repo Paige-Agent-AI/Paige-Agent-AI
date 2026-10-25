@@ -240,6 +240,13 @@ deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-ru
   "$REPO/supabase/functions/_shared/agreements/commercial-presentation.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/commercial-presentation-read.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/field-preparation.test.ts"
+
+# Original originating approval/read controls plus concrete Work bridge; local
+# dynamic imports may read ONLY this domain, with all effect permissions denied.
+deno test --allow-import --node-modules-dir=none --allow-read="$REPO/supabase/functions/_shared/agreements" \
+  --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+  "$REPO/supabase/functions/_shared/agreements/prepared-signature-request.test.ts" \
+  "$REPO/supabase/functions/_shared/agreements/prepared-signature-work.test.ts"
 # The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
 # runtime already exercised above, with this same fenced native cluster and all
 # 54 original assertions. No transpiled copy or relaxed test is substituted.
@@ -255,6 +262,6 @@ node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofr
 # original gate above remains intact. No hosted Storage or customer proof.
 deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
   --deny-net --deny-write --deny-ffi --deny-sys \
-  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation
+  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work
 
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

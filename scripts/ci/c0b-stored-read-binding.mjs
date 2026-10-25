@@ -1,7 +1,8 @@
-// Build-time proof of existing inline reads, not an executor or runtime authority store.
+// Build-time proof of existing caller-JWT reads, not an executor or runtime authority store.
 import ts from "typescript";
+import { createHash } from "node:crypto";
 const specs = [
-  ["automation_list", "automations.list", "paige_automations", "id,name,category,trigger_key,granted_lane,state,created_at", false, true],
+  ["automation_list", "automations.list", "paige_automations", "id,tenant_id,name,category,trigger_key,granted_lane,state,created_at", false, true],
   ["automation_triggers_list", "automations.triggers_list", "paige_automation_triggers", "key,label,category,description,is_live,dark_reason", false, false],
   ["document_pending_reviews", "research_knowledge.document_pending_reviews", "credit_report_uploads", "id,file_name,created_at,last_analyzed_at", false, false],
   ["document_resume_review", "research_knowledge.document_resume_review", "credit_report_uploads", "id,user_id,client_id,file_name,analysis_result,extraction_review_state", false, false],
@@ -21,7 +22,12 @@ const readMethods = new Set(["from", "select", "eq", "order", "limit", "maybeSin
 const valueMethods = new Set(["map", "filter", "trim", "replace"]);
 const primitives = new Set(["String", "Number"]);
 
-export function validateStoredReadBindings(chatText, helperText) {
+// Exact reviewed read-only extraction, not a generic helper-call allowance.
+// Any helper or dispatch change fails closed until its own review and renewal.
+const AUTOMATION_LIST_BRANCH = "d9709bad124d4d855c403e6cf58f51fe715c37289b9af264fc96ea5650555139";
+const AUTOMATION_LIST_HELPER = "e18f3e8b4aee1289ef5aab6b1129dfae9feea504b4fa734b84b1002fca23c184";
+const sourceHash = source => createHash("sha256").update(source.replace(/\r\n/g, "\n")).digest("hex");
+export function validateStoredReadBindings(chatText, helperText, automationListText = "") {
   const chat = ts.createSourceFile("paige-ai-chat.ts", chatText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const helper = ts.createSourceFile("credit-extraction-payload.ts", helperText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const findings = [], tools = new Map();
@@ -74,6 +80,20 @@ export function validateStoredReadBindings(chatText, helperText) {
     require(branches.length === 1, `${tool}: exact existing dispatch branch`);
     if (branches.length !== 1) continue;
     const body = branches[0].thenStatement, calls = visit(body, ts.isCallExpression);
+    if (tool === "automation_list") {
+      const imported = visit(chat, ts.isImportDeclaration).filter(n => string(n.moduleSpecifier) === "../_shared/paige-orchestration/automation-list-read.ts");
+      require(imported.length === 1 && imported[0].importClause?.namedBindings
+        && ts.isNamedImports(imported[0].importClause.namedBindings)
+        && imported[0].importClause.namedBindings.elements.some(e => ident(e.name) === "readBoundedAutomationList" && !e.propertyName)
+        && declarations("readBoundedAutomationList").length === 0, `${tool}: unshadowed original-domain helper`);
+      require(sourceHash(body.getText(chat)) === AUTOMATION_LIST_BRANCH, `${tool}: exact reviewed caller/selected-scope dispatch`);
+      require(sourceHash(automationListText) === AUTOMATION_LIST_HELPER, `${tool}: exact reviewed bounded caller-JWT read`);
+      const mounted = visit(chat, n => ts.isPropertyAssignment(n) && ident(n.name) === "name" && string(n.initializer) === tool)
+        .some(n => { for (let p = n.parent; p; p = p.parent) if (ts.isVariableDeclaration(p) && ident(p.name) === "toolDefs") return true; return false; });
+      require(mounted, `${tool}: mounted model tool`);
+      tools.set(tool, { key, write: false, seatAuthority: admin ? "workspace-admin" : "member", selfDescribe });
+      continue;
+    }
     require(calls.filter((c) => method(c) === "from" && root(c.expression) === "supabaseClient" && string(c.arguments[0]) === table).length === 1, `${tool}: caller-JWT ${table} read`);
     require(calls.some((c) => method(c) === "select" && root(c.expression) === "supabaseClient" && string(c.arguments[0])?.replace(/\s/g, "") === columns), `${tool}: bounded safe columns`);
     const mounted = visit(chat, (n) => ts.isPropertyAssignment(n) && ident(n.name) === "name" && string(n.initializer) === tool)

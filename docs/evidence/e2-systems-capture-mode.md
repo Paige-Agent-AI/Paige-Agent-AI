@@ -526,3 +526,16 @@ composition and a fresh31-check native proof pass, with the updated fixture path
 Fresh exact-head review/CI/Preview and source-contract receiving inspection govern
 release; predecessor green is historical only. No include-all, production history
 repair/reset, grant, invocation or acceptance waiver.
+
+### Preview lifecycle reconciliation — October25
+
+Exact a2c986fd Preview failed because this isolated PR database retained the old
+240202 entry after the safe forward rename to250102. Guarded branch readback
+confirmed the owning nonpersistent, no-data PR branch, zero Auth users and zero
+Work rows. The supported rebase returned success; immediate history still showed
+the old slot. Closing and reopening the same draft at the same head retired that
+disposable Preview through its normal lifecycle. A fresh check is required, not
+borrowed from the predecessor. Current main005f5d389d9faf98fa4e56ac9f3bb53c1471fd68
+is composed, including E08 native250008 before this reader250102. SQL/proof bytes
+and the complete other-kind reader remain fixed. No production history repair,
+reset, include-all, second applier, native invocation or activation is performed.

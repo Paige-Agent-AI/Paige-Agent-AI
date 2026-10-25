@@ -7649,8 +7649,12 @@ Current gaps:
   the reply in the autonomy catalogue. No Team Hub content enters Knowledge or Memory: once a person
   has read Team Hub through PAIGE their automatic memory summaries stop (owner ruling 2026-10-25),
   their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld
-  for the rest of a request that carried Team Hub text. `PROOF_OWED`. Contract:
+  for the rest of a request that carried Team Hub text. Merged #2860 (`a8aaa1316`); migrations
+  and `paige-ai-chat` read back on production. `PROOF_OWED`. Contract:
   [increment 4 PAIGE contract](delivery/exp08-team-hub-increment4-paige-contract.md).
+- Team Hub read performance (migration `20271114250008`): opening a conversation and searching cost
+  the page, not the workspace (measured 0.75–4.8 s → 2–4 ms at 1M messages; rare-word search
+  ~1.8 s). Two btree indexes over ids and times only, no message text; output byte-identical.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

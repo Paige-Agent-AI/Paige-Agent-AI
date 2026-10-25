@@ -1,0 +1,225 @@
+{
+  "sourceCheckpoint": "1212ddb69295a31279fb7cdd5a8355b6851283ed",
+  "channel": "development",
+  "productionActivation": "NOT_ACTIVATED",
+  "sourceFiles": [
+    {
+      "file": "docs/binding-ledger/surface-binding-ledger.json",
+      "sha256": "8218fd515486e91741f941177a508186bd76a04f93cd9ed34064a7677fe320fb"
+    },
+    {
+      "file": "docs/integration-registry/README.md",
+      "sha256": "86708c157b738adeba2cfed9e1e1b211f6c585a00b5facf98c92759ac325ab15"
+    },
+    {
+      "file": "docs/integration-registry/integration-capability-registry.json",
+      "sha256": "6b1e369a798eb1f3b29721a9998b94ad68455d34a3b71c0e9baf5f907b711953"
+    },
+    {
+      "file": "scripts/agreements/prepared-confirmation-proof.mjs",
+      "sha256": "24bc745778069925414cc17680e986124670895782a4d579146a10fe71a22482"
+    },
+    {
+      "file": "scripts/agreements/prepared-work-eligibility-proof.mjs",
+      "sha256": "947b6bbeb5674d9f1ec4be4b07eba4352573fab9aa01474fe45a3227703ebcdf"
+    },
+    {
+      "file": "scripts/agreements/run-integrity-proof.sh",
+      "sha256": "eee263e905bdbbc4efdc7530259be61b660f5115a79bacef1ebc4b82c04b074b"
+    },
+    {
+      "file": "src/solo/sales-dialog.test.tsx",
+      "sha256": "e3620dd04a38dddb7ade4ce485fb4205c94ac41de42ef1a8b351da19d517b07f"
+    },
+    {
+      "file": "src/solo/sales-dialog.tsx",
+      "sha256": "f351013d8046362b5296f7f235c0dd79b0ce257ed3ba216444bb405972ffa571"
+    },
+    {
+      "file": "src/solo/sales-ops.tsx",
+      "sha256": "d830b5b1e4b35ee1598617de1e39df28a216f530f05c19e35dc9cdadb7c0bfbf"
+    },
+    {
+      "file": "src/solo/sales/AgreementDocumentFields.tsx",
+      "sha256": "6a79c73e82baf2efb4aeb9c50033a4df143e5fec563f898996b0e69eeefa3118"
+    },
+    {
+      "file": "src/solo/sales/AgreementDocumentPreparation.test.tsx",
+      "sha256": "ae6d62563298b415e749c077679332f703921880a137ac7c5401abbc905ba537"
+    },
+    {
+      "file": "src/solo/sales/AgreementDocumentPreparation.tsx",
+      "sha256": "1f32b18d7b012ed2e15c6f249966f79846f852d26ffe8b2b31d00b6fab9d354f"
+    },
+    {
+      "file": "src/solo/sales/AgreementPreparationWorkspace.tsx",
+      "sha256": "1be9daeca8a38209971be1f507252631a95ad594c637bd37957b034b4e498cf6"
+    },
+    {
+      "file": "src/solo/sales/AgreementSignatureExecution.tsx",
+      "sha256": "7c5492afdbc84056da89161d586b0f8e67570eb69246e695be216e9bdbe5256b"
+    },
+    {
+      "file": "src/solo/sales/AgreementSignatureRequest.tsx",
+      "sha256": "9325395fb22cd6cdac3c6aaee09408cd7a4a3b34546a1f93161731ed481676a4"
+    },
+    {
+      "file": "src/solo/sales/AgreementSigningReview.tsx",
+      "sha256": "9bfba014546546eafe12754c64b4e4d8b84e2b70bdffb0e6e015f1453589f6a9"
+    },
+    {
+      "file": "src/solo/sales/agreement-document-fields.css",
+      "sha256": "ad97ff05655e0e5a13cf7a70488ee5e171dbfa11126c76c920ce9ad73e192087"
+    },
+    {
+      "file": "src/solo/sales/agreementDocumentApi.test.ts",
+      "sha256": "6e3aa13b5e3779155dc21411862454b77ca16bd905e891a809fbf6558e09b7b6"
+    },
+    {
+      "file": "src/solo/sales/agreementDocumentApi.ts",
+      "sha256": "bcf48cdb27e66c27ed0fad57f2b9604bb123b0cc75904245c0095bbed9c94978"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/prepared-signature-originating.ts",
+      "sha256": "78acb073fbfc32c47a585c4efa56413ef115d05fbc9d67edec8d258ff2941016"
+    },
+    {
+      "file": "supabase/functions/agreement-send/index.ts",
+      "sha256": "e1c86c818d2ebcec873280a95b3107cf81b402d48f640e719967afedcb54efa1"
+    },
+    {
+      "file": "supabase/functions/agreement-send/prepared-command.test.ts",
+      "sha256": "e92cb670939a683dee2b419ae8dcc2461e528ce3282bd672cec661ab13fd3317"
+    },
+    {
+      "file": "supabase/migrations/20271114280004_e04_prepared_work_availability.sql",
+      "sha256": "c3cb0ed87060af2eec12fb7e7bf63610371b756687e896d08bcf22cbe8f44c80"
+    }
+  ],
+  "frames": [
+    {
+      "file": "1024-partial.jpg",
+      "sha256": "63b98156904743797352bcadb30716b5bdadd1e81588718b004786a558001cae",
+      "bytes": 41369,
+      "pixelWidth": 1009,
+      "pixelHeight": 757,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "1366-approval-initial.invalid-wrapper.jpg",
+      "sha256": "5de7b91bfc9fb9182f92dddaa636bd341ec6a3bb27060b0ba292ddc4cbb930c1",
+      "bytes": 46378,
+      "pixelWidth": 1351,
+      "pixelHeight": 759,
+      "classification": "INVALID_WRAPPER_EXCLUDED"
+    },
+    {
+      "file": "1366-approval.jpg",
+      "sha256": "e0445c5f00de72569a2ed8ed191cb52519400bb40170db5461e915aee8c1837a",
+      "bytes": 46489,
+      "pixelWidth": 1351,
+      "pixelHeight": 759,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "1366-refused.jpg",
+      "sha256": "6c2b52e894bb88bf6eeb54f5092f1cb37604b16f3162726bba84261c68635bbf",
+      "bytes": 43287,
+      "pixelWidth": 1351,
+      "pixelHeight": 759,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "1536-original-history.jpg",
+      "sha256": "3db97e5b4f5fad684b9ffe5962d8c0c84f8ddf93c4ceaf578eb78e203294138f",
+      "bytes": 55137,
+      "pixelWidth": 1521,
+      "pixelHeight": 763,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "390-approval.jpg",
+      "sha256": "b47403006113b9c37aa0d62c7b12d13abeda0dcc075649a063bae00b54b3ec94",
+      "bytes": 40609,
+      "pixelWidth": 375,
+      "pixelHeight": 811,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "390-expired-recovery.jpg",
+      "sha256": "dcf6649b9bcd4d3393a8fdd27776800f7129194adfb7d04a0944fa85e666dcdb",
+      "bytes": 29880,
+      "pixelWidth": 375,
+      "pixelHeight": 811,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "390-leave-confirmation.jpg",
+      "sha256": "83d62c34e514da9b7f0e79efbee617abe4a11919d8e9515fa58b3a4e4a9daac7",
+      "bytes": 32885,
+      "pixelWidth": 375,
+      "pixelHeight": 811,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "390-provider-receipt.jpg",
+      "sha256": "58efb6b9d4aa9b143be78c6d95615e34f8b7aa75baad96bc21bfa94fa0726a80",
+      "bytes": 33954,
+      "pixelWidth": 375,
+      "pixelHeight": 811,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "390-uncertain.jpg",
+      "sha256": "c167c1abc25783b6adaab83c0b09cbd23f633b390c7986c1908bf7f14e843b6b",
+      "bytes": 30524,
+      "pixelWidth": 375,
+      "pixelHeight": 811,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "900-original-history.jpg",
+      "sha256": "1c0e1bb6313a32eaf218464e47b54a4f5de8edae477edc882ce89cf3fb9cb764",
+      "bytes": 64874,
+      "pixelWidth": 885,
+      "pixelHeight": 983,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    },
+    {
+      "file": "editor-focus.jpg",
+      "sha256": "68067212aef43f79b7698ea30033cfc6f9f3943384af94c1c58c6f8d99164cd6",
+      "bytes": 32199,
+      "pixelWidth": 375,
+      "pixelHeight": 811,
+      "classification": "CONTROLLED_ACTUAL_COMPONENT_RENDER"
+    }
+  ],
+  "proof": {
+    "ui": {
+      "file": "e04-c51-final-focus-ui-1792969153063.log",
+      "tests": 203,
+      "files": 4,
+      "result": "PASS"
+    },
+    "sdk": {
+      "file": "e04-c51-original-sdk-canonical-cwd-1792969043313.log",
+      "tests": 136,
+      "steps": 36,
+      "result": "PASS"
+    },
+    "native": {
+      "result": "RUNNING",
+      "log": "e04-c51-work-eligibility-repaired-1792968699238.log",
+      "migration": "20271114280004",
+      "production": "NOT_APPLIED_PRODUCTION"
+    },
+    "authenticated": "UNVERIFIED",
+    "founder": "NOT_ACCEPTED"
+  },
+  "limitations": [
+    "Synthetic actual-component transport ports; no provider effect",
+    "Viewport geometry is CSS pixels; JPEG capture dimensions are distinct",
+    "No full authenticated SOLO shell/PAIGE-open or two-cohort acceptance",
+    "Native complete repaired campaign must finish without weakening incumbent controls"
+  ]
+}

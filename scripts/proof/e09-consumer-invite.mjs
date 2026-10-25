@@ -11,10 +11,19 @@ import { isProofDescendant } from './e09-proof-path.mjs';
 const baselineOnly = process.argv.includes('--baseline');
 const documents = process.argv.includes('--documents');
 const ownerActions = process.argv.includes('--owner-actions');
-const actions = process.argv.includes('--actions') || process.argv.includes('--actions-baseline') || ownerActions;
+const actionActTimeBaseline = process.argv.includes('--action-act-time-baseline');
+const actionActTime = process.argv.includes('--action-act-time') || actionActTimeBaseline;
+const inviteActTimeBaseline = process.argv.includes('--invite-act-time-baseline');
+const inviteActTime = process.argv.includes('--invite-act-time') || inviteActTimeBaseline;
+const messageActivityBaseline = process.argv.includes('--message-activity-baseline');
+const messageActivity = process.argv.includes('--message-activity') || messageActivityBaseline;
+const actions = process.argv.includes('--actions') || process.argv.includes('--actions-baseline') || ownerActions || actionActTime;
 const actionsBaseline = process.argv.includes('--actions-baseline');
 const actionPredecessors=[];
-const entry = process.argv.includes('--entry') || actions || documents;
+let actionActTimeEvidence;
+let inviteActTimeEvidence;
+let messageActivityEvidence;
+const entry = process.argv.includes('--entry') || actions || documents || inviteActTime || messageActivity;
 const entryBaseline = process.argv.includes('--entry-baseline');
 const root = process.cwd();
 const bin = process.env.E09_PG_BIN ?? (process.platform === 'win32' ? 'C:/Program Files/PostgreSQL/16/bin' : '');
@@ -262,6 +271,43 @@ try {
      const out=sql(`BEGIN;SELECT set_config('test.actor',${literal(options.actor===null?'':options.actor??f.actor)},true);SET LOCAL ROLE authenticated;${statement(f,options)};COMMIT;`);
      const row=out.split(/\r?\n/).find(s=>s.startsWith('{'));assert(row,'Native response result required');return JSON.parse(row);
    };
+   if(actionActTime){
+     // Reconstruct the actual current writer, including the accepted-access gate.
+     // Load the original migration block verbatim; do not loosen a fixture guard.
+     sql("ALTER TABLE clients ADD COLUMN portal_access_state text NOT NULL DEFAULT 'open'");
+     const source=fs.readFileSync('supabase/migrations/20271111010000_e09_customer_portal_access.sql','utf8').replaceAll('\r\n','\n');
+     const accessPatch=source.match(/DO \$e09_access_respond\$[\s\S]*?\$e09_access_respond\$;/)?.[0];
+     assert(accessPatch,'Original accepted-access writer patch required');sql(accessPatch);
+     const sourceMd5=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure");
+     assert.equal(sourceMd5,'e1095a18ee344a3b1528e7320d33fdd9','Proof must use the observed production body');
+     actionActTimeEvidence={sourceMd5,baseline:actionActTimeBaseline,waits:[]};
+     if(!actionActTimeBaseline){
+       const actTimeMigration=fs.readFileSync('supabase/migrations/20271114110009_e09_customer_response_act_time.sql','utf8');
+       const scopeMigration=fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql','utf8');
+       const oldGuard="IF v_action.status = 'expired' OR v_action.expires_at <= now() THEN";
+       const newGuard=oldGuard.replace('now()','pg_catalog.clock_timestamp()');
+       const metadata=()=>sql("SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig,'acl',proacl::text) FROM pg_proc WHERE oid='customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure");
+       actionActTimeEvidence.predecessors=[];
+       for(const [name,predecessor]of [['full-schema',originalResponse],['recorded-production',originalResponse
+         .replace('-- (B1) STEP 4 — §8 close-the-loop','-- (B1) §8 close-the-loop').replace('-- (B2) STEP 4 — file the response','-- (B2) file the response')]]){
+         sql('DROP FUNCTION customer_respond_to_action(uuid,text,text,timestamptz)');sql(predecessor);sql(scopeMigration);sql(accessPatch);
+         const before=sql("SELECT pg_get_functiondef('customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure)").replaceAll('\r\n','\n');
+         const beforeMetadata=metadata();
+         const unknownBefore=before.replace('DECLARE','DECLARE\n  -- synthetic unknown predecessor');sql(unknownBefore);
+         check('Act-time '+name+' unknown predecessor refuses without overwriting it',()=>{assert.throws(()=>sql(actTimeMigration));assert.equal(sql("SELECT pg_get_functiondef('customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure)").replaceAll('\r\n','\n'),unknownBefore);assert.equal(metadata(),beforeMetadata);});
+         sql(before);sql(actTimeMigration);
+         const after=sql("SELECT pg_get_functiondef('customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure)").replaceAll('\r\n','\n');
+         check('Act-time '+name+' changes only the expiry clock and retains metadata',()=>{assert.equal(after,before.replace(oldGuard,newGuard));assert.equal(metadata(),beforeMetadata);});
+         sql(actTimeMigration);
+         check('Act-time '+name+' exact replay is a no-op',()=>{assert.equal(sql("SELECT pg_get_functiondef('customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure)").replaceAll('\r\n','\n'),after);assert.equal(metadata(),beforeMetadata);});
+         const unknown=after.replace('DECLARE','DECLARE\n  -- synthetic unknown forward source');sql(unknown);
+         check('Act-time '+name+' unknown source refuses without overwriting it',()=>{assert.throws(()=>sql(actTimeMigration));assert.equal(sql("SELECT pg_get_functiondef('customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure)").replaceAll('\r\n','\n'),unknown);});
+         sql(after);
+         actionActTimeEvidence.predecessors.push({name,sourceMd5:sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure"),metadataUnchanged:true,replayed:true});
+       }
+       actionActTimeEvidence.migrationSHA256=createHash('sha256').update(actTimeMigration).digest('hex');
+     }
+   }
    for(const [name,options,callOptions]of [
      ['archived relationship',{inactive:true},{}],['merged relationship',{merged:true},{}],['suspended business',{tenantInactive:true},{}],
      ['wrong business/contact tuple',{foreign:true},{}],['wrong actual subject',{},'other'],['missing actual subject',{}, {actor:null}],
@@ -305,13 +351,61 @@ try {
      const f=actionFixture();sql(`CREATE FUNCTION proof_reject_response_audit() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'synthetic response audit refusal';END;$$;CREATE TRIGGER proof_response_audit BEFORE INSERT ON paige_audit_log FOR EACH ROW EXECUTE FUNCTION proof_reject_response_audit();`);
      const before=sql('SELECT proof_action_snapshot()');assert.throws(()=>response(f));assert.equal(sql('SELECT proof_action_snapshot()'),before);sql('DROP TRIGGER proof_response_audit ON paige_audit_log;DROP FUNCTION proof_reject_response_audit();');
    });
+   if(actionActTime){const {customerActionActTimeProof}=await import('./e09-customer-action-act-time.mjs');
+     await customerActionActTimeProof({sql,check,assert,spawn,exe,args,transcripts,actionFixture,statement,evidence:actionActTimeEvidence});}
  }
+ if(inviteActTime){
+   // Previous cases deliberately retain their historical migration stage. This
+   // phase loads the current, original multi-business admission body verbatim.
+   sql(functionFrom('supabase/migrations/20271113630009_e09_multi_business_invitation_admission.sql','accept_tenant_invite'));
+   const sourceMd5=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='accept_tenant_invite(text)'::regprocedure");
+   assert.equal(sourceMd5,'543bb36574e23f05c20838b7ee56413f','Current invitation source must match observed production');
+   inviteActTimeEvidence={sourceMd5,baseline:inviteActTimeBaseline,waits:[],historicalStage:'Earlier invitation cases run before the original multi-business source; not full current schema proof'};
+   if(!inviteActTimeBaseline){
+     const repair=fs.readFileSync('supabase/migrations/20271114120009_e09_consumer_invite_act_time.sql','utf8');
+     const read=()=>sql("SELECT pg_get_functiondef('accept_tenant_invite(text)'::regprocedure)").replaceAll('\r\n','\n');
+     const metadata=()=>sql("SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig,'acl',proacl::text,'args',pg_get_function_identity_arguments(oid),'result',pg_get_function_result(oid)) FROM pg_proc WHERE oid='accept_tenant_invite(text)'::regprocedure");
+     const before=read(),beforeMetadata=metadata();
+     const unknownBefore=before.replace('-- E09_CONSUMER_INVITE_INTEGRITY_V1','-- E09_CONSUMER_INVITE_INTEGRITY_V1\n    -- synthetic unrecognized source');sql(unknownBefore);
+     check('Consumer act-time unrecognized predecessor refuses without overwrite',()=>{assert.throws(()=>sql(repair));assert.equal(read(),unknownBefore);assert.equal(metadata(),beforeMetadata);});sql(before);
+     sql(repair);const after=read();
+     const gate="    PERFORM 1 FROM public.tenants WHERE id = _tok.tenant_id AND status = 'active' FOR SHARE;\n    IF NOT FOUND THEN RAISE EXCEPTION 'customer relationship unavailable' USING ERRCODE = '42501'; END IF;\n";
+     const effect='    UPDATE public.clients SET linked_user_id = _uid,\n';
+     const clock="    IF _tok.expires_at <= pg_catalog.clock_timestamp() THEN RAISE EXCEPTION 'invite has expired'; END IF;\n";
+     check('Consumer act-time preserves non-consumer bytes, ABI/ACL and every original effect',()=>{
+       assert.equal(after,before.replace(gate,'').replace(effect,gate+clock+effect));assert.equal(metadata(),beforeMetadata);
+       const start="  IF _tok.kind = 'consumer' THEN",tail="  ELSIF _tok.kind = 'subaccount_owner' THEN";
+       assert.equal(after.slice(0,after.indexOf(start)),before.slice(0,before.indexOf(start)));
+       assert.equal(after.slice(after.indexOf(tail)),before.slice(before.indexOf(tail)));
+     });sql(repair);
+     check('Consumer act-time exact replay changes nothing',()=>{assert.equal(read(),after);assert.equal(metadata(),beforeMetadata);});
+     const unknownAfter=after.replace('-- E09_CONSUMER_INVITE_INTEGRITY_V1','-- E09_CONSUMER_INVITE_INTEGRITY_V1\n    -- synthetic unrecognized forward source');sql(unknownAfter);
+     check('Consumer act-time unrecognized forward source refuses without overwrite',()=>{assert.throws(()=>sql(repair));assert.equal(read(),unknownAfter);assert.equal(metadata(),beforeMetadata);});sql(after);
+     inviteActTimeEvidence.appliedSourceMd5=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='accept_tenant_invite(text)'::regprocedure");
+     assert.equal(inviteActTimeEvidence.appliedSourceMd5,'99b75b7f65d50cc4971c12dca4bef74e');
+     check('Full-schema act-time inverse restores the exact original current body',()=>{
+       const suite=fs.readFileSync('supabase/tests/consumer_invite_acceptance.sql','utf8');
+       const start=suite.indexOf('CREATE FUNCTION pg_temp.e09_invite_act_time_inverse(');
+       const end=suite.indexOf('\n$$;',start)+4;
+       assert.ok(start>=0&&end>start,'The original full-schema inverse helper must exist');
+       const result=sql(suite.slice(start,end)+"\nSELECT md5(pg_temp.e09_invite_act_time_inverse(prosrc)) FROM pg_proc WHERE oid='accept_tenant_invite(text)'::regprocedure;");
+       assert.deepEqual(result.split(/\r?\n/),['CREATE FUNCTION','543bb36574e23f05c20838b7ee56413f']);
+     });
+     inviteActTimeEvidence.migrationSHA256=createHash('sha256').update(repair).digest('hex');
+   }
+   const {invitationActTimeProof}=await import('./e09-invitation-act-time.mjs');
+   await invitationActTimeProof({sql,check,assert,spawn,exe,args,transcripts,fixture,call,evidence:inviteActTimeEvidence});
+ }
+ if(messageActivity){const {messageActivityProof}=await import('./e09-message-activity.mjs');messageActivityEvidence=await messageActivityProof({sql,check,assert,fs,root,path,fixture,baseline:messageActivityBaseline});}
  if(ownerActions){const {ownerActionReadProof}=await import('./e09-owner-customer-actions.mjs');ownerActionReadProof({sql,check,assert,fs,root,path,fixture});}
  if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
  const report={mode:documents?'documents-candidate':actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(documents?{documentMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108150000_e09_customer_documents.sql')).digest('hex'),physicalStorage:'NOT_RUN',realtimeTransport:'NOT_RUN'}:{}),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};
  if(ownerActions){report.mode='owner-actions-candidate';report.ownerActionMigrationSHA256=createHash('sha256').update(fs.readFileSync('supabase/migrations/20271114090000_e09_owner_customer_action_read.sql')).digest('hex');report.ownerActionSourceApplied=process.env.E09_OWNER_ACTION_BASELINE!=='1';}
- fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
+ if(actionActTime){report.mode=actionActTimeBaseline?'action-act-time-baseline':'action-act-time-candidate';report.actionActTime=actionActTimeEvidence;}
+ if(inviteActTime){report.mode=inviteActTimeBaseline?'invite-act-time-baseline':'invite-act-time-candidate';report.inviteActTime=inviteActTimeEvidence;}
+ if(messageActivity){report.mode=messageActivityBaseline?'message-activity-baseline':'message-activity-candidate';report.messageActivity={source:'original S7 Portal RPCs and original Rail writer, exact production fingerprints',threadTriggers:'NOT_RECONSTRUCTED; full-schema original suite remains required',authenticatedCustomer:'NOT_RUN',...messageActivityEvidence};}
+ fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline||actionActTimeBaseline||inviteActTimeBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
  console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
  if(failed.length)process.exitCode=1;
 }finally{if(started)run('pg_ctl',['-D',cluster,'-w','stop','-m','fast']);fs.writeFileSync(path.join(work,baselineOnly?'baseline-transcript.json':'candidate-transcript.json'),JSON.stringify(transcripts,null,2));}

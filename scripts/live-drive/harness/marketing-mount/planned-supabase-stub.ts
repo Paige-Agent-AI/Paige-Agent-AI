@@ -55,6 +55,25 @@ const plan = new URLSearchParams(window.location.search).get("plan") === "0" ? [
 declare global { interface Window { __planCalls: Array<{ fn: string; args: Record<string, unknown> }> } }
 window.__planCalls = [];
 
+// EXP07 row 9 — the presence read's rows, now carrying the connection lifecycle's readiness
+// answer (get_social_presence_evidence' extended OUT columns). instagram: on record + connected
+// (label + verified-at); x: on record + needs_reauth; facebook: on record with NO connection (the
+// honest absence); the rest not_recorded. `?social=0` answers no rows at all (unreadable class).
+const socialRows = new URLSearchParams(window.location.search).get("social") === "0" ? [] : [
+  { network: "instagram", status: "on_record", handle: "@northfield-co", as_of: day(2), reason: null, tenant_id: "t-northfield",
+    connection_status: "connected", connection_label: "Northfield Coaching (main)", connection_verified_at: "2026-10-20T10:00:00Z", connection_profiles: 1 },
+  { network: "x", status: "on_record", handle: "@northfield", as_of: day(2), reason: null, tenant_id: "t-northfield",
+    connection_status: "needs_reauth", connection_label: null, connection_verified_at: null, connection_profiles: null },
+  { network: "facebook", status: "on_record", handle: "northfield-coaching", as_of: day(2), reason: null, tenant_id: "t-northfield",
+    connection_status: null, connection_label: null, connection_verified_at: null, connection_profiles: null },
+  { network: "linkedin", status: "not_recorded", handle: null, as_of: day(2), reason: null, tenant_id: "t-northfield",
+    connection_status: null, connection_label: null, connection_verified_at: null, connection_profiles: null },
+  { network: "youtube", status: "not_recorded", handle: null, as_of: day(2), reason: null, tenant_id: "t-northfield",
+    connection_status: null, connection_label: null, connection_verified_at: null, connection_profiles: null },
+  { network: "tiktok", status: "not_recorded", handle: null, as_of: day(2), reason: null, tenant_id: "t-northfield",
+    connection_status: null, connection_label: null, connection_verified_at: null, connection_profiles: null },
+];
+
 const identity = [{ default_email_sender: "hello@northfield.example", default_email_domain: "northfield.example", default_email_status: "verified" }];
 
 function answer(rows: unknown): Promise<Answer> {
@@ -80,8 +99,15 @@ function from(table: string) {
   return chain;
 }
 
-export const supabase = { from, rpc: (fn: string, args: Record<string, unknown>) => {
+export const supabase = {
+  auth: {
+    getSession: async () => ({ data: { session: { access_token: "harness" } }, error: null }),
+    getUser: async () => ({ data: { user: { id: "harness-user" } }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+  },
+  from, rpc: (fn: string, args: Record<string, unknown>) => {
     window.__planCalls.push({ fn, args });
+    if (fn === "get_social_presence_evidence") return answer(socialRows);
     if (fn === "content_plan_list") return answer(plan);
     if (fn === "content_plan_upsert") {
       let row = plan.find((e) => e.id === args.p_id);

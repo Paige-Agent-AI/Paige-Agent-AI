@@ -1,5 +1,40 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October25 — verified source-release closeout, full Experience still open
+
+Original2694/2690/2696/2787/2800 have actual reviewed, merged and production-source
+identities in the sole [Master§4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Finance2694 all-seven-tab/Overview/source return and Systems2690 Escape/focus/
+Chat-draft/reload have bounded ordinary SOLO PASS. Finance2696 child and report2787
+artifact/turn/Rail/retrieval/reload proof remain owed under the browser input stop;
+synthetic visual and source tests do not substitute for customer acceptance.
+
+Original2800 is released410d5419b437161326c8bb84667ee6fbdc7767cc, an O06/O14
+source foundation only. It supplies no current UI consumer or historical Chat
+capability; original historical inspection/role/tenant/cohort/return/reload proof
+remains required. O07 actual scans/corrections is separate: Refresh rereads and
+Ask First opens PAIGE; onboarding scans can draft/file original remediation work
+and must not be invoked as an unapproved read or relabelled customer request.
+
+All19/nine required outcomes, historical9PASS/0FAIL and supplement12PASS/0FAIL/
+4BLOCKED, original monthly uncertainty, algorithm maturity, activation controls
+and one complete founder evaluation remain unchanged. No customer release name,
+new provider/action/runtime, acceptance closure or recursive docs-release row.
+
+
+## October25 — original recorded-finding source foundation, development
+
+O6/O14 adds only an opt-in read to the original Systems hook over existing RLS
+records. All default consumers and current snapshot health remain unchanged;
+no current UI uses the extension. Initial152/6 source cases passed; hosted tier
+guard caught the inline compare. Unchanged canonical eligibility/loading helper
+now applies, all original negatives retained;184/7 PASS. Fresh type/review/CI/release
+remain pending. [Owning proof and routing](../evidence/e2-recorded-finding-source.md).
+Original report2787 is independently reconciled as released2f04941f/web+Chat535;
+actual report/document/turn/Rail/retrieval/reload acceptance remains owed.
+Four exact Master closeouts remain queued. All19/nine/ALG/founder obligations
+and browser/input/activation/protected monthly boundaries remain unchanged.
+
 ## October24 evening — original-reference Finance read and reload verified
 
 The originating Sales2768 repair is released in containing production03edfad8a.

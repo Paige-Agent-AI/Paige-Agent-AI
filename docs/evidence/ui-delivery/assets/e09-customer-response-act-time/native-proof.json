@@ -1,0 +1,856 @@
+{
+  "evidenceClass": "synthetic native PostgreSQL; not authenticated customer proof",
+  "base": "468e50f6461517e43e5381ae2c2423332cf818cd",
+  "baseline": {
+    "mode": "action-act-time-baseline",
+    "evidenceClass": "synthetic-native-postgresql",
+    "fullSupabaseReplay": "UNVERIFIED",
+    "authenticatedAcceptance": "NOT_RUN",
+    "host": "127.0.0.1",
+    "port": 55446,
+    "platform": "win32",
+    "node": "v24.19.0",
+    "migrationSHA256": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4",
+    "actionPredecessors": [
+      {
+        "name": "full-schema",
+        "before": "1be5e25443930bcb013a71b001743b66",
+        "after": "fcf773974057df079f85ae2b574b32a2",
+        "replay": "PASS"
+      },
+      {
+        "name": "recorded-production",
+        "before": "17868b60f3725f0b863705c59b9f4c07",
+        "after": "eac7910cd403aaf3c4d8fb7e429ab3c1",
+        "replay": "PASS"
+      }
+    ],
+    "actionMigrationSHA256": "dc3e2b646592dbe199c6c288133cccbdd4c3a2d96ba4815404053ac292067bda",
+    "results": [
+      {
+        "name": "Other invitation branches preserved byte-for-byte",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: unused consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: used unlimited consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: recorded consumer acceptance despite count drift",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: revoked consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: expired consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: existing unlimited team semantics",
+        "status": "PASS"
+      },
+      {
+        "name": "No custom questions uses the existing contact form; malformed published configuration still refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Entry preserves all staff/agency/owner branches",
+        "status": "PASS"
+      },
+      {
+        "name": "Wrong recipient with legitimate staff standing cannot claim consumer contact",
+        "status": "PASS"
+      },
+      {
+        "name": "Matching unconfirmed email refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing recipient refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Anonymous caller denied",
+        "status": "PASS"
+      },
+      {
+        "name": "Expired invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Legacy unlimited token with prior use refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recorded prior acceptance refuses even if count zero",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Occupied exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Merged contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Archived contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Unbound consumer token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recipient address removed from contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Different existing relationship does not redirect acceptance",
+        "status": "PASS"
+      },
+      {
+        "name": "Malformed token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Team recipient regression",
+        "status": "PASS"
+      },
+      {
+        "name": "Verified recipient with pre-existing staff standing binds the exact contact once",
+        "status": "PASS"
+      },
+      {
+        "name": "Pure verified external recipient joins without a business seat or staff context",
+        "status": "PASS"
+      },
+      {
+        "name": "Email normalization accepts only authoritative verified recipient",
+        "status": "PASS"
+      },
+      {
+        "name": "Team acceptance still grants ordinary member and staff pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Claimed JWT email cannot override stored auth identity",
+        "status": "PASS"
+      },
+      {
+        "name": "Audit failure rolls back link, role and token consumption",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent acceptance grants once and records one attributable receipt",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses archived relationship",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses merged relationship",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses suspended business",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses wrong business/contact tuple",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses wrong actual subject",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses missing actual subject",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses closed action",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses expired action",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses empty question",
+        "status": "PASS"
+      },
+      {
+        "name": "Native old caller cannot submit without the viewed version",
+        "status": "PASS"
+      },
+      {
+        "name": "Native version refusal null",
+        "status": "PASS"
+      },
+      {
+        "name": "Native version refusal 2025-01-01",
+        "status": "PASS"
+      },
+      {
+        "name": "Native completion persists canonical response, actor, status, notification, audit and incumbent linked output",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response accepted",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response declined",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response question",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent same-version completion persists once",
+        "status": "PASS"
+      },
+      {
+        "name": "Native audit failure rolls back response and all preceding effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Native completed after observed expiry row wait refuses with zero response/status/audit/notification/linked/Rail effects",
+        "status": "FAIL",
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ok: true,\n+   status: 'customer_acted'\n-   error: 'ACTION_EXPIRED',\n-   ok: false\n  }\n"
+      },
+      {
+        "name": "Native accepted after observed expiry row wait refuses with zero response/status/audit/notification/linked/Rail effects",
+        "status": "FAIL",
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ok: true,\n+   status: 'customer_acted'\n-   error: 'ACTION_EXPIRED',\n-   ok: false\n  }\n"
+      },
+      {
+        "name": "Native declined after observed expiry row wait refuses with zero response/status/audit/notification/linked/Rail effects",
+        "status": "FAIL",
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ok: true,\n+   status: 'customer_declined'\n-   error: 'ACTION_EXPIRED',\n-   ok: false\n  }\n"
+      },
+      {
+        "name": "Native question after observed expiry row wait refuses with zero response/status/audit/notification/linked/Rail effects",
+        "status": "FAIL",
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ok: true,\n+   status: 'proposed'\n-   error: 'ACTION_EXPIRED',\n-   ok: false\n  }\n"
+      }
+    ],
+    "passed": 53,
+    "failed": 4,
+    "actionActTime": {
+      "sourceMd5": "e1095a18ee344a3b1528e7320d33fdd9",
+      "baseline": true,
+      "waits": [
+        {
+          "type": "completed",
+          "transactionStarted": "2026-10-25T00:19:22.954065-04:00",
+          "expiresAt": "2026-10-25T00:19:27.525259-04:00",
+          "releasedAt": "2026-10-25T00:19:27.594572-04:00",
+          "startedBeforeExpiry": true,
+          "observedRowWait": true,
+          "initialWait": {
+            "wait_type": "Lock",
+            "blocked_by_holder": true
+          },
+          "releasedAfterExpiry": true,
+          "result": {
+            "ok": true,
+            "status": "customer_acted"
+          },
+          "durableStateUnchanged": false
+        },
+        {
+          "type": "accepted",
+          "transactionStarted": "2026-10-25T00:19:28.598554-04:00",
+          "expiresAt": "2026-10-25T00:19:33.1573-04:00",
+          "releasedAt": "2026-10-25T00:19:33.219922-04:00",
+          "startedBeforeExpiry": true,
+          "observedRowWait": true,
+          "initialWait": {
+            "wait_type": "Lock",
+            "blocked_by_holder": true
+          },
+          "releasedAfterExpiry": true,
+          "result": {
+            "ok": true,
+            "status": "customer_acted"
+          },
+          "durableStateUnchanged": false
+        },
+        {
+          "type": "declined",
+          "transactionStarted": "2026-10-25T00:19:34.638436-04:00",
+          "expiresAt": "2026-10-25T00:19:38.719351-04:00",
+          "releasedAt": "2026-10-25T00:19:38.772764-04:00",
+          "startedBeforeExpiry": true,
+          "observedRowWait": true,
+          "initialWait": {
+            "wait_type": "Lock",
+            "blocked_by_holder": true
+          },
+          "releasedAfterExpiry": true,
+          "result": {
+            "ok": true,
+            "status": "customer_declined"
+          },
+          "durableStateUnchanged": false
+        },
+        {
+          "type": "question",
+          "transactionStarted": "2026-10-25T00:19:39.480872-04:00",
+          "expiresAt": "2026-10-25T00:19:44.17173-04:00",
+          "releasedAt": "2026-10-25T00:19:44.244549-04:00",
+          "startedBeforeExpiry": true,
+          "observedRowWait": true,
+          "initialWait": {
+            "wait_type": "Lock",
+            "blocked_by_holder": true
+          },
+          "releasedAfterExpiry": true,
+          "result": {
+            "ok": true,
+            "status": "proposed"
+          },
+          "durableStateUnchanged": false
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "mode": "action-act-time-candidate",
+    "evidenceClass": "synthetic-native-postgresql",
+    "fullSupabaseReplay": "UNVERIFIED",
+    "authenticatedAcceptance": "NOT_RUN",
+    "host": "127.0.0.1",
+    "port": 55446,
+    "platform": "win32",
+    "node": "v24.19.0",
+    "migrationSHA256": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4",
+    "actionPredecessors": [
+      {
+        "name": "full-schema",
+        "before": "1be5e25443930bcb013a71b001743b66",
+        "after": "fcf773974057df079f85ae2b574b32a2",
+        "replay": "PASS"
+      },
+      {
+        "name": "recorded-production",
+        "before": "17868b60f3725f0b863705c59b9f4c07",
+        "after": "eac7910cd403aaf3c4d8fb7e429ab3c1",
+        "replay": "PASS"
+      }
+    ],
+    "actionMigrationSHA256": "dc3e2b646592dbe199c6c288133cccbdd4c3a2d96ba4815404053ac292067bda",
+    "results": [
+      {
+        "name": "Other invitation branches preserved byte-for-byte",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: unused consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: used unlimited consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: recorded consumer acceptance despite count drift",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: revoked consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: expired consumer",
+        "status": "PASS"
+      },
+      {
+        "name": "Public native peek: existing unlimited team semantics",
+        "status": "PASS"
+      },
+      {
+        "name": "No custom questions uses the existing contact form; malformed published configuration still refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Entry preserves all staff/agency/owner branches",
+        "status": "PASS"
+      },
+      {
+        "name": "Wrong recipient with legitimate staff standing cannot claim consumer contact",
+        "status": "PASS"
+      },
+      {
+        "name": "Matching unconfirmed email refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing recipient refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Anonymous caller denied",
+        "status": "PASS"
+      },
+      {
+        "name": "Expired invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Revoked invitation refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Legacy unlimited token with prior use refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recorded prior acceptance refuses even if count zero",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Occupied exact CRM contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Merged contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Archived contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Unbound consumer token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Recipient address removed from contact refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Different existing relationship does not redirect acceptance",
+        "status": "PASS"
+      },
+      {
+        "name": "Malformed token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Missing token refuses",
+        "status": "PASS"
+      },
+      {
+        "name": "Team recipient regression",
+        "status": "PASS"
+      },
+      {
+        "name": "Verified recipient with pre-existing staff standing binds the exact contact once",
+        "status": "PASS"
+      },
+      {
+        "name": "Pure verified external recipient joins without a business seat or staff context",
+        "status": "PASS"
+      },
+      {
+        "name": "Email normalization accepts only authoritative verified recipient",
+        "status": "PASS"
+      },
+      {
+        "name": "Team acceptance still grants ordinary member and staff pointer",
+        "status": "PASS"
+      },
+      {
+        "name": "Claimed JWT email cannot override stored auth identity",
+        "status": "PASS"
+      },
+      {
+        "name": "Audit failure rolls back link, role and token consumption",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent acceptance grants once and records one attributable receipt",
+        "status": "PASS"
+      },
+      {
+        "name": "Act-time full-schema unknown predecessor refuses without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Act-time full-schema changes only the expiry clock and retains metadata",
+        "status": "PASS"
+      },
+      {
+        "name": "Act-time full-schema exact replay is a no-op",
+        "status": "PASS"
+      },
+      {
+        "name": "Act-time full-schema unknown source refuses without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Act-time recorded-production unknown predecessor refuses without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Act-time recorded-production changes only the expiry clock and retains metadata",
+        "status": "PASS"
+      },
+      {
+        "name": "Act-time recorded-production exact replay is a no-op",
+        "status": "PASS"
+      },
+      {
+        "name": "Act-time recorded-production unknown source refuses without overwriting it",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses archived relationship",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses merged relationship",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses suspended business",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses wrong business/contact tuple",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses wrong actual subject",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses missing actual subject",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses closed action",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses expired action",
+        "status": "PASS"
+      },
+      {
+        "name": "Native customer action refuses empty question",
+        "status": "PASS"
+      },
+      {
+        "name": "Native old caller cannot submit without the viewed version",
+        "status": "PASS"
+      },
+      {
+        "name": "Native version refusal null",
+        "status": "PASS"
+      },
+      {
+        "name": "Native version refusal 2025-01-01",
+        "status": "PASS"
+      },
+      {
+        "name": "Native completion persists canonical response, actor, status, notification, audit and incumbent linked output",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response accepted",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response declined",
+        "status": "PASS"
+      },
+      {
+        "name": "Native permitted response question",
+        "status": "PASS"
+      },
+      {
+        "name": "Concurrent same-version completion persists once",
+        "status": "PASS"
+      },
+      {
+        "name": "Native audit failure rolls back response and all preceding effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Native completed after observed expiry row wait refuses with zero response/status/audit/notification/linked/Rail effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Native accepted after observed expiry row wait refuses with zero response/status/audit/notification/linked/Rail effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Native declined after observed expiry row wait refuses with zero response/status/audit/notification/linked/Rail effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Native question after observed expiry row wait refuses with zero response/status/audit/notification/linked/Rail effects",
+        "status": "PASS"
+      }
+    ],
+    "passed": 65,
+    "failed": 0,
+    "actionActTime": {
+      "sourceMd5": "e1095a18ee344a3b1528e7320d33fdd9",
+      "baseline": false,
+      "waits": [
+        {
+          "type": "completed",
+          "transactionStarted": "2026-10-25T00:29:08.477675-04:00",
+          "expiresAt": "2026-10-25T00:29:13.161328-04:00",
+          "releasedAt": "2026-10-25T00:29:13.226096-04:00",
+          "startedBeforeExpiry": true,
+          "observedRowWait": true,
+          "initialWait": {
+            "wait_type": "Lock",
+            "blocked_by_holder": true
+          },
+          "releasedAfterExpiry": true,
+          "result": {
+            "ok": false,
+            "error": "ACTION_EXPIRED"
+          },
+          "durableStateUnchanged": true
+        },
+        {
+          "type": "accepted",
+          "transactionStarted": "2026-10-25T00:29:13.949783-04:00",
+          "expiresAt": "2026-10-25T00:29:18.663967-04:00",
+          "releasedAt": "2026-10-25T00:29:18.733846-04:00",
+          "startedBeforeExpiry": true,
+          "observedRowWait": true,
+          "initialWait": {
+            "wait_type": "Lock",
+            "blocked_by_holder": true
+          },
+          "releasedAfterExpiry": true,
+          "result": {
+            "ok": false,
+            "error": "ACTION_EXPIRED"
+          },
+          "durableStateUnchanged": true
+        },
+        {
+          "type": "declined",
+          "transactionStarted": "2026-10-25T00:29:19.574461-04:00",
+          "expiresAt": "2026-10-25T00:29:24.108888-04:00",
+          "releasedAt": "2026-10-25T00:29:24.188435-04:00",
+          "startedBeforeExpiry": true,
+          "observedRowWait": true,
+          "initialWait": {
+            "wait_type": "Lock",
+            "blocked_by_holder": true
+          },
+          "releasedAfterExpiry": true,
+          "result": {
+            "ok": false,
+            "error": "ACTION_EXPIRED"
+          },
+          "durableStateUnchanged": true
+        },
+        {
+          "type": "question",
+          "transactionStarted": "2026-10-25T00:29:24.766134-04:00",
+          "expiresAt": "2026-10-25T00:29:29.484241-04:00",
+          "releasedAt": "2026-10-25T00:29:29.545363-04:00",
+          "startedBeforeExpiry": true,
+          "observedRowWait": true,
+          "initialWait": {
+            "wait_type": "Lock",
+            "blocked_by_holder": true
+          },
+          "releasedAfterExpiry": true,
+          "result": {
+            "ok": false,
+            "error": "ACTION_EXPIRED"
+          },
+          "durableStateUnchanged": true
+        }
+      ],
+      "predecessors": [
+        {
+          "name": "full-schema",
+          "sourceMd5": "3ef4c14c7e0545af4103f724b445ea8a",
+          "metadataUnchanged": true,
+          "replayed": true
+        },
+        {
+          "name": "recorded-production",
+          "sourceMd5": "3e5b6bc2a80879db33ceb837c1ec7c15",
+          "metadataUnchanged": true,
+          "replayed": true
+        }
+      ],
+      "migrationSHA256": "e6c55fb47c52c568c551c23873070c38d549dc30cc2aae20014fa41b1070326d"
+    }
+  },
+  "cleanup": {
+    "baseline": "owned loopback cluster stopped by original finally",
+    "candidate": "owned loopback cluster stopped by original finally"
+  },
+  "sourceHashes": [
+    {
+      "path": "supabase/migrations/20271114110009_e09_customer_response_act_time.sql",
+      "sha256": "e6c55fb47c52c568c551c23873070c38d549dc30cc2aae20014fa41b1070326d"
+    },
+    {
+      "path": "scripts/proof/e09-consumer-invite.mjs",
+      "sha256": "66ff9b5cac698b2983cec2f27232827ff1a7d9c3cba41331d6a0c0c63f7fe689"
+    },
+    {
+      "path": "scripts/proof/e09-customer-action-act-time.mjs",
+      "sha256": "ada72dc44d97a20030a3efb5261508962aa1426cd96cab91175a565c79eb610a"
+    },
+    {
+      "path": "supabase/tests/consumer_invite_acceptance.sql",
+      "sha256": "9b472092500cb91d7cc71b5a00b98052448391b7002106a8f4ff38315b2cb4c4"
+    },
+    {
+      "path": "src/hooks/useMyActions.ts",
+      "sha256": "c064254c4bae0e1726352b4c320d9d4efc840d65840ee310d25064cd3ad22345"
+    },
+    {
+      "path": "src/pages/app/ActionItems.tsx",
+      "sha256": "15091d00d64ff74024bfa1cf350f04d526c30c6a237378bd3658c7d5a45895f0"
+    }
+  ],
+  "rendered": {
+    "engine": "Codex in-app browser",
+    "actualSource": [
+      "src/hooks/useMyActions.ts",
+      "src/pages/app/ActionItems.tsx"
+    ],
+    "synthetic": [
+      "Auth and SDK read/response transport",
+      "business branding",
+      "customer shell identity"
+    ],
+    "notMounted": [
+      "business owner workspace",
+      "real Activity Feed",
+      "CURA runtime"
+    ],
+    "paths": [
+      {
+        "width": 900,
+        "height": 770,
+        "theme": "light"
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "dark",
+        "capturedImageHeight": 843
+      }
+    ],
+    "flow": "keyboard Enter response -> native false-shaped synthetic expiry result -> honest refusal and disabled response buttons -> keyboard Enter read-only Try again -> original Expired card; no saved-success text",
+    "countsEachFlow": {
+      "responseAttempts": 1,
+      "actionReads": 2
+    },
+    "horizontalOverflow": false,
+    "primaryControlHeight": 44,
+    "keyboardLimit": "Locator Enter drove response/recovery; automatic error focus and natural full Tab loop are not certified. Refusal retained body focus; first native Tab reached the synthetic footer. No keyboard/AT blanket claim.",
+    "authenticated": "NOT_RUN",
+    "nativeIPhone": "NOT_RUN",
+    "fullShell": "NOT_RUN",
+    "frames": [
+      {
+        "path": "390-assigned-dark.jpg",
+        "format": "JPEG",
+        "pixelWidth": 390,
+        "pixelHeight": 843
+      },
+      {
+        "path": "390-expired-readback-dark.jpg",
+        "format": "JPEG",
+        "pixelWidth": 390,
+        "pixelHeight": 843
+      },
+      {
+        "path": "390-expiry-refused-dark.jpg",
+        "format": "JPEG",
+        "pixelWidth": 390,
+        "pixelHeight": 843
+      },
+      {
+        "path": "900-assigned.jpg",
+        "format": "JPEG",
+        "pixelWidth": 900,
+        "pixelHeight": 770
+      },
+      {
+        "path": "900-expired-readback.jpg",
+        "format": "JPEG",
+        "pixelWidth": 900,
+        "pixelHeight": 770
+      },
+      {
+        "path": "900-expiry-refused.jpg",
+        "format": "JPEG",
+        "pixelWidth": 900,
+        "pixelHeight": 770
+      }
+    ]
+  },
+  "sourceTests": {
+    "passed": 70,
+    "suites": 4,
+    "paths": [
+      "src/hooks/useMyActions.scope.test.tsx",
+      "src/hooks/useMyActions.business.test.tsx",
+      "src/pages/app/ActionItems.scope.test.tsx",
+      "src/components/tenant-relationships/ClientActionItems.test.tsx"
+    ],
+    "scope": "original unchanged current-source regression suites; separate from native counts"
+  },
+  "impeccableDetector": {
+    "version": "4.1.0",
+    "exit": 0,
+    "blockingFindings": 0,
+    "advisories": [
+      "incumbent ActionItems.tsx10px badge outside documented type ramp"
+    ],
+    "scope": "two unchanged original source files; not general design certification"
+  }
+}

@@ -1,0 +1,329 @@
+{
+  "frames": [
+    {
+      "frame": "solo-1536x770-paige-closed",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1536x770-paige-open",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1366x768-paige-closed",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1366x768-paige-open",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1024x768-paige-closed",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-1024x768-paige-open",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-900x1000-paige-closed",
+      "overflowX": 0
+    },
+    {
+      "frame": "solo-900x1000-paige-open",
+      "overflowX": 0
+    }
+  ],
+  "results": [
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the connected sentence states what a connection grants and does not",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed needs_reauth speaks its state",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the no-connection absence is said, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the connected identity's label renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the verified-at date renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed no channel shows an audience figure (a connection grants none)",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the connected sentence states what a connection grants and does not",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open needs_reauth speaks its state",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the no-connection absence is said, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the connected identity's label renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the verified-at date renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open no channel shows an audience figure (a connection grants none)",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the connected sentence states what a connection grants and does not",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed needs_reauth speaks its state",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the no-connection absence is said, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the connected identity's label renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the verified-at date renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed no channel shows an audience figure (a connection grants none)",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the connected sentence states what a connection grants and does not",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open needs_reauth speaks its state",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the no-connection absence is said, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the connected identity's label renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the verified-at date renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open no channel shows an audience figure (a connection grants none)",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the connected sentence states what a connection grants and does not",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed needs_reauth speaks its state",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the no-connection absence is said, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the connected identity's label renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the verified-at date renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed no channel shows an audience figure (a connection grants none)",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the connected sentence states what a connection grants and does not",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open needs_reauth speaks its state",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the no-connection absence is said, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the connected identity's label renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the verified-at date renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open no channel shows an audience figure (a connection grants none)",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the connected sentence states what a connection grants and does not",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed needs_reauth speaks its state",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the no-connection absence is said, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the connected identity's label renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the verified-at date renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed no channel shows an audience figure (a connection grants none)",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the connected sentence states what a connection grants and does not",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open needs_reauth speaks its state",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the no-connection absence is said, not hidden",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the connected identity's label renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the verified-at date renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open no channel shows an audience figure (a connection grants none)",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open no horizontal overflow",
+      "detail": "overflowX=0"
+    },
+    {
+      "ok": true,
+      "name": "the panel foot's truth adapts to a connection (and still says posting is off)",
+      "detail": "[\"Published outputs are your pages, funnels and forms, not posts. They count as placements only once a supported provider records where they went live.\",\"Some o"
+    },
+    {
+      "ok": true,
+      "name": "an unread presence read claims nothing about accounts or connections",
+      "detail": ""
+    }
+  ],
+  "pageErrors": []
+}

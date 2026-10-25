@@ -490,5 +490,106 @@
     "inverseRestoresExactFrozenGuard": true,
     "validatorAndMetadataChanged": false
   },
-  "finalHeadCi": "PENDING_NEW_EXACT_HEAD"
+  "finalHeadCi": "PENDING_NEW_EXACT_HEAD",
+  "hosted_typing_correction": {
+    "inspected_head": "b67e2ac450c62b4e0dd3e277bfd5e3f08a1b0dad",
+    "hosted_deno": {
+      "artifact": 12586838391,
+      "sha256": "d396739b3088c2a824e53aaf77b1bb7e2b9e090b6565536ce5f07541b43035af",
+      "base": "468e50f6461517e43e5381ae2c2423332cf818cd",
+      "baseline_diagnostics": 9,
+      "candidate_diagnostics": 22,
+      "new_errors": 13,
+      "scope": "Generic return inference in Calendar helper and its existing exact-ID/agenda consumers; not permission/provider/native failure."
+    },
+    "local_strict_compile": {
+      "before": 11,
+      "after": 0,
+      "removed": [
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'view' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'window' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'shown_count' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'has_more' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'has_more' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'has_more' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        },
+        {
+          "code": 2339,
+          "file": "supabase/functions/_shared/calendar-booking-read.ts",
+          "message": "Property 'bookings' does not exist on type '{ status: \"available\"; } & { read_at: string; }'."
+        }
+      ],
+      "added": [],
+      "emittedRuntimeIdentical": true,
+      "sha": "8c94d90960c8376f1be0488ee25c4e4ca16b68eaf55dae5395202f3550487600"
+    },
+    "public_consumer_unit": {
+      "actual_tests": 125,
+      "passed": 125,
+      "failed": 0,
+      "new_test": "Strictly compile exact-ID and agenda consumer fields; no emit/business execution"
+    },
+    "lint": 0,
+    "pre_renewal": {
+      "originalFindings": [],
+      "originalTools": 29,
+      "candidateFindings": [
+        "incumbent reviewed source changed: supabase/functions/_shared/calendar-booking-read.ts"
+      ],
+      "originalDigest": "e6afa5a476d351286aae66fafa2d2153aaa3e7309ee80828b8cd505b5cf7ed9e",
+      "candidateDigest": "41e960e069a4f09655b49e7413cd939e19c91ad3ea451952fa1e3aa372953547",
+      "otherSourcesExact": 124,
+      "rootUnchanged": true
+    },
+    "review": "Required source review before changing the one helper digest. No Root/29 aggregate/other124 source renewal is permitted by this correction.",
+    "INT336": "Existing first four native-boundary Node scripts pass locally; complete original hosted step remains under investigation, no check waiver.",
+    "invalid_tooling": [
+      "First new Vitest invocation used unsupported minWorkers and ran no tests; corrected command exited0/125PASS.",
+      "Direct module execution of c0b-incumbent-resource-binding has no entry point; exit0 is not validation. Actual exported validator reproduced original29/zero findings, then refused only changed helper."
+    ],
+    "boundary": "Type-only source change; emitted runtime bytes identical. Ordinary authenticated read/Rail/reload/panel/provider/Live/full Experience acceptance remains held/owed."
+  }
 }

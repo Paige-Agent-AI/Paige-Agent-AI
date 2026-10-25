@@ -3,6 +3,43 @@ import { readCalendarAccountShape, readCalendarBooking, type CalendarBookingRead
 import * as calendarRead from "../../supabase/functions/_shared/calendar-booking-read";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 import { createClient } from "@supabase/supabase-js";
+import path from "node:path";
+import ts from "typescript";
+
+it("preserves the typed available contract for original booking and agenda consumers", () => {
+  // Vitest erases types. Compile a real consumer as well so an inference failure
+  // cannot leave the runtime suites green while the deployed Edge build fails.
+  const fixturePath = path.resolve("supabase/functions/_shared/calendar-read-contract.fixture.ts");
+  const fixtureSource = `
+    import { readCalendarBooking, readCalendarAgenda, calendarAgendaForModel } from "./calendar-booking-read.ts";
+    declare const booking: Awaited<ReturnType<typeof readCalendarBooking>>;
+    declare const agenda: Awaited<ReturnType<typeof readCalendarAgenda>>;
+    if (booking.status === "available") {
+      const found: boolean = booking.found;
+      const original: Record<string, unknown> | null = booking.booking;
+      const readAt: string = booking.read_at;
+      void [found, original, readAt];
+    }
+    if (agenda.status === "available") {
+      const records: Record<string, unknown>[] = agenda.bookings;
+      const view: "mine" | "team" = agenda.view;
+      const from: string = agenda.window.from;
+      const shown: number = agenda.shown_count;
+      const more: boolean = agenda.has_more;
+      void [records, view, from, shown, more];
+    }
+    calendarAgendaForModel(agenda);
+  `;
+  const options: ts.CompilerOptions = { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler, allowImportingTsExtensions: true,
+    noEmit: true, strict: true, skipLibCheck: true, types: [], lib: ["lib.es2022.d.ts", "lib.dom.d.ts"] };
+  const host = ts.createCompilerHost(options), readFile = host.readFile, fileExists = host.fileExists;
+  host.readFile = filename => path.resolve(filename) === fixturePath ? fixtureSource : readFile(filename);
+  host.fileExists = filename => path.resolve(filename) === fixturePath || fileExists(filename);
+  const program = ts.createProgram([fixturePath], options, host);
+  expect(ts.getPreEmitDiagnostics(program).map(diagnostic => ({ code: diagnostic.code,
+    message: ts.flattenDiagnosticMessageText(diagnostic.messageText, " ") }))).toEqual([]);
+});
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const identity: ContextIdentity = { actorId: id(1), tenantId: id(2), workspaceId: id(2), role: "owner", accountShape: "solo", actAsClientId: null, scopeEpoch: 1 };

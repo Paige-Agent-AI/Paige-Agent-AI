@@ -84,6 +84,15 @@ export async function readCalendarAccountShape(caller: CalendarBookingReadCaller
 
 type CalendarSelection<T> = { kind: "selected"; value: T; otherHost: boolean }
   | { kind: "refused" | "unavailable" };
+type CalendarBookingAvailable = {
+  status: "available"; found: boolean; booking: Record<string, unknown> | null;
+  read_at: string; message: string;
+};
+type CalendarAgendaAvailable = {
+  status: "available"; view: "mine" | "team"; window: { from: string; to: string };
+  bookings: Record<string, unknown>[]; shown_count: number; has_more: boolean;
+  read_at: string; message: string;
+};
 type CalendarReadAccess = {
   tenantId: string; actorId: string;
   signal: AbortSignal;
@@ -176,7 +185,7 @@ export async function readCalendarBooking(identity: ContextIdentity, deps: Calen
     return { status: "needs_input" as const, message: "Provide only one exact booking_id UUID. Scope and date-range arguments are not accepted." };
   }
   const bookingId = args.booking_id.toLowerCase();
-  return withCalendarScope(identity, deps, async ({ tenantId, actorId, signal, wait }) => {
+  return withCalendarScope<CalendarBookingAvailable>(identity, deps, async ({ tenantId, actorId, signal, wait }) => {
     const result = await wait(() => deps.caller.rpc("list_team_bookings", { _from: "-infinity", _to: "infinity", _host_ids: null, _tenant_id: tenantId, _booking_id: bookingId })
       .select(COLUMNS.join(",")).eq("id", bookingId).limit(2).abortSignal(signal));
     if (result.error) return { kind: object(result.error) && result.error.code === "42501" ? "refused" : "unavailable" } as const;
@@ -217,7 +226,7 @@ export async function readCalendarAgenda(identity: ContextIdentity, deps: Calend
     (view !== "mine" && view !== "team") || Date.parse(to) <= Date.parse(from) || Date.parse(to) - Date.parse(from) > 32 * 86_400_000) {
     return { status: "needs_input" as const, message: "Provide explicit-offset from/to timestamps covering at most 32 elapsed days, and optionally view mine or team. Actor, tenant and host selectors are not accepted." };
   }
-  const result = await withCalendarScope(identity, deps, async ({ tenantId, actorId, signal, wait }) => {
+  const result = await withCalendarScope<CalendarAgendaAvailable>(identity, deps, async ({ tenantId, actorId, signal, wait }) => {
     const response = await wait(() => deps.caller.rpc("list_team_bookings", { _from: from, _to: to, _host_ids: view === "mine" ? [actorId] : null, _tenant_id: tenantId, _booking_id: null })
       .select(AGENDA_COLUMNS.join(",")).neq("booking_kind", "class_seat").gt("end_at", from)
       .order("start_at", { ascending: true }).order("id", { ascending: true }).limit(51).abortSignal(signal));

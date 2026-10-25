@@ -19,9 +19,11 @@
 -- same whitespace rule as a message body and must be 2..200 characters, otherwise
 -- {"ok":false,"code":"invalid"}. The limit is clamped to 1..20. Newest first, (created_at, id).
 -- Each result carries the message and conversation ids, a conversation label (the channel name, or
--- for a DM the other person's display name, both exactly as team_hub_list_conversations derives
--- them), the thread root (the parent message id for a reply, null for a top-level message), the
--- author's display name, the time, and a snippet of at most 240 characters around the first match.
+-- for a DM the other person's display name), the thread root (the parent message id for a reply,
+-- null for a top-level message), the author's display name, the time, and a snippet of at most 240
+-- characters around the first match. A person is named only while they hold an active seat in the
+-- workspace; anyone else is "Former teammate", the name every Team Hub surface gives them
+-- (collaboration contract: an author no longer on the roster), never their current profile name.
 -- Never an email, a storage path or a file name. Every grant is explicit: Supabase's default
 -- privileges hand new functions to anon and authenticated, and this file revokes them.
 -- Forward-only and replay-safe: a second apply changes nothing.
@@ -58,11 +60,15 @@ BEGIN
  pattern:='%'||replace(replace(replace(q,'\','\\'),'%','\%'),'_','\_')||'%';
  SELECT coalesce(jsonb_agg(jsonb_build_object('message_id',h.id,'conversation_id',h.channel_id,
    'conversation_kind',h.kind,
-   -- The label team_hub_list_conversations gives: the channel name, or for a DM the other person
-   -- named from the pair key, so it still names them after their seat ends. Never an email.
-   'conversation_label',CASE WHEN h.kind='dm' THEN coalesce(nullif(btrim(dp.full_name),''),'Teammate') ELSE h.name END,
+   -- The channel name, or for a DM the other person from the pair key. A person is named only while
+   -- they hold an active seat here, as team_hub_list_conversations' people list does; otherwise
+   -- 'Former teammate', never the name their profile carries now. Never an email.
+   'conversation_label',CASE WHEN h.kind<>'dm' THEN h.name
+    WHEN public._team_hub_is_active(p_expected_tenant,h.dm_user_id) THEN coalesce(nullif(btrim(dp.full_name),''),'Teammate')
+    ELSE 'Former teammate' END,
    'thread_root_id',h.parent_message_id,
-   'author_name',coalesce(nullif(btrim(ap.full_name),''),'Teammate'),
+   'author_name',CASE WHEN public._team_hub_is_active(p_expected_tenant,h.author_user_id)
+    THEN coalesce(nullif(btrim(ap.full_name),''),'Teammate') ELSE 'Former teammate' END,
    'created_at',h.created_at,
    'snippet',public._team_hub_search_snippet(h.body,q))
    ORDER BY h.created_at DESC, h.id DESC),'[]'::jsonb) INTO results

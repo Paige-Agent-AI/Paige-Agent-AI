@@ -87,16 +87,64 @@ describe("a reply is posted only from its approved card, never from Live", () =>
 });
 
 describe("offer and degraded mode", () => {
-  it("offers the tools on the tenant tier only, never a client seat or the customer portal", () => {
+  it("offers the tools on the tenant tier of a canonical SOLO account only, never a client seat or the customer portal", () => {
     for (const symbol of ["TEAM_HUB_READ_TOOLS", "TEAM_HUB_POST_TOOLS"]) {
       const lines = CHAT.split("\n").filter((l) => l.includes(`toolDefs.push(...${symbol}`));
       assert.equal(lines.length, 1, symbol);
-      assert.match(lines[0], /^\s*if \(callerTier === "tenant" && !scopedClientId && !customerPortal\) toolDefs\.push/);
+      assert.match(lines[0], /^\s*if \(callerTier === "tenant" && calendarBookingAccountShape === "solo" && !scopedClientId && !customerPortal\) toolDefs\.push/);
     }
   });
   it("admits the three reads to conversational mode and withholds the reply", () => {
     const line = CHAT.split("\n").find((l) => l.startsWith("const CONVERSATIONAL_ADMITTED_READ_TOOLS"))!;
     for (const tool of ["team_hub_conversations", "team_hub_read_conversation", "team_hub_search"]) assert.ok(line.includes(`"${tool}"`), tool);
     assert.ok(!line.includes("team_hub_post_reply"));
+  });
+});
+
+describe("Team Hub text is never traced as text (contract section 5; a trace is readable workspace-wide)", () => {
+  const READ = between("} else if (TEAM_HUB_READ_TOOL_NAMES.has(tc.function.name)) {", "} else if (tc.function.name === TEAM_HUB_POST_TOOL_NAME) {");
+  const POST = between("} else if (tc.function.name === TEAM_HUB_POST_TOOL_NAME) {", "} else {\n          toolResults.push({ tool_call_id: tc.id, role: \"tool\", content: JSON.stringify({ success: false, error: `Unknown tool:");
+  it("a read that carries content switches the turn to metadata-only tracing before the content is pushed", () => {
+    const set = READ.indexOf('if (read.carriesContent) { traceCtx.content_policy = "metadata_only"; teamHubContentCarried = true; }');
+    const read = READ.indexOf("const read = await TEAM_HUB_READERS[");
+    const push = READ.indexOf("toolResults.push({ tool_call_id: tc.id, role: \"tool\", content: JSON.stringify(hubEnvelope) });");
+    assert.ok(read >= 0 && set > read && push > set);
+  });
+  it("the approved reply switches it before the definer is called", () => {
+    const set = POST.indexOf('traceCtx.content_policy = "metadata_only";');
+    assert.ok(set >= 0 && POST.indexOf("await postTeamHubReply(") > set);
+  });
+  it("a person who has used Team Hub is traced as metadata only from the start of every turn, before any model call", () => {
+    const stamp = CHAT.indexOf("    traceCtx.tenant_id = personaCtx.tenant_id;\n");
+    const check = CHAT.indexOf("if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id], TEAM_HUB_CHAT_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME).catch(() => true)) {\n      traceCtx.content_policy = \"metadata_only\";", stamp);
+    assert.ok(stamp >= 0 && check > stamp && check - stamp < 1200, "the check follows the identity stamp directly");
+    for (const site of ['traceFor("thread-summary-fold")', 'traceFor("turn-classify")', 'trace: traceFor("chat")', 'traceFor("chat-tool-loop")']) {
+      const at = CHAT.indexOf(site);
+      assert.ok(at > check, `${site} comes after the check`);
+    }
+  });
+  it("the read receipt's run id names the person, so two people never share one", () => {
+    assert.match(READ, /runId: await stableRunId\(\[tc\.function\.name, hubTenant, user\.id, `\$\{payloadThreadId \?\? ""\}:\$\{tc\.id\}`\]\)/);
+    assert.match(POST, /runId: await stableRunId\(\[tc\.function\.name, hubTenant, user\.id, `\$\{payloadThreadId \?\? ""\}:\$\{tc\.id\}`\]\)/);
+  });
+});
+
+describe("once Team Hub text is in a request, the web and Knowledge tools never reach dispatch", () => {
+  it("the flag lives outside the dispatcher, starts false and is only ever set true by a content-carrying read", () => {
+    const decl = CHAT.indexOf("      let teamHubContentCarried = false;\n      const executeToolCalls = async (");
+    assert.ok(decl >= 0);
+    const writes = [...CHAT.matchAll(/teamHubContentCarried = ([a-z]+)/g)].map((m) => m[1]);
+    assert.deepEqual(writes, ["false", "true"]);
+  });
+  it("the one dispatch call site filters them out and answers each with the plain refusal", () => {
+    const sites = [...CHAT.matchAll(/await executeToolCalls\(/g)];
+    assert.equal(sites.length, 1, "one executeToolCalls call site");
+    const at = sites[0].index!;
+    const before = CHAT.slice(at - 700, at);
+    assert.match(before, /const teamHubWithheld = teamHubContentCarried \? roundCalls\.filter\(\(tc: any\) => TEAM_HUB_EGRESS_WITHHELD_TOOLS\.has\(String\(tc\?\.function\?\.name \?\? ""\)\)\) : \[\];/);
+    const call = CHAT.slice(at, CHAT.indexOf("\n", at));
+    assert.match(call, /^await executeToolCalls\(roundCalls\.filter\(\(tc: any\) => !teamHubWithheld\.includes\(tc\)\), queuedApprovals, toolStepHooks\);/);
+    const after = CHAT.slice(at, at + 600);
+    assert.match(after, /for \(const tc of teamHubWithheld\) \{\s*executed\.push\(tc\);\s*toolResults\.push\(\{ tool_call_id: tc\.id, role: "tool", content: JSON\.stringify\(TEAM_HUB_EGRESS_REFUSAL\) \}\);/);
   });
 });

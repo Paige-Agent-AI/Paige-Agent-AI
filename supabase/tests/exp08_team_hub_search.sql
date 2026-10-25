@@ -513,6 +513,34 @@ SELECT pg_temp.check(pg_temp.same(pg_temp.ids(public.team_hub_search(:'ta',:'q')
 \echo 'PASS: leaving, being removed by a seat ending, and archiving each stop a private message being found'
 
 ---------------------------------------------------------------------------------------------
+-- 6b. A person whose seat has ended is "Former teammate", as author and as a DM label, never the
+--     name their profile carries now (collaboration contract: an author no longer on the roster).
+---------------------------------------------------------------------------------------------
+SELECT public.team_hub_open_dm(:'ta',:'u5')->>'channel_id' AS dm15 \gset
+SELECT pg_temp.act(:'u5');
+SELECT public.team_hub_post_message(:'ta',:'dm15','The quokka invoice is paid',gen_random_uuid())#>>'{message,id}' AS m_qk \gset
+SELECT pg_temp.act(:'u1');
+SELECT public.team_hub_search(:'ta','quokka') AS rq_seated \gset
+RESET ROLE;
+UPDATE public.tenant_members SET status='suspended' WHERE tenant_id=:'ta' AND user_id=:'u5';
+UPDATE public.profiles SET full_name='Renamed Elsewhere' WHERE user_id=:'u5';
+SET ROLE authenticated;
+SELECT public.team_hub_search(:'ta','quokka') AS rq_former \gset
+SELECT pg_temp.check(pg_temp.ids(:'rq_seated'::jsonb)=ARRAY[:'m_qk']::uuid[]
+  AND pg_temp.hit(:'rq_seated',:'m_qk')->>'author_name'='Second Member' AND pg_temp.hit(:'rq_seated',:'m_qk')->>'conversation_label'='Second Member',
+  'former: while seated, the author and the DM are named with their display name'),
+ pg_temp.check(pg_temp.ids(:'rq_former'::jsonb)=ARRAY[:'m_qk']::uuid[]
+  AND pg_temp.hit(:'rq_former',:'m_qk')->>'author_name'='Former teammate' AND pg_temp.hit(:'rq_former',:'m_qk')->>'conversation_label'='Former teammate',
+  'former: once their seat ends, the author and the DM are "Former teammate", never their current profile name'),
+ pg_temp.check(strpos(:'rq_former','Renamed Elsewhere')=0 AND strpos(:'rq_former','Second Member')=0,
+  'former: the ended seat''s name appears nowhere in the result');
+RESET ROLE;
+UPDATE public.tenant_members SET status='active' WHERE tenant_id=:'ta' AND user_id=:'u5';
+UPDATE public.profiles SET full_name='Second Member' WHERE user_id=:'u5';
+SET ROLE authenticated;
+\echo 'PASS: a person whose seat has ended is named Former teammate, as author and as a DM label'
+
+---------------------------------------------------------------------------------------------
 -- 7. Deleted messages are excluded, and so is a reply whose thread root is deleted.
 ---------------------------------------------------------------------------------------------
 SELECT public.team_hub_post_message(:'ta',:'general','Root about the zebra crossing',gen_random_uuid())#>>'{message,id}' AS m_root \gset

@@ -59,7 +59,7 @@ import { AGREEMENT_TOOLS } from '../_shared/paige-spine/domains/agreement.ts';
 import { PLANNING_CLIENT_SHARE_TOOLS } from '../_shared/paige-spine/domains/planning_writes.ts';
 // EXP08 Team Hub increment 4: three caller-JWT reads and one approved reply (contract docs/delivery/exp08-team-hub-increment4-paige-contract.md).
 import { TEAM_HUB_READ_TOOLS, TEAM_HUB_POST_TOOLS, TEAM_HUB_READ_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME, TEAM_HUB_CHAT_TOOL_NAMES } from '../_shared/paige-spine/domains/team_hub.ts';
-import { TEAM_HUB_READERS, postTeamHubReply, teamHubPostConfirmSummary, teamHubSessionTainted, COULD_NOT_READ as TEAM_HUB_COULD_NOT_READ } from '../_shared/team-hub/chat.ts';
+import { TEAM_HUB_READERS, postTeamHubReply, teamHubPostConfirmSummary, teamHubSessionTainted, COULD_NOT_READ as TEAM_HUB_COULD_NOT_READ, TEAM_HUB_EGRESS_WITHHELD_TOOLS, TEAM_HUB_EGRESS_REFUSAL } from '../_shared/team-hub/chat.ts';
 import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/planning/scoped-write.ts';
 // E09 Slice M: read and change the customer portal menu (update is high; owner/admin only).
 import { PORTAL_MENU_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
@@ -3419,6 +3419,14 @@ JSON:`;
     // Identity is now known — stamp the turn's trace context (see `traceCtx` at the top of the
     // handler). Every `gatewayCompat` site BELOW this line writes an attributed row from here on.
     traceCtx.tenant_id = personaCtx.tenant_id;
+    // EXP08 Team Hub increment 4 (contract section 5: nothing from Team Hub is stored). A trace row's
+    // excerpts are readable by every member of the workspace, and this turn's messages are the
+    // browser's, so they may carry PAIGE's earlier answers about a DM or a private channel. A person
+    // who has used Team Hub through PAIGE, in any workspace, is traced as metadata only: no prompt or
+    // answer text. Unknown is treated as yes. The Team Hub branches below set the same policy too.
+    if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id], TEAM_HUB_CHAT_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME).catch(() => true)) {
+      traceCtx.content_policy = "metadata_only";
+    }
 
     // === L8 MEMORY FABRIC — Owner-Ops cross-session SEMANTIC memory (§7/§8/§26/§34) ===
     // STILL DEFERRED to slice 4b (cross-chat memory) — NOT wired here. Slice 4a.3 delivered the
@@ -9004,11 +9012,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_AGENDA_READ_TOOLS);
     // EXP08 Team Hub increment 4: read what the asker can see in Team Hub, and draft a reply they approve.
-    // Tenant tier only, never on a client seat or the customer portal. The offer is not the authority:
+    // Tenant tier, canonical SOLO account only (Team Hub is a SOLO surface, as the Calendar and Task reads
+    // beside it), never on a client seat or the customer portal. The offer is not the authority:
     // every team_hub_* definer re-proves the active seat, canonical SOLO and visibility under the
     // asker's JWT, so any other tier or workspace is refused by the database.
-    if (callerTier === "tenant" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_READ_TOOLS);
-    if (callerTier === "tenant" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_POST_TOOLS as any);
+    if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_READ_TOOLS);
+    if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_POST_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     if (weeklyCommitmentStatusToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS);
     if (weeklyCommitmentDraftToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_DRAFT_TOOLS);
@@ -11447,6 +11456,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // (including the terminal Unknown-tool branch). Approvals accumulate into
       // the shared queuedApprovals passed in from the loop.
       let documentCallOrdinal = 0;
+      // EXP08 Team Hub increment 4: set by the Team Hub read dispatch once Team Hub text has been handed
+      // to the model in this request. From then on the round loop below withholds the web and Knowledge
+      // tools (TEAM_HUB_EGRESS_WITHHELD_TOOLS) before dispatch, so text read from Team Hub cannot carry a
+      // teammate's private words out of Paige or into the workspace's Knowledge.
+      let teamHubContentCarried = false;
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks) => {
         // Provider-authored tool names cannot cross the customer audience boundary.
         // Future customer actions must be explicitly admitted by their native domain contract.
@@ -18683,13 +18697,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           let hubArgs: unknown = null;
           try { hubArgs = JSON.parse(tc.function.arguments || "{}"); } catch { hubArgs = null; }
           const read = await TEAM_HUB_READERS[tc.function.name]({ tenantId: hubTenant, userId: user.id }, supabaseClient, hubArgs);
+          // Before any of it reaches the model: no later call in this request traces prompt or answer
+          // text (a trace is readable by every member of the workspace), and the web and Knowledge tools
+          // are withheld for the rest of the request.
+          if (read.carriesContent) { traceCtx.content_policy = "metadata_only"; teamHubContentCarried = true; }
           let hubEnvelope = read.envelope;
           if (hubTenant && (read.carriesContent || read.envelope.status === "available")) {
             let recorded = false;
             try {
               recorded = await recordCapabilityRun(supabase, {
                 tenantId: hubTenant, actorId: user.id, capabilityKey: tc.function.name, outcome: "capability_succeeded",
-                runId: await stableRunId([tc.function.name, hubTenant, `${payloadThreadId ?? ""}:${tc.id}`]),
+                runId: await stableRunId([tc.function.name, hubTenant, user.id, `${payloadThreadId ?? ""}:${tc.id}`]),
                 // Never the query, a conversation name or any message text.
                 detail: { channel: "paige_chat", tool: tc.function.name, read_only: true },
               });
@@ -18707,6 +18725,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // token can be spent. That token, through teamHubPostRequestId, is the request id, so a
           // replayed approval posts at most once. Caller JWT: auth.uid() is the author.
           const hubTenant = callerTier === "tenant" && !scopedClientId && !customerPortal ? personaCtx?.tenant_id ?? null : null;
+          // The reply's text may restate a private conversation: never traced as text from here on.
+          traceCtx.content_policy = "metadata_only";
           const hubToken = approvalChannel.get(tc.id) === "operator_card"
             ? [...approvalSpend].find(([, callId]) => callId === tc.id)?.[0] ?? null : null;
           let hubArgs: unknown = null;
@@ -18724,6 +18744,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           // Every outcome is recorded, a refusal included; never the text or the conversation.
           await recordCapabilityRun(supabase, { tenantId: hubTenant, actorId: user.id, capabilityKey: tc.function.name,
+            runId: await stableRunId([tc.function.name, hubTenant, user.id, `${payloadThreadId ?? ""}:${tc.id}`]),
             outcome: posted.success ? "capability_succeeded" : "outcome_unknown" in posted ? "capability_outcome_unknown" : "capability_refused",
             detail: { channel: "paige_chat", tool: tc.function.name } });
           if (!posted.success && "outcome_unknown" in posted) requestExecutionState.needsReview = true;
@@ -19831,7 +19852,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // wire; `finishedSteps` keeps each call's describeStep answer for the rail label below.
             const finishedSteps = new Map<any, ReturnType<typeof describeStep>>();
             const toolStepHooks = createToolStepHooks(controller, round, continuationsUsed, finishedSteps);
-            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls, queuedApprovals, toolStepHooks);
+            // EXP08 Team Hub increment 4: once Team Hub text is in this request, the web and Knowledge
+            // tools never reach dispatch; each gets its one plain refusal instead (contract section 5).
+            const roundCalls = askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls;
+            const teamHubWithheld = teamHubContentCarried ? roundCalls.filter((tc: any) => TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(String(tc?.function?.name ?? ""))) : [];
+            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(roundCalls.filter((tc: any) => !teamHubWithheld.includes(tc)), queuedApprovals, toolStepHooks);
+            for (const tc of teamHubWithheld) {
+              executed.push(tc);
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(TEAM_HUB_EGRESS_REFUSAL) });
+            }
             // An approved call its card will report as "couldn't confirm" tells the model the same,
             // before the model reads it, so Paige never says "that failed" beside a card that says
             // check first (approval-outcome.ts).

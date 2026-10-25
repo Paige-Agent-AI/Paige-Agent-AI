@@ -6,7 +6,7 @@ SET LOCAL lock_timeout='3s';
 
 CREATE OR REPLACE FUNCTION private.e04_prepared_field_input(
  _source jsonb,_signer uuid,_at timestamptz,_proposed jsonb
-) RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE answer jsonb; field jsonb; value jsonb; field_id text; kind text; code integer;
  seen text[]:='{}'::text[]; normalized jsonb:='[]'::jsonb; own_ids text[]:='{}'::text[];
  signed_at text; result jsonb; trim_chars text:=''; controls text:=''; text_controls text;

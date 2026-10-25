@@ -123,11 +123,14 @@ build553f32f7cb7ea5297338b69692d9eb3c9754dfdb-mvmy4p4w/customerUpdate:null.
 
 Original automatic Edge40136916896/job121000269907SUCCESS with actual86 tests/OK
 in4.376s. Selected/retired sets0, so every provider preflight/deploy/source-readback/
-tag step correctlySKIPPED. Real source-size recovery and original full
-workflow_dispatch certification are PROOF OWED. Actual edge-live remainsd361;
-old40120140274 remainsFAILED. Own native/runtime redeployment N/A. Nothing here
-turns prior runtime531/source2765 into new customer proof or activates a provider.
-Local execution remains unavailable; Word last-verified53bc remains unpublished.
+tag step correctlySKIPPED. That dated no-op and edge-lived361 are retained.
+Later original recovery40137959302/job121003416943/source216768d8e1eccbaacc39717cd1858bae6087449f
+is independently SUCCESS: actual raw logs show API-first Chat→local_requested,
+agreement→API, complete source/config PASS for both, then guarded edge-live216.
+Original40120140274 remainsFAILED. Own native migration N/A; later Chat532 and
+signing41 are dated recovery-source evidence, not new customer/provider activation.
+Local tools have recovered. Word2785 remains a separate open draft; customer
+file/model reading and physical-phone proof remain unverified.
 Functional source/recovery decisions tested; visual unchanged; experiential real
 customer/model/upload/history/reload/isolation/revocation/phone/full42/seven/Teach
 and one complete founder acceptance still owed. No catalogue/algorithm promotion.

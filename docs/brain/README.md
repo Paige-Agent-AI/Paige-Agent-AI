@@ -43,7 +43,7 @@ owners. CAP018–024 and ALG01/02/04/12/13 maturity and one integrated Founder
 Acceptance remain unchanged; no customer version/announcement or recursive
 product-release credit for this mechanical closeout.
 
-## EXP09 original deployment packaging — October24 source published; provider proof owed
+## EXP09 original deployment packaging — October24/25 source and bounded recovery verified
 
 Original2776 reviewed3bb50528ce320744cec5b586dc17775522901200/LOWER5640094616
 +5640211505 passed all10 applicable checks/schema-free PreviewSKIPPED/two statuses,
@@ -57,15 +57,18 @@ retain exact identities.
 
 Automatic40136916896/121000269907 actually ran86 Python tests/OK, but selected
 and retired0: all provider/deploy/source-readback/tag steps correctlySKIPPED.
-This proves workflow/source publication, not real API413/local-build recovery.
-Existing workflow_dispatch plus original complete source/config verification and
-guarded tag reconciliation remain PROOF OWED; edge-live staysd361 and the original
-40120140274 failure remainsFAILED. No raw provider error, secret or unknown outcome
-authorizes replay; configured/discovered import maps retain the existing hold.
+This initial run proves workflow/source publication, not actual provider recovery.
+The later [original recovery40137959302](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/40137959302),
+job121003416943/source216768d8e1eccbaacc39717cd1858bae6087449f, is independently
+SUCCESS: raw logs show API-first Chat→local_requested, agreement→API, complete
+source/config PASS for both, then guarded edge-live216. Earlier d361/no-op and
+40120140274FAILED remain historical evidence. No raw provider error, secret or
+unknown outcome authorizes replay; import maps retain the existing hold.
 No new provider client, credentials, approval, runtime, job engine or activation.
-Own migration/runtime-function redeployment N/A; old2765 runtime531 proof stays
-separate. Local Word/execution/customer browser, actual upload/model/return/revoke/
-phone, all42/seven/Teach and Founder Acceptance remain unfinished. UI, catalogue
+Own migration N/A; original2765 runtime531 and later recovery runtime532 are dated
+source proof, not actual customer file reading. Word2785 is a separate open draft;
+actual file/model/return/revoke/phone, all42/seven/Teach and Founder Acceptance
+remain unfinished. UI, catalogue
 and algorithm maturity unchanged; no customer version/publication or recursive
 feature credit for this closeout.
 

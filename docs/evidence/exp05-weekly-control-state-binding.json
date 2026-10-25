@@ -92,5 +92,54 @@
       "retainedFailures": "Original full-review RED from omitted native null; first new native driver used two raw SQL columns instead of one JSON envelope; next run applied the projection before the incumbent original-body performance invariant. Corrected only driver envelope and dependency sequence; all assertions, original metadata/source guards, timeouts, permissions and fixtures retained.",
       "cleanup": "Original result artifact records fixture_service_role.restoration_verified=true; final transcript confirms original role posture restored. Original finally stops the disposable cluster and drops its database. No production/provider/customer effect."
     }
+  },
+  "nativeOwnerObservedControl": {
+    "parent": "ce133a8bd08746205d5bad28418e9ec5d0f9d2f6",
+    "defect": "Original human-owner controller coerced both missing reviewed and fresh control cutoffs to null. Native CAS remained authoritative; no unauthorized production execution is claimed.",
+    "repair": "Retain exact observed cutoff; missing review or fresh evidence returns original unavailable before authorization. Saved null and raw microseconds remain exact. No writer/RPC/permission/activation change.",
+    "red": {
+      "cases": 55,
+      "passed": 53,
+      "failed": 2,
+      "log": "private work/weekly-owner-observed-red.log"
+    },
+    "green": {
+      "files": 11,
+      "cases": 271,
+      "failed": 0,
+      "log": "private work/weekly-owner-observed-full-green.log"
+    },
+    "static": {
+      "strictES2020Diagnostics": 0,
+      "eslint": 0,
+      "impeccableNamedSourceFindings": 0
+    },
+    "sourceSha256": {
+      "src/solo/weekly/weekly-owner-read.ts": "7d5678ffe83e4bedfdc466207fa19872fc71b4cb9125cd5733862c853e01ecd7",
+      "src/solo/weekly/weekly-owner-control.test.ts": "c568dcb4efdf2c29d343a61c15d3f093a8c4cfc6df21ce0589d925c525a7098b"
+    },
+    "dependency": "Original2824 explicit-null getter14130105 must release/read back first. No new migration/native history update.",
+    "capabilityStatus": "Original weekly status/draft and eleven Operations catalogue limitations unchanged; no conversational future-control admission, Live, recurrence, provider or algorithm maturity promotion.",
+    "uiEvidence": "docs/evidence/ui-delivery/exp05-weekly-observed-control.md",
+    "proofBoundary": "Source and protected recording ports only; existing browser/input hold and genuine original owner approval/audit/cohort/record/receipt/reload/Live/full ten/E5/founder proof remain owed.",
+    "nativeIntegrationCorrection": {
+      "failedHead": "e463e507a8dc690f5189ac2d3988175f3cc23988",
+      "failedJob": 121140863240,
+      "finding": "Hosted full native proof reached the owner authorization consumer before applying parent14130105. Its expected saved response was correctly unavailable because the historical getter omitted the initial control cutoff. Unit and private integration proofs did not waive that failure.",
+      "repair": "Apply and verify the same original guarded projection after historical getter/body/performance invariants and before the dependent owner consumer. Preserve original migration replay, metadata and source-drift assertions, permissions, thresholds, deadlines and cleanup.",
+      "negative": "Temporarily restore the actual captured legacy getter only inside the original disposable database. Actual read remains available, its unknown-cutoff review cannot dispatch authorization, and original definition/audit/event state stays exact. Restore and hash-check the projected getter in finally before original positive cases.",
+      "nativeProof": {
+        "status": "PASS",
+        "cases": 125,
+        "originalCasesRetained": 124,
+        "newCases": 1,
+        "reportSha256": "a3f631beae41ea6002c0977cc5c366ecc3fb235a67684f54f02b744f2fe26f88",
+        "roleRestorationVerified": true,
+        "providerEffects": 0,
+        "newAuthorizationEvents": 0,
+        "log": "private work/weekly-owner-order-native-full.log"
+      },
+      "scope": "Original native proof driver/module and owning evidence only; production controller, SQL, writer, trigger posture and authority remain unchanged from reviewed e463. New exact-head hosted CI is required; ordinary account/Live/full Experience acceptance remains unverified."
+    }
   }
 }

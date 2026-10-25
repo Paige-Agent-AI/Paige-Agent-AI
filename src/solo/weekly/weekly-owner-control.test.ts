@@ -48,6 +48,8 @@ function configurationFixture() {
 function authorizationFixture(ready = false) {
   const f = fixture(), original = f.caller.rpc.getMockImplementation()!;
   f.saved.schedule_status = "requested";
+  // This is an observed canonical null, not a missing transport field.
+  f.saved.future_control_at = null;
   f.caller.rpc.mockImplementation(async (name, args) => {
     if (name !== "control_weekly_commitment_check") return original(name, args);
     f.effects.push(args); f.saved.schedule_status = "scheduled";
@@ -61,6 +63,23 @@ function authorizationFixture(ready = false) {
   return f;
 }
 describe("exact native weekly authorization", () => {
+  it("missing reviewed cutoff stays unavailable without attempting authorization", async () => {
+    const f = authorizationFixture(), review = structuredClone(f.saved);
+    delete review.future_control_at;
+    expect((await f.control(review, "authorize")).status).toBe("unavailable");
+    expect(f.effects).toEqual([]);
+  });
+  it("a fresh owner read with unknown cutoff cannot replace the reviewed saved null", async () => {
+    const f = authorizationFixture(), review = structuredClone(f.saved), original = f.caller.rpc.getMockImplementation()!;
+    f.caller.rpc.mockImplementation(async (name, args) => {
+      if (name !== "get_weekly_commitment_checks") return original(name, args);
+      const data = f.dto();
+      Reflect.deleteProperty(data.checks[0].schedule, "future_control_at");
+      return { data, error: null };
+    });
+    expect((await f.control(review, "authorize")).status).toBe("unavailable");
+    expect(f.effects).toEqual([]);
+  });
   it.each([false, true])("saves exact authorization with real readiness %s", async ready => {
     const f = authorizationFixture(ready), reviewed = structuredClone(f.saved);
     expect((await f.control(reviewed, "authorize")).status).toBe("saved");

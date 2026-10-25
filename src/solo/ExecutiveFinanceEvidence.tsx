@@ -6,17 +6,17 @@ import { formatReviewInstant } from './executive-review';
 export function ExecutiveFinanceEvidence({ evidence, timezone, accountHeadingLevel = 4 }: { evidence: FinanceReviewEvidence; timezone: string; accountHeadingLevel?: 3 | 4 }) {
   const AccountHeading = accountHeadingLevel === 3 ? 'h3' : 'h4';
   return <section className="exec-finance-evidence" aria-label="Financial source snapshots">
-    {!evidence.sources.length ? <p className="exec-note">No verified production financial source was returned. Financial figures are unavailable; this does not mean a zero balance. Review source setup in Finance.</p>
-      : <p className="exec-note">Showing {evidence.sources.length} of {evidence.eligible_sources} eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.</p>}
+    {!evidence.sources.length ? <p className="exec-note">Financial figures are unavailable; this does not mean a zero balance. Review source setup in Finance.</p>
+      : <p className="exec-note">Showing {evidence.sources.length} of {evidence.eligible_sources} eligible sources. Companies, accounts and currencies stay separate; credit is not cash.</p>}
     {evidence.sources.map(source => <details className="exec-provenance exec-finance-source" key={source.binding_id}>
       <summary>{source.company_label}<small>{source.provider === 'plaid' ? 'Plaid' : 'QuickBooks'} · {source.state === 'available' ? 'Recorded source facts' : 'Source snapshot unavailable'}</small></summary>
-      {source.state === 'unavailable' ? <p className="exec-note">The verified source has no readable snapshot for this review. No amount is inferred. Open Finance to inspect the source.</p> : <>
+      {source.state === 'unavailable' ? <p className="exec-note">Source snapshot unavailable. No amount is inferred. Inspect the source in Finance.</p> : <>
         <p className="exec-note">{source.coverage === 'complete' ? 'Complete source snapshot' : 'Partial source snapshot'} · Showing {source.accounts.length} of {source.accounts_count} source accounts. Institution freshness is unverified.</p>
         <dl>
           <div><dt>Source observed</dt><dd>{formatReviewInstant(source.source_observed_at, timezone, true)} · {timezone}</dd></div>
           <div><dt>Synchronized</dt><dd>{formatReviewInstant(source.synchronized_at, timezone, true)} · {timezone}</dd></div>
         </dl>
-        {!source.accounts.length && <p className="exec-note">The source returned no account figures. No balance is inferred.</p>}
+        {!source.accounts.length && <p className="exec-note">No account figures returned; no balance is inferred.</p>}
         {source.accounts.map(account => <section className="exec-finance-account" key={account.native_id} aria-label={account.label}>
           <AccountHeading>{account.label}</AccountHeading>{account.product && <p className="exec-note">Source product: {account.product}</p>}
           <dl className="exec-figures">
@@ -33,7 +33,7 @@ export function ExecutiveFinanceEvidence({ evidence, timezone, accountHeadingLev
           <div><dt>Source observation</dt><dd>{source.observation_id}</dd></div>
           <div><dt>Source receipt reference</dt><dd>{source.receipt_run_id}</dd></div>
         </dl>
-        <p className="exec-note">These are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.</p>
+        <p className="exec-note">Source observations are not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.</p>
       </>}
     </details>)}
   </section>;

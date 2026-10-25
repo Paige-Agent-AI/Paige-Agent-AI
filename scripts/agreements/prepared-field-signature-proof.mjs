@@ -22,7 +22,7 @@ export async function provePreparedFieldSignature({sql,read,q,tenant,context,acc
  // Existing production service role already has private-schema USAGE (read-only metadata confirmed); complete the older disposable fixture to the same contract.
  if(!process.argv.includes('--prepared-field-signature-baseline')){
   sql('GRANT USAGE ON SCHEMA private TO service_role;');
-  const migration=read('supabase/migrations/20271114220004_e04_prepared_field_signature.sql');
+  const migration=read('supabase/migrations/20271114230404_e04_prepared_field_signature.sql');
   const legacy='public._record_agreement_signature(text,integer,text,text,text,text,boolean,boolean,text,integer,text,inet,text)';
   const oldMetadata=()=>sql(`SELECT jsonb_agg(jsonb_build_object('id',oid,'body',md5(prosrc),'owner',proowner,'acl',proacl::text,'config',proconfig,'definer',prosecdef) ORDER BY oid)
    FROM pg_proc WHERE oid IN ('${legacy}'::regprocedure,'public._paige_preparation_legacy_token_hold()'::regprocedure,

@@ -253,7 +253,8 @@ deno test --allow-import --node-modules-dir=none --allow-read="$REPO/supabase/fu
 # Check the original deployed door as well as its private history projection.
 deno check --allow-import --node-modules-dir=none \
   "$REPO/supabase/functions/_shared/agreements/prepared-signature-outcome.ts" \
-  "$REPO/supabase/functions/agreement-send/index.ts"
+  "$REPO/supabase/functions/agreement-send/index.ts" \
+  "$REPO/supabase/functions/sign-agreement/index.ts"
 # Runtime-created imports in the hostile source tests do not type-check the
 # imported module. Check the actual credential bridge directly as well.
 deno check --allow-import --node-modules-dir=none \
@@ -277,7 +278,7 @@ node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofr
 # original gate above remains intact. No hosted Storage or customer proof.
 deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
   --deny-net --deny-write --deny-ffi --deny-sys \
-  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work --prepared-status --prepared-credentials --prepared-message-origin --prepared-signature-completion
+  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations --commercial-document-preparations --signature-record --accepted-commercial --effective-commercial --prepared-seal-source --recipient-fields --decline-act --prepared-confirmation --prepared-work --prepared-status --prepared-credentials --prepared-message-origin --prepared-signature-completion --prepared-field-signatures
 
 # Same native cluster, original generic/PPA/recipient/mailbox/unknown-outcome
 # Communications cases against the four actual agreement-extension functions.

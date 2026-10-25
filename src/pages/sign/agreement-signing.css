@@ -352,7 +352,7 @@
 /* Original signing result: keep completion recovery and copy access in context. */
 .ags-result-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:20px; }
 .ags-result-actions .ags-decline { min-height:44px; }
-.ags-seal .ags-result-warning { margin-top:12px; padding:10px 12px; border-left:2px solid var(--bad); border-radius:8px; background:var(--bad-tint); color:var(--bad); font-size:14px; }
+.ags-seal .ags-result-warning { margin-top:12px; padding:10px 12px; border:1px solid var(--bad); border-radius:8px; background:var(--bad-tint); color:var(--bad); font-size:14px; }
 @media (max-width:520px) {
   .ags-result-actions { flex-direction:column; align-items:stretch; }
   .ags-result-actions button { width:100%; }

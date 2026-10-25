@@ -44,3 +44,15 @@ RELEASE_RECOVERY: position=forward-fix; reference=original Work intent/consumed 
 ALG-01: bounded original identity/history reconciliation only, PARTIAL. ALG-12: private read failure/changed authority/uncertainty signals, PARTIAL; no new detection effectiveness claim. ALG-02: conversion/onboarding/completion still incomplete. ALG-13: useful source-backed follow-up recommendations remain UNVERIFIED. Original register/catalogue/maturity/activation are unchanged. All O1–O12, consultant-first SOLO scope and original release evidence remain intact.
 
 Current October25 receiving refresh: 3a8d6960601bf140397a9baf671f1c493b86b363/tree70ceac9886c4ff7e375a6459e75257f7c57f7102 composes actual mainf41f3a79. Six owning runtime/native/proof blobs exactly equal frozen70a1; only the existing gate adds a direct check of actual agreement-send and outcome against the pinned SDK. Fresh116cases/21steps/directstrict0; original35native results remain historical source-identical proof. All prior JSON roots/history retained; own native14170004 and new exact CI/Preview/customer proof remain owed. Original native14160004 is now genuinely applied ONCE/9 and read back; no activation or full Experience acceptance.
+
+## Actual production release — October25
+
+This dated section supersedes only earlier source-stage NOT_APPLIED/NOT_RELEASED statements; the original proof history and customer-verification limits remain intact.
+
+Reviewed `72ccaa695a54695452eb8b2c2e6b562426cde9c4`; sequential AUTHOR-REVIEW / LOWER ASSURANCE6399148139; all13 exact checks/two webSUCCESS/0threads. Actual merge`fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2`, tree`a76d777ecb1fb3251a68ec19b3f4140629fa52e5`. Native`20271114170004` genuinely ONCE/6; normal run40204399496/job121202262104 Push/PERSISTED/record-commit SUCCESS, exact source/ABI/owner/default/ACL verified.
+
+Normal Edge40204399616/job121202133288 SUCCESS, actual agreement-send v22/JWTtrue and34 source files exact. Certificate12602513494 SHA256c38a551309aab22c2453a0c968cf27290a323d247abe6315eddadc3145af1ae0.
+
+Production `dpl_PAPAXLkKNdpvVBWZ9xs3rw7UL1DK` READY/exact merge; both canonical public200/build`fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2-mvny84nd`/customerUpdate:null at2026-10-25T14:58:03Z. [Actual release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2830#issuecomment-6399204232). Returning request history is only prepared or outcome_unknown with receipt_id:null. Work success is never provider acceptance, delivery, signature or payment proof.
+
+Source/native/web readback only; ordinary owner/staff/client/cohort/reload/Central QA and full O1–O12/founder acceptance remain UNVERIFIED. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; catalogue and restricted activation unchanged. Mechanical closeout does not create another runtime release or activation.

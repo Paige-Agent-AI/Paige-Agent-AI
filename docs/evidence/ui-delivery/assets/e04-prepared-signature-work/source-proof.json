@@ -96,5 +96,108 @@
     "order": "ACTUAL14140004 -> E09 14150009+14150019 -> own14160004 -> 14170004/14180004/14190004",
     "activation": "NONE",
     "factory": "UNMOUNTED"
+  },
+  "productionReleaseOct25": {
+    "recordedAt": "2026-10-25T16:04:14.215Z",
+    "reviewedHead": "72e7afd5b6f02105d78b9b3641e0bf6ee52e515c",
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE 6398405229",
+    "exactChecks": "13 SUCCESS +2web SUCCESS +0threads",
+    "merge": "f41f3a7919f76539e8c71e8b22c0d86235e54c06",
+    "tree": "44322dd8626f0935188d92be3ea042ca32a44942",
+    "native": {
+      "version": "20271114160004",
+      "count": 1,
+      "statements": 9,
+      "run": 40199007347,
+      "job": 121186064728,
+      "evidence": {
+        "at": "2026-10-25T13:48:29.975Z",
+        "source": {
+          "merge": "f41f3a7919f76539e8c71e8b22c0d86235e54c06",
+          "tree": "44322dd8626f0935188d92be3ea042ca32a44942",
+          "parents": [
+            "b5122f922a030db33dd8d57767f9ced07e07fd1b",
+            "72e7afd5b6f02105d78b9b3641e0bf6ee52e515c"
+          ],
+          "exactProspectiveMatch": true,
+          "ownBlobs": 8,
+          "outsideBlobs": 16063,
+          "nativeSha": "bc9ae257a9174c0c7e09f1896691caf7a4bc6aa3b192db944a733357e87e61a2",
+          "functions": [
+            {
+              "schema": "public",
+              "name": "_read_prepared_agreement_work",
+              "body": "c76fcd36123c7189e9c73b75142c91a2"
+            },
+            {
+              "schema": "public",
+              "name": "_register_prepared_agreement_work",
+              "body": "f739cd90a09539edb256da96f17538b7"
+            }
+          ]
+        },
+        "actual": {
+          "versions": [
+            {
+              "version": "20271114150009",
+              "statements": 13
+            },
+            {
+              "version": "20271114150019",
+              "statements": 8
+            },
+            {
+              "version": "20271114160004",
+              "statements": 9
+            }
+          ],
+          "functions": [
+            {
+              "anon": false,
+              "body": "c76fcd36123c7189e9c73b75142c91a2",
+              "name": "_read_prepared_agreement_work",
+              "owner": "postgres",
+              "config": [
+                "search_path=\"\""
+              ],
+              "definer": true,
+              "service": true,
+              "defaults": 0,
+              "identity": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text",
+              "authenticated": false
+            },
+            {
+              "anon": false,
+              "body": "f739cd90a09539edb256da96f17538b7",
+              "name": "_register_prepared_agreement_work",
+              "owner": "postgres",
+              "config": [
+                "search_path=\"\""
+              ],
+              "definer": true,
+              "service": true,
+              "defaults": 0,
+              "identity": "_actor uuid, _tenant uuid, _confirmation uuid, _request_nonce uuid, _fingerprint text, _audit uuid",
+              "authenticated": false
+            }
+          ]
+        }
+      }
+    },
+    "edge": "Normal Edge40199007258 SUCCESS; zero affected functions, upload/readback skipped. Factory UNMOUNTED.",
+    "web": {
+      "id": "dpl_8AfXkaeToryPh5amvg55tYW4uteD",
+      "environment": "production",
+      "state": "READY",
+      "sha": "f41f3a7919f76539e8c71e8b22c0d86235e54c06",
+      "canonicalPublicStatus": 200,
+      "build": "f41f3a7919f76539e8c71e8b22c0d86235e54c06-mvnvqtyo",
+      "customerUpdate": null,
+      "observedAt": "2026-10-25T13:46:34Z"
+    },
+    "scope": "Original consumed approval and exact prepared request register/read the same canonical Work. It does not dispatch a message or establish a signature/payment/service result.",
+    "authenticatedAcceptance": "UNVERIFIED",
+    "founderAcceptance": "OPEN for complete O1–O12",
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2826#issuecomment-6398451757"
   }
 }

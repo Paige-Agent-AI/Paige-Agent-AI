@@ -136,7 +136,9 @@ SELECT pg_temp.as_server();
 SELECT pg_temp.require_true((SELECT status FROM public.growth_pages WHERE id='b1900700-0000-4000-8000-0000000007a1')='draft','unpublish kept the work as a draft');
 SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claims','{"role":"anon"}',true);
-SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007a3',NULL,NULL))=0,'the unpublished page''s form no longer answers the public read');
+-- Owner ruling 2026-09-30: unpublishing a page leaves its forms live — the standalone /form/:id
+-- and site embeds keep working; only the page comes down. The proof pins the ruling.
+SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_public_form('b1900700-0000-4000-8000-0000000007a3',NULL,NULL))=1,'after page unpublish its embedded form stays live (owner ruling 2026-09-30)');
 RESET ROLE;
 
 -- 5. RESTORE AN EARLIER VERSION, REPUBLISH: the visitor then receives the restored content.

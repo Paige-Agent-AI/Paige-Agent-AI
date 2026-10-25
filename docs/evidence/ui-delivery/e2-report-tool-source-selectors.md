@@ -64,6 +64,6 @@ runner, approval inbox, provider connection, business send or payment.
 Actual released-customer catalogue readback after restart retains CAP009/010/011/013
 Coming Soon,012/016/017 Limited,014/015 Unverified; all nine account Access cells
 remain Unverified. Original Chat return preserves the saved VERA response and
-empty composer. [ANT52 bounded presentation receipt](https://linear.app/paigeai/issue/ANT-52#comment-fd3f5714-1b56-458c-8ecc-c3e5b7d443f2)
+empty composer. ANT52 bounded presentation receipt fd3f5714-1b56-458c-8ecc-c3e5b7d443f2
 does not prove execution of those skills or promote report readiness. No raw
 customer data is included in this record.

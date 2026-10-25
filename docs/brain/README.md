@@ -74,6 +74,8 @@ remain owed. This mechanical identity closeout adds no product or recursive row.
 
 ## EXP02 original report source requests — October24 source released
 
+**October24 consumer development:** draft [#2787](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2787) exposes the original released selector contract on the existing document tool. Original44/44 owning tests and79/79 unmodified hostile guards pass after a separately reviewed29-literal renewal; all124 dependency pins/SOURCES remain exact. Exact final CI, normal source release and genuine report/artifact/turn/Rail/reload/retrieval/recovery/customer proof remain owed. No provider/admission activation or original uncertain monthly replay; CAP014/015 stay Unverified, all19/nine and founder acceptance open. Earlier source-release paragraphs below retain their dated production boundary.
+
 Original #2734 exact408923cc/author-related LOWER5638380473 passed all13 required
 checks and both web statuses, then merged d3617646e494923887b9b9781c470901427a6c8a.
 Normal migration40099957248/120889968225 persisted original840002 once; submit,

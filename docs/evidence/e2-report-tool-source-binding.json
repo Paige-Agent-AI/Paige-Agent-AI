@@ -267,5 +267,22 @@
       "importsUnchanged": true
     }
   ],
-  "method": "Read-only private instrumentation returns original canonical AST parts without changing extractor logic, metadata or dependency pins."
+  "method": "Read-only private instrumentation returns original canonical AST parts without changing extractor logic, metadata or dependency pins.",
+  "renewal": {
+    "source": "b0ea23c75429d71060903ab7ddff7fb6ef906644",
+    "fields": 29,
+    "distinctFingerprints": 28,
+    "allOtherBytesExact": true,
+    "dependencyPinsChanged": 0,
+    "method": "AST-addressed original CONTRACTS fingerprint literals; duplicate scalar values retained per original adapter.",
+    "preRenewalReviewHead": "89ff5325a2d570390d5980ad85195c142fd2a871",
+    "preRenewalReviewId": 5640822555,
+    "bindingModuleSha256": "64e1108a1fff1af0582792b211ea21dfeb6a9c1cc372f5a9abae173f2871d1c4",
+    "originalGuardTests": {
+      "passed": 79,
+      "failed": 0,
+      "durationMs": 143380.8143
+    },
+    "coordination": "ANT161/3ef4e81d: existing E02 root lease; explicit E04 SOURCES-only reservation and E05 receiving ACK; no ownership transfer or E04 ACK inferred."
+  }
 }

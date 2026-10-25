@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: NO: expose the already released840002 alternative input th
 FLOW_PROTOTYPE: NOT_REQUIRED: the original report journey and mounted interface remain unchanged.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible existing and future SOLO owners/admins request a private source-backed report without gathering each original metric in foreground Chat first.
 VISUAL_DIRECTION: PASS: retain the approved Executive/Chat/report surfaces; Finance presentation remains its separate2694/2696 release.
-AUTOMATED_EVIDENCE: PASS: original owning reach suite43PASS/1genuineRED before declaration →44PASS/1file after current-main composition,55.89s. Executes the original submit branch and refuses mixed/forged/unsupported/version/duplicate selectors, caller authority injection and missing conversation/Studio identity. Earlier source foundation2734 retains its original native/worker proof.
-STATIC_EVIDENCE: UNVERIFIED: exact-head hosted CI, final reviewed binding renewal and deployed source remain owed. Current-main inverse is exact outside one original tool object and one canonical currentMetricVersion import; private original extractor decomposition reproduces all29 baseline bindings/124 dependencies and changes only enclosing-handler identity[15].
+AUTOMATED_EVIDENCE: PASS: original owning reach43PASS/1genuineRED→44PASS/1file55.89s; original submission and strict input/authority/conversation/Studio controls retained. After separately reviewed29-literal renewal, unmodified original C0b hostile guard79/79 PASS143.38s. No extractor, assertion, metadata, timeout or source-dependency relaxation.
+STATIC_EVIDENCE: UNVERIFIED: final exact-head hosted CI and deployed source remain owed. Reviewed29 literal renewal is inverse-exact outside those scalar fields/provenance; every124 dependency pin/SOURCES byte is retained. Original module decomposition and44 owning cases pass; full-root lint407→407/no new or removed findings, owning test lint0.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no mounted visual source changes; synthetic Finance screenshots do not prove this report path.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: local original-branch execution is source proof; real new report settlement, saved artifact and original turn/Rail remain owed after release and legitimate admission.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no report was submitted or retried for this slice. The original uncertain CPU-failed monthly operation remains unretried with EXP05. Fresh authorized settlement/retrieval/reload/recovery/permission/cohort/Live proof remains owed.
@@ -67,3 +67,17 @@ remain Unverified. Original Chat return preserves the saved VERA response and
 empty composer. ANT52 bounded presentation receipt fd3f5714-1b56-458c-8ecc-c3e5b7d443f2
 does not prove execution of those skills or promote report readiness. No raw
 customer data is included in this record.
+
+## Original guard renewal and delivery boundary
+
+PR2787 pre-renewal exact89ff review5640822555 is AUTHOR-REVIEW / LOWER
+ASSURANCE. Original source b0ea23c7 remains unchanged. Only29 derived CONTRACTS
+fingerprint fields and provenance are renewed; original28 distinct scalar values
+are addressed per adapter, with every other byte inverse-exact. Original79 hostile
+cases pass unchanged. E04 retains its disjoint readiness SOURCES entry; the E02
+root lease and E05 receiving ACK preserve the queue without a whole-file wait.
+No E04 acknowledgment, new authority or dependency digest is inferred. An initial
+private global-value helper correctly refused duplicate scalar values before any
+write; its premature pre-renewal test start was stopped and is INVALID setup,
+not a product result. Final exact-head review/CI and genuine source/customer
+release proof remain separate.

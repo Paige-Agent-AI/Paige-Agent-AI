@@ -33,9 +33,17 @@ type Query = {
   maybeSingle(): Promise<Result>; single(): Promise<Result>; then(fulfilled: (result: Result) => unknown): Promise<unknown>;
 };
 
-function fixture(statuses: string[] = ['fail'], options: { previous?: string; scope?: 'tenant' | 'operator'; catalogError?: boolean; insertError?: boolean; findingError?: boolean; missing?: boolean; throws?: boolean } = {}) {
+function fixture(statuses: string[] = ['fail'], options: {
+  previous?: string; scope?: 'tenant' | 'operator'; catalogError?: boolean; insertError?: boolean;
+  findingError?: boolean; missing?: boolean; throws?: boolean; finalizeError?: boolean; finalizeNoop?: boolean;
+  findingReadError?: boolean; runReadError?: boolean; findingReadPatch?: Record<string, unknown>;
+  runReadPatch?: Record<string, unknown>; findingRows?: 'missing' | 'duplicate'; findingWriteLostAck?: boolean;
+  finalizeLostAck?: boolean;
+} = {}) {
   const calls: Call[] = [], rpcs: Array<{ name: string; input: Record<string, unknown> }> = [], dispatched: Record<string, unknown>[] = [];
   let finding = 0;
+  let savedRun: Record<string, unknown> | null = null;
+  const savedFindings: Array<Record<string, unknown>> = [];
   const rows = statuses.map((status, index) => ({ check_id: 'check_' + index, runner_key: 'runner_' + index, check_name: 'Recorded check ' + index, domain: 'data_product', severity: 'medium', department: 'operations_pmo', data_source: 'original_source', nl_prompt: null, remediation_prompt: 'Review {{tenant.business_name}}', priority: index, status }));
   const admin = {
     from(table: string) {
@@ -49,11 +57,36 @@ function fixture(statuses: string[] = ['fail'], options: { previous?: string; sc
           // The real registry SELECT returns no observation status. Only dispatch supplies it.
           return { data: selected.map(row => Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'status'))), error: null };
         }
-        if (table === 'paige_systems_check_run' && call.operation === 'read') return { data: options.previous ? { id: PRIOR } : null, error: null };
-        if (table === 'paige_systems_check_finding' && call.operation === 'read') return { data: rows.map(row => ({ check_id: row.check_id, status: options.previous })), error: null };
-        if (call.operation === 'insert' && table === 'paige_systems_check_run') return options.insertError ? { data: null, error: { message: 'Write unavailable' } } : { data: { id: RUN }, error: null };
-        if (call.operation === 'insert' && table === 'paige_systems_check_finding') return options.findingError ? { data: null, error: { message: 'Finding write unavailable' } } : { data: { id: `b4000000-0000-4000-8000-${String(++finding).padStart(12, '0')}` }, error: null };
-        if (call.operation === 'update') return { data: null, error: null };
+        if (table === 'paige_systems_check_run' && call.operation === 'read') {
+          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'id' && item[2] === RUN)) return { data: options.previous ? { id: PRIOR } : null, error: null };
+          if (options.runReadError) return { data: null, error: { message: 'Synthetic read unavailable' } };
+          return { data: savedRun ? { ...savedRun, ...options.runReadPatch } : null, error: null };
+        }
+        if (table === 'paige_systems_check_finding' && call.operation === 'read') {
+          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === RUN)) return { data: rows.map(row => ({ check_id: row.check_id, status: options.previous })), error: null };
+          if (options.findingReadError) return { data: null, error: { message: 'Synthetic read unavailable' } };
+          const persisted = savedFindings.map((row, index) => ({ ...row, ...(index === 0 ? options.findingReadPatch : {}) }));
+          return { data: options.findingRows === 'missing' ? persisted.slice(1) : options.findingRows === 'duplicate' ? persisted.map(() => persisted[0]) : persisted, error: null };
+        }
+        if (call.operation === 'insert' && table === 'paige_systems_check_run') {
+          if (options.insertError) return { data: null, error: { message: 'Write unavailable' } };
+          savedRun = { ...call.payload, id: RUN, completed_at: null }; return { data: { id: RUN }, error: null };
+        }
+        if (call.operation === 'insert' && table === 'paige_systems_check_finding') {
+          if (options.findingError) return { data: null, error: { message: 'Finding write unavailable' } };
+          const id = `b4000000-0000-4000-8000-${String(++finding).padStart(12, '0')}`;
+          savedFindings.push({ ...call.payload, id, resolution_action_id: null });
+          if (options.findingWriteLostAck) throw new Error('Synthetic acknowledgement lost after write');
+          return { data: { id }, error: null };
+        }
+        if (call.operation === 'update') {
+          if (table === 'paige_systems_check_run') {
+            if (options.finalizeError) return { data: null, error: { message: 'Synthetic finalization unavailable' } };
+            if (!options.finalizeNoop) Object.assign(savedRun!, call.payload);
+            if (options.finalizeLostAck) throw new Error('Synthetic acknowledgement lost after finalization');
+          }
+          return { data: null, error: null };
+        }
         throw new Error('Unbound original source operation: ' + table);
       };
       const query: Query = {
@@ -73,7 +106,7 @@ function fixture(statuses: string[] = ['fail'], options: { previous?: string; sc
   }]));
   const scope = options.scope ?? 'tenant';
   const base = { admin, tenantId: scope === 'tenant' ? TENANT : null, scope, scanFlavor: 'onboarding', dispatch };
-  return { calls, rpcs, dispatched, execute: (extra: Record<string, unknown> = {}) => run({ ...base, ...extra }), inserted: (table: string) => calls.filter(call => call.table === table && call.operation === 'insert'), updated: (table: string) => calls.filter(call => call.table === table && call.operation === 'update') };
+  return { calls, rpcs, dispatched, persisted: () => ({ run: savedRun, findings: savedFindings }), execute: (extra: Record<string, unknown> = {}) => run({ ...base, ...extra }), inserted: (table: string) => calls.filter(call => call.table === table && call.operation === 'insert'), updated: (table: string) => calls.filter(call => call.table === table && call.operation === 'update') };
 }
 beforeEach(() => {
   forge.mockReset().mockResolvedValue({ result: { content: 'Synthetic original draft', needs_config: false, model: 'synthetic' } });
@@ -126,9 +159,57 @@ describe('Original Systems capture mode: observations are separate from remediat
     expect(h.calls).toEqual([]); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
   });
   it('does not fabricate a saved finding when its original insert fails', async () => {
-    const h = fixture(['fail'], { findingError: true }); const result = await h.execute({ actionFiling: 'none' });
-    expect(result).toMatchObject({ run_id: RUN, fail_count: 1, actions_filed: 0, findings: [{ finding_id: '', status: 'fail', resolution_action_id: null }] });
+    const h = fixture(['fail'], { findingError: true });
+    await expect(h.execute({ actionFiling: 'none' })).rejects.toMatchObject({ runId: RUN, reason: 'finding_write' });
+    expect(h.persisted().run?.completed_at).toBeNull(); expect(h.updated('paige_systems_check_run')).toEqual([]);
     expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+});
+
+describe('Capture completion requires original persisted records, never acknowledgements alone', () => {
+  const unknown = (reason: string) => ({ name: 'SystemsCheckCaptureUnconfirmed', message: 'SYSTEMS_CHECK_CAPTURE_UNCONFIRMED', runId: RUN, reason });
+  it('reads back original run/findings with the same tenant scope and no remediation', async () => {
+    const h = fixture(['pass', 'fail']); await h.execute({ actionFiling: 'none' });
+    const reads = h.calls.filter(call => call.operation === 'read' && ['paige_systems_check_run', 'paige_systems_check_finding'].includes(call.table));
+    expect(reads).toHaveLength(2);
+    for (const call of reads) expect(call.filters).toContainEqual(['eq', 'tenant_id', TENANT]);
+    expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
+  });
+  it.each([
+    ['finding_readback', { findingReadError: true }], ['finding_readback', { findingRows: 'missing' as const }],
+    ['finding_readback', { findingRows: 'duplicate' as const }], ['finding_readback', { findingReadPatch: { tenant_id: ACTION } }],
+    ['finding_readback', { findingReadPatch: { run_id: PRIOR } }], ['finding_readback', { findingReadPatch: { status: 'pass' } }],
+    ['finding_readback', { findingReadPatch: { paige_drafted_fix: { content: 'Unexpected draft' } } }],
+    ['finding_readback', { findingReadPatch: { resolution_action_id: ACTION } }],
+    ['run_finalize', { finalizeError: true }], ['run_readback', { finalizeNoop: true }],
+    ['run_readback', { runReadError: true }], ['run_readback', { runReadPatch: { tenant_id: ACTION } }],
+    ['run_readback', { runReadPatch: { check_count: 99 } }], ['run_readback', { runReadPatch: { completed_at: null } }],
+    ['run_readback', { runReadPatch: { triggered_by: { scope: 'tenant', action_filing: 'all' } } }],
+  ] as const)('keeps the original identity and refuses unverified %s: %j', async (reason, options) => {
+    const h = fixture(['fail', 'pass'], options);
+    await expect(h.execute({ actionFiling: 'none' })).rejects.toMatchObject(unknown(reason));
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
+    if (reason === 'finding_readback') expect(h.persisted().run?.completed_at).toBeNull();
+  });
+  it('uses original null-tenant readback for the explicit operator capture scope', async () => {
+    const h = fixture(['fail'], { scope: 'operator' }); expect(await h.execute({ actionFiling: 'none' })).toMatchObject({ check_count: 1, actions_filed: 0 });
+    const reads = h.calls.filter(call => call.operation === 'read' && ['paige_systems_check_run', 'paige_systems_check_finding'].includes(call.table));
+    expect(reads).toHaveLength(2); for (const read of reads) expect(read.filters).toContainEqual(['is', 'tenant_id', null]);
+    expect(h.persisted().run?.tenant_id).toBeNull(); expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+  it.each([['finding_write', { findingWriteLostAck: true }], ['run_finalize', { finalizeLostAck: true }]] as const)('does not replay an uncertain %s acknowledgement', async (reason, option) => {
+    const h = fixture(['fail'], option); await expect(h.execute({ actionFiling: 'none' })).rejects.toMatchObject(unknown(reason));
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.inserted('paige_systems_check_finding')).toHaveLength(1);
+    expect(h.persisted().findings).toHaveLength(1); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
+  });
+  it('keeps the original all-mode partial-persistence compatibility', async () => {
+    const h = fixture(['fail'], { findingError: true }); expect(await h.execute()).toMatchObject({ findings: [{ finding_id: '' }] });
+    expect(h.updated('paige_systems_check_run')).toHaveLength(1);
+  });
+  it.each([{ finalizeError: true }, { finalizeNoop: true }])('does not silently change existing remediation finalization behavior: %j', async option => {
+    const h = fixture(['fail'], option); expect(await h.execute()).toMatchObject({ actions_filed: 1, fail_count: 1 });
+    expect(forge).toHaveBeenCalledTimes(1); expect(h.rpcs).toHaveLength(1);
+    expect(h.calls.filter(call => call.operation === 'read' && ['paige_systems_check_run', 'paige_systems_check_finding'].includes(call.table))).toEqual([]);
   });
 });
 

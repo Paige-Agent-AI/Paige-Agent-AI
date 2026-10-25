@@ -32,7 +32,7 @@ the mode is provenance, never authority. No table, migration, grant or new store
 | Risk/authorization | Existing trusted-server scope invariant remains; this mode grants no actor, role, tenant, cohort or provider authority |
 | Original writer | The one `runSystemsCheck` and incumbent `file_action` for unchanged remediation choices |
 | Durable evidence | Same original run/findings and actual mode; zero filed actions is not a completed repair or Rail execution receipt |
-| Recovery | Original errors/partial persistence remain observable. Later admission must verify original run/findings, reconcile uncertain outcomes and avoid replay; it cannot equate a returned summary with verified completion |
+| Recovery | Capture-only confirms original findings before finalization and reads the finalized run back. Unconfirmed persistence retains the known original run identity; later admission still needs work correlation, fresh authority and reconciliation, never replay |
 | Customer result | No UI, current manual-scan capability, action/approval, catalogue promotion or customer acceptance supplied by this foundation |
 
 A genuine later manual flow still needs explicit scan purpose/flavor, current
@@ -58,9 +58,43 @@ database authorization or a production Edge invocation.
 Coverage includes real dispatch for all four observation states, original subset
 markers, mode/scope metadata, zero remediation/model requests, unsupported inputs,
 source/run failures, missing/throwing runners and default/all/delta/operator
-compatibility. A failed finding insert retains an empty original finding ID; it
-does not fabricate persisted evidence. Later execution must treat that as partial
-or unverified, not claim a complete durable scan from the summary alone.
+compatibility. The initial30-case/214-total source proof is historical. The
+readback refinement strengthens only the new capture choice: a failed finding
+insert now leaves that run unfinalized and throws a closed unconfirmed-capture
+error with its known original run ID. The existing remediation partial-result
+behavior and its original guard remain unchanged and separately tested.
+
+## Capture persistence readback refinement
+
+The actual core initially failed19 new completion/acknowledgement controls while
+31 other controls passed. The refined source passes52 owning+184 incumbent
+controls,236/8 suites in22.92s. Test ports retain rows produced by the actual
+inserts; readback does not manufacture results from the catalog or expected test
+status. Native database/permission proof is still not established by these ports.
+
+Only explicit none mode checks the complete original finding set, including
+original IDs/checks/results, tenant/run correlation, unique rows and absence of
+core remediation fields. Missing, duplicate, foreign, altered or unreadable rows
+refuse completion before the run is finalized. Finalization uses the same native
+scope and its original run is read back for exact ID, flavor, counts, completed
+instant and persisted actual mode/scope. Empty catalogs remain zero checks, not a
+fabricated pass; explicit operator capture uses original null-tenant scope.
+
+A failed or lost finding/finalization acknowledgement is unconfirmed, never proof
+of absence. SystemsCheckCaptureUnconfirmed carries a known runId and a closed
+phase only; it never contains source/error payloads or grants replay. A write may
+already have landed. The caller must inspect the same original records under
+fresh authority, not call the scan again automatically. An initial run insert
+whose acknowledgement loses the generated ID still needs the later originating
+work/intent correlation; this refinement does not manufacture that contract.
+
+No transaction or immutable business snapshot is promised across these original
+record reads. A future domain consumer still needs canonical work/claim/lease,
+current actor/tenant/cohort authority, original receipt correlation and fresh
+readback before acting. These checks prove diagnostic record persistence at the
+readback boundary, never a repaired business, a Rail execution receipt or authority
+to modify any department. Existing all/delta/default callers issue no new readback
+queries and retain their original partial-finding/finalization behavior.
 
 ## Delivery and customer truth
 

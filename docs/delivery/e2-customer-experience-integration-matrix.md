@@ -1791,8 +1791,12 @@ adds an explicit internal capture choice with no remediation forge/file_action;
 existing default/all/delta calls remain. Original runs/findings carry actual mode
 and scope; unsupported internal choices fail before reads/effects. No new API,
 role/grant, manual flavor/admission, queue, registry or execution authority.
-Source30 owning+184 original controls pass,214/8; no authenticated or rendered
-proof follows. The required manual scan/corrective outcome stays incomplete until
+Initial30 owning+184 original controls,214/8 are retained as source history.
+Readback19RED/31PASS now yields52own+184original=236/8 source PASS; none mode
+confirms original findings/run and retains the known identity on unconfirmed
+persistence, without replay, new authority or legacy caller behavior changes.
+Fresh exact review/type/native Deno/CI/source release remain owed; no authenticated
+or rendered proof follows. The required manual scan/corrective outcome stays incomplete until
 existing Spine/Harness/Trust/Layer C/work/receipt and original-run recovery are
 connected and verified. All19/nine and one final founder evaluation remain open;
 no activation, provider spend, new QA account or browser-control bypass.

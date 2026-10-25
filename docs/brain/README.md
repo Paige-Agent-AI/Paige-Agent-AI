@@ -585,9 +585,12 @@ existing all/delta/default callers keep their original behavior. Actual mode and
 scope are persisted on the same original run context, never used as authority.
 Unsupported internal options fail closed; no API, role/grant, registry, scheduler,
 approval or customer-scan activation. [Source contract and remaining gates](../evidence/e2-systems-capture-mode.md):
-10RED/13PASS and closed-scope5RED before correction, final214/8 source PASS/lint0.
-Type ratchet10baseline/6current passes; review/CI/full deployed readback remain owed.
-No UI/customer/ALG or
+Initial10RED/13PASS, closed-scope5RED and214/8 source proof are retained.
+Capture readback19RED/31PASS now yields52own+184original=236/8 source PASS:
+none mode confirms original findings before finalization and reads back its run;
+unconfirmed writes retain the known run identity, never replay or grant authority.
+Legacy all/delta/default partial behavior stays unchanged. Fresh exact review,
+type/native Deno/CI/full deployed readback remain owed. No UI/customer/ALG or
 Capabilities promotion. Manual purpose/admission/original work+receipt/recovery,
 authenticated isolation/reload and full19/nine/founder acceptance remain required.
 

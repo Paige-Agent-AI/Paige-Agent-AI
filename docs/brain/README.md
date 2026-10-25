@@ -1,3 +1,11 @@
+## EXP05 weekly same-session recovery — October25 development
+
+Original weekly hook/composer causal50/7 becomes57/0; surrounding14-file373/0.
+Same known actor/sign-in retains typed proposal/focus, original review and pending/
+unknown hold without another request. Genuine/unknown changes still retire.
+[Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
+does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
+
 ## EXP02 private request foundation released — October25
 
 Original [#2867 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)

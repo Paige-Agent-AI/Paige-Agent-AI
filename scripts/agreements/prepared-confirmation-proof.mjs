@@ -152,7 +152,9 @@ export async function provePreparedConfirmation({sql,read,context,tenant,actor,c
  try{const [,result]=await Promise.all([revoker,denied]);check(result==='refused','Actual committed role revocation wins before claim');}
  finally{sql(`UPDATE tenant_members SET role='owner' WHERE user_id='${actor}' AND tenant_id='${tenant}';`);}
  check(originals()===original,'Every original signature/hold/actor/preparation/autonomy body and ACL remains unchanged');
- return {result:'PASS',checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,
+ if(process.argv.includes('--prepared-work'))console.log(JSON.stringify({checkpoint:'Original confirmation controls before Work adoption',checks,concurrentSessions:sessions,observedLockWaits:waits}));
+ const preparedWork=process.argv.includes('--prepared-work')?await(await import('./prepared-signature-work-proof.mjs')).provePreparedSignatureWork({sql,read,tenant,actor,quote,fixture,issue,claim,startSession,observe}):null;
+ return {result:'PASS',checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,preparedWork,
   proofBodySha256:createHash('sha256').update(proofBody).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),
   scope:'Original native pending-confirmation prerequisite only. Synthetic mailbox/Storage metadata; no prepared issuer/provider/signature/field effect, activation or customer acceptance.'};
 }

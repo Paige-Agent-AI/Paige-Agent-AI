@@ -119,6 +119,14 @@ inverse restores the original ancestry test by reversing only the count and
 three explicit helper additions; all earlier assertions remain exact. New
 hosted exact-head CI remains required; these are local source/negative controls.
 
+The receiving main416927eb/E08 attachment release is now composed normally.
+All16128 outside-owned blobs and the five non-guard owning source blobs are exact;
+the whole guard inverse recovers that receiving main, retaining its reviewed
+sender2eea pin and this slice's29 dispatches/deadline pin. The unchanged Root and
+elapsed utility keep their earlier SDK/native proof boundary. Fresh combined
+broad C0b249, incoming original sender attachment8 and positive Spine232 pass.
+New combined-head hosted gates and actual deployment remain separate.
+
 Preserve the existing approved conversational states and PAIGE design system.
 [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
 hardening concerns applied to existing behavior: bounded waiting, honest saved

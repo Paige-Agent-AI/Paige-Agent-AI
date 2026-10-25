@@ -1829,4 +1829,448 @@
       "founderAcceptance": "NOT_REQUESTED"
     }
   }
+,
+  "productionRelease": {
+    "generatedAt": "2026-10-25 18:03:37 UTC",
+    "pr": 2851,
+    "reviewedHead": "58fdff1ab4e8fe65ee627043c635ee51c9beee97",
+    "reviews": {
+      "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "source": 5644315607,
+      "finalReceiving": 5644495135
+    },
+    "mergeCommit": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+    "tree": "e98c7c72af63f08d0708e9ea5993fd179e94661d",
+    "parents": [
+      "21307aad3085df70c44c97d5cfc46ce64d1c3373",
+      "58fdff1ab4e8fe65ee627043c635ee51c9beee97"
+    ],
+    "actualTreeMatchesInspectedUnion": true,
+    "all9OwnAnd16174IncomingOutsidePreserved": true,
+    "checks": [
+      {
+        "id": 121238298216,
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237849170,
+        "name": "Vercel Preview Comments",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237765089,
+        "name": "web-fetch-hardening-smoke",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237765035,
+        "name": "verify",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237764859,
+        "name": "comms-provider-boundary",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237412091,
+        "name": "database-contract",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411915,
+        "name": "contract",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411630,
+        "name": "Validate UI delivery evidence",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411577,
+        "name": "postgres-authority",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411573,
+        "name": "channel-sql",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411320,
+        "name": "lint",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411240,
+        "name": "collections-sql",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121237411169,
+        "name": "audit",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "webStatuses": "2_SUCCESS",
+    "unresolvedThreads": 0,
+    "native": {
+      "run": 40218936283,
+      "job": 121246162498,
+      "steps": [
+        {
+          "name": "Push migrations to prod",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Verify prod is caught up (PERSISTED, not just ran — §32)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Record applied commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        }
+      ],
+      "dbLive": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+      "frontier": "20271114230009",
+      "migration": {
+        "version": "20271114230009",
+        "rows": 1,
+        "statements": 9
+      },
+      "sourceBodies": {
+        "advance_action": "0d412f9c0a734aeb2815dca39ab061a3",
+        "share_client_portal_request": "81e21f92abe3d552f89d98c8d7b3b9d3"
+      },
+      "metadata": [
+        {
+          "signature": "public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)",
+          "body": "81e21f92abe3d552f89d98c8d7b3b9d3",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "args": "_expected_actor_id uuid, _expected_tenant_id uuid, _confirmation_id uuid, _fingerprint text, _claimed_in_request uuid, _thread_id uuid DEFAULT NULL::uuid",
+          "result": "jsonb",
+          "authenticated": true,
+          "anon": false,
+          "service_role": false
+        },
+        {
+          "signature": "public._client_portal_access_authorize(uuid,uuid,boolean)",
+          "body": "7c3eb55c866321fed052ae742b75e42d",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "args": "p_expected_actor_id uuid, p_expected_tenant_id uuid, p_lock boolean",
+          "result": "text",
+          "authenticated": false,
+          "anon": false,
+          "service_role": false
+        },
+        {
+          "signature": "public.admin_propose_paige_actions(uuid,jsonb)",
+          "body": "21bd99c7a036f28f82a677fa25c6db04",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=public"
+          ],
+          "args": "p_contact_id uuid, p_actions jsonb",
+          "result": "jsonb",
+          "authenticated": true,
+          "anon": false,
+          "service_role": true
+        },
+        {
+          "signature": "public.read_client_portal_request_draft(uuid,uuid,uuid,uuid)",
+          "body": "1701abdd098639638fa0495f43827e81",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "args": "_expected_actor_id uuid, _expected_tenant_id uuid, _contact_id uuid, _intent_id uuid",
+          "result": "jsonb",
+          "authenticated": true,
+          "anon": false,
+          "service_role": false
+        },
+        {
+          "signature": "public.list_client_portal_request_drafts(uuid,uuid,uuid,timestamptz,uuid)",
+          "body": "ad2d2f83823b7939a0272a4ccbca4b40",
+          "owner": "postgres",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "args": "_expected_actor_id uuid, _expected_tenant_id uuid, _contact_id uuid, _before_created_at timestamp with time zone DEFAULT NULL::timestamp with time zone, _before_work_id uuid DEFAULT NULL::uuid",
+          "result": "jsonb",
+          "authenticated": true,
+          "anon": false,
+          "service_role": false
+        }
+      ],
+      "method": "Read-only catalog/schema metadata; no customer or tenant business rows read or modified"
+    },
+    "web": {
+      "deployment": "dpl_92uuhfzSJ3CGcKziRzB3N9GLokhV",
+      "state": "READY",
+      "commit": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5",
+      "canonicalPublicReadback": "outputs/e09-publication-production-web-readback.json",
+      "publicBuild": "81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5-mvo4ry4b",
+      "customerUpdate": null,
+      "observedAt": "2026-10-25T17:59:39.0702622+00:00"
+    },
+    "mainPushVerification": "40218936277/40218936282 still running; not substituted for exact58fd premerge13 green checks",
+    "edge": "NOT_APPLICABLE",
+    "classification": "internal-only; no customer release identity or announcement",
+    "functional": "MERGED / NATIVE SOURCE AND ACL / WEB BUILD VERIFIED",
+    "visual": "No changed rendered source; no new responsive/premium/AT claim",
+    "experiential": "Native227/full-schema321 bounded engineering proof; original shared command and owner/client journey incomplete",
+    "activation": "NOT_REGISTERED_OR_MOUNTED",
+    "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+    "founderAcceptance": "NOT_REQUESTED",
+    "closeout": "Original Master4.0/Brain/owning packet append prepared locally; main publication pending"
+  },
+  "focusedSourceProductionRelease": {
+    "schema_version": 1,
+    "pr": 2858,
+    "reviewedHead": "325dd153ad46c11aa6689686d644675ea3c0326d",
+    "merge": "4f8788b1a7a502c143f9b7446752dc7609da72ba",
+    "tree": "e213f990ccce16d28022ef67f343e7e03ca99e2e",
+    "parents": [
+      "7ce948051bdf6ec1458f54466c9384d9069e7690",
+      "325dd153ad46c11aa6689686d644675ea3c0326d"
+    ],
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "id": 5644691759
+    },
+    "checks": [
+      {
+        "id": 121247665202,
+        "name": "Supabase Preview",
+        "result": "success"
+      },
+      {
+        "id": 121247413576,
+        "name": "Vercel Preview Comments",
+        "result": "success"
+      },
+      {
+        "id": 121247212836,
+        "name": "web-fetch-hardening-smoke",
+        "result": "success"
+      },
+      {
+        "id": 121247212801,
+        "name": "comms-provider-boundary",
+        "result": "success"
+      },
+      {
+        "id": 121247212655,
+        "name": "verify",
+        "result": "success"
+      },
+      {
+        "id": 121247106567,
+        "name": "postgres-authority",
+        "result": "success"
+      },
+      {
+        "id": 121247105492,
+        "name": "lint",
+        "result": "success"
+      },
+      {
+        "id": 121247105480,
+        "name": "Validate UI delivery evidence",
+        "result": "success"
+      },
+      {
+        "id": 121247105448,
+        "name": "channel-sql",
+        "result": "success"
+      },
+      {
+        "id": 121247105409,
+        "name": "audit",
+        "result": "success"
+      },
+      {
+        "id": 121247105330,
+        "name": "contract",
+        "result": "success"
+      },
+      {
+        "id": 121247105314,
+        "name": "collections-sql",
+        "result": "success"
+      },
+      {
+        "id": 121247105099,
+        "name": "database-contract",
+        "result": "success"
+      }
+    ],
+    "preservation": {
+      "ownBlobs": 12,
+      "incomingOutsideEntries": 16177,
+      "actualUnionMatches": true,
+      "earlierProspectiveTree": "4cc76f7806d518eebc4caedb97d722f77db2b8be",
+      "incomingAdvance": "Only original E02 source/test/evidence; actual union independently verified"
+    },
+    "native": {
+      "pipeline": 40222508426,
+      "job": 121257031118,
+      "status": "SUCCESS",
+      "push": "SUCCESS",
+      "persisted": "SUCCESS",
+      "recordCommit": "SUCCESS",
+      "db_live": "4f8788b1a7a502c143f9b7446752dc7609da72ba",
+      "frontier": "20271114230119",
+      "functions": [
+        {
+          "owner": "postgres",
+          "definer": true,
+          "body_hash": "ce47399b991cea106916d331a88657fe",
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "signature": "read_client_portal_request_share_source(uuid,uuid,uuid,uuid)",
+          "anon_execute": false,
+          "service_execute": false,
+          "authenticated_execute": true
+        },
+        {
+          "owner": "postgres",
+          "definer": true,
+          "body_hash": "f011f8a047c8025508ea3ece73efbcee",
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "signature": "share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)",
+          "anon_execute": false,
+          "service_execute": false,
+          "authenticated_execute": true
+        }
+      ],
+      "migrations": [
+        {
+          "rows": 1,
+          "version": "20271114230109",
+          "statements": 9
+        },
+        {
+          "rows": 1,
+          "version": "20271114230119",
+          "statements": 4
+        }
+      ]
+    },
+    "web": {
+      "id": "dpl_G7rVxfd6vw4FAZvv7A2uytXnZxEh",
+      "state": "READY",
+      "sha": "4f8788b1a7a502c143f9b7446752dc7609da72ba",
+      "publicReadbackFile": "outputs/e09-publication-consumer-web-readback.json",
+      "bothDomainsStatus": 200,
+      "buildId": "4f8788b1a7a502c143f9b7446752dc7609da72ba-mvo6dm0e",
+      "customerUpdate": null,
+      "checkedAt": "2026-10-25T18:44:45.1212805+00:00"
+    },
+    "proof": {
+      "native": "284/0",
+      "transport": "68/0",
+      "fullSchema": "341 actual hosted SUCCESS",
+      "actualRootSDK": "NOT_RUN",
+      "edge": "NOT_APPLICABLE unmounted module; no new registered importer"
+    },
+    "boundary": {
+      "functional": "Native source/recovery and transport released; original common owner command and UI connection still owed",
+      "visual": "No rendered-source change in2858",
+      "experiential": "Authenticated owner/customer original job/reload still UNVERIFIED",
+      "founder": "One integrated evaluation later; not requested",
+      "customerReconnect": "OWNER_DEFERRED",
+      "activation": "NOT_ACTIVATED",
+      "customerVersion": "NONE"
+    },
+    "recordedAt": "2026-10-25T18:46:20.627Z"
+  }
+,
+  "privatePreparationUiRelease": {
+    "pr": 2864,
+    "reviewedHead": "c43b0c3aa3c3cd963b1eab4d14d2c1f99e5f948b",
+    "merge": "7d7663962eddb72f4d96a9650f6d5e23b8a079b2",
+    "actualParents": [
+      "561be9987004e4cf28fefd4d79e5b179a9065f78",
+      "c43b0c3aa3c3cd963b1eab4d14d2c1f99e5f948b"
+    ],
+    "tree": "f57a1ad4bdc5e170652dce8a642f5f582f77a084",
+    "actualUnion": {
+      "own": 15,
+      "outside": 16212,
+      "result": "PASS"
+    },
+    "review": {
+      "id": 5644923194,
+      "kind": "AUTHOR-REVIEW / LOWER ASSURANCE"
+    },
+    "checks": {
+      "success": 10,
+      "supabasePreview": "SKIPPED: no native/Edge delta",
+      "vercelStatuses": 2,
+      "unresolvedThreads": 0
+    },
+    "deployment": {
+      "id": "dpl_4ae9YnfSxg5YXdVXEaxGMgbRHEf6",
+      "state": "READY",
+      "environment": "production",
+      "sha": "7d7663962eddb72f4d96a9650f6d5e23b8a079b2"
+    },
+    "readback": {
+      "origins": [
+        "paigeagent.ai",
+        "app.paigeagent.ai"
+      ],
+      "httpStatus": 200,
+      "buildId": "7d7663962eddb72f4d96a9650f6d5e23b8a079b2-mvo8jk06",
+      "customerUpdate": null,
+      "observedUtc": "2026-10-25T19:50:17–18Z"
+    },
+    "migrations": "NOT_APPLICABLE",
+    "edge": "NOT_APPLICABLE",
+    "functional": "original private preparation, saved native readback/history/recovery mounted; owning local 123 passed",
+    "visual": "bounded original component render 18 checks,17 captures; full authenticated shell/phone/AT unverified",
+    "customerReturn": "PASS: original affected designated customer returned through original /app guards to /app/messages; original CURA and business-message history visible; identity checked in ordinary customer menu; private evidence local only",
+    "ownerPreparationRuntime": "UNVERIFIED: not driven with actual owner session",
+    "sharingCommand": "UNREGISTERED / UNMOUNTED",
+    "founderAcceptance": "NOT_COMPLETE",
+    "activation": "NONE",
+    "publicReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2864#issuecomment-6402407693"
+  }
 }

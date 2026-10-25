@@ -190,7 +190,7 @@ const optionalIdentityText = (value: unknown): string | null => {
   }
   return value;
 };
-async function boundRequestSender(ports: PreparedSignatureEmailPorts, tenantId: string,
+async function boundRequestSender(ports: Pick<PreparedSignatureEmailPorts, "admin" | "environment">, tenantId: string,
   connectorId: string, actorId: string): Promise<BoundSender> {
   try {
     // Reuse the one canonical mailbox permission and provider/domain readiness
@@ -229,6 +229,9 @@ async function boundRequestSender(ports: PreparedSignatureEmailPorts, tenantId: 
     return fail("SENDER_UNVERIFIED");
   }
 }
+// The provider path must repeat the SAME complete sender opinion immediately
+// before dispatch, rather than inventing a second name/reply-to/readiness rule.
+export { boundRequestSender as readPreparedRequestSender };
 /** READ ONLY in the ORIGINAL agreement capability. This is the whole review
  * input for a FUTURE canonical HIGH request, never a yes, issued confirmation,
  * token, message, claim, send or execution receipt. The actual admission/claim

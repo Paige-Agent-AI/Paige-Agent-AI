@@ -5,7 +5,7 @@
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/sms-terms", "destination": "/sms-terms.html" },
     { "source": "/auth", "destination": "/auth.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

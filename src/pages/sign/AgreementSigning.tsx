@@ -22,6 +22,7 @@ import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import "./agreement-signing.css";
+import {RecipientAgreementDocument,type ReviewedRecipientFields} from './RecipientAgreementDocument';
 
 type PeekRow = {
   document_title: string | null;
@@ -199,6 +200,15 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   const [consentRead, setConsentRead] = useState(false);
   const [consentEsign, setConsentEsign] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [fieldMode,setFieldMode]=useState<'review'|'legacy'>('review');
+  const [preparedReview,setPreparedReview]=useState<ReviewedRecipientFields|null>(null);
+  const signatureInput=useRef<HTMLInputElement>(null);
+  const signatureChoices=useRef<HTMLDivElement>(null);
+  const preparedReady=useCallback((review:ReviewedRecipientFields|null)=>{
+    setPreparedReview(review);
+    if(!review){setConsentRead(false);setConsentEsign(false);}
+  },[]);
+  const legacyReady=useCallback(()=>{setFieldMode('legacy');setPreparedReview(null);},[]);
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
 
@@ -226,7 +236,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   }, [token]);
 
   useEffect(() => {
-    if (phase !== "ready" || !row?.document_path || row?.document_body) { setDocPhase("idle"); return; }
+    if (fieldMode !== 'legacy' || phase !== "ready" || !row?.document_path || row?.document_body) { setDocPhase("idle"); return; }
     let revoked = false;
     setDocPhase("loading");
     (async () => {
@@ -247,14 +257,14 @@ function AgreementSigningCeremony({ token }: { token: string }) {
       }
     })();
     return () => { revoked = true; };
-  }, [phase, row?.document_path, row?.document_body, token]);
+  }, [phase, row?.document_path, row?.document_body, token,fieldMode]);
   useEffect(() => () => { if (docUrl) URL.revokeObjectURL(docUrl); }, [docUrl]);
 
   // The read gate's two honest modes: a text body is measured by scrolling it; an uploaded
   // document is satisfied only by the viewer actually showing it. No percentage is claimed over
   // a PDF the product cannot measure.
   const uploadedDoc = !!row?.document_path && !row?.document_body;
-  const docGateOpen = uploadedDoc ? docPhase === "ready" : read;
+  const docGateOpen = fieldMode==='legacy' ? (uploadedDoc ? docPhase === "ready" : read) : preparedReview!==null;
 
   /* THE READ GATE.
    * It must never unlock before the document has actually been read to the end, and it must never
@@ -276,7 +286,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
     const raf = requestAnimationFrame(evaluate);
     window.addEventListener("resize", evaluate);
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", evaluate); };
-  }, [phase, row?.document_body, evaluate]);
+  }, [phase, row?.document_body, evaluate,fieldMode]);
 
   const named = mode === "type" ? typed.trim().length > 1 : !!drawn;
   const canSign = docGateOpen && named && consentRead && consentEsign && !busy;
@@ -293,6 +303,8 @@ function AgreementSigningCeremony({ token }: { token: string }) {
           signature_image_base64: mode === "draw" ? drawn : null,
           consent_read: consentRead,
           consent_esign: consentEsign,
+          ...(preparedReview?{preparation_id:preparedReview.packet.preparation_id,
+            preparation_sha256:preparedReview.packet.preparation_sha256,field_values:preparedReview.answers}:{}),
         },
       });
       const {payload,status}=await signingReply(data,error);
@@ -458,7 +470,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
   return (
     <div className="ags">
       <Helmet><title>{title} · please review and sign</title></Helmet>
-      <div className="ags-wrap">
+      <div className="ags-wrap" data-prepared={fieldMode!=='legacy'}>
         <div className="ags-top">
           <div className="ags-brand">
             <span className="ags-mark" aria-hidden="true">
@@ -489,7 +501,9 @@ function AgreementSigningCeremony({ token }: { token: string }) {
           </div>
         </div>
 
-        <div className="ags-doc">
+        {fieldMode!=='legacy'?<RecipientAgreementDocument token={token} busy={busy} onReady={preparedReady} onLegacy={legacyReady} onCheck={()=>void sign(true)} onContinue={()=>requestAnimationFrame(()=>{
+          (signatureInput.current??signatureChoices.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]'))?.focus();
+        })}/>:<div className="ags-doc">
           <div className="ags-doc-hd">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
             <b>{title}</b>
@@ -532,26 +546,26 @@ function AgreementSigningCeremony({ token }: { token: string }) {
               <span>{docPhase === "ready" ? "Document shown — review it in full before signing." : docPhase === "failed" ? "Document unavailable." : "Opening the document…"}</span>
             )}
           </div>
-        </div>
+        </div>}
 
         <div className="ags-gate" data-locked={!docGateOpen}>
           <div className="ags-lock" data-open={docGateOpen}>
             {docGateOpen ? (
               <>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                <span>{uploadedDoc ? "The document is shown above. You can sign it now." : "You have read the whole agreement. You can sign it now."}</span>
+                <span>{fieldMode!=='legacy'?'Document and required answers ready. Review your signature and consent below.':uploadedDoc ? "The document is shown above. You can sign it now." : "You have read the whole agreement. You can sign it now."}</span>
               </>
             ) : (
               <>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                <span>{uploadedDoc ? (docPhase === "failed" ? "The document could not be shown, so signing stays locked." : "The document is being shown above. Signing opens once it is.") : "Scroll to the end of the agreement above to sign it."}</span>
+                <span>{fieldMode!=='legacy'?'Finish reviewing your document and required answers to continue.':uploadedDoc ? (docPhase === "failed" ? "The document could not be shown, so signing stays locked." : "The document is being shown above. Signing opens once it is.") : "Scroll to the end of the agreement above to sign it."}</span>
               </>
             )}
           </div>
 
-          <div style={docGateOpen ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}>
-            <fieldset disabled={!docGateOpen} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-            <div className="ags-tabs" role="group" aria-label="How to sign">
+          <div style={docGateOpen&&!busy ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}>
+            <fieldset disabled={!docGateOpen||busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+            <div ref={signatureChoices} className="ags-tabs" role="group" aria-label="How to sign">
               <button type="button" aria-pressed={mode === "type"} onClick={() => setMode("type")}>Type it</button>
               <button type="button" aria-pressed={mode === "draw"} onClick={() => setMode("draw")}>Draw it</button>
             </div>
@@ -560,6 +574,7 @@ function AgreementSigningCeremony({ token }: { token: string }) {
               <label className="ags-field">
                 <span>Your full legal name</span>
                 <input
+                  ref={signatureInput}
                   className="ags-sig"
                   value={typed}
                   autoComplete="name"

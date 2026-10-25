@@ -114,7 +114,33 @@ export async function weeklyAuthorizationControlProof({run,json,literal,check,re
       assert.equal(run(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(second)} AND action='weekly_check.authorize';`),'2');
     });
     json(`SELECT control_weekly_commitment_check(${literal(second)},'cancel',1);`,ownerCtx);
-    return {status:'PASS',native_state_and_cutoff:true,concurrent_stale_reviews:6,full_source_review_cases:5,new_events:0,provider_effects:0};
+    const pausedId=json(`SELECT draft_weekly_commitment_check(${literal(randomUUID())},'Synthetic exact resume review',1,'09:00','UTC');`,ownerCtx).automation_id;
+    const pauseResume=()=>json(`SELECT control_weekly_commitment_check(${literal(pausedId)},'pause',1);`,ownerCtx);
+    const prepareResume=()=>prepareWeeklyControlReview(identity,deps,'resume',{automation_id:pausedId},randomUUID());
+    pauseResume();
+    const resume=await prepareResume();
+    check('full source resume binds the original paused native snapshot without executing',()=>{
+      assert.equal(resume.status,'review_ready');
+      assert.equal(resume.binding.args._action,'authorize');
+      const original=json('SELECT get_weekly_commitment_checks();',ownerCtx).checks.find(row=>row.automation_id===pausedId);
+      assert.deepEqual(resume.binding.args._expected_control,{state:'paused',future_control_at:original.schedule.future_control_at});
+      assert.equal(run(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(pausedId)} AND action='weekly_check.authorize';`),'0');
+    });
+    pauseResume();
+    check('later pause refuses the original full source resume without a new authorization',()=>{
+      refuses(statement(resume.binding),ownerCtx,'40001');
+      assert.equal(run(`SELECT state FROM paige_automations WHERE id=${literal(pausedId)};`),'paused');
+      assert.equal(run(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(pausedId)} AND action='weekly_check.authorize';`),'0');
+    });
+    const freshResume=await prepareResume();
+    check('fresh source resume uses one original authorization audit and no occurrence',()=>{
+      assert.equal(freshResume.status,'review_ready');
+      assert.equal(json(statement(freshResume.binding),ownerCtx).state,'live');
+      assert.equal(run(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(pausedId)} AND action='weekly_check.authorize';`),'1');
+      assert.equal(run(`SELECT count(*) FROM paige_native_events WHERE tenant_id=${literal(tenant)} AND payload->>'automation_id'=${literal(pausedId)};`),'0');
+    });
+    json(`SELECT control_weekly_commitment_check(${literal(pausedId)},'cancel',1);`,ownerCtx);
+    return {status:'PASS',native_state_and_cutoff:true,concurrent_stale_reviews:6,full_source_review_cases:5,resume_review_cases:3,new_events:0,provider_effects:0};
   }
   // The original guarded retirement proof and disposable database teardown own
   // cleanup. Never bypass the native history-preservation/act guards.

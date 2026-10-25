@@ -1,5 +1,11 @@
 # Paige Agent AI — Master Project Reference
 
+> **October24 EXP02 bounded Finance acceptance:** one new original-reference
+> VERA read matches the released Finance measurement and retains its saved reply,
+> source-step badge and original conversation after reload; [sanitized receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055).
+> Prior refusals remain historical. Candidate2694 rendering/release, other roles,
+> Live, full19/nine and founder acceptance remain open. No action or cash claim.
+
 > **October24 EXP02 Finance post-restart — source candidate:** main03edfad8a
 > is composed with unchanged Finance leaves; original Sales repair2768/d53d99e9
 > is merged and containing production03ed was observed. Fresh69/3 regression and

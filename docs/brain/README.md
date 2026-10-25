@@ -1,3 +1,11 @@
+## EXP02 Finance — October24 released read/persistence PASS
+
+New original-reference VERA read matches Finance and survives reload after the
+originating2768 repair; ANT52/47e3e3ad-2a66-4af3-9ca5-e2578b184b59. This bounded
+released proof preserves prior refusals and historical denominators. Candidate2694
+UI release, detailed activity/roles/Live/full19/nine/founder acceptance stay open.
+[Current Finance record](finance-department.md#october24-evening--original-reference-finance-read-and-reload-verified).
+
 ## EXP02 Finance — October24 post-restart
 
 Local execution recovered; actual main03edfad8a preserves the original Sales

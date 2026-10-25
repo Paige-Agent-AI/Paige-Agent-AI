@@ -1,5 +1,24 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October24 evening — original-reference Finance read and reload verified
+
+The originating Sales2768 repair is released in containing production03edfad8a.
+One new authorized, explicitly read-only VERA request returned the ORIGINAL
+receivables measurement matching Finance, preserved exact custom bounds and
+current-snapshot semantics, and explained coverage, source freshness, expiry and
+missing bank/accounting facts. It settled by the42-second observation; the UI
+reported one read step/22s. Reload retained the same saved reply, original step
+badge, workspace and empty composer. No refused reference or unknown monthly work
+was replayed. [Sanitized source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055); ANT52/47e3e3ad-2a66-4af3-9ca5-e2578b184b59.
+
+This is PASS for the bounded RELEASED read/persistence pathway, not undeployed
+Finance2694 UI acceptance, detailed activity inspection, universal roles/cohorts,
+Live, business execution or complete Finance. Earlier actual refusals stay
+historical; original9/0 and12/0/4 denominators are unchanged. No customer amounts,
+reference tokens or account/session metadata are published. All19/nine and one
+complete founder evaluation remain required. Candidate CI/review/release and
+post-deployment rendered acceptance remain separate gates.
+
 ## October24 — post-restart current-main confirmation
 
 Windows restart restored local execution. Composed actual main03edfad8a, preserving

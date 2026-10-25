@@ -18,7 +18,7 @@ REDUCED_MOTION: PASS: native environment reports Reduced Motion enabled; existin
 STATE_COVERAGE: PASS: original53 consumer cases include supported/no-source data, denial, read failure/retry, expiry, account retirement, original source Sheet, editable VERA hints and all seven original tab choices. Real native states remain separately unverified; no business-action success state introduced.
 TRUTHFUL_STATE_LABELS: PASS: finance.department stays PROOF_OWED. Supported Sales figures retain original expiry/currency/coverage; missing company cash/profit stays unavailable. Nine analytics catalogue and actor/provider availability are unchanged.
 SOLO_UI: YES: same original Finance consumer for all eligible existing/future SOLO accounts, no account-specific branch or provisioning change.
-UNVERIFIED: positive ordinary original-reference review, actual Chat/Live/cohort/permission/recovery and candidate release/readback remain owed. Earlier real refusal is FAIL; originating2768 source is merged, not customer-accepted. New composition requires exact review/CI. Full19/nine/founder acceptance remain open.
+UNVERIFIED: this candidate post-release rendering/reference review, actual Chat/Live/cohort/permission/recovery and deployment/readback remain owed. Underlying released original-reference Finance read/reload now has bounded PASS (ANT52/47e3e3ad-2a66-4af3-9ca5-e2578b184b59); prior refusals remain historical. New exact-head CI/review and full19/nine/founder acceptance remain open.
 
 OWNER_INTENT: Finance menu lands on Overview; visually clear financial information with fewer words across all seven Finance subpages. This first bounded slice establishes Overview/common hierarchy; Banking, Debt and remaining readiness views remain required follow-ups.
 MUST_NOT_HAPPEN: no fabricated cash, zero, accounting result, forecast, provider readiness or success; no lost subpage, hidden necessary caveat, changed financial authority, auto-sent VERA request, composer loss or new receipt engine.
@@ -244,4 +244,24 @@ Acceptance: NOT_ACCEPTED. All19/nine remain required; no new capability/algorith
 provider, approval, execution or Rail claim. Fresh exact-head review/CI and normal
 release/readback remain gates. Historical pending tool/asset/source statements
 below retain their original dated scope.
+
+
+## October24 evening — original-reference Finance read and reload verified
+
+The originating Sales2768 repair is released in containing production03edfad8a.
+One new authorized, explicitly read-only VERA request returned the ORIGINAL
+receivables measurement matching Finance, preserved exact custom bounds and
+current-snapshot semantics, and explained coverage, source freshness, expiry and
+missing bank/accounting facts. It settled by the42-second observation; the UI
+reported one read step/22s. Reload retained the same saved reply, original step
+badge, workspace and empty composer. No refused reference or unknown monthly work
+was replayed. [Sanitized source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055); ANT52/47e3e3ad-2a66-4af3-9ca5-e2578b184b59.
+
+This is PASS for the bounded RELEASED read/persistence pathway, not undeployed
+Finance2694 UI acceptance, detailed activity inspection, universal roles/cohorts,
+Live, business execution or complete Finance. Earlier actual refusals stay
+historical; original9/0 and12/0/4 denominators are unchanged. No customer amounts,
+reference tokens or account/session metadata are published. All19/nine and one
+complete founder evaluation remain required. Candidate CI/review/release and
+post-deployment rendered acceptance remain separate gates.
 

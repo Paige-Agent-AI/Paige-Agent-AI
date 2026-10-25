@@ -953,6 +953,7 @@ This mechanical documentation closeout is not logged recursively.
 | Increment | Exact released identity and proof | Completion boundary |
 | --- | --- | --- |
 | [#2771](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2771): the Studio session shows the brand its pages will use, honestly | Implementation `a927e20cc` + evidence head `dfa9576ce`, all gates SUCCESS on the exact head (§24 dispatch path); AUTHOR-REVIEW / LOWER ASSURANCE (distinct reviewer dispatched, never returned; [receipt 6392097852](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2771#issuecomment-6392097852) — the review's material catch was a rebase incident, fully repaired and disclosed); merged squash `b2d20a99ab1b6b676e612f9d967899f834ffb45a`; production deployment `7307847724` success; readback: paigeagent.ai serves the build, `SoloEntry-C_zgixvu.js` carries the shipped string. [Release receipt 6392792392](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2771#issuecomment-6392792392). | Read-only brand-context line from the anon-safe portal-brand read with honest missing states; `loadBrand` carries the raw `primary_color`; brand write intake stays Setup/E01. 103/103 studio tests; 5 labelled harness frames. Authenticated owner reopen with real brand facts PROOF OWED; EXP06 rows 3–18 remain open. |
+
 **2026-10-25 UTC — EXP05 original Task-outcome inspection and native Chat projection.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

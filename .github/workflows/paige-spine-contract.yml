@@ -299,6 +299,7 @@ jobs:
       # removes it, restore+republish serves the restored content, drafts and refused placeholders
       # never leak, foreign actors refused.
       - name: Growth public publication binding proof (EXP06)
+        if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/growth_public_publication.sql
 
       - name: Experience 03 — a lead carries its campaign; the campaign reads its leads (rolled back)

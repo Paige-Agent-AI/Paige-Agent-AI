@@ -272,3 +272,15 @@ inspection; ordinary authenticated full-request/receipt/reload, eligible cohorts
 isolation and separate Live remain unverified. Helpers still has no bounded-task
 dataset; this does not activate delegation or complete ZION, weekly execution,
 the Builder, any ten-outcome/E5-CV1-9 case or founder acceptance.
+
+Subsequent source-window reconciliation: original ANT161/417400e6 explicitly
+excludes paige-turn and reserves only29Root/action-risk scalars in the shared
+guard. This helper's disjoint existing source tuple can be renewed after exact
+021b7f9e sequential AUTHOR-REVIEW / LOWER ASSURANCE464d7e37, without transferring
+that reservation or E09's following JS window. Only83c7ce93 to307f88e1 and its
+three review-comment lines change. The whole incoming guard is recovered by
+undoing that patch: other126 entries/keys,29dispatches, sender, counts, metadata,
+extractor, validator and hostile tests remain exact. Actual original source and
+Calendar-ancestry guard programs112PASS; no empty module invocation is counted
+as test proof. Current-main composition, aggregate Spine checks, final immutable
+review, exact-head CI, merge and production readback are still required.

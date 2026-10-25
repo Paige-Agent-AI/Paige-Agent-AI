@@ -1155,7 +1155,10 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/paige-turn/interactive-reminder-history.ts": "84e35fd73307cf8172951fc1dcbf0b1064dd988cfb596ea95bc3ea7e244b4415",
  "supabase/functions/_shared/paige-turn/interactive-refusal.ts": "908219d36f0b49358553e4ea9e03a846f19b1f0995ef6b56e09295f1e1e7b240",
  // EXP05 exact original turn/authority/receipt reader, reviewed848abb406.
- "supabase/functions/_shared/paige-turn/interactive-specialist-history.ts": "83c7ce9334b35ba9b20bccbf7c467ebc9f30478ba2a24aee0ccde78bf8f08cf0",
+ // EXP05021b7f9e, sequential AUTHOR-REVIEW / LOWER ASSURANCE464d7e37:
+ // one original eight-second read budget; all authority/origin/receipt checks
+ // and the entire prior helper recover by undoing only its stage wrappers.
+ "supabase/functions/_shared/paige-turn/interactive-specialist-history.ts": "307f88e1c25dbc04db4e1cf578b963206272b9cefe9e3ccdedf6e6b0ae354f6e",
  // Original record references remain URL-free, bounded and reauthorized at destination.
  // EXP02 source review, AUTHOR-REVIEW / LOWER ASSURANCE (ANT161/a22186d8):
  // only the two existing UUID-reference branches admit systems_check. Original

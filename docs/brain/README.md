@@ -287,6 +287,18 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 
 
+
+## EXP09 approved private-request publication — October25 source milestone
+
+Original [#2851](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851) exact reviewed58fd/all13 checks/two webSUCCESS/zero threads, documented AUTHOR-REVIEW / LOWER ASSURANCE5644315607/5644495135, actually merged81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5/treee98c7c72. Actual213+58 union retains every9own and16174incoming outside entry. Original HIGH stored-call evidence, owner/customer/source/version/recipient/access/consent checks and original Work/publisher/PCA/notice/audit/response sources remain; ordinary drafted/executing refuses only this private-publication kind. No second approval, execution, inbox or receipt system.
+
+Normal native40218936283/job121246162498/persisted check/db-live81a SUCCESS. Production14230009 once9statements; advance0d412f9c/share81e21f92 and new caller-Auth-only ABI/postgres/empty path read back, original authority7c/publisher21bd/private read1701/historyad2d unchanged. Productiondpl_92uuhfzSJ3CGcKziRzB3N9GLokhV READY/exact81a; both public200/build81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5-mvo4ry4b/null at17:59:39UTC. [Actual receipt6401201920](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851#issuecomment-6401201920), [original owning packet](../delivery/e09-customer-actions-business-scope.md), [original evidence](../evidence/e09-private-request-publication.json). Main post-push CI is recorded separately and was still running at this observation.
+
+Functional source/native/web verified; native227/full-schema321 are fixture/engineering proof. Visual: no new rendered source or responsive claim. Experiential: shared command is NOT_REGISTERED_OR_MOUNTED; original owner/client/Chat/eligible Live journey remains incomplete. Founder Acceptance not requested, customer reconnect OWNER_DEFERRED. Full42/seven/Teach/seven Capabilities/ALG/one integrated founder evaluation remain open; no provider/customer/consent action or activation. The next paragraph records the separately verified2858 source/recovery release; no availability is inherited from2851.
+
+
+Original [#2858](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2858) actually released4f8788b1a7a502c143f9b7446752dc7609da72ba/treee213 after all13 exact325dd checks/current341/Preview/two webSUCCESS/zero threads, final AUTHOR-REVIEW / LOWER ASSURANCE5644691759. Actual7ce+325 union retains all12own/all16177incoming outside entries. Normal native40222508426/job121257031118 steps4–6 SUCCESS/db-live4f;14230109 once9 statements and14230119 once4, sharef011 and receipt-backed readerce473/Auth-only/postgres/empty path verified. Productiondpl_G7rVxfd6vw4FAZvv7A2uytXnZxEh READY/exact4f; both public200/build4f8788b1a7a502c143f9b7446752dc7609da72ba-mvo6dm0e/null at18:44:45UTC. [Actual receipt6401671241](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2858#issuecomment-6401671241). Exact source/receipt transport is released; native284/current341/transport68 are bounded engineering proof. Original common owner command/Chat/eligible Live/actual Root SDK integration and authenticated owner/client return remain owed. No new rendered UI, account, consent, provider act or activation; customer reconnect OWNER_DEFERRED and one integrated founder evaluation later. Main post-push CI is a separate later gate, not inferred from premerge/native/web evidence.
+
 ## EXP09 private request recovery — October 25 bounded production release
 
 Original [#2825](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2825) reviewed489f8a58a/all13 exact checks/two webSUCCESS/zero threads, with documented AUTHOR-REVIEW / LOWER ASSURANCE5643270333/5643284660/5643409402, actually mergedb5122f922a030db33dd8d57767f9ced07e07fd1b/treecaecbde7740e6646787f7672bbf1abeb2436a2ba. All incoming Root/Chat/C0b/Work/commercial source was preserved; no shared execution contract was changed. Native146/consumer94/actual hosted286 are bounded source/role/fixture evidence, not authenticated acceptance.
@@ -3932,3 +3944,25 @@ claimed. Algorithms/catalogue and the original ten outcomes/E5-CV1–9 remain
 unchanged; one integrated founder evaluation is still owed. See the original
 [control binding evidence](../evidence/exp05-weekly-control-state-binding.json).
 This source-only closeout does not create another delivery log or activation.
+
+### Verified #2864 private request controls and customer return — 2026-10-25
+
+Original #2864 actually merged 7d7663962eddb72f4d96a9650f6d5e23b8a079b2, actual parents 561be9987004e4cf28fefd4d79e5b179a9065f78 + c43b0c3aa3c3cd963b1eab4d14d2c1f99e5f948b, tree f57a1ad4bdc5e170652dce8a642f5f582f77a084; recomposed actual union retains all15 owning/all16212 outside blobs and modes. Final author-review LOWER ASSURANCE5644923194,10 SUCCESS checks + designed no-native Preview SKIP,two Vercel statuses SUCCESS,zero threads. Production dpl_4ae9YnfSxg5YXdVXEaxGMgbRHEf6 READY/exact7d; both public origins200/build7d7663962eddb72f4d96a9650f6d5e23b8a079b2-mvo8jk06/null at19:50:17–18UTC. [Release receipt6402407693](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2864#issuecomment-6402407693). Original private preparation/readback/history/recovery is mounted with local123 and bounded render18/17capture proof; actual owner preparation remains UNVERIFIED. Actual existing designated customer returned through original guards to its branded /app/messages with original CURA and business-message history; no credential/session extraction, role/consent change, send or business action. Private customer evidence stays local. No complete multi-business/seven-pillar proof or founder acceptance. Shared owner publication tool remains UNREGISTERED/UNMOUNTED. New safeguard #2870 is separate and is not credited for this earlier return recovery.
+
+## EXP05 bounded original ZION result inspection — October25 source release
+
+The existing history helper now uses one8s elapsed read budget without replay,
+broader authority or late proof. [Original source/production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2866#issuecomment-6403059382),
+the sole Master4.0 row and [original status evidence](../evidence/ui-delivery/exp05-specialist-original-status.md#october25---original-result-budget-production-source-receipt)
+record reviewed2f293/LOWER5644914592/all11 gates, actual9d8bdb79, successful
+own Edge40231463272 and immutable-source readback. Containing Chat547 source is
+verified separately; its whole E08 Edge run remains FAIL at nav-pull-profile,
+not a waived global release or asserted customer failure. Both public aliases
+were observed on containinga8, not exact-public9d8.
+
+Functional source deployed; Visual unchanged; original authenticated result,
+receipt, full-request timing and reload remain PROOF OWED. No earlier preflight
+bound, issued-read cancellation, CPU-incident closure, action/recurrence/Live or
+catalogue/algorithm promotion is claimed. The complete ten-outcome Experience,
+E5-CV1–9, universal SOLO cohorts and founder acceptance remain open. This is
+mechanical source-release accounting, not another delivery log or activation.

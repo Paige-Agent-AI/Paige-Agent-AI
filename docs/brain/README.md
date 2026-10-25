@@ -1,3 +1,25 @@
+## EXP04 original decline source release — October 25
+
+[#2802](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2802) is recorded in the sole
+[Master §4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reviewed `37893bc053f521f3c8ea20000212055fecc12900`; final AUTHOR-REVIEW / LOWER ASSURANCE
+6394061966; all 13 exact-head checks and both web statuses SUCCESS. Actual main
+`57ab5f6e6991412fb8d8b2b3d239d72bfec1ad0e` / tree `a86f04ba791606e3ca3dbcf92043dcf47b8afacb`.
+Normal native 40166767389 SUCCESS: migration 20271114100004 once, full native body
+MD5 `0e6103f6efe199f0e4e6eb88aa0eea1a` and original ABI/default/owner/ACL/config exact.
+Web `dpl_9oA7yCTqyj4T1wZ6eXom3ysh41E3` READY; immutable/canonical 200 exact
+57ab5f6e6991412fb8d8b2b3d239d72bfec1ad0e-mvneoh2j/null at 05:49:38.916 UTC.
+[Actual receipt 6394089035](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2802#issuecomment-6394089035).
+
+The original decision now rechecks current authority/state/expiry after both original
+locks. Signature13, prepared token/effect holds, grants and records remain intact.
+No new public recovery authority or prepared execution. Full O1–O12, ordinary
+authenticated roles/reload/revocation/Central QA and founder acceptance remain open.
+ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; no maturity or activation
+change. Historical native/web evidence is not ordinary customer acceptance.
+Unmerged UI/prepared-request work is excluded. All prior Brain history follows intact;
+this mechanical closeout changes no product/policy and earns no recursive row.
+
 ## EXP04 delivery and Agreements source releases — October25
 
 Three original releases are now recorded in the sole

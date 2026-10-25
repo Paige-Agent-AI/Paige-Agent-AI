@@ -852,6 +852,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP04 original recipient decline; verified native correctness release.**
+
+| Increment | Exact release and production proof | Completion boundary |
+| --- | --- | --- |
+| [#2802](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2802), decline against the locked current agreement | Reviewed `37893bc053f521f3c8ea20000212055fecc12900` / tree `bb4a207b2f67145e14be25bbc8027bd3d16a0a45`; final AUTHOR-REVIEW / LOWER ASSURANCE [6394061966](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2802#issuecomment-6394061966). All 13 exact-head checks and both web statuses SUCCESS; zero review threads. Actual main `57ab5f6e6991412fb8d8b2b3d239d72bfec1ad0e` / tree `a86f04ba791606e3ca3dbcf92043dcf47b8afacb` equals the inspected union; seven owning blobs and 15,910 incoming outside entries exact. Normal native run 40166767389 / lint 121089313452 / deploy 121089389295 SUCCESS; migration `20271114100004` exactly once, full native body MD5 `0e6103f6efe199f0e4e6eb88aa0eea1a` and original ABI/default/owner/ACL/definer/search_path read back exactly. Production `dpl_9oA7yCTqyj4T1wZ6eXom3ysh41E3` READY; immutable and canonical version responses both 200, exact `57ab5f6e6991412fb8d8b2b3d239d72bfec1ad0e-mvneoh2j` / customerUpdate:null at 05:49:38.916 UTC. Edge NOT_APPLICABLE. [Actual release receipt 6394089035](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2802#issuecomment-6394089035). | Revalidates the original token/state/expiry after original parent-then-signer locks and records one atomic actual decline/event/revocation timestamp. Causal original stale-success RED retained; 49 native checks, replay twice, one forward-source refusal, 14 real sessions/seven observed waits and the full unchanged original native suite passed. Earlier wait failure and invalid Windows guard invocation remain recorded; no timeout, baseline, grant or assertion waiver. No new UI, signature, public recovery privilege, prepared HIGH/send/token/atomic field admission or provider effect. Ordinary recipient/owner/staff/linked-client operation, reload/revocation, Central QA and complete founder acceptance remain UNVERIFIED. |
+
+This is historical source/native/web release evidence, not a claim that moving aliases stay pinned. Full O1–O12 remains open. No payment, notification, signed-agreement or completed-service claim; no algorithm/catalogue promotion, provider/role/admission activation, customer version or announcement. Unmerged recipient UI and prepared-request work are excluded. This mechanical source closeout earns no recursive shipped row.
+
 **2026-10-25 UTC — EXP04 original delivery, invitation review and recipient-source reads; verified source releases.**
 
 | Increment | Exact release and production proof | Completion boundary |

@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-10-25T08:17:02.947606+00:00",
-  "sourceCommit": "cac886e4308a15385ae14a3c60c446b2951d0e4c",
+  "generatedAt": "2026-10-25T08:26:53.869530+00:00",
+  "sourceCommit": "038c46fc041e98dfbd8303d88f4512ba1aca5757",
   "evidenceClass": "synthetic-native-postgresql",
   "sourceBlobs": {
     "scripts/proof/e09-consumer-invite.mjs": "0beddfbfbb279ee59e7022a25bde11158f322275",
     "scripts/proof/e09-private-request.mjs": "e448ca901d7545e18870708819e7308faa505d7c",
-    "supabase/migrations/20271114150009_e09_private_request_preparation.sql": "fbc23e9aa806b202f9fcd286a5d3a88f91625039",
+    "supabase/migrations/20271114150009_e09_private_request_preparation.sql": "11fefc091a463eeba506ba73e11e061a29ccbb0a",
     "supabase/tests/customer_portal_access.sql": "1b56c9f7715247844eb740d06ba2f7a698c1e499",
-    "docs/delivery/e09-customer-actions-business-scope.md": "ccb3956df62f85fb74d1c0d1b942b9bc75cd0a7a"
+    "docs/delivery/e09-customer-actions-business-scope.md": "c9137e6a418be89e4fa2c5f232847a5ad78927d2"
   },
   "baseline": {
     "passed": 73,
@@ -566,7 +566,7 @@
       },
       "canonicalReplayFileHash": "8389ea7b5589ad7ce939d9f8b01b6188",
       "migration": "20271114150009_e09_private_request_preparation.sql",
-      "migrationNormalizedSHA256": "34b7772cd8027d18c368b7f072598aeef1878976ed8d4118f1d917ec3c85487f",
+      "migrationNormalizedSHA256": "0911a8c0dd7bf1b39970783031a5f1695e51cfd3d4f4beb2c20b0d7104265d6b",
       "fixture": "synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority",
       "customerPublication": "NOT_RUN",
       "fullSchema": "PROOF_OWED"
@@ -575,5 +575,20 @@
   "hostedFullSchema": "PROOF_OWED",
   "customerPublication": "NOT_RUN",
   "authenticatedAcceptance": "UNVERIFIED",
-  "founderAcceptance": "NOT_REQUESTED"
+  "founderAcceptance": "NOT_REQUESTED",
+  "priorAttempt": {
+    "head": "f8c59fce0898251dbde151d79feee58e830e6d4d",
+    "sourceCommit": "cac886e4308a15385ae14a3c60c446b2951d0e4c",
+    "migrationNormalizedSHA256": "34b7772cd8027d18c368b7f072598aeef1878976ed8d4118f1d917ec3c85487f",
+    "nativePassed": 124,
+    "requiredVerify": "FAILED signature ACL scanner could not recognize grouped second signature",
+    "disposition": "Equivalent explicit per-signature owning ACL statements; guard/baseline/permissions unchanged; native124 repeated",
+    "invalidToolInvocation": "Direct Windows signature guard entrypoint silently did not run; exported original run/selfTest invoked instead"
+  },
+  "signatureGuard": {
+    "candidateAdditions": 0,
+    "baselineRetained": 4,
+    "selfTestsPassed": 12
+  },
+  "previewAdvisoryDisposition": "Intended authenticated definer API WARN0029, original subject/workspace/Portal owner+Work staff checks enforced, no suppression; final hosted readback owed"
 }

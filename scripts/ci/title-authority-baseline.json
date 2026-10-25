@@ -61,6 +61,13 @@
       "reason": "Writes the two columns only after is_tenant_admin() authorizes the caller, then echoes the saved values back; nothing branches on them.",
       "defined_in": "20260901001520_solo_team_workspace.sql",
       "fingerprint": "9bae5500ae6446a1"
+    },
+    {
+      "function": "public.team_hub_list_conversations(uuid)",
+      "purpose": "display",
+      "reason": "Returns each active teammate's title in the Team Hub roster so namesakes can be told apart in the @ picker; who may see the roster is the caller's active seat in a canonical SOLO workspace, and permission is derived from role and is_owner, never the title.",
+      "defined_in": "20271113850008_exp08_team_hub_collaboration.sql",
+      "fingerprint": "1c7ef3aea66eef8d"
     }
   ],
   "non_identity_columns": {

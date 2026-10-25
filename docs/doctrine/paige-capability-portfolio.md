@@ -151,6 +151,7 @@ clients.portal = PARTIAL
 settings.setup = PROOF_OWED
 settings.public-presence = PROOF_OWED
 settings.team = PROOF_OWED
+teamhub = PROOF_OWED
 settings.connections = UNAVAILABLE
 settings.integrations = PARTIAL
 settings.vault = INTENTIONALLY_ISOLATED

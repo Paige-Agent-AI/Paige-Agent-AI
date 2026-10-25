@@ -1,14 +1,9 @@
-import { parseWeeklyControlIntent } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-control-intent";
+import { parseWeeklyDraftState, type WeeklyDraftIntent, type WeeklyDraftState } from "../../../supabase/functions/_shared/paige-orchestration/weekly-draft-projection";
 import { createWeeklyDraftDeadline } from "../../../supabase/functions/_shared/paige-orchestration/weekly-draft-deadline";
 import type { WeeklyBrowserScope } from "./weekly-owner-read";
 
-export type WeeklyDraftIntent = { name: string; weekday: number; local_time: string; timezone: string };
-export type WeeklyDraftState = {
-  phase: "awaiting_approval" | "saved" | "saved_unreceipted" | "changed" | "expired" | "declined" | "unknown";
-  confirmationId: string; requestId: string; readAt: string; summary: string; draft: WeeklyDraftIntent;
-  expiresAt: string; token: string | null; automationId: string | null; revision: number | null;
-  processState: string | null; receiptId: string | null;
-};
+export { parseWeeklyDraftState };
+export type { WeeklyDraftIntent, WeeklyDraftState };
 export type WeeklyDraftRequest = { action: "prepare"; draft: WeeklyDraftIntent } | { action: "pending" }
   | { action: "status"; confirmation_id: string }
   | { action: "commit"; confirmation_id: string; approvedConfirmations: string[] }
@@ -24,33 +19,6 @@ type Caller = {
 };
 const object = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === "object" && !Array.isArray(v);
 const uuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(v);
-const instant = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d\d-\d\dT/.test(v) && Number.isFinite(Date.parse(v));
-/** Closed projection: no raw authority, token, args or database error reaches model prose.
- * Token is retained only for the incumbent human confirmation card's HTTP response.
- */
-export function parseWeeklyDraftState(raw: unknown, scope: Pick<WeeklyBrowserScope, "actorId" | "tenantId">): WeeklyDraftState | null {
-  if (!object(raw) || raw.ok !== true || raw.actor_id !== scope.actorId || raw.tenant_id !== scope.tenantId ||
-    !uuid(raw.confirmation_id) || !uuid(raw.request_id) || !instant(raw.read_at) || !instant(raw.expires_at) ||
-    typeof raw.summary !== "string" || raw.summary.length < 1 || raw.summary.length > 2048 ||
-    typeof raw.phase !== "string" || !["awaiting_approval", "saved", "saved_unreceipted", "changed", "expired", "declined", "unknown"].includes(raw.phase)) return null;
-  const draft = parseWeeklyControlIntent("draft", raw.draft);
-  if (!draft || !("name" in draft)) return null;
-  const present = ["saved", "saved_unreceipted", "changed"].includes(raw.phase);
-  if (present ? !uuid(raw.automation_id) || !Number.isSafeInteger(raw.revision) || Number(raw.revision) < 1 ||
-    typeof raw.process_state !== "string" || !["draft", "live", "paused"].includes(raw.process_state)
-    : raw.automation_id !== null || raw.revision !== null || raw.process_state !== null || raw.receipt_id !== null) return null;
-  if (raw.phase === "awaiting_approval" ? typeof raw.confirmation_token !== "string" ||
-    !/^[0-9a-f]{16}:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(raw.confirmation_token)
-    : raw.confirmation_token !== null) return null;
-  if (raw.phase !== "changed" && raw.recurrence_authorized !== false) return null;
-  if (["saved", "saved_unreceipted"].includes(raw.phase) && (raw.process_state !== "draft" || raw.revision !== 1)) return null;
-  if (raw.phase === "saved" && !uuid(raw.receipt_id) || raw.phase === "saved_unreceipted" && raw.receipt_id !== null ||
-    raw.receipt_id !== null && !uuid(raw.receipt_id)) return null;
-  return { phase: raw.phase as WeeklyDraftState["phase"], confirmationId: raw.confirmation_id, requestId: raw.request_id,
-    readAt: raw.read_at, summary: raw.summary, draft: draft as WeeklyDraftIntent, expiresAt: raw.expires_at,
-    token: raw.confirmation_token as string | null, automationId: raw.automation_id as string | null,
-    revision: raw.revision as number | null, processState: raw.process_state as string | null, receiptId: raw.receipt_id as string | null };
-}
 
 /** Exactly one invocation. Uncertain writes are recovered by status/pending READS;
  * there is no automatic retry, new request identity or local authority/persistence.

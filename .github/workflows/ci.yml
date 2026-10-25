@@ -78,6 +78,10 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
       - name: EXP02 analytics catalogue guards, replay and read-only permissions in isolated database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/e2_analytics_catalogue.sql
+      - name: EXP08 Team Hub storage, workspace isolation, refusals and migration replay in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_collaboration.sql
+      - name: EXP08 Team Hub team work, atomic Operations task creation, exactly-once retry and work list isolation in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_team_work.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
@@ -128,6 +132,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # need base-sha history for changed-files diffs + the tsc ratchet
+
+      - name: Edge release source and bounded deployment recovery
+        run: python3 -B -m unittest discover -s .github/scripts -p test_edge_source_readback.py -v
 
       - uses: actions/setup-node@v4
         with:
@@ -871,6 +878,7 @@ jobs:
             supabase/functions/_shared/agreements/document.test.ts \
             supabase/functions/_shared/agreements/retained-document.test.ts \
             supabase/functions/_shared/agreements/seal-readback.test.ts \
+            supabase/functions/_shared/agreements/prepared-seal-source.test.ts \
             supabase/functions/_shared/agreements/signing-guard.test.ts \
             supabase/functions/sign-agreement/preflight.test.ts \
             supabase/functions/sales-collection-command/effectuation.test.ts \
@@ -878,6 +886,7 @@ jobs:
             supabase/functions/_shared/agreements/owner-preparation.test.ts \
             supabase/functions/_shared/agreements/owner-preparation-http.test.ts \
             supabase/functions/_shared/agreements/prepared-signature-review.test.ts \
+            supabase/functions/_shared/agreements/prepared-signature-request.test.ts \
             supabase/functions/_shared/agreements/portal-door.test.ts
           # E09 Slice A: agreement-document's third (customer portal) door is mounted before the other
           # two and leaves both byte-identical. Source pins read the repo tree only; every other deny stays.

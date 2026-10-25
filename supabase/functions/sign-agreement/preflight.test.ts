@@ -17,6 +17,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
   let signerOverride:Record<string,unknown>={};
   let nativeMode:'refuse'|'record'|'lost_ack'='refuse',recorded=false,recoveryError:string|null=null,notices=0,completionAttempts=0;
   let receiptOverride:Record<string,unknown>={};
+  let preparedSourceReads=0,preparedSourceFailure=false;
   let readFailure:'signer'|'agreement'|'order'|null=null;
   const nativeInputs:Record<string,unknown>[]=[];
   const receipt=(replayed:boolean)=>({state:'recorded',replayed,signing_id:agreementId,signer_id:signerId,
@@ -31,6 +32,11 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       const request=new Request(input,init),url=new URL(request.url);
       assert.equal(url.origin,'https://synthetic.invalid');
       if(url.pathname==='/rest/v1/rpc/check_public_rate_limit')return json(true);
+      if(url.pathname==='/rest/v1/rpc/_read_prepared_agreement_seal'){
+        preparedSourceReads++;assert.deepEqual(await request.json(),{_agreement:agreementId});
+        return preparedSourceFailure?json({message:'Synthetic source unavailable',code:'SYNTHETIC_READ'},503)
+          :json({state:'unavailable',agreement_id:agreementId,tenant_id:tenant});
+      }
       if(url.pathname==='/rest/v1/rpc/_record_agreement_signature'){
         const args=await request.json();nativeInputs.push(args);
         assert.equal(args._token_hash,await sha256Hex('a'.repeat(64)));
@@ -62,7 +68,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       if(url.pathname==='/rest/v1/paige_agreements'){
         if(readFailure==='agreement')return json({message:'Synthetic original record unavailable',code:'SYNTHETIC_READ'},503);
         assert.equal(request.method,'GET','progress belongs to the same native signature transaction');
-        if(url.searchParams.get('select')?.startsWith('id,tenant_id,title,status,body_source'))completionAttempts++;
+        if(url.searchParams.get('select')?.startsWith('id,tenant_id,contact_id,version,title,status,body_source'))completionAttempts++;
         if(url.searchParams.get('select')==='status,sealed_storage_key,sealed_sha256'){
           assert.equal(url.searchParams.get('id'),'eq.'+agreementId);assert.equal(url.searchParams.get('tenant_id'),'eq.'+tenant);
         }
@@ -182,6 +188,18 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       const result=await(await invoke({check_only:true})).json();
       assert.equal(result.ok,true);assert.equal(result.completed,false);assert.equal(terminalWrites,0);assert.equal(storageReads,0);assert.equal(completionAttempts,0);assert.equal(notices,0);
     });
+    for(const failedRead of [false,true])await t.step('actual final-signature handler preserves recorded signature when prepared completion evidence is unavailable: '+failedRead,async()=>{
+      receiptOverride={outstanding_count:0,agreement_status:'sent'};signerOverride={};recorded=false;
+      agreement=base;storage=new Response(new Uint8Array(bytes).buffer);preparedSourceFailure=failedRead;
+      preparedSourceReads=0;terminalWrites=0;completionAttempts=0;notices=0;storageReads=0;
+      const reply=await invoke(),result=await reply.json();
+      assert.equal(reply.status,200);assert.equal(result.ok,true);assert.equal(result.completed,false);assert.equal(result.audit_complete,true);
+      assert.equal(result.signed_event_id,receipt(false).signed_event_id);assert.equal(result.signed_pdf_path,null);
+      assert.equal(terminalWrites,1);assert.equal(preparedSourceReads,1);assert.equal(completionAttempts,1);
+      assert.equal(storageReads,1,'only the original before-signing document check; no fallback seal/upload');
+      assert.equal(notices,1,'only original owner signature activity, no completion notification');
+    });
+    preparedSourceFailure=false;
     for(const validCopy of [true,false])await t.step('existing completed copy requires actual readback, with no completion effect: '+validCopy,async()=>{
       receiptOverride={outstanding_count:0,agreement_status:'completed'};signerOverride={status:'signed'};
       agreement={...base,status:'completed',sealed_storage_key:'synthetic/sealed.pdf',sealed_sha256:pdfDigest};

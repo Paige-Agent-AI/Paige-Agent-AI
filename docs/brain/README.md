@@ -84,6 +84,35 @@ owners. CAP018–024 and ALG01/02/04/12/13 maturity and one integrated Founder
 Acceptance remain unchanged; no customer version/announcement or recursive
 product-release credit for this mechanical closeout.
 
+## EXP09 original deployment packaging — October24/25 source and bounded recovery verified
+
+Original2776 reviewed3bb50528ce320744cec5b586dc17775522901200/LOWER5640094616
++5640211505 passed all10 applicable checks/schema-free PreviewSKIPPED/two statuses,
+full general40134197911 and native40134197918. Actual main
+553f32f7cb7ea5297338b69692d9eb3c9754dfdb/treec210ae53b9ee845fcda9ab5f9d82bdf729f31a3a
+equals inspected d90+3bb union; all five blobs and incoming EXP01Chat/EXP04Sales/
+EXP05claim/records preserved. ProductionGyp READY and both immutable/public200,
+build553f-mvmy4p4w/null. [Original receipt6390125500](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2776#issuecomment-6390125500)
+and the sole [Master §4.0 row](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log)
+retain exact identities.
+
+Automatic40136916896/121000269907 actually ran86 Python tests/OK, but selected
+and retired0: all provider/deploy/source-readback/tag steps correctlySKIPPED.
+This initial run proves workflow/source publication, not actual provider recovery.
+The later [original recovery40137959302](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/40137959302),
+job121003416943/source216768d8e1eccbaacc39717cd1858bae6087449f, is independently
+SUCCESS: raw logs show API-first Chat→local_requested, agreement→API, complete
+source/config PASS for both, then guarded edge-live216. Earlier d361/no-op and
+40120140274FAILED remain historical evidence. No raw provider error, secret or
+unknown outcome authorizes replay; import maps retain the existing hold.
+No new provider client, credentials, approval, runtime, job engine or activation.
+Own migration N/A; original2765 runtime531 and later recovery runtime532 are dated
+source proof, not actual customer file reading. Word2785 is a separate open draft;
+actual file/model/return/revoke/phone, all42/seven/Teach and Founder Acceptance
+remain unfinished. UI, catalogue
+and algorithm maturity unchanged; no customer version/publication or recursive
+feature credit for this closeout.
+
 ## EXP05 weekly original approval and recovery — October24 source released
 
 Native #2758 exactadf6/LOWER6386231227+6386546848/all13+twoSUCCESS merged actual
@@ -425,6 +454,51 @@ cases; original MCP governed-door/destructive guards and self-tests retained.
 [Evidence and boundary](../evidence/ui-delivery/exp05-mcp-zion-workspace.md).
 Source preparation only: no instructions/provider/activation or authenticated
 ZION result, historical acceptance or full ten-outcome/E5/founder closure.
+
+
+
+## EXP02 Systems Check dialog return — October23 source candidate
+
+**October24 native zoom addendum:** actual native menu200percent, original428x208CSSpx dialog/44px actions, forward/reverse keyboard containment and Escape return observed; menu100percent restoration verified. Two additional page-only captures join the existing manifest. Current-main229fb5e9 composed with unchanged component/styles. Current motion preference/AT/native pending/scope and released ordinary proof remain owed. No confirmed action, new readiness or founder acceptance.
+
+**October24 restored confirmation:** current-main03ed is composed; original
+component6ee9d5f9 is retained and its dialog-action CSS minimum improves36→44px.
+Original67/67 tests pass in34.52s. Eleven final original-shell captures now include
+all eight desktop/narrow closed/open layouts, desktop/390 dialogs and390 visible
+focus return, with exact hashes/raster dimensions in the linked evidence. Chat
+draft and original Escape/focus return are observed. These replace the earlier
+missing matched-render claim only; previous failures and the dated results below
+remain historical. Native200percent/current reduced-motion/pending/scope-retirement,
+exact-head review/CI/release and authenticated customer/Live/cohort/full19/nine/
+founder proof remain owed. No action, authority or readiness promotion.
+
+Original review dialogs now consume Escape before shared shell shortcuts and
+restore their original control after inert clears. A per-account decision generation
+retires late success/refusal/focus, including A→B→A and unmount, without cancelling
+or settling the original domain operation. Four causal keyboard/inert failures,
+then two late-result scope failures are retained; final106 cases/four original suites
+pass, scoped lint0/current-main build112seconds. Detector0 findings. Native Cancel/
+Escape returns to the original control after inert clears; focus trap, unchanged
+synthetic draft/scroll are verified. Eight DOM geometries have no page overflow,
+but lagging compositor frames are INVALID; complete matching renders/zoom/scope
+and released ordinary proof remain owed. Exact origin access was authorized;
+intermittent browser stalls/reset and read-only synthetic-confirm refusal retained.
+[Evidence](../evidence/ui-delivery/e2-systems-dialog-return.md).
+Functional local / Visual candidate UNVERIFIED / Experiential original defect and
+bounded native return, released proof owed / Founder NOT_ACCEPTED. No shell, runner, approval writer,
+provider, registry, LayerC, Rail or permission change. Native recorded-check UI is
+partial; canonical Systems Check Mind-context stays UNAVAILABLE (SCR-2/SCR-3).
+All19/nine remain mandatory.
+
+Preceding Finance2684 is source-releasedd780fd85e3cfd0c73256847c79f2692a5a399d1a,
+LOWER5634377259/all10 applicable checks/two statuses. Normal2M5h READY/exactmeta;
+public containinga9bd855c-mvlgdzr6/null and unchanged source/six served markers
+verified, exactd780 public intermediate not sampled (receipt6374834566). Same-ref/
+date-range ordinary read/reload is still owed. Original monthly CPU failure and
+unknown claim are preserved; EXP05 recovery ACK ANT11/96c5091a, no retry/reset.
+Earlier candidate sections remain dated historical evidence; historical9/0 and
+12/0/4, algorithms, nine catalogue/access labels, role/cohort/Live and full founder
+acceptance are unchanged.
 
 ## EXP02 Finance specialist attribution — October23 source released
 

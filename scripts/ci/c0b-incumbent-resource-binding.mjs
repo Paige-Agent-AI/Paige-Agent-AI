@@ -1,3 +1,5 @@
+// EXP02 current689 composition: report ROOT/scalars unchanged from reviewedf076.
+// Preserve COMPLETE incoming E04 C35 readiness source pin, provenance and metadata.
 // EXP02 report source plan, current-main229 composition, October24.
 // AUTHOR-REVIEW / LOWER ASSURANCE ba7eeb2ca3860f11c60a06c40f72034cc9f6f634, receipt6392035404.
 // Original ROOT00cf86f001c67679f51466c8aeef59ef12b4a38e preserves released campaign read.
@@ -5,6 +7,13 @@
 // every branch/control/other identity/helper/import and all124 incoming pins exact.
 // Canonical metric keys already pinned; missing-import regression2FAIL to46PASS.
 // Extractor/validator/metadata/hostile controls and E04 SOURCES reservation retained.
+// EXP04 prepared invitation source, Oct24: AUTHOR-REVIEW / LOWER ASSURANCE
+// BEFORE renewal at245458a0, receipt5640616994; exact reviewed readiness blob
+// d8856749c80394d597bd32df7c770c77bc6b8141. Extract only the original canonical
+// sender-list query/policy; incumbent resolver byte-exact by inverse. Old pin
+// 920b5bf2 reproduced, original121 email/invoice cases PASS. Renew this ONE
+// dependency literal; Chat root/all29 dispatches, other dependencies, metadata,
+// extractor/validators and hostile tests unchanged. No runtime activation.
 // EXP09 private CURA files: sequential AUTHOR-REVIEW / LOWER ASSURANCE before renewal.
 // Reviewed committed Chat blob323ef07c58eb97f5592fae4b243ba4cbcfcc0ea6 at b2091782b,
 // composed with actual main6380. All29 original decompositions change only
@@ -1013,7 +1022,7 @@ const SOURCES = {
   "supabase/functions/_shared/paige-orchestration/subject-tenant.ts": "79bfca5cada98f8226a533684556c2b6035ec8aaf0855c06846b035ef4d778bd",
   "supabase/functions/_shared/sales-payments/balance-projection.ts": "089be3509f1a784659f86ceaa8e21238a765b744ebc5f75ecdb870be58070a92",
   "supabase/functions/_shared/sales-invoice-delivery/readiness.ts": "951b29afbdab2ad6480fdaadde38ae6f927bf5686f7bbf5518109128c91bb140",
-  "supabase/functions/_shared/comms-email/readiness.ts": "920b5bf24d44385ded3bd1b72840c1f1ebd3689524cd88472e6bc6337c043cfc",
+  "supabase/functions/_shared/comms-email/readiness.ts": "325b6bae21a323b849b23d02fe2d0df19baa0be6385a7810d289af0238ac5c7b",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
   "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",

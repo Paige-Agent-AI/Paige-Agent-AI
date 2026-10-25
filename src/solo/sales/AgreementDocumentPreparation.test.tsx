@@ -11,9 +11,9 @@ import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
 import {projectPreparedSignatureReview} from '../../../supabase/functions/_shared/agreements/prepared-signature-review-contract';
 import type {AssignedField} from './agreementDocumentModel';
 import {useSalesDraftExit} from '../sales-dialog';
-const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),sources:vi.fn(),review:vi.fn(),signing:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
+const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),sources:vi.fn(),review:vi.fn(),signing:vi.fn(),senders:vi.fn(),requestReview:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{}}));
-vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history,readAgreementCommercialSources:ports.sources,readAgreementCommercialReview:ports.review,readAgreementSigningReview:ports.signing}));
+vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history,readAgreementCommercialSources:ports.sources,readAgreementCommercialReview:ports.review,readAgreementSigningReview:ports.signing,readAgreementSigningSenders:ports.senders,readAgreementSignatureRequest:ports.requestReview}));
 vi.mock('./AgreementDocumentFields',()=>({AgreementDocumentFields:(props:{canEdit:boolean;source:unknown;document:unknown;bytes:Uint8Array;fields:AssignedField[];savedPreparationSha:string;onChange:(fields:AssignedField[])=>void;onSave:(value:Awaited<ReturnType<typeof prepareAgreementFields>>)=>void})=><div data-field-inspector data-editable={props.canEdit} data-saved-fields-sha={props.savedPreparationSha}>
   <span data-displayed-byte-length>{props.bytes.length}</span><span>{props.fields.length} proposed fields</span><button disabled={!props.canEdit} onClick={()=>props.onChange([...props.fields,{id:'f1111111-0000-4000-8000-000000000001',signer_id:fixture.signers[0].id,kind:'signature',page:1,x:20,y:20,width:120,height:40,required:true,label:'Signature'}])}>Place controlled field</button>
   <button disabled={!props.canEdit} onClick={()=>{ports.fieldWork=prepareAgreementFields(props.source,props.document,props.fields).then(props.onSave);}}>Save controlled fields</button></div>}));
@@ -22,7 +22,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const actor='b1111111-0000-4000-8000-000000000001',request='b2222222-0000-4000-8000-000000000002',event='f2222222-0000-4000-8000-000000000002';
 let root:Root,host:HTMLDivElement,current=true,record:Extract<AgreementDocumentView,{state:'retained'}>;
 const empty=():AgreementDocumentView=>({state:'none',title:'Controlled agreement',source:structuredClone(fixture.source) as AgreementDocumentView['source'],can_prepare:true,preparation_hold:null,document_signers:[]});
-const good=(view:AgreementDocumentView)=>({ok:true,value:view});
+const good=<T,>(view:T)=>({ok:true,value:view});
 const absent=()=>({ok:false,reason:'unconfirmed',message:'Original request is not confirmed.'});
 async function writeReply(command:AgreementDocumentCommand,source=record.source,document=record.preparation.manifest.document){
   const prepared=await prepareAgreementFields(source,document,command.action==='retain_fields'?command.fields:[]),next=structuredClone(record);
@@ -30,11 +30,11 @@ async function writeReply(command:AgreementDocumentCommand,source=record.source,
   return {ok:true,value:{view:next,receipt:{state:'recorded',historical_receipt:true,id:next.preparation.id,event_id:next.preparation.event_id,revision_no:2,document_sha256:document.sha256,preparation_sha256:prepared.preparation_sha256,is_selected:true}}};
 }
 function Harness({requestId=null,resume={draft:[],busy:false,uncertain:false}}:{requestId?:string|null;resume?:DocumentGuard}){
-  const [guard,setGuard]=React.useState<DocumentGuard>(resume);const exit=useSalesDraftExit(guard.draft,guard.busy,ports.return,{uncertain:guard.uncertain});
+  const [guard,setGuard]=React.useState<DocumentGuard>(resume);const exit=useSalesDraftExit({fields:guard.draft,invitations:guard.signatureDraft??null},guard.busy,ports.return,{uncertain:guard.uncertain});
   const adoptBaseline=exit.adoptBaseline;
   React.useLayoutEffect(()=>{adoptBaseline([]);},[adoptBaseline]);
   return <><AgreementDocumentPreparation tenantId={fixture.source.tenant_id} actorId={actor} agreementId={fixture.source.agreement_id} requestId={requestId} authorityKey="controlled" isCurrent={()=>current&&exit.alive.current}
-    resume={guard} onGuard={(next,baseline)=>{setGuard(next);if(baseline)exit.adoptBaseline(baseline);}}
+    resume={guard} onGuard={(next,baseline)=>{setGuard(next);if(baseline)exit.adoptBaseline({fields:baseline,invitations:null});}}
     onRetainRequest={id=>{if(!ports.retained(id))return false;ports.checkpoints.push(id??'');return true;}}
     onRequest={exit.request} onReturn={ports.return} onAddSigners={vi.fn()} onAccessRefused={ports.refused}/>{exit.confirmation}</>;
 }
@@ -176,4 +176,79 @@ it('retires private document and review data through the original parent when re
 it('does not reopen a canceled read when its late source response arrives',async()=>{
   let release!:(value:unknown)=>void;ports.read.mockResolvedValue(good(record));ports.signing.mockReturnValue(new Promise(done=>{release=done;}));await mount();await click('Review saved signing request');
   expect(host.textContent).toContain('Checking the saved document');await click('Back to document');await act(async()=>release({ok:true,value:await savedReview()}));expect(host.querySelector('[aria-label="Saved signing request review"]')).toBeNull();expect(document.activeElement).toBe(button('Review saved signing request'));expect(ports.save).not.toHaveBeenCalled();
+});
+
+
+const choiceId='e1111111-0000-4000-8000-000000000001';
+async function openInvitations(){
+  const fields=fixture.signers.map((signer,index)=>({id:'f1111111-0000-4000-8000-00000000000'+(index+1),signer_id:signer.id,kind:'signature' as const,page:1,x:20,y:20+index*80,width:120,height:40,required:true,label:'Signature'}));
+  const prepared=await prepareAgreementFields(fixture.source,fixture.document,fields);
+  record.preparation.manifest=structuredClone(prepared.manifest);record.preparation.preparation_sha256=prepared.preparation_sha256;
+  const review=await savedReview();expect(review.ready_for_review).toBe(true);
+  ports.read.mockResolvedValue(good(record));ports.signing.mockResolvedValue(good(review));
+  ports.senders.mockResolvedValue(good({kind:'prepared_signature_sender_choices',review_sha256:review.review_sha256,
+    senders:[{connector_id:choiceId,from_address:'hello@studio.example.test',state:'ready',reason:null}],
+    provider_execution_verified:false,approval:'not_requested',execution:'unavailable'}));
+  await mount();await click('Review saved signing request');return review;
+}
+function setControl(control:Element,value:string){const prototype=control instanceof HTMLSelectElement?HTMLSelectElement.prototype:control instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(prototype,'value')!.set!.call(control,value);control.dispatchEvent(new Event(control instanceof HTMLSelectElement?'change':'input',{bubbles:true}));}
+async function chooseSender(){
+  const select=host.querySelector<HTMLSelectElement>('select[aria-label="Send from"]');
+  expect(select).not.toBeNull();await act(async()=>setControl(select!,choiceId));
+}
+it('prepares per-signer messages inside the original saved review and protects them with the ONE parent guard',async()=>{
+  await openInvitations();expect(button('Check complete request').disabled).toBe(true);await chooseSender();
+  const input=host.querySelector('textarea[aria-label="Invitation message"]')!;
+  await act(async()=>setControl(input,'A corrected invitation for the client.'));
+  const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+  await click('Back to document');expect(host.querySelectorAll('[role="alertdialog"]')).toHaveLength(1);await click('Continue editing');
+  expect((host.querySelector('textarea[aria-label="Invitation message"]') as HTMLTextAreaElement).value).toBe('A corrected invitation for the client.');
+  expect(ports.save).not.toHaveBeenCalled();expect(ports.requestReview).not.toHaveBeenCalled();
+  expect(host.textContent).not.toContain('[[PAIGE_AGREEMENT_SIGNING_LINK]]');
+});
+it('keeps invitation edits through an unavailable identity read and distinguishes a genuinely empty retry',async()=>{
+  await openInvitations();await chooseSender();ports.senders.mockResolvedValueOnce({ok:false,reason:'sender_choices_unverified',message:'Email identities could not be checked.'})
+    .mockResolvedValueOnce(good({senders:[]}));await click('Refresh email identities');expect(host.textContent).toContain('Email identities could not be checked.');
+  await click('Retry email identities');expect(host.textContent).toContain('No usable business email was returned');expect(button('Check complete request').disabled).toBe(true);
+  expect(ports.requestReview).not.toHaveBeenCalled();expect(ports.save).not.toHaveBeenCalled();
+});
+it('stops a pending check without losing invitations and ignores its late response',async()=>{
+  await openInvitations();await chooseSender();let release!:(v:unknown)=>void;ports.requestReview.mockReturnValue(new Promise(done=>{release=done;}));
+  await click('Check complete request');expect(host.textContent).toContain('Checking complete request');await click('Stop waiting');
+  await act(async()=>release(good({args:{sender:{from_address:'private@unexpected.test'}}})));
+  expect(host.textContent).not.toContain('private@unexpected.test');expect(host.textContent).not.toContain('Request checked · not sent');
+  expect(button('Check complete request').disabled).toBe(false);expect(ports.save).not.toHaveBeenCalled();
+});
+it('retires private invitations and the document when actual request-review access is refused',async()=>{
+  await openInvitations();await chooseSender();ports.requestReview.mockResolvedValue({ok:false,reason:'access_unverified',message:'Access changed.'});
+  await click('Check complete request');expect(ports.refused).toHaveBeenCalledOnce();expect(host.textContent).not.toContain('Controlled Client');
+  expect(host.querySelector('[aria-label="Signature invitation preparation"]')).toBeNull();expect(ports.save).not.toHaveBeenCalled();
+});
+
+it('shows the actual complete checked request, restores focus and keeps approval and sending distinct',async()=>{
+  const review=await openInvitations();await chooseSender();
+  ports.requestReview.mockImplementation(async(_ctx,_review,sender,draft)=>good({
+    kind:'prepared_signature_request_review',tool:'agreement_send',approval:'not_requested',execution:'unavailable',request_sha256:'a'.repeat(64),
+    args:{agreementId:review.request.agreement_id,expectedTenantId:review.request.tenant_id,operationId:draft.operation_id,
+      preparationId:review.request.preparation_id,preparationSha256:review.request.preparation_sha256,reviewSha256:review.review_sha256,
+      source:review.request.expected_source,title:review.title,document:review.document,recipients:review.signers,requestSchemaVersion:1,
+      sender:{connector_id:sender.connector_id,provider:'sendgrid',from_address:sender.from_address,from_name:'Controlled Studio',reply_to:null},
+      messages:draft.messages.map((m:{signer_id:string;subject:string;body_text:string})=>({...m,to:review.signers.find(s=>s.id===m.signer_id)!.email,body_html:'unused in this view'}))}}));
+  await click('Check complete request');expect(host.textContent).toContain('Request checked · not sent');
+  expect(document.activeElement?.textContent).toContain('Request checked · not sent');
+  expect(host.textContent).toContain('Controlled Client');expect(host.textContent).toContain('Controlled Business Signer');
+  expect(host.textContent).toContain('Approval, sending, delivery and signatures have not occurred.');
+  expect(host.textContent).not.toContain('[[PAIGE_AGREEMENT_SIGNING_LINK]]');
+  await click('Edit invitations');expect(host.textContent).not.toContain('Request checked · not sent');
+  expect(ports.save).not.toHaveBeenCalled();expect(ports.requestReview).toHaveBeenCalledOnce();
+});
+it('keeps separate client and business messages when the active recipient changes',async()=>{
+  await openInvitations();await chooseSender();
+  await act(async()=>setControl(host.querySelector('textarea[aria-label="Invitation message"]')!,'Client invitation with requested details.'));
+  await act(async()=>setControl(host.querySelector('select[aria-label="Invitation recipient"]')!,fixture.signers[1].id));
+  expect((host.querySelector('textarea') as HTMLTextAreaElement).value).toBe('Please review the agreement before signing.');
+  await act(async()=>setControl(host.querySelector('textarea')!,'Business signer invitation.'));
+  await act(async()=>setControl(host.querySelector('select[aria-label="Invitation recipient"]')!,fixture.signers[0].id));
+  expect((host.querySelector('textarea') as HTMLTextAreaElement).value).toBe('Client invitation with requested details.');
 });

@@ -6,6 +6,7 @@
 -- Measurements behind the change: Linear ANT-161, 2026-10-25 (AWS assessment).
 -- Disposable PostgreSQL only; the fixture is the search proof's, unchanged.
 \set QUIET on
+\set ON_ERROR_STOP on
 DROP DATABASE IF EXISTS exp08_team_hub_read_perf_proof;
 CREATE DATABASE exp08_team_hub_read_perf_proof;
 \c exp08_team_hub_read_perf_proof
@@ -414,8 +415,31 @@ UPDATE public.team_hub_messages SET deleted_at=now()
 UPDATE public.team_hub_messages SET deleted_at=now()
  WHERE id IN (SELECT id FROM public.team_hub_messages WHERE parent_message_id=(SELECT id FROM roots ORDER BY id OFFSET 1 LIMIT 1)
   ORDER BY created_at DESC, id DESC OFFSET 1 LIMIT 2);
+-- A teammate whose seat is no longer active (u6 is suspended): their #general messages and a DM
+-- with them, so both 'Former teammate' labels are part of the recorded output.
+INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,created_at)
+SELECT :'ta'::uuid, :'general'::uuid, :'u6'::uuid, 'Former author venue deposit '||g, gen_random_uuid(),
+ timestamptz '2027-01-01' + make_interval(secs=>g*7) FROM generate_series(1,20) g;
+INSERT INTO public.team_hub_channels(tenant_id,kind,visibility,dm_key,created_by)
+ VALUES (:'ta','dm','private',least(:'u1'::uuid,:'u6'::uuid)::text||':'||greatest(:'u1'::uuid,:'u6'::uuid)::text,:'u1')
+ RETURNING id AS dm16 \gset
+INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by)
+ VALUES (:'dm16',:'ta',:'u1',:'u1'),(:'dm16',:'ta',:'u6',:'u1');
+INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,created_at)
+SELECT :'ta'::uuid, :'dm16'::uuid, CASE WHEN g%2=0 THEN :'u6'::uuid ELSE :'u1'::uuid END, 'Former DM venue deposit '||g,
+ gen_random_uuid(), timestamptz '2027-01-01' + make_interval(secs=>g) FROM generate_series(1,30) g;
+-- An archived channel with messages: nobody may open or search it.
+INSERT INTO public.team_hub_channels(tenant_id,kind,name,visibility,created_by,archived_at)
+ VALUES (:'ta','channel','old-ops','team',:'u1',now()) RETURNING id AS archived \gset
+INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,created_at)
+SELECT :'ta'::uuid, :'archived'::uuid, :'u1'::uuid, 'Archived venue deposit '||g, gen_random_uuid(),
+ timestamptz '2027-01-01' + make_interval(secs=>g) FROM generate_series(1,25) g;
 ANALYZE public.team_hub_messages;
 
+CREATE FUNCTION pg_temp.reply_cursor(n int) RETURNS text LANGUAGE sql AS $$
+ SELECT quote_literal(created_at)||'::timestamptz,'||quote_literal(id)||'::uuid' FROM public.team_hub_messages
+  WHERE parent_message_id=(SELECT id FROM roots ORDER BY id OFFSET 1 LIMIT 1)
+  ORDER BY created_at DESC, id DESC OFFSET n LIMIT 1 $$;
 -- The call matrix, as (key, sql) rows. Every call is made as the database owner with the actor's
 -- claims set: both functions are SECURITY DEFINER and read the actor only from auth.uid().
 CREATE TEMP TABLE calls(k text PRIMARY KEY, actor text, q text);
@@ -423,6 +447,7 @@ INSERT INTO calls
 SELECT format('list a=%s ch=%s root=%s cur=%s lim=%s', a, ch, rt, cur, lim), a,
  format('SELECT public.team_hub_list_messages(%L,%L,%s,%s,%s)', CASE WHEN ch='bgeneral' THEN :'tb' ELSE :'ta' END,
   CASE ch WHEN 'general' THEN :'general' WHEN 'leads' THEN :'leads' WHEN 'dm12' THEN :'dm12' WHEN 'bgeneral' THEN :'bgeneral'
+   WHEN 'dm16' THEN :'dm16' WHEN 'archived' THEN :'archived'
    ELSE '30000000-0000-4000-8000-000000000999' END,
   CASE rt WHEN 'none' THEN 'NULL' WHEN 'live' THEN quote_literal((SELECT id FROM roots ORDER BY id OFFSET 1 LIMIT 1))||'::uuid'
    WHEN 'deleted' THEN quote_literal((SELECT id FROM roots ORDER BY id LIMIT 1))||'::uuid'
@@ -435,21 +460,31 @@ SELECT format('list a=%s ch=%s root=%s cur=%s lim=%s', a, ch, rt, cur, lim), a,
      WHERE channel_id=:'general' AND parent_message_id IS NULL ORDER BY created_at DESC, id DESC OFFSET 2 LIMIT 1)
    WHEN 'deep' THEN (SELECT quote_literal(created_at)||'::timestamptz,'||quote_literal(id)||'::uuid' FROM public.team_hub_messages
      WHERE channel_id=:'general' AND parent_message_id IS NULL ORDER BY created_at DESC, id DESC OFFSET 2990 LIMIT 1)
+   -- Cursors inside the live root's own thread, every reply counted (deleted ones too): offsets
+   -- 1 and 2 are a tied pair that is deleted, 3 and 4 a live tied pair, 10 and 37 plain mid-thread rows.
+   WHEN 'r1' THEN pg_temp.reply_cursor(1) WHEN 'r2' THEN pg_temp.reply_cursor(2)
+   WHEN 'r3' THEN pg_temp.reply_cursor(3) WHEN 'r4' THEN pg_temp.reply_cursor(4)
+   WHEN 'r10' THEN pg_temp.reply_cursor(10)
+   -- Two live replies are older than r37, so at limit 2 has_more is false only if the cursor row
+   -- itself is left out of the count.
+   WHEN 'r37' THEN pg_temp.reply_cursor(37)
    ELSE 'now(),NULL' END,
   coalesce(lim,'NULL'))
 FROM unnest(ARRAY[:'u1',:'u2',:'u3',:'u5',:'u6',:'u8','none']) a,
- unnest(ARRAY['general','leads','dm12','bgeneral','missing']) ch,
+ unnest(ARRAY['general','leads','dm12','dm16','archived','bgeneral','missing']) ch,
  unnest(ARRAY['none','live','deleted','reply','missing']) rt,
- unnest(ARRAY['none','mid','tie','deep','half']) cur,
- unnest(ARRAY['1','2','30','100',NULL,'0','500']) lim
-WHERE (rt='none' OR ch='general') AND (cur='none' OR (ch='general' AND rt IN ('none','live')));
+ unnest(ARRAY['none','mid','tie','deep','half','r1','r2','r3','r4','r10','r37']) cur,
+ unnest(ARRAY['1','2','3','30','100',NULL,'0','-5','500']) lim
+WHERE (rt='none' OR ch='general') AND (cur='none' OR (ch='general' AND rt IN ('none','live')))
+ AND (cur NOT LIKE 'r%' OR rt='live');
 INSERT INTO calls
 SELECT format('search a=%s t=%s q=%s lim=%s', a, t, qq, lim), a,
  format('SELECT public.team_hub_search(%L,%L,%s)', CASE t WHEN 'a' THEN :'ta' ELSE :'tb' END, qq, coalesce(lim,'NULL'))
 FROM unnest(ARRAY[:'u1',:'u2',:'u3',:'u5',:'u6',:'u7',:'u8','none']) a,
  unnest(ARRAY['a','b']) t,
- unnest(ARRAY['venue deposit','status','STATUS NOTE 1','reply','zz','x','%%','a_b','leads venue','note 2990']) qq,
- unnest(ARRAY['1','5','20','50',NULL]) lim;
+ unnest(ARRAY['venue deposit','status','STATUS NOTE 1','reply','zz','x','%%','a_b','leads venue','note 2990',
+  'former','archived venue',NULL,'   ']) qq,
+ unnest(ARRAY['1','5','20','50',NULL,'-3']) lim;
 
 CREATE FUNCTION pg_temp.run(round text) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE c record; r jsonb;
@@ -470,8 +505,18 @@ SELECT pg_temp.check((SELECT count(*) FROM before_run)=(SELECT count(*) FROM cal
 SELECT pg_temp.check((SELECT count(*) FROM before_run WHERE k LIKE 'list%' AND v->>'ok'='true' AND jsonb_array_length(v->'messages')>0)>50
  AND (SELECT count(*) FROM before_run WHERE k LIKE 'search%' AND v->>'ok'='true' AND jsonb_array_length(v->'results')>0)>50
  AND (SELECT count(*) FROM before_run WHERE v->>'ok'='false')>50
- AND EXISTS(SELECT 1 FROM before_run WHERE (v->>'has_more')::boolean),
- 'matrix: real pages, real hits, refusals and has_more all occur before the change');
+ AND EXISTS(SELECT 1 FROM before_run WHERE (v->>'has_more')::boolean)
+ -- Thread cursors land inside the thread: some return a partial page, not empty or all of it.
+ AND EXISTS(SELECT 1 FROM before_run WHERE k LIKE '%root=live cur=r%' AND v->>'ok'='true'
+  AND jsonb_array_length(v->'messages') BETWEEN 1 AND 30 AND (v->>'has_more')::boolean)
+ AND EXISTS(SELECT 1 FROM before_run WHERE k LIKE '%root=live cur=r%' AND v->>'ok'='true'
+  AND jsonb_array_length(v->'messages') BETWEEN 1 AND 99 AND NOT (v->>'has_more')::boolean)
+ -- Both 'Former teammate' labels appear in the recorded output.
+ AND EXISTS(SELECT 1 FROM before_run, jsonb_array_elements(v->'results') e WHERE e->>'author_name'='Former teammate')
+ AND EXISTS(SELECT 1 FROM before_run, jsonb_array_elements(v->'results') e WHERE e->>'conversation_label'='Former teammate')
+ -- The archived channel is never shown.
+ AND NOT EXISTS(SELECT 1 FROM before_run WHERE v::text LIKE '%Archived venue deposit%'),
+ 'matrix: real pages, thread-cursor pages, refusals, has_more and both Former teammate labels occur before the change');
 \echo 'PASS: the shipped list and search were recorded across the call matrix'
 
 ---------------------------------------------------------------------------------------------

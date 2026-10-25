@@ -10,6 +10,11 @@
 -- and output. Both functions keep their signatures and privileges. The two indexes are btree indexes
 -- over ids and times only: no message text is indexed (owner ruling 2026-10-24, "nothing indexed").
 -- Rollback: re-emit the previous bodies (20271113850008, 20271114240008) and drop the two indexes.
+-- One transaction with a short lock timeout, like its siblings: CREATE INDEX takes a SHARE lock on
+-- team_hub_messages, and it must give up rather than queue posts behind a long-open writer.
+
+BEGIN;
+SET LOCAL lock_timeout = '2s';
 
 CREATE INDEX IF NOT EXISTS team_hub_messages_top_stream_idx
  ON public.team_hub_messages (channel_id, created_at DESC, id DESC) WHERE parent_message_id IS NULL;
@@ -68,9 +73,10 @@ DECLARE actor uuid:=auth.uid(); refusal text:=public._team_hub_refusal(p_expecte
 BEGIN
  IF refusal IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code',refusal); END IF;
  IF q IS NULL OR char_length(q)<2 OR char_length(q)>200 THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
- -- A literal: the escape character first, then the two wildcards.
-visible:=ARRAY(SELECT c.id FROM public.team_hub_channels c WHERE c.tenant_id=p_expected_tenant
+ -- The conversations the asker can see now, resolved once per call rather than once per message.
+ visible:=ARRAY(SELECT c.id FROM public.team_hub_channels c WHERE c.tenant_id=p_expected_tenant
   AND EXISTS(SELECT 1 FROM public._team_hub_visible(p_expected_tenant,actor,c.id)));
+ -- A literal: the escape character first, then the two wildcards.
  pattern:='%'||replace(replace(replace(q,'\','\\'),'%','\%'),'_','\_')||'%';
  SELECT coalesce(jsonb_agg(jsonb_build_object('message_id',h.id,'conversation_id',h.channel_id,
    'conversation_kind',h.kind,
@@ -103,3 +109,5 @@ visible:=ARRAY(SELECT c.id FROM public.team_hub_channels c WHERE c.tenant_id=p_e
 END $$;
 REVOKE ALL ON FUNCTION public.team_hub_search(uuid,text,int) FROM PUBLIC, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.team_hub_search(uuid,text,int) TO authenticated;
+
+COMMIT;

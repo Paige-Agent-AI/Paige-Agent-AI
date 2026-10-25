@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {normalizeCommsEmailAddress,commsEmailBodyHtml} from '../../../supabase/functions/_shared/comms-email/contract';
 import {supabase} from '@/integrations/supabase/client';
 import {documentDescriptorSchema,assignedFieldSchema} from './agreementDocumentModel';
 import {prepareAgreementFields,readAgreementPdfDocument,type AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
@@ -60,9 +61,9 @@ const commercialReview=z.discriminatedUnion('state',[
   z.object({state:z.literal('needs_input'),tenant_id:id,agreement_id:id,invoice_id:id,fields:z.array(z.string().min(1)).max(30)}).strict(),
   z.object({state:z.literal('ready'),tenant_id:id,agreement_id:id,invoice_id:id,input:z.unknown(),presentation:z.unknown(),payload_digest:hash,presented_body_markdown:z.string().min(1).max(300000)}).strict(),
 ]);
-export type DocumentFailure='access_unverified'|'source_changed'|'commercial_review_required'|'document_unavailable'|'rate_limited'|'invalid_request'|'unconfirmed'|'retired';
+export type DocumentFailure='message_invalid'|'sender_unverified'|'sender_changed'|'sender_choices_unverified'|'recipient_held'|'fields_incomplete'|'access_unverified'|'source_changed'|'commercial_review_required'|'document_unavailable'|'rate_limited'|'invalid_request'|'unconfirmed'|'retired';
 export type DocumentResult<T>={ok:true;value:T}|{ok:false;reason:DocumentFailure;message:string};
-const messages:Record<DocumentFailure,string>={access_unverified:'Agreement access could not be verified. Reopen the record in the intended business.',source_changed:'The agreement or selected preparation changed. Inspect its current version before continuing.',
+const messages:Record<DocumentFailure,string>={message_invalid:'Check every recipient’s subject and message before reviewing again.',sender_unverified:'This email identity is not ready. Check its connection and verification.',sender_changed:'The email identity changed. Refresh the choices and review again.',sender_choices_unverified:'Email identities could not be checked. Keep your message draft and retry.',recipient_held:'A recipient’s communication preferences prevent this request. Check those preferences before reviewing again.',fields_incomplete:'Complete and save the required signature fields before preparing the request.',access_unverified:'Agreement access could not be verified. Reopen the record in the intended business.',source_changed:'The agreement or selected preparation changed. Inspect its current version before continuing.',
   commercial_review_required:'Review the original commercial terms before preparing this signing document.',document_unavailable:'The exact PDF could not be prepared or verified. Check the source document and its supported format.',
   rate_limited:'Too many preparation attempts. Keep this request and check again later.',invalid_request:'Choose the original agreement and preparation before continuing.',unconfirmed:'The result could not be confirmed. Check the same preparation request; it may already be recorded.',retired:'Your business, sign-in or agreement access changed. Reopen the original preparation.'};
 const failure=(reason:DocumentFailure)=>({ok:false as const,reason,message:messages[reason]});
@@ -255,4 +256,70 @@ export function listAgreementDocumentHistory(ctx:AgreementDocumentContext,before
   if(before!==null&&(!Number.isSafeInteger(before)||before<1))return Promise.resolve(failure('invalid_request'));
   return authorized(ctx,(headers,signal)=>native.rpc('list_agreement_document_preparations',{_expected_tenant_id:ctx.tenantId,_agreement_id:ctx.agreementId,_limit:20,_before_revision:before})
     .setHeader('Authorization',headers.Authorization).abortSignal(signal),async data=>history.parse(data));
+}
+
+
+export type AgreementSignatureDraft={operation_id:string;connector_id:string;messages:{signer_id:string;subject:string;body_text:string}[]};
+const senderChoice=z.object({connector_id:id,from_address:z.string().refine(v=>normalizeCommsEmailAddress(v)===v),
+  state:z.enum(['ready','needs_setup']),reason:z.enum(['TENANT_EMAIL_SENDER_MISSING','SENDER_VERIFICATION_MISSING','EMAIL_PROVIDER_NOT_CONFIGURED','EMAIL_RECONNECT_REQUIRED']).nullable()}).strict()
+  .refine(v=>v.state==='ready'?v.reason===null:v.reason!==null);
+const senderChoices=z.object({kind:z.literal('prepared_signature_sender_choices'),review_sha256:hash,senders:z.array(senderChoice).max(1000),
+  provider_execution_verified:z.literal(false),approval:z.literal('not_requested'),execution:z.literal('unavailable')}).strict()
+  .refine(v=>new Set(v.senders.map(s=>s.connector_id)).size===v.senders.length);
+export type AgreementSignatureSender=z.infer<typeof senderChoice>;
+export type AgreementSignatureSenders=z.infer<typeof senderChoices>;
+const requestEnvelope=z.object({kind:z.literal('prepared_signature_request_review'),tool:z.literal('agreement_send'),args:z.record(z.string(),z.unknown()),
+  request_sha256:hash,approval:z.literal('not_requested'),execution:z.literal('unavailable')}).strict();
+const boundSender=z.object({connector_id:id,provider:z.literal('sendgrid'),from_address:z.string().refine(v=>normalizeCommsEmailAddress(v)===v),
+  from_name:z.string().nullable(),reply_to:z.string().nullable()}).strict();
+export type AgreementSignatureRequest={kind:'prepared_signature_request_review';tool:'agreement_send';args:{
+  agreementId:string;expectedTenantId:string;operationId:string;preparationId:string;preparationSha256:string;reviewSha256:string;
+  source:PreparedSignatureReview['request']['expected_source'];title:string;document:PreparedSignatureReview['document'];
+  recipients:PreparedSignatureReview['signers'];requestSchemaVersion:1;sender:z.infer<typeof boundSender>;
+  messages:{signer_id:string;to:string;subject:string;body_text:string;body_html:string}[]};
+  request_sha256:string;approval:'not_requested';execution:'unavailable'};
+function requestSource(ctx:AgreementDocumentContext,operationId:string,review:PreparedSignatureReview){
+  if(!valid(ctx)||!id.safeParse(operationId).success||operationId!==operationId.toLowerCase()||!review.ready_for_review||review.issues.length
+    ||review.request.tenant_id!==ctx.tenantId||review.request.agreement_id!==ctx.agreementId||!hash.safeParse(review.review_sha256).success)throw Error('Invalid saved request');
+  return {operation_id:operationId,review:parsePreparedSignatureReviewIntent(review.request),expected_review_sha256:review.review_sha256};
+}
+function readOnlyResult<T>(result:DocumentResult<T>):DocumentResult<T>{
+  return result.ok===false&&result.reason==='unconfirmed'?{...result,message:'This request could not be checked. Keep your message draft and retry the review.'}:result;
+}
+export async function readAgreementSigningSenders(ctx:AgreementDocumentContext,operationId:string,review:PreparedSignatureReview):Promise<DocumentResult<AgreementSignatureSenders>>{
+  ctx={...ctx};let input:ReturnType<typeof requestSource>;
+  try{input=requestSource(ctx,operationId,structuredClone(review));}catch{return failure('invalid_request');}
+  return readOnlyResult(await authorized(ctx,(headers,signal)=>supabase.functions.invoke('agreement-send?review=senders',{method:'POST',headers,signal,body:input}),async data=>{
+    const reply=z.object({ok:z.literal(true),review:senderChoices}).strict().parse(data);
+    if(reply.review.review_sha256!==input.expected_review_sha256)throw Error('Changed saved request');
+    return reply.review;
+  }));
+}
+
+/** Exact response projection only: all actual authorization/readiness stays on
+ * the original server. A matching digest is never a confirmation or approval. */
+export async function readAgreementSignatureRequest(ctx:AgreementDocumentContext,review:PreparedSignatureReview,sender:AgreementSignatureSender,draft:AgreementSignatureDraft):Promise<DocumentResult<AgreementSignatureRequest>>{
+  ctx={...ctx};let input:ReturnType<typeof requestSource>&AgreementSignatureDraft,captured:PreparedSignatureReview,selected:AgreementSignatureSender;
+  try{
+    captured=structuredClone(review);selected=senderChoice.parse(structuredClone(sender));
+    const copy=structuredClone(draft);
+    if(selected.state!=='ready'||copy.connector_id!==selected.connector_id||!Array.isArray(copy.messages)
+      ||copy.messages.length!==captured.signers.length||new Set(copy.messages.map(m=>m.signer_id)).size!==copy.messages.length
+      ||captured.signers.some(s=>!copy.messages.some(m=>m.signer_id===s.id)))throw Error('Invalid request');
+    input={...requestSource(ctx,copy.operation_id,captured),connector_id:copy.connector_id,messages:copy.messages.map(m=>({signer_id:m.signer_id,subject:m.subject,body_text:m.body_text}))};
+  }catch{return failure('invalid_request');}
+  return readOnlyResult(await authorized(ctx,(headers,signal)=>supabase.functions.invoke('agreement-send?review=prepared-request',{method:'POST',headers,signal,body:input}),async data=>{
+    const reply=z.object({ok:z.literal(true),review:requestEnvelope}).strict().parse(data).review;
+    const identity=boundSender.parse(reply.args.sender);
+    if(identity.connector_id!==selected.connector_id||identity.from_address!==selected.from_address)throw Error('Changed sender');
+    const expected={agreementId:captured.request.agreement_id,expectedTenantId:captured.request.tenant_id,operationId:input.operation_id,
+      preparationId:captured.request.preparation_id,preparationSha256:captured.request.preparation_sha256,reviewSha256:captured.review_sha256,
+      source:captured.request.expected_source,title:captured.title,document:captured.document,recipients:captured.signers,
+      requestSchemaVersion:1 as const,sender:identity,messages:captured.signers.map(s=>{
+        const m=input.messages.find(m=>m.signer_id===s.id)!;
+        return {signer_id:s.id,to:s.email,subject:m.subject,body_text:m.body_text,body_html:commsEmailBodyHtml(m.body_text)};
+      })};
+    if(canonicalPresentationJson(reply.args)!==canonicalPresentationJson(expected)||reply.request_sha256!==await sha256Hex(canonicalPresentationJson(expected)))throw Error('Changed complete request');
+    return {...reply,args:expected};
+  }));
 }

@@ -3,7 +3,7 @@ import {PreparationArtifactUnavailable} from './preparation-artifact.ts';
 import {PreparedSignatureReviewUnavailable,readPreparedSignatureReview} from './prepared-signature-review.ts';
 
 const maxBody=1048576;
-async function boundedJson(req:Request):Promise<unknown>{
+export async function readBoundedOwnerPreparationJson(req:Request):Promise<unknown>{
   if(!/^application\/json(?:\s*;|$)/i.test(req.headers.get('Content-Type')??''))throw new OwnerPreparationUnavailable('INVALID_REQUEST');
   const reader=req.body?.getReader();if(!reader)throw new OwnerPreparationUnavailable('INVALID_REQUEST');
   let length=0;const chunks:Uint8Array[]=[];
@@ -35,7 +35,7 @@ export async function handleOwnerPreparation(
     if(auth.error||!auth.data.user||auth.data.user.is_anonymous)throw new OwnerPreparationUnavailable('ACCESS_UNVERIFIED');
     if(req.method==='POST'){
       if(await overWriteLimit(auth.data.user.id))return json({ok:false,code:'rate_limited',error:'Too many preparation attempts. Keep the original request and try checking it again later.'},429);
-      const input=await boundedJson(req);
+      const input=await readBoundedOwnerPreparationJson(req);
       return json({ok:true,...await executeOwnerPreparation(input,caller,service)});
     }
     if(req.method!=='GET')return json({ok:false,error:'GET or POST only'},405);

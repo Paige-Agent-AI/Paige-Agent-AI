@@ -1,0 +1,91 @@
+{
+  "scope": "Synthetic local original components, never authenticated or provider acceptance",
+  "sourceBuild": "compiled-c35-original-workspace-v4; 38 exact captured inputs",
+  "viewports": [
+    {
+      "clientWidth": 1521,
+      "height": 770,
+      "overflow": false,
+      "scrollWidth": 1521,
+      "viewportWidth": 1536
+    },
+    {
+      "clientWidth": 1351,
+      "height": 768,
+      "overflow": false,
+      "scrollWidth": 1351,
+      "viewportWidth": 1366
+    },
+    {
+      "clientWidth": 1009,
+      "height": 768,
+      "overflow": false,
+      "scrollWidth": 1009,
+      "viewportWidth": 1024
+    },
+    {
+      "clientWidth": 885,
+      "height": 1000,
+      "overflow": false,
+      "scrollWidth": 885,
+      "viewportWidth": 900
+    },
+    {
+      "clientWidth": 375,
+      "height": 844,
+      "overflow": false,
+      "scrollWidth": 375,
+      "viewportWidth": 390
+    }
+  ],
+  "states": [
+    {
+      "state": "choices_unknown",
+      "text": ":\n        - heading \"Prepare signature invitations\" [level=5]\n        - paragraph: Choose your business email and review the message for every recipient. This check sends nothing.\n        - alert:\n          - paragraph: Email identities could not be checked. Keep your message draft and retry.\n          - button \"Retry email identities\":\n            - text: Retry email identities\n        - text: Recipient\n        - combobox \"Invitation recipient\":\n          - option \"Controlled Client · Step 1\" [selected]\n          - option \"Controlled Business Signer · Step 1\"\n        - paragraph: client@example.test · Client\n        - text: Subject\n        - textbox \"Invitation subject\": Your agreement is ready to review\n        - text: Message\n        - textbox \"Invitation message\": Please review the agreement before signing.\n        - paragraph: \"Subject: up to 200 characters. Message: up to 9966 characters.\"\n        - paragraph:\n          - text: A secure signing link will be included after an authorized send.\n        - button \"Check complete request\" [disabled]\n      - "
+    },
+    {
+      "state": "choices_empty",
+      "text": ":\n        - heading \"Prepare signature invitations\" [level=5]\n        - paragraph: Choose your business email and review the message for every recipient. This check sends nothing.\n        - status:\n          - heading \"No usable business email was returned\" [level=6]\n          - paragraph: Connect and verify PAIGE Email in Settings → Connections, then check again.\n          - button \"Check email identities again\"\n        - text: Recipient\n        - combobox \"Invitation recipient\":\n          - option \"Controlled Client · Step 1\" [selected]\n          - option \"Controlled Business Signer · Step 1\"\n        - paragraph: client@example.test · Client\n        - text: Subject\n        - textbox \"Invitation subject\": Your agreement is ready to review\n        - text: Message\n        - textbox \"Invitation message\": Please review the agreement before signing.\n        - paragraph: \"Subject: up to 200 characters. Message: up to 9966 characters.\"\n        - paragraph:\n          - text: A secure signing link will be included after an authorized send.\n        - button \"Check complete request\" [disabled]\n      - "
+    },
+    {
+      "state": "choices_setup",
+      "text": ":\n        - heading \"Prepare signature invitations\" [level=5]\n        - paragraph: Choose your business email and review the message for every recipient. This check sends nothing.\n        - text: Send from\n        - combobox \"Send from\":\n          - option \"Choose a business email\"\n          - option \"hello@studio.example.test · Setup needed\" [selected]\n        - status: Email domain verification is needed.\n        - button \"Refresh email identities\"\n        - text: Recipient\n        - combobox \"Invitation recipient\":\n          - option \"Controlled Client · Step 1\" [selected]\n          - option \"Controlled Business Signer · Step 1\"\n        - paragraph: client@example.test · Client\n        - text: Subject\n        - textbox \"Invitation subject\": Your agreement is ready to review\n        - text: Message\n        - textbox \"Invitation message\": Please review the agreement before signing.\n        - paragraph: \"Subject: up to 200 characters. Message: up to 9966 characters.\"\n        - paragraph:\n          - text: A secure signing link will be included after an authorized send.\n        - button \"Check complete request\" [disabled]\n      - "
+    },
+    {
+      "state": "recipient_held",
+      "text": ":\n        - heading \"Prepare signature invitations\" [level=5]\n        - paragraph: Choose your business email and review the message for every recipient. This check sends nothing.\n        - text: Send from\n        - combobox \"Send from\":\n          - option \"Choose a business email\"\n          - option \"hello@studio.example.test\" [selected]\n        - button \"Refresh email identities\"\n        - text: Recipient\n        - combobox \"Invitation recipient\":\n          - option \"Controlled Client · Step 1\" [selected]\n          - option \"Controlled Business Signer · Step 1\"\n        - paragraph: client@example.test · Client\n        - text: Subject\n        - textbox \"Invitation subject\": Your agreement is ready to review\n        - text: Message\n        - textbox \"Invitation message\": Keep this corrected invitation while verification is pending.\n        - paragraph: \"Subject: up to 200 characters. Message: up to 9966 characters.\"\n        - paragraph:\n          - text: A secure signing link will be included after an authorized send.\n        - alert:\n          - paragraph: A recipient’s communication preferences prevent this request. Check those preferences before reviewing again.\n        - button \"Check complete request\"\n      - "
+    },
+    {
+      "state": "sender_changed",
+      "text": ":\n        - heading \"Prepare signature invitations\" [level=5]\n        - paragraph: Choose your business email and review the message for every recipient. This check sends nothing.\n        - text: Send from\n        - combobox \"Send from\":\n          - option \"Choose a business email\"\n          - option \"hello@studio.example.test\" [selected]\n        - button \"Refresh email identities\"\n        - text: Recipient\n        - combobox \"Invitation recipient\":\n          - option \"Controlled Client · Step 1\" [selected]\n          - option \"Controlled Business Signer · Step 1\"\n        - paragraph: client@example.test · Client\n        - text: Subject\n        - textbox \"Invitation subject\": Your agreement is ready to review\n        - text: Message\n        - textbox \"Invitation message\": Keep this corrected invitation while verification is pending.\n        - paragraph: \"Subject: up to 200 characters. Message: up to 9966 characters.\"\n        - paragraph:\n          - text: A secure signing link will be included after an authorized send.\n        - alert:\n          - paragraph: The email identity changed. Refresh the choices and review again.\n          - button \"Refresh sending identity\"\n        - button \"Check complete request\" [disabled]\n      - "
+    },
+    {
+      "state": "request_source_changed",
+      "text": ":\n        - heading \"Prepare signature invitations\" [level=5]\n        - paragraph: Choose your business email and review the message for every recipient. This check sends nothing.\n        - text: Send from\n        - combobox \"Send from\":\n          - option \"Choose a business email\"\n          - option \"hello@studio.example.test\" [selected]\n        - button \"Refresh email identities\"\n        - text: Recipient\n        - combobox \"Invitation recipient\":\n          - option \"Controlled Client · Step 1\" [selected]\n          - option \"Controlled Business Signer · Step 1\"\n        - paragraph: client@example.test · Client\n        - text: Subject\n        - textbox \"Invitation subject\": Your agreement is ready to review\n        - text: Message\n        - textbox \"Invitation message\": Keep this corrected invitation while verification is pending.\n        - paragraph: \"Subject: up to 200 characters. Message: up to 9966 characters.\"\n        - paragraph:\n          - text: A secure signing link will be included after an authorized send.\n        - alert:\n          - paragraph: The agreement or selected preparation changed. Inspect its current version before continuing.\n          - button \"Read current document source\"\n        - button \"Check complete request\" [disabled]\n      - "
+    }
+  ],
+  "cancel": {
+    "checkEnabled": true,
+    "checked": false,
+    "message": "Keep the original invitation after canceling this read."
+  },
+  "keyboard": {
+    "resultHeadingReceivesFocus": true,
+    "nextTab": "Edit invitations",
+    "leaveDialogs": 1,
+    "initial": "Continue editing",
+    "escape": "Back to document",
+    "outline": "Mineral rgb(101,90,150) solid 1.6px; offset2.4px"
+  },
+  "recovery": {
+    "requestUnknownRetainsDraft": true,
+    "retryWithRestoredReadSucceeds": true,
+    "permissionRefusalRetiresPrivatePane": true
+  },
+  "limits": [
+    "No whole SOLO global PAIGE panel mount",
+    "No actual browser zoom or screen-reader speech",
+    "No signed-in persistence or provider execution",
+    "Initial r2-access-denied capture precedes refusal; use r2-access-retired"
+  ]
+}

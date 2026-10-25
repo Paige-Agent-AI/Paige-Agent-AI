@@ -1,6 +1,7 @@
 // INT-328 — party resolution and the readiness reader against an in-memory service client.
 import { describe, it, expect } from "vitest";
 import { resolveCommsEmailParties, readEmailSenderFacts, readCommsEmailReadiness as readWith, type CommsEmailAdmin } from "./readiness.ts";
+import * as readiness from "./readiness.ts";
 import { readFileSync } from "node:fs";
 const preSend = { result: { proceed: true, outcome: "proceed" } as { proceed: boolean; outcome: string }, calls: [] as unknown[] };
 const check = async (_admin: never, input: unknown) => { preSend.calls.push(input); return preSend.result; };
@@ -110,5 +111,44 @@ describe("readEmailSenderFacts — the one connector sender-fact read", () => {
     const comms = readFileSync("supabase/functions/_shared/comms-email/readiness.ts", "utf8");
     expect(comms).toContain("await readEmailSenderFacts(admin, input.tenantId, input.connectorId, input.actorUserId)");
     expect(comms.match(/credentials_vault_ref,config/g)).toHaveLength(1);
+  });
+});
+
+describe("listCommsEmailSenders", () => {
+  const actor = "40000000-0000-4000-8000-000000000001";
+  it("lists authorized identities without a client-primary-email read", async () => {
+    const a = admin({ channel_connectors: [conn(S1)] });
+    expect(await readiness.listCommsEmailSenders(a, { tenantId: T, actorUserId: actor }))
+      .toEqual([{ connector_id: S1, from_address: "owner@biz.test" }]);
+    expect(a.reads).toEqual([{ table: "channel_connectors", filters:
+      [["tenant_id", T], ["channel_type", "email"], ["active", true], ["status", "active"]] }]);
+  });
+  it("preserves original provider defaults, explicit SendGrid selection and sorted normalization", async () => {
+    const a = admin({ channel_connectors: [conn(S2, { provider: "sendgrid", from_address: "B@Biz.test" }),
+      conn(S1, { from_address: " A@Biz.test " })] });
+    expect(await readiness.listCommsEmailSenders(a, { tenantId: T })).toEqual([
+      { connector_id: S1, from_address: "a@biz.test" }]);
+    expect(await readiness.listCommsEmailSenders(a, { tenantId: T }, ["sendgrid"])).toEqual([
+      { connector_id: S2, from_address: "b@biz.test" }]);
+  });
+  it("never lists foreign, inactive, revoked, malformed or another person's sender", async () => {
+    for (const change of [{ tenant_id: F }, { active: false }, { status: "disabled" },
+      { mailbox_class: null }, { from_address: "invalid" },
+      { mailbox_class: "personal", mailbox_owner_user_id: C }]) {
+      expect(await readiness.listCommsEmailSenders(admin({ channel_connectors: [conn(S1, change)] }),
+        { tenantId: T, actorUserId: actor })).toEqual([]);
+    }
+    const a = admin({ channel_connectors: [conn(S1, { mailbox_class: "personal", mailbox_owner_user_id: actor })] });
+    expect(await readiness.listCommsEmailSenders(a, { tenantId: T })).toEqual([]);
+    expect(await readiness.listCommsEmailSenders(a, { tenantId: T, actorUserId: actor }))
+      .toEqual([{ connector_id: S1, from_address: "owner@biz.test" }]);
+  });
+  it("throws on a failed or malformed read rather than reporting no sender", async () => {
+    await expect(readiness.listCommsEmailSenders(admin({}, true), { tenantId: T })).rejects.toThrow("sender_read_failed");
+    const malformed: CommsEmailAdmin = { from: () => ({ select: () => {
+      const q = { eq: () => q, then: (resolve: (v: unknown) => unknown) => Promise.resolve(
+        { data: {}, error: null }).then(resolve) }; return q as never;
+    } }) };
+    await expect(readiness.listCommsEmailSenders(malformed, { tenantId: T })).rejects.toThrow("sender_read_failed");
   });
 });

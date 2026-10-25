@@ -196,6 +196,7 @@ try{
    ['public.paige_chat_threads','is_archived','true','id',ids.thread,'false'],
   ]){const w=fresh();fixture.run(`UPDATE ${table} SET ${column}=$1 WHERE ${where}=$2`,[value,target]);try{refused(w,'42501');}finally{fixture.run(`UPDATE ${table} SET ${column}=$1 WHERE ${where}=$2`,[restore,target]);}}
   const payloadless=fixture.run('SELECT id FROM public.paige_durable_work WHERE intent_id=$1',[foreignIntent]);refused(payloadless,'42501');
+  for(const direct of [true,false]){const w=fresh(),run=direct?w:randomUUID();fixture.run('INSERT INTO public.paige_systems_check_run(id,work_id)VALUES($1,$2)',[run,direct?null:w]);try{refused(w,'55000','SYSTEMS_WORK_RECONCILIATION_REQUIRED');}finally{fixture.run('DELETE FROM public.paige_systems_check_run WHERE id=$1',[run]);}}
   const ceiling=fresh();fixture.run('UPDATE public.paige_durable_work SET max_attempts=2 WHERE id=$1',[ceiling]);refused(ceiling,'42501');
   for(const status of ['cancelled','outcome_unknown']){const w=fresh();fixture.run("UPDATE public.paige_durable_work SET status=$1,terminal_outcome=CASE WHEN $1='cancelled' THEN '{\"cancelled\":true}'::jsonb END,settled_at=CASE WHEN $1='cancelled' THEN now() END WHERE id=$2",[status,w]);refused(w,'55000');}
   const expired=fresh();fixture.run("UPDATE public.paige_durable_work SET lease_until=clock_timestamp()-interval '1second' WHERE id=$1",[expired]);refused(expired,'55000');

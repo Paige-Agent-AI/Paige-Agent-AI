@@ -57,6 +57,10 @@ BEGIN
  IF original.dispatch_started_attempt>=original.attempt_count THEN
   RAISE EXCEPTION 'SYSTEMS_WORK_ALREADY_DISPATCHED' USING ERRCODE='55000';
  END IF;
+ IF EXISTS(SELECT 1 FROM public.paige_systems_check_run r
+  WHERE r.id=original.id OR r.work_id=original.id) THEN
+  RAISE EXCEPTION 'SYSTEMS_WORK_RECONCILIATION_REQUIRED' USING ERRCODE='55000';
+ END IF;
  UPDATE public.paige_durable_work w SET dispatch_started_attempt=w.attempt_count,
   heartbeat_at=clock_timestamp(),lease_until=clock_timestamp()+interval '5 minutes',
   safe_summary='Your Systems Check request is being processed.',updated_at=clock_timestamp(),version=w.version+1

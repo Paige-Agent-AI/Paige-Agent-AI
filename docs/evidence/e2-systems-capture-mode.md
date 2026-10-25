@@ -455,15 +455,20 @@ write. The bounded five-minute execution lease is original Work state, not a
 second scheduler. No generic/document/Knowledge writer or grant is changed.
 
 The existing PostgreSQL proof's optional `--manual-dispatch` mode retains its
-original47 checkpoints, then verifies38 claim checkpoints: real absent-function
+original47 checkpoints, then verifies40 claim checkpoints: real absent-function
 baseline, server-only ACL, duplicate-DDL refusal, exact original tuple, same-row
 lost-ACK refusal, eligibility/role/foreign-purpose negatives, seven observed
 native claim waits across two actual sessions, current authority after waits,
 expiry during a held row lock, three-second timeout and caller-setting restore.
 One further actual wait with only the row lock removed deliberately exposes
 duplicate admission; the repaired concurrency assertion rejects that outcome.
-The correct definition is restored before final metadata/no-scan checks. First
-37-check and final38-check runs are distinct local observations; neither is
+The correct definition is restored before final metadata/no-scan checks. Review
+added an explicit refusal when an original run ID or Work backlink already
+exists, preserving reconciliation before any new claim. The runner's duplicate
+INSERT guard is not used as permission to rescan. Initial37/38-check and corrected
+40-check runs are distinct local observations. A redundant fixture ALTER hit the
+already installed original Work backlink and is retained INVALID42701; removing
+that setup duplication does not relax any source assertion. None is
 production activation or authenticated customer evidence. Surrounding modeled
 Auth/Operator fixture boundaries remain explicitly bounded.
 

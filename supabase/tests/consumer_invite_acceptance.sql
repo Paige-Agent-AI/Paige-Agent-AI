@@ -67,6 +67,12 @@ BEGIN
  CASE WHEN _options?'used' THEN 1 ELSE 0 END,CASE WHEN _options?'last_used' THEN now() ELSE NULL END,
  CASE WHEN _options?'revoked' THEN now() ELSE NULL END,CASE WHEN _options?'unbound' THEN NULL ELSE _client END,
  CASE WHEN _options?'no_recipient' THEN NULL ELSE _email END);
+ IF _options?'elapsed' THEN
+  UPDATE public.tenant_invite_tokens SET expires_at=clock_timestamp()+interval '20 milliseconds' WHERE id=_inv;
+  PERFORM pg_sleep(0.03);
+  RETURN NEXT ok((SELECT now()<expires_at AND clock_timestamp()>=expires_at FROM public.tenant_invite_tokens WHERE id=_inv),
+   _name||': transaction began before the deadline, current admission is after it');
+ END IF;
  IF _allow OR _options?'used' OR _options?'last_used' OR _options?'expired' OR _options?'revoked' THEN
   SET LOCAL ROLE anon;
   RETURN NEXT is((SELECT is_valid FROM public.peek_tenant_invite(_token)),
@@ -110,6 +116,8 @@ SELECT * FROM pg_temp.e09_case('unconfirmed recipient','{"unconfirmed":true,"sta
 SELECT * FROM pg_temp.e09_case('anonymous','{"anonymous":true}');
 SELECT * FROM pg_temp.e09_case('missing recipient','{"no_recipient":true,"staff":true,"expected_error":"42501:portal invitation belongs to a different verified recipient"}');
 SELECT * FROM pg_temp.e09_case('expired','{"expired":true,"staff":true}');
+SELECT * FROM pg_temp.e09_case('elapsed external customer deadline','{"elapsed":true,"expected_error":"P0001:invite has expired"}');
+SELECT * FROM pg_temp.e09_case('elapsed existing-staff customer deadline','{"elapsed":true,"staff":true,"expected_error":"P0001:invite has expired"}');
 SELECT * FROM pg_temp.e09_case('revoked','{"revoked":true,"staff":true}');
 SELECT * FROM pg_temp.e09_case('unlimited legacy token already used','{"used":true,"staff":true,"expected_error":"42501:portal invitation has already been accepted"}');
 SELECT * FROM pg_temp.e09_case('recorded acceptance count drift','{"last_used":true,"staff":true,"expected_error":"42501:portal invitation has already been accepted"}');
@@ -119,7 +127,21 @@ SELECT * FROM pg_temp.e09_case('archived exact contact','{"archived":true,"staff
 SELECT * FROM pg_temp.e09_case('unbound token','{"unbound":true,"staff":true,"expected_error":"42501:portal invitation requires an explicit client relationship"}');
 
 -- Exact original invitation integrity, including every non-consumer branch.
-SELECT is((SELECT md5(replace(prosrc,$inv_new$    -- Keep one canonical relationship per login in each business.
+-- Invert only this new act-time span before the incumbent membership inverse.
+CREATE FUNCTION pg_temp.e09_invite_act_time_inverse(_src text) RETURNS text LANGUAGE plpgsql AS $$
+DECLARE
+ _gate text:=E'    PERFORM 1 FROM public.tenants WHERE id = _tok.tenant_id AND status = ''active'' FOR SHARE;\n    IF NOT FOUND THEN RAISE EXCEPTION ''customer relationship unavailable'' USING ERRCODE = ''42501''; END IF;\n';
+ _clock text:=E'    IF _tok.expires_at <= pg_catalog.clock_timestamp() THEN RAISE EXCEPTION ''invite has expired''; END IF;\n';
+ _tail text:=E'    -- E09_CUSTOMER_ENTRY_V1: commit the same native token and audit; leave\n    -- profiles.active_tenant_id and all business/staff membership untouched.\n';
+BEGIN
+ IF (length(_src)-length(replace(_src,_gate||_clock,'')))<>length(_gate||_clock)
+  OR (length(_src)-length(replace(_src,_tail,'')))<>length(_tail) THEN
+  RAISE EXCEPTION 'invitation inverse source mismatch';
+ END IF;
+ RETURN replace(replace(_src,_gate||_clock,''),_tail,_tail||_gate);
+END;
+$$;
+SELECT is((SELECT md5(replace(pg_temp.e09_invite_act_time_inverse(prosrc),$inv_new$    -- Keep one canonical relationship per login in each business.
     -- Other businesses retain their own original relationship authorization.
     IF EXISTS (SELECT 1 FROM public.clients c
       WHERE c.linked_user_id = _uid AND c.tenant_id = _tok.tenant_id
@@ -127,7 +149,7 @@ SELECT is((SELECT md5(replace(prosrc,$inv_new$    -- Keep one canonical relation
     -- relationship/switch slice removes the global unique constraint safely.
     IF EXISTS (SELECT 1 FROM public.clients c
       WHERE c.linked_user_id = _uid AND c.id <> _client_id) THEN$inv_old$)) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'10316cc79166fbcc24825cbbacf34e89','invitation exact inverse preserves all original recipient/token/CRM/audit and staff/agency branches');
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'543bb36574e23f05c20838b7ee56413f','the reviewed per-business invitation source is installed');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'99b75b7f65d50cc4971c12dca4bef74e','the reviewed per-business invitation source and consumer act-time guard are installed');
 SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='v' AND proconfig=ARRAY['search_path=public'] AND pg_get_function_identity_arguments(oid)='_token text' AND pg_get_function_result(oid)='uuid' FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure) AND has_function_privilege('authenticated','public.accept_tenant_invite(text)','EXECUTE') AND has_function_privilege('service_role','public.accept_tenant_invite(text)','EXECUTE') AND NOT has_function_privilege('anon','public.accept_tenant_invite(text)','EXECUTE'),'original invitation ABI owner authority path and entry grants remain unchanged');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._clients_portal_access_guard()'::regprocedure),'c1dceae767c0b94a7e465f678a72d648','original revoke and re-invitation lifecycle guard is unchanged');
 

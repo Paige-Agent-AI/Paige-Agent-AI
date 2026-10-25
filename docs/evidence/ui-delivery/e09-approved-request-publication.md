@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: clients.portal remains PARTIAL. Proposed client.por
 SOLO_UI: NO: backend-native-only change, tenant-neutral implementation; no SOLO UI source or reference-account conditional.
 UNVERIFIED: original full-schema321, final-head review/required CI/Preview, merge, deployment/readback, shared canonical Chat/Portal/eligible Live integration, authenticated owner/client journey and one complete founder evaluation remain separate requirements.
 
-INTERNAL_BUILD_IDENTITY: implementation=ddcd7ac7842bf219341d215c341bc1bec039249a; final evidence head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=20271114210009_NOT_APPLIED; edge=NOT_APPLICABLE; evidence=docs/evidence/e09-private-request-publication.json
+INTERNAL_BUILD_IDENTITY: implementation=ddcd7ac7842bf219341d215c341bc1bec039249a; final evidence head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114210009 exact-head normal apply and readback); edge=NOT_APPLICABLE; evidence=docs/evidence/e09-private-request-publication.json
 RELEASE_CHANNEL: development: unmounted original Work publication domain contract, synthetic native evidence only.
 RELEASE_CLASSIFICATION: internal-only: no completed customer outcome or customer release identity.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version, announcement or update.

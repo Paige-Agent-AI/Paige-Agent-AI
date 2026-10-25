@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC - EXP05 bounded Automation inspection - production readback.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2840](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2840), bounded saved-process inspection | Reviewed ccf4777c2e5e1dc0d6eca2b12b90f1e95847a9dc; AUTHOR-REVIEW / LOWER ASSURANCE5643272560/final6398242176; all 11 exact-head checks and both web statuses SUCCESS. Merge b437bc39f4d9bac358252442ed6ffe2de57f53dd/tree bb566f035c6935f6a31fc904aa0e5552997204e6. Normal workflow40197767982/job121182244466 SUCCESS; artifact12600593544 SHA2561714c72fde218c8b4e99013ba89fd71536e0ac0fa5df16892c1b9d7059e78c1b independently checked before parsing. Selected Chat541/JWTtrue/all287 source and emitted files PASS; fresh provider metadata confirms541. Vercel dpl_5DKf31FyVYBzeeNax6khiy7sCwXy READY; both public200/build b437bc39...-mvnv65xg at13:30:47.849UTC. [Production receipt6398275149](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2840#issuecomment-6398275149). | SOURCE/WEB/SELECTED EDGE VERIFIED. Original automations.list caller-JWT/RLS/native resolver, four concurrent reads, one8s deadline,24KB model projection and explicit unavailable/partial coverage. No native/activation/provider/effect delta. Saved readiness is not execution or provider proof; ordinary changed-path Chat/Live and full EXP05 acceptance remain owed. Original scratch cleanup remains INCOMPLETE/permission_denied. |
+
 **2026-10-25 UTC — EXP05 original Task-outcome inspection and native Chat projection.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

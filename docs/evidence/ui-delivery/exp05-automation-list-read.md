@@ -34,6 +34,10 @@ ACCEPTANCE_CRITERIA: a current eligible customer can inspect a bounded selected-
 INTERNAL_BUILD_IDENTITY: reviewed-source=fd11620d092acb77b7ab7ce93764c6e9f8d82e1f; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(bounded-automation-list); evidence=docs/evidence/ui-delivery/exp05-automation-list-read.md
 RELEASE_CHANNEL: development: source and protected recording-port proof only
 RELEASE_CLASSIFICATION: internal-only: no customer version, announcement, activation or complete Experience claim
+CUSTOMER_RELEASE_IDENTITY: none: internal reliability improvement without a separately approved customer release identity
+RELEASE_NOTE_REQUIRED: NO: no customer announcement or completed Experience release is proposed by this read repair
+RELEASE_TRUTH_BOUNDARY: PARTIAL: implemented selected-workspace inspection; PROOF_OWED: hosted CI, production source/configuration, ordinary authenticated result and reload; complete automation execution, Live and founder acceptance excluded from any LIVE claim
+RELEASE_RECOVERY: position=forward-fix-or-reviewed-revert; reference=docs/evidence/ui-delivery/exp05-automation-list-read.md; preserve original native records and policy, repair only the bounded read without executing or replaying work
 
 ## Original contract and proof boundary
 
@@ -42,7 +46,7 @@ member read lane and original caller-JWT source. The selected workspace is
 server-derived and rechecked before and after reads. Native RLS and the existing
 `resolve_automation_autonomy` remain authoritative. The same 50-record window
 uses a 51st-row sentinel, deterministic ordering, four concurrent resolver calls,
-one eight-second deadline and a24KB UTF-8 model projection. Returned coverage and
+one eight-second deadline and a 24KB UTF-8 model projection. Returned coverage and
 truncated names/reasons are explicit. Resolver failure is unavailable readiness,
 never an empty clear reason list. Requests, scope reads or network calls already
 in flight may finish remotely; a retired local read cannot start further list
@@ -77,8 +81,8 @@ OpenAI-primary routing, Anthropic fallback and all budgets remain unchanged.
 ## Review and remaining acceptance
 
 Sequential AUTHOR-REVIEW / LOWER ASSURANCE is recorded before the two exact
-stored-read pins (ANT161c15e6a47) and29 incumbent dispatch scalars (1cd741cb).
-Every incumbent component is identical except enclosing identity15; all125
+stored-read pins (ANT161c15e6a47) and 29 incumbent dispatch scalars (1cd741cb).
+Every incumbent component is identical except enclosing identity15; all 125
 dependency values, metadata, original extractor and hostile controls remain.
 Original positive guard tests pass before counting the hostile negatives.
 The private first scalar-inverse collector rejected duplicate equal hashes and

@@ -410,9 +410,9 @@ Inside Team Hub, a teammate attaches up to 5 files (10 MB each) to a message or 
 
 Authenticated runtime is `UNVERIFIED`. Production holds both migrations and the active `team-hub-file` edge function (read back 2026-10-25). Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
-### EXP08 Team Hub increment 4: PAIGE with Team Hub (migrations `20271114240008` and `20271114240108`, 2026-10-25)
+### EXP08 Team Hub increment 4: PAIGE with Team Hub (migrations `20271114240008` and `20271114240108`, 2026-10-25; merged #2860)
 
-In the one PAIGE chat, typed or Live, an active SOLO member can ask PAIGE what's new in Team Hub, to catch them up on a conversation or thread, or to search the conversations they can see. PAIGE reads with the asker's own JWT through the `team_hub_*` definers, fresh every turn; nothing is stored or indexed. PAIGE can draft a reply, and it is posted under the person's own name only when they approve the card (never from Live, at most once per card). No Team Hub content enters Knowledge or Memory: once a person has read Team Hub through PAIGE, their automatic memory summaries stop (owner ruling 2026-10-25), their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld for the rest of any request that carried Team Hub text.
+In the one PAIGE chat, typed or Live, an active SOLO member can ask PAIGE what's new in Team Hub, to catch them up on a conversation or thread, or to search the conversations they can see. PAIGE reads with the asker's own JWT through the `team_hub_*` definers, fresh every turn; nothing is stored, and no message text is indexed. PAIGE can draft a reply, and it is posted under the person's own name only when they approve the card (never from Live, at most once per card). No Team Hub content enters Knowledge or Memory: once a person has read Team Hub through PAIGE, their automatic memory summaries stop (owner ruling 2026-10-25), their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld for the rest of any request that carried Team Hub text.
 
 §61 exception, unchanged: only SOLO gets Team Hub, so the tools are offered only on a canonical SOLO account. The contract is `docs/delivery/exp08-team-hub-increment4-paige-contract.md`.
 
@@ -429,7 +429,9 @@ In the one PAIGE chat, typed or Live, an active SOLO member can ask PAIGE what's
 - Disposable-PostgreSQL proof `supabase/tests/exp08_team_hub_search.sql` (14 PASS, mutation-tested), in CI.
 - Node tests `_shared/team-hub/chat.test.ts` and `chat-wiring.test.ts`, mutation-tested, in CI.
 
-Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
+Merged as #2860 (`a8aaa1316`). Production holds `20271114240008` and `20271114240108`, `team_hub_search` (DEFINER, `authenticated` only) and the `team_hub_post_reply` catalogue row; `paige-ai-chat` v547's deployed source matches `a8aaa1316`. Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
+
+**Read-performance slice (migration `20271114250008`):** no tier, availability or output changes. `team_hub_list_messages` and `team_hub_search` are re-emitted with byte-identical output and unchanged privileges, plus two btree indexes over ids and times only (no text). Proof: `supabase/tests/exp08_team_hub_read_performance.sql`, in CI.
 
 ### E09 C1 — announcements to customers through the one campaign system (branch `e09-c1`, migration `20271111060000`, 2026-10-19; not yet merged)
 

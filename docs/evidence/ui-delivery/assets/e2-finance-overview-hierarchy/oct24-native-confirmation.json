@@ -165,5 +165,137 @@
     ],
     "geometry_note": "Observed Edge Responsive toolbar CSS dimensions; original 1523x906 window pixels. 50/75 percent canvas scaling is not a full-size raster or browser 200 percent zoom claim. Height1000 was initially only an input value while auto height remained applied; native Up/Down then verified applied Description1000 and 900x1000 tooltip before captures. Initial auto-height frames are not used.",
     "proof_boundary": "Synthetic layout and rail return only. Original320 source Sheet Escape focus capture remains bounded proof. Browser200 percent zoom, actual roles/cohorts, Chat draft/scroll/Live and post-release customer flow remain UNVERIFIED; no capability/provider/algorithm promotion."
+  },
+  "browser_zoom_confirmation": {
+    "kind": "SYNTHETIC_NATIVE_PROOF_NOT_CUSTOMER_ACCEPTANCE",
+    "source_commit": "ce6818e620fa8e7b6a58f330ce711ab911eaefc4",
+    "source_product_unchanged": true,
+    "window_pixels": {
+      "width": 1523,
+      "height": 906
+    },
+    "browser_zoom_percent": 200,
+    "zoom_restored_percent": 100,
+    "observations": [
+      "Native browser zoom200percent was observed before the original captures",
+      "Complete monetary strings remain readable in original scroll owner",
+      "Original Sheet reading and Escape return to the same metric",
+      "Home and End reach first and last original Finance tabs",
+      "Native environment reported Reduced Motion enabled; existing Sheet/rail/navigation observed"
+    ],
+    "frames": [
+      {
+        "file": "oct24-browser-200-light-open.jpg",
+        "bytes": 91511,
+        "sha256": "604775d407c7e94d1735e53c991f5766e0f211da5f8d23281f6607fbe7fd6d6e",
+        "source_copy_exact": true
+      },
+      {
+        "file": "oct24-browser-200-light-amounts.jpg",
+        "bytes": 141646,
+        "sha256": "78c4ffbaf07635015e9be72a29d3db2eee870459eed2a6e500432af46c0da96f",
+        "source_copy_exact": true
+      },
+      {
+        "file": "oct24-browser-200-light-sheet.jpg",
+        "bytes": 125992,
+        "sha256": "3ac8cfcffa26555baa3aa98a273b02036141f61d677d6c4f81e5e6b777530a52",
+        "source_copy_exact": true
+      },
+      {
+        "file": "oct24-browser-200-light-escape-focus.jpg",
+        "bytes": 143689,
+        "sha256": "e7729cf5c19fd55c678912c70f40b758d5122fca7eaacb70371cb39a928ec311",
+        "source_copy_exact": true
+      },
+      {
+        "file": "oct24-browser-200-light-end-tab.jpg",
+        "bytes": 141061,
+        "sha256": "befd726901d12f1926e9109ef742c76bcb4ac33d84283747ebdf403abd91cd90",
+        "source_copy_exact": true
+      },
+      {
+        "file": "oct24-browser-200-light-home-tab.jpg",
+        "bytes": 142351,
+        "sha256": "97fa151e7014519853463a6ce3e9f9e7d7afec955b21dd94f5cbd98383ee3587",
+        "source_copy_exact": true
+      }
+    ],
+    "proof_boundary": "Original pre-restart synthetic captures, copied byte-for-byte. No backend/model/customer acceptance, physical mobile or measured animation-duration claim. Error-fixture inspection remains incomplete."
+  },
+  "post_restart_confirmation": {
+    "main": "03edfad8a4d7829e6d77f513918369f5ce2bbb71",
+    "product_source_unchanged_from": "586d10204332fef50eb9b705dd9f1beaa3ecbe74",
+    "method": "Existing authorized Edge, documented viewport override, native rendered interface and original DOM controls",
+    "frames": [
+      {
+        "file": "oct24-restored-error-1366.jpg",
+        "bytes": 77184,
+        "sha256": "d2d14978e8f14124fbb36021b867408e53cf5b0280d78a0de85abeaf44e20713"
+      },
+      {
+        "file": "oct24-confirmed-1536x770-closed.jpg",
+        "bytes": 82934,
+        "sha256": "8ba17342726bc99f982e5400d6e94a67f6c58940ad74f8f4f0fa69c5eb0a2906"
+      },
+      {
+        "file": "oct24-confirmed-1536x770-open.jpg",
+        "bytes": 85902,
+        "sha256": "9b44ec1be7d3ad0f43b9e733ca7128cdb3640a20774b373bfdeeeefe149c62bf"
+      },
+      {
+        "file": "oct24-confirmed-1366x768-closed.jpg",
+        "bytes": 79695,
+        "sha256": "e79faeea9da61005bfb3e353a2867d36b6c6454242c277e68e07fccfac021615"
+      },
+      {
+        "file": "oct24-confirmed-1366x768-open.jpg",
+        "bytes": 81299,
+        "sha256": "baeea6f158c464f3beb98417ba58e879c6541335f4b43a2c4ac38d52f9ef8b72"
+      },
+      {
+        "file": "oct24-confirmed-1024x768-closed.jpg",
+        "bytes": 73660,
+        "sha256": "fe4c7c2ba295c98fafd653d5d4e23b060104f8af7b5db940c1d9cde67995d8e7"
+      },
+      {
+        "file": "oct24-confirmed-1024x768-open.jpg",
+        "bytes": 34807,
+        "sha256": "f1213d577bf51b4ccd1e7f215c5e2c8217dc8129e663cfc3b61f38b11bf4a6bf"
+      },
+      {
+        "file": "oct24-confirmed-900x1000-closed.jpg",
+        "bytes": 82808,
+        "sha256": "340fc88eb648ab8f0d8877060d5440a77371158b953308d8eb0a0dc7699dce2d"
+      },
+      {
+        "file": "oct24-confirmed-900x1000-open.jpg",
+        "bytes": 35325,
+        "sha256": "0aa76061d30e56d075470c5da30dff85382ebb9c0f508696dbb854c85a7ac104"
+      },
+      {
+        "file": "oct24-confirmed-member-b-390.jpg",
+        "bytes": 26606,
+        "sha256": "9cab6e080d30abaa0edabfdf16639022ee81321d4a84c5b6f60f0b97eb69fa6a"
+      },
+      {
+        "file": "oct24-confirmed-error-390.jpg",
+        "bytes": 35568,
+        "sha256": "fb18a3a83e19a6f00079223bdc843e9da10b28c727408f45bfee31a4ce0ce299"
+      },
+      {
+        "file": "oct24-confirmed-390-escape-focus.jpg",
+        "bytes": 15711,
+        "sha256": "6a0af1183da9a11da780360c7fa963494a59291aceb61444572a12a15e872375"
+      }
+    ],
+    "proof": [
+      "All eight required original viewport/PAIGE open-closed states on current shell",
+      "Original error state and retry remain unavailable, never zero or success",
+      "Second synthetic workspace/member denial has no VERA review control",
+      "390px original Sheet Escape restores the same connected metric control"
+    ],
+    "diagnostics": "Immediate transition frames and unsupported animation-observer attempts are INVALID capture diagnostics. Settled1366 open measures21px, all three amount scrollWidth/clientWidth equal; no source repair was required. Native app screenshot mismatched target and was excluded; only target-bound browser captures are accepted.",
+    "boundary": "Synthetic rendering/interaction only, no backend/authorization or customer acceptance. Real Chat/Live/cohort/current Finance original-reference acceptance stays separate."
   }
 }

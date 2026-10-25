@@ -13,12 +13,12 @@ RENDERED_EVIDENCE: PASS: final unchanged product source has eight current requir
 BEHAVIORAL_EVIDENCE: UNVERIFIED: original native landing/query, Home/End, source opening and final320 same-control Escape return now have bounded proof. Prior genuine focus-loss and split-amount findings are corrected and preserved historically. Actual Chat/composer/scroll continuity, customer roles/cohorts and post-release reference/reload remain owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate is not deployed. Earlier Finance no-source and bounded VERA QA remain dated evidence, not this refinement's acceptance.
 KEYBOARD_FOCUS: PASS: original320 source-Sheet Escape returns visibly to the same metric on final stable-module source; connected same-epoch/range guards and changed-workspace refusal pass owning tests. Original Home/End/tab navigation proof is retained. Full actual Chat/Live continuity and ordinary-role acceptance remain separately UNVERIFIED.
-ZOOM_REFLOW: PASS: bounded native browser200percent observation preserves complete amounts, original content scrolling, Sheet reading, same-metric Escape focus and Home/End tab reachability; restored100percent. Six private original captures still require publication/hash binding; no customer or physical-mobile acceptance.
+ZOOM_REFLOW: PASS: bounded native browser200percent observation preserves complete amounts, original content scrolling, Sheet reading, same-metric Escape focus and Home/End tab reachability; restored100percent. Six original captures are now published and hash-bound in oct24-native-confirmation.json; no customer or physical-mobile acceptance.
 REDUCED_MOTION: PASS: native environment reports Reduced Motion enabled; existing reduced-motion CSS and Sheet/rail/navigation behavior inspected. No new motion or measured frame-duration claim.
 STATE_COVERAGE: PASS: original53 consumer cases include supported/no-source data, denial, read failure/retry, expiry, account retirement, original source Sheet, editable VERA hints and all seven original tab choices. Real native states remain separately unverified; no business-action success state introduced.
 TRUTHFUL_STATE_LABELS: PASS: finance.department stays PROOF_OWED. Supported Sales figures retain original expiry/currency/coverage; missing company cash/profit stays unavailable. Nine analytics catalogue and actor/provider availability are unchanged.
 SOLO_UI: YES: same original Finance consumer for all eligible existing/future SOLO accounts, no account-specific branch or provisioning change.
-UNVERIFIED: six original zoom assets need publication/hash binding; native error-state, current roles/cohorts/Chat/Live and normal candidate release/readback remain owed. Released positive original-reference VERA review is FAIL; truthful refusal/reload is bounded separate proof, EXP04 repair2768 pending. Earlier exact CI is green, new composition requires its own checks/review. Full19/nine/founder acceptance remain open.
+UNVERIFIED: positive ordinary original-reference review, actual Chat/Live/cohort/permission/recovery and candidate release/readback remain owed. Earlier real refusal is FAIL; originating2768 source is merged, not customer-accepted. New composition requires exact review/CI. Full19/nine/founder acceptance remain open.
 
 OWNER_INTENT: Finance menu lands on Overview; visually clear financial information with fewer words across all seven Finance subpages. This first bounded slice establishes Overview/common hierarchy; Banking, Debt and remaining readiness views remain required follow-ups.
 MUST_NOT_HAPPEN: no fabricated cash, zero, accounting result, forecast, provider readiness or success; no lost subpage, hidden necessary caveat, changed financial authority, auto-sent VERA request, composer loss or new receipt engine.
@@ -214,4 +214,34 @@ Orchestration Contract: read-only evidence and original conversation only; no
 business action, new approval, provider activation or Rail execution claim.
 CAP009–017 and all19 required outcomes retain their existing evidence states.
 The original CPU-failed monthly operation remains unknown and unretried.
+
+
+## October24 — post-restart current-main confirmation
+
+Windows restart restored local execution. Composed actual main03edfad8a, preserving
+all incoming source and the original Finance product/test/harness blobs. The
+original Sales initialization repair2768 is merged as d53d99e951e0f18ac1a6895598f2e4211e1367e5;
+public production returned03edfad8a-mvn28mxb/customerUpdate:null. This is source
+release evidence, not positive Finance original-reference reacceptance. The earlier
+real refusal/FAIL remains historical and unresolved by this source observation.
+
+Fresh original Finance workspace/invoice/shared metric suites:69PASS/3 in40.30s.
+Sandbox SWC cache refusal occurred before collection; unchanged execution with the
+existing owner-secured cache passed, without permission or source modification.
+Six pre-restart browser200percent captures are now published byte-for-byte with
+hashes; twelve target-bound current-source frames cover all eight required
+viewport/PAIGE states, desktop/narrow error, second synthetic workspace/member
+denial and390px same-metric Escape return. See the existing confirmation JSON.
+Immediate rail-transition captures were INVALID setup evidence: settled1366px
+open uses21px with intact amounts and equal scroll/client widths. No speculative
+UI repair followed. The wrong-target native screenshot is excluded. Error retry
+was exercised in a fixed error fixture; real backend recovery is not claimed.
+
+Functional: original Finance source and current regression proof. Visual: bounded
+current-source synthetic rendering/interaction confirmed. Experiential: complete
+ordinary customer reference/Chat/Live/cohort/recovery proof remains owed. Founder
+Acceptance: NOT_ACCEPTED. All19/nine remain required; no new capability/algorithm,
+provider, approval, execution or Rail claim. Fresh exact-head review/CI and normal
+release/readback remain gates. Historical pending tool/asset/source statements
+below retain their original dated scope.
 

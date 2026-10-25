@@ -1,5 +1,34 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October24 — post-restart current-main confirmation
+
+Windows restart restored local execution. Composed actual main03edfad8a, preserving
+all incoming source and the original Finance product/test/harness blobs. The
+original Sales initialization repair2768 is merged as d53d99e951e0f18ac1a6895598f2e4211e1367e5;
+public production returned03edfad8a-mvn28mxb/customerUpdate:null. This is source
+release evidence, not positive Finance original-reference reacceptance. The earlier
+real refusal/FAIL remains historical and unresolved by this source observation.
+
+Fresh original Finance workspace/invoice/shared metric suites:69PASS/3 in40.30s.
+Sandbox SWC cache refusal occurred before collection; unchanged execution with the
+existing owner-secured cache passed, without permission or source modification.
+Six pre-restart browser200percent captures are now published byte-for-byte with
+hashes; twelve target-bound current-source frames cover all eight required
+viewport/PAIGE states, desktop/narrow error, second synthetic workspace/member
+denial and390px same-metric Escape return. See the existing confirmation JSON.
+Immediate rail-transition captures were INVALID setup evidence: settled1366px
+open uses21px with intact amounts and equal scroll/client widths. No speculative
+UI repair followed. The wrong-target native screenshot is excluded. Error retry
+was exercised in a fixed error fixture; real backend recovery is not claimed.
+
+Functional: original Finance source and current regression proof. Visual: bounded
+current-source synthetic rendering/interaction confirmed. Experiential: complete
+ordinary customer reference/Chat/Live/cohort/recovery proof remains owed. Founder
+Acceptance: NOT_ACCEPTED. All19/nine remain required; no new capability/algorithm,
+provider, approval, execution or Rail claim. Fresh exact-head review/CI and normal
+release/readback remain gates. Historical pending tool/asset/source statements
+below retain their original dated scope.
+
 ## October24 — current Finance verification and release boundary
 
 All applicable exact-head checks for parent #2694 at

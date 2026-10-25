@@ -69,7 +69,8 @@ describe("existing process inspection has one bounded caller-JWT read", () => {
   }, 130000);
   it("keeps current native readiness separate from a stored live state or completed work", async () => {
     const f = fixture(), r = await f.run(); available(r);
-    expect(r).toMatchObject({ success: true, read_only: true, coverage: { returned: 1, limit: 50, has_more: false },
+    expect(r).toMatchObject({ success: true, read_only: true, provider_readiness: "not_checked", execution_history: "not_read",
+      coverage: { returned: 1, limit: 50, has_more: false },
       automations: [{ id: row(0).id, state: "live", readiness: "resolved", what_actually_happens: "confirm", would_it_run: true }] });
     expect(r.note).toContain("not an execution receipt");
     expect(f.calls.find(x => x.name === "paige_automations")?.operations).toEqual([

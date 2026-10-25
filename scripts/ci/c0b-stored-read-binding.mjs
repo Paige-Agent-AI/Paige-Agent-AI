@@ -25,7 +25,7 @@ const primitives = new Set(["String", "Number"]);
 // Exact reviewed read-only extraction, not a generic helper-call allowance.
 // Any helper or dispatch change fails closed until its own review and renewal.
 const AUTOMATION_LIST_BRANCH = "d9709bad124d4d855c403e6cf58f51fe715c37289b9af264fc96ea5650555139";
-const AUTOMATION_LIST_HELPER = "b83afe9e4ec58df9a7ab7f0732404464fc7edabbbb62c51d28b32202cdbd5189";
+const AUTOMATION_LIST_HELPER = "e18f3e8b4aee1289ef5aab6b1129dfae9feea504b4fa734b84b1002fca23c184";
 const sourceHash = source => createHash("sha256").update(source.replace(/\r\n/g, "\n")).digest("hex");
 export function validateStoredReadBindings(chatText, helperText, automationListText = "") {
   const chat = ts.createSourceFile("paige-ai-chat.ts", chatText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);

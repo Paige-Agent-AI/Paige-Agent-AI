@@ -158,3 +158,143 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL:2330 production source/configuration is verified
 INTERNAL_BUILD_IDENTITY: reviewed=70a3cf8d8b7cd2fbd3685f677c0c505cd4240af7; main=2635c205d4214ed0380d21ce8a9958d09f9ecade; deployment=dpl_Gbo5rUnZy2NZMrCxVXtAt13hq9Rt READY/exact; environment=production; migrations=APPLIED(20271109030000_calendar_booking_exact_read); edge=APPLIED(paige-ai-chat@442); evidence=docs/evidence/ui-delivery/ant21-calendar-booking-read.md
 RELEASE_CHANNEL: production: shared internal restoration source for every eligible existing/future SOLO; representative-account proof is never an implementation allowlist
 UNVERIFIED: New2330 ordinary corrected effect/reload/paired-isolation acceptance, full booking/host/role/provisioning/recovery/provider classes, complete Calendar geometry, separate Live, full18/50 and owner acceptance remain owed; old uncertain receipts are not backfilled or relabeled
+
+
+## October 25 - EXP05 bounded native agenda preparation (development only)
+
+The existing exact-ID reader above remains the released capability. This additive
+work supports EXP05 outcomes01/02/04/10: a weekly review can inspect original saved
+Calendar commitments over explicit dates without inventing availability. It is
+REUSE of public.list_team_bookings and REPAIR/EXTEND of the owning adapter, not a
+new Calendar engine or provider integration.
+
+Current key calendar.booking_read is unchanged. Proposed calendar.agenda_read is
+UNAVAILABLE: no registration, Chat consumer, deployment, catalogue promotion, Live
+or authenticated acceptance is claimed. Protected domain/registry/Chat/C0b work
+is requested in ANT-161 1a47775c-67fa-43b5-9608-8183275e2841 and
+cda7f19c-0251-4859-add4-f34afe3a3ed4. E03 booking/communications, E04 commercial
+and E09 customer-session authority remain separate.
+
+The original caller/tenant/classification/deadline boundary serves both readers.
+Agenda accepts only own from/to RFC3339 timestamps with explicit offsets and
+optional mine/team, at most32 elapsed days. Mine defaults to server actor as host;
+team requires native admin before and after, including empty. Returned records
+require original tenant/host/ID, strict overlap, stable start/ID order, bounded
+projection and no duplicates. Class participant rows, guest/private details and
+the overfetch row are excluded. Fifty shown records plus has_more is not a complete
+agenda, free capacity, working hours, provider sync or an action receipt. One
+shared8s deadline/Stop signal prevents late stages from starting new lookups.
+
+Verification at2026-10-25T04:04UTC:
+- Owning Vitest121/121 PASS, exit0:78 unchanged exact-ID and43 agenda/cohort/
+  transport/authority/revocation/date/DST/subset/timeout/Stop cases.
+- Real installed Supabase client with offline fetch port preserves caller bearer,
+  five-argument native body, projection/filter/order/limit51 and AbortSignal.
+  This is transport serialization, not real Auth proof.
+- Scoped ESLint0; complete original type ratchet exit0/baseline10/current6/no new.
+  Earlier timeout and incomplete0-test attempt remain INVALID.
+- Original fenced PostgreSQL proof35/35 PASS/exit0, preserving original100k/
+  generic-plan/ABI/ACL/member/admin/foreign/no-auth checks. New overlap fixtures
+  roll back. The32-day/51-row query measured9.518ms in this isolated100k fixture,
+  not production. Native materialization may exceed51: no DB-work bound claimed.
+  Database dropped/cluster stopped. First extended native34PASS/1FAIL was JSON
+  aggregate framing in the new proof, corrected without native/assertion changes.
+- Original helper78PASS/39RED and corrected117PASS remain dated evidence.
+- Production read-only metadata confirms20271109030000 and native body MD5s:
+  five-argument6ec4ba377abfe348192cdf17bb973869;
+  four-argumentfa896186ae99710ec160304eb558bd43. Both independently match source,
+  postgres/STABLE/definer/search_path=public/authenticatedEXEC/anon denied.
+  No production record, native body, migration, grant or effect changed.
+
+Orchestration Contract: eventual existing Gateway/Kit/Harness read under current
+actor/tenant/role -> original caller-JWT RPC -> validated references/read timestamp
+-> existing read Rail. No mutation, approval, LayerC dispatch, scheduler, provider,
+action receipt or replay. ALG-01 scope/current-state truth; ALG-08 Calendar inputs
+only, no optimizer; ALG-12/13 truthful refusal/unknown/coverage; ALG-11 routing and
+budget unchanged. No algorithm maturity promoted.
+
+Functional: owned source/native proof only. Visual: no layout/rendered acceptance;
+browser input stops held without alternate-control bypass. Experiential: consumer,
+receipt/reload and ordinary authorized cohort proof owed. Founder Acceptance: not
+requested/accepted. Immutable review, coordinated binding renewal, exact-head CI
+and production readback remain required. Full ten outcomes/E5-CV1-9, Builder, ZION,
+actual recurring execution/recovery and separate Live remain unfinished.
+
+
+### October25 continuation - bounded governed Chat consumer, still development
+
+The preceding preparation checkpoint is retained. The current local source also
+registers calendar.agenda_read and offers read_calendar_agenda through the same
+SOLO/native-role/current-caller boundary as the original exact-ID read. Both use
+the existing Gateway/Kit/Harness and record_capability_run. Native reads use the
+caller JWT; the existing service client only records the read Rail. This changes
+no booking, schedule, invitation, provider, approval, runtime activation or Live
+permission. A native read receipt is not a booking-execution receipt.
+
+The model gets explicit title_preview/title_truncated, original booking IDs,
+source_shown_count/source_has_more and omitted_from_model. UTF8 output is capped
+at12000bytes, even with50 maximal Unicode names; original names/read rows remain
+unchanged. Missing preview rows require native Calendar or narrower-window
+inspection. No silent title change or claim of complete/conflict-free availability.
+
+Original28 full-handler cases remain. Additive agenda controls reproduced32PASS/
+9RED before wiring, then42PASS/0FAIL with the actual production handler and explicit
+recording Auth/native/provider ports. Actual caller/body, one native lookup, one
+canonical read Rail, closed-read settlement, empty/refused/unavailable results,
+role/classification and both pre-receipt/post-receipt workspace-switch egress are
+covered. A changed workspace suppresses the old result; it is not a fabricated
+refusal from the previous workspace. This is not real HTTP/Auth/customer proof.
+
+Owning unit121PASS/3RED ->124PASS bounds the preview and preserves the original
+read. Six focused Calendar/admission/C0b-registration/interactive/weekly suites
+pass243/243. Original application type ratchet exits0/baseline10/current6/no new.
+The unsupported date-time declaration was corrected to existing supported bounded
+strings with strict RFC3339 runtime validation; no Kit schema was expanded.
+Static offer discovery required separate explicit array pushes, retaining the
+old offer. The narrow Kit recognizer now checks each actual Calendar AST branch,
+so a valid agenda branch cannot mask a broken original exact-reader scope or
+callback. All original Calendar/Task/weekly hostile controls plus11 new agenda
+controls pass; full anti-bypass scan retains288/296 baseline/no new debt. Actual
+source ancestry remains held until immutable review and exact derived renewal.
+
+Catalogue: the eleven assigned generic Operations recipes, including Weekly
+Priorities Plan/Capacity Review, are not promoted by this supporting read.
+The canonical key has PARTIAL maturity and bounded description; technical Chat
+binding is not authenticated customer Live status. Deployed panel availability,
+permissions/cohort behavior, receipt persistence and reload are PROOF OWED.
+No separate catalogue/status engine or shared-panel UI change is introduced.
+
+Source routing is documented in ANT161/c4892412: E03 explicitly released its root
+window/no further claim, E04 explicitly holds no broad root lease, E08 only the
+disjoint sender digest/provenance. No receiving ACK/domain transfer is invented.
+This bounded Calendar turn preserves every adjacent source and releases after
+immutable review/pins. Parent2792 release, exact-head CI, full production source/
+configuration readback, genuine owner record/Rail/reload/isolation and separate
+Live remain required. Browser stops and full EXP05/founder acceptance stay open.
+
+
+Final consumer review correction: the former exact-booking-only Operations advice
+would prevent the new tool from helping Run My Week. The original PAIGE/ZION
+guidance now allows one offered agenda read with explicit window/confirmed business
+zone and honest shown/title-preview limits, keeping every core-read/three-priority/
+no-repeat/no-action rule and exact-ID fallback. The existing progress label starts
+with "Checking" and reports unavailable as a failed lookup, never a finished action.
+Actual guidance/trace tests15:12PASS/3RED, then all28/three suites PASS. One new
+trace test initially omitted the real content/message envelope; corrected fixture
+uses the original strict envelope, with no production failure inference.
+
+The six original C0b suites now pass234/234 (230 retained plus4 restrictive agenda
+mutants), exit0. Exact official extraction reproduced every old scalar and current
+candidate. A first private comparison incorrectly treated unavailable component
+arrays as equal and is INVALID; corrected diagnostic requires arrays and confirms
+all29 aggregate changes are ONLY enclosing identity[15]. Branches, dominating
+controls, other identities, helpers and imports remain equal. Immutable8d811f8393/
+Rootd55b8e95 review ANT161/73fa1612 precedes renewal of only29 scalar literals and2
+Calendar dependency values. Exact inverse restores all remaining frozen guard
+bytes,125 paths/123 other source values and all metadata/validator code. Pure
+Operations guidance/start labels grant no authority and add no ancestry exemption.
+See the existing binding evidence JSON for complete derivation/correction history.
+
+### October25 exact hosted correction
+
+Candidate b67 hosted Deno failed with13 new inference diagnostics; immutable artifact12586838391 retained. Type-only source98b7df6c adds checked available-result shapes, strict public-consumer regression and identical emitted JavaScript;125 Calendar tests PASS. Separate AUTHOR-REVIEW / LOWER ASSURANCE ANT161f484fa71 preceded ONE helper digest renewal. Root/all29/other124 pins, extractor and original assertions unchanged. Current six C0b suites234PASS/0FAIL/0SKIP,143785.8428ms. Two stale recovery read expectations reproduced, then original registry33 and actual-handler78 controls pass with bounded agenda positive/foreign/team-refusal/no-effect cases. Explicit PostgREST fixture port correction retained; no production defect inferred from a missing fake method. Original Calendar42/task39/reminder33/weekly34/history/ZION/Portal recording-boundary regressions remain green. No new screen, layout, browser proof, provider/activation or customer acceptance. Required NEW exact-head hosted CI and production full-source proof remain gates; browser stop stays held. Full details and prior failure history remain in exp05-calendar-agenda-binding.json.

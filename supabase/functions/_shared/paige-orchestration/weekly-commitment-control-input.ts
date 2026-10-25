@@ -8,8 +8,12 @@ export type { WeeklyControlOperation, WeeklyControlIntent } from "./weekly-commi
  * Execution must adopt the existing canonical confirmation and permission contracts,
  * with security/admission review before any schema is offered to Chat/Live.
  */
-export type WeeklyBindingFacts = Readonly<{ requestId?: string; process?: { id: string; revision: number } }>;
-export type WeeklyRpcBinding = Readonly<{ rpc: "draft_weekly_commitment_check" | "configure_weekly_commitment_check" | "control_weekly_commitment_check"; args: Readonly<Record<string, string | number>> }>;
+export type WeeklyControlSnapshot = Readonly<{ state: "requested" | "paused"; future_control_at: string | null }>;
+export type WeeklyBindingFacts = Readonly<{ requestId?: string; process?: { id: string; revision: number;
+  control?: Readonly<{ state: string; future_control_at: string | null }> | null } }>;
+export type WeeklyRpcBinding = Readonly<{ rpc: "draft_weekly_commitment_check" | "configure_weekly_commitment_check" | "control_weekly_commitment_check"; args: Readonly<Record<string, string | number | WeeklyControlSnapshot>> }>;
+type WeeklyDraftRpcBinding = Readonly<{ rpc: "draft_weekly_commitment_check";
+  args: Readonly<Record<string, string | number>> }>;
 
 const scheduleProperties = {
   weekday: { type: "integer", minimum: 1, maximum: 7, description: "ISO weekday, Monday=1." },
@@ -28,6 +32,8 @@ export const WEEKLY_CONTROL_REVIEW_INPUTS = Object.freeze({
   authorize: targetInput(), pause: targetInput(), resume: targetInput(), cancel: targetInput(),
 });
 
+export function bindWeeklyControlForReview(operation: "draft", raw: unknown, facts: WeeklyBindingFacts): WeeklyDraftRpcBinding | null;
+export function bindWeeklyControlForReview(operation: WeeklyControlOperation, raw: unknown, facts: WeeklyBindingFacts): WeeklyRpcBinding | null;
 /** Produces the exact RPC arguments for future trusted issuance, not permission to call it.
  * Facts must come from the authenticated server. No receipt, execution or next run is inferred.
  */
@@ -45,6 +51,19 @@ export function bindWeeklyControlForReview(operation: WeeklyControlOperation, ra
   if (operation === "configure" && "weekday" in intent) {
     return Object.freeze({ rpc: "configure_weekly_commitment_check", args: Object.freeze({ _automation_id: process.id,
       _weekday: intent.weekday, _local_time: intent.local_time, _timezone: intent.timezone, _expected_revision: process.revision }) });
+  }
+  if (operation === "authorize") {
+    const control = process.control;
+    if (!control || (control.state !== "requested" && control.state !== "paused")) return null;
+    const cutoff = control.future_control_at;
+    if (cutoff !== null && (typeof cutoff !== "string" || cutoff.length > 40 ||
+      !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(cutoff) || !Number.isFinite(Date.parse(cutoff)))) return null;
+    // The existing four-argument native writer compares this original state and
+    // cutoff after locking the process. Never normalize or reconstruct its time.
+    const expected: WeeklyControlSnapshot = Object.freeze({ state: control.state, future_control_at: cutoff });
+    return Object.freeze({ rpc: "control_weekly_commitment_check", args: Object.freeze({
+      _automation_id: process.id, _action: "authorize", _expected_revision: process.revision, _expected_control: expected,
+    }) });
   }
   return Object.freeze({ rpc: "control_weekly_commitment_check", args: Object.freeze({ _automation_id: process.id,
     _action: operation, _expected_revision: process.revision }) });

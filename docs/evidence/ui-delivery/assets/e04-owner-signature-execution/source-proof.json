@@ -208,18 +208,154 @@
       "result": "PASS"
     },
     "native": {
-      "result": "RUNNING",
+      "result": "PASS",
       "log": "e04-c51-work-eligibility-repaired-1792968699238.log",
-      "migration": "20271114280004",
-      "production": "NOT_APPLIED_PRODUCTION"
+      "logSha256": "202439bce808dcf2b994a172e5cfbc56c4ea7b5b4131c5d096cdfebaeb8505d8",
+      "confirmation": {
+        "result": "PASS",
+        "checks": 59,
+        "migrationReplay": 2,
+        "concurrentSessions": 6,
+        "observedLockWaits": 3,
+        "preparedWork": {
+          "checks": 57,
+          "migrationReplay": 2,
+          "concurrentSessions": 8,
+          "observedLockWaits": 4,
+          "originalWorkSource": "693340656ec8ec445cd34c25b3d91d80",
+          "proofBodySha256": "0702afa450e321f1e75b3b7dca6b7cc7584c94062f67f43295ce90287732884d",
+          "migrationSha256": "bc9ae257a9174c0c7e09f1896691caf7a4bc6aa3b192db944a733357e87e61a2",
+          "requestStatus": {
+            "checks": 35,
+            "migrationReplay": 2,
+            "currentReaderRetained": false,
+            "migrationSha256": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835",
+            "proofBodySha256": "fd1db267c3dc98aee258efea44f7fa362405252601fcce199c5274435f5de7a4",
+            "scope": "Original private Work history only, not a provider/status transition, signature or acceptance"
+          },
+          "credentials": {
+            "checks": 122,
+            "migrationReplay": 2,
+            "concurrentSessions": 12,
+            "observedLockWaits": 6,
+            "migrationSha256": "b73b69c16bbed55db8fb75dc6adb3cf4f5a3826410190c391e2a7a4ea397cac6",
+            "proofBodySha256": "41a731157e8835de7ef0941ae781c85eb9f64c6c0dd1d129b4b713ae7d9c9528",
+            "scope": "Local original native/source credential proof only; no sending/signing/provider or customer acceptance"
+          },
+          "messageOrigin": {
+            "checks": 41,
+            "admission": {
+              "checks": 47,
+              "concurrentSessions": 4,
+              "observedLockWaits": 2,
+              "completion": {
+                "checks": 34,
+                "concurrentSessions": 4,
+                "observedLockWaits": 2,
+                "originalSignature": "3a2fa340fca9838aa9c6737f1e41ae61",
+                "fieldSignature": {
+                  "checks": 50,
+                  "concurrentSessions": 4,
+                  "observedLockWaits": 2,
+                  "sealing": {
+                    "checks": 33,
+                    "sourceSha256": "98779927b2294947d0f203dafe31fb59f3f96e83e1a5888f8528e9f8d72b7f10",
+                    "sealedSha256": "1b8d8667ad3d80682de6bc9dd7646161865dc19d31beec03d87801b576167128",
+                    "sealedByteLength": 4217,
+                    "concurrentSessions": 2,
+                    "observedLockWaits": 1,
+                    "scope": "Real original local PDF/native state with synthetic Auth/provider/storage ports; no hosted Storage or customer acceptance"
+                  },
+                  "scope": "Original native prepared field/signature transaction with synthetic provider input; not hosted recipient/provider/customer acceptance"
+                },
+                "publicationStatus": {
+                  "checks": 28,
+                  "migrationReplay": 2,
+                  "concurrentSessions": 2,
+                  "observedLockWaits": 1,
+                  "migrationSha256": "d04829b2646f7b0ddd419f1ea00433c531d4bf117aa9f13b6b811b11c6410875",
+                  "proofBodySha256": "47480978069d1bb2321efceb7410e526520f4fdfc541d313ae52c81cb779e1bb",
+                  "scope": "Actual isolated native original publication/status only; synthetic provider facts, no hosted/customer/provider execution"
+                },
+                "proofBodySha256": "76c0b22b2ed48a57b95ed237eaf0b9ce3d3e99543e9404162a1d97164328054a",
+                "scope": "Original local publication and closed signature/seal fences with explicit synthetic provider input; no complete signing/provider/customer acceptance"
+              },
+              "proofBodySha256": "cdbd4728fe77064e2ad2fcb8df9af3ab17e82019ea6b76f3b6758e5d826d8093",
+              "scope": "Actual local native canonical message prepare/claim/finalize and synthetic provider facts only; no mounted caller, sender/provider call or authenticated customer acceptance"
+            },
+            "migrationReplay": 2,
+            "migrationSha256": "3b5656b69943363d6735d2cc380b1a1ccd1ff05c05fa21196c16cfb1f4a8915a",
+            "proofBodySha256": "5a3c8be632474aa2dfd9d0701d6642064684359058315d06e3ed8443d086ffca",
+            "scope": "Local private source and original canonical message admission only; provider/customer acceptance and mounted execution remain owed"
+          },
+          "legacySignatureAfterPublication": {
+            "result": "PASS",
+            "checks": 76,
+            "migrationReplay": 0,
+            "engineRetained": true,
+            "concurrentSessions": 8,
+            "observedLockWaits": 4,
+            "scope": "Synthetic actual native transactions only; no hosted signature/provider/customer acceptance"
+          },
+          "statusAfterPublication": {
+            "checks": 36,
+            "migrationReplay": 0,
+            "currentReaderRetained": true,
+            "migrationSha256": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835",
+            "proofBodySha256": "fd1db267c3dc98aee258efea44f7fa362405252601fcce199c5274435f5de7a4",
+            "scope": "Original private Work history only, not a provider/status transition, signature or acceptance"
+          },
+          "scope": "Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance"
+        },
+        "workEligibility": {
+          "result": "PASS",
+          "checks": 17,
+          "migrationReplay": 2,
+          "concurrentSessions": 2,
+          "observedLockWaits": 1,
+          "source": "039070012a306af391746d9ce95eeb61",
+          "migrationSha256": "c3cb0ed87060af2eec12fb7e7bf63610371b756687e896d08bcf22cbe8f44c80",
+          "scope": "Original issue/claim restriction under the original tenant lock. Synthetic native scope only; subscription-trial enrollment mapping and authenticated billing/cohort acceptance remain separate evidence."
+        },
+        "proofBodySha256": "33be2ada7e200e468a3628d1f7aa2605b86c9798bc1479914d4cfe856d60aa64",
+        "migrationSha256": "67ec7e77ce6b5089e312bb55b2b3ed867ba0194e230afeb72b970b5b2fd819d7",
+        "scope": "Original native pending-confirmation prerequisite only. Synthetic mailbox/Storage metadata; no prepared issuer/provider/signature/field effect, activation or customer acceptance."
+      },
+      "nativeMigration": "20271114280004",
+      "production": "NOT_APPLIED_PRODUCTION",
+      "cleanup": {
+        "isolatedDatabases": 0,
+        "server": "STOPPED"
+      },
+      "causalOldSource": "e04-c51-work-eligibility-baseline-1792966363614.log:FAIL at expected42501 unavailable-cohort refusal",
+      "firstRepaired": "e04-c51-work-eligibility-repaired-1792967712333.log:FAIL incumbent observation before new cases; no assertion changed"
     },
     "authenticated": "UNVERIFIED",
-    "founder": "NOT_ACCEPTED"
+    "founder": "NOT_ACCEPTED",
+    "types": {
+      "result": "PASS",
+      "log": "e04-c51-final-focus-types-1792969335496.log",
+      "scope": "Owning production/tests using original app compiler configuration; full CI separate"
+    },
+    "detector": {
+      "result": "PASS",
+      "version": "4.1.0",
+      "antiPatterns": 0,
+      "incumbentAdvisories": 4,
+      "suppressions": false
+    }
   },
   "limitations": [
     "Synthetic actual-component transport ports; no provider effect",
     "Viewport geometry is CSS pixels; JPEG capture dimensions are distinct",
-    "No full authenticated SOLO shell/PAIGE-open or two-cohort acceptance",
-    "Native complete repaired campaign must finish without weakening incumbent controls"
-  ]
+    "No full authenticated SOLO shell/PAIGE-open or two-cohort acceptance"
+  ],
+  "composedSourceCheckpoint": "e9363bb9a4a56077e467435cced5488bbc9b57f8",
+  "composition": {
+    "incoming": "6683bfb7cf1f0179922cc7c84840c6a0f3a5799c",
+    "outsidePreserved": 16260,
+    "ownBlobsPreserved": 43,
+    "shell": "Exact original + own HTTP test + native eligibility flag only",
+    "sourceCheckpoint": "84d0ae0cb684b0397e164676d09cbd3d71b26903"
+  }
 }

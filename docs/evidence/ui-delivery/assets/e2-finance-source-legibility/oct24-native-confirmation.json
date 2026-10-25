@@ -1,0 +1,303 @@
+{
+  "sourceBase": "48ca58cdf0e4bc8b3a4e6317f41aa225a82186a1",
+  "incomingMain": "229fb5e968b1c4106e871bad4e66e7b087c882ae",
+  "sourceBlobs": {
+    "presenter": "bf77a976f2588e5371ece0d0447bd214cef1f3f6",
+    "banking": "8c868ecb56a675903b8d9d79f7972bb78777148d",
+    "styles": "64a4d91482890f74472778502cebd21d73029103"
+  },
+  "method": "Actual supported existing Edge browser page captures of original Finance/Executive shell, component and CSS with neutral backend-refusing fixtures; no agent image resize, crop or edit. Tab-scoped supported CDP emulation used after higher-level viewport override did not reach the target; reapplied after navigation and reset afterward.",
+  "rasterBoundary": "CSS1536 rounds1535 raster pixels,390x844 rounds390x843; exact JPEG dimensions below. Native browser zoom is independently observed in Edge menu200percent then restored100percent, not a device-scale substitute.",
+  "geometry": [
+    {
+      "name": "oct24-1536x770-closed.jpg",
+      "documentWidth": 1536,
+      "panelScrollWidth": 1310,
+      "panelWidth": 1310,
+      "viewportHeight": 770,
+      "viewportWidth": 1536
+    },
+    {
+      "name": "oct24-1536x770-open.jpg",
+      "documentWidth": 1536,
+      "panelScrollWidth": 787,
+      "panelWidth": 787,
+      "viewportHeight": 770,
+      "viewportWidth": 1536
+    },
+    {
+      "name": "oct24-1366x768-closed.jpg",
+      "documentWidth": 1366,
+      "panelScrollWidth": 1140,
+      "panelWidth": 1140,
+      "viewportHeight": 768,
+      "viewportWidth": 1366
+    },
+    {
+      "name": "oct24-1366x768-open.jpg",
+      "documentWidth": 1366,
+      "panelScrollWidth": 675,
+      "panelWidth": 675,
+      "viewportHeight": 768,
+      "viewportWidth": 1366
+    },
+    {
+      "name": "oct24-1024x768-closed.jpg",
+      "documentWidth": 1024,
+      "panelScrollWidth": 942,
+      "panelWidth": 942,
+      "viewportHeight": 768,
+      "viewportWidth": 1024
+    },
+    {
+      "name": "oct24-1024x768-open.jpg",
+      "documentWidth": 1024,
+      "panelScrollWidth": 942,
+      "panelWidth": 942,
+      "viewportHeight": 768,
+      "viewportWidth": 1024
+    },
+    {
+      "name": "oct24-900x1000-closed.jpg",
+      "documentWidth": 900,
+      "panelScrollWidth": 818,
+      "panelWidth": 818,
+      "viewportHeight": 1000,
+      "viewportWidth": 900
+    },
+    {
+      "name": "oct24-900x1000-open.jpg",
+      "documentWidth": 900,
+      "panelScrollWidth": 818,
+      "panelWidth": 818,
+      "viewportHeight": 1000,
+      "viewportWidth": 900
+    },
+    {
+      "name": "oct24-390-source-heading.jpg",
+      "documentWidth": 390,
+      "panelScrollWidth": 308,
+      "panelWidth": 308,
+      "viewportHeight": 844,
+      "viewportWidth": 390
+    },
+    {
+      "name": "oct24-390-account-facts.jpg",
+      "documentWidth": 390,
+      "panelScrollWidth": 308,
+      "panelWidth": 308,
+      "viewportHeight": 844,
+      "viewportWidth": 390
+    },
+    {
+      "name": "oct24-native-200-source-heading.jpg",
+      "documentWidth": 757,
+      "panelScrollWidth": 680,
+      "panelWidth": 680,
+      "viewportHeight": 387,
+      "viewportWidth": 757
+    },
+    {
+      "name": "oct24-native-200-account-facts.jpg",
+      "documentWidth": 757,
+      "panelScrollWidth": 680,
+      "panelWidth": 680,
+      "viewportHeight": 387,
+      "viewportWidth": 757
+    },
+    {
+      "name": "oct24-error-default.jpg",
+      "documentWidth": 1514,
+      "panelScrollWidth": 1298,
+      "panelWidth": 1298,
+      "viewportHeight": 774,
+      "viewportWidth": 1514
+    },
+    {
+      "name": "oct24-error-390.jpg",
+      "documentWidth": 390,
+      "panelScrollWidth": 308,
+      "panelWidth": 308,
+      "viewportHeight": 844,
+      "viewportWidth": 390
+    },
+    {
+      "name": "oct24-member-390.jpg",
+      "documentWidth": 390,
+      "panelScrollWidth": 318,
+      "panelWidth": 318,
+      "viewportHeight": 844,
+      "viewportWidth": 390
+    },
+    {
+      "name": "oct24-unavailable-390.jpg",
+      "documentWidth": 390,
+      "panelScrollWidth": 308,
+      "panelWidth": 308,
+      "viewportHeight": 844,
+      "viewportWidth": 390
+    }
+  ],
+  "executiveGeometry": [
+    {
+      "name": "oct24-executive-1366-source.jpg",
+      "viewportWidth": 1366,
+      "viewportHeight": 768,
+      "sourceWidth": 713,
+      "sourceScrollWidth": 713
+    },
+    {
+      "name": "oct24-executive-390-source.jpg",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "sourceWidth": 271,
+      "sourceScrollWidth": 271
+    }
+  ],
+  "observations": [
+    "All8 required closed/open layouts visually inspected;1024/900 openChat is the original overlay and must fold before source interaction.",
+    "Full original decimal amount retained; cash0 differs from unavailable credit/limit, with company/account/currency separation and no totals.",
+    "Native source disclosure closes/reopens with Enter; original refresh changes its fixture source label, original connections destination/Return to Banking work. These are synthetic ports, not provider or persistence proof.",
+    "Actual native menu200percent and separate100percent restoration; source values reachable without page overflow.",
+    "Local prefers-reduced-motion reduce emulated: original retry button computed animation and transition0.00001s; shipped Schibsted Grotesk font family confirmed. Emulation cleared.",
+    "Failure/retry remains truthful with no inferred balance; denied fixture hides source facts and VERA review; unavailable never means zero.",
+    "All temporary tab metrics/media/browser viewport overrides cleared."
+  ],
+  "invalidExcluded": [
+    "Initial higher-level viewport calls left actual1514px geometry; those incorrectly named frames were replaced with correctly measured final captures.",
+    "Two post-navigation member/unavailable screenshots had390x199 raster disagreement; reapplied supported tab metrics and replaced with actual390x843 final frames.",
+    "Initial exact-text selector did not match the native summary with nested provider label; original observed summary control used instead."
+  ],
+  "unverified": [
+    "Actual populated production Finance/provider/account/source statement coverage and ordinary candidate customer verification.",
+    "Other-role/tenant/isolation/cohort/eligibleLive/AT and full Finance/all19/nine/founder acceptance."
+  ],
+  "files": [
+    {
+      "name": "oct24-1024x768-closed.jpg",
+      "bytes": 61876,
+      "sha256": "29adccfb8c4b33c106fd47f8b299d1d2895c2a7b30d9b2fa28a62ac0bed97e50",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "name": "oct24-1024x768-open.jpg",
+      "bytes": 33061,
+      "sha256": "246b0ebb8124900dd03b7d5b249b54b922b9415cdc74c2ce89e4ed48a8657db3",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "name": "oct24-1366x768-closed.jpg",
+      "bytes": 82351,
+      "sha256": "a47f27828ad032052f9caeb349501f764e8bc8476d24e367aea928c24f9685cd",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "name": "oct24-1366x768-open.jpg",
+      "bytes": 77355,
+      "sha256": "770d689435114e5dee45d2864ff54191e0133cd1ca92fcfe0b459b5a4cabc033",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "name": "oct24-1536x770-closed.jpg",
+      "bytes": 85537,
+      "sha256": "fd1d4282721bad0b341599d0f6b0ded1526dc61cba043fe32c39dfca0e64b423",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "name": "oct24-1536x770-open.jpg",
+      "bytes": 81489,
+      "sha256": "79b383444831196963c8b95085b121f67458db92481da135f66a5e4df4d7a71b",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "name": "oct24-390-account-facts.jpg",
+      "bytes": 36084,
+      "sha256": "27c001bd37488e980b5b3436e3e3166258d68eb52236cc7147a21ac4bcb32473",
+      "width": 390,
+      "height": 843
+    },
+    {
+      "name": "oct24-390-source-heading.jpg",
+      "bytes": 41017,
+      "sha256": "d8708a5e30466deab85d82368d5a11c2a400caa1941c102d698f28d9ed434014",
+      "width": 390,
+      "height": 843
+    },
+    {
+      "name": "oct24-900x1000-closed.jpg",
+      "bytes": 74965,
+      "sha256": "43aa4fb7783672b9d65d7514c7785ca5470715513f5a84becc17d3044168cd87",
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "name": "oct24-900x1000-open.jpg",
+      "bytes": 34920,
+      "sha256": "fb2c865ed0e8862a444bc1d90de7a8639bdc543b16932413cb61f13488fde509",
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "name": "oct24-error-390.jpg",
+      "bytes": 38198,
+      "sha256": "eb530656ad91369e571db6310e73e6f9b12783f4ae7147b09549be9b947336bb",
+      "width": 390,
+      "height": 843
+    },
+    {
+      "name": "oct24-error-default.jpg",
+      "bytes": 64140,
+      "sha256": "4a3b1ba75b9b6d8e4007ddac2d717f02b7d38d98c8c03ab276395650559bf443",
+      "width": 1514,
+      "height": 774
+    },
+    {
+      "name": "oct24-executive-1366-source.jpg",
+      "bytes": 74073,
+      "sha256": "a44d417577a4bd06fcd59719f1330fbde919953fa1aab20c845fd3d5a0d5682c",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "name": "oct24-executive-390-source.jpg",
+      "bytes": 43395,
+      "sha256": "4c9294ae2fad41aca3b3b1b8e133b04df429623ed7967aa6b3722f5bab361446",
+      "width": 390,
+      "height": 843
+    },
+    {
+      "name": "oct24-member-390.jpg",
+      "bytes": 24565,
+      "sha256": "f812d73d41131b5370390d701070fe5b3b140cc8d0215e86f8bd7152167a3f69",
+      "width": 390,
+      "height": 843
+    },
+    {
+      "name": "oct24-native-200-account-facts.jpg",
+      "bytes": 25440,
+      "sha256": "404ac0404bbccc39005acc810332469feb6e78fdb31cff01025b47d12a93092b",
+      "width": 757,
+      "height": 387
+    },
+    {
+      "name": "oct24-native-200-source-heading.jpg",
+      "bytes": 28113,
+      "sha256": "22d5fa6a375bf82b6ca39090fbaf8a001d6bb52c049ddffb559f8b26a5bcb864",
+      "width": 757,
+      "height": 387
+    },
+    {
+      "name": "oct24-unavailable-390.jpg",
+      "bytes": 38986,
+      "sha256": "2e1c897f1227668d152dab410df296ce81dddda9d27eefe560c2d607ad6a0692",
+      "width": 390,
+      "height": 843
+    }
+  ]
+}

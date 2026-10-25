@@ -441,7 +441,13 @@ BEGIN
  IF _options?'tenant_inactive' THEN UPDATE public.tenants SET status='suspended' WHERE id=_tenant;END IF;
  INSERT INTO public.paige_customer_actions(id,tenant_id,contact_id,initiated_by_admin_id,action_type,title,status,expires_at,updated_at)
  VALUES(_action,_tenant,_contact,_owner,'task','Prepare for your next session',CASE WHEN _options?'closed' THEN 'customer_acted' ELSE 'proposed' END,
-  now()+CASE WHEN _options?'expired' THEN interval '-1 day' ELSE interval '1 day' END,_version);
+  CASE WHEN _options?'elapsed' THEN clock_timestamp()+interval '20 milliseconds'
+    ELSE now()+CASE WHEN _options?'expired' THEN interval '-1 day' ELSE interval '1 day' END END,_version);
+ IF _options?'elapsed' THEN
+  PERFORM pg_sleep(0.03);
+  RETURN NEXT ok((SELECT now()<expires_at AND clock_timestamp()>=expires_at FROM public.paige_customer_actions WHERE id=_action),
+    _label||': transaction began before expiry but current act is after it');
+ END IF;
  _before:=pg_temp.e09_action_snapshot(_action);
  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',CASE WHEN _options?'anonymous' THEN NULL WHEN _options?'wrong_actor' THEN _other ELSE _actor END,
   'role','authenticated')::text,true);
@@ -452,6 +458,7 @@ BEGIN
  SELECT count(*) INTO _customer_read FROM public.paige_customer_responses WHERE action_id=_action;
  RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);
  RETURN NEXT is((_result->>'ok')::boolean,_allow,_label||': native response outcome');
+ IF _options?'elapsed' THEN RETURN NEXT is(_result->>'error','ACTION_EXPIRED',_label||': actual post-lock expiry gate refuses');END IF;
  IF NOT _allow THEN
   RETURN NEXT is(pg_temp.e09_action_snapshot(_action),_before,_label||': no response, action, notification, audit, linked or Rail effects');
  ELSE
@@ -494,6 +501,10 @@ SELECT * FROM pg_temp.e09_action_case('missing viewed version','{"missing_versio
 SELECT * FROM pg_temp.e09_action_case('cached old caller','{"legacy":true}');
 SELECT * FROM pg_temp.e09_action_case('already closed action','{"closed":true}');
 SELECT * FROM pg_temp.e09_action_case('expired action','{"expired":true}');
+SELECT * FROM pg_temp.e09_action_case('elapsed completion','{"elapsed":true}');
+SELECT * FROM pg_temp.e09_action_case('elapsed acknowledgement','{"elapsed":true}',false,'accepted');
+SELECT * FROM pg_temp.e09_action_case('elapsed decline','{"elapsed":true}',false,'declined');
+SELECT * FROM pg_temp.e09_action_case('elapsed question','{"elapsed":true}',false,'question','Which document?');
 SELECT * FROM pg_temp.e09_action_case('empty question','{}',false,'question',' ');
 SELECT * FROM pg_temp.e09_action_case('oversized question','{}',false,'question',repeat('x',4001));
 SELECT * FROM pg_temp.e09_action_case('null response kind','{}',false,NULL);

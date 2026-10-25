@@ -477,7 +477,7 @@ function selfTest() {
   bad += ok("imported catalog mutations are included", parseChat('', ['widget_delete_thing']).declared.includes('widget_delete_thing'));
   bad += ok("invoice risk discovery reads its bounded canonical map", parseSalesInvoiceActions('export const SALES_INVOICE_ACTIONS = {\n "invoice.publish": "sales_publish_invoice",\n} as const;').join() === 'sales_publish_invoice');
   bad += ok("invoice risk discovery refuses an absent or incomplete map", parseSalesInvoiceActions('"invoice.publish": "sales_publish_invoice"').length === 0 && parseSalesInvoiceActions('export const SALES_INVOICE_ACTIONS = {').length === 0);
-  for (const tool of ['sales_record_manual_payment', 'sales_reverse_manual_payment', 'sales_void_invoice']) {
+  for (const tool of ['sales_record_manual_payment', 'sales_reverse_manual_payment', 'sales_void_invoice', 'client_portal_request_share']) {
     bad += ok(`an unclassified explicit ${tool} fails regardless of its name`, findings({ ...base, requiredClassifications: [tool], governedEdgeActions: [tool] }).some(f => f.includes(`${tool} is a canonical governed mutation`)));
   }
   bad += ok("an unclassified imported write fails", findings({...base, chat:{...base.chat, declared:[...base.chat.declared,...parseChat('', ['widget_delete_thing']).declared]}}).some(f=>f.includes('widget_delete_thing')));
@@ -766,6 +766,9 @@ const governedEdgeActions = [
   ...CONTACT_SCOPED_EDGE_HANDLERS.flatMap((path) => parseCapabilityConstants(fs.readFileSync(path, "utf8"))),
 ];
 const requiredClassifications = [];
+// `share` deliberately does not widen MUTATION_VERB. Its actual domain mount
+// must retain an explicit classification, through the same original requirement.
+if (importedTools.includes('client_portal_request_share')) requiredClassifications.push('client_portal_request_share');
 const merchantDeclarations='supabase/functions/_shared/sales-payments/merchant-capability.ts';
 if(fs.existsSync(merchantDeclarations)){
   const sources=MERCHANT_PATHS.map(path=>fs.readFileSync(path,'utf8'));

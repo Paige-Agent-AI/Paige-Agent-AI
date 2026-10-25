@@ -38,7 +38,7 @@ export function installOriginalAgreementComms({sql,read}){
 // only the four exact changed public bodies replace their incumbent versions.
 // No agreement helper is mocked or callable from this generic-only campaign.
 export function installAgreementCommsCompatibility({sql,read}){
- const source=read('supabase/migrations/20271114190004_e04_agreement_message_origin.sql');
+ const source=read('supabase/migrations/20271114230204_e04_agreement_message_origin.sql');
  for(const name of ['_comms_email_governance','prepare_comms_email_send','read_comms_email_send_binding','claim_comms_email_send']){
   const m=source.match(new RegExp('CREATE OR REPLACE FUNCTION public\\.'+name+'\\([\\s\\S]*?\\bAS\\s+(\\$[A-Za-z_0-9]*\\$)[\\s\\S]*?\\1\\s*;','i'));
   assert(m,'Actual candidate Communications function '+name);sql(m[0]);

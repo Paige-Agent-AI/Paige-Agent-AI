@@ -1,0 +1,76 @@
+{
+  "scope": "Source-native Operations components; deterministic synthetic ports only",
+  "source": "92c805f84b0185de3bbd78c2991f713b4d30a391; 142 source plus5 fixture inputs; v2",
+  "viewports": [
+    {
+      "clientWidth": 1521,
+      "dialogWidth": 480,
+      "height": 770,
+      "overflow": false,
+      "viewportWidth": 1536
+    },
+    {
+      "clientWidth": 1351,
+      "dialogWidth": 480,
+      "height": 768,
+      "overflow": false,
+      "viewportWidth": 1366
+    },
+    {
+      "clientWidth": 1009,
+      "dialogWidth": 480,
+      "height": 768,
+      "overflow": false,
+      "viewportWidth": 1024
+    },
+    {
+      "clientWidth": 885,
+      "dialogWidth": 480,
+      "height": 1000,
+      "overflow": false,
+      "viewportWidth": 900
+    },
+    {
+      "clientWidth": 375,
+      "dialogWidth": 375.2000122070313,
+      "height": 844,
+      "overflow": false,
+      "viewportWidth": 390
+    }
+  ],
+  "owner": {
+    "source": "Studio version2",
+    "submission": "revision1 in_review",
+    "ownerDecision": "separate explicit internally approved",
+    "release": "separate explicit awaiting_client",
+    "clientDecision": "not recorded by owner"
+  },
+  "memberSelfReview": "no eligible reviewer; second person required",
+  "secondPersonReview": "original assigned reviewer path retained",
+  "uncertain": {
+    "changeNotConfirmed": true,
+    "repeatWritesLocked": true,
+    "closeHeld": true,
+    "inspectOriginalStateDoesNotReplay": true
+  },
+  "recordedClientDecision": "separate accepted fixture read; not real client acceptance",
+  "keyboard": {
+    "escapeSubmissionConfirmation": "returns to Review submission",
+    "sheetClose": "returns to original work row",
+    "focus": "visible token outline",
+    "noAssistiveSpeechClaim": true
+  },
+  "visual": {
+    "themes": "Mineral and Obsidian",
+    "newAnimation": false,
+    "noHorizontalOverflow": true
+  },
+  "limits": [
+    "Whole SOLO PAIGE shell not mounted",
+    "No actual browser200percent zoom or screen-reader speech",
+    "Synthetic uncertainty not authenticated durable reload",
+    "No native/provider/real work release or client decision",
+    "v1 private artifact-read text differed; v2 ports corrected without production changes",
+    "r2-1536-awaiting-client is top of sheet; use r2-1536-awaiting-client-outcome for named state"
+  ]
+}

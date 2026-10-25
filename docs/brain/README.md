@@ -1,3 +1,20 @@
+## EXP02 private request foundation released — October25
+
+Original [#2867 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)
+is maina358554c8cff8bbe0ba52243fb7097508c088c86/tree1cf0156e,
+reviewed2ef74cdb7/final AUTHOR-REVIEW / LOWER ASSURANCE5645103641/all13 exact
+checks/Preview/two webSUCCESS. The sole Master4.0 row records the full preserved
+union, normal native40231237484, applied240002/full1462-version parity,
+exact private ABI/ACL/source, unchanged original contracts/tables and READYweb.
+Both public hosts report exacta358-mvoab511/null at20:35:36UTC. Edge N/A.
+
+Functional: private preparation source RELEASED. Visual: N/A, no UI change.
+Experiential: manual admission, dispatch, original result/Rail receipt and recovery
+remain incomplete. Founder Acceptance: NOT_ACCEPTED. No scan was run or offered;
+manual capability remains UNAVAILABLE and analytics/catalogue maturity unchanged.
+Original9/0 and12/0/4 remain historical; all19/nine continue. Protected monthly
+UNKNOWN/UNRETRIED remains intact. Earlier development/failure evidence is retained.
+
 ## EXP04 canonical signature messages and prepared completion — October25 production closeout
 
 - [#2842 actual receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2842#issuecomment-6402089091): reviewed9f84ef28552d23265d34e6f33f6d18cb58787fae/LOWER6401917960/all13exact checks/two webSUCCESS/zero threads; actual12fde7f248d086504fa4e437a70c580324c43b7e. Native230204 ONCE14, canonical message/provider/Work bindings, exact two-function deployed source/configuration and READYweb/bothpublic12fde…-mvo7ckxs/null verified. Owner's bounded sender integrity renewal applied; no broader protected change. Factory UNMOUNTED.

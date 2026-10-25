@@ -122,5 +122,11 @@ export async function provePreparedSignatureWork({sql,read,tenant,actor,quote,fi
   legacySignatureAfterPublication=await proveSignatureRecord({sql,read,context,tenant,fresh,quote,startSession,observe,preserveCurrentEngine:process.argv.includes('--prepared-field-signatures')});
   assert.equal(legacySignatureAfterPublication.checks,76,'All original signature controls must pass AFTER the publication fence extension');
  }
- return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),requestStatus,credentials,messageOrigin,legacySignatureAfterPublication,scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};
+ let statusAfterPublication=null;
+ if(process.argv.includes('--prepared-publication-status')){
+  const {provePreparedRequestStatus}=await import('./prepared-request-status-proof.mjs');
+  statusAfterPublication=await provePreparedRequestStatus({sql,read,quote,tenant,actor,setup,register,preserveCurrentReader:true});
+  assert.equal(statusAfterPublication.checks,36,'All original35status controls plus current-reader retention must pass after the extension');
+ }
+ return {checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,originalWorkSource:'693340656ec8ec445cd34c25b3d91d80',proofBodySha256:createHash('sha256').update(provePreparedSignatureWork.toString()).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),requestStatus,credentials,messageOrigin,legacySignatureAfterPublication,statusAfterPublication,scope:'Original Work registration/read only; synthetic audit/session/mail/Storage, not approval/send/customer acceptance'};
 }

@@ -122,5 +122,63 @@
       "report": "private work/2808-retirement-green.json"
     },
     "boundary": "No production source/workflow/helper mutation in this correction; actual full provider readback and new exact-head CI remain required."
+  },
+  "readOnlyRecoveryProbe": {
+    "actualFailedRelease": {
+      "pr": 2808,
+      "commit": "18757b70a80781717efd807dc3a96e14c5378e6a",
+      "run": 40169531913,
+      "artifact": 12588952958,
+      "artifactSha256": "37cc37e4567b56862c7e39f599b1905a6ddf76ebe5a9aaba9eddf182fc45380c",
+      "allPass": false,
+      "reason": "invalid_readback_input"
+    },
+    "immutableInputOnly": {
+      "commit": "18757b70a80781717efd807dc3a96e14c5378e6a",
+      "fileCounts": [
+        119,
+        283,
+        32,
+        116,
+        127,
+        18
+      ],
+      "status": "PASS source-only expected_release; no provider download or ordinary actor proof"
+    },
+    "purpose": "Obtain fixed phase/static helper-site evidence for the actual unexpected ValueError, without repeating identical uploads. This is NOT a claim the underlying provider-path error is already repaired.",
+    "diagnostic": "Only fixed category/phase and at most8 static helper function+line sites; no exception message, source line, raw CLI/source payload, file path, environment, token or header.",
+    "upload": "Only a valid ancestral same-source/config PUSH with no retirements may skip upload. Full selection remains freshly certified edge-live and full download/config/race/tag proof remains mandatory. Manual, source, config, retirement and unknown predecessor retain original behavior.",
+    "red": {
+      "tests": 5,
+      "failures": 2,
+      "errors": 3,
+      "log": "private work/readback-diagnostic-red.log",
+      "boundary": "Missing diagnostic/upload-decision controlled baseline, not a production reproduction"
+    },
+    "green": {
+      "tests": 99,
+      "failures": 0,
+      "seconds": 126.077,
+      "log": "private work/readback-diagnostic-full.log"
+    },
+    "retirement": {
+      "tests": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "report": "private work/readback-diagnostic-retirement-serial.json",
+      "retainedFirstRun": "20PASS/1 host-case failure at5215.958ms (STACK_TRACE_ERROR) during concurrent local tests; unchanged serial21PASS. No timeout, assertion or source change used to obtain the repeat."
+    },
+    "sourceSha256": {
+      ".github/scripts/edge-source-readback.py": "b7d5074315b3ed1ae8957414cbfe48b395e439118251ca64ea09ebe4b183a694",
+      ".github/scripts/test_edge_source_readback.py": "959285af3a3374b5924066d3d94c8db8d5159828ce16732286d9311bcacd113b",
+      ".github/workflows/deploy-edge-functions.yml": "4671650709a8dc5661ff56ae5d9970ba40103c39e1f0cdf7ea7119b07e9f078d"
+    },
+    "remaining": [
+      "New exact-head review/CI",
+      "Actual original provider diagnostic, then correction of demonstrated cause if still failing",
+      "Full source certificate and canonical release-log closeout",
+      "Browser/input stop, ordinary domain record/Rail/reload, Live and complete EXP05/founder proof remain held/owed"
+    ]
   }
 }

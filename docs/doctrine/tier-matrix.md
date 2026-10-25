@@ -410,7 +410,7 @@ Inside Team Hub, a teammate attaches up to 5 files (10 MB each) to a message or 
 
 Authenticated runtime is `UNVERIFIED`. Production holds both migrations and the active `team-hub-file` edge function (read back 2026-10-25). Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
-### EXP08 Team Hub increment 4: PAIGE with Team Hub (migrations `20271114170008` and `20271114180008`, 2026-10-25)
+### EXP08 Team Hub increment 4: PAIGE with Team Hub (migrations `20271114230208` and `20271114230308`, 2026-10-25)
 
 In the one PAIGE chat, typed or Live, an active SOLO member can ask PAIGE what's new in Team Hub, to catch them up on a conversation or thread, or to search the conversations they can see. PAIGE reads with the asker's own JWT through the `team_hub_*` definers, fresh every turn; nothing is stored or indexed. PAIGE can draft a reply, and it is posted under the person's own name only when they approve the card (never from Live, at most once per card). No Team Hub content enters Knowledge or Memory: once a person has read Team Hub through PAIGE, their automatic memory summaries stop (owner ruling 2026-10-25), their PAIGE traces carry no text, and the web, Knowledge and unattended-write tools are withheld for the rest of any request that carried Team Hub text.
 

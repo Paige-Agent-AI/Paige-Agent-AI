@@ -48,7 +48,7 @@ const RUNNER_AGENT = "paige-systems-check";
 // ── Types ──────────────────────────────────────────────────────────────────────────────────────
 
 export type CheckStatus = "pass" | "fail" | "skip" | "error";
-export type ScanFlavor = "onboarding" | "scheduled" | "change_triggered";
+export type ScanFlavor = "onboarding" | "scheduled" | "change_triggered" | "manual";
 /** WHO the scan is for (§9/§51/§53). 'tenant' = the L1/L2 default 10 tenant checks (tenant_id set);
  *  'operator' = platform-operator infra checks that run TENANT-LESS (tenant_id NULL on every write). The
  *  catalog is scope-filtered so the two never mix, and operator writes never carry a tenant_id. */
@@ -143,6 +143,13 @@ export interface RunSystemsCheckOptions {
    *  or newly-degraded vs the tenant's previous run. 'none' captures original checks/findings without
    *  remediation drafts or actions; it grants no authority to run a check. Existing callers stay unchanged. */
   actionFiling?: "all" | "delta" | "none";
+  /** Internal manual worker only: the original native Work UUID, supplied AFTER
+   *  its current actor/tenant/immutable-payload/lease/exclusive-dispatch checks.
+   *  Binds both the original run ID and its existing work_id foreign key.
+   *  Never bind browser/model input or triggeredBy metadata here. This identity
+   *  grants no authority, claim, persistence, idempotency or retry permission.
+   *  No public caller consumes this option; legacy captures still mint their ID. */
+  manualCaptureRunId?: string;
   /** Test seam: override the dispatch map (defaults to the shared SYSTEMS_CHECK_DISPATCH registry). */
   dispatch?: Record<string, CheckRunner>;
 }
@@ -163,7 +170,7 @@ export interface RunSystemsCheckSummary {
   }>;
 }
 
-type CaptureReadbackPhase = "finding_write" | "finding_readback" | "run_finalize" | "run_readback";
+type CaptureReadbackPhase = "run_insert" | "finding_write" | "finding_readback" | "run_finalize" | "run_readback";
 
 /** A known original run owes reconciliation. This never proves absence or permits replay. */
 export class SystemsCheckCaptureUnconfirmed extends Error {
@@ -229,6 +236,24 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   const actionFiling = opts.actionFiling === undefined ? "all" : opts.actionFiling;
   if (!["all", "delta", "none"].includes(actionFiling)) {
     throw new Error("SYSTEMS_CHECK_INVALID_ACTION_FILING");
+  }
+  const manualCaptureRunId = opts.manualCaptureRunId;
+  if (manualCaptureRunId !== undefined) {
+    if (scanFlavor !== "manual" || scope !== "tenant" || actionFiling !== "none") {
+      throw new Error("SYSTEMS_CHECK_MANUAL_ID_CONTEXT");
+    }
+    // Native uuid output is canonical lowercase. Refuse noncanonical input
+    // before any I/O rather than turning an ack normalization into uncertainty.
+    if (typeof manualCaptureRunId !== "string"
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(manualCaptureRunId)) {
+      throw new Error("SYSTEMS_CHECK_MANUAL_ID_INVALID");
+    }
+  }
+  // Internal purpose only, not actor/admission authority. An eventual governed
+  // manual caller must capture the original evidence without automatic fixes.
+  if (scanFlavor === "manual") {
+    if (scope !== "tenant") throw new Error("SYSTEMS_CHECK_MANUAL_TENANT_ONLY");
+    if (actionFiling !== "none") throw new Error("SYSTEMS_CHECK_MANUAL_CAPTURE_ONLY");
   }
 
   // Resolve the display name for the remediation brief's business-name token (§15 — no placeholder). For a
@@ -296,6 +321,9 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
           .from("paige_systems_check_run")
           .select("id")
           .neq("scan_flavor", "change_triggered")
+          // Observation-only manual work must not suppress or re-trigger the
+          // existing scheduled remediation decision by becoming its baseline.
+          .neq("scan_flavor", "manual")
           .order("started_at", { ascending: false })
           .order("created_at", { ascending: false })
           .order("id", { ascending: false })
@@ -340,9 +368,17 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   // are patched at the end. Readers have twice been written against "all three are patched at the
   // end", which is false and makes check_count look untrustworthy when it is the one column that
   // is not.
-  const { data: runRow, error: runErr } = await admin
+  // Keep the original identity even if the first acknowledgement is lost. This
+  // is an existing run row, never an idempotency grant, an absent-write claim or
+  // permission to replay. Legacy remediation keeps its database-assigned ID.
+  const captureRunId = actionFiling === "none" ? manualCaptureRunId ?? crypto.randomUUID() : null;
+  let runInsert: { data: unknown; error: { message?: string } | null };
+  try {
+    runInsert = await admin
     .from("paige_systems_check_run")
     .insert({
+      ...(captureRunId ? { id: captureRunId } : {}),
+      ...(manualCaptureRunId ? { work_id: manualCaptureRunId } : {}),
       tenant_id: tenantId,                 // EXPLICIT (§9); NULL for an operator scan (§53 tenant-less)
       scan_flavor: scanFlavor,
       check_count: rows.length,
@@ -366,10 +402,19 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     })
     .select("id")
     .single();
+  } catch (error) {
+    if (captureRunId) throw new SystemsCheckCaptureUnconfirmed(captureRunId, "run_insert");
+    throw error;
+  }
+  const { data: runRow, error: runErr } = runInsert;
+  if (captureRunId && (runErr || !runRow || typeof runRow !== "object" || Array.isArray(runRow)
+    || (runRow as { id?: unknown }).id !== captureRunId)) {
+    throw new SystemsCheckCaptureUnconfirmed(captureRunId, "run_insert");
+  }
   if (runErr || !runRow) {
     throw new Error(`SYSTEMS_CHECK_RUN_INSERT_FAILED: ${runErr?.message ?? "no row returned"}`);
   }
-  const runId = (runRow as { id: string }).id;
+  const runId = captureRunId ?? (runRow as { id: string }).id;
 
   async function captureIo<T>(operation: () => PromiseLike<T>, phase: CaptureReadbackPhase): Promise<T> {
     try { return await operation(); }
@@ -606,13 +651,16 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
 
   if (actionFiling === "none") {
     let runRead = admin.from("paige_systems_check_run")
-      .select("id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by")
+      .select(manualCaptureRunId
+        ? "id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by,work_id"
+        : "id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by")
       .eq("id", runId);
     runRead = scope === "operator" ? runRead.is("tenant_id", null) : runRead.eq("tenant_id", tenantId);
     const { data, error } = await captureIo(() => runRead.maybeSingle(), "run_readback");
     const row = data as Record<string, unknown> | null;
     const audit = row?.triggered_by as Record<string, unknown> | null;
     if (error || !row || Array.isArray(row) || row.id !== runId || row.tenant_id !== tenantId
+      || (manualCaptureRunId !== undefined && row.work_id !== manualCaptureRunId)
       || row.scan_flavor !== scanFlavor || row.check_count !== summary.check_count
       || row.pass_count !== summary.pass_count || row.fail_count !== summary.fail_count
       || typeof row.completed_at !== "string" || new Date(row.completed_at).getTime() !== new Date(completedAt).getTime()

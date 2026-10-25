@@ -95,3 +95,9 @@ Actual database/customer authentication, complete Automation Builder lifecycle,
 weekly execution, ZION delegation/return, notices, all ten outcomes and original
 E5-CV1–9 remain separate acceptance obligations. Founder evaluation is one complete
 integrated Experience after engineering/runtime completion, not this slice.
+
+## October25 production readback addendum
+
+The earlier development record above remains historical. Reviewed ccf4777c is merged b437bc39f4d9bac358252442ed6ffe2de57f53dd after all11 exact-head checks/both web statuses and separate AUTHOR-REVIEW / LOWER ASSURANCE. Normal40197767982/job121182244466 verified the selected Chat541/JWTtrue/287 source+emitted files; original artifact12600593544 ZIP SHA2561714c72fde218c8b4e99013ba89fd71536e0ac0fa5df16892c1b9d7059e78c1b was independently checked. Actual READY production dpl_5DKf31FyVYBzeeNax6khiy7sCwXy and both public b437bc39...-mvnv65xg/customerUpdate:null were read back13:30:47.849UTC. Original scratch cleanup warning remains incomplete/permission_denied. Source/config/web release is verified; native delta NOT_APPLICABLE, no effect or activation.
+
+Earlier ordinary owner catalogue inspection confirms the eleven separate Operations recipes remain Listed/Unverified. It does not prove this changed Chat response: rendered-response, relevant roles/cohorts/reload, separate Live and full Experience proof remain owed. The read-only connection subsequently detached; temporary responsive viewport reset and ephemeral-tab cleanup could not run through the detached tab. No alternate control was used. No UI layout, catalogue maturity, permission, provider, algorithm or owner-acceptance claim changes in this mechanical closeout.

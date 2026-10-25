@@ -1,5 +1,52 @@
 # EXP02 Systems capture without automatic remediation
 
+## October25 — unused manual-purpose source actually released
+
+Original [#2853](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2853#issuecomment-6400618979)
+mergedbbee3e1d40071b7fce95228cb3cca633ab0008f7/tree68a7a950 from61dc+d1 after
+reviewedd1c86219a1a6f7c9c63a864105a5da6404844271/LOWER5644115608/final5644251947,
+all13 exact checks/two webSUCCESS/zero threads. Actual union preserves all16174
+outside entries, four owning runtime/test/SQL blobs, whole incoming CI except
+two additive native-proof lines and all prior evidence. Sole Master4.0 has the row.
+
+Normal native20271114220002 is APPLIED: actual original-table purpose and
+tenant/none constraints match; ownerpostgres/forcedRLS and anon/authenticated
+INSERT/UPDATE refusal remain. Edge40214639936/job121233023970 SUCCESS;
+actual API certificate12607325507/SHA256da1a4a91b4c0f87742ba4536d2dd21e9fd083d70fed89646e936e8e08a452c04
+independently verifies159 source entries/configs: change138/JWTtrue,
+onboarding142/false,operator144/false,scheduled145/false. Original checkout guard
+refused a certificate invocation on the earlier branch; the unchanged helper
+then passed on the actual merged checkout. No source/config guard was weakened.
+READYwebdpl_GnF5c2npPAQj55VLf57CLsxrEFPn; both public200/exact
+bbee3e1d40071b7fce95228cb3cca633ab0008f7-mvo2uzff/customerUpdatenull.
+
+Actual isolatedPG16 compatibility/refusal/unchanged-permission/rollback proof and
+73 owning cases PASS. Initial7FAIL/66PASS, broad256PASS/cold-import timeout and
+original5s Operator rerun5PASS remain historical. Exact Deno artifact12605752877
+proves4 functions3 unchanged baseline/head diagnostics and0new/own-core, not
+zero-error native typing. Functional source prerequisite RELEASED; Visual N/A;
+Experiential manual Work/current-authority/claim/receipt/reload still incomplete.
+No manual caller, worker, registration, approval/provider activation or customer
+scan; no ALG/CAP promotion. Full19/nine and Founder Acceptance remain open.
+The local successor below is retained as historical source evidence.
+
+## October25 — initial capture identity source released
+
+Successor [#2847](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2847#issuecomment-6399705002)
+is actually mergedc908539817d029c4b745b8518c24a16fa2c11795/tree7ace2fa2 after
+reviewede1fdf874/LOWER5643768520+5643912963/correction6399644574, all11 exact
+checks/two webSUCCESS/zero threads. Actual72a2+e1 union/all16174 outside entries,
+three owning blobs and four original source/config closures are exact.
+Normal Edge40208009138/job121213021865 and independently checked API certificate
+12604896678/SHA256a6b2df9981237bf08c3601c8ce79bc4baee523ef8a29c3a671396342d87ab241
+verify159 returned source entries across all four closures/configs. Certified
+edge-livec908 and READYwebdpl_9Tt77RbWUXj18d2W2sRfG2SCribp/both public exact
+c908-mvnzv71o/null passed. The sole Master4.0 row holds complete identities.
+Functional: source prerequisite RELEASED; Visual N/A; Experiential manual scan/
+Work/receipt and Founder Acceptance remain open. Initial UUID preservation grants
+no persistence/absence/idempotency or retry authority; no activation or monthly replay.
+The development successor text below is retained as historical source evidence.
+
 ## October25 — verified source release
 
 Reviewed `1b42e9ac8d6bea71f42244e0be124f9f27ea4b47`, LOWER5642231020/final5642812783;
@@ -149,3 +196,137 @@ uncertainty, provider/action activation and browser holds remain preserved.
 Recovery is an ordinary reviewed source forward-fix/revert. Activating a new
 customer scan and replaying an uncertain business operation are separate matters;
 neither is authorized by merging this unused internal option.
+
+## October25 — initial capture identity, development successor
+
+The original #2813 release above retained a known identity after finding/finalize
+uncertainty but could lose it with the first run acknowledgement. This successor
+allocates a standard UUID for the existing run.id only in internal none mode,
+before its one original INSERT. Missing, malformed, mismatched, failed or thrown
+acknowledgements return SystemsCheckCaptureUnconfirmed with that same identity
+and run_insert phase. No check dispatch, finding write, finalization, automatic
+reconciliation or replay follows an unconfirmed start. Allocation failure sends
+no run write. Tenant/operator scope validation and the original catalog remain.
+
+The identity does not prove insertion or absence, confer read/actor authority,
+or establish idempotency/exactly-once behavior. A future authorized consumer must
+still correlate original Work, reauthorize original source reads and reconcile
+the uncertain result. Default/all/delta retain database-assigned IDs, original
+initial errors and remediation behavior. No caller/API/manual flavor, schema,
+provider, registry, queue, receipt engine or consequential activation is added.
+
+Failing-first actual-core controls produced8FAIL/54PASS against the unchanged
+release, then62PASS after the correction; subsequent allocation/operator/legacy
+controls and final verification are recorded in the successor PR. This is local
+source proof, not native released-source or authenticated manual-scan acceptance.
+Functional: development. Visual: N/A. Experiential: original manual flow/Work/
+receipt still incomplete. Founder Acceptance: NOT_ACCEPTED; all19/nine and the
+single integrated founder evaluation remain required. Catalogue and algorithms
+are unchanged; protected monthly UNKNOWN/UNRETRIED is never replayed.
+
+## October25 — unused manual purpose, local successor
+
+MATERIAL_FLOW_CHANGE: NO: unused internal purpose; existing callers and public
+entry/access remain unchanged. Actual manual customer flow is still unavailable.
+
+Pre-edit routing: ANT138/713e57f3 and ANT161/b0fa6a60; exact two-line existing-CI
+proof region bda3d669. REUSE the original run/findings, registry, scope guard,
+capture completion and UUID uncertainty behavior. EXTEND only the original
+ScanFlavor/constraint with manual; REPAIR the legacy delta baseline interaction.
+No new engine, caller, registry, approval, queue, schedule or activity store.
+
+Manual requires tenant scope and explicit none filing before any read/write.
+The native constraint independently requires a non-null tenant and original
+triggered_by scope=tenant/action_filing=none. Existing three purposes and their
+defaults remain valid. A manual capture cannot replace the original scheduled
+remediation baseline, suppress a newly degraded fix or refile an unchanged one.
+The original selected_runner_keys marker still distinguishes partial coverage.
+
+The forward constraint change is one atomic DO statement with original-definition
+precondition and bounded/restored lock timeout. It changes no role, grant, RLS,
+owner, column/default, index, domain writer or public RPC. Database-first and
+core-first ordering preserve all existing callers; no public caller offers manual.
+Actual production metadata was READ ONLY to verify the three-purpose constraint
+and absent ordinary-client writes. Proposed source slot20271114220002 is unapplied
+and must pass normal frontier/Preview/CI/release verification before a release claim.
+
+Actual original-core causal proof:7FAIL/66PASS before correction, then73PASS.
+Initial local secure-cache startup failure is tooling evidence, not a causal test;
+the unchanged runner passed using its existing secure cache, with no ACL changes.
+Broader original regressions produced256PASS/one unchanged Operator cold-import
+5s timeout; that original suite reran5PASS at its original limit. The red run is
+retained; no timeout, test, guard or baseline is waived or changed.
+Actual PostgreSQL16.14 executes the unchanged forward file in an isolated,
+original-shaped fixture: old manual refusal, new tenant/none positives, invalid
+context/purpose/tenant/update refusals, retained legacy rows and unchanged owner,
+defaults/columns/ACL/RLS/indexes/other constraints/timeout. The original read-only
+fixture role still cannot insert/update. Entire fixture/data/role rollback and
+own-cluster stop passed. This is bounded native contract proof, not the complete
+production schema, Auth identity, scan, provider or customer outcome. The existing
+CI PostgreSQL service gains only an additive proof invocation; no guard is waived.
+
+| Orchestration contract | This source successor |
+| --- | --- |
+| Original question/entry | Future owner on-demand check; currently only internal core purpose, no admitted UI/Chat/Live request |
+| Source/tenant | Same scoped registry/run/findings; no competing Metric source; purpose metadata is not actor authority |
+| Spine/specialist | Manual scan UNAVAILABLE/unregistered; existing business.operating_snapshot remains a READ, VERA under PAIGE |
+| Adapter/authority | No new ActionAdapter, action-risk key, mutation verb, approval or execution lane; future governed consumer must obtain original authority |
+| Original writer | Same runSystemsCheck; default/all/delta remediation stays with its incumbent writer |
+| Work/receipt | No Work claim or Rail receipt here; original run identity does not prove persistence, absence, idempotency or repair |
+| Recovery | Existing unconfirmed original UUID/phase; no automatic replay, replacement or provider effect |
+| Result | Local source/native contract only; authorized Work correlation, request/claim/post-wait checks, result/receipt/reload remain required |
+
+The command-center.systems-check Mind lens remains UNAVAILABLE under its existing
+binding; this is no context/Memory widening. CAP009–017/readiness and ALG03/06/11/
+12/13 maturity are unchanged. Functional: LOCAL. Visual: N/A. Experiential: actual
+manual flow unoffered and incomplete. Founder Acceptance: NOT_ACCEPTED; all19/nine
+and one complete live evaluation remain required. Native/full-schema permissions,
+review, exact-head CI, deployment/readback and actual governed outcome are still owed.
+
+## October25 — internal original-Work identity bridge, local successor
+
+The existing core can bind a canonical native Work UUID as the ORIGINAL run's
+primary key AND its existing work_id foreign key through an internal
+manual/tenant/none option. Actual production metadata confirmed that nullable
+uuid link with ON DELETE RESTRICT; no schema or second correlation store is added.
+Every current
+native caller stays byte-exact and none consumes that option; browser/model bodies
+and triggeredBy audit labels are not forwarded into it. No factory, claim, public
+door, registry, approval, provider, worker or schema is introduced by this bridge.
+
+Invalid/noncanonical identities and all nonmanual/operator/remediation contexts
+refuse before any I/O. Legacy captures still allocate their original UUID and
+legacy remediation still uses its database-assigned identity. The one original
+INSERT and strict acknowledgement remain; its known original UUID survives a
+refused or uncertain acknowledgement without dispatch, another-run inspection or
+automatic replay. Finding/finalization readback keeps the same original identity
+and explicitly selects/verifies the canonical Work link when one is bound.
+An identity is not current permission, a dispatch claim or a Rail receipt.
+
+Same final compiled-core harness: untouched releasedbbee core23FAIL/74PASS,
+prior identity-onlya3 core4FAIL/93PASS, candidate97PASS (73 incumbent+24 new).
+Initial three candidate failures exposed
+the mock's hardcoded INSERT acknowledgement; the fixture now returns the actual
+inserted primary key, as the original table does. All final causal legs use the
+same corrected fixture and restore candidate bytes exactly. Earlier94-case results
+and initial assertion-placement corrections remain historical; no old case was removed.
+
+| Orchestration part | Actual boundary |
+| --- | --- |
+| Request/entry | Future manual check from Systems/Chat; no caller admitted here |
+| Source/tenant | Original run/findings and server-resolved tenant; no new Metric source |
+| Capability/specialist | Manual scan remains UNAVAILABLE/unregistered; PAIGE/VERA existing read attribution unchanged |
+| Authority/risk | No new grant/approval/risk decision; original native authority and admission still required |
+| Claim/adapter | Original Work dispatch_started_attempt CAS must be used by the future consumer; UUID is not that CAS |
+| Writer | Existing runSystemsCheck single INSERT/readback; legacy remediation untouched |
+| Identity/receipt | Future native Work UUID binds the run ID AND existing work_id FK; no Work or Rail receipt produced here |
+| Interruption | Original unconfirmed UUID/reason, no automatic resend, restart or absence claim |
+| Verification | Local source/fixture proof only; actual two simultaneous native workers and lost-ack/revocation still owed |
+| Return/result | Original authorized Work/run/receipt/reload/continuation verification required before customer admission |
+
+Functional: LOCAL prerequisite. Visual: N/A; private request prototype remains
+REVISE for new-trigger focus return, no production UI shipped. Experiential:
+callable manual capture and canonical result/receipt/recovery remain INCOMPLETE.
+Founder Acceptance: NOT_ACCEPTED; all19/nine and original9/0+12/0/4 preserved.
+ALG03/06/11/12/13 and CAP009–017 readiness are unchanged. No model/provider,
+customer scan, business action or protected monthly retry was performed.

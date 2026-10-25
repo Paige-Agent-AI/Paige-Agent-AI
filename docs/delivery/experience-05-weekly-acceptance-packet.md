@@ -1,5 +1,43 @@
 # Weekly Internal Commitment Check — protected acceptance handoff
 
+## October25 15:34UTC - original draft recovery deployed; read-only QA boundary
+
+Original Automation draft repair#2845 is reviewed846b33c55c39179a2af1702b430a3280d11a3e37
+(AUTHOR-REVIEW / LOWER ASSURANCE5643723169), all11 exact-head checks/Preview and
+both web statuses SUCCESS, merged480627ac5bdc3ad92e4524d70ebaa23e56520ed9.
+Actual Edge Chat542/JWTtrue/full287 source-emitted closure and exact production
+web/bothpublic480627-mvnzcgjf are verified. The sole Master4.0 row and
+[owning source/release evidence](../evidence/ui-delivery/exp05-automation-draft-deadline.md)
+retain certificate, original failure/review, cleanup warning and recovery boundaries.
+No native, recurrence, provider or Live activation belongs to this increment.
+
+Renewed human read-only permission allowed genuine ordinary-owner inspection:
+Operations opens canonical Overview, weekly inspection resolves no registered
+responsibility/no proposals/recurrence unavailable, and missing business time zone
+holds the Work week rather than inventing a boundary. A previously authorized
+protected internal booking retains its original schedule/status after full reload;
+Escape closes inspection and restores event focus. All11 Operations recipes
+remain Listed/Unverified. The temporary QA tab was closed. No new question,
+approval, business mutation, provider or schedule change was performed.
+
+Both available signed-in sessions currently resolve the same business; a browser
+profile label is not a second eligible cohort. These are bounded historical record,
+navigation, reload, keyboard and catalogue observations, not new draft execution,
+E5-CV1–9 closure, foreign-role/tenant/new-account or Live proof. Preserve every
+original case below. Complete weekly execution, Builder lifecycle, ZION return,
+meaningful privacy-scoped attention, universal SOLO proof and one integrated
+founder evaluation remain owed; no algorithm maturity is promoted.
+
+## October25 - bounded process inspection released; original owner history readback
+
+#2840 is production source/config/web verified at b437bc39f4d9bac358252442ed6ffe2de57f53dd after all exact-head gates and documented lower-assurance author review. Original caller-JWT/RLS process inspection and native readiness resolver remain authoritative. Four concurrent lookups share one8s deadline and bounded output; unavailable readiness is explicit. Native schema, approvals, execution, recurrence, providers, OpenAI-primary routing and Anthropic fallback are unchanged. Exact deployment, certificate digest, source identities and retained cleanup warning are in Master4.0 and the existing Edge evidence. No customer release identity or catalogue promotion.
+
+Separately observed ordinary existing-owner evidence: the protected original internal-task process remains paused; its approved historical occurrence has exactly one original domain result and a succeeded creation Rail. Its declined occurrence has zero domain results and no Task link. Full reload returns the same process/attempts, and the original approved Task link opens the canonical Work inspector with the independently read current pending state. The original occurrence correlation is distinct from the domain result/Rail run identity; joins use canonical tenant, idempotency and actor binding. This is read-only inspection of already authorized historical fixtures, not new Chat execution, a new approval or Task completion. Private evidence SHA256 a7154a170fbc16add1e23c45cf3ef8ebb801ab788f55a8a8a08f7bcb6c13cb1d; recordedAt13:19:46UTC, observation window is the morning session, not an invented exact action timestamp. No personal identifiers or titles are copied here.
+
+The existing weekly responsibility panel correctly showed no saved responsibility or proposals, with recurring execution unavailable; an unset business time zone remains a truthful hold. All eleven Operations recipe entries were Listed/Unverified. No values, record, schedule, provider or permission were changed. Browser connection later detached from the same owned QA tab; the final responsive scroll/reachability check and reset of its temporary viewport could not be completed. Rebinding, reset and ephemeral-tab close were refused; no alternate profile/input or permission bypass. Earlier observations remain bounded to their actual evidence time.
+
+Functional: deployed read reliability plus bounded original-record inspection. Visual: existing compact navigation/catalogue observed, changed-response and remaining responsive proof UNVERIFIED. Experiential: one existing-owner historical read/reload chain only; exact new approvals, weekly execution, full Builder, ZION dispatch/return, contextual notices, equivalent eligible existing/new cohorts, isolation and separate Live remain open. ALG01 preserves original identity/no-repeat; ALG12/13 gain truthful unavailable inputs only; no algorithm maturity promotion. All ten outcomes and the exact original E5-CV1-9 rows remain unchanged, and founder acceptance is one complete integrated evaluation later.
+
 ## October25 12:55UTC — original Task inspection released; customer execution acceptance open
 
 The original Task outcome reader#2820 is now merged31e25a98c0d653c7c49abefbc96ea78c7893a03b, reviewed d5077e68/LOWER5642862282, all11 exact checks and both web statuses SUCCESS. Normal40190965302/job121161691730 completed the original selected5-function source/config certificate; digest12597677862/4c1535c0675ab25e20940ae569dd54aa798c9704b306b69aab3125c850d5ea52 independently verified. Actual Chat540 contains286 exact emitted modules; native-event-dispatch keeps its original service/cron-only JWT setting. Separately retrieved weekly-command24 has the same18 files/closure/config as immutable31e/certified23; no version-based inference or redeploy. Exact READY Verceldpl_2TevQU7m4hauMVHU7iusMDNUrS9R and bothpublic31e-mvnrw0rm were read back11:58:47.888UTC.

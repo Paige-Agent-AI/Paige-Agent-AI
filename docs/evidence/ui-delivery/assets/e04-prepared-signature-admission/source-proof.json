@@ -200,5 +200,197 @@
     "nativeOrder": "Actual14130105 -> own14140004 -> E0914150009+14150019 -> own14160004+14170004+14180004",
     "productionNative": "NOT_APPLIED",
     "activation": "NONE"
+  },
+  "productionRelease": {
+    "pr": 2819,
+    "reviewedHead": "43e9501d576a48700f6498394e7483c27b4996fc",
+    "reviewedTree": "0ff8cbbd6468f1f5495c7b75b8b531b11e6310d1",
+    "main": "c13dd867e2d976c800fcc3b84a8a6c82cd27e984",
+    "tree": "2b5a61b54a4141c93cf99d3af0bd5b7b5759de44",
+    "review": {
+      "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+      "initial": 6396920776,
+      "final": 6397274964
+    },
+    "checks": [
+      {
+        "id": 121152696033,
+        "name": "Supabase Preview",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152419387,
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152231665,
+        "name": "verify",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152231652,
+        "name": "comms-provider-boundary",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152231607,
+        "name": "audit",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152231507,
+        "name": "web-fetch-hardening-smoke",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152231130,
+        "name": "postgres-authority",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152230951,
+        "name": "contract",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152230935,
+        "name": "lint",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152230928,
+        "name": "Validate UI delivery evidence",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152230856,
+        "name": "channel-sql",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152230794,
+        "name": "database-contract",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      },
+      {
+        "id": 121152230760,
+        "name": "collections-sql",
+        "conclusion": "success",
+        "head": "43e9501d576a48700f6498394e7483c27b4996fc"
+      }
+    ],
+    "webStatuses": 2,
+    "unresolvedThreads": 0,
+    "receipt": 6397301417,
+    "deployment": "dpl_3KcCDy6UDby6v4c5AjJu3TvuWZLC",
+    "buildId": "c13dd867e2d976c800fcc3b84a8a6c82cd27e984-mvnrpcgt",
+    "native": {
+      "run": 40190622368,
+      "job": 121160732365,
+      "sourceSha256": "67ec7e77ce6b5089e312bb55b2b3ed867ba0194e230afeb72b970b5b2fd819d7",
+      "frontier": "20271114140004",
+      "functions": [
+        {
+          "acl": "{postgres=X/postgres,service_role=X/postgres}",
+          "anon": false,
+          "body": "d96af4caa27fd76fe5fea0a568921c33",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": true,
+          "defaults": 0,
+          "identity": "_claim_prepared_agreement_confirmation(uuid,uuid,uuid,text,uuid)",
+          "authenticated": false
+        },
+        {
+          "acl": "{postgres=X/postgres,service_role=X/postgres}",
+          "anon": false,
+          "body": "3169028fd264f0c007a64e135ade92f9",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": true,
+          "defaults": 0,
+          "identity": "_issue_prepared_agreement_confirmation(uuid,uuid,jsonb,text,uuid)",
+          "authenticated": false
+        },
+        {
+          "acl": "{postgres=X/postgres,service_role=X/postgres}",
+          "anon": false,
+          "body": "36b07f6a9351c3a41bedffaf75f9481e",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": true,
+          "defaults": 0,
+          "identity": "_read_prepared_agreement_confirmation(uuid,uuid,uuid)",
+          "authenticated": false
+        },
+        {
+          "acl": "{postgres=X/postgres}",
+          "anon": false,
+          "body": "8f14988369b520427da5f663d37ce00f",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": false,
+          "defaults": 0,
+          "identity": "private.e04_prepared_confirmation_source(uuid,uuid,jsonb)",
+          "authenticated": false
+        }
+      ],
+      "migration": {
+        "name": "e04_prepared_request_confirmation",
+        "version": "20271114140004",
+        "statements": 14
+      },
+      "migration_count": 1
+    },
+    "edge": {
+      "run": 40190622283,
+      "job": 121160642347,
+      "result": "SUCCESS_NO_AFFECTED_IMPORTERS",
+      "upload": "SKIPPED",
+      "sourceReadback": "SKIPPED",
+      "edgeLive": "f34b177ed229faabdba5c3ed6904723f601c986f",
+      "factory": "UNMOUNTED"
+    },
+    "recordedAt": "2026-10-25T11:54:09.002Z",
+    "channel": "production",
+    "classification": "internal-only",
+    "source": "Original exact-head review/CI, expected-head normal merge, normal pipelines and independent native/source/config/public-version readback",
+    "publicHosts": [
+      "https://paigeagent.ai",
+      "https://app.paigeagent.ai"
+    ],
+    "customerUpdate": null,
+    "activation": "NONE",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "OPEN",
+    "algorithms": "ALG01/12 PARTIAL; ALG02 incomplete; ALG13 usefulnessUNVERIFIED",
+    "fullExperience": "O1–O12 OPEN",
+    "recovery": "forward-fix; preserve original records and holds",
+    "proofBoundary": "Original service-only native prerequisite, serverfactory UNMOUNTED; zero affected Edge importers"
   }
 }

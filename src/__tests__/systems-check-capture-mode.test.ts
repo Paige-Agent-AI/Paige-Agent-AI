@@ -22,23 +22,25 @@ type Summary = { run_id: string; check_count: number; pass_count: number; fail_c
 const run = loaded.runSystemsCheck as (options: Record<string, unknown>) => Promise<Summary>;
 const TENANT = 'b4000000-0000-4000-8000-000000001111';
 const RUN = 'b4000000-0000-4000-8000-00000000a001';
+const captureUuid = vi.fn((): ReturnType<Crypto['randomUUID']> => RUN);
 const PRIOR = 'b4000000-0000-4000-8000-00000000a002';
+const MANUAL_PRIOR = 'b4000000-0000-4000-8000-00000000a003';
 const ACTION = 'b4000000-0000-4000-8000-00000000c001';
-type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; filters: unknown[][] };
+type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; selected?: string; filters: unknown[][] };
 type Result = { data: unknown; error: { message: string } | null };
 type Query = {
-  select(): Query; insert(payload: Record<string, unknown>): Query; update(payload: Record<string, unknown>): Query;
+  select(columns?: string): Query; insert(payload: Record<string, unknown>): Query; update(payload: Record<string, unknown>): Query;
   eq(...args: unknown[]): Query; neq(...args: unknown[]): Query; not(...args: unknown[]): Query; is(...args: unknown[]): Query;
   in(...args: unknown[]): Query; order(...args: unknown[]): Query; limit(...args: unknown[]): Query;
   maybeSingle(): Promise<Result>; single(): Promise<Result>; then(fulfilled: (result: Result) => unknown): Promise<unknown>;
 };
 
 function fixture(statuses: string[] = ['fail'], options: {
-  previous?: string; scope?: 'tenant' | 'operator'; catalogError?: boolean; insertError?: boolean;
+  previous?: string; manualBaseline?: string; scope?: 'tenant' | 'operator'; catalogError?: boolean; insertError?: boolean;
   findingError?: boolean; missing?: boolean; throws?: boolean; finalizeError?: boolean; finalizeNoop?: boolean;
   findingReadError?: boolean; runReadError?: boolean; findingReadPatch?: Record<string, unknown>;
   runReadPatch?: Record<string, unknown>; findingRows?: 'missing' | 'duplicate'; findingWriteLostAck?: boolean;
-  finalizeLostAck?: boolean;
+  finalizeLostAck?: boolean; runInsertLostAck?: boolean; runInsertResponse?: unknown;
 } = {}) {
   const calls: Call[] = [], rpcs: Array<{ name: string; input: Record<string, unknown> }> = [], dispatched: Record<string, unknown>[] = [];
   let finding = 0;
@@ -58,19 +60,29 @@ function fixture(statuses: string[] = ['fail'], options: {
           return { data: selected.map(row => Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'status'))), error: null };
         }
         if (table === 'paige_systems_check_run' && call.operation === 'read') {
-          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'id' && item[2] === RUN)) return { data: options.previous ? { id: PRIOR } : null, error: null };
+          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'id' && item[2] === (savedRun?.id ?? RUN))) {
+            const manualExcluded = call.filters.some(item => item[0] === 'neq' && item[1] === 'scan_flavor' && item[2] === 'manual');
+            return { data: options.manualBaseline && !manualExcluded ? { id: MANUAL_PRIOR } : options.previous ? { id: PRIOR } : null, error: null };
+          }
           if (options.runReadError) return { data: null, error: { message: 'Synthetic read unavailable' } };
           return { data: savedRun ? { ...savedRun, ...options.runReadPatch } : null, error: null };
         }
         if (table === 'paige_systems_check_finding' && call.operation === 'read') {
-          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === RUN)) return { data: rows.map(row => ({ check_id: row.check_id, status: options.previous })), error: null };
+          if (!call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === (savedRun?.id ?? RUN))) {
+            const manual = call.filters.some(item => item[0] === 'eq' && item[1] === 'run_id' && item[2] === MANUAL_PRIOR);
+            return { data: rows.map(row => ({ check_id: row.check_id, status: manual ? options.manualBaseline : options.previous })), error: null };
+          }
           if (options.findingReadError) return { data: null, error: { message: 'Synthetic read unavailable' } };
           const persisted = savedFindings.map((row, index) => ({ ...row, ...(index === 0 ? options.findingReadPatch : {}) }));
           return { data: options.findingRows === 'missing' ? persisted.slice(1) : options.findingRows === 'duplicate' ? persisted.map(() => persisted[0]) : persisted, error: null };
         }
         if (call.operation === 'insert' && table === 'paige_systems_check_run') {
           if (options.insertError) return { data: null, error: { message: 'Write unavailable' } };
-          savedRun = { ...call.payload, id: RUN, completed_at: null }; return { data: { id: RUN }, error: null };
+          // The original table accepts an explicitly supplied primary key. Keep
+          // this native INSERT behavior separate from any worker's authority.
+          savedRun = { ...call.payload, id: call.payload?.id ?? RUN, completed_at: null };
+          if (options.runInsertLostAck) throw new Error('Synthetic acknowledgement lost after run insert');
+          return { data: Object.prototype.hasOwnProperty.call(options, 'runInsertResponse') ? options.runInsertResponse : { id: savedRun.id }, error: null };
         }
         if (call.operation === 'insert' && table === 'paige_systems_check_finding') {
           if (options.findingError) return { data: null, error: { message: 'Finding write unavailable' } };
@@ -90,7 +102,7 @@ function fixture(statuses: string[] = ['fail'], options: {
         throw new Error('Unbound original source operation: ' + table);
       };
       const query: Query = {
-        select() { return query; }, insert(payload: Record<string, unknown>) { call.operation = 'insert'; call.payload = payload; return query; }, update(payload: Record<string, unknown>) { call.operation = 'update'; call.payload = payload; return query; },
+        select(columns?: string) { call.selected = columns; return query; }, insert(payload: Record<string, unknown>) { call.operation = 'insert'; call.payload = payload; return query; }, update(payload: Record<string, unknown>) { call.operation = 'update'; call.payload = payload; return query; },
         eq(...args: unknown[]) { call.filters.push(['eq', ...args]); return query; }, neq(...args: unknown[]) { call.filters.push(['neq', ...args]); return query; }, not(...args: unknown[]) { call.filters.push(['not', ...args]); return query; }, is(...args: unknown[]) { call.filters.push(['is', ...args]); return query; },
         in(...args: unknown[]) { call.filters.push(['in', ...args]); return query; }, order(...args: unknown[]) { call.filters.push(['order', ...args]); return query; }, limit(...args: unknown[]) { call.filters.push(['limit', ...args]); return query; },
         maybeSingle: async () => answer(), single: async () => answer(), then: (fulfilled: (result: Result) => unknown) => Promise.resolve(answer()).then(fulfilled),
@@ -109,7 +121,43 @@ function fixture(statuses: string[] = ['fail'], options: {
   return { calls, rpcs, dispatched, persisted: () => ({ run: savedRun, findings: savedFindings }), execute: (extra: Record<string, unknown> = {}) => run({ ...base, ...extra }), inserted: (table: string) => calls.filter(call => call.table === table && call.operation === 'insert'), updated: (table: string) => calls.filter(call => call.table === table && call.operation === 'update') };
 }
 beforeEach(() => {
+  vi.restoreAllMocks(); captureUuid.mockClear();
+  vi.spyOn(globalThis.crypto, 'randomUUID').mockImplementation(captureUuid);
   forge.mockReset().mockResolvedValue({ result: { content: 'Synthetic original draft', needs_config: false, model: 'synthetic' } });
+});
+
+describe('Unused manual capture purpose does not grant invocation or remediation', () => {
+  it.each([undefined, 'all', 'delta'])('refuses manual remediation mode %j before every source/effect', async actionFiling => {
+    const h = fixture();
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_CAPTURE_ONLY');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+  it('refuses an operator manual purpose before source reads or persistence', async () => {
+    const h = fixture(['fail'], { scope: 'operator' });
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none' })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_TENANT_ONLY');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(h.rpcs).toEqual([]);
+  });
+  it('records the explicit tenant purpose without drafts or actions', async () => {
+    const h = fixture(['pass', 'fail']);
+    expect(await h.execute({ scanFlavor: 'manual', actionFiling: 'none' })).toMatchObject({ run_id: RUN, check_count: 2, actions_filed: 0 });
+    expect(h.persisted().run).toMatchObject({ id: RUN, tenant_id: TENANT, scan_flavor: 'manual', selected_runner_keys: null, triggered_by: { scope: 'tenant', action_filing: 'none' } });
+    expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+  it('retains the original selected-runner marker for a partial manual capture', async () => {
+    const h = fixture(['pass', 'fail']);
+    expect(await h.execute({ scanFlavor: 'manual', actionFiling: 'none', runnerKeys: ['runner_0'] })).toMatchObject({ check_count: 1, actions_filed: 0 });
+    expect(h.persisted().run).toMatchObject({ scan_flavor: 'manual', selected_runner_keys: ['runner_0'] });
+    expect(h.dispatched).toHaveLength(1);
+  });
+  it.each([
+    { previous: 'pass', manualBaseline: 'fail', actions: 1 },
+    { previous: 'fail', manualBaseline: 'pass', actions: 0 },
+    { previous: undefined, manualBaseline: 'fail', actions: 1 },
+  ])('preserves the original scheduled delta decision with a newer manual record: %j', async scenario => {
+    const h = fixture(['fail'], scenario);
+    expect(await h.execute({ scanFlavor: 'scheduled', actionFiling: 'delta' })).toMatchObject({ actions_filed: scenario.actions });
+    expect(h.rpcs).toHaveLength(scenario.actions); expect(forge).toHaveBeenCalledTimes(scenario.actions);
+  });
 });
 
 describe('Original Systems capture mode: observations are separate from remediation', () => {
@@ -142,8 +190,9 @@ describe('Original Systems capture mode: observations are separate from remediat
     expect(result).toMatchObject({ error_count: 1, pass_count: 0, fail_count: 0, actions_filed: 0 });
     expect(h.inserted('paige_systems_check_finding')[0].payload?.status).toBe('error'); expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
   });
-  it.each([['catalog', { catalogError: true }], ['run', { insertError: true }]] as const)('fails loudly when the original %s cannot be recorded/read', async (_name, option) => {
-    const h = fixture(['fail'], option); await expect(h.execute({ actionFiling: 'none' })).rejects.toThrow(/SYSTEMS_CHECK_(CATALOG_READ|RUN_INSERT)_FAILED/);
+  it('fails loudly before allocating a capture identity when the catalog cannot be read', async () => {
+    const h = fixture(['fail'], { catalogError: true }); await expect(h.execute({ actionFiling: 'none' })).rejects.toThrow('SYSTEMS_CHECK_CATALOG_READ_FAILED');
+    expect(captureUuid).not.toHaveBeenCalled();
     expect(h.dispatched).toEqual([]); expect(h.inserted('paige_systems_check_finding')).toEqual([]); expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
   });
   it.each(['', 'NONE', 'audit', null, 37, {}, []])('refuses an unknown remediation mode before any source or effect: %j', async actionFiling => {
@@ -168,6 +217,41 @@ describe('Original Systems capture mode: observations are separate from remediat
 
 describe('Capture completion requires original persisted records, never acknowledgements alone', () => {
   const unknown = (reason: string) => ({ name: 'SystemsCheckCaptureUnconfirmed', message: 'SYSTEMS_CHECK_CAPTURE_UNCONFIRMED', runId: RUN, reason });
+  it('allocates the original run identity before its first write and retains it through completion', async () => {
+    const h = fixture(['pass']); expect(await h.execute({ actionFiling: 'none' })).toMatchObject({ run_id: RUN });
+    expect(captureUuid).toHaveBeenCalledTimes(1);
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1);
+    expect(h.inserted('paige_systems_check_run')[0].payload?.id).toBe(RUN);
+    expect(h.persisted().run?.id).toBe(RUN);
+  });
+  it('does not send a run write if original identity allocation fails', async () => {
+    captureUuid.mockImplementationOnce(() => { throw new Error('Synthetic UUID source unavailable'); });
+    const h = fixture(['fail']); await expect(h.execute({ actionFiling: 'none' })).rejects.toThrow('Synthetic UUID source unavailable');
+    expect(h.inserted('paige_systems_check_run')).toEqual([]); expect(h.dispatched).toEqual([]);
+    expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
+  });
+  it('keeps the same unknown original identity and null-tenant scope for an internal operator capture', async () => {
+    const h = fixture(['fail'], { scope: 'operator', runInsertLostAck: true });
+    await expect(h.execute({ actionFiling: 'none' })).rejects.toMatchObject(unknown('run_insert'));
+    expect(h.persisted().run).toMatchObject({ id: RUN, tenant_id: null, completed_at: null });
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.dispatched).toEqual([]);
+    expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
+  });
+  it.each([
+    { insertError: true }, { runInsertLostAck: true }, { runInsertResponse: null },
+    { runInsertResponse: {} }, { runInsertResponse: { id: PRIOR } },
+    { runInsertResponse: [{ id: RUN }] }, { runInsertResponse: { id: '' } },
+  ])('retains the original identity on unconfirmed run insertion without dispatch or replay: %j', async option => {
+    const h = fixture(['fail'], option);
+    await expect(h.execute({ actionFiling: 'none' })).rejects.toMatchObject(unknown('run_insert'));
+    expect(captureUuid).toHaveBeenCalledTimes(1);
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1);
+    expect(h.inserted('paige_systems_check_run')[0].payload?.id).toBe(RUN);
+    expect(h.dispatched).toEqual([]); expect(h.inserted('paige_systems_check_finding')).toEqual([]);
+    expect(h.updated('paige_systems_check_run')).toEqual([]); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
+    if ('runInsertLostAck' in option) expect(h.persisted().run).toMatchObject({ id: RUN, completed_at: null });
+    if ('insertError' in option) expect(h.persisted().run).toBeNull();
+  });
   it('reads back original run/findings with the same tenant scope and no remediation', async () => {
     const h = fixture(['pass', 'fail']); await h.execute({ actionFiling: 'none' });
     const reads = h.calls.filter(call => call.operation === 'read' && ['paige_systems_check_run', 'paige_systems_check_finding'].includes(call.table));
@@ -214,6 +298,16 @@ describe('Capture completion requires original persisted records, never acknowle
 });
 
 describe('Existing remediation contracts remain active at their original ports', () => {
+  it.each([{}, { actionFiling: 'all' }, { actionFiling: 'delta' }])('preserves database-assigned identity and initial errors for legacy %j', async choice => {
+    const h = fixture(['pass']); expect(await h.execute(choice)).toMatchObject({ run_id: RUN });
+    expect(h.inserted('paige_systems_check_run')[0].payload).not.toHaveProperty('id'); expect(captureUuid).not.toHaveBeenCalled();
+    const refused = fixture(['pass'], { insertError: true });
+    await expect(refused.execute(choice)).rejects.toThrow('SYSTEMS_CHECK_RUN_INSERT_FAILED');
+    expect(refused.dispatched).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+    const lost = fixture(['pass'], { runInsertLostAck: true });
+    await expect(lost.execute(choice)).rejects.toThrow('Synthetic acknowledgement lost after run insert');
+    expect(lost.dispatched).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
   it.each([{}, { actionFiling: 'all' }])('keeps original default/all drafting, filing and linkage: %j', async choice => {
     const h = fixture(['fail', 'pass']); const result = await h.execute(choice);
     expect(forge).toHaveBeenCalledTimes(1); expect(h.rpcs).toHaveLength(1); expect(h.rpcs[0]).toMatchObject({ name: 'file_action', input: { p_action_kind: 'systems.remediate', p_tenant_id: TENANT } });
@@ -243,5 +337,68 @@ describe('Existing remediation contracts remain active at their original ports',
     const h = fixture(['fail'], { scope: 'operator' }); const result = await h.execute();
     expect(result.actions_filed).toBe(0); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
     expect(h.inserted('paige_systems_check_finding')[0].payload).toMatchObject({ tenant_id: null, paige_drafted_fix: { source: 'operator_registry_brief', operator_scope: true } });
+  });
+});
+
+describe('Internal original-Work identity binding, never caller authority', () => {
+  it('uses the supplied original Work UUID for the one insert and every original readback', async () => {
+    const h = fixture(['fail', 'pass']);
+    const result = await h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR });
+    expect(result).toMatchObject({ run_id: PRIOR, check_count: 2, actions_filed: 0 });
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1);
+    expect(h.inserted('paige_systems_check_run')[0].payload).toMatchObject({id:PRIOR,work_id:PRIOR});
+    expect(h.persisted().run?.id).toBe(PRIOR);
+    expect(h.persisted().findings.every(f => f.run_id === PRIOR)).toBe(true);
+    const reads = h.calls.filter(c => c.operation === 'read' && ['paige_systems_check_run','paige_systems_check_finding'].includes(c.table));
+    expect(reads).toHaveLength(2);
+    expect(reads[0].filters).toContainEqual(['eq', 'run_id', PRIOR]);
+    expect(reads[1].filters).toContainEqual(['eq', 'id', PRIOR]);
+    expect(reads[1].selected?.split(',')).toContain('work_id');
+    expect(captureUuid).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled();
+  });
+  it.each([null, 17, {}, '', 'not-a-uuid', RUN + 'x', PRIOR.toUpperCase(), 'b4000000-0000-0000-8000-00000000a002', 'b4000000-0000-4000-0000-00000000a002'])('rejects malformed internal identity before any I/O: %j', async id => {
+    const h = fixture(['fail']);
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: id })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_ID_INVALID');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
+  it.each([
+    { scanFlavor: 'onboarding', actionFiling: 'none' },
+    { scanFlavor: 'scheduled', actionFiling: 'none' },
+    { scanFlavor: 'change_triggered', actionFiling: 'none' },
+    { scanFlavor: 'manual' }, { scanFlavor: 'manual', actionFiling: 'delta' },
+    { scanFlavor: 'manual', actionFiling: 'none', scope: 'operator', tenantId: null },
+  ])('refuses an internal manual identity in every other execution context: %j', async extra => {
+    const h = fixture(['fail']);
+    await expect(h.execute({ ...extra, manualCaptureRunId: PRIOR })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_ID_CONTEXT');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(h.rpcs).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
+  it('does not take an identity from audit labels or invent an authoritative Work claim', async () => {
+    const h = fixture(['pass']);
+    expect(await h.execute({ scanFlavor: 'manual', actionFiling: 'none', triggeredBy: { manualCaptureRunId: PRIOR, work_id: PRIOR } })).toMatchObject({ run_id: RUN });
+    expect(captureUuid).toHaveBeenCalledTimes(1); expect(h.rpcs).toEqual([]);
+    expect(h.inserted('paige_systems_check_run')[0].payload).not.toHaveProperty('work_id');
+  });
+  it.each([
+    ['run_insert', { runInsertLostAck: true }],
+    ['finding_write', { findingWriteLostAck: true }],
+    ['run_finalize', { finalizeLostAck: true }],
+  ] as const)('retains the same original Work/run identity after uncertain %s', async (reason, options) => {
+    const h = fixture(['pass'], options);
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR })).rejects.toMatchObject({ name: 'SystemsCheckCaptureUnconfirmed', runId: PRIOR, reason });
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.persisted().run?.id).toBe(PRIOR);
+    expect(captureUuid).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+    if (reason === 'run_insert') { expect(h.dispatched).toEqual([]); expect(h.persisted().findings).toEqual([]); expect(h.updated('paige_systems_check_run')).toEqual([]); }
+  });
+  it('does not dispatch, inspect another run or retry when the original insert refuses', async () => {
+    const h = fixture(['pass'], { insertError: true });
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR })).rejects.toMatchObject({ name: 'SystemsCheckCaptureUnconfirmed', runId: PRIOR, reason: 'run_insert' });
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.dispatched).toEqual([]);
+    expect(h.calls.filter(c => c.operation === 'read' && c.table === 'paige_systems_check_run')).toEqual([]);
+    expect(h.updated('paige_systems_check_run')).toEqual([]); expect(captureUuid).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+  it.each([null,undefined,ACTION])('refuses missing or mismatched canonical Work correlation in the original readback: %j', async workId => {
+    const h=fixture(['pass'],{runReadPatch:{work_id:workId}});
+    await expect(h.execute({scanFlavor:'manual',actionFiling:'none',manualCaptureRunId:PRIOR})).rejects.toMatchObject({name:'SystemsCheckCaptureUnconfirmed',runId:PRIOR,reason:'run_readback'});
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1);expect(captureUuid).not.toHaveBeenCalled();expect(h.rpcs).toEqual([]);
   });
 });

@@ -1,0 +1,233 @@
+{
+  "at": "2026-10-25T14:27:13.663Z",
+  "neutralSynthetic": true,
+  "sourceSha256": "2c361525e04909a426fabf156fe5d7816bf3df7dea9dca7c954b12318ec8195b",
+  "stylesheetSourceSha256": "61a2f53608549c56c205d8b4f1684efea3251acf5d7d17fdcea575544010a240",
+  "noPrivateProductCssOverride": true,
+  "captures": [
+    {
+      "file": "product-1536-closed-drawer.jpg",
+      "label": "1536-closed-drawer",
+      "bodyFont": "14px",
+      "height": 770,
+      "rootWidth": 1536,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [
+        {
+          "height": 44,
+          "name": "Expand",
+          "width": 73
+        },
+        {
+          "height": 44,
+          "name": "Close finding details",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Back to original source",
+          "width": 161.6374969482422
+        }
+      ],
+      "width": 1536
+    },
+    {
+      "file": "product-1536-open.jpg",
+      "label": "1536-open",
+      "bodyFont": null,
+      "height": 770,
+      "rootWidth": 1536,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [],
+      "width": 1536
+    },
+    {
+      "file": "product-1366-closed-drawer.jpg",
+      "label": "1366-closed-drawer",
+      "bodyFont": "14px",
+      "height": 768,
+      "rootWidth": 1366,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [
+        {
+          "height": 44,
+          "name": "Expand",
+          "width": 73
+        },
+        {
+          "height": 44,
+          "name": "Close finding details",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Back to original source",
+          "width": 161.6374969482422
+        }
+      ],
+      "width": 1366
+    },
+    {
+      "file": "product-1366-open.jpg",
+      "label": "1366-open",
+      "bodyFont": null,
+      "height": 768,
+      "rootWidth": 1366,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [],
+      "width": 1366
+    },
+    {
+      "file": "product-1024-closed-drawer.jpg",
+      "label": "1024-closed-drawer",
+      "bodyFont": "14px",
+      "height": 768,
+      "rootWidth": 1024,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [
+        {
+          "height": 44,
+          "name": "Expand",
+          "width": 73
+        },
+        {
+          "height": 44,
+          "name": "Close finding details",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Back to original source",
+          "width": 161.6374969482422
+        }
+      ],
+      "width": 1024
+    },
+    {
+      "file": "product-1024-open.jpg",
+      "label": "1024-open",
+      "bodyFont": null,
+      "height": 768,
+      "rootWidth": 1024,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [],
+      "width": 1024
+    },
+    {
+      "file": "product-900-closed-drawer.jpg",
+      "label": "900-closed-drawer",
+      "bodyFont": "14px",
+      "height": 1000,
+      "rootWidth": 900,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [
+        {
+          "height": 44,
+          "name": "Expand",
+          "width": 73
+        },
+        {
+          "height": 44,
+          "name": "Close finding details",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Back to original source",
+          "width": 161.6374969482422
+        }
+      ],
+      "width": 900
+    },
+    {
+      "file": "product-900-open.jpg",
+      "label": "900-open",
+      "bodyFont": null,
+      "height": 1000,
+      "rootWidth": 900,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [],
+      "width": 900
+    },
+    {
+      "file": "product-390-closed-drawer.jpg",
+      "label": "390-closed-drawer",
+      "bodyFont": "16px",
+      "height": 844,
+      "rootWidth": 390,
+      "scripts": [
+        "/assets/index-adrI41Gy.js"
+      ],
+      "styles": [
+        "/assets/index-BUJfK_kK.css"
+      ],
+      "targets": [
+        {
+          "height": 44,
+          "name": "Expand",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Close finding details",
+          "width": 44
+        },
+        {
+          "height": 44,
+          "name": "Back to original source",
+          "width": 161.6374969482422
+        }
+      ],
+      "width": 390
+    }
+  ],
+  "narrowKeyboardBottom": {
+    "drawerBottom": 755.9999923706055,
+    "outcomeBottom": 726.1000022888184,
+    "scrollTop": 241.6000061035156
+  },
+  "escapeTriggerFocusReturned": true,
+  "viewportReset": true,
+  "backendPermissions": "UNVERIFIED",
+  "productionAndFounderAcceptance": false
+}

@@ -18,7 +18,7 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 //   team.hub_read_conversation  — public.team_hub_list_messages: the newest messages of one visible
 //     conversation, or one thread. Author names, times, bodies, file NAMES (never paths) and linked
 //     work record ids.
-//   team.hub_search             — public.team_hub_search (migration 20271114170008): a literal,
+//   team.hub_search             — public.team_hub_search (migration 20271114230208): a literal,
 //     case-insensitive substring search over only the conversations the asker can see.
 //   team.hub_post_reply         — public.team_hub_post_message: a reply posted under the asker's own
 //     name ONLY after they approve the card. `high` in action-risk.ts, so the card is forced on every

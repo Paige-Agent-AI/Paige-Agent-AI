@@ -1,0 +1,251 @@
+{
+  "recordedAt": "2026-10-25T10:34:46.014Z",
+  "sourceHead": "8b75fc49880eaab4bbb0086ae763a90e1e69e66d",
+  "sourceTree": "13b6a9086b526a6318243539826752f5bc728ddc",
+  "parent": "70a1a34b1fd6d57baa496f7612f320f2af9ccca6",
+  "inputs": {
+    "scripts/agreements/document-preparations-proof.mjs": "e28d8bbac375ac3651f0c1c52285e2faba13163d0279be2976cee8628af3b970",
+    "scripts/agreements/prepared-confirmation-proof.mjs": "d1c0039c1209edf13420eb4e64cb91d0349fdf97f1800f369f03ff5c8b08302a",
+    "scripts/agreements/prepared-signature-work-proof.mjs": "c7021e06a968311edc76912e457afcbe37ab8df29469ba2453164f35e802f689",
+    "scripts/agreements/signer-preparation-integrity-proof.mjs": "ead454d40cdbd4fc9fa4e8803067c84e41cc806e4416423e236c7c3ec420e5a0",
+    "scripts/agreements/run-integrity-proof.sh": "ffbb0d8cd45b6e0908e8b45724e62caa8cd0ad7bd85a58fee8803f68a6ffa452",
+    "supabase/migrations/20271114180004_e04_approved_signing_credentials.sql": "b73b69c16bbed55db8fb75dc6adb3cf4f5a3826410190c391e2a7a4ea397cac6",
+    "scripts/agreements/prepared-signature-credentials-proof.mjs": "3f1cbb7fcd3385a7c9cdc47a047feae6ad36853c30e21ab49c88e4306354c1a9",
+    "scripts/agreements/prepared-credentials-commercial-fixture.mjs": "1acbb75c2781d6caa083e3c0895fb4e4a434516c7bef4e08becfc940b0196a0a",
+    "supabase/functions/_shared/agreements/prepared-signature-credentials.ts": "221c7a4ca08ad91f37699f9b94af20e4db8d7ca06b091945139273a64a21a1e3",
+    "supabase/functions/_shared/agreements/prepared-signature-credentials.test.ts": "e5edd6fefe452bfc799d088f00ed93f701b90bb5d0f54252fec46db3cf9840f0",
+    "supabase/functions/_shared/agreements/prepared-signature-request.test.ts": "8415cd5fa9c78edef719d3f91c16f81cd563edadbe772257191a250ccc4975b0",
+    "supabase/functions/_shared/agreements/prepared-signature-work.test.ts": "fccc5bc30f76effa9d5eb66dba4b08f1c9176554274bc71175376cb21a93ed5c",
+    "supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts": "2863d3e2d811b08cd4db31252147423e68570da3fa3f8c1a538c68d2dc96e08b",
+    "supabase/functions/_shared/agreements/token.ts": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2",
+    "supabase/functions/_shared/agreements/preparation-json.ts": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8",
+    "supabase/functions/_shared/confirm-fingerprint.ts": "109b8116b1ddb28f2cad63dd3b9915e6067cc29a2b512ef5c1960fd0ea202378",
+    "supabase/functions/_shared/comms-email/contract.ts": "79c754ab6b261b64cdd93b225b46fb20c65f0ef46c693aea5c2b26b989f440c4",
+    "supabase/functions/_shared/sales-collections/primitives.ts": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91"
+  },
+  "completeOriginalInverses": {
+    "scripts/agreements/document-preparations-proof.mjs": true,
+    "scripts/agreements/prepared-confirmation-proof.mjs": true,
+    "scripts/agreements/prepared-signature-work-proof.mjs": true,
+    "scripts/agreements/signer-preparation-integrity-proof.mjs": true,
+    "scripts/agreements/run-integrity-proof.sh": true,
+    "supabase/functions/_shared/agreements/prepared-signature-request.test.ts": true,
+    "supabase/functions/_shared/agreements/prepared-signature-work.test.ts": true,
+    "supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts": true
+  },
+  "source": {
+    "cases": 126,
+    "httpSteps": 21,
+    "log": "e04-c44-credentials-repaired-1792924138195.log",
+    "inputs": {
+      "supabase/functions/_shared/agreements/prepared-signature-work.test.ts": "fccc5bc30f76effa9d5eb66dba4b08f1c9176554274bc71175376cb21a93ed5c",
+      "supabase/functions/_shared/agreements/prepared-signature-request.test.ts": "8415cd5fa9c78edef719d3f91c16f81cd563edadbe772257191a250ccc4975b0",
+      "supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts": "2863d3e2d811b08cd4db31252147423e68570da3fa3f8c1a538c68d2dc96e08b",
+      "supabase/functions/_shared/agreements/prepared-signature-credentials.test.ts": "e5edd6fefe452bfc799d088f00ed93f701b90bb5d0f54252fec46db3cf9840f0",
+      "supabase/functions/_shared/agreements/prepared-signature-credentials.ts": "221c7a4ca08ad91f37699f9b94af20e4db8d7ca06b091945139273a64a21a1e3"
+    },
+    "originalCases": 116,
+    "originalHttpSteps": 21,
+    "permissions": "Pinned Deno2.9.8, strict cached/frozen original lock, domain-only reads; net/env/run/ffi/sys denied"
+  },
+  "native": {
+    "checks": 122,
+    "migrationReplay": 2,
+    "concurrentSessions": 12,
+    "observedLockWaits": 6,
+    "migrationSha256": "b73b69c16bbed55db8fb75dc6adb3cf4f5a3826410190c391e2a7a4ea397cac6",
+    "proofBodySha256": "41a731157e8835de7ef0941ae781c85eb9f64c6c0dd1d129b4b713ae7d9c9528",
+    "scope": "Local original native/source credential proof only; no sending/signing/provider or customer acceptance",
+    "log": "e04-c44-repaired-1792924147055.log",
+    "originalConfirmation": 59,
+    "originalWork": 56,
+    "originalStatus": 35,
+    "originalSignature": 76,
+    "originalDecline": 49,
+    "originalSeal": 51,
+    "cleanup": "0 databases; task-owned cluster stopped"
+  },
+  "scope": "Originating approved credentials foundation only; original actual native engines with synthetic local identity/mailbox/Storage metadata. No sending, signature, provider, hosted customer acceptance or activation.",
+  "release": {
+    "deployment": "NOT_DEPLOYED",
+    "migration": "NOT_APPLIED",
+    "mountedCaller": "UNAVAILABLE",
+    "customerAcceptance": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "currentReceiving": {
+    "at": "2026-10-25T14:44:24.079Z",
+    "sourceHead": "408ab3183ac0e57ca9b57f7b95088fb8240eafb1",
+    "sourceTree": "828df745ba9f365c3fc04fe5c9daf6329acbf4e9",
+    "updatedOriginalParent": "72ccaa695a54695452eb8b2c2e6b562426cde9c4",
+    "receivingMain": "f41f3a7919f76539e8c71e8b22c0d86235e54c06",
+    "originalRuntimeNativeProofBlobsExact": 9,
+    "combinedGate": {
+      "incomingC43WholeInverse": true,
+      "originalC44WholeInverse": true,
+      "reason": "One genuine existing-gate conflict; both direct strict gates and every original command/test/flag retained"
+    },
+    "inputs": {
+      "scripts/agreements/document-preparations-proof.mjs": "e28d8bbac375ac3651f0c1c52285e2faba13163d0279be2976cee8628af3b970",
+      "scripts/agreements/prepared-confirmation-proof.mjs": "d1c0039c1209edf13420eb4e64cb91d0349fdf97f1800f369f03ff5c8b08302a",
+      "scripts/agreements/prepared-credentials-commercial-fixture.mjs": "1acbb75c2781d6caa083e3c0895fb4e4a434516c7bef4e08becfc940b0196a0a",
+      "scripts/agreements/prepared-signature-credentials-proof.mjs": "3f1cbb7fcd3385a7c9cdc47a047feae6ad36853c30e21ab49c88e4306354c1a9",
+      "scripts/agreements/prepared-signature-work-proof.mjs": "c7021e06a968311edc76912e457afcbe37ab8df29469ba2453164f35e802f689",
+      "scripts/agreements/run-integrity-proof.sh": "c1467fee7ffa2f5fe1f82929da8a8a2173d19f980980e2157b1024a9b267d496",
+      "scripts/agreements/signer-preparation-integrity-proof.mjs": "ead454d40cdbd4fc9fa4e8803067c84e41cc806e4416423e236c7c3ec420e5a0",
+      "supabase/functions/_shared/agreements/prepared-signature-credentials.test.ts": "e5edd6fefe452bfc799d088f00ed93f701b90bb5d0f54252fec46db3cf9840f0",
+      "supabase/functions/_shared/agreements/prepared-signature-credentials.ts": "221c7a4ca08ad91f37699f9b94af20e4db8d7ca06b091945139273a64a21a1e3",
+      "supabase/migrations/20271114180004_e04_approved_signing_credentials.sql": "b73b69c16bbed55db8fb75dc6adb3cf4f5a3826410190c391e2a7a4ea397cac6"
+    },
+    "sourceProof": {
+      "currentCases": 126,
+      "steps": 21,
+      "unit": "e04-c44-current-unit-1792938602757.log",
+      "actualSdkStrict": "e04-c44-current-concrete-strict-1792939197817.log",
+      "native": "Original122/replay2/12sessions/6OBSERVEDwaits at source-identical0601 retained; no new native run claimed"
+    },
+    "release": {
+      "native17": "NOT_APPLIED; original C43 new exactCI required",
+      "native18": "NOT_APPLIED",
+      "freshHostedCi": "PROOF_OWED",
+      "customerAcceptance": "UNVERIFIED"
+    }
+  },
+  "finalReceiving": {
+    "at": "2026-10-25T14:55:06.783Z",
+    "sourceHead": "78329e72a287437ffb5430037214b7c2dd367b60",
+    "sourceTree": "9ca424e29364d1f3c86e18a17e0289a5224fe35b",
+    "main": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2",
+    "allNineOwningSourceBlobsEqualOriginal0601": true,
+    "wholeBothGateInverses": true,
+    "source126": "Current126 PASS/21 steps; direct actual credential/outcome/handler SDK strict PASS",
+    "checks": "Scoped lint0/UI guard0/migration no collision/actual ACL4baseline+12 PASS before clean peer-only receiving merge",
+    "native122": "Source-identical original122/replay2/12sessions/6observed waits retained; no new native run claimed",
+    "native17": "C43 actually merged fd295d; normal pipeline/readback still pending",
+    "native18": "NOT_APPLIED",
+    "newExactCi": "PROOF_OWED",
+    "acceptance": "UNVERIFIED"
+  },
+  "productionReleaseOct25": {
+    "recordedAt": "2026-10-25T16:04:14.244Z",
+    "reviewedHead": "ad450fdfaa279e3dd72fc3738f096a82b215aab1",
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE 6399613137",
+    "exactChecks": "13 SUCCESS +2web SUCCESS +0threads",
+    "merge": "72a2c69c2551917f12b4aa6902af6a526b6cb390",
+    "tree": "cce268c87bd2a4514c5106a486e150a545f8be5c",
+    "native": {
+      "version": "20271114180004",
+      "count": 1,
+      "statements": 20,
+      "run": 40207787714,
+      "job": 121212461816,
+      "evidence": {
+        "functions": [
+          {
+            "anon": false,
+            "args": "",
+            "auth": false,
+            "body": "7e634cc60a69a2eaa11fa5b01722cb4e",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": 0,
+            "identity": "_paige_preparation_legacy_effect_hold()"
+          },
+          {
+            "anon": false,
+            "args": "",
+            "auth": false,
+            "body": "46c36eb38a54080388b25f7ff315d0b9",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": 0,
+            "identity": "_paige_preparation_legacy_token_hold()"
+          },
+          {
+            "anon": false,
+            "args": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text",
+            "auth": false,
+            "body": "78228993b63b007430bb9d7f5213270b",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": 0,
+            "identity": "private.e04_prepared_issuance_record(uuid,uuid,uuid,text)"
+          },
+          {
+            "anon": false,
+            "args": "_tenant uuid, _agreement uuid, _preparation uuid",
+            "auth": false,
+            "body": "38ec7e5cac3bcfb27e75bfce7c2e965c",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": false,
+            "defaults": 0,
+            "identity": "private.e04_prepared_issuance_write(uuid,uuid,uuid)"
+          },
+          {
+            "anon": false,
+            "args": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text",
+            "auth": false,
+            "body": "35117989911f1368790d9c34756fdc8b",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": true,
+            "defaults": 0,
+            "identity": "_read_prepared_agreement_credentials(uuid,uuid,uuid,text)"
+          },
+          {
+            "anon": false,
+            "args": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text, _credentials jsonb",
+            "auth": false,
+            "body": "8fd508a93c8817678ca07035a21e225b",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "service": true,
+            "defaults": 0,
+            "identity": "_issue_prepared_agreement_credentials(uuid,uuid,uuid,text,jsonb)"
+          }
+        ],
+        "migration": {
+          "count": 1,
+          "statements": 20
+        }
+      }
+    },
+    "edge": "Normal Edge40207787726/job121212350551 SUCCESS with zero affected functions; upload/readback/tag correctly skipped. Factory UNMOUNTED.",
+    "web": {
+      "id": "dpl_4qFSUFQm5gYnBvaYjFn6Wreh5EAx",
+      "environment": "production",
+      "state": "READY",
+      "sha": "72a2c69c2551917f12b4aa6902af6a526b6cb390",
+      "canonicalPublicStatus": 200,
+      "build": "72a2c69c2551917f12b4aa6902af6a526b6cb390-mvnzrew2",
+      "customerUpdate": null,
+      "observedAt": "2026-10-25T15:39:17Z"
+    },
+    "scope": "Retained exact document and one-way credential commitments only. Raw credentials remain transient; no sent/viewed/signed/sealed/payment or client-delivery completion is inferred.",
+    "authenticatedAcceptance": "UNVERIFIED",
+    "founderAcceptance": "OPEN for complete O1–O12",
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2834#issuecomment-6399654510"
+  }
+}

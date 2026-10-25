@@ -106,11 +106,11 @@ selector. Model-supplied tenant or user ids are never honoured.
   Hub*, *Posting your Team Hub reply*) and finished copy in `describeStep` (*Read Team Hub*,
   *Searched Team Hub*, *Posted your Team Hub reply*). An approval card is not a step, so the
   draft itself has no step line.
-- **Catalogue:** migration `20271114180008_exp08_team_hub_reply_catalogue.sql` lists the reply in
+- **Catalogue:** migration `20271114230308_exp08_team_hub_reply_catalogue.sql` lists the reply in
   `list_tool_autonomy` (category Team), so the owner can see it and turn it off. Its `high` risk
   clamps the lane to confirm whatever is stored.
 
-## 4. The search definer (migration `20271114170008_exp08_team_hub_search.sql`)
+## 4. The search definer (migration `20271114230208_exp08_team_hub_search.sql`)
 
 - **Signature:** `public.team_hub_search(p_expected_tenant uuid, p_query text, p_limit int DEFAULT 20)`.
   It is `SECURITY DEFINER` with `search_path=''`, and is granted to `authenticated` only.
@@ -178,7 +178,7 @@ selector. Model-supplied tenant or user ids are never honoured.
   - `paige-ai-chat/index.ts`, `_shared/action-risk.ts`, `_shared/paige-turn/step-start.ts` (step
     copy only) and `scripts/ci/c0b-incumbent-resource-binding.mjs`;
   - new files: `_shared/paige-spine/domains/team_hub.ts`, its registry entry, `_shared/team-hub/chat.ts`
-    with tests, migrations `20271114170008` (search) and `20271114180008` (catalogue), and the proof;
+    with tests, migrations `20271114230208` (search) and `20271114230308` (catalogue), and the proof;
   - lint and test updates that pin the read sets: `action-risk-lint.mjs`, `capability-kit-lint.mjs`,
     `int346-runtime-recovery-handler-check.mjs`, `e2-2-conversational-read-admission.test.ts`, and
     `receipt-coverage-ledger.json`.
@@ -199,7 +199,7 @@ selector. Model-supplied tenant or user ids are never honoured.
 
 ## 8. Proof owed after merge
 
-- §32 `db-live` readback of `20271114170008`.
+- §32 `db-live` readback of `20271114230208`.
 - `edge-live` for `paige-ai-chat`.
 - An authenticated drive on the owner-designated existing SOLO account covering list, read,
   search, a post approved from the card, and a declined card. No new QA tenants.

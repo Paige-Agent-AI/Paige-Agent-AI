@@ -109,6 +109,18 @@ END $$;
 -- Historical migration replay below must not leave a mixed generation of native functions.
 -- Snapshot the exact CURRENT six contracts inside this proof's existing transaction. No migration
 -- BEGIN/COMMIT is included: the outer ROLLBACK remains the only termination of this proof.
+-- The E09 guard is the sole composed change to original advance. Prove the
+-- complete original Comms body before pinning the new exact CURRENT source.
+DO $e09_advance_inverse$
+DECLARE body text;
+ guard constant text:=E'\n\n  -- E09: private customer requests publish only through the original HIGH stored-call gate.\n  IF _row.action_kind = ''client.portal_recommendation'' AND _next IN (''drafted'',''executing'') THEN\n    RAISE EXCEPTION ''PORTAL_REQUEST_APPROVED_PUBLICATION_REQUIRED'' USING ERRCODE=''42501'';\n  END IF;';
+BEGIN
+ SELECT prosrc INTO body FROM pg_proc
+  WHERE oid='public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure;
+ PERFORM pg_temp.check_true(body IS NOT NULL AND length(body)-length(replace(body,guard,''))=length(guard)
+  AND md5(replace(body,guard,''))='66dcedb5e40dd43a54373c0e0ded1884',
+  'E09 exact private-kind guard inverse preserves the entire original Comms advance body');
+END $e09_advance_inverse$;
 CREATE TEMP TABLE current_comms_origin_contract ON COMMIT DROP AS
 SELECT p.oid AS function_oid, pg_get_functiondef(p.oid) AS definition, e.expected_md5,
  jsonb_build_object('identity_args',pg_get_function_identity_arguments(p.oid),
@@ -118,7 +130,7 @@ SELECT p.oid AS function_oid, pg_get_functiondef(p.oid) AS definition, e.expecte
   'parallel',p.proparallel,'strict',p.proisstrict,'leakproof',p.proleakproof,
   'cost',p.procost,'rows',p.prorows) AS metadata
 FROM (VALUES
- ('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure,'66dcedb5e40dd43a54373c0e0ded1884'),
+ ('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure,'0d412f9c0a734aeb2815dca39ab061a3'),
  ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'34fe39ac8f870cbcc6887f3e2fc3a8e0'),
  ('public.read_comms_email_send_binding(uuid)'::regprocedure,'b1afe7cd33a951738c2f49c6660a5023'),
  ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'b457bccb225454101baba2355ee6baa6'),

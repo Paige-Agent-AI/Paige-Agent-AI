@@ -1,5 +1,31 @@
 # Finance department — current source and full operating target
 
+## October25 — fresh seven-view Finance read and reload
+
+The existing designated ordinary SOLO Owner completed a fresh read of Overview,
+Banking & Cash, Debt & Credit, Receivables, Expenses & Payables, Profitability and
+Budgeting & Forecasting. Finance landed on Overview and every view identified
+VERA. Original Sales evidence retained currency, current-snapshot and population
+limits. Evidence inspection, Escape and source-trigger focus passed. The original
+Profitability route, displayed values/labels and empty composer survived reload.
+
+The actual loaded bootstrap matched the public entry; public build
+`8843865672911d02953a8142918faa4774882ec1-mvnyytgj` was stable around the binding.
+All four original #2696 Finance source leaves are unchanged. This new bounded
+proof does not replace the earlier historical seven-view exact-binding gap.
+[Sanitized released QA receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2696#issuecomment-6399493118);
+ANT52 `b598089f-59f7-4725-b8bf-9606e5096807`.
+
+No eligible company-account or financing figures were supplied; unavailable is
+not zero or proof of provider disconnection. No request, approval, provider,
+payment or business action was initiated. Functional and Experiential: bounded
+read/navigation/evidence/reload PASS. Visual: supporting actual rendered capture,
+no new native zoom/AT/mobile or full-layout acceptance. Founder Acceptance:
+NOT_ACCEPTED. Populated company sources, legitimate role/tenant/cohort negatives,
+governed execution, all19/nine and the single full-Experience evaluation remain
+open. Algorithm maturity and catalogue readiness are unchanged; these are original
+Finance/Metric reads, not a Layer C execution or Rail action receipt.
+
 ## October24 evening — original-reference Finance read and reload verified
 
 The originating Sales2768 repair is released in containing production03edfad8a.

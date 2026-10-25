@@ -7,7 +7,7 @@ import {confirmFingerprint} from '../../supabase/functions/_shared/confirm-finge
 // Extends the ORIGINAL directory-checked, unique disposable Agreements DB.
 // Actual native actor/preparation/confirmation/autonomy bodies are exercised;
 // mailbox/Storage metadata is synthetic. No signer, provider or customer proof.
-export async function provePreparedConfirmation({sql,read,context,tenant,actor,client,fresh,quote,startSession,observe}) {
+export async function provePreparedConfirmation({sql,read,context,tenant,actor,client,fresh,quote,startSession,observe,makeCommercial}) {
  let checks=0,sessions=0,waits=0;
  const check=(v,m)=>{assert(v,m);checks++;},q=quote;
  const json=s=>{const value=sql(s);return value===''?null:JSON.parse(value);};
@@ -153,7 +153,7 @@ export async function provePreparedConfirmation({sql,read,context,tenant,actor,c
  finally{sql(`UPDATE tenant_members SET role='owner' WHERE user_id='${actor}' AND tenant_id='${tenant}';`);}
  check(originals()===original,'Every original signature/hold/actor/preparation/autonomy body and ACL remains unchanged');
  if(process.argv.includes('--prepared-work'))console.log(JSON.stringify({checkpoint:'Original confirmation controls before Work adoption',checks,concurrentSessions:sessions,observedLockWaits:waits}));
- const preparedWork=process.argv.includes('--prepared-work')?await(await import('./prepared-signature-work-proof.mjs')).provePreparedSignatureWork({sql,read,tenant,actor,quote,fixture,issue,claim,startSession,observe}):null;
+ const preparedWork=process.argv.includes('--prepared-work')?await(await import('./prepared-signature-work-proof.mjs')).provePreparedSignatureWork({sql,read,tenant,actor,quote,fixture,issue,claim,startSession,observe,fresh,context,client,makeCommercial}):null;
  return {result:'PASS',checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,preparedWork,
   proofBodySha256:createHash('sha256').update(proofBody).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),
   scope:'Original native pending-confirmation prerequisite only. Synthetic mailbox/Storage metadata; no prepared issuer/provider/signature/field effect, activation or customer acceptance.'};

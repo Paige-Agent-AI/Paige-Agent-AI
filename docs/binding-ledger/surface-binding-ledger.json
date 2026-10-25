@@ -1133,7 +1133,7 @@
         "docs/delivery/exp08-team-hub-increment3-attachments-contract.md",
         "docs/delivery/exp08-team-hub-increment4-paige-contract.md"
       ],
-      "next_slice": "An authenticated SOLO drive of increments 1-4 (including a PAIGE read, search, an approved reply and a declined card), the §32 readback of 20271114170008 and 20271114180008, a scheduled stale-file sweep, a Team Hub record-link destination so PAIGE can link to a conversation, and the four rendered defects from the increment-3 evidence record.",
+      "next_slice": "An authenticated SOLO drive of increments 1-4 (including a PAIGE read, search, an approved reply and a declined card), the §32 readback of 20271114230208 and 20271114230308, a scheduled stale-file sweep, a Team Hub record-link destination so PAIGE can link to a conversation, and the four rendered defects from the increment-3 evidence record.",
       "sources": [
         "docs/delivery/exp08-team-hub-collaboration-contract.md",
         "docs/doctrine/surface-cards/team.md",

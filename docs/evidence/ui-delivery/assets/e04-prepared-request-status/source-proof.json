@@ -1,0 +1,142 @@
+{
+  "at": "2026-10-25T09:12:39.195Z",
+  "sourceHead": "2fb42762eb1aeda981e04c0ebea719aa988c5452",
+  "sourceTree": "5cb2a4c710cf951294703731be18b8f6297a7ee5",
+  "parent": "db608d739b8859785e914bbe2543bd7c9d33609d",
+  "inputs": {
+    "supabase/functions/agreement-send/index.ts": "655e6c5ea0a59746b039ac51f57c978b6ad7e2be4b185949e10ff6d9fc093563",
+    "supabase/functions/_shared/agreements/prepared-signature-outcome.ts": "08a52d2052e4d4599a1a8fd111d7d053a1d0698893526e31c3cb2e7e167b2486",
+    "supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts": "2863d3e2d811b08cd4db31252147423e68570da3fa3f8c1a538c68d2dc96e08b",
+    "supabase/migrations/20271114170004_e04_prepared_request_status.sql": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835",
+    "scripts/agreements/prepared-request-status-proof.mjs": "3d89463fa4139620c7fe772c9a7bd4e073ce48a7f4cdbd2ab537d0f784193cf9",
+    "scripts/agreements/prepared-signature-work-proof.mjs": "0f1ba49c98dc0ae90c50fed1c7490b64e766e7d1cecf6134f5b1dccfd1221ca8",
+    "scripts/agreements/run-integrity-proof.sh": "96dd0c3f6645e598899f9d99640c2379296af3d1727ec424a5c717e9ad950a42"
+  },
+  "completeOriginalInverses": {
+    "scripts/agreements/prepared-signature-work-proof.mjs": true,
+    "scripts/agreements/run-integrity-proof.sh": true,
+    "supabase/functions/agreement-send/index.ts": true,
+    "supabase/functions/_shared/agreements/prepared-signature-request.test.ts": true,
+    "supabase/functions/_shared/agreements/prepared-signature-work.test.ts": true
+  },
+  "originalTestsRetained": 108,
+  "sourceProof": {
+    "cases": 116,
+    "httpSteps": 21,
+    "log": "e04-c43-status-repaired-1792918856630.log",
+    "permissions": "Strict Deno2.9.8 cached/frozen; local domain read only, network/env/run/ffi/sys denied"
+  },
+  "native": {
+    "checks": 35,
+    "migrationReplay": 2,
+    "migrationSha256": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835",
+    "proofBodySha256": "2f0dad7540e6dfc5fd5907fb24defb57d46c69fb690ab08eacff9ed586ce1710",
+    "scope": "Original private Work history only, not a provider/status transition, signature or acceptance",
+    "originalWork": 56,
+    "originalConfirmation": 59,
+    "originalSignature": 76,
+    "originalRecipient": 52,
+    "originalDecline": 49,
+    "originalSeal": 51,
+    "log": "e04-c43-repaired-1792919241034.log",
+    "cleanup": "0 isolated DBs; original task cluster stopped"
+  },
+  "baseline": {
+    "unit": "e04-c43-status-baseline-1792918761341.log",
+    "native": "e04-c43-baseline-1792918701231.log",
+    "result": "Missing actual read seam; seven pure cases and six HTTP step failures; original108/13 preserved"
+  },
+  "invalidOrIncomplete": [
+    "First unit driver missing mode: INVALID_TOOLING",
+    "Initial HTTP import path: INVALID_TOOLING, corrected before actual baseline",
+    "First repaired native fixture directly set terminal Work status; ORIGINAL constraint refused; corrected using original transition without product/guard change"
+  ],
+  "release": {
+    "channel": "development",
+    "deployment": "NOT_DEPLOYED",
+    "migration": "NOT_APPLIED",
+    "execution": "UNAVAILABLE",
+    "customerAcceptance": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "currentReceiving": {
+    "at": "2026-10-25T13:58:00.029Z",
+    "sourceHead": "3a8d6960601bf140397a9baf671f1c493b86b363",
+    "sourceTree": "70ceac9886c4ff7e375a6459e75257f7c57f7102",
+    "receivingMain": "f41f3a7919f76539e8c71e8b22c0d86235e54c06",
+    "originalSourceHead": "70a1a34b1fd6d57baa496f7612f320f2af9ccca6",
+    "originalSixRuntimeNativeProofBlobsExact": 6,
+    "ciExtension": "Only actual original handler/outcome direct SDK strict check added; whole original gate inverse PASS",
+    "inputs": {
+      "scripts/agreements/prepared-request-status-proof.mjs": "3d89463fa4139620c7fe772c9a7bd4e073ce48a7f4cdbd2ab537d0f784193cf9",
+      "scripts/agreements/prepared-signature-work-proof.mjs": "0f1ba49c98dc0ae90c50fed1c7490b64e766e7d1cecf6134f5b1dccfd1221ca8",
+      "scripts/agreements/run-integrity-proof.sh": "8dbf8f8da46106c90b3f6be0259afd0eb7faa914b800c7b05abd79315579a03c",
+      "supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts": "2863d3e2d811b08cd4db31252147423e68570da3fa3f8c1a538c68d2dc96e08b",
+      "supabase/functions/_shared/agreements/prepared-signature-outcome.ts": "08a52d2052e4d4599a1a8fd111d7d053a1d0698893526e31c3cb2e7e167b2486",
+      "supabase/functions/agreement-send/index.ts": "655e6c5ea0a59746b039ac51f57c978b6ad7e2be4b185949e10ff6d9fc093563",
+      "supabase/migrations/20271114170004_e04_prepared_request_status.sql": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835"
+    },
+    "sourceProof": {
+      "cases": 116,
+      "steps": 21,
+      "unit": "e04-c43-current-unit-1792936416684.log",
+      "concreteStrict": "e04-c43-final-concrete-strict-1792936640946.log",
+      "native": "Original35 cases retained at source-identical70a1; no new local native run claimed"
+    },
+    "release": {
+      "native14160004": "ACTUALLY_APPLIED_ONCE9 at f41f3a79",
+      "native14170004": "NOT_APPLIED",
+      "exactCurrentCi": "PROOF_OWED",
+      "customerAcceptance": "UNVERIFIED"
+    }
+  },
+  "productionReleaseOct25": {
+    "recordedAt": "2026-10-25T16:04:14.237Z",
+    "reviewedHead": "72ccaa695a54695452eb8b2c2e6b562426cde9c4",
+    "review": "AUTHOR-REVIEW / LOWER ASSURANCE 6399148139",
+    "exactChecks": "13 SUCCESS +2web SUCCESS +0threads",
+    "merge": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2",
+    "tree": "a76d777ecb1fb3251a68ec19b3f4140629fa52e5",
+    "native": {
+      "version": "20271114170004",
+      "count": 1,
+      "statements": 6,
+      "run": 40204399496,
+      "job": 121202262104,
+      "evidence": {
+        "function": {
+          "anon": false,
+          "args": "_actor uuid, _tenant uuid, _operation uuid, _request_sha256 text",
+          "auth": false,
+          "body": "7cdf08ab70430d5b95706695608e6fea",
+          "owner": "postgres",
+          "config": [
+            "search_path=\"\""
+          ],
+          "definer": true,
+          "service": true,
+          "defaults": 0
+        },
+        "migration": {
+          "count": 1,
+          "statements": 6
+        }
+      }
+    },
+    "edge": "Normal Edge40204399616/job121202133288 SUCCESS, actual agreement-send v22/JWTtrue and34 source files exact. Certificate12602513494 SHA256c38a551309aab22c2453a0c968cf27290a323d247abe6315eddadc3145af1ae0.",
+    "web": {
+      "id": "dpl_PAPAXLkKNdpvVBWZ9xs3rw7UL1DK",
+      "environment": "production",
+      "state": "READY",
+      "sha": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2",
+      "canonicalPublicStatus": 200,
+      "build": "fd295dde81bdf7cdc08956b8ed3cfc25a9c439e2-mvny84nd",
+      "customerUpdate": null,
+      "observedAt": "2026-10-25T14:58:03Z"
+    },
+    "scope": "Returning request history is only prepared or outcome_unknown with receipt_id:null. Work success is never provider acceptance, delivery, signature or payment proof.",
+    "authenticatedAcceptance": "UNVERIFIED",
+    "founderAcceptance": "OPEN for complete O1–O12",
+    "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2830#issuecomment-6399204232"
+  }
+}

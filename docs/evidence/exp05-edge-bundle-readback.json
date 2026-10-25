@@ -232,5 +232,65 @@
     },
     "unchanged": "Original deployment workflow, source closure, JWT/config/metadata/race checks, upload skip, certified baseline, retirement and edge-live controls are unchanged.",
     "acceptance": "Required exact-head CI, reviewed merge and actual full deployed-source readback still owed. Calendar2805 is green but source-held; Task2820 is stacked/unreleased. No customer/Live/algorithm maturity or catalogue promotion. Browser/input hold and ordinary domain/Rail/reload/founder proof stay separate."
+  },
+  "sourceIdentityDiagnostics": {
+    "base": "cfc313eb554ef8f266d9eb5ff71b8aaa2ccfd081",
+    "actualRelease": {
+      "pr": 2822,
+      "run": 40176675738,
+      "job": 121118731641,
+      "artifact": 12592247017,
+      "artifactSha256": "4ccc6fdada7faa4468d0228faa58413f7d6f629d41528c8ea194e523c0fa38d6",
+      "allPass": false,
+      "scratchCleanup": {
+        "status": "incomplete",
+        "reason": "permission_denied"
+      },
+      "passed": [
+        "execute-approval@179",
+        "paige-business-review@80",
+        "paige-native-event-dispatch@260",
+        "paige-orchestrator@129",
+        "weekly-commitment-command@20"
+      ],
+      "failed": {
+        "function": "paige-ai-chat",
+        "reason": "deployed_source_mismatch",
+        "attempts": 3
+      },
+      "uploads": "SKIPPED",
+      "edgeLive": "NOT ADVANCED",
+      "web": {
+        "deployment": "dpl_76dF1SSbLzHtX9x8HS8J7d8TdtsG",
+        "state": "READY",
+        "bothPublicVersionHosts": 200,
+        "build": "cfc313eb554ef8f266d9eb5ff71b8aaa2ccfd081-mvnkeokk"
+      }
+    },
+    "diagnostic": "Retain only first differing immutable expected-closure repository path plus expected/downloaded SHA256 and fixed mode/scope. Additional repository-source names and unknown download names remain omitted. No text, absolute paths, raw CLI/provider payload, environment, token or header. Original source comparison and FAIL reason/exit/tag rules unchanged.",
+    "red": {
+      "tests": 3,
+      "passed": 1,
+      "errors": 2,
+      "log": "private work/source-identity-diagnostic-red.log"
+    },
+    "green": {
+      "tests": 109,
+      "failed": 0,
+      "seconds": 132.324,
+      "log": "private work/source-identity-diagnostic-full.log"
+    },
+    "sourceSha256": {
+      ".github/scripts/edge-source-readback.py": "5a0abb59d1e7bbb41e8f92cb05d25025669e27e1f5ed988af1c3b24f64d97595",
+      ".github/scripts/test_edge_source_readback.py": "7ee48ab79ed207e0bbf3c4ecb4bda0761f3ddc310cad8f3ecae5dcba95fbcc02"
+    },
+    "proofBoundary": "Controlled original verifier/recording ports only. Actual differing production file/source meaning and original full source certificate remain UNVERIFIED. Do not assume stale source versus vendor representation or automatically redeploy.",
+    "unchanged": "Workflow, source normalizer, closure, metadata/config/JWT/race/budget, credential, upload, retirement and tag gates; no business/Root/SQL/provider/admission/activation/catalogue/maturity change.",
+    "remaining": [
+      "Required exact-head review/CI/merge",
+      "Actual safe source-identity diagnostic, then correction of the demonstrated cause",
+      "Calendar/Task parent/deployment/authenticated/receipt/reload proof",
+      "Physical browser/input hold, separate Live, complete ten/E5/Builder/ZION/algorithms/founder acceptance"
+    ]
   }
 }

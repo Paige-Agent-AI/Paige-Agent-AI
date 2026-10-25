@@ -1,13 +1,15 @@
 {
-  "generatedAt": "2026-10-25T08:26:53.869530+00:00",
-  "sourceCommit": "038c46fc041e98dfbd8303d88f4512ba1aca5757",
+  "generatedAt": "2026-10-25T10:05:17.531733+00:00",
+  "sourceCommit": "d5141bfa5e942c73d93c4d807b11c23d58797904",
   "evidenceClass": "synthetic-native-postgresql",
   "sourceBlobs": {
-    "scripts/proof/e09-consumer-invite.mjs": "0beddfbfbb279ee59e7022a25bde11158f322275",
-    "scripts/proof/e09-private-request.mjs": "e448ca901d7545e18870708819e7308faa505d7c",
+    "scripts/proof/e09-consumer-invite.mjs": "a219a635ac6b4aa9e3df7ec1c5001cf0b5ffbe21",
+    "scripts/proof/e09-private-request.mjs": "151359d3e8f97421e9ef4c8850040ad6e2773099",
     "supabase/migrations/20271114150009_e09_private_request_preparation.sql": "11fefc091a463eeba506ba73e11e061a29ccbb0a",
-    "supabase/tests/customer_portal_access.sql": "1b56c9f7715247844eb740d06ba2f7a698c1e499",
-    "docs/delivery/e09-customer-actions-business-scope.md": "c9137e6a418be89e4fa2c5f232847a5ad78927d2"
+    "supabase/migrations/20271114150019_e09_private_request_history.sql": "a2fbc4ddc21de469d4618dea13601e45fb521509",
+    "supabase/tests/customer_portal_access.sql": "2ccbf788feaf1000c41a79cb5728be7ccac502f4",
+    "src/lib/client-private-request.ts": "a35442e65920a0799c4ee35ba7ca6966b1962609",
+    "src/lib/client-private-request.test.ts": "6beac9a79a3f049e8ec179d70cadb3d987e74f9f"
   },
   "baseline": {
     "passed": 73,
@@ -537,6 +539,10 @@
         "status": "PASS"
       },
       {
+        "name": "Migration refuses unknown forward list_client_portal_request_drafts without overwriting it",
+        "status": "PASS"
+      },
+      {
         "name": "Exact canonical LF original writer form replays without changing its permissions or words",
         "status": "PASS"
       },
@@ -549,16 +555,102 @@
         "status": "PASS"
       },
       {
+        "name": "Returning owner discovers original private requests without a browser-stored intent",
+        "status": "PASS"
+      },
+      {
+        "name": "History API keeps the same authenticated-only empty-path native contract",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses wrong actor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses missing actor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses wrong business without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses customer identity without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses service without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses anonymous without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses partial time cursor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses partial ID cursor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history refuses infinite cursor without effects",
+        "status": "PASS"
+      },
+      {
+        "name": "Private Work history cannot widen missing original Work standing",
+        "status": "PASS"
+      },
+      {
+        "name": "Malformed original intent metadata fails closed instead of inventing a replacement identity",
+        "status": "PASS"
+      },
+      {
+        "name": "History uses the original changed-content projection rather than showing old prepared words",
+        "status": "PASS"
+      },
+      {
+        "name": "Reload history waits for the original pending preparation and reads its committed Work once",
+        "status": "PASS"
+      },
+      {
+        "name": "History rechecks revoked membership after waiting before returning any private page",
+        "status": "PASS"
+      },
+      {
+        "name": "A new legitimate owner scope has empty history without implying a rejected request",
+        "status": "PASS"
+      },
+      {
+        "name": "Foreign CRM record is refused by the history reader even when a real Work ID is known",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Work keyset pages preserve all tied timestamps and IDs once, without browser state",
+        "status": "PASS"
+      },
+      {
+        "name": "History cursor is a filter, never authority to view another actor or business",
+        "status": "PASS"
+      },
+      {
+        "name": "Returning history and pagination never create customer actions, notices, approvals or responses",
+        "status": "PASS"
+      },
+      {
         "name": "Original native file, advance and Portal authority remain byte-exact",
         "status": "PASS"
       }
     ],
-    "passed": 124,
+    "passed": 146,
     "failed": 0,
     "ownerActionMigrationSHA256": "578b43e6b9b04c7fbfc6a707b170e6f3b8278f5b2030b99ac0879e8e11c451f8",
     "ownerActionSourceApplied": true,
     "privateRequest": {
       "baseline": false,
+      "historyBaseline": false,
+      "baselineSource": null,
       "originalFingerprints": {
         "file_action": "40349ee33cf5f77ef6fc228087fdc67f",
         "advance_action": "66dcedb5e40dd43a54373c0e0ded1884",
@@ -567,12 +659,18 @@
       "canonicalReplayFileHash": "8389ea7b5589ad7ce939d9f8b01b6188",
       "migration": "20271114150009_e09_private_request_preparation.sql",
       "migrationNormalizedSHA256": "0911a8c0dd7bf1b39970783031a5f1695e51cfd3d4f4beb2c20b0d7104265d6b",
+      "historyMigration": "20271114150019_e09_private_request_history.sql",
+      "historyMigrationNormalizedSHA256": "2eddf92d1df111ecb3bd17bbeb8f6c2ddb3031d5e679d55fe9015a2878e396c3",
+      "appliedMigrationOrder": [
+        "20271114150009",
+        "20271114150019"
+      ],
       "fixture": "synthetic Auth/role/autonomy/graph ports; original native writers, canonical role retirement, recorded CRLF transport and owner authority",
       "customerPublication": "NOT_RUN",
       "fullSchema": "PROOF_OWED"
     }
   },
-  "hostedFullSchema": "PROOF_OWED",
+  "hostedFullSchema": "PROOF_OWED successor; predecessor268 PASS retained",
   "customerPublication": "NOT_RUN",
   "authenticatedAcceptance": "UNVERIFIED",
   "founderAcceptance": "NOT_REQUESTED",
@@ -590,5 +688,58 @@
     "baselineRetained": 4,
     "selfTestsPassed": 12
   },
-  "previewAdvisoryDisposition": "Intended authenticated definer API WARN0029, original subject/workspace/Portal owner+Work staff checks enforced, no suppression; final hosted readback owed"
+  "previewAdvisoryDisposition": "Intended authenticated definer API WARN0029, original subject/workspace/Portal owner+Work staff checks enforced, no suppression; final hosted readback owed",
+  "historyBaseline": {
+    "source": "ba786f11b52c71b4ed87e7eb7a022b5aaa376e18",
+    "passed": 124,
+    "failed": 1,
+    "causalFailures": [
+      {
+        "name": "Returning owner discovers original private requests without a browser-stored intent",
+        "status": "FAIL",
+        "error": "psql failed: ERROR:  function public.list_client_portal_request_drafts(unknown, unknown, unknown, unknown, unknown) does not exist\r\nLINE 1: SELECT public.list_client_portal_request_drafts('e0910000-00...\r\n               ^\r\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\r\n"
+      }
+    ]
+  },
+  "historyConsumer": {
+    "ownTotal": 41,
+    "inheritedOwn": 27,
+    "originalOwnerRegressions": 19,
+    "combinedTotal": 60,
+    "actualNativeHistoryObjects": 7,
+    "actualNativeRequestObjects": 38,
+    "strictGraphDiagnostics": 0,
+    "scopedLintErrors": 0,
+    "preliminaryRed": "INVALID_SOURCE_OVERLAP; delayed preliminary run compiled successor and passed41; never counted as RED or extra cases"
+  },
+  "historyAttempts": [
+    {
+      "native": {
+        "passed": 143,
+        "failed": 1
+      },
+      "classification": "INVALID_UTC_ORACLE",
+      "correction": "Exact raw native last-record cursor and same instant, no product normalization"
+    },
+    {
+      "sourceComparison": "INVALID_WINDOWS_LOCALE_DECODING",
+      "correction": "Explicit UTF8 proves all268 incumbent expressions/fixture unchanged"
+    }
+  ],
+  "successorFullSchema": {
+    "plan": 286,
+    "result": "PROOF_OWED"
+  },
+  "predecessorHead": {
+    "head": "ba786f11b52c71b4ed87e7eb7a022b5aaa376e18",
+    "all13Checks": "SUCCESS",
+    "nativeSuite": 268,
+    "isSuccessorCI": false
+  },
+  "delivery": {
+    "originalPreparation": "20271114150009 remains byte-exact ba786",
+    "forwardHistory": "20271114150019",
+    "productionApply": "NOT_APPLIED",
+    "resetOrIncludeAll": "NOT_USED"
+  }
 }

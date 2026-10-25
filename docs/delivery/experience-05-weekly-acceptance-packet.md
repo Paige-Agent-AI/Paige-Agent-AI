@@ -1,5 +1,15 @@
 # Weekly Internal Commitment Check — protected acceptance handoff
 
+## October25 11:45UTC — current-source combined native regression
+
+Private438bf29b/treece54a42d (releasedbdd68 plus original Taskd507) completed the ORIGINAL weekly native program125PASS with all125 prior named cases exact and original service-role restoration verified; reportSHA256d30441f92ffce62b411c0630fdabdbb6ecea999ff3613f791a0de5d4344c0b9a. This proves weekly execution/refusal/recovery with Task-history registered in current Root. The separate16 Task Chat recording-port cases remain a different evidence class; native Task-history Chat and ordinary customer proof are not claimed. All12Task source blobs and every incoming outside path are exact. Public Task checkout was restored to its frozen head; final required hosted verify/release and customer acceptance remain separate.
+
+## October25 11:35UTC — owner preflight is production-verified
+
+#2832 is mergedbdd68 and exact public web/readback is verified after all required exact-head gates. No native/Edge source changes or recurring/provider activation belong to this child. Original missing-control refusal and unknown-result inspection are retained; ordinary customer, fresh visual/keyboard, separate Live and all full acceptance cases remain unverified. Task#2820 currentd507 preserves its original12 source blobs; the prior f0 UI check used an obsolete parent base, while the corrected current-base check passes without changing E04 source or the guard. Its new required gates and its own release/readback remain separate.
+
+The existing disposable full native program is also checking private438bf29b: actual releasedbdd68 plus original Taskd507, with no source/provider/customer mutation. This is IN_PROGRESS, not a borrowed combined PASS. Original E5-CV1–9 and all earlier dated checkpoints below remain exact; no new customer closure is claimed.
+
 ## October25 11:00UTC — production verification follow-on; acceptance still open
 
 This dated follow-on preserves the earlier checkpoint and every original acceptance row. Actual source/native/web details are in the original Master§4.0 and owning evidence; source releases do not close complete outcomes.

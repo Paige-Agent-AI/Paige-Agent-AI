@@ -852,6 +852,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP04 recipient document magnification; verified source/web release.**
+
+| Increment | Exact reviewed source and production readback | Completion boundary |
+| --- | --- | --- |
+| [#2823](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2823), Fit width and100/150/200percent exact-document reading | Reviewed `fb7e75c1291653da477e89af741f5eb83f474b8d` / tree `acb2e9d88fc79f20320b21e9aead85290eacba2e`; AUTHOR-REVIEW / LOWER ASSURANCE6395169047 and final6395533498. All10 applicable required checks/two web SUCCESS, UI-only Preview SKIPPED, zero inline threads. Actual normal main `33b9d7094ad28e4e44381202313652bbc63f7adf` / tree `1e6678a8cc0782a55eebcbf6084368016da2a0ec`, inspected cfc313eb+fb7 parents; all15 own/all16018 outside entries/all28 rendered product hashes exact. Normal production `dpl_EwgsGnotKdoqgEhwv89yVwYVoy91` READY; canonical20008:48:25UTC/authenticated immutable20008:48:23UTC both exact `33b9d7094ad28e4e44381202313652bbc63f7adf-mvnkzfr7` / customerUpdate:null. Actual signingJSa84484c9 and valid text/css2f98dd26 verify zoom controls, scoped paper ink/tint,44px/focus and review-status source. [Actual receipt6395590760](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2823#issuecomment-6395590760). | Six causal RED/original48 component PASS followed by79 focused PASS; all33 original test case expressions retained. Five actual-source JPEGs/33 inputs cover1536+390/both palettes, retained answers, fresh review/consent, stale callback refusal, pan/focus/44px and corrected paper contrast. No shared renderer/native/affected-Edge/provider/permission/admission activation. Actual authenticated recipient/owner/staff/client/cohorts/reload/receipts, browser zoom/physical phone/AT/CentralQA, complete prepared issuer/signature/seal and all O1–O12/founder acceptance remain incomplete/unverified. |
+
+This is a production-channel internal increment, not a customer release identity or complete signing claim. Original token/effect holds and canonical signing/Communications/Work/Finance systems remain. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; catalogue unchanged. The earlier duplicate-assets probe returned SPA HTML and was rejected as CSS proof before the exact text/css readback. No real signatures, messages, financial or service effects were performed.
+
 **2026-10-25 UTC — EXP04 original recipient document and inline decision; bounded interface release.**
 
 | Increment | Exact source and normal production proof | Completion boundary |

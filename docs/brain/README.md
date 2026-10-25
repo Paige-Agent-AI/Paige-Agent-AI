@@ -1,3 +1,24 @@
+## EXP02 original manual Work history reader released — October25
+
+[#2877 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521)
+is main6683bfb7cf1f0179922cc7c84840c6a0f3a5799c/tree9a286b3e9ac9fe6f07ef4debf4f1a35c947a75bf.
+Reviewedf292c96a752f75d957e52a3ea6edc12ff04de5c0; AUTHOR-REVIEW / LOWER
+ASSURANCE5645590987/all13 exact checks/Preview/two webSUCCESS/zero threads;
+renewed E05 receiving9cd8952b. Whole incoming CI/evidence inverses and16,274
+outside entries preserved, no second reader or grant. Normal native40241921677/
+job121315482302 SUCCESS/db-live6683;250102 once/current frontier at readback,
+1467 recorded versions. Bodyd953ea9965f31193d3dbf2f184114730/original12-field
+ABI/postgres/stable definer/empty search_path/authenticated-only ACL exact;
+anon denied. READYdpl_BTNcv7Wp3rjSUbjcpmG5LCs7VWS9/both public200/exact
+6683bfb7cf1f0179922cc7c84840c6a0f3a5799c-mvof6mtm/null22:51:45UTC. Edge N/A.
+
+Functional: bounded history reader RELEASED. Visual: N/A. Experiential: manual
+request/dispatch/scan/result/Rail/recovery/customer proof INCOMPLETE; no invocation
+or activation. Historical-read eligibility does not widen active-only Work creation.
+Founder NOT_ACCEPTED; full19/nine, historical9/0+12/0/4, existing ALG/catalogue
+maturity and protected monthly UNKNOWN/UNRETRIED preserved. Separate owner-approved
+claim260002 was absent at this readback. Sole Master4.0 row records this delivery.
+
 ## EXP02 private request foundation released — October25
 
 Current EXP02 continuation: original MMA menu→Finance Overview/VERA and saved

@@ -1,5 +1,23 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October25 — original manual Work history reader actually released
+
+O07/O14 prerequisite [#2877](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521)
+reviewedf292c96a752f75d957e52a3ea6edc12ff04de5c0/LOWER5645590987,
+all13 exact checks/Preview/two webSUCCESS/zero threads/renewed E05 receiving,
+actually merged6683bfb7cf1f0179922cc7c84840c6a0f3a5799c/tree9a286b3e.
+Normal native40241921677/job121315482302 SUCCESS/db-live6683;250102 once/current
+frontier,1467 recorded versions; bodyd953ea9965f31193d3dbf2f184114730 and original
+12-field ABI/owner/stable definer/empty search_path/auth-only ACL verified, anon denied.
+READYdpl_BTNcv7Wp3rjSUbjcpmG5LCs7VWS9/both public exact6683-mvof6mtm/null22:51:45UTC.
+
+Functional bounded history reader RELEASED; Visual N/A; Experiential manual
+request/scan/result/Rail/recovery/customer proof INCOMPLETE; Founder NOT_ACCEPTED.
+Current Metric authority/closed manual purpose govern reads, not new-Work eligibility.
+No new reader/grant/invocation/activation. Manual Spine/catalogue/ALG maturity,
+original19/nine/9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED unchanged.
+The single actual delivery row is in Master4.0; earlier checkpoints remain history.
+
 ## October25 — private request foundation source release
 
 O07/O19 prerequisite [#2867](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2867#issuecomment-6402912682)

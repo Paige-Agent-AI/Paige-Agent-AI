@@ -852,13 +852,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
-- EXP05 original internal-task decision history (#2788).**
+**2026-10-25 UTC - EXP05 original internal-task decision history (#2788).**
 
 | Increment | Exact release and production proof | Completion boundary |
 | --- | --- | --- |
 | [#2788](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2788), label the original decision time accurately | Reviewed `a5ab0448e4002fad8ae64b87450e598c9e817347`, sequential AUTHOR-REVIEW / LOWER ASSURANCE6391648944/6391731659/6392051810/6392065247; all10 applicable exact-head checks and both web statuses SUCCESS. Schema-free Preview was SKIPPED. Actual main `fc89661e1a915852567c12d9f58dbf936e98c927` / tree `7cca1c8b401e0fe56954ce709aa297c7b760b2f3` is the inspected incoming630d+a5ab union; all eight reviewed blobs match and incoming Supabase source is unchanged. Production `dpl_8ef7jgcX19RVmx5kFWisCGgD5bff` READY/exactfc896; both public HTTP200/buildfc89661e1a915852567c12d9f58dbf936e98c927-mvn5xqjq/customerUpdate:null. [Actual release receipt6392128091](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2788#issuecomment-6392128091), [owning rendered evidence](evidence/ui-delivery/exp05-history-decision-time.md). | Ordinary authorized SOLO owner: Operations/Playbooks/Automations original history shows Decision recorded at the unchanged original instant; inspect outcome opens the same canonical Task and normal reload retains its original state/responsible person. No action or record was mutated. Original54 focused tests,102 synthetic rendered state frames and20 native geometry frames and desktop/narrow evidence are bounded proof. Own SQL/Edge NOT_APPLICABLE. Read-only automations.owner_task_history remains unadmitted to Chat; no recurrence, catalogue/algorithm promotion, new receipt, provider or Live activation. Full weekly/Builder/ZION/cohort/E5-CV1-9/ten-outcome and founder acceptance remain open. Automated review quota failure is unavailable assurance, never passed third-party review. Internal increment only; no customer announcement or recursive documentation-release row. |
 
-**2026-10-25 UTC **2026-10-24 UTC — EXP04 original prepared-field seal source; verified source release only.**
+**2026-10-24 UTC — EXP04 original prepared-field seal source; verified source release only.**
 
 | Increment | Exact release and production proof | Completion boundary |
 | --- | --- | --- |

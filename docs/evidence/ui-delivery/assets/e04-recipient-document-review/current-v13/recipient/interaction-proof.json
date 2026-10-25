@@ -1,0 +1,94 @@
+{
+  "sourceHead": "5bd6729972e475d48c053235f80ea63a76d72160",
+  "scope": "Actual production components with local synthetic API ports. No genuine signature, consent, decline, native decision, notification or customer acceptance.",
+  "steps": [
+    {
+      "step": "review-to-consent",
+      "signDisabled": true,
+      "focus": "ags-sig",
+      "consents": [
+        false,
+        false
+      ]
+    },
+    {
+      "step": "correct-answer",
+      "signDisabled": true,
+      "consents": [
+        false,
+        false
+      ],
+      "value": "Corrected Controlled Contact"
+    },
+    {
+      "step": "simulated-lost-signature-ack",
+      "unconfirmed": true,
+      "noRepeat": true
+    },
+    {
+      "step": "simulated-original-receipt-read",
+      "recorded": true,
+      "notCompleted": true,
+      "noNotificationClaim": true
+    },
+    {
+      "step": "cancel-decline",
+      "focus": "I don't agree to these terms"
+    },
+    {
+      "step": "reopen-decline",
+      "reasonRetained": true
+    },
+    {
+      "step": "decision-in-flight",
+      "decisionLabel": true,
+      "cancelDisabled": true,
+      "noSignatureClaim": true
+    },
+    {
+      "step": "simulated-native-decline-receipt",
+      "recorded": true,
+      "noNotificationClaim": true
+    },
+    {
+      "step": "decline-unconfirmed",
+      "originalDocumentRetained": true,
+      "bothActsHeld": true,
+      "focus": "alert"
+    },
+    {
+      "step": "field-source-unavailable",
+      "refusedSource": true,
+      "noLegacyInference": true
+    },
+    {
+      "step": "read-only-retry-still-unavailable",
+      "errorRetained": true,
+      "signDisabled": true
+    },
+    {
+      "step": "uniform-invalid-credential",
+      "variants": [
+        {
+          "mode": "expired",
+          "heading": "This signing link is no longer available"
+        },
+        {
+          "mode": "waiting",
+          "heading": "This signing link is no longer available"
+        },
+        {
+          "mode": "refused",
+          "heading": "This signing link is no longer available"
+        }
+      ],
+      "identical": true
+    },
+    {
+      "step": "explicit-legacy",
+      "originalText": true,
+      "noAssignedFieldInference": true,
+      "signDisabled": true
+    }
+  ]
+}

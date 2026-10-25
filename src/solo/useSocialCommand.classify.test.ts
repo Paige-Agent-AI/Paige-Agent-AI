@@ -15,7 +15,8 @@ import { classifyPresence } from "./useSocialCommand";
  * one row per network, refused together rather than per-network, with three distinct reasons.
  */
 const row = (over: Record<string, unknown> = {}) => ({
-  network: "instagram", status: "on_record", handle: "@acme", reason: null, tenant_id: "t1", as_of: null, ...over,
+  network: "instagram", status: "on_record", handle: "@acme", reason: null, tenant_id: "t1", as_of: null,
+  connection_status: null, connection_label: null, connection_verified_at: null, connection_profiles: null, ...over,
 } as never);
 
 const refusedRows = (reason: string) =>
@@ -44,6 +45,30 @@ describe("classifyPresence — a response that carries no answer is not an answe
     expect(out.unreadable, `${reason} must be unreadable`).toBe(true);
     expect(out.refused, `${reason} refused flag`).toBe(expectedRefused);
     expect(out.handles).toEqual([]);
+  });
+
+  // EXP07 row 9 — the readiness columns classify from the same rows.
+  it("carries each network's connection readiness, translated never", () => {
+    const out = classifyPresence([
+      row({ connection_status: "connected", connection_label: "Main", connection_verified_at: "2026-10-20T10:00:00Z", connection_profiles: 1 }),
+      row({ network: "x", handle: "@acme", connection_status: "needs_reauth", connection_label: null, connection_verified_at: null, connection_profiles: null }),
+      row({ network: "facebook", handle: "acme", connection_status: null, connection_label: null, connection_verified_at: null, connection_profiles: null }),
+    ]);
+    expect(out.connections).toHaveLength(2);
+    expect(out.connections[0]).toMatchObject({ network: "instagram", status: "connected", label: "Main", profiles: 1 });
+    expect(out.connections[1]).toMatchObject({ network: "x", status: "needs_reauth", label: null, profiles: 1 });
+  });
+
+  it("an unread read yields no readiness either — never guessed from a handle", () => {
+    const out = classifyPresence(refusedRows("workspace record not readable"));
+    expect(out.connections).toEqual([]);
+    const out2 = classifyPresence([]);
+    expect(out2.connections).toEqual([]);
+  });
+
+  it("an unknown status string is dropped, not guessed", () => {
+    const out = classifyPresence([row({ connection_status: "half-connected" })]);
+    expect(out.connections).toEqual([]);
   });
 
   it("every refusal is unreadable, so the subset can never be the wider gate", () => {

@@ -1,6 +1,6 @@
 import { uuid } from "./weekly-commitment-control-intent.ts";
 import { createWeeklyDraftDeadline } from "./weekly-draft-deadline.ts";
-import { parseWeeklyDraftState, weeklyDraftModelContext } from "./weekly-draft-projection.ts";
+import { parseWeeklyDraftState, weeklyDraftModelContext, weeklyDraftRecordReference } from "./weekly-draft-projection.ts";
 
 type CallerDb = { rpc(name: string, args?: Record<string, unknown>): PromiseLike<{ data: unknown; error: unknown }> };
 
@@ -11,7 +11,8 @@ type WeeklyDraftChatReadOptions = Readonly<{
   signal: AbortSignal;
 }>;
 type WeeklyDraftChatReadResult =
-  | { status: "available"; context: NonNullable<ReturnType<typeof weeklyDraftModelContext>> }
+  | { status: "available"; context: NonNullable<ReturnType<typeof weeklyDraftModelContext>>;
+      record: ReturnType<typeof weeklyDraftRecordReference> }
   | { status: "refused"; reason: "invalid_original_scope" | "original_scope_retired" | "native_scope_refused" }
   | { status: "unavailable"; reason: "original_draft_not_verified" };
 
@@ -48,7 +49,8 @@ export async function readWeeklyDraftChatStatus(callerJwtDb: CallerDb,
     const state = parseWeeklyDraftState(result.data, scope);
     if (!state || state.confirmationId !== confirmationId) return unavailable;
     const context = weeklyDraftModelContext(result.data, scope);
-    return context ? { status: "available", context } : unavailable;
+    return context ? { status: "available", context,
+      record: weeklyDraftRecordReference(result.data, scope, confirmationId) } : unavailable;
   } catch {
     return isCurrent() ? unavailable : { status: "refused", reason: "original_scope_retired" };
   }

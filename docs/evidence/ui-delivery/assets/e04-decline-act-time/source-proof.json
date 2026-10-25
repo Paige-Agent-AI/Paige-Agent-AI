@@ -1,0 +1,69 @@
+{
+  "scope": "Original native decline repair; no customer/UI/provider acceptance",
+  "codeHead": "f0ca11dff2a6f0691145c7291c769737b08b45c0",
+  "source": [
+    {
+      "path": "scripts/agreements/run-integrity-proof.sh",
+      "blob": "ab2883007d50f423e5634e3afac35df0f24a125b"
+    },
+    {
+      "path": "scripts/agreements/signer-preparation-integrity-proof.mjs",
+      "blob": "686e2b02f227e1637c4a19d7f08aad084a138404"
+    },
+    {
+      "path": "scripts/agreements/decline-record-proof.mjs",
+      "blob": "dc5b9f766e71f3d3a666b7259aa3fc4a510dc4cd"
+    },
+    {
+      "path": "supabase/migrations/20271114100004_e04_decline_act_time.sql",
+      "blob": "e2d975791b4e63caa9ba5330a65bbf3cbfd0fce7"
+    }
+  ],
+  "proof": {
+    "focusedDecline": 49,
+    "signatureRecordOriginal": 76,
+    "outerOriginal": 44,
+    "countersNestedNeverSummed": true,
+    "replay": 2,
+    "sessions": 14,
+    "observedWaits": 7,
+    "forwardGuardRefusal": 1,
+    "baseline": "CAUSAL_RED_RETAINED",
+    "fullSuite": "PASS_ORIGINAL_FLAGS_EFFECTIVE_COMMERCIAL_AND_DECLINE",
+    "priorFullFailure": "RETAINED_ORIGINAL_WAIT_OBSERVATION_BEFORE_NEW_CODE",
+    "originalFullCounters": {
+      "outer": 44,
+      "checked": 75,
+      "editability": 23,
+      "documentPreparations": 372,
+      "commercialNested": 29,
+      "acceptedNested": 267,
+      "effectiveNested": 184,
+      "ownerNested": 27,
+      "signature": 76,
+      "preparedSeal": 51,
+      "recipient": 52,
+      "decline": 49
+    },
+    "ownedCluster": "VERIFIED_EMPTY_AND_STOPPED"
+  },
+  "notClaimed": [
+    "rendered new decline UI",
+    "production/native release",
+    "ordinary recipient acceptance",
+    "prepared signing/send activation",
+    "full12/Central QA/founder acceptance"
+  ],
+  "aclGuardContinuation": {
+    "priorHead": "8efa0e5833e1d3fdb5f6cbc2a0a3c6711dca488e",
+    "priorDirectWindowsInvocation": "INVALID_TOOLING_MODULE_ENTRY_DID_NOT_EXECUTE",
+    "exportedRunBaseline": "FAIL_ORIGINAL_SIGNATURE_ACL_GUARD",
+    "correction": "SINGLE_DOCUMENTED_ORIGINAL_EXTERNAL_RECIPIENT_ACL_RATIONALE_COMMENT",
+    "nativeFunctionBodyUnchanged": true,
+    "wholePriorSQLInverseExact": true,
+    "guardBaselineAssertionsUnchanged": true,
+    "originalExportedRun": "PASS_4_OF_4_BASELINE_NO_NEW_GRANT",
+    "originalSelfTests": "PASS_12_OF_12_UNCHANGED_CASES",
+    "fullNativeBodyMD5": "0e6103f6efe199f0e4e6eb88aa0eea1a"
+  }
+}

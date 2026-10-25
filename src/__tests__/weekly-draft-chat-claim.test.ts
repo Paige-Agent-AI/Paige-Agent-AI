@@ -82,7 +82,19 @@ describe("original weekly Chat claim before generic confirmation CAS", () => {
     expect(result).toMatchObject({ status: "observed", context: { phase: "saved",
       definition_is_current: "saved_draft", authority: "not_granted_by_projection" } });
     expect(result).not.toHaveProperty("storedArgs");
-    expect(JSON.stringify(result)).not.toContain(runtimeNonce);
+    expect(result).toMatchObject({ record: { automationId: intent, runId: request, receiptId: runtimeNonce } });
+    if (result.status === "observed") for (const id of [intent, request, runtimeNonce, confirmation, token])
+      expect(JSON.stringify(result.context)).not.toContain(id);
+  });
+  it("does not promote an unreceipted observation to an inspectable completed run", async () => {
+    const state = { ...observed(), phase: "saved_unreceipted", automation_id: intent, revision: 1,
+      process_state: "draft" };
+    const db = caller({ claimed: false, state, thread_id: thread });
+    expect(await claimWeeklyDraftChatApproval(db, options())).toMatchObject({
+      status: "observed", record: null, retryAllowed: false, genericFallbackAllowed: false,
+      context: { phase: "saved_unreceipted" },
+    });
+    expect(db.rpc).toHaveBeenCalledTimes(1);
   });
   it("does not accept an observed changed original schedule or missing saved receipt", async () => {
     for (const state of [{ ...observed(), draft: { ...observed().draft, weekday: 2 } },

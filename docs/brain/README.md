@@ -1,3 +1,43 @@
+## EXP04 delivery and Agreements source releases — October25
+
+Three original releases are now recorded in the sole
+[Master§4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log):
+
+- [#2775](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2775): reviewed8714f12cb2236be72b1f774d1159eec250f61348,
+  AUTHOR-REVIEW / LOWER ASSURANCE5640912481; all13 exact checks/two web statuses
+  SUCCESS. Mainad7e92e0a1501a83b464770483909fb328216a05; native860009 once,
+  seven changed functions/full source and permission metadata exact; six unchanged
+  functions preserved. Webdpl_6eK2RVaWEvaeS4q2b4UkSwttg7h3 READY and immutable/public200
+  exactad7-mvn553ud/null. Owner review of their own exact saved submission is
+  permitted; staff/admin self-review remains refused and a separate client
+  decision remains required. [Actual receipt6391930705](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2775#issuecomment-6391930705).
+- [#2784](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2784): reviewed0a42704fc4eb3972a2f9f3222efb9c53c9ac5c51,
+  LOWER5641050041; all11 exact checks/two web statuses SUCCESS.
+  Mainbda8c220a185eaa3f733302ca57dfc5c9836dcc7; normal Edge40152900122 verifies
+  seven original functions/175 runtime entries, independent configuration and
+  five changed-module comparisons exact. Webdpl_3GZmVcbb4AkXD1UbEpQwQeQadZM7 READY,
+  immutable/public200 exactbda-mvn6n695/null and actual document lazy source
+  verified. Exact sender/message review stays NOT_SENT; no HIGH request,
+  token or provider effect. [Actual receipt6392320164](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2784#issuecomment-6392320164).
+- [#2798](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2798): reviewed64f3e57fc2efc70c302c5d7f85d7eaa8a78855fc,
+  LOWER6393182667; all13 exact checks/two web statuses SUCCESS.
+  Main2a6c8b92841e011019562fb1cdcd0c9f90f6562e; native870004 once/private reader
+  full body and permissions exact. Normal Edge40160089712 verifies three selected
+  closures; independent sign-agreement44 configuration and three changed modules
+  exact. Webdpl_EXh8PrC2txwpMPYCA8hdYhuzKS6b READY; immutable/public200
+  exact2a6c-mvnar88c/null. This is only an existing-token own-field/source read,
+  with no mounted recipient UI or prepared-signing execution.
+  [Actual receipt6393256626](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2798#issuecomment-6393256626).
+
+Original signature/effect holds and all O1–O12 remain intact. Bounded synthetic
+rendered/source/native proof is not ordinary owner/staff/linked-client acceptance.
+Authenticated reload/revocation, CentralQA and the integrated founder evaluation
+remain open. ALG01/12 PARTIAL,02 incomplete,13 usefulness UNVERIFIED; no algorithm
+or capability promotion, provider/role activation, customer release or announcement.
+Readback identities are historical release evidence. Current draft repairs and
+recipient UI are excluded. This mechanical closeout changes no product or policy
+and earns no recursive shipped row; all existing Brain history is preserved below.
+
 ## EXP04 original prepared-field seal source — October24 release closeout
 
 Original [#2745](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2745)
@@ -73,6 +113,21 @@ Original [#2741](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2741) rev
 Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) revieweda5e5984e (sequential LOWER6389425023/6389733892; all10 applicable checks+two statuses SUCCESS, schema-free Preview SKIPPED) merged d53d99e951e0f18ac1a6895598f2e4211e1367e5/tree2f176875 exactly. WebcpgpMJPHC1ZVHT4GqYwBj1w22GaE and immutable authenticated-MCP/publicd53-mvmwsq4f/null verified. The two INITIAL_SESSION guards retain original references and every material Auth/native revocation boundary. Protected original-reference customer FAIL remains open pending fresh authorized reacceptance; no ref replay or customer PASS is inferred. [Receipt6389808952](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768#issuecomment-6389808952).
 
 [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and existing [EXP04 journey](../delivery/exp04-get-paid-deliver-journey.md) retain exact source/review/CI/deployment/acceptance boundaries. This mechanical closeout adds no product, activation, algorithm/capability maturity, provider/role change, customer version or recursive shipped row. Pending2745/2775 and full O1–O12/one integrated founder evaluation remain open.
+
+## EXP09 Word, returning-customer Home and original requests — source released, October25 UTC
+
+Original2785/8244→main33b6 (Chat533 exact runtime/config),2791/ae3→9fe,
+2793/2c8→29cd,2795/cd352→7bd and2799/002→468e are recorded in the sole
+[Master4.0 shipped log](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Original release receipts6391829384/6392412248/6392572878/6393186794/6393337534 retain
+exact review, CI, production identities and boundaries. Existing private files,
+Chat/dirty-work/CRM/navigation/customer actions and response records remain canonical.
+Original owner read adds no writer or private CURA access. Actual files, later-build dirty
+work and returning-customer Home proof are still owed; owner credentials do not
+replace the disconnected customer or bypass browser restrictions. No new
+identity/history/model/Memory/update engine, named release, provider/Live/Research
+activation or catalogue/algorithm promotion. Full42/seven/Teach/owner-client
+journey and one complete founder evaluation remain open.
 
 ## EXP09 private multi-file CURA Chat — October24 source released; customer proof owed
 
@@ -499,6 +554,28 @@ Source preparation only: no instructions/provider/activation or authenticated
 ZION result, historical acceptance or full ten-outcome/E5/founder closure.
 
 
+
+## EXP02 original recorded-finding source — October25 development
+
+O6/O14 extends the original Systems hook with an opt-in exact-record RLS read;
+default consumers keep their original RPC/projection/result shape. Actor/account,
+reference, original run and readable timestamps bind the optional result; missing,
+withheld, failed and retired reads remain distinct from current health or actions.
+No SQL/grant, current UI, Spine/Chat admission, scan, approval or Rail writer changes.
+[Source and proof boundary](../evidence/e2-recorded-finding-source.md):152/6 source
+tests passed initially; corrected canonical eligibility now184/7 PASS, with all
+original negatives retained and fresh exact review/type/CI/release pending. No
+new tier rule or guard exception. Historical customer/UI acceptance and
+all19/nine/founder remain owed; browser/input stop is held. Original source2787
+is separately merged2f04941f/web+Chat535 verified, not report/customer acceptance.
+Queued Master2694/2690/2696/2787 closeouts remain unclaimed as complete.
+
+October25 source continuation: original required database CI refused moving
+ledger reads, then correctly identified released domain objects absent from the
+older branch. Composed actualmain468e50f6 through c4d0ab80/tree5289e11b preserves
+all five reviewed EXP02 leaves and every incoming change. No SQL/grant/CI/guard
+was altered; all184/7 original controls and scoped lint pass on the composition.
+The original failures remain and fresh exact-head review/CI is required.
 
 ## EXP02 Systems Check dialog return — October23 source candidate
 

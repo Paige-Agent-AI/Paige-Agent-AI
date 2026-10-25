@@ -291,6 +291,11 @@ try {
   sync(database, readFileSync(migrationPath, 'utf8'));
   if (personalSender) installPersonalSenderProof({ sql: source => sync(database, source), baseline: process.argv.includes('--personal-sender-baseline') });
   if (originAdmission) installOriginAdmissionProof({ sql: source => sync(database, source), baseline: process.argv.includes('--origin-admission-baseline') });
+  if (process.argv.includes('--agreement-origin-compatibility')) {
+    assert(originAdmission && !process.argv.includes('--origin-admission-baseline'), 'Original full origin-admission campaign must precede agreement compatibility');
+    const { installAgreementCommsCompatibility } = await import('../agreements/prepared-message-admission-fixture.mjs');
+    installAgreementCommsCompatibility({ sql: source => sync(database, source), read: name => readFileSync(new URL('../../' + name, import.meta.url), 'utf8').replaceAll('\r\n','\n') });
+  }
   // Proof instrument (NOT a stub of anything in prod): records every binding write so a double
   // admission is visible even when both writers store the same attempts value.
   sync(database, `

@@ -1,0 +1,31 @@
+# EXP09 — native approved request publication
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: docs/delivery/e09-customer-actions-business-scope.md, Native approved publication continuation, records the owner job, pre-edit ten answers, original domain records, shared-source receiving contracts, state/recovery and proof boundaries. Existing Flow-by-Flow build/delivery/review routes apply.
+PAIGE_UI_DESIGN: PASS: preserve original People/ClientActionItems, customer Actions, navigation, Auth/CURA roles and shared design tokens. This increment edits no UI/style, creates no shell or visible control and claims no new rendered quality.
+MATERIAL_FLOW_CHANGE: NO: unmounted native handoff plus a fixed-kind ordinary-execution refusal; the incumbent dotted-kind publication already failed its real customer-action constraint. No new rendered/interactive Portal or Chat path is mounted here. The complete approved owner-to-customer flow remains owed.
+FLOW_PROTOTYPE: NOT_REQUIRED: no product interface implementation. Existing local private-preparation flow prototype is retained as mock evidence only, not founder approval or proof of this native sharing contract. Later visible integration still requires proportional original-component review.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an actually authorized SOLO owner shares exact reviewed words for one original CRM customer through the common stored-call gate, then returns to the same Work/customer response. This native increment does not yet expose that action in the UI.
+VISUAL_DIRECTION: PASS: incumbent PAIGE/CURA world retained. Impeccable context and private-form planning remain in the owning packet; no visual change, design drift repair, new typography or premium-finish claim is included.
+AUTOMATED_EVIDENCE: PASS: docs/evidence/e09-private-request-publication.json retains original223 and adds composed227/0 with all223 case objects preserved, first146 exact, six observed concurrent lock waits and simultaneous original customer completion/owner recovery. Four new controls execute both original Communications full-source inverses and reject any additional native source change. Real SQL publisher/reader/response/access bodies execute; Auth/issuer/autonomy/outer graph are explicit synthetic ports. Predecessor b991 hosted S7 plan321/access-doors/private-native PASS, but its overall database gate FAILS two old Comms current-source pins. New exact-head complete CI remains required.
+STATIC_EVIDENCE: PASS: guarded exact original advance addition, whole-definition inverse, original ABI/owner/ACL preserved, exact replay pins and unknown-forward refusal; no Root/risk/C0b/registry/provider/history edit. Local definer/ACL/collision/SOLO checks are recorded separately from required exact-head CI.
+RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered source changes. No screenshot, responsive, device or signed-in visual result is inferred from native SQL.
+BEHAVIORAL_EVIDENCE: PASS: native prepare/share/customer completion/owner return persists the same original records. Exact stored actor/business/contact/Work/version/words/recipient/access binding, consent, expiry, replay, atomic rollback, cross-client and real concurrent response/recovery controls execute in the isolated original runner. This is not authenticated production behavior.
+AUTHENTICATED_RUNTIME: UNVERIFIED: affected_scope=original owner and external-client Portal/Chat; boundary=shared command/owner UI not mounted and customer reconnect OWNER_DEFERRED. No owner-as-client, new customer, provider effect or identity substitution.
+KEYBOARD_FOCUS: NOT_APPLICABLE: no keyboard/focus source change or new interactive control.
+ZOOM_REFLOW: NOT_APPLICABLE: no layout, typography or overflow change.
+REDUCED_MOTION: NOT_APPLICABLE: no motion added or changed.
+STATE_COVERAGE: PASS: private prepared, exact approved native shared, same-claim historical replay, refused source/scope/access/consent/expired claim, unknown acknowledgment reconciliation and atomic failure are tested. No queued/executing/delivery state is fabricated.
+TRUTHFUL_STATE_LABELS: PASS: clients.portal remains PARTIAL. Proposed client.portal_request_share is UNAVAILABLE/not registered/mounted/activated. Native SQL evidence cannot establish Chat approval, live customer receipt or a completed pillar/algorithm/Experience.
+SOLO_UI: NO: backend-native-only change, tenant-neutral implementation; no SOLO UI source or reference-account conditional.
+UNVERIFIED: original full-schema321, final-head review/required CI/Preview, merge, deployment/readback, shared canonical Chat/Portal/eligible Live integration, authenticated owner/client journey and one complete founder evaluation remain separate requirements.
+
+INTERNAL_BUILD_IDENTITY: implementation=5d4b5fd8a89d3de1697d93a0fb01713dabab747b; native API unchanged from ddcd7ac7842bf219341d215c341bc1bec039249a; final evidence head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271114230009 exact-head normal apply and readback); edge=NOT_APPLICABLE; evidence=docs/evidence/e09-private-request-publication.json
+RELEASE_CHANNEL: development: unmounted original Work publication domain contract, synthetic native evidence only.
+RELEASE_CLASSIFICATION: internal-only: no completed customer outcome or customer release identity.
+CUSTOMER_RELEASE_IDENTITY: none: no customer version, announcement or update.
+RELEASE_NOTE_REQUIRED: no: original-domain prerequisite, no mounted new customer workflow.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: native publication/reconciliation built and locally verified; PROOF OWED: exact-head hosted replay, deployment and full original owner/client entry-to-result integration.
+RELEASE_RECOVERY: position=forward-fix through original Work/common proposal/PCA and original status readback, never automatic replacement or duplicate publication; reference=docs/delivery/e09-customer-actions-business-scope.md
+
+FRONTIER_RECOVERY: current main bbee composed; SQL byte-exact, original native227/0 and all case objects preserved at4e8e3d4af. Filename/source-path correction only; no rendered interface, activation or authenticated result is claimed. Fresh final exact-head gates remain mandatory.

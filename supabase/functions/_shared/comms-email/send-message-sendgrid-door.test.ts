@@ -13,6 +13,7 @@ import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
+import { isPreparedAgreementMessage } from "../agreements/prepared-signature-message.ts";
 
 const MSG = "33333333-3333-4333-8333-3333333333bb";
 const TENANT = "44444444-4444-4444-8444-4444444444bb";
@@ -63,7 +64,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean } = 
     fetchCalls.push(url);
     return Promise.resolve(new Response(JSON.stringify({ id: "provider-id" }), { status: url.includes("sendgrid") ? 202 : 200, headers: { "X-Message-Id": "sg-id" } }));
   };
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",isPreparedAgreementMessage,
     Deno: {
       env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? "re_key" : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },

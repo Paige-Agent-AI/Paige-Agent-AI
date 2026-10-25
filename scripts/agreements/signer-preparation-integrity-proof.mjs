@@ -24,7 +24,7 @@ const startSession=(name,input)=>{
  const promise=new Promise((resolve,reject)=>{let output='',errors='';const timer=setTimeout(()=>{child.kill();reject(Error('Owned signer session timed out'));},20000);child.stdout.on('data',v=>output+=v);child.stderr.on('data',v=>errors+=v);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('close',code=>{clearTimeout(timer);code===0?resolve(output.trim()):reject(Error(errors));});});
  sessions.push(promise);promise.catch(()=>{});child.stdin.end(`SET application_name=${quote(name)};`+input);return promise;
 };
-const observe=async query=>{const deadline=Date.now()+5000;do{if(sql(query)==='t')return;await new Promise(resolve=>setTimeout(resolve,20));}while(Date.now()<deadline);throw Error('Expected original lock/session state was not observed');};
+const observe=async query=>{const deadline=Date.now()+5000;do{if(sql(query)==='t')return;await new Promise(resolve=>setTimeout(resolve,20));}while(Date.now()<deadline);const diagnostic=sql("SELECT coalesce(jsonb_agg(jsonb_build_object('application',application_name,'state',state,'wait_type',wait_event_type,'wait',wait_event)),'[]'::jsonb) FROM pg_stat_activity WHERE datname=current_database() AND pid<>pg_backend_pid();");throw Error('Expected original lock/session state was not observed; fenced-session states='+diagnostic);};
 try{
  sql(read('scripts/agreements/_fixture-schema.sql'));
  sql('ALTER TABLE tenant_client_agreements ADD COLUMN offer_id uuid REFERENCES tenant_products(id),ADD COLUMN catalog_price_id uuid;');

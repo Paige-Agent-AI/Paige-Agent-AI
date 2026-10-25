@@ -1,0 +1,1832 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-25T15:47:06.850Z",
+  "evidenceClass": "isolated-native-postgresql; synthetic Auth/role/common-issuer/autonomy/outer graph ports",
+  "baseCommit": "c579849404dab1d300e998bee28265d313b6838a",
+  "sourceBlobs": {
+    "scripts/proof/e09-consumer-invite.mjs": "3c94717ea97e9c2204274d03379ac23b80fa8815",
+    "scripts/proof/e09-private-request.mjs": "856e3813ecd08d59a73175cf9a992ab1c7829dda",
+    "supabase/migrations/20271114210009_e09_approved_private_request_publication.sql": "da026bb90e7073ea9b8b977ccc176917d39b1008",
+    "supabase/tests/customer_portal_access.sql": "9b3e65a65b4c95861a7ceb51836de61ada3d496a"
+  },
+  "command": [
+    "node",
+    "scripts/proof/e09-consumer-invite.mjs",
+    "--private-request-publication"
+  ],
+  "dedicatedLoopbackPort": 55449,
+  "node": "v24.19.0",
+  "platform": "win32",
+  "runs": {
+    "desiredEndpointRed": {
+      "passed": 152,
+      "failed": 1,
+      "reportSHA256": "130bc872d5563af6e98761b60663cc06d434c8f24dcca1a92bb2e2f32a7a44a4",
+      "failures": [
+        {
+          "name": "Approved native publication creates one original customer record linked to the same Work",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  function public.share_client_portal_request(unknown, unknown, unknown, unknown, unknown, unknown) does not exist\r\nLINE 1: SELECT public.share_client_portal_request('e0910000-0000-000...\r\n               ^\r\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\r\n"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "qualificationFailure": {
+      "passed": 152,
+      "failed": 1,
+      "reportSHA256": "8a6c5cda20254b316d6f47d7af119002e8041201b48a983bef7d8ecf494e0bd9",
+      "failures": [
+        {
+          "name": "Approved native publication creates one original customer record linked to the same Work",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  missing FROM-clause entry for table \"share_client_portal_request\"\r\nLINE 1: ....*               FROM public.clients c WHERE c.id=share_clie...\r\n                                                             ^\r\nQUERY:  SELECT c.*               FROM public.clients c WHERE c.id=share_client_portal_request.contact_id AND c.tenant_id=_expected_tenant_id FOR UPDATE\r\nCONTEXT:  PL/pgSQL function public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid) line 55 at SQL statement\r\n"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "invalidSnapshot": {
+      "passed": 157,
+      "failed": 51,
+      "reportSHA256": "7e2ef12e485a8dc46f54b10ca721410605df45b7f3363264d004e807900e3ffe",
+      "failures": [
+        {
+          "name": "Lost acknowledgment reconciles the same claimed proposal and Work without another effect",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "A historical replay after proposal expiry returns the same record and never reexecutes",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses wrong expected actor without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses null expected actor without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses wrong business without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses missing proposal without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses unknown proposal without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses wrong fingerprint without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses missing claim without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses wrong claim without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses foreign conversation without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses customer principal without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses anonymous principal without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Publication refuses service principal without durable effects",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses unclaimed proposal",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses untrusted legacy proposal",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses same request that minted the proposal",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses unbound claim",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses expired proposal",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses foreign actor",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses foreign tenant",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses different tool",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses client persona focus",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses a changed exact title",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses a changed exact body",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses another joined identity",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses another access version",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses an obsolete version",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses foreign CRM relationship",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses foreign original Work",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses arbitrary internal payload",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Stored-call publication refuses nonobject approved arguments",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses revoked membership",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses lost original staff standing",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses ordinary member with a global title",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses paused client",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses ended client",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses customer consent off",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses missing joined identity",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses changed joined identity",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses changed access version",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses inactive client",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses a disabled original kind",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses automation disabled",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses unexpected draft",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses an attached second approval",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Execution revalidation refuses changed private intent schema",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Ordinary native drafted cannot publish the private-request kind",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Ordinary native executing cannot publish the private-request kind",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "A publisher-audit failure rolls back the customer item, notice, Work and original receipt atomically",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        },
+        {
+          "name": "Same forward migration replays without rewriting data or duplicating the original native guard",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  column \"id\" does not exist\r\nLINE 7: ...approvals',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM p...\r\n                                                             ^\r\n"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "reviewDiagnostics": {
+      "passed": 217,
+      "failed": 3,
+      "reportSHA256": "9812b8542b85cac12043d7fe0c0efa602445f27943cf806b3d19c358631f9832",
+      "failures": [
+        {
+          "name": "Removing only the fixed-kind guard restores the entire original native advance definition",
+          "status": "FAIL",
+          "error": "Expected values to be strictly equal:\n\n1 !== 2\n"
+        },
+        {
+          "name": "Forward replay refuses a changed protected dependency: public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)",
+          "status": "FAIL",
+          "error": "psql failed: ERROR:  syntax error at or near \"THEN\"\r\nLINE 25:  THEN\r\n          ^\r\n"
+        },
+        {
+          "name": "A real contact-lock wait revalidates changed membership before any publication",
+          "status": "FAIL",
+          "error": "The input did not match the regular expression /PORTAL_REQUEST_(NOT_AUTHORIZED|APPROVAL_UNAVAILABLE)/. Input:\n\n'ERROR:  PORTAL_ACCESS_NOT_AUTHORIZED\\r\\n' +\n  'CONTEXT:  PL/pgSQL function public._client_portal_access_authorize(uuid,uuid,boolean) line 29 at RAISE\\r\\n' +\n  'SQL statement \"SELECT public._client_portal_access_authorize(_expected_actor_id,_expected_tenant_id,true)\"\\r\\n' +\n  'PL/pgSQL function public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid) line 70 at PERFORM\\r\\n'\n"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "readerDiagnostic": {
+      "passed": 221,
+      "failed": 1,
+      "reportSHA256": "6e9127af281d656e0bc578b3cedbc022d71a2707d6dfd8acf04efcdfdce4926d",
+      "failures": [
+        {
+          "name": "The original customer reader returns the shared request and excludes another customer",
+          "status": "FAIL",
+          "error": "The expression evaluated to a falsy value:\n\n  assert(own.actions.some(a=>a.id===first.customer_action_id))\n"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "preAdditionalReview": {
+      "passed": 222,
+      "failed": 0,
+      "reportSHA256": "88739db40c3f9a70a3a1cc2b957e814e9fd52e4aef7020c7dcf66496e6276a3f",
+      "failures": [],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "lockOrderRed": {
+      "passed": 222,
+      "failed": 1,
+      "reportSHA256": "36ca2f41048d7cbebca7b328815af267328c4485464d42c144644edc9ed71086",
+      "failures": [
+        {
+          "name": "Customer completion and historical owner reconciliation preserve the original lock order without deadlock",
+          "status": "FAIL",
+          "error": "ERROR:  deadlock detected\r\nDETAIL:  Process 48276 waits for ShareLock on transaction 1752; blocked by process 49660.\r\nProcess 49660 waits for ShareLock on transaction 1753; blocked by process 48276.\r\nHINT:  See server log for query details.\r\nCONTEXT:  while locking tuple (2,42) in relation \"paige_customer_actions\"\r\nSQL statement \"SELECT a.*           FROM public.paige_customer_actions a WHERE a.id=work.customer_action_id\r\n   AND a.tenant_id=_expected_tenant_id AND a.contact_id=v_contact_id FOR SHARE\"\r\nPL/pgSQL function public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid) line 109 at SQL statement\r\n\n\n3 !== 0\n"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "reviewed": {
+      "passed": 223,
+      "failed": 0,
+      "reportSHA256": "bb588bca0afefbd149ee03e2f052c43b5cefcd7c1617c88294ae633a3df6d3b9",
+      "failures": [],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    }
+  },
+  "incumbent146CaseObjectsPreserved": true,
+  "results": [
+    {
+      "name": "Other invitation branches preserved byte-for-byte",
+      "status": "PASS"
+    },
+    {
+      "name": "Public native peek: unused consumer",
+      "status": "PASS"
+    },
+    {
+      "name": "Public native peek: used unlimited consumer",
+      "status": "PASS"
+    },
+    {
+      "name": "Public native peek: recorded consumer acceptance despite count drift",
+      "status": "PASS"
+    },
+    {
+      "name": "Public native peek: revoked consumer",
+      "status": "PASS"
+    },
+    {
+      "name": "Public native peek: expired consumer",
+      "status": "PASS"
+    },
+    {
+      "name": "Public native peek: existing unlimited team semantics",
+      "status": "PASS"
+    },
+    {
+      "name": "No custom questions uses the existing contact form; malformed published configuration still refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Entry preserves all staff/agency/owner branches",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong recipient with legitimate staff standing cannot claim consumer contact",
+      "status": "PASS"
+    },
+    {
+      "name": "Matching unconfirmed email refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing recipient refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous caller denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Expired invitation refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoked invitation refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Legacy unlimited token with prior use refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Recorded prior acceptance refuses even if count zero",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing exact CRM contact refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign exact CRM contact refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Occupied exact CRM contact refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Merged contact refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived contact refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Unbound consumer token refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Recipient address removed from contact refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Different existing relationship does not redirect acceptance",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed token refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing token refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Team recipient regression",
+      "status": "PASS"
+    },
+    {
+      "name": "Verified recipient with pre-existing staff standing binds the exact contact once",
+      "status": "PASS"
+    },
+    {
+      "name": "Pure verified external recipient joins without a business seat or staff context",
+      "status": "PASS"
+    },
+    {
+      "name": "Email normalization accepts only authoritative verified recipient",
+      "status": "PASS"
+    },
+    {
+      "name": "Team acceptance still grants ordinary member and staff pointer",
+      "status": "PASS"
+    },
+    {
+      "name": "Claimed JWT email cannot override stored auth identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Audit failure rolls back link, role and token consumption",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent acceptance grants once and records one attributable receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses archived relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses merged relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses suspended business",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses wrong business/contact tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses wrong actual subject",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses missing actual subject",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses closed action",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses expired action",
+      "status": "PASS"
+    },
+    {
+      "name": "Native customer action refuses empty question",
+      "status": "PASS"
+    },
+    {
+      "name": "Native old caller cannot submit without the viewed version",
+      "status": "PASS"
+    },
+    {
+      "name": "Native version refusal null",
+      "status": "PASS"
+    },
+    {
+      "name": "Native version refusal 2025-01-01",
+      "status": "PASS"
+    },
+    {
+      "name": "Native completion persists canonical response, actor, status, notification, audit and incumbent linked output",
+      "status": "PASS"
+    },
+    {
+      "name": "Native permitted response accepted",
+      "status": "PASS"
+    },
+    {
+      "name": "Native permitted response declined",
+      "status": "PASS"
+    },
+    {
+      "name": "Native permitted response question",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent same-version completion persists once",
+      "status": "PASS"
+    },
+    {
+      "name": "Native audit failure rolls back response and all preceding effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner read preserves legacy reader, customer response writer and original authority byte-for-byte",
+      "status": "PASS"
+    },
+    {
+      "name": "Ordinary SOLO owner without global staff role reads exact original action and response",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner projection never includes private payload, login identity, foreign action or mismatched response",
+      "status": "PASS"
+    },
+    {
+      "name": "A second eligible SOLO cohort uses the same scoped reader",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner read refuses wrong current workspace without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner read refuses wrong customer without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner read refuses forged actor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner read refuses missing expected actor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner read refuses customer identity without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner read refuses service principal without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner read refuses anonymous principal without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Global staff role on a plain tenant member is not owner authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoked owner membership invalidates a returning read",
+      "status": "PASS"
+    },
+    {
+      "name": "Ineligible business agency refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Ineligible business sub_account refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Ineligible business suspended refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Paused, ended and nonconsenting relationships retain only shared history without changing consent",
+      "status": "PASS"
+    },
+    {
+      "name": "Expired pending item is derived truth, not a status write or completed action",
+      "status": "PASS"
+    },
+    {
+      "name": "Bounded original actions and responses report more without silently implying a complete list",
+      "status": "PASS"
+    },
+    {
+      "name": "Private request status distinguishes missing committed work from a rejected request",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner prepares one original private Work record without customer publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Same prepared intent returns original Work without another filing",
+      "status": "PASS"
+    },
+    {
+      "name": "Status/replay keep one original version and exactly the original two writer audits",
+      "status": "PASS"
+    },
+    {
+      "name": "Whitespace normalization preserves exact original private words on replay",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses changed content without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses changed title without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses blank title without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses blank body without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses null body without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses long title without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses long body without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses wrong expected actor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses missing expected actor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses wrong selected business without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses missing intent without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses customer identity without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses service principal without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation refuses anonymous principal without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign CRM contact cannot be prepared or read in the current business",
+      "status": "PASS"
+    },
+    {
+      "name": "Second eligible business gets its own original private Work and history",
+      "status": "PASS"
+    },
+    {
+      "name": "Same intent at another own CRM record never recovers the previous contact content",
+      "status": "PASS"
+    },
+    {
+      "name": "A global admin title on an ordinary member grants no Portal owner authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Losing original Work staff standing refuses both read and preparation",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoked membership refuses returning status and prepare without another filing",
+      "status": "PASS"
+    },
+    {
+      "name": "Original Portal eligibility refuses agency without widening a cohort",
+      "status": "PASS"
+    },
+    {
+      "name": "Original Portal eligibility refuses sub_account without widening a cohort",
+      "status": "PASS"
+    },
+    {
+      "name": "Original Portal eligibility refuses trial without widening a cohort",
+      "status": "PASS"
+    },
+    {
+      "name": "Original Portal eligibility refuses past_due without widening a cohort",
+      "status": "PASS"
+    },
+    {
+      "name": "Original Portal eligibility refuses suspended without widening a cohort",
+      "status": "PASS"
+    },
+    {
+      "name": "Paused, ended and nonconsenting relationships stay private and their preferences stay unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Known intent reconciles before a changed kind admission; new intent refuses",
+      "status": "PASS"
+    },
+    {
+      "name": "A draft-agent change cannot silently turn private preparation into model work",
+      "status": "PASS"
+    },
+    {
+      "name": "Changing original Work content invalidates the prepared preview rather than exposing a stale version",
+      "status": "PASS"
+    },
+    {
+      "name": "Closed preparation result never projects arbitrary Work payload or staff routing",
+      "status": "PASS"
+    },
+    {
+      "name": "Failure of the original assignment audit rolls back filing and every original audit",
+      "status": "PASS"
+    },
+    {
+      "name": "New public API is authenticated-only and never exposes the private original authorizer",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent same-intent preparations wait on the original profile and commit one original Work record",
+      "status": "PASS"
+    },
+    {
+      "name": "A workspace switch committed during the profile wait refuses the stale request without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Membership revoked during a contact wait is revalidated before any filing or words return",
+      "status": "PASS"
+    },
+    {
+      "name": "Ambiguous original intent history refuses instead of arbitrarily choosing a record",
+      "status": "PASS"
+    },
+    {
+      "name": "An unrelated customer-action link is rejected rather than presented as a shared result",
+      "status": "PASS"
+    },
+    {
+      "name": "Replaying the same migration preserves original Work, source metadata and private history",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration refuses unknown forward file_action without overwriting it",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration refuses unknown forward advance_action without overwriting it",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration refuses unknown forward _client_portal_access_authorize without overwriting it",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration refuses unknown forward read_client_portal_request_draft without overwriting it",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration refuses unknown forward prepare_client_portal_request without overwriting it",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration refuses unknown forward list_client_portal_request_drafts without overwriting it",
+      "status": "PASS"
+    },
+    {
+      "name": "Exact canonical LF original writer form replays without changing its permissions or words",
+      "status": "PASS"
+    },
+    {
+      "name": "Native source ABI, OID, owner, grants, search path and body are all preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "Private preparation and every refusal create no customer action, response, notice or approval",
+      "status": "PASS"
+    },
+    {
+      "name": "Returning owner discovers original private requests without a browser-stored intent",
+      "status": "PASS"
+    },
+    {
+      "name": "History API keeps the same authenticated-only empty-path native contract",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses wrong actor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses missing actor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses wrong business without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses customer identity without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses service without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses anonymous without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses partial time cursor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses partial ID cursor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history refuses infinite cursor without effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Work history cannot widen missing original Work standing",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed original intent metadata fails closed instead of inventing a replacement identity",
+      "status": "PASS"
+    },
+    {
+      "name": "History uses the original changed-content projection rather than showing old prepared words",
+      "status": "PASS"
+    },
+    {
+      "name": "Reload history waits for the original pending preparation and reads its committed Work once",
+      "status": "PASS"
+    },
+    {
+      "name": "History rechecks revoked membership after waiting before returning any private page",
+      "status": "PASS"
+    },
+    {
+      "name": "A new legitimate owner scope has empty history without implying a rejected request",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign CRM record is refused by the history reader even when a real Work ID is known",
+      "status": "PASS"
+    },
+    {
+      "name": "Original Work keyset pages preserve all tied timestamps and IDs once, without browser state",
+      "status": "PASS"
+    },
+    {
+      "name": "History cursor is a filter, never authority to view another actor or business",
+      "status": "PASS"
+    },
+    {
+      "name": "Returning history and pagination never create customer actions, notices, approvals or responses",
+      "status": "PASS"
+    },
+    {
+      "name": "Original native file, advance and Portal authority remain byte-exact",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication baseline executes the exact observed original customer-action writer",
+      "status": "PASS"
+    },
+    {
+      "name": "Original direct publisher positive control creates one exact customer item and notice",
+      "status": "PASS"
+    },
+    {
+      "name": "Original direct publisher refuses customer authority without customer effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Original direct publisher refuses an ordinary team member inside the same business",
+      "status": "PASS"
+    },
+    {
+      "name": "Original direct publisher refuses another business without customer effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Original direct publisher preserves client-controlled consent",
+      "status": "PASS"
+    },
+    {
+      "name": "Approved native publication creates one original customer record linked to the same Work",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer gets only exact approved words and an empty closed public payload",
+      "status": "PASS"
+    },
+    {
+      "name": "Lost acknowledgment reconciles the same claimed proposal and Work without another effect",
+      "status": "PASS"
+    },
+    {
+      "name": "A historical replay after proposal expiry returns the same record and never reexecutes",
+      "status": "PASS"
+    },
+    {
+      "name": "Original private recovery and returning history reconcile shared Work without exposing metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "The original customer reader returns the shared request and excludes another customer",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer completion and owner return use the same original action, response, Work and records",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses wrong expected actor without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses null expected actor without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses wrong business without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses missing proposal without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses unknown proposal without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses wrong fingerprint without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses missing claim without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses wrong claim without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses foreign conversation without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses customer principal without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses anonymous principal without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication refuses service principal without durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses unclaimed proposal",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses untrusted legacy proposal",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses same request that minted the proposal",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses unbound claim",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses expired proposal",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses foreign actor",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses foreign tenant",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses different tool",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses client persona focus",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses a changed exact title",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses a changed exact body",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses another joined identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses another access version",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses an obsolete version",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses foreign CRM relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses foreign original Work",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses arbitrary internal payload",
+      "status": "PASS"
+    },
+    {
+      "name": "Stored-call publication refuses nonobject approved arguments",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses revoked membership",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses lost original staff standing",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses ordinary member with a global title",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses paused client",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses ended client",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses customer consent off",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses missing joined identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses changed joined identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses changed access version",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses inactive client",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses a disabled original kind",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses automation disabled",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses unexpected draft",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses an attached second approval",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution revalidation refuses changed private intent schema",
+      "status": "PASS"
+    },
+    {
+      "name": "Ordinary native drafted cannot publish the private-request kind",
+      "status": "PASS"
+    },
+    {
+      "name": "Ordinary native executing cannot publish the private-request kind",
+      "status": "PASS"
+    },
+    {
+      "name": "A publisher-audit failure rolls back the customer item, notice, Work and original receipt atomically",
+      "status": "PASS"
+    },
+    {
+      "name": "Browser cannot insert or rewrite canonical proposal evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "New native executor is caller-JWT-only with the original advance ABI and grants unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Same forward migration replays without rewriting data or duplicating the original native guard",
+      "status": "PASS"
+    },
+    {
+      "name": "Removing only the fixed-kind guard restores the entire original native advance definition",
+      "status": "PASS"
+    },
+    {
+      "name": "Forward replay refuses a changed protected dependency: public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)",
+      "status": "PASS"
+    },
+    {
+      "name": "Forward replay refuses a changed protected dependency: public.share_client_portal_request(uuid,uuid,uuid,text,uuid,uuid)",
+      "status": "PASS"
+    },
+    {
+      "name": "Forward replay refuses a changed protected dependency: public.admin_propose_paige_actions(uuid,jsonb)",
+      "status": "PASS"
+    },
+    {
+      "name": "Forward replay refuses a changed protected dependency: public._client_portal_access_authorize(uuid,uuid,boolean)",
+      "status": "PASS"
+    },
+    {
+      "name": "Unrelated original record-only Work execution still uses the original advance branch",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent identical approved claims wait and commit one original customer item/notice",
+      "status": "PASS"
+    },
+    {
+      "name": "A real contact-lock wait revalidates changed consent before any publication",
+      "status": "PASS"
+    },
+    {
+      "name": "A real contact-lock wait revalidates changed membership before any publication",
+      "status": "PASS"
+    },
+    {
+      "name": "A real contact-lock wait revalidates changed expiry before any publication",
+      "status": "PASS"
+    },
+    {
+      "name": "A real contact-lock wait revalidates changed recipient before any publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Native publication proof actually observed every required concurrency wait",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer completion and historical owner reconciliation preserve the original lock order without deadlock",
+      "status": "PASS"
+    }
+  ],
+  "native": {
+    "migration": "supabase/migrations/20271114210009_e09_approved_private_request_publication.sql",
+    "advanceBeforeSHA256": "d482b09e792a1e443fc91597db55c48d8a24efa217f1a5bb4b69adfe85cc1183",
+    "originalPublisher": "21bd99c7a036f28f82a677fa25c6db04",
+    "outerApproval": "SYNTHETIC_TRUSTED_ISSUER_AND_AUTONOMY_PORT; NOT_REAL_CHAT_APPROVAL",
+    "observedLockWaits": 6,
+    "responseReplayWaited": false,
+    "authenticatedCustomer": "NOT_RUN",
+    "productionOperation": false,
+    "sourceFingerprints": {
+      "advance_action": "0d412f9c0a734aeb2815dca39ab061a3",
+      "share_client_portal_request": "81e21f92abe3d552f89d98c8d7b3b9d3"
+    }
+  },
+  "fullSchema": {
+    "suite": "supabase/tests/customer_portal_access.sql",
+    "plan": 321,
+    "status": "NOT_RUN; exact-head hosted CI required"
+  },
+  "release": {
+    "merge": "NOT_MERGED",
+    "deployment": "NOT_DEPLOYED",
+    "activation": "NOT_REGISTERED_OR_MOUNTED",
+    "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "securityBoundary": "Native claimed-proposal fixtures are NOT genuine Chat approval or outer admission. No production record, provider operation, customer account, consent or credential change.",
+  "implementationCommit": "ddcd7ac7842bf219341d215c341bc1bec039249a",
+  "composition": {
+    "incomingMain": "c908539817d029c4b745b8518c24a16fa2c11795",
+    "sourceInputsUnchanged": true,
+    "incomingOutsideOwnPathsPreserved": 16173,
+    "earlierComparison": "NOT_COMPLETED: default child-process output buffer too small; same tree read rerun with explicit 16MiB buffer; no source adjustment"
+  },
+  "commsComposition": {
+    "generatedAt": "2026-10-25T16:22:59.467Z",
+    "runtimeCommit": "5d4b5fd8a89d3de1697d93a0fb01713dabab747b",
+    "sourceBlobs": {
+      "scripts/proof/e09-consumer-invite.mjs": "3c94717ea97e9c2204274d03379ac23b80fa8815",
+      "scripts/proof/e09-private-request.mjs": "c1e4eb9242d445c1682cf053e07aa683ab45cd6a",
+      "supabase/migrations/20271114210009_e09_approved_private_request_publication.sql": "da026bb90e7073ea9b8b977ccc176917d39b1008",
+      "supabase/tests/customer_portal_access.sql": "9b3e65a65b4c95861a7ceb51836de61ada3d496a",
+      "supabase/tests/exp03_lead_reply_draft.sql": "3cae2f96e8cbc85e5224c4b9586ccbf20ce3d843",
+      "supabase/tests/paige_email_sendgrid_receipts.sql": "bf9cb74ce8541ed2c954a2fa04224e169afddc8b"
+    },
+    "passed": 227,
+    "failed": 0,
+    "allOriginal223CaseObjectsPreserved": true,
+    "first146CaseObjectsPreserved": true,
+    "newControls": [
+      {
+        "name": "Original Communications composition inverse executes on current native Work: supabase/tests/exp03_lead_reply_draft.sql",
+        "status": "PASS"
+      },
+      {
+        "name": "Communications composition inverse rejects any additional native source change: supabase/tests/exp03_lead_reply_draft.sql",
+        "status": "PASS"
+      },
+      {
+        "name": "Original Communications composition inverse executes on current native Work: supabase/tests/paige_email_sendgrid_receipts.sql",
+        "status": "PASS"
+      },
+      {
+        "name": "Communications composition inverse rejects any additional native source change: supabase/tests/paige_email_sendgrid_receipts.sql",
+        "status": "PASS"
+      }
+    ],
+    "reportSHA256": "7ac57cb8bdea9a42b2c18e503535ad13cfb7a62ba3d9f6e07756b9e6392d1163",
+    "cleanup": {
+      "command": "pg_ctl",
+      "exitCode": 0,
+      "stopped": true
+    },
+    "hostedPredecessor": {
+      "head": "b991f356695485e7d97edc03538bb4806cc20d13",
+      "workflowRun": 40209005467,
+      "job": 121216006819,
+      "overall": "FAIL",
+      "originalS7Plan321": "SUCCESS step98",
+      "accessDoors": "SUCCESS step99",
+      "privateNative": "SUCCESS step110",
+      "failures": [
+        {
+          "step": 54,
+          "file": "supabase/tests/exp03_lead_reply_draft.sql",
+          "line": 130,
+          "error": "fixture begins with all six exact reviewed current origin-admission bodies"
+        },
+        {
+          "step": 56,
+          "file": "supabase/tests/paige_email_sendgrid_receipts.sql",
+          "line": 79,
+          "error": "fixture begins with all six exact reviewed current origin-admission bodies"
+        }
+      ]
+    },
+    "repair": "Only each current advance scalar and an added whole-prosrc inverse. All original test bytes restored by that exact patch inverse. Five other pins, snapshots, historical replays, current admissions and rollback retained. No Communications runtime/provider change.",
+    "newHeadCI": "NOT_RUN; required exact-head repeat; predecessor native successes are not inherited release gates"
+  },
+  "focusedOwnerTransport": {
+    "generatedAt": "2026-10-25T16:42:28.501Z",
+    "runtimeCommit": "189b9bc97c31197cd77cd33d8db207e2b4c1d6a9",
+    "parent": "06df735504b2596866e4ec9d6c1c2a37d985b214",
+    "sourceBlobs": {
+      "scripts/proof/e09-consumer-invite.mjs": "06803459f88a0f50aa321956f2e04cd75dec3392",
+      "scripts/proof/e09-private-request.mjs": "8e2706b8c9ad9d44682c88dcda4fafba7c065ea3",
+      "supabase/tests/customer_portal_access.sql": "73a161bf40be0a03e50dcbfeaa2da9a992c26f72",
+      "supabase/migrations/20271114210109_e09_owner_focused_request_publication.sql": "164d95ca3eff998219db7933af77e5a12c7f3043",
+      "supabase/functions/_shared/client-portal-request-publication.ts": "439d368fe63f25b11b1bec6b118139a4a3df1834",
+      "supabase/functions/_shared/client-portal-request-publication.test.ts": "aff518620fa538de01edf976ec9291c497319632"
+    },
+    "parentNativeMigrationByteExact": true,
+    "baseline": {
+      "passed": 226,
+      "failed": 2,
+      "reportSHA256": "b8cfb723d22b87acff91f1f2ae2086fa62f39dd4446d4792bd37dd6ecdee4df5",
+      "boundary": "pre-refinement native81e21; genuine owner focus refused, not a customer role failure; uncommitted proof before an additional compatibility control"
+    },
+    "preParentComposition": {
+      "passed": 234,
+      "failed": 0,
+      "reportSHA256": "7098b7769ca3bab7904dfd8154cbc29d983a093d3d4a669facfd2164a27fe5cb"
+    },
+    "composed": {
+      "passed": 238,
+      "failed": 0,
+      "all227ParentCaseObjectsPreserved": true,
+      "observedLockWaits": 6,
+      "sourceFingerprints": {
+        "advance_action": "0d412f9c0a734aeb2815dca39ab061a3",
+        "share_client_portal_request": "f011f8a047c8025508ea3ece73efbcee"
+      },
+      "reportSHA256": "2426fc0d20fa9f00a7d28c4dcd4d42ec42631b4fddd7457a7499dff8801e7de8",
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "adapter": {
+      "initial": "FAILED_COLLECTION: missing module; zero executed cases",
+      "beforeAdditionalReview": {
+        "passed": 31,
+        "failed": 0
+      },
+      "reviewRed": {
+        "passed": 31,
+        "failed": 2,
+        "transcriptSHA256": "1b521ff54dd9e37c3c5bfc1cdf7e3284b9b909edbb4b9ea54338238f3b5dbecb"
+      },
+      "reviewed": {
+        "passed": 33,
+        "failed": 0,
+        "transcriptSHA256": "b167305930382d6c92b7482c14a2128678eacd6d84bd05a9b9344b4fadfe6e72"
+      },
+      "strictScopedTypeGraph": "PASS; installed app SDK2.112.4 shape compatible",
+      "lint": "PASS",
+      "rootPinnedSDK": "2.75.0; actual Root/Deno integration graph NOT_RUN; no dependency/pin changed"
+    },
+    "native": "Same ABI/OID/owner/ACL and one original executor; actual owner may use NULL or exact CRM focus, foreign focus/customer principal denied; no new approval path",
+    "fullSchema": {
+      "suite": "supabase/tests/customer_portal_access.sql",
+      "plan": 322,
+      "status": "NOT_RUN; required exact-head hosted execution"
+    },
+    "release": {
+      "status": "LOCAL_UNPUSHED",
+      "registration": "NOT_REGISTERED",
+      "mount": "NOT_MOUNTED",
+      "activation": "NOT_ACTIVATED",
+      "customer": "OWNER_DEFERRED",
+      "founder": "NOT_REQUESTED"
+    }
+  },
+  "frontierRecovery": {
+    "generatedAt": "2026-10-25T17:16:13.764Z",
+    "runtimeCommit": "4e8e3d4af4e6317017da3bd738b63598bb197bf4",
+    "incomingMain": "bbee3e1d40071b7fce95228cb3cca633ab0008f7",
+    "migration": "supabase/migrations/20271114230009_e09_approved_private_request_publication.sql",
+    "nativeBlob": "da026bb90e7073ea9b8b977ccc176917d39b1008",
+    "proofBlob": "40429de93e77cbfff7c88bf3c3fd18734225ad26",
+    "nativeSqlByteExactToReviewed06df": true,
+    "proofOnlyPathInverse": true,
+    "originalAll227CaseObjectsPreserved": true,
+    "passed": 227,
+    "failed": 0,
+    "reportSHA256": "1910f1f8cea00835b4ff70ebb215a0181305605675279ec9fa83d43c9dc17bba",
+    "cleanup": {
+      "command": "pg_ctl",
+      "exitCode": 0,
+      "stopped": true
+    },
+    "incomingOutsideOwningPathsPreserved": 16174,
+    "prior06dfChecks": "13_SUCCESS; both Vercel SUCCESS; zero threads; superseded head requires fresh CI",
+    "fullSchemaPlan": 321,
+    "productionFrontierObserved": "20271114220002",
+    "productionCandidateCountObserved": 0,
+    "productionApply": "NOT_RUN",
+    "reason": "Only never-production-applied own candidate reordered after actual production frontier; no include-all or history edit",
+    "customerActivation": "NOT_REGISTERED_OR_MOUNTED",
+    "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "trustedSourceContinuation": {
+    "generatedAt": "2026-10-25T17:26:21.401Z",
+    "runtimeCommit": "362764768d3392812dac7968f09b05dc3e8f06b3",
+    "parent": "58fdff1ab4e8fe65ee627043c635ee51c9beee97",
+    "sourceBlobs": {
+      ".github/workflows/ci.yml": "21ee2c2f631a0d1076292af48deda89680575df1",
+      "scripts/proof/e09-consumer-invite.mjs": "06803459f88a0f50aa321956f2e04cd75dec3392",
+      "scripts/proof/e09-private-request.mjs": "114c7bf33d311747b67869a7748e2efb51757a99",
+      "supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql": "ec59b7bcf4f1435bd6d9e42dd2e6934c55b35e4f",
+      "supabase/functions/_shared/client-portal-request-publication.ts": "841c11e2bc4ced99ff79c9b233d896de27f9a787",
+      "supabase/functions/_shared/client-portal-request-publication.test.ts": "aff518620fa538de01edf976ec9291c497319632",
+      "supabase/functions/_shared/client-portal-request-publication-source.test.ts": "50c08103d795928d85c8387c77e05f169079be6f",
+      "supabase/tests/customer_portal_access.sql": "78c4cde413ed08d4e8e96d4f4275f1a469963f04"
+    },
+    "migration": "supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql",
+    "parentNativeByteExact": true,
+    "sourceReaderBody": "4eb171a1dd0b2de6bab6355ddcf303e1",
+    "baseline": {
+      "passed": 231,
+      "failed": 3,
+      "reportSHA256": "e9a9c807e37612215b0e9d85b903c32ebcb9210560cef9476a30a25b53caa990",
+      "boundary": "V1 owner focus refuses twice; trusted source API absent; remaining source cases NOT_RUN"
+    },
+    "firstCandidate": {
+      "passed": 256,
+      "failed": 0,
+      "reportSHA256": "34e7cedfa4929a24d73441dee67dc8694d3a404708dac18272e6053f3a029466"
+    },
+    "reviewed": {
+      "passed": 257,
+      "failed": 0,
+      "allPrior238And256CaseObjectsPreserved": true,
+      "reportSHA256": "e44231249435795babb472bbcbff92182522717265dcb6fa99ab6cdc578b4f0d",
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      },
+      "addedSourceControls": [
+        {
+          "name": "Actual owner reads exact original Work/customer source without a model-authored binding",
+          "status": "PASS"
+        },
+        {
+          "name": "Read-only sharing source exposes no private intent, claim, arbitrary payload or role data",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses another actor comparison without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses another active business without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses foreign CRM contact without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses foreign original Work without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses a customer principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses anonymous principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source reader refuses service identity without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses paused access without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses client consent off without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses no joined customer without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses revoked member without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses lost Work standing without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source readiness refuses changed private source without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Source reader has the exact Auth-only, postgres definer and empty-path boundary",
+          "status": "PASS"
+        },
+        {
+          "name": "Sharing-source replay refuses an unknown forward body without overwriting it",
+          "status": "PASS"
+        },
+        {
+          "name": "Already-shared source returns the same canonical identity and no new proposal or content",
+          "status": "PASS"
+        },
+        {
+          "name": "Owner historical readback survives client pause without granting the client access",
+          "status": "PASS"
+        }
+      ]
+    },
+    "transport": {
+      "initial": "INVALID_COLLECTION: absent export, zero source cases; not a passing or behavioral test",
+      "failFirst": "Explicit unavailable baseline32PASS/3causalFAIL; no production stub retained",
+      "baselineTranscriptSHA256": "e62718b1adffae17eb215614c08b2527169dae9dceaad9c8696e751886ec3538",
+      "passed": 68,
+      "failed": 0,
+      "transcriptSHA256": "6c0466def717f922625dc0c2bc749a0169ed00bb3d8b4902271426ea4175d635",
+      "scopedStrictTypeScript": "PASS including installed app SDK2.112.4 shape; not actual Root2.75.0 integration",
+      "scopedLint": "PASS",
+      "hostedDenoDenyAll": "NOT_RUN; original CI block extended without relaxing permissions"
+    },
+    "fullSchema": {
+      "plan": 338,
+      "additionalSourceAssertions": 16,
+      "entirePrior322SuiteInverse": "PASS",
+      "execution": "NOT_RUN; required exact-head hosted gate"
+    },
+    "ciWholeIncomingInverse": "PASS; original58fd entire workflow restored after removing only new E09 block",
+    "sourceBoundary": "Native source read is not approval. Common stored-call issue/claim and outer admission remain original shared responsibilities",
+    "delivery": {
+      "review": "PENDING final exact-head sequential passes",
+      "ci": "NOT_RUN",
+      "merge": "NOT_MERGED",
+      "production": "NOT_DEPLOYED",
+      "activation": "NOT_REGISTERED_OR_MOUNTED",
+      "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+      "founderAcceptance": "NOT_REQUESTED"
+    }
+  },
+  "receiptReadbackReview": {
+    "generatedAt": "2026-10-25T17:51:25.929Z",
+    "runtimeCommit": "8d728d41f8cc6bf305f58d55c1ddc53e223942aa",
+    "originalReviewedHead": "7c6e3c83271e7e799c7da23c07b23b3b2edcb735",
+    "findingReview": 5644423905,
+    "finding": "Pending historical source must verify original publication receipt rather than infer sharing from a same-customer link",
+    "baseline": {
+      "passed": 257,
+      "failed": 3,
+      "sourceBody": "4eb171a1dd0b2de6bab6355ddcf303e1",
+      "reportSHA256": "b0c8bc08e9dc1fde1aa9b8bf153015887f18048cf6fc7d0db95745c874f01472",
+      "failures": [
+        {
+          "name": "Historical sharing source refuses an unrelated same-customer record",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        },
+        {
+          "name": "Historical sharing source refuses missing original publication marker",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        },
+        {
+          "name": "Historical sharing source refuses different original publisher result",
+          "status": "FAIL",
+          "error": "Missing expected exception."
+        }
+      ],
+      "boundary": "Additional uncommitted probes against immutable7c6e native source; isolated fixture only, not production evidence"
+    },
+    "migration": "supabase/migrations/20271114230119_e09_original_request_receipt_readback.sql",
+    "originalPreviewAppliedMigrationByteExact": true,
+    "sourceBody": "ce47399b991cea106916d331a88657fe",
+    "sourceBlobs": {
+      "scripts/proof/e09-private-request.mjs": "41aedbda1a306cdd324fce4e10f81e9a2274071e",
+      "supabase/migrations/20271114230119_e09_original_request_receipt_readback.sql": "82860594baa248bedf2485faa3a657d04ed28a55",
+      "supabase/migrations/20271114230109_e09_owner_focused_request_publication.sql": "ec59b7bcf4f1435bd6d9e42dd2e6934c55b35e4f",
+      "supabase/tests/customer_portal_access.sql": "94f1dcc23537f4c32976aa43577f2938f57dc3ff"
+    },
+    "candidate": {
+      "passed": 284,
+      "failed": 0,
+      "allPrior257CaseObjectsPreserved": true,
+      "currentReaderRegressionControls": 19,
+      "reportSHA256": "641ff5d7d60c14eee9b571471a487791bffbf286e5d1422cd3b012b6ed2023e5",
+      "newControls": [
+        {
+          "name": "Historical-source forward repair applies without changing any original business data",
+          "status": "PASS"
+        },
+        {
+          "name": "Receipt-readback inverse restores the entire original source definition",
+          "status": "PASS"
+        },
+        {
+          "name": "Receipt-readback preserves the original source OID, ABI, owner, ACL and search path",
+          "status": "PASS"
+        },
+        {
+          "name": "The same receipt-readback forward replays without any original data change",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses an unrelated same-customer record",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses missing original publication marker",
+          "status": "PASS"
+        },
+        {
+          "name": "Historical sharing source refuses different original publisher result",
+          "status": "PASS"
+        },
+        {
+          "name": "Exact original receipt still reconciles after customer access and consent are withdrawn",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Actual owner reads exact original Work/customer source without a model-authored binding",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Read-only sharing source exposes no private intent, claim, arbitrary payload or role data",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses another actor comparison without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses another active business without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses foreign CRM contact without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses foreign original Work without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses a customer principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses anonymous principal without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source reader refuses service identity without writes",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses paused access without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses client consent off without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses no joined customer without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses revoked member without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses lost Work standing without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source readiness refuses changed private source without approving or publishing",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Source reader has the exact Auth-only, postgres definer and empty-path boundary",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Sharing-source replay refuses an unknown forward body without overwriting it",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Already-shared source returns the same canonical identity and no new proposal or content",
+          "status": "PASS"
+        },
+        {
+          "name": "Current receipt-backed reader: Owner historical readback survives client pause without granting the client access",
+          "status": "PASS"
+        }
+      ],
+      "cleanup": {
+        "command": "pg_ctl",
+        "exitCode": 0,
+        "stopped": true
+      }
+    },
+    "boundary": "Original private reader/current owner authorization, common approval/writer/Work/PCA/receipt stores retained. New projection verifies original Work/version/words/publisher result/PCA binding; PCA read takes no new lock. Historical pause/consent withdrawal permits owner readback, never client access or new effect.",
+    "fullSchema": {
+      "plan": 341,
+      "original338HostedPredecessor": "SUCCESS exact7c6e step98/job121238928060; new341 still NOT_RUN",
+      "additionalReceiptNegatives": 3
+    },
+    "transport": {
+      "passed": 68,
+      "failed": 0,
+      "sourceUnchangedFrom7c6e": true
+    },
+    "delivery": {
+      "review": "PENDING exact final head",
+      "ci": "NOT_RUN for repaired head",
+      "merge": "NOT_MERGED",
+      "deployment": "NOT_DEPLOYED",
+      "activation": "NOT_REGISTERED_OR_MOUNTED",
+      "authenticatedCustomer": "OWNER_DEFERRED; NOT_RUN",
+      "founderAcceptance": "NOT_REQUESTED"
+    }
+  }
+}

@@ -946,15 +946,20 @@ const SOURCES = {
   // branch, authority, verifier, adapter selection or recipient logic changed; paige-ai-chat untouched,
   // so all dispatch fingerprints are unchanged. Old canonical digest 29306707… reproduced from main
   // before renewing (scratchpad /tmp/renew-digest.mjs, printer {removeComments:true}). Renew this digest only.
-  // EXP04 C45 AUTHOR-REVIEW / LOWER ASSURANCE, ANT161/2b682833: original
-  // 08ec0fe3 baseline and all29 bindings/125 source pins reproduced before renewal.
-  // Whole original sender inverse and four native Comms inverses;133 actual
-  // consumer cases, direct concrete-SDK strict0, native41+47/all predecessors
-  // and original61 generic/PPA controls PASS. Only approved agreement purpose
-  // adds native HIGH/Work/document/signer revalidation plus RAM-only links.
-  // One claim, policy, adapter, finalizer and history retained. No Chat admission,
-  // registry/dispatch/other dependency/extractor/validator or activation change.
-  "supabase/functions/send-message/index.ts": "1f8b4d987fa936eb696c1e787d8772cde34aaf1bd3ef4112f34a0fa6a538e1ae",
+  // EXP08 Team Hub increment 3 renewal (2026-10-25), author source review, scope CONFIRMED by an independent
+  // §39 re-reviewer on the same diff: branch claude/practical-davinci-ij8hb8 changes send-message/index.ts only inside
+  // attachmentValidationError — two early returns of "attachment_not_allowed": any path containing `%`
+  // (Storage's router percent-decodes object names, so `team%2Dhub/<id>` is read as `team-hub/<id>`), and a
+  // case-insensitive first folder of `team-hub` (<tenant>/team-hub/ holds members-only Team Hub files). An
+  // input refusal before any send: no dispatch branch, authority, verifier, adapter selection, recipient or
+  // provider payload changed; paige-ai-chat untouched, so all dispatch fingerprints are unchanged. Old digest
+  // 08ec0fe3… reproduced from 1dac06b8b with the same canonical form (TypeScript printer {removeComments:true},
+  // sha256) before renewing; the new value was then confirmed by this file's own test passing. Renew this digest only.
+  // EXP04 C45/E08 receiving AUTHOR-REVIEW / LOWER ASSURANCE: both whole
+  // sender inverses preserve the complete reviewed agreement extension and
+  // incoming Team Hub attachment refusals. Old08ec/E082eea/C451f8 reproduced.
+  // This one explicit composed pin changes no validator, dispatch or peer pin.
+  "supabase/functions/send-message/index.ts": "2405fcebb5a03881de4e430cf2e4d4727fef1d797bf82998098e018acb28f42b",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are

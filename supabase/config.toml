@@ -761,3 +761,7 @@ verify_jwt = false
 # deployed-source readback needs it declared to match production.
 [functions.send-push-notification]
 verify_jwt = false
+
+# EXP08 Team Hub files: caller JWT checks the row first; the service role then reads only that exact path.
+[functions.team-hub-file]
+verify_jwt = true

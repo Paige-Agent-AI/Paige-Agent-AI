@@ -58,5 +58,36 @@
     "execution": "UNAVAILABLE",
     "customerAcceptance": "UNVERIFIED",
     "founderAcceptance": "NOT_REQUESTED"
+  },
+  "currentReceiving": {
+    "at": "2026-10-25T13:58:00.029Z",
+    "sourceHead": "3a8d6960601bf140397a9baf671f1c493b86b363",
+    "sourceTree": "70ceac9886c4ff7e375a6459e75257f7c57f7102",
+    "receivingMain": "f41f3a7919f76539e8c71e8b22c0d86235e54c06",
+    "originalSourceHead": "70a1a34b1fd6d57baa496f7612f320f2af9ccca6",
+    "originalSixRuntimeNativeProofBlobsExact": 6,
+    "ciExtension": "Only actual original handler/outcome direct SDK strict check added; whole original gate inverse PASS",
+    "inputs": {
+      "scripts/agreements/prepared-request-status-proof.mjs": "3d89463fa4139620c7fe772c9a7bd4e073ce48a7f4cdbd2ab537d0f784193cf9",
+      "scripts/agreements/prepared-signature-work-proof.mjs": "0f1ba49c98dc0ae90c50fed1c7490b64e766e7d1cecf6134f5b1dccfd1221ca8",
+      "scripts/agreements/run-integrity-proof.sh": "8dbf8f8da46106c90b3f6be0259afd0eb7faa914b800c7b05abd79315579a03c",
+      "supabase/functions/_shared/agreements/prepared-signature-outcome.test.ts": "2863d3e2d811b08cd4db31252147423e68570da3fa3f8c1a538c68d2dc96e08b",
+      "supabase/functions/_shared/agreements/prepared-signature-outcome.ts": "08a52d2052e4d4599a1a8fd111d7d053a1d0698893526e31c3cb2e7e167b2486",
+      "supabase/functions/agreement-send/index.ts": "655e6c5ea0a59746b039ac51f57c978b6ad7e2be4b185949e10ff6d9fc093563",
+      "supabase/migrations/20271114170004_e04_prepared_request_status.sql": "33469641b3bf5e0662c73dfcb6429364ac05cfeabaa25369610ebe47fc872835"
+    },
+    "sourceProof": {
+      "cases": 116,
+      "steps": 21,
+      "unit": "e04-c43-current-unit-1792936416684.log",
+      "concreteStrict": "e04-c43-final-concrete-strict-1792936640946.log",
+      "native": "Original35 cases retained at source-identical70a1; no new local native run claimed"
+    },
+    "release": {
+      "native14160004": "ACTUALLY_APPLIED_ONCE9 at f41f3a79",
+      "native14170004": "NOT_APPLIED",
+      "exactCurrentCi": "PROOF_OWED",
+      "customerAcceptance": "UNVERIFIED"
+    }
   }
 }

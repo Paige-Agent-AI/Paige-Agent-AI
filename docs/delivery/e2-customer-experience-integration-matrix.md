@@ -16,6 +16,15 @@ and catalogue maturity remain unchanged; one integrated founder evaluation.
 
 ## EXP02 Systems Check dialog return — October23 source candidate
 
+**October24 update:** composed main03ed, original67/67 PASS; eleven final native
+synthetic captures now cover eight closed/open layouts and desktop/390 dialog
+focus return. Original dialog actions render44px after a scoped CSS correction.
+See the existing evidence link below for hashes and precise scope. This replaces
+the earlier missing matched-capture boundary; native200percent/current reduced
+motion/pending/scope-retirement, exact-head CI/release and authenticated customer,
+other-role/cohort/Live/full19/nine/founder acceptance remain owed. No approved
+action, real scan, receipt or algorithm maturity is inferred.
+
 Original review dialogs now consume Escape before shared shell shortcuts and
 restore their original control after inert clears. A per-account decision generation
 retires late success/refusal/focus, including A→B→A and unmount, without cancelling

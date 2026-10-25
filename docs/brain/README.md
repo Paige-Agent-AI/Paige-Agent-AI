@@ -361,6 +361,17 @@ ZION result, historical acceptance or full ten-outcome/E5/founder closure.
 
 ## EXP02 Systems Check dialog return — October23 source candidate
 
+**October24 restored confirmation:** current-main03ed is composed; original
+component6ee9d5f9 is retained and its dialog-action CSS minimum improves36→44px.
+Original67/67 tests pass in34.52s. Eleven final original-shell captures now include
+all eight desktop/narrow closed/open layouts, desktop/390 dialogs and390 visible
+focus return, with exact hashes/raster dimensions in the linked evidence. Chat
+draft and original Escape/focus return are observed. These replace the earlier
+missing matched-render claim only; previous failures and the dated results below
+remain historical. Native200percent/current reduced-motion/pending/scope-retirement,
+exact-head review/CI/release and authenticated customer/Live/cohort/full19/nine/
+founder proof remain owed. No action, authority or readiness promotion.
+
 Original review dialogs now consume Escape before shared shell shortcuts and
 restore their original control after inert clears. A per-account decision generation
 retires late success/refusal/focus, including A→B→A and unmount, without cancelling

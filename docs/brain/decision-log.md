@@ -4,9 +4,9 @@
 
 - **EXP08 Team Hub increment 3 built: attachments (2026-10-25, not yet merged, `PROOF_OWED`).** Built against the owner's increment-3 decision below. Contract: [increment 3](../delivery/exp08-team-hub-increment3-attachments-contract.md). Evidence: [increment 3 record](../evidence/ui-delivery/exp08-team-hub-increment3.md).
   - **What shipped in source:**
-    - Migration `20271114150008` adds the `team_hub_files` table (RLS on, no policies, no browser grants, A10 `delete`) and four `AS RESTRICTIVE` `storage.objects` policies on `comms-attachments` at `<tenant>/team-hub/<file_id>`.
+    - Migration `20271114160008` adds the `team_hub_files` table (RLS on, no policies, no browser grants, A10 `delete`) and four `AS RESTRICTIVE` `storage.objects` policies on `comms-attachments` at `<tenant>/team-hub/<file_id>`.
     - The same migration adds `team_hub_begin_file`, `team_hub_file_for_check`, `team_hub_discard_file`, the service-role `team_hub_file_verdict` and `team_hub_claim_stale_files`, and replaces `team_hub_post_message` with a version that takes a trailing `p_file_ids`. The old 6-argument call from `team_hub_request_task` still resolves.
-    - Migration `20271114150009` adds the `team_hub_files` retirement provider. The operator deletion UI reads it (`FILE_PROVIDER_ACTIONS`).
+    - Migration `20271114160108` adds the `team_hub_files` retirement provider. The operator deletion UI reads it (`FILE_PROVIDER_ACTIONS`).
     - The new `team-hub-file` edge function checks each file's real bytes (`_shared/team-hub-file-type.ts`).
     - Service-role reader guards in `send-message`, `subagent-email-composer` and `analyze-financial-document`.
     - UI: paperclip and drop, file chips with their states and plain-word refusals, file rows with Download, and the not-scanned disclosure.

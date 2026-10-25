@@ -53,8 +53,8 @@ below. The originals stay where they are as history (§58).
     exactly-once link in `team_hub_work_refs`, PAIGE prefill handoffs and the Team work panel.
     Also `PROOF_OWED`; see the
     [increment 2 work contract](../../delivery/exp08-team-hub-increment2-work-contract.md).
-  - **Update, 2026-10-25:** increment 3 adds attachments (migrations `20271114150008` and
-    `20271114150009`, not yet merged).
+  - **Update, 2026-10-25:** increment 3 adds attachments (migrations `20271114160008` and
+    `20271114160108`, not yet merged).
     - Limits: up to 5 files of 10 MB each per message or thread reply.
     - Storage: the private `comms-attachments` bucket at `<tenant>/team-hub/<file_id>`, recorded
       in `team_hub_files` behind four restrictive storage policies.

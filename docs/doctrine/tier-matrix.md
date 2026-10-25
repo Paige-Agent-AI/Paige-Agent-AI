@@ -382,7 +382,7 @@ Inside Team Hub, a teammate types `/` for four commands. *Draft a task* creates 
 
 Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
-### EXP08 Team Hub increment 3: attachments (migrations `20271114150008` and `20271114150009`, 2026-10-25; not yet merged)
+### EXP08 Team Hub increment 3: attachments (migrations `20271114160008` and `20271114160108`, 2026-10-25; not yet merged)
 
 Inside Team Hub, a teammate attaches up to 5 files (10 MB each) to a message or thread reply with the paperclip or by dropping them, sees each file's state on a chip, and can send files with no text. Everyone who can see the conversation now gets a Download that mints a fresh 60-second signed URL served as an attachment. Files are **not malware-scanned** (owner decision); the paperclip and every file row say so.
 - Types: PDF, PNG, JPEG, WEBP, GIF, `.docx`, `.xlsx`, `.txt`, `.csv`. The `team-hub-file` edge function checks each file's real bytes. Word and Excel files with macros, embedded objects or charts, ActiveX, external templates or data links, or DDE fields are refused. Legacy `.doc`/`.xls` and PowerPoint are not accepted.

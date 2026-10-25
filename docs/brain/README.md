@@ -631,8 +631,8 @@ prefill PAIGE; the Team work panel reads status from `plan_items`. Contract:
 
 **Increment 3 (2026-10-25, `PROOF_OWED`, not yet merged):** attachments, up to 5 files of 10 MB
 each per message, in `comms-attachments` at `<tenant>/team-hub/<file_id>`. Files are recorded in
-`team_hub_files` behind four restrictive storage policies (migration `20271114150008`) and purged
-on retirement by the `team_hub_files` provider (`20271114150009`). The `team-hub-file` edge
+`team_hub_files` behind four restrictive storage policies (migration `20271114160008`) and purged
+on retirement by the `team_hub_files` provider (`20271114160108`). The `team-hub-file` edge
 function checks the real bytes, and Download mints a fresh 60-second attachment URL. Files are
 **not malware-scanned**. Legacy `.doc`/`.xls` and PowerPoint are not accepted, and Word or Excel
 files with embedded objects, charts, external links or macros are refused. No scheduled stale-file

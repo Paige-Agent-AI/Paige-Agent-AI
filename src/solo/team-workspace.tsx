@@ -1,32 +1,54 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Mail, RefreshCw, Search, ShieldCheck, Sparkles, UserPlus, Users, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Mail, MailX, MessageSquare, MessageSquareOff, Pause, Pencil, RefreshCw, Search, Send, ShieldCheck, Sparkles, Undo2, UserMinus, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { readFunctionErrorBody } from "@/lib/integrations/connectError";
 import { TeamMemberContact } from "./team-member-contact";
+import { Modal, NoticeBar, PermissionCards, RowMenu, TeamPicker, TeamSwitch, type MenuItem, type TeamNotice } from "./team-controls";
+import { DepartureReview, type DepartureOutcome } from "./team-departure";
 import {
+  canActOn,
   inviteLifecycle,
   inviteIsFinished,
   deliveryPresentation,
   DELIVERY_STEPS,
   invitationRefusalMessage,
+  lifecycleRefusal,
   memberVisibleIdentity,
+  normalizeHoldings,
   normalizeTeamWorkspace,
   permissionPresentation,
-  removalRefusal,
   validateWorkProfile,
-  type RemovalRefusal,
+  type MemberHoldings,
   type TeamInviteRecord,
   type TeamMemberRecord,
   type TeamWorkspaceRecord,
 } from "./team-workspace-contract";
 
+// The dialog trap moved to ./team-controls so the drawer and the suspend dialog share it; it is
+// re-exported for any caller that imported it from here.
+export { Modal } from "./team-controls";
+
 const PAGE_SIZE = 25;
 
 function initials(member: TeamMemberRecord): string {
   return (member.full_name || member.email || "?").split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
+
+// Colour hooks only (owner colour pass 2026-10-26). A stable tint per person, from the same id on
+// every render and every device, and a tone per permission. Neither carries meaning on its own:
+// the initials and the pill's word do.
+function avatarHue(member: TeamMemberRecord): number {
+  const key = member.user_id || member.email || member.full_name || "";
+  let h = 0;
+  for (let i = 0; i < key.length; i += 1) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return h % 4;
+}
+function permissionTone(permission: string | null | undefined, isOwner: boolean): "owner" | "admin" | "member" | undefined {
+  if (isOwner || permission === "owner") return "owner";
+  return permission === "admin" || permission === "member" ? permission : undefined;
 }
 
 function useTeamWorkspace(search: string, permission: string) {
@@ -67,88 +89,39 @@ function useTeamWorkspace(search: string, permission: string) {
     return () => { clearTimeout(timer); seq.current += 1; };
   }, [load, tenantLoading]);
 
+  // RE-READ IN PLACE after a write on a row (the switch, suspend, reinstate, a removal). `refresh()`
+  // nulls the roster before it awaits, which flashes the skeleton and drops every page past the
+  // first: the row the operator just acted on would jump away. This keeps what is on screen until the
+  // server's answer replaces it, and asks for as many rows as are showing, so the persisted state is
+  // what the roster then shows. A failed re-read leaves the screen as it was rather than blanking it.
+  const shownRef = useRef(0);
+  useEffect(() => { shownRef.current = state.value?.members.length ?? 0; });
+  const reload = useCallback(async () => {
+    const request = ++seq.current;
+    if (!activeTenantId) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- migration RPC awaits generated types
+    const { data, error } = await (supabase as any).rpc("get_solo_team_workspace", {
+      _search: search.trim() || null,
+      _permission: permission,
+      _limit: Math.min(100, Math.max(PAGE_SIZE, shownRef.current)),
+      _offset: 0,
+    });
+    if (request !== seq.current) return;
+    const next = normalizeTeamWorkspace(data);
+    if (error || !next || next.tenant_id !== activeTenantId) return;
+    setState((current) => ({ ...current, tenantId: activeTenantId, loading: false, loadingMore: false, error: null, value: next }));
+  }, [activeTenantId, permission, search]);
+
   return {
     ...state,
     loading: tenantLoading || state.loading || Boolean(activeTenantId && state.tenantId !== activeTenantId),
     refresh: () => load(0),
+    reload,
     loadMore: () => load(state.value?.members.length ?? 0),
   };
 }
 
-/**
- * `onEscape` lets the dialog's own content own the Escape key for as long as it has something to
- * back out of — a destructive confirmation being the case that needs it. Returning `true` means
- * "handled"; anything else falls through to closing the dialog. Without it, backing out of "Remove
- * X?" discarded the whole editor, including unsaved work details the footer's Cancel/Close wording
- * exists to protect.
- */
-function Modal({ title, description, onClose, onEscape, busy, wide, children }: { title: string; description: string; onClose: () => void; onEscape?: () => boolean; /** A request is in flight and must not be interrupted: the close control is DISABLED, not merely inert. */ busy?: boolean; /** Opens at the wider size from the first frame, so content arriving later never resizes it. */ wide?: boolean; children: React.ReactNode }) {
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLElement>(null);
-  // The key handler and the focus capture read the latest callbacks through refs so the effect can
-  // run ONCE. It used to depend on `onClose`, which the caller re-creates on every render, so every
-  // parent state change re-ran it: re-capturing the return-focus target and yanking focus back to
-  // the close button — including in the middle of a confirmation the user was reading.
-  const latest = useRef({ onClose, onEscape });
-  // Assigned on COMMIT, not during render: a render that is discarded (StrictMode, concurrent
-  // rendering) would otherwise leave this ref holding callbacks from a pass that never took effect.
-  useEffect(() => { latest.current = { onClose, onEscape }; });
-  useEffect(() => {
-    const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    // `[data-initial-focus]` is tried on its own FIRST. A single querySelector with a comma-joined
-    // list returns the first match in DOCUMENT order across all branches, and the header's close
-    // button precedes every child — so the opt-in marker never once won, on this dialog or on the
-    // invite dialog that has carried it all along.
-    const marked = dialogRef.current?.querySelector<HTMLElement>("[data-initial-focus]");
-    const firstFocus = marked ?? dialogRef.current?.querySelector<HTMLElement>("input, select, textarea, button");
-    (firstFocus ?? closeRef.current)?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        if (latest.current.onEscape?.() === true) return;
-        latest.current.onClose();
-        return;
-      }
-      if (event.key !== "Tab" || !dialogRef.current) return;
-      const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex="-1"])')];
-      // Nothing tabbable at all: Tab must not walk out of an aria-modal dialog into the roster
-      // beneath it. HONEST NOTE: this is a defensive floor, not a state I can point at — the fourth
-      // read measured three focusable nodes during a pending removal (the work-profile inputs stay
-      // enabled), so my original claim that "every control is disabled" was wrong. The branch below
-      // is the one that actually fires in that state.
-      if (!focusable.length) { event.preventDefault(); return; }
-      const first = focusable[0]; const last = focusable[focusable.length - 1];
-      // The caret is somewhere the trap's own list does not contain — a `tabIndex={-1}` target that
-      // was focused programmatically, which is exactly what the live "Removing…" line is. The
-      // first/last comparison below can never match it, so Tab left the dialog entirely: with the
-      // footer control disabled there was nothing tabbable AFTER it in document order. Found by the
-      // third adversarial read; jsdom has no native Tab, so no unit test could see it.
-      if (!focusable.includes(document.activeElement as HTMLElement)) {
-        event.preventDefault();
-        (event.shiftKey ? last : first).focus();
-        return;
-      }
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      // Only restore focus to a node that is still in the document. After a removal the invoking
-      // roster row is gone, and `.focus()` on a detached element is a silent no-op that drops focus
-      // to <body>; the caller moves focus deliberately in that case instead.
-      if (returnFocus && document.contains(returnFocus)) returnFocus.focus();
-    };
-  }, []);
-  return <div className="stw-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
-    <section ref={dialogRef} className={wide ? "stw-modal is-wide" : "stw-modal"} role="dialog" aria-modal="true" aria-labelledby="stw-modal-title" aria-describedby="stw-modal-desc">
-      <header><div><h2 id="stw-modal-title">{title}</h2><p id="stw-modal-desc">{description}</p></div><button ref={closeRef} className="stw-icon-btn" onClick={onClose} disabled={busy} aria-label="Close"><X /></button></header>
-      {children}
-    </section>
-  </div>;
-}
-
-export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, onPendingChange, onContactDirtyChange }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: () => void; onSaved: (saved?: { job_title: string; responsibilities: string }) => void | Promise<void>; onRemoved?: (announcement: string) => void; /** Raised while a removal is in flight, so the PARENT does not unmount this dialog underneath it. */ onPendingChange?: (pending: boolean) => void; /** Raised while contact edits are unsaved, for the same reason: a roster reload must not take them. */ onContactDirtyChange?: (dirty: boolean) => void }) {
+export function MemberEditor({ member, workspace, onClose, onSaved, onContactDirtyChange, canRemove, onRequestRemoval }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: () => void; onSaved: (saved?: { job_title: string; responsibilities: string }) => void | Promise<void>; /** Raised while contact edits are unsaved: a roster reload must not take them. */ onContactDirtyChange?: (dirty: boolean) => void; /** The viewer may remove this person (canActOn); the drawer is opened by the parent. */ canRemove?: boolean; onRequestRemoval?: () => void }) {
   const [title, setTitle] = useState(member.job_title ?? "");
   const [responsibilities, setResponsibilities] = useState(member.responsibilities ?? "");
   const [savedTitle, setSavedTitle] = useState(member.job_title ?? "");
@@ -169,8 +142,8 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, o
   const save = async () => {
     if (!workspace.can_manage_profiles || !dirty || Object.keys(errors).length) return;
     setSaving(true);
-    // Same wrap, same reason: `saving` now gates the destructive control, so an escaping rejection
-    // here would silently kill "Remove from workspace" until the dialog is closed and reopened.
+    // WRAPPED: an escaping rejection would skip `setSaving(false)` and leave Save and the way into
+    // removal disabled, with nothing said, until the dialog is closed and reopened.
     let data: { job_title?: string | null; responsibilities?: string | null } | null = null;
     let error: { message?: string } | null = null;
     try {
@@ -206,289 +179,11 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, o
     // in the audit log. §70.2 — the person who cannot use it is right and the passing test is wrong.
     await onSaved({ job_title: nextTitle, responsibilities: nextResponsibilities });
   };
-
-  // REMOVAL. Owner-only, and gated on the same server-derived flag the permission control uses —
-  // never a client-side tier or account-type compare. `permission.mutable` is Admin-or-Member for a
-  // non-owner, which is exactly the set the server agrees to remove; reusing it keeps the screen
-  // from offering an act the database will refuse, and keeps a legacy specialised permission from
-  // being quietly reassigned by a surface that promises it will not do that.
-  const canRemove = workspace.can_change_permissions && !member.is_owner && permission.mutable && Boolean(onRemoved);
-  const [removal, setRemoval] = useState<{ stage: "idle" | "armed" | "pending"; error: RemovalRefusal | null; tenantAtArm: string | null; /** The workspace NAME as of arming. The pending copy must name the workspace the call was SENT to, which the live one stops being the moment somebody switches. */ nameAtArm: string | null }>({ stage: "idle", error: null, tenantAtArm: null, nameAtArm: null });
-  const removeButtonRef = useRef<HTMLButtonElement>(null);
-  const removalInFlightRef = useRef(false);
-  useEffect(() => { removalInFlightRef.current = removal.stage === "pending"; }, [removal.stage]);
-  // The PARENT must not unmount this dialog mid-call. It renders on `selectedLive`, and a workspace
-  // switch during a pending removal nulls the roster and drops the selected member from it — so the
-  // editor vanished and BOTH outcomes were lost: a refusal had nowhere to land, and a removal the
-  // server actually applied was never announced, while the post-await switch guard below could not
-  // run at all. Gating dismissal inside this component could not see that, because the unmount came
-  // from above. Reported by the peer read of the previous head as a second, separate seam.
-  // The hold covers an IN-FLIGHT CALL and nothing else. I widened it once to `|| Boolean(removal.error)`
-  // to keep a refusal on screen, and the read of that commit caught what an unbounded flag does: an
-  // error state never expires, so an operator who reads a refusal without dismissing it pinned the
-  // editor open over a roster that no longer contained the member — with the work fields and "Save
-  // work details" live, because those gate on `pending`. That is the shipped-save-flow regression the
-  // comment 400 lines below says was repaired, reopened through a different door. A mount-lifetime
-  // problem is not something a boolean with no time bound can solve.
-  useEffect(() => { onPendingChange?.(removal.stage === "pending"); }, [removal.stage, onPendingChange]);
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const pendingRef = useRef<HTMLParagraphElement>(null);
-  const errorRef = useRef<HTMLParagraphElement>(null);
-  const inFlight = useRef(false);
-  // The workspace as of NOW, not as of the click. `confirmRemoval` is a closure created when the
-  // button was pressed, so every `workspace.*` it reads AFTER its await is the value from that
-  // render — which is exactly the value a mid-call workspace switch invalidates. Both post-await
-  // comparisons below decide whether the operator is still looking at the workspace they acted in,
-  // so reading a stale one makes them answer "unchanged" precisely when it changed. Found while
-  // fixing the parent-unmount seam: the switch branch was correct and simply never fired.
-  const workspaceRef = useRef(workspace);
-  workspaceRef.current = workspace;
-  // ...and the roster record ALONE cannot answer that question, which is the sixth read's finding.
-  // The parent feeds this dialog `workspace ?? lastWorkspace.current` ON PURPOSE, because `load(0)`
-  // nulls the roster before it awaits and the dialog must outlive that flash. So for the whole
-  // switch window — the 180ms debounce plus the fetch — the prop above IS the PRE-switch roster,
-  // and `workspaceRef.current.tenant_id !== tenantAtArm` answers "nothing changed" precisely when
-  // it did. Every one of the three post-await guards was therefore blind exactly where it mattered,
-  // and a removal that landed inside that window reinstated the cross-workspace banner (the parent
-  // clears `notice` on `activeTenantId`, which fires BEFORE the roster reloads, so the banner is
-  // written after the clear) while a refusal landed in a dialog the new roster then unmounted —
-  // reported to nobody at all.
-  //
-  // The tenant CONTEXT is the signal that does not flash: it is what the parent's own invite-dialog
-  // guard already keys on. It is read through a commit-assigned ref for the same reason
-  // `removalInFlightRef` is.
-  const { activeTenantId } = useTenantContext();
-  // THE SAFETY NET. A refusal the operator has not dealt with, held so that losing this component
-  // cannot lose the outcome of a destructive action. Cleared by every path that means "seen":
-  // Cancel, Escape, a retry, and closing the dialog deliberately.
-  const unreadRefusalRef = useRef<{ message: string; tenantId: string } | null>(null);
-  useEffect(() => {
-    unreadRefusalRef.current = removal.error
-      ? { message: removal.error.message, tenantId: removal.tenantAtArm ?? workspace.tenant_id }
-      : null;
-  }, [removal.error, removal.tenantAtArm, workspace.tenant_id]);
-  // SCOPED TO THE WORKSPACE IT IS ABOUT, because the net's first version re-fired a refusal into a
-  // context where it was false. It cannot tell "unread" from "read but not dismissed" — and this
-  // component FOCUSES the alert on every refusal (see the effect below), so it is read by
-  // construction and then recorded as unread anyway. An operator who read "Only the workspace owner
-  // can remove people from this workspace" and then switched to a workspace they DO own was told it
-  // again, about the wrong one, with no name in the sentence to give it away.
-  //
-  // So the net now only speaks where the sentence is still true. It is a backstop for an outcome
-  // destroyed before it could be read, never a replay of one that was.
-  useEffect(() => () => {
-    const unread = unreadRefusalRef.current;
-    // Silence it only where the sentence is PROVABLY about somewhere else. An unknown live tenant —
-    // Exit tenant, a session revalidating — is not evidence that the refusal is false; it is the
-    // case where the operator most needs to hear it, and treating "unknown" as "different" turned
-    // two of this file's own tests red the moment I tried it. Fail toward telling them.
-    if (unread && (!activeTenantRef.current || activeTenantRef.current === unread.tenantId)) toast.error(unread.message);
-  }, []);
-  const activeTenantRef = useRef(activeTenantId);
-  // Commit-assigned, matching `removalInFlightRef` and the `Modal` `latest` ref. HONEST NOTE:
-  // mutation cannot tell this apart from a render-phase assignment, because jsdom runs no
-  // StrictMode double-render and discards no renders — so this is the file's stated pattern applied
-  // for consistency, NOT a property any test here proves.
-  useEffect(() => { activeTenantRef.current = activeTenantId; }, [activeTenantId]);
-  // Proof of a switch, never a guess at one. A null/absent live id means UNKNOWN — treating that as
-  // "switched" would report "you have since switched workspace" to an operator who never moved,
-  // which is a false statement rather than a silence, so it is the direction that must fail closed.
-  //
-  // The roster is deliberately NOT consulted as a second witness. I wrote it as one, and mutation
-  // proved the branch can never fire alone: `useTeamWorkspace` returns early without fetching when
-  // there is no tenant id, and when a roster value DOES exist the hook has already asserted
-  // `next.tenant_id === activeTenantId` — so a roster that disagrees with `tenantAtArm` implies a
-  // live id that disagrees too. An unreachable OR that a comment calls load-bearing is the exact
-  // thing the read of this diff filed against the disarm effect below; it is removed rather than
-  // left in to be believed.
-  const switchedAwayFrom = (tenantAtArm: string) =>
-    Boolean(activeTenantRef.current) && activeTenantRef.current !== tenantAtArm;
-  // Whether this dialog has been through a removal stage at all. Without it the effect below fires
-  // its `idle` branch on MOUNT — and a child's effects commit before its parent's, so it overrode
-  // the Modal's own initial focus and left the caret on "Remove from workspace" the moment anyone
-  // opened a teammate. Enter would then have armed a removal. Found by an adversarial read of the
-  // pushed diff and confirmed in a real browser; every jsdom test here passed straight through it,
-  // because none of them asserted anything about focus BEFORE the confirm was armed.
-  const removalTouched = useRef(false);
-
-  // Focus follows the stage, in an effect rather than in the click handler: the node being focused
-  // is rendered BY the state change, so focusing synchronously would reach a ref that is still null.
-  useEffect(() => {
-    if (removal.stage !== "idle") removalTouched.current = true;
-    if (!removalTouched.current) return;
-    // Cancel, never the destructive button: an armed confirmation must not be one Enter away.
-    if (removal.stage === "armed" && !removal.error) cancelRef.current?.focus();
-    // Both buttons disable while the request is in flight. The Tab trap queries
-    // `button:not(:disabled)` and only acts when activeElement is its first or last member, so a
-    // browser blurring the disabled button drops focus to <body> and the next Tab walks straight
-    // out of an aria-modal dialog. The live status line keeps it inside.
-    if (removal.stage === "pending") pendingRef.current?.focus();
-    // Same trap, different stage, and it is the one the first version missed: a NON-retryable
-    // refusal disables the confirm button while it holds focus and leaves the stage `armed`, so
-    // neither branch above fires. jsdom does not blur on `disabled`, which is exactly why the tests
-    // could not see it. The alert is the right landing place anyway — it is what the user must read.
-    if (removal.stage === "armed" && removal.error) errorRef.current?.focus();
-    if (removal.stage === "idle") removeButtonRef.current?.focus();
-  }, [removal.stage, removal.error]);
-
-  // If the active workspace changes underneath an ARMED confirmation, disarm it. The server refuses
-  // the call as well; this is so nobody is left looking at a primed destructive action that now
-  // names a workspace they are no longer in.
-  //
-  // NOT while the call is already PENDING. A sent request cannot be un-sent, and resetting the stage
-  // to `idle` here threw away the fact that one was in flight: the parent's hold was released, the
-  // dialog unmounted, and the outcome — refusal OR a removal the server actually applied — was
-  // discarded. The post-await guard below is what reports a switch that happened mid-call, and it
-  // can only do that if this leaves the stage alone. Found while fixing the parent-unmount seam:
-  // the hold looked correct and was being dropped from underneath by this line.
-  useEffect(() => {
-    setRemoval((current) => (current.stage !== "pending" && current.tenantAtArm && current.tenantAtArm !== workspace.tenant_id ? { stage: "idle", error: null, tenantAtArm: null, nameAtArm: null } : current));
-  }, [workspace.tenant_id]);
-
-  const disarmRemoval = () => setRemoval({ stage: "idle", error: null, tenantAtArm: null, nameAtArm: null });
-
-  const confirmRemoval = async () => {
-    // `disabled` alone is not a guard: two clicks dispatched inside one React batch both run before
-    // the disabling re-render commits, and the second removal answers "that person is not on this
-    // workspace's team" — which the screen then reports as a reconciliation rather than as the
-    // removal the owner actually performed. Right roster, wrong sentence.
-    if (inFlight.current) return;
-    inFlight.current = true;
-    const tenantAtArm = removal.tenantAtArm ?? workspace.tenant_id;
-    const nameAtArm = removal.nameAtArm ?? workspace.tenant_name;
-    setRemoval({ stage: "pending", error: null, tenantAtArm, nameAtArm });
-    // WRAPPED, because blocking dismissal turns an unhandled rejection into a TRAP. supabase-js
-    // resolves a PostgREST refusal into `{ error }` rather than throwing, so this path used to be
-    // unreachable in practice — but a genuine transport rejection (offline, DNS, an aborted
-    // connection) rejects the promise, and with the dialog now correctly undismissable while
-    // pending, an escaping rejection would leave the person stuck on "Removing…" for ever with no
-    // error and no way out but a page reload. `inFlight` would also stay true, wedging retry.
-    // Named by the peer read as the cost of the gate; this is what pays it.
-    let data: { tenant_id?: string } | null = null;
-    let error: { message?: string } | null = null;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- migration RPC awaits generated types
-      ({ data, error } = await (supabase as any).rpc("remove_solo_team_member", {
-        _member_user_id: member.user_id,
-        _expected_tenant_id: tenantAtArm,
-      }));
-    } catch (thrown) {
-      // "network request failed" rather than a bare "request failed": a thrown non-Error IS a
-      // transport failure, and the refusal vocabulary classifies by message. The old string matched
-      // none of its transport patterns, so the one case that genuinely deserves a retry was being
-      // told it could not have one.
-      error = { message: thrown instanceof Error ? thrown.message : "network request failed" };
-    }
-
-    inFlight.current = false;
-    if (error) {
-      const refusal = removalRefusal(error.message ?? null, identity.primary, nameAtArm);
-      if (refusal.reconciled) {
-        // Not a removal this owner performed, and it must never be reported as one. The roster is
-        // simply behind, so reconcile it and say exactly that.
-        //
-        // ...but only into the workspace it is about. `onRemoved` writes the roster banner, and if
-        // the operator has switched since, that banner makes a claim about a workspace they are no
-        // longer looking at — and the parent's own switch effect would clear it anyway. Same class
-        // as the two branches below; flagged by the third read as pre-existing and fixed here
-        // rather than left as the one remaining instance of it.
-        if (switchedAwayFrom(tenantAtArm)) {
-          setRemoval({ stage: "idle", error: null, tenantAtArm: null, nameAtArm: null });
-          toast.error(refusal.message);
-          onClose();
-          return;
-        }
-        onRemoved?.(refusal.message);
-        closeAfterOutcome();
-        return;
-      }
-      // If the workspace CHANGED while the call was in flight, this dialog is no longer the right
-      // place to say so: it now sits over a different roster, and the disarm effect above would
-      // wipe the alert the moment the stage leaves `pending` anyway — showing the refusal for one
-      // frame and then discarding it, which is barely better than never showing it. So the outcome
-      // goes to the parent-owned channel, which outlives the dialog, and the dialog closes.
-      // A REFUSAL IS NEVER LOST, and it is no longer a predicate that guarantees it. Two rounds
-      // were spent trying to answer "will this dialog survive to be read?" before the answer
-      // settled: it cannot be answered. `selectedLive` — the only signal that knows — conflates
-      // "the member is gone" with "the roster is reloading", and the reload is debounced 180ms and
-      // nulls its value before it awaits, so there is always a window where the honest answer is
-      // "yes" and the truth a moment later is "no". Holding the dialog open instead pinned a
-      // departed member with a live Save. Both mechanisms were the same mistake: racing an async
-      // refetch with a boolean.
-      //
-      // So the guarantee moved into the unmount itself (see `unreadRefusalRef` above). The refusal
-      // is rendered in here when the dialog is still the right place for it, and if ANYTHING takes
-      // the dialog away before the operator has dealt with it — a queued refetch, a Save, the
-      // parent's own stale-selection clear — it is re-emitted to the channel that outlives this
-      // component. No predicate has to win.
-      //
-      // `switchedAwayFrom` stays, and what it decides is ROUTING, not wording: on a real switch the
-      // disarm effect above would wipe the error before any unmount, so the safety net could not
-      // see it. Going straight to the durable channel is what keeps that case covered. (An earlier
-      // comment here claimed it decided the wording. It never did — both paths emit the identical
-      // `refusal.message` — and a comment that misdescribes the mechanism is what the next reader
-      // reasons from.)
-      // HONEST NOTE on both lines below, because mutation cannot separate them and I will not imply
-      // it can: removing this branch entirely, or dropping the ref-clear, leaves the suite green.
-      // The safety net happens to cover the same case — but only by the order two effects commit
-      // in. The disarm effect above wipes `removal.error` on a tenant change, and if it commits
-      // before the unmount the net has nothing left to re-emit. Routing the switch explicitly is
-      // DETERMINISTIC; the net is the backstop for everything that is not a switch. (The separate
-      // ref-clear this branch used to carry is gone — `closeAfterOutcome` does it for all six
-      // settle paths now, which is where it belonged.)
-      if (switchedAwayFrom(tenantAtArm)) {
-        setRemoval({ stage: "idle", error: null, tenantAtArm: null, nameAtArm: null });
-        toast.error(refusal.message);
-        closeAfterOutcome();
-        return;
-      }
-      setRemoval({ stage: "armed", error: refusal, tenantAtArm, nameAtArm });
-      return;
-    }
-
-    // The server echoes the workspace it acted on. Switching workspaces writes
-    // profiles.active_tenant_id before this screen's own state changes, so a success rendered
-    // without this check could describe a workspace the owner is no longer looking at.
-    const acted = typeof data?.tenant_id === "string" ? data.tenant_id : null;
-    // TWO DIFFERENT THINGS, told apart rather than collapsed into one sentence. The previous
-    // version answered "your active workspace changed" for BOTH — including the case where the
-    // client never switched and the SERVER echoed a different tenant, which is the case this PR's
-    // own harness drives. It certified a false statement as OK. And in the other case it dropped a
-    // fact it holds: `acted === tenantAtArm` proves the person WAS removed, and the operator was
-    // told only that nothing is being claimed. Reported by the fourth adversarial read.
-    if (acted !== tenantAtArm) {
-      setRemoval({ stage: "idle", error: null, tenantAtArm: null, nameAtArm: null });
-      toast.error(acted === null
-        // It reported no workspace at all, which is not the same as reporting a different one.
-        ? `This did not come back with a workspace, so nothing is being claimed here. Reopen Team to see the current roster.`
-        : `The server reported acting on a different workspace, so nothing is being claimed here. Reopen Team to see the current roster.`);
-      closeAfterOutcome();
-      return;
-    }
-    if (switchedAwayFrom(tenantAtArm)) {
-      // The removal DID happen, in the workspace it named. Say that, rather than leaving the
-      // operator with an ambiguity about a destructive act that completed.
-      setRemoval({ stage: "idle", error: null, tenantAtArm: null, nameAtArm: null });
-      toast.success(`${identity.primary} was removed from ${nameAtArm}. You have since switched workspace, so this roster does not show it.`);
-      closeAfterOutcome();
-      return;
-    }
-
-    // `nameAtArm`, not the click-time closure: the guard above proves the ids match, so this is
-    // the same workspace either way — but naming the one the call was SENT to is what this whole
-    // sequence is about, and it stays right if that workspace is renamed mid-call.
-    onRemoved?.(`${identity.primary} no longer has access to ${nameAtArm}.`);
-    closeAfterOutcome();
-  };
-
   const changePermission = async () => {
     if (!permissionDraft) return;
     setSaving(true);
-    // WRAPPED for the same reason `confirmRemoval` is, and it is worse here than it was there.
-    // `saving` now gates the destructive control, so a transport rejection that skips
-    // `setSaving(false)` does not merely wedge this button — it kills "Remove from workspace"
-    // permanently, with nothing said. I hung a gate off this flag and did not give it the
-    // treatment the gate's own comment says it needs.
+    // WRAPPED: a transport rejection that skips `setSaving(false)` would wedge every control in this
+    // dialog with nothing said.
     let error: { message?: string } | null = null;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- migration RPC awaits generated types
@@ -498,147 +193,177 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, o
     }
     setSaving(false);
     if (error) { toast.error(error.message ?? "The permission change did not complete. Please try again."); return; }
-    toast.success(`Permission changed to ${permissionPresentation(permissionDraft, false).label}.`); setPermissionDraft(null); onSaved(); requestClose();
-
+    toast.success(`Permission changed to ${permissionPresentation(permissionDraft, false).label}.`); setPermissionDraft(null); onSaved(); onClose();
   };
 
-  // A removal in flight is NOT dismissible, on any path — backdrop, the header X, the footer Close,
-  // or Escape. Found by the peer read of this diff: the dialog could be dismissed mid-call, and if
-  // the server then REFUSED, `setRemoval({ stage: "armed", error: refusal })` landed on an unmounted
-  // component and was discarded. The owner saw a closed dialog and an unchanged roster with no
-  // indication the removal had failed — the failure was silent, which is the one outcome a
-  // destructive action must never have. `inFlight` guards a second CLICK; it never guarded a
-  // dismissal. The window is short but it is exactly the window a slow or failing call widens.
-  //
-  // THE FIRST ATTEMPT AT THIS FIX DID NOT WORK, and how it failed is why this is now ONE function
-  // rather than a wrapper at one boundary. It gated only the prop handed to `Modal` — which covers
-  // the backdrop, the header X and Escape — but the FOOTER button is rendered by THIS component and
-  // wired the raw `onClose` prop directly. So the single control actually labelled "Close" stayed
-  // live, and a person trying to back out would click precisely that one. Caught by an independent
-  // read of the pushed diff; my own test missed it because it selected the close control by
-  // `aria-label`, which the footer button does not carry. Every path now goes through `requestClose`,
-  // and the controls are DISABLED rather than live-looking and inert.
-  const removalInFlight = removal.stage === "pending";
-  // EVERY string in the removal block names THIS, not the live roster. Pinning only the live-region
-  // line left the paragraph above it and BOTH aria-labels still reading `workspace.tenant_name` —
-  // which the parent re-supplies as the NEW workspace after a mid-call switch. Three of the four
-  // then asserted a destructive act against a workspace it was not happening in while the fixed one
-  // said otherwise: the screen contradicted itself, and a screen-reader user heard the wrong claim
-  // from the button labels — worse than before, when all four at least agreed. Idle: `nameAtArm` is
-  // null and this is the live name, which is right. Armed: a switch disarms, so it cannot go stale.
-  const removalWorkspaceName = removal.nameAtArm ?? workspace.tenant_name;
-  // THE GATE IS READ THROUGH A REF, because the gate itself was a stale closure — which is how the
-  // first version of this fix failed, in the opposite click order. `changePermission` captures
-  // `requestClose` at the render where "Confirm access change" was pressed; if the removal had not
-  // started yet, that copy holds `removalInFlight === false` and closes the dialog unconditionally
-  // when its own RPC resolves — mid-removal, discarding the refusal exactly as before. The note
-  // below already named this mechanism for the raw closes, and I failed to apply it one line up.
-  // A ref cannot go stale, so every copy of `requestClose`, however old, reads the current state.
-  // THE INVARIANT, in both directions: while a removal is in flight NO other write starts, and while
-  // any other write is in flight a removal cannot start. `saving` is shared by the work-details save
-  // and the permission change, so gating on it covers both — deliberately, not incidentally. This is
-  // what makes the interleaving that broke the first version of this gate unreachable rather than
-  // merely guarded. (`save()` never closes the dialog, so it was not an escape path; it is included
-  // for the invariant, not because it leaked.)
-  // Assigned on COMMIT, not during render — the rule this file already states for `Modal`'s
-  // `latest` ref 300 lines up, and which I broke here: a render discarded by StrictMode or
-  // concurrent rendering would leave this holding `true` against a committed `false`, producing a
-  // Close button that looks live and does nothing. `requestClose` only ever runs from an event
-  // handler, which is after commit, so reading a commit-assigned ref is correct.
-  // NOTE FOR ANYONE TIDYING THIS: the six `onClose()` calls inside `confirmRemoval` are RAW on
-  // purpose and must stay that way. They run after the call has settled, but `requestClose` closes
-  // over a `pending` state that is still true at that instant (the ref updates on the NEXT
-  // render, and these run before it) — so routing them
-  // through here would refuse the close and strand the operator in a dialog whose work is done.
-  // Every close path a PERSON can trigger goes through `requestClose`; the settle paths are the
-  // component deciding it is finished, which is the one case the gate must not block.
-  // Closing it yourself acknowledges what is in it, so the safety net must not then repeat it back
-  // as a toast. Written through the ref rather than through state because this unmounts in the same
-  // batch: a `setRemoval` here may never commit before the component is gone.
-  const requestClose = () => { if (removalInFlightRef.current) return; unreadRefusalRef.current = null; onClose(); };
-  // Every settle path leaves through here. Written to the ref SYNCHRONOUSLY rather than relying on
-  // the `[removal.error]` effect having flushed: these run in the same batch as the unmount, so a
-  // reply fast enough to beat the passive effect would let the net re-announce a refusal the retry
-  // had already superseded — a "we can't say whether this happened" toast over a roster banner
-  // saying it did. Only the switch branch carried this line; the other five inherited the hazard.
-  const closeAfterOutcome = () => { unreadRefusalRef.current = null; onClose(); };
-  return <Modal title={identity.primary} description="Contact details say where to reach them. Work details describe what they do. Permission controls what they can access."
+  // REMOVAL moved to the departure review drawer (approved design, EXP08). This dialog only offers
+  // the way in; the drawer owns the call and every guarantee the inline block used to carry.
+  const suspended = member.status === "suspended";
+  const firstName = member.full_name?.trim() ? member.full_name.trim().split(/\s+/)[0] : identity.primary;
+  // Stage 0 (live): change_user_role refuses a target without an active seat, so a suspended
+  // person's permission can't be changed directly. The control is not offered; the reason is.
+  const permissionEditable = workspace.can_change_permissions && permission.mutable && !suspended;
+  return <Modal title={identity.primary} description={`${member.email ?? "Email unavailable"} · ${suspended ? "Suspended" : "Active"}`}
     wide
-    busy={removalInFlight}
-    onClose={requestClose}
-    onEscape={() => { if (removal.stage !== "armed") return false; disarmRemoval(); return true; }}>
+    onClose={onClose}>
     <div className="stw-modal-body">
-      <div className="stw-person-summary"><span className="stw-avatar">{initials(member)}</span><div><strong>{identity.primary}</strong>{identity.secondary && <span>{identity.secondary}</span>}</div><span className="stw-pill" data-tone={member.is_owner ? "owner" : "neutral"}>{permission.label}</span></div>
+      <div className="stw-person-summary"><span className="stw-avatar" data-hue={avatarHue(member)}>{initials(member)}</span><div><strong>{identity.primary}</strong>{identity.secondary && <span>{identity.secondary}</span>}</div><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span></div>
       <TeamMemberContact member={member} workspace={workspace} onDirtyChange={reportContactDirty}/>
       <div className="stw-separation-note"><ShieldCheck/><span><strong>Permission and title are separate.</strong> Changing someone’s title never changes their access.</span></div>
       <label>Title<input value={title} disabled={!workspace.can_manage_profiles || saving} maxLength={121} onChange={(e) => { setTitle(e.target.value); setSaveConfirmed(false); }} placeholder="e.g. Client Success Manager"/>{errors.title && <small role="alert">{errors.title}</small>}</label>
       <label>Responsibilities<textarea value={responsibilities} disabled={!workspace.can_manage_profiles || saving} maxLength={2001} onChange={(e) => { setResponsibilities(e.target.value); setSaveConfirmed(false); }} rows={5} placeholder="What this person owns, decides, and hands off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label>
       {saveConfirmed && <div className="stw-separation-note" role="status"><ShieldCheck/><span>Work details saved. Permission was not changed.</span></div>}
-      {workspace.can_change_permissions && permission.mutable && <div className="stw-permission-change"><label>Enforced permission<select value={permissionDraft ?? member.permission} onChange={(e) => setPermissionDraft(e.target.value)}><option value="admin">Admin</option><option value="member">Member</option></select></label>{permissionDraft && permissionDraft !== member.permission && <div className="stw-confirm"><p>Change access from {permission.label} to {permissionPresentation(permissionDraft, false).label}? This changes authorization, not the title.</p><button className="stw-btn secondary" onClick={() => setPermissionDraft(null)}>Cancel</button><button className="stw-btn" disabled={saving || removalInFlight} onClick={changePermission}>Confirm access change</button></div>}</div>}
-      {/* `canRemove` is recomputed from the LIVE roster, so switching into a workspace where the
-          viewer is only an Admin used to unmount this entire block MID-REMOVAL — taking the
-          "Removing…" status line, Cancel and Confirm with it. What was left was an open dialog
-          saying nothing about a destructive act in flight, with ZERO enabled controls: both close
-          buttons are disabled while pending (deliberately, so a refusal cannot be lost), the work
-          fields are disabled by `!can_manage_profiles`, Escape routes through the same gate, and
-          the Tab trap's own `!focusable.length` branch swallows the key. A page reload was the only
-          exit. Once a removal is under way this block belongs to the call, not to the live roster —
-          it stays until the call settles and the switch guard above closes the dialog properly.
-          The predicate is `!== "idle"` rather than `=== "pending"` because that is the invariant: a
-          removal under way in EITHER stage belongs to its call. Stated plainly so it is not mistaken
-          for a tested fact — only the pending half is provable, since a switch while merely ARMED is
-          unmounted by the parent's stale-selection clear before this gate is reached, and mutation
-          confirms no test here separates the two. */}
-      {(canRemove || removal.stage !== "idle") && <div className="stw-permission-change">
-        <div className="stw-confirm">
-          {removal.stage === "idle" && <p>Removing someone ends their access to {workspace.tenant_name}. It does not delete their Paige account or the work already recorded under their name.</p>}
-          <button ref={removeButtonRef} className="stw-btn secondary" disabled={removal.stage !== "idle" || saving} onClick={() => setRemoval({ stage: "armed", error: null, tenantAtArm: workspace.tenant_id, nameAtArm: workspace.tenant_name })} aria-label={`Remove ${identity.primary} from ${removalWorkspaceName}`}>Remove from workspace</button>
-        </div>
-        {removal.stage !== "idle" && <div className="stw-confirm">
-          <p>Remove {identity.primary} from {removalWorkspaceName}? They lose access to this workspace right away. Their Paige account is not deleted and their {removalWorkspaceName} history stays. To bring them back you would send a new invitation.</p>
-          {removal.stage === "pending" && <p ref={pendingRef} tabIndex={-1} role="status" aria-busy="true">Removing {identity.primary} from {removalWorkspaceName}…</p>}
-          {removal.error && <p ref={errorRef} tabIndex={-1} role="alert">{removal.error.message}</p>}
-          <button ref={cancelRef} className="stw-btn secondary" disabled={removal.stage === "pending"} onClick={disarmRemoval}>Cancel</button>
-          <button className="stw-btn" disabled={removal.stage === "pending" || saving || !canRemove || removal.error?.retryable === false} onClick={confirmRemoval} aria-label={`Confirm removing ${identity.primary} from ${removalWorkspaceName}`}>{removal.stage === "pending" ? "Removing\u2026" : removal.error ? "Try again" : "Confirm removal"}</button>
-        </div>}
-      </div>}
+      {permissionEditable
+        ? <div className="stw-permission-change"><div className="stw-fieldlabel" id="stw-ed-perm-l">Permission</div>
+          <PermissionCards value={permissionDraft ?? member.permission} labelledBy="stw-ed-perm-l" onChange={(next) => setPermissionDraft(next === member.permission ? null : next)} />
+          {permissionDraft && permissionDraft !== member.permission && <div className="stw-confirm"><p>Change access from {permission.label} to {permissionPresentation(permissionDraft, false).label}? This changes authorization, not the title.</p><button type="button" className="stw-btn secondary" onClick={() => setPermissionDraft(null)}>Cancel</button><button type="button" className="stw-btn primary" disabled={saving} onClick={changePermission}>Confirm access change</button></div>}</div>
+        : <div className="stw-permission-change"><div className="stw-fieldlabel">Permission</div><p className="stw-perm-ro"><span className="stw-perm" data-tone={permissionTone(member.permission, member.is_owner)}>{permission.label}</span><span className="stw-muted">{member.is_owner || member.permission === "owner" ? "Owner access is protected here." : suspended && workspace.can_change_permissions && permission.mutable ? `Reinstate ${firstName} before changing their permission.` : !permission.mutable ? "This access level isn't changed from Team settings." : "Only the owner changes permissions."}</span></p></div>}
     </div>
-    <footer className="stw-modal-actions"><button className="stw-btn secondary" onClick={requestClose} disabled={removalInFlight}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{workspace.can_manage_profiles && <button className="stw-btn" disabled={saving || removalInFlight || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
+    <footer className="stw-modal-actions">{canRemove && onRequestRemoval && <button type="button" className="stw-quiet stw-danger-link" disabled={saving} onClick={onRequestRemoval}>Remove from team…</button>}<button type="button" className="stw-btn secondary" onClick={onClose}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{workspace.can_manage_profiles && <button type="button" className="stw-btn primary" disabled={saving || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
   </Modal>;
 }
-export function InviteDialog({ workspace, onClose, onInvited }: { workspace: TeamWorkspaceRecord; onClose: () => void; onInvited: () => void }) {
-  const [email, setEmail] = useState(""); const [permission, setPermission] = useState("member"); const [title, setTitle] = useState(""); const [responsibilities, setResponsibilities] = useState(""); const [sending, setSending] = useState(false); const [reviewing, setReviewing] = useState(false);
+
+/** What an invitation's Team conversations choice means, in the approved design's words. */
+function conversationsCopy(on: boolean): string {
+  return on ? "On: they join the open team channels as soon as they accept."
+    : "Off: they can't open Team Hub (channels, direct messages or shared files) and work only on what they're assigned. Good for a spot-job contractor.";
+}
+
+export function InviteDialog({ workspace, onClose, onInvited }: { workspace: TeamWorkspaceRecord; onClose: () => void; onInvited: (outcome: { email: string; conversations: boolean; emailed: boolean }) => void }) {
+  const [email, setEmail] = useState(""); const [permission, setPermission] = useState<"member" | "admin">("member"); const [title, setTitle] = useState(""); const [responsibilities, setResponsibilities] = useState(""); const [conversations, setConversations] = useState(true); const [sending, setSending] = useState(false); const [reviewing, setReviewing] = useState(false); const [touched, setTouched] = useState(false); const [failure, setFailure] = useState<string | null>(null);
   const errors = validateWorkProfile(title, responsibilities); const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  // Who may invite an Admin is an OPEN owner question (prototype open question 1). Until it is
+  // ruled, the shipped behaviour stands (§58): the server lets any owner or admin invite an Admin
+  // (solo_team_invite_authority + create_solo_team_invite), so the Admin card stays selectable.
+  const emailRef = useRef<HTMLInputElement>(null);
   // The workspace is captured when the dialog opens, and it is what the review step names. If the
-  // active workspace changes while a confirmation is on screen, neither answer is safe: sending to
-  // the new one invites a stranger into a workspace nobody named, and sending to the captured one
-  // contradicts what the rest of the screen now says. So it aborts. An invitation carries a live
-  // access token, and a token cannot be recalled — a disagreement is an abort, never a redirection.
-  // `workspace` here is the record CAPTURED when the dialog opened, not the live roster
-  // value. That distinction is the whole fix: `useTeamWorkspace.load(0)` sets `value: null`
-  // before it awaits, so any refetch — a search keystroke, a filter, a refresh, a workspace
-  // switch — briefly nulls the roster. Rendering the dialog off that value unmounted it
-  // mid-typing with no explanation, AND re-initialised this guard's ref to the new workspace,
-  // making the abort below unreachable. Caught by adversarial review; the jsdom tests missed
-  // it because they rendered this component directly and drove a prop transition the parent
-  // structurally cannot produce.
-  //
-  // The live signal is `activeTenantId`, which comes from the tenant context and does not
-  // flash through null.
+  // active workspace changes while a confirmation is on screen, it aborts: an invitation carries a
+  // live access token, and a token cannot be recalled.
   const { activeTenantId } = useTenantContext();
   const send = async () => {
     if (activeTenantId && activeTenantId !== workspace.tenant_id) {
       toast.error(`This invitation was for ${workspace.tenant_name}, but you have since switched workspace. Nothing was sent. Reopen the invitation in the workspace you mean.`);
       return;
     }
-    setSending(true);
-    const { data, error } = await supabase.functions.invoke("solo-team-invitations", { body: { action: "create", expectedTenantId: workspace.tenant_id, email, permission, jobTitle: title, responsibilities } });
+    setSending(true); setFailure(null);
+    // Team conversations travels only when it is OFF. On is the server's default, so an invitation
+    // with it on keeps the exact body every deployed version of the function accepts.
+    const { data, error } = await supabase.functions.invoke("solo-team-invitations", { body: { action: "create", expectedTenantId: workspace.tenant_id, email, permission, jobTitle: title, responsibilities, ...(conversations ? {} : { teamHubAccess: false }) } });
     setSending(false);
-    if (error || data?.ok === false) { toast.error(invitationRefusalMessage(await readFunctionErrorBody(error, data), "The invitation could not be sent. Please try again.")); return; }
-    data?.emailed ? toast.success("Invitation sent.") : toast.warning("Invitation is pending, but the email was not sent. You can retry from Team.");
-    onInvited(); onClose();
+    if (error || data?.ok === false) {
+      const message = invitationRefusalMessage(await readFunctionErrorBody(error, data), "The invitation wasn't sent. Nothing was created. Try again.");
+      setFailure(message); toast.error(message); return;
+    }
+    if (!data?.emailed) toast.warning("Invitation is pending, but the email was not sent. You can retry from Team.");
+    onInvited({ email: email.trim(), conversations, emailed: data?.emailed === true }); onClose();
   };
-  return <Modal title={reviewing ? "Confirm invitation" : "Invite someone"} description={reviewing ? "Review the workspace, the person, their work context, and enforced access before anything is sent." : "Choose enforced access separately from the work they will own."} onClose={onClose}>{reviewing ? <div className="stw-modal-body"><dl className="stw-invite-review"><div><dt>Workspace</dt><dd>{workspace.tenant_name}</dd></div><div><dt>Send to</dt><dd>{email.trim()}</dd></div><div><dt>Enforced permission</dt><dd>{permissionPresentation(permission, false).label}</dd></div><div><dt>Title</dt><dd>{title.trim() || "Not set"}</dd></div><div><dt>Responsibilities</dt><dd>{responsibilities.trim() || "Not set"}</dd></div></dl><div className="stw-separation-note"><ShieldCheck/><span>This confirmation sends one invitation. The title and responsibilities inform Paige about work; they do not grant authority.</span></div></div> : <div className="stw-modal-body"><label>Email<input data-initial-focus type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="person@company.com"/>{email.length > 0 && !validEmail && <small role="alert">Enter a valid email address.</small>}</label><label>Permission<select value={permission} onChange={(e) => setPermission(e.target.value)}><option value="member">Member</option><option value="admin">Admin</option></select></label><label>Title <span>optional</span><input maxLength={121} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Operations Lead"/>{errors.title && <small role="alert">{errors.title}</small>}</label><label>Responsibilities <span>optional</span><textarea maxLength={2001} rows={4} value={responsibilities} onChange={(e) => setResponsibilities(e.target.value)} placeholder="What they will own and where they hand work off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label><div className="stw-separation-note"><ShieldCheck/><span>The title and responsibilities give Paige work context. Only the permission above controls access.</span></div></div>}<footer className="stw-modal-actions">{reviewing ? <><button className="stw-btn secondary" onClick={() => setReviewing(false)}>Back</button><button data-initial-focus className="stw-btn" disabled={sending} onClick={send}>{sending ? "Sending…" : "Confirm and send invitation"}</button></> : <><button className="stw-btn secondary" onClick={onClose}>Cancel</button><button className="stw-btn" disabled={!validEmail || Object.keys(errors).length > 0} onClick={() => setReviewing(true)}>Review invitation</button></>}</footer></Modal>;
+  return <Modal title={reviewing ? "Confirm invitation" : "Invite someone"} description={reviewing ? "Check who this goes to and what they can reach. One invitation is sent." : `New teammates join ${workspace.tenant_name}'s open team channels when they accept. Turn team conversations off for someone who should only see their assigned work.`} onClose={onClose} busy={sending}>
+    {reviewing
+      ? <div className="stw-modal-body"><dl className="stw-invite-review">
+          <div><dt>Workspace</dt><dd>{workspace.tenant_name}</dd></div>
+          <div><dt>Send to</dt><dd>{email.trim()}</dd></div>
+          <div><dt>Permission</dt><dd>{permissionPresentation(permission, false).label}</dd></div>
+          <div><dt>Team conversations</dt><dd>{conversations ? "On: joins the open team channels when they accept" : "Off: assigned work only, no Team Hub"}</dd></div>
+          <div><dt>Title</dt><dd>{title.trim() || "Not set"}</dd></div>
+          <div><dt>Responsibilities</dt><dd>{responsibilities.trim() || "Not set"}</dd></div>
+        </dl>
+        {failure && <div className="stw-alert" role="alert" tabIndex={-1}><AlertTriangle aria-hidden="true" /><p>{failure}</p></div>}</div>
+      : <div className="stw-modal-body">
+        <label>Email<input ref={emailRef} data-initial-focus type="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setTouched(true)} aria-invalid={touched && !validEmail ? true : undefined} placeholder="person@company.com" autoComplete="off"/>{touched && !validEmail && <small role="alert">Enter an email address like name@company.com.</small>}</label>
+        <div><div className="stw-fieldlabel" id="stw-inv-perm-l">Permission</div><PermissionCards value={permission} labelledBy="stw-inv-perm-l" onChange={setPermission} /></div>
+        <label className="stw-optional">Title <span>optional</span><input maxLength={121} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Video Editor"/>{errors.title && <small role="alert">{errors.title}</small>}</label>
+        <label className="stw-optional">Responsibilities <span>optional</span><textarea maxLength={2001} rows={3} value={responsibilities} onChange={(e) => setResponsibilities(e.target.value)} placeholder="What they'll own and where they hand work off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label>
+        <div className="stw-convo">{conversations ? <MessageSquare aria-hidden="true" /> : <MessageSquareOff aria-hidden="true" />}<div><strong id="stw-inv-convo-l">Team conversations</strong><p id="stw-inv-convo-d">{conversationsCopy(conversations)}</p></div>
+          <TeamSwitch checked={conversations} labelledBy="stw-inv-convo-l" describedBy="stw-inv-convo-d" onToggle={() => setConversations((c) => !c)} /></div>
+      </div>}
+    <footer className="stw-modal-actions">{reviewing
+      ? <><button type="button" className="stw-btn secondary" disabled={sending} onClick={() => { setReviewing(false); setFailure(null); }}>Back</button><button type="button" data-initial-focus className="stw-btn act" disabled={sending} aria-busy={sending || undefined} onClick={send}>{sending ? "Sending…" : failure ? "Try again" : "Send invitation"}</button></>
+      : <><button type="button" className="stw-btn secondary" onClick={onClose}>Cancel</button><button type="button" className="stw-btn primary" disabled={Object.keys(errors).length > 0} onClick={() => { setTouched(true); if (!validEmail) { emailRef.current?.focus(); return; } setReviewing(true); }}>Review invitation</button></>}</footer>
+  </Modal>;
+}
+
+/**
+ * Suspend: a brief, blocking decision with a consequence everywhere in the business. One alert
+ * dialog, focus on Cancel. What it says about approvals and the mailbox comes from the departure
+ * review read when it is available, and is said in general terms when it is not — never invented.
+ */
+function SuspendDialog({ member, workspace, onClose, onSuspended }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: () => void; onSuspended: (approvals: number) => void }) {
+  const identity = memberVisibleIdentity(member);
+  const first = member.full_name?.trim() ? member.full_name.trim().split(/\s+/)[0] : identity.primary;
+  const [stage, setStage] = useState<"idle" | "pending" | "error">("idle");
+  const [refusal, setRefusal] = useState<{ message: string; retryable: boolean; unavailable: boolean } | null>(null);
+  const [holdings, setHoldings] = useState<MemberHoldings | null>(null);
+  const inFlight = useRef(false);
+  const tenantAtOpen = useRef(workspace.tenant_id);
+  // A workspace switch closes the dialog — but never under a call in flight, whose outcome is still
+  // owed: that case is reported after it settles, below.
+  const { activeTenantId } = useTenantContext();
+  const activeRef = useRef(activeTenantId);
+  useEffect(() => { activeRef.current = activeTenantId; }, [activeTenantId]);
+  const switchedAway = () => Boolean(activeRef.current) && activeRef.current !== tenantAtOpen.current;
+  useEffect(() => {
+    if (!inFlight.current && activeTenantId && activeTenantId !== tenantAtOpen.current) {
+      toast.error(`You switched workspace, so suspending ${identity.primary} in ${workspace.tenant_name} was closed. Nothing was changed.`);
+      onClose();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a switch closes it
+  }, [activeTenantId]);
+  useEffect(() => {
+    let live = true;
+    // Best effort: the facts below are true without it; with it, they name what is waiting.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- EXP08 RPC awaits generated types
+    void Promise.resolve((supabase as any).rpc("team_member_holdings", { _member_user_id: member.user_id, _expected_tenant_id: workspace.tenant_id }))
+      .then((r: { data: unknown; error: unknown }) => { if (live && !r?.error) setHoldings(normalizeHoldings(r?.data, member.user_id)); })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, [member.user_id, workspace.tenant_id]);
+  const approvals = holdings?.items.approvals ?? [];
+  const mailbox = holdings?.items.mailboxes[0] as Extract<MemberHoldings["items"]["mailboxes"][number], { kind: "mailboxes" }> | undefined;
+  const n = holdings ? holdings.counts.approvals : null;
+  const approvalLine = n === null
+    ? `Approvals assigned to ${first} stay assigned and wait. ${first} can't act on them while suspended. New approvals can still be assigned to ${first}, and ${first} is still emailed about them.`
+    : n
+      ? `${n === 1 ? `1 approval assigned to ${first}${approvals[0]?.kind === "approvals" && approvals[0].summary ? ` (“${approvals[0].summary}”)` : ""} stays assigned to ${first} and waits` : `${n} approvals assigned to ${first} stay assigned to ${first} and wait`}. ${first} can't act on ${n === 1 ? "it" : "them"} while suspended. New approvals can still be assigned to ${first}, and ${first} is still emailed about them.`
+      : `No approvals are assigned to ${first}. New ones can still be assigned to ${first} while suspended, and ${first} is still emailed about them.`;
+  const pending = stage === "pending";
+  const suspend = async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setStage("pending"); setRefusal(null);
+    let data: { tenant_id?: string; status?: string } | null = null;
+    let error: { code?: string; message?: string } | null = null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- EXP08 RPC awaits generated types
+      ({ data, error } = await (supabase as any).rpc("suspend_solo_team_member", { _member_user_id: member.user_id, _expected_tenant_id: tenantAtOpen.current }));
+    } catch (thrown) { error = { message: thrown instanceof Error ? thrown.message : "network request failed" }; }
+    inFlight.current = false;
+    if (error || data?.tenant_id !== tenantAtOpen.current || data?.status !== "suspended") {
+      const r = error ? lifecycleRefusal(error, "suspend", identity.primary, workspace.tenant_name) : { message: "The answer didn't confirm the suspension, so nothing is being claimed. Reopen Team to see the current roster.", retryable: false, unavailable: false, reconciled: false };
+      if (switchedAway()) { toast.error(r.message); onClose(); return; }
+      setRefusal(r); setStage("error"); return;
+    }
+    if (switchedAway()) {
+      toast.success(`${identity.primary} was suspended in ${workspace.tenant_name}. You have since switched workspace, so this roster does not show it.`);
+      onClose();
+      return;
+    }
+    onSuspended(n ?? 0);
+
+  };
+  return <Modal role="alertdialog" title={`Suspend ${identity.primary}?`} description={`${first} can't open ${workspace.tenant_name} until you reinstate them. They can still sign in to Paige.`} busy={pending} onClose={onClose}>
+    <div className="stw-modal-body">
+      <ul className="stw-facts">
+        <li><Pause aria-hidden="true" /><span>Access to this workspace stops at once: Operations, clients, Team Hub and Paige here.</span></li>
+        <li><CheckCircle2 aria-hidden="true" /><span>{approvalLine}</span></li>
+        {mailbox && <li><Mail aria-hidden="true" /><span>Nothing can be sent from {mailbox.address ?? mailbox.label} while {first} is suspended, including emails Paige already prepared for {first}. It stays connected and keeps receiving mail.</span></li>}
+        <li><ShieldCheck aria-hidden="true" /><span>Nothing is deleted or reassigned. Their work, clients and messages stay where they are.</span></li>
+        <li><Undo2 aria-hidden="true" /><span>You can reinstate {first} at any time, with their permission and team conversations setting as they are then.</span></li>
+      </ul>
+      {stage === "error" && refusal && <div className="stw-alert" role="alert" tabIndex={-1}><AlertTriangle aria-hidden="true" /><p>{refusal.message}</p></div>}
+      {pending && <p className="stw-status" role="status" tabIndex={-1}><RefreshCw className="stw-spin" aria-hidden="true" />Suspending {first}…</p>}
+    </div>
+    <footer className="stw-modal-actions"><button type="button" data-initial-focus className="stw-btn secondary" disabled={pending} onClick={onClose}>Cancel</button><button type="button" className="stw-btn primary" disabled={pending || (stage === "error" && refusal?.retryable === false)} aria-busy={pending || undefined} onClick={suspend}>{pending ? "Suspending…" : stage === "error" ? "Try again" : "Suspend access"}</button></footer>
+  </Modal>;
 }
 
 /**
@@ -724,97 +449,137 @@ function InviteRow({ invite, onManage }: {
   </article>;
 }
 
-export function SoloTeamWorkspace({ openPaige }: { openPaige?: () => void } = {}) {
-  const [view, setView] = useState<"team" | "roles">("team"); const [search, setSearch] = useState(""); const [permission, setPermission] = useState("all"); const [selected, setSelected] = useState<TeamMemberRecord | null>(null);
-  // The workspace an in-flight invitation was opened against. Held here rather than derived
-  // from `team.value`, which is nulled by every roster refetch (see InviteDialog).
-  // A REFETCH must not close the dialog (that was the §58 regression); a genuine WORKSPACE SWITCH
-  // must. Otherwise the dialog sits there naming workspace A over workspace B's roster, inviting
-  // the operator to keep composing something the send-time guard will then refuse. `activeTenantId`
-  // distinguishes the two: it changes only on a real switch, and never flashes through null on a
-  // reload. The send-time abort stays as the backstop for the same-tick race.
-  const { activeTenantId } = useTenantContext();
+type Filter = "all" | "owner" | "admin" | "member" | "invited";
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: "all", label: "Everyone" }, { value: "owner", label: "Owner" }, { value: "admin", label: "Admins" }, { value: "member", label: "Members" }, { value: "invited", label: "Invited" },
+];
+
+/**
+ * Team conversations for each seat. The roster read does not carry it (get_solo_team_workspace
+ * returns neither the seat's nor the invitation's value), so it is read where it IS published:
+ * Team Hub's own roster (team_hub_list_conversations → people[].team_conversations, active seats),
+ * and, for a suspended seat this viewer may act on, the departure review's member row. A value no
+ * source returned stays UNKNOWN, and the row says so instead of drawing a switch that guesses.
+ */
+function useConversationAccess(workspace: TeamWorkspaceRecord | null, viewerId: string | null) {
+  const [known, setKnown] = useState<{ tenantId: string | null; map: Record<string, boolean> }>({ tenantId: null, map: {} });
+  const seq = useRef(0);
+  const read = useCallback(async () => {
+    if (!workspace) return;
+    const request = ++seq.current;
+    const map: Record<string, boolean> = {};
+    for (const m of workspace.members) if (typeof m.team_hub_access === "boolean") map[m.user_id] = m.team_hub_access;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC awaits generated types
+      const { data, error } = await (supabase as any).rpc("team_hub_list_conversations", { p_expected_tenant: workspace.tenant_id });
+      if (!error && data?.ok === true && data.tenant_id === workspace.tenant_id && Array.isArray(data.people)) {
+        for (const p of data.people) if (p && typeof p.user_id === "string" && typeof p.team_conversations === "boolean" && !(p.user_id in map)) map[p.user_id] = p.team_conversations;
+      }
+    } catch { /* unknown stays unknown */ }
+    const suspended = workspace.members.filter((m) => m.status === "suspended" && !(m.user_id in map) && canActOn(workspace.viewer_permission, viewerId, m)).slice(0, 10);
+    await Promise.all(suspended.map(async (m) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- EXP08 RPC awaits generated types
+        const { data, error } = await (supabase as any).rpc("team_member_holdings", { _member_user_id: m.user_id, _expected_tenant_id: workspace.tenant_id });
+        const h = error ? null : normalizeHoldings(data, m.user_id);
+        if (h && typeof h.member.team_hub_access === "boolean") map[m.user_id] = h.member.team_hub_access;
+      } catch { /* unknown stays unknown */ }
+    }));
+    if (request !== seq.current) return;
+    setKnown({ tenantId: workspace.tenant_id, map });
+  }, [workspace, viewerId]);
+  useEffect(() => { void read(); }, [read]);
+  const set = (userId: string, value: boolean) => setKnown((c) => ({ ...c, map: { ...c.map, [userId]: value } }));
+  return { map: known.tenantId === workspace?.tenant_id ? known.map : {}, set };
+}
+
+function lastSeen(member: TeamMemberRecord): string {
+  if (member.status === "suspended") return "Can't open this workspace";
+  return member.last_sign_in_at ? `Signed in ${new Date(member.last_sign_in_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "No sign-in recorded";
+}
+
+export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: () => void; openConnections?: () => void } = {}) {
+  const [view, setView] = useState<"team" | "roles">("team"); const [search, setSearch] = useState(""); const [filter, setFilter] = useState<Filter>("all"); const [selected, setSelected] = useState<TeamMemberRecord | null>(null);
+  const permission = filter === "invited" ? "all" : filter;
+  // The workspace an in-flight invitation was opened against. Held here rather than derived from
+  // `team.value`, which is nulled by every roster refetch (see InviteDialog).
+  const { activeTenantId, activeUserId } = useTenantContext();
   const [inviteWorkspace, setInviteWorkspace] = useState<TeamWorkspaceRecord | null>(null);
-  // The outcome of a removal has to live OUTSIDE the dialog. `refresh()` is `load(0)`, which sets
-  // `value` back to null, so the editor unmounts the instant the roster reloads — any confirmation
-  // rendered inside it is destroyed before it can be read or announced.
-  const [notice, setNotice] = useState<string | null>(null);
+  // Every flow returns here, to one bottom notice (approved design). It lives OUTSIDE the dialogs,
+  // so a roster reload that unmounts one cannot take its outcome with it.
+  const [notice, setNotice] = useState<TeamNotice | null>(null);
+  const noticeSeq = useRef(0);
+  const announce = useCallback((n: Omit<TeamNotice, "key">) => setNotice({ ...n, key: ++noticeSeq.current }), []);
+  const [suspending, setSuspending] = useState<{ member: TeamMemberRecord; workspace: TeamWorkspaceRecord } | null>(null);
+  const [departing, setDeparting] = useState<{ member: TeamMemberRecord; workspace: TeamWorkspaceRecord } | null>(null);
+  const [busy, setBusy] = useState<Record<string, "convo" | "reinstate">>({});
+  const [flash, setFlash] = useState<string | null>(null);
+  // Who is looking: from the account context when it carries it, else the session. An unknown viewer
+  // is offered no act on anyone (canActOn), because "yourself" can't be ruled out.
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  useEffect(() => {
+    if (activeUserId) return;
+    let live = true;
+    try {
+      void Promise.resolve(supabase.auth.getUser()).then((r) => { if (live) setSessionUserId(r?.data?.user?.id ?? null); }).catch(() => undefined);
+    } catch { /* no session reader: stays unknown */ }
+    return () => { live = false; };
+  }, [activeUserId]);
+  const viewerId = activeUserId ?? sessionUserId;
+
   useEffect(() => {
     setInviteWorkspace((current) => {
       if (!current || !activeTenantId || current.tenant_id === activeTenantId) return current;
       toast.error(`You switched workspace, so the invitation for ${current.tenant_name} was closed. Nothing was sent.`);
       return null;
     });
-    // The removal announcement is cleared for the SAME reason, found by the peer read of this diff.
-    // It names a workspace ("Dana Reyes no longer has access to Example Team.") and this component
-    // does NOT remount on a switch — that is the premise the invite fix above rests on. Left alone,
-    // the banner sat over the next workspace's roster still making a claim about the previous one:
-    // the same cross-workspace false statement the invitation seam was just repaired to stop making.
+    // A notice names a workspace and a person. This component does NOT remount on a switch, so a
+    // notice left standing would make a claim about the previous workspace over the next one. (The
+    // suspend dialog and the departure review close THEMSELVES on a switch, because only they know
+    // whether a call is in flight whose outcome must still be reported.)
     setNotice(null);
   }, [activeTenantId]);
   const team = useTeamWorkspace(search, permission); const workspace = team.value;
-  // `refresh()` is `load(0)`, which sets `value` to null BEFORE it awaits. So during any refetch —
-  // including the one a workspace switch triggers — `workspace` is momentarily null, and a render
-  // gate that requires it unmounts the editor no matter what else is held. The last known roster is
-  // kept so the dialog can outlive that flash; the LIVE one is still preferred whenever it exists,
-  // so the child's own workspace-switch guard keeps seeing real changes rather than a frozen
-  // snapshot. (The invite dialog solves the same problem by capturing at open; it can, because it
-  // needs only the workspace it was opened for. This one must keep watching.)
+  const conversations = useConversationAccess(workspace, viewerId);
+  // The last known roster, so the editor can outlive the null flash of a refetch.
   const lastWorkspace = useRef<TeamWorkspaceRecord | null>(null);
-  const rosterRef = useRef<HTMLDivElement>(null);
-  // Focus is moved deliberately rather than restored. The roster row that opened the editor is the
-  // row that just went, and focusing a detached node silently drops focus to <body>.
-  useEffect(() => { if (notice) rosterRef.current?.focus(); }, [notice]);
-  const closeEditor = useCallback(() => { setRemovalPending(false); setSelected(null); }, []);
+  const closeEditor = useCallback(() => setSelected(null), []);
   const openEditor = (member: TeamMemberRecord) => { setNotice(null); setSelected(member); };
-  // Applied to the snapshot BEFORE the refresh is started, so it is already correct whichever way
-  // the race lands: if the editor survives the reload it keeps its own local state, and if it is
-  // unmounted and remounted it now remounts onto the saved values rather than the ones they
-  // replaced. This is the parent's half of the fix — the child cannot reach `selected`.
+  // Applied to the snapshot BEFORE the refresh is started, so the editor remounts onto the saved
+  // values rather than the ones they replaced (the save flow the owner hit on production).
   const handleSaved = (saved?: { job_title: string; responsibilities: string }) => {
     if (saved) setSelected((current) => (current ? { ...current, job_title: saved.job_title, responsibilities: saved.responsibilities } : current));
     return team.refresh();
   };
-  const handleRemoved = (announcement: string) => { setRemovalPending(false); setNotice(announcement); setSelected(null); team.refresh(); };
   // A selection is a snapshot taken when the row was clicked. Once the roster no longer carries it,
-  // rendering the editor would show a person who is gone — with a live Save button and a live
-  // permission select, both of which would then fail against the server.
+  // rendering the editor would show a person who is gone — so it is CLEARED, not merely hidden.
   const selectedLive = selected && workspace ? workspace.members.some((row) => row.membership_id === selected.membership_id) : false;
   if (workspace) lastWorkspace.current = workspace;
   const editorWorkspace = workspace ?? lastWorkspace.current;
-  // ...and it must be CLEARED, not merely hidden. `refresh()` is `load(0)`, which drops every page
-  // past the first and re-applies the current search and permission filters — so a member reached
-  // via "Load more", or one the filter no longer matches after an edit, falls out of the returned
-  // page on any refresh. Hiding alone left `selected` set: the editor vanished mid-save and never
-  // came back, and a later "Load more" that happened to return that row re-opened it on its own,
-  // showing the stale snapshot. That is a regression to the SHIPPED save flow, not just to removal.
-  // ...but NOT while a removal is in flight. Clearing then unmounts the dialog mid-call and both
-  // outcomes are lost — the refusal has nowhere to land, and a removal the server DID apply is
-  // never announced. The stale-selection clear and the in-flight hold are different concerns that
-  // happen to touch the same state, so both are stated here rather than one silently winning.
-  const [removalPending, setRemovalPending] = useState(false);
   // Unsaved contact edits hold the dialog open across a roster reload (saving work details reloads
-  // it, and for a frame the roster is empty), exactly as an in-flight removal does.
+  // it, and for a frame the roster is empty).
   const [contactHold, setContactHold] = useState(false);
-  useEffect(() => { if (selected && workspace && !selectedLive && !removalPending) setSelected(null); }, [selected, workspace, selectedLive, removalPending]);
+  useEffect(() => { if (selected && workspace && !selectedLive) setSelected(null); }, [selected, workspace, selectedLive]);
+  useEffect(() => { if (!flash) return; const t = window.setTimeout(() => setFlash(null), 1200); return () => window.clearTimeout(t); }, [flash]);
   const pending = useMemo(() => workspace?.invitations.filter((item) => inviteLifecycle(item) === "pending") ?? [], [workspace]);
   // Split ONCE, from the same predicate the database uses to decide what may be cleared, so the
   // screen cannot offer a "Remove from list" the server will refuse.
   const activeInvites = useMemo(() => workspace?.invitations.filter((item) => !inviteIsFinished(item)) ?? [], [workspace]);
   const pastInvites = useMemo(() => workspace?.invitations.filter((item) => inviteIsFinished(item)) ?? [], [workspace]);
+
+  /** One invitation write, through the existing edge function. Returns the outcome; the caller decides how to say it. */
+  const inviteWrite = async (action: "resend" | "revoke" | "archive", invite: TeamInviteRecord): Promise<{ ok: true; emailed: boolean } | { ok: false; message: string }> => {
+    if (!workspace) return { ok: false, message: "This workspace is still loading. Try again in a moment." };
+    const { data, error } = await supabase.functions.invoke("solo-team-invitations", { body: { action, expectedTenantId: workspace.tenant_id, inviteId: invite.id } });
+    if (error || data?.ok === false) return { ok: false, message: invitationRefusalMessage(await readFunctionErrorBody(error, data), "The invitation could not be updated. Please try again.") };
+    return { ok: true, emailed: data?.emailed === true };
+  };
   const manageInvite = async (action: "resend" | "revoke" | "archive", invite: TeamInviteRecord) => {
-    if (!workspace) { toast.error("This workspace is still loading. Try again in a moment."); return; }
-    const { data, error } = await supabase.functions.invoke("solo-team-invitations", {
-      body: { action, expectedTenantId: workspace.tenant_id, inviteId: invite.id },
-    });
-    if (error || data?.ok === false) {
-      toast.error(invitationRefusalMessage(await readFunctionErrorBody(error, data), "The invitation could not be updated. Please try again."));
-      return;
-    }
+    const result = await inviteWrite(action, invite);
+    if ("message" in result) { toast.error(result.message); return; }
     if (action === "resend") {
-      // `emailed` now means the provider ACCEPTED it, which is still not delivery — the delivery
-      // line on the row is what answers that, and it updates when the provider tells us.
-      data?.emailed
+      // `emailed` means the provider ACCEPTED it, which is still not delivery.
+      result.emailed
         ? toast.success("Fresh invitation sent; the old link was revoked. Delivery will show on the invitation.")
         : toast.warning("Fresh invitation created, but it could not be emailed. Share the link directly, or try again.");
     } else if (action === "archive") {
@@ -824,21 +589,187 @@ export function SoloTeamWorkspace({ openPaige }: { openPaige?: () => void } = {}
     }
     team.refresh();
   };
-  return <div className="stw-workspace"><div className="stw-tabs" role="tablist" aria-label="Team settings"><button role="tab" aria-selected={view === "team"} onClick={() => setView("team")}>Team</button><button role="tab" aria-selected={view === "roles"} onClick={() => setView("roles")}>Roles &amp; access</button></div>
-    {view === "roles" ? <section className="stw-access"><header><ShieldCheck/><div><h2>Roles &amp; access</h2><p>Permissions are enforced. Titles and responsibilities only describe work.</p></div></header><div className="stw-role-grid"><article><span>Owner</span><h3>Full workspace authority</h3><p>Manages invitations, work details, and permission changes. Owner access is protected here.</p></article><article><span>Admin</span><h3>Team operations</h3><p>Can manage invitations and work details. Cannot change another person’s enforced permission.</p></article><article><span>Member</span><h3>Standard workspace access</h3><p>Can see the confirmed team and access explanation. Cannot manage people or invitations.</p></article></div></section> : <>
-      <section className="stw-toolbar"><div><h2>People</h2><p>{workspace ? `${workspace.total_members} confirmed ${workspace.total_members === 1 ? "person" : "people"} in ${workspace.tenant_name}` : "Confirmed members of this workspace"}</p></div>{workspace?.can_manage_invitations && <button className="stw-btn" onClick={() => setInviteWorkspace(workspace)}><UserPlus/>Invite someone</button>}</section>
-      <section className="stw-permission-note"><ShieldCheck/><div><strong>Workspace permissions</strong><span>Owners and authorized admins may manage team access. Permissions apply only to this Solo workspace.</span></div><button onClick={() => setView("roles")}>Review roles</button></section>
-      <section className="stw-roster" ref={rosterRef} tabIndex={-1}>{notice && <div className="stw-separation-note" role="status"><ShieldCheck/><span>{notice}</span></div>}<div className="stw-filters"><label><span className="sr-only">Search team</span><Search/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search people, titles, responsibilities"/></label><label><span className="sr-only">Filter by permission</span><select value={permission} onChange={(e) => setPermission(e.target.value)}><option value="all">All permissions</option><option value="owner">Owner</option><option value="admin">Admin</option><option value="member">Member</option></select><ChevronDown/></label></div>
-        {team.loading ? <div className="stw-state" role="status"><RefreshCw className="ss-spin"/>Resolving this workspace’s team…</div> : team.error && !workspace ? <div className="stw-state error" role="alert"><strong>{/access denied|permission/i.test(team.error) ? "You don’t have access to this team" : "Team unavailable"}</strong><span>{/access denied|permission/i.test(team.error) ? "Your current workspace permission does not allow this roster to load." : team.error}</span><button onClick={team.refresh}>Retry</button></div> : workspace && workspace.members.length === 0 ? <div className="stw-empty"><Users/><h3>No people match these filters</h3><p>Clear the search or choose a different permission.</p></div> : <>{workspace && workspace.total_members === 1 && workspace.members[0]?.is_owner && !search && permission === "all" && <div className="stw-first-use"><Users/><div><strong>Your workspace starts with you</strong><span>Invite the first teammate, then give them a title and clear responsibilities.</span></div>{workspace.can_manage_invitations && <button className="stw-btn" onClick={() => setInviteWorkspace(workspace)}>Invite first teammate</button>}</div>}<div className="stw-list" aria-label="Team roster">{workspace?.members.map((member) => { const access = permissionPresentation(member.permission, member.is_owner); return <button className="stw-row" key={member.membership_id} onClick={() => openEditor(member)}><span className="stw-avatar">{initials(member)}</span><span className="stw-identity"><strong>{member.full_name || member.email || "Name unavailable"}</strong><small>{member.email || "Email unavailable"}</small></span><span className="stw-work"><strong>{member.job_title || "Title not set"}</strong><small>{member.responsibilities || "Responsibilities not set"}</small></span><span className="stw-pill" data-tone={member.is_owner ? "owner" : "neutral"}>{access.label}</span><span className="stw-last"><strong>{member.status === "suspended" ? "Suspended" : "Active"}</strong><small>{member.last_sign_in_at ? `Last signed in ${new Date(member.last_sign_in_at).toLocaleDateString()}` : "No sign-in recorded"}</small></span></button>; })}</div></>}
-        {team.error && workspace && <div className="stw-inline-error" role="alert">The next page could not be loaded. <button onClick={team.loadMore}>Retry</button></div>}{workspace && workspace.members.length < workspace.total_members && <button className="stw-load" disabled={team.loadingMore} onClick={team.loadMore}>{team.loadingMore ? "Loading…" : `Load more (${workspace.total_members - workspace.members.length} remaining)`}</button>}
+  const rowInvite = async (action: "resend" | "revoke", invite: TeamInviteRecord, again = false) => {
+    const email = invite.email || "this address";
+    const result = await inviteWrite(action, invite);
+    if ("message" in result) { announce({ tone: "bad", text: result.message, spoken: result.message }); return; }
+    void team.reload();
+    if (action === "revoke") {
+      const s = `The invitation to ${email} was withdrawn. Its link no longer works.`;
+      announce({ text: <>The invitation to <strong>{email}</strong> was withdrawn. Its link no longer works.</>, spoken: s, focus: true, action: { label: "Send again", run: () => void rowInvite("resend", invite, true) } });
+      return;
+    }
+    const s = result.emailed ? (again ? `A new invitation went to ${email}.` : `A fresh invitation went to ${email}. The old link no longer works.`) : `A new invitation was created for ${email}, but it couldn't be emailed. Share the link directly, or try again.`;
+    announce({ tone: result.emailed ? "ok" : "bad", text: s, spoken: s });
+  };
+
+  const unavailable = useRef<Set<string>>(new Set());
+  const conversationsSwitch = async (member: TeamMemberRecord, next: boolean) => {
+    if (!workspace || busy[member.user_id]) return;
+    const identity = memberVisibleIdentity(member).primary;
+    if (unavailable.current.has("conversations")) { const s = `Changing team conversations isn't available in ${workspace.tenant_name} yet. Nothing was changed.`; announce({ tone: "bad", text: s, spoken: s }); return; }
+    setBusy((b) => ({ ...b, [member.user_id]: "convo" }));
+    let data: { tenant_id?: string; team_hub_access?: boolean } | null = null;
+    let error: { code?: string; message?: string } | null = null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- EXP08 RPC awaits generated types
+      ({ data, error } = await (supabase as any).rpc("set_solo_team_member_team_hub_access", { _member_user_id: member.user_id, _expected_tenant_id: workspace.tenant_id, _on: next }));
+    } catch (thrown) { error = { message: thrown instanceof Error ? thrown.message : "network request failed" }; }
+    setBusy((b) => { const n = { ...b }; delete n[member.user_id]; return n; });
+    if (error || data?.tenant_id !== workspace.tenant_id || data?.team_hub_access !== next) {
+      const r = error ? lifecycleRefusal(error, "conversations", identity, workspace.tenant_name) : null;
+      if (r?.unavailable) unavailable.current.add("conversations");
+      // The refusal says what is known: a lost reply is "we can't say whether this changed", not a
+      // definite non-change. The generic sentence is kept only for an answer that didn't echo the value.
+      // A retry is safe: the switch does nothing if the value is already set.
+      const s = r ? r.message : `Team conversations for ${identity} didn't change. Try again.`;
+      const retry = !r || r.retryable;
+      announce({ tone: "bad", text: s, spoken: s, ...(retry ? { action: { label: "Retry", run: () => void conversationsSwitch(member, next) } } : {}) });
+      // Uncertain or reconciled: re-read, so the row shows what the server holds.
+      if (retry || r?.reconciled) void team.reload();
+      return;
+    }
+    conversations.set(member.user_id, next);
+    setFlash(member.user_id);
+    const first = member.full_name?.trim() ? member.full_name.trim().split(/\s+/)[0] : identity;
+    const tail = member.status === "suspended"
+      ? (next ? ` stays suspended. When reinstated, ${first} will be in every open team channel, including any they had left, and keeps the private channels they were in.` : ` stays suspended. When reinstated, ${first} won't have Team Hub and will work only on what they're assigned.`)
+      : (next ? " is back in Team Hub, in every open team channel, including any they had left, and keeps the private channels they were in." : " can't open Team Hub now. They keep their channels, their assigned work and their permission.");
+    announce({ text: <><strong>{identity}</strong>{tail}</>, spoken: `${identity}${tail}`, action: { label: next ? "Turn off again" : "Turn back on", run: () => void conversationsSwitch({ ...member }, !next) } });
+    void team.reload();
+  };
+
+  const reinstate = async (member: TeamMemberRecord) => {
+    if (!workspace || busy[member.user_id]) return;
+    const identity = memberVisibleIdentity(member).primary;
+    if (unavailable.current.has("reinstate")) { const s = `Reinstating isn't available in ${workspace.tenant_name} yet. Nothing was changed.`; announce({ tone: "bad", text: s, spoken: s }); return; }
+    setBusy((b) => ({ ...b, [member.user_id]: "reinstate" }));
+    let data: { tenant_id?: string; status?: string } | null = null;
+    let error: { code?: string; message?: string } | null = null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- EXP08 RPC awaits generated types
+      ({ data, error } = await (supabase as any).rpc("reinstate_solo_team_member", { _member_user_id: member.user_id, _expected_tenant_id: workspace.tenant_id }));
+    } catch (thrown) { error = { message: thrown instanceof Error ? thrown.message : "network request failed" }; }
+    setBusy((b) => { const n = { ...b }; delete n[member.user_id]; return n; });
+    if (error || data?.tenant_id !== workspace.tenant_id || data?.status !== "active") {
+      const r = error ? lifecycleRefusal(error, "reinstate", identity, workspace.tenant_name) : null;
+      if (r?.unavailable) unavailable.current.add("reinstate");
+      // As above: a lost reply is reported as unknown, never as "still suspended". A repeated
+      // reinstate that already landed comes back as the already-reinstated refusal, so Retry is safe.
+      const s = r ? r.message : `${identity} is still suspended. Try again.`;
+      const retry = !r || r.retryable;
+      announce({ tone: "bad", text: s, spoken: s, ...(retry ? { action: { label: "Retry", run: () => void reinstate(member) } } : {}) });
+      if (retry || r?.reconciled) void team.reload();
+      return;
+    }
+    setFlash(member.user_id);
+    const label = permissionPresentation(member.permission, member.is_owner).label;
+    announce({ text: <><strong>{identity}</strong> can open {workspace.tenant_name} again, as {label}.</>, spoken: `${identity} can open ${workspace.tenant_name} again, as ${label}.` });
+    void team.reload();
+  };
+
+  const openSuspend = (member: TeamMemberRecord) => {
+    if (!workspace) return;
+    if (unavailable.current.has("suspend")) { const s = `Suspending isn't available in ${workspace.tenant_name} yet. Nothing was changed.`; announce({ tone: "bad", text: s, spoken: s }); return; }
+    setNotice(null); setDeparting(null); setSuspending({ member, workspace });
+  };
+  const openDeparture = (member: TeamMemberRecord) => { if (!workspace) return; setNotice(null); setSelected(null); setDeparting({ member, workspace }); };
+
+  const canInvite = Boolean(workspace?.can_manage_invitations);
+  const viewerPermission = workspace?.viewer_permission ?? "member";
+  const filterLabel = FILTERS.find((f) => f.value === filter)!.label;
+  const needle = search.trim().toLowerCase();
+  // Pending invitations are folded into the roster as Invited, after the people already on the
+  // team. The Invitations section below stays the one home for the delivery trail and past ones.
+  const invitedRows = workspace && (filter === "invited" || (filter === "all" && workspace.members.length >= workspace.total_members))
+    ? pending.filter((i) => !needle || (i.email ?? "").toLowerCase().includes(needle)) : [];
+  const memberRows = filter === "invited" ? [] : workspace?.members ?? [];
+  const allLoaded = Boolean(workspace && workspace.members.length >= workspace.total_members);
+  const suspendedCount = allLoaded ? workspace!.members.filter((m) => m.status === "suspended").length : 0;
+  const countLine = workspace
+    ? `${workspace.total_members} ${workspace.total_members === 1 ? "person" : "people"} in ${workspace.tenant_name}${suspendedCount ? ` (${suspendedCount} suspended)` : ""}${pending.length ? `, plus ${pending.length} invited` : ""}`
+    : "Confirmed members of this workspace";
+
+  const memberRow = (member: TeamMemberRecord) => {
+    const identity = memberVisibleIdentity(member);
+    const access = permissionPresentation(member.permission, member.is_owner);
+    const act = workspace ? canActOn(viewerPermission, viewerId, member) : false;
+    const me = Boolean(viewerId) && member.user_id === viewerId;
+    const suspended = member.status === "suspended";
+    const rowBusy = busy[member.user_id];
+    const value = conversations.map[member.user_id];
+    const owner = member.is_owner || member.permission === "owner";
+    let sw: React.ReactNode;
+    if (owner) sw = <span className="stw-ro-on">On</span>;
+    else if (value === undefined) sw = <span className="stw-ro" title="This setting isn't shown here yet">Not shown yet</span>;
+    else if (act) sw = <>{<TeamSwitch id={`stw-sw-${member.user_id}`} checked={value} busy={rowBusy === "convo"} label={`Team conversations for ${identity.primary}`} describedBy={suspended ? `stw-swcap-${member.user_id}` : undefined} onToggle={() => void conversationsSwitch(member, !value)} />}{suspended && <span className="stw-cap2" id={`stw-swcap-${member.user_id}`}>Takes effect when reinstated</span>}</>;
+    else if (suspended) sw = value ? <span className="stw-ro-on">On<span className="sr-only"> · </span><span className="stw-paused">Paused while suspended</span></span> : <span className="stw-ro">Off</span>;
+    else sw = <span className={value ? "stw-ro-on" : "stw-ro"}>{value ? "On" : "Off"}</span>;
+    const items: MenuItem[] = act ? [
+      { key: "edit", label: "Edit details", icon: <Pencil aria-hidden="true" />, onSelect: () => openEditor(member) },
+      suspended
+        ? { key: "reinstate", label: "Reinstate access", icon: <Undo2 aria-hidden="true" />, onSelect: () => void reinstate(member) }
+        : { key: "suspend", label: "Suspend access…", icon: <Pause aria-hidden="true" />, onSelect: () => openSuspend(member) },
+      { key: "remove", label: "Remove from team…", icon: <UserMinus aria-hidden="true" />, tone: "danger", separatorBefore: true, onSelect: () => openDeparture(member) },
+    ] : [];
+    return <div className="stw-row" role="listitem" key={member.membership_id} data-status={member.status} data-flash={flash === member.user_id ? "true" : undefined}>
+      <span className="stw-avatar" aria-hidden="true" data-hue={avatarHue(member)}>{initials(member)}</span>
+      <div className="stw-identity"><strong><button type="button" className="stw-namebtn" aria-label={`${identity.primary}, edit details`} onClick={() => openEditor(member)}>{member.full_name || member.email || "Name unavailable"}</button>{me && <span className="stw-you">You</span>}</strong><small>{member.email || "Email unavailable"}</small><small className="stw-t">{member.job_title || "Title not set"}</small></div>
+      <div className="stw-work"><strong>{member.job_title || "Title not set"}</strong><small>{member.responsibilities || "Responsibilities not set"}</small></div>
+      <div className="stw-permc"><span className="stw-perm" data-tone={permissionTone(member.permission, owner)}>{access.label}</span></div>
+      <div className="stw-swc">{sw}</div>
+      <div className="stw-stat" data-s={member.status}><span className="stw-dot" data-s={member.status} aria-hidden="true" />{rowBusy === "reinstate" ? <span className="stw-row-busy"><RefreshCw className="stw-spin" aria-hidden="true" />Reinstating…</span> : <div><strong>{suspended ? "Suspended" : "Active"}</strong><small>{lastSeen(member)}</small></div>}</div>
+      <div className="stw-acts">{act && <RowMenu triggerId={`stw-more-${member.user_id}`} label={`Actions for ${identity.primary}`} items={items} busy={Boolean(rowBusy)} />}</div>
+    </div>;
+  };
+  const inviteRow = (invite: TeamInviteRecord) => {
+    const email = invite.email || "Recipient unavailable";
+    // The same authority the Invitations section below uses: any owner or admin who manages
+    // invitations may resend or withdraw any pending one (resend/revoke_solo_team_invite).
+    const act = canInvite;
+    const value = typeof invite.team_hub_access === "boolean" ? invite.team_hub_access : undefined;
+    const items: MenuItem[] = act ? [
+      { key: "resend", label: "Resend invitation", icon: <Send aria-hidden="true" />, onSelect: () => void rowInvite("resend", invite) },
+      { key: "withdraw", label: "Withdraw invitation", icon: <MailX aria-hidden="true" />, tone: "danger", onSelect: () => void rowInvite("revoke", invite) },
+    ] : [];
+    return <div className="stw-row" role="listitem" key={`invite-${invite.id}`} data-status="invited">
+      <span className="stw-avatar" aria-hidden="true">{email.split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase()}</span>
+      <div className="stw-identity"><strong>{email}</strong><small>Hasn't accepted yet</small><small className="stw-t">Title not set</small></div>
+      <div className="stw-work"><strong>Title not set</strong><small>Responsibilities not set</small></div>
+      <div className="stw-permc"><span className="stw-perm" data-tone={permissionTone(invite.permission, false)}>{permissionPresentation(invite.permission, false).label}</span></div>
+      <div className="stw-swc">{value === undefined ? <span className="stw-ro">Not shown yet</span> : <span className={value ? "stw-ro-on" : "stw-ro"}>{value ? "On when they join" : "Off"}</span>}{act && value !== undefined && <span className="stw-cap2">Withdraw and invite again to change</span>}</div>
+      <div className="stw-stat" data-s="invited"><span className="stw-dot" data-s="invited" aria-hidden="true" /><div><strong>Invited</strong><small>Invited {new Date(invite.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · expires {new Date(invite.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</small></div></div>
+      <div className="stw-acts">{act && <RowMenu triggerId={`stw-more-invite-${invite.id}`} label={`Actions for ${email}`} items={items} />}</div>
+    </div>;
+  };
+
+  const firstUse = workspace && workspace.total_members === 1 && workspace.members[0]?.is_owner && !search && filter === "all" && pending.length === 0;
+  const denied = team.error ? /access denied|permission/i.test(team.error) : false;
+
+  return <div className={notice ? "stw-workspace has-notice" : "stw-workspace"}><div className="stw-tabs" role="tablist" aria-label="Team settings"><button type="button" role="tab" aria-selected={view === "team"} onClick={() => setView("team")}>Team</button><button type="button" role="tab" aria-selected={view === "roles"} onClick={() => setView("roles")}>Roles &amp; access</button></div>
+    {view === "roles" ? <section className="stw-access"><header><ShieldCheck/><div><h2>Roles &amp; access</h2><p>Permissions are enforced. Titles and responsibilities only describe work.</p></div></header><div className="stw-role-grid">
+      <article><h3>Owner</h3><p>Everything, including permissions. Invites admins and members. Suspends, reinstates and removes admins and members, and switches their team conversations. Can't be suspended or removed.</p></article>
+      <article><h3>Admin</h3><p>Manages invitations and work details, and invites admins and members. Suspends, reinstates and removes members, and switches their team conversations. Can't suspend, remove or switch another admin or the owner, and can't do any of these to themselves.</p></article>
+      <article><h3>Member</h3><p>Works in the business: their own tasks, the clients they're assigned, and Team Hub when team conversations are on. Can't manage people or invitations.</p></article>
+    </div><div className="stw-roles-note"><MessageSquare aria-hidden="true" /><p><strong>Team conversations is separate from permission.</strong> On: they're in Team Hub, and new teammates join the open team channels when they accept. Off: they can't open Team Hub (channels, direct messages or shared files) and work only on what they're assigned; they stay in their channels. Back on: they join every open team channel again, including any they had left, and keep the private channels they were in. Off suits a spot-job contractor, who is otherwise a member like anyone else.</p></div></section> : <>
+      <section className="stw-toolbar" aria-labelledby="stw-people-h"><div><h2 id="stw-people-h">People</h2><p>{countLine}</p></div>{canInvite && <button type="button" className={firstUse ? "stw-btn secondary" : "stw-btn primary"} onClick={() => setInviteWorkspace(workspace)}><UserPlus/>Invite someone</button>}</section>
+      <section className="stw-permission-note" aria-label="Workspace permissions"><ShieldCheck/><div><strong>Workspace permissions</strong><span>The owner manages admins and members; admins manage members. Permissions apply only to {workspace?.tenant_name ?? "this workspace"}.</span></div><button type="button" onClick={() => setView("roles")}>Review roles</button></section>
+      <section className="stw-roster" aria-labelledby="stw-people-h"><div className="stw-filters"><label><span className="sr-only">Search team</span><Search/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search people, titles, responsibilities" autoComplete="off"/></label><TeamPicker value={filter} label="Show" prefix="Show:" options={FILTERS} onChange={(v) => setFilter(v as Filter)} className="stw-filter-pick" /></div>
+        {team.loading ? <><p className="sr-only" role="status">Loading the team…</p><div aria-hidden="true">{[0, 1, 2, 3].map((i) => <div key={i} className="stw-skelrow"><div className="stw-skel c" /><div><div className="stw-skel" style={{ width: "70%", marginBottom: 7 }} /><div className="stw-skel" style={{ width: "52%" }} /></div><div><div className="stw-skel" style={{ width: "60%", marginBottom: 7 }} /><div className="stw-skel" style={{ width: "84%" }} /></div><div className="stw-skel" style={{ width: 64 }} /><div className="stw-skel" style={{ width: 70 }} /><div className="stw-skel" style={{ width: "76%" }} /><span /></div>)}</div></>
+          : team.error && !workspace ? <div className="stw-rstate" role="alert"><AlertTriangle aria-hidden="true" /><strong>{denied ? "You don’t have access to this team" : "The team didn't load"}</strong><span>{denied ? "Your current workspace permission does not allow this roster to load." : "Check your connection and try again. Nothing on the team changed."}</span><button type="button" className="stw-btn secondary" onClick={team.refresh}><RefreshCw aria-hidden="true" />Try again</button></div>
+          : <>{firstUse && <div className="stw-first-use"><Users/><div><strong>Your workspace starts with you</strong><span>Invite the first teammate, then give them a title and clear responsibilities.</span></div>{canInvite && <button type="button" className="stw-btn primary" onClick={() => setInviteWorkspace(workspace)}>Invite first teammate</button>}</div>}
+            {memberRows.length + invitedRows.length === 0
+              ? <div className="stw-empty"><strong>No one matches</strong><span>Clear the search or show everyone.</span><button type="button" className="stw-btn secondary" onClick={() => { setSearch(""); setFilter("all"); }}>Show everyone</button></div>
+              : <><div className="stw-cols" aria-hidden="true"><span /><span>Person</span><span className="stw-c-work">Work</span><span>Permission</span><span>Team conversations</span><span>Status</span><span /></div>
+                <div className="stw-list" role="list" aria-label="Team roster">{memberRows.map(memberRow)}{invitedRows.map(inviteRow)}</div></>}</>}
+        {team.error && workspace && <div className="stw-inline-error" role="alert"><AlertTriangle aria-hidden="true" /><span>The next page didn't load.</span><button type="button" className="stw-quiet" onClick={team.loadMore}>Retry</button></div>}{workspace && filter !== "invited" && workspace.members.length < workspace.total_members && <button type="button" className="stw-load" disabled={team.loadingMore} aria-busy={team.loadingMore || undefined} onClick={team.loadMore}>{team.loadingMore ? <><RefreshCw className="stw-spin" aria-hidden="true" />Loading…</> : `Load more (${workspace.total_members - workspace.members.length} remaining)`}</button>}
       </section>
       {workspace?.can_manage_invitations && <section className="stw-invites">
         <header><Mail/><div><h2>Invitations</h2><p>Delivery is reported by the email provider. Accepted, expired, and revoked are derived from the invitation record.</p></div><span>{pending.length} pending</span></header>
         {workspace.invitations.length === 0
           ? <p className="stw-invite-empty">No team invitations yet.</p>
           : <>
-            {/* ACTIVE first, and on their own. The report that started this was a finished
-                invitation sitting at the top of the list with no action on it. */}
+            {/* ACTIVE first, and on their own. */}
             {activeInvites.length === 0
               ? <p className="stw-invite-empty">Nothing outstanding. Every invitation here has been accepted, expired, or withdrawn.</p>
               : <div>{activeInvites.map((invite) => <InviteRow key={invite.id} invite={invite} onManage={manageInvite}/>)}</div>}
@@ -850,7 +781,34 @@ export function SoloTeamWorkspace({ openPaige }: { openPaige?: () => void } = {}
             </details>}
           </>}
       </section>}
-      <section className="stw-paige"><Sparkles/><div><h2>Paige team context</h2><p>Paige can read the confirmed roster, each person’s enforced permission, title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.</p><small>She can also invite someone, resend or withdraw an invitation, edit work details, and change a permission. She is held to the same rules you are: the permission change is owner-only, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval; if this workspace has put an action on autopilot in Paige&rsquo;s settings, those two still ask.</small></div>{openPaige ? <button className="stw-btn secondary" onClick={openPaige}>Open Paige</button> : <span>Governed</span>}</section>
+      <section className="stw-paige" aria-labelledby="stw-paige-h"><span className="stw-plate" aria-hidden="true"><Sparkles/></span>
+        <div><h2 id="stw-paige-h">Paige team context</h2>
+          <p>Paige can read the confirmed roster, each person's permission, title and responsibilities for this workspace. Work details people write are reference for her, not instructions or authority.</p>
+          <div className="stw-lanes">
+            <div className="stw-now"><h3>She can do this for you today</h3><ul><li><CheckCircle2 aria-hidden="true" />Invite someone</li><li><CheckCircle2 aria-hidden="true" />Resend or withdraw an invitation</li><li><CheckCircle2 aria-hidden="true" />Edit someone's title and responsibilities</li><li><CheckCircle2 aria-hidden="true" />Change a permission (owner only)</li></ul></div>
+            <div className="stw-soon"><h3>Coming to Paige, not yet available</h3><ul><li><Clock aria-hidden="true" />Suspend or reinstate someone</li><li><Clock aria-hidden="true" />Remove someone and hand over their work</li><li><Clock aria-hidden="true" />Turn someone's team conversations on or off</li></ul></div>
+          </div>
+          <p className="stw-rule">She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. The actions still coming will follow the same rules. Until then, do them here.</p>
+        </div>{openPaige && <button type="button" className="stw-btn secondary" onClick={openPaige}>Open Paige</button>}</section>
     </>}
-    {editorWorkspace && selected && (selectedLive || removalPending || (contactHold && !workspace)) && <MemberEditor member={selected} workspace={editorWorkspace} onClose={closeEditor} onSaved={handleSaved} onRemoved={handleRemoved} onPendingChange={setRemovalPending} onContactDirtyChange={setContactHold}/>} {inviteWorkspace && <InviteDialog workspace={inviteWorkspace} onClose={() => setInviteWorkspace(null)} onInvited={team.refresh}/>}</div>;
+    {editorWorkspace && selected && (selectedLive || (contactHold && !workspace)) && <MemberEditor member={selected} workspace={editorWorkspace} onClose={closeEditor} onSaved={handleSaved} onContactDirtyChange={setContactHold}
+      canRemove={canActOn(editorWorkspace.viewer_permission, viewerId, selected)} onRequestRemoval={() => openDeparture(selected)}/>}
+    {inviteWorkspace && <InviteDialog workspace={inviteWorkspace} onClose={() => setInviteWorkspace(null)} onInvited={({ email, conversations: on, emailed }) => {
+      void team.reload();
+      const s = emailed ? `Invitation sent to ${email}. ${on ? "They'll join the open team channels when they accept." : "They won't join Team Hub; they'll see only their assigned work."}` : `The invitation for ${email} is pending, but the email wasn't sent. You can resend it from Team.`;
+      announce({ tone: emailed ? "ok" : "bad", text: s, spoken: s, focus: true });
+    }}/>}
+    {suspending && <SuspendDialog member={suspending.member} workspace={suspending.workspace} onClose={() => setSuspending(null)} onSuspended={(approvals) => {
+      const m = suspending.member; const name = memberVisibleIdentity(m).primary; const first = m.full_name?.trim() ? m.full_name.trim().split(/\s+/)[0] : name;
+      setSuspending(null); setFlash(m.user_id); void team.reload();
+      const tail = ` is suspended and can't open ${suspending.workspace.tenant_name}.${approvals ? ` ${approvals === 1 ? "1 approval stays" : `${approvals} approvals stay`} assigned to ${first}.` : ""}`;
+      announce({ text: <><strong>{name}</strong>{tail}</>, spoken: `${name}${tail}`, focus: true, action: { label: "Reinstate", run: () => void reinstate({ ...m, status: "suspended" }) } });
+    }}/>}
+    {departing && viewerId && <DepartureReview member={departing.member} workspace={departing.workspace} viewerId={viewerId} members={departing.workspace.tenant_id === workspace?.tenant_id ? workspace.members : departing.workspace.members}
+      onOpenConnections={openConnections}
+      onSuspendInstead={departing.member.status === "active" ? () => { const d = departing; setDeparting(null); openSuspend(d.member); } : undefined}
+      onClose={(outcome?: DepartureOutcome) => { const d = departing; setDeparting(null); if (outcome) announce({ text: outcome.text, spoken: outcome.spoken, focus: true, action: outcome.action === "review-again" ? { label: "Review again", run: () => setDeparting(d) } : undefined }); }}
+      onRemoved={(outcome) => { setDeparting(null); void team.reload(); announce({ text: outcome.text, spoken: outcome.spoken, focus: true }); }}/>}
+    <NoticeBar notice={notice} onDismiss={() => setNotice(null)} />
+  </div>;
 }

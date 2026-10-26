@@ -166,7 +166,10 @@ describe("Solo Settings rendered customer copy", () => {
   it("renders the approved Workspace permissions title and body", () => {
     const text = renderedText(renderDestination("team"));
     expect(text).toContain("Workspace permissions");
-    expect(text).toContain("Owners and authorized admins may manage team access. Permissions apply only to this Solo workspace.");
+    // Approved Settings → Team design (EXP08, 2026-10-26): the authority rule in one sentence. The
+    // workspace is named once the roster has loaded; before that it reads "this workspace".
+    expect(text).toContain("The owner manages admins and members; admins manage members.");
+    expect(text).toMatch(/Permissions apply only to (this workspace|.+)\./);
   });
 
   it("keeps operator-only terminology out of every rendered destination", () => {

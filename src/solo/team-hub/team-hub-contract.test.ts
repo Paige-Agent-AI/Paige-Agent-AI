@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { detectVpAddress } from "../../../supabase/functions/_shared/paige-context/vp-address";
 import {
   bodyProblem,
+  conversationsOff,
   messageLength,
   channelNameProblem,
   incomingAnnouncement,
@@ -577,5 +578,38 @@ describe("attachments (increment 3 contract)", () => {
     expect(postRefusalMessage("invalid", [], 0, now)).toBe("Not sent. Everyone you mention must be on the team and able to see this conversation.");
     expect(postRefusalMessage("too_long", [old], 0, now)).toBe("Messages can be up to 8,000 characters.");
     expect(postRefusalMessage("no_answer", [old], 0, now)).toBe("Not sent. Your message is kept here.");
+  });
+});
+
+describe("EXP08 lifecycle: the Team conversations switch in the contract", () => {
+  it("passes conversations_off and recipient_conversations_off through by their own codes", () => {
+    for (const code of ["conversations_off", "recipient_conversations_off"]) {
+      expect(parseConversationList({ ok: false, code }, null, TENANT)).toEqual({ kind: "refused", code });
+    }
+  });
+
+  it("reads each person's team_conversations, and an answer from before the switch is unknown, not off", () => {
+    const result = parseConversationList(list({ people: [
+      { user_id: "u-a", display_name: "Theo", title: null, permission: "member", team_conversations: false },
+      { user_id: "u-b", display_name: "Dana", title: null, permission: "member", team_conversations: true },
+      { user_id: "u-c", display_name: "Sam", title: null, permission: "member" },
+    ] }), null, TENANT);
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+    expect(result.value.people.map((p) => [p.display_name, p.team_conversations, conversationsOff(p)])).toEqual([
+      ["Theo", false, true], ["Dana", true, false], ["Sam", null, false],
+    ]);
+    expect(parseConversationList(list({ people: [{ user_id: "u-a", display_name: "Theo", title: null, permission: "member", team_conversations: "no" }] }), null, TENANT).kind, "a malformed flag makes the answer unusable").toBe("unavailable");
+  });
+
+  it("never offers a switched-off person as a mention", () => {
+    const people = [person({ user_id: "u-theo", display_name: "Theo Brandt", team_conversations: false }), person({ user_id: "u-dana", display_name: "Dana Reyes" })];
+    expect(mentionCandidates({ kind: "everyone" }, people, "u-me", "").map((p) => p.display_name)).toEqual(["Dana Reyes"]);
+  });
+
+  it("says a switched-off person's state plainly, and a DM to one is not delivered", () => {
+    expect(refusalMessage("conversations_off", "read")).toBe("Team conversations are off for you in this workspace. Your work and permission are unchanged.");
+    expect(refusalMessage("recipient_conversations_off", "send")).toMatch(/^Not delivered\. .*Your message is kept here\.$/);
+    expect(refusalMessage("recipient_conversations_off", "dm")).not.toMatch(/sent|delivered/i);
   });
 });

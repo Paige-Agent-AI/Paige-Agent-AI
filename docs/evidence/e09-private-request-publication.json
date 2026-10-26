@@ -2427,5 +2427,84 @@
     "authenticated": "UNVERIFIED",
     "founderAcceptance": "NOT_REQUESTED",
     "scope": "Full42/seven retained. Owner-relayed lifecycle additions acknowledged; classify original Calendar/E04/E05/support/commercial/Comms source and ALG01/02/04/10/12/13 before any new implementation; no second system or broader authority."
+  },
+  "ownerCommandScopedConfirmationCorrection": {
+    "runtime": "abd5c337499faac437a9e5644cf70c426bcd686c",
+    "composed": "5ba026e18700780398d7cb7ec9a90552c5f099b5",
+    "incomingMain": "99c63316dfc6a9a0ddd19d80660fe43fe724b564",
+    "finding": {
+      "source": "NON-AUTHOR4372871559",
+      "failedHead": "e15fddbf058c2f9a47bb4a371cfd4de969c76ef6",
+      "issue": "Raw intent hash does not match the original common issuer scoped fingerprint",
+      "disposition": "Use existing scopedConfirmationFingerprint around the same exact stored-argument hash; no issuer/claim/native ABI or permission change"
+    },
+    "rootSha256": "db58b72020aa696ef9b393efefb8070797a448fcf26325f9722de0030262da8e",
+    "tests": {
+      "initialSandboxCollection": "INVALID:0 cases, temporary-cache rename EPERM",
+      "causalRed": {
+        "passed": 8,
+        "failed": 7,
+        "total": 15
+      },
+      "scopedGreen": {
+        "passed": 15,
+        "failed": 0,
+        "total": 15
+      },
+      "fullSerial": {
+        "passed": 99,
+        "failed": 0,
+        "total": 99,
+        "prior96Retained": true
+      },
+      "originalIncumbentFile": {
+        "passed": 83,
+        "failed": 0
+      },
+      "originalNative": {
+        "passed": 49,
+        "failed": 0,
+        "scope": "Synthetic Windows loopback; stopped cluster, not hosted proof"
+      },
+      "appScopedES2020": "PASS:0",
+      "changedTestLint": "PASS:0",
+      "actualRootCompiler": "Same10 inherited diagnostics, not clean compile"
+    },
+    "sourceBinding": {
+      "originalAggregatesReproduced": 29,
+      "literalRenewal": 28,
+      "changedIdentityIndex": 15,
+      "incumbentDispatchControlHelperImports": "UNCHANGED",
+      "searchPrivacyRefusal": "UNCHANGED",
+      "validatorExtractorOtherSourcePins": "UNCHANGED"
+    },
+    "native": {
+      "productionFrontierObserved": "20271114280004",
+      "former270009": "NOT_APPLIED in production; retired original disposable Preview only",
+      "forwardVersion": "20271114280009",
+      "canonicalSqlSha256": "9e5f5b502dd31855c6d53429251a1e929846b2f5392cc23e732a3eadcf285dbd",
+      "sqlComparison": "Exact git bytes unchanged by rename",
+      "formerReportedChecksum": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4 was stale; not current source identity",
+      "hostedProof102": "FAILED on e15; diagnosis and fresh required CI owed"
+    },
+    "preview": {
+      "originalBranch": "84101487-49c0-45a6-af5c-35a363801f30",
+      "withData": false,
+      "authUsers": 0,
+      "clients": 0,
+      "work": 0,
+      "messages": 0,
+      "confirmations": 0,
+      "initialTenantRows": 3,
+      "recovery": "Original unmerged PR temporarily closed; disposable branch absence verified. Reopen same PR only after forward source review; fresh ordinary Preview/source readback owed",
+      "productionReset": false,
+      "includeAll": false,
+      "newPaidBranchCreation": false
+    },
+    "status": "NOT_MERGED/NOT_DEPLOYED; corrective exact-head review and required CI owed",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED",
+    "fullScope": "Full42/seven/Teach/CAP018–024/lifecycle and actual canonical algorithm maturity retained"
   }
 }

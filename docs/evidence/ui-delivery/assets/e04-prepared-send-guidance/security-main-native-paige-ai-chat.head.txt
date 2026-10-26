@@ -1,0 +1,61 @@
+Check supabase/functions/paige-ai-chat/index.ts
+TS2769 [ERROR]: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "planned" | "estimated" | "exact" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: string; }, never, never, null, "analytics_events", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string | null; event_name: string; event_category: "system" | "engagement" | "paige"; properties: Record<string, unknown>; page_path: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "planned" | "estimated" | "exact" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: string; }, never, never, null, "analytics_events", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+  await recordWrite("analytics_events", supabaseAdmin.from("analytics_events").insert({
+                                                                               ~~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:744:80
+
+TS2345 [ERROR]: Argument of type 'SupabaseClient<any, "public", "public", any, any>' is not assignable to parameter of type 'ContextDb'.
+  The types returned by 'from(...)' are incompatible between these types.
+    Type 'PostgrestQueryBuilder<any, any, any, any, unknown>' is missing the following properties from type 'ContextDbQuery': eq, neq, in, gte, and 4 more.
+    const userContext = customerPortal ? "" : await buildUserContext(supabase, contextUserId, fundingEnabled);
+                                                                     ~~~~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:3473:70
+
+TS2345 [ERROR]: Argument of type 'SupabaseClient<any, "public", "public", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.
+  Type '"public"' is not assignable to type 'never'.
+            void logAnalyticsEvent(supabase, user.id, "rag_retrieval_triggered", "paige", {
+                                   ~~~~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:3600:36
+
+TS2345 [ERROR]: Argument of type 'SupabaseClient<any, "public", "public", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.
+  Type '"public"' is not assignable to type 'never'.
+            void logAnalyticsEvent(supabase, user.id, "web_search_triggered", "paige", {
+                                   ~~~~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:13461:36
+
+TS2345 [ERROR]: Argument of type 'SupabaseClient<any, "public", "public", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.
+  Type '"public"' is not assignable to type 'never'.
+            void logAnalyticsEvent(supabase, user.id, "deep_research_triggered", "paige", {
+                                   ~~~~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:13514:36
+
+TS2339 [ERROR]: Property 'catch' does not exist on type 'PromiseLike<void>'.
+            .catch?.((e: any) => console.warn("[paige-ai-chat] rail producer skipped:", e?.message));
+             ~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:19390:14
+
+TS2345 [ERROR]: Argument of type 'SupabaseClient<any, "public", "public", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.
+  Type '"public"' is not assignable to type 'never'.
+              void logAnalyticsEvent(supabase, user.id, "entity_diagram_generated", "paige", {});
+                                     ~~~~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:21324:38
+
+TS2345 [ERROR]: Argument of type 'SupabaseClient<any, "public", "public", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.
+  Type '"public"' is not assignable to type 'never'.
+                void logAnalyticsEvent(supabase, user.id, "legal_flag_shown", "paige", {
+                                       ~~~~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:21334:40
+
+TS2345 [ERROR]: Argument of type 'SupabaseClient<any, "public", "public", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.
+  Type '"public"' is not assignable to type 'never'.
+                void logAnalyticsEvent(supabase, user.id, "lender_searched", "engagement", {
+                                       ~~~~~~~~
+    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:21355:40
+
+Found 9 errors.
+
+error: Type checking failed.

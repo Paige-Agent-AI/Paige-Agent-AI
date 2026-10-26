@@ -503,5 +503,20 @@
       }
     }
   ],
-  "scope": "Source-only receiving proof; no permission/admission/metadata/helper/import/native/CI or inspector change; no review/CI/deployment/acceptance inferred"
+  "scope": "Source-only receiving proof; no permission/admission/metadata/helper/import/native/CI or inspector change; no review/CI/deployment/acceptance inferred",
+  "proof": {
+    "runtimeSource": "2051a6aaeeaeaa058572bdb1a3790b1421d82b08",
+    "hostileCases": 83,
+    "chatCases": 15,
+    "native": {
+      "version": "2.9.6",
+      "base": 9,
+      "head": 9,
+      "newDiagnostics": 0,
+      "cleanCompile": false
+    },
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "requiredHostedChecks": "NEW_HEAD_REQUIRED",
+    "release": "DRAFT / mandatory UI and cohorts still owed"
+  }
 }

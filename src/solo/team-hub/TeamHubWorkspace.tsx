@@ -1,5 +1,5 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { ArrowLeft, AtSign, ClipboardList, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareReply, PanelRight, Paperclip, Plus, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
+import { ArrowLeft, AtSign, ClipboardList, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
@@ -29,6 +29,7 @@ import {
   dayKey,
   dayLabel,
   initials,
+  conversationsOff,
   mentionCandidates,
   mentionLabel,
   mentionRuns,
@@ -126,7 +127,16 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
       Your access to Team Hub and its conversations ended. Ask an owner if you should be invited again.
     </CenterState></div>;
   }
+  if (hub.status === "conversations_off") {
+    // EXP08: still on the team, with their work and permission, but this person's Team
+    // conversations switch is off. Not "couldn't load", and not "no longer on this team".
+    return <div className="th-hub th-hub--state" data-state="conversations-off"><CenterState icon={<MessageSquareOff aria-hidden="true" />} title="Team conversations are off for you" role="status"
+      action={<button type="button" className="th-btn" onClick={() => void hub.retryLoad()}>Check again</button>}>
+      In this workspace you work on what you're assigned without Team Hub, so channels, direct messages and shared files aren't open to you. Your tasks, the clients you're assigned and your permission are unchanged. To join team conversations, ask an owner or admin.
+    </CenterState></div>;
+  }
   if (hub.status === "scope_changed") {
+
     return <div className="th-hub th-hub--state"><CenterState icon={<Users aria-hidden="true" />} title="Your workspace changed" role="alert"
       action={<button type="button" className="th-btn" onClick={() => void hub.retryAfterScopeChange()}>Reload Team Hub</button>}>
       Team Hub only shows the workspace you're in now. Reload to open its conversations.
@@ -856,9 +866,12 @@ function NewChannelForm({ teammates, people, online, onCancel, onCreate }: {
     {visibility === "private" && <>
       {teammates.length
         ? <div className="th-chips" role="group" aria-label="Add people">{teammates.map((person) =>
-          <button key={person.user_id} type="button" className="th-chip" aria-pressed={members.includes(person.user_id)}
+          // EXP08: someone with Team conversations off can't be added (the server refuses), so they are
+          // shown, marked, and not choosable — rather than offered and then refused.
+          <button key={person.user_id} type="button" className="th-chip" aria-pressed={members.includes(person.user_id)} disabled={conversationsOff(person)}
+            title={conversationsOff(person) ? "Team conversations are off for this person" : undefined}
             onClick={() => setMembers((current) => current.includes(person.user_id) ? current.filter((id) => id !== person.user_id) : [...current, person.user_id])}>
-            {mentionLabel(person, people)}</button>)}</div>
+            {mentionLabel(person, people)}{conversationsOff(person) && <span className="th-chip-note"> · Team conversations off</span>}</button>)}</div>
         : <p className="th-note">You're the only person on the team right now.</p>}
       <p className="th-note">People you don't add won't see its name, members or messages.</p>
     </>}
@@ -883,7 +896,7 @@ function PersonPicker({ teammates, people, online, onCancel, onPick }: {
     onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); onCancel(); } }}>
     {teammates.length
       ? teammates.map((person, index) => <button key={person.user_id} ref={index === 0 ? firstRef : undefined} type="button" className="th-option"
-        disabled={!online || Boolean(busy)} onClick={async () => {
+        disabled={!online || Boolean(busy) || conversationsOff(person)} onClick={async () => {
           setBusy(person.user_id);
           setError(null);
           const result = await onPick(person);
@@ -892,7 +905,7 @@ function PersonPicker({ teammates, people, online, onCancel, onPick }: {
         }}>
         <span className="th-avatar" aria-hidden="true">{initials(person.display_name)}</span>
         <span className="th-option-meta"><span>{mentionLabel(person, people)}</span>
-          <small>{[permissionLabel(person.permission) ?? "Member", person.title].filter(Boolean).join(" · ")}</small></span>
+          <small>{[permissionLabel(person.permission) ?? "Member", person.title, conversationsOff(person) ? "Team conversations off" : null].filter(Boolean).join(" · ")}</small></span>
       </button>)
       : <p className="th-note">No one else is on the team yet.</p>}
     {error && <p className="th-error">{error}</p>}
@@ -1046,9 +1059,11 @@ function AddPeople({ channelId, memberIds, people, meId, online, hub, announce, 
     }}>
     {teammates.length
       ? <div className="th-chips" role="group" aria-label="Teammates">{teammates.map((person) =>
-        <button key={person.user_id} type="button" className="th-chip" aria-pressed={chosen.includes(person.user_id)}
+        <button key={person.user_id} type="button" className="th-chip" aria-pressed={chosen.includes(person.user_id)} disabled={conversationsOff(person)}
+          title={conversationsOff(person) ? "Team conversations are off for this person" : undefined}
           onClick={() => setChosen((current) => current.includes(person.user_id) ? current.filter((id) => id !== person.user_id) : [...current, person.user_id])}>
-          {mentionLabel(person, people)}</button>)}</div>
+          {mentionLabel(person, people)}{conversationsOff(person) && <span className="th-chip-note"> · Team conversations off</span>}</button>)}</div>
+
       : <p className="th-note">{people.some((person) => person.user_id !== meId) ? "Everyone on the team is already in this channel." : "No one else is on the team yet."}</p>}
     {error && <p className="th-error">{error}</p>}
     <div className="th-form-actions">

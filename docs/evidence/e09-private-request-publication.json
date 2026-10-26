@@ -2538,5 +2538,66 @@
     "activation": "UNCHANGED",
     "authenticated": "UNVERIFIED",
     "founderAcceptance": "NOT_REQUESTED"
+  },
+  "ownerCommandForwardOrderRecovery": {
+    "observedAt": "2026-10-26T01:22:00Z",
+    "originalReviewedHead": "37a48f6d7ba9a18f910909b4b23dd06c3bb9d334",
+    "originalReviewedSource": "AUTHOR-REVIEW / LOWER ASSURANCE5646254894; actual non-author scoped-token finding fixed and resolved",
+    "incomingMain": "d08a2f206d479c3727898cb68466758075382898",
+    "composition": "63aa24193268935fc0fd645d5018479ed0efec23",
+    "compositionTree": "e841c73eaae871203a5c39bd784b0005142237c4",
+    "incomingSourcePreserved": {
+      "originalOwningPaths": 34,
+      "outsideEntries": 16356
+    },
+    "reason": "Actual original E08 migration300008 applied once while required broad tests ran; own280009 absent",
+    "migration": {
+      "from": "supabase/migrations/20271114280009_e09_request_share_autonomy_catalogue.sql",
+      "to": "supabase/migrations/20271114320009_e09_request_share_autonomy_catalogue.sql",
+      "canonicalSha256": "9e5f5b502dd31855c6d53429251a1e929846b2f5392cc23e732a3eadcf285dbd",
+      "sqlUnchanged": true,
+      "productionApplied": false,
+      "afterActual": "20271114300008",
+      "afterRecordedReservation": "20271114310008",
+      "sourceWindow": "ANT161/4ca2813b-1760-4b80-bc7e-5fbc00f5fc9a"
+    },
+    "native": {
+      "passed": 50,
+      "failed": 0,
+      "allPrior50ResultObjectsPreserved": true,
+      "clusterStoppedExit": 0,
+      "scope": "Isolated Windows loopback, not authenticated or production"
+    },
+    "originalLinux": {
+      "run": 40251287971,
+      "job": 121343702514,
+      "artifact": 12621230541,
+      "passed": 50,
+      "failed": 0,
+      "zipSha256": "f184a638970dac60a2829ef5beb07aefa224be913766b08c2e276bd15de75199",
+      "head": "37a48f6d7ba9a18f910909b4b23dd06c3bb9d334",
+      "scope": "Original exact-head Linux synthetic proof only, not new-head full CI"
+    },
+    "supportingFullHandler": {
+      "passed": 6,
+      "failed": 0,
+      "scope": "Actual Root through unchanged original protected loader and synthetic recording ports; not native/provider/authenticated/required CI; separate from99"
+    },
+    "previewRecovery": {
+      "retiredBranch": "393e8f86-9f8b-4643-8de7-f5c1f9ce0756",
+      "withData": false,
+      "authUsers": 0,
+      "clients": 0,
+      "work": 0,
+      "confirmations": 0,
+      "retirementAbsenceVerified": true,
+      "method": "Same PR normal close/reopen; fresh standard Preview and source readback owed"
+    },
+    "productRootUiApprovalBindings": "UNCHANGED from37; original E04/E05/E08 valid source preserved",
+    "status": "NOT_MERGED/NOT_DEPLOYED; new-head exact review/required CI/Preview and actual native/Edge/web readback owed",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "latestCustomerReturn": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
   }
 }

@@ -37,6 +37,33 @@ vi.mock("../../supabase/functions/_shared/social-provider/governance.ts", () => 
   };
 });
 
+// The capability-record module uses crypto.subtle (Deno-native) and the studio-caller module
+// has its own RPC chain — both are Deno-runtime modules proven by the growth-publish door's
+// production use. Here we double them so the tests prove THIS door's branching logic.
+vi.mock("../../supabase/functions/_shared/capability-record.ts", () => ({
+  recordCapabilityRun: vi.fn(async (admin: unknown, args: Record<string, unknown>) => {
+    const { rpc } = admin as { rpc: (fn: string, a: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> };
+    await rpc("record_capability_run", args);
+  }),
+  stableRunId: vi.fn(async (parts: Array<string | null | undefined>) =>
+    "run-" + (parts ?? []).filter(Boolean).join("-").slice(0, 32)),
+}));
+vi.mock("../../supabase/functions/_shared/studio-caller.ts", () => ({
+  resolveStudioCaller: vi.fn(async (caller: { rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> }, requestedTenant: unknown) => {
+    const { data: active } = await caller.rpc("current_user_tenant_id");
+    if (typeof active !== "string" || !active) return { ok: false, status: 403, error: "Open one of your workspaces first.", reason: "no_workspace" };
+    if (requestedTenant != null && requestedTenant !== "" && String(requestedTenant).toLowerCase() !== active) {
+      return { ok: false, status: 403, error: "That isn't the workspace you're signed in to.", reason: "other_workspace" };
+    }
+    const { data: isAdmin } = await caller.rpc("is_tenant_admin", { _tenant: active });
+    if (isAdmin !== true) {
+      const { data: manages } = await caller.rpc("agency_can_manage_child", { _child: active });
+      if (manages !== true) return { ok: false, status: 403, error: "Only this workspace's owner or an admin can use this.", reason: "not_admin" };
+    }
+    return { ok: true, tenantId: active };
+  }),
+}));
+
 import {
   world, publishBody, connectedRow, pieceRow, MINE, THEIRS, USER, PIECE, FOREIGN_PIECE, CONNECTION,
 } from "./social-publish-door.world.ts";

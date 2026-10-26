@@ -990,6 +990,16 @@ AS $function$
       RAISE EXCEPTION 'Cannot grant a platform-operator role here (owner-only)'
         USING ERRCODE = '42501';
     END IF;
+    -- A role a row in platform_operator_roles makes an operator tier is refused here too, with the
+    -- lockdown's own error. Production relied on the user_roles trigger for this, but below a person
+    -- not active in this workspace gets no global row at all, so that trigger would never fire and
+    -- the refusal would turn into a silent pending seat.
+    IF NOT public.is_platform_owner()
+       AND EXISTS (SELECT 1 FROM public.platform_operator_roles r WHERE r.role = _role::text) THEN
+      RAISE EXCEPTION
+        'PROTECTED_ROLE_GRANT_FORBIDDEN: role "%" (a platform-operator tier) may be granted or revoked only by an existing super_admin or a trusted service context (§53).', _role
+        USING ERRCODE = '42501';
+    END IF;
 
     _tenant_role := public.map_app_role_to_tenant_role(_role);
 

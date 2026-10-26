@@ -602,6 +602,49 @@ CREATE TRIGGER trg_sync_tenant_member_to_user_roles AFTER INSERT OR UPDATE OR DE
   FOR EACH ROW EXECUTE FUNCTION public.sync_tenant_member_to_user_roles();
 CREATE TRIGGER trg_sync_user_role_to_tenant_member AFTER INSERT OR UPDATE ON public.user_roles
   FOR EACH ROW EXECUTE FUNCTION public.sync_user_role_to_tenant_member();
+-- The operator-tier lockdown on user_roles, production's definition (20270510000000), and the
+-- row that makes a role an operator tier (operator_standing.sql lists 'moderator' the same way).
+CREATE TABLE public.platform_operator_roles (role text PRIMARY KEY);
+INSERT INTO public.platform_operator_roles (role) VALUES ('moderator');
+CREATE OR REPLACE FUNCTION public.enforce_protected_role_grant()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  _jwt_role text := auth.role();  -- 'authenticated' | 'anon' | 'service_role' | NULL (direct/no-JWT)
+  _touched text[];
+  _role_txt text;
+BEGIN
+  _touched := CASE TG_OP
+    WHEN 'INSERT' THEN ARRAY[NEW.role::text]
+    WHEN 'DELETE' THEN ARRAY[OLD.role::text]
+    ELSE ARRAY[OLD.role::text, NEW.role::text]
+  END;
+  FOREACH _role_txt IN ARRAY _touched LOOP
+    IF _role_txt IN ('super_admin', 'platform_admin')
+       OR EXISTS (SELECT 1 FROM public.platform_operator_roles r WHERE r.role = _role_txt) THEN
+      -- Allowed writers: (a) an existing platform owner (super_admin) acting via a verified JWT, OR
+      -- (b) a trusted server context — a service_role API caller, or a direct no-JWT connection
+      -- (migration / pg_cron / superuser / the auth service), where auth.role() is 'service_role' or
+      -- NULL. A genuine authenticated/anon JWT that is NOT the platform owner is REFUSED. coalesce
+      -- maps the no-JWT NULL to 'service' so it is treated as trusted.
+      IF NOT (
+           public.is_platform_owner()
+        OR coalesce(_jwt_role, 'service') NOT IN ('authenticated', 'anon')
+      ) THEN
+        RAISE EXCEPTION
+          'PROTECTED_ROLE_GRANT_FORBIDDEN: role "%" (a platform-operator tier) may be granted or revoked only by an existing super_admin or a trusted service context (§53).', _role_txt
+          USING ERRCODE = '42501';
+      END IF;
+    END IF;
+  END LOOP;
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END;
+$function$;
+CREATE TRIGGER trg_enforce_protected_role_grant BEFORE INSERT OR UPDATE OR DELETE ON public.user_roles
+  FOR EACH ROW EXECUTE FUNCTION public.enforce_protected_role_grant();
 
 -- ═════════════════════════════════ BASELINE: production's definitions of the changed objects ════
 CREATE SCHEMA proof;
@@ -2265,6 +2308,8 @@ INSERT INTO proof.checks (id, obj, kind, actor, active, role, sql, expect) VALUE
 ('grant admin to outsider mints no global row','fn:grant_tenant_member_role','hole','AA','A','authenticated',$q$SELECT proof.seq($a$SELECT public.grant_tenant_member_role(proof.i('V'),'admin',proof.i('A'))$a$, $b$SELECT (SELECT count(*) FROM public.user_roles WHERE user_id = proof.i('V') AND role = 'admin')::text || ':' || (SELECT string_agg(tenant_id::text || '=' || role::text || '/' || status, ',') FROM public.tenant_members WHERE user_id = proof.i('V'))$b$)$q$,'ok:0:11111111-1111-4111-8111-00000000000a=admin/pending'),
 ('grant admin to member: seat active, global row by seat sync','fn:grant_tenant_member_role','keep','AA','A','authenticated',$q$SELECT proof.seq($a$SELECT public.grant_tenant_member_role(proof.i('MA2'),'admin',proof.i('A'))$a$, $b$SELECT (SELECT count(*) FROM public.user_roles WHERE user_id = proof.i('MA2') AND role = 'admin')::text || ':' || (SELECT role::text || '/' || status FROM public.tenant_members WHERE user_id = proof.i('MA2') AND tenant_id = proof.i('A'))$b$)$q$,'ok:1:admin/active'),
 ('grant sales_rep still writes its global row','fn:grant_tenant_member_role','keep','AA','A','authenticated',$q$SELECT proof.seq($a$SELECT public.grant_tenant_member_role(proof.i('MA2'),'sales_rep',proof.i('A'))$a$, $b$SELECT (SELECT count(*) FROM public.user_roles WHERE user_id = proof.i('MA2') AND role = 'sales_rep')::text$b$)$q$,'ok:1'),
+('grant row-listed operator role to outsider refused by name','fn:grant_tenant_member_role','keep','AA','A','authenticated',$q$SELECT public.grant_tenant_member_role(proof.i('V'),'moderator',proof.i('A'))::text$q$,'err:42501:PROTECTED_ROLE_GRANT_FORBIDDEN%'),
+('grant row-listed operator role to member refused by name','fn:grant_tenant_member_role','keep','AA','A','authenticated',$q$SELECT public.grant_tenant_member_role(proof.i('MA2'),'moderator',proof.i('A'))::text$q$,'err:42501:PROTECTED_ROLE_GRANT_FORBIDDEN%'),
 ('grant X in B refused','fn:grant_tenant_member_role','deny','X','B','authenticated',$q$SELECT public.grant_tenant_member_role(proof.i('MB'),'admin')::text$q$,'err:P0001:Tenant admin%'),
 ('grant MA refused','fn:grant_tenant_member_role','deny','MA','A','authenticated',$q$SELECT public.grant_tenant_member_role(proof.i('MA2'),'admin')::text$q$,'err:P0001:Tenant admin%'),
 ('grant sales_rep to outsider: pending seat, no global row','fn:grant_tenant_member_role','hole','AA','A','authenticated',$q$SELECT proof.seq($a$SELECT public.grant_tenant_member_role(proof.i('V'),'sales_rep',proof.i('A'))$a$, $b$SELECT (SELECT count(*) FROM public.user_roles WHERE user_id = proof.i('V') AND role = 'sales_rep')::text || ':' || coalesce((SELECT string_agg(tenant_id::text || '=' || role::text || '/' || status, ',' ORDER BY tenant_id) FROM public.tenant_members WHERE user_id = proof.i('V')), '-')$b$)$q$,'ok:0:%=%/pending'),

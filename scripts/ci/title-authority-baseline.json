@@ -125,9 +125,9 @@
     },
     {
       "function": "public.grant_tenant_member_role(uuid, app_role, uuid, text)",
-      "reason": "Refuses a grant of the retired role by name before any write. Re-read and re-pinned for 20271115030008, which stops the global 'admin' user_roles insert and writes any other global role only for a person already active in the workspace (or on an operator path); the coach refusal is unchanged.",
+      "reason": "Refuses a grant of the retired role by name before any write. Re-read and re-pinned for 20271115030008, which stops the global 'admin' user_roles insert and writes any other global role only for a person already active in the workspace (or on an operator path), and refuses a row-listed operator-tier role up front with PROTECTED_ROLE_GRANT_FORBIDDEN; the coach refusal is unchanged and still first.",
       "defined_in": "20271115030008_admin_scope_stage0.sql",
-      "fingerprint": "bdbedf4a6ae0cf19"
+      "fingerprint": "41f03cba6726074e"
     },
     {
       "function": "public.revoke_tenant_member_role(uuid, app_role, uuid, text)",

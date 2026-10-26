@@ -8,7 +8,8 @@ DECLARE entry record; p record; helper oid;
 BEGIN
  FOR entry IN SELECT * FROM (VALUES
   ('public.list_sales_collection_agreements(uuid,integer,uuid)','86532270bb5c0adb2ebff564a0dee81b','5c417ab5ff754506c60342d2c5f2d35b','authenticated'),
-  ('public.preview_sales_collection_command(uuid,uuid,jsonb)','9ccde31a3199fefc4aac2afbd9547fc0','de97896559987f475de6972b8ef0a595','service_role')
+  ('public.preview_sales_collection_command(uuid,uuid,jsonb)','9ccde31a3199fefc4aac2afbd9547fc0','de97896559987f475de6972b8ef0a595','service_role'),
+  ('public.execute_sales_collection_command(uuid,uuid,uuid,jsonb,jsonb)','4a25621d37c0b292aa3b38d5b7f055f2','4a25621d37c0b292aa3b38d5b7f055f2','service_role')
  ) x(signature,old_hash,new_hash,caller_role) LOOP
   SELECT * INTO p FROM pg_proc WHERE oid=entry.signature::regprocedure;
   IF md5(p.prosrc) NOT IN (entry.old_hash,entry.new_hash) OR NOT p.prosecdef

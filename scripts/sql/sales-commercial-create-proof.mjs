@@ -222,7 +222,7 @@ try {
  assert.equal(run('SELECT count(*) FROM paige_sales_collection_operations;').trim(),'1');
  assert.equal(run('SELECT count(*) FROM paige_workspace_events;').trim(),'1');
  run("UPDATE tenant_client_agreements SET term_kind='installment';");
- for(const [identity,find,replace] of [[commandRoutine,'DECLARE agreement','DECLARE agreement'],[routine,'DECLARE rows','DECLARE rows'],[helperIdentity,' SELECT CASE',' SELECT CASE']]){
+ for(const [identity,find,replace] of [[commandRoutine,'DECLARE agreement','DECLARE agreement'],[routine,'DECLARE rows','DECLARE rows'],[helperIdentity,' SELECT CASE',' SELECT CASE'],[executeRoutine,'DECLARE action','DECLARE action']]){
   const before=definitionOf(identity),drift=before.replace(find,replace+' /* synthetic current-source drift */');assert.notEqual(before,drift);
   assert.throws(()=>run('BEGIN;'+drift+';'+sourceGuard),/Collections .*changed/);
   assert.equal(definitionOf(identity),before,'source-drift refusal preserves the original function');
@@ -237,6 +237,7 @@ try {
   ['public._sales_collection_amount_basis(public.tenant_client_agreements)','SET search_path=pg_catalog'],
   ['public.preview_sales_collection_command(uuid,uuid,jsonb)','STABLE'],
   ['public.list_sales_collection_agreements(uuid,integer,uuid)','SECURITY INVOKER'],
+  ['public.execute_sales_collection_command(uuid,uuid,uuid,jsonb,jsonb)','SECURITY INVOKER'],
  ]){
   const identity=`'${signature}'::regprocedure`,before=definitionOf(identity);
   assert.throws(()=>run(`BEGIN;ALTER FUNCTION ${signature} ${alteration};${sourceGuard}`),/Collections .*changed/);

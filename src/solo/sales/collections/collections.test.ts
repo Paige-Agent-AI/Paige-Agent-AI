@@ -1,6 +1,6 @@
 import {describe,it,expect,vi} from 'vitest';
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:vi.fn()}}));
-import {decodeInvoice,decodeReceipt,decodeRegister,escapeCsv,exportRegister} from './api';
+import {decodeAgreement,decodeInvoice,decodeReceipt,decodeRegister,escapeCsv,exportRegister} from './api';
 import {supabase} from '@/integrations/supabase/client';
 import {parseCsv,decodeImportBatch} from './importModel';
 import {collectionMoney,minorInput} from './presentation';
@@ -8,6 +8,14 @@ const tenant='11111111-1111-4111-8111-111111111111',id='22222222-2222-4222-8222-
 const invoice={id,tenant_id:tenant,client_id:client,client_name:'Example client',invoice_number:'IMPORTED-1',source_invoice_number:'SOURCE-1',status:'recorded',version:1,amount_cents:10000,currency:'usd',due_date:'2026-10-09',created_at:time,manual_recorded_cents:2500,remaining_cents:7500,receipt_count:1,record_kind:'imported',provenance:'owner_imported_unverified'};
 const page={rows:[invoice],has_more:false,next_cursor:null,snapshot_at:time,membership_captured_at:time,facts_read_at:time,export_completed_at:time,membership_count:1,balance_basis:'manual_recorded_only',membership_boundary:'canonical_ids_snapshot'};
 describe('Collections truth decoder',()=>{
+ it('keeps older agreement reads usable without upgrading unknown amount semantics',()=>{
+  const agreement={id,tenant_id:tenant,client_id:client,client_name:'Example client',title:'Terms',status:'draft',agreed_amount_minor:350000,agreed_currency:'usd',collection_terms:null,collection_terms_version:0,terms_current:false};
+  expect(decodeAgreement(agreement,tenant)).toMatchObject({id,agreed_amount_basis:'unverified'});
+  expect(decodeAgreement({...agreement,term_kind:'installment',agreed_amount_basis:'total'},tenant)).toMatchObject({agreed_amount_basis:'total'});
+  expect(decodeAgreement({...agreement,term_kind:'recurring',agreed_amount_basis:'per_cycle'},tenant)).toMatchObject({agreed_amount_basis:'per_cycle'});
+  for(const patch of [{term_kind:'recurring',agreed_amount_basis:'total'},{term_kind:'one_time'},{agreed_amount_basis:'total'}])expect(decodeAgreement({...agreement,...patch},tenant)).toBeNull();
+  expect(decodeAgreement({...agreement,term_kind:'one_time',agreed_amount_basis:'total'},client)).toBeNull();
+ });
  it('reads canonical mixed allocations without upgrading manual receipts',()=>{
   const mixed={...invoice,manual_recorded_cents:2500,provider_verified_cents:5000,remaining_cents:2500};
   expect(decodeInvoice(mixed,tenant)).toEqual(expect.objectContaining({manual_recorded_cents:2500,provider_verified_cents:5000,allocated_cents:7500,remaining_cents:2500}));

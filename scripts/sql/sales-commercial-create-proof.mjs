@@ -66,6 +66,67 @@ try {
  assert.equal(run('SELECT count(*) FROM tenant_client_agreements;').trim(),'0');assert.equal(run('SELECT count(*) FROM paige_sales_collection_operations;').trim(),'0');
  const unavailable=JSON.parse(run(`SELECT preview_sales_collection_command('${actor}','${tenant}',${literal({...command,client_id:'ffffffff-0000-4000-8000-000000000001'})});`).trim());assert.equal(unavailable.eligible,false);
  const op=randomUUID(),first=JSON.parse(run(execute(op)).trim());assert.equal(first.outcome,'commercial_terms_created');assert.equal(first.row.amount_cents,350000);
+ // Read the amount's meaning from the same commercial row and its immutable original operation.
+ // No new financial writer, principal multiplication, approval or receipt source is introduced.
+ run('ALTER TABLE tenant_client_agreements ADD COLUMN collection_terms jsonb,ADD COLUMN collection_terms_version integer NOT NULL DEFAULT 0;');
+ const listStart=collections.indexOf('CREATE OR REPLACE FUNCTION public.list_sales_collection_agreements(');
+ const listEnd=collections.indexOf('TO authenticated;',listStart)+'TO authenticated;'.length;
+ assert(listStart>=0&&listEnd>listStart);run(collections.slice(listStart,listEnd));
+ const routine="'public.list_sales_collection_agreements(uuid,integer,uuid)'::regprocedure";
+ // psql uses platform line endings on Windows; normalize its textual transport only.
+ const readDefinition=()=>run(`SELECT pg_get_functiondef(${routine});`).replaceAll('\r\n','\n').trim();
+ const originalDefinition=readDefinition();
+ const originalMetadata=run(`SELECT jsonb_build_object('security',prosecdef,'config',proconfig,'acl',proacl::text) FROM pg_proc WHERE oid=${routine};`).trim();
+ assert(!JSON.parse(run(`SELECT list_sales_collection_agreements('${tenant}');`).trim()).rows[0].agreed_amount_basis,'original reader has no basis evidence');
+ const basisMigration=read('supabase/migrations/20271115040004_sales_collection_amount_basis.sql');
+ run(basisMigration);const appliedDefinition=readDefinition();run(basisMigration);
+ assert.equal(readDefinition(),appliedDefinition,'read migration replays exactly');
+ assert.equal(run(`SELECT jsonb_build_object('security',prosecdef,'config',proconfig,'acl',proacl::text) FROM pg_proc WHERE oid=${routine};`).trim(),originalMetadata,'original security/search path/ACL retained');
+ const projection=basisMigration.match(/EXECUTE replace\(definition,\$projection\$([\s\S]*?)\$projection\$,\$projection\$([\s\S]*?)\$projection\$\)/);
+ assert(projection);assert.equal(appliedDefinition.replace(projection[2],projection[1]),originalDefinition,'whole original reader inverse retains all other bytes');
+ const list=`SELECT list_sales_collection_agreements('${tenant}');`;
+ const readRow=(patch='',role='authenticated')=>{
+  const output=run(`BEGIN;${patch}SET LOCAL ROLE ${role};${list}ROLLBACK;`);
+  const page=JSON.parse(output.split(/\r?\n/).find(line=>line.startsWith('{')));
+  assert.equal(page.rows.length,1);assert.equal(page.rows[0].id,first.row.id);
+  return page.rows[0];
+ };
+ assert.equal(readRow().agreed_amount_basis,'total','governed negotiated installment is a fixed total');
+ assert.equal(readRow().agreed_amount_minor,350000,'original principal is never multiplied');
+ assert.equal(readRow("UPDATE tenant_client_agreements SET term_kind='recurring';").agreed_amount_basis,'per_cycle');
+ assert.equal(readRow("UPDATE tenant_client_agreements SET term_kind='one_time',installments_total=NULL,billing_interval=NULL;").agreed_amount_basis,'total');
+ assert.equal(readRow("UPDATE tenant_client_agreements SET price_basis='catalog',catalog_price_snapshot_minor=350000,catalog_price_snapshot_currency='usd',catalog_price_snapshot_kind='installment',catalog_price_snapshot_at=now();").agreed_amount_basis,'per_installment');
+ for(const patch of [
+  "agreed_amount_minor=350001", "agreed_currency='eur'", "billing_interval='year'", "interval_count=2",
+  'installments_total=11', "payment_schedule='on_start'", "starts_on='2026-11-02'", "ends_on='2027-12-01'",
+  "term_kind='deposit'", "term_kind='custom_quote'",
+ ])assert.equal(readRow('UPDATE tenant_client_agreements SET '+patch+';').agreed_amount_basis,'unverified','changed economic/source fact: '+patch);
+ const otherClient=randomUUID(),otherOffer=randomUUID(),otherActor=randomUUID();
+ assert.equal(readRow(`INSERT INTO clients(id,tenant_id) VALUES('${otherClient}','${tenant}');UPDATE tenant_client_agreements SET contact_id='${otherClient}';`).agreed_amount_basis,'unverified','changed original customer');
+ assert.equal(readRow(`INSERT INTO tenant_products(id,tenant_id,name) VALUES('${otherOffer}','${tenant}','Other offer');UPDATE tenant_client_agreements SET offer_id='${otherOffer}';`).agreed_amount_basis,'unverified','changed original offer');
+ assert.equal(readRow(`INSERT INTO auth.users(id) VALUES('${otherActor}');UPDATE tenant_client_agreements SET created_by='${otherActor}';`).agreed_amount_basis,'unverified','foreign creation actor');
+ assert.equal(readRow("UPDATE tenant_client_agreements SET title='Corrected label',notes='Internal note';").agreed_amount_basis,'total','non-economic correction does not erase original total evidence');
+ const legacy=randomUUID();
+ const legacyRow=`INSERT INTO tenant_client_agreements(id,tenant_id,contact_id,offer_id,status,term_kind,price_basis,agreed_amount_minor,agreed_currency,billing_interval,interval_count,installments_total,payment_schedule,starts_on,created_by)
+  SELECT '${legacy}',tenant_id,contact_id,offer_id,status,term_kind,price_basis,agreed_amount_minor,agreed_currency,billing_interval,interval_count,installments_total,payment_schedule,starts_on,created_by FROM tenant_client_agreements WHERE id='${first.row.id}';`;
+ const legacyOutput=run(`BEGIN;${legacyRow}SET LOCAL ROLE authenticated;${list}ROLLBACK;`);
+ const legacyPage=JSON.parse(legacyOutput.split(/\r?\n/).find(line=>line.startsWith('{')));
+ assert.equal(legacyPage.rows.find(row=>row.id===legacy).agreed_amount_basis,'unverified','legacy negotiated installment is not inferred from the same amount');
+ const foreignTenant='bbbbbbbb-0000-4000-8000-000000000001';
+ const forgedForeignOperation=`INSERT INTO paige_sales_collection_operations(id,tenant_id,actor_user_id,command,result)
+  SELECT '${randomUUID()}','${foreignTenant}',actor_user_id,command,jsonb_set(result,'{row,id}',to_jsonb('${legacy}'::text)) FROM paige_sales_collection_operations WHERE id='${op}';`;
+ const foreignOutput=run(`BEGIN;${legacyRow}${forgedForeignOperation}SET LOCAL ROLE authenticated;${list}ROLLBACK;`);
+ assert.equal(JSON.parse(foreignOutput.split(/\r?\n/).find(line=>line.startsWith('{'))).rows.find(row=>row.id===legacy).agreed_amount_basis,'unverified','another tenant operation never establishes this total');
+ deny(`SELECT list_sales_collection_agreements('${foreignTenant}');`,'42501');
+ for(const role of ['anon','service_role'])deny(list,'42501',`SET LOCAL ROLE ${role};`);
+ deny(list,'42501',"UPDATE tenant_members SET status='revoked'; SET LOCAL ROLE authenticated;");
+ run("UPDATE tenant_members SET status='active';");
+ // A future concurrent reader change must cause a guarded migration refusal, not be overwritten.
+ const changedDefinition=appliedDefinition.replace('DECLARE rows jsonb;','DECLARE rows jsonb; -- concurrent source change\n');
+ assert.notEqual(changedDefinition,appliedDefinition);
+ assert.throws(()=>run('BEGIN;'+changedDefinition+';'+basisMigration),/Collections agreement reader changed/);
+ assert.equal(readDefinition(),appliedDefinition,'guarded refusal rolled back the test change');
+ process.stdout.write('PASS amount basis: original whole-reader inverse/ACL and exact replay; governed fixed total, per-cycle and per-installment distinctions; ambiguous legacy, changed economics, foreign provenance, revoked role and source-drift refusals. No new obligations or financial effects.\n');
  assert.deepEqual(JSON.parse(run(execute(op)).trim()),first);
  assert.deepEqual(JSON.parse(run('SET ROLE service_role;'+execute(op)).trim().split(/\r?\n/).at(-1)),first);
  for(const role of ['anon','authenticated'])run(`SET ROLE ${role};DO $proof$ BEGIN BEGIN ${execute(randomUUID()).replace(/^SELECT /,'PERFORM ')} EXCEPTION WHEN OTHERS THEN IF SQLSTATE='42501' THEN RETURN;END IF;RAISE;END;RAISE EXCEPTION 'missing public ACL refusal';END $proof$;`);

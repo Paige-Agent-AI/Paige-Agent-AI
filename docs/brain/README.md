@@ -385,6 +385,12 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 
 
+## EXP09 application startup recovery — October26 source released
+
+Original [#2900](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900) exact reviewed7f9b53493b68d900bcd65153e22c576b1e15d7b2/LOWER5646544693, all10 applicable checks/two webSUCCESS/no-native Preview SKIP/zero threads, merged0617f6d8c5d1534d831a642bf4bf20c3486cb6d4/tree1914f3bd289a3bcf38ea12255aeb8cbe30e10c26. Actual c0d1+7f9 union retains10 own/16,379 outside entries. Normal webdpl_8ySMuLRKAmbW4CDwRdz9tjETXwk4 READY/exact0617; both origins exact0617-mvon01s9/null and actual app/assets/404/revalidation/native304 readback PASS at02:29:19UTC. [Release receipt6406895196](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900#issuecomment-6406895196); [original UI evidence](../evidence/ui-delivery/e09-application-root-recovery.md).
+
+The original recovery boundary now catches App/provider render errors above route boundaries. Controlled bootstrap1/2→3/0, focused44/0, original renderer20 checks/0 external retains every16 prior result; healthy state/router draft and explicit guarded reload remain. Functional: source release verified for this failure class. Visual: original bounded local desktop/narrow/light/dark/keyboard/reflow proof, real device/AT owed. Experiential: latest actual customer sign-in/history and initiating cause UNVERIFIED; earlier genuine return proof is separate. Founder Acceptance NOT_REQUESTED; full42/seven, Teach CURA, CAP018–024, original lifecycle/domain/orchestration and canonical algorithms remain open. No SQL/Edge/Auth/role/consent/provider/activation or customer publication. This mechanical observed-identity closeout does not add product or a recursive shipped row.
+
 ## EXP09 approved private-request publication — October25 source milestone
 
 Original [#2851](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851) exact reviewed58fd/all13 checks/two webSUCCESS/zero threads, documented AUTHOR-REVIEW / LOWER ASSURANCE5644315607/5644495135, actually merged81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5/treee98c7c72. Actual213+58 union retains every9own and16174incoming outside entry. Original HIGH stored-call evidence, owner/customer/source/version/recipient/access/consent checks and original Work/publisher/PCA/notice/audit/response sources remain; ordinary drafted/executing refuses only this private-publication kind. No second approval, execution, inbox or receipt system.

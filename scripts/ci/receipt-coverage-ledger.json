@@ -1212,6 +1212,12 @@
       "evidence": "public.commit_weekly_commitment_draft in experience05_confirmed_weekly_draft.sql calls the existing record_capability_run with the stored request UUID, tenant and actor in the same native draft-save transaction. read_weekly_commitment_draft reads the exact original Rail row. This declares source coverage; migration, deployment and authenticated proof remain separate."
     },
     {
+      "tool": "client_portal_request_share",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "The original paige-ai-chat client_portal_request_share dispatch records via recordCapabilityRun using the actual original claim/request identity: capability_succeeded only after the caller-JWT native share_client_portal_request receipt verifies the original Work/PCA; capability_refused for pre-dispatch/native refusal; capability_outcome_unknown when native outcome cannot be verified. Current-scope withholding retains an already verified native outcome with result_withheld metadata. Original source already_shared reconciliation is read-only and is not attributed as a second publication. Source coverage only, not deployment or authenticated acceptance."
+    },
+    {
       "tool": "portal_menu_update",
       "risk": "high",
       "receipt": "emits",

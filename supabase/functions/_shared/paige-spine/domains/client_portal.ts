@@ -252,3 +252,30 @@ export const PORTAL_ACCESS_TOOLS=[
  {type:'function',function:{name:'client_portal_access_set',description:'Pause, restore or end ONE joined client\'s access to this business\'s client portal. pause: they see that their access is paused the next time they open the portal, and the owner can restore it later. restore: they can open their portal again. end: they see that access has ended, and only a new invitation brings them back; anything they connected under their own login stops showing to the team until they rejoin. Pause and end stop any open invitation from working. Their history stays on the contact, they are not emailed, and emails, texts, invoices, agreements and booked sessions are not affected. A reason is required for pause and end and stays internal. Owner or admin only, and the owner approves it on the card first. Call read_client_portal_access first and pass its access_version back unchanged; if the change is refused because their access changed, read it again and tell the owner what it is now before proposing anything. Never say the client has lost or regained access until this reports success.',parameters:writable(PORTAL_ACCESS_SET_CAPABILITY.input)}},
 ] as const;
 export const PORTAL_ACCESS_TOOL_NAMES:ReadonlySet<string>=new Set(PORTAL_ACCESS_TOOLS.map((t)=>t.function.name));
+
+// Original private Work -> exact common approval -> original native publisher.
+// Declaration is not activation, authenticated proof or a completed Portal.
+export const PORTAL_REQUEST_SHARE_TOOL='client_portal_request_share';
+export const PORTAL_REQUEST_SHARE_CAPABILITY=defineCapability({
+ identity:{id:'client.portal_request_share',version:1,domain:'client',owner:'clients',humanSurface:MENU_SURFACE,
+  description:'Share one request already saved privately for this business\'s customer, after the owner reviews and approves the exact words.'},
+ input:objectInputSchema({properties:{contact_id:{type:'string',format:'uuid',description:'Original CRM customer record.'},work_id:{type:'string',format:'uuid',description:'Original saved private request, never a replacement work record.'}},required:['contact_id','work_id']}),
+ effect:'mutation',
+ governance:{actionRiskKey:'client_portal_request_share',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('client.portal_request_share.execute')},
+ tenantScope:MENU_SCOPE,availability:MENU_AVAILABILITY,
+ providerBinding:{kind:'internal',operation:'public.share_client_portal_request',connectionResolver:null},
+ idempotency:{mode:'required',key:'Original private Work and exact stored common confirmation, including native recipient, access/source versions and all approved words.',readback:'public.read_client_portal_request_share_source',replay:'reconcile_then_return'},
+ receipt:{rail:true,recorder:'record_capability_run',redaction:'tenant_safe',visibility:'owner_internal'},
+ outcome:{projector:'capability-record'},
+});
+export const PORTAL_REQUEST_SHARE={
+ key:'client.portal_request_share',domain:'client',owner:'clients',humanSurface:MENU_SURFACE,readiness:'none',
+ action:{classification:'mutate',executor:'public.share_client_portal_request',chatTool:'client_portal_request_share',seatAuthority:'workspace-admin',riskPolicyKey:'high',approvalAuthority:'chat-canonical',
+  idempotency:'The native publisher consumes the actual original common claimed call and preserves the same Work/customer-action receipt. Unknown outcomes read the same original source; never issue a replacement request or replay an uncertain effect.'},
+ outcome:{kinds:['approval_required','shared','refused','outcome_unknown'],projector:'public.read_client_portal_request_share_source',railVisibility:'Owner-internal original Work, common confirmation and publication receipt; customer sees only authorized shared words.'},
+ // Required source manifest binding, never proof of activation or customer acceptance.
+ chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+}as const satisfies SpineCapability;
+export const PORTAL_REQUEST_SHARE_TOOLS=[
+ {type:'function',function:{name:'client_portal_request_share',description:'Share one request already saved privately for an existing CRM customer. Use only when the business owner asks to share that saved request. Give its contact_id and original work_id; the server reads the exact saved title, full body, recipient and versions. Never invent or supply replacement words, recipients, work, tenant or approval. The owner must approve the original card in PAIGE Chat; a spoken yes never publishes it. Nothing is shared until the original publisher confirms it. A lost or uncertain result must check the same original work, never send again or create another request. Sharing is not email delivery, a customer view, a response or completion.',parameters:writable(PORTAL_REQUEST_SHARE_CAPABILITY.input)}},
+]as const;

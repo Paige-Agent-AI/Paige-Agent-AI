@@ -55,6 +55,10 @@ export async function proveAcceptedCollectionSource({sql,read,quote,tenant,actor
  ])equal(mutationBasis(patch),'unverified','Changed/missing accepted evidence must not establish a total: '+patch);
  assert.throws(()=>mutationBasis(`UPDATE tenant_client_agreements SET effective_at=NULL WHERE id='${c.terms}';`),/23514:.*e04_effective_provenance_complete/);checks++;
  equal(mutationBasis(`UPDATE tenant_client_agreements SET term_kind='recurring' WHERE id='${c.terms}';`),'per_cycle','Old acceptance never makes a current recurring amount a finite principal');
+ for(const kind of ['deposit','custom_quote']){
+  equal(mutationBasis(`UPDATE tenant_client_agreements SET term_kind='${kind}' WHERE id='${c.terms}';`),'total','Exact accepted principal may establish total meaning for '+kind);
+  equal(mutationBasis(`UPDATE tenant_client_agreements SET term_kind='${kind}',effective_at=NULL,effective_signing_id=NULL,effective_terms_version=NULL,effective_operation_id=NULL,effective_source_digest=NULL WHERE id='${c.terms}';`),'unverified','No total inference without original accepted/effective evidence for '+kind);
+ }
  equal(mutationBasis(`UPDATE tenant_client_agreements SET price_basis='catalog',catalog_price_snapshot_kind='installment' WHERE id='${c.terms}';`),'per_installment','Catalogue price retains its original per-payment meaning');
  equal(mutationBasis(`UPDATE tenant_client_agreements SET starts_on=starts_on+1,ends_on='2027-12-01',billing_interval='month',interval_count=2,installments_total=12,payment_schedule='custom',collection_terms_version=collection_terms_version+1 WHERE id='${c.terms}';`),'total','Later draft timing/schedule revisions do not erase proof of unchanged original principal');
  const preview=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,deposit_date:'2026-11-01',installment_cents:30000,first_installment_date:'2026-12-01',cadence:'monthly'});

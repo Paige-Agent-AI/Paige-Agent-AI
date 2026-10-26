@@ -192,6 +192,7 @@ try {
  assert.equal(previewPatch[1],originalSummary);
  assert.equal(guardedPreview.replace(previewPatch[2],originalSummary),priorPreview,'all other preview branches and checks remain byte-identical');
  assert.equal(readPreview().eligible,true,'original negotiated fixed total remains eligible');
+ for(const kind of ['deposit','custom_quote'])assert.equal(readRow(`UPDATE tenant_client_agreements SET term_kind='${kind}';`).agreed_amount_basis,'unverified','A different original creation kind cannot establish accepted total meaning');
  assert.equal(readPreview("UPDATE tenant_client_agreements SET term_kind='recurring';").eligible,false,'finite plan requires an original verified total at native revalidation');
  const saveGovernance={...governance,action:finite.action,tool:'sales_save_collection_terms'};
  const save=(operation=randomUUID(),value=finite)=>execute(operation,value,saveGovernance);

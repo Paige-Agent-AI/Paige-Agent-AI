@@ -241,6 +241,13 @@ Deno.test("each refusal maps to the remedy that actually applies", async () => {
   }
 });
 
+Deno.test('a prepared signing document refusal preserves the original review instead of proposing another agreement',async()=>{
+  const p=sendPort({ok:false,status:409,body:{ok:false,code:'PREPARED_DOCUMENT_REVIEW_REQUIRED',error:'Synthetic private cause.'}});
+  const r=await sendAgreement({send:p.send,expectedTenantId:TENANT,agreementId:AGREEMENT});
+  assert(!r.success);assertEquals(r.reason,'prepared_review_required');assert(/saved signing document/i.test(r.message));
+  assert(!/draft a new|Synthetic private|delivered/i.test(r.message));
+});
+
 Deno.test("an unknown outcome NEVER invites a blind retry", async () => {
   const send: AgreementSendPort = () => Promise.reject(new Error("socket hang up"));
   const r = await sendAgreement({ send, expectedTenantId: TENANT, agreementId: AGREEMENT });

@@ -1,0 +1,187 @@
+{
+  "baseRef": "865c168a9918b2dd41624a05d9f2641ed5bb4e42",
+  "headRef": "2051a6aaeeaeaa058572bdb1a3790b1421d82b08",
+  "baseSha": "865c168a9918b2dd41624a05d9f2641ed5bb4e42",
+  "headSha": "2051a6aaeeaeaa058572bdb1a3790b1421d82b08",
+  "runnerCheckout": "2051a6aaeeaeaa058572bdb1a3790b1421d82b08",
+  "changedFiles": [
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/1366-geometry.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/1366-refused.jpg",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/390-geometry.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/390-refused.jpg",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-final-chat-1792972449378.txt",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-final-lint-1792972449309.txt",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-final-tests-1792972449329.txt",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-final-types-1792972449286.txt",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-guidance-chat-baseline-1792971389269.txt",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-guidance-owner-baseline-1792971296950.txt",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-ratchet-2x-evidence.json.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-ratchet-2x.log.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-ratchet-current-evidence.json.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-ratchet-current.log.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-receiving-c0b.log.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-receiving-chat.log.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-receiving-ui-guard.log.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-refusal-binding-proof.json.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/security-main-binding-proof.json",
+    "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/source-proof.json",
+    "docs/evidence/ui-delivery/e04-prepared-send-guidance.md",
+    "scripts/ci/c0b-incumbent-resource-binding.mjs",
+    "src/solo/sales-ops.tsx",
+    "src/solo/useSoloAgreementSignings.send.test.tsx",
+    "src/solo/useSoloAgreementSignings.ts",
+    "supabase/functions/_shared/agreements/chat-write.test.ts",
+    "supabase/functions/_shared/agreements/chat-write.ts",
+    "supabase/functions/paige-ai-chat/index.ts"
+  ],
+  "functions": [
+    {
+      "fn": "paige-ai-chat",
+      "base": {
+        "ran": true,
+        "present": true,
+        "exit": 1,
+        "diagnostics": [
+          {
+            "code": "TS2769",
+            "message": "No overload matches this call.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'ContextDb'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2339",
+            "message": "Property 'catch' does not exist on type 'PromiseLike<void>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          }
+        ],
+        "reportedCount": 9,
+        "attempts": 1,
+        "raw": "Check supabase/functions/paige-ai-chat/index.ts\nTS2769 [ERROR]: No overload matches this call.\n  Overload 1 of 2, '(values: never, options?: { count?: \"planned\" | \"estimated\" | \"exact\" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: string; }, never, never, null, \"analytics_events\", never, \"POST\">', gave the following error.\n    Argument of type '{ user_id: string | null; event_name: string; event_category: \"system\" | \"engagement\" | \"paige\"; properties: Record<string, unknown>; page_path: string; }' is not assignable to parameter of type 'never'.\n  Overload 2 of 2, '(values: never[], options?: { count?: \"planned\" | \"estimated\" | \"exact\" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: string; }, never, never, null, \"analytics_events\", never, \"POST\">', gave the following error.\n    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.\n  await recordWrite(\"analytics_events\", supabaseAdmin.from(\"analytics_events\").insert({\n                                                                               ~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:744:80\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'ContextDb'.\n  The types returned by 'from(...)' are incompatible between these types.\n    Type 'PostgrestQueryBuilder<any, any, any, any, unknown>' is missing the following properties from type 'ContextDbQuery': eq, neq, in, gte, and 4 more.\n    const userContext = customerPortal ? \"\" : await buildUserContext(supabase, contextUserId, fundingEnabled);\n                                                                     ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:3473:70\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n            void logAnalyticsEvent(supabase, user.id, \"rag_retrieval_triggered\", \"paige\", {\n                                   ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:3600:36\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n            void logAnalyticsEvent(supabase, user.id, \"web_search_triggered\", \"paige\", {\n                                   ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:13461:36\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n            void logAnalyticsEvent(supabase, user.id, \"deep_research_triggered\", \"paige\", {\n                                   ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:13514:36\n\nTS2339 [ERROR]: Property 'catch' does not exist on type 'PromiseLike<void>'.\n            .catch?.((e: any) => console.warn(\"[paige-ai-chat] rail producer skipped:\", e?.message));\n             ~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:19389:14\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n              void logAnalyticsEvent(supabase, user.id, \"entity_diagram_generated\", \"paige\", {});\n                                     ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:21323:38\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n                void logAnalyticsEvent(supabase, user.id, \"legal_flag_shown\", \"paige\", {\n                                       ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:21333:40\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n                void logAnalyticsEvent(supabase, user.id, \"lender_searched\", \"engagement\", {\n                                       ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/base/supabase/functions/paige-ai-chat/index.ts:21354:40\n\nFound 9 errors.\n\nerror: Type checking failed.",
+        "outcome": "diagnostics"
+      },
+      "head": {
+        "ran": true,
+        "present": true,
+        "exit": 1,
+        "diagnostics": [
+          {
+            "code": "TS2769",
+            "message": "No overload matches this call.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'ContextDb'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2339",
+            "message": "Property 'catch' does not exist on type 'PromiseLike<void>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          },
+          {
+            "code": "TS2345",
+            "message": "Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.",
+            "file": "supabase/functions/paige-ai-chat/index.ts"
+          }
+        ],
+        "reportedCount": 9,
+        "attempts": 1,
+        "raw": "Check supabase/functions/paige-ai-chat/index.ts\nTS2769 [ERROR]: No overload matches this call.\n  Overload 1 of 2, '(values: never, options?: { count?: \"planned\" | \"estimated\" | \"exact\" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: string; }, never, never, null, \"analytics_events\", never, \"POST\">', gave the following error.\n    Argument of type '{ user_id: string | null; event_name: string; event_category: \"system\" | \"engagement\" | \"paige\"; properties: Record<string, unknown>; page_path: string; }' is not assignable to parameter of type 'never'.\n  Overload 2 of 2, '(values: never[], options?: { count?: \"planned\" | \"estimated\" | \"exact\" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: string; }, never, never, null, \"analytics_events\", never, \"POST\">', gave the following error.\n    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.\n  await recordWrite(\"analytics_events\", supabaseAdmin.from(\"analytics_events\").insert({\n                                                                               ~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:744:80\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'ContextDb'.\n  The types returned by 'from(...)' are incompatible between these types.\n    Type 'PostgrestQueryBuilder<any, any, any, any, unknown>' is missing the following properties from type 'ContextDbQuery': eq, neq, in, gte, and 4 more.\n    const userContext = customerPortal ? \"\" : await buildUserContext(supabase, contextUserId, fundingEnabled);\n                                                                     ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:3473:70\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n            void logAnalyticsEvent(supabase, user.id, \"rag_retrieval_triggered\", \"paige\", {\n                                   ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:3600:36\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n            void logAnalyticsEvent(supabase, user.id, \"web_search_triggered\", \"paige\", {\n                                   ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:13461:36\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n            void logAnalyticsEvent(supabase, user.id, \"deep_research_triggered\", \"paige\", {\n                                   ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:13514:36\n\nTS2339 [ERROR]: Property 'catch' does not exist on type 'PromiseLike<void>'.\n            .catch?.((e: any) => console.warn(\"[paige-ai-chat] rail producer skipped:\", e?.message));\n             ~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:19390:14\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n              void logAnalyticsEvent(supabase, user.id, \"entity_diagram_generated\", \"paige\", {});\n                                     ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:21324:38\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n                void logAnalyticsEvent(supabase, user.id, \"legal_flag_shown\", \"paige\", {\n                                       ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:21334:40\n\nTS2345 [ERROR]: Argument of type 'SupabaseClient<any, \"public\", \"public\", any, any>' is not assignable to parameter of type 'SupabaseClient<unknown, { PostgrestVersion: string; }, never, never, { PostgrestVersion: string; }>'.\n  Type '\"public\"' is not assignable to type 'never'.\n                void logAnalyticsEvent(supabase, user.id, \"lender_searched\", \"engagement\", {\n                                       ~~~~~~~~\n    at file:///C:/Users/tonig/AppData/Local/Temp/deno-ratchet-UtfxFt/head/supabase/functions/paige-ai-chat/index.ts:21355:40\n\nFound 9 errors.\n\nerror: Type checking failed.",
+        "outcome": "diagnostics"
+      },
+      "changedFiles": [
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/1366-geometry.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/1366-refused.jpg",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/390-geometry.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/390-refused.jpg",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-final-chat-1792972449378.txt",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-final-lint-1792972449309.txt",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-final-tests-1792972449329.txt",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-final-types-1792972449286.txt",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-guidance-chat-baseline-1792971389269.txt",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-guidance-owner-baseline-1792971296950.txt",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-ratchet-2x-evidence.json.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-ratchet-2x.log.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-ratchet-current-evidence.json.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-ratchet-current.log.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-receiving-c0b.log.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-receiving-chat.log.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-receiving-ui-guard.log.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/e04-c53-refusal-binding-proof.json.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/security-main-binding-proof.json",
+        "docs/evidence/ui-delivery/assets/e04-prepared-send-guidance/source-proof.json",
+        "docs/evidence/ui-delivery/e04-prepared-send-guidance.md",
+        "scripts/ci/c0b-incumbent-resource-binding.mjs",
+        "src/solo/sales-ops.tsx",
+        "src/solo/useSoloAgreementSignings.send.test.tsx",
+        "src/solo/useSoloAgreementSignings.ts",
+        "supabase/functions/_shared/agreements/chat-write.test.ts",
+        "supabase/functions/_shared/agreements/chat-write.ts",
+        "supabase/functions/paige-ai-chat/index.ts"
+      ],
+      "depsMatch": true
+    }
+  ],
+  "baseDepFingerprint": "deno.json=absent deno.jsonc=absent import_map.json=absent",
+  "headDepFingerprint": "deno.json=absent deno.jsonc=absent import_map.json=absent"
+}

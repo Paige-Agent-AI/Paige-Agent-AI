@@ -1,0 +1,20 @@
+{
+  "dialog": [
+    {
+      "height": 580.6000366210938,
+      "width": 760,
+      "x": 303.20001220703125,
+      "y": 93.70000457763672
+    }
+  ],
+  "focus": {
+    "role": "alert",
+    "tag": "SPAN",
+    "text": "Open the saved signing document to inspect the original request and receipts. Review there before another send."
+  },
+  "pageWidth": 1366,
+  "viewport": {
+    "height": 768,
+    "width": 1366
+  }
+}

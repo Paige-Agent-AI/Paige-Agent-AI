@@ -2,6 +2,7 @@ import React,{act} from 'react';
 import {createRoot,type Root} from 'react-dom/client';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {useSoloAgreementSignings,type SigningsState} from './useSoloAgreementSignings';
+import {SignatureSender} from './sales-ops';
 
 // Actual original hook; only Auth/query/Edge transport is controlled. These
 // cases send no email and do not prove hosted/provider authorization/acceptance.
@@ -51,4 +52,42 @@ it('a malformed apparent success cannot become an empty successful send',async()
 it('duplicate gestures in one original hook do not dispatch two simultaneous sends',async()=>{
   let resolve!:(value:ReturnType<typeof success>)=>void;m.invoke.mockReturnValue(new Promise(done=>{resolve=done;}));let first!:ReturnType<SigningsState['sendForSignature']>,second!:ReturnType<SigningsState['sendForSignature']>;
   await act(async()=>{first=latest.sendForSignature(agreement,tenant);second=latest.sendForSignature(agreement,tenant);});expect(m.invoke).toHaveBeenCalledOnce();let refused:unknown;await act(async()=>{resolve(success());await first;refused=await second;});expect(refused).toMatchObject({ok:false,state:'refused'});
+});
+
+it('a verified prepared-document refusal directs the owner to the original review without creating another request',async()=>{
+  m.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify({ok:false,code:'PREPARED_DOCUMENT_REVIEW_REQUIRED',error:'Synthetic private recipient detail.'}),{status:409,headers:{'Content-Type':'application/json'}})}});
+  const result=await send();expect(result).toMatchObject({ok:false,state:'refused',message:expect.stringContaining('saved signing document')});
+  expect(JSON.stringify(result)).not.toContain('Synthetic private');expect(JSON.stringify(result)).not.toMatch(/draft a new|nothing was sent|delivered/i);expect(m.invoke).toHaveBeenCalledOnce();
+});
+it.each([['wrong status',503,'PREPARED_DOCUMENT_REVIEW_REQUIRED'],['different code',409,'ORIGINAL_DOCUMENT_UNVERIFIED']])('keeps %s uncertain instead of inventing a prepared-document refusal',async(_name,status,code)=>{
+  m.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify({ok:false,code}),{status:Number(status),headers:{'Content-Type':'application/json'}})}});
+  expect(await send()).toMatchObject({ok:false,state:'unconfirmed'});expect(m.invoke).toHaveBeenCalledOnce();
+});
+it('retires the owner response if the actor changes while the refusal body is being checked',async()=>{
+  let controller!:ReadableStreamDefaultController<Uint8Array>;const stream=new ReadableStream<Uint8Array>({start(value){controller=value;}});
+  m.invoke.mockResolvedValue({data:null,error:{context:new Response(stream,{status:409,headers:{'Content-Type':'application/json'}})}});let pending!:ReturnType<SigningsState['sendForSignature']>;
+  await act(async()=>{pending=latest.sendForSignature(agreement,tenant);});m.context={...m.context,activeUserId:'bbbbbbbb-0000-4000-8000-000000000002'};await render();let result:unknown;
+  await act(async()=>{controller.enqueue(new TextEncoder().encode(JSON.stringify({ok:false,code:'PREPARED_DOCUMENT_REVIEW_REQUIRED'})));controller.close();result=await pending;});
+  expect(result).toMatchObject({ok:false,state:'unconfirmed'});expect(JSON.stringify(result)).not.toContain('saved signing document');expect(m.invoke).toHaveBeenCalledOnce();
+});
+it.each([['oversized',JSON.stringify({ok:false,code:'PREPARED_DOCUMENT_REVIEW_REQUIRED',padding:'x'.repeat(2049)}),'application/json'],['malformed','{','application/json'],['non-JSON',JSON.stringify({ok:false,code:'PREPARED_DOCUMENT_REVIEW_REQUIRED'}),'text/plain']])('keeps an %s refusal body uncertain without displaying its private content',async(_name,body,mime)=>{
+  m.invoke.mockResolvedValue({data:null,error:{context:new Response(body,{status:409,headers:{'Content-Type':mime}})}});
+  const result=await send();expect(result).toMatchObject({ok:false,state:'unconfirmed'});expect(JSON.stringify(result)).not.toContain('saved signing document');expect(m.invoke).toHaveBeenCalledOnce();
+});
+it('bounds an interrupted refusal-body read and makes no automatic second request',async()=>{
+  vi.useFakeTimers();let controller!:ReadableStreamDefaultController<Uint8Array>;
+  try{const stream=new ReadableStream<Uint8Array>({start(value){controller=value;}});m.invoke.mockResolvedValue({data:null,error:{context:new Response(stream,{status:409,headers:{'Content-Type':'application/json'}})}});
+    let pending!:ReturnType<SigningsState['sendForSignature']>;await act(async()=>{pending=latest.sendForSignature(agreement,tenant);});let result:unknown;
+    await act(async()=>{await vi.advanceTimersByTimeAsync(1500);result=await pending;});expect(result).toMatchObject({ok:false,state:'unconfirmed'});expect(m.invoke).toHaveBeenCalledOnce();
+  }finally{controller?.close();vi.useRealTimers();}
+});
+it('the actual original panel and hook show the prepared-review refusal with a usable return',async()=>{
+  const close=vi.fn();m.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify({ok:false,code:'PREPARED_DOCUMENT_REVIEW_REQUIRED'}),{status:409,headers:{'Content-Type':'application/json'}})}});
+  function Panel(){const signings=useSoloAgreementSignings();return <SignatureSender signings={signings} signing={{id:agreement,documentTitle:'Controlled retained agreement',displayState:'sent'}} clientName="Controlled Client" agreedLabel="Original recorded terms" tenantId={tenant} onClose={close} onVoided={vi.fn()}/>;}
+  await act(async()=>root.render(<Panel/>));const dialog=document.querySelector('[role="dialog"]')!;
+  const button=(name:string)=>[...dialog.querySelectorAll('button')].find(b=>b.textContent?.trim()===name)!;
+  await act(async()=>button('Send it to Controlled').click());expect(dialog.querySelector('[role="alert"]')?.textContent).toContain('saved signing document');
+  expect(document.activeElement).toBe(dialog.querySelector('[role="alert"]'));
+  expect(dialog.textContent).not.toContain('Signing request not verified');expect(m.invoke).toHaveBeenCalledOnce();
+  await act(async()=>button('Back').click());expect(close).toHaveBeenCalledOnce();expect(m.invoke).toHaveBeenCalledOnce();
 });

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "source": "e04-c53-receiving-ui-guard.log",
+  "bytes": 175,
+  "sha256": "e867df1070305b5d683f32f43f6bd1e54499aa2b2b9137a6d01f0b0420593209",
+  "encoding": "base64",
+  "content": "VUkgZGVsaXZlcnkgZXZpZGVuY2U6IFBBU1MgKDIgVUkgZmlsZShzKSwgMSBldmlkZW5jZSByZWNvcmQocykpLgpUaGlzIGd1YXJkIHZhbGlkYXRlcyBhbiBhdHRlc3RhdGlvbiByZWNvcmQ7IGl0IGRvZXMgbm90IHByb3ZlIHRoZSBza2lsbCB3YXMgdXNlZCBvciB0aGUgZXZpZGVuY2UgaXMgdHJ1dGhmdWwuCg==",
+  "boundary": "Local original-source verification. Not hosted CI, clean compile, production or authenticated execution."
+}

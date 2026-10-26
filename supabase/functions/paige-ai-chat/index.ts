@@ -18029,6 +18029,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       case "not_delivered": return "capability_failed";
                       case "refused":
                       case "not_a_draft":
+                      case "prepared_review_required":
                       case "needs_setup":
                       case "no_workspace":
                       case "bad_agreement_id":

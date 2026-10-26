@@ -1,0 +1,6 @@
+
+C:\Users\tonig\Documents\Codex\2026-10-14\paige-engineering-2-0-experience-04\work\e04-preparation\src\solo\sales-ops.tsx
+  605:6  warning  React Hook React.useEffect has a missing dependency: 'existing'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 1 problem (0 errors, 1 warning)
+

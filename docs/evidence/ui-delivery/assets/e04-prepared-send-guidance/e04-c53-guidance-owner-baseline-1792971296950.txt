@@ -1,0 +1,37 @@
+
+ RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-14/paige-engineering-2-0-experience-04/work/e04-preparation
+
+ ❯ src/solo/useSoloAgreementSignings.send.test.tsx (13 tests | 1 failed) 269ms
+   × a verified prepared-document refusal directs the owner to the original review without creating another request 135ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  19:35:34
+   Duration  54.09s (transform 3.28s, setup 2.48s, import 3.27s, tests 269ms, environment 45.39s)
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+7:35:13 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-swc" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/solo/useSoloAgreementSignings.send.test.tsx > a verified prepared-document refusal directs the owner to the original review without creating another request
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, state: 'refused', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "message": StringContaining "saved signing document",
++   "message": "The signing request could not be verified. It may have completed; inspect this agreement in its original business before sending again.",
+    "ok": false,
+-   "state": "refused",
++   "state": "unconfirmed",
+  }
+
+ ❯ src/solo/useSoloAgreementSignings.send.test.tsx:58:44
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

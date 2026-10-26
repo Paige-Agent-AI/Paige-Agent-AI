@@ -277,6 +277,7 @@ export type AgreementSendFailure =
   | "bad_agreement_id"
   | "refused"
   | "not_a_draft"
+  | "prepared_review_required"
   | "needs_setup"
   | "document_problem"
   | "stale_document"
@@ -296,6 +297,8 @@ const SEND_MESSAGES: Record<AgreementSendFailure, string> = {
     "That agreement could not be sent — the active workspace may have changed, or this account may not be an owner or admin of it. Nothing was sent.",
   not_a_draft:
     "That agreement is not a draft any more, so it was not sent again. Nothing went out. Draft a new agreement rather than resending this one.",
+  prepared_review_required:
+    "Open the saved signing document in Sales to inspect its original request and receipts. Review there before another send.",
   needs_setup:
     "Something this agreement needs is missing, so nothing was sent. It may have no signer yet, or the workspace may have no contact address for signers to reach. Open the agreement in Sales — it will say which.",
   document_problem:
@@ -356,7 +359,7 @@ export async function sendAgreement(input: {
   }
 
   const body = (reply.body ?? {}) as {
-    ok?: unknown; error?: unknown; status?: unknown;
+    ok?: unknown; error?: unknown; status?: unknown; code?: unknown;
     sent?: unknown; failed?: unknown; notDelivered?: unknown;
   };
 
@@ -375,6 +378,7 @@ export async function sendAgreement(input: {
     if (reply.status === 403) return sendFail("refused");
     if (reply.status === 404) return sendFail("bad_agreement_id");
     if (reply.status === 409) {
+      if (body.code === "PREPARED_DOCUMENT_REVIEW_REQUIRED") return sendFail("prepared_review_required");
       // The 409 family carries three different remedies, and the body distinguishes them: a missing
       // workspace contact address is `needs_config`, which a person fixes; a row whose frozen bytes
       // are not the uploaded file is a STALE DOCUMENT that only a new agreement fixes; an agreement

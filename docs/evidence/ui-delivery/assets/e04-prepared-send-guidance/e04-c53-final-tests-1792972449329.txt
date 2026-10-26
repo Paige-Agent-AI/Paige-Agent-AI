@@ -1,0 +1,13 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+7:54:21 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-swc" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+
+ RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-14/paige-engineering-2-0-experience-04/work/e04-preparation
+
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  19:54:31
+   Duration  28.47s (transform 27.01s, setup 4.37s, import 33.18s, tests 2.29s, environment 24.96s)
+

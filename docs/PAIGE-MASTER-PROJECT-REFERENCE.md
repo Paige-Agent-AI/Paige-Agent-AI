@@ -881,6 +881,12 @@ documentation successor; exact-e993 public aliases were not observed. Original
 source/capture evidence retains this limitation and original9/0+12/0/4. This
 mechanical identity closeout is not logged recursively.
 
+**2026-10-26 UTC — EXP03 email journey: the campaign lifecycle's own negatives are proven in required CI (successor lead's first delivery).**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2930 email campaign lifecycle proof](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2930) | Squash `49d0a8a2a7` of reviewed head `11e513f73` ([review receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2930#issuecomment-6425587100), labelled AUTHOR-REVIEW / LOWER ASSURANCE: a reviewer agent dispatched by the author found 2 MAJOR and 9 MINOR issues in the proof and its record, none in product code; all were fixed). All 11 exact-head checks SUCCESS, including `database-contract`, which runs the new `supabase/tests/email_campaign_lifecycle.sql` (86 assertions) against production's reproduced grants, and `verify`. Local full replay (1,479 migrations, CLI 2.109.1) passed 86/86 on six runs, and ten reinstated defects each turned it red. No migration, edge function or web change. | Test, CI and records only. The campaign lifecycle guards are LIVE in source and now proven: saved drafts, member and foreign-business refusals, frozen versions, stale and generic approvals refused, PAIGE's filing waits for a person, decline, suppression and opt-out at plan and send, unknown and duplicate sends, cancel mid-send, and resends that never reach anyone twice. Real campaign delivery stays UNAVAILABLE (production: 1 campaign, 0 recipients, 0 sends ever). The authenticated drive and the founder evaluation are PROOF OWED. Journey §14 carries the successor's ACK and the full row-by-row matrix. No customer release. |
+
 **2026-10-26 UTC — EXP03 F8: the qualified handoff reads Sales' own records.**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

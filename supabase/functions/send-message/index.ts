@@ -104,6 +104,8 @@ const COMMS_EMAIL_PROVIDER_TIMEOUT_MS = 20_000;
 const COMMS_EMAIL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Refusal code for any SendGrid send that is not the governed email door's dispatch (security H2).
 const PAIGE_EMAIL_DOOR_REQUIRED = "paige_email_requires_governed_send";
+// email-campaign-worker's provider idempotency key: `ecr:<email_campaign_recipients.id>`.
+const CAMPAIGN_RECIPIENT_KEY = /^ecr:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 interface CommsEmailBinding {
   operation_id: string; tenant_id: string; actor_user_id: string; contact_id: string; connector_id: string;
   recipient: string; from_address: string; provider: "resend" | "gmail" | "smtp" | "sendgrid";
@@ -117,7 +119,10 @@ type OutboundDelivery = Awaited<ReturnType<OutboundChannelAdapter["send"]>>;
 // event for this message. They are HINTS for finding the stored governed send, never proof: a receipt
 // is accepted only after it is verified server-side against the stored message (tenant, operation,
 // message id and the recorded X-Message-Id), never trusted from the event.
-type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null; sendgridCustomArgs?: Record<string, string> | null };
+type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null; sendgridCustomArgs?: Record<string, string> | null;
+  // Experience 03: a campaign email asks SendGrid to track opens and clicks itself, so campaign analytics
+  // never depend on the account's tracking defaults.
+  sendgridTrackEngagement?: boolean };
 
 // read_comms_email_send_binding returns the binding (flat, like the invoice read) plus the
 // message's tenant. A nested `comms_email_binding` object is accepted too. Anything malformed,
@@ -384,6 +389,9 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
           body: JSON.stringify({
             personalizations: [{ to: [{ email: ctx.to }] }],
             ...(sgCustomArgs ? { custom_args: sgCustomArgs } : {}),
+            ...(sgComms.sendgridTrackEngagement ? {
+              tracking_settings: { open_tracking: { enable: true }, click_tracking: { enable: true, enable_text: false } },
+            } : {}),
             from: name0 ? { email: ctx.from.address, name: name0 } : { email: ctx.from.address },
             ...(ctx.replyTo ? { reply_to: { email: ctx.replyTo } } : {}),
             subject: msg.subject || "(no subject)",
@@ -716,7 +724,9 @@ Deno.serve(async (req) => {
   let outcome:
     | "sent" | "failed"
     | "blocked_client_dnd" | "blocked_suppressed" | "blocked_no_consent"
-    | "queued_tenant_dnd" | "queued_quiet_hours" | "queued_scheduled" = "failed";
+    | "queued_tenant_dnd" | "queued_quiet_hours" | "queued_scheduled"
+    // Experience 03: a campaign email SendGrid may have accepted without saying so (never "failed").
+    | "outcome_unknown" = "failed";
   let reason: string | null = null;
 
   // ── Resolve the tenant + connector + sender identity (§9/§38) BEFORE the send ──
@@ -836,6 +846,11 @@ Deno.serve(async (req) => {
   let commsProviderAttempted = false;
   let commsDelivery: OutboundDelivery | null = null;
   let commsBindingEligible = false;
+  // Experience 03: an approved campaign email the database admitted to SendGrid (see the H2 refusal).
+  let campaignSendgrid: { tenant_id: string; recipient_id: string } | null = null;
+  // True when SendGrid's answer to that send could not be read: it may have been accepted, so the
+  // worker records outcome_unknown and never sends it again.
+  let campaignSendgridUnconfirmed = false;
   if (commsEmailRequested || draftRow?.meta?.comms_email_binding) {
     if (!commsEmailRequested || !isInternal || !body.message_id) {
       return new Response(JSON.stringify({ error: "comms_email_binding_required" }), {
@@ -1093,7 +1108,27 @@ Deno.serve(async (req) => {
   // only for a service-role request naming a prepared comms_email operation whose stored binding
   // matched it field for field; every other request (a user's generic send, a scheduled release, an
   // invoice, a marketing send) with a SendGrid connector is refused here, before any provider call.
-  if (connectorRow?.provider === "sendgrid" && !commsBinding) {
+  //
+  // The one other admitted shape (20271116020000): an approved marketing campaign's email, sent by
+  // email-campaign-worker (service role, marketing, idempotency key `ecr:<recipient id>`), and only
+  // when email_campaign_sendgrid_admit says so: the recipient the dispatcher has leased right now, its
+  // own address, the campaign's approved connector, still SendGrid, still verified for THIS business.
+  if (connectorRow?.provider === "sendgrid" && !commsBinding && isInternal && body.marketing === true) {
+    const ecr = typeof body.idempotency_key === "string" ? CAMPAIGN_RECIPIENT_KEY.exec(body.idempotency_key) : null;
+    if (ecr) {
+      const { data: admitted, error: admitError } = await admin.rpc("email_campaign_sendgrid_admit", {
+        p_recipient_id: ecr[1], p_connector_id: effectiveConnectorId, p_to: body.to,
+      });
+      const a = (admitted ?? null) as { ok?: unknown; tenant_id?: unknown; recipient_id?: unknown } | null;
+      if (!admitError && a?.ok === true && typeof a.tenant_id === "string" && a.tenant_id === tenantId &&
+          typeof a.recipient_id === "string" && a.recipient_id.toLowerCase() === ecr[1].toLowerCase()) {
+        campaignSendgrid = { tenant_id: a.tenant_id, recipient_id: a.recipient_id };
+      } else if (admitError) {
+        console.warn("[send-message] campaign SendGrid admission unavailable:", admitError.message);
+      }
+    }
+  }
+  if (connectorRow?.provider === "sendgrid" && !commsBinding && !campaignSendgrid) {
     if (isInternal && draftRow?.status === "queued") return await terminalizeScheduledRelease(PAIGE_EMAIL_DOOR_REQUIRED);
     return new Response(JSON.stringify({
       status: "failed", outcome: "refused", error: PAIGE_EMAIL_DOOR_REQUIRED,
@@ -1613,6 +1648,15 @@ Deno.serve(async (req) => {
           paige_tenant_id: commsBinding.tenant_id, paige_operation_id: commsBinding.operation_id, paige_message_id: String(body.message_id),
         };
       }
+      if (campaignSendgrid) {
+        // A campaign email's correlation ids: the business and its recipient row (both id claims), which
+        // _sendgrid_apply_campaign_receipt requires before an event may touch that row.
+        (ctx as CommsEmailSendContext).sendgridCustomArgs = {
+          paige_tenant_id: campaignSendgrid.tenant_id,
+          paige_operation_id: campaignSendgrid.recipient_id, paige_message_id: campaignSendgrid.recipient_id,
+        };
+        (ctx as CommsEmailSendContext).sendgridTrackEngagement = true;
+      }
       await assertCurrentEmailSender();
       if(signingMessage&&preparedAgreement){
         try{
@@ -1635,6 +1679,12 @@ Deno.serve(async (req) => {
         ? await sendWithinCommsEmailDeadline(() => adapter.send(outMsg, ctx), commsAbort)
         : await adapter.send(outMsg, ctx);
       if (commsBinding) commsDelivery = delivery;
+      // SendGrid has no idempotent replay: only a 4xx proves nothing was accepted. A thrown request, a
+      // timeout or a 5xx may have been accepted, so the campaign send is reported unknown, not failed.
+      if (campaignSendgrid && !delivery.ok) {
+        const httpStatus = delivery.meta?.http_status;
+        campaignSendgridUnconfirmed = !(typeof httpStatus === "number" && httpStatus >= 400 && httpStatus < 500);
+      }
       // #141b/#141c HONEST NOTE (§13): the paige_messages_audit.pipe_used CHECK is
       // ('resend','twilio','ghl_fallback') — 'gmail'/'smtp' are not yet legal values, so widening
       // it is a tracked follow-up (an enum migration carries its own §37 producer inventory). The
@@ -1997,6 +2047,8 @@ Deno.serve(async (req) => {
   // reason: prefer the SMS reason code the branch set, else the raw error text on failure.
   outcome = status; // 'sent' | 'failed'
   if (status === "failed" && !reason) reason = errorText;
+  // email-campaign-worker reads an outcome it does not know as outcome_unknown (mapSendResult).
+  if (campaignSendgridUnconfirmed && status === "failed") outcome = "outcome_unknown";
   if (commsBinding) {
     // A throw before the claim (e.g. no Resend key) never reached a provider. A reconcile that did not
     // win its claim cannot finalize an operation that is not 'prepared' — it stays for review.

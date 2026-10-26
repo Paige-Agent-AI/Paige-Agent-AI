@@ -50,3 +50,19 @@ describe("email campaign lifecycle proof", () => {
     }
   });
 });
+
+describe("email campaign SendGrid lane proof", () => {
+  const lane = readFileSync("supabase/tests/email_campaign_sendgrid_lane.sql", "utf8");
+  it("runs in the database-contract job", () => {
+    expect(workflow).toContain("- run: supabase test db supabase/tests/email_campaign_sendgrid_lane.sql");
+  });
+  it("is rolled back and uses only synthetic test tenants and addresses", () => {
+    expect(lane.trimStart().split("\n").some((l) => l === "BEGIN;")).toBe(true);
+    expect(lane.trimEnd().endsWith("ROLLBACK;")).toBe(true);
+    expect(lane).toContain("'test-tenant-e03-sglane-cedar'");
+    expect(lane).toContain("'test-tenant-e03-sglane-dune'");
+    for (const [, domain] of lane.matchAll(/[a-z0-9._%+-]+@([a-z0-9.-]+)/gi)) {
+      expect(domain.toLowerCase().endsWith("tests.invalid")).toBe(true);
+    }
+  });
+});

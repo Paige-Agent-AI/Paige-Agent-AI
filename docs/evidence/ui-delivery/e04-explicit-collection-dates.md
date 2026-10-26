@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: candidate is not deployed; actual eligible ow
 KEYBOARD_FOCUS: UNVERIFIED: native keyboard date editing and Tab inspected in the original control; concise Anchor date accessible name and associated description retained. Complete shell focus/scroll/assistive-technology verification remains owed.
 ZOOM_REFLOW: UNVERIFIED: original narrow form/no root overflow inspected; browser zoom200% and full-shell reflow remain owed.
 REDUCED_MOTION: UNVERIFIED: no motion/style change; actual media preference drive not performed.
-STATE_COVERAGE: PASS: local missing/valid/cleared/restored/switched dates, dirty edits, invalid programmatic submit, read-only refusal, review and Back/Cancel covered. Parent loading/error/permission/native approval/unknown-outcome recovery remain original and are not claimed newly authenticated.
+STATE_COVERAGE: UNVERIFIED: local missing/valid/cleared/restored/switched dates, dirty edits, invalid programmatic submit, read-only refusal, review and Back/Cancel covered by77 cases and the prototype. Real parent loading/error/permission/native approval and unknown-outcome recovery still require authenticated full-shell verification.
 TRUTHFUL_STATE_LABELS: PASS: preview and prepared command are never labelled saved, approved, invoiced, paid or sent. No due date is inferred from device UTC or another agreement.
 SOLO_UI: YES: Sales → Payments → Collections → Collection plan; one existing implementation for all eligible SOLO businesses.
 UNVERIFIED: all mandatory full-shell/two-authorized-tenant checks, real save and reload, exact-head hosted checks/review/deployment, browser zoom, assistive technology and complete O1–O12/founder acceptance. Keep this increment DRAFT until material release holds are satisfied; these labels do not waive required checks.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: actual permitted actors can review and correct an original 
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: no shared Shell, Chat, Root, C0b, CI, schema, SDK, provider, Portal, capability registry or native writer edit.
 
-INTERNAL_BUILD_IDENTITY: dc2892e2136d8abd05f821fe83ccbab69c4d83e7; source-tree=7428b4c61cb2156afd4a025ba16f1b9e18d21166; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NO_CHANGE; evidence=assets/e04-explicit-collection-dates/source-proof.json
+INTERNAL_BUILD_IDENTITY: dc2892e2136d8abd05f821fe83ccbab69c4d83e7; source-tree=7428b4c61cb2156afd4a025ba16f1b9e18d21166; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e04-explicit-collection-dates/source-proof.json
 RELEASE_CHANNEL: development: source/prototype only; no activation or authenticated customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: bounded commercial correctness/accessibility repair.
 CUSTOMER_RELEASE_IDENTITY: none: integrated EXP04 remains open for one later founder evaluation.

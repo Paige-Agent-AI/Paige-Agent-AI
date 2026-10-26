@@ -1749,6 +1749,11 @@
           "path": "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql",
           "role": "fail_closed_containment",
           "note": "only the service role may create or change a SendGrid connector (signed-in users may only switch one off); one SendGrid-verified claim per domain across businesses; one row per SendGrid domain id."
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/prepared-signature-originating.ts",
+          "role": "fail_closed_containment",
+          "note": "EXP04 originating agreement consumer reuses the original agreement_send HIGH confirmation, scoped Work, per-recipient governed prepare and private send-message door. Exact document, sending identity and all invitation content are reviewed together. Native publication records distinguish provider acceptance, partial acceptance and uncertain results; a return read never resends or renews approval. Implemented source/controlled proof only: actual provider, ordinary-role and complete Experience acceptance remain PROOF OWED. No connection, provider readiness, sender, approval or activation authority is added."
         }
       ],
       "sources": [

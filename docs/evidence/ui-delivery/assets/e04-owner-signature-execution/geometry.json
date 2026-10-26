@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-25T22:22:09.809Z",
+  "scope": "Actual production components and CSS; synthetic transport only; no backend/provider/ordinary-role acceptance. Full Solo/PAIGE-open and alternate real account remain unverified.",
+  "readings": [
+    {
+      "actionHeights": [
+        44
+      ],
+      "focus": "Continue editing",
+      "height": 770,
+      "scrollOwner": "HTML",
+      "scrollWidth": 1521,
+      "width": 1536
+    },
+    {
+      "dialogs": 0,
+      "focus": "Original signing request",
+      "height": 770,
+      "scrollOwner": "HTML",
+      "scrollWidth": 1521,
+      "state": "partial-history",
+      "width": 1536
+    },
+    {
+      "actionHeights": [
+        44
+      ],
+      "dialogs": 0,
+      "focus": "Original signing request",
+      "height": 1000,
+      "scrollOwner": "HTML",
+      "scrollWidth": 885,
+      "state": "partial-history",
+      "width": 900
+    }
+  ]
+}

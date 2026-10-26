@@ -28,6 +28,7 @@ import { workDateLabel, workStatusLabel } from "./operations-presentation";
 import { OperationsProjects } from "./OperationsProjects";
 import { OperationsOverview } from "./OperationsOverview";
 import { OperationsRecordedFindings } from './OperationsRecordedFindings';
+import { OperationsZionHistory } from './OperationsZionHistory';
 import { overviewNativeWork, operationsWorkSetRows, type OperationsWorkSet } from "./operations-overview-work";
 import { OperationsCapacity } from "./OperationsCapacity";
 import OperationsDelivery from "./OperationsDelivery";
@@ -381,7 +382,8 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
       onOpenBusinessTimeZone={onOpenBusinessTimeZone ? () => { if (!checkNavigation()) onOpenBusinessTimeZone(); } : undefined}
       businessTimeZoneRef={businessTimeZoneRef}
       nativeWorkState={workReadable ? 'ready' : source.loading || crm.loading ? 'loading' : 'unavailable'}
-      recordedFindings={<OperationsRecordedFindings tenantId={tenantId} userId={userId} openPaige={openPaige} canLeave={() => !checkNavigation()} />}
+      recordedFindings={<><OperationsRecordedFindings tenantId={tenantId} userId={userId} openPaige={openPaige} canLeave={() => !checkNavigation()} />
+        <OperationsZionHistory tenantId={tenantId} userId={userId} /></>}
       onNavigate={setDestination} onInspectWorkSet={group => setDestination("Work", group)} onReviewWithPaige={openPaige ? reviewWithPaige : undefined}
       onReviewWorkWithPaige={openPaige ? reviewWorkWithPaige : undefined} />
     <p className="ops-source-limit">Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."}{people.partial && " Some team profiles are outside the current read."}</p>

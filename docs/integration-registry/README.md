@@ -273,6 +273,8 @@ longer exists).
 | Browserbase | marketplace/MCP/automation | `PROPOSED` | prohibited | Secure Browser bootstrap browser-**worker** runtime (replaceable, behind a provider-neutral internal contract); review 2026-09-07 = **CONDITIONAL GO**, 7 vendor gates before wiring |
 | Paige browser + Firecrawl | marketplace/MCP/automation | `PARTIAL` | draft | G5/read-only egress deployed in #1042; DNS-rebinding + SSRF reconciliation and §32.c authenticated drive remain |
 
+EXP04's originating agreement consumer uses that existing governed sender and original HIGH agreement confirmation, scoped Work and canonical publication receipts. Its owner review/result/return integration has source and controlled proof; actual provider operation, ordinary-role acceptance and the complete commercial journey remain `PROOF_OWED`. It adds no sending identity, provider adapter or activation authority; provider acceptance remains separate from delivery and signing.
+
 ### Gmail connection-authority proof boundary (2026-10-16)
 
 The `gmail` entry is the communications provider home, separate from `google-workspace`

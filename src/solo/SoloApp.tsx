@@ -52,7 +52,54 @@ const TenantCanonicalCalendarWorkspace=React.lazy(()=>import("@/components/tenan
 const Marketplace=React.lazy(()=>import("./marketplace").then(m=>({default:m.Marketplace})));
 const SoloSettings=React.lazy(()=>import("./settings").then(m=>({default:m.SoloSettings})));
 const VibeStudio=React.lazy(()=>import("./vibe").then(m=>({default:m.VibeStudio})));
+const SCREEN_LABELS={operations:'Operations',teamhub:'Team Hub',finance:'Finance',cal:'Calendar',clients:'Clients',growth:'Growth',ads:'Ads',sales:'Sales',market:'Marketplace',settings:'Settings'};
 const ScreenOpening=({label})=>(<div role="status" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'50vh',color:'var(--ink-3)',fontSize:13.5}}>Opening {label}…</div>);
+
+// The browser error shapes for a failed dynamic import (Chromium/Firefox/Safari
+// phrasings; vite's preload helper re-wraps some). Anything unrecognized rethrows
+// to the shell boundary rather than being mislabeled a download failure.
+const isChunkLoadFailure = (error: unknown) =>
+  error instanceof TypeError || error instanceof Error
+    ? /dynamically imported module|Importing a module script|error loading dynamically imported|Failed to fetch/i.test(String(error?.message ?? error))
+    : false;
+
+// A failed screen download must cost exactly one screen — never the shell, never
+// Chat (the paige column lives outside this boundary), never navigation. §32: the
+// failure is loud in the console and honest on screen. "Try again" resets the
+// boundary so React re-attempts the dynamic import; a browser that cached the
+// rejected download needs "Reload PAIGE", and the copy says so without guessing
+// which case a person is in.
+export class ScreenLoadBoundary extends React.Component<
+  { resetKey: string; children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: unknown) {
+    // DOWNLOAD failures only. A render error inside a loaded screen belongs to the
+    // shell's existing SoloScreenBoundary contract ("Page unavailable", reset on
+    // path change) — rethrow so the outer boundary keeps exactly its old behavior.
+    if (!isChunkLoadFailure(error)) throw error;
+    console.error("[SoloApp] a screen download failed — Chat and navigation continue. Cause:", error);
+  }
+  componentDidUpdate(prev: { resetKey: string }) {
+    if (prev.resetKey !== this.props.resetKey && this.state.failed) this.setState({ failed: false });
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div role="alert" style={{maxWidth:420,margin:'10vh auto',padding:'22px 24px',border:'1px solid var(--line)',borderRadius:14,background:'var(--surface)'}}>
+        <strong style={{display:'block',fontSize:15,marginBottom:6}}>This view could not open.</strong>
+        <p style={{fontSize:13,color:'var(--ink-3)',margin:'0 0 14px'}}>Its download or the view itself failed. PAIGE, Chat and navigation still work, and nothing you saved is affected.</p>
+        <div style={{display:'flex',gap:8}}>
+          <button className="btn btn-s" style={{padding:'7px 12px',fontSize:13}} onClick={()=>this.setState({failed:false})}>Try again</button>
+          <button className="btn btn-s" style={{padding:'7px 12px',fontSize:13}} onClick={()=>window.location.reload()}>Reload PAIGE</button>
+        </div>
+      </div>
+    );
+  }
+}
+
 
 // Trust Compass is reached through Command Center (its third sub-tab), not a top-level rail entry
 // (owner-ruled 2026-09-05). The legacy `/solo/{account}/trust-compass` address redirects into it.
@@ -431,7 +478,7 @@ onSignOut={()=>void performSignOut({redirectTo:'/'})}>
 <div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>
-<main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'||screenRoute==='finance'?screenRoute:location.pathname}`} resetKey={location.pathname}><React.Suspense fallback={<ScreenOpening label={[...NAV,...NAV2].find(n=>n[0]===screenRoute)?.[1]||'this view'}/>}>{screenRoute==='paige'?null:screens[screenRoute]}</React.Suspense></SoloScreenBoundary></main>
+<main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${screenRoute==='operations'||screenRoute==='finance'?screenRoute:location.pathname}`} resetKey={location.pathname}><ScreenLoadBoundary resetKey={location.pathname}><React.Suspense fallback={<ScreenOpening label={SCREEN_LABELS[screenRoute]||[...NAV,...NAV2].find(n=>n[0]===screenRoute)?.[1]||'this view'}/>}>{screenRoute==='paige'?null:screens[screenRoute]}</React.Suspense></ScreenLoadBoundary></SoloScreenBoundary></main>
 {studio&&<React.Suspense fallback={null}><VibeStudio onBack={closeStudio} openPaige={openPaige}/></React.Suspense>}</div></div>
 </TenantCommandCenterShell>};
 

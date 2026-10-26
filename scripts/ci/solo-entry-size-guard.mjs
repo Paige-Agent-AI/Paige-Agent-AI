@@ -32,6 +32,8 @@ const REQUIRED_LAZY_CHUNK_PREFIXES = [
   "marketplace-",
   "AdsWorkspace-",
   "ClientsConversations-",
+  "vibe-",
+  "TenantCanonicalCalendarWorkspace-",
 ];
 
 let failures = [];

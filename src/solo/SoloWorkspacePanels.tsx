@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { BookOpen, Brain, Bot, RotateCw, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTenantContext } from "@/hooks/useTenantContext";

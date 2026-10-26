@@ -1,7 +1,7 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Router, NavigationType, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { beforeAll, afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { CrmWorkRecord } from "./operations/operations-native-work";
 
 // The host, Operations controller, Workspace, Sheet and native editor are real.
@@ -45,6 +45,16 @@ vi.mock("./marketplace", () => ({ Marketplace: () => null }));
 vi.mock("./settings", () => ({ SoloSettings: () => <input aria-label="Other department input" defaultValue="Initial settings value" /> }));
 vi.mock("./vault/useBusinessVault", () => ({ useVaultAccess: () => ({}), canShowVaultNavigation: () => false }));
 vi.mock("./vibe", () => ({ VibeStudio: () => null }));
+
+// Route-level code split (PR9): the screens this suite exercises load lazily inside
+// SoloApp. Vitest transforms them on FIRST import, which an in-test wait budget
+// cannot honestly cover — pre-warm at file load (the eager world paid this same
+// cost at module load). The lazy path itself is pinned by the tabSplit suite.
+const screensWarm = Promise.all([import("./operations/OperationsRoute"), import("./settings")]);
+beforeAll(async () => {
+  await screensWarm;
+}, 60_000);
+
 import SoloApp from "./SoloApp";
 import { buildCrmWorkStageOperation } from "./operations/operations-crm-work-command";
 
@@ -67,6 +77,20 @@ beforeEach(() => { vi.clearAllMocks(); port.actor = "11111111-1111-4111-8111-111
   port.readTask.mockReset(); port.readTask.mockImplementation(async () => ({ status: "available", found: true, task: task() }));
   port.submit.mockReset(); port.failOperations = false; sessionStorage.clear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
+
+// Route-level code split (PR9): SoloApp's screens load lazily; a mount or route
+// change can briefly show the shell's "Opening …" fallback. Wait for the real
+// screen instead of assuming one act flush covers the chunk resolution.
+const waitForScreenReady = async (element: HTMLElement = host) => {
+  for (let attempt = 0; attempt < 40 && element.textContent?.includes("Opening "); attempt += 1) {
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 5)); });
+  }
+  // Post-mount effects (address canonicalization, retained-state restore) land one
+  // flush after the chunk does; settle once more so assertions see the settled screen.
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+};
+
+const mountReady = async (...args: Parameters<typeof mount>) => { await mount(...args); await waitForScreenReady(); };
 const mount = async (entries = [settings, work], initialIndex = entries.length - 1) => {
   await act(async () => root.render(<MemoryRouter initialEntries={entries} initialIndex={initialIndex}><Controls /><Routes>
     <Route path="/solo/:account/*" element={<SoloApp />} /></Routes></MemoryRouter>));
@@ -79,7 +103,7 @@ async function click(label: string) { const target = label === "Close" ? dialog(
   expect(button).toBeTruthy(); await act(async () => button!.click()); }
 
 it.each([capacity, settings])("keeps the actual dirty inspector mounted through POP to %s", async prior => {
-  await mount([prior, work]); expect(dialog()?.textContent).toContain(task().title);
+  await mountReady([prior, work]); expect(dialog()?.textContent).toContain(task().title);
   const nativeInput = checkbox()!; await act(async () => nativeInput.click()); expect(nativeInput.checked).toBe(true);
   const screenHost = host.querySelector("[data-solo-screen-host]"), paige = host.querySelector('[aria-label="Existing PAIGE draft"]');
   await click("History Back");
@@ -90,7 +114,7 @@ it.each([capacity, settings])("keeps the actual dirty inspector mounted through 
 });
 
 it.each([capacity, settings])("keeps the actual dirty inspector and Forward entry for %s", async next => {
-  await mount([work, next], 0); const nativeInput = checkbox()!; await act(async () => nativeInput.click());
+  await mountReady([work, next], 0); const nativeInput = checkbox()!; await act(async () => nativeInput.click());
   await click("History Forward"); expect(address()).toBe(work); expect(checkbox()).toBe(nativeInput); expect(nativeInput.checked).toBe(true);
   await click("Close"); expect(dialog()).toBeNull(); expect(address()).toBe("/solo/123/operations/work");
   await vi.waitFor(() => expect(document.activeElement?.textContent).toBe("Work"));
@@ -99,7 +123,7 @@ it.each([capacity, settings])("keeps the actual dirty inspector and Forward entr
 });
 
 it("preserves accepted Back and unrelated PAIGE state after an intentional Close", async () => {
-  await mount(); const nativeInput = checkbox()!; await act(async () => nativeInput.click());
+  await mountReady(); const nativeInput = checkbox()!; await act(async () => nativeInput.click());
   const paige = host.querySelector<HTMLTextAreaElement>('[aria-label="Existing PAIGE draft"]')!;
   paige.value = "Protected sibling draft";
   await click("History Back"); expect(address()).toBe(work); expect(checkbox()).toBe(nativeInput);
@@ -111,7 +135,7 @@ it("preserves accepted Back and unrelated PAIGE state after an intentional Close
 it.each(["review", "pending", "unknown"])("retains %s command/inspection state across a cross-department departure", async phase => {
   let release!: (value: unknown) => void;
   port.submit.mockImplementation(() => phase === "pending" ? new Promise(resolve => { release = resolve; }) : Promise.resolve({ kind: "uncertain", message: "Synthetic unknown result" }));
-  await mount(); const nativeInput = checkbox()!; await act(async () => nativeInput.click()); await click("Review due date");
+  await mountReady(); const nativeInput = checkbox()!; await act(async () => nativeInput.click()); await click("Review due date");
   if (phase !== "review") await click("Confirm task change");
   const retained = sessionStorage.getItem(`paige:operations-crm-stage:${port.actor}:${port.tenant}`);
   const existingCalls = port.submit.mock.calls.length;
@@ -137,7 +161,7 @@ async function openDifferentRetainedRecovery() {
     "77777777-7777-4777-8777-777777777777")!;
   const storageKey = `paige:operations-crm-stage:${port.actor}:${port.tenant}`;
   sessionStorage.setItem(storageKey, JSON.stringify(operation));
-  await mount();
+  await mountReady();
   expect(address()).toBe(work); expect(dialog()?.querySelector("h2")?.textContent).toBe(task().title);
   const stage = dialog()!.querySelector<HTMLSelectElement>('[aria-label="Review CRM task stage"]')!;
   await act(async () => { stage.value = "done"; stage.dispatchEvent(new Event("change", { bubbles: true })); });
@@ -156,7 +180,7 @@ it("clears Task A from the actual shell address on closing retained B, and reloa
   // A full shell remount from the actual resulting address must not restore a
   // removed reference. Only the original unresolved operation metadata remains.
   await act(async () => root.unmount()); root = createRoot(host);
-  await mount([closedAddress]);
+  await mountReady([closedAddress]);
   expect(address()).toBe(closedAddress); expect(dialog()).toBeNull();
   expect(port.readTask).toHaveBeenCalledExactlyOnceWith(id, expect.any(AbortSignal));
   expect(JSON.parse(sessionStorage.getItem(storageKey)!)).toEqual(operation);
@@ -194,10 +218,10 @@ it("verifies retained B once then freshly reads A before restoring A details ben
 });
 
 it.each(["actor", "tenant"] as const)("retires the mounted draft on %s A→B→A rather than borrowing the old hold", async field => {
-  await mount(); const nativeInput = checkbox()!; await act(async () => nativeInput.click());
-  const prior = port[field]; port[field] = "77777777-7777-4777-8777-777777777777"; await mount();
+  await mountReady(); const nativeInput = checkbox()!; await act(async () => nativeInput.click());
+  const prior = port[field]; port[field] = "77777777-7777-4777-8777-777777777777"; await mountReady();
   expect(nativeInput.isConnected).toBe(false); expect(checkbox()?.checked).toBe(false);
-  const intermediate = checkbox(); port[field] = prior; await mount();
+  const intermediate = checkbox(); port[field] = prior; await mountReady();
   expect(intermediate?.isConnected).toBe(false); expect(checkbox()).not.toBe(nativeInput); expect(checkbox()?.checked).toBe(false);
   expect(port.readTask).toHaveBeenCalledTimes(3); expect(port.submit).not.toHaveBeenCalled();
 });
@@ -205,16 +229,16 @@ it.each(["actor", "tenant"] as const)("retires the mounted draft on %s A→B→A
 it("aborts a retired shell read and does not publish its late reply after actor/tenant A→B→A", async () => {
   let release!: (value: unknown) => void; const old = task();
   port.readTask.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
-  await mount(); const signal = port.readTask.mock.calls[0][1] as AbortSignal;
-  const prior = port.tenant; port.tenant = "77777777-7777-4777-8777-777777777777"; await mount();
-  port.tenant = prior; await mount(); const currentInput = checkbox();
+  await mountReady(); const signal = port.readTask.mock.calls[0][1] as AbortSignal;
+  const prior = port.tenant; port.tenant = "77777777-7777-4777-8777-777777777777"; await mountReady();
+  port.tenant = prior; await mountReady(); const currentInput = checkbox();
   await act(async () => release({ status: "available", found: true, task: { ...old, title: "Retired Task must not paint" } }));
   expect(signal.aborted).toBe(true); expect(checkbox()).toBe(currentInput); expect(dialog()?.textContent).not.toContain("Retired Task must not paint");
   expect(port.submit).not.toHaveBeenCalled();
 });
 
 it("keeps ordinary department remount and screen-host scroll ownership unchanged", async () => {
-  await mount([settings]); const settingsInput = host.querySelector<HTMLInputElement>('[aria-label="Other department input"]')!;
+  await mountReady([settings]); const settingsInput = host.querySelector<HTMLInputElement>('[aria-label="Other department input"]')!;
   settingsInput.value = "Departing settings draft"; const priorHost = host.querySelector<HTMLElement>("[data-solo-screen-host]")!;
   expect(priorHost.style.overflow).toBe("auto"); await click("Go Capacity");
   expect(settingsInput.isConnected).toBe(false); expect(host.querySelector<HTMLElement>("[data-solo-screen-host]")?.style.overflow).toBe("hidden");
@@ -226,7 +250,7 @@ it("keeps ordinary department remount and screen-host scroll ownership unchanged
 it("resets an Operations render failure on a changed path while retaining its healthy host", async () => {
   const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
   try {
-    port.failOperations = true; await mount(["/solo/123/operations/work"]);
+    port.failOperations = true; await mountReady(["/solo/123/operations/work"]);
     expect(host.querySelector('[aria-label="Page unavailable"]')).toBeTruthy();
     const priorHost = host.querySelector("[data-solo-screen-host]"); port.failOperations = false; await click("Go Capacity");
     expect(host.querySelector('[aria-label="Page unavailable"]')).toBeNull(); expect(host.querySelector('[aria-label="Capacity"]')).toBeTruthy();

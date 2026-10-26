@@ -11,8 +11,15 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
+
+// Pre-warm the panel chunks at file scope: under a full parallel run, vitest's
+// on-first-import transform can exceed any honest in-test wait budget. The lazy
+// MOUNT path (Suspense fallback, first-visit load, reopen) is still fully
+// exercised — this only pays the transform cost where the eager world paid it.
+const panelsWarm = Promise.all([import("./SoloWorkspacePanels"), import("./paige-research")]);
+beforeAll(async () => { await panelsWarm; }, 60_000);
 
 const harness = vi.hoisted(() => ({
   rpc: vi.fn(async () => ({ data: { state: "not_acknowledged" }, error: null as unknown })),
@@ -45,11 +52,11 @@ const selectTab = async (label: string) => {
 // rather than assume a fixed flush depth (Research is heavier than the panels module).
 const waitForPanelContent = async (tabId: string, marker: string) => {
   for (let attempt = 0; attempt < 40 && !panel(tabId).textContent?.includes(marker); attempt += 1) {
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 5)); });
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 25)); });
   }
   expect(panel(tabId).textContent).toContain(marker);
 };
-const panel = (id: string) => host.querySelector(`#spw-panel-${id}`)!;
+const panel = (id: string) => host.querySelector<HTMLElement>(`#spw-panel-${id}`)!;
 
 beforeEach(() => {
   vi.clearAllMocks();

@@ -2600,4 +2600,102 @@
     "latestCustomerReturn": "UNVERIFIED",
     "founderAcceptance": "NOT_REQUESTED"
   }
+,
+  "ownerCommandCampaignOrderRecovery": {
+    "recordedAt": "2026-10-26T02:08:50.014Z",
+    "priorReviewedHead": "c99692b0f40d5d7927db41740c30634a5eaa56c8",
+    "priorLowerReview": 5646393966,
+    "incomingMain": "c0d1c7281b67a834783bafa405531e3216cf30a1",
+    "composition": "770d1077413cf215ebe5ad4ff59d1292770599fe",
+    "compositionTree": "861f2494cd2771b7dfaa5f6841602fbc513f6c52",
+    "reason": "Actual E03#2889 native20271115010000 overtook pending320009 during its final broad Test",
+    "migration": {
+      "from": "supabase/migrations/20271114320009_e09_request_share_autonomy_catalogue.sql",
+      "to": "supabase/migrations/20271115020009_e09_request_share_autonomy_catalogue.sql",
+      "canonicalSha256": "9e5f5b502dd31855c6d53429251a1e929846b2f5392cc23e732a3eadcf285dbd",
+      "sqlUnchanged": true,
+      "ownProductionApplied": false,
+      "sourceWindow": "ANT161/4cb95af1-4915-4c8a-bf5b-7225bcdfd93b",
+      "includeAll": "OWNER_FORBIDDEN; no alternate apply/history route"
+    },
+    "native": {
+      "passed": 50,
+      "failed": 0,
+      "allPrior50ObjectsPreserved": true,
+      "clusterStoppedExit": 0,
+      "scope": "Synthetic isolated loopback, not authenticated/production"
+    },
+    "originalAuthority": {
+      "catalogueDefinition": "7b224b776dcd79d51f1216196351a1b8",
+      "portalAccess": "7c3eb55c866321fed052ae742b75e42d",
+      "workReader": "1701abdd098639638fa0495f43827e81",
+      "roleReader": "368894d933d5053b5dab6472d85a7428",
+      "eligibleOwnerWithoutLegacyWorkRoleExists": false,
+      "scope": "Source/aggregate metadata only, not authenticated parity"
+    },
+    "preview": {
+      "retiredBranch": "d5f1fd48-ec0d-43d7-ada6-fe3ddd6305d3",
+      "withData": false,
+      "authUsers": 0,
+      "clients": 0,
+      "work": 0,
+      "confirmations": 0,
+      "absenceVerified": true,
+      "method": "Same original PR ordinary close/reopen; fresh standard Preview/readback owed"
+    },
+    "runtimeAndUi": "UNCHANGED fromc99; Rootdb58, risk/C0b/CI source frozen for original receiving coordination, not an activation or unverified-parent merge grant",
+    "predecessorCi": "Last observed12 successful conclusions, final broad Test still running; no new-head credit",
+    "newHeadGates": "Exact review, all applicable required CI/Preview, current-main/native order and native/Edge/web deployment/source readback owed",
+    "status": "NOT_MERGED/NOT_DEPLOYED",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "latestCustomerReturn": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "ownerCommandReceiverTestRecovery": {
+    "recordedAt": "2026-10-26T02:20:55.751Z",
+    "predecessorHead": "c99692b0f40d5d7927db41740c30634a5eaa56c8",
+    "predecessorCi": {
+      "run": 40254034138,
+      "job": 121352202656,
+      "state": "FAIL",
+      "failedSteps": [
+        "Test",
+        "Smoke — client-memory authorization"
+      ],
+      "artifact": 12623356828,
+      "artifactSha256": "8191908d9e58d2ba2b1b18ad828a11685bd18cd82adf164a86a010c12778ce6c"
+    },
+    "findings": [
+      "Original extracted audit closure did not receive its real newly referenced Portal tool constant; its existing Knowledge helper was also omitted by one factory. Supply both real imports at the test boundary, preserving the production closure and every incumbent assertion. Add original share/reconciliation receipt distinction.",
+      "Frozen read-registration roster did not name the new saved-request publisher. Assert its actual owner requirement, HIGH common approval, native executor and PARTIAL maturity; all incumbent roster assertions stay exact.",
+      "Group24 classified the new actor/tenant/tool/limit1 card-ID privacy read as proposal recovery. Distinguish only the exact select(id) metadata read, add four positive bounded-read assertions and preserve original no proposal access/write/claim/consumption on scope change."
+    ],
+    "proof": {
+      "receiverTests": {
+        "baselineTotal": 50,
+        "baselinePassed": 12,
+        "baselineFailed": 38,
+        "finalTotal": 51,
+        "finalPassed": 51,
+        "finalFailed": 0
+      },
+      "originalRequestRegression": {
+        "passed": 99,
+        "failed": 0
+      },
+      "fullOriginalHandlerSmoke": {
+        "passed": 1242,
+        "failed": 0,
+        "prior1238AssertionsPreserved": true,
+        "additionalIdOnlyAssertions": 4
+      }
+    },
+    "abandonedExperiment": "An earlier local extra scope lookup fixed the metadata-count assertion but failed three incumbent no-evidence client controls. Fully reversed by exact source inverse; not passing release evidence or a production vulnerability finding.",
+    "productSource": "UNCHANGED Rootdb58, risk/C0b/CI/UI/SQL; no new fingerprint renewal, permission, trace policy, execution or activation change",
+    "requiredGates": "Fresh exact-head review, required CI/Preview and actual native/Edge/web release/readback remain mandatory; predecessor FAIL is not waived",
+    "status": "NOT_MERGED/NOT_DEPLOYED",
+    "latestCustomerReturn": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  }
 }

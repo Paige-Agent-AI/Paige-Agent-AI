@@ -1,7 +1,7 @@
 // One mode of the original fenced synthetic-Postgres proof, not another runner.
 // Real original E08 wrapper and E09 migration; pre-E08 catalogue is a local port.
 export function requestShareCatalogueProof({sql,check,assert,fs,fixture,baseline=false}) {
- const file='supabase/migrations/20271114320009_e09_request_share_autonomy_catalogue.sql';
+ const file='supabase/migrations/20271115020009_e09_request_share_autonomy_catalogue.sql';
  const candidate=fs.readFileSync(file,'utf8').replaceAll('\r\n','\n');
  const predecessorFile='supabase/migrations/20271114240108_exp08_team_hub_reply_catalogue.sql';
  const predecessor=fs.readFileSync(predecessorFile,'utf8').replaceAll('\r\n','\n');

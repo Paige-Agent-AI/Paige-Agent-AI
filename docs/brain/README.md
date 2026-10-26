@@ -704,6 +704,15 @@ feature credit for this closeout.
 
 ### October26 whole-Experience receiving reconciliation
 
+Owner design addendum ANT-11/704476b3 is mapped as subcases in the same original
+acceptance packet: original-record drilldowns, real workflow detail, compact
+nonredundant copy, purposeful color/graphics/motion, laptop/tablet/phone in both
+themes, keyboard/focus/zoom/reduced motion and bounded Impeccable finish evidence.
+No new UI or case PASS is claimed by this mapping. Master4.0 now records actual
+#2931/source083634 and #2929/source56db releases with exact CI/production/build
+boundaries. #2933 remains the next original-reader source/CI candidate; original
+ten/E5/owner-away/Builder/ZION/cohort/Live/founder acceptance stays open.
+
 Owner addendum ANT-11/7d47cc68 is mapped to the same ten outcomes and unchanged
 E5-CV1–9 in the [original acceptance packet](../delivery/experience-05-weekly-acceptance-packet.md#october26-whole-experience-reconciliation--original-scope-retained).
 Owner-away policy/trigger/artifact/Rail/notice/stop/recovery, E04 obligations,

@@ -1083,3 +1083,58 @@ analytics CAP009–017 remain at existing maturity: this slice verifies executio
 evidence, not a prioritization, prediction, anomaly or financial algorithm. All19
 original outcomes/nine analytics and original9PASS0FAIL + supplement12PASS0FAIL
 4BLOCKED + monthlyUNKNOWN/UNRETRIED remain separately open.
+# October26 — checkpoint and finalizer production source readback
+
+This post-merge receipt supersedes the development-only status of #2932/#2936
+below, preserving their earlier failures and source findings as dated evidence.
+
+- **Checkpoint #2932:** final reviewed2de588b5413360c4f1ea454c90c163cb6dafa94e,
+  LOWER5658491760, all11 exact checks/Preview/two webSUCCESS; actual
+  merge46e473a96d4c31009662f451b7e5da7fa572c171. Original143 capture cases and
+  four affected suites171PASS. Complete incoming docs/all16,554 outside entries
+  preserved. No caller installs the native-authority callback.
+- Normal Edge40402243852 first job121850842414 **FAILED** mandatory source
+  verification: downloaded operator core was the old source despite upload ACKs.
+  Artifact12690000097 / ZIP SHA2564030117fabae57d99dc395559495408b7c38cc3c50beddf1047c8db79ee163bb
+  is retained. A later direct source read was already current; this establishes an
+  observed propagation/snapshot discrepancy, not an asserted deeper root cause.
+- Retrying only that original failed job produced121853839148 **SUCCESS**.
+  Original API certificate12689651786 / ZIP SHA256
+  f3215c2ba425eefa8503f0a46aa3f3a2eab7db1e01df6cfa54e61fe0e29ca82c was independently
+  verified using the existing release reader against the exact46e checkout.
+  All159 source entries/configs match; change/onboarding/operator/scheduled
+  versions150/152/155/157 contain exact core SHA256
+  c5e1bb024fbb453e6dada568788b9f2d0dbcc1503aed682b639a0661de70c5e5.
+  No fallback source emitter was used. Original JWT configurations are unchanged.
+- Merge webdpl_AqqYuCJwmcwHNxVfXX1qT6qLhs89 READY. Actual public readback was
+  containing146cf565900ab5f208a3c85dd91ef71a79ba0d41-mvprgpiq/null on both origins,
+  with verified lineage146cf→15cdd256→46e; exact46e public aliases were not observed.
+- **Finalizer #2936:** final reviewed7e58e833f23192d3198d9ad8b00bfafa2774ec08,
+  LOWER5658806915; actual existing E05 non-author source review5659062649 and
+  receiving09d9b380 independently reran148 native controls. Same-account GitHub
+  COMMENT is not distinct-account approval. All13 exact checks/fresh Preview/two
+  webSUCCESS; actual merge3d541038cd72dc00f33df442fc6ce7142668c0f4, whole incoming
+  docs/all16,555 outside entries preserved. Partial-source finding, old146 proof
+  and normally retired empty Preview are historical; corrected148 includes the
+  original canonical null full-sweep marker and empty-marked subset refusal.
+- Normal native40405795748, lint121863086188 and deploy121863296677 **SUCCESS**.
+  Production10352 applied once; original transitionOID294695/body
+  48e851ee40eec05738b6ba09b8000f93, five-field ABI, defaults300/false, postgres owner,
+  definer/empty search_path and original postgres+service ACL retained. Anonymous
+  and authenticated execute=false, service=true. No finalizer invocation or scan.
+- Webdpl_AkfM3wJemgHSizWykgmrnAUx9CA3 READY; both public origins200 and exact
+  3d541038cd72dc00f33df442fc6ce7142668c0f4-mvps1m8o/customerUpdate:null observed.
+  Native10309→10352 sequence complete, original E05 source ownership handed back
+  and E04 next-ready higher native window released through ANT161/91bac1a3.
+
+Original native claim/heartbeat, Core checkpoints and finalizer are deployed
+prerequisites, not an activated manual workflow. No new caller/Spine/worker,
+approval, provider or Chat activation. Original E05 consumer receiving38e43d02
+and correction240eb1ff name the actual heartbeat_paige_durable_work port; no
+generic durable worker or phantom helper exists. Functional bounded source
+DEPLOYED; Visual N/A; Experiential manual result/recovery INCOMPLETE; Founder
+NOT_ACCEPTED. All19/nine/catalogue/ALG and historical9-0+12-0-4/monthlyUNKNOWN
+UNRETRIED/representative-weekUNMEASURED remain unchanged.
+
+Source receipts: [#2932](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2932#issuecomment-6427641944),
+[#2936](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2936#issuecomment-6428143292).

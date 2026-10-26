@@ -863,7 +863,7 @@ repo uses AWS (searched `amazonaws`, `SES`, `sesv2`, `aws_ses`, `AWS_ACCESS_KEY`
 `supabase/functions`, `src`, the config registry — absent), while the SendGrid door, signed webhook and
 receipt journal are built and connected. SES remains a later cost option, not a blocker.
 
-**Built (migration `20271116020000`, `send-message`):**
+**Built (migration `20271116030000`, `send-message`):**
 1. A campaign may name a SendGrid sender only when its domain is SendGrid-verified for that business
    (`_email_resolve_sender`, the one sender resolver for draft, approval and claim). It is PAIGE-paid.
 2. `email_campaign_sendgrid_admit` — send-message's only new SendGrid admission (security H2 otherwise
@@ -895,6 +895,14 @@ choice: `dropped` events stay journal-only (SendGrid drops to its own lists; no 
 send's audit row reads `failed` (the audit `status` vocabulary has no unknown) while the campaign row
 reads `outcome_unknown`; the admission is not single-use (only the service role can ask, and the worker
 begins each recipient once).
+
+**Merged as #2941 (`79247765`); renumbered before it could apply.** `deploy-edge-functions` run #867
+redeployed `send-message`. `deploy-migrations` run #697 refused the migration: EXP08's
+`20271116020008` reached production first, and the CLI will not insert an earlier version below the
+remote frontier. Nothing was applied and nothing broke (the new `send-message` asks
+`email_campaign_sendgrid_admit` only for a SendGrid connector, and production has none). The migration
+is renumbered `20271116030000` (no shared object with `020008`); local proofs re-ran in production's
+order (`020008` then `030000`).
 
 **Still not live, by design.** No business has a SendGrid sender. Next, in order: (a) Paige's own
 managed sender on SendGrid — needs the authenticated SendGrid domain from the owner; (b) a business

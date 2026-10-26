@@ -149,7 +149,7 @@ GRANT EXECUTE ON FUNCTION public.email_campaign_sendgrid_admit(uuid, uuid, text)
 ALTER TABLE public.sendgrid_receipt_processing
   ADD COLUMN IF NOT EXISTS correlated_campaign_recipient_id uuid;
 COMMENT ON COLUMN public.sendgrid_receipt_processing.correlated_campaign_recipient_id IS
-  'Experience 03: the email_campaign_recipients row a correlated campaign event updated (20271116020000). NULL for governed replies and uncorrelated events.';
+  'Experience 03: the email_campaign_recipients row a correlated campaign event updated (20271116030000). NULL for governed replies and uncorrelated events.';
 
 CREATE OR REPLACE FUNCTION public._sendgrid_apply_campaign_receipt(
   _sg_message_id text, _status text, _email text, _event_at timestamptz,
@@ -307,7 +307,7 @@ BEGIN
       fx := jsonb_build_object('correlation', 'apply_failed', 'reason', 'apply_failed_' || lower(SQLSTATE),
                                'message_id', NULL, 'effect', 'apply_failed');
     END;
-    -- Not a governed reply: it may be a campaign email (20271116020000). Contained the same way.
+    -- Not a governed reply: it may be a campaign email (20271116030000). Contained the same way.
     IF fx->>'correlation' = 'uncorrelated' AND fx->>'reason' IN ('no_message', 'not_governed') THEN
       BEGIN
         cx := public._sendgrid_apply_campaign_receipt(r.message_id, r.status, r.email, r.event_at,

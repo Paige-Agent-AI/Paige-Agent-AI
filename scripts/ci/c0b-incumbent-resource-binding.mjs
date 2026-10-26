@@ -997,7 +997,7 @@ const SOURCES = {
   // EXP03 campaign SendGrid lane renewal (2026-10-26), AUTHOR-REVIEW / LOWER ASSURANCE (an independent §39
   // reviewer read the same diff and found no blocker): branch claude/great-heisenberg-u7kyd9 changes
   // send-message/index.ts in three places. (1) Before the H2 refusal, a service-role marketing send keyed
-  // `ecr:<recipient id>` asks email_campaign_sendgrid_admit (migration 20271116020000) and is admitted to
+  // `ecr:<recipient id>` asks email_campaign_sendgrid_admit (migration 20271116030000) and is admitted to
   // SendGrid only when the database says so for this tenant and recipient; every other SendGrid send is
   // still refused. (2) That send's custom_args carry the tenant and the recipient id, and it asks
   // SendGrid to track opens and clicks. (3) An unreadable SendGrid answer for it reports outcome

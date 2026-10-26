@@ -1,6 +1,6 @@
 // @vitest-environment node
 // EXP03 — an approved campaign email may ride PAIGE Email (SendGrid) only as the database admits it
-// (email_campaign_sendgrid_admit, migration 20271116020000). The REAL send-message handler is
+// (email_campaign_sendgrid_admit, migration 20271116030000). The REAL send-message handler is
 // transpiled and executed with only its imports and the network substituted (the
 // send-message-sendgrid-door.test.ts technique): `fetch` is a stub that records every call, so no HTTP
 // request leaves this process and no provider is called.

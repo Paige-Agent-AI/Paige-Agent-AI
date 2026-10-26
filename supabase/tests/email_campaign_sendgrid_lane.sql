@@ -1,4 +1,4 @@
--- EXP03 — the SendGrid lane for approved marketing campaigns (20271116020000), through the real seams.
+-- EXP03 — the SendGrid lane for approved marketing campaigns (20271116030000), through the real seams.
 -- Full replayed schema, actual caller roles, synthetic data only (test-tenant-* rows, *.tests.invalid
 -- addresses; §63); everything rolled back. No provider is called: send-message's admission question is
 -- the service-only email_campaign_sendgrid_admit, and SendGrid's events enter through the one door,

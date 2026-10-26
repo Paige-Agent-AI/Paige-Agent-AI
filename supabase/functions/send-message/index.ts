@@ -1109,7 +1109,7 @@ Deno.serve(async (req) => {
   // matched it field for field; every other request (a user's generic send, a scheduled release, an
   // invoice, a marketing send) with a SendGrid connector is refused here, before any provider call.
   //
-  // The one other admitted shape (20271116020000): an approved marketing campaign's email, sent by
+  // The one other admitted shape (20271116030000): an approved marketing campaign's email, sent by
   // email-campaign-worker (service role, marketing, idempotency key `ecr:<recipient id>`), and only
   // when email_campaign_sendgrid_admit says so: the recipient the dispatcher has leased right now, its
   // own address, the campaign's approved connector, still SendGrid, still verified for THIS business.

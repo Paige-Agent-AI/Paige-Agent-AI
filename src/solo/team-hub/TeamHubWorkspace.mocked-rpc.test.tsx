@@ -9,7 +9,7 @@
  */
 import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
 import { REFRESH_INTERVAL_MS, teamHubNavigation } from "./useTeamHub";
 
@@ -902,6 +902,11 @@ describe("mark read through the newest displayed message (A8, mocked RPC)", () =
 
 describe("structure for assistive tech (mocked RPC)", () => {
   it("names the day, New and replies separators, since a separator's text is not read", async () => {
+    // Pin the clock to midday: "10 minutes ago" read just after midnight is yesterday, and the
+    // separator would rightly say so. Only Date is faked; the component's timers stay real.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 26, 12, 0, 0));
+    onTestFinished(() => { vi.useRealTimers(); });
     db.conversations = [channel({ unread: 1 })];
     db.messages["c-general"] = [msg({ id: "m-root", reply_count: 2, created_at: at(10) })];
     db.replies["m-root"] = [msg({ id: "r-1", parent_message_id: "m-root", created_at: at(6) }), msg({ id: "r-2", parent_message_id: "m-root", created_at: at(5) })];
@@ -2121,5 +2126,56 @@ describe("increment 3 rendered-evidence fixes (mocked RPC)", () => {
       await resized(stream);
       expect(box.top).toBe(100);
     });
+  });
+});
+
+describe("EXP08 lifecycle: Team conversations switched off (mocked RPC)", () => {
+  it("shows a switched-off person an honest state, not 'couldn't load' and not 'no longer on this team'", async () => {
+    db.override.team_hub_list_conversations = () => ({ ok: false, code: "conversations_off" });
+    const { host } = await mount();
+    expect(host.textContent).toContain("Team conversations are off for you");
+    expect(host.textContent).toContain("Your tasks, the clients you're assigned and your permission are unchanged.");
+    expect(host.textContent).not.toContain("Team Hub couldn't load");
+    expect(host.textContent).not.toContain("You're no longer on this team");
+    expect(host.querySelector("textarea"), "no composer behind a door that refuses them").toBeNull();
+    // Turned back on by the owner: Check again opens the hub.
+    delete db.override.team_hub_list_conversations;
+    await act(async () => button(host, "Check again")!.click());
+    await flush();
+    expect(host.textContent).toContain("Kickoff is Thursday.");
+  });
+
+  it("reports a DM to a switched-off person as NOT delivered, keeps the draft, and shows nothing as sent", async () => {
+    db.conversations = [channel({ id: "c-dm", kind: "dm", name: null, visibility: "private", member_count: 2, member_ids: [ME, "u-dana"], dm_user_id: "u-dana" })];
+    db.messages = { "c-dm": [] };
+    db.override.team_hub_post_message = () => ({ ok: false, code: "recipient_conversations_off" });
+    const { host } = await mount();
+    await type(composer(host), "Can you take the Brightline call?");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(composer(host).value).toBe("Can you take the Brightline call?");
+    const shown = host.querySelector(".th-composer-wrap .th-error")!;
+    expect(shown.textContent).toContain("Not delivered. This teammate has Team conversations turned off, so they can't read it.");
+    expect(host.textContent).not.toMatch(/Your message, sending/);
+  });
+
+  it("marks switched-off people in the pickers and does not offer them as mentions", async () => {
+    db.people = [person(ME, "Morgan Hale", null, "owner"), { ...person("u-theo", "Theo Brandt", "Contract Copywriter"), team_conversations: false } as ReturnType<typeof person>, { ...person("u-dana", "Dana Reyes", "Client lead"), team_conversations: true } as ReturnType<typeof person>];
+    const { host } = await mount();
+    await act(async () => button(host, "Message a teammate")!.click());
+    await flush();
+    const picker = host.querySelector("[role=group][aria-label='Message a teammate']")!;
+    const theo = Array.from(picker.querySelectorAll("button")).find((b) => b.textContent?.includes("Theo Brandt"))!;
+    const dana = Array.from(picker.querySelectorAll("button")).find((b) => b.textContent?.includes("Dana Reyes"))!;
+    expect(theo.disabled, "can't DM someone whose conversations are off").toBe(true);
+    expect(theo.textContent).toContain("Team conversations off");
+    expect(dana.disabled).toBe(false);
+    await act(async () => button(host, "Cancel")!.click());
+    await flush();
+    await type(composer(host), "@");
+    await flush();
+    const options = Array.from(host.querySelectorAll("[role=listbox] [role=option]")).map((o) => o.textContent ?? "");
+    expect(options.some((o) => o.includes("Dana Reyes"))).toBe(true);
+    expect(options.some((o) => o.includes("Theo Brandt")), "not offered as a mention the server would refuse").toBe(false);
   });
 });

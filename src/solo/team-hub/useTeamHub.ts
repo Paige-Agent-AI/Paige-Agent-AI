@@ -77,7 +77,7 @@ const PAGE_SIZE = 50;
 const THREAD_PAGE_SIZE = 50;
 
 /** `account_unavailable` is the server's `unavailable` (A1): not a canonical SOLO workspace. */
-export type HubStatus = "loading" | "ready" | "unavailable" | "account_unavailable" | "not_member" | "scope_changed";
+export type HubStatus = "loading" | "ready" | "unavailable" | "account_unavailable" | "not_member" | "scope_changed" | "conversations_off";
 
 export interface StreamState {
   channelId: string;
@@ -208,7 +208,9 @@ function failureCode(result: TeamHubResult<unknown>): TeamHubRefusal | "no_answe
   return result.kind === "refused" ? result.code : "no_answer";
 }
 
-const ENDS_HUB = new Set<TeamHubRefusal>(["not_member", "unavailable", "scope_changed"]);
+// EXP08: conversations_off ends the hub too — every door refuses a switched-off person, so the hub
+// says so once instead of failing each call with a generic error.
+const ENDS_HUB = new Set<TeamHubRefusal>(["not_member", "unavailable", "scope_changed", "conversations_off"]);
 
 const newestOf = (messages: TeamHubMessage[]) => messages.length ? [...messages].sort(compareMessages)[messages.length - 1] : undefined;
 
@@ -270,6 +272,9 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       void Promise.resolve(tenantRefresh.current?.()).finally(() => { if (alive.current) void refreshAfterAction.current(); });
     } else if (result.code === "not_member" || result.code === "unavailable") {
       setStatus(result.code === "not_member" ? "not_member" : "account_unavailable");
+      clear();
+    } else if (result.code === "conversations_off") {
+      setStatus("conversations_off");
       clear();
     } else if (result.code === "scope_changed") {
       setStatus("scope_changed");
@@ -928,7 +933,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [refresh]);
 
   const retryLoad = useCallback(async () => {
-    setStatus((current) => current === "unavailable" ? "loading" : current);
+    setStatus((current) => current === "unavailable" || current === "conversations_off" ? "loading" : current);
     await refresh();
   }, [refresh]);
 

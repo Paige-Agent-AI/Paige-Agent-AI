@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Download, Trash2, Bell, FileText, Loader2, ExternalLink } from "lucide-react";
+import { Download, Trash2, Bell, FileText, Loader2, ExternalLink, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadMyUserData } from "@/lib/downloadMyUserData";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { SecurityBadge } from "@/components/security/SecurityBadge";
 import { Link } from "react-router-dom";
 import { useClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import { useTenantFeature } from "@/hooks/useTenantFeature";
+import { normalizePortalSupportEmail, portalSupportHref } from "@/lib/portal/supportContact";
 
 /**
  * Who is looking decides what this panel may say (§2, §13, E09 Slice 6 D6).
@@ -46,6 +47,8 @@ export function DataPrivacyPanel() {
   const customer = known && (!!brand?.tenant_id || multipleBusinesses);
   const customerOfOne = customer && !!brand?.tenant_id;
   const business = brand?.tenant_name?.trim() || "your business";
+  const supportEmail = customerOfOne ? normalizePortalSupportEmail(brand?.support_email) : null;
+  const supportHref = portalSupportHref(supportEmail);
   // A customer's assistant is their agent, never PAIGE, the owner's COO (owner ruling, 2026-10-19).
   const { agentName } = useCustomerIdentity();
   const showCredit = known && !customer && !funding.loading && funding.enabled;
@@ -104,7 +107,7 @@ export function DataPrivacyPanel() {
         <div>
           <h3 className="text-lg font-semibold tracking-tight">Data &amp; Privacy</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            {customer
+            {customer || !known
               ? "Download your data, ask for it to be deleted, and read how it's handled."
               // customer-identity-exempt: staff branch (not a customer of a business)
               : "Download your data, ask for it to be deleted, and read how Paige handles it."}
@@ -179,25 +182,41 @@ export function DataPrivacyPanel() {
           </AlertDialog>
         </li>}
 
-        {/* Delete Account */}
+        {customerOfOne && <li className={row}>
+          <div className="min-w-0 sm:flex-1">
+            <div className="flex items-center gap-2"><Mail className="w-4 h-4 shrink-0 text-muted-foreground" /><p className="font-medium">Business support</p></div>
+            <p className="text-sm text-muted-foreground mt-1 break-words">{supportEmail || `Send a private message to ${business}’s team.`}</p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="min-h-[44px] self-start">
+            {supportHref ? <a href={supportHref}>Email the business</a> : <Link to="/app/messages?topic=help">Message your business</Link>}
+          </Button>
+        </li>}
+
+        {/* A business's records and portal access are separate from a global sign-in. */}
         <li className={row}>
           <div className="min-w-0 sm:flex-1">
             <div className="flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-destructive" />
-              <p className="font-medium">Delete Account</p>
+              <p className="font-medium">{customer ? "Request removal" : known ? "Delete Account" : "Account requests"}</p>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {customer
-                ? `Email privacy@paigeagent.ai to close your portal login. To delete what ${business} holds about you, message ${business}.`
+              {!known
+                ? "Your business contact is unavailable while we check your portal access. Return to the portal and try again."
+                : customerOfOne
+                ? `Ask ${business} to remove your access to this portal and review the records it holds about you. Nothing is deleted automatically. Your login and access to other businesses are separate. For information about closing your sign-in across businesses, read the privacy policy for your portal login.`
+                : customer
+                ? "Choose a business before requesting removal of its portal access or records. Your login and access to other businesses are separate."
                 // customer-identity-exempt: staff branch (not a customer of a business)
                 : "Email privacy@paigeagent.ai to ask us to close your Paige login and delete the data tied to it. We reply to confirm each step. Nothing is deleted automatically."}
             </p>
           </div>
-          <Button asChild variant="destructive" size="sm" className="min-h-[44px] self-start">
+          {customer ? <Button asChild variant="outline" size="sm" className="min-h-[44px] self-start">
+            <Link to={customerOfOne ? "/app/messages?topic=help" : "/app"}>{customerOfOne ? "Contact the business" : "Choose business"}</Link>
+          </Button> : known ? <Button asChild variant="destructive" size="sm" className="min-h-[44px] self-start">
             <a href="mailto:privacy@paigeagent.ai?subject=Account%20Deletion%20Request">
               Email us
             </a>
-          </Button>
+          </Button> : <Button asChild variant="outline" size="sm" className="min-h-[44px] self-start"><Link to="/app">Return to portal</Link></Button>}
         </li>
 
         {/* Communication preferences — a customer's own choices for their business, on Your account. */}

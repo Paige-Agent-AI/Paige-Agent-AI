@@ -1,0 +1,180 @@
+{
+ "tabStops": [
+  {
+   "name": "Team",
+   "role": "tab",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Roles & access",
+   "role": "tab",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Invite someone",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Review roles",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "",
+   "role": "input",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Show: Everyone",
+   "role": "combobox",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Morgan Hale, edit details",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Dana Reyes, edit details",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Team conversations for Dana Reyes",
+   "role": "switch",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Actions for Dana Reyes",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Avery Cole, edit details",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Team conversations for Avery Cole",
+   "role": "switch",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Actions for Avery Cole",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Sam Lee, edit details",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Team conversations for Sam Lee",
+   "role": "switch",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Actions for Sam Lee",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Priya Natarajan, edit details",
+   "role": "button",
+   "fv": true,
+   "outline": "solid 2px"
+  },
+  {
+   "name": "Team conversations for Priya Natarajan",
+   "role": "switch",
+   "fv": true,
+   "outline": "solid 2px"
+  }
+ ],
+ "menuOpen": {
+  "items": [
+   "Edit details",
+   "Suspend access…",
+   "Remove from team…"
+  ],
+  "focused": "menuitem",
+  "focusedText": "Edit details"
+ },
+ "menuArrow": "Suspend access…",
+ "menuFirstFocusBeforeArrow": "see menuOpen.focusedText",
+ "afterEsc": {
+  "menu": false,
+  "focus": "Actions for Sam Lee"
+ },
+ "reopen": [
+  "Edit details",
+  "Suspend access…",
+  "Remove from team…"
+ ],
+ "drawer": {
+  "open": true,
+  "modal": "true",
+  "label": "What Sam Lee holds",
+  "focusInside": true
+ },
+ "drawerEsc": {
+  "open": false,
+  "focus": "Actions for Sam Lee"
+ },
+ "zoom200-light": {
+  "overflow": 0,
+  "invite": true
+ },
+ "zoom200-menufocus-light": "Remove from team…",
+ "zoom200-review-light": {
+  "dialog": true,
+  "overflow": 0
+ },
+ "zoom200-dark": {
+  "overflow": 0,
+  "invite": true
+ },
+ "zoom200-menufocus-dark": "Remove from team…",
+ "zoom200-review-dark": {
+  "dialog": true,
+  "overflow": 0
+ },
+ "motion-no-preference": {
+  "animations": [
+   "stw-drw 0.24s",
+   "stw-spin 0.9s",
+   "stw-sheen 1.4s"
+  ],
+  "transitions": [
+   "background-color, border-color 0.18s, 0.18s",
+   "transform, background-color 0.2s, 0.18s",
+   "background-color, opacity, border-color 0.15s, 0.15s, 0.15s"
+  ]
+ },
+ "motion-reduce": {
+  "animations": [
+   "stw-drw 0.001s",
+   "stw-spin 0.001s",
+   "stw-sheen 0.001s"
+  ],
+  "transitions": []
+ }
+}

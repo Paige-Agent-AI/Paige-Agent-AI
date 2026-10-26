@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { CustomerAssistantSettings } from "@/components/tenant-relationships/CustomerAssistantSettings";
 import { assistantFields, assistantPatch } from "@/lib/portal/assistantSettings";
 import type { ClientPortalConfig } from "@/hooks/useClientPortalConfig";
+import { PortalSupportEmail } from "./PortalSupportEmail";
 
 /**
  * Client Portal (§9/§10/§11) — the ONE tenant-facing surface where a tenant skins
@@ -102,6 +103,8 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
   const [assistant, setAssistant] = useState(() => assistantFields());
   const [portalBaseline, setPortalBaseline] = useState<{ welcome: typeof welcome; assistant: typeof assistant } | null>(null);
   const [menuDirty, setMenuDirty] = useState(false);
+  const [supportState, setSupportState] = useState({dirty: false, busy: false});
+  const updateSupportState = useCallback((state: {dirty: boolean; busy: boolean}) => setSupportState(state), []);
   const [menuDraft, setMenuDraft] = useState<PortalModuleOverlay[] | undefined>(undefined);
 
   const initialWelcome = useMemo(
@@ -165,9 +168,9 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
     || "Here's where things stand — your next steps are ready when you are.";
 
   const dirty = brandDirty || portalDirty;
-  const busy = bk.saving || pc.saving;
-  useBeforeUnloadGuard(dirty || busy || menuDirty);
-  useEffect(() => { onDirtyChange?.(dirty || busy || menuDirty); }, [dirty, busy, menuDirty, onDirtyChange]);
+  const busy = bk.saving || pc.saving || supportState.busy;
+  useBeforeUnloadGuard(dirty || busy || menuDirty || supportState.dirty);
+  useEffect(() => { onDirtyChange?.(dirty || busy || menuDirty || supportState.dirty); }, [dirty, busy, menuDirty, supportState.dirty, onDirtyChange]);
 
   const handleSave = async () => {
     if (brandDirty && invalidHex) {
@@ -216,7 +219,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
     );
   }
 
-  if (bk.isError || pc.isError || catalogInput.isError) return <section role="alert" className="p-6 space-y-3">
+  if ((bk.isError && !bk.state) || pc.isError || catalogInput.isError) return <section role="alert" className="p-6 space-y-3">
     <h2 className="text-lg font-semibold">We couldn’t load the saved experience</h2>
     <p className="text-sm text-muted-foreground">Try again before editing the portal’s appearance or content.</p>
     <Button variant="outline" onClick={() => { void bk.refetch(); void pc.refetch(); void catalogInput.refetch(); }}>Retry experience</Button>
@@ -321,6 +324,8 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
                 </div>
               </div>
             </SectionCard>
+
+            <PortalSupportEmail brand={bk} onStateChange={updateSupportState} />
 
             {/* WELCOME */}
             <SectionCard

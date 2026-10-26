@@ -51,6 +51,20 @@ describe("C0b canonical read declaration convergence", () => {
         expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
         continue;
       }
+      // The new saved-request publisher retains its original native owner gate
+      // and HIGH common approval. Every incumbent roster assertion remains below.
+      if (tool === "client_portal_request_share") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        expect(mutatingTools().has(tool)).toBe(true);
+        expect(PAIGE_SPINE_CAPABILITIES.find(cap => cap.action?.chatTool === tool)).toMatchObject({
+          key: "client.portal_request_share", maturity: "PARTIAL",
+          action: { classification: "mutate", executor: "public.share_client_portal_request",
+            riskPolicyKey: "high", approvalAuthority: "chat-canonical", seatAuthority: "workspace-admin" },
+        });
+        expect(authorityAdmits(tool, { workspaceAdmin: false, platformOperator: false, seat: true }, new Set())).toBe(false);
+        expect(authorityAdmits(tool, { workspaceAdmin: true, platformOperator: false, seat: true }, new Set())).toBe(true);
+        continue;
+      }
       // E09 Slice 3: the newly registered owner/admin-only client-share tool, likewise absent from
       // the frozen roster. Its SQL admits only is_tenant_admin, so the Chat gate must say admin too.
       if (tool === "plan_item_set_client_share") {

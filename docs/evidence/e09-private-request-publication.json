@@ -2273,4 +2273,429 @@
     "activation": "NONE",
     "publicReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2864#issuecomment-6402407693"
   }
+,
+  "ownerCommandImplementation": {
+    "channel": "development",
+    "runtimeCommit": "64102341e4fadded558174ab8cfeea30540165c4",
+    "composedCommit": "d74b1db523ad872ed81f4b5a48558c6246da1992",
+    "rootSha256": "8e89285fc3ef35e1fcb1ff1e246a3ecb161659b5a61569577210decec379d7ef",
+    "source": "original common confirmation and caller-JWT native publication; no alternate executor/issuer/store",
+    "tests": {
+      "focused": {
+        "passed": 94,
+        "failed": 0
+      },
+      "exactCallSelection": {
+        "redPassed": 10,
+        "redFailed": 2,
+        "greenPassed": 12,
+        "greenFailed": 0,
+        "overlapsFocused": true
+      },
+      "privacy": {
+        "redPassed": 5,
+        "redFailed": 1,
+        "greenPassed": 6,
+        "greenFailed": 0,
+        "overlapsFocused": true
+      },
+      "nativeCatalogue": {
+        "passed": 49,
+        "failed": 0,
+        "originalCasesRetained": 35,
+        "scope": "actual local PostgreSQL wrapper; Auth/pre-E08 catalogue explicit synthetic ports"
+      },
+      "ownStrictTypes": "PASS:0",
+      "ownLint": "PASS:0",
+      "actualRootDeno": {
+        "compiler": "2.1.4",
+        "sdk": "2.75.0",
+        "baselineDiagnostics": 10,
+        "candidateDiagnostics": 10,
+        "exactComparison": "PASS: only offsets/two literal union orders normalized; raw diagnostics retained",
+        "zeroErrorCompile": false
+      }
+    },
+    "incumbents": {
+      "base": "a8aaa131631f77eb0eb4da7cfd9d8bbba4884267",
+      "tools": 29,
+      "literalsRenewed": 28,
+      "sourceSpecificReview": "all original dispatch/control/helper/imports and other identities exact; one extra Portal-only Search refusal captured by unchanged inspector; identity15 changes and one HIGH risk row; exact whole-original binding inverse",
+      "extractorOrValidatorChanged": false
+    },
+    "visual": {
+      "sourceRenderChecks": 33,
+      "captures": 31,
+      "failures": 0,
+      "externalRequests": 0,
+      "prototypeChecks": 19,
+      "scope": "original component and local ports, not authenticated shell",
+      "evidence": "docs/evidence/ui-delivery/e09-owner-request-command.md"
+    },
+    "orchestration": {
+      "path": "existing atomic share_client_portal_request under original common HIGH approval",
+      "work": "paige_actions",
+      "customerAction": "paige_customer_actions",
+      "unknown": "reconcile same original Work; no duplicate dispatch",
+      "live": "review preparation only; no voice publication",
+      "off": "preserved",
+      "privateHistory": "existing metadata-only/egress/summary contracts; no Knowledge/Memory copy"
+    },
+    "nativeMigration": {
+      "id": "20271114270009",
+      "state": "NOT_APPLIED",
+      "guardedOriginalListDefinitionMd5": "7b224b776dcd79d51f1216196351a1b8"
+    },
+    "edge": "NOT_DEPLOYED: paige-ai-chat and original affected consumers require normal source-bound deployment",
+    "web": "NOT_DEPLOYED",
+    "activation": "UNCHANGED; no provider/customer/consent/Live operation",
+    "authenticated": "UNVERIFIED: ordinary owner approval/customer response/return, full shell and two cohorts not driven; attached browser unavailable",
+    "founderAcceptance": "NOT_REQUESTED",
+    "scope": "all42/seven pillars/Teach CURA/CAP018-024/ALG01,02,04,12,13 remain open"
+  }
+,
+  "ownerCommandGovernanceCorrection": {
+    "failedHead": "72690e961439a6b054d4ae585e5ef575f25aec0f",
+    "runtime": "90e967d50294ba273bdb0e5eb122d4079b498fd4",
+    "rootSha256": "2e2d88d86b44f688aa76da928628512489e89d33958360ee7193ded57ba27c28",
+    "finding": "Original strict gate-order discovery, missing imported-catalog discovery and original receipt coverage failed hosted CI; prior no-finding review is superseded for release",
+    "disposition": "Original preparation block moved intact after unchanged original risk brakes; one closed actual-import/mount/domain-array AST discovery with8 hostile negatives; one truthful emits row in original receipt ledger. No assertion/gate/exemption relaxed.",
+    "verification": {
+      "focused": 94,
+      "actionRisk": "197 classified / zero unclassified and self-test PASS",
+      "receiptCoverage": "197 all declared and original10 hostile cases PASS through actual original CLI",
+      "rootDeno": "same10 inherited diagnostics, not zero-error compile",
+      "binding": "29 original aggregates reproduced; only28 literals and sameHIGH risk digest reviewed/renewed; original provider/control/helper/imports unchanged, same Portal-only Search refusal"
+    },
+    "preview": "First-head standard Preview270009/source/ABI/ACL PASS, zero users/clients; not corrected-head or production proof",
+    "status": "NOT_MERGED/NOT_DEPLOYED/NOT_ACTIVATED; fresh exact-head review and CI required",
+    "authenticated": "UNVERIFIED; original customer consent/identity/session/other browser leases unchanged"
+  }
+,
+  "ownerCommandRestrictedCorrection": {
+    "failedHead": "977ecd32492172aef59e2fffc3beff064b087f99",
+    "runtime": "94c2227d4e785d4cad4737d67ca83eb4a4e85692",
+    "composed": "405c9c9202be4f7948d4f8c6409d4acc181c61eb",
+    "binding": "d9ac2f6d6296108dc36d2c1053dbe6ff28badcad",
+    "rootSha256": "89f212b4e1cf05c0e95088df3639d805fac9b53d98a543e61c1f1511e7821fdd",
+    "findings": [
+      "Original restricted Chat may not touch the approval store; original handler reproduces new trace-read failure",
+      "App-target ES2020 reports TS2550 on newly consumed backend Object.hasOwn; earlier isolated ES2022 scope was insufficient"
+    ],
+    "disposition": [
+      "Existing restricted flags withhold metadata without card reads; original assertions/admission unchanged",
+      "Equivalent prototype-own check, same fields/ABI/authority; compiler/baseline unchanged"
+    ],
+    "tests": {
+      "focused": {
+        "passed": 96,
+        "failed": 0,
+        "serial": true,
+        "prior94Retained": true
+      },
+      "restrictedPrivacy": {
+        "redPassed": 7,
+        "redFailed": 1,
+        "greenPassed": 8,
+        "greenFailed": 0,
+        "overlapsFocused": true
+      },
+      "transport": {
+        "passed": 68,
+        "failed": 0
+      },
+      "consumerAppES2020": "PASS:0",
+      "wholeLocalApp": "NOT_PASS: unrelated absent @mdxeditor/editor dependency remains",
+      "partialParallel34": "INVALID for complete suite claim",
+      "originalRestrictedHandler": "PASS unchanged program",
+      "selectedOriginalPrograms": "PASS: answer/context/metadata/restricted/recovery/booking/Work/planning/weekly/history/CURA status+teaching/two-tool; full hosted pause matrix still required",
+      "rootDeno": "same10 inherited diagnostics, not zero-error compile"
+    },
+    "native": {
+      "frontier": "20271114260008",
+      "proposed270009": "NOT_APPLIED",
+      "listDefinitionMd5": "7b224b776dcd79d51f1216196351a1b8",
+      "publisherDefinitionMd5": "dad507ac047c8f91dc23ccac16c28998"
+    },
+    "protocol": {
+      "version": 2,
+      "active": true,
+      "scope": "read-only existing global flag; not new action/Live authorization or execution proof"
+    },
+    "status": "NOT_MERGED/NOT_DEPLOYED; fresh exact-head review and CI required",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED",
+    "scope": "Full42/seven retained. Owner-relayed lifecycle additions acknowledged; classify original Calendar/E04/E05/support/commercial/Comms source and ALG01/02/04/10/12/13 before any new implementation; no second system or broader authority."
+  },
+  "ownerCommandScopedConfirmationCorrection": {
+    "runtime": "abd5c337499faac437a9e5644cf70c426bcd686c",
+    "composed": "5ba026e18700780398d7cb7ec9a90552c5f099b5",
+    "incomingMain": "99c63316dfc6a9a0ddd19d80660fe43fe724b564",
+    "finding": {
+      "source": "NON-AUTHOR4372871559",
+      "failedHead": "e15fddbf058c2f9a47bb4a371cfd4de969c76ef6",
+      "issue": "Raw intent hash does not match the original common issuer scoped fingerprint",
+      "disposition": "Use existing scopedConfirmationFingerprint around the same exact stored-argument hash; no issuer/claim/native ABI or permission change"
+    },
+    "rootSha256": "db58b72020aa696ef9b393efefb8070797a448fcf26325f9722de0030262da8e",
+    "tests": {
+      "initialSandboxCollection": "INVALID:0 cases, temporary-cache rename EPERM",
+      "causalRed": {
+        "passed": 8,
+        "failed": 7,
+        "total": 15
+      },
+      "scopedGreen": {
+        "passed": 15,
+        "failed": 0,
+        "total": 15
+      },
+      "fullSerial": {
+        "passed": 99,
+        "failed": 0,
+        "total": 99,
+        "prior96Retained": true
+      },
+      "originalIncumbentFile": {
+        "passed": 83,
+        "failed": 0
+      },
+      "originalNative": {
+        "passed": 49,
+        "failed": 0,
+        "scope": "Synthetic Windows loopback; stopped cluster, not hosted proof"
+      },
+      "appScopedES2020": "PASS:0",
+      "changedTestLint": "PASS:0",
+      "actualRootCompiler": "Same10 inherited diagnostics, not clean compile"
+    },
+    "sourceBinding": {
+      "originalAggregatesReproduced": 29,
+      "literalRenewal": 28,
+      "changedIdentityIndex": 15,
+      "incumbentDispatchControlHelperImports": "UNCHANGED",
+      "searchPrivacyRefusal": "UNCHANGED",
+      "validatorExtractorOtherSourcePins": "UNCHANGED"
+    },
+    "native": {
+      "productionFrontierObserved": "20271114280004",
+      "former270009": "NOT_APPLIED in production; retired original disposable Preview only",
+      "forwardVersion": "20271114280009",
+      "canonicalSqlSha256": "9e5f5b502dd31855c6d53429251a1e929846b2f5392cc23e732a3eadcf285dbd",
+      "sqlComparison": "Exact git bytes unchanged by rename",
+      "formerReportedChecksum": "b5800a2c310e54bbddd2842202161a8fb4b08815a1a9ccd600808abdc5d6adf4 was stale; not current source identity",
+      "hostedProof102": "FAILED on e15; diagnosis and fresh required CI owed"
+    },
+    "preview": {
+      "originalBranch": "84101487-49c0-45a6-af5c-35a363801f30",
+      "withData": false,
+      "authUsers": 0,
+      "clients": 0,
+      "work": 0,
+      "messages": 0,
+      "confirmations": 0,
+      "initialTenantRows": 3,
+      "recovery": "Original unmerged PR temporarily closed; disposable branch absence verified. Reopen same PR only after forward source review; fresh ordinary Preview/source readback owed",
+      "productionReset": false,
+      "includeAll": false,
+      "newPaidBranchCreation": false
+    },
+    "status": "NOT_MERGED/NOT_DEPLOYED; corrective exact-head review and required CI owed",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED",
+    "fullScope": "Full42/seven/Teach/CAP018–024/lifecycle and actual canonical algorithm maturity retained"
+  },
+  "ownerCommandCatalogueStartupCorrection": {
+    "runtime": "848d2c96302f171c9172401032c31fc3d7a07250",
+    "actualFailedHead": "e15fddbf058c2f9a47bb4a371cfd4de969c76ef6",
+    "actualFailure": "Original GitHub step102: pg_ctl could not start fresh synthetic server before fixture/assertions",
+    "underlyingSocketPermissionCause": "UNVERIFIED: deeper old server log not retained",
+    "correction": "Reuse original durable-document TCP-only startup option; no product/managed/production source or config change",
+    "native": {
+      "passed": 50,
+      "failed": 0,
+      "original49CaseObjectsPreserved": true,
+      "stoppedClusterExit": 0,
+      "scope": "Synthetic Windows loopback; fresh Linux CI required"
+    },
+    "pathControls": {
+      "passed": 3,
+      "failed": 0
+    },
+    "ci": "Only own proof/artifact moves after Install, whole remaining CI text exact; original synthetic startup log retained7days",
+    "rootUiNativeSql": "UNCHANGED from ce9",
+    "oldE15": "CANCELLED by normal supersession; actual startup FAIL and incomplete broad Test not credited",
+    "freshPreview": {
+      "branch": "393e8f86-9f8b-4643-8de7-f5c1f9ce0756",
+      "project": "gppcnwldiplsufxrvkcl",
+      "withData": false,
+      "status": "FUNCTIONS_DEPLOYED; exact source readback owed"
+    },
+    "reviewedCe9": "AUTHOR-REVIEW / LOWER ASSURANCE5646219086; scoped-token finding4372871559 fixed",
+    "status": "NOT_MERGED/NOT_DEPLOYED; final review/CI/readback owed",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "ownerCommandForwardOrderRecovery": {
+    "observedAt": "2026-10-26T01:22:00Z",
+    "originalReviewedHead": "37a48f6d7ba9a18f910909b4b23dd06c3bb9d334",
+    "originalReviewedSource": "AUTHOR-REVIEW / LOWER ASSURANCE5646254894; actual non-author scoped-token finding fixed and resolved",
+    "incomingMain": "d08a2f206d479c3727898cb68466758075382898",
+    "composition": "63aa24193268935fc0fd645d5018479ed0efec23",
+    "compositionTree": "e841c73eaae871203a5c39bd784b0005142237c4",
+    "incomingSourcePreserved": {
+      "originalOwningPaths": 34,
+      "outsideEntries": 16356
+    },
+    "reason": "Actual original E08 migration300008 applied once while required broad tests ran; own280009 absent",
+    "migration": {
+      "from": "supabase/migrations/20271114280009_e09_request_share_autonomy_catalogue.sql",
+      "to": "supabase/migrations/20271114320009_e09_request_share_autonomy_catalogue.sql",
+      "canonicalSha256": "9e5f5b502dd31855c6d53429251a1e929846b2f5392cc23e732a3eadcf285dbd",
+      "sqlUnchanged": true,
+      "productionApplied": false,
+      "afterActual": "20271114300008",
+      "afterRecordedReservation": "20271114310008",
+      "sourceWindow": "ANT161/4ca2813b-1760-4b80-bc7e-5fbc00f5fc9a"
+    },
+    "native": {
+      "passed": 50,
+      "failed": 0,
+      "allPrior50ResultObjectsPreserved": true,
+      "clusterStoppedExit": 0,
+      "scope": "Isolated Windows loopback, not authenticated or production"
+    },
+    "originalLinux": {
+      "run": 40251287971,
+      "job": 121343702514,
+      "artifact": 12621230541,
+      "passed": 50,
+      "failed": 0,
+      "zipSha256": "f184a638970dac60a2829ef5beb07aefa224be913766b08c2e276bd15de75199",
+      "head": "37a48f6d7ba9a18f910909b4b23dd06c3bb9d334",
+      "scope": "Original exact-head Linux synthetic proof only, not new-head full CI"
+    },
+    "supportingFullHandler": {
+      "passed": 6,
+      "failed": 0,
+      "scope": "Actual Root through unchanged original protected loader and synthetic recording ports; not native/provider/authenticated/required CI; separate from99"
+    },
+    "previewRecovery": {
+      "retiredBranch": "393e8f86-9f8b-4643-8de7-f5c1f9ce0756",
+      "withData": false,
+      "authUsers": 0,
+      "clients": 0,
+      "work": 0,
+      "confirmations": 0,
+      "retirementAbsenceVerified": true,
+      "method": "Same PR normal close/reopen; fresh standard Preview and source readback owed"
+    },
+    "productRootUiApprovalBindings": "UNCHANGED from37; original E04/E05/E08 valid source preserved",
+    "status": "NOT_MERGED/NOT_DEPLOYED; new-head exact review/required CI/Preview and actual native/Edge/web readback owed",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "latestCustomerReturn": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  }
+,
+  "ownerCommandCampaignOrderRecovery": {
+    "recordedAt": "2026-10-26T02:08:50.014Z",
+    "priorReviewedHead": "c99692b0f40d5d7927db41740c30634a5eaa56c8",
+    "priorLowerReview": 5646393966,
+    "incomingMain": "c0d1c7281b67a834783bafa405531e3216cf30a1",
+    "composition": "770d1077413cf215ebe5ad4ff59d1292770599fe",
+    "compositionTree": "861f2494cd2771b7dfaa5f6841602fbc513f6c52",
+    "reason": "Actual E03#2889 native20271115010000 overtook pending320009 during its final broad Test",
+    "migration": {
+      "from": "supabase/migrations/20271114320009_e09_request_share_autonomy_catalogue.sql",
+      "to": "supabase/migrations/20271115020009_e09_request_share_autonomy_catalogue.sql",
+      "canonicalSha256": "9e5f5b502dd31855c6d53429251a1e929846b2f5392cc23e732a3eadcf285dbd",
+      "sqlUnchanged": true,
+      "ownProductionApplied": false,
+      "sourceWindow": "ANT161/4cb95af1-4915-4c8a-bf5b-7225bcdfd93b",
+      "includeAll": "OWNER_FORBIDDEN; no alternate apply/history route"
+    },
+    "native": {
+      "passed": 50,
+      "failed": 0,
+      "allPrior50ObjectsPreserved": true,
+      "clusterStoppedExit": 0,
+      "scope": "Synthetic isolated loopback, not authenticated/production"
+    },
+    "originalAuthority": {
+      "catalogueDefinition": "7b224b776dcd79d51f1216196351a1b8",
+      "portalAccess": "7c3eb55c866321fed052ae742b75e42d",
+      "workReader": "1701abdd098639638fa0495f43827e81",
+      "roleReader": "368894d933d5053b5dab6472d85a7428",
+      "eligibleOwnerWithoutLegacyWorkRoleExists": false,
+      "scope": "Source/aggregate metadata only, not authenticated parity"
+    },
+    "preview": {
+      "retiredBranch": "d5f1fd48-ec0d-43d7-ada6-fe3ddd6305d3",
+      "withData": false,
+      "authUsers": 0,
+      "clients": 0,
+      "work": 0,
+      "confirmations": 0,
+      "absenceVerified": true,
+      "method": "Same original PR ordinary close/reopen; fresh standard Preview/readback owed"
+    },
+    "runtimeAndUi": "UNCHANGED fromc99; Rootdb58, risk/C0b/CI source frozen for original receiving coordination, not an activation or unverified-parent merge grant",
+    "predecessorCi": "Last observed12 successful conclusions, final broad Test still running; no new-head credit",
+    "newHeadGates": "Exact review, all applicable required CI/Preview, current-main/native order and native/Edge/web deployment/source readback owed",
+    "status": "NOT_MERGED/NOT_DEPLOYED",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "latestCustomerReturn": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  },
+  "ownerCommandReceiverTestRecovery": {
+    "recordedAt": "2026-10-26T02:20:55.751Z",
+    "predecessorHead": "c99692b0f40d5d7927db41740c30634a5eaa56c8",
+    "predecessorCi": {
+      "run": 40254034138,
+      "job": 121352202656,
+      "state": "FAIL",
+      "failedSteps": [
+        "Test",
+        "Smoke — client-memory authorization"
+      ],
+      "artifact": 12623356828,
+      "artifactSha256": "8191908d9e58d2ba2b1b18ad828a11685bd18cd82adf164a86a010c12778ce6c"
+    },
+    "findings": [
+      "Original extracted audit closure did not receive its real newly referenced Portal tool constant; its existing Knowledge helper was also omitted by one factory. Supply both real imports at the test boundary, preserving the production closure and every incumbent assertion. Add original share/reconciliation receipt distinction.",
+      "Frozen read-registration roster did not name the new saved-request publisher. Assert its actual owner requirement, HIGH common approval, native executor and PARTIAL maturity; all incumbent roster assertions stay exact.",
+      "Group24 classified the new actor/tenant/tool/limit1 card-ID privacy read as proposal recovery. Distinguish only the exact select(id) metadata read, add four positive bounded-read assertions and preserve original no proposal access/write/claim/consumption on scope change."
+    ],
+    "proof": {
+      "receiverTests": {
+        "baselineTotal": 50,
+        "baselinePassed": 12,
+        "baselineFailed": 38,
+        "finalTotal": 51,
+        "finalPassed": 51,
+        "finalFailed": 0
+      },
+      "originalRequestRegression": {
+        "passed": 99,
+        "failed": 0
+      },
+      "fullOriginalHandlerSmoke": {
+        "passed": 1242,
+        "failed": 0,
+        "prior1238AssertionsPreserved": true,
+        "additionalIdOnlyAssertions": 4
+      }
+    },
+    "abandonedExperiment": "An earlier local extra scope lookup fixed the metadata-count assertion but failed three incumbent no-evidence client controls. Fully reversed by exact source inverse; not passing release evidence or a production vulnerability finding.",
+    "productSource": "UNCHANGED Rootdb58, risk/C0b/CI/UI/SQL; no new fingerprint renewal, permission, trace policy, execution or activation change",
+    "requiredGates": "Fresh exact-head review, required CI/Preview and actual native/Edge/web release/readback remain mandatory; predecessor FAIL is not waived",
+    "status": "NOT_MERGED/NOT_DEPLOYED",
+    "latestCustomerReturn": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
+  }
 }

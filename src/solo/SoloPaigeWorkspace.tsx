@@ -543,7 +543,7 @@ export function SoloPaigeWorkspace({
           focusBanner={clientScope ? (
             <div className="spw-chat-head" data-solo-paige-focus>
               <TruthPill tone="partial">IN CONTEXT</TruthPill>
-              <div><strong>{clientScope.label}</strong><span>Recorded outcomes for this client only. PAIGE reads them; she cannot change them.</span></div>
+              <div><strong>{clientScope.label}</strong><span>Focused on this client. PAIGE checks your permissions before any action.</span></div>
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
           ) : !planScope && presenceScope ? (

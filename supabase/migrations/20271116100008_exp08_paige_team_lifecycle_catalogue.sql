@@ -5,11 +5,28 @@
 -- The two reads (team_list_members, team_member_holdings) are not governed and get no row.
 -- Metadata only: no stored grant, no execution, no Chat/Live admission. Delegates the incumbent
 -- before appending five rows, retaining every prior catalogue row, its scope checks and stored modes.
-DO $$ BEGIN
- IF to_regprocedure('public._list_tool_autonomy_before_exp08_team_lifecycle(uuid)') IS NULL THEN
+--
+-- GUARDED like 20271115020009: it wraps exactly the catalogue production runs, never whatever happens to
+-- be there. 2e8dba15… is md5(pg_get_functiondef(list_tool_autonomy)) read from production 2026-10-26 (the
+-- e09 request-share wrapper, applied as 20271115020009); a different incumbent (another catalogue
+-- migration landing first) refuses rather than being quietly wrapped. On a replay the predecessor
+-- already exists, and the current catalogue must still be THIS file's wrapper (md5 a58337ca…, computed
+-- from the definition below): a later wrapper built on top of this one refuses rather than being
+-- overwritten. Proof: supabase/tests/exp08_paige_team_lifecycle_catalogue.sql.
+DO $guard$
+DECLARE _current text := CASE WHEN to_regprocedure('public.list_tool_autonomy(uuid)') IS NULL THEN NULL
+  ELSE md5(pg_get_functiondef(to_regprocedure('public.list_tool_autonomy(uuid)'))) END;
+BEGIN
+ IF to_regprocedure('public._list_tool_autonomy_before_exp08_team_lifecycle(uuid)') IS NOT NULL THEN
+  IF _current IS DISTINCT FROM 'a58337ca9887626d3d5cbeb223f7c28b' THEN
+   RAISE EXCEPTION 'Autonomy catalogue changed after the EXP08 team lifecycle rows; compose and review before re-applying';
+  END IF;
+ ELSIF _current IS DISTINCT FROM '2e8dba155891e8203d9251d141687855' THEN
+  RAISE EXCEPTION 'Original autonomy catalogue changed; compose and review before applying';
+ ELSE
   ALTER FUNCTION public.list_tool_autonomy(uuid) RENAME TO _list_tool_autonomy_before_exp08_team_lifecycle;
  END IF;
-END $$;
+END $guard$;
 REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_exp08_team_lifecycle(uuid) FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_exp08_team_lifecycle(uuid) FROM service_role;
 

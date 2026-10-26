@@ -62,7 +62,7 @@ import { PLANNING_CLIENT_SHARE_TOOLS } from '../_shared/paige-spine/domains/plan
 import { TEAM_HUB_READ_TOOLS, TEAM_HUB_POST_TOOLS, TEAM_HUB_READ_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME, TEAM_HUB_CHAT_TOOL_NAMES } from '../_shared/paige-spine/domains/team_hub.ts';
 import { TEAM_HUB_READERS, postTeamHubReply, teamHubPostConfirmSummary, teamHubSessionTainted, COULD_NOT_READ as TEAM_HUB_COULD_NOT_READ, TEAM_HUB_EGRESS_WITHHELD_TOOLS, TEAM_HUB_EGRESS_REFUSAL } from '../_shared/team-hub/chat.ts';
 import { TEAM_LIFECYCLE_TOOLS, TEAM_LIFECYCLE_READ_TOOL_NAMES, TEAM_LIFECYCLE_WRITE_TOOL_NAMES, TEAM_LIFECYCLE_MEMBER_TOOL_NAMES } from '../_shared/paige-spine/domains/team_lifecycle.ts';
-import { TEAM_LIFECYCLE_READERS, runTeamLifecycleWrite, teamLifecycleConfirmSummary, readHoldingsForCard, readWorkItemForCard, parseHandoverArgs, conversationsValue } from '../_shared/team-lifecycle/chat.ts';
+import { TEAM_LIFECYCLE_READERS, runTeamLifecycleWrite, teamLifecycleConfirmSummary, readHoldingsForCard, readWorkItemForCard, parseHandoverArgs, conversationsValue, teamLifecyclePreCardProblem, findTeamRosterMember, HANDOVER_SOLO_ONLY } from '../_shared/team-lifecycle/chat.ts';
 import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/planning/scoped-write.ts';
 // E09 Slice M: read and change the customer portal menu (update is high; owner/admin only).
 import { PORTAL_MENU_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
@@ -9044,10 +9044,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_POST_TOOLS as any);
     // EXP08 team lifecycle: find suspended teammates, read what someone holds, and suspend, reinstate,
     // remove, switch Team conversations or hand work over, each write behind the person's card. Offered
-    // where the five Team tools above are (every tier), except on a client seat or the customer portal.
-    // The offer is not the authority: each definer re-proves owner/admin over that person under the
-    // asker's JWT, and refuses a God/operator session (no active workspace) or any other tier it must.
-    if (!scopedClientId && !customerPortal) toolDefs.push(...TEAM_LIFECYCLE_TOOLS as any);
+    // where the five Team tools in the base list are: every tier except a client seat (callerTier
+    // "client") and the customer portal. A staff conversation focused on one client (scopedClientId)
+    // keeps them, as it keeps those five, so "suspend Sam" there is not a dead end. The offer is not the
+    // authority: each definer re-proves owner/admin over that person under the asker's JWT, and refuses
+    // a God/operator session (no active workspace) or any other tier it must.
+    if (callerTier !== "client" && !customerPortal) toolDefs.push(...TEAM_LIFECYCLE_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     if (weeklyCommitmentStatusToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS);
     if (weeklyCommitmentDraftToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_DRAFT_TOOLS);
@@ -9876,6 +9878,61 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       return `${email.slice(0, 120)} (${level})`;
     };
 
+    // EXP08 team lifecycle: the person a lifecycle card names, looked up past the first roster page.
+    // `teamCardRoster` reads the first 100 people (the RPC's own cap); the lifecycle gate and cards must
+    // be able to name anyone on the team, so later pages are read on demand, on the caller's own client,
+    // with the same tenant check, and cached for this request. The roster's order is deterministic
+    // (owner first, then name, then user_id), so paging neither skips nor repeats anyone.
+    const TEAM_ROSTER_PAGE = 100, TEAM_ROSTER_MAX = 2000;
+    const teamRosterExtraPages = new Map<number, Promise<any | null>>();
+    const teamRosterPageAt = (offset: number): Promise<any | null> => {
+      if (offset === 0) return teamCardRoster();
+      let page = teamRosterExtraPages.get(offset);
+      if (!page) {
+        page = (async () => {
+          try {
+            const { data, error } = await supabaseClient.rpc("get_solo_team_workspace", {
+              _search: null, _permission: "all", _limit: TEAM_ROSTER_PAGE, _offset: offset,
+            });
+            if (error) return null;
+            const expected = personaCtx?.tenant_id ?? null;
+            const rosterTenant = typeof (data as any)?.tenant_id === "string" ? (data as any).tenant_id : null;
+            if (!expected || !rosterTenant || rosterTenant !== expected) return null;
+            return data ?? null;
+          } catch { return null; }
+        })();
+        teamRosterExtraPages.set(offset, page);
+      }
+      return page;
+    };
+    const teamMemberRow = (userId: unknown): Promise<any | null> =>
+      findTeamRosterMember(teamRosterPageAt, userId, { pageSize: TEAM_ROSTER_PAGE, max: TEAM_ROSTER_MAX });
+    const describeLifecycleMember = async (userId: unknown): Promise<string | null> => {
+      const hit = await teamMemberRow(userId);
+      const name = typeof hit?.full_name === "string" ? hit.full_name.trim() : "";
+      const email = typeof hit?.email === "string" ? hit.email.trim() : "";
+      if (name) return email ? `${name.slice(0, 80)} (${email.slice(0, 120)})` : name.slice(0, 80);
+      if (email) return email.slice(0, 120);
+      return null;
+    };
+    // The persona workspace's shape for the lifecycle tools, once per request: the Calendar/Task offer
+    // already classified it on a plain Solo turn; a client-focused staff thread did not, so it is read
+    // here on the caller's own client. "solo" only when confirmed.
+    let lifecycleAccountShapePromise: Promise<"solo" | "not_solo" | "unknown"> | null = null;
+    const lifecycleAccountShape = (): Promise<"solo" | "not_solo" | "unknown"> => {
+      if (!lifecycleAccountShapePromise) {
+        lifecycleAccountShapePromise = (async () => {
+          if (calendarBookingAccountShape === "solo") return "solo";
+          if (callerTier !== "tenant" || customerPortal || !turnScopeTenantId) return "unknown";
+          try {
+            const shape = await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller, turnScopeTenantId, req.signal);
+            return shape.status === "available" ? "solo" : shape.status === "refused" ? "not_solo" : "unknown";
+          } catch { return "unknown"; }
+        })();
+      }
+      return lifecycleAccountShapePromise;
+    };
+
     const describeConfirm = async (name: string, a: any): Promise<string> => {
       // Resolve a booking preset's human title + current lifecycle for the consent card, so the
       // operator approves a NAMED calendar and its exact consequence — never an unnamed one, and so
@@ -10265,17 +10322,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "team_remove_member":
         case "team_set_conversations": {
           const lifecycleScope = { tenantId: personaCtx?.tenant_id ?? null, userId: user.id };
-          const holdings = name === "team_remove_member" || name === "team_set_conversations"
+          const holdings = name === "team_remove_member" || name === "team_set_conversations" || name === "team_suspend_member"
             ? await readHoldingsForCard(lifecycleScope, supabaseClient, a?.member_user_id) : null;
-          return teamLifecycleConfirmSummary(name, { who: (await describeTeamMember(a?.member_user_id)) ?? "that teammate",
-            on: conversationsValue(a?.on) === true, holdings });
+          return teamLifecycleConfirmSummary(name, { who: (await describeLifecycleMember(a?.member_user_id)) ?? "that teammate",
+            on: conversationsValue(a?.on) === true, holdings,
+            accountShape: name === "team_set_conversations" ? await lifecycleAccountShape() : undefined });
         }
         case "team_handover_work": {
           const handover = parseHandoverArgs(a);
           const item = "problem" in handover ? null : await readWorkItemForCard(supabaseClient, personaCtx?.tenant_id ?? null, handover.itemId);
           return teamLifecycleConfirmSummary(name, { who: "", title: item?.title ?? "that piece of work",
-            receiver: (await describeTeamMember(a?.assigned_to_user_id)) ?? "that teammate",
-            holder: item?.assignee ? await describeTeamMember(item.assignee) : null });
+            receiver: (await describeLifecycleMember(a?.assigned_to_user_id)) ?? "that teammate",
+            holder: item?.assignee ? await describeLifecycleMember(item.assignee) : null, unassigned: !!item && !item.assignee });
         }
         case "member_grant_role":
           return `Grant the "${a?.role || ""}" role to a team member.`;
@@ -12628,15 +12686,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
 
           // EXP08 team lifecycle — the same rule for every lifecycle write: no card for an unnamed person.
-          // The roster read includes suspended teammates, so a reinstatement can be named. The switch's
-          // value is settled once here (a boolean, or refused), as the permission is above, so the card
-          // and the write read the same thing. A hand-over must name an active receiver and a piece of
-          // open work this caller can see, or there is nothing honest to approve.
+          // The roster read includes suspended teammates and is paged past its first 100 people, so
+          // anyone on the team can be named. The switch's value is settled once here (a boolean, or
+          // refused), as the permission is above, so the card and the write read the same thing. A
+          // hand-over must be on a standalone business account and name an active receiver and a piece
+          // of open work this caller can see, or there is nothing honest to approve. Every refusal here
+          // carries refused_before_run AND not_applied, the pair the never-ran reading needs.
           if (TEAM_LIFECYCLE_MEMBER_TOOL_NAMES.has(tc.function.name)) {
-            if (!(await describeTeamMember(gateArgs?.member_user_id))) {
+            // The rule each definer proves (the caller's seat, themselves, the owner, admin-by-admin, the
+            // state the act needs), read from the roster the card already loaded, so no card is shown for
+            // an act the database is certain to refuse. The database stays the authority.
+            const target = await teamMemberRow(gateArgs?.member_user_id);
+            const problem = teamLifecyclePreCardProblem(tc.function.name, {
+              target: target && (await describeLifecycleMember(gateArgs?.member_user_id)) ? target : null,
+              viewerId: user.id, viewerPermission: (await teamCardRoster())?.viewer_permission ?? null,
+            });
+            if (problem) {
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                success: false, refused_before_run: true,
-                error: "I can't confirm who that is on this workspace's team, so I haven't asked you to approve anything. Check the person is listed (team_list_members shows suspended teammates too), and that this is the workspace you mean.",
+                success: false, refused_before_run: true, not_applied: true, error: problem,
               }) });
               continue;
             }
@@ -12644,7 +12711,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const on = conversationsValue(gateArgs?.on);
               if (on === null) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                  success: false, refused_before_run: true,
+                  success: false, refused_before_run: true, not_applied: true,
                   error: "Say whether their Team conversations should be on or off, then call this again. Nothing was proposed.",
                 }) });
                 continue;
@@ -12654,12 +12721,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           }
           if (tc.function.name === "team_handover_work") {
+            // Work moves only on a standalone business account (the Work writer refuses anything else
+            // with PLAN_FORBIDDEN), so anywhere else no card is shown for a hand-over certain to fail.
+            const solo = (await lifecycleAccountShape()) === "solo";
             const handover = parseHandoverArgs(gateArgs);
-            const receiver = "problem" in handover ? null
-              : ((await teamCardRoster())?.members ?? []).find((m: any) => m?.user_id === handover.receiverId) ?? null;
-            const item = "problem" in handover ? null : await readWorkItemForCard(supabaseClient, personaCtx?.tenant_id ?? null, handover.itemId);
-            const problem = "problem" in handover ? handover.problem
-              : !receiver || !(await describeTeamMember(handover.receiverId)) ? "I can't confirm who should receive it on this workspace's team."
+            const receiver = !solo || "problem" in handover ? null : await teamMemberRow(handover.receiverId);
+            const item = !solo || "problem" in handover ? null : await readWorkItemForCard(supabaseClient, personaCtx?.tenant_id ?? null, handover.itemId);
+            const problem = !solo ? `${HANDOVER_SOLO_ONLY}.`
+              : "problem" in handover ? handover.problem
+              : !receiver || !(await describeLifecycleMember(handover.receiverId)) ? "I can't confirm who should receive it on this workspace's team."
               : receiver.status !== "active" ? "The person you named isn't an active teammate, so they can't receive work."
               : !item ? "I can't see that piece of work in this workspace."
               : !item.open ? "That piece of work is already finished or cancelled, so there is nothing to hand over."
@@ -12667,8 +12737,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               : null;
             if (problem) {
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                success: false, refused_before_run: true,
-                error: `${problem} I haven't asked you to approve anything. Read their holdings again (team_member_holdings) if the work may have changed.`,
+                success: false, refused_before_run: true, not_applied: true,
+                error: `${problem} I haven't asked you to approve anything.${solo ? " If the work may have changed, read their holdings again." : ""}`,
               }) });
               continue;
             }
@@ -19030,8 +19100,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // The tenant is the server-resolved persona tenant, sent as the refusal-only expected tenant; any
           // tenant or person-as-actor the model sends is never forwarded. A write reaches here only after
           // the generic confirm gate claimed the person's card (all five are `high`), and never from Live.
-          const lifecycleScope = { tenantId: !scopedClientId && !customerPortal ? personaCtx?.tenant_id ?? null : null, userId: user.id };
           const lifecycleRead = TEAM_LIFECYCLE_READ_TOOL_NAMES.has(tc.function.name);
+          // The holdings read needs the account shape (work moves only on a standalone business account).
+          const lifecycleScope = { tenantId: callerTier !== "client" && !customerPortal ? personaCtx?.tenant_id ?? null : null, userId: user.id,
+            accountShape: tc.function.name === "team_member_holdings" ? await lifecycleAccountShape() : undefined };
           let lifecycleArgs: unknown = null;
           try { lifecycleArgs = JSON.parse(tc.function.arguments || "{}"); } catch { lifecycleArgs = null; }
           const wrongTenant = await teamSeamTenantMismatch();

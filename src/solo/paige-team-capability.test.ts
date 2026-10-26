@@ -361,10 +361,12 @@ describe("the handler's lifecycle call sites (source-level proof, not runtime pr
   it("records a capability receipt in the branch", () => {
     expect(branch).toContain("await recordCapabilityRun(supabase, { tenantId: lifecycleScope.tenantId, actorId: user.id, capabilityKey: tc.function.name,");
   });
-  it("refuses an unnamed person before any card, for every person-write", () => {
+  it("refuses an unnamed person, or an act the definers' rule forbids, before any card, for every person-write", () => {
     const gate = HANDLER.slice(HANDLER.indexOf("// EXP08 team lifecycle — the same rule for every lifecycle write"), HANDLER.indexOf("// ── AN OMITTED FIELD MEANS"));
     expect(gate).toContain("if (TEAM_LIFECYCLE_MEMBER_TOOL_NAMES.has(tc.function.name)) {");
-    expect(gate).toContain("if (!(await describeTeamMember(gateArgs?.member_user_id))) {");
+    expect(gate).toContain("const target = await teamMemberRow(gateArgs?.member_user_id);");
+    expect(gate).toContain("target: target && (await describeLifecycleMember(gateArgs?.member_user_id)) ? target : null,");
+    expect(gate).toContain("const problem = teamLifecyclePreCardProblem(tc.function.name, {");
   });
   it("is never added to the owner-ops branch set", async () => {
     const { OWNER_OPS_BRANCH_TOOLS } = await import("../../supabase/functions/_shared/workspace-authority");

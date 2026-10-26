@@ -31,8 +31,12 @@ describe("the writes are high, so no standing grant runs one alone", () => {
 
 describe("offer", () => {
   it("is offered except on a client seat or the customer portal, before the narrowing filters run", () => {
-    const offer = CHAT.indexOf("if (!scopedClientId && !customerPortal) toolDefs.push(...TEAM_LIFECYCLE_TOOLS as any);");
+    // A client seat is the caller's TIER (as every neighbouring gate reads it), not scopedClientId, which
+    // marks a staff conversation focused on one client; that thread keeps these, as it keeps the five
+    // Team tools in the base list.
+    const offer = CHAT.indexOf('if (callerTier !== "client" && !customerPortal) toolDefs.push(...TEAM_LIFECYCLE_TOOLS as any);');
     assert.ok(offer >= 0);
+    assert.ok(!CHAT.includes("if (!scopedClientId && !customerPortal) toolDefs.push(...TEAM_LIFECYCLE_TOOLS"), "the old gate let a client-tier caller be offered them");
     const filter = CHAT.indexOf("CONVERSATIONAL_ADMITTED_READ_TOOLS.has", offer);
     assert.ok(filter > offer, "the conversational filter runs after the offer, so Live never sees them");
   });
@@ -44,13 +48,36 @@ describe("offer", () => {
 
 describe("cards: nobody is asked to approve a change to an unnamed person", () => {
   const GATE = between("// EXP08 team lifecycle — the same rule for every lifecycle write: no card for an unnamed person.", "// ── AN OMITTED FIELD MEANS");
-  it("every person-write needs a named teammate before any card", () => {
-    assert.match(GATE, /if \(TEAM_LIFECYCLE_MEMBER_TOOL_NAMES\.has\(tc\.function\.name\)\) \{\s*if \(!\(await describeTeamMember\(gateArgs\?\.member_user_id\)\)\) \{/);
+  it("every person-write is checked against the definers' rule, from the paged roster, before any card", () => {
+    assert.match(GATE, /if \(TEAM_LIFECYCLE_MEMBER_TOOL_NAMES\.has\(tc\.function\.name\)\) \{[\s\S]*?const target = await teamMemberRow\(gateArgs\?\.member_user_id\);\s*const problem = teamLifecyclePreCardProblem\(tc\.function\.name, \{/);
+    assert.match(GATE, /target: target && \(await describeLifecycleMember\(gateArgs\?\.member_user_id\)\) \? target : null,\s*viewerId: user\.id, viewerPermission: \(await teamCardRoster\(\)\)\?\.viewer_permission \?\? null,/);
+  });
+  it("every refusal before a card carries both never-ran markers", () => {
+    const refusals = GATE.match(/refused_before_run: true[^}]*/g) ?? [];
+    assert.equal(refusals.length, 3);
+    for (const r of refusals) assert.match(r, /not_applied: true/);
+  });
+  it("a hand-over outside a standalone business account is refused before the card", () => {
+    assert.match(GATE, /const solo = \(await lifecycleAccountShape\(\)\) === "solo";[\s\S]*const problem = !solo \? `\$\{HANDOVER_SOLO_ONLY\}\.`/);
+  });
+  it("the account shape is 'solo' only when the classification confirmed it, read on the caller's client", () => {
+    const SHAPE = between("const lifecycleAccountShape = ()", "const describeConfirm");
+    assert.match(SHAPE, /if \(calendarBookingAccountShape === "solo"\) return "solo";/);
+    assert.match(SHAPE, /readCalendarAccountShape\(supabaseClient as unknown as CalendarBookingReadCaller, turnScopeTenantId, req\.signal\)/);
+    assert.match(SHAPE, /return shape\.status === "available" \? "solo" : shape\.status === "refused" \? "not_solo" : "unknown";/);
+  });
+  it("names anyone on the team, past the roster's first page", () => {
+    assert.match(CHAT, /const teamMemberRow = \(userId: unknown\): Promise<any \| null> =>\s*findTeamRosterMember\(teamRosterPageAt, userId, \{ pageSize: TEAM_ROSTER_PAGE, max: TEAM_ROSTER_MAX \}\);/);
+    const PAGER = between("const teamRosterPageAt = (offset: number)", "const teamMemberRow");
+    assert.match(PAGER, /if \(offset === 0\) return teamCardRoster\(\);/);
+    assert.match(PAGER, /supabaseClient\.rpc\("get_solo_team_workspace"/);
+    assert.match(PAGER, /if \(!expected \|\| !rosterTenant \|\| rosterTenant !== expected\) return null;/);
   });
   it("the switch is settled to a boolean once, and written back", () => {
     assert.match(GATE, /const on = conversationsValue\(gateArgs\?\.on\);[\s\S]*gateArgs\.on = on;\s*tc\.function\.arguments = JSON\.stringify\(gateArgs\);/);
   });
   it("a hand-over needs a named ACTIVE receiver and open work this caller can see", () => {
+    assert.match(GATE, /receiver = !solo \|\| "problem" in handover \? null : await teamMemberRow\(handover\.receiverId\)/);
     assert.match(GATE, /receiver\.status !== "active"/);
     assert.match(GATE, /!item \? "I can't see that piece of work in this workspace\."/);
     assert.match(GATE, /!item\.open \?/);
@@ -59,8 +86,10 @@ describe("cards: nobody is asked to approve a change to an unnamed person", () =
   it("the card text comes from the module, naming people from the roster read", () => {
     const CARD = between('case "team_suspend_member":\n        case "team_reinstate_member":', 'case "member_grant_role":');
     assert.match(CARD, /readHoldingsForCard\(lifecycleScope, supabaseClient, a\?\.member_user_id\)/);
-    assert.match(CARD, /who: \(await describeTeamMember\(a\?\.member_user_id\)\) \?\? "that teammate"/);
-    assert.match(CARD, /receiver: \(await describeTeamMember\(a\?\.assigned_to_user_id\)\)/);
+    assert.match(CARD, /who: \(await describeLifecycleMember\(a\?\.member_user_id\)\) \?\? "that teammate"/);
+    assert.match(CARD, /receiver: \(await describeLifecycleMember\(a\?\.assigned_to_user_id\)\)/);
+    assert.match(CARD, /accountShape: name === "team_set_conversations" \? await lifecycleAccountShape\(\) : undefined/);
+    assert.match(CARD, /unassigned: !!item && !item\.assignee/);
   });
 });
 
@@ -75,7 +104,7 @@ describe("dispatch: last in the chain, caller JWT, server tenant, card-only, nev
     assert.equal(CHAT.slice(at, unknown).split("\n        } else if (").length, 1, "no dispatch branch between this one and Unknown tool");
   });
   it("the scope is the persona tenant and the session user, never a model value", () => {
-    assert.match(BRANCH, /const lifecycleScope = \{ tenantId: !scopedClientId && !customerPortal \? personaCtx\?\.tenant_id \?\? null : null, userId: user\.id \};/);
+    assert.match(BRANCH, /const lifecycleScope = \{ tenantId: callerTier !== "client" && !customerPortal \? personaCtx\?\.tenant_id \?\? null : null, userId: user\.id,\s*accountShape: tc\.function\.name === "team_member_holdings" \? await lifecycleAccountShape\(\) : undefined \};/);
     assert.ok(!/lifecycleArgs\??\.(tenant|user|actor)/.test(BRANCH));
   });
   it("runs on the caller's client, never the service role", () => {

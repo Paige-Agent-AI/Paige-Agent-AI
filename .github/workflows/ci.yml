@@ -111,6 +111,11 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/admin_scope_stage0.sql
       - name: EXP08 team lifecycle, suspend/reinstate/remove authority, consent, Team conversations switch, arrival join and departure review in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_lifecycle.sql
+      - name: EXP08 PAIGE team lifecycle catalogue, md5 guard against production's incumbent, replay guard, five Team rows and grants in a disposable database
+        run: |
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE IF EXISTS exp08_lifecycle_cat' -c 'CREATE DATABASE exp08_lifecycle_cat'
+          psql -X -At -h 127.0.0.1 -U postgres -d exp08_lifecycle_cat -v ON_ERROR_STOP=1 -f supabase/tests/exp08_paige_team_lifecycle_catalogue.sql | tee /tmp/exp08-lifecycle-catalogue.txt
+          grep -qx 'all 20 assertions ran' /tmp/exp08-lifecycle-catalogue.txt
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback

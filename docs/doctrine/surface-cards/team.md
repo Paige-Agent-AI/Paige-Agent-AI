@@ -167,7 +167,7 @@ cannot write.
 | `member_grant_role` | `high` |
 | `member_revoke_role` | `high` |
 | `team_set_work_profile` | `ordinary` |
-| `team_suspend_member` · `team_reinstate_member` · `team_remove_member` · `team_set_conversations` · `team_handover_work` | `high` — EXP08 lifecycle, branch `exp08-paige-team-tools`, **not merged** |
+| `team_suspend_member` · `team_reinstate_member` · `team_remove_member` · `team_set_conversations` · `team_handover_work` | `high` — EXP08 lifecycle (LIVE on merge; authenticated runtime UNVERIFIED) |
 
 **A correction is recorded here rather than smoothed over.** The first version of this ruling said
 every Team mutation was `owner_only`, and this card recorded it as a gap against the code. That
@@ -294,13 +294,19 @@ a live model actually speaks this way is **UNVERIFIED** until an authenticated d
 | `team_set_conversations` | `set_solo_team_member_team_hub_access` | `high` |
 | `team_handover_work` | `plan_update_item_versioned` (CRM tasks, clients and deals use the existing `crm_assign_*` tools) | `high` |
 
-The seven EXP08 lifecycle rows are on branch `exp08-paige-team-tools` and are **not merged or live**.
-They take ids from the team context block or `team_list_members` (suspended teammates are only in the
-latter); the database enforces the one rule — the owner acts on admins and members, an admin on
-members only, nobody on the owner or on themselves. Approvals and connected mailboxes cannot be
-handed over; PAIGE says so and does not offer to move them.
+The seven EXP08 lifecycle rows go LIVE when this change merges (the edge function deploys and the
+catalogue migration `20271116100008` applies on the push to `main`); an authenticated drive is
+`UNVERIFIED`. They take ids from the team context block or `team_list_members` (suspended teammates
+are only in the latter). For the four person acts and the review, the database enforces the one rule —
+the owner acts on admins and members, an admin on members only, nobody on the owner or on themselves —
+and PAIGE checks the same rule from the roster before showing any card. **The work hand-over is not
+bound by that rule**: it follows the existing Work writer's own rule (`plan_update_item_versioned`,
+`is_tenant_admin`), so any owner or admin of the workspace may reassign any open piece of its work,
+whoever holds it — the authority Operations → Work already gives them — and only on a standalone
+business account (an agency or sub-account is refused before the card). Approvals and connected
+mailboxes cannot be handed over; PAIGE says so and does not offer to move them.
 
-Ids come from the context block only — never a name PAIGE resolved herself. Nobody can be made an
+Ids come from the context block or, for the EXP08 lifecycle tools, `team_list_members` — never a name PAIGE resolved herself. Nobody can be made an
 owner; the permission enum is `admin | member` and the database refuses `owner` besides.
 
 ## Required confirmation / approval

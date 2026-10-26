@@ -13,7 +13,7 @@ export function SalesDialogPortal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.querySelector(".solo-campaigns") ?? document.body);
 }
 
-export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => void, options?: { uncertain?: boolean; recordedDraftFound?: boolean }) {
+export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => void, options?: { uncertain?: boolean; recordedDraftFound?: boolean;uncertainKind?:'signature_request' }) {
   const initial = React.useRef(JSON.stringify(draft));
   const [, refreshBaseline] = React.useReducer((value: number) => value + 1, 0);
   const uncertain = options?.uncertain === true;
@@ -107,8 +107,8 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
     const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>("button")];
     buttons[document.activeElement === buttons[0] ? 1 : 0]?.focus();
   }}>
-    <h3 id="so-discard-title">{recordedDraftFound ? "Leave this wording?" : uncertain ? "Leave while the save is unconfirmed?" : "Discard unsaved changes?"}</h3>
-    <p id="so-discard-description">{recordedDraftFound ? "A retained draft was found. Leaving this editor does not apply its current wording to that record. Review the recorded draft before making corrections." : uncertain ? "An earlier save may still complete. You can check the original request when you return." : "Your changes have not been saved. Continue editing to keep working."}</p>
+    <h3 id="so-discard-title">{recordedDraftFound ? "Leave this wording?" : uncertain ? options?.uncertainKind==='signature_request'?"Leave while sending is unconfirmed?":"Leave while the save is unconfirmed?" : "Discard unsaved changes?"}</h3>
+    <p id="so-discard-description">{recordedDraftFound ? "A retained draft was found. Leaving this editor does not apply its current wording to that record. Review the recorded draft before making corrections." : uncertain ? options?.uncertainKind==='signature_request'?"Leaving does not cancel the signing request. Check its original request and sending receipts when you return.":"An earlier save may still complete. You can check the original request when you return." : "Your changes have not been saved. Continue editing to keep working."}</p>
     <button className="btn btn-p" onClick={() => setPending(null)}>Continue editing</button>
     <button className="btn" onClick={() => { const action = pending; bypass.current = true; setPending(null); action(); }}>{recordedDraftFound ? "Leave current editor" : uncertain ? "Leave and check later" : "Discard changes"}</button>
   </div> : null;
@@ -121,7 +121,7 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
   // A same-document recovery checkpoint is not an exit or a saved-work receipt.
   // Permit one explicit opaque request kind and business, only for the SAME
   // agreement. Keep dirty/busy/beforeunload and every other guard active.
-  const retainRequestLocation = (url: string, replace: () => void, kind:'signer'|'document'='signer') => {
+  const retainRequestLocation = (url: string, replace: () => void, kind:'signer'|'document'|'signature'='signer') => {
     const current = new URL(location.href);
     let target: URL;
     try { target = new URL(url, location.href); } catch { return false; }
@@ -129,11 +129,24 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
     if (target.origin !== current.origin || target.pathname !== current.pathname || target.hash !== current.hash
       || current.searchParams.getAll('agreement').length!==1||target.searchParams.getAll('agreement').length!==1
       || !uuid.test(current.searchParams.get('agreement') ?? '') || target.searchParams.get('agreement') !== current.searchParams.get('agreement')) return false;
+    const signatureKeys=['agreement_signature_request','agreement_signature_digest'];
+    const signatureValid=(params:URLSearchParams)=>signatureKeys.every(key=>!params.has(key))||
+      signatureKeys.every(key=>params.getAll(key).length===1)&&uuid.test(params.get(signatureKeys[0])??'')&&/^[a-f0-9]{64}$/.test(params.get(signatureKeys[1])??'');
+    if(!signatureValid(current.searchParams)||!signatureValid(target.searchParams))return false;
+    const hasSignature=target.searchParams.has(signatureKeys[0]);
+    if(kind==='signature'){
+      const business=target.searchParams.get('agreement_business');
+      if(!hasSignature||!uuid.test(business??'')||target.searchParams.getAll('agreement_business').length!==1||target.searchParams.has('agreement_signer_request')
+        ||current.searchParams.has('agreement_business')&&current.searchParams.get('agreement_business')!==business)return false;
+      for(const key of [...signatureKeys,'agreement_business']){current.searchParams.delete(key);target.searchParams.delete(key);}
+    }else{
     const requestKey=kind==='document'?'agreement_document_request':'agreement_signer_request',otherKey=kind==='document'?'agreement_signer_request':'agreement_document_request';
     const id = target.searchParams.get(requestKey), business = target.searchParams.get('agreement_business');
     if(current.searchParams.has(otherKey)||target.searchParams.has(otherKey)||target.searchParams.getAll(requestKey).length > 1 || target.searchParams.getAll('agreement_business').length > 1
-      || (id !== null ? !uuid.test(id) || !uuid.test(business ?? '') : business !== null)) return false;
+      || (id !== null ? !uuid.test(id) || !uuid.test(business ?? '') : hasSignature?!uuid.test(business??''):business !== null)
+      ||hasSignature&&(kind==='signer'||current.searchParams.get('agreement_business')!==business)) return false;
     for (const key of [requestKey, 'agreement_business']) { current.searchParams.delete(key); target.searchParams.delete(key); }
+    }
     current.searchParams.sort(); target.searchParams.sort();
     if (current.search !== target.search) return false;
     const destination = new URL(url, location.href).href;

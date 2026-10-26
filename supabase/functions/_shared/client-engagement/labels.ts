@@ -8,6 +8,8 @@
 import type { Attention, ClientEngagementStatus } from './status.ts';
 import type { ReadLinkDestination, ReadRecordLink } from '../paige-turn/record-links.ts';
 
+export const INVOICE_TERMS_VERSION_REASON = 'Invoice and plan versions differ';
+
 export const AGREEMENT_TEXT: Record<string, string> = {
   none: 'no agreement has been sent', draft: 'agreement drafted, not sent', sent: 'agreement sent, not yet viewed',
   viewed: 'agreement viewed, not signed', partially_signed: 'agreement partially signed', signed: 'agreement signed',
@@ -29,6 +31,7 @@ export const ATTENTION_TEXT: Record<Attention, string> = {
   mixed_currency: 'Invoices use more than one currency, so totals are not added up.',
   list_truncated: 'There are more records than one read returns, so totals are not added up.',
   terms_invoiced_more_than_once: 'The agreed terms were invoiced more than once.',
+  invoice_terms_version_mismatch: 'The invoice and payment plan refer to different agreement versions. Review the original terms before checking payment timing.',
   other_terms_not_shown: 'This client has other terms that are not shown.',
   business_time_zone_unset: 'The business time zone is not set, so due and overdue dates are on hold.',
 };
@@ -62,6 +65,7 @@ export const ATTENTION_DESTINATION: Record<Attention, ReadLinkDestination | null
   payment_request_failed: 'sales_invoices',
   invoice_status_legacy: 'sales_invoices',
   terms_invoiced_more_than_once: 'sales_invoices',
+  invoice_terms_version_mismatch: 'sales_agreements',
   work_overdue: 'operations_work',
   work_blocked: 'operations_work',
   business_time_zone_unset: 'business_time_zone',

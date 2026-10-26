@@ -11,6 +11,7 @@ import { collectionMoney } from "@/solo/sales/collections/presentation";
 import {
   ATTENTION_DESTINATION,
   ATTENTION_TEXT,
+  INVOICE_TERMS_VERSION_REASON,
   NOT_RECORDED_TEXT,
   standingInvoiceLink,
 } from "../../../supabase/functions/_shared/client-engagement/labels";
@@ -117,6 +118,7 @@ function Row({ state, label, children, actions }: { state: { state: PillState; l
 function notKnown(s: ClientEngagementStatus): string {
   if (s.money.mixed_currency) return "More than one currency, so not added up";
   if (s.truncated.invoices || s.truncated.terms) return "More invoices than one check reads, so not added up";
+  if (s.attention.includes('invoice_terms_version_mismatch')) return INVOICE_TERMS_VERSION_REASON;
   return "Not known from these records";
 }
 
@@ -158,7 +160,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
   const terms = s.terms;
   const termsLine = terms
     ? [`Terms: ${(AGREEMENT_STATE[terms.status] ?? AGREEMENT_STATE.unrecognised).label}`,
-        terms.agreed_minor !== null && terms.currency ? `${collectionMoney(terms.agreed_minor, terms.currency)} agreed` : null,
+        terms.agreed_minor !== null && terms.currency ? `${collectionMoney(terms.agreed_minor, terms.currency)} ${s.attention.includes('invoice_terms_version_mismatch') ? 'recorded' : 'agreed'}` : null,
         terms.recurring ? "recurring" : terms.schedule.length ? plural(terms.schedule.length, "scheduled payment") : null,
       ].filter(Boolean).join(" · ")
     : "No terms agreed yet";

@@ -91,9 +91,10 @@ export type Attention = 'agreement_not_signed' | 'agreement_not_bound_to_terms' 
   | 'terms_unreadable' | 'payment_overdue' | 'behind_schedule' | 'payment_outcome_unknown'
   | 'payment_request_failed' | 'invoice_status_legacy' | 'work_overdue' | 'work_blocked'
   | 'mixed_currency' | 'list_truncated' | 'terms_invoiced_more_than_once' | 'other_terms_not_shown'
-  | 'business_time_zone_unset';
+  | 'business_time_zone_unset' | 'invoice_terms_version_mismatch';
 
-/** `due` is true when the row falls due on or before today in the owner's zone; null when today is unknown. */
+/** `due` is true when the row falls due on or before today in the owner's zone;
+ * null when today or applicability to the invoice's original revision is unknown. */
 export type ScheduleRow = { sequence: number; due_date: string; amount_minor: number; due: boolean | null; label: string | null };
 
 export type ClientEngagementStatus = {
@@ -265,23 +266,36 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
     zone: localToday === null ? null : zoneSource.zone };
   const asOf = localToday;
   const termsRow = pickTerms(source.terms);
-  const terms = composeTerms(termsRow, asOf);
+  let terms = composeTerms(termsRow, asOf);
   const agreement = composeAgreement(source.signings, termsRow?.id ?? null);
   const attention = new Set<Attention>();
 
   const currencies = new Set<string>();
   if (terms?.currency) currencies.add(terms.currency.toLowerCase());
 
+  const billedForTerms = termsRow ? source.invoices.filter(i => BILLED.has(i.status)
+    && i.commercial_terms_reference?.id === termsRow.id) : [];
+  // The same agreement can have a later working plan. An invoice's original
+  // version cannot borrow that plan's dates or establish progress against it.
+  const invoiceTermsVersionMismatch = billedForTerms.some(i => {
+    const version = i.commercial_terms_reference!.version, current = termsRow!.collection_terms_version;
+    return typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0
+      || typeof current !== 'number' || !Number.isSafeInteger(current) || current < 0 || version !== current;
+  });
+  if (invoiceTermsVersionMismatch) {
+    attention.add('invoice_terms_version_mismatch');
+    if (terms) terms = { ...terms, schedule: terms.schedule.map(row => ({ ...row, due: null })) };
+  }
+
   // The terms' schedule: what was due before today (past due) and on or before today (due to date).
-  const usable = terms?.state === 'current';
+  const usable = terms?.state === 'current' && !invoiceTermsVersionMismatch;
   const lastShown = terms?.schedule.at(-1)?.due_date;
   // A truncated schedule can only be summed exactly if every unseen row falls after as_of.
   const scheduleKnown = usable && asOf !== null
     && (!terms!.schedule_has_more || (lastShown !== undefined && lastShown > asOf));
   const pastDueOnSchedule = scheduleKnown
     ? terms!.schedule.filter(r => r.due_date < asOf!).reduce((sum, r) => sum + r.amount_minor, 0) : null;
-  const billedBound = termsRow ? source.invoices.filter(i => BILLED.has(i.status)
-    && i.commercial_terms_reference?.id === termsRow.id).length : 0;
+  const billedBound = billedForTerms.length;
   // Two billed invoices each carrying the whole agreed amount cannot both be the obligation.
   if (billedBound > 1) attention.add('terms_invoiced_more_than_once');
 
@@ -396,8 +410,9 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
       contracted_minor: known(contracted),
       due_to_date_minor: known(dueToDate),
       invoiced_minor: known(invoiced),
-      invoiced_against_terms_minor: known(termsInvoiced),
-      received_against_terms: { verified_minor: known(termsVerified), recorded_by_owner_minor: known(termsRecorded) },
+      invoiced_against_terms_minor: known(invoiceTermsVersionMismatch ? null : termsInvoiced),
+      received_against_terms: { verified_minor: known(invoiceTermsVersionMismatch ? null : termsVerified),
+        recorded_by_owner_minor: known(invoiceTermsVersionMismatch ? null : termsRecorded) },
       not_yet_invoiced_minor: totalsKnown && contracted !== null ? Math.max(0, contracted - termsInvoiced) : null,
       received: { verified_minor: known(verified), recorded_by_owner_minor: known(recorded), test_environment_minor: known(test) },
       outstanding_minor: known(outstanding),

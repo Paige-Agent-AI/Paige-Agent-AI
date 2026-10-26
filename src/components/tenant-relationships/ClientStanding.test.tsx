@@ -29,6 +29,17 @@ const dd = (term: string) => [...host.querySelectorAll(".trc-standing-money > di
 const hrefs = () => [...host.querySelectorAll("a")].map(a => [a.textContent, a.getAttribute("href")]);
 
 describe("ClientStanding", () => {
+  it("explains an invoice revision mismatch while preserving balances and original navigation", async () => {
+    const changed=structuredClone(source);changed.terms[0].collection_terms_version=2;
+    rpc.mockResolvedValue({data:{...changed,receipt_id:undefined},error:null});await render();
+    expect(dd("Outstanding")?.textContent).toBe("$3,020.00");
+    expect(dd("Paid · verified by your payment provider")?.textContent).toBe("$100.00");
+    expect(dd("Recorded by you · not provider-verified")?.textContent).toBe("$500.00");
+    expect(dd("Overdue")?.textContent).toContain("Not known");
+    expect(dd("Overdue")?.textContent).toContain("Invoice and plan versions differ");
+    expect(host.textContent).toContain(ATTENTION_TEXT.invoice_terms_version_mismatch);
+    expect(hrefs()).toContainEqual(["Open terms & agreements","/solo/42/sales/agreements"]);
+  });
   it("reads one client through the governed read, once, and headlines where they stand", async () => {
     rpc.mockResolvedValue(reply()); await render();
     expect(rpc).toHaveBeenCalledTimes(1);

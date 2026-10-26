@@ -8,7 +8,7 @@ import {
   parseClientEngagementSource,
   type ClientEngagementStatus,
 } from './status.ts';
-import { AGREEMENT_TEXT, ATTENTION_TEXT, PAYMENT_STATE_TEXT, standingRecordLinks } from './labels.ts';
+import { AGREEMENT_TEXT, ATTENTION_TEXT, INVOICE_TERMS_VERSION_REASON, PAYMENT_STATE_TEXT, standingRecordLinks } from './labels.ts';
 import type { ReadRecordLink } from '../paige-turn/record-links.ts';
 
 // Experience 04 E4-S2 — "where does this client stand?" and the business time zone, from chat.
@@ -119,6 +119,7 @@ export function money(minor: number | null, currency: string | null, unknown = '
 export function rec(v: string | null | undefined, empty = 'untitled'): string {
   // Control characters and line breaks become spaces; bidirectional overrides and zero-width marks are dropped so
   // a name cannot visually re-order the line; every double-quote look-alike becomes ' so the quoting cannot be faked.
+  // eslint-disable-next-line no-control-regex -- stripping control characters from source labels is intentional
   const flat = (v ?? '').replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, ' ')
     .replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, '')
     .replace(/["\u201c\u201d\u201e\u201f\u2033\u00ab\u00bb\uff02]/g, "'").replace(/\s+/g, ' ').trim();
@@ -149,6 +150,7 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   const zone = zoneSet ? s.time_zone.zone : null;
   const when = (iso: string | null) => at(iso, zone) ?? (iso ? 'date not shown until the business time zone is set' : null);
   const m = s.money;
+  const invoiceTermsVersionMismatch = s.attention.includes('invoice_terms_version_mismatch');
   const totalsReason = m.mixed_currency ? 'not added up: invoices use more than one currency'
     : s.truncated.invoices ? 'not added up: more invoices exist than one read returns' : 'not known';
   const lines: string[] = [];
@@ -163,11 +165,13 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   if (!s.terms) lines.push('TERMS: no agreed terms are recorded for this client.');
   else {
     const t = s.terms;
-    lines.push(`TERMS: ${rec(t.title ?? t.offer_name, 'Agreed terms')} — status ${t.status}, ${t.state === 'current' ? 'current' : t.state === 'stale' ? 'changed since it was agreed' : t.state === 'unreadable' ? 'schedule unreadable' : t.state}; agreed ${money(t.agreed_minor, t.currency)}${t.kind ? `, ${t.kind.replace(/_/g, ' ')}` : ''}${t.recurring ? ', recurring' : ''}.`);
+    const planState = invoiceTermsVersionMismatch ? 'saved plan; invoice version not matched' : t.state === 'current' ? 'current' : t.state === 'stale' ? 'changed since it was agreed' : t.state === 'unreadable' ? 'schedule unreadable' : t.state;
+    lines.push(`TERMS: ${rec(t.title ?? t.offer_name, 'Agreed terms')} — status ${t.status}, ${planState}; ${invoiceTermsVersionMismatch ? 'recorded amount' : 'agreed'} ${money(t.agreed_minor, t.currency)}${t.kind ? `, ${t.kind.replace(/_/g, ' ')}` : ''}${t.recurring ? ', recurring' : ''}.`);
     if (t.schedule.length) {
       lines.push(`INSTALLMENTS (${t.schedule.length}${t.schedule_has_more ? '+' : ''}):`);
       for (const r of t.schedule.slice(0, 12)) {
-        const due = r.due === null ? held : r.due ? 'due' : 'not yet due';
+        const due = r.due === null ? zoneSet && invoiceTermsVersionMismatch
+          ? `verification pending — ${INVOICE_TERMS_VERSION_REASON.toLowerCase()}` : held : r.due ? 'due' : 'not yet due';
         lines.push(`  #${r.sequence} ${r.due_date} ${money(r.amount_minor, t.currency)}${r.label ? ` (${rec(r.label)})` : ''} — ${due}`);
       }
       if (t.schedule.length > 12 || t.schedule_has_more) lines.push('  (more installments exist; not all are listed)');

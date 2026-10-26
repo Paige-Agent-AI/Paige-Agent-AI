@@ -43,6 +43,16 @@ function fakeCaller(replies: Record<string, { data?: unknown; error?: { code?: s
 const one = (id = CLIENT, exact = true) => ({ matches: [{ id, name: 'Test Consulting Client', status: 'active', exact }], more: false });
 
 describe('the client-standing projection never invents money', () => {
+  it('explains a mismatched invoice revision without declaring current-plan dates due', () => {
+    const s=base();s.terms[0].collection_terms_version=2;
+    const text=standing(s);
+    expect(text).toContain('verification pending — invoice and plan versions differ');
+    expect(text).toContain('Review the original terms before checking payment timing.');
+    expect(text).toContain('Outstanding (invoiced, not yet received): USD 3,020.00');
+    expect(text).toContain('Paid and VERIFIED by the payment provider: USD 100.00');
+    expect(text).not.toContain('exactly on schedule');
+    expect(text).not.toContain('ahead of the schedule by');
+  });
   it('keeps provider-verified, owner-recorded and test money apart, with real amounts', () => {
     const text = standing();
     expect(text).toContain('Paid and VERIFIED by the payment provider: USD 100.00');

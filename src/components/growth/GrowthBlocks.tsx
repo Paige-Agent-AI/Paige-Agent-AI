@@ -5,7 +5,7 @@
 //
 // Theming: <GrowthBlocks> wraps the list in a scope div that applies resolveGrowthTheme()
 // as inline CSS variables, so the same component themes identically in both surfaces.
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import DOMPurify from "dompurify";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
@@ -560,17 +560,37 @@ function FaqBlock({ block }: { block: Extract<GrowthBlock, { type: "faq" }> }) {
 
 function MediaBlock({ block }: { block: Extract<GrowthBlock, { type: "media" }> }) {
   const src = block.provider !== "mp4" ? embedUrl(block.provider, block.url) : null;
+  // Truthfulness (§13): the server validates the provider allowlist and an https URL, but not that
+  // the URL actually carries a video id — and a PAIGE-hosted mp4 can 404. A source the page cannot
+  // show says so in plain words; it never renders as an unexplained black box. A private, deleted
+  // or expired provider video keeps the PROVIDER's own message inside the iframe — that is the
+  // provider's truth, not ours to invent.
+  const [mp4Failed, setMp4Failed] = React.useState(false);
+  const unavailable = block.provider === "mp4" ? mp4Failed || !block.url : !src;
   return (
     <section className={SECTION}>
       <div className={WRAP_NARROW}>
         <SectionHead title={block.title} />
         <Frame>
-          <div className="aspect-video w-full bg-black">
-            {block.provider === "mp4" ? (
-              <video src={block.url} controls playsInline className="h-full w-full" />
-            ) : src ? (
+          <div className="aspect-video w-full bg-black" role="region" aria-label={block.title || "Video"}>
+            {unavailable ? (
+              <div className="flex h-full w-full items-center justify-center bg-black/95" role="status">
+                <p className="px-6 text-center text-sm font-medium" style={{ color: "var(--gp-muted)" }}>
+                  This video isn&rsquo;t available right now.
+                </p>
+              </div>
+            ) : block.provider === "mp4" ? (
+              <video
+                src={block.url}
+                controls
+                playsInline
+                preload="metadata"
+                onError={() => setMp4Failed(true)}
+                className="h-full w-full"
+              />
+            ) : (
               <iframe
-                src={src}
+                src={src as string}
                 title={block.title || "Embedded video"}
                 className="h-full w-full"
                 loading="lazy"
@@ -579,7 +599,7 @@ function MediaBlock({ block }: { block: Extract<GrowthBlock, { type: "media" }> 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                 allowFullScreen
               />
-            ) : null}
+            )}
           </div>
         </Frame>
         {block.caption && <p className="mt-3 text-center text-sm" style={{ color: "var(--gp-muted)" }}>{block.caption}</p>}

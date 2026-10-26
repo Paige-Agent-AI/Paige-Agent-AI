@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
+import { PageLoadBoundary } from "./components/app/PageLoadBoundary";
 import "./index.css";
 import { initObservability } from "./lib/observability";
 import { isFormOnBusinessSite } from "./hooks/useEmbedHeight";
@@ -110,7 +111,7 @@ cleanupServiceWorkers();
 // intake refuses an address-less origin), so the visitor gets the form's address to open instead of a blank page.
 const sandboxedForm = /^\/form\//.test(window.location.pathname) && String(window.origin) === "null";
 
-createRoot(document.getElementById("root")!).render(sandboxedForm ? <SandboxedFormNotice /> : (
+createRoot(document.getElementById("root")!).render(<PageLoadBoundary>{sandboxedForm ? <SandboxedFormNotice /> : (
   <React.StrictMode>
     <HelmetProvider>
       <App />
@@ -126,7 +127,7 @@ createRoot(document.getElementById("root")!).render(sandboxedForm ? <SandboxedFo
       <div data-app-ready hidden aria-hidden="true" />
     </HelmetProvider>
   </React.StrictMode>
-));
+)}</PageLoadBoundary>);
 
 // ---------------------------------------------------------------------------
 // Cinematic splash dismissal

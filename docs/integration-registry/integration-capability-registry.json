@@ -3317,7 +3317,7 @@
       "rail_mind_memory": "Rail: governed media/broadcast outcomes. Mind: safe facts only. Memory: none of media bytes.",
       "status": "PROOF_OWED",
       "owner": "EXP10 (connections/eligibility/readiness) coordinating with EXP07 (broadcast/media experience owner)",
-      "dependency": "Backend API access VERIFIED 2026-10-25 via the deployed read-only canary (GET read-back: ok, test video status ready 100%, duration 8.8s, account match; deployment ACTIVE v1). Owed: tenant upload to processing to playback proof, live input + simulcast proof, tenant/Platform isolation negatives, deletion/retention, the complementary two-way guest component decision.",
+      "dependency": "Backend API access VERIFIED 2026-10-25 via the deployed read-only canary (GET read-back: ok, test video status ready 100%, duration 8.8s, account match; deployments v1/v2 ACTIVE, identical source). Owed: tenant upload to processing to playback proof, live input + simulcast proof, tenant/Platform isolation negatives, deletion/retention, the complementary two-way guest component decision.",
       "next_slice": "EXP07's first end-to-end implementation PR (upload/processing/playback against the verified backend)",
       "tier_eligibility": {
         "platform": "eligible",
@@ -3357,7 +3357,7 @@
         {
           "path": "supabase/functions/cf-stream-verify/index.ts",
           "role": "provider_adapter",
-          "note": "the read-only backend-access canary - the committed file is the deployed ACTIVE v1 source verbatim (Management-API read-back compared byte-for-byte; source sha256 f3b84ece81c864e6ed639f0151f0ab7f6825cdfd923067fa3088f96403b9d66; deployment bundle hash ezbr_sha256 379e6f42351d1fd840de65a51570c34beeaff455c6951e050145626513b02380) - retired when the governed media door verifies equivalently"
+          "note": "the read-only backend-access canary - the committed file is the deployed source verbatim (v1 compared byte-for-byte via the Management read API; the merge-deployed v2 reports the identical bundle hash ezbr_sha256 379e6f42351d1fd840de65a51570c34beeaff455c6951e050145626513b02380 - the provider digest of the same bytes; source sha256 f3b84ece81c864e6ed639f0151f0ab7f6825cdfd923067fa3088f96403b9d66; deployment bundle hash ezbr_sha256 379e6f42351d1fd840de65a51570c34beeaff455c6951e050145626513b02380) - retired when the governed media door verifies equivalently"
         }
       ],
       "sources": [

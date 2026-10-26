@@ -17,6 +17,8 @@ const privateRequestFocusBaseline = process.argv.includes('--private-request-foc
 const privateRequestFocus = process.argv.includes('--private-request-focused-publication') || privateRequestFocusBaseline;
 const privateRequestPublication = process.argv.includes('--private-request-publication') || privateRequestFocus;
 const privateRequest = process.argv.includes('--private-request') || privateRequestBaseline || privateRequestHistoryBaseline || privateRequestPublicationBaseline || privateRequestPublication;
+const requestShareCatalogue = process.argv.includes('--request-share-catalogue') || process.argv.includes('--request-share-catalogue-baseline');
+const requestShareCatalogueBaseline = process.argv.includes('--request-share-catalogue-baseline');
 const ownerActions = process.argv.includes('--owner-actions') || privateRequest;
 const actionActTimeBaseline = process.argv.includes('--action-act-time-baseline');
 const actionActTime = process.argv.includes('--action-act-time') || actionActTimeBaseline;
@@ -31,7 +33,8 @@ let actionActTimeEvidence;
 let inviteActTimeEvidence;
 let messageActivityEvidence;
 let privateRequestEvidence;
-const entry = process.argv.includes('--entry') || actions || documents || inviteActTime || messageActivity;
+let requestShareCatalogueEvidence;
+const entry = process.argv.includes('--entry') || actions || documents || inviteActTime || messageActivity || requestShareCatalogue;
 const entryBaseline = process.argv.includes('--entry-baseline');
 const root = process.cwd();
 const bin = process.env.E09_PG_BIN ?? (process.platform === 'win32' ? 'C:/Program Files/PostgreSQL/16/bin' : '');
@@ -103,8 +106,20 @@ function denied(name,options={},role='authenticated',tokenOverride) {
 let started=false;
 try {
  run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8']);
- run('pg_ctl',['-D',cluster,'-l',path.join(cluster,'server.log'),'-o',`-h 127.0.0.1 -p ${port}`,'-w','start']); started=true;
+ try {
+  // Same TCP-only startup as the original durable-document proof. A Linux
+  // package's system Unix-socket directory is not part of this isolated test.
+  run('pg_ctl',['-D',cluster,'-l',path.join(cluster,'server.log'),'-o',`-h 127.0.0.1 -p ${port} -c unix_socket_directories=`,'-w','start']); started=true;
+ } catch (error) {
+  // Startup precedes every fixture: this log contains no customer/provider data.
+  let detail='Startup log unavailable';
+  try { detail=fs.readFileSync(path.join(cluster,'server.log'),'utf8').trim().split(/\r?\n/).slice(-8).join('\n'); } catch { /* failed before log creation */ }
+  throw new Error(`${error.message}\n${detail}`);
+ }
  sql(fs.readFileSync(path.join(root,'scripts/proof/e09-consumer-invite-fixture.sql'),'utf8'));
+ if(requestShareCatalogue)check('Original synthetic catalogue proof stays on its designated TCP loopback only',()=>{
+  assert.equal(sql(`SELECT current_setting('unix_socket_directories')='' AND inet_server_addr()='127.0.0.1'::inet AND current_setting('listen_addresses')='127.0.0.1' AND current_setting('port')='${port}';`),'t');
+ });
  if(entry || entryBaseline) {
  const validator=fs.readFileSync(path.join(root,'supabase/migrations/20271107110000_e09_client_welcome_atomic.sql'),'utf8').replaceAll('\r\n','\n')
    .match(/CREATE OR REPLACE FUNCTION public\._client_portal_welcome_fields\(p_config jsonb\)[\s\S]*?\n\$\$;/)?.[0];
@@ -407,6 +422,7 @@ try {
  if(messageActivity){const {messageActivityProof}=await import('./e09-message-activity.mjs');messageActivityEvidence=await messageActivityProof({sql,check,assert,fs,root,path,fixture,baseline:messageActivityBaseline});}
  if(ownerActions){const {ownerActionReadProof}=await import('./e09-owner-customer-actions.mjs');ownerActionReadProof({sql,check,assert,fs,root,path,fixture});}
  if(privateRequest){const {privateRequestProof}=await import('./e09-private-request.mjs');privateRequestEvidence=await privateRequestProof({sql,check,assert,fs,root,path,fixture,spawn,exe,args,transcripts,baseline:privateRequestBaseline,historyBaseline:privateRequestHistoryBaseline,publicationBaseline:privateRequestPublicationBaseline,publicationCandidate:privateRequestPublication,focusCandidate:privateRequestFocus,focusBaseline:privateRequestFocusBaseline});}
+ if(requestShareCatalogue){const {requestShareCatalogueProof}=await import('./e09-request-share-catalogue.mjs');requestShareCatalogueEvidence=requestShareCatalogueProof({sql,check,assert,fs,fixture,baseline:requestShareCatalogueBaseline});}
  if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
  const report={mode:documents?'documents-candidate':actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(documents?{documentMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108150000_e09_customer_documents.sql')).digest('hex'),physicalStorage:'NOT_RUN',realtimeTransport:'NOT_RUN'}:{}),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};
@@ -415,6 +431,7 @@ try {
  if(inviteActTime){report.mode=inviteActTimeBaseline?'invite-act-time-baseline':'invite-act-time-candidate';report.inviteActTime=inviteActTimeEvidence;}
  if(messageActivity){report.mode=messageActivityBaseline?'message-activity-baseline':'message-activity-candidate';report.messageActivity={source:'original S7 Portal RPCs and original Rail writer, exact production fingerprints',threadTriggers:'NOT_RECONSTRUCTED; full-schema original suite remains required',authenticatedCustomer:'NOT_RUN',...messageActivityEvidence};}
  if(privateRequest){report.mode=privateRequestFocus?(privateRequestFocusBaseline?'private-request-focused-publication-baseline':'private-request-focused-publication-candidate'):privateRequestPublication?'private-request-publication-candidate':privateRequestPublicationBaseline?'private-request-publication-baseline':privateRequestHistoryBaseline?'private-request-history-baseline':privateRequestBaseline?'private-request-baseline':'private-request-candidate';report.privateRequest=privateRequestEvidence;}
+ if(requestShareCatalogue){report.mode=requestShareCatalogueBaseline?'request-share-catalogue-baseline':'request-share-catalogue-candidate';report.requestShareCatalogue=requestShareCatalogueEvidence;}
  fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline||actionActTimeBaseline||inviteActTimeBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
  console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
  if(failed.length)process.exitCode=1;

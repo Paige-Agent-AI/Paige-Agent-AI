@@ -3448,7 +3448,17 @@ console.log('\n24. proposal authority requires proven current scope and durable 
  const tenant={tenant_id:CALLER_TENANT};const rpc=data=>({data,error:null});
  const run=(st,resolve=()=>rpc([tenant]),extra={},initialTenant=CALLER_TENANT)=>drive({stream:true,extraBody:{threadId:THREAD},toolCall:{name:'update_client_data',args},rpcOverrides:{get_paige_persona_context:resolve,resolve_tool_autonomy:rpc('confirm'),get_actor_access:rpc({tier:'tenant'})},tablesExtra:{paige_pending_confirmations:st.table,user_roles:()=>[{role:'admin'}],paige_chat_threads:[{id:THREAD,caller_user_id:USER,tenant_id:initialTenant,audience:'workspace',interactive_recovery_hold:null}]},onInsert:mirrorConfirms(st),...extra});
  const writes=r=>r.outboundCalls.filter(x=>x.url.includes('paige-write-back'));
- const pending=r=>r.rec.from.filter(x=>x.table==='paige_pending_confirmations');
+ // Portal privacy classification reads only this actor's card IDs. It cannot
+ // recover arguments, claim, consume or issue an approval. Keep all proposal
+ // access forbidden on scope loss, while measuring this separate ID-only read.
+ const privacyIdRead=x=>x.op==='select'&&x.client==='service'
+   &&x.filters.some(f=>f[0]==='select'&&f[1]==='id')
+   &&x.filters.filter(f=>f[0]==='select').length===1
+   &&x.filters.some(f=>f[0]==='eq'&&f[1]==='user_id'&&f[2]===USER)
+   &&x.filters.some(f=>f[0]==='eq'&&f[1]==='tool_name'&&f[2]==='client_portal_request_share')
+   &&x.filters.some(f=>f[0]==='in'&&f[1]==='tenant_id'&&Array.isArray(f[2])&&f[2].includes(CALLER_TENANT))
+   &&x.filters.some(f=>f[0]==='limit'&&f[1]===1);
+ const pending=r=>r.rec.from.filter(x=>x.table==='paige_pending_confirmations'&&!privacyIdRead(x));
  for(const [name,result] of Object.entries({rpc_error:{data:null,error:{code:'57014',message:'scope unavailable'}},null_result:rpc(null),object:rpc({tenant_id:CALLER_TENANT}),malformed:rpc([{}]),bad_id:rpc([{tenant_id:'junk'}]),multiple:rpc([tenant,tenant])})){
  const st=makeConfirmStore();const r=await run(st,()=>result);
  assert('24.1 invalid persona cannot issue '+name,st.rows.length===0&&writes(r).length===0&&pending(r).length===0);
@@ -3465,6 +3475,8 @@ console.log('\n24. proposal authority requires proven current scope and durable 
  const body={threadId:THREAD,...(operation==='claim'||operation==='recover'?{approvedConfirmations:[issuedApproval(issued)]}:{}),...(operation==='cancel'?{declinedConfirmations:[issuedApproval(issued)]}:{})};
  const r=await run(st,resolver,{extraBody:body,toolCall:{name:'update_client_data',args:operation==='recover'?{updates:{goal:'DRIFT'},confirm:true}:args}});
  assert('24.4 fresh scope mismatch stops '+operation,n>1&&writes(r).length===0&&pending(r).length===0&&(operation==='issue'?st.rows.length===0:!st.rows[0].consumed));
+ assert('24.4 privacy classification is a bounded ID-only read, never proposal access '+operation,
+   r.rec.from.filter(x=>x.table==='paige_pending_confirmations'&&privacyIdRead(x)).length===1);
  }
  for(const mode of ['confirm','auto']){
  const st=makeConfirmStore([{...issued,consumed:false}]);let cancelled=false;

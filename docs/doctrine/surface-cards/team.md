@@ -75,6 +75,28 @@ below. The originals stay where they are as history (§58).
       (owner ruling 2026-10-25) and their PAIGE traces carry no text.
     - Also `PROOF_OWED`. See the
       [increment 4 PAIGE contract](../../delivery/exp08-team-hub-increment4-paige-contract.md).
+  - **Update, 2026-10-26:** team lifecycle (migration `20271115040008`, owner rulings that day).
+    - Suspend and reinstate: a reversible hold. Owners and admins; an admin acts on members only.
+    - Remove: an admin may now remove a member.
+    - Team conversations switch, on by default: off keeps the person's own assigned work and is
+      refused `conversations_off` by every Team Hub door. Contractors are members.
+    - Arrival: a new teammate joins the open team channels unless switched off.
+    - Departure review: a read-only list of what someone holds before they leave.
+    - A suspension is lifted only by reinstatement (or billing); other role writes leave it suspended.
+    - While someone is suspended, only the owner (or a platform owner) changes their role or ends
+      their seat; an admin still reinstates, removes and switches Team conversations for a member.
+    - The departure review returns item rows with the version each existing hand-over writer needs;
+      the hand-over contract (approvals and mailboxes have no hand-over writer) is in
+      `docs/doctrine/tier-matrix.md`. PAIGE's tools for these acts are task #7, not built.
+    - Invitations can carry Team conversations off (`teamHubAccess` on the `solo-team-invitations`
+      create body); the person then joins no team channel on arrival.
+    - A DM to someone switched off is refused `recipient_conversations_off`, not stored as delivered.
+    - Accepting an invitation (`/accept-invite`) never lifts or changes a held seat: a person whose
+      seat here is suspended or otherwise not active is refused 409 before any write, and an active
+      seat is never lowered by an invitation. A revoked or archived seat must be removed before the
+      person can be invited back. The page still shows a generic error for every refusal (it does not
+      read the reply's message on a non-2xx), which is owed to the page.
+    - `PROOF_OWED`: not merged; no browser surface yet.
 - **Owner decisions, 2026-10-24.** Answered by the owner in the EXP08 Claude Code session and
   logged in `docs/brain/decision-log.md`. They are approvals to build, not proof that anything
   works.
@@ -209,7 +231,7 @@ access. Two entry points, one seam — the Team screen, and PAIGE in the rail be
 | Invitations | `tenant_invite_tokens` where `kind = 'team'` |
 | Identity | `profiles` (display name), `auth.users` (email, last sign-in) |
 | Read | `get_solo_team_workspace(_search,_permission,_limit,_offset)` · `get_paige_team_context()` |
-| Write | `set_solo_team_member_work_profile` · `set_solo_team_member_permission` · `create_/resend_/revoke_solo_team_invite(_actor, _expected_tenant_id, …)` (service-role only, behind the `solo-team-invitations` edge function; authority proved by `solo_team_invite_authority`) · `remove_solo_team_member` (Owner-only, **applied to production as `20261048000000`; owner drive owed**) |
+| Write | `set_solo_team_member_work_profile` · `set_solo_team_member_permission` · `create_/resend_/revoke_solo_team_invite(_actor, _expected_tenant_id, …)` (create gains `_team_hub_access boolean DEFAULT true` in `20271115040008`; service-role only, behind the `solo-team-invitations` edge function; authority proved by `solo_team_invite_authority`) · `remove_solo_team_member` (Owner-only, **applied to production as `20261048000000`; owner drive owed**; owner **or admin on a member** once `20271115040008` is live) · `suspend_solo_team_member` · `reinstate_solo_team_member` · `set_solo_team_member_team_hub_access` · read-only `team_member_holdings` (all `20271115040008`, **not yet merged**) |
 
 All are `SECURITY DEFINER` with the authority check **in the body**, so the same refusal applies
 whether the request came from the screen or from a sentence.
@@ -231,6 +253,7 @@ from the expanding rail (`openPaige` → `expandRail`), beside whatever screen i
 | Retry | Invitation resend/revoke per row; roster retry on a failed load |
 | Remove | Owner-only, last in the member editor: an armed confirmation naming the person and the workspace, then success / refusal / failure+retry / already-gone, announced in the roster after the dialog closes (**shipped; owner drive owed**) |
 | Denied | "You don't have access to this team" — distinguished from a load failure |
+| Suspend / reinstate / Team conversations / departure review | **Not built in the UI.** The server acts exist in `20271115040008` (not yet merged); the Team screen has no control for them yet |
 
 ## What PAIGE can read
 

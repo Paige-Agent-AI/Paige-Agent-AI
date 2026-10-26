@@ -141,7 +141,46 @@ BEGIN
  RETURN replace(replace(_src,_gate||_clock,''),_tail,_tail||_gate);
 END;
 $$;
-SELECT is((SELECT md5(replace(pg_temp.e09_invite_act_time_inverse(prosrc),$inv_new$    -- Keep one canonical relationship per login in each business.
+-- EXP08 team lifecycle (20271115040008) changes exactly one hunk of this function: the staff/team
+-- branch's seat insert carries the invitation's Team conversations choice. Invert exactly that hunk
+-- first, so the E09 inverse below still proves every original branch is preserved.
+CREATE FUNCTION pg_temp.exp08_lifecycle_invite_inverse(_src text) RETURNS text LANGUAGE plpgsql AS $lci$
+DECLARE
+ _new text:=$lc_new$    -- EXP08 lifecycle: a Solo Team invitation carries its Team conversations choice onto the seat in
+    -- the same statement that creates it, so the arrival trigger never joins a switched-off person to
+    -- anything. Every other kind arrives with it on, as before. On a conflict an invitation can
+    -- switch it off, never on. (A suspended seat stays suspended: enforce_tenant_member_consent.)
+    INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at, team_hub_access)
+    VALUES (
+      _tok.tenant_id, _uid,
+      (CASE WHEN _tok.default_role = 'owner'::public.tenant_role
+            THEN 'admin'::public.tenant_role ELSE _tok.default_role END),
+      'active', false, now(), (_tok.kind <> 'team' OR _tok.team_hub_access))
+    ON CONFLICT (tenant_id, user_id) DO UPDATE
+      SET status = 'active',
+          joined_at = COALESCE(public.tenant_members.joined_at, now()),
+          updated_at = now(),
+          team_hub_access = public.tenant_members.team_hub_access AND EXCLUDED.team_hub_access;
+$lc_new$;
+ _old text:=$lc_old$    INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at)
+    VALUES (
+      _tok.tenant_id, _uid,
+      (CASE WHEN _tok.default_role = 'owner'::public.tenant_role
+            THEN 'admin'::public.tenant_role ELSE _tok.default_role END),
+      'active', false, now())
+    ON CONFLICT (tenant_id, user_id) DO UPDATE
+      SET status = 'active',
+          joined_at = COALESCE(public.tenant_members.joined_at, now()),
+          updated_at = now();
+$lc_old$;
+BEGIN
+ IF (length(_src)-length(replace(_src,_new,'')))<>length(_new) THEN
+  RAISE EXCEPTION 'EXP08 lifecycle invitation inverse source mismatch';
+ END IF;
+ RETURN replace(_src,_new,_old);
+END;
+$lci$;
+SELECT is((SELECT md5(replace(pg_temp.e09_invite_act_time_inverse(pg_temp.exp08_lifecycle_invite_inverse(prosrc)),$inv_new$    -- Keep one canonical relationship per login in each business.
     -- Other businesses retain their own original relationship authorization.
     IF EXISTS (SELECT 1 FROM public.clients c
       WHERE c.linked_user_id = _uid AND c.tenant_id = _tok.tenant_id
@@ -149,7 +188,9 @@ SELECT is((SELECT md5(replace(pg_temp.e09_invite_act_time_inverse(prosrc),$inv_n
     -- relationship/switch slice removes the global unique constraint safely.
     IF EXISTS (SELECT 1 FROM public.clients c
       WHERE c.linked_user_id = _uid AND c.id <> _client_id) THEN$inv_old$)) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'10316cc79166fbcc24825cbbacf34e89','invitation exact inverse preserves all original recipient/token/CRM/audit and staff/agency branches');
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'99b75b7f65d50cc4971c12dca4bef74e','the reviewed per-business invitation source and consumer act-time guard are installed');
+-- Renewed for EXP08 team lifecycle 20271115040008 (was 99b75b7f65d50cc4971c12dca4bef74e, production's E09
+-- body): the one hunk inverted above, nothing else; the inverse check above still returns the original.
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'177c271028efecfc63c23623ef3aff88','the reviewed per-business invitation source and consumer act-time guard are installed');
 SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='v' AND proconfig=ARRAY['search_path=public'] AND pg_get_function_identity_arguments(oid)='_token text' AND pg_get_function_result(oid)='uuid' FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure) AND has_function_privilege('authenticated','public.accept_tenant_invite(text)','EXECUTE') AND has_function_privilege('service_role','public.accept_tenant_invite(text)','EXECUTE') AND NOT has_function_privilege('anon','public.accept_tenant_invite(text)','EXECUTE'),'original invitation ABI owner authority path and entry grants remain unchanged');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._clients_portal_access_guard()'::regprocedure),'c1dceae767c0b94a7e465f678a72d648','original revoke and re-invitation lifecycle guard is unchanged');
 

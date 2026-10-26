@@ -32,6 +32,7 @@ describe("the server grants and offers the retired title role nowhere", () => {
     const offenders = [
       "supabase/functions/send-admin-invitation/index.ts",
       "supabase/functions/accept-invite/index.ts",
+      "supabase/functions/accept-invite/team-seat.ts",
       "supabase/functions/handle-inbound-webhook/index.ts",
     ].filter((path) => codeLines(path).some((line) => ROLE_USE.test(line)));
     expect(offenders).toEqual([]);
@@ -47,7 +48,8 @@ describe("the server grants and offers the retired title role nowhere", () => {
   it("accepting an invitation that carries it is refused before any role is written", () => {
     const source = read("supabase/functions/accept-invite/index.ts");
     const refusal = source.search(/RETIRED_ROLES\.has\(\s*team\.role\s*\)/);
-    const grant = source.search(/\.upsert\(\s*\{\s*user_id:\s*authUser\.id,\s*role:\s*team\.role\s*\}/);
+    // The seat and the global role are written by grantTeamSeat (team-seat.ts), seat first (EXP08 B3).
+    const grant = source.search(/grantTeamSeat\(\s*admin,/);
     expect(grant).toBeGreaterThan(-1);
     expect(refusal).toBeGreaterThan(-1);
     expect(refusal).toBeLessThan(grant);

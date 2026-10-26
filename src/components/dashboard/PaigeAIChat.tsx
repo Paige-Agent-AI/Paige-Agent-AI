@@ -2032,6 +2032,12 @@ const PaigeAIChatInner = ({
               // This request did not process the file. Only a fresh deliberate
               // Send may try it again; never keep its completed dispatch latched.
               if (doc && attachmentSubmissionRef.current === doc) attachmentSubmissionRef.current = null;
+              requestAnimationFrame(() => {
+                if (ticketAccepted(requestTicket) && document.activeElement === document.body
+                  && inputRef.current && !inputRef.current.disabled) {
+                  inputRef.current.focus({ preventScroll: true });
+                }
+              });
             }
             setConnectionIssue(recoveryRefused ? "recovery-read-only" : "interactive-unconfirmed");
             setStreamingThreadId(null);

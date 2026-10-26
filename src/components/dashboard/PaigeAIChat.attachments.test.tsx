@@ -159,6 +159,47 @@ describe("INT-338 real composer attachment integration", () => {
     return e;
   };
   const remove = () => host.querySelector<HTMLButtonElement>('button[aria-label="Remove attachment"]');
+  it.each(["body", "another-control", "changed-workspace", "unknown-response"] as const)(
+    "keeps keyboard recovery focus truthful after a refusal: %s", async outcome => {
+      let respond!: (response: Response) => void;
+      vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+        const body = JSON.parse(String(init.body));
+        return body.interactive?.kind === "message"
+          ? new Promise<Response>(resolve => { respond = resolve; })
+          : new Response(JSON.stringify({ settled: true }));
+      }));
+      harness.threads = [{ id: "focus-thread", title: "Read records", updated_at: "2026-10-19T12:00:00Z" }];
+      await render({ activeThreadId: "focus-thread" }); await waitForWritable();
+      await type("Read the existing records");
+      const frames: FrameRequestCallback[] = [];
+      vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback); return frames.length;
+      }));
+      const attach = host.querySelector<HTMLButtonElement>('button[aria-label="Attach a document"]')!;
+      await act(async () => { send().focus(); send().click(); send().blur(); await settle(); });
+      expect(document.activeElement).toBe(document.body);
+      if (outcome === "another-control") attach.focus();
+      await act(async () => {
+        respond(new Response(JSON.stringify({
+          code: outcome === "unknown-response" ? "OTHER_REFUSAL" : "INTERACTIVE_RECOVERY_READ_ONLY",
+          message_accepted: true,
+        }), { status: 409 }));
+        await settle();
+      });
+      const originalFrames = frames.splice(0);
+      if (outcome === "changed-workspace") {
+        harness.tenantId = "foreign-workspace";
+        await render({ activeThreadId: "focus-thread" });
+      }
+      await act(async () => { originalFrames.forEach(callback => callback(1)); await settle(); });
+      if (outcome === "body") expect(document.activeElement).toBe(textarea());
+      else if (outcome === "another-control") expect(document.activeElement).toBe(attach);
+      else expect(document.activeElement).not.toBe(textarea());
+      const requests = vi.mocked(fetch).mock.calls.filter(([, init]) =>
+        JSON.parse(String(init?.body)).interactive?.kind === "message");
+      expect(requests).toHaveLength(1);
+    },
+  );
   it("explains a known recovery refusal without claiming the uploaded PDF was read or offering replay", async () => {
     const bodies: Array<{ requestIntentId: string; interactive?: { kind: string }; document?: { base64: string } }> = [];
     vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {

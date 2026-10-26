@@ -73,7 +73,7 @@ The four tabs' panels are ~47 kB. Splitting them alone moved nothing (SoloEntry 
 - Guard: `node scripts/ci/solo-entry-size-guard.mjs` (also wired into ci.yml verify after Build).
 - Source-map attribution + import-set enumeration scripts (one-off, not committed); both builds with `npm run build`.
 
-INTERNAL_BUILD_IDENTITY: ce9db607a85ac77b5d1c44f29191b59167dc5549; deployment=undeployed at authoring (ships with the next web build; deployed readback follows the merge); environment=local build + throttled-browser synthetic + CI; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + the guard + the tab suite
+INTERNAL_BUILD_IDENTITY: bbd4829486910bca27072bc293fd2371e127c1bc; deployment=undeployed at authoring (ships with the next web build; deployed readback follows the merge); environment=local build + throttled-browser synthetic + CI; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + the guard + the tab suite
 RELEASE_CHANNEL: development: merges through the normal PR gate; performance slice, no rollout concept change.
 RELEASE_CLASSIFICATION: internal-only: pre-evaluation performance improvement of the EXP01 entry surface.
 CUSTOMER_RELEASE_IDENTITY: none: not yet in the founder evaluation window.

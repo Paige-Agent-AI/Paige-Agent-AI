@@ -31,7 +31,7 @@ RELEASE_CHANNEL: development: source and controlled proof only; not customer-rea
 RELEASE_CLASSIFICATION: internal-only: one coherent original preparation/evidence integration pending required release gates.
 CUSTOMER_RELEASE_IDENTITY: none: integrated Experience not accepted or ready for customer announcement.
 RELEASE_NOTE_REQUIRED: no: no customer release or publication proposed.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED for customer preparation/save and accepted-source integration; no Live capability/catalogue/algorithm promotion.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: customer preparation/save and accepted-source integration; no Live capability/catalogue/algorithm promotion.
 RELEASE_RECOVERY: position=unapplied forward source, preserve original records and all existing recovery paths; reference=this record and docs/evidence/ui-delivery/e04-fixed-source-save.md.
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: mandatory actual full-shell evidence remains owed.

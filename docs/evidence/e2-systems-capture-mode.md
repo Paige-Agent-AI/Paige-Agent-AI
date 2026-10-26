@@ -1,5 +1,33 @@
 # EXP02 Systems capture without automatic remediation
 
+## October26 — unchanged approved private claim moves forward, release held
+
+Current native readback observes frontier20271115040008, old290002 absent and
+the private claim function absent. The original shared history mismatch is now
+resolved by its existing owner; EXP02 performed no repair. Only this unapplied
+filename and owning proof path move to20271115090002. Exact approved75-line SQL
+SHA2564fba913a01659da82f4a3dbb167adc37b80c16b7ca5945de4bd6597b7af96da4,
+ABI, source authority, one-attempt CAS and existing service-role-only grant are
+unchanged. The original human approval remains specific; no new grant requested.
+
+Current-mainc4e2 composition preserves original source and incoming cancellation,
+Finance, Work and other-owner records. Protective heartbeat#2918/80002 is a
+separate reviewed foundation; preserve E04 pending50004/60004/70004 and coordinate
+actual order before merge. No include-all, reset, direct apply or history edit.
+Prior950 required verify failure is retained: actual E08 midnight assertion
+00:05FAIL/00:15PASS is reproduced; original E08 correction/source-window request
+ANT161/a52223e4 is pending. No blind retry, test weakening or unowned edit.
+Fresh forward-name native preparation47 plus private-dispatch40 checkpoints pass
+separately; these are source/fixture observations, not permission or invocation.
+New exact-head review/CI/Preview/receiving/normal release/readback remain required;
+earlier green or failures stay bound to their actual heads.
+
+Functional: DEVELOPMENT ONLY/private claim, no invocation. Visual N/A;
+Experiential manual request→capture→result/Rail/recovery INCOMPLETE; Founder
+NOT_ACCEPTED. No worker/scan/public or Chat/provider/spend activation. All19/nine,
+manual Spine UNAVAILABLE, CAP/ALG maturity, original9/0+12/0/4 and protected
+monthly UNKNOWN/UNRETRIED remain unchanged.
+
 ## October25 — unapplied claim moves forward after actual260008
 
 Claim #2878 exact08efd1e54e9ee68e58cdcbaa4a099d67468334c3 earned all13 required

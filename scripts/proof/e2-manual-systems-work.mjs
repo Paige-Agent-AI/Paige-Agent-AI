@@ -163,7 +163,7 @@ try{
  assert.equal(fixture.run('SELECT count(*)FROM public.paige_systems_check_run'),'0');assert.equal(originalShape(),shape);assertions++;
  let manualDispatchProof;
  if(process.argv.includes('--manual-dispatch')){
-  const source=read('supabase/migrations/20271114290002_e02_manual_systems_dispatch.sql'),names=[];
+  const source=read('supabase/migrations/20271115090002_e02_manual_systems_dispatch.sql'),names=[];
   const startKey='public._start_manual_systems_check_work(uuid)';
   const fresh=(thread=ids.thread)=>decode(call(randomUUID(),ids.actor,ids.tenant,thread)).work_id;
   const row=id=>fixture.run('SELECT row_to_json(w)::text FROM public.paige_durable_work w WHERE id=$1',[id]);

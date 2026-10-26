@@ -726,6 +726,12 @@ jobs:
       # approval, and Updates consent for promotions/announcements to portal-linked contacts at plan AND send.
       - run: supabase test db supabase/tests/e09_campaign_portal_audience.sql
         if: ${{ !cancelled() }}
+      # EXP03 email journey: the rest of the campaign lifecycle — saved drafts reopen as saved, members and
+      # other businesses refused, a filed version frozen, stale or generic approvals refused, PAIGE files but
+      # never approves, decline returns a draft, suppression re-checked at send, an expired lease never
+      # re-sent, a duplicate record refused, cancel mid-send, and a resend never reaching anyone twice.
+      - run: supabase test db supabase/tests/email_campaign_lifecycle.sql
+        if: ${{ !cancelled() }}
       # E09 K2: relevant retrieval — the asker re-resolved from the thread; authorized set first, candidates only
       # through the exact-chunk check, ranked by distance, five sources, eight passages within 4,800 characters
       # in index order; unrankable shares fill by recency; no embedding = the K1 read's documents, order and text; finance re-checked;

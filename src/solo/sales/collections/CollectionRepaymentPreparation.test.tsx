@@ -9,7 +9,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let root:Root,host:HTMLDivElement;
 beforeEach(()=>{host=document.createElement('div');document.body.append(host);root=createRoot(host)});
 afterEach(()=>{act(()=>root.unmount());host.remove()});
-const agreement:Agreement={id:'11111111-1111-4111-8111-111111111111',tenant_id:'22222222-2222-4222-8222-222222222222',client_id:'33333333-3333-4333-8333-333333333333',client_name:'Controlled client',title:'Consulting agreement',status:'draft',agreed_amount_minor:350000,agreed_currency:'usd',collection_terms:null,collection_terms_version:3,terms_current:true};
+const agreement:Agreement={id:'11111111-1111-4111-8111-111111111111',tenant_id:'22222222-2222-4222-8222-222222222222',client_id:'33333333-3333-4333-8333-333333333333',client_name:'Controlled client',title:'Consulting agreement',status:'draft',term_kind:'one_time',agreed_amount_basis:'total',agreed_amount_minor:350000,agreed_currency:'usd',collection_terms:null,collection_terms_version:3,terms_current:true};
 const other:Agreement={...agreement,id:'44444444-4444-4444-8444-444444444444',title:'Other agreement'};
 function field(name:string,scope:ParentNode=host):HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement{
  const direct=Array.from(scope.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>('input,select,textarea')).find(e=>e.getAttribute('aria-label')===name);
@@ -33,6 +33,53 @@ function complete(installment='300'){
 function savedCommand(review:ReturnType<typeof mount>['review']){const command=review.mock.calls[0]?.[0];if(command?.action!=='collection.save_terms')throw Error('Original save command missing');return command}
 
 describe('Original collection-plan repayment preparation',()=>{
+ it.each([
+  {term_kind:undefined,agreed_amount_basis:undefined},
+  {term_kind:'recurring' as const,agreed_amount_basis:'per_cycle' as const},
+  {term_kind:'installment' as const,agreed_amount_basis:'per_installment' as const},
+  {term_kind:'installment' as const,agreed_amount_basis:'unverified' as const},
+  {status:'cancelled'}, {status:'completed'},
+ ])('requires original fixed-total and eligible-source evidence %j',semantics=>{
+  const {review}=mount([{...agreement,...semantics}]);
+  expect(button('Prepare deposit and installments').disabled).toBe(true);
+  click('Prepare deposit and installments');expect(proposal().style.display).toBe('none');
+  expect(host.querySelector('[role="status"]')?.textContent).toMatch(/total|agreement/i);
+  if(semantics.agreed_amount_basis==='per_cycle')expect(host.textContent).toContain('Saved agreement amount per cycle');
+  if(semantics.agreed_amount_basis==='per_installment')expect(host.textContent).toContain('Saved amount per installment');
+  expect(review).not.toHaveBeenCalled();
+ });
+ it('uses a negotiated installment total only when the original read verifies that meaning',()=>{
+  const {review}=mount([{...agreement,term_kind:'installment',agreed_amount_basis:'total'}]);open();complete();click('Use proposed schedule');click('Review and save terms');
+  expect(savedCommand(review)).toMatchObject({agreement_id:agreement.id,expected_version:3,terms:{total_cents:350000,count:11}});
+ });
+ it('does not replace an already recorded recurring collection plan with a finite proposal',()=>{
+  const recurring=parseCollectionTerms({schema_version:1,kind:'recurring',currency:'usd',total_cents:350000,anchor_date:'2026-11-01',cadence:'monthly',count:null});
+  mount([{...agreement,collection_terms:recurring}]);
+  expect(button('Prepare deposit and installments').disabled).toBe(true);expect(host.textContent).toContain('recurring collection plan');
+ });
+ it('retires an open proposal when original total semantics disappear and requires fresh input on return',()=>{
+  const {show,review}=mount();open();complete();expect(button('Use proposed schedule').disabled).toBe(false);
+  show([{...agreement,term_kind:'recurring',agreed_amount_basis:'per_cycle'}]);
+  expect(button('Use proposed schedule').disabled).toBe(true);expect(proposal().textContent).toContain('per billing cycle');
+  act(()=>proposal().querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+  expect(review).not.toHaveBeenCalled();
+  show([agreement]);expect(field('Deposit amount',proposal()).value).toBe('');expect(button('Use proposed schedule').disabled).toBe(true);
+ });
+ it.each([{collection_terms_version:4},{term_kind:'recurring' as const,agreed_amount_basis:'per_cycle' as const}])('blocks review after source change, programmatic submit and restoration %j',patch=>{
+  const {show,review}=mount();open();complete();click('Use proposed schedule');
+  expect(button('Review and save terms').disabled).toBe(false);
+  show([{...agreement,...patch}]);
+  expect(button('Review and save terms').disabled).toBe(true);
+  act(()=>host.querySelector('.sc-builder > .sc-builder-grid > form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+  expect(review).not.toHaveBeenCalled();expect(host.textContent).toContain('original agreement changed');
+  expect(document.activeElement).toBe(host.querySelector('[role="alert"]'));
+  show([agreement]);expect(button('Review and save terms').disabled).toBe(true);
+  click('Discard proposal and use current terms');
+  expect(document.activeElement).toBe(field('Saved agreement'));
+  expect(field('Custom schedule: date, amount, label').value).toBe('');
+  open();complete();click('Use proposed schedule');click('Review and save terms');
+  expect(savedCommand(review)).toMatchObject({agreement_id:agreement.id,expected_version:3});
+ });
  it('asks for actual dates and never reviews or saves merely by preparing or applying a proposal',()=>{
   const {review,dirty}=mount();open();expect(proposal().textContent).toContain(agreement.client_name);expect(proposal().textContent).toContain(agreement.title);
   for(const name of ['Deposit amount','Installment amount','Deposit date','First installment date','Payment frequency'])expect(field(name,proposal()).value).toBe('');

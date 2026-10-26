@@ -10,7 +10,7 @@ BEGIN
  FOR entry IN SELECT * FROM (VALUES
   ('list_sales_collection_agreements(uuid,integer,uuid)','5c417ab5ff754506c60342d2c5f2d35b','8a0cb33d5ca87cea2ea6eb90f02c7dd9','plpgsql','v',true,'jsonb','search_path=pg_catalog, public','authenticated',false),
   ('_sales_collection_amount_basis(public.tenant_client_agreements)','7544b588965ce92018bf45020c00dcb1','a7c2887fc4578d00a7e9cf84d6b53097','sql','s',false,'text','search_path=pg_catalog, public',NULL,false),
-  ('_sales_collection_accepted_total_evidence(public.tenant_client_agreements)','65e7d7b962a6e994e85545d892d7949d','65e7d7b962a6e994e85545d892d7949d','sql','s',false,'jsonb','search_path=pg_catalog, public',NULL,true),
+  ('_sales_collection_accepted_total_evidence(public.tenant_client_agreements)','86404f3e9e26ef646e7c2db458f9218b','86404f3e9e26ef646e7c2db458f9218b','sql','s',false,'jsonb','search_path=pg_catalog, public',NULL,true),
   ('preview_sales_collection_command(uuid,uuid,jsonb)','de97896559987f475de6972b8ef0a595','de97896559987f475de6972b8ef0a595','plpgsql','v',true,'jsonb','search_path=pg_catalog, public','service_role',false),
   ('execute_sales_collection_command(uuid,uuid,uuid,jsonb,jsonb)','4a25621d37c0b292aa3b38d5b7f055f2','4a25621d37c0b292aa3b38d5b7f055f2','plpgsql','v',true,'jsonb','search_path=pg_catalog, public','service_role',false),
   ('_paige_accepted_commercial_payload(public.paige_agreements)','235026b37dfde7b0f151588c680c8ca9','235026b37dfde7b0f151588c680c8ca9','plpgsql','s',false,'jsonb','search_path=""',NULL,false),
@@ -77,7 +77,9 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path=pg_catalog,pu
                 AND r.detail->'terms_version'=to_jsonb(a.effective_terms_version)))
  FROM (SELECT (_agreement).*) a
  WHERE a.term_kind IN ('installment','deposit','custom_quote') AND a.price_basis='negotiated'
-   AND a.catalog_price_id IS NULL AND a.renews_on IS NULL AND a.effective_at IS NOT NULL;
+   AND a.catalog_price_id IS NULL AND a.renews_on IS NULL AND a.effective_at IS NOT NULL
+   AND a.collection_terms_version BETWEEN 0 AND 9007199254740991
+   AND a.collection_terms_version>=a.effective_terms_version;
 $evidence$;
 REVOKE ALL ON FUNCTION public._sales_collection_accepted_total_evidence(public.tenant_client_agreements) FROM PUBLIC,anon,authenticated,service_role;
 
@@ -135,7 +137,7 @@ $after$);
  END IF;
  IF (SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_collection_amount_basis(public.tenant_client_agreements)'::regprocedure) IS DISTINCT FROM 'a7c2887fc4578d00a7e9cf84d6b53097'
   OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.list_sales_collection_agreements(uuid,integer,uuid)'::regprocedure) IS DISTINCT FROM '8a0cb33d5ca87cea2ea6eb90f02c7dd9'
-  OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_collection_accepted_total_evidence(public.tenant_client_agreements)'::regprocedure) IS DISTINCT FROM '65e7d7b962a6e994e85545d892d7949d' THEN
+  OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_collection_accepted_total_evidence(public.tenant_client_agreements)'::regprocedure) IS DISTINCT FROM '86404f3e9e26ef646e7c2db458f9218b' THEN
   RAISE EXCEPTION 'Original Collections evidence patch readback failed' USING ERRCODE='55000';
  END IF;
 END $patch$;

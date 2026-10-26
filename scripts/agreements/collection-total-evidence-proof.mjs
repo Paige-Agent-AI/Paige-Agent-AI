@@ -24,11 +24,12 @@ export async function proveCollectionTotalEvidence({sql,read,tenant,actor,c}){
   const page=json(`BEGIN;SET LOCAL session_replication_role=replica;${patch}SET test.uid='${actor}';SET test.tenant='${tenant}';SET ROLE authenticated;SELECT list_sales_collection_agreements('${tenant}');ROLLBACK;`);
   const found=page.rows.find(v=>v.id===c.terms);assert(found);return found;
  };
- const original=row(),e=readAcceptedCollectionTotalEvidence(original);
+ const original=row(),e=readAcceptedCollectionTotalEvidence(original),controlledRows={installment:original};
  assert(e);checks++;equal(e.commercial_terms_id,c.terms,'Proof belongs to this exact original commercial record');equal(e.signing_id,c.p.source.agreement_id,'Proof names the original accepted signing record');
  equal(readCollectionAmountBasis(original),'total','The original installment path remains usable');
  for(const kind of ['deposit','custom_quote']){
   const current=row(`UPDATE tenant_client_agreements SET term_kind='${kind}' WHERE id='${c.terms}';`);
+  controlledRows[kind]=current;
   equal(current.agreed_amount_basis,'unverified','An older reader stays usable and gated for '+kind);
   assert(readAcceptedCollectionTotalEvidence(current));checks++;
   equal(readCollectionAmountBasis(current),'total','An upgraded reader needs matching original native proof for '+kind);
@@ -36,6 +37,9 @@ export async function proveCollectionTotalEvidence({sql,read,tenant,actor,c}){
   assert.throws(()=>readCollectionAmountBasis({...current,agreed_amount_basis:'total',agreed_amount_total_evidence:null}),/COLLECTION_AMOUNT_BASIS_UNVERIFIED/);checks++;
   const missing=row(`UPDATE tenant_client_agreements SET term_kind='${kind}',effective_signing_id=NULL,effective_operation_id=NULL,effective_source_digest=NULL,effective_terms_version=NULL,effective_at=NULL WHERE id='${c.terms}';`);
   equal(missing.agreed_amount_total_evidence,null,'Native missing provenance produces no evidence');equal(readCollectionAmountBasis(missing),'unverified','The current read cannot infer an accepted total');
+  const regressed=row(`UPDATE tenant_client_agreements SET term_kind='${kind}',collection_terms_version=0 WHERE id='${c.terms}';`);
+  equal(regressed.agreed_amount_total_evidence,null,'Native evidence refuses a current revision older than its accepted revision');
+  equal(sql(`BEGIN;SET LOCAL session_replication_role=replica;UPDATE tenant_client_agreements SET term_kind='${kind}',collection_terms_version=0 WHERE id='${c.terms}';SELECT _sales_collection_amount_basis(t) FROM tenant_client_agreements t WHERE id='${c.terms}';ROLLBACK;`),'unverified','Native writer basis independently refuses revision regression');
   assert.throws(()=>readCollectionAmountBasis({...current,agreed_amount_total_evidence:{...current.agreed_amount_total_evidence,client_id:'c2222222-0000-4000-8000-000000000002'}}),/COLLECTION_TOTAL_EVIDENCE_UNVERIFIED/);checks++;
   const command={action:'collection.save_terms',agreement_id:c.terms,expected_version:current.collection_terms_version,terms:current.collection_terms};
   const governance={actor_user_id:actor,tenant_id:tenant,tool:'sales_save_collection_terms',action:command.action,approval_channel:'operator_card',approved_fingerprint:'a'.repeat(16),decision_receipt_recorded:true};
@@ -65,5 +69,6 @@ export async function proveCollectionTotalEvidence({sql,read,tenant,actor,c}){
   assert.throws(()=>sql(`BEGIN;ALTER FUNCTION ${signature} SET search_path=pg_catalog;`+migration),/55000:/);checks++;
   equal(definition(signature),prior,'Rejected metadata/source drift rolls back');
  }
+ if(process.argv.includes('--emit-collection-evidence'))console.log(JSON.stringify({checkpoint:'C61 actual controlled native read',rows:controlledRows}));
  return {checks,migrationReplay:2,scope:'Real original native read/private evidence validation; synthetic authority and document metadata, no hosted acceptance'};
 }

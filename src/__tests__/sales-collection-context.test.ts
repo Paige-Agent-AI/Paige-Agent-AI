@@ -13,6 +13,16 @@ const row = { id: agreement, tenant_id: tenant, client_id: client, offer_id: off
   status: 'active', agreed_amount_minor: 350000, agreed_currency: 'usd',
   collection_terms: assembled.terms, collection_terms_version: 1, terms_current: true };
 describe('canonical commercial collection context', () => {
+  it.each(['deposit','custom_quote'])('uses only matching %s principal evidence in the existing closed Chat context',term_kind=>{
+    const evidence={schema_version:1,kind:'accepted_effective_principal',tenant_id:tenant,commercial_terms_id:agreement,client_id:client,offer_id:offer,principal_minor:350000,currency:'usd',current_terms_version:1,accepted_terms_version:1,signing_id:'60000000-0000-4000-8000-000000000001',signing_version:1,source_digest:'a'.repeat(64),operation_id:'70000000-0000-4000-8000-000000000001',receipt_id:'80000000-0000-4000-8000-000000000001'};
+    const source={...row,term_kind,agreed_amount_basis:'unverified',agreed_amount_total_evidence:evidence};
+    const facts=projectCollectionAgreement(source,tenant);
+    expect(facts).toMatchObject({id:agreement,client_id:client,offer_id:offer,agreed_amount_basis:'total',authority:'not_evaluated',signing_agreement_resolved:false,provider_execution:'not_verified'});
+    expect(facts).not.toHaveProperty('agreed_amount_total_evidence');expect(facts).not.toHaveProperty('signing_id');
+    expect(source.agreed_amount_basis).toBe('unverified');
+    expect(projectCollectionAgreement({...source,agreed_amount_total_evidence:null},tenant)).toMatchObject({agreed_amount_basis:'unverified'});
+    expect(()=>projectCollectionAgreement({...source,agreed_amount_total_evidence:{...evidence,tenant_id:client}},tenant)).toThrow();
+  });
   it('projects only the verified amount-basis fact and keeps older source semantics unverified',()=>{
     expect(projectCollectionAgreement(row,tenant)).toMatchObject({term_kind:null,agreed_amount_basis:'unverified'});
     const facts=projectCollectionAgreement({...row,term_kind:'installment',agreed_amount_basis:'total',approved:true,original_operation:{notes:'PRIVATE'}},tenant);

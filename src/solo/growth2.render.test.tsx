@@ -120,7 +120,7 @@ vi.mock("./useCampaignActions", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./useCampaignActions")>()),
   useCampaignActions: () => ({
     phase: "ready", canManage: harness.assets.canManage !== false, actions: [], retry: () => {},
-    plan: async () => ({ ok: true, message: "" }), remove: async () => ({ ok: true, message: "" }),
+    plan: async () => ({ ok: true, message: "" }), prepare: async () => ({ ok: true, message: "" }), remove: async () => ({ ok: true, message: "" }),
     recordOutcome: async () => ({ ok: true, message: "" }), evaluate: async () => ({ ok: true, message: "" }),
   }),
 }));

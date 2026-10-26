@@ -65,8 +65,17 @@ function ScopedComposer({ actor, tenant, businessZone, onSaved }: {
   useEffect(() => {
     scope.current = { actorId: actor, tenantId: tenant, epoch: (scope.current?.epoch ?? 0) + 1 };
     void command({ action: "pending" });
-    const { data } = supabase.auth.onAuthStateChange(event => {
+    let signInIdentity: string | null = null, observedChange = false;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // Retain this review, never authority; every command keeps its original checks.
+      const user = session?.user, at = user?.last_sign_in_at;
+      const identity = user && user.id === actor && typeof at === "string" && Number.isFinite(Date.parse(at))
+        ? JSON.stringify([user.id, at]) : null;
+      if (event === "INITIAL_SESSION") { if (!observedChange) signInIdentity = identity; return; }
       if (["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) {
+        observedChange = true;
+        if (event === "SIGNED_IN" && identity !== null && identity === signInIdentity) return;
+        signInIdentity = event === "SIGNED_OUT" ? null : identity;
         ticket.current++; flight.current = false; scope.current = null;
         setBlocked(true); setRequests([]); setSelected(null); setPlanning(false); setBusy(false); setLoading(false);
         setProposalRead("unread");

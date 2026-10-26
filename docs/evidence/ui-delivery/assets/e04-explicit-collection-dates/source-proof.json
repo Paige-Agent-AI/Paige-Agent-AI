@@ -1,0 +1,35 @@
+{
+  "originalCases": 7,
+  "allOriginalItBodiesByteExact": true,
+  "addedCases": 3,
+  "sourceInverse": {
+    "path": "src/solo/sales/collections/CollectionPlanBuilder.tsx",
+    "originalSha256": "8af5baecf8399701d163f727357b3f598522a92bbcf7f9a2be695616c6b7c85b",
+    "candidateSha256": "f5f6df96189b6c507450ad221ddfad5a3f9a1e21d635876eaff6d01f2d1ceb3e",
+    "wholeOriginalInverse": true,
+    "changes": 3,
+    "base": "865c168a9918b2dd41624a05d9f2641ed5bb4e42"
+  },
+  "tests": {
+    "causal": "8PASS/2FAIL before source",
+    "focused": "10PASS after source",
+    "collections": "77PASS/8files"
+  },
+  "lint": "PASS",
+  "diff": "PASS",
+  "boundaries": "Not deployed; full-shell/two authorized tenant and authenticated acceptance proof owed",
+  "runtimeSource": "dc2892e2136d8abd05f821fe83ccbab69c4d83e7",
+  "assets": [
+    {
+      "name": "desktop-proposed.png",
+      "sha256": "f224e15354426064cb8a4bbdddaa6fb64726d159216b6b463ad1390a58ff125c",
+      "scope": "Controlled local source-backed prototype, no real owner or customer data"
+    },
+    {
+      "name": "narrow-proposed.png",
+      "sha256": "6c2fcf28cbc2844c8c7e4fae0618a717414a3176fbb8a468baada14fcb4780ca",
+      "scope": "Controlled local source-backed prototype, no real owner or customer data"
+    }
+  ],
+  "externalOrNativeEffects": false
+}

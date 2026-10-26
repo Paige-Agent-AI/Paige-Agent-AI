@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "source": "e04-c53-ratchet-2x.log",
+  "bytes": 321,
+  "sha256": "ec44f1221f05a2037ea4569870bda8f5ddaf4907d7bd33449eb69a90e1a0ddc6",
+  "encoding": "base64",
+  "content": "LS0tIHJhdGNoZXQgcGFpZ2UtYWktY2hhdAogICAgYmFzZSBAIGMwZDFjNzI4OiBkaWFnbm9zdGljcyAoOSBkaWFnbm9zdGljKHMpKQogICAgaGVhZCBAIDI5MTEzNGFhOiBkaWFnbm9zdGljcyAoOSBkaWFnbm9zdGljKHMpKQoKZGVubyBlZGdlIHJhdGNoZXQ6IG5vIG5ldyBvciBpbmNyZWFzZWQgZGlhZ25vc3RpY3MgYWNyb3NzIDEgZnVuY3Rpb24ocykuIEV2aWRlbmNlIGluIEM6XFVzZXJzXHRvbmlnXERvY3VtZW50c1xDb2RleFwyMDI2LTEwLTE0XHBhaWdlLWVuZ2luZWVyaW5nLTItMC1leHBlcmllbmNlLTA0XG91dHB1dHNcZTA0LWM1My1yYXRjaGV0LTJ4Ly4K",
+  "boundary": "Local original-source verification. Not hosted CI, clean compile, production or authenticated execution."
+}

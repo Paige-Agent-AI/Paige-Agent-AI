@@ -78,7 +78,7 @@ try {
  const originalDefinition=readDefinition();
  const originalMetadata=run(`SELECT jsonb_build_object('security',prosecdef,'config',proconfig,'acl',proacl::text) FROM pg_proc WHERE oid=${routine};`).trim();
  assert(!JSON.parse(run(`SELECT list_sales_collection_agreements('${tenant}');`).trim()).rows[0].agreed_amount_basis,'original reader has no basis evidence');
- const basisMigration=read('supabase/migrations/20271115040004_sales_collection_amount_basis.sql');
+ const basisMigration=read('supabase/migrations/20271115050004_sales_collection_amount_basis.sql');
  run(basisMigration);const appliedDefinition=readDefinition();run(basisMigration);
  assert.equal(readDefinition(),appliedDefinition,'read migration replays exactly');
  assert.equal(run(`SELECT jsonb_build_object('security',prosecdef,'config',proconfig,'acl',proacl::text) FROM pg_proc WHERE oid=${routine};`).trim(),originalMetadata,'original security/search path/ACL retained');

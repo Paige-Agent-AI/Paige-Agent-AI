@@ -118,7 +118,6 @@ describe("answered refusals become plain sentences, never a code", () => {
     const { c } = caller(refuse("only the workspace owner may remove an admin from this workspace", "42501"));
     const r = await runTeamLifecycleWrite("team_remove_member", scope, c, { member_user_id: SAM }) as any;
     assert.equal(r.not_applied, true);
-    assert.equal(r.refused_before_run, undefined, "the database answered; the call was made");
     assert.doesNotMatch(r.error, /42501|P0001|PLAN_/);
     assert.match(r.error, /Only the workspace owner/);
   });
@@ -149,7 +148,7 @@ describe("refused before any call", () => {
     ] as const) {
       const r = await runTeamLifecycleWrite(tool, s, c, input) as any;
       assert.equal(r.success, false, tool);
-      assert.equal(r.refused_before_run, true, tool);
+      assert.equal(r.not_applied, true, tool);
     }
     assert.equal(calls.length, 0);
   });

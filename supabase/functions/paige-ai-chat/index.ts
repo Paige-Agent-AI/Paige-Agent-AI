@@ -19038,14 +19038,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           let lifecycleResult: any;
           if (wrongTenant) {
             lifecycleResult = lifecycleRead ? { status: "refused", message: `Tell the person: "${wrongTenant}" Nothing was read.` }
-              : { success: false, not_applied: true, refused_before_run: true, reason: "workspace_mismatch", error: wrongTenant };
+              : { success: false, not_applied: true, reason: "workspace_mismatch", error: wrongTenant };
           } else if (lifecycleRead) {
             lifecycleResult = await TEAM_LIFECYCLE_READERS[tc.function.name](lifecycleScope, supabaseClient, lifecycleArgs);
           } else if (liveRuntimeScope) {
-            lifecycleResult = { success: false, not_applied: true, refused_before_run: true, reason: "live",
+            lifecycleResult = { success: false, not_applied: true, reason: "live",
               error: "Team changes are made only from their card in the chat, never by voice. Nothing was changed." };
           } else if (approvalChannel.get(tc.id) !== "operator_card") {
-            lifecycleResult = { success: false, not_applied: true, refused_before_run: true, reason: "no_approval",
+            lifecycleResult = { success: false, not_applied: true, reason: "no_approval",
               error: "This team change has no approved card, so nothing was changed. Offer the card again if they still want it." };
           } else {
             try {
@@ -19362,7 +19362,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // The posted message the definer returned; never the conversation or an argument.
         if (tool === "team_hub_post_reply") return out?.posted === true && typeof out?.message_id === "string" && UUID.test(out.message_id) ? out.message_id : null;
         // EXP08 team lifecycle: the membership or work item the definer answered about; never an argument.
-        if (tool && TEAM_LIFECYCLE_WRITE_TOOL_NAMES.has(tool)) return out?.success === true && out?.record_locator?.table === WRITE_TARGET[tool]
+        if (tool && ["team_suspend_member", "team_reinstate_member", "team_remove_member", "team_set_conversations", "team_handover_work"].includes(tool)) return out?.success === true && out?.record_locator?.table === WRITE_TARGET[tool]
           && typeof out.record_locator.id === "string" && UUID.test(out.record_locator.id) ? out.record_locator.id : null;
         if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
         // The menu's record is the server-resolved tenant, proven by readback; never an argument.

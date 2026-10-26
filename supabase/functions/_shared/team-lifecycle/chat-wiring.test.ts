@@ -99,7 +99,7 @@ describe("dispatch: last in the chain, caller JWT, server tenant, card-only, nev
 describe("the write trail", () => {
   it("names the membership or work row the definer answered about", () => {
     assert.match(CHAT, /team_suspend_member: "tenant_members", team_reinstate_member: "tenant_members", team_remove_member: "tenant_members",\s*team_set_conversations: "tenant_members", team_handover_work: "plan_items",/);
-    assert.match(CHAT, /if \(tool && TEAM_LIFECYCLE_WRITE_TOOL_NAMES\.has\(tool\)\) return out\?\.success === true && out\?\.record_locator\?\.table === WRITE_TARGET\[tool\]/);
+    assert.match(CHAT, /if \(tool && \["team_suspend_member", "team_reinstate_member", "team_remove_member", "team_set_conversations", "team_handover_work"\]\.includes\(tool\)\) return out\?\.success === true && out\?\.record_locator\?\.table === WRITE_TARGET\[tool\]/);
   });
   it("labels every write for the turned-off refusal", () => {
     for (const tool of WRITES) assert.match(CHAT, new RegExp(`\\n      ${tool}: "`));

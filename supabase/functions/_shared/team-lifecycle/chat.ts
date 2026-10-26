@@ -28,7 +28,7 @@ export type TeamLifecycleReadStatus = "available" | "needs_input" | "refused" | 
 export type TeamLifecycleReadResult = { status: TeamLifecycleReadStatus; message?: string; [key: string]: unknown };
 export type TeamLifecycleWriteResult =
   | { success: true; [key: string]: unknown }
-  | { success: false; not_applied: true; reason: string; error: string; refused_before_run?: true }
+  | { success: false; not_applied: true; reason: string; error: string }
   | { success: false; outcome_unknown: true; reason: "outcome_unknown"; error: string; note: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -85,8 +85,10 @@ export function teamLifecycleRefusal(message: unknown): string | null {
   return null;
 }
 
-const notApplied = (reason: string, error: string, beforeRun = false): TeamLifecycleWriteResult =>
-  beforeRun ? { success: false, not_applied: true, reason, error, refused_before_run: true } : { success: false, not_applied: true, reason, error };
+// No never-ran marker from here: this runs after the card was claimed, and that marker is reserved
+// for reviewed refusals made before any approval was spent (confirm-gate-containment-wiring.test.ts).
+// A refusal here is recorded on the write trail as a failed attempt, which is the cautious reading.
+const notApplied = (reason: string, error: string): TeamLifecycleWriteResult => ({ success: false, not_applied: true, reason, error });
 const unknown = (error = "The team change did not report back, so it is not known whether it happened."): TeamLifecycleWriteResult =>
   ({ success: false, outcome_unknown: true, reason: "outcome_unknown", error,
      note: "Tell the person plainly that you could not confirm it, and that Settings → Team shows the current state. Do not try it again in this reply." });
@@ -333,12 +335,12 @@ export function conversationsValue(v: unknown): boolean | null {
  * approved the card (the tools are `high`, so the card is forced on every lane) and never from Live.
  */
 export async function runTeamLifecycleWrite(tool: string, scope: TeamLifecycleScope, caller: TeamLifecycleCaller, input: unknown): Promise<TeamLifecycleWriteResult> {
-  if (!scope.tenantId || !scope.userId) return notApplied("no_workspace", "I couldn't confirm which workspace this is, so nothing was changed.", true);
+  if (!scope.tenantId || !scope.userId) return notApplied("no_workspace", "I couldn't confirm which workspace this is, so nothing was changed.");
   const tenant = scope.tenantId.toLowerCase();
   const a = object(input) ?? {};
   if (tool === "team_handover_work") {
     const parsed = parseHandoverArgs(a);
-    if ("problem" in parsed) return notApplied("invalid", `${parsed.problem} Nothing was moved.`, true);
+    if ("problem" in parsed) return notApplied("invalid", `${parsed.problem} Nothing was moved.`);
     let reply: { data: unknown; error: RpcError };
     try {
       reply = await caller.rpc("plan_update_item_versioned", {
@@ -354,10 +356,10 @@ export async function runTeamLifecycleWrite(tool: string, scope: TeamLifecycleSc
       note: "Handed over. It is on the receiver's work list now; its status and due date did not change. Its version changed, so read team_member_holdings again before handing over anything else from the same list." };
   }
   const memberId = uuid(a.member_user_id);
-  if (!memberId) return notApplied("invalid", "That needs the teammate's user_id, so nothing was changed.", true);
+  if (!memberId) return notApplied("invalid", "That needs the teammate's user_id, so nothing was changed.");
   if (tool === "team_set_conversations") {
     const on = conversationsValue(a.on);
-    if (on === null) return notApplied("invalid", "Say whether Team conversations should be on or off, so nothing was changed.", true);
+    if (on === null) return notApplied("invalid", "Say whether Team conversations should be on or off, so nothing was changed.");
     let reply: { data: unknown; error: RpcError };
     try { reply = await caller.rpc("set_solo_team_member_team_hub_access", { _member_user_id: memberId, _expected_tenant_id: scope.tenantId, _on: on }); }
     catch { return unknown(); }
@@ -369,7 +371,7 @@ export async function runTeamLifecycleWrite(tool: string, scope: TeamLifecycleSc
       note: !d.changed ? `It was already ${on ? "on" : "off"}; nothing changed.` : on ? `Team conversations are on; they joined ${count(d.joined_channels)} open team channel(s).` : "Team conversations are off. Nothing was deleted and their assigned work is untouched." };
   }
   const rpc = MEMBER_RPC[tool];
-  if (!rpc) return notApplied("unsupported", "That team change isn't one I can make, so nothing was changed.", true);
+  if (!rpc) return notApplied("unsupported", "That team change isn't one I can make, so nothing was changed.");
   let reply: { data: unknown; error: RpcError };
   try { reply = await caller.rpc(rpc, { _member_user_id: memberId, _expected_tenant_id: scope.tenantId }); }
   catch { return unknown(); }

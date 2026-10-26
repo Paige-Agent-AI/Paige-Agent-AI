@@ -1,3 +1,22 @@
+## EXP02 manual capture interruption foundation — October25, development
+
+The original Systems core now accepts an optional trusted native cancellation
+signal only with its already-validated manual Work/run identity. Existing
+default/remediation callers supply no signal and retain their original behavior.
+An interruption keeps that identity and a closed unconfirmed phase, stops late
+core continuation and cancels supported original Supabase requests. An issued
+write can still commit; cancellation never proves absence, rollback or retry.
+Actual whole-core causal source proof: original97PASS/18newFAIL becomes115PASS.
+See [the existing O07 evidence](../evidence/e2-systems-capture-mode.md).
+
+No caller consumes the option yet. E05's proposed current-authority heartbeat
+seam remains unedited pending receiving disposition; native authority, bounded
+consumer, original transition/Rail/result/recovery and authenticated proof are
+still owed. Review, exact CI and source release/readback remain separate gates.
+Functional LOCAL prerequisite; Visual N/A; Experiential INCOMPLETE; Founder
+NOT_ACCEPTED. Manual Spine/catalogue and ALG03/06/11/12/13 maturity unchanged;
+all19/nine, original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED retained.
+
 ## EXP02 original manual Work history reader released — October25
 
 [#2877 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521)

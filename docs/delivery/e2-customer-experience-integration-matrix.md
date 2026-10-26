@@ -1,5 +1,23 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October25 — O07 trusted manual interruption prerequisite, development
+
+EXTEND the original Systems core, not a new execution/budget engine: optional
+native AbortSignal plus original manual WorkUUID. Genuine whole-core causal
+baseline97PASS/18FAIL becomes115PASS; existing source tests retain their assertions.
+Cancellation during an uncooperative read or issued write retains original
+identity/phase, prevents later core writes and never means absent/rolled-back/
+retryable/completed. Existing default/remediation paths remain covered.
+[Original evidence and orchestration boundary](../evidence/e2-systems-capture-mode.md).
+
+No caller, worker, heartbeat edit, grant, scheduler, scan or provider is activated.
+E05 receiving for the current-authority continuation remains pending; consumer,
+authority/lease, terminal transition, Rail/result/recovery and authenticated proof
+are still required. Functional LOCAL; Visual N/A; Experiential INCOMPLETE;
+Founder NOT_ACCEPTED. Review/exact CI/merge/Edge/public readback remain distinct.
+Manual Spine/catalogue, ALG03/06/11/12/13 and all19/nine stay at their existing
+partial/unavailable/unverified maturity; historical9/0+12/0/4 preserved.
+
 ## October25 — original manual Work history reader actually released
 
 O07/O14 prerequisite [#2877](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521)

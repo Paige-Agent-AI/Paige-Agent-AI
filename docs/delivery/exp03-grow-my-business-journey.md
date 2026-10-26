@@ -822,6 +822,31 @@ grepped across `supabase/functions` and `src`.
 | Ad launch/spend | Owner, per launch | Budget, account, campaign | Real spend | Pause | Proposal/approval design only |
 | S4b process activation, S3 reply screen | Owner sees the design (§00) | A rendered prototype | None | Not activated | Source/backend negatives |
 
+### 14.5 SendGrid delivery reporting — connected 2026-10-26; one door defect found and fixed
+
+- **Owner action.** The owner configured SendGrid's Event Webhook by hand: enabled, signed, every event,
+  pointed at `handle-sendgrid-webhook`. They installed `SENDGRID_WEBHOOK_PUBLIC_KEY`. The scoped admin key
+  is not set (the broker reported 503 to the operator) and is not needed while the webhook is configured by
+  hand.
+- **Proof.** An unsigned probe changed from 503 `webhook_not_configured` to 401 `invalid_signature`.
+  SendGrid's "Test Your Integration" events reached the door and passed the signature check, at
+  20:16–20:17 UTC.
+- **Defect.** Every test event was quarantined (503). Real `sg_event_id`s are URL-safe base64 with `=`
+  padding (SendGrid's own examples, e.g. `6g4ZI7SA-xmRDv57GoPIPw==`). The door's check and
+  `ingest_sendgrid_receipt` both refused `=`. On the real function the padded id is `invalid`, the
+  normalized id is `processed`, and a redelivery is `duplicate`.
+- **Fix.** The door drops the padding before forming the receipt id. Padding is fixed by length, so
+  identity stays one-to-one and stable across redeliveries. No migration is needed.
+- **Open, tracked:**
+  - Delayed or asynchronous bounces carry no `sg_message_id`, so they are quarantined. That holds their
+    batch for SendGrid's 24-hour retry window.
+  - `unsubscribe` events are acknowledged but not recorded. The owner is advised to turn SendGrid
+    Subscription Tracking off.
+  - SendGrid's Google Analytics link tracking may change the UTM tags Paige attributes campaigns by.
+    Verification is owed.
+  - Campaigns still send managed mail through Resend. The SendGrid-only cutover the owner re-confirmed on
+    2026-10-26 is the next email deliverable.
+
 **States kept separate:** source · review · exact CI · merge · deploy · configured · connected · activated ·
 authenticated · founder. This checkpoint reaches **source + local automated proof** for §14.2 and **merge**
 for #2923. Nothing else is claimed.

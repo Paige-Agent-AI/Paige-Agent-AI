@@ -854,6 +854,16 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-26 UTC — EXP09 original review handoff and business-owned Portal support contact.**
+
+| Increment | Exact source and observed production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2921 original review handoff](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2921#issuecomment-6423825101) | Reviewed `eafff31b8d63aaa3a73d5c2fc68df1532d267810`, AUTHOR-REVIEW / LOWER ASSURANCE5655784782; applicable exact-head checks and both web statuses passed, no-SQL Preview skipped. Actual main `8374ed50c36f9e8126903cbcaad3f85c07537b15` / tree `cf3f469e5cf0cf8facfbf16a4809890df6ef5e94` preserves all9 owning and16,478 incoming outside entries. Production `dpl_B4amWbNfDtX71jLjd36DZY6ubHc6` READY at8374; public readback observed the verified documentation-only containing9dc021eebf3c8a54e5c146c5fecc8ed728e45f81 / `dpl_7QjgyW8cCk8TLV42FpB6y68pHTRF`, with unchanged runtime. Native/Edge delta N/A. | Original client focus settles before the one existing unsent PAIGE review draft; optional cleanup retires only that exact pending handoff. Authenticated owner first-click focus/reference-only draft PASS; no message, share, approval or client decision executed. Exact8374 public alias was superseded before observation, not claimed observed. Complete client sharing/approval/reload, full42/seven pillars and founder acceptance remain open. Internal increment, no customer release identity/announcement. |
+| [#2926 business support contact](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2926#issuecomment-6426469014) | Reviewed `90ec3c6c0527c0aaa17d356633df11e67e253baa`, AUTHOR-REVIEW / LOWER ASSURANCE5657856527 plus current-main receiving6426231991/6426276013; all13 exact-head checks/Preview and both web statuses SUCCESS, full database363 and unit steps PASS. Actual main `d8a7670bf249af7ec3d937aa355204a40d601ddf` / tree `b2b1f1dd6392dab5aa5065ceb99dd8a76d110f95` preserves all16 reviewed owning and16,540 incoming outside entries. Production `dpl_EQLjVyZ3AKbLAHJrfw9Vyq7G5WkN` READY; both public origins expose exactd8a-mvpp3lir/customerUpdate=null and static/cache checks PASS20:15:57UTC. Normal deploy-migrations40393813363/job121821748560 SUCCESS;10309 once/body285ed6410676a6cdbb3aea860e00333f, whole incumbent inverse76db8ac4261c65f20a6465d0fc42fdab, original OID259426/ABI13/owner/ACL/config/STABLE/definer preserved. Edge delta N/A. | Existing Portal Experience configures original business support contact; customer Settings uses authorized own/published/receiving-ready contact or business Messages. Authenticated owner field, invalid-address focus and Discard PASS; no live contact changed. Positive live contact save/customer reload remains PROOF OWED pending chosen inbox/customer connection. Responsive component evidence and actual owner-shell inspection are distinct; inherited narrow form with PAIGE open needs refinement. No sender, consent, deletion, identity or financial effect. Full42/seven-pillar and founder acceptance remain open; no customer release identity/announcement. |
+
+This mechanical post-merge identity closeout records the two preceding deliveries;
+it changes no product, policy, capability or acceptance status and is not logged recursively.
+
 **2026-10-26 UTC — EXP02 original private manual Work safeguards; no scan activation.**
 
 | Increment | Actual source and production evidence | Acceptance boundary |
@@ -870,6 +880,12 @@ The earlier exact-e993 public assertion correctly refused the already-published
 documentation successor; exact-e993 public aliases were not observed. Original
 source/capture evidence retains this limitation and original9/0+12/0/4. This
 mechanical identity closeout is not logged recursively.
+
+**2026-10-26 UTC — EXP03 email journey: the campaign lifecycle's own negatives are proven in required CI (successor lead's first delivery).**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2930 email campaign lifecycle proof](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2930) | Squash `49d0a8a2a7` of reviewed head `11e513f73` ([review receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2930#issuecomment-6425587100), labelled AUTHOR-REVIEW / LOWER ASSURANCE: a reviewer agent dispatched by the author found 2 MAJOR and 9 MINOR issues in the proof and its record, none in product code; all were fixed). All 11 exact-head checks SUCCESS, including `database-contract`, which runs the new `supabase/tests/email_campaign_lifecycle.sql` (86 assertions) against production's reproduced grants, and `verify`. Local full replay (1,479 migrations, CLI 2.109.1) passed 86/86 on six runs, and ten reinstated defects each turned it red. No migration, edge function or web change. | Test, CI and records only. The campaign lifecycle guards are LIVE in source and now proven: saved drafts, member and foreign-business refusals, frozen versions, stale and generic approvals refused, PAIGE's filing waits for a person, decline, suppression and opt-out at plan and send, unknown and duplicate sends, cancel mid-send, and resends that never reach anyone twice. Real campaign delivery stays UNAVAILABLE (production: 1 campaign, 0 recipients, 0 sends ever). The authenticated drive and the founder evaluation are PROOF OWED. Journey §14 carries the successor's ACK and the full row-by-row matrix. No customer release. |
 
 **2026-10-26 UTC — EXP03 F8: the qualified handoff reads Sales' own records.**
 

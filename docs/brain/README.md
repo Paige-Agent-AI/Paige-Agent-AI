@@ -1,3 +1,27 @@
+## EXP02 original Systems source releases verified — October26
+
+The development entries below are dated history. Original checkpoint port
+[#2932](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2932#issuecomment-6427641944)
+merged46e473a9; the normal Edge source-verification failure is preserved and its
+failed-job-only recovery passed. The original API certificate independently
+matches all159 downloaded source entries/configs across the four incumbent hosts.
+No caller installs the optional port. Original Work finalizer
+[#2936](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2936#issuecomment-6428143292)
+merged3d541038 with actual E05 non-author source review, all13 exact checks/fresh
+Preview and148 native controls. Normal native10352 applied once; original
+transitionOID294695/body48e851ee, ABI/defaults/config/server-only ACL verified.
+Both public origins200/exact3d541-mvps1m8o/null; web READY. Native10309→10352
+ordering is complete and the short source window is handed back.
+
+Functional: these bounded source safeguards are DEPLOYED, no scan/caller/worker
+activated. Visual: N/A; prior Finance evidence retained. Experiential: manual
+request/result/Rail/recovery remains INCOMPLETE. Founder: NOT_ACCEPTED. Manual
+Spine UNAVAILABLE; original19/nine, historical9-0+12-0-4, protected monthly
+UNKNOWN/UNRETRIED and ALG/CAP maturity unchanged. Full receipts remain in the
+existing [Systems evidence](../evidence/e2-systems-capture-mode.md),
+[E02 matrix](../delivery/e2-customer-experience-integration-matrix.md) and Master
+Reference §4.0; no second ledger.
+
 ## EXP02 original capture-phase checkpoints — development only, October26
 
 The original Systems core now has an optional trusted manual checkpoint port at

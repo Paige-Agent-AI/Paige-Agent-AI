@@ -852,6 +852,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-26 UTC — EXP03 S4a: a campaign step reaches its approval (prepare_action).**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2889 campaign step prepare-for-approval](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2889) | Merged `c0d1c7281b` (squash of head `a535c7318`); independent non-author review round 1 HOLD with 3 P1s (unexecutable pgTAP: temp-table ACL + an impossible success assertion; evidence record claiming database proof that never ran) — all fixed across three CI-hardened rounds (`28faa2851` GRANT + single-CTE prepare + totals 21; `a0f73056e` approvals-row NOT NULL draft satisfied with the step's own name as subject; `a535c7318` approvals status literal `pending`); reviewer's migration-integrity axis A PASS: byte-diff vs the LIVE incumbent `20271022100000` confines every change to the vocabulary line + the prepare branch (the writer was redefined after `20271021200000`; the first build from the stale base would have reverted action-truth/bus-refused behavior — caught before review). Exact-head checks all green: ci, PAIGE Spine contract (run 40250434648 successor on `a535c7318`), migration-lint, ui-delivery-evidence, Security Audit, Finance/Sales SQL proofs, Supabase Preview, Vercel. deploy-migrations SUCCESS on the merge; production readback 2026-10-26: `20271115010000` in schema_migrations and the live `configure_campaign_brief_actions` carries `prepare_action`. Evidence: `docs/evidence/ui-delivery/exp03-s4a-campaign-step-prepare.md` (validator PASS). | Backend+UI code complete and released. Rendered browser matrix, an authenticated owner press of Prepare, and the founder run of the joined journey remain PROOF OWED. Known nit (review P3, left as-is): a rare caller without the global admin role sees the generic refusal sentence if the bus itself refuses. |
+
+
 **2026-10-25 UTC — EXP02 continuous Finance navigation and source return.**
 
 | PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |

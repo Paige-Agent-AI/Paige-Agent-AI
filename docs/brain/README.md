@@ -1,3 +1,14 @@
+## EXP02 full-matrix clarification — October26, acceptance remains open
+
+The [existing nineteen-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md)
+now adds the Coordinator's original O01–O19 subcases for complete source-backed
+review, useful original Work/artifacts, approved minimal Vault context and
+revocation, held originating producers and measured representative-week value.
+All original nineteen definitions and nine analytics entries are retained; no
+readiness, algorithm, deployment, activation or customer/founder claim is promoted.
+This is acceptance clarification, not new infrastructure or an originating-domain
+takeover. Protected monthly remains UNKNOWN/UNRETRIED; baseline value UNMEASURED.
+
 ## October26 — coherent original manual Work safeguards, release ordering pending
 
 O07/O14 REUSE/EXTEND only the original Work preparation, private claim and

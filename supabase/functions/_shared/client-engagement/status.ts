@@ -8,8 +8,8 @@
 //     provider money are three different things and are never summed into one "received".
 //   * A contractual obligation (the agreed schedule) is not an invoice; an invoice is not money.
 //   * A payment request in flight or with an unknown outcome is never counted as received.
-//   * Facts the platform does not record (disputes, refunds, an "effective" transition,
-//     installment-level allocation) are declared as not recorded — never inferred as zero.
+//   * Facts this standing projection does not establish (including effective
+//     terms until the native evidence is consumed) are never inferred as zero.
 //   * Unreadable or inconsistent sources degrade to a named state, never to a confident number.
 //   * "Today" is the calendar date in the BUSINESS OWNER's configured time zone (owner ruling,
 //     2026-10-12), set only by the owner (set_business_time_zone) — never UTC, server time or the
@@ -107,7 +107,8 @@ export type ClientEngagementStatus = {
   agreement: {
     state: AgreementState; signing_id: string | null; title: string | null; sent_at: string | null;
     completed_at: string | null; sealed: boolean; bound_to_terms: boolean;
-    /** The platform has no "effective" transition yet: signing and active terms are reported separately. */
+    /** This standing composer does not yet consume the native effective record;
+     * signing and active terms are reported separately, without claiming a platform-wide gap. */
     effective: 'not_recorded';
   };
   terms: null | {

@@ -121,11 +121,16 @@ export function proveEffectiveClientRead({sql,read,tenant,c,prepared}){
  const md5=value=>createHash('md5').update(value).digest('hex');
  const anchor="'collection_terms',p.collection_terms,'collection_terms_version',p.collection_terms_version,",
   replacement=anchor+"\n    'effective_terms',public._sales_client_effective_terms(_expected_tenant_id,_contact_id,p.id),";
+ const gapAnchor="  -- Facts the platform does not record yet are declared, never inferred as zero.\n  'not_recorded',jsonb_build_array('payment_disputes','provider_refunds','terms_effective_transition','installment_allocation'),",
+  gapReplacement="  -- Gaps in this projection are declared, never inferred as zero.\n  'not_recorded',jsonb_build_array('payment_disputes','provider_refunds','installment_allocation'),";
  equal(md5(body),'401d2de2a7dd91192da36b242b12041d','Original full source body matches deployed contract');
  equal(body.split(anchor).length,2,'Exactly one additive source projection anchor');
- equal(md5(body.replace(anchor,replacement)),'48afb1a55ab7d24d3334adff97ef0b3d','Expected full-reader successor hash');
- equal(body.replace(anchor,replacement).replace(replacement,anchor),body,'Whole inverse preserves original scope, E09 fields and every other source byte');
- equal(publicAfter.replace(replacement,anchor),publicBefore,'Actual installed public reader inverse preserves every other original byte');
+ equal(body.split(gapAnchor).length,2,'Exactly one obsolete global-gap declaration anchor');
+ const transformed=body.replace(anchor,replacement).replace(gapAnchor,gapReplacement);
+ equal(md5(transformed),'4680297b25322dca36b44dbaaf528a39','Expected full-reader successor hash');
+ equal(transformed.includes('terms_effective_transition'),false,'Per-record effective evidence replaces the obsolete global absence claim');
+ equal(transformed.replace(replacement,anchor).replace(gapReplacement,gapAnchor),body,'Whole inverse preserves original scope, E09 fields and every other source byte');
+ equal(publicAfter.replace(replacement,anchor).replace(gapReplacement,gapAnchor),publicBefore,'Actual installed public reader inverse preserves every other original byte');
  return {checks,migration:path,projectionBody:beforeMeta.body,fullMigrationGuard:'PASS: complete source migration/replay and metadata negatives on canonical local owner',
   fullSchemaRpc:'PROOF_OWED: complete canonical schema and hosted owner/role read',
   scope:'Original native signing/effectuation/operation/Rail fixture; synthetic identity and file metadata only, no hosted role/byte/signing/payment/customer acceptance'};

@@ -160,7 +160,7 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
     : `Business time zone: ${s.time_zone.state === 'missing' ? 'NOT SET' : 'NOT RECOGNISED'} — due, upcoming and overdue judgements are withheld until the owner sets it in Settings → Setup → Business profile.`}`);
 
   const a = s.agreement;
-  lines.push(`AGREEMENT: ${AGREEMENT_TEXT[a.state] ?? a.state}${a.title ? ` (${rec(a.title)})` : ''}${a.sent_at ? `; sent ${when(a.sent_at)}` : ''}${a.completed_at ? `; signed ${when(a.completed_at)}` : ''}${a.state === 'signed' ? (a.sealed ? '; sealed copy stored' : '; sealed copy not confirmed') : ''}. Linked to the agreed terms: ${a.bound_to_terms ? 'yes' : 'no'}. The platform does not record when an agreement takes effect.`);
+  lines.push(`AGREEMENT: ${AGREEMENT_TEXT[a.state] ?? a.state}${a.title ? ` (${rec(a.title)})` : ''}${a.sent_at ? `; sent ${when(a.sent_at)}` : ''}${a.completed_at ? `; signed ${when(a.completed_at)}` : ''}${a.state === 'signed' ? (a.sealed ? '; sealed copy stored' : '; sealed copy not confirmed') : ''}. Linked to the agreed terms: ${a.bound_to_terms ? 'yes' : 'no'}. Effective terms are not established by this standing view.`);
 
   if (!s.terms) lines.push('TERMS: no agreed terms are recorded for this client.');
   else {
@@ -213,7 +213,7 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   lines.push(s.attention.length
     ? `NEEDS ATTENTION:\n${s.attention.map((k) => `  - ${ATTENTION_TEXT[k] ?? k}`).join('\n')}`
     : 'NEEDS ATTENTION: nothing flagged.');
-  if (s.not_recorded.length) lines.push(`NOT RECORDED BY THE PLATFORM: ${s.not_recorded.join(', ')}.`);
+  if (s.not_recorded.length) lines.push(`NOT ESTABLISHED BY THIS STANDING READ: ${s.not_recorded.join(', ')}.`);
   return lines.join('\n');
 }
 

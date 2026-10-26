@@ -27,7 +27,7 @@ BEGIN
  END IF;
  SELECT * INTO p FROM pg_catalog.pg_proc
  WHERE oid=pg_catalog.to_regprocedure('public.read_client_engagement_status(uuid,uuid)');
- IF NOT FOUND OR pg_catalog.md5(p.prosrc) NOT IN ('401d2de2a7dd91192da36b242b12041d','48afb1a55ab7d24d3334adff97ef0b3d')
+ IF NOT FOUND OR pg_catalog.md5(p.prosrc) NOT IN ('401d2de2a7dd91192da36b242b12041d','4680297b25322dca36b44dbaaf528a39')
    OR NOT p.prosecdef OR p.provolatile<>'v'
    OR p.proconfig IS DISTINCT FROM ARRAY['search_path=pg_catalog, public']::text[]
    OR pg_catalog.pg_get_userbyid(p.proowner)<>'postgres'
@@ -143,18 +143,23 @@ DECLARE original text; changed text; expected_oid oid;
  anchor text:=$anchor$'collection_terms',p.collection_terms,'collection_terms_version',p.collection_terms_version,$anchor$;
  replacement text:=$replacement$'collection_terms',p.collection_terms,'collection_terms_version',p.collection_terms_version,
     'effective_terms',public._sales_client_effective_terms(_expected_tenant_id,_contact_id,p.id),$replacement$;
+ gap_anchor text:=$gap_before$  -- Facts the platform does not record yet are declared, never inferred as zero.
+  'not_recorded',jsonb_build_array('payment_disputes','provider_refunds','terms_effective_transition','installment_allocation'),$gap_before$;
+ gap_replacement text:=$gap_after$  -- Gaps in this projection are declared, never inferred as zero.
+  'not_recorded',jsonb_build_array('payment_disputes','provider_refunds','installment_allocation'),$gap_after$;
 BEGIN
  expected_oid:='public.read_client_engagement_status(uuid,uuid)'::regprocedure;
  IF (SELECT pg_catalog.md5(prosrc) FROM pg_catalog.pg_proc WHERE oid=expected_oid)='401d2de2a7dd91192da36b242b12041d' THEN
   original:=pg_catalog.pg_get_functiondef(expected_oid);
-  IF (pg_catalog.length(original)-pg_catalog.length(pg_catalog.replace(original,anchor,'')))/pg_catalog.length(anchor)<>1 THEN
+  IF (pg_catalog.length(original)-pg_catalog.length(pg_catalog.replace(original,anchor,'')))/pg_catalog.length(anchor)<>1
+   OR (pg_catalog.length(original)-pg_catalog.length(pg_catalog.replace(original,gap_anchor,'')))/pg_catalog.length(gap_anchor)<>1 THEN
    RAISE EXCEPTION 'Original client status projection anchor changed' USING ERRCODE='23514';
   END IF;
-  changed:=pg_catalog.replace(original,anchor,replacement);
+  changed:=pg_catalog.replace(pg_catalog.replace(original,anchor,replacement),gap_anchor,gap_replacement);
   EXECUTE changed;
  END IF;
  IF 'public.read_client_engagement_status(uuid,uuid)'::regprocedure::oid<>expected_oid
-  OR (SELECT pg_catalog.md5(prosrc) FROM pg_catalog.pg_proc WHERE oid=expected_oid)<>'48afb1a55ab7d24d3334adff97ef0b3d' THEN
+  OR (SELECT pg_catalog.md5(prosrc) FROM pg_catalog.pg_proc WHERE oid=expected_oid)<>'4680297b25322dca36b44dbaaf528a39' THEN
   RAISE EXCEPTION 'Additive original client status readback differs' USING ERRCODE='23514';
  END IF;
 END

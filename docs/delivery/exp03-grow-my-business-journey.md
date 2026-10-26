@@ -4,7 +4,12 @@ Date: 2026-10-12 · Journey Lead at authoring: Claude Code (one accountable lead
 record at authoring; now with active EXP04 — historical EXP03 references preserved, not taken over), ANT-147
 (integration), ANT-15 (Marketing), ANT-45 (Ads), ANT-21 (historical PC-1 QA) · Shell: SOLO
 
-**Current state — 2026-10-23: ONE zCod EXP03 resumption owner-authorized; old staffing/PC-1 snapshots historical;
+**Current state — 2026-10-26: the owner moved the remaining EXP03 assignment to ONE Claude Code successor lead,
+replacing the zCod lead (zCod credits exhausted). This is not parallel staffing. The successor's ACK, full
+mapped-row matrix and next deliverable are in §14.** The zCod staffing named below is historical. Its branches,
+PRs, reviews and evidence are preserved.
+
+**Superseded 2026-10-26 (kept as history) — 2026-10-23: ONE zCod EXP03 resumption owner-authorized; old staffing/PC-1 snapshots historical;
 full roadmap/mapped matrix retained; ACK/start/source/customer release separately evidenced.** The sections below
 are the original 2026-10-12/13 record, preserved as history with two superseded facts named: the INT-346 typed-chat
 blocker (production `paige_chat_interactive_protocol()` is active v2 as of 2026-10-23) and PC-1 (retired; the
@@ -549,3 +554,274 @@ member). Visit linkage (`growth-public-visit`) was not exercised live.
 **Fixture retention:** brief CB-20DEBF, its form and the two submissions stay on the designated account as the
 standing QA fixture for the next slices (S1e chat read, S2 roll-up, S3 reply UI) — clearly named, zero-cost,
 no-send.
+
+## 14. Successor lead checkpoint — 2026-10-26 (Claude Code, replacing the zCod lead)
+
+**Identity.** One Claude Code session (cloud). Branch `claude/great-heisenberg-u7kyd9` cut from main `ae12ff14`
+(main was `e8197859` at start; it became `ae12ff14` when #2923 merged). The zCod lane is superseded for new
+implementation, and its branches, PRs, reviews and evidence are preserved. The predecessor's local
+`exp03-f8-records` checkout was not touched.
+
+**Scope ACK.** The successor accepts the complete assignment:
+- F1–F9, S1–S6 and WEB01–14;
+- every mapped original alias (annex below, by Map row);
+- the CRM, Communications, Marketing, Ads, AI Sales and Appointment Setter experience;
+- the owner's full email/newsletter/mailbox mandate (SendGrid, tenant PAIGE Email, custom domains, Gmail,
+  iCloud), and the webinar chain;
+- the owner's whole-matrix reconciliation (ANT-87 `d16287be`).
+
+It does not narrow any of them. NEXUS stays the existing product specialist under PAIGE. No new agent or runtime.
+
+**Grounded at start (artifacts, not beliefs).**
+- Production `schema_migrations` frontier is `20271116010202`. The E02 `010102`/`010202` pair is applied; E09's
+  `10309` is next by agreement (ANT-161 `0b9dc19f`, `843d3f3e`). EXP03 needs no migration for its next
+  deliverable.
+- The live `get_campaign_brief_leads` carries the F8 fields.
+- Production has 1 `email_campaigns` row, 0 recipients and 0 sends ever (read-only, 2026-10-26).
+- Open EXP03 PRs at start: #2923, #2131, #2152. No other EXP03 branch has unmerged work in flight.
+- **Inaccessible, stated exactly:**
+  - The Drive connector returns the Delivery Evidence Register only as a sampled table summary. Sheet
+    cells, Map K:AB, WEB rows and Assignment Locks cannot be read or written cell by cell from this session.
+    The Map and Locks rows are therefore **not updated by this checkpoint**. This section is the source-side
+    record until a session with Sheets cell access (or the Coordinator) transcribes it.
+  - Linear ANT-87/ANT-161 read normally.
+
+### 14.1 Inherited PR dispositions
+
+| PR | Disposition |
+|---|---|
+| [#2923](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2923) F8 records | Reviewed **NON-AUTHOR** on exact head `4b00bc0`. The production claim was re-read: `20271116010000` is applied and the live read carries the F8 fields. All required checks were SUCCESS (Preview SKIP for a docs-only change). **Merged** `ae12ff14`. Receipt: [#2923 comment](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2923#issuecomment-6425223336). It closes the #2917 row, so it is not logged recursively. |
+| [#2131](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2131) S3 backend closeout | **Not merged; reconciliation owed.** Its base is `5c90859` (2026-10-14), 12 days stale. Its content is still absent from main: master §4.0 has no `f2e2a0af6` release row, and master line ~3828 still reads "NOT merged or live". The successor will port only facts it re-verifies on current main into a fresh records PR, then close #2131 as superseded with a link. It will not merge the stale branch blind. |
+| [#2152](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2152) SendGrid-only directive (2026-10-14) | **Not merged; reconciliation owed.** The owner's 2026-10-14 ruling (SendGrid replaces Resend for platform, tenant PAIGE Email and campaigns) is still unrecorded on main. Current source still sends managed campaign mail as `provider:'resend'` (`_email_resolve_sender`). The same fresh-records approach as #2131 applies: re-verify the inventory against current source and official provider docs, then supersede. |
+
+### 14.2 Next coherent safe deliverable — started and proven in this checkpoint
+
+**Email campaign lifecycle negatives** (`supabase/tests/email_campaign_lifecycle.sql`, 86 assertions, rolled
+back, synthetic test tenants). It runs in the required `database-contract` job (`paige-spine-contract.yml`)
+through `supabase test db`, and `src/__tests__/email-campaign-lifecycle.test.ts` pins that wiring and the plan count.
+
+Before it, no database-contract suite drove the campaign lifecycle. The E09 suite covers portal audience and
+Updates consent only. The new suite proves, through the real seams:
+- a saved draft reopens as saved;
+- members and another business are refused (campaigns, versions and recipients unreadable to them);
+- a filed version is frozen;
+- a stale approval (version replaced, or hash mismatch) and a generic queue approve are refused;
+- approval needs a signed-in owner or admin: an admin seat approves, and a call with no signed-in person is
+  refused by the function body (`not_signed_in`), not only by the grant;
+- PAIGE's filing waits for a person: she replays her own filing and cannot take over an owner's filing.
+  The database does not stop a JWT-bearing caller from approving; what keeps PAIGE from approving is that
+  approve is not one of her registered capabilities (`_shared/paige-spine/domains/email_campaigns.ts`);
+- decline from the seam and the owner's own RLS-scoped decline from the approvals queue both return a draft;
+- suppressed and opted-out people are excluded at plan, and both are re-checked at send after approval;
+- an expired lease becomes `outcome_unknown` and is never handed out again;
+- a duplicate record is refused;
+- cancel mid-send refuses the leased hand-off, and a held-back (deferred) send under the cancelled campaign is
+  never claimed again;
+- settle reads the rows;
+- a resend never re-plans anyone sent or outcome-unknown.
+
+**Evidence, by class:**
+- **Automated (local, replayed schema):** the full 1,479-migration replay on Supabase CLI 2.109.1 (CI's
+  version) passes 86/86 via `supabase test db`, six repeated runs (recipient ids are random; the suite
+  does not depend on their order).
+- **Mutation proof (§71.4):** ten defects were reinstated one at a time, and each turned specific assertions
+  red. The restored baseline is 86/86.
+  - M1: the send-time suppression re-check removed.
+  - M2: an expired lease returned to planned.
+  - M3: the approve skips both hash checks.
+  - M4: a record accepts a repeat.
+  - M5: a resend ignores who was reached.
+  - M6: the approval-guard trigger disabled.
+  - M7: the frozen-version trigger disabled.
+  - M8: the queue-decline withdrawal trigger disabled.
+  - M9: the claim ignores campaign status (found by the independent review: the first version's
+    "never claimed again" assertion could not fail, because nothing was left planned).
+  - M10: the approve body no longer requires a signed-in person (the first version asserted the grant's
+    refusal instead of the body's).
+  - The first M1 and M3 mutants were operator-precedence no-ops and were corrected before counting.
+  - One finding: removing only the re-derived hash comparison is masked by the stored-hash comparison. That is
+    defense in depth, not a gap.
+- **Not reached:** CI on the exact head (pending), production grants (CI reproduces them; the local run did
+  not), any provider send, authenticated customer drive and founder evaluation.
+
+**Independent review:** a separate reviewer agent, given the code rather than my conclusions, found 2 MAJOR
+and 9 MINOR issues, all in the proof and this record, none in product code. All were fixed in this PR: a
+vacuous cancelled-claim check, a grant-dependent signed-in check, a NULL-able hand-off id, an error-tolerant
+`isnt`, a superuser stand-in for the queue decline, header overclaims, campaign-scoped claim assertions, and
+vitest counting, comment matching and address checks.
+
+**No defect was found** in the lifecycle seams, so no product change ships with this proof.
+
+### 14.3 Original matrix — retained, with successor classification
+
+**Legend:**
+- **WORKING (source)** — shipped source with production objects. Authenticated customer proof is still owed
+  unless stated.
+- **PARTIAL** — a named subset works.
+- **MISSING** — searched and absent; the terms searched are listed.
+- **DECISION** — needs an owner/provider decision.
+- **HELD** — waits on another owner's producer.
+- **UNVERIFIED** — not yet grounded by the successor. Kept as an open row, never closed by inference.
+
+No row is closed by a group label.
+
+**F1–F9 / S1–S6 (this document's §4/§10, current state).**
+- **F1** Set acquisition goal: WORKING. The builder works and chat `campaign.create`/`.revise` are registered.
+  Typed chat is active v2 (2026-10-23). The structured numeric target is E02's store: DECISION (§8).
+- **F2** Recommend strategy: PARTIAL, judgement only. S6 is owed.
+- **F3** Assets + capture: WORKING. Studio/forms/S2a embed, and the UI attach works. Chat attach is MISSING
+  (O4).
+- **F4** Approve: WORKING. S4a `prepare_action` (#2889). S4b process activation needs an owner-seen design:
+  DECISION.
+- **F5–F6** Capture + attributed report: WORKING and live-reproduced (§13). S1e chat read (#2774).
+  Authenticated owner drive is owed.
+- **F7** Follow-up / book: PARTIAL. The S3 backend is live but inert. The approval-row remainder shipped
+  (#2846). The reply screen is owed (owner design). Booking→deal is NOT CONNECTED (E05 writer, E04
+  `2e30b7f5` constraint).
+- **F8** To customer: PARTIAL. The read side shipped (#2917, records #2923). The agreement/invoice/booking
+  link writers are Sales/E04/E05: HELD.
+- **F9** Measure: PARTIAL. S2 credited counts reach the COO review (#2801). CAC/ROAS is UNAVAILABLE (no
+  spend source).
+- **WEB01–14:** retained unchanged. The rows are not readable cell by cell here (see Grounded), so per-row
+  reconciliation is owed.
+
+**Mapped annex (by Map row → original ID).** Evidence names the source seam. "Searched" lists the terms
+grepped across `supabase/functions` and `src`.
+
+| Map row | Original ID | State | Evidence / gap · owner |
+|---|---|---|---|
+| 64 | CAP-063 Ad Copy Draft | PARTIAL | `draft_marketing_content` is draft-only. An ad-format draft is UNVERIFIED. No ad launch (DECISION) |
+| 67 | CAP-066 Campaign Plan | WORKING | `campaign_briefs`/`configure_campaign_brief`; Spine `campaign.create/revise/list/leads` |
+| 69 | CAP-068 Email Newsletter Draft | WORKING (draft) | `email_campaign_draft` (kind `newsletter`), consent gate; lifecycle proven §14.2; live delivery DISABLED |
+| 70 | CAP-069 Email Sequence Design | WORKING (draft) | `email_series_draft` (E3c), approval human-only; sends disabled; recurrence HELD |
+| 71 | CAP-070 Landing Page Copy | WORKING | Studio page generation (E06/E07 shared publisher); copy embedded per §19 |
+| 129 | FLOW:CRM | PARTIAL | `crm-command` contact/company/deal/task actions + chat `crm_*` tools; per-row below |
+| 130 | FLOW:COMMS | PARTIAL | governed email door, Conversations, `send-sms`, calling setup, Gmail read/organize; live SendGrid disabled |
+| 131 | FLOW:MARKETING | PARTIAL | F1–F9 above |
+| 195 | 2 Contact creation | WORKING | `crm_create_contact`, `contact.create`, form intake → `create_contact` |
+| 198 | 5 Business email sending | PARTIAL | `comms.email_send` door; Accepted≠Delivered (#2796); SendGrid events pending the webhook-admin credential (DECISION) |
+| 200 | 7 Follow-up creation | PARTIAL | `crm_create_task`; S3 `owner.lead_followup` draft (inert until opted in) |
+| 202 | 9 Contact editing | WORKING | `crm_update_contact`, `update_contact` |
+| 203 | 10 Contact assignment | WORKING | `contact.assign_owner` / `assign_coach` |
+| 204 | 11 Deal creation | WORKING | `deal.create`; intake files deals (S1b) |
+| 205 | 12 Deal/contact association | PARTIAL | `deal.assign_contact`. Booking↔deal NOT CONNECTED (E05/E04, HELD) |
+| 233–235 | Contacts manual UI (15, 16) | UNVERIFIED | Clients surface (E02/CRM-owned). EXP03 consumes it; drive owed |
+| 236–238 | Contact creation in Chat (17, 18) | WORKING (source) | `crm_create_contact`; authenticated chat drive owed |
+| 248–250 | Conversations (25, 26) | PARTIAL | form inquiries join (#2172); composer bypasses the door (O12) — REPAIR owed |
+| 251–253 | Marketing (27, 28) | PARTIAL | F1–F9 |
+| 254–256 | Ads (29, 30) | PARTIAL | `ads.lead_funnel` read only; launch/spend MISSING (DECISION) |
+| 338 | PCO-CRM-001 Find contact | WORKING | `crm_search_contacts` |
+| 339 | PCO-CRM-002 Create contact | WORKING | as row 195 |
+| 340 | PCO-CRM-003 Update details | WORKING | as row 202 |
+| 341 | PCO-CRM-004 Merge duplicates | PARTIAL | governed merge lineage (`20270204000000`, `20270320000000`); the owner-facing merge flow is UNVERIFIED |
+| 342 | PCO-CRM-005 Assign ownership | WORKING | as row 203 |
+| 343 | PCO-CRM-006 Tag and segment | PARTIAL | `email_segment_save` + rule keys; the contact tag writer is UNVERIFIED |
+| 344 | PCO-CRM-007 Customer timeline | PARTIAL | `crm_clients.client_rail`, `crm_get_contact_summary`; completeness UNVERIFIED |
+| 345 | PCO-CRM-008 Qualify lead | MISSING | no evidence-based qualifier; ALG-05 not verified |
+| 346 | PCO-CRM-009 Score lead | MISSING | ALG-05 gap |
+| 347 | PCO-CRM-010 Create opportunity | WORKING | as row 204 |
+| 348 | PCO-CRM-011 Move stage | WORKING | `deal.move`, `crm_update_pipeline_stage` |
+| 349 | PCO-CRM-012 Link deal | PARTIAL | `deal.assign_contact`, `company.create`; deal↔company link UNVERIFIED |
+| 350 | PCO-CRM-013 Stale opportunities | UNVERIFIED | `crm_pipeline_summary` may cover it |
+| 351 | PCO-CRM-014 Prepare follow-up | PARTIAL | S3 reply draft |
+| 352 | PCO-CRM-015 Schedule follow-up | PARTIAL | task with due date; scheduler is E05 |
+| 353 | PCO-CRM-016 Churn risk | UNVERIFIED | E02 consumer |
+| 354 | PCO-CRM-017 Close won/lost + reason | PARTIAL | `deal.close`; reason capture UNVERIFIED |
+| 355 | PCO-CRM-018 Account commitments | UNVERIFIED | E04/E05 sources |
+| 356 | PCO-COMMS-001 Unread business inbox | PARTIAL | `inbox_list`, `comms.message_content_read`; sync state UI MISSING (O11) |
+| 357 | PCO-COMMS-002 Private mailbox | PARTIAL | Gmail personal read/organize (#1880), mailbox-owner-private |
+| 358 | PCO-COMMS-003 Find thread | PARTIAL | `inbox_list` |
+| 359 | PCO-COMMS-004 Draft reply | PARTIAL | chat draft; S3 reply draft; reply screen owed |
+| 360 | PCO-COMMS-005 Review recipient/sender | PARTIAL | confirm card + door binding; reply-screen states (O7) owed |
+| 361 | PCO-COMMS-006 Send approved email | PARTIAL | door in code; SendGrid live DISABLED; campaign path proven §14.2 (no send) |
+| 362 | PCO-COMMS-007 Delivery outcome | PARTIAL | #2796 labels; provider events DECISION (credential) |
+| 363 | PCO-COMMS-008 Gmail OAuth | PARTIAL | `gmail-oauth-start/callback`; revoked grant still shows Connected (O10 REPAIR); send scopes DECISION |
+| 364 | PCO-COMMS-009 iCloud Mail | MISSING | no IMAP; SMTP 587 blocked; `EmailIntegrationConfig` unmounted (O13). E10 + DECISION |
+| 365 | PCO-COMMS-010 Tenant PAIGE Email | PARTIAL | SendGrid door + sender integrity source; auto-provisioned mailbox MISSING (DECISION: domain/provider/cost) |
+| 366 | PCO-COMMS-011 SMS to consenting contact | PARTIAL | `send-sms`, `paige_suppressions`; per-tenant A2P is E10; EXP03 consent wiring UNVERIFIED |
+| 367 | PCO-COMMS-012 Business phone line | UNVERIFIED | `provision-tenant-twilio`, `voice-twiml` exist; Live/E10 lane |
+| 368 | PCO-COMMS-013 Transfer call | MISSING | searched `call_transfer`, `transfer_call`, `warm_transfer`: 0 |
+| 369 | PCO-COMMS-014 Outbound call | MISSING | searched `outbound_call`, `place_call`, `start_call`: 0; `voice-access-token` role UNVERIFIED |
+| 370 | PCO-COMMS-015 Opt-outs/suppress | PARTIAL | campaign plan + send suppression proven §14.2; SMS STOP (`handle-inbound-sms`) UNVERIFIED |
+| 371 | PCO-COMMS-016 Multi-contact outreach | PARTIAL | campaign lifecycle proven §14.2; sends disabled |
+| 372 | PCO-COMMS-017 Attachments | UNVERIFIED | the door forwards attachments; safety scanning UNVERIFIED |
+| 373 | PCO-COMMS-018 Sensitive escalation | UNVERIFIED | `comms.support_cases_read` (E09) |
+| 374 | PCO-COMMS-019 Response times | MISSING | no producer found; E02/E09 |
+| 375 | PCO-COMMS-020 Voice-call outcomes | UNVERIFIED | Live lane |
+| 376 | PCO-MKT-001 Brief | WORKING | row 67 |
+| 377 | PCO-MKT-002 Audience segment | WORKING | segments + preview; exclusion proven §14.2 |
+| 378 | PCO-MKT-003 Capture form | WORKING | `growth_form.save` |
+| 379 | PCO-MKT-004 Publish funnel | WORKING | `growth_form.publish` door; S2a embed |
+| 380 | PCO-MKT-005 Attribution | WORKING | S1a stamp, live-reproduced (§13) |
+| 381 | PCO-MKT-006 Welcome sequence | WORKING (draft) | `email_series_draft` kind `welcome` |
+| 382 | PCO-MKT-007 Automated nurture | PARTIAL | series engine; S4b activation design owed (DECISION); recurrence HELD |
+| 389 | PCO-MKT-014 Paid ads performance | MISSING | no in-product spend producer; E10 provider |
+| 390 | PCO-MKT-015 Ad-launch proposal | MISSING | DECISION |
+| 391 | PCO-MKT-016 Approve/pause ad | MISSING | DECISION |
+| 392 | PCO-MKT-017 Compare acquisition | PARTIAL | #2801 credited counts; CAC/ROAS UNAVAILABLE |
+| 393 | PCO-MKT-018 Experiments | UNVERIFIED | not grounded |
+| 395 | PCO-MKT-020 Webinar promotion | PARTIAL / HELD | grounding `99923e05` (dated); attendance producer unnamed |
+| 529 | PCO-LIVE-014 Phone-to-human | MISSING | transfer absent (row 368) |
+| 530 | PCO-LIVE-015 Inbound business call | UNVERIFIED | `twilio-inbound-webhook`, `voice-twiml` |
+| 531 | PCO-LIVE-016 Post-call update | UNVERIFIED | not grounded |
+| 532 | PCO-LIVE-017 Recording consent | MISSING | searched `call_recording`, `recording_consent`: 0 |
+| 533 | PCO-LIVE-018 Outbound voice spend | UNVERIFIED | `paige_voice_budget_control` (scope to confirm) |
+| 552 | PCO-CUSTOMER-001 Answer lead question | UNVERIFIED | E09 CURA / site chat |
+| 553 | PCO-CUSTOMER-002 Qualify caller | MISSING | no voice qualifier |
+| 554 | PCO-CUSTOMER-003 Book caller | PARTIAL | `public-booking` creates a contact, no deal; voice booking MISSING |
+| 584 | PCO-COMMERCE-005 Abandoned checkout | MISSING | searched `abandoned_checkout`, `checkout_abandon`: 0; checkout is E04 |
+| 585 | PCO-COMMERCE-006 Retention offer | MISSING | searched `retention_offer`, `winback`: 0; `reengagement` campaign kind exists |
+| 597 | J03 Lead → booked appointment | PARTIAL | booking→deal HELD (E05/E04) |
+| 604 | J10 Correct CRM data | PARTIAL | `crm_update_contact`; authenticated drive owed |
+| 607 | J13 Gmail/iCloud workflow | PARTIAL | Gmail read/organize; iCloud MISSING |
+| 608 | J14 Inbound phone lead | UNVERIFIED | Live lane |
+| 612 | J18 Ad campaign closed loop | MISSING | no launch/spend |
+
+**Appended email subcases (owner mandate; original IDs untouched):**
+- **E-1 to E-9 (campaign lifecycle):** draft save/reopen, member/foreign refusal, freeze, stale refusal,
+  owner-or-admin-only approve, PAIGE's filing waits for a person, decline, suppression and opt-out at plan and
+  send, unknown/duplicate/cancel/resend.
+  WORKING (source) and proven §14.2. No live send.
+- **E-10 SendGrid account integration:**
+  - PARTIAL: the door, receipts and sender integrity are live but inert.
+  - DECISION: the scoped webhook-admin credential.
+  - The Resend→SendGrid managed-sender cutover is #2152 reconciliation.
+- **E-11 Auto-provisioned tenant mailbox:** MISSING. Decision package owed: domain strategy, provider,
+  per-mailbox cost, sender vs alias vs full mailbox.
+- **E-12 Custom domain:** existing-mailbox connection and new-mailbox provisioning are both MISSING (E10 + E06
+  DNS). No silent MX/SPF/DKIM/DMARC change.
+- **E-13 Gmail send/manage scopes:** DECISION (consent/app review). Read/organize is shipped.
+- **E-14 iCloud Mail:** MISSING. Current Apple authentication/transport requirements need re-grounding from
+  official docs with E10.
+- **E-15 Inbound replies → Conversations:** PARTIAL (the form-inquiry path ships). Campaign-reply threading is
+  UNVERIFIED.
+- **E-16 Attribution of email to outcomes (E02):** PARTIAL. Opens/clicks are bounded signals only.
+
+**Algorithm support (canonical IDs, actual maturity):**
+- **ALG-05** lead prioritization: **NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED.**
+- **ALG-09** attribution/acquisition:
+  - PARTIAL. Signals: form link + `utm_campaign`.
+  - Logic: the deterministic S1a rule (`form_and_tag` / `form_link` / `campaign_tag` / `ambiguous`, never
+    guessed).
+  - Output: a stamped lead, live-reproduced.
+  - The spend/conversion side is MISSING, so it is not paid optimization.
+- **ALG-10** communication timing/channel:
+  - PARTIAL. Signals: consent, suppression, opt-out, the daily cap and the `deferred` pre-send hold.
+  - Logic: eligibility at plan and re-check at send, proven §14.2.
+  - Timing/channel selection: **NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED.**
+- **ALG-01/08/11/12/13:** apply only where wiring is shown. None is newly claimed here.
+
+### 14.4 Held effects — decision table (independent work continues)
+
+| Effect | Actor / authority | Exact ask | Cost / effect | Rollback | Work that continues meanwhile |
+|---|---|---|---|---|---|
+| SendGrid provider events + first real send | Owner supplies the scoped webhook-admin credential; an admin runs the broker prepare (no key in chat or docs) | The credential scope as in the S7.4 package | No new spend beyond the standing account; enables delivery evidence | The existing disabled/enabled boundary | Lifecycle proofs, reply UI, Conversations REPAIR (O12) |
+| Managed sender Resend→SendGrid | Owner ruling 2026-10-14 (#2152) recorded; engineering cutover | Confirm the P1–P11 order after re-grounding | Provider switch for platform/tenant mail | Resend ≤14 days per step (per #2152) | Re-grounding the inventory on current source |
+| Tenant PAIGE Email mailbox | Owner: domain, provider, per-mailbox cost | A decision package (to be prepared) | Spend + DNS | Not provisioned until approved | Sender vs mailbox labels stay truthful |
+| Gmail send/manage scopes, iCloud transport | Owner + E10 (consent/app review) | Scope list per operation | Provider review; no spend | Revoke/disconnect | Gmail O10/O15 REPAIRs |
+| Ad launch/spend | Owner, per launch | Budget, account, campaign | Real spend | Pause | Proposal/approval design only |
+| S4b process activation, S3 reply screen | Owner sees the design (§00) | A rendered prototype | None | Not activated | Source/backend negatives |
+
+**States kept separate:** source · review · exact CI · merge · deploy · configured · connected · activated ·
+authenticated · founder. This checkpoint reaches **source + local automated proof** for §14.2 and **merge**
+for #2923. Nothing else is claimed.

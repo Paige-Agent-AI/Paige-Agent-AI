@@ -4325,3 +4325,26 @@ mechanical source-release accounting, not another delivery log or activation.
 ## EXP05 routine automation session recovery — October25 source correction
 
 The existing native Operations/Settings process hook must not discard original history or a pending/inconclusive control on routine same-session SIGNED_IN. Reuse canonical nonsecret actor/sign-in metadata for retention only; genuine session/scope changes still retire synchronously and original caller/native CAS remain authority. Actual hook causal38/4 becomes228/0 across five owning data/hook/UI files, including original native component/result/link preservation and all negative controls. [Source and proof limits](../evidence/ui-delivery/exp05-owner-task-session-recovery.md) retain strict base/candidate15 inherited failures/zero new, unchanged native markup/styles and actual pre-release ordinary-owner original Task/receipt/reload retrieval separately from corrected deployment acceptance. No Root lease, runtime, writer, provider, capability/catalogue/algorithm maturity or full-Experience closure; exact review/CI/deployment/current authenticated return still owed.
+## EXP02 original manual result finalization — source only, October26
+
+O07/O14/O16 extend the existing E05 Work transition under original source window
+ANT161/3b5f49aa. Forward candidate `20271116010352` follows actual E09 `10309`;
+original E04 gap receiving c0311e44 is retained, not an idle reservation. Only
+the closed manual Systems branch verifies current authority, original completed
+run/findings and original Rail before one atomic Work settlement. Every other
+kind's full source and the existing function identity/defaults/ACL remain intact.
+Late source/receipt lock waits cannot revive an expired attempt; historical
+success replay remains valid after later original-domain finding corrections,
+but cannot manufacture a missing receipt. Failure/cancellation retain original
+semantics and do not imply rollback or absence of partial data.
+
+The existing native heartbeat proof retains all57 assertions and adds89 finalizer
+checks:146 PASS, including actual two-session waits, clock mutants, concurrency,
+source/result/receipt contradictions, current-role refusals, replay and rollback.
+Original Systems/Rail/Work records are seeded synthetic fixtures, not a real scan,
+actual Auth, customer results or acceptance. No new helper/grant/runtime/worker,
+caller, scan, registry or provider activation. Exact source receiving/review/CI,
+Preview, normal native deployment and readback remain required. Manual Spine is
+UNAVAILABLE; ALG/CAP009–017 maturity, all19/nine, historical9-0+12-0-4 and protected
+monthly UNKNOWN/UNRETRIED remain unchanged. Visual N/A, Experiential INCOMPLETE,
+Founder NOT_ACCEPTED. [Original evidence](../evidence/e2-systems-capture-mode.md).

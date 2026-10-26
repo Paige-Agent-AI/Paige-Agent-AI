@@ -7,22 +7,28 @@ import { readEnvelopeStatus } from '../../supabase/functions/_shared/paige-turn/
 import { confirmFingerprint } from '../../supabase/functions/_shared/confirm-fingerprint';
 
 const source = ts.createSourceFile('index.ts', readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8'), ts.ScriptTarget.Latest, true);
-let dispatch: ts.Statement | undefined, target: ts.Expression | undefined;
+let dispatch: ts.Statement | undefined, target: ts.Expression | undefined, scopeFingerprint: ts.Expression | undefined;
 function find(node: ts.Node) {
   if (ts.isIfStatement(node) && node.expression.getText(source) === 'tc.function.name === PORTAL_REQUEST_SHARE_TOOL') dispatch = node.thenStatement;
   if (ts.isVariableDeclaration(node) && node.name.getText(source) === 'resolveWriteTargetId') target = node.initializer;
+  if (ts.isVariableDeclaration(node) && node.name.getText(source) === 'scopedConfirmationFingerprint') scopeFingerprint = node.initializer;
   ts.forEachChild(node, find);
 }
 find(source);
-if (!dispatch || !target) throw Error('Original Root dispatch or locator is missing');
+if (!dispatch || !target || !scopeFingerprint) throw Error('Original Root dispatch, locator or scoped confirmation is missing');
 const body = ts.transpileModule(`async function run() ${dispatch.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 const locator = ts.transpileModule(`const locate=${target.getText(source)};`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+// Exercise the actual shared confirmation function, not a test-owned token format.
+const scopedFingerprintSource = ts.transpileModule(`const scoped=${scopeFingerprint.getText(source)};`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 const uuid = (n: number) => `e09fa000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const originalScopedFingerprint = (tenant: string, thread: string, client: string | null = null) =>
+  new Function('confirmFingerprint', 'personaCtx', 'payloadThreadId', 'scopedClientId', `${scopedFingerprintSource};return scoped;`)(confirmFingerprint, { tenant_id: tenant }, thread, client) as (tool: string, intent: string) => Promise<string>;
 
 async function setup(options: { live?: boolean } = {}) {
   const scope = { actorId: uuid(1), tenantId: uuid(2), threadId: uuid(3), clientId: null, audience: 'owner' as const };
   const stored = { expected_tenant_id: uuid(2), contact_id: uuid(4), work_id: uuid(5), version: '2026-10-25T12:00:00.123456Z', title: 'Read the guide', body: 'Choose one milestone.', recipient_user_id: uuid(6), access_version: null };
-  const fingerprint = await confirmFingerprint('client_portal_request_share',stored);
+  const scopedConfirmationFingerprint = originalScopedFingerprint(scope.tenantId, scope.threadId, scope.clientId);
+  const fingerprint = await scopedConfirmationFingerprint('client_portal_request_share', await confirmFingerprint('client_portal_request_share', stored));
   const claim = { id: uuid(8), fingerprint, requestNonce: uuid(9), threadId: uuid(3), clientId: null };
   const response = { data: { schema_version: 1, actor_id: uuid(1), tenant_id: uuid(2), contact_id: uuid(4), work_id: uuid(5), customer_action_id: uuid(10), status: 'shared', replayed: false, published_at: '2026-10-25T13:00:00Z' } as unknown, error: null as unknown };
   const slot = { state: 'claimed', claim, dispatched: false };
@@ -36,7 +42,7 @@ async function setup(options: { live?: boolean } = {}) {
   const deps = { traceCtx: { content_policy: 'full' }, portalRequestContentCarried: false, portalRequestScope: () => scope,
     approvalChannel: new Map([['call-1', 'operator_card']]), approvalSpend: new Map([[token, 'call-1']]), portalRequestClaims: new Map([[token, slot]]),
     tc: { id: 'call-1', function: { name: 'client_portal_request_share', arguments: JSON.stringify(stored) } },
-    liveRuntimeScope: options.live ? {} : null, portalRequestCurrent: () => true, executePortalRequestPublication, confirmFingerprint,
+    liveRuntimeScope: options.live ? {} : null, portalRequestCurrent: () => true, executePortalRequestPublication, confirmFingerprint, scopedConfirmationFingerprint,
     supabaseClient: { rpc, auth }, req: { signal: new AbortController().signal }, requestExecutionState: state,
     supabase: {}, user: { id: uuid(1) }, revalidateProposalScope: revalidate, recordCapabilityRun: record, stableRunId: async () => uuid(11), toolResults, OUTCOME_UNKNOWN_NOTE: 'Check the original record.' };
   const run = new Function(...Object.keys(deps), `${body}; return run;`)(...Object.values(deps)) as () => Promise<void>;
@@ -70,11 +76,32 @@ it('a missing telemetry acknowledgement does not erase a verified native result'
   const f = await setup(); f.record.mockResolvedValue(false); await f.run(); expect(f.result()).toMatchObject({ success: true, verified_readback: true });
 });
 it('binds the original claimed call independently of reused provider call identifiers',async()=>{
-  const f=await setup(),otherFingerprint=await confirmFingerprint('client_portal_request_share',{...f.stored,work_id:uuid(99)});
+  const f=await setup(),otherFingerprint=await f.deps.scopedConfirmationFingerprint('client_portal_request_share',await confirmFingerprint('client_portal_request_share',{...f.stored,work_id:uuid(99)}));
   const otherToken=otherFingerprint+':'+uuid(70);
   f.deps.approvalSpend.clear();f.deps.approvalSpend.set(otherToken,'call-1');f.deps.approvalSpend.set(f.token,'call-1');
   f.deps.portalRequestClaims.set(otherToken,{state:'claimed',claim:{...f.claim,id:uuid(88),fingerprint:otherFingerprint},dispatched:false});
   await f.run();expect(f.rpc).toHaveBeenCalledOnce();expect(f.rpc.mock.calls[0][1]).toMatchObject({_confirmation_id:uuid(8),_fingerprint:f.claim.fingerprint});
+});
+it('refuses an unscoped token even when its exact stored arguments match',async()=>{
+  const f=await setup(),unscoped=await confirmFingerprint('client_portal_request_share',f.stored),token=unscoped+':'+uuid(7);
+  expect(unscoped).not.toBe(f.claim.fingerprint);
+  f.deps.approvalSpend.clear();f.deps.portalRequestClaims.clear();
+  f.deps.approvalSpend.set(token,'call-1');f.deps.portalRequestClaims.set(token,{...f.slot,claim:{...f.claim,fingerprint:unscoped}});
+  await f.run();expect(f.rpc).not.toHaveBeenCalled();expect(f.result()).toMatchObject({success:false,not_applied:true});
+});
+it('refuses exact words approved for another tenant, thread or focused client',async()=>{
+  for(const mode of ['tenant','thread','client']){
+    const f=await setup(),scoped=originalScopedFingerprint(mode==='tenant'?uuid(99):f.scope.tenantId,mode==='thread'?uuid(99):f.scope.threadId,mode==='client'?uuid(99):null);
+    const fingerprint=await scoped('client_portal_request_share',await confirmFingerprint('client_portal_request_share',f.stored)),token=fingerprint+':'+uuid(7);
+    f.deps.approvalSpend.clear();f.deps.portalRequestClaims.clear();f.deps.approvalSpend.set(token,'call-1');
+    f.deps.portalRequestClaims.set(token,{...f.slot,claim:{...f.claim,fingerprint}});
+    await f.run();expect(f.rpc).not.toHaveBeenCalled();expect(f.result()).toMatchObject({success:false,not_applied:true});
+  }
+});
+it('refuses ambiguous actual claims rather than choosing by their provider call id',async()=>{
+  const f=await setup(),token=f.claim.fingerprint+':'+uuid(70);
+  f.deps.approvalSpend.set(token,'call-1');f.deps.portalRequestClaims.set(token,{...f.slot,claim:{...f.claim,id:uuid(88)}});
+  await f.run();expect(f.rpc).not.toHaveBeenCalled();expect(f.result()).toMatchObject({success:false,not_applied:true});
 });
 it('does not dispatch words changed after the original claim was captured',async()=>{
   const f=await setup();f.deps.tc.function.arguments=JSON.stringify({...f.stored,body:'Different words after approval.'});

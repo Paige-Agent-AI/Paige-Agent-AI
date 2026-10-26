@@ -18897,7 +18897,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           let storedFingerprint: string | null = null;
           try {
             if (stored && typeof stored === "object" && !Array.isArray(stored)) {
-              storedFingerprint = await confirmFingerprint(tc.function.name, stored as Record<string, unknown>);
+              storedFingerprint = await scopedConfirmationFingerprint(tc.function.name,
+                await confirmFingerprint(tc.function.name, stored as Record<string, unknown>));
             }
           } catch { /* no exact original claim can be selected */ }
           const shareTokens = approvalChannel.get(tc.id) === "operator_card"

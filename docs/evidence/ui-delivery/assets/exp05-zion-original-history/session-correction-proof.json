@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "sourceCheck": "PASS",
+  "historicalVisualSource": "e61443fa0e200bba1b855190b50860bed460a86c",
+  "historicalVisualProof": "source-proof.json",
+  "historicalVisualProofSHA256": "8d95af89a992e0ffaac52404b57b87ab42848901a2a8a8ea03a6b93f015ed2a3",
+  "currentAcceptedMain": "709c181c13e45ae59288a2c0631ed0a616e9d09f",
+  "currentPrototypeAcceptedMain": "005f5d389d9faf98fa4e56ac9f3bb53c1471fd68",
+  "productInputsVerified": 376,
+  "changedProductInputs": [
+    {
+      "path": "src/solo/operations/OperationsZionHistory.tsx",
+      "sha256": "5102e5b5f5d6e486ea5a470de223ec4d0738a4f78b70687590fab6451a4e3798",
+      "gitBlob": "85456432b3c4189d3f9b06f8031e74f7ca07b80a",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit owning candidate product source"
+    }
+  ],
+  "unchangedRenderContract": "Exact owning JSX return tree, CSS, reader and other375 product inputs equal the prior source-bound visual packet; all20 prior capture hashes verified. They remain historical visual evidence, not newly captured or rebound.",
+  "mockPortCount": 188,
+  "mockPortTopology": "unchanged188 disclosed boundaries; neutral auth port now emits INITIAL_SESSION and explicit same/new-session metadata, never credentials",
+  "privateAuthPortSHA256": "a004b8af2390f8275c3bd277f04a1fe2d0b6b5a8295d6b144d555efe4535eb63",
+  "privateManifestSHA256": "eabc0564bac52b5788692a93b646e0a074626192eff11ef62d996ba3d25678f3",
+  "bundleSHA256": "9e6913216d4afc742c5a618637c261bdbcf08ccb8a862f5488b5f26f1950aafd",
+  "htmlSHA256": "38007da5772331bf2b434efb84e97db5a386de153ffdc77317e0f225404d3a9f",
+  "transforms": [],
+  "automated": {
+    "causalRed": {
+      "artifactSHA256": "7b219da856c825e58af4f898587cd5367b4e9c5da5d758019f27c4d66a509348",
+      "suites": 1,
+      "passed": 16,
+      "failed": 3,
+      "success": false
+    },
+    "correctedFocused": {
+      "artifactSHA256": "1ff96c3a3fb78b3466f2dce960bceb934efac51a50b184aa576a491cf7a1409e",
+      "suites": 3,
+      "passed": 53,
+      "failed": 0,
+      "success": true
+    },
+    "operationsIntegration": {
+      "artifactSHA256": "1f831a521b09262ebb4eabdc937d5985abbdc5a496d16557dc28a4a1ddeb5469",
+      "suites": 86,
+      "passed": 972,
+      "failed": 0,
+      "success": true
+    }
+  },
+  "browser": {
+    "environment": "isolated native host; neutral SDK/auth fixtures; no provider/business effects",
+    "cases": [
+      {
+        "case": "untouched collapsed same-session recovery",
+        "text": "ZION assignments\nInspect recent work\n\nInspect the original responses from work you asked ZION to prepare.",
+        "result": "PASS"
+      },
+      {
+        "case": "populated original response survives same-session recovery",
+        "unchanged": true,
+        "text": "ZION assignments\nClose inspection\n\nYour recent requests \u00b7 sampled from up to five specialist assignments.\n\nZION\n\nRequested Oct 25, 2026, 15:12 UTC\n\nResponse recorded\nRefresh original response\n\nOriginal receipt verified\n\nInspected Oct 25, 2026, 15:15 UTC\n\nRead original response\n\nReview the unfinished commitment with its owner, then decide whether its due date or next step should change. This original planning response did not change any work.\n\nBusiness actions need their own work records and results.\n\nOriginal references\nRefresh sample",
+        "result": "PASS"
+      },
+      {
+        "case": "genuine changed sign-in removes private result",
+        "text": "ZION assignments\nClose inspection\n\nYour recent assignments could not be verified.\n\nCheck current access again",
+        "result": "PASS"
+      },
+      {
+        "case": "same-session SIGNED_IN while original sample is held",
+        "result": "PASS",
+        "observed": "Reading remained pending and original sample appeared after held completion; no new invocation."
+      },
+      {
+        "case": "SIGNED_OUT while original sample is held, then late completion",
+        "result": "PASS",
+        "observed": "Prior sample withdrawn; owner/admin refusal remains after completion; no result reopened."
+      }
+    ],
+    "captureLimit": "New exact CDP screenshot calls timed out; original twenty source-bound visual captures are retained as historical unchanged-JSX/CSS proof, not recaptured or rebound. Current native screenshot is separately recorded at its actual pixel dimensions.",
+    "narrowDOM": {
+      "width": 390,
+      "height": 1000,
+      "sectionClientWidth": 281,
+      "sectionScrollWidth": 281
+    }
+  },
+  "currentNativeCapture": {
+    "file": "session-correction-current.jpg",
+    "format": "jpg",
+    "width": 1536,
+    "height": 735,
+    "sha256": "1d8bfe1cd14e9ac9cc9fd2d49e059d83cf24a3dc7caa836326c054b40bdff9fa",
+    "scope": "Actual native screenshot of corrected component at changed-section scroll position; physical capture dimensions only, no exact CSS viewport or full-page claim."
+  },
+  "authority": "Nonsecret last_sign_in_at plus actor equality governs retained UI only. Original pre/post caller session and server/RLS authorize every read. No provider, business write, new invocation, approval or cached permission.",
+  "unverified": [
+    "new authenticated consumer positive/negative and reload",
+    "equivalent eligible cohorts and new-account runtime",
+    "true200-percent browser zoom",
+    "full weekly execution, Builder, delegation, Live and complete EXP05 acceptance"
+  ]
+}

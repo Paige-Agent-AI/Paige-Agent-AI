@@ -1,0 +1,121 @@
+{
+  "environment": "production",
+  "scope": "Existing authorized ordinary SOLO owner",
+  "before": [
+    {
+      "access": "Unverified",
+      "coverage": "Coming Soon",
+      "description": "Reviews source-backed ad spend, leads and returns when those measurements are available. Automatic ROAS, cost-per-lead and attribution analysis is not available in Business Review yet; a listed ad provider does not prove a connection or a return.",
+      "name": "Ad Spend Efficiency Read"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Coming Soon",
+      "description": "Flags client risk only when permitted activity or service-delivery evidence supports it. Current client and lifecycle totals do not establish churn risk. Source-backed client churn detection is not available in Business Review yet.",
+      "name": "Churn Signal Detection"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Coming Soon",
+      "description": "Compares retention and expansion only from authoritative acquisition-cohort evidence. Current client totals cannot reconstruct cohort history. Cohort comparisons are not available in Business Review yet.",
+      "name": "Cohort Analysis Read"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Limited",
+      "description": "PAIGE can review recorded form intake, submissions linked to an opportunity, and current pipeline evidence when permitted. Visitor conversion, causal attribution and historical stage-to-stage drop-off diagnosis are not available in Business Review yet.",
+      "name": "Conversion Funnel Diagnosis"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Coming Soon",
+      "description": "Interprets authorized email, content and audience measurements when their sources provide them. Source-backed channel engagement is not available in Business Review yet. A contact count or listed connection is not evidence of engagement.",
+      "name": "Engagement Read"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Unverified",
+      "description": "PAIGE can explain available business evidence for the last 30 days and identify missing information. Filing a monthly review document for approval and later retrieval remains unverified. A Chat answer is not a filed document or permission to send it.",
+      "name": "Monthly Business Review Draft"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Unverified",
+      "description": "PAIGE can discuss the current quarter using available business evidence and its limitations. Filing a quarterly narrative for approval and later retrieval remains unverified. No unsupported financial history, forecast or delivery is promised.",
+      "name": "Quarterly Narrative Draft"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Limited",
+      "description": "PAIGE can compare recorded receipts where complete, compatible source periods exist, with currencies kept separate. Recorded receipts are not recognized revenue, MRR, ARR, profit or bank cash. Full revenue-series analysis requires authoritative revenue evidence.",
+      "name": "Revenue Trend Read"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Limited",
+      "description": "Ask PAIGE for a sourced weekly review of available sales, collections, client, operations, recorded form intake and Strategic Play evidence. Missing information stays explicit and recommendations need supporting evidence. This is a read-only review; automatic scheduling, sends and business actions are not included.",
+      "name": "Weekly Business Review"
+    }
+  ],
+  "after": [
+    {
+      "access": "Unverified",
+      "coverage": "Coming Soon",
+      "description": "Reviews source-backed ad spend, leads and returns when those measurements are available. Automatic ROAS, cost-per-lead and attribution analysis is not available in Business Review yet; a listed ad provider does not prove a connection or a return.",
+      "name": "Ad Spend Efficiency Read"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Coming Soon",
+      "description": "Flags client risk only when permitted activity or service-delivery evidence supports it. Current client and lifecycle totals do not establish churn risk. Source-backed client churn detection is not available in Business Review yet.",
+      "name": "Churn Signal Detection"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Coming Soon",
+      "description": "Compares retention and expansion only from authoritative acquisition-cohort evidence. Current client totals cannot reconstruct cohort history. Cohort comparisons are not available in Business Review yet.",
+      "name": "Cohort Analysis Read"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Limited",
+      "description": "PAIGE can review recorded form intake, submissions linked to an opportunity, and current pipeline evidence when permitted. Visitor conversion, causal attribution and historical stage-to-stage drop-off diagnosis are not available in Business Review yet.",
+      "name": "Conversion Funnel Diagnosis"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Coming Soon",
+      "description": "Interprets authorized email, content and audience measurements when their sources provide them. Source-backed channel engagement is not available in Business Review yet. A contact count or listed connection is not evidence of engagement.",
+      "name": "Engagement Read"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Unverified",
+      "description": "PAIGE can explain available business evidence for the last 30 days and identify missing information. Filing a monthly review document for approval and later retrieval remains unverified. A Chat answer is not a filed document or permission to send it.",
+      "name": "Monthly Business Review Draft"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Unverified",
+      "description": "PAIGE can discuss the current quarter using available business evidence and its limitations. Filing a quarterly narrative for approval and later retrieval remains unverified. No unsupported financial history, forecast or delivery is promised.",
+      "name": "Quarterly Narrative Draft"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Limited",
+      "description": "PAIGE can compare recorded receipts where complete, compatible source periods exist, with currencies kept separate. Recorded receipts are not recognized revenue, MRR, ARR, profit or bank cash. Full revenue-series analysis requires authoritative revenue evidence.",
+      "name": "Revenue Trend Read"
+    },
+    {
+      "access": "Unverified",
+      "coverage": "Limited",
+      "description": "Ask PAIGE for a sourced weekly review of available sales, collections, client, operations, recorded form intake and Strategic Play evidence. Missing information stays explicit and recommendations need supporting evidence. This is a read-only review; automatic scheduling, sends and business actions are not included.",
+      "name": "Weekly Business Review"
+    }
+  ],
+  "unchangedAfterReload": true,
+  "newChatSends": 0,
+  "invocations": 0,
+  "customerOutcomeAcceptance": false,
+  "sharedAccessReadiness": "All nine Access labels are currently hardcoded Unverified; no readiness proof inferred."
+}

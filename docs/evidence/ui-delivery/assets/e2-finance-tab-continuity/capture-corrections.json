@@ -1,0 +1,7 @@
+{
+  "excludedInitialNativeCaptures": 13,
+  "reason": "Target screenshots encoded JPEG with fractional display rounding; a 1536 CSS viewport produced a 1535-pixel bitmap. They are archived privately and excluded from exact-frame PASS.",
+  "correction": "Fresh original browser Page.captureScreenshot PNG with explicit current CSS clip and verified encoding/dimensions; no image conversion, resize or editing. One capture timeout was resumed after state readback; an unmatched trial clip was never saved or counted. Invalid inline helper/Pillow attempts produced no verification result.",
+  "resized": false,
+  "customerAcceptance": false
+}

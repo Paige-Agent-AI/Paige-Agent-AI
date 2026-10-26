@@ -1,5 +1,14 @@
 # EXP05 — preserve original weekly work on same-session return
 
+## Current-main composition — October26 UTC
+
+Original reviewed2fabce6b source/proofs below remain historical. Current main
+dd6496a8f659d653b7249506c1ec5dc719433ed6 is composed, preserving its released
+automation/ZION inspection, E02 Finance/reader and E08 work. One README insertion
+conflict is resolved with both complete sections; all four weekly source/test
+blobs remain byte-identical. Final new-head review/required CI and actual release
+remain separate gates; earlier green checks are not borrowed for this successor.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: existing owner resumes a weekly proposal/review/control. Original flow and acceptance remain docs/delivery/experience-05-weekly-commitment-check.md and its acceptance packet; causal proof is docs/evidence/exp05-weekly-session-recovery.json.
 PAIGE_UI_DESIGN: PASS: existing Operate, compact weekly controls, native form/focus and all routed design/accessibility checks retained; no JSX, CSS, label, route or new state.

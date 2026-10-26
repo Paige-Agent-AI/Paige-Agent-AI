@@ -765,3 +765,9 @@ verify_jwt = false
 # EXP08 Team Hub files: caller JWT checks the row first; the service role then reads only that exact path.
 [functions.team-hub-file]
 verify_jwt = true
+
+# EXP08 Team Hub stale-file sweep: CRON-invoked hourly (the cron poster presents no Supabase JWT), so
+# verify_jwt=false. It fails closed in-function to the internal-caller gate (service-role bearer OR a
+# valid x-cron-token), exactly like paige-media-sweeper and paige-model-watch.
+[functions.team-hub-file-sweep]
+verify_jwt = false

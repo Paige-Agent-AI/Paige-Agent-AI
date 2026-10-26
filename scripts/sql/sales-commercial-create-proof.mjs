@@ -93,6 +93,7 @@ try {
  };
  assert.equal(readRow().agreed_amount_basis,'total','governed negotiated installment is a fixed total');
  assert.equal(readRow().agreed_amount_minor,350000,'original principal is never multiplied');
+ assert.equal(readRow().title,null,'a canonical newly recorded fixed agreement may legitimately have no title');
  assert.equal(readRow("UPDATE tenant_client_agreements SET term_kind='recurring';").agreed_amount_basis,'per_cycle');
  assert.equal(readRow("UPDATE tenant_client_agreements SET term_kind='one_time',installments_total=NULL,billing_interval=NULL;").agreed_amount_basis,'total');
  assert.equal(readRow("UPDATE tenant_client_agreements SET price_basis='catalog',catalog_price_snapshot_minor=350000,catalog_price_snapshot_currency='usd',catalog_price_snapshot_kind='installment',catalog_price_snapshot_at=now();").agreed_amount_basis,'per_installment');

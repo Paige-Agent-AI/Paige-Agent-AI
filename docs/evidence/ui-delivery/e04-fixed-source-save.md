@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: A current original total survives native revalidation under
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Native reader/preview whole inverses and original executor identity; private invoker helper/ACL; original Edge admission/approval/execution and response branches; original review component; original financial model and signed terms remain intact.
 
-INTERNAL_BUILD_IDENTITY:73429e279b272e438821b9b8e88f85299fe4a1b0; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(candidate-native-guard-parity); edge=PROOF_OWED(candidate-collection-command-parity); evidence=docs/evidence/ui-delivery/e04-fixed-source-save.md
+INTERNAL_BUILD_IDENTITY:a41561c052beb303b42d958e578c3b938ec75c10; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(candidate-native-guard-parity); edge=PROOF_OWED(candidate-collection-command-parity); evidence=docs/evidence/ui-delivery/e04-fixed-source-save.md
 RELEASE_CHANNEL: development: Isolated actual native proof and controlled existing-dialog verification, no production activation.
 RELEASE_CLASSIFICATION: patch: Financial correctness prerequisite for the existing finite collection save and later preparation UI.
 CUSTOMER_RELEASE_IDENTITY: none: held source candidate; integrated Experience founder evaluation has not occurred.
@@ -57,7 +57,7 @@ RELEASE_RECOVERY:position=forward-only source reconciliation under normal requir
 
 ## Verification and limitations
 
-Runtime `73429e279b272e438821b9b8e88f85299fe4a1b0`, parent `7e2b49d2be00f14cec61483f91fa862730e46925`. Evidence-only commits must preserve its runtime/test blobs. Native compile proof ran on `135a432cd6e32501993a6bca8f92b51bb228c061`; all TypeScript/Edge blobs remain identical through the later native metadata-guard refinement.
+Runtime `a41561c052beb303b42d958e578c3b938ec75c10`, parent `7e2b49d2be00f14cec61483f91fa862730e46925`. Evidence-only commits must preserve its runtime/test blobs. Native compile proof ran on `135a432cd6e32501993a6bca8f92b51bb228c061`; all TypeScript/Edge blobs remain identical through the later native metadata-guard refinement.
 
 1. Original `scripts/sql/sales-commercial-create-proof.mjs` on a directory-verified unique loopback PostgreSQL16 database: **PASS**. Uses original schema CHECK/FKs, common writer/governance/receipt bodies and canonical exact signed-term router. Adds helper ACL, read/preview inverse and whole-executor preservation, fixed save, historical replay once, recurring preservation, periodic/catalog/legacy/source-change refusal, actual two-session row-lock race, receipt rollback, source and authority-metadata drift negatives. Auth/autonomy/approval resolution remains a fixture; not hosted customer proof.
 2. Focused Collections/closed-read/model tests: **147 PASS /11 files**. Includes exact actual endpoint refusal mapping (no approval or writer call), arbitrary-message negatives and actual original review refusal/cancel behavior.
@@ -72,3 +72,5 @@ Failing-first: actual current canonical native preview accepted a finite schedul
 **Release holds remain:** parent native Preview/history reconciliation; current exact-head CI/review; preservation of legacy accepted-term/source-revision continuity; complete authenticated roles/cohorts/reload/recovery. In particular, a safe refusal is not proof that all legitimate preexisting accepted agreements can make every permitted correction. That compatibility must be reconciled through the original accepted records before activating this stricter save path or the new UI.
 
 ALG-01 and ALG-12 remain **PARTIAL**; these tests extend source/replay/exception evidence, not provider reconciliation. ALG-02 remains **INCOMPLETE**, ALG-13 usefulness **UNVERIFIED**. All O1–O12 and consultant lifecycle additions remain open; founder **NOT_ACCEPTED**. Actual normal merge/release/readback and canonical shipped closeout are owed, not claimed.
+
+Review correction: the migration now pins the unchanged original executor body and authority metadata as well as the reader and preview, because native revalidation relies on its existing lock/call order. Actual executor source/security drift negatives pass. No executor implementation was changed. The accepted-legacy continuity and shared native history holds remain unresolved.

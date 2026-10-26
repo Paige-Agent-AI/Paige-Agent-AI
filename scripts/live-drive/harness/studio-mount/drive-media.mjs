@@ -12,6 +12,34 @@ const browser = await chromium.launch({ executablePath: process.env.PW_EXECUTABL
 const errors = [];
 const results = [];
 
+async function scrollMediaIntoView(page) {
+  // The media section appends below the fold. The preview renders in a full-height iframe inside
+  // the stage pane, so the child frame's document never scrolls itself and el.scrollIntoView()
+  // there does not chain across the frame boundary — scroll .vs-stage directly. The harness is
+  // same-origin, so the element's projected position inside the pane the capture will show is
+  // computable from the top document; require it to actually be on screen, not merely scrolled.
+  const r = await page.evaluate(() => {
+    const pane = document.querySelector(".vs-stage");
+    if (!pane) return { err: "no .vs-stage pane" };
+    const docOf = (f) => { try { return f.contentDocument; } catch { return null; } };
+    const frames = [...pane.querySelectorAll("iframe")];
+    const host = frames.find((f) => { const d = docOf(f); return d && d.querySelector("iframe[src*='youtube-nocookie'], section [role='status']"); });
+    if (!host) return { err: "media element not found in any preview iframe" };
+    pane.scrollTop = pane.scrollHeight;
+    const d = docOf(host);
+    const el = d.querySelector("iframe[src*='youtube-nocookie'], section [role='status']");
+    const iframeTopInPane = host.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop;
+    const elTopInDoc = el.getBoundingClientRect().top - d.documentElement.getBoundingClientRect().top;
+    const projected = iframeTopInPane + elTopInDoc;
+    const elH = el.getBoundingClientRect().height;
+    const onScreen = projected < pane.scrollTop + pane.clientHeight && projected + elH > pane.scrollTop;
+    return { onScreen, projected: Math.round(projected), scrollTop: Math.round(pane.scrollTop), clientH: Math.round(pane.clientHeight) };
+  });
+  if (!r || r.err || !r.onScreen) return r || { err: "evaluate failed" };
+  await page.waitForTimeout(300); // let the scrolled pane paint before the capture
+  return true;
+}
+
 async function shoot(page, name) {
   await page.evaluate(() => {
     const tag = document.createElement("div");
@@ -51,6 +79,8 @@ for (const [w, h] of [[1536, 770], [900, 1000]]) {
   }
   if (!found) errors.push(`ok ${w}x${h}: no nocookie embed element in any preview frame`);
   if (await p.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)) errors.push(`ok ${w}x${h}: document overflow`);
+  const sok = await scrollMediaIntoView(p);
+  if (sok !== true) errors.push(`ok ${w}x${h}: media section not verifiably in the captured viewport (${JSON.stringify(sok)})`);
   await shoot(p, `media-ok-${w}x${h}`);
   await p.close();
 }
@@ -65,6 +95,8 @@ for (const [w, h] of [[1366, 768], [900, 1000]]) {
   const all = texts.join(" ").replace(/\s+/g, " ");
   if (!all.includes("This video isn’t available right now.")) errors.push(`broken ${w}x${h}: honest sentence missing in any frame (got: ${all.slice(-200)})`);
   if (p.frames().some((f) => f.url().includes("youtube"))) errors.push(`broken ${w}x${h}: an embed frame rendered for the unparseable URL`);
+  const sbroken = await scrollMediaIntoView(p);
+  if (sbroken !== true) errors.push(`broken ${w}x${h}: honest state not verifiably in the captured viewport (${JSON.stringify(sbroken)})`);
   await shoot(p, `media-broken-${w}x${h}`);
   await p.close();
 }

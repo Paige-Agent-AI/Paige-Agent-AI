@@ -40,6 +40,40 @@ scenario supplements these rows rather than replacing them with a second matrix.
 | **09 Keep owner informed / E5-CV8** | Existing contextual attention/communications controls and original Rail/result references. | IMPLEMENTATION GAP / HELD DEPENDENCY: weekly notice producer/presentation remains UNAVAILABLE at the last verified checkpoint. Returning Chat history or a receipt alone is not delivered owner attention. Preserve consent, quiet hours, frequency and provider limits. | E05 produces relevant result/exception context; existing permitted communication/presentation consumers deliver it. Do not revive retired Notifications, create an inbox/notice ledger, or substitute external sends. |
 | **10 Show results/resume / E5-CV3,4,6,9** | Original Task/weekly/specialist history, canonical Work inspector and original process/receipt links. | PARTLY BUILT / PROOF OWED: later-session truthful review of what completed, failed, remains unknown or needs approval; current record and historical observation must remain distinct. Positive ZION assignment/result/receipt/reload is still owed. | PAIGE remains primary interface; ZION returns through the original governed assignment and Rails. E08 Team Hub consumes reusable permitted references. Prove cross-session return and separate authorized Live acceptance. |
 
+### October26 visual/job acceptance addendum — no new case closure
+
+Receive owner standard ANT-11/704476b3. Apply these subcases to the same ten
+outcomes and unchanged E5-CV1–9, never a replacement inventory. Reuse the approved
+Operations direction and existing design system; refine unfinished flows without
+blanket rebuilding released areas. Large repeated banners/slogans are not the
+default. Compact context, purposeful token color, accessible icons and meaningful
+visuals must explain actual priority, ownership, progress and next action.
+
+| Original cases / owned surface | Required real interaction and visual/job evidence |
+| --- | --- |
+| E5-CV3/4/9 — Overview and Work, Outcomes01/03/07/10 | Select attention/priority to inspect the original Work and evidence; useful loading, empty, stale, denied and failure states. Status uses label/icon as well as color. Filters, original-record detail and close/back preserve context and unsaved work. No decorative or invented activity. |
+| E5-CV1/3/4 — Projects/milestones and weekly plan, Outcomes01/02/03 | Inspect the actual milestone/dependency/owner and follow the original Work. Explain a recommendation from real deadlines; correct/decline it. Timeline/progress represents recorded facts, not assumed delivery or task-count completion. |
+| E5-CV3/4/6 — Delivery, Outcomes03/07/10 | Drill into the original E04 promise/terms and permitted Work/result; keep E09 customer acceptance and E04 commercial truth separate. No task status or receipt alone implies delivered/accepted service. |
+| E5-CV1/4/5 — Playbooks and Builder, Outcomes03/05/06 | Inspect original procedure/source, trigger, conditions and step preview; correct/save the actual draft. Approval/enablement/execution are distinct. Workflow detail/expansion reveals real supported actions, limits and readiness, not a static decorative diagram or second workflow engine. |
+| E5-CV1/2/7 — Capacity, Calendar/reminders, Outcomes01/02/04 | Inspect actual workload/assignee and original dated work, zone/conflicts and permitted future controls. Missing effort/availability remains unknown. E08 confirmed availability is separate from booking windows; no assumed free capacity or hidden booking. |
+| E5-CV3/6/8/9 — ZION/execution/attention/reentry, Outcomes06–10 | Inspect the original bounded assignment, approval, state, result and Rail. Useful permitted next action and recovery/pause/revoke remain traceable. Show actual queued/running/failed/unknown states only, never imaginary specialist activity. Contextual ZION action stays in the existing PAIGE workflow, not a dedicated planning subtab. |
+| All applicable cases/surfaces — device/accessibility/performance | Real laptop/tablet/phone inspection in Mineral and Obsidian; preserve original four SOLO viewport/open-closed cases and add relevant narrow-phone coverage. Verify long names, touch/keyboard, focus/escape/return, zoom, safe areas/virtual keyboard, scroll/reachability and no clipping/overlap/hidden controls. Color is never the sole signal; provide meaningful labels and chart alternatives. |
+| All applicable cases/surfaces — motion and finish | Purposeful supported CSS/graphics/motion only where it explains state/cause/progress/location; reduced motion preserves feedback and prevents layout shifts. Apply bounded Impeccable inspect/fix/confirm and record actual rendered interactions, performance and remaining defects. Tooltips/static captures/fixtures are not completed interactive proof. |
+
+The mandatory Flow-by-Flow → paige-ui-design → applicable Flow Prototype and
+Impeccable routes remain. UI-bearing increments carry actual proportionate
+render/interaction evidence; source-only lifecycle corrections explicitly state
+why no presentation changed and cannot promote their fixtures to browser proof.
+These subcases are REQUIRED / PROOF OWED until individually evidenced. This
+document implements no new visual surface, status promotion or founder acceptance.
+
+Updated receiving evidence: actual EXP03 successorce69090b and E05b60e28ae retain
+original Work/Calendar handoff identities; CRM/comms remain E03. E08's source
+window1b69efd6 is still held until its exact freeze/handback. E09 browser allocation
+remains; E05 queued379c5a59 after E09 and the existing E02 owner-read pass, with no
+browser access inferred. Current#2933 is only the original reader retirement
+correction, reviewed/CI candidate, not an approved or executed recurring job.
+
 ### Owner-away representative week — subcases of the original rows
 
 1. **E5-CV1/2, Outcomes02/04/05/06:** clarify the actual task and permitted recurrence;

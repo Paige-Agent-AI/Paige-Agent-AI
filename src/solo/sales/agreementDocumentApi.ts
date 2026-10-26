@@ -1,11 +1,11 @@
 import {z} from 'zod';
-import {normalizeCommsEmailAddress,commsEmailBodyHtml} from '../../../supabase/functions/_shared/comms-email/contract';
+import {normalizeCommsEmailAddress,commsEmailBodyHtml,COMMS_EMAIL_SUBJECT_MAX,COMMS_EMAIL_BODY_MAX} from '../../../supabase/functions/_shared/comms-email/contract';
 import {supabase} from '@/integrations/supabase/client';
 import {documentDescriptorSchema,assignedFieldSchema} from './agreementDocumentModel';
 import {prepareAgreementFields,readAgreementPdfDocument,type AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
 import {canonicalPresentationJson} from '../../../supabase/functions/_shared/agreements/preparation-json';
 import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
-import {parsePreparedSignatureReviewIntent,projectPreparedSignatureReview,type PreparedSignatureReview} from '../../../supabase/functions/_shared/agreements/prepared-signature-review-contract';
+import {parsePreparedSignatureReviewIntent,projectPreparedSignatureReview,PREPARED_SIGNING_LINK_MARKER,type PreparedSignatureReview} from '../../../supabase/functions/_shared/agreements/prepared-signature-review-contract';
 import {verifyRetainedAgreementPdf} from '../../../supabase/functions/_shared/agreements/retained-document';
 import {prepareCommercialPresentation,commercialPresentationText,type PreparedCommercialPresentation} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
 
@@ -321,5 +321,96 @@ export async function readAgreementSignatureRequest(ctx:AgreementDocumentContext
       })};
     if(canonicalPresentationJson(reply.args)!==canonicalPresentationJson(expected)||reply.request_sha256!==await sha256Hex(canonicalPresentationJson(expected)))throw Error('Changed complete request');
     return {...reply,args:expected};
+  }));
+}
+
+export type AgreementSignatureReference={operation_id:string;request_sha256:string};
+const signatureReference=z.object({operation_id:id,request_sha256:hash}).strict();
+const signatureArgs=z.object({agreementId:id,expectedTenantId:id,operationId:id,preparationId:id,preparationSha256:hash,reviewSha256:hash,
+  source:z.object({client_id:id,version:z.number().int().positive(),updated_at:date}).strict(),title:z.string().min(1),
+  document:z.object({sha256:hash,byte_length:z.number().int().min(5).max(26214400),page_count:z.number().int().min(1).max(250)}).strict(),
+  recipients:z.array(z.object({id,full_name:z.string().min(1),email:z.string().refine(v=>normalizeCommsEmailAddress(v)===v),signer_role:role,
+    signing_order:z.number().int().positive(),field_count:z.number().int().positive()}).strict()).min(1).max(100),
+  requestSchemaVersion:z.literal(1),sender:boundSender,messages:z.array(z.object({signer_id:id,to:z.string(),subject:z.string().min(1).max(COMMS_EMAIL_SUBJECT_MAX),
+    body_text:z.string().min(1).max(COMMS_EMAIL_BODY_MAX),body_html:z.string().min(1)}).strict()).min(1).max(100)}).strict();
+export type AgreementSignatureCommand={operation_id:string;review:PreparedSignatureReview['request'];expected_review_sha256:string;
+  connector_id:string;messages:AgreementSignatureDraft['messages'];expected_request_sha256:string};
+const originalSignatureResult=z.object({kind:z.literal('prepared_signature_request_result'),state:z.enum(['prepared','outcome_unknown','provider_accepted','provider_partial']),
+  tenant_id:id,actor_id:id,operation_id:id,request_sha256:hash,agreement_id:id,work_id:id,receipt_id:id.nullable()}).strict()
+  .refine(v=>['provider_accepted','provider_partial'].includes(v.state)?v.receipt_id!==null:v.receipt_id===null);
+export type AgreementSignatureOutcome=z.infer<typeof originalSignatureResult>;
+const signatureProposal=z.object({state:z.literal('approval_required'),capability:z.literal('agreement_send'),fingerprint:z.string().regex(/^[a-f0-9]{16}$/),
+  operation_id:id,request_sha256:hash,summary:z.string().min(1).max(4000),expires_at:date}).strict();
+export type AgreementSignatureProposal=z.infer<typeof signatureProposal>;
+const signatureRefusal=z.object({state:z.literal('refused'),code:z.string().regex(/^[A-Z][A-Z0-9_]{0,99}$/)}).strict();
+const signatureUnknown=z.object({state:z.literal('outcome_unknown'),code:z.literal('ORIGINAL_REQUEST_READBACK_REQUIRED'),operation_id:id}).strict();
+export type AgreementSignatureSubmission=AgreementSignatureOutcome|AgreementSignatureProposal|z.infer<typeof signatureRefusal>|z.infer<typeof signatureUnknown>;
+export type AgreementSignatureRecovery=AgreementSignatureOutcome|{kind:'prepared_signature_request_review_recovery';state:'review_available';
+  operation_id:string;request_sha256:string;command:AgreementSignatureCommand}|{kind:'prepared_signature_request_review_recovery';state:'review_unavailable';
+  operation_id:string;request_sha256:string;reason:'consumed'|'expired'|'unverified'}|null;
+
+/** Browser projection only. The original server rechecks every source,
+ * permission, confirmation and provider at execution time. */
+async function checkedSignatureCommand(ctx:AgreementDocumentContext,value:unknown):Promise<AgreementSignatureCommand>{
+  const envelope=requestEnvelope.parse(structuredClone(value)),a=signatureArgs.parse(envelope.args);
+  if(a.expectedTenantId!==ctx.tenantId||a.agreementId!==ctx.agreementId||a.operationId!==a.operationId.toLowerCase()
+    ||a.recipients.length!==a.messages.length||new Set(a.recipients.map(s=>s.id)).size!==a.recipients.length
+    ||new Set(a.messages.map(m=>m.signer_id)).size!==a.messages.length)throw Error('Invalid original request');
+  const messages=a.recipients.map(s=>{
+    const m=a.messages.find(m=>m.signer_id===s.id);
+    if(!m||m.to!==s.email||m.body_html!==commsEmailBodyHtml(m.body_text)
+      ||m.body_text.split(PREPARED_SIGNING_LINK_MARKER).length!==2)throw Error('Invalid original invitation');
+    return {signer_id:m.signer_id,subject:m.subject,body_text:m.body_text};
+  });
+  if(await sha256Hex(canonicalPresentationJson(a))!==envelope.request_sha256)throw Error('Changed original request');
+  return {operation_id:a.operationId,review:parsePreparedSignatureReviewIntent({tenant_id:a.expectedTenantId,agreement_id:a.agreementId,
+    preparation_id:a.preparationId,preparation_sha256:a.preparationSha256,expected_source:a.source}),expected_review_sha256:a.reviewSha256,
+    connector_id:a.sender.connector_id,messages,expected_request_sha256:envelope.request_sha256};
+}
+function checkedSignatureOutcome(value:unknown,ctx:AgreementDocumentContext,ref:AgreementSignatureReference):AgreementSignatureOutcome{
+  const result=originalSignatureResult.parse(value);
+  if(result.tenant_id!==ctx.tenantId||result.actor_id!==ctx.actorId||result.agreement_id!==ctx.agreementId
+    ||result.operation_id!==ref.operation_id||result.request_sha256!==ref.request_sha256)throw Error('Changed original result');
+  return result;
+}
+function originalRequestResult<T>(result:DocumentResult<T>):DocumentResult<T>{
+  return result.ok===false&&result.reason==='unconfirmed'?{...result,message:'The result could not be confirmed. Check the original request before taking another action.'}:result;
+}
+export async function submitAgreementSignatureRequest(ctx:AgreementDocumentContext,value:unknown,approvedFingerprint?:string):Promise<DocumentResult<AgreementSignatureSubmission>>{
+  ctx={...ctx};let command:AgreementSignatureCommand;
+  try{command=await checkedSignatureCommand(ctx,value);if(approvedFingerprint!==undefined&&!/^[a-f0-9]{16}$/.test(approvedFingerprint))throw Error('Invalid approval');}
+  catch{return failure('invalid_request');}
+  const ref={operation_id:command.operation_id,request_sha256:command.expected_request_sha256};
+  return originalRequestResult(await authorized(ctx,(headers,signal)=>supabase.functions.invoke('agreement-send?command=prepared-request',{
+    method:'POST',headers,signal,body:{...command,...(approvedFingerprint===undefined?{}:{approved_fingerprint:approvedFingerprint})}}),async data=>{
+    const raw=z.object({ok:z.literal(true),result:z.unknown()}).strict().parse(data).result;
+    const proposal=signatureProposal.safeParse(raw);
+    if(proposal.success){if(proposal.data.operation_id!==ref.operation_id||proposal.data.request_sha256!==ref.request_sha256)throw Error('Changed approval');return proposal.data;}
+    const refused=signatureRefusal.safeParse(raw);if(refused.success)return refused.data;
+    const uncertain=signatureUnknown.safeParse(raw);if(uncertain.success){if(uncertain.data.operation_id!==ref.operation_id)throw Error('Changed request');return uncertain.data;}
+    return checkedSignatureOutcome(raw,ctx,ref);
+  }));
+}
+/** The URL contains only the original opaque reference. No approval,
+ * invitation wording, signing credential or automatic execution is restored. */
+export async function readAgreementSignatureRecovery(ctx:AgreementDocumentContext,value:AgreementSignatureReference):Promise<DocumentResult<AgreementSignatureRecovery>>{
+  ctx={...ctx};let ref:AgreementSignatureReference;
+  try{ref=signatureReference.parse(structuredClone(value));}catch{return failure('invalid_request');}
+  return originalRequestResult(await authorized(ctx,(headers,signal)=>supabase.functions.invoke('agreement-send?review=request-recovery',{
+    method:'POST',headers,signal,body:{tenant_id:ctx.tenantId,agreement_id:ctx.agreementId,operation_id:ref.operation_id,expected_request_sha256:ref.request_sha256}}),async data=>{
+    const raw=z.object({ok:z.literal(true),result:z.unknown()}).strict().parse(data).result;
+    if(raw===null)return null;
+    const unavailable=z.object({kind:z.literal('prepared_signature_request_review_recovery'),state:z.literal('review_unavailable'),...signatureReference.shape,
+      reason:z.enum(['consumed','expired','unverified'])}).strict().safeParse(raw);
+    if(unavailable.success){if(unavailable.data.operation_id!==ref.operation_id||unavailable.data.request_sha256!==ref.request_sha256)throw Error('Changed original review');return unavailable.data;}
+    const available=z.object({kind:z.literal('prepared_signature_request_review_recovery'),state:z.literal('review_available'),...signatureReference.shape,
+      command:z.unknown(),review:requestEnvelope}).strict().safeParse(raw);
+    if(available.success){
+      const recovered=available.data,command=await checkedSignatureCommand(ctx,recovered.review);
+      if(recovered.operation_id!==ref.operation_id||recovered.request_sha256!==ref.request_sha256||command.operation_id!==ref.operation_id
+        ||command.expected_request_sha256!==ref.request_sha256||canonicalPresentationJson(command)!==canonicalPresentationJson(recovered.command))throw Error('Changed saved review');
+      return {kind:'prepared_signature_request_review_recovery' as const,state:'review_available' as const,...ref,command};
+    }
+    return checkedSignatureOutcome(raw,ctx,ref);
   }));
 }

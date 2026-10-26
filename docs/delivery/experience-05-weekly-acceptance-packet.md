@@ -1,3 +1,14 @@
+## October26 index reconciliation — no new customer outcome
+
+The two exact released-source/readback supplements below remain unchanged.
+Current main35fff3a88118e053d049be3bea0c2b99178fe929 introduced a real Master
+insertion conflict after the originaled0 closeout was reviewed. Preserve complete
+incoming E02 Finance/E04 signature/E06 publication proof and both E05 release
+records, moving only the new Master block/Brain note to unique existing EXP05
+anchors. Originaled0 CI remains historical; this new docs-only head requires its
+own review and required exact-head checks. No source, runtime, activation,
+permission, catalogue, algorithm or acceptance state changes.
+
 # Weekly Internal Commitment Check — protected acceptance handoff
 
 ## October25 23:57UTC — original inspection releases, acceptance remains open

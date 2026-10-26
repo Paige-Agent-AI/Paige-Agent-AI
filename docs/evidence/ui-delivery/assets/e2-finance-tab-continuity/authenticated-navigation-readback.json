@@ -1,0 +1,31 @@
+{
+  "recorded_on_utc": "2026-10-25",
+  "source_pr": 2883,
+  "source_merge": "1ff498e790da4deeab60be2c60f988f7023a7a80",
+  "proof_class": "authenticated_existing_authorized_solo_owner",
+  "scope": "read_only_finance_navigation_and_original_source_inspection",
+  "trace": [
+    {"key":"End","selected":"finance-tab-forecast","focused":"finance-tab-forecast","panels":1,"draftLength":0},
+    {"key":"Left","selected":"finance-tab-profitability","focused":"finance-tab-profitability","panels":1,"draftLength":0},
+    {"key":"Home","selected":"finance-tab-overview","focused":"finance-tab-overview","panels":1,"draftLength":0},
+    {"key":"Left","selected":"finance-tab-forecast","focused":"finance-tab-forecast","panels":1,"draftLength":0},
+    {"key":"Right","selected":"finance-tab-overview","focused":"finance-tab-overview","panels":1,"draftLength":0},
+    {"key":"Right","selected":"finance-tab-banking","focused":"finance-tab-banking","panels":1,"draftLength":0},
+    {"key":"Right","selected":"finance-tab-debt","focused":"finance-tab-debt","panels":1,"draftLength":0},
+    {"key":"Right","selected":"finance-tab-receivables","focused":"finance-tab-receivables","panels":1,"draftLength":0},
+    {"key":"Right","selected":"finance-tab-expenses","focused":"finance-tab-expenses","panels":1,"draftLength":0},
+    {"key":"Right","selected":"finance-tab-profitability","focused":"finance-tab-profitability","panels":1,"draftLength":0},
+    {"key":"Right","selected":"finance-tab-forecast","focused":"finance-tab-forecast","panels":1,"draftLength":0}
+  ],
+  "no_per_key_refocusing": true,
+  "conversation_text_unchanged_during_navigation": true,
+  "finance_menu": {"destination":"Overview","vera_attribution":true,"draftLength":0},
+  "original_source": {"opened":true,"escape_closed":true,"original_trigger_focused":true,"history_closed":true,"retired_trigger_focused":false,"history_destination":"Budgeting & Forecasting","draftLength":0},
+  "reload": {"returned_to_overview":true,"same_authorized_owner":true,"composer_send_disabled":true,"latency":"UNVERIFIED","additional_key_batch":"UNVERIFIED","conversation_text_across_reload":"UNVERIFIED"},
+  "excluded": ["Stale earlier tab and initial loading observations are not a product failure or successful QA.","The additional post-reload key batch timed out before returning observations and is excluded.","No customer screenshot, amount, original record ID, account identifier or browser-session metadata is included."],
+  "still_unverified": ["other customer cohort and role","native 200 percent zoom","assistive technology","Live","full Finance source and provider coverage","full 19 outcomes and nine analytics acceptance"],
+  "new_message_or_model_request": false,
+  "approval_scan_provider_money_or_account_action": false,
+  "synthetic": false,
+  "founder_acceptance": false
+}

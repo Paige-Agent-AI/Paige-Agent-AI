@@ -166,7 +166,8 @@ export async function provePreparedConfirmation({sql,read,context,tenant,actor,c
  check(originals()===original,'Every original signature/hold/actor/preparation/autonomy body and ACL remains unchanged');
  if(process.argv.includes('--prepared-work'))console.log(JSON.stringify({checkpoint:'Original confirmation controls before Work adoption',checks,concurrentSessions:sessions,observedLockWaits:waits}));
  const preparedWork=process.argv.includes('--prepared-work')?await(await import('./prepared-signature-work-proof.mjs')).provePreparedSignatureWork({sql,read,tenant,actor,quote,fixture,issue,claim,startSession,observe,fresh,context,client,makeCommercial}):null;
- return {result:'PASS',checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,preparedWork,
+ const workEligibility=process.argv.includes('--prepared-work-eligibility')?await(await import('./prepared-work-eligibility-proof.mjs')).provePreparedWorkEligibility({sql,read,tenant,actor,quote,fixture,issue,claim,startSession,observe}):null;
+ return {result:'PASS',checks,migrationReplay:2,concurrentSessions:sessions,observedLockWaits:waits,preparedWork,workEligibility,
   proofBodySha256:createHash('sha256').update(proofBody).digest('hex'),migrationSha256:createHash('sha256').update(migration).digest('hex'),
   scope:'Original native pending-confirmation prerequisite only. Synthetic mailbox/Storage metadata; no prepared issuer/provider/signature/field effect, activation or customer acceptance.'};
 }

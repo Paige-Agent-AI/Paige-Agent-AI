@@ -4,6 +4,9 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ATTENTION_TEXT } from "../../../supabase/functions/_shared/client-engagement/labels";
+import { takePendingPaigePrompt } from "@/lib/paigePromptHandoff";
+import { clearPaigeClientScope } from "@/solo/paigeClientScope";
+import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
 
 // Experience 04 E4-S3 PR beta (Track D): where one client stands, on that client's Solo record —
 // read through the SAME governed read and composer PAIGE answers from, so the page and the chat can
@@ -19,7 +22,7 @@ import { ClientStanding } from "./ClientStanding";
 const reply = (patch: Record<string, unknown> = {}) => ({ data: { ...structuredClone(source), receipt_id: undefined, ...patch }, error: null });
 let host: HTMLDivElement, root: Root;
 beforeEach(() => { rpc.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
-afterEach(() => { act(() => root.unmount()); host.remove(); });
+afterEach(() => { act(() => root.unmount()); host.remove(); takePendingPaigePrompt(); clearPaigeClientScope(); clearPaigePublicPresenceScope(); });
 const render = async (openPaige = vi.fn()) => {
   await act(async () => root.render(<MemoryRouter><ClientStanding contactId={CLIENT} clientName="Test Consulting Client" account="42" openPaige={openPaige} /></MemoryRouter>));
   await act(async () => { await Promise.resolve(); });

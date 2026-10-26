@@ -18,6 +18,9 @@ import { ClientStanding } from './ClientStanding';
 import { ClientSharedWork } from './ClientSharedWork';
 import * as readModule from '../../solo/engagement/useClientEngagementStatus';
 import { composeClientEngagementStatus, parseClientEngagementSource } from '../../../supabase/functions/_shared/client-engagement/status';
+import { takePendingPaigePrompt } from '@/lib/paigePromptHandoff';
+import { clearPaigeClientScope, getPaigeClientScope, setPaigeClientScope, subscribePaigeClientScope } from '@/solo/paigeClientScope';
+import { clearPaigePublicPresenceScope } from '@/solo/paigePublicPresenceScope';
 
 const ACTOR = 'e0400000-0000-4000-8000-000000000001';
 const OTHER = 'e0400000-0000-4000-8000-000000000002';
@@ -47,7 +50,43 @@ describe('original client standing and shared work · scope continuity', () => {
     Object.assign(mock.context, { activeTenantId: source.tenant_id, activeUserId: ACTOR, accountContextLoading: false, accountContextStatus: 'ready' });
     host = document.createElement('div'); document.body.append(host); root = createRoot(host);
   });
-  afterEach(() => { act(() => root.unmount()); host.remove(); });
+  afterEach(() => { act(() => root.unmount()); host.remove(); takePendingPaigePrompt(); clearPaigeClientScope(); clearPaigePublicPresenceScope(); });
+
+  it('does not prepare or retarget a question from a retired original read frame', async () => {
+    const status = composeClientEngagementStatus(parseClientEngagementSource(reply().data));
+    const current = vi.fn(() => true), open = vi.fn();
+    const spy = vi.spyOn(readModule, 'useClientEngagementStatus').mockReturnValue({ phase: 'ready', status, error: '',
+      retry: vi.fn(), reload: async () => status, isCurrent: current });
+    try {
+      setPaigeClientScope({ tenantId: source.tenant_id, clientId: OTHER, label: 'Original other scope' });
+      takePendingPaigePrompt();
+      await act(async () => root.render(<MemoryRouter><ClientStanding contactId={source.contact_id}
+        clientName="Synthetic consulting client" account="42" openPaige={open} /></MemoryRouter>));
+      current.mockReturnValue(false);
+      const ask = [...host.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Ask PAIGE about Synthetic consulting client');
+      expect(ask).toBeDefined(); await act(async () => ask!.click());
+      expect(open).not.toHaveBeenCalled(); expect(takePendingPaigePrompt()).toBeNull();
+      expect(getPaigeClientScope(source.tenant_id)?.clientId).toBe(OTHER);
+    } finally { spy.mockRestore(); }
+  });
+
+  it('does not hand off text after the original read retires during a focus transition', async () => {
+    const status = composeClientEngagementStatus(parseClientEngagementSource(reply().data));
+    const current = vi.fn(() => true), open = vi.fn();
+    const spy = vi.spyOn(readModule, 'useClientEngagementStatus').mockReturnValue({ phase: 'ready', status, error: '',
+      retry: vi.fn(), reload: async () => status, isCurrent: current });
+    let stop = () => {};
+    try {
+      clearPaigeClientScope(); takePendingPaigePrompt();
+      await act(async () => root.render(<MemoryRouter><ClientStanding contactId={source.contact_id}
+        clientName="Synthetic consulting client" account="42" openPaige={open} /></MemoryRouter>));
+      stop = subscribePaigeClientScope(() => { current.mockReturnValue(false); });
+      const ask = [...host.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Ask PAIGE about Synthetic consulting client');
+      expect(ask).toBeDefined(); await act(async () => ask!.click());
+      expect(current).toHaveBeenCalled(); expect(open).not.toHaveBeenCalled();
+      expect(takePendingPaigePrompt()).toBeNull();
+    } finally { stop(); spy.mockRestore(); }
+  });
 
   it('preserves the original two-sections / one governed read contract', async () => {
     await render(); expect(mock.rpc).toHaveBeenCalledTimes(1);

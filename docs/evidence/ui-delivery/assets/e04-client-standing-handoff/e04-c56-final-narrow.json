@@ -1,0 +1,16 @@
+{
+  "ax": "Browser tab: 21, Title: \"EXP04 client handoff — local prototype\", URL: \"http://127.0.0.1:5286/\".\nThe following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\nRemoved element IDs: 21-37\n~\t\t\t\t16 pop up button (collapsed, settable) Theme, Value: Mineral, Secondary Actions: Expand\n~\t\t\t\t\t\t18 (selected) Mineral\n~\t\t\t\t\t\t19 Obsidian\n+\t\t49 container\n+\t\t\t50 heading Client standing, Value: 1\n+\t\t\t\t51 text Client standing\n+\t\t\t52 container Where Synthetic consulting client stands, ID: client-standing\n+\t\t\t\t53 heading Where Synthetic consulting client stands, Value: 3, ID: trc-standing-title\n+\t\t\t\t\t54 text Where  Synthetic consulting client  stands\n+\t\t\t\t55 container\n+\t\t\t\t\t56 text Checked  8:10 PM EDT\n+\t\t\t\t57 button Check again\n+\t\t\t\t58 container\n+\t\t\t\t\t59 text Nothing commercial is recorded for  Synthetic consulting client  yet.\n+\t\t\t\t60 text Terms, signatures, invoices and delivery work appear here as they’re added in Sales and Operations.\n+\t\t\t\t61 link Description: Set up terms, Value: 127.0.0.1:5286/solo/123/sales/agreements\n+\t\t\t\t62 button Ask PAIGE about Synthetic consulting client\n+\t\t\t\t\t63 text Ask PAIGE about \n+\t\t\t\t\t64 text Synthetic consulting client\n+\t\t\t\t65 container\n+\t\t\t\t\t66 text From your Sales and Operations records. Checking changes nothing.  Not tracked here:  payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid .\nThe focused UI element is 45 button Seed a draft",
+  "dom": {
+    "documentWidth": 390,
+    "draft": "MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.",
+    "focus": "Seed a draft",
+    "height": 844,
+    "scrollOwner": {
+      "overflow": "auto",
+      "scrollTop": 471.2000122070313,
+      "scrollWidth": 381,
+      "width": 381
+    },
+    "width": 390
+  }
+}

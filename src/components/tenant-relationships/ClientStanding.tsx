@@ -1,10 +1,14 @@
 import { useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { Link } from "react-router-dom";
 import { ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { StatePill, type PillState } from "@/components/ui/page/StatePill";
 import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 import { clientEngagementScopeKey, useClientEngagementStatus } from "@/solo/engagement/useClientEngagementStatus";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
+import { readPaigeOpenScope, setPaigeClientScope } from "@/solo/paigeClientScope";
+import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
 import { businessCalendarHeldNote, businessDateLabel } from "@/solo/data/useBusinessTimeZone";
 import { AGREEMENT_STATE, SIGNATURE_STATE } from "@/solo/sales/agreementVocabulary";
 import { collectionMoney } from "@/solo/sales/collections/presentation";
@@ -41,6 +45,7 @@ import "./client-standing.css";
  * deviation in journey §16.4.
  */
 type Props = { contactId: string; clientName: string; account: string | null; openPaige: () => void };
+const STANDING_QUESTION = "MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.";
 
 /** Sales' tones, spoken in the shared pill vocabulary. No gold: nothing here is an act. */
 const PILL_FOR_TONE: Record<string, PillState> = { ok: "success", warn: "warning", bad: "error", opportunity: "pending", n: "off" };
@@ -246,6 +251,7 @@ export function ClientStanding(props: Props) {
 }
 
 function ClientStandingScope({ contactId, clientName, account, openPaige }: Props) {
+  const { activeTenantId } = useTenantContext();
   const read = useClientEngagementStatus(contactId);
   const busy = read.phase === "loading" || read.phase === "idle";
   // "Check again" re-reads; the last answer for THIS client stays on screen, at full ink, until the new one
@@ -254,6 +260,20 @@ function ClientStandingScope({ contactId, clientName, account, openPaige }: Prop
   if (read.phase === "ready") last.current = { contactId, status: read.status };
   if (!busy && read.phase !== "ready") last.current = null;
   const shown = read.phase === "ready" ? read.status : busy && last.current?.contactId === contactId ? last.current.status : null;
+  const askPaige = () => {
+    if (!shown || !read.isCurrent()) return;
+    const scope = readPaigeOpenScope({ clientId: contactId, clientLabel: clientName }, activeTenantId);
+    if (!scope) return;
+    // Commit the existing focus BEFORE handing off text. A still-mounted old
+    // composer must not consume this question into another client's draft.
+    flushSync(() => {
+      clearPaigePublicPresenceScope();
+      setPaigeClientScope(scope);
+    });
+    if (!read.isCurrent()) return;
+    handOffPaigePrompt(STANDING_QUESTION);
+    openPaige();
+  };
   const refreshing = busy && shown !== null;
   const zone = shown?.time_zone.state === "configured" ? shown.time_zone.zone : null;
   return (
@@ -284,7 +304,7 @@ function ClientStandingScope({ contactId, clientName, account, openPaige }: Prop
             <button type="button" className="trc-standing-quiet" onClick={read.retry}><RefreshCw aria-hidden />Try again</button>
           </div>
         )}
-        {shown && <Standing s={shown} name={clientName} account={account} openPaige={openPaige} />}
+        {shown && <Standing s={shown} name={clientName} account={account} openPaige={askPaige} />}
       </div>
     </section>
   );

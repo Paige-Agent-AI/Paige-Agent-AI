@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "main": "cc059a2c805a9cf23f29f5295140ed06a04e9765",
+  "publishedHead": "05050e2a5a668d6438fde798e9accb0ae0100123",
+  "runtimeChange": "NONE since published head",
+  "testOnlyChange": "Wait for actual dynamically imported Clients module before inspecting the original handoff",
+  "source": [
+    {
+      "path": "src/components/tenant-relationships/ClientStanding.tsx",
+      "sha256": "f0ecf710062bdae361f13ec75c49bd6e83579e92756c172f068ecbd0de805715"
+    },
+    {
+      "path": "src/components/tenant-relationships/ClientStanding.test.tsx",
+      "sha256": "fca548299fc6d9429ad0be9e81af549170e0a9e800f269647ff07773b921496b"
+    },
+    {
+      "path": "src/components/tenant-relationships/ClientStanding.scope.test.tsx",
+      "sha256": "3f6c62a631c1476ba8b13217d3428bbea4d381a5dd7ec363b98417480711613c"
+    },
+    {
+      "path": "src/components/tenant-relationships/ClientStanding.handoff.test.tsx",
+      "sha256": "e6e1d5ce144e0fd09100cc0f9378e575770c399b299545ccc09fe91aa63a5d7d"
+    }
+  ],
+  "baseline": {
+    "tests": 66,
+    "pass": 64,
+    "fail": 2
+  },
+  "corrected": {
+    "probePass": 2,
+    "focusedPass": 66,
+    "build": "PASS",
+    "entrySizeGuard": "PASS 384kB <=520kB; all expected lazy chunks present",
+    "lint": "0 errors/0 warnings"
+  },
+  "claims": "Source/local compatibility proof only; new exact-head review/hosted CI/release/authenticated acceptance owed.",
+  "originalItBodiesExact": true
+}

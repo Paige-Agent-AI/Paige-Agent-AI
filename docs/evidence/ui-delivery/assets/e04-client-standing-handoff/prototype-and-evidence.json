@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "boundary": "Read-only throwaway prototype archive; not imported by production. Actual component/native scope/draft functions, controlled visual port and synthetic backend only.",
+  "files": [
+    {
+      "path": "index.html",
+      "content": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>EXP04 client handoff — local prototype</title></head><body><div id=\"root\"></div><script type=\"module\" src=\"/main.tsx\"></script></body></html>\n"
+    },
+    {
+      "path": "ports.ts",
+      "content": "import source from '../../src/__tests__/fixtures/exp04-client-status-source.json';\nexport const control = { mode: 'empty',\n  context: { activeTenantId: source.tenant_id, activeUserId: 'e0400000-0000-4000-8000-000000000001',\n    accountContextLoading: false, accountContextStatus: 'ready' } };\nexport const useTenantContext = () => control.context;\nexport const fixture = source;\nexport const supabase = {\n  async rpc(name: string) {\n    if(name !== 'read_client_engagement_status') throw Error('Prototype forbids other backend calls.');\n    if(control.mode === 'loading') return new Promise(() => {});\n    if(control.mode === 'refused') return { data: null, error: { code: '42501' } };\n    if(control.mode === 'error') return { data: null, error: { code: 'PGRST' } };\n    const record = structuredClone(source);\n    if(control.mode === 'empty') { record.terms = []; record.signings = []; record.invoices = [];\n      record.work = { ...record.work, total: 0, done: 0, open: 0, overdue: 0, blocked: 0, cancelled: 0, undated_open: 0, items: [] }; }\n    return { data: { ...record, receipt_id: undefined }, error: null };\n  },\n};\n"
+    },
+    {
+      "path": "vite.config.ts",
+      "content": "import { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react-swc';\nimport path from 'node:path';\nconst repo = path.resolve(__dirname, '../..');\nexport default defineConfig({ root: __dirname, publicDir: path.join(repo, 'public'), plugins: [react()],\n  resolve: { alias: { '@/hooks/useTenantContext': path.join(__dirname, 'ports.ts'),\n    '@/integrations/supabase/client': path.join(__dirname, 'ports.ts'), '@': path.join(repo, 'src') } },\n  server: { host: '127.0.0.1', port: 5286, strictPort: true, fs: { allow: [repo] } },\n});\n"
+    },
+    {
+      "path": "main.tsx",
+      "content": "import React, { useCallback, useEffect, useState, useSyncExternalStore } from 'react';\nimport { createRoot } from 'react-dom/client';\nimport { MemoryRouter } from 'react-router-dom';\nimport { ClientStanding } from '../../src/components/tenant-relationships/ClientStanding';\nimport { clearPaigeClientScope, getPaigeClientScope, subscribePaigeClientScope } from '../../src/solo/paigeClientScope';\nimport { mergeIntoDraft, subscribePaigePromptHandoff } from '../../src/lib/paigePromptHandoff';\nimport { createComposerScopeIdentity, initialComposerConversation, resolveComposerScopeState, setComposerDraftSessionScope, useComposerDraft } from '../../src/lib/paigeComposerScopeState';\nimport { Textarea } from '../../src/components/ui/textarea';\nimport { control, fixture } from './ports';\nimport '../../src/index.css';\nimport '../../src/components/tenant-relationships/tenant-relationships-clients-workspace.css';\nimport './prototype.css';\n\nsetComposerDraftSessionScope({ kind: 'ready', tenantId: control.context.activeTenantId, userId: control.context.activeUserId });\nfunction Composer() {\n  const snapshot = useCallback(() => getPaigeClientScope(control.context.activeTenantId), []);\n  const scope = useSyncExternalStore(subscribePaigeClientScope, snapshot, () => null);\n  const identity = createComposerScopeIdentity({ tenantId: control.context.activeTenantId, userId: control.context.activeUserId, focusedClientId: scope?.clientId });\n  const draft = useComposerDraft(resolveComposerScopeState({ currentIdentity: identity, displayedIdentity: identity,\n    conversation: initialComposerConversation(false, 'c56-prototype'), busy: false }));\n  useEffect(() => subscribePaigePromptHandoff(prompt => draft.setValue(current => mergeIntoDraft(current, prompt, { preserveAddressee: true }))), [draft.setValue]);\n  return <section className=\"c56-composer\" aria-label=\"Controlled composer port\">\n    <h2>PAIGE</h2><p role=\"status\">{scope ? `Selected client: ${scope.label}` : 'Business conversation'}</p>\n    <p>Canonical scope, draft storage and merger; controlled visual port. No Chat backend or send.</p>\n    <label htmlFor=\"c56-question\">Review your unsent question</label>\n    <Textarea id=\"c56-question\" value={draft.value} onChange={event => draft.setValue(event.target.value)} />\n    <div className=\"c56-actions\"><button onClick={() => draft.setValue('Keep my original unsent note.')}>Seed a draft</button>\n      <button onClick={() => clearPaigeClientScope()}>Return to business draft</button><button onClick={() => draft.setValue('')}>Clear this draft</button></div>\n    <p>No message has been sent. Actual model, authorization and read receipt remain unverified by this prototype.</p>\n  </section>;\n}\nfunction Prototype() {\n  const [mode, setMode] = useState('empty'), [frame, setFrame] = useState(0), [open, setOpen] = useState(false);\n  const [theme, setTheme] = useState('light');\n  return <main className=\"paige-solo solo-campaigns c56-prototype\" data-pg={theme} data-theme={theme}>\n    <aside className=\"c56-controls\" aria-label=\"Prototype controls\"><strong>Local flow prototype · synthetic records · no backend effects</strong>\n      <label>Record state <select value={mode} onChange={event => { const next = event.target.value; control.mode = next; setMode(next); setFrame(current => current + 1); }}>\n        {['empty','populated','loading','refused','error'].map(value => <option key={value}>{value}</option>)}</select></label>\n      <label>Theme <select value={theme} onChange={event => setTheme(event.target.value)}><option value=\"light\">Mineral</option><option value=\"dark\">Obsidian</option></select></label>\n      <button onClick={() => setOpen(value => !value)}>{open ? 'Fold composer' : 'Open composer'}</button>\n    </aside>\n    <div className=\"c56-panels\"><article className=\"trc-record-section c56-record\"><h1>Client standing</h1>\n      <ClientStanding key={frame} contactId={fixture.contact_id} clientName=\"Synthetic consulting client\" account=\"123\" openPaige={() => setOpen(true)} />\n    </article><div hidden={!open}><Composer /></div></div>\n  </main>;\n}\ncreateRoot(document.getElementById('root')!).render(<MemoryRouter><Prototype /></MemoryRouter>);\n"
+    },
+    {
+      "path": "prototype.css",
+      "content": ".c56-prototype{height:100dvh;background:var(--pg-canvas);color:var(--pg-ink);display:flex;flex-direction:column;font-family:var(--pg-font-body)}\n.c56-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px;border-bottom:1px solid var(--pg-line);background:var(--pg-surface)}\n.c56-controls strong{flex-basis:100%;font-size:14px}.c56-controls label{display:flex;gap:8px;align-items:center;font-size:13px}\n.c56-controls select,.c56-controls button,.c56-actions button{min-height:44px;border:1px solid var(--pg-line);border-radius:var(--pg-r-chip);background:var(--pg-canvas);color:var(--pg-ink);padding:8px 12px}\n.c56-panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:24px;padding:24px;min-height:0;overflow:auto;align-items:start}\n.c56-record{min-width:0}.c56-record h1{font-size:24px;margin:0 0 24px}.c56-composer{padding:20px;background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:var(--pg-r-plate);min-width:0}\n.c56-composer h2{font-size:20px}.c56-composer p{font-size:14px;line-height:1.55;margin:12px 0;color:var(--pg-muted)}.c56-composer label{display:block;margin:16px 0 8px}\n.c56-composer textarea{min-height:220px;background:var(--pg-canvas);color:var(--pg-ink);font-size:16px;line-height:1.55}.c56-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}\n.c56-prototype button:focus-visible,.c56-prototype select:focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}\n@media(max-width:760px){.c56-panels{grid-template-columns:minmax(0,1fr);padding:16px;gap:16px}.c56-controls{padding:12px}.c56-record h1{font-size:21px}}\n"
+    }
+  ],
+  "flowContract": "Goal: From an authorized client standing record, prepare an exact-client read in the existing PAIGE composer; the owner chooses whether to send it.\nHuman and feel: SOLO consultant/coach/fractional owner; informed and in control.\nEntry and exit: Existing Clients standing CTA to existing Chat, with the original record and its source navigation retained.\nSystem: Existing Obsidian/Mineral Clients and PAIGE surfaces; no new layout, sender, registry, approval or draft store.\nSignature: Canonical selected-client context plus an editable, visibly unsent MERIT question.\nFeedback: Existing panel/context announcement and composer; no added motion or haptics.\nRejecting: Automatic send; mixing a previous client's or business-only draft into another client's scope.\nVariants: Empty/populated/current refresh, refused/loading/error, current/retired actor-business-client, existing same-scope draft and another-scope draft.\n\n| From | Trigger/guard | To | Recovery/exit |\n| --- | --- | --- | --- |\n| Current authorized empty/populated standing | Ask PAIGE; original read frame still current | Existing exact-client context and visible unsent question | Edit, retain, clear or fold the original composer; no send occurs |\n| Same-client draft already present | Ask again | Keep all existing work and append/deduplicate through the existing merger | Owner decides what to send |\n| Other-client/business draft present | Change client focus | Keep prior draft in its original canonical scope; put question only in the selected scope | Clearing focus restores the prior business draft |\n| Loading/refused/error/no workspace | No authorized displayed record | No standing question handoff | Existing original reload/permission/Setup recovery |\n| Retired actor/business/client frame | Old callback/gesture | No prompt or scope write | Return to current authorized record |\n| Ready unsent question | Owner presses Send | Original Chat authorization, read capability and native receipt | Existing refusal/unavailable/unknown/reload behavior; separately verified |\n\nRouting: E04 O12; original client.engagement_status / read_client_engagement_status / caller-JWT read_client_engagement_status and exact clients.id. Existing PAIGE Gateway/Harness/Trust/INT346 remain authoritative. Drafting is local UI, not a business action or Layer C job. No provider activation, MUTATION_VERB, financial obligation, customer send or additional approval. Existing paige.workspace and sales.department Binding Ledger states remain partial/proof owed; no Live promotion. After an actual owner Send, only original source records, conversation/trace and Rail read receipt may support a result. Authenticated owner/staff/client/cohort/reload proof stays distinct from this controlled prototype.\n\nAuthority: The owner's complete O12/AI-native workflow and October15/21 safe-increment policy approve routine implementation and interaction decisions; one complete founder evaluation follows integrated readiness. This prototype restores the existing CTA's intended job and does not seek per-slice founder approval. Impeccable context launcher did not run (local command syntax failure); existing PRODUCT.md and DESIGN.md were read directly. Public-site September28 capability prose is historical, not current SOLO activation evidence. Preserve the incumbent SOLO world. Portable direct-writing fallback; no legal agreement words are authored.\n\nState: PRE_IMPLEMENTATION. Native-source causal test and read-only prototype required before production UI edit. No runtime source has been changed for C56.\n",
+  "preimplementationDecision": "Use canonical scope/draft/opener; settle selected context before plain-text handoff. No new engine or automatic Send. Owner approved full O12 and routine UI discretion; founder acceptance not requested.",
+  "cleanup": {
+    "prototypeTabClosed": true,
+    "viewportReset": true,
+    "ownVerifiedServerStopped": true
+  },
+  "records": [
+    {
+      "source": "e04-c56-handoff-baseline.log",
+      "artifact": "e04-c56-handoff-baseline.log.json",
+      "bytes": 4022,
+      "sha256": "1ebd092d860e36d47df7b646e84c9114945a807efd821e08821ef12207284067"
+    },
+    {
+      "source": "e04-c56-focused-tests.log",
+      "artifact": "e04-c56-focused-tests.log.json",
+      "bytes": 13223,
+      "sha256": "675627efff5a3b7e7ed064e8b2d831aa361fcc521ffe9291c993ae5327c6fdf1"
+    },
+    {
+      "source": "e04-c56-original-composer-tests.log",
+      "artifact": "e04-c56-original-composer-tests.log.json",
+      "bytes": 33455,
+      "sha256": "4ffaf16cb5599943c4e67bbc5794fb928459cc9776f665d7a61212a104420c04"
+    },
+    {
+      "source": "e04-c56-lint.log",
+      "artifact": "e04-c56-lint.log.json",
+      "bytes": 356,
+      "sha256": "d84f7990f145b9e06ab544dd25c96e70ff1fbb18c4f701b5ccbca8fa06c29b7a"
+    },
+    {
+      "source": "e04-c56-final-lint.log",
+      "artifact": "e04-c56-final-lint.log.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "e04-c56-final-handoff.log",
+      "artifact": "e04-c56-final-handoff.log.json",
+      "bytes": 1871,
+      "sha256": "18cd050339a81661cd8ef98601cde3bebbe8705bbdbb9e334a4ff4818ef6f4b0"
+    },
+    {
+      "source": "e04-c56-project-types-all.log",
+      "artifact": "e04-c56-project-types-all.log.json",
+      "bytes": 5501,
+      "sha256": "72b87f69c5abc8e108a7b7481b6e366aba8f8d9130905ca11fdc775b2b9ca92f"
+    },
+    {
+      "source": "e04-c56-project-types-summary.json",
+      "artifact": "e04-c56-project-types-summary.json.json",
+      "bytes": 332,
+      "sha256": "0150b473ca3996f8dc860dc4c520b8b05490a33e0f0f740803c3916d1b87d272"
+    },
+    {
+      "source": "e04-c56-impeccable-detector.log",
+      "artifact": "e04-c56-impeccable-detector.log.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "e04-c56-web-build.log",
+      "artifact": "e04-c56-web-build.log.json",
+      "bytes": 39293,
+      "sha256": "64e9ba6e80f70b49ac43aa0a8ef0d607f25f8fe96505ceeb9712711d6fd8afc9"
+    },
+    {
+      "source": "e04-c56-prototype-desktop.jpg",
+      "artifact": "e04-c56-prototype-desktop.jpg",
+      "bytes": 83252,
+      "sha256": "fbcfdc10a3b0b60f2fada3c735a4458cb568b92d9fb613efba79672404eca455"
+    },
+    {
+      "source": "e04-c56-prototype-narrow.jpg",
+      "artifact": "e04-c56-prototype-narrow.jpg",
+      "bytes": 47746,
+      "sha256": "69e3cf753504921fa60bddb1502bfdbc950926795dd479ebe51c64ed04f7539f"
+    },
+    {
+      "source": "e04-c56-final-desktop.jpg",
+      "artifact": "e04-c56-final-desktop.jpg",
+      "bytes": 83547,
+      "sha256": "3364dd85dd51c40544a3a351f7d1aa66854196e501af5a2359f38e199f48a586"
+    },
+    {
+      "source": "e04-c56-final-narrow.jpg",
+      "artifact": "e04-c56-final-narrow.jpg",
+      "bytes": 46146,
+      "sha256": "d378a5128d3674eed534e01af929d52ce335d084f2425c32dd72b9ef9c303754"
+    },
+    {
+      "source": "e04-c56-final-desktop.json",
+      "artifact": "e04-c56-final-desktop.json",
+      "bytes": 2341,
+      "sha256": "4dea6b20290316a1a569cd074c5e73964571053e03e460b19dada06f10d03075"
+    },
+    {
+      "source": "e04-c56-final-narrow.json",
+      "artifact": "e04-c56-final-narrow.json",
+      "bytes": 2212,
+      "sha256": "9a7b08384ae0c6104840b081fe168a4d8c537850b9b897fb7b42e332f642c2d1"
+    },
+    {
+      "source": "e04-c56-prototype-desktop-geometry.json",
+      "artifact": "e04-c56-prototype-desktop-geometry.json",
+      "bytes": 233,
+      "sha256": "c25993cbe60a9caf809a25c7e2c8cb6c378b774ccee61c0be244f1e0accc5dc5"
+    },
+    {
+      "source": "e04-c56-prototype-narrow-geometry.json",
+      "artifact": "e04-c56-prototype-narrow-geometry.json",
+      "bytes": 479,
+      "sha256": "0bea6f90086bb8f6b19660ddcb5cd29742d431049f15b2efd302cdc4435bde02"
+    },
+    {
+      "source": "e04-c56-prototype-cases.json",
+      "artifact": "e04-c56-prototype-cases.json",
+      "bytes": 13292,
+      "sha256": "0d01c609b17423bed9fd1a35e6ba9cd2541ef2d14e5125bef0ce71820e2cffd3"
+    }
+  ]
+}

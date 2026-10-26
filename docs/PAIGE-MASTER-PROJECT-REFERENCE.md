@@ -854,6 +854,22 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-26 UTC — EXP09 original review handoff and business-owned Portal support contact.**
+
+| Increment | Exact source and observed production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2921 original review handoff](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2921#issuecomment-6423825101) | Reviewed `eafff31b8d63aaa3a73d5c2fc68df1532d267810`, AUTHOR-REVIEW / LOWER ASSURANCE5655784782; applicable exact-head checks and both web statuses passed, no-SQL Preview skipped. Actual main `8374ed50c36f9e8126903cbcaad3f85c07537b15` / tree `cf3f469e5cf0cf8facfbf16a4809890df6ef5e94` preserves all9 owning and16,478 incoming outside entries. Production `dpl_B4amWbNfDtX71jLjd36DZY6ubHc6` READY at8374; public readback observed the verified documentation-only containing9dc021eebf3c8a54e5c146c5fecc8ed728e45f81 / `dpl_7QjgyW8cCk8TLV42FpB6y68pHTRF`, with unchanged runtime. Native/Edge delta N/A. | Original client focus settles before the one existing unsent PAIGE review draft; optional cleanup retires only that exact pending handoff. Authenticated owner first-click focus/reference-only draft PASS; no message, share, approval or client decision executed. Exact8374 public alias was superseded before observation, not claimed observed. Complete client sharing/approval/reload, full42/seven pillars and founder acceptance remain open. Internal increment, no customer release identity/announcement. |
+| [#2926 business support contact](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2926#issuecomment-6426469014) | Reviewed `90ec3c6c0527c0aaa17d356633df11e67e253baa`, AUTHOR-REVIEW / LOWER ASSURANCE5657856527 plus current-main receiving6426231991/6426276013; all13 exact-head checks/Preview and both web statuses SUCCESS, full database363 and unit steps PASS. Actual main `d8a7670bf249af7ec3d937aa355204a40d601ddf` / tree `b2b1f1dd6392dab5aa5065ceb99dd8a76d110f95` preserves all16 reviewed owning and16,540 incoming outside entries. Production `dpl_EQLjVyZ3AKbLAHJrfw9Vyq7G5WkN` READY; both public origins expose exactd8a-mvpp3lir/customerUpdate=null and static/cache checks PASS20:15:57UTC. Normal deploy-migrations40393813363/job121821748560 SUCCESS;10309 once/body285ed6410676a6cdbb3aea860e00333f, whole incumbent inverse76db8ac4261c65f20a6465d0fc42fdab, original OID259426/ABI13/owner/ACL/config/STABLE/definer preserved. Edge delta N/A. | Existing Portal Experience configures original business support contact; customer Settings uses authorized own/published/receiving-ready contact or business Messages. Authenticated owner field, invalid-address focus and Discard PASS; no live contact changed. Positive live contact save/customer reload remains PROOF OWED pending chosen inbox/customer connection. Responsive component evidence and actual owner-shell inspection are distinct; inherited narrow form with PAIGE open needs refinement. No sender, consent, deletion, identity or financial effect. Full42/seven-pillar and founder acceptance remain open; no customer release identity/announcement. |
+
+This mechanical post-merge identity closeout records the two preceding deliveries;
+it changes no product, policy, capability or acceptance status and is not logged recursively.
+
+**2026-10-26 UTC — EXP02 original private manual Work safeguards; no scan activation.**
+
+| Increment | Actual source and production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2918 source release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2918#issuecomment-6424997500) | Reviewedef36f7c78752d7bc5f937d3b00d6ac54fbe64073/LOWER5657102273/all13 exact checks/normal Preview/two webSUCCESS/zero threads. Actuale8197859ea8aaf32f86cfaab5c79625611648e93/tree75c0b32718c24f73005008d2d383b6310b2c9b02, parents9dc+ef36 and all16,482 outside entries/incoming docs/otherCI exact. Normal native40383697454/job121786526429 SUCCESS;20271116010102 then20271116010202 once, bodiesf1e7/11a08 and original ABI/default300/postgres/definer/server-only ACLs verified, anon/auth execute=false. Same specifically approved75-line claim/grant; original#2878 only superseded/closed. READYdpl_9TyvJ3juiLhay6vCgY2J89e6FN3K; both public200/exacte819-mvpmostu/null19:09:56.957UTC. UI/Edge delta N/A. | Functional bounded private native safeguards deployed/source verified, not a scan/caller/worker/provider/Chat activation. Visual N/A/prior Finance retained. Experiential manual scan/result/Rail/recovery incomplete; Founder NOT_ACCEPTED. Current finalizer/consumer/shared window/authenticated proof remain owed. Catalogue/ALG/manualSpine unchanged; original19/nine/9-0+12-0-4/monthlyUNKNOWNUNRETRIED/representative-weekUNMEASURED retained. Exact bounds and full-outcome subcases remain in the existing E2 matrix/Second Brain/Systems evidence; no duplicate registry or customer release identity. |
+
 **2026-10-26 UTC — EXP02 original manual capture interruption source.**
 
 | Increment | Actual source and production evidence | Acceptance boundary |
@@ -864,6 +880,12 @@ The earlier exact-e993 public assertion correctly refused the already-published
 documentation successor; exact-e993 public aliases were not observed. Original
 source/capture evidence retains this limitation and original9/0+12/0/4. This
 mechanical identity closeout is not logged recursively.
+
+**2026-10-26 UTC — EXP03 email journey: the campaign lifecycle's own negatives are proven in required CI (successor lead's first delivery).**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2930 email campaign lifecycle proof](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2930) | Squash `49d0a8a2a7` of reviewed head `11e513f73` ([review receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2930#issuecomment-6425587100), labelled AUTHOR-REVIEW / LOWER ASSURANCE: a reviewer agent dispatched by the author found 2 MAJOR and 9 MINOR issues in the proof and its record, none in product code; all were fixed). All 11 exact-head checks SUCCESS, including `database-contract`, which runs the new `supabase/tests/email_campaign_lifecycle.sql` (86 assertions) against production's reproduced grants, and `verify`. Local full replay (1,479 migrations, CLI 2.109.1) passed 86/86 on six runs, and ten reinstated defects each turned it red. No migration, edge function or web change. | Test, CI and records only. The campaign lifecycle guards are LIVE in source and now proven: saved drafts, member and foreign-business refusals, frozen versions, stale and generic approvals refused, PAIGE's filing waits for a person, decline, suppression and opt-out at plan and send, unknown and duplicate sends, cancel mid-send, and resends that never reach anyone twice. Real campaign delivery stays UNAVAILABLE (production: 1 campaign, 0 recipients, 0 sends ever). The authenticated drive and the founder evaluation are PROOF OWED. Journey §14 carries the successor's ACK and the full row-by-row matrix. No customer release. |
 
 **2026-10-26 UTC — EXP03 F8: the qualified handoff reads Sales' own records.**
 
@@ -900,6 +922,24 @@ This is a bounded PUBLIC SOURCE closeout, not publication of protected productio
 | --- | --- | --- | --- |
 | [#2877](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521); reviewedf292c96a752f75d957e52a3ea6edc12ff04de5c0; main6683bfb7cf1f0179922cc7c84840c6a0f3a5799c/tree9a286b3e9ac9fe6f07ef4debf4f1a35c947a75bf | Original12-field Work reader extended for exact manual purpose/current Metric authority. Whole other-kind source/metadata retained; historical reads do not widen active-only creation. No new reader/grant/scan/writer. | AUTHOR-REVIEW / LOWER ASSURANCE5645590987/all13 exact checks/Preview/two webSUCCESS/zero threads/renewed E05 receiving9cd8952b. Actual79768362+f292 union preserves16,274 incoming outside entries/frozen native+proof/whole CI+evidence inverses. Local31 checkpoints/causal3FAIL5PASS→8PASS/sixteen incumbent comparisons/original47 factory regressions retained. Normal native40241921677/job121315482302 SUCCESS/db-live6683;250102 once/current frontier at readback,1467 versions; bodyd953ea9965f31193d3dbf2f184114730/original12-field ABI/postgres/stable definer/empty search_path/auth-only ACL exact, anon denied; separate260002 absent. READYdpl_BTNcv7Wp3rjSUbjcpmG5LCs7VWS9/both public200/exact6683bfb7cf1f0179922cc7c84840c6a0f3a5799c-mvof6mtm/null22:51:45UTC; Edge N/A. | [Original capture evidence](evidence/e2-systems-capture-mode.md), ANT138/c16561b0. Internal-only/no customer version/announcement. Manual request/scan/result/Rail/recovery/customer proof remain incomplete; manual capability/ALG/catalogue unchanged. Full19/nine/founder open; original9/0+12/0/4/monthly UNKNOWN/UNRETRIED retained. Forward correction only, no reset/include-all/applied-history rewrite. |
 
+
+**2026-10-26 UTC — EXP05 weekly review retirement and full-scope reconciliation.**
+
+| Increment | Exact reviewed source and actual release | Acceptance boundary |
+| --- | --- | --- |
+| [#2931 original review retirement](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2931#issuecomment-6426222033) | Reviewed9c3f7327955d30fa170921133d8f7818e9ed4570/LOWER5657877485; all10 successful check runs including verify121800434792, two webSUCCESS, no threads, no-schema PreviewSKIP. Actual0836340482c33ba79ab9b9a053eecbee979ef43b/treeb9b0f895b9d4ee51e4fe85783767e441fa510f68 equals the inspected f034+9c3 union; exact same tree exercised266PASS/7files, report9bbf4f8d205bd76b117ac7175b0bc92876d8cc7e0e437206e54a42644cce4ede. All four owning blobs and incoming E08 preserved. Normal Verceldpl_3AyESst5rRRNJKm8H4yLQRY5Z9No READY. Edge40392779365/job121817828037 SUCCESS selected no affected function; deploy/source-verify/update steps correctly SKIPPED. | Captured initiating scope, cancellation and retired-observer correction is source released in the existing preparation helper, still unimported/unadmitted. Actual39/3→244/0 source proof remains distinct from authenticated control preparation/execution. No new executor deployed, migration, provider, recurrence, Live, catalogue/ALG maturity or ten/E5 closure. |
+| [#2929 full acceptance reconciliation](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2929) | Reviewed951547814a939f31a88133abad91f6e6b8358472/LOWER5657732667; all10 successful check runs/two webSUCCESS/no threads, no-schema PreviewSKIP. Actual56db711a82e6d97f4d4f04c95547b4b2ad730787/tree3d986c1f159b8d180f6f94c7ed757fc5588cc00c has original872c+951 parents and only two additive owned documents; all original E5-CV1–9 rows/whole incumbent packet and Brain preserved. Normaldpl_2C4o95HvWoV4omkfaUgFRXkF1YcS READY/exact production revision; native/Edge/provider/config changes N/A. | Full ten outcomes, owner-away policy→trigger→artifact→Rail→notice→stop/recovery and eight applicable ALG contracts retain explicit build/proof/held gaps and original producers/receivers. Documentation is not a newly completed customer capability or source activation. |
+
+Actual public readback first refused the already-advanced exact083 expectation
+(retained failure9e0fc4b8f92f0cd095d671e43403ddb78920773311bbed87d5404055821f5f88).
+Both origins subsequently passed exact containing872c-mvpowgd9/null20:11UTC,
+proofb34615fb0ee82e5e514295f8d4d3ed0c1763dc020a7ae4aef4ad2ccdeff7194e.
+Latest containingd8a7670bf249af7ec3d937aa355204a40d601ddf-mvpp3lir/null
+passed20:19:31–32UTC, proof8cbd29491fa0f6ae4c74f413d64d549f0db84151e12fca63fda3fbf6af098c6d.
+These are public build/unchanged weekly callback observations, not new helper,
+customer action, native/tenant isolation, Live or full Experience acceptance.
+No new customer release identity/announcement. This mechanical release-log
+closeout does not receive a recursive shipped row.
 
 **2026-10-26 UTC — EXP05 retain original weekly work on same-session return.**
 

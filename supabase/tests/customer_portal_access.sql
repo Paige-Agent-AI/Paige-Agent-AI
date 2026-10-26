@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(341);
+SELECT plan(363);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -178,6 +178,70 @@ SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000001',$q$SELECT to_js
  'the chat control is a catalogue row the owner can see, default confirm');
 SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(count(*)) FROM public.list_tool_autonomy() x WHERE tool_key='portal_menu_update'$q$),
  '1'::jsonb,'the incumbent catalogue rows survive the wrapper');
+
+-- Original customer brand contact: no inherited platform address or sending-only
+-- mailbox. These actual roles/source fixtures roll back with the original suite.
+CREATE FUNCTION pg_temp.business_support(_actor uuid DEFAULT 'e0917000-0000-4000-8000-000000000003') RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(_actor,'SELECT to_jsonb(b) FROM public.get_client_portal_brand() b');
+$$;
+UPDATE public.tenants SET brand=jsonb_build_object('support_email','care@northwind.example') WHERE id='e0927000-0000-4000-8000-000000000001';
+INSERT INTO public.tenant_legal_profile(tenant_id,legal_business_name,support_email)
+ VALUES('e0927000-0000-4000-8000-000000000001','Northwind Studio','legal-support@northwind.example')
+ ON CONFLICT(tenant_id) DO UPDATE SET support_email=EXCLUDED.support_email;
+SELECT is(pg_temp.business_support()->>'support_email','care@northwind.example','customer receives the business own explicit contact');
+SELECT is(pg_temp.business_support()->>'tenant_id','e0927000-0000-4000-8000-000000000001','support stays bound to original relationship');
+SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000003',$q$SELECT public.client_portal_frame()$q$)#>>'{brand,support_email}',
+ 'care@northwind.example','original closed customer frame carries same contact');
+SELECT is(pg_temp.business_support('e0917000-0000-4000-8000-000000000002'),NULL::jsonb,'other business owner is not a customer by route or role label');
+SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000003',$q$SELECT to_jsonb(b) FROM public.get_client_portal_brand() b$q$,'anon')->>'sqlstate','42501','anonymous role cannot read business contact');
+SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000003',$q$SELECT to_jsonb(public.set_tenant_brand('e0927000-0000-4000-8000-000000000001','{"support_email":"forged@example.com"}'))$q$)->>'sqlstate','42501','customer cannot set the business contact');
+UPDATE public.tenants SET brand='{}' WHERE id='e0927000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email','legal-support@northwind.example','unset contact falls back to existing published business support');
+UPDATE public.tenants SET brand=jsonb_build_object('support_email',E'care@northwind.example\r\nBcc:other@example.com') WHERE id='e0927000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email','legal-support@northwind.example','header/control input is refused before fallback');
+UPDATE public.tenants SET brand=jsonb_build_object('support_email','privacy@paigeagent.ai') WHERE id='e0927000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email','legal-support@northwind.example','generic platform contact cannot replace business support');
+UPDATE public.tenants SET brand='{}' WHERE id='e0927000-0000-4000-8000-000000000001';
+UPDATE public.tenant_legal_profile SET support_email=NULL,authorized_representative_email='private-representative@example.com' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+DELETE FROM public.tenant_email_identities WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'no guessed platform sender, Auth or private representative fallback');
+INSERT INTO public.tenant_email_identities(tenant_id,from_name,local_part,kind,status) VALUES
+ ('e0927000-0000-4000-8000-000000000001','Northwind Studio','test-e09-support-contact','shared','active');
+CREATE TEMP TABLE support_original_domain AS SELECT shared_domain FROM public.platform_email_settings WHERE id=true;
+UPDATE public.platform_email_settings SET shared_domain='business-mail.example' WHERE id=true;
+SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'sending registration alone is not an inbound support mailbox');
+INSERT INTO public.channel_connectors(id,tenant_id,channel_type,provider,inbound_address,active) VALUES
+ ('e0997000-0000-4000-8000-000000000001','e0927000-0000-4000-8000-000000000001','email','resend','test-e09-support-contact@business-mail.example',true);
+SELECT is(pg_temp.business_support()->>'support_email','test-e09-support-contact@business-mail.example','exact original active inbound route enables registered managed business contact');
+UPDATE public.channel_connectors SET active=false WHERE id='e0997000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'disabled inbound route cannot become support contact');
+UPDATE public.channel_connectors SET active=true,tenant_id='e0927000-0000-4000-8000-000000000002' WHERE id='e0997000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'foreign inbound route cannot become this business contact');
+UPDATE public.channel_connectors SET tenant_id='e0927000-0000-4000-8000-000000000001' WHERE id='e0997000-0000-4000-8000-000000000001';
+UPDATE public.tenant_email_identities SET local_part='test-e09_support-contact' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+UPDATE public.channel_connectors SET inbound_address='test-e09_support-contact@business-mail.example' WHERE id='e0997000-0000-4000-8000-000000000001';
+INSERT INTO public.channel_connectors(id,tenant_id,channel_type,provider,inbound_address,active) VALUES
+ ('e0997000-0000-4000-8000-000000000002','e0927000-0000-4000-8000-000000000002','email','resend','test-e09Xsupport-contact@business-mail.example',true);
+SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'original receiver match cannot select a different business');
+DELETE FROM public.channel_connectors WHERE id='e0997000-0000-4000-8000-000000000002';
+SELECT is(pg_temp.business_support()->>'support_email','test-e09_support-contact@business-mail.example','unambiguous registered receiving address stays available');
+UPDATE public.tenant_email_identities SET local_part='test-e09-support-contact' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+UPDATE public.channel_connectors SET inbound_address='test-e09-support-contact@business-mail.example' WHERE id='e0997000-0000-4000-8000-000000000001';
+UPDATE public.tenant_email_identities SET status='disabled' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'disabled registered identity is withheld');
+UPDATE public.tenant_email_identities SET status='active' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+UPDATE public.tenants SET brand=jsonb_build_object('support_email','preferred@northwind.example') WHERE id='e0927000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email','preferred@northwind.example','explicit business contact wins over managed fallback');
+SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(public.set_tenant_brand('e0927000-0000-4000-8000-000000000002','{"support_email":"forged@example.com"}'))$q$)->>'sqlstate','42501','original brand writer refuses another business');
+SELECT ok(pg_temp.business_support()->>'support_email' <> 'private-representative@example.com','private representative never exposed');
+-- Preserve original S7 suite fixture appearance; only this owned synthetic contact remains.
+UPDATE public.tenants SET brand='{}' WHERE id='e0927000-0000-4000-8000-000000000001';
+DELETE FROM public.channel_connectors WHERE id='e0997000-0000-4000-8000-000000000001';
+DELETE FROM public.tenant_email_identities WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+UPDATE public.platform_email_settings SET shared_domain=(SELECT shared_domain FROM support_original_domain) WHERE id=true;
+UPDATE public.tenant_legal_profile SET support_email=NULL WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'customer returns to authoritative no-email state after clearing original sources');
+SELECT is((SELECT count(*) FROM public.tenant_email_identities WHERE tenant_id='e0927000-0000-4000-8000-000000000001'),0::bigint,'reader never provisions an email identity');
 
 -- Fixtures that must disappear for the customer while paused, and survive.
 INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,expires_at,max_uses,uses,contact_id,email) VALUES

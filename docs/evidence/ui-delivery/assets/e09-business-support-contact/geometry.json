@@ -1,0 +1,203 @@
+{
+  "class": "actual-production-components-with-neutral-mocked-authority",
+  "customer": [
+    {
+      "height": 770,
+      "links": [
+        {
+          "height": 44,
+          "href": "mailto:hello%40northwind.example",
+          "text": "Email the business",
+          "width": 142.1875
+        },
+        {
+          "height": 44,
+          "href": "/app/messages?topic=help",
+          "text": "Contact the business",
+          "width": 157.16250610351562
+        },
+        {
+          "height": 44,
+          "href": "/app/settings?view=client-account#preferences",
+          "text": "Manage",
+          "width": 77.20000457763672
+        },
+        {
+          "height": 44,
+          "href": "/privacy",
+          "text": "View Policy ",
+          "width": 125.20000457763672
+        }
+      ],
+      "scrollWidth": 1521,
+      "width": 1536
+    },
+    {
+      "height": 768,
+      "links": [
+        {
+          "height": 44,
+          "href": "mailto:hello%40northwind.example",
+          "text": "Email the business",
+          "width": 142.1875
+        },
+        {
+          "height": 44,
+          "href": "/app/messages?topic=help",
+          "text": "Contact the business",
+          "width": 157.16250610351562
+        },
+        {
+          "height": 44,
+          "href": "/app/settings?view=client-account#preferences",
+          "text": "Manage",
+          "width": 77.20000457763672
+        },
+        {
+          "height": 44,
+          "href": "/privacy",
+          "text": "View Policy ",
+          "width": 125.20000457763672
+        }
+      ],
+      "scrollWidth": 1351,
+      "width": 1366
+    },
+    {
+      "height": 768,
+      "links": [
+        {
+          "height": 44,
+          "href": "mailto:hello%40northwind.example",
+          "text": "Email the business",
+          "width": 142.1875
+        },
+        {
+          "height": 44,
+          "href": "/app/messages?topic=help",
+          "text": "Contact the business",
+          "width": 157.16250610351562
+        },
+        {
+          "height": 44,
+          "href": "/app/settings?view=client-account#preferences",
+          "text": "Manage",
+          "width": 77.20000457763672
+        },
+        {
+          "height": 44,
+          "href": "/privacy",
+          "text": "View Policy ",
+          "width": 125.20000457763672
+        }
+      ],
+      "scrollWidth": 1009,
+      "width": 1024
+    },
+    {
+      "height": 1000,
+      "links": [
+        {
+          "height": 44,
+          "href": "mailto:hello%40northwind.example",
+          "text": "Email the business",
+          "width": 142.1875
+        },
+        {
+          "height": 44,
+          "href": "/app/messages?topic=help",
+          "text": "Contact the business",
+          "width": 157.16250610351562
+        },
+        {
+          "height": 44,
+          "href": "/app/settings?view=client-account#preferences",
+          "text": "Manage",
+          "width": 77.20000457763672
+        },
+        {
+          "height": 44,
+          "href": "/privacy",
+          "text": "View Policy ",
+          "width": 125.20000457763672
+        }
+      ],
+      "scrollWidth": 900,
+      "width": 900
+    },
+    {
+      "height": 844,
+      "links": [
+        {
+          "height": 44,
+          "href": "mailto:hello%40northwind.example",
+          "text": "Email the business",
+          "width": 142.1875
+        },
+        {
+          "height": 44,
+          "href": "/app/messages?topic=help",
+          "text": "Contact the business",
+          "width": 157.16250610351562
+        },
+        {
+          "height": 44,
+          "href": "/app/settings?view=client-account#preferences",
+          "text": "Manage",
+          "width": 77.20000457763672
+        },
+        {
+          "height": 44,
+          "href": "/privacy",
+          "text": "View Policy ",
+          "width": 125.20000457763672
+        }
+      ],
+      "scrollWidth": 375,
+      "width": 390
+    }
+  ],
+  "owner": [
+    {
+      "description": "portal-support-hint",
+      "fieldHeight": 44,
+      "fieldWidth": 594.4000244140625,
+      "label": "Support email",
+      "scrollWidth": 1521,
+      "width": 1536
+    },
+    {
+      "description": "portal-support-hint",
+      "fieldHeight": 44,
+      "fieldWidth": 594.4000244140625,
+      "label": "Support email",
+      "scrollWidth": 1351,
+      "width": 1366
+    },
+    {
+      "description": "portal-support-hint",
+      "fieldHeight": 44,
+      "fieldWidth": 455.2000122070313,
+      "label": "Support email",
+      "scrollWidth": 1009,
+      "width": 1024
+    },
+    {
+      "description": "portal-support-hint",
+      "fieldHeight": 44,
+      "fieldWidth": 795.2000122070312,
+      "label": "Support email",
+      "scrollWidth": 885,
+      "width": 900
+    },
+    {
+      "description": "portal-support-hint",
+      "fieldHeight": 44,
+      "fieldWidth": 309.6000061035156,
+      "label": "Support email",
+      "scrollWidth": 375,
+      "width": 390
+    }
+  ],
+  "authenticated": false
+}

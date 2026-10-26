@@ -1,3 +1,77 @@
+## October26 — optional original manual capture checkpoints, source only
+
+O07/O16 EXTEND only `RunSystemsCheckOptions`/the existing `manualBoundary` in
+the original runner. `manualCaptureCheckpoint` is a trusted internal phase port,
+not permission: a future canonical worker must bind it to the original native
+Work heartbeat/current authority/lease. No caller installs the port here. It
+requires the same validated manual WorkUUID/native AbortSignal/tenant/manual/none
+context. There is no new role policy, timer, executor, API, grant or data store.
+
+Every original context/catalog/run/check/finding/finalization/readback boundary
+awaits an explicit true acknowledgement. Malformed or refused acknowledgements
+become the existing phase-specific capture-unconfirmed result; original context
+and runner fallback catches cannot convert that refusal into continued work or
+an ordinary error finding. Cancellation races an uncooperative checkpoint and
+checks again before I/O; its late resolution/rejection cannot resume the core,
+and existing abort listeners are removed. Earlier writes remain uncertain.
+
+Original whole-core fixture is reused, not a mock implementation of the core.
+Unchanged-core causal baseline:115PASS/27FAIL. The first candidate exposed eight
+remaining fallback-catch failures, repaired without weakening assertions. Final
+143 capture cases include all115 originals, the27 causal cases and one additional
+second-check permission refresh control; all four affected suites171PASS.
+Coverage includes malformed port/context/acknowledgements, all eight phase
+refusals with actual issued-operation order, partial saved-state preservation,
+cancellation/late replies, private-reason masking and listener cleanup. Default,
+scheduled, remediation and recorded-finding/latest-run/navigation tests remain.
+Scoped ESLint/whitespace PASS. Restricted native-cache and unsupported local
+reporter failures were setup INVALID before assertions, not product failures.
+
+Functional: LOCAL source proof only; exact review/hosted CI/full compiler/normal
+four-function Edge deployment/source readback remain owed. Visual N/A;
+Experiential full manual request/result/Rail/recovery INCOMPLETE; Founder
+NOT_ACCEPTED. Original transition/Rail source window now granted by E05 in
+ANT161/3b5f49aa but its production consumer/settlement is not supplied by this port.
+No new native function, privilege, caller/worker/schedule/provider/scan or Chat
+activation. Manual Spine/CAP009–017/ALG03/06/11/12/13 unchanged; all19/nine,
+original9-0+12-0-4 and protected monthlyUNKNOWNUNRETRIED remain open.
+
+## October26 — original manual Work safeguards deployed, scan still unavailable
+
+[#2918 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2918#issuecomment-6424997500): reviewed
+ef36f7c78752d7bc5f937d3b00d6ac54fbe64073/tree75c0b327,
+AUTHOR-REVIEW / LOWER ASSURANCE5657102273/all13 exact checks/normal Preview/
+two webSUCCESS/zero threads. Actual mergee8197859ea8aaf32f86cfaab5c79625611648e93,
+parents9dc+ef36, complete root and all16,482 outside entries/incoming docs/otherCI exact.
+Original E05 source-byte receiving b7e1171e/8be27afd retained; no new material SQL.
+
+Normal deploy-migrations40383697454/job121786526429 SUCCESS at exacte819.
+Production20271116010102 heartbeat then20271116010202 approved private claim each
+applied once; bodiesf1e7ab28b56b167c50aba50f51d6afee/11a08bb0e52828cac0011dd6ec17bbd5,
+original ABI/default300/postgres/definer/empty search_path/server-only ACLs verified;
+anon/authenticated execute=false. Same approved75-line claim SHA2564fba913a unchanged.
+No direct applier, history repair, reset or include-all. E09 next10309 window released
+after actual native readback. Original#2878 closed as superseded, not merged/deployed
+at its old head; its original failure/review/approval evidence remains historical.
+
+READY productiondpl_9TyvJ3juiLhay6vCgY2J89e6FN3K/exacte819/canonical aliases;
+both public origins200/exacte819-mvpmostu/customerUpdate:null at
+2026-10-26T19:09:56.957Z. UI/Edge delta N/A. Fresh original preparation47,
+claim40, heartbeat57 and history-reader31 native checks pass separately;
+controlled identity fixtures and seeded records are not customer acceptance.
+
+Functional: bounded private safeguards DEPLOYED/source verified. Visual: N/A,
+prior Finance rendered proof retained. Experiential: manual request/scan/result/
+Rail/recovery INCOMPLETE. Founder NOT_ACCEPTED. No scan/caller/worker/scheduler/
+provider or consequential Chat activation; manual Spine remains UNAVAILABLE.
+Original finalizer source window/consumer and authenticated proof remain owed;
+private finalizer prototypes are not a released runner or customer result.
+ALG03/06/11/12/13, nine catalogue readiness, original19 definitions and
+9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED remain at their existing bounds.
+Protected monthly stays UNKNOWN/UNRETRIED; representative-week baseline UNMEASURED.
+Earlier development/order checkpoints below remain dated history, superseded only
+for this source release. Sole Master4.0 records it once; no customer announcement.
+
 ## October26 — coherent original manual Work safeguards, release ordering pending
 
 O07/O14 REUSE/EXTEND only the original Work preparation, private claim and

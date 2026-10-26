@@ -13,6 +13,9 @@ export type TeamMemberRecord = {
   job_title: string | null;
   responsibilities: string | null;
   last_sign_in_at: string | null;
+  /** Team conversations, when the roster read carries it. Absent today (get_solo_team_workspace does
+   *  not return it), so the screen reads it from Team Hub's own roster instead; see teamHubAccessFor. */
+  team_hub_access?: boolean | null;
 };
 
 /**
@@ -39,6 +42,8 @@ export type TeamInviteRecord = {
   uses: number;
   token?: string | null;
   delivery?: InviteDelivery | null;
+  /** The invitation's Team conversations choice, when the roster read carries it. */
+  team_hub_access?: boolean | null;
 };
 
 /** The stages an invitation email passes through, in the order a person reads them. */
@@ -152,6 +157,10 @@ export type RemovalRefusal = { message: string; retryable: boolean; reconciled: 
 export function removalRefusal(raw: string | null | undefined, personName: string, workspaceName: string): RemovalRefusal {
   const text = (raw ?? "").toLowerCase();
   const known: Array<[RegExp, RemovalRefusal]> = [
+    // EXP08: an admin may now remove a member, but only the owner removes an admin. Checked before
+    // the older owner-only sentence, which it would otherwise match.
+    [/only the workspace owner may remove an admin/, { message: `Only the workspace owner can remove an admin. ${personName} is still on this team.`, retryable: false, reconciled: false }],
+    [/only an owner or an admin may remove/, { message: "Only an owner or an admin can remove people from this workspace.", retryable: false, reconciled: false }],
     [/only the workspace owner/, { message: "Only the workspace owner can remove people from this workspace.", retryable: false, reconciled: false }],
     [/an owner cannot be removed/, { message: `${personName} is an owner of ${workspaceName}, and an owner can't be removed here.`, retryable: false, reconciled: false }],
     [/cannot remove yourself/, { message: "You can't remove yourself from this workspace.", retryable: false, reconciled: false }],
@@ -274,4 +283,129 @@ export function invitationRefusalMessage(
   // Never echo the framework constant back at a person, whatever path it arrived by.
   if (sentence && !/non-2xx status code/i.test(sentence)) return sentence;
   return fallback;
+}
+
+// ── EXP08 lifecycle: suspend, reinstate, Team conversations, departure review ──────────────────
+
+/** A function the browser named does not exist on the server yet (PostgREST PGRST202, or Postgres
+ *  42883). The deploy window between a merged migration and its apply is real: the screen says the
+ *  act is not available yet rather than reporting a failure that sounds like a refusal. */
+export function isMissingFunction(error: { code?: string | null; message?: string | null } | null | undefined): boolean {
+  if (!error) return false;
+  if (error.code === "PGRST202" || error.code === "42883") return true;
+  return /could not find the function|function .* does not exist/i.test(error.message ?? "");
+}
+
+export type LifecycleAct = "suspend" | "reinstate" | "conversations" | "review";
+export type LifecycleRefusal = { message: string; retryable: boolean; unavailable: boolean; reconciled: boolean };
+
+/**
+ * What to SAY when a lifecycle act does not go through. The same rule as removalRefusal: the
+ * sentences this seam authors are recognised; anything else degrades to an honest sentence that
+ * claims nothing about the cause and never prints a backend identifier.
+ */
+export function lifecycleRefusal(error: { code?: string | null; message?: string | null } | null | undefined, act: LifecycleAct, personName: string, workspaceName: string): LifecycleRefusal {
+  const unchanged = act === "review" ? "Nothing was read." : "Nothing was changed.";
+  if (isMissingFunction(error)) {
+    return { message: `This isn't available in ${workspaceName} yet. ${unchanged}`, retryable: false, unavailable: true, reconciled: false };
+  }
+  const text = (error?.message ?? "").toLowerCase();
+  const plain = (message: string, retryable = false, reconciled = false): LifecycleRefusal => ({ message, retryable, unavailable: false, reconciled });
+  if (/only the workspace owner may (suspend|reinstate|review what) an admin|only the workspace owner may change an admin|only the workspace owner may review what an admin/.test(text)) {
+    return plain(`Only the workspace owner can do this for an admin. ${unchanged}`);
+  }
+  if (/only the workspace owner can change a suspended teammate/.test(text)) {
+    return plain(`Only the workspace owner can change a suspended teammate's role or seat. ${unchanged}`);
+  }
+  if (/only an owner or an admin may/.test(text)) return plain(`Only an owner or an admin can do this. ${unchanged}`);
+  if (/cannot (suspend|reinstate|change your own|review your own)|you cannot/.test(text)) return plain(`You can't do this for yourself. ${unchanged}`);
+  if (/an owner cannot|an owner's|owner's holdings/.test(text)) return plain(`${personName} is an owner, and this can't be done to an owner here. ${unchanged}`);
+  if (/only an admin or a member/.test(text)) return plain(`${personName}'s access level isn't one ${workspaceName}'s team settings can change. ${unchanged}`);
+  if (/only an active teammate can be suspended/.test(text)) return plain(`${personName} isn't active right now, so there is nothing to suspend. ${unchanged}`, false, true);
+  if (/only a suspended teammate can be reinstated/.test(text)) return plain(`${personName} isn't suspended, so there is nothing to reinstate. ${unchanged}`, false, true);
+  if (/only a current teammate/.test(text)) return plain(`${personName} isn't a current teammate. ${unchanged}`, false, true);
+  if (/not on this workspace/.test(text)) return plain(`${personName} is no longer on this team. ${unchanged}`, false, true);
+  if (/active workspace changed/.test(text)) return plain(`Your active workspace changed before this could run. ${unchanged} Open ${workspaceName} again to try.`);
+  if (/authentication required/.test(text)) return plain(`This did not run. ${unchanged} Reopen Team, or sign in again if you have been signed out.`);
+  if (/did not take effect/.test(text)) return plain(`That didn't take effect. ${unchanged}`, true);
+  if (/canceling statement due to (statement|lock) timeout/.test(text)) return plain(`That took too long and was cancelled. ${unchanged}`, true);
+  if (/failed to fetch|networkerror|network request|network error|timeout|timed out|aborted|econnreset|load failed/.test(text)) {
+    return plain(act === "review" ? "We couldn't reach the server. Check your connection and try again." : `We couldn't reach the server, so we can't say whether this changed for ${personName}. Try again, or reopen Team to see the current roster.`, true);
+  }
+  return plain(`That didn't go through. ${unchanged} Reopen Team to see the current roster.`);
+}
+
+/**
+ * Who may act on whom, mirroring the server's one rule for every lifecycle act (suspend, reinstate,
+ * remove, Team conversations, departure review): an owner on any admin or member; an admin on a
+ * member only; nobody on an owner, nobody on themselves. The server decides for real; this decides
+ * only what to OFFER, so a control is never drawn that will be refused.
+ */
+export function canActOn(viewerPermission: TeamPermission, viewerId: string | null, target: Pick<TeamMemberRecord, "user_id" | "permission" | "is_owner">): boolean {
+  if (target.is_owner || target.permission === "owner") return false;
+  if (target.permission !== "admin" && target.permission !== "member") return false;
+  if (!viewerId || target.user_id === viewerId) return false;
+  if (viewerPermission === "owner") return true;
+  return viewerPermission === "admin" && target.permission === "member";
+}
+
+/** A suspended seat is changed only by the owner (EXP08 rule 1b). */
+export function canChangeSuspended(viewerPermission: TeamPermission): boolean {
+  return viewerPermission === "owner";
+}
+
+// ── Departure review (team_member_holdings) ──
+
+export type HoldingKind = "work" | "crm_tasks" | "clients" | "deals" | "approvals" | "mailboxes";
+export const HOLDING_KINDS: HoldingKind[] = ["work", "crm_tasks", "clients", "deals", "approvals", "mailboxes"];
+
+export type HoldingItem =
+  | { kind: "work"; id: string; title: string; status: string; due_at: string | null; updated_at: string; client_label: string | null }
+  | { kind: "crm_tasks"; id: string; title: string; status: string; due_date: string | null; updated_at: string; client_label: string | null }
+  | { kind: "clients"; id: string; label: string; relation: "assigned" | "lead_owner"; updated_at: string }
+  | { kind: "deals"; id: string; title: string; value_cents: number | null; currency: string | null; expected_close_date: string | null; version: number; client_label: string | null }
+  | { kind: "approvals"; id: string; summary: string | null; approval_kind: string | null; status: string; created_at: string | null }
+  | { kind: "mailboxes"; id: string; label: string; provider: string | null; address: string | null };
+
+export type MemberHoldings = {
+  member: { user_id: string; display_name: string; role: string; status: string; team_hub_access: boolean | null };
+  items: Record<HoldingKind, HoldingItem[]>;
+  counts: Record<HoldingKind, number>;
+};
+
+const text = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v : null);
+const rows = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => Boolean(x) && typeof x === "object") : []);
+
+/** The departure review, or null when the answer is not one this screen can trust. A row without the
+ *  version its writer needs is dropped from the hand-over (it is still counted), never guessed. */
+export function normalizeHoldings(value: unknown, expectedUserId: string): MemberHoldings | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  const member = row.member as Record<string, unknown> | undefined;
+  const holdings = row.holdings as Record<string, unknown> | undefined;
+  const counts = row.counts as Record<string, unknown> | undefined;
+  if (row.ok !== true || !member || !holdings || !counts || member.user_id !== expectedUserId) return null;
+  const items = {} as Record<HoldingKind, HoldingItem[]>;
+  items.work = rows(holdings.work).flatMap((w) => text(w.id) && text(w.updated_at) ? [{ kind: "work" as const, id: w.id as string, title: text(w.title) ?? "Untitled work", status: String(w.status ?? ""), due_at: text(w.due_at), updated_at: w.updated_at as string, client_label: text(w.client_label) }] : []);
+  items.crm_tasks = rows(holdings.crm_tasks).flatMap((w) => text(w.id) && text(w.updated_at) ? [{ kind: "crm_tasks" as const, id: w.id as string, title: text(w.title) ?? "Untitled task", status: String(w.status ?? ""), due_date: text(w.due_date), updated_at: w.updated_at as string, client_label: text(w.client_label) }] : []);
+  items.clients = rows(holdings.clients).flatMap((c) => text(c.id) && text(c.updated_at) && (c.relation === "assigned" || c.relation === "lead_owner") ? [{ kind: "clients" as const, id: c.id as string, label: text(c.label) ?? "Client not recorded", relation: c.relation, updated_at: c.updated_at as string }] : []);
+  items.deals = rows(holdings.deals).flatMap((d) => text(d.id) && Number.isInteger(d.version) ? [{ kind: "deals" as const, id: d.id as string, title: text(d.title) ?? "Untitled deal", value_cents: typeof d.value_cents === "number" ? d.value_cents : null, currency: text(d.currency), expected_close_date: text(d.expected_close_date), version: d.version as number, client_label: text(d.client_label) }] : []);
+  items.approvals = rows(holdings.approvals).flatMap((a) => text(a.id) ? [{ kind: "approvals" as const, id: a.id as string, summary: text(a.summary), approval_kind: text(a.kind), status: String(a.status ?? ""), created_at: text(a.created_at) }] : []);
+  items.mailboxes = rows(holdings.mailboxes).flatMap((m) => text(m.id) ? [{ kind: "mailboxes" as const, id: m.id as string, label: text(m.label) ?? "Connected mailbox", provider: text(m.provider), address: text(m.address) }] : []);
+  const total = {} as Record<HoldingKind, number>;
+  for (const kind of HOLDING_KINDS) {
+    const n = Number(counts[kind]);
+    total[kind] = Number.isFinite(n) && n >= items[kind].length ? n : items[kind].length;
+  }
+  return {
+    member: {
+      user_id: expectedUserId,
+      display_name: text(member.display_name) ?? "Teammate",
+      role: String(member.role ?? ""),
+      status: String(member.status ?? ""),
+      team_hub_access: typeof member.team_hub_access === "boolean" ? member.team_hub_access : null,
+    },
+    items,
+    counts: total,
+  };
 }

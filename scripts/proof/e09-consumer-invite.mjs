@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 import { isProofDescendant } from './e09-proof-path.mjs';
 
 const baselineOnly = process.argv.includes('--baseline');
+const supportContact = process.argv.includes('--support-contact');
 const documents = process.argv.includes('--documents');
 const privateRequestBaseline = process.argv.includes('--private-request-baseline');
 const privateRequestHistoryBaseline = process.argv.includes('--private-request-history-baseline');
@@ -423,6 +424,7 @@ try {
  if(ownerActions){const {ownerActionReadProof}=await import('./e09-owner-customer-actions.mjs');ownerActionReadProof({sql,check,assert,fs,root,path,fixture});}
  if(privateRequest){const {privateRequestProof}=await import('./e09-private-request.mjs');privateRequestEvidence=await privateRequestProof({sql,check,assert,fs,root,path,fixture,spawn,exe,args,transcripts,baseline:privateRequestBaseline,historyBaseline:privateRequestHistoryBaseline,publicationBaseline:privateRequestPublicationBaseline,publicationCandidate:privateRequestPublication,focusCandidate:privateRequestFocus,focusBaseline:privateRequestFocusBaseline});}
  if(requestShareCatalogue){const {requestShareCatalogueProof}=await import('./e09-request-share-catalogue.mjs');requestShareCatalogueEvidence=requestShareCatalogueProof({sql,check,assert,fs,fixture,baseline:requestShareCatalogueBaseline});}
+ if(supportContact){const {supportContactProof}=await import('./e09-support-contact.mjs');supportContactProof({sql,check,assert,fs,fixture});}
  if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
  const report={mode:documents?'documents-candidate':actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(documents?{documentMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108150000_e09_customer_documents.sql')).digest('hex'),physicalStorage:'NOT_RUN',realtimeTransport:'NOT_RUN'}:{}),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};

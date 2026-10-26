@@ -11,6 +11,149 @@ permission, catalogue, algorithm or acceptance state changes.
 
 # Weekly Internal Commitment Check — protected acceptance handoff
 
+## October26 whole-Experience reconciliation — original scope retained
+
+Received owner-directed ANT-11/7d47cc68 and current ANT-161 assignments at
+`e8197859ea8aaf32f86cfaab5c79625611648e93`. This additive mapping preserves all
+ten outcomes, the exact E5-CV1–9 assertions, the seven original browser assertions,
+role/database/cleanup requirements and historical restoration IDs below. Older
+dated candidate/release statements remain historical. No new case is closed.
+The unit of delivery is the universal SOLO product, not the historical QA accounts.
+
+### Current disposition and next coherent acceptance steps
+
+`PARTLY BUILT` means existing source is reused and a missing integration is named;
+`PROOF OWED` does not mean a complete customer flow is implemented or accepted.
+Every row below still requires its full original terminal proof. The owner-away
+scenario supplements these rows rather than replacing them with a second matrix.
+
+| Original outcome / acceptance cases | Existing implementation to reuse | Specific remaining obligation and classification | Producer → receiver / next proof |
+| --- | --- | --- | --- |
+| **01 Understand responsibilities / E5-CV3,4,9** | `operations-weekly-source.ts`, original Work/Planning readers, `weekly-commitment-read.ts`, bounded Calendar agenda. #2805/#2820 source releases and original Task-history readback are retained. | PARTLY BUILT / PROOF OWED: genuine tasks, projects, milestones, overdue and blocked commitments must be useful together; missing sources, dates, capacity and dependencies stay unknown. | E04 supplies original service-session/homework/delivery obligation IDs; E08 supplies legitimate assignee/capacity context. E05 reads the permitted original records and proves stated coverage, current authority and original Work navigation. |
+| **02 Plan my week / E5-CV1,2,5,9** | Existing bounded weekly review, personal Planning, Calendar display and saved weekly-definition inspection. | PARTLY BUILT / IMPLEMENTATION GAP: complete explainable prioritization and capacity/dependency-aware weekly planning; owner correction and durable continuation remain PROOF OWED. A prioritization answer is not an authorized schedule. | E02 confirmed priorities/metrics → E05 plan; E08 availability/workload and E04 real deadlines remain separately attributable inputs. Prove a useful representative week without inventing hours or dependency completion. |
+| **03 Create/manage work / E5-CV4,5,6** | `OperationsWork`, creator/editor/activity and canonical versioned Planning/Task writers; original occurrence/result/Rail readers. | PARTLY BUILT / PROOF OWED: create, assign, reschedule and complete supported work, with stale-version/refusal and reload evidence. Shared completion must reconcile actual domain result, not a generic completed flag. | E05 is original Work writer; E04/09 supply original obligations/acceptance. E08 consumes Work references and proposes assignments through the same writer, never a Team-owned duplicate task. |
+| **04 Calendar/reminders / E5-CV2,5,7** | Existing Calendar, Planning reminders, weekly native state/cutoff controls and `weekly-owner-read.ts`. #2856 exact-state resume and #2890 same-session recovery are source released. | PARTLY BUILT / HELD DEPENDENCY / PROOF OWED: Chat future-control offer/consumer still needs its original governed integration. Actual schedule, DST/conflict behavior and delivered occurrence/notice need their original proofs; no recurrence activation is inferred. | E05 original process/revision/cutoff ↔ Calendar; E03 qualification/booking and E04 service obligations supply their own source identity. Prove no hidden booking, catch-up burst or second scheduler. |
+| **05 Build automations / E5-CV1,5,9** | Existing Automation drafts/templates/triggers/actions and `weekly-draft-command.ts`; draft save/claim/commit/decline remain distinct. | PARTLY BUILT / IMPLEMENTATION GAP: natural-language clarification → accurate multi-step preview → correction → durable draft, with supported trigger/action, readiness, limits and cost clearly exposed. A saved draft is not enabled or executed. | E05 composes original registered domain capabilities; E10 supplies actual connection/readiness/revocation. Unsupported future-Experience producers remain explicit gaps, not permission to build their domains. |
+| **06 Authorize/execute / E5-CV1,3,7** | Existing Trust, Spine, Harness, `engine.ts`, `adapters.ts`, weekly ActionAdapter/native command and original process/events/acts. | PARTLY BUILT / IMPLEMENTATION GAP / PROOF OWED: exact approved policy → admitted trigger → current authority/budget → useful completed domain artifact → original receipt. `prepareWeeklyControlReview` remains preparation-only and is not imported into Chat admission. Preserve `automation_set_state` owner-only policy. | E05 owns orchestration consumption and original Work outcome; domain leads retain domain writers, E10 provider readiness. Prove request, authorization, enablement, dispatch, execution and outcome as separate states. |
+| **07 Monitor exceptions / E5-CV3,6,8** | Existing Work/act/event/history and original Operating/Metric evidence; original ZION status reader. | PARTLY BUILT / IMPLEMENTATION GAP / PROOF OWED: detect real overdue, stuck, failed and unknown work with source/time/impact and a permitted next action. An absent record or stale heartbeat is not proof of failure or successful recovery. | E02 supplies attributable operating signals; E05 correlates original Work/act/result/Rail, with E10 provider degradation when relevant. Prove representative exceptions, false-positive controls and useful escalation. |
+| **08 Recover safely / E5-CV5,6,7,9** | Original operation identity, native CAS, exact approvals, no-repeat reconciliation and ZION return/history; #2880/#2885/#2890 released recovery subsets. | PARTLY BUILT / PROOF OWED: cancellation, lateness, revoked/expired/duplicate approvals, concurrent changes, lost acknowledgment and unknown outcomes across the whole job. #2898 client refusal/file flow remains DRAFT with material browser proof unfinished. | E05 retains original Work and execution contracts; E02's #2918 extends the same bounded manual Work heartbeat/claim under its received source lease. Source safeguards are not an executed weekly job. Prove original-result readback rather than replay. |
+| **09 Keep owner informed / E5-CV8** | Existing contextual attention/communications controls and original Rail/result references. | IMPLEMENTATION GAP / HELD DEPENDENCY: weekly notice producer/presentation remains UNAVAILABLE at the last verified checkpoint. Returning Chat history or a receipt alone is not delivered owner attention. Preserve consent, quiet hours, frequency and provider limits. | E05 produces relevant result/exception context; existing permitted communication/presentation consumers deliver it. Do not revive retired Notifications, create an inbox/notice ledger, or substitute external sends. |
+| **10 Show results/resume / E5-CV3,4,6,9** | Original Task/weekly/specialist history, canonical Work inspector and original process/receipt links. | PARTLY BUILT / PROOF OWED: later-session truthful review of what completed, failed, remains unknown or needs approval; current record and historical observation must remain distinct. Positive ZION assignment/result/receipt/reload is still owed. | PAIGE remains primary interface; ZION returns through the original governed assignment and Rails. E08 Team Hub consumes reusable permitted references. Prove cross-session return and separate authorized Live acceptance. |
+
+### October26 visual/job acceptance addendum — no new case closure
+
+Receive owner standard ANT-11/704476b3. Apply these subcases to the same ten
+outcomes and unchanged E5-CV1–9, never a replacement inventory. Reuse the approved
+Operations direction and existing design system; refine unfinished flows without
+blanket rebuilding released areas. Large repeated banners/slogans are not the
+default. Compact context, purposeful token color, accessible icons and meaningful
+visuals must explain actual priority, ownership, progress and next action.
+
+| Original cases / owned surface | Required real interaction and visual/job evidence |
+| --- | --- |
+| E5-CV3/4/9 — Overview and Work, Outcomes01/03/07/10 | Select attention/priority to inspect the original Work and evidence; useful loading, empty, stale, denied and failure states. Status uses label/icon as well as color. Filters, original-record detail and close/back preserve context and unsaved work. No decorative or invented activity. |
+| E5-CV1/3/4 — Projects/milestones and weekly plan, Outcomes01/02/03 | Inspect the actual milestone/dependency/owner and follow the original Work. Explain a recommendation from real deadlines; correct/decline it. Timeline/progress represents recorded facts, not assumed delivery or task-count completion. |
+| E5-CV3/4/6 — Delivery, Outcomes03/07/10 | Drill into the original E04 promise/terms and permitted Work/result; keep E09 customer acceptance and E04 commercial truth separate. No task status or receipt alone implies delivered/accepted service. |
+| E5-CV1/4/5 — Playbooks and Builder, Outcomes03/05/06 | Inspect original procedure/source, trigger, conditions and step preview; correct/save the actual draft. Approval/enablement/execution are distinct. Workflow detail/expansion reveals real supported actions, limits and readiness, not a static decorative diagram or second workflow engine. |
+| E5-CV1/2/7 — Capacity, Calendar/reminders, Outcomes01/02/04 | Inspect actual workload/assignee and original dated work, zone/conflicts and permitted future controls. Missing effort/availability remains unknown. E08 confirmed availability is separate from booking windows; no assumed free capacity or hidden booking. |
+| E5-CV3/6/8/9 — ZION/execution/attention/reentry, Outcomes06–10 | Inspect the original bounded assignment, approval, state, result and Rail. Useful permitted next action and recovery/pause/revoke remain traceable. Show actual queued/running/failed/unknown states only, never imaginary specialist activity. Contextual ZION action stays in the existing PAIGE workflow, not a dedicated planning subtab. |
+| All applicable cases/surfaces — device/accessibility/performance | Real laptop/tablet/phone inspection in Mineral and Obsidian; preserve original four SOLO viewport/open-closed cases and add relevant narrow-phone coverage. Verify long names, touch/keyboard, focus/escape/return, zoom, safe areas/virtual keyboard, scroll/reachability and no clipping/overlap/hidden controls. Color is never the sole signal; provide meaningful labels and chart alternatives. |
+| All applicable cases/surfaces — motion and finish | Purposeful supported CSS/graphics/motion only where it explains state/cause/progress/location; reduced motion preserves feedback and prevents layout shifts. Apply bounded Impeccable inspect/fix/confirm and record actual rendered interactions, performance and remaining defects. Tooltips/static captures/fixtures are not completed interactive proof. |
+
+The mandatory Flow-by-Flow → paige-ui-design → applicable Flow Prototype and
+Impeccable routes remain. UI-bearing increments carry actual proportionate
+render/interaction evidence; source-only lifecycle corrections explicitly state
+why no presentation changed and cannot promote their fixtures to browser proof.
+These subcases are REQUIRED / PROOF OWED until individually evidenced. This
+document implements no new visual surface, status promotion or founder acceptance.
+
+Updated receiving evidence: actual EXP03 successorce69090b and E05b60e28ae retain
+original Work/Calendar handoff identities; CRM/comms remain E03. E08's source
+window1b69efd6 is still held until its exact freeze/handback. E09 browser allocation
+remains; E05 queued379c5a59 after E09 and the existing E02 owner-read pass, with no
+browser access inferred. Current#2933 is only the original reader retirement
+correction, reviewed/CI candidate, not an approved or executed recurring job.
+
+### Owner-away representative week — subcases of the original rows
+
+1. **E5-CV1/2, Outcomes02/04/05/06:** clarify the actual task and permitted recurrence;
+   review exact policy, actor, business, process revision, time zone, limits,
+   connected-provider readiness and actions. Save and approve through existing
+   controls only. A declined or unsupported policy produces no enabled work.
+2. **E5-CV3/4, Outcomes03/06/10:** an admitted original trigger rechecks current
+   authority and produces a useful canonical artifact while the owner is away.
+   Completion requires matching original Work/process/event/act/domain-result/Rail
+   identities. A prepared document, schedule tick or generic finalizer is not proof.
+3. **E5-CV6/8, Outcomes07/08/09:** preserve a real failure/unknown result, identify
+   its impact and surface only permitted meaningful attention. Record actual
+   notice/delivery separately; no fabricated activity or silent external send.
+4. **E5-CV5/6/7, Outcomes03/04/08:** pause/revoke/cancel, stale changes, late
+   delivery, duplicates and interruption prevent unauthorized future effects.
+   Reconcile the original attempt after lost acknowledgment; unknown never means
+   safe to repeat. Preserve a legitimately running act and its original revision.
+5. **E5-CV9, Outcomes01/02/10:** return in a later authorized conversation, inspect
+   the same originals, correct the next plan and distinguish historical results
+   from current work. Chat-only proof cannot close Live or founder acceptance.
+
+### Algorithm Support — actual inputs, logic, output and missing proof
+
+| Canonical contract | Original inputs / bounded behavior / wiring | Current maturity and required evidence |
+| --- | --- | --- |
+| **ALG-01** | Original Work/process/event/act, exact stored approval/version/cutoff and domain/Rail readback; original native CAS/claim/reconciliation and weekly adapter. | PARTIAL: causal/native/source recovery proof exists; complete owner-away original artifact/Rail/reload, concurrency, denial and unknown-no-replay still owed. #2918 is the original E02-owned bounded manual safeguard, not a new weekly executor. |
+| **ALG-08** | Real deadlines, dependencies, recorded effort/availability and original Calendar/Planning zones/windows. Native weekly scheduling and observed capacity remain authoritative. | PARTIAL schedule/zone subset; actual resource optimization wiring, feasible plan quality and DST/conflict/capacity tests remain gaps/proof owed. Unknown effort/availability never becomes zero or free capacity. |
+| **ALG-12** | Original recorded Work/act/exception/provider status and timestamps; bounded classification must retain unknown and source coverage. | PARTIAL presentation; useful anomaly/stuck-work detection, incident escalation and false-positive evaluation still owed. No new anomaly store or manufactured health signal. |
+| **ALG-13** | Confirmed goals, actual unfinished commitments, current supported capability/approval/provider readiness; attributable explanation and permitted next step. | PARTIAL bounded next-step presentation; integrated recommendations and measured usefulness remain owed. Recommendations cannot authorize their own execution. |
+| **ALG-03** | Consume E02's canonical Metric/Evidence and Operating Fabric priorities; keep source, measurement period and missing-data limits. | Consumer integration/proof owed; E05 does not create a business-health score or infer causality/ROI. |
+| **ALG-11** | Existing Model Fabric routing/evaluation, OpenAI-primary and Anthropic fallback, existing quality/latency/cost controls. | Shared policy preserved; EXP05-specific quality/latency/cost correlation to actual jobs remains proof owed. No second model router or unsupported savings claim. |
+| **ALG-02** | Consume legitimate EXP00/01 confirmed Setup/first-value evidence where relevant to current work. | Input handoff/integration proof owed; no new onboarding intelligence. |
+| **ALG-10, when communications apply** | Actual consent, preferences, authorized channel/provider, timing/frequency and original communication authority. | Required before connected communications; no send/phone/SMS/provider activation is granted by this packet. |
+
+Any stronger capability/algorithm claim without original input, implemented logic,
+output wiring and qualifying proof is **NO VERIFIED SUPPORTING ALGORITHM
+IDENTIFIED — GAP OR VERIFICATION OWED**. Existing algorithm IDs are not a score.
+
+### Grounding, shared boundaries and current engineering order
+
+- EXP03's full Growth assignment is moving to the owner-designated sole Claude
+  successor (ANT-161/2c1e7871); delivery is owner-confirmed, receiving identity/ACK
+  remains pending. E05 retains Work/Calendar/execution, not CRM/email/DNS ownership.
+- EXP08 requested the current Team-lifecycle Root/risk/registry/C0b edit window
+  (ANT-161/1b69efd6). E05 requested exact freeze/handoff and edits none of those
+  shared paths concurrently. E04's held original refusal and pins remain intact.
+- First complete original weekly-review/control bindings after that narrow source
+  handoff. Reuse the existing preparation, approval, Kit and native writers; test
+  missing input, scope/role/version changes, decline/expiry and unknown recovery.
+  No owner-only policy may be reclassified to make the connection reachable.
+- Then prove the coherent approved-policy → trigger → useful original artifact →
+  receipt → notice/escalation → stop/recovery chain using the existing engine and
+  original domain owners. Build independent monitoring/ZION/Builder gaps in small
+  coherent increments, preserving all ten rows and the original case assertions.
+- Browser time remains with EXP09. Coordinate a bounded return for remaining
+  original refusal/file, responsive and owner-session checks without borrowing its
+  customer context. This is engineering QA, not a request for founder evaluation.
+- Full EXP13 bulk upload/extraction/Knowledge remains its future held scope;
+  E09's customer-specific CURA publication remains E09. Preserve the original PDF
+  incident and E05's bounded refusal/recovery duty without taking over EXP13.
+
+**Release and acceptance truth:** this reconciliation changes documentation only;
+no callable capability, permission, provider, native writer, configuration or
+activation changes. Current eleven Operations recipe entries were last observed
+Listed/Unverified; no Live promotion follows. Source/review/exact-head CI/merge/
+deployment/configuration/connection/activation/authenticated proof/founder
+acceptance remain separate. Required ordinary-owner/member, foreign tenant,
+equivalent eligible existing/new-business, provider-readiness, revoked approval,
+reload and unknown-result tests remain in the original rows. Do not create a QA
+tenant or role to fill evidence gaps. Founder acceptance is NOT_ACCEPTED until
+the complete integrated Experience is ready for its one owner evaluation.
+
+Orchestration Contract for this documentation increment: entry is the existing
+acceptance packet; domain records/registered capabilities/ActionAdapters, current
+Trust approvals, Harness execution and Rail writers are unchanged. No execution
+or receipt is issued. Functional source status is preserved; Visual is N/A for the
+documentation diff; Experiential proof remains open; Founder Acceptance is
+NOT_ACCEPTED. Shipped-log disposition is N/A until actual merge; no customer
+release identity or announcement is requested.
+
 ## October25 23:57UTC — original inspection releases, acceptance remains open
 
 Original#2885/main1d6a917 and#2880/main dd6496 are reviewed, exact-head green and

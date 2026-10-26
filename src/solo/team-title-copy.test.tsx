@@ -93,7 +93,7 @@ describe("the Team screen's word for what someone is called", () => {
     await mountScreen();
     expect(text()).toContain("Head Trainer");
     expect(text()).toContain(`${Word} not set`);
-    expect(text()).toContain(`enforced permission, ${word}, and responsibilities`);
+    expect(text()).toContain(`each person's permission, ${word} and responsibilities`);
     expect(text()).not.toMatch(/job title/i);
   });
 
@@ -116,9 +116,10 @@ describe("the Team screen's word for what someone is called", () => {
   it(`the permission-change confirmation says it changes authorization, not the ${word}`, async () => {
     await mountScreen();
     await clickText("Sam Rivera");
-    const select = document.querySelector("[role='dialog'] .stw-permission-change select") as HTMLSelectElement;
-    expect(select, "the owner is offered the permission control").toBeTruthy();
-    await choose(select, "admin", "change");
+    // The permission is chosen with radio cards (approved design), never a native select.
+    const admin = Array.from(document.querySelectorAll("[role='dialog'] .stw-permission-change [role='radio']")).find((n) => n.textContent?.includes("Admin")) as HTMLButtonElement;
+    expect(admin, "the owner is offered the permission control").toBeTruthy();
+    await act(async () => admin.click());
     expect(text()).toContain(`This changes authorization, not the ${word}.`);
     expect(text()).not.toMatch(/job title/i);
   });

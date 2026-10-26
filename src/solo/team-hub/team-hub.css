@@ -84,6 +84,7 @@
 .th-seg button::after{margin-left:auto}
 .th-chips{display:flex;flex-wrap:wrap;gap:6px}
 .th-chip small{color:var(--pg-muted);font-size:11px}
+.th-chip-note{color:inherit;font-size:11px}
 .th-chip:disabled{opacity:.55;cursor:not-allowed}
 .th-form-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:6px}
 .th-inline-form--wide .th-form-actions{display:flex;justify-content:flex-end}
@@ -350,3 +351,6 @@
   .th-pop,.th-thread,.th-work,.th-preview,.th-att-glyph{animation:none}
   .th-btn,.th-send,.th-reply-action{transition:none}
 }
+/* EXP08 owner colour pass (2026-10-26): "Team conversations are off" carries the conversations
+   indigo on a soft plate rather than flat graphite. Token-only; other centre states unchanged. */
+.th-hub[data-state="conversations-off"] .th-center-mark{color:var(--pg-violet);background:color-mix(in srgb,var(--pg-violet) 16%,var(--pg-canvas));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pg-violet) 28%,var(--pg-canvas))}

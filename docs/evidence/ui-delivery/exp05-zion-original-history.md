@@ -1,5 +1,20 @@
 # EXP05 — inspect original ZION assignments in Operations
 
+## Post-release observation — October25 23:51–54UTC
+
+The source/render attestation below retains its original development snapshot.
+[#2880 production receipt6405171195](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2880#issuecomment-6405171195)
+records actual dd6496/tree3d358467, exacta857/LOWER/all10 checks/two webSUCCESS,
+no-native PreviewSKIP/P2 corrected-resolved; original capture failure retained,
+unchanged retry passed. READY/both public/emitted JS+CSS verified; native/Edge N/A.
+Existing ordinary owner obtained an explicit empty recent tenant-scoped sample.
+Positive original response/receipt/reload remains owed. Screenshot and next DOM
+capture timed out; no new pixels/viewport acceptance. Historical frames stay
+source-bound;374/376 inputs exact, two incoming automation/Finance differences
+separately reviewed with exact-union source1204/0 in76 files. No new Chat,
+delegation, approval, action/provider/recurrence activation or catalogue/algorithm
+promotion. Full ten/E5/Builder/ZION/Live/cohort/founder acceptance remains open.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: bounded original-read flow and ten routing answers below; installed Flow-by-Flow and its routed references read before implementation.
 PAIGE_UI_DESIGN: PASS: repository router and all five quality modules, interaction, upstream, accessibility and release references read; existing SOLO tokens retained.

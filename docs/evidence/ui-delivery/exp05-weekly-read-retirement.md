@@ -1,5 +1,69 @@
 # EXP05 — Retire cancelled and expired weekly inspections
 
+## October26 — original Chat status handoff correction, development
+
+REPAIR the same original weekly reader's awaiting Chat projection. The original
+caller-JWT read, native owner checks, response parser and eight-second deadline
+remain unchanged. Capture the initiating identity before awaiting that reader;
+recheck cancellation and exact actor/business/workspace/role/shape/epoch at its
+return boundary, catching a retired observer, before projecting model context.
+Reuse the existing unavailable message and scope_changed reason. No private
+snapshot is substituted, no RPC retried and no action executed.
+
+The causal original-suite run completes the actual five fixture RPCs and original
+Context available return, then injects interruption at that handoff:55 incumbent
+assertions PASS and all3 new assertions FAIL because the stale result is still
+available. Corrected six owning suites207PASS/0FAIL/0skipped. This is controlled
+source evidence, not proof of a production disclosure or authenticated recovery.
+Original read-only inspection is distinct from a weekly execution result/Rail.
+
+Production source closure strict-check PASS and scoped ESLint PASS. The combined
+test/source strict invocation retains one incumbent TS2322 in the existing
+malformed-observation fixture; baseline/current diagnostic, actual source line
+and error text match, with no additional diagnostic. The new import shifts that
+old location by one line. An initial comparison incorrectly treated the location
+shift as a new diagnostic and is retained separately. Do not call the combined
+strict invocation clean. Kit guard remains288/296 baseline entries, no bypass.
+The unchanged original disposable PostgreSQL proof now128PASS, including actual
+engine/Gateway/native adapter execution/redrain and both prepared read consumers,
+exact state/cutoff and concurrent stale-authorization controls. Result SHA256
+06cf32a0d4d6b16cd759849e6a9bd2c8cb04427e2e8ca15f770a45c39f02fb1f;
+log04641142d8b13d3fd079cf5b371ea6cae012c915e62b21661901672e38c8738a.
+Original fixture role restored/verified and own cluster stopped. The first
+restricted attempt failed on loopback permission before assertions, and its log
+and stopped cluster remain retained as INVALID infrastructure evidence. No
+assertion, timeout, native source or role policy changed to obtain the normal
+authorized local run. These are synthetic substrate/authority fixtures, not real
+customer recurrence or provider proof. Causal red report1025dd2822f2e99c809ec43cf7f2a40b0efe73be01ec76449a9c33e83381f1d4;
+green report5c9adc2761819630446b561cf62937f14e4f50cbd9f054a6f73c443e4f9be4de.
+Immutable review/CI, normal deployment/full source readback and authenticated
+interrupted/reload evidence remain gates at this checkpoint.
+
+This does not alter JSX, CSS, geometry, controls, focus, messages, routes, modality,
+state vocabulary or the original success/unavailable customer flow. Flow
+Prototype remains NOT_REQUIRED for this existing lifecycle-contract correction;
+new rendered/keyboard/viewport proof is NOT_APPLICABLE to the unchanged interface,
+not claimed from old captures. The installed Impeccable routing excludes
+backend-only tasks; no new visual design or finish verdict is claimed. Preserve
+the original presentation records below, attributed to their original increments.
+
+Orchestration: existing automations.weekly_commitment_status / read_only,
+get_weekly_commitment_checks, original Harness/Context and caller JWT; no
+ActionAdapter dispatch, approval, job, provider, mutation or new receipt stream.
+Actual recurring work retains its existing Layer C/native adapter. ALG-01 is
+supported only by retirement of stale inspection context; ALG-12/13 consume
+verified observations, and no algorithm maturity or metric is promoted here.
+
+Grounding/collision: base0836340482c33ba79ab9b9a053eecbee979ef43b includes released
+E08#2925 and reviewed E05#2931. This changes only the E05-owned reader/test and
+this existing evidence/Brain. Shared Chat/Root, registry, risk, C0b, CI and native
+sources remain untouched under the E08 window and E02/E09/E04 native sequence.
+Catalogue capability/availability/limits remain unchanged; this is not a Live
+promotion, recurring activation, cohort verification or full Experience closure.
+Channel=development; migration=NOT_APPLICABLE; Edge paige-ai-chat source/readback
+PROOF OWED; customer release identity/announcement=none; founder acceptance=owed.
+Recovery is a reviewed forward correction of this reader, never action replay.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: same Operations/Calendar/PAIGE weekly inspection entry, loading, verified/refused/unavailable read and original exits; retire stale lookup stages rather than continuing after the original deadline or actor/scope change.
 PAIGE_UI_DESIGN: PASS: existing PAIGE UI router, five quality modules and Impeccable guidance preserve the original native Sheet, state wording, focus, hierarchy, scroll owner and controls. This increment changes only the two existing reader functions and their owning tests.

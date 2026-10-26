@@ -77,7 +77,15 @@ export async function prepareWeeklyCommitmentChatResponse(identity: ContextIdent
   if (!args || typeof args !== "object" || Array.isArray(args) || Object.keys(args).length !== 0) {
     return { status: "needs_input" as const, message: "Status inspection takes no schedule, scope or authorization arguments. Nothing was read." };
   }
-  const result = await readWeeklyCommitmentProjection(identity, deps);
+  const origin = Object.freeze({ ...identity });
+  const result = await readWeeklyCommitmentProjection(origin, deps);
+  // The reader and its awaiting Chat consumer resume in different microtasks.
+  // Recheck the original scope at that handoff before exposing model context.
+  let currentScope = false;
+  try { currentScope = !deps.signal?.aborted && isCurrentWeeklyCommitmentScope(origin, deps.currentIdentity()); }
+  catch { /* A retired identity source cannot publish an old inspection. */ }
+  if (!currentScope) return { status: "unavailable" as const,
+    message: "The current authorized weekly status could not be verified. Do not infer an empty schedule or completion.", reason: "scope_changed" };
   if (result.status !== "available" || !result.data) {
     return { status: "unavailable" as const, message: "The current authorized weekly status could not be verified. Do not infer an empty schedule or completion.", reason: result.reason };
   }

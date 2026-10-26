@@ -661,6 +661,20 @@ unknown hold without another request. Genuine/unknown changes still retire.
 [Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
 does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
 
+## EXP05 original status handoff — October26 development
+
+The original weekly Chat consumer captures its initiating scope and rechecks the
+same canonical identity/request after its awaited owner read, before model
+projection. Cancellation, a retired observer or changed original identity returns
+the existing unavailable contract. The actual five-RPC reader/parser still runs;
+no write, retry, new permission, schedule or receipt is added. Original-suite
+55PASS/3FAIL becomes six-suite207PASS; original native128PASS with own cluster
+stopped and fixture role restored. Source strict/lint/Kit PASS, while the one
+incumbent strict-test fixture diagnostic remains unchanged. See the original
+[retirement evidence](../evidence/ui-delivery/exp05-weekly-read-retirement.md).
+Immutable review/CI/deployment/authenticated interruption/reload remain owed.
+No catalogue/algorithm/recurring/Live or full ten/E5 acceptance promotion.
+
 ## EXP05 weekly review interruption — October26 development
 
 Original unadmitted weekly review now snapshots its initiating scope before the

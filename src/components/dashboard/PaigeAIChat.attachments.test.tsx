@@ -159,6 +159,69 @@ describe("INT-338 real composer attachment integration", () => {
     return e;
   };
   const remove = () => host.querySelector<HTMLButtonElement>('button[aria-label="Remove attachment"]');
+  it("explains a known recovery refusal without claiming the uploaded PDF was read or offering replay", async () => {
+    const bodies: Array<{ requestIntentId: string; interactive?: { kind: string }; document?: { base64: string } }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      bodies.push(body);
+      return body.interactive?.kind === "message" && body.document
+        ? new Response(JSON.stringify({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true }), { status: 409 })
+        : body.interactive?.kind === "message" ? streamed("Here are the existing records you asked about.")
+        : new Response(JSON.stringify({ settled: true }));
+    }));
+    harness.threads = [{ id: "held-thread", title: "Document review", updated_at: "2026-10-19T12:00:00Z" }];
+    await render({ activeThreadId: "held-thread" }); await waitForWritable();
+    await stage(file("Program-brief.pdf"), "drop"); await type("Review this brief");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("An earlier response was interrupted, and its outcomes still need checking");
+    expect(host.textContent).toContain("Your message was recorded");
+    expect(host.textContent).toContain("new actions and attachments are on hold");
+    expect(host.textContent).toContain("You can still ask questions about existing records");
+    expect(host.textContent).toContain("Remove the attached file first to ask about existing records.");
+    expect(remove()).not.toBeNull();
+    expect(Array.from(host.querySelectorAll('[role="status"]')).some(status => status.textContent === "Program-brief.pdf attached")).toBe(true);
+    expect(host.textContent).not.toContain("The connection ended");
+    expect(host.textContent).not.toContain("I've read");
+    expect(host.textContent).not.toContain("Your message wasn't sent");
+    expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
+    expect(bodies.filter(b => b.interactive?.kind === "message")).toHaveLength(1);
+    expect(bodies[0].document).toMatchObject({ base64: "AQID" });
+    // A known no-processing refusal may be tried again only by another deliberate
+    // Send. That new intent must not be swallowed by the first send's latch.
+    await act(async () => { send().click(); send().click(); await settle(); });
+    const documentRequests = bodies.filter(b => b.interactive?.kind === "message");
+    expect(documentRequests).toHaveLength(2);
+    expect(documentRequests[1].requestIntentId).not.toBe(documentRequests[0].requestIntentId);
+    expect(documentRequests[1].document).toMatchObject({ base64: "AQID" });
+    expect(remove()).not.toBeNull();
+    await act(async () => { remove()!.click(); await settle(); });
+    expect(host.textContent).not.toContain("Remove the attached file first");
+    await type("Show my existing records");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("Here are the existing records you asked about");
+    expect(bodies.filter(b => b.interactive?.kind === "message")).toHaveLength(3);
+    expect(bodies.filter(b => b.interactive?.kind === "message").at(-1)?.document).toBeUndefined();
+  });
+  it.each([
+    { status: 409, code: "OTHER_REFUSAL", accepted: true },
+    { status: 500, code: "INTERACTIVE_RECOVERY_READ_ONLY", accepted: true },
+    { status: 409, code: "INTERACTIVE_RECOVERY_READ_ONLY", accepted: undefined },
+  ])("does not restore or replay an uncertain document outcome %j", async refusal => {
+    const bodies: Array<{ interactive?: { kind: string }; document?: { base64: string } }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body)); bodies.push(body);
+      return new Response(JSON.stringify({ code: refusal.code, message_accepted: refusal.accepted }), { status: refusal.status });
+    }));
+    harness.threads = [{ id: "uncertain-thread", title: "Document review", updated_at: "2026-10-19T12:00:00Z" }];
+    await render({ activeThreadId: "uncertain-thread" }); await waitForWritable();
+    await stage(file("Program-brief.pdf"), "drop"); await type("Review this brief");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("The connection ended before PAIGE confirmed the result");
+    expect(remove()).toBeNull();
+    expect(host.textContent).not.toContain("Remove the attached file first");
+    expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
+    expect(bodies.filter(b => b.interactive?.kind === "message")).toHaveLength(1);
+  });
   it.each(["paste", "drop"] as const)("%s during Thinking stages once and Send supersedes with one document", async route => {
     const bodies: Array<{ requestIntentId: string; interactive: { kind: string; supersedesIntentId?: string }; document?: { base64: string } }> = []; const controllers: ReadableStreamDefaultController<Uint8Array>[] = []; const signals: AbortSignal[] = [];
     vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {

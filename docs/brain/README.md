@@ -736,6 +736,18 @@ weekly preparation/save/approval/activation/execution and all provider effects.
 Full ten outcomes/E5-CV1–9, weekly/automation/ZION/Rail/recovery, cohorts/eligible
 Live and founder acceptance remain unfinished. No catalogue/algorithm promotion.
 
+## EXP05 unprocessed-file recovery — October26 development, visual hold
+
+Original#2401 client-only continuation restores a file only after exact known
+pre-processing refusal and an unchanged composer; a deliberate new Send gets a
+fresh intent while unknown outcomes never replay. Actual200/0 source regression
+and retained causal/infra failures are [bounded evidence](../evidence/ui-delivery/exp05-refused-file-retention.md),
+not current native pixels, deployment, Knowledge ingestion or customer acceptance.
+Original eight-page/refusal/no-saved-Knowledge and single-file limits remain
+historical; multi-document extraction/publication/retrieval belongs to future
+EXP13, unactivated. Existing EXP05 ten/E5/Builder/ZION and EXP01/E09 boundaries
+remain intact. No Root/risk/C0b/permission/provider or activation change.
+
 ## EXP05 original refusal/reload — source verified, release owed, October23
 
 The bounded original#2401 successor preserves a known pre-processing refusal on

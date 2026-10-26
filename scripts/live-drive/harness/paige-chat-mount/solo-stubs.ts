@@ -3,14 +3,18 @@
 // stylesheets are the real ones. Thread fixtures are VISIBLY illustrative (Brightwater Advisory is
 // an invented business; no real account appears here — CLAUDE.md §63).
 import { useMemo } from "react";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 
 const params = new URLSearchParams(window.location.search);
 const scenario = params.get("scenario") ?? "normal";
+const secondContext = params.get("context") === "b";
+const actorId = secondContext ? "test-owner-b" : "harness-owner";
+const tenantId = secondContext ? "test-tenant-b" : "harness-tenant";
 
 export const supabase = {
   auth: {
-    getSession: async () => ({ data: { session: { access_token: "harness-token", user: { id: "harness-owner" } } } }),
-    getUser: async () => ({ data: { user: { id: "harness-owner" } }, error: null }),
+    getSession: async () => ({ data: { session: { access_token: "harness-token", user: { id: actorId } } } }),
+    getUser: async () => ({ data: { user: { id: actorId } }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
   functions: { invoke: async () => ({ data: null, error: null }) },
@@ -30,12 +34,12 @@ export const supabase = {
 
 export function useTenantContext() {
   return useMemo(() => ({
-    activeTenantId: "harness-tenant",
+    activeTenantId: tenantId,
     // E4-S3: a real Solo workspace is a top-level `standalone` tenant; `?tier=sub` renders a sub-account
     // (a parented child) so the read links' fail-closed resolution can be seen too.
     activeTenant: new URLSearchParams(window.location.search).get("tier") === "sub"
       ? { id: "harness-tenant", name: "Brightwater Advisory", account_number: "3856", account_type: "sub_account", parent_tenant_id: "harness-agency" }
-      : { id: "harness-tenant", name: "Brightwater Advisory", account_number: "3855", account_type: "standalone", parent_tenant_id: null },
+      : { id: tenantId, name: secondContext ? "Northfield Services" : "Brightwater Advisory", account_number: secondContext ? "3857" : "3855", account_type: "standalone", parent_tenant_id: null },
     tenants: [],
     isLoading: false,
   }), []);
@@ -43,7 +47,7 @@ export function useTenantContext() {
 export const TenantProvider = ({ children }: { children: unknown }) => children;
 export const useOptionalTenantContext = useTenantContext;
 
-export function useScopedUserId() { return "harness-owner"; }
+export function useScopedUserId() { return actorId; }
 
 export function usePlaybook() {
   return { persona: { name: "PAIGE", greeting: "", role: "" }, quickActions: [] };
@@ -143,17 +147,25 @@ export function useChatDocumentUpload() {
     attachedDoc: HARNESS_DOC, isProcessingFile: false, isDragOver: false, fileInputRef: { current: null }, acceptString: ".pdf,.png,.jpg,.jpeg,.webp,.docx",
     handleFileSelect: () => undefined, handleDragOver: () => undefined, handleDragLeave: () => undefined,
     handleDrop: () => undefined, removeAttachment: () => undefined, openFilePicker: () => undefined, setAttachedDoc: () => undefined,
+    prepareAttachmentRestore: () => () => undefined,
   };
 }
 
 export function usePaigeThreads() {
-  const threads = scenario === "reload" ? [THREAD] : scenario.startsWith("askreload") ? [ASK_THREAD] : [];
+  const recoveryTurns = [
+    { id: "refused-user", role: "user", content: "Review this document", created_at: at(40), bundle_ref: null },
+    { id: "refused-answer", role: "assistant", content: RECOVERY_READ_ONLY_REFUSAL.message, created_at: at(41), bundle_ref: {
+      turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 },
+      interactive_refusal: { v: 1, code: RECOVERY_READ_ONLY_REFUSAL.code },
+    } },
+  ];
+  const threads = scenario === "reload" || scenario.startsWith("recovery-") ? [THREAD] : scenario.startsWith("askreload") ? [ASK_THREAD] : [];
   return {
     threads,
     isLoading: false,
     isFetched: true,
-    loadTurns: async () => (scenario === "reload" ? RELOAD_TURNS : scenario === "askreload" ? ASK_TURNS : scenario === "askreload-answered" ? ASK_ANSWERED_TURNS : scenario === "askreload-reopened" ? ASK_REOPENED_TURNS : scenario === "askreload-claimed" ? ASK_CLAIMED_TURNS : []),
-    ensureThread: async () => "harness-thread-new",
+    loadTurns: async () => (scenario === "recovery-reload" ? recoveryTurns : scenario === "reload" ? RELOAD_TURNS : scenario === "askreload" ? ASK_TURNS : scenario === "askreload-answered" ? ASK_ANSWERED_TURNS : scenario === "askreload-reopened" ? ASK_REOPENED_TURNS : scenario === "askreload-claimed" ? ASK_CLAIMED_TURNS : []),
+    ensureThread: async () => scenario.startsWith("recovery-") ? THREAD.id : "harness-thread-new",
     onTurnPersisted: () => undefined,
     renameThread: () => undefined,
     archiveThread: () => undefined,

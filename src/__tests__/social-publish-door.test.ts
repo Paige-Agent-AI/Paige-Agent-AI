@@ -74,9 +74,9 @@ describe("social publish door — proposal, owner approval, provider execution, 
     const r = await w.call(publishBody());
     expect(r.status).toBe(202);
     expect(r.body.state).toBe("approval_required");
-    expect(r.body.approval.fingerprint).toMatch(/^[0-9a-f]{16}$/);
-    expect(r.body.approval.summary).toContain("Spring workshop reminder");
-    expect(r.body.approval.summary).toContain("instagram");
+    expect((r.body.approval as Record<string, string>).fingerprint).toMatch(/^[0-9a-f]{16}$/);
+    expect((r.body.approval as Record<string, string>).summary).toContain("Spring workshop reminder");
+    expect((r.body.approval as Record<string, string>).summary).toContain("instagram");
     expect(r.body.preview).toMatchObject({ piece_id: PIECE, platform: "instagram", channel_label: "Northfield Coaching (main)" });
     expect(w.seen.createPost).toHaveLength(0); // the provider was never called
   });

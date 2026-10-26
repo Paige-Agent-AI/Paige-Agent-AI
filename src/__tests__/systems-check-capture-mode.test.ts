@@ -522,3 +522,90 @@ describe('Trusted manual cancellation retains original work and stops late conti
     expect(h.persisted().findings).toEqual([]); expect(h.updated('paige_systems_check_run')).toEqual([]);
   });
 });
+
+describe('Trusted manual checkpoints precede each original capture step', () => {
+  const manual = { scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR };
+  const phases = ['context_read', 'catalog_read', 'run_insert', 'check_read', 'finding_write', 'finding_readback', 'run_finalize', 'run_readback'];
+  const unconfirmed = (reason: string) => ({ name: 'SystemsCheckCaptureUnconfirmed', message: 'SYSTEMS_CHECK_CAPTURE_UNCONFIRMED', runId: PRIOR, reason });
+  const phaseFor = (call: Readonly<Call>) => {
+    if (call.table === 'tenants') return 'context_read';
+    if (call.table === 'paige_systems_check_registry') return 'catalog_read';
+    if (call.table === 'paige_systems_check_run') return call.operation === 'insert' ? 'run_insert' : call.operation === 'update' ? 'run_finalize' : 'run_readback';
+    return call.operation === 'insert' ? 'finding_write' : 'finding_readback';
+  };
+
+  it('awaits a fresh trusted checkpoint before every actual original operation', async () => {
+    const events: string[] = [], controller = new AbortController();
+    const h = fixture(['pass'], { pauseResponse: async call => { events.push('io:' + phaseFor(call)); }, pauseRunner: async () => { events.push('io:check_read'); } });
+    const checkpoint = vi.fn(async (phase: string) => { events.push('checkpoint:' + phase); return true; });
+    expect(await h.execute({ ...manual, manualCaptureSignal: controller.signal, manualCaptureCheckpoint: checkpoint })).toMatchObject({ run_id: PRIOR, check_count: 1, actions_filed: 0 });
+    expect(events).toEqual(phases.flatMap(phase => ['checkpoint:' + phase, 'io:' + phase]));
+    expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
+
+  it.each([null, false, 'checkpoint', 1, {}, []])('refuses malformed checkpoint %j before all I/O', async manualCaptureCheckpoint => {
+    const h = fixture();
+    await expect(h.execute({ ...manual, manualCaptureSignal: new AbortController().signal, manualCaptureCheckpoint })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_CHECKPOINT_INVALID');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(h.rpcs).toEqual([]);
+  });
+
+  it.each([
+    { scanFlavor: 'manual', actionFiling: 'none' },
+    manual,
+    { scanFlavor: 'onboarding', actionFiling: 'none' },
+  ])('requires the original manual identity and native cancellation context: %j', async context => {
+    const checkpoint = vi.fn(async () => true), h = fixture();
+    await expect(h.execute({ ...context, manualCaptureCheckpoint: checkpoint })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_CHECKPOINT_CONTEXT');
+    expect(checkpoint).not.toHaveBeenCalled(); expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]);
+  });
+
+  it.each([undefined, null, false, 'true', 1, {}])('does not treat a malformed acknowledgement as permission: %j', async answer => {
+    const h = fixture();
+    await expect(h.execute({ ...manual, manualCaptureSignal: new AbortController().signal, manualCaptureCheckpoint: async () => answer })).rejects.toMatchObject(unconfirmed('context_read'));
+    expect(h.calls).toEqual([]); expect(h.persisted().run).toBeNull(); expect(h.dispatched).toEqual([]);
+  });
+
+  it.each(phases)('a refused %s prevents that original operation and every later step', async refused => {
+    const issued: string[] = [], seen: string[] = [], controller = new AbortController();
+    const h = fixture(['pass'], { pauseResponse: async call => { issued.push(phaseFor(call)); }, pauseRunner: async () => { issued.push('check_read'); } });
+    await expect(h.execute({ ...manual, manualCaptureSignal: controller.signal, manualCaptureCheckpoint: async (phase: string) => {
+      seen.push(phase); if (phase === refused) throw new Error('Private native authority refusal'); return true;
+    } })).rejects.toMatchObject(unconfirmed(refused));
+    expect(seen).toEqual(phases.slice(0, phases.indexOf(refused) + 1));
+    expect(issued).toEqual(phases.slice(0, phases.indexOf(refused)));
+    if (phases.indexOf(refused) <= phases.indexOf('run_insert')) expect(h.persisted().run).toBeNull();
+    else expect(h.persisted().run).toMatchObject({ id: PRIOR, work_id: PRIOR });
+    if (refused === 'run_finalize') expect(h.persisted().run?.completed_at).toBeNull();
+    if (refused === 'run_readback') expect(h.persisted().run?.completed_at).toEqual(expect.any(String));
+    expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
+
+  it('a checkpoint cannot resume its original operation after cancelling the request', async () => {
+    const controller = new AbortController(), h = fixture();
+    await expect(h.execute({ ...manual, manualCaptureSignal: controller.signal, manualCaptureCheckpoint: async () => { controller.abort(); return true; } })).rejects.toMatchObject(unconfirmed('context_read'));
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]);
+  });
+
+  it('rechecks the native checkpoint before each later original check rather than caching a phase', async () => {
+    const h = fixture(['pass', 'pass']); let checks = 0;
+    await expect(h.execute({ ...manual, manualCaptureSignal: new AbortController().signal, manualCaptureCheckpoint: async (phase: string) => {
+      if (phase === 'check_read' && ++checks === 2) throw new Error('Current authority changed'); return true;
+    } })).rejects.toMatchObject(unconfirmed('check_read'));
+    expect(checks).toBe(2); expect(h.dispatched).toHaveLength(1); expect(h.persisted().findings).toHaveLength(1);
+    expect(h.persisted().run).toMatchObject({ id: PRIOR, work_id: PRIOR, check_count: 2, completed_at: null });
+    expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+
+  it.each(['resolves', 'rejects'] as const)('cancels an uncooperative checkpoint which later %s without starting I/O', async late => {
+    const controller = new AbortController(), gate = deferredRead(), h = fixture();
+    const add = vi.spyOn(controller.signal, 'addEventListener'), remove = vi.spyOn(controller.signal, 'removeEventListener');
+    const pending = h.execute({ ...manual, manualCaptureSignal: controller.signal, manualCaptureCheckpoint: async () => {
+      await gate.pause(); if (late === 'rejects') throw new Error('Late private guard failure'); return true;
+    } }).then(value => value, error => error);
+    const entered = await observedWithin(gate.entered);
+    if (entered === 'did-not-settle') { gate.release(); await pending; expect(entered).not.toBe('did-not-settle'); return; }
+    controller.abort(); const outcome = await observedWithin(pending); gate.release(); await new Promise(resolve => setImmediate(resolve));
+    expect(outcome).toMatchObject(unconfirmed('context_read')); expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]);
+    expect(remove.mock.calls.map(call => call[1])).toEqual(add.mock.calls.map(call => call[1]));
+  });
+});

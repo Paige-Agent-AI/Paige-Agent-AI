@@ -155,6 +155,12 @@ export interface RunSystemsCheckOptions {
    *  stops this core's continuation; an already-issued write may still commit.
    *  It grants no actor authority, lease, retry or result/receipt confirmation. */
   manualCaptureSignal?: AbortSignal;
+  /** Trusted internal port for the ORIGINAL native Work heartbeat before each
+   *  manual capture step. Only an explicit successful acknowledgement permits
+   *  continuation. The port grants no authority itself and no caller installs it
+   *  yet; it requires the same validated manual Work ID and native deadline.
+   *  Default, scheduled and remediation callers remain unchanged. */
+  manualCaptureCheckpoint?: (phase: CaptureReadbackPhase) => Promise<true>;
   /** Test seam: override the dispatch map (defaults to the shared SYSTEMS_CHECK_DISPATCH registry). */
   dispatch?: Record<string, CheckRunner>;
 }
@@ -267,6 +273,11 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     if (!manualCaptureRunId) throw new Error("SYSTEMS_CHECK_MANUAL_SIGNAL_CONTEXT");
     if (!(manualCaptureSignal instanceof AbortSignal)) throw new Error("SYSTEMS_CHECK_MANUAL_SIGNAL_INVALID");
   }
+  const manualCaptureCheckpoint = opts.manualCaptureCheckpoint;
+  if (manualCaptureCheckpoint !== undefined) {
+    if (!manualCaptureRunId || !manualCaptureSignal) throw new Error("SYSTEMS_CHECK_MANUAL_CHECKPOINT_CONTEXT");
+    if (typeof manualCaptureCheckpoint !== "function") throw new Error("SYSTEMS_CHECK_MANUAL_CHECKPOINT_INVALID");
+  }
 
   // Reuse the worker's native cancellation signal, not another timer/executor.
   // Some read ports may ignore cancellation: race their reply and never resume
@@ -279,8 +290,14 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     const aborted = new Promise<never>((_, reject) => { onAbort = () => reject(unconfirmed()); });
     manualCaptureSignal.addEventListener("abort", onAbort, { once: true });
     try {
-      const pending = Promise.resolve().then(() => {
+      const pending = Promise.resolve().then(async () => {
         if (manualCaptureSignal.aborted) throw unconfirmed();
+        if (manualCaptureCheckpoint) {
+          try {
+            if (await manualCaptureCheckpoint(phase) !== true) throw unconfirmed();
+          } catch { throw unconfirmed(); }
+          if (manualCaptureSignal.aborted) throw unconfirmed();
+        }
         return operation();
       });
       const result = await Promise.race([pending, aborted]);
@@ -306,6 +323,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
         tenantName = (tRow as { name?: string }).name || tenantName;
       }
     } catch (e) {
+      if (manualCaptureCheckpoint && e instanceof SystemsCheckCaptureUnconfirmed) throw e;
       if (manualCaptureSignal?.aborted) throw new SystemsCheckCaptureUnconfirmed(manualCaptureRunId!, "context_read");
       console.error("[systems-check] tenant name lookup failed:", (e as Error)?.message);
     }
@@ -497,6 +515,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
           };
         }
       } catch (e) {
+        if (manualCaptureCheckpoint && e instanceof SystemsCheckCaptureUnconfirmed) throw e;
         if (manualCaptureSignal?.aborted) throw new SystemsCheckCaptureUnconfirmed(manualCaptureRunId!, "check_read");
         result = {
           status: "error",

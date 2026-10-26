@@ -690,9 +690,14 @@ SQL expression; no semantic default or other pg_proc attribute is ignored.
 
 Functional: local DEVELOPMENT. Visual: N/A. Experiential: manual journey
 INCOMPLETE. Founder Acceptance: NOT_ACCEPTED. Exact receiving, final review,
-original CI wiring/required exact-head checks, normal native/web release and
+required exact-head checks, normal native/web release and
 readback remain owed. The independently observed shared history recovery does
 not waive source/order or release gates. No customer scan or protected monthly
 retry. ALG03/06/11/12/13 maturity, manual Spine UNAVAILABLE/unregistered,
 Systems/Mind boundaries and CAP009–017 readiness unchanged. Original9PASS/0FAIL
 and12PASS/0FAIL/4BLOCKED retained; all19/nine remain open.
+
+The original CI workflow receives exactly one two-line EXP02 step under the
+bounded existing-owner acknowledgement ANT161/a7e44784. All other workflow
+content is unchanged; actual hosted execution remains owed. Fresh forward-name
+native57 and unchanged original request47/reader31 regressions pass separately.

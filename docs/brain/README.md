@@ -20,7 +20,9 @@ attempts remain INVALID; they are not product findings.
 
 CLI-created migration is forward-renamed20271115080002; original private dispatch
 is a separate held PR#2878, no invocation. Exact receiving review, current source,
-CI wiring/required exact-head gates, normal release and readback remain owed.
+required exact-head gates, normal release and readback remain owed. The original
+CI step is added within the received EXP02 block (ANT161/a7e44784); all other
+workflow bytes remain unchanged. Hosted execution is not yet verified.
 The prior shared history mismatch is independently observed resolved, not repaired
 by EXP02; actual frontier/order must still be rechecked before release.
 Functional: DEVELOPMENT ONLY. Visual: N/A. Experiential: complete manual request,

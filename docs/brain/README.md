@@ -745,6 +745,25 @@ unknown hold without another request. Genuine/unknown changes still retire.
 [Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
 does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
 
+## EXP05 original status handoff — October26 development
+
+The original weekly Chat consumer captures its initiating scope and rechecks the
+same canonical identity/request after its awaited owner read, before model
+projection. Cancellation, a retired observer or changed original identity returns
+the existing unavailable contract. The actual five-RPC reader/parser still runs;
+no write, retry, new permission, schedule or receipt is added. Original-suite
+55PASS/3FAIL becomes six-suite207PASS; original native128PASS with own cluster
+stopped and fixture role restored. Source strict/lint/Kit PASS, while the one
+incumbent strict-test fixture diagnostic remains unchanged. See the original
+[handoff evidence](../evidence/ui-delivery/exp05-weekly-status-handoff.md).
+The old44f1b9ef hosted Kit self-test failure is retained: repeated scope text
+prevented its single causal mutant. One shared fail-closed observer now preserves
+the unchanged guard40/runtime48 and exact-lock207 cases. The new native run's
+1039.639ms history margin FAIL remains explicit pending identical serial proof;
+an earlier128PASS is not borrowed as the corrected candidate's native result.
+Immutable review/CI/deployment/authenticated interruption/reload remain owed.
+No catalogue/algorithm/recurring/Live or full ten/E5 acceptance promotion.
+
 ## EXP05 weekly review interruption — October26 development
 
 Original unadmitted weekly review now snapshots its initiating scope before the

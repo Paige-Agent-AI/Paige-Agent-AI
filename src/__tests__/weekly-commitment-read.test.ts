@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { readWeeklyCommitmentProjection, prepareWeeklyCommitmentChatResponse } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
 import { projectWeeklyCalendar, parseWeeklyCommitmentSnapshot, parseWeeklySourceItems, projectWeeklyCommitmentChat, reviewWeeklyScheduleChange } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
+import * as contextSource from "../../supabase/functions/_shared/paige-context/mod";
 
 const actor = "11111111-1111-4111-8111-111111111111", tenant = "22222222-2222-4222-8222-222222222222";
 const process = "33333333-3333-4333-8333-333333333333", event = "44444444-4444-4444-8444-444444444444";
@@ -288,6 +289,32 @@ describe("prepared owner-only weekly read — not conversationally admitted", ()
     const result = await prepareWeeklyCommitmentChatResponse(identity, fixture(data), {});
     expect(result.status).toBe("available"); expect(result.projection?.length).toBeLessThanOrEqual(12000);
     expect(result.projection).not.toContain("PRIVATE SOURCE CONTENT"); expect(result.projection).toContain('"has_more":true');
+  });
+  it.each(["cancelled", "retired observer", "mutated initiating identity"])("retires the completed read at its Chat handoff when %s", async interruption => {
+    const origin = { ...identity }, f = fixture(), stop = new AbortController();
+    f.switchIdentity(origin);
+    let retired = false;
+    const available = contextSource.contextAvailable;
+    const handoff = vi.spyOn(contextSource, "contextAvailable").mockImplementation(data => {
+      // Complete the real reader and all original authority/RPC/parser checks.
+      // Inject only the interruption before the awaiting Chat consumer resumes.
+      const completed = available(data);
+      retired = true;
+      if (interruption === "cancelled") stop.abort();
+      if (interruption === "mutated initiating identity") Object.assign(origin, { tenantId: "other-tenant", workspaceId: "other-tenant", scopeEpoch: 2 });
+      return completed;
+    });
+    try {
+      const result = await prepareWeeklyCommitmentChatResponse(origin, { ...f, signal: stop.signal,
+        currentIdentity: () => {
+          if (retired && interruption === "retired observer") throw new Error("retired");
+          return f.currentIdentity();
+        } }, {});
+      expect(handoff).toHaveBeenCalledOnce();
+      expect(f.calls).toEqual(["current_user_tenant_id", "weekly_commitment_owner", "get_weekly_commitment_checks", "current_user_tenant_id", "weekly_commitment_owner"]);
+      expect(result.status).toBe("unavailable");
+      expect("projection" in result).toBe(false);
+    } finally { handoff.mockRestore(); }
   });
   it("model arguments cannot provide scope, schedule or approval authority", async () => {
     for (const args of [{ tenant_id: tenant }, { authorize: true }, { schedule: "weekly" }, [], null]) {

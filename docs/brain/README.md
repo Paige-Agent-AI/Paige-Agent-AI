@@ -661,6 +661,18 @@ unknown hold without another request. Genuine/unknown changes still retire.
 [Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
 does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
 
+## EXP05 weekly review interruption — October26 development
+
+Original unadmitted weekly review now snapshots its initiating scope before the
+canonical read and refuses a cancelled, changed or unavailable identity at the
+completed-read handoff. Actual39 incumbent PASS/3 causal FAIL becomes244 PASS
+across six original suites; strict ES2020 closure passes. Initial temp-cache
+rename failure ran no assertions and remains INVALID. [Original additive evidence](../evidence/exp05-weekly-control-state-binding.json)
+retains earlier state/cutoff releases and exact source/test hashes. No Root,
+registry, risk, native writer, permission, provider or activation changes; no
+new customer-visible control. Weekly Chat/Live future controls remain unadmitted,
+all ten/E5/owner-away/Builder/ZION/role/cohort/founder proof remains open.
+
 ## EXP05 weekly session retention — October26 source released
 
 Original weekly hook/composer#2890 is mergedabc8c75b7 after exacta82/LOWER5646239219,

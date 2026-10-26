@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { prepareWeeklyControlReview } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-control-review";
 import { readWeeklyCommitmentProjection } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
+import * as weeklyRead from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 import type { WeeklyControlOperation } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-control-input";
 
@@ -20,6 +21,52 @@ function fixture(data:unknown=canonical()) {
 const target={automation_id:process};
 
 describe("canonical weekly conversation review without approval or execution",()=>{
+  it("retires a review when cancellation arrives at the completed canonical-read handoff",async()=>{
+    const controller=new AbortController(),f={...fixture(),signal:controller.signal};
+    const original=weeklyRead.readWeeklyCommitmentProjection;
+    const read=vi.spyOn(weeklyRead,"readWeeklyCommitmentProjection").mockImplementation(async(...args)=>{
+      const result=await original(...args);
+      expect(result.status).toBe("available");
+      controller.abort();
+      return result;
+    });
+    try{
+      const result=await prepareWeeklyControlReview(identity,f,"pause",target,request);
+      expect(result).toEqual({status:"unavailable",reason:"scope_changed"});
+      expect(result).not.toHaveProperty("binding");
+      expect(f.calls.filter(name=>name==="get_weekly_commitment_checks")).toHaveLength(1);
+    }finally{read.mockRestore();}
+  });
+  it("returns unavailable rather than throwing when current identity fails after the canonical read",async()=>{
+    const f=fixture(),original=weeklyRead.readWeeklyCommitmentProjection;
+    const read=vi.spyOn(weeklyRead,"readWeeklyCommitmentProjection").mockImplementation(async(...args)=>{
+      const result=await original(...args);
+      expect(result.status).toBe("available");
+      f.currentIdentity=()=>{throw new Error("identity retired");};
+      return result;
+    });
+    try{
+      await expect(prepareWeeklyControlReview(identity,f,"pause",target,request))
+        .resolves.toEqual({status:"unavailable",reason:"scope_changed"});
+      expect(f.calls.every(name=>["current_user_tenant_id","weekly_commitment_owner","get_weekly_commitment_checks"].includes(name))).toBe(true);
+    }finally{read.mockRestore();}
+  });
+  it("does not let a mutated initiating identity adopt another business after the canonical read",async()=>{
+    const initiating={...identity},f=fixture(),original=weeklyRead.readWeeklyCommitmentProjection;
+    f.currentIdentity=()=>initiating;
+    const read=vi.spyOn(weeklyRead,"readWeeklyCommitmentProjection").mockImplementation(async(...args)=>{
+      const result=await original(...args);
+      expect(result.status).toBe("available");
+      Object.assign(initiating,{tenantId:request,workspaceId:request,scopeEpoch:2});
+      return result;
+    });
+    try{
+      const result=await prepareWeeklyControlReview(initiating,f,"pause",target,request);
+      expect(result).toEqual({status:"unavailable",reason:"scope_changed"});
+      expect(result).not.toHaveProperty("binding");
+      expect(f.calls.filter(name=>name==="get_weekly_commitment_checks")).toHaveLength(1);
+    }finally{read.mockRestore();}
+  });
   it("prepares resume with the exact native paused cutoff and no write",async()=>{
     const data=canonical(),cutoff="2026-10-23T15:20:10.123456+00:00";
     Object.assign(data.checks[0],{schedule:{...schedule,future_control_at:cutoff}});

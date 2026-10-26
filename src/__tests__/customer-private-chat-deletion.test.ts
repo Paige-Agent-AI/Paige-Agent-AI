@@ -24,8 +24,13 @@ async function drive({role="super_admin",keep=true,self=false,owner=false,cleanu
     insert:()=>{operation="insert";return q;},maybeSingle:async()=>result(),
     then:(done:(value:unknown)=>unknown,failed:(error:unknown)=>unknown)=>Promise.resolve(result()).then(done,failed)};
    return q;}};
- new Function("serve","createClient","Deno","console",javascript)(
-  (value:typeof handler)=>{handler=value;},()=>admin,{env:{get:()=>"synthetic-local-only"}},{error:()=>{}});
+ // The handler's gate is _shared/operatorAuth.ts (Platform Operator only, EXP08 stage 0); its own
+ // tests prove the is_platform_operator check. Here it answers as that check would for the role.
+ const requireOperator=async()=>["super_admin","platform_admin"].includes(role)
+  ?{ok:true,userId:actor,admin}
+  :{ok:false,response:new Response(JSON.stringify({error:"forbidden"}),{status:403})};
+ new Function("serve","createClient","requireOperator","Deno","console",javascript)(
+  (value:typeof handler)=>{handler=value;},()=>admin,requireOperator,{env:{get:()=>"synthetic-local-only"}},{error:()=>{}});
  const response=await handler!(new Request("https://deletion.tests.invalid",{method:"POST",
   headers:{Authorization:"Bearer synthetic-local-only","Content-Type":"application/json"},
   body:JSON.stringify({user_id:self?actor:target,keep_contact:keep})}));
@@ -40,7 +45,7 @@ describe("canonical account deletion with customer-private Chat",()=>{
    filters:[["caller_user_id",target],["audience","customer_private"]]});
   expect(privateIndex).toBeLessThan(r.calls.findIndex(c=>c.table==="auth.users"));
  });
- for(const role of ["client","member"])it("does not give "+role+" account-deletion authority",async()=>{
+ for(const role of ["client","member","admin"])it("does not give "+role+" account-deletion authority",async()=>{
   const r=await drive({role});expect(r.status).toBe(403);
   expect(r.calls.some(c=>c.operation==="delete")).toBe(false);
  });

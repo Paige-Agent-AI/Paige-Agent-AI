@@ -101,6 +101,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_search.sql
       - name: EXP08 Team Hub read and search performance, byte-identical results across the call matrix, index use at volume
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_read_performance.sql
+      - name: Admin scope stage 0, owner or admin of one business gains no admin power in another, failing-first and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/admin_scope_stage0.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
@@ -827,6 +829,16 @@ jobs:
         run: deno test --allow-sys --no-lock supabase/functions/_shared/transactional-email-templates/email-footer.test.ts
       - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)
         run: node scripts/ci/forbid-sendgrid-admin-key-refs.mjs
+      - name: EXP08 stage 0 — admin power stops at the admin's own workspace (edge authority)
+        run: |
+          deno test --allow-import --allow-env --allow-read=supabase/functions --node-modules-dir=none --deny-net --deny-write --deny-run --deny-ffi \
+            supabase/functions/_shared/operatorAuth.test.ts \
+            supabase/functions/analyze-financial-document/access.test.ts \
+            supabase/functions/ingest-rag-outcome/access.test.ts \
+            supabase/functions/paige-mcp/team-members.test.ts \
+            supabase/functions/notify-approval-event/recipients.test.ts \
+            supabase/functions/execute-approval/admission_test.ts \
+            supabase/functions/paige-ai-chat/member-grant-result_test.ts
       - name: Deno ratchet (affected edge functions — fails on NEW or increased diagnostics)
         # `count != ''` as well as `!= '0'`: an empty count means the resolve step did not run or
         # produced no output, and an unbounded run is a configuration error, not a no-op pass.
@@ -890,6 +902,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run build
 
+      - name: Solo entry size guard (chat-first first load)
+        if: ${{ !cancelled() }}
+        run: node scripts/ci/solo-entry-size-guard.mjs
+
       - name: Billing payment setup safety and reconciliation
         if: ${{ !cancelled() }}
         run: |
@@ -918,6 +934,7 @@ jobs:
           # test` in the LATER step. `none` makes Deno resolve `npm:pdf-lib` from its own cache and
           # leave node_modules completely untouched. Do not "fix" a resolution error by switching
           # this back to auto; add the dependency or vendor it instead.
+          node scripts/agreements/native-pdf-bundle-proof.mjs
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
@@ -932,7 +949,9 @@ jobs:
             supabase/functions/_shared/agreements/owner-preparation-http.test.ts \
             supabase/functions/_shared/agreements/prepared-signature-review.test.ts \
             supabase/functions/_shared/agreements/prepared-signature-request.test.ts \
-            supabase/functions/_shared/agreements/portal-door.test.ts
+            supabase/functions/_shared/agreements/portal-door.test.ts \
+            supabase/functions/_shared/agreements/commercial-presentation.test.ts \
+            supabase/functions/_shared/agreements/field-preparation.test.ts
           # E09 Slice A: agreement-document's third (customer portal) door is mounted before the other
           # two and leaves both byte-identical. Source pins read the repo tree only; every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \

@@ -1105,7 +1105,8 @@ async function main() {
   step("B an owner of another workspace cannot approve it", async () => {
     const r = await post(approver.base, { approval_id: approvalId }, A.owner.jwt);
     assert.equal(r.status, 403, JSON.stringify(r.json));
-    assert.equal(r.json.error, "cross_tenant_forbidden");
+    // EXP08 stage 0: the door asks THIS approval's workspace, so there is no separate cross-tenant answer.
+    assert.equal(r.json.error, "forbidden");
     assert.equal(ledger(b.eventId).outcome, "approval_pending");
     assert.equal(one(`select status || ':' || (claimed_at is null) from public.paige_pending_approvals where id = ${q(approvalId)};`), "pending:true");
   });
@@ -1117,17 +1118,16 @@ async function main() {
     assert.equal(ledger(b.eventId).outcome, "approval_pending");
   });
 
-  // The §59 global-role trap: the door's first check is the GLOBAL admin role, which every workspace
-  // owner holds. The owner of workspace A, seated in B only as a plain member, passes that check and
-  // the membership check; what B's own authority says about a plain member must still refuse.
+  // The §59 global-role trap: every workspace owner holds the GLOBAL admin role. The owner of workspace
+  // A, seated in B only as a plain member, used to pass the door (global admin + an active seat) and was
+  // stopped only by the governed gate the executor re-runs. Since EXP08 stage 0 the door itself asks
+  // B's own authority about them (execute-approval/admission.ts), so it refuses before any claim.
   step("B the owner of another workspace, seated here as a plain member, cannot approve it", async () => {
     sql(`insert into public.tenant_members (tenant_id, user_id, role, status, joined_at) values (${q(B.tenantId)}, ${q(A.owner.id)}, 'member', 'active', now() - interval '1 day');`);
     try {
       const r = await post(approver.base, { approval_id: approvalId }, A.owner.jwt);
-      // The door admits them (global admin + an active seat); the governed gate the executor re-runs for
-      // the approver refuses, because a plain member is not owner-ops eligible for this capability.
-      assert.equal(r.json.executed, false, JSON.stringify(r.json));
-      assert.equal(r.json.reason, "governed_capability_not_for_tier", JSON.stringify(r.json));
+      assert.equal(r.status, 403, JSON.stringify(r.json));
+      assert.equal(r.json.error, "forbidden", JSON.stringify(r.json));
       assert.equal(ledger(b.eventId).outcome, "approval_pending", JSON.stringify(r.json));
       assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(b.contactId)};`), 0);
       assert.equal(one(`select status || ':' || (claimed_at is null) from public.paige_pending_approvals where id = ${q(approvalId)};`), "pending:true");

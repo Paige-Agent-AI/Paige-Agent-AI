@@ -214,6 +214,8 @@ import { canonicalDirectFunctionName, isMarketplaceDirectFunctionBlocked, resolv
 // §200: the god/platform actor has no tenant of its own; resolve the operator's
 // designated system tenant from config-as-data (fail-closed null when unset).
 import { platformOperatorTenantId } from "../_shared/platform-operator-tenant.ts";
+// EXP08 stage 0: list_team_members lists the connection's own workspace seats only.
+import { listWorkspaceTeam } from "./team-members.ts";
 // The governed door (task #45). One decision for all 119 tools; see the adapter's header for why
 // a mutation refuses here rather than being left to a workspace autonomy row.
 import { decideMcpToolCall, mcpGovernedAuditRow } from "../_shared/paige-mcp/governed-adapter.ts";
@@ -1140,34 +1142,17 @@ mcp.tool("list_approval_comments", {
 
 // ---------- Admin ----------
 mcp.tool("list_team_members", {
-  description: "List team members and their roles from user_roles + profiles. Filter by role if needed.",
+  description: "List this workspace's team — its members' seats, roles, titles and suspension — for the workspace this connection is acting in. Filter by seat role if needed.",
   inputSchema: z.object({
-    role: z.string().optional().describe("owner | admin | sales_rep | coach | broker | cs"),
+    role: z.string().optional().describe("owner | admin | member"),
     limit: z.number().int().optional(),
   }),
   handler: async (args) => {
-    const limit = Math.min(Math.max(args.limit ?? 100, 1), 200);
-    let q = admin
-      .from("user_roles")
-      .select("user_id, role, created_at")
-      .limit(limit);
-    if (args.role) q = q.eq("role", args.role);
-    const { data: roles, error } = await q;
-    if (error) return err(error.message);
-    const ids = Array.from(new Set((roles ?? []).map((r) => r.user_id)));
-    const { data: profiles } = await admin
-      .from("profiles")
-      .select("user_id, full_name, suspended_at")
-      .in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
-    const byId = new Map((profiles ?? []).map((p) => [p.user_id, p]));
-    const items = (roles ?? []).map((r) => ({
-      user_id: r.user_id,
-      role: r.role,
-      full_name: byId.get(r.user_id)?.full_name ?? null,
-      suspended: !!byId.get(r.user_id)?.suspended_at,
-      created_at: r.created_at,
-    }));
-    return ok({ items });
+    // EXP08 stage 0: the connection's OWN workspace only (server-resolved), never the platform's
+    // global role table. See ./team-members.ts.
+    const r = await listWorkspaceTeam(admin, await actorTenantId(), args);
+    if (!r.ok) return err(r.error);
+    return ok({ items: r.items, ...(r.note ? { note: r.note } : {}) });
   },
 });
 

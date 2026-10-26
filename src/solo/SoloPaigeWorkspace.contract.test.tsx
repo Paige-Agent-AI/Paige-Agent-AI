@@ -224,7 +224,9 @@ describe("Solo PAIGE workspace contract", () => {
   });
 
   it("keeps named leadership contextual and disputed assignments out of the Helpers view", () => {
-    const workspace = source("src/solo/SoloPaigeWorkspace.tsx");
+    // The Helpers view moved to SoloWorkspacePanels (chat-first entry code-split); the
+    // contract it pins is unchanged.
+    const workspace = source("src/solo/SoloWorkspacePanels.tsx");
     expect(workspace).toContain("Current delegations");
     expect(workspace).toContain("Ephemeral helper");
     expect(workspace).toContain("Department specialist");
@@ -236,7 +238,9 @@ describe("Solo PAIGE workspace contract", () => {
   });
 
   it("links to the canonical governed Mind while keeping authority local to the action", () => {
-    const workspace = source("src/solo/SoloPaigeWorkspace.tsx");
+    // The Knowledge explainer moved to SoloWorkspacePanels (chat-first entry code-split);
+    // the workspace-level negative (no Ask-first in the chat header) stays on the workspace.
+    const workspace = source("src/solo/SoloWorkspacePanels.tsx");
     expect(workspace).toContain("Mind is available");
     expect(workspace).toContain("/command-center/mind");
     expect(workspace).toContain("does not invent relationships or unavailable history");

@@ -334,7 +334,23 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
-### EXP08 Team Hub increment 1: team channels, DMs and threads (migration `20271113850008`, 2026-10-24; not yet merged)
+### Admin scope stage 0 — workspace admin power stops at its own workspace (migration `20271115030008`, owner ruling 2026-10-26; ships on merge, `PROOF_OWED` on production)
+
+Owner ruling: being the owner or admin of one business never gives admin power in another the same person belongs to. Stage 0 closes the readers that bound no workspace, took the target workspace from the caller, or took it from a portal relationship. No surface gains a tier; what changes is who passes inside each one.
+
+| Tier | Change |
+|---|---|
+| God / Super Admin | Unchanged. Platform objects (skills catalogue writes, MCP/n8n/webhook/Plaid setters, user suspension, the edge platform jobs) are platform-owner or operator only. |
+| Platform admin (operator) | Gains the `requireOperator` edge functions (they read `is_platform_operator`). Loses nothing: it held no global `admin` row. |
+| Agency | Acts in a child business only through `agency_can_manage_child` (0 child businesses on production). |
+| Standalone owner / admin | Full power in their own workspace, unchanged. In any other workspace they belong to: exactly the seat that workspace gave them, for the stage-0 objects. Role changes reach only people with an active seat in their own workspace. |
+| Member | Unchanged. |
+| Client | A client who owns another business can no longer file owner-only events into the business they are a client of. |
+| Anonymous | Unchanged (no new grant). |
+
+Still global until stage 1: the tenant-bound readers that pair `has_role(admin)` with the current workspace (about 90 policies and 50 functions). Proof: `supabase/tests/admin_scope_stage0.sql` in CI.
+
+### EXP08 Team Hub increment 1: team channels, DMs and threads (migration `20271113850008`, 2026-10-24; merged and applied — corrected 2026-10-26)
 
 Team Hub is a new SOLO main-menu destination directly below Operations, with slug `team-hub`. The existing `/solo/{n}/team` address still redirects to Settings → Team.
 - Storage: four new tables. RLS is on, there are no policies, and there are no browser grants.
@@ -359,7 +375,7 @@ Team Hub is a new SOLO main-menu destination directly below Operations, with slu
 
 Authenticated runtime is `UNVERIFIED`. Binding-ledger state: `teamhub` = `PROOF_OWED`.
 
-### EXP08 Team Hub increment 2: team work (migration `20271113860008`, 2026-10-24; not yet merged)
+### EXP08 Team Hub increment 2: team work (migration `20271113860008`, 2026-10-24; merged and applied — corrected 2026-10-26)
 
 Inside Team Hub, a teammate types `/` for four commands. *Draft a task* creates one real task in Operations through the existing `plan_assign_task_scoped`, as the caller, with an exactly-once link in `team_hub_work_refs`. *Ask a specialist*, *Request approval* and *Schedule a meeting* only prefill a PAIGE draft. A Team work panel lists the tasks started from conversations the caller can see, with status read from `plan_items` through the caller's own RLS.
 - Storage: one new link table, `team_hub_work_refs`. RLS is on, there are no policies, and there are no browser grants. It stores no status, title, assignee or due date.

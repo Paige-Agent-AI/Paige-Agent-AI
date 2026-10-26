@@ -6,7 +6,7 @@
 //   trigger="score_milestone"    → credit_strategy (score crossed threshold)
 //   trigger="coaching_insight"   → coaching_insight (from a chat session)
 //
-// Auth: must be the affected user OR an admin OR the service role.
+// Auth: must be the affected user, the Platform Operator, or the service role (./access.ts).
 // Embeddings: OpenAI Voyage voyage-3 (1024 dims) — matches schema.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { embeddingsCompat } from "../_shared/voyage.ts";
@@ -14,6 +14,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { anonymize, scoreBand, amountBand, type AnonymizeIdentity } from "../_shared/rag-anonymize.ts";
 import { contactMethodsForUser } from "../_shared/user-contact-methods.ts";
+import { decideOutcomeIngestAccess, isServiceRoleBearer } from "./access.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,7 +97,7 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization") ?? "";
 
     // Auth: accept either a user JWT or the service role key.
-    const isServiceRole = authHeader.includes(supabaseServiceKey);
+    const isServiceRole = isServiceRoleBearer(authHeader, supabaseServiceKey);
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -119,12 +120,16 @@ serve(async (req) => {
     }
     const payload = parsed.data;
 
-    // Permission: caller must be the affected user, an admin, or service role.
+    // Permission: the affected person, the Platform Operator, or the service role — NOT the global
+    // `admin` role, which an owner/admin seat in any workspace carries (EXP08 stage 0).
     const admin = createClient(supabaseUrl, supabaseServiceKey);
-    if (!isServiceRole && callerId !== payload.user_id) {
-      const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", callerId);
-      const isStaff = (roles ?? []).some((r: { role: string }) => r.role === "admin");
-      if (!isStaff) {
+    if (!isServiceRole) {
+      const allowed = await decideOutcomeIngestAccess(callerId, payload.user_id, async () => {
+        const { data, error } = await userClient.rpc("is_platform_operator");
+        if (error) throw new Error(`operator check failed: ${error.message}`);
+        return data === true;
+      });
+      if (!allowed) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

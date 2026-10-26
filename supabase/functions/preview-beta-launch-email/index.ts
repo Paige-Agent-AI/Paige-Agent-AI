@@ -1,11 +1,11 @@
-// Admin-only HTML preview of the beta-launch-welcome email template.
+// Platform-Operator-only HTML preview of the beta-launch-welcome email template.
 // Renders the same React Email component used by the live send pipeline,
 // substituting a caller-provided sample recipient name so Antonio can
 // review the final inbox-ready output before triggering the broadcast.
 
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { requireOperator } from "../_shared/operatorAuth.ts";
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 const corsHeaders = {
@@ -30,46 +30,11 @@ Deno.serve(async (req) => {
     )
   }
 
-  // Admin-only gate (mirrors send-beta-launch-email)
-  const authHeader = req.headers.get('Authorization') || ''
-  const jwt = authHeader.replace(/^Bearer\s+/i, '')
-  if (!jwt) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const adminClient = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-
-  const { data: userData, error: userErr } = await adminClient.auth.getUser(jwt)
-  if (userErr || !userData?.user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-  const callerId = userData.user.id
-
-  const { data: roleRows, error: roleErr } = await adminClient
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', callerId)
-  if (roleErr) {
-    return new Response(JSON.stringify({ error: 'Role lookup failed' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-  const isAdmin = (roleRows ?? []).some((r: { role: string }) => r.role === 'admin')
-  if (!isAdmin) {
-    return new Response(JSON.stringify({ error: 'Admin role required' }), {
-      status: 403,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
+  // Platform Operator only (EXP08 stage 0, owner ruling 2026-10-26), from the VERIFIED JWT — the same
+  // operator check send-beta-launch-email uses (systems-check-http operatorUserId). It used to admit
+  // the global `admin` row, which an owner/admin seat in ANY workspace writes.
+  const guard = await requireOperator(req)
+  if (!guard.ok) return guard.response
 
   // Parse optional sample name from the body (POST) or query string (GET).
   let sampleName: string | undefined

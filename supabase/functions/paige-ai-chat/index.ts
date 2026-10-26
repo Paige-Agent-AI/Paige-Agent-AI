@@ -15751,7 +15751,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 _user_id: args.user_id, _role: args.role, _tenant_id: personaCtx?.tenant_id ?? null,
               });
               if (error) throw error;
-              result = { success: true, user_id: args.user_id, role: args.role };
+              // EXP08 stage 0: the grant takes effect only for a person already ACTIVE in this
+              // workspace; anyone else gets a pending seat and no access until they accept. The RPC
+              // does not say which happened, so the result must not claim access was given (§13).
+              result = { success: true, user_id: args.user_id, role: args.role,
+                note: "The role applies only if this person is already an active member of this workspace. If they are not, nothing is granted yet: they now hold a pending seat, and the access starts only when they accept. Say this plainly; do not say they have access." };
             } else if (tc.function.name === "member_revoke_role") {
               const { data: rv, error } = await supabaseClient.rpc("revoke_tenant_member_role", {
                 _user_id: args.user_id, _role: args.role, _tenant_id: personaCtx?.tenant_id ?? null,

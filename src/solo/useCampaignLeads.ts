@@ -23,6 +23,13 @@ export type CampaignLead = {
   readonly pipelineName: string | null;
   readonly stageLabel: string | null;
   readonly status: LeadStatus;
+  /** F8 (Progress to customer): who in Sales holds the opportunity. A name, so a member gets null. */
+  readonly ownerName: string | null;
+  /** F8: Sales' own close date, only when the deal is won. */
+  readonly wonAt: string | null;
+  /** F8: the deal's invoices, as raw counts (business facts, not names). */
+  readonly invoiceCount: number;
+  readonly invoicePaidCount: number;
 };
 
 export type CampaignLeadCounts = { readonly leads: number; readonly opportunities: number; readonly won: number; readonly lost: number; readonly waiting: number; readonly failed: number };
@@ -68,6 +75,7 @@ export function readCampaignLeads(data: unknown): Omit<CampaignLeadsState, "phas
     return [{
       id, attribution, receivedAt: str(row.received_at), name: str(row.contact_name), hasContact: row.has_contact === true, formName: str(row.form_name),
       pipelineName: str(row.pipeline_name), stageLabel: str(row.stage_label), status: statusOf(row),
+      ownerName: str(row.deal_owner), wonAt: str(row.won_at), invoiceCount: num(row.invoice_count), invoicePaidCount: num(row.invoice_paid_count),
     }];
   });
   const captureForms = (Array.isArray(payload.capture_forms) ? payload.capture_forms : []).flatMap((raw) => {

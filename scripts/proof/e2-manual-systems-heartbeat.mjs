@@ -86,7 +86,7 @@ try{
  fixture.run("INSERT INTO public.paige_chat_threads VALUES($1,$2,$3,'workspace',false)",[ids.thread,ids.tenant,ids.actor]);
  const red=causal();assert.deepEqual(red,[true,true,false,false]);console.log('BASELINE original heartbeat: 2 PASS / 2 FAIL (revocation and finite budget)');
  if(!baselineOnly){
-  const migration=read('supabase/migrations/20271115040102_e02_manual_systems_heartbeat.sql');
+  const migration=read('supabase/migrations/20271116010102_e02_manual_systems_heartbeat.sql');
   const definition=()=>fixture.run(`SELECT pg_get_functiondef('${key}'::regprocedure)`).replaceAll('\r\n','\n');
   const body=()=>fixture.run(`SELECT prosrc FROM pg_proc WHERE oid='${key}'::regprocedure`).replaceAll('\r\n','\n');
   // A CREATE OR REPLACE reparses the default expression at a new source offset.

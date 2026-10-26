@@ -41,7 +41,16 @@ const startsLive = publishMode === "live" || publishMode === "live-blocked" || p
 let form: Record<string, unknown> = { id: "f-1", name: "New client intake", slug: "new-client-intake", status: startsLive ? "active" : "draft", schema_json: FORM_SCHEMA, draft_schema_json: FORM_SCHEMA,
   success_action_json: { message: "Thanks — we'll be in touch within one business day." }, draft_success_action_json: { message: "Thanks — we'll be in touch within one business day." },
   auto_create_deal: true, pipeline_id: "pl-1", stage_id: "st-1", notify_email: "hello@northwind.example" };
-const page = { id: "p-1", title: "Referral workshop", slug: "referral-workshop", status: "draft", blocks_json: PAGE_BLOCKS, draft_blocks_json: PAGE_BLOCKS, theme_json: null, draft_theme_json: null };
+// EXP06 PR5: `?media=ok|broken` appends the page's video section — a well-formed YouTube embed,
+// and (broken) an https URL the parser cannot read, whose honest unavailable card must render.
+const mediaParam = new URLSearchParams(window.location.search).get("media");
+const MEDIA_BLOCKS = mediaParam === "ok"
+  ? [{ type: "media", provider: "youtube", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", title: "Last year's workshop (replay)", caption: "Ninety minutes, recorded." }]
+  : mediaParam === "broken"
+  ? [{ type: "media", provider: "youtube", url: "https://example.com/not-a-video", title: "Keynote replay", caption: "" }]
+  : [];
+const pageBlocks = mediaParam ? [...PAGE_BLOCKS, ...MEDIA_BLOCKS] : PAGE_BLOCKS;
+const page = { id: "p-1", title: "Referral workshop", slug: "referral-workshop", status: "draft", blocks_json: pageBlocks, draft_blocks_json: pageBlocks, theme_json: null, draft_theme_json: null };
 const turns: Record<string, Array<{ role: string; content: string; seq: number }>> = {
   "th-s-form": [
     { role: "user", content: "An intake form for new clients", seq: 1 },

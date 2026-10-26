@@ -172,6 +172,28 @@ function teamHubReadDoorBound(resolver, operation) {
     && chat.includes("awaitTEAM_HUB_READERS[tc.function.name]({tenantId:hubTenant,userId:user.id},supabaseClient,hubArgs)")
     && door.includes(`caller.rpc("${operation.slice(7)}",{p_expected_tenant:scope.tenantId`);
 }
+// EXP08 team lifecycle: the two reads keep their existing definer names (get_solo_team_workspace, the
+// Team screen's roster, and team_member_holdings, the departure review), which predate the read_*
+// heuristic. Admit each exact read tuple and schema only when the actual caller-JWT door is bound: the
+// domain catalog offered with the client-seat/portal exclusion, the dispatch passing the server tenant
+// scope and the caller client, and the dispatch module calling that definer on the caller.
+const TEAM_LIFECYCLE_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/team_lifecycle.ts";
+const TEAM_LIFECYCLE_READ_DECLARATIONS = new Map([
+  ["public.get_solo_team_workspace", ["team.list_members", "TEAM_LIST_MEMBERS_CAPABILITY", "team_list_members", 'caller.rpc("get_solo_team_workspace",{_search:search,']],
+  ["public.team_member_holdings", ["team.member_holdings", "TEAM_MEMBER_HOLDINGS_CAPABILITY", "team_member_holdings", 'caller.rpc("team_member_holdings",{_member_user_id:memberId,_expected_tenant_id:scope.tenantId})']],
+]);
+function teamLifecycleReadDoorBound(resolver, call) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const compact = value => value.replace(/\s+/g, "");
+  const chat = compact(read("supabase/functions/paige-ai-chat/index.ts"));
+  const door = compact(read("supabase/functions/_shared/team-lifecycle/chat.ts"));
+  return chat.includes("from'../_shared/paige-spine/domains/team_lifecycle.ts'")
+    && chat.includes("from'../_shared/team-lifecycle/chat.ts'")
+    && chat.includes("if(!scopedClientId&&!customerPortal)toolDefs.push(...TEAM_LIFECYCLE_TOOLSasany);")
+    && chat.includes("constlifecycleScope={tenantId:!scopedClientId&&!customerPortal?personaCtx?.tenant_id??null:null,userId:user.id};")
+    && chat.includes("awaitTEAM_LIFECYCLE_READERS[tc.function.name](lifecycleScope,supabaseClient,lifecycleArgs)")
+    && door.includes(compact(call));
+}
 const CALENDAR_BOOKING_ADAPTER_FILE = "supabase/functions/_shared/calendar-booking-read.ts";
 function calendarChatReadBranch(resolver, tool) {
   const source = resolver.sourceFile(path.join(ROOT, "supabase/functions/paige-ai-chat/index.ts"));
@@ -383,6 +405,11 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 const [id,symbol,tool]=TEAM_HUB_READ_DECLARATIONS.get(operation);
                 if(identity&&literalProperty(identity,'id')===id&&owner.name.text===symbol&&teamHubReadDoorBound(resolver,operation))readTools.set(tool,owner.name.text);
+              }
+              else if(TEAM_LIFECYCLE_READ_DECLARATIONS.has(operation)&&relative(file)===TEAM_LIFECYCLE_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                const [id,symbol,tool,call]=TEAM_LIFECYCLE_READ_DECLARATIONS.get(operation);
+                if(identity&&literalProperty(identity,'id')===id&&owner.name.text===symbol&&teamLifecycleReadDoorBound(resolver,call))readTools.set(tool,owner.name.text);
               }
               else if(operation==='public.list_team_bookings'&&relative(file)===CALENDAR_BOOKING_DECLARATION_FILE){
                 const identity=nestedProperties(sections,'identity',sourceFile);

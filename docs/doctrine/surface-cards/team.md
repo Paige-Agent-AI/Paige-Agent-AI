@@ -167,6 +167,7 @@ cannot write.
 | `member_grant_role` | `high` |
 | `member_revoke_role` | `high` |
 | `team_set_work_profile` | `ordinary` |
+| `team_suspend_member` · `team_reinstate_member` · `team_remove_member` · `team_set_conversations` · `team_handover_work` | `high` — EXP08 lifecycle, branch `exp08-paige-team-tools`, **not merged** |
 
 **A correction is recorded here rather than smoothed over.** The first version of this ruling said
 every Team mutation was `owner_only`, and this card recorded it as a gap against the code. That
@@ -285,6 +286,19 @@ a live model actually speaks this way is **UNVERIFIED** until an authenticated d
 | `team_invite_member` | `solo-team-invitations` create | `high` |
 | `team_invite_resend` | resend | `high` |
 | `team_invite_revoke` | revoke | `high` |
+| `team_list_members` (read) | `get_solo_team_workspace` — suspended people included, never an email | read |
+| `team_member_holdings` (read) | `team_member_holdings` — open work, CRM tasks, clients, deals, approvals, mailboxes, with the hand-over call per movable row | read |
+| `team_suspend_member` | `suspend_solo_team_member` | `high` |
+| `team_reinstate_member` | `reinstate_solo_team_member` | `high` |
+| `team_remove_member` | `remove_solo_team_member` (card states what they still hold) | `high` |
+| `team_set_conversations` | `set_solo_team_member_team_hub_access` | `high` |
+| `team_handover_work` | `plan_update_item_versioned` (CRM tasks, clients and deals use the existing `crm_assign_*` tools) | `high` |
+
+The seven EXP08 lifecycle rows are on branch `exp08-paige-team-tools` and are **not merged or live**.
+They take ids from the team context block or `team_list_members` (suspended teammates are only in the
+latter); the database enforces the one rule — the owner acts on admins and members, an admin on
+members only, nobody on the owner or on themselves. Approvals and connected mailboxes cannot be
+handed over; PAIGE says so and does not offer to move them.
 
 Ids come from the context block only — never a name PAIGE resolved herself. Nobody can be made an
 owner; the permission enum is `admin | member` and the database refuses `owner` besides.

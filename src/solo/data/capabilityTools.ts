@@ -167,6 +167,12 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
   team_invite_member: { capability: "account", risk: "high" },
   team_invite_resend: { capability: "account", risk: "high" },
   team_invite_revoke: { capability: "account", risk: "high" },
+  // EXP08 team lifecycle — PAIGE's five team changes, each behind the person's card.
+  team_suspend_member: { capability: "account", risk: "high" },
+  team_reinstate_member: { capability: "account", risk: "high" },
+  team_remove_member: { capability: "account", risk: "high" },
+  team_set_conversations: { capability: "account", risk: "high" },
+  team_handover_work: { capability: "account", risk: "high" },
   // marketplace_install / marketplace_uninstall are containment tombstones (see below) — no runtime
   // dispatches them, so a knob would render as a working control and report a successful save for a
   // capability nothing can execute or govern. Deliberately NOT mapped (§70.1).

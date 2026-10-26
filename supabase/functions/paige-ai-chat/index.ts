@@ -61,6 +61,8 @@ import { PLANNING_CLIENT_SHARE_TOOLS } from '../_shared/paige-spine/domains/plan
 // EXP08 Team Hub increment 4: three caller-JWT reads and one approved reply (contract docs/delivery/exp08-team-hub-increment4-paige-contract.md).
 import { TEAM_HUB_READ_TOOLS, TEAM_HUB_POST_TOOLS, TEAM_HUB_READ_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME, TEAM_HUB_CHAT_TOOL_NAMES } from '../_shared/paige-spine/domains/team_hub.ts';
 import { TEAM_HUB_READERS, postTeamHubReply, teamHubPostConfirmSummary, teamHubSessionTainted, COULD_NOT_READ as TEAM_HUB_COULD_NOT_READ, TEAM_HUB_EGRESS_WITHHELD_TOOLS, TEAM_HUB_EGRESS_REFUSAL } from '../_shared/team-hub/chat.ts';
+import { TEAM_LIFECYCLE_TOOLS, TEAM_LIFECYCLE_READ_TOOL_NAMES, TEAM_LIFECYCLE_WRITE_TOOL_NAMES, TEAM_LIFECYCLE_MEMBER_TOOL_NAMES } from '../_shared/paige-spine/domains/team_lifecycle.ts';
+import { TEAM_LIFECYCLE_READERS, runTeamLifecycleWrite, teamLifecycleConfirmSummary, readHoldingsForCard, readWorkItemForCard, parseHandoverArgs, conversationsValue } from '../_shared/team-lifecycle/chat.ts';
 import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/planning/scoped-write.ts';
 // E09 Slice M: read and change the customer portal menu (update is high; owner/admin only).
 import { PORTAL_MENU_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
@@ -9040,6 +9042,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // asker's JWT, so any other tier or workspace is refused by the database.
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_READ_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !scopedClientId && !customerPortal) toolDefs.push(...TEAM_HUB_POST_TOOLS as any);
+    // EXP08 team lifecycle: find suspended teammates, read what someone holds, and suspend, reinstate,
+    // remove, switch Team conversations or hand work over, each write behind the person's card. Offered
+    // where the five Team tools above are (every tier), except on a client seat or the customer portal.
+    // The offer is not the authority: each definer re-proves owner/admin over that person under the
+    // asker's JWT, and refuses a God/operator session (no active workspace) or any other tier it must.
+    if (!scopedClientId && !customerPortal) toolDefs.push(...TEAM_LIFECYCLE_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     if (weeklyCommitmentStatusToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS);
     if (weeklyCommitmentDraftToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_DRAFT_TOOLS);
@@ -9716,6 +9724,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       team_invite_member: "inviting someone to the team",
       team_invite_resend: "sending a fresh team invitation",
       team_invite_revoke: "withdrawing a team invitation",
+      team_suspend_member: "suspending a teammate",
+      team_reinstate_member: "reinstating a teammate",
+      team_remove_member: "removing a teammate",
+      team_set_conversations: "changing a teammate's Team conversations",
+      team_handover_work: "handing a teammate's work to someone else",
     };
 
     // A human one-liner of exactly what a mutating call will do — shown to the
@@ -10243,6 +10256,26 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "team_invite_revoke": {
           const who = (await describeTeamInvite(a?.invitation_id)) ?? "that invitation";
           return `Withdraw the invitation to ${who} so their link stops working. They are not told; they will simply find they cannot accept.`;
+        }
+        // EXP08 team lifecycle. The person (and the hand-over's receiver and work) are named from reads
+        // on the caller's own session, never from the model; the gate below refuses a card it cannot
+        // name. Removal states what the person still holds; the switch states its current value.
+        case "team_suspend_member":
+        case "team_reinstate_member":
+        case "team_remove_member":
+        case "team_set_conversations": {
+          const lifecycleScope = { tenantId: personaCtx?.tenant_id ?? null, userId: user.id };
+          const holdings = name === "team_remove_member" || name === "team_set_conversations"
+            ? await readHoldingsForCard(lifecycleScope, supabaseClient, a?.member_user_id) : null;
+          return teamLifecycleConfirmSummary(name, { who: (await describeTeamMember(a?.member_user_id)) ?? "that teammate",
+            on: conversationsValue(a?.on) === true, holdings });
+        }
+        case "team_handover_work": {
+          const handover = parseHandoverArgs(a);
+          const item = "problem" in handover ? null : await readWorkItemForCard(supabaseClient, personaCtx?.tenant_id ?? null, handover.itemId);
+          return teamLifecycleConfirmSummary(name, { who: "", title: item?.title ?? "that piece of work",
+            receiver: (await describeTeamMember(a?.assigned_to_user_id)) ?? "that teammate",
+            holder: item?.assignee ? await describeTeamMember(item.assignee) : null });
         }
         case "member_grant_role":
           return `Grant the "${a?.role || ""}" role to a team member.`;
@@ -12589,6 +12622,53 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
                 success: false,
                 error: "I can't confirm who that is on this workspace's team, so I haven't asked you to approve anything. Check the person or invitation is still listed here, and that this is the workspace you mean.",
+              }) });
+              continue;
+            }
+          }
+
+          // EXP08 team lifecycle — the same rule for every lifecycle write: no card for an unnamed person.
+          // The roster read includes suspended teammates, so a reinstatement can be named. The switch's
+          // value is settled once here (a boolean, or refused), as the permission is above, so the card
+          // and the write read the same thing. A hand-over must name an active receiver and a piece of
+          // open work this caller can see, or there is nothing honest to approve.
+          if (TEAM_LIFECYCLE_MEMBER_TOOL_NAMES.has(tc.function.name)) {
+            if (!(await describeTeamMember(gateArgs?.member_user_id))) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+                success: false, refused_before_run: true,
+                error: "I can't confirm who that is on this workspace's team, so I haven't asked you to approve anything. Check the person is listed (team_list_members shows suspended teammates too), and that this is the workspace you mean.",
+              }) });
+              continue;
+            }
+            if (tc.function.name === "team_set_conversations") {
+              const on = conversationsValue(gateArgs?.on);
+              if (on === null) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+                  success: false, refused_before_run: true,
+                  error: "Say whether their Team conversations should be on or off, then call this again. Nothing was proposed.",
+                }) });
+                continue;
+              }
+              gateArgs.on = on;
+              tc.function.arguments = JSON.stringify(gateArgs);
+            }
+          }
+          if (tc.function.name === "team_handover_work") {
+            const handover = parseHandoverArgs(gateArgs);
+            const receiver = "problem" in handover ? null
+              : ((await teamCardRoster())?.members ?? []).find((m: any) => m?.user_id === handover.receiverId) ?? null;
+            const item = "problem" in handover ? null : await readWorkItemForCard(supabaseClient, personaCtx?.tenant_id ?? null, handover.itemId);
+            const problem = "problem" in handover ? handover.problem
+              : !receiver || !(await describeTeamMember(handover.receiverId)) ? "I can't confirm who should receive it on this workspace's team."
+              : receiver.status !== "active" ? "The person you named isn't an active teammate, so they can't receive work."
+              : !item ? "I can't see that piece of work in this workspace."
+              : !item.open ? "That piece of work is already finished or cancelled, so there is nothing to hand over."
+              : item.assignee === handover.receiverId ? "That piece of work is already theirs."
+              : null;
+            if (problem) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+                success: false, refused_before_run: true,
+                error: `${problem} I haven't asked you to approve anything. Read their holdings again (team_member_holdings) if the work may have changed.`,
               }) });
               continue;
             }
@@ -18943,6 +19023,51 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             : unknown
               ? { success: false, outcome_unknown: true, error: "Sharing did not report back. Check the same original request before anything else; do not share it again automatically.", note: OUTCOME_UNKNOWN_NOTE }
               : { success: false, not_applied: true, error: "This request was not shared by this attempt. Its original review card, current access and saved version must be verified before sharing." }) });
+        } else if (TEAM_LIFECYCLE_READ_TOOL_NAMES.has(tc.function.name) || TEAM_LIFECYCLE_WRITE_TOOL_NAMES.has(tc.function.name)) {
+          // EXP08 team lifecycle — LAST IN THE CHAIN, so no reviewed incumbent dispatch gains a dominating
+          // condition. Caller JWT only (supabaseClient): every definer re-derives the workspace from
+          // current_user_tenant_id() and re-proves owner/admin authority over that person for auth.uid().
+          // The tenant is the server-resolved persona tenant, sent as the refusal-only expected tenant; any
+          // tenant or person-as-actor the model sends is never forwarded. A write reaches here only after
+          // the generic confirm gate claimed the person's card (all five are `high`), and never from Live.
+          const lifecycleScope = { tenantId: !scopedClientId && !customerPortal ? personaCtx?.tenant_id ?? null : null, userId: user.id };
+          const lifecycleRead = TEAM_LIFECYCLE_READ_TOOL_NAMES.has(tc.function.name);
+          let lifecycleArgs: unknown = null;
+          try { lifecycleArgs = JSON.parse(tc.function.arguments || "{}"); } catch { lifecycleArgs = null; }
+          const wrongTenant = await teamSeamTenantMismatch();
+          let lifecycleResult: any;
+          if (wrongTenant) {
+            lifecycleResult = lifecycleRead ? { status: "refused", message: `Tell the person: "${wrongTenant}" Nothing was read.` }
+              : { success: false, not_applied: true, refused_before_run: true, reason: "workspace_mismatch", error: wrongTenant };
+          } else if (lifecycleRead) {
+            lifecycleResult = await TEAM_LIFECYCLE_READERS[tc.function.name](lifecycleScope, supabaseClient, lifecycleArgs);
+          } else if (liveRuntimeScope) {
+            lifecycleResult = { success: false, not_applied: true, refused_before_run: true, reason: "live",
+              error: "Team changes are made only from their card in the chat, never by voice. Nothing was changed." };
+          } else if (approvalChannel.get(tc.id) !== "operator_card") {
+            lifecycleResult = { success: false, not_applied: true, refused_before_run: true, reason: "no_approval",
+              error: "This team change has no approved card, so nothing was changed. Offer the card again if they still want it." };
+          } else {
+            try {
+              lifecycleResult = await runTeamLifecycleWrite(tc.function.name, lifecycleScope, supabaseClient, lifecycleArgs);
+            } catch (e) {
+              console.error("[paige] team lifecycle dispatch threw", { tool: tc.function.name, reason: e instanceof Error ? e.message : "unknown" });
+              lifecycleResult = { success: false, outcome_unknown: true, reason: "outcome_unknown",
+                error: "The team change did not report back, so it is not known whether it happened.",
+                note: "Tell the person plainly that you could not confirm it, and that Settings → Team shows the current state. Do not try it again in this reply." };
+            }
+          }
+          // A read records its receipt only when it was available; every write outcome is recorded, a
+          // refusal included. Never a name, a title or an item.
+          if (!lifecycleRead || lifecycleResult?.status === "available") {
+            await recordCapabilityRun(supabase, { tenantId: lifecycleScope.tenantId, actorId: user.id, capabilityKey: tc.function.name,
+              runId: await stableRunId([tc.function.name, lifecycleScope.tenantId, user.id, `${payloadThreadId ?? ""}:${tc.id}`]),
+              outcome: lifecycleRead || lifecycleResult?.success === true ? "capability_succeeded"
+                : lifecycleResult?.outcome_unknown === true ? "capability_outcome_unknown" : "capability_refused",
+              detail: { channel: "paige_chat", tool: tc.function.name, ...(lifecycleRead ? { read_only: true } : {}) } });
+          }
+          if (lifecycleResult?.outcome_unknown === true) requestExecutionState.needsReview = true;
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(lifecycleResult) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }
@@ -19048,6 +19173,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         team_set_work_profile: "tenant_members", team_set_permission: "tenant_members",
         team_invite_member: "tenant_invite_tokens", team_invite_resend: "tenant_invite_tokens",
         team_invite_revoke: "tenant_invite_tokens",
+        // EXP08 team lifecycle: the four person acts land on the membership row; the hand-over on the work item.
+        team_suspend_member: "tenant_members", team_reinstate_member: "tenant_members", team_remove_member: "tenant_members",
+        team_set_conversations: "tenant_members", team_handover_work: "plan_items",
         calendar_book_meeting: "internal_bookings",
         generate_image: "marketing_content", content_save: "marketing_content",
         document_generate: "marketing_content",
@@ -19233,6 +19361,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (tool === "automation_draft") return typeof out?.automation_id === "string" && UUID.test(out.automation_id) ? out.automation_id : null;
         // The posted message the definer returned; never the conversation or an argument.
         if (tool === "team_hub_post_reply") return out?.posted === true && typeof out?.message_id === "string" && UUID.test(out.message_id) ? out.message_id : null;
+        // EXP08 team lifecycle: the membership or work item the definer answered about; never an argument.
+        if (tool && TEAM_LIFECYCLE_WRITE_TOOL_NAMES.has(tool)) return out?.success === true && out?.record_locator?.table === WRITE_TARGET[tool]
+          && typeof out.record_locator.id === "string" && UUID.test(out.record_locator.id) ? out.record_locator.id : null;
         if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
         // The menu's record is the server-resolved tenant, proven by readback; never an argument.
         if (tool === "portal_menu_update") return out?.verified_readback === true && out?.record_locator?.table === "tenants" && typeof out.record_locator.id === "string" && UUID.test(out.record_locator.id) ? out.record_locator.id : null;

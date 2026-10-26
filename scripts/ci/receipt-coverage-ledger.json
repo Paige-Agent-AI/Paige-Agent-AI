@@ -1222,6 +1222,36 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "paige-ai-chat dispatch (the read_tenant_portal_menu / portal_menu_update branch) records the run via recordCapabilityRun after _shared/client-portal-menu.ts configurePortalMenu returns: capability_succeeded only when a fresh caller-JWT public.read_tenant_portal_menu read of the stored overlay equals the merged array that was sent (a no-change replay included), capability_refused for a request refused before any write (bad shape, Home or Messages, an unknown or not-yet-live entry, an entry the Playbook does not list, no current workspace) or a refusal the database answered with a SQLSTATE (not owner/admin, shape), capability_outcome_unknown when the write may have landed but the readback did not confirm it (including a dispatch that throws). The switch over PortalMenuFailure is exhaustive, so no outcome goes unrecorded."
+    },
+    {
+      "tool": "team_suspend_member",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the TEAM_LIFECYCLE branch, last in the chain) records the run via recordCapabilityRun after _shared/team-lifecycle/chat.ts runTeamLifecycleWrite returns, for every outcome: capability_succeeded only when public.suspend_solo_team_member (status suspended) (caller JWT) answers with the exact confirmed change for this person and the server tenant; capability_refused for a request refused before any call (workspace mismatch, a Live turn, no claimed operator card, malformed arguments, no workspace) or a refusal the definer answered with a SQLSTATE (mapped to a plain sentence); capability_outcome_unknown when the call threw, answered without a SQLSTATE, or answered without confirming the change. The detail never carries a name, a title or an item."
+    },
+    {
+      "tool": "team_reinstate_member",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the TEAM_LIFECYCLE branch, last in the chain) records the run via recordCapabilityRun after _shared/team-lifecycle/chat.ts runTeamLifecycleWrite returns, for every outcome: capability_succeeded only when public.reinstate_solo_team_member (status active) (caller JWT) answers with the exact confirmed change for this person and the server tenant; capability_refused for a request refused before any call (workspace mismatch, a Live turn, no claimed operator card, malformed arguments, no workspace) or a refusal the definer answered with a SQLSTATE (mapped to a plain sentence); capability_outcome_unknown when the call threw, answered without a SQLSTATE, or answered without confirming the change. The detail never carries a name, a title or an item."
+    },
+    {
+      "tool": "team_remove_member",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the TEAM_LIFECYCLE branch, last in the chain) records the run via recordCapabilityRun after _shared/team-lifecycle/chat.ts runTeamLifecycleWrite returns, for every outcome: capability_succeeded only when public.remove_solo_team_member (removed_user_id) (caller JWT) answers with the exact confirmed change for this person and the server tenant; capability_refused for a request refused before any call (workspace mismatch, a Live turn, no claimed operator card, malformed arguments, no workspace) or a refusal the definer answered with a SQLSTATE (mapped to a plain sentence); capability_outcome_unknown when the call threw, answered without a SQLSTATE, or answered without confirming the change. The detail never carries a name, a title or an item."
+    },
+    {
+      "tool": "team_set_conversations",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the TEAM_LIFECYCLE branch, last in the chain) records the run via recordCapabilityRun after _shared/team-lifecycle/chat.ts runTeamLifecycleWrite returns, for every outcome: capability_succeeded only when public.set_solo_team_member_team_hub_access (the asked team_hub_access, changed true or false) (caller JWT) answers with the exact confirmed change for this person and the server tenant; capability_refused for a request refused before any call (workspace mismatch, a Live turn, no claimed operator card, malformed arguments, no workspace) or a refusal the definer answered with a SQLSTATE (mapped to a plain sentence); capability_outcome_unknown when the call threw, answered without a SQLSTATE, or answered without confirming the change. The detail never carries a name, a title or an item."
+    },
+    {
+      "tool": "team_handover_work",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the TEAM_LIFECYCLE branch, last in the chain) records the run via recordCapabilityRun after _shared/team-lifecycle/chat.ts runTeamLifecycleWrite returns, for every outcome: capability_succeeded only when public.plan_update_item_versioned (ok, item_id, tenant_id, actor_id) (caller JWT) answers with the exact confirmed change for this person and the server tenant; capability_refused for a request refused before any call (workspace mismatch, a Live turn, no claimed operator card, malformed arguments, no workspace) or a refusal the definer answered with a SQLSTATE (mapped to a plain sentence); capability_outcome_unknown when the call threw, answered without a SQLSTATE, or answered without confirming the change. The detail never carries a name, a title or an item."
     }
   ]
 }

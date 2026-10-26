@@ -78,6 +78,8 @@ jobs:
           supabase/functions/_shared/team-hub/chat.test.ts
           supabase/functions/_shared/team-hub/chat-wiring.test.ts
           supabase/functions/_shared/team-hub/file-sweep.test.ts
+          supabase/functions/_shared/team-lifecycle/chat.test.ts
+          supabase/functions/_shared/team-lifecycle/chat-wiring.test.ts
           supabase/functions/send-message/attachment-validation.test.mjs
           supabase/functions/analyze-financial-document/document-source.test.mjs
           supabase/functions/subagent-email-composer/attachment-path.test.mjs

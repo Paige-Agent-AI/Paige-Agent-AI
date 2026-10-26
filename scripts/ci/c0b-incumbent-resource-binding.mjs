@@ -994,7 +994,18 @@ const SOURCES = {
   // sender inverses preserve the complete reviewed agreement extension and
   // incoming Team Hub attachment refusals. Old08ec/E082eea/C451f8 reproduced.
   // This one explicit composed pin changes no validator, dispatch or peer pin.
-  "supabase/functions/send-message/index.ts": "2405fcebb5a03881de4e430cf2e4d4727fef1d797bf82998098e018acb28f42b",
+  // EXP03 campaign SendGrid lane renewal (2026-10-26), AUTHOR-REVIEW / LOWER ASSURANCE (an independent §39
+  // reviewer read the same diff and found no blocker): branch claude/great-heisenberg-u7kyd9 changes
+  // send-message/index.ts in three places. (1) Before the H2 refusal, a service-role marketing send keyed
+  // `ecr:<recipient id>` asks email_campaign_sendgrid_admit (migration 20271116020000) and is admitted to
+  // SendGrid only when the database says so for this tenant and recipient; every other SendGrid send is
+  // still refused. (2) That send's custom_args carry the tenant and the recipient id, and it asks
+  // SendGrid to track opens and clicks. (3) An unreadable SendGrid answer for it reports outcome
+  // "outcome_unknown" (the outcome union widened by that one value). No other dispatch branch, authority,
+  // verifier or adapter selection changed; paige-ai-chat is untouched, so all dispatch fingerprints are
+  // unchanged. Old digest 2405fceb… reproduced from main 3d541038 and from 146cf565 with the same canonical
+  // form (TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
+  "supabase/functions/send-message/index.ts": "2753af0d96a4b8f1220b87e72ca106129b695becb30737991b9f7b3e1154e0ff",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are

@@ -4392,3 +4392,28 @@ Follow-up review reproduced partial-source completion on old0be80. The repair
 requires the canonical null full-sweep marker and rejects even an empty marked
 subset. The original no-data Preview was retired normally before revising the
 unmerged migration; all148 native controls now pass. Fresh gates remain owed.
+## EXP02 private original Systems Work consumer — development only, October26
+
+The thin original-Systems adapter now binds the existing native dispatch claim,
+current-authority heartbeat before each original Core phase, unfiltered
+tenant/manual/capture-only run and original native finalizer/Rail. It consumes
+only the original server tuple, never a caller-supplied tenant, runner selection
+or approval. Native authority and at-most-one dispatch remain original Work
+contracts. The existing capture abort wait is extracted/reused; no timer,
+executor, queue, scheduler, retry, registry, grant or HTTP entry point is added.
+No existing host imports/adopts the adapter; manual Spine remains UNAVAILABLE.
+
+One fresh bounded settlement scope must come from the eventual original host
+after capture awaiting ends. Interrupted/late writes and refused/lost settlement
+retain the original identity with unconfirmed protocol status; no native state,
+rollback, receipt or success is invented. Actual native source completion may
+still be established after a lost Core reply. Controlled transport plus the
+whole original Core pass179 cases/all143 original controls; four affected
+suites207PASS. Native SQL's separate148 proof is retained, not rerun or replaced
+by fixtures. Compiler comparison against actual main has identical three
+pre-existing prompt-forge diagnostics, zero new; not a clean compile or CI waiver.
+
+Functional LOCAL/unadmitted; final review/exact CI/release proof owed. Visual N/A;
+Experiential manual workflow INCOMPLETE; Founder NOT_ACCEPTED. All19/nine,
+ALG03/06/11/12/13, catalogue readiness and historical9-0+12-0-4/monthlyUNKNOWN
+UNRETRIED remain unchanged. [Original Systems evidence](../evidence/e2-systems-capture-mode.md).

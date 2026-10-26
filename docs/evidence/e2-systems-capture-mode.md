@@ -1083,3 +1083,58 @@ analytics CAP009–017 remain at existing maturity: this slice verifies executio
 evidence, not a prioritization, prediction, anomaly or financial algorithm. All19
 original outcomes/nine analytics and original9PASS0FAIL + supplement12PASS0FAIL
 4BLOCKED + monthlyUNKNOWN/UNRETRIED remain separately open.
+## October26 — private original Systems Work consumer, development only
+
+O07/O14/O16/O19 REUSE the original server-only `_start_manual_systems_check_work`
+eight-column tuple, `heartbeat_paige_durable_work`, actual full Core and
+`transition_paige_durable_work`/original Rail. EXP02 owns the thin Systems adapter;
+E05 receiving38e43d02/correction240eb1ff retains shared Work ownership and failure
+semantics. No generic worker exists; none is created. Incumbent four host
+contracts, shared Root/risk/registry, SQL/grants and all department writers stay
+unchanged. No HTTP caller imports this module and no manual capability activates.
+
+The native claim is attempted once. Strict reply-shape checks do not issue
+authority; only the native RPC validates current actor/tenant/payload/lease and
+exclusive dispatch. Tenant comes solely from that tuple; scope tenant, flavor
+manual, action filing none and no runner filter are fixed. The original capture
+wait is extracted without a new timeout/executor, reused for claim/settlement
+transport and all original Core boundaries. Native heartbeat is fresh at each
+phase; malformed/refused/expired acknowledgements stop continuation.
+
+The eventual original host supplies its bounded capture signal and one fresh
+bounded non-aborted settlement scope AFTER capture awaiting ends. A single
+original native finalizer request derives actual source completion and original
+receipt; the request marker is not proof. No Core count or fabricated flag can
+establish success. A genuinely completed source run can settle after its Core
+reply is lost. Aborted awaiting, late I/O, current-authority refusal, incomplete
+source, lost native reply or deadline returns the original work identity as
+**protocol unconfirmed**, not a fabricated persisted outcome_unknown/cancelled,
+rollback or retry grant. Existing authenticated Work/result readers remain the
+return path; shared non-success semantics are not rewritten.
+
+Verification: existing whole-Core fixture retains all143 earlier cases and adds
+36 adapter cases,179PASS; original display/navigation contracts yield207PASS
+across four suites. Controlled native replies are transport fixtures, not actual
+SQL, real runner evidence or authenticated acceptance. Original native148 proof
+is separate. Controls cover exact scope/identity, native refusal/malformed tuple,
+expired heartbeat, secret non-disclosure, one native claim/dispatch, concurrent
+second-consumer refusal, aborted/late claim and heartbeat, late finding write,
+lost Core completion reply, independent settlement scope and uncertain native
+settlement without replay. First test startup was INVALID on compiler-cache
+permissions; unchanged configuration worked with normal cache access. The first
+asserting run had174PASS/1FAIL because a new test expected a nonexistent run
+actions_filed column; corrected to original run/finding/no-action contracts,
+not a product change or weakened authorization. Native compiler first lacked
+managed DNS; actual connected Deno2.1.4/SDK2.75.0 comparison has the same complete
+three prompt-forge diagnostics as original main9186eab1, zero new diagnostics.
+This is not clean compilation or a replacement for required hosted CI.
+
+Functional: LOCAL source integration, final review/exact CI/normal source release
+and readback pending. Visual N/A; no customer UI change. Experiential: manual
+admission/request/result/reload and corrective-work proof remains INCOMPLETE.
+Founder NOT_ACCEPTED. ALG03/06/11/12/13 and CAP009–017 maturity unchanged; no
+prediction, readiness or causal-benefit claim. Manual systems.check remains
+UNAVAILABLE/unregistered, original Binding Ledger state unchanged. All19/nine,
+historical9PASS0FAIL + supplement12PASS0FAIL4BLOCKED and protected monthlyUNKNOWN
+UNRETRIED/representative-weekUNMEASURED remain open. No scan, finalizer invocation,
+worker/Chat/provider activation or customer acceptance is claimed.

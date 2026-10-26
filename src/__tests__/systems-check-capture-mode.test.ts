@@ -18,6 +18,19 @@ new Function('exports', 'require', compiled.outputText)(loaded, (name: string) =
   return { forge };
 });
 expect(imports).toEqual(['./prompt-forge.ts']);
+
+// Load the thin adapter against this SAME whole original Core, not a replacement
+// runner. Native RPC replies are controlled transport fixtures; original native
+// SQL/permissions are covered separately and this is not authenticated acceptance.
+const adapterSource = readFileSync(resolve('supabase/functions/_shared/systems-check-manual-work.ts'), 'utf8');
+const adapterCompiled = ts.transpileModule(adapterSource, { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }, reportDiagnostics: true });
+if (adapterCompiled.diagnostics?.length) throw new Error('Original Systems adapter did not compile');
+const adapterLoaded: Record<string, unknown> = {};
+new Function('exports', 'require', adapterCompiled.outputText)(adapterLoaded, (name: string) => {
+  if (name !== './systems-check-runner.ts') throw new Error('Unbound adapter dependency: ' + name);
+  return loaded;
+});
+const consumeWork = adapterLoaded.consumeManualSystemsCheckWork as (options: Record<string, unknown>) => Promise<Record<string, unknown>>;
 type Summary = { run_id: string; check_count: number; pass_count: number; fail_count: number; skip_count: number; error_count: number; actions_filed: number; findings: Array<{ finding_id: string; resolution_action_id: string | null; status: string }> };
 const run = loaded.runSystemsCheck as (options: Record<string, unknown>) => Promise<Summary>;
 const TENANT = 'b4000000-0000-4000-8000-000000001111';
@@ -130,7 +143,7 @@ function fixture(statuses: string[] = ['fail'], options: {
   }]));
   const scope = options.scope ?? 'tenant';
   const base = { admin, tenantId: scope === 'tenant' ? TENANT : null, scope, scanFlavor: 'onboarding', dispatch };
-  return { calls, rpcs, dispatched, persisted: () => ({ run: savedRun, findings: savedFindings }), execute: (extra: Record<string, unknown> = {}) => run({ ...base, ...extra }), inserted: (table: string) => calls.filter(call => call.table === table && call.operation === 'insert'), updated: (table: string) => calls.filter(call => call.table === table && call.operation === 'update') };
+  return { admin, dispatch, calls, rpcs, dispatched, persisted: () => ({ run: savedRun, findings: savedFindings }), execute: (extra: Record<string, unknown> = {}) => run({ ...base, ...extra }), inserted: (table: string) => calls.filter(call => call.table === table && call.operation === 'insert'), updated: (table: string) => calls.filter(call => call.table === table && call.operation === 'update') };
 }
 beforeEach(() => {
   vi.restoreAllMocks(); captureUuid.mockClear();
@@ -607,5 +620,173 @@ describe('Trusted manual checkpoints precede each original capture step', () => 
     controller.abort(); const outcome = await observedWithin(pending); gate.release(); await new Promise(resolve => setImmediate(resolve));
     expect(outcome).toMatchObject(unconfirmed('context_read')); expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]);
     expect(remove.mock.calls.map(call => call[1])).toEqual(add.mock.calls.map(call => call[1]));
+  });
+});
+
+type WorkCall = { name: string; input: Record<string, unknown>; signal?: AbortSignal };
+function workFixture(options: Parameters<typeof fixture>[1] = {}, reply?: (call: WorkCall, normal: Result) => Promise<Result>) {
+  const h = fixture(['fail'], options), calls: WorkCall[] = [];
+  Object.assign(loaded.SYSTEMS_CHECK_DISPATCH as object, h.dispatch);
+  const claimed = { work_id: PRIOR, work_status: 'claimed', server_idempotency_key: 'server-private-fixture-key',
+    tenant_id: TENANT, initiating_user_id: ACTION, thread_id: null, attempt_count: 1,
+    request_payload: { version: 1, scope: 'tenant', scan_flavor: 'manual', action_filing: 'none' } };
+  const admin = { ...h.admin, rpc(name: string, input: Record<string, unknown>) {
+    const call: WorkCall = { name, input }; calls.push(call);
+    const answer = async (): Promise<Result> => {
+      let normal: Result;
+      if (name === '_start_manual_systems_check_work') normal = { data: [claimed], error: null };
+      else if (name === 'heartbeat_paige_durable_work') normal = { data: [{ work_status: 'claimed', work_version: 2, work_lease_until: '2026-10-27T01:05:00Z' }], error: null };
+      else if (name === 'transition_paige_durable_work' && h.persisted().run?.completed_at) normal = { data: [{ work_status: 'succeeded', work_version: 3, work_attempt_count: 1, work_lease_until: null, work_settled_at: '2026-10-27T01:01:00Z' }], error: null };
+      else normal = { data: null, error: { message: 'Native result not established' } };
+      return reply ? reply(call, normal) : normal;
+    };
+    const query = { abortSignal(signal: AbortSignal) { call.signal = signal; return query; },
+      then: (fulfilled: (r: Result) => unknown, rejected?: (error: unknown) => unknown) => answer().then(fulfilled, rejected) };
+    return query;
+  } };
+  const capture = new AbortController(), settlement = new AbortController();
+  const settle = vi.fn(() => settlement.signal);
+  return { ...h, calls: h.calls, workCalls: calls, capture, settlement, settle,
+    execute: (extra: Record<string, unknown> = {}) => consumeWork({ admin, workId: PRIOR, captureSignal: capture.signal, settlementSignal: settle, ...extra }) };
+}
+
+describe('Private original Systems Work consumption, not public admission', () => {
+  const unknown = { workId: PRIOR, confirmation: 'unconfirmed' };
+  it('uses one native claim, fresh native heartbeat at every phase, actual whole Core, and original settlement', async () => {
+    const h = workFixture();
+    expect(await h.execute({ tenantId: RUN, scope: 'operator', scanFlavor: 'scheduled', actionFiling: 'all', runnerKeys: ['not-in-original-catalog'] }))
+      .toEqual({ workId: PRIOR, confirmation: 'confirmed', workStatus: 'succeeded', runId: PRIOR });
+    expect(h.workCalls[0]).toMatchObject({ name: '_start_manual_systems_check_work', input: { p_work: PRIOR }, signal: h.capture.signal });
+    const beats = h.workCalls.filter(c => c.name === 'heartbeat_paige_durable_work');
+    expect(beats).toHaveLength(8);
+    for (const beat of beats) expect(beat).toMatchObject({ input: { _work_id: PRIOR, _server_idempotency_key: 'server-private-fixture-key', _lease_seconds: 300 }, signal: h.capture.signal });
+    expect(h.workCalls.at(-1)).toMatchObject({ name: 'transition_paige_durable_work', input: { _work_id: PRIOR, _new_status: 'succeeded', _terminal_outcome: { verified_readback: true }, _reconciled: false }, signal: h.settlement.signal });
+    expect(h.workCalls.filter(c => c.name === '_start_manual_systems_check_work')).toHaveLength(1);
+    expect(h.dispatched).toHaveLength(1); expect(h.dispatched[0]).toMatchObject({ tenantId: TENANT, scope: 'tenant', scanFlavor: 'manual' });
+    expect(h.persisted().run).toMatchObject({ id: PRIOR, work_id: PRIOR, tenant_id: TENANT, scan_flavor: 'manual', selected_runner_keys: null });
+    expect(JSON.stringify(h.persisted())).not.toContain('server-private-fixture-key');
+    expect(h.calls.find(c => c.table === 'paige_systems_check_registry')?.filters.some(f => f[0] === 'in' && f[1] === 'runner_key')).toBe(false);
+    expect(h.persisted().findings[0]).toMatchObject({ run_id: PRIOR, tenant_id: TENANT, resolution_action_id: null });
+    expect(h.rpcs).toEqual([]); expect(forge).not.toHaveBeenCalled(); expect(h.settle).toHaveBeenCalledTimes(1);
+  });
+  it.each([null, '', 'not-a-work-id'])('refuses invalid internal identity %j without I/O', async workId => {
+    const h = workFixture(); await expect(h.execute({ workId })).rejects.toThrow('SYSTEMS_WORK_INTERNAL_CONTEXT_INVALID'); expect(h.workCalls).toEqual([]);
+  });
+  it('does not claim an already interrupted request or fabricate a cancelled Work status', async () => {
+    const h = workFixture(); h.capture.abort(); expect(await h.execute()).toEqual(unknown); expect(h.workCalls).toEqual([]); expect(h.settle).not.toHaveBeenCalled();
+  });
+  it.each(['refused', 'rejected', 'multiple', 'mismatched', 'payload', 'operator', 'wrong-attempt', 'missing-key'])(
+    'refuses %s original claim without Core, settlement or second dispatch', async kind => {
+      const h = workFixture({}, async (call, normal) => {
+        if (call.name !== '_start_manual_systems_check_work') return normal;
+        if (kind === 'rejected') throw new Error('Private source failure');
+        if (kind === 'refused') return { data: null, error: { message: 'Native current authority refused' } };
+        const row = { ...(normal.data as Record<string, unknown>[])[0] };
+        if (kind === 'multiple') return { data: [row, row], error: null };
+        if (kind === 'mismatched') row.work_id = RUN;
+        if (kind === 'payload') row.request_payload = { version: 1, scope: 'tenant', scan_flavor: 'manual', action_filing: 'all' };
+        if (kind === 'operator') row.tenant_id = null;
+        if (kind === 'wrong-attempt') row.attempt_count = 2;
+        if (kind === 'missing-key') delete row.server_idempotency_key;
+        return { data: [row], error: null };
+      });
+      expect(await h.execute()).toEqual(unknown); expect(h.workCalls).toHaveLength(1); expect(h.calls).toEqual([]); expect(h.settle).not.toHaveBeenCalled();
+    });
+  it.each(['error', 'expired', 'empty', 'invalid-lease'])('stops at a %s native heartbeat, without an invented successful result', async kind => {
+    const h = workFixture({}, async (call, normal) => {
+      if (call.name !== 'heartbeat_paige_durable_work') return normal;
+      if (kind === 'error') return { data: null, error: { message: 'Role revoked' } };
+      if (kind === 'empty') return { data: [], error: null };
+      const row = { ...(normal.data as Record<string, unknown>[])[0] };
+      if (kind === 'expired') row.work_status = 'expired'; else row.work_lease_until = 'invalid';
+      return { data: [row], error: null };
+    });
+    expect(await h.execute()).toEqual(unknown); expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]);
+    expect(h.workCalls.map(c => c.name)).toEqual(['_start_manual_systems_check_work', 'heartbeat_paige_durable_work', 'transition_paige_durable_work']);
+    expect(h.workCalls.at(-1)?.signal).toBe(h.settlement.signal);
+  });
+  it.each(['lost-reply', 'refused', 'empty', 'claimed', 'wrong-attempt', 'no-settled-time', 'lease-retained'])(
+    'keeps one completed original run unconfirmed on %s settlement, never replays', async kind => {
+      const h = workFixture({}, async (call, normal) => {
+        if (call.name !== 'transition_paige_durable_work') return normal;
+        if (kind === 'lost-reply') throw new Error('Acknowledgement lost after possible commit');
+        if (kind === 'refused') return { data: null, error: { message: 'Current authority or native lease refused' } };
+        if (kind === 'empty') return { data: [], error: null };
+        const row = { ...(normal.data as Record<string, unknown>[])[0] };
+        if (kind === 'claimed') row.work_status = 'claimed';
+        if (kind === 'wrong-attempt') row.work_attempt_count = 2;
+        if (kind === 'no-settled-time') row.work_settled_at = null;
+        if (kind === 'lease-retained') row.work_lease_until = '2026-10-27T01:05:00Z';
+        return { data: [row], error: null };
+      });
+      const result = await h.execute(); expect(result).toEqual(unknown); expect(JSON.stringify(result)).not.toContain('private-fixture-key');
+      expect(h.dispatched).toHaveLength(1); expect(h.persisted().run?.completed_at).toBeTruthy();
+      expect(h.inserted('paige_systems_check_run')).toHaveLength(1);
+      expect(h.workCalls.filter(c => c.name === 'transition_paige_durable_work')).toHaveLength(1);
+    });
+  it.each(['same', 'aborted', 'invalid', 'throws'])('refuses %s reconciliation scope without recycling cancelled scan authority', async kind => {
+    const h = workFixture(); h.settlement.abort();
+    const settlementSignal = () => { if (kind === 'throws') throw new Error('Host scope unavailable');
+      return kind === 'same' ? h.capture.signal : kind === 'aborted' ? h.settlement.signal : {}; };
+    expect(await h.execute({ settlementSignal })).toEqual(unknown);
+    expect(h.workCalls.filter(c => c.name === 'transition_paige_durable_work')).toHaveLength(0);
+    expect(h.dispatched).toHaveLength(1);
+  });
+  it('does not restart after a late claim acknowledgement', async () => {
+    const gate = deferredRead(), h = workFixture({}, async (call, normal) => { if (call.name === '_start_manual_systems_check_work') await gate.pause(); return normal; });
+    const pending = h.execute(); await gate.entered; h.capture.abort();
+    expect(await observedWithin(pending)).toEqual(unknown); gate.release(); await new Promise(resolve => setImmediate(resolve));
+    expect(h.workCalls).toHaveLength(1); expect(h.calls).toEqual([]); expect(h.settle).not.toHaveBeenCalled();
+  });
+  it('uses one fresh settlement scope after an uncooperative check is interrupted, preserving the partial original run', async () => {
+    const gate = deferredRead(), h = workFixture({ pauseRunner: gate.pause });
+    const pending = h.execute(); await gate.entered; h.capture.abort();
+    expect(await observedWithin(pending)).toEqual(unknown); gate.release(); await new Promise(resolve => setImmediate(resolve));
+    expect(h.workCalls.at(-1)?.signal).toBe(h.settlement.signal);
+    expect(h.persisted().run).toMatchObject({ id: PRIOR, work_id: PRIOR, completed_at: null });
+    expect(h.persisted().findings).toHaveLength(0); expect(h.dispatched).toHaveLength(1);
+    expect(h.workCalls.filter(c => c.name === '_start_manual_systems_check_work')).toHaveLength(1);
+  });
+  it('can accept genuine native completion after a completed write loses its Core reply', async () => {
+    const h = workFixture({ finalizeLostAck: true });
+    expect(await h.execute()).toEqual({ workId: PRIOR, confirmation: 'confirmed', workStatus: 'succeeded', runId: PRIOR });
+    expect(h.persisted().run?.completed_at).toBeTruthy(); expect(h.dispatched).toHaveLength(1); expect(h.settle).toHaveBeenCalledTimes(1);
+  });
+  it('bounds awaiting an uncooperative finalizer, retaining uncertainty if its late reply succeeds', async () => {
+    const gate = deferredRead(), h = workFixture({}, async (call, normal) => { if (call.name === 'transition_paige_durable_work') await gate.pause(); return normal; });
+    const pending = h.execute(); await gate.entered; h.settlement.abort();
+    expect(await observedWithin(pending)).toEqual(unknown); gate.release(); await new Promise(resolve => setImmediate(resolve));
+    expect(h.workCalls.filter(c => c.name === 'transition_paige_durable_work')).toHaveLength(1); expect(h.dispatched).toHaveLength(1);
+  });
+  it('lets the original native dispatch claim refuse a concurrent second consumer, never a JS replay grant', async () => {
+    let claims = 0;
+    const h = workFixture({}, async (call, normal) => call.name === '_start_manual_systems_check_work' && ++claims > 1
+      ? { data: null, error: { message: 'Native already dispatched' } } : normal);
+    const outcomes = await Promise.all([h.execute(), h.execute()]);
+    expect(outcomes.filter(o => o.confirmation === 'confirmed')).toHaveLength(1);
+    expect(outcomes.filter(o => o.confirmation === 'unconfirmed')).toHaveLength(1);
+    expect(h.workCalls.filter(c => c.name === '_start_manual_systems_check_work')).toHaveLength(2);
+    expect(h.inserted('paige_systems_check_run')).toHaveLength(1); expect(h.dispatched).toHaveLength(1);
+    expect(h.workCalls.filter(c => c.name === 'transition_paige_durable_work')).toHaveLength(1);
+  });
+  it.each(['resolves', 'rejects'] as const)('never resumes after an uncooperative native heartbeat later %s', async late => {
+    const gate = deferredRead(), h = workFixture({}, async (call, normal) => {
+      if (call.name === 'heartbeat_paige_durable_work') { await gate.pause(); if (late === 'rejects') throw new Error('Late authority failure'); }
+      return normal;
+    });
+    const pending = h.execute(); await gate.entered; h.capture.abort();
+    expect(await observedWithin(pending)).toEqual(unknown); gate.release(); await new Promise(resolve => setImmediate(resolve));
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(h.settle).toHaveBeenCalledTimes(1);
+    expect(h.workCalls.at(-1)?.signal).toBe(h.settlement.signal);
+  });
+  it('retains the original identity after a finding write commits too late to acknowledge', async () => {
+    const gate = deferredRead(), h = workFixture({ pauseResponse: async call => {
+      if (call.table === 'paige_systems_check_finding' && call.operation === 'insert') await gate.pause();
+    } });
+    const pending = h.execute(); await gate.entered; h.capture.abort();
+    expect(await observedWithin(pending)).toEqual(unknown); gate.release(); await new Promise(resolve => setImmediate(resolve));
+    expect(h.persisted().run).toMatchObject({ id: PRIOR, work_id: PRIOR, completed_at: null });
+    expect(h.persisted().findings).toHaveLength(1); expect(h.updated('paige_systems_check_run')).toHaveLength(0);
+    expect(h.dispatched).toHaveLength(1); expect(h.workCalls.filter(c => c.name === 'transition_paige_durable_work')).toHaveLength(1);
   });
 });

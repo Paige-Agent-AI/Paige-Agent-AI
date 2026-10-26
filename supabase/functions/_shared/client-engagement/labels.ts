@@ -61,7 +61,7 @@ export const PAYMENT_STATE_TEXT: Record<string, string> = {
   unpaid: 'unpaid', awaiting_confirmation: 'payment awaiting provider confirmation', outcome_unknown: 'payment outcome unknown',
 };
 
-/** The facts the platform does not record, in the owner's words (status.ts `not_recorded` keys). */
+/** Facts this read does not establish, in the owner's words (status.ts `not_recorded` keys). */
 export const NOT_RECORDED_TEXT: Record<string, string> = {
   payment_disputes: 'payment disputes',
   provider_refunds: 'refunds made at your payment provider',

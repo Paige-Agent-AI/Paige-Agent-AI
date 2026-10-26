@@ -197,7 +197,7 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
     : m.behind_schedule_minor > 0 ? money(m.behind_schedule_minor, cur)
     : m.behind_schedule_minor < 0 ? `no — ahead of the schedule by ${money(-m.behind_schedule_minor, cur)}` : 'no — exactly on schedule'}`);
   lines.push(`  Agreed but not yet invoiced: ${money(m.not_yet_invoiced_minor, cur)}`);
-  lines.push(`  Payment requests awaiting provider confirmation (NOT received): ${money(m.awaiting_confirmation_minor, cur, totalsReason)}; payments with unknown outcome: ${m.outcome_unknown_count}; failed payment requests: ${m.failed_request_count}; reversals: ${m.reversal_count}. Disputes are not recorded by the platform.`);
+  lines.push(`  Payment requests awaiting provider confirmation (NOT received): ${money(m.awaiting_confirmation_minor, cur, totalsReason)}; payments with unknown outcome: ${m.outcome_unknown_count}; failed payment requests: ${m.failed_request_count}; reversals: ${m.reversal_count}. Dispute details are not established by this standing read.`);
 
   if (s.invoices.length) {
     lines.push(`INVOICES (${s.invoices.length}${s.truncated.invoices ? '+, list truncated' : ''}):`);

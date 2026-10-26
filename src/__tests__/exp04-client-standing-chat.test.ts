@@ -49,6 +49,8 @@ describe('the client-standing projection never invents money', () => {
     expect(text).toContain('NOT ESTABLISHED BY THIS STANDING READ:');
     expect(text).not.toContain('The platform does not record when an agreement takes effect.');
     expect(text).not.toContain('NOT RECORDED BY THE PLATFORM:');
+    expect(text).toContain('Dispute details are not established by this standing read.');
+    expect(text).not.toContain('Disputes are not recorded by the platform.');
   });
   it.each([0,3])('does not equate %i done work records with accepted service', done => {
     const s=base();s.work={...s.work,total:3,done,open:0,cancelled:3-done,blocked:0,overdue:0,undated_open:0,

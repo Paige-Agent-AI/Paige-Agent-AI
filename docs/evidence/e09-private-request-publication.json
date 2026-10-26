@@ -2506,5 +2506,37 @@
     "authenticated": "UNVERIFIED",
     "founderAcceptance": "NOT_REQUESTED",
     "fullScope": "Full42/seven/Teach/CAP018–024/lifecycle and actual canonical algorithm maturity retained"
+  },
+  "ownerCommandCatalogueStartupCorrection": {
+    "runtime": "848d2c96302f171c9172401032c31fc3d7a07250",
+    "actualFailedHead": "e15fddbf058c2f9a47bb4a371cfd4de969c76ef6",
+    "actualFailure": "Original GitHub step102: pg_ctl could not start fresh synthetic server before fixture/assertions",
+    "underlyingSocketPermissionCause": "UNVERIFIED: deeper old server log not retained",
+    "correction": "Reuse original durable-document TCP-only startup option; no product/managed/production source or config change",
+    "native": {
+      "passed": 50,
+      "failed": 0,
+      "original49CaseObjectsPreserved": true,
+      "stoppedClusterExit": 0,
+      "scope": "Synthetic Windows loopback; fresh Linux CI required"
+    },
+    "pathControls": {
+      "passed": 3,
+      "failed": 0
+    },
+    "ci": "Only own proof/artifact moves after Install, whole remaining CI text exact; original synthetic startup log retained7days",
+    "rootUiNativeSql": "UNCHANGED from ce9",
+    "oldE15": "CANCELLED by normal supersession; actual startup FAIL and incomplete broad Test not credited",
+    "freshPreview": {
+      "branch": "393e8f86-9f8b-4643-8de7-f5c1f9ce0756",
+      "project": "gppcnwldiplsufxrvkcl",
+      "withData": false,
+      "status": "FUNCTIONS_DEPLOYED; exact source readback owed"
+    },
+    "reviewedCe9": "AUTHOR-REVIEW / LOWER ASSURANCE5646219086; scoped-token finding4372871559 fixed",
+    "status": "NOT_MERGED/NOT_DEPLOYED; final review/CI/readback owed",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED"
   }
 }

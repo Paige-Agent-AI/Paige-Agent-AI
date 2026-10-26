@@ -92,7 +92,7 @@ WORKING = source shipped and its production objects read back (not authenticated
 | F5 Capture prospect (actor: prospect) | Submit form from campaign link | `/p/` or `/form/:id` → submission → contact → opportunity | WORKING without attribution (13) or campaign pipeline (14) | **S1** |
 | F6 Report verified lead | Owner sees the lead, which campaign, how it was attributed, where it sits in Sales | dossier "Recorded outcome" → lead list; PAIGE answer | "Attribution needs a verified source; not available yet." (`campaign-desk.tsx:110`) | **S1** |
 | F7 Follow up / book | Authorized follow-up and appointment | `form.submitted` → scoped process → email draft for approval → booking | PARTIAL (15, 16, 18) | S4 |
-| F8 Progress to customer | Opportunity → agreement → invoice → paid | Sales contracts | PARTIAL (19, 20) | S5 (Sales-owned writers) |
+| F8 Progress to customer | Opportunity → agreement → invoice → paid | Sales contracts | PARTIAL — the read side shipped (F8 PR #2917 `4422cb02d`: recipient, invoice counts, close date read from Sales' own records; agreement/booked-call linkage absent and said so); the writers remain Sales-owned (19, 20) | S5 (Sales-owned writers) |
 | F9 Measure + improve | Results vs goal; next best change with evidence | metrics → Exp 02 review → recommendation | PARTIAL (22, 23) | S6 |
 
 Negative paths that every slice proves: a member (non-admin) sees counts, never names; another workspace's campaign

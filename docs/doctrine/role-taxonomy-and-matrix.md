@@ -169,7 +169,7 @@ Each slice is its own PR with a §37 producer inventory, §32 proof, and §39 pe
     explicit `service_role` trust branch so the legitimate `paige-ai-chat` path works. Boundary proof
     `supabase/tests/match_paige_memory_authz.sql`; evidence `docs/evidence/match-paige-memory-authz.md`.
     (The remaining c1 candidates + the c2 policy queue are NOT swept here — narrow, evidence-led slice.)
-  - **R3b — admin scope STAGE 0 🟡 BUILT 2026-10-26, NOT MERGED** (migration `20271115030008`, owner
+  - **R3b — admin scope STAGE 0 ✅ LIVE 2026-10-26 (#2904 `865c168a9`, applied and read back)** (migration `20271115030008`, owner
     ruling 2026-10-26: owning or administering one business never gives admin power in another; operator
     tiers unchanged; owners, admins and PAIGE keep full create/change/delete in their own workspace). Closes
     the readers stage 1 cannot reach: 23 functions and 29 policies on 19 tables that bound no tenant, took

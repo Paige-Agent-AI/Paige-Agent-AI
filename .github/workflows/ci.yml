@@ -103,6 +103,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_read_performance.sql
       - name: Admin scope stage 0, owner or admin of one business gains no admin power in another, failing-first and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/admin_scope_stage0.sql
+      - name: EXP08 team lifecycle, suspend/reinstate/remove authority, consent, Team conversations switch, arrival join and departure review in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_lifecycle.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
@@ -1244,6 +1246,23 @@ jobs:
       - name: E09 original client game-plan draft and saved-receipt proof
         if: ${{ !cancelled() }}
         run: node --import ./scripts/knowledge-scope/register.mjs scripts/proof/e09-client-game-plan.mjs
+
+      - name: EXP08 accepting a team invitation never lifts a suspension or leaves a global role behind a refused seat
+        if: ${{ !cancelled() }}
+        run: |
+          # accept-invite's consume path (B3, EXP08 lifecycle review round 3): a person whose seat in
+          # the invitation's workspace is suspended or otherwise not active is refused 409 before any
+          # write; otherwise the seat is written first and read back active, then the global role, each
+          # result checked, with the seat write undone if the role write fails and the role taken back
+          # if a suspension lands in between. Real team-seat.ts against a recording fake that plays the
+          # consent trigger's rules (1) and 1b and the seat-to-role sync.
+          deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/accept-invite/team-seat.test.ts
+          # And index.ts calls it at the right moments: the check before any write, the password included.
+          deno test --allow-import=deno.land --allow-read=supabase/functions/accept-invite --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/accept-invite/consume-order.test.ts
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/accept-invite/index.ts
 
       - name: The platform email sender is not an open relay (who may send, and to whom)
         if: ${{ !cancelled() }}

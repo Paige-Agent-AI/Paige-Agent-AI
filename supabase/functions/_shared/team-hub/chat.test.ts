@@ -5,7 +5,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
-  CANT_SEE, COULD_NOT_READ, NOT_AVAILABLE, NO_MATCH, TEAM_HUB_FENCE, TEAM_HUB_READERS,
+  CANT_SEE, CONVERSATIONS_OFF, COULD_NOT_READ, RECIPIENT_CONVERSATIONS_OFF, NOT_AVAILABLE, NO_MATCH, TEAM_HUB_FENCE, TEAM_HUB_READERS,
   postTeamHubReply, quoteTeamHubText, teamHubPostConfirmSummary, teamHubPostRequestId, teamHubSessionTainted,
   TEAM_HUB_EGRESS_WITHHELD_TOOLS, TEAM_HUB_EGRESS_REFUSAL, type TeamHubCaller,
 } from "./chat.ts";
@@ -163,6 +163,7 @@ describe("refusals say what happened (contract section 2, flow 5)", () => {
     ["scope_changed", { ok: false, code: "scope_changed" }, "refused", CANT_SEE],
     ["not_member", { ok: false, code: "not_member" }, "refused", NOT_AVAILABLE],
     ["unavailable", { ok: false, code: "unavailable" }, "refused", NOT_AVAILABLE],
+    ["conversations_off", { ok: false, code: "conversations_off" }, "refused", CONVERSATIONS_OFF],
     ["database error", { __error: true }, "unavailable", COULD_NOT_READ],
   ];
   for (const [label, answer, status, sentence] of cases) {
@@ -317,6 +318,19 @@ describe("the approved reply posts at most once, under the person's own approval
     const ok4000 = await postTeamHubReply(scope, fakeCaller({ team_hub_post_message: { ok: true, message: { id: MSG } } }).caller,
       { conversation_id: LAUNCH, body: "z".repeat(4000) }, "fp:x");
     assert.equal(ok4000.success, true);
+  });
+  it("Team conversations switched off: says so, never that Team Hub is unavailable, and posts nothing", async () => {
+    const { caller } = fakeCaller({ team_hub_post_message: { ok: false, code: "conversations_off" } });
+    const r = await postTeamHubReply(scope, caller, { conversation_id: LAUNCH, body: "hi" }, "fp:off");
+    assert.ok(!r.success && "not_applied" in r && r.reason === "conversations_off" && r.error.includes(CONVERSATIONS_OFF));
+    assert.ok(!(!r.success && "not_applied" in r && r.error.includes(NOT_AVAILABLE)));
+  });
+  it("a DM to someone with Team conversations off: says so, never that it posted or that Team Hub is unavailable", async () => {
+    const { caller } = fakeCaller({ team_hub_post_message: { ok: false, code: "recipient_conversations_off" } });
+    const r = await postTeamHubReply(scope, caller, { conversation_id: LAUNCH, body: "hi" }, "fp:roff");
+    assert.ok(!r.success && "not_applied" in r && r.reason === "recipient_conversations_off"
+      && r.error.includes(RECIPIENT_CONVERSATIONS_OFF) && r.error.includes("Nothing was posted."));
+    assert.ok(!(!r.success && "not_applied" in r && (r.error.includes(NOT_AVAILABLE) || r.error.includes(CONVERSATIONS_OFF))));
   });
   it("a transport failure after sending is an unknown outcome, never a claimed post", async () => {
     const { caller } = fakeCaller({}, { throwOn: "team_hub_post_message" });

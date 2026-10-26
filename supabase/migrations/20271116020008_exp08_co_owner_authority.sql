@@ -23,8 +23,10 @@
 --       tenants.owner_user_id = _user AND public.is_tenant_owner(_user, _tenant)
 --     (the holder must ALSO still hold an active owner seat — a suspended holder is not one).
 --   * grant_co_owner: the gate is is_tenant_account_holder(caller) OR platform owner; message.
---   * revoke_co_owner: the same gate; then a non-platform caller may not revoke themselves; then
---     nobody (platform owner included) revokes the tenant's account holder.
+--   * revoke_co_owner: the same gate, which ALSO admits a step-down (_user = _caller, the caller
+--     holding an active owner seat in _tenant — owner ruling 2026-10-26, "A co-owner can step down
+--     to Admin themselves"); then nobody (platform owner included) revokes the tenant's account
+--     holder, which also refuses the holder stepping down.
 -- Signatures, owner, SECURITY DEFINER, search_path, grants, the FOR UPDATE lock, the last-owner
 -- floor, every other refusal and the audit writes are byte-identical.
 --
@@ -36,13 +38,32 @@
 --   * Production 2026-10-26: 12 tenants; 4 have no owner_user_id (none has an active owner) and
 --     1 holder has no active owner seat. On those, only the platform owner can grant co-ownership
 --     after this change. Every tenant that has an active owner has its holder as an active owner.
---   * The self-revocation refusal cannot change an OUTCOME under this gate (the only non-platform
---     caller who passes the gate is the holder, whom the next refusal protects anyway); it is
---     defence in depth for when the gate widens, and the proof pins it by its message.
+--   * An earlier draft of this migration also refused ALL self-revocation by a non-platform caller.
+--     It is gone: it would have taken away the co-owner step-down production allows today, which
+--     the owner ruled must stay. The holder still cannot revoke themselves (the holder refusal).
+--     The step-down seat check reads tenant_members directly, NOT is_tenant_owner, so the
+--     company-workspace operator branch of is_tenant_owner does not count as a seat; the target
+--     check after the FOR UPDATE lock re-verifies the same seat, so a seat lost in between still
+--     ends in CO_OWNER_NOT_OWNER.
 --   * The platform_admin narrowing above is CONSISTENT with the owner ruling of 2026-10-26: only
 --     the account holder adds or removes owners; the platform super admin may do so only for
 --     recovery when there is no working account holder (that recovery gating is a later
 --     increment). Nothing here is widened beyond super_admin.
+--
+-- §58 — CAPABILITIES THIS CHANGE REMOVES OR KEEPS, each against production today.
+--   * (was ✓, owner-ruled) The account holder could step down via revoke_co_owner while another
+--     owner remained. Now nobody, the platform owner included, demotes the holder here; moving the
+--     holder (a holder transfer) is a later increment.
+--   * (was ✓, owner-ruled) A platform_admin (operator, not super_admin) could grant and revoke
+--     co-ownership in a company workspace through is_tenant_owner's operator branch. Now only the
+--     account holder or the platform super admin acts (the super admin, for recovery).
+--   * KEPT per the owner ruling: a co-owner who is not the holder steps down to admin themselves
+--     (revoke_co_owner(_tenant, auth.uid())), subject to the last-owner floor, as on production.
+--
+-- TRACKED FOLLOW-UP, OUTSIDE THIS CHANGE. revoke_platform_access (executable by authenticated, gated
+-- is_platform_admin() OR is_platform_owner()) DELETEs tenant_members rows, owner and holder seats
+-- included, so it bypasses revoke_co_owner's last-owner floor and its holder refusal. Not touched
+-- here; it needs its own grounded change.
 --
 -- VERIFIER FOLLOW-UPS FOLDED INTO THIS SAME MIGRATION (it was unmerged when they were found).
 --   S1  Now that tenants.owner_user_id is an AUTHORITY signal, the #227 F.0 "shell carve-out" in
@@ -169,12 +190,12 @@ BEGIN
   IF _tenant IS NULL OR _user IS NULL THEN
     RAISE EXCEPTION 'CO_OWNER_BAD_ARGS' USING ERRCODE = '22023';
   END IF;
-  IF NOT (public.is_tenant_account_holder(_caller, _tenant) OR _is_platform) THEN
+  -- Step-down (owner ruling 2026-10-26): an ACTIVE owner may give up their OWN seat. The account
+  -- holder is excluded by the holder refusal below, which binds every caller.
+  IF NOT (public.is_tenant_account_holder(_caller, _tenant) OR _is_platform
+          OR (_user = _caller AND EXISTS (SELECT 1 FROM public.tenant_members
+                WHERE tenant_id = _tenant AND user_id = _caller AND is_owner = true AND status = 'active'))) THEN
     RAISE EXCEPTION 'CO_OWNER_FORBIDDEN: only the account holder may revoke co-ownership'
-      USING ERRCODE = '42501';
-  END IF;
-  IF _user = _caller AND NOT _is_platform THEN
-    RAISE EXCEPTION 'CO_OWNER_FORBIDDEN: you cannot revoke your own ownership here'
       USING ERRCODE = '42501';
   END IF;
 
@@ -238,8 +259,8 @@ GRANT EXECUTE ON FUNCTION public.revoke_co_owner(uuid, uuid) TO authenticated, s
 
 -- ── S1: guard_tenant_owner_only_columns — narrow the #227 F.0 shell carve-out ─────────────────────
 -- Re-emitted from its newest body (20260804020000 F.0; production md5(prosrc)
--- ad32e93ac6869c6b2a102208c8deb1d2) with ONLY the carve-out changed: two comment lines reworded
--- and two conditions added (NEW.owner_user_id = auth.uid(); no OTHER active owner). The trusted-
+-- ad32e93ac6869c6b2a102208c8deb1d2) with ONLY the carve-out changed: three comment lines replaced
+-- with two, and two conditions added (NEW.owner_user_id = auth.uid(); no OTHER active owner). The trusted-
 -- context test on its first line, the guarded columns, the refusal and its message are
 -- byte-identical (proof: supabase/tests/exp08_co_owner_authority.sql diffs prosrc).
 CREATE OR REPLACE FUNCTION public.guard_tenant_owner_only_columns()

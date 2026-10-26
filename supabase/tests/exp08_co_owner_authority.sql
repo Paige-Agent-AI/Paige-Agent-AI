@@ -1,5 +1,6 @@
 -- EXP08 co-owner authority: only the ACCOUNT HOLDER (tenants.owner_user_id, still holding an active
--- owner seat) or the PLATFORM OWNER grants or revokes co-ownership; nobody revokes the holder here.
+-- owner seat) or the PLATFORM OWNER grants or revokes co-ownership; nobody revokes the holder here;
+-- a co-owner who is not the holder may step down to admin themselves (owner ruling 2026-10-26).
 -- Migration under test: supabase/migrations/20271116020008_exp08_co_owner_authority.sql.
 -- Disposable PostgreSQL only (it creates and drops its own database). Never target a linked project.
 --
@@ -32,7 +33,7 @@
 --      put back, is byte-identical to production's (both RPCs and the tenants guard); every case
 --      passes.
 --   3  MUTANTS (§71.4): each mutant rewrites ONE gate element inside a rolled-back subtransaction and
---      must fail at least one case; two semantically neutral controls must fail none.
+--      must fail at least one case; the semantically neutral controls must fail none.
 -- Every case runs in its own subtransaction that is always rolled back, so each starts from the
 -- same fixture, as `authenticated` (or `anon`) with request.jwt.claims set, like PostgREST.
 \set ON_ERROR_STOP on
@@ -334,7 +335,8 @@ CREATE FUNCTION proof.expect(_ok boolean, _what text) RETURNS void LANGUAGE plpg
 BEGIN IF _ok IS NOT TRUE THEN RAISE EXCEPTION 'EXPECTATION_FALSE: %', _what USING ERRCODE='P0001'; END IF; END $$;
 GRANT EXECUTE ON FUNCTION proof.u(text), proof.expect(boolean, text) TO anon, authenticated, service_role;
 
--- Tenant A: holder H (active owner seat), co-owners C1 and C2, admin AD, member ME. OUT is nobody's.
+-- Tenant A: holder H (active owner seat), co-owners C1 and C2, admin AD, member ME, and CX, a co-owner
+--   whose owner seat is SUSPENDED. OUT is nobody's.
 -- Tenant B: holder HB, co-owner CB, member MB (the cross-tenant target).
 -- Tenant S: holder HS whose owner seat is SUSPENDED, co-owner CS, member MS.
 -- Tenant X: holder HX is an active ADMIN, not an owner (production has one such holder); owner OX, member MX.
@@ -345,17 +347,18 @@ GRANT EXECUTE ON FUNCTION proof.u(text), proof.expect(boolean, text) TO anon, au
 --   in neither E (not its holder) nor, for HS, S (no active seat there).
 -- Tenant Q (S1): NO holder of record; two active co-owners Q1 and Q2, admin AQ, member QM.
 -- Tenant SH (S1): an un-onboarded shell — no holder, no members (the accept_tenant_invite path).
+-- Tenant Z (S1): NO holder of record and NO active owner; admin ZA, member ZM.
 -- P is the platform owner (super_admin) and holds no seat anywhere.
 INSERT INTO public.tenants(id,name,owner_user_id) VALUES
  (proof.u('A'),'Tenant A',proof.u('H')), (proof.u('B'),'Tenant B',proof.u('HB')),
  (proof.u('S'),'Tenant S',proof.u('HS')), (proof.u('X'),'Tenant X',proof.u('HX')),
  (proof.u('L'),'Tenant L',NULL),          (proof.u('W'),'Tenant W',proof.u('WH')),
  (proof.u('E'),'Tenant E',proof.u('HE')), (proof.u('Q'),'Tenant Q',NULL),
- (proof.u('SH'),'Shell SH',NULL);
+ (proof.u('SH'),'Shell SH',NULL),         (proof.u('Z'),'Tenant Z',NULL);
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner)
 SELECT proof.u(t), proof.u(p), r::public.tenant_role, s, o FROM (VALUES
  ('A','H','owner','active',true), ('A','C1','owner','active',true), ('A','C2','owner','active',true),
- ('A','AD','admin','active',false), ('A','ME','member','active',false),
+ ('A','AD','admin','active',false), ('A','ME','member','active',false), ('A','CX','owner','suspended',true),
  ('B','HB','owner','active',true), ('B','CB','owner','active',true), ('B','MB','member','active',false),
  ('S','HS','owner','suspended',true), ('S','CS','owner','active',true), ('S','MS','member','active',false),
  ('X','HX','admin','active',false), ('X','OX','owner','active',true), ('X','MX','member','active',false),
@@ -364,7 +367,8 @@ SELECT proof.u(t), proof.u(p), r::public.tenant_role, s, o FROM (VALUES
  ('E','HE','owner','active',true), ('E','H','owner','active',true), ('E','HS','owner','active',true),
  ('E','CE','owner','active',true), ('E','EM','member','active',false),
  ('Q','Q1','owner','active',true), ('Q','Q2','owner','active',true), ('Q','AQ','admin','active',false),
- ('Q','QM','member','active',false)
+ ('Q','QM','member','active',false),
+ ('Z','ZA','admin','active',false), ('Z','ZM','member','active',false)
 ) v(t,p,r,s,o);
 INSERT INTO public.fixture_super_admins VALUES (proof.u('P'));
 INSERT INTO public.fixture_platform_admins VALUES (proof.u('PA'));
@@ -386,6 +390,9 @@ CREATE FUNCTION proof.h(p text, t text) RETURNS text LANGUAGE sql IMMUTABLE AS
 -- make a refusal look like a success, nor a no-op look like an attack that got through).
 CREATE FUNCTION proof.set_holder(t text, p text) RETURNS text LANGUAGE sql IMMUTABLE AS
  $$ SELECT format('WITH u AS (UPDATE public.tenants SET owner_user_id = proof.u(%L) WHERE id = proof.u(%L) RETURNING 1) SELECT proof.expect(count(*) = 1, ''exactly one tenants row updated'') FROM u', p, t) $$;
+-- The same self-crown, with ANOTHER guarded column changed in the same statement.
+CREATE FUNCTION proof.set_holder_and(t text, p text, extra text) RETURNS text LANGUAGE sql IMMUTABLE AS
+ $$ SELECT format('WITH u AS (UPDATE public.tenants SET owner_user_id = proof.u(%L), %s WHERE id = proof.u(%L) RETURNING 1) SELECT proof.expect(count(*) = 1, ''exactly one tenants row updated'') FROM u', p, extra, t) $$;
 CREATE FUNCTION proof.holder_is(t text, p text) RETURNS text LANGUAGE sql IMMUTABLE AS
  $$ SELECT format('EXISTS(SELECT 1 FROM public.tenants WHERE id=proof.u(%L) AND owner_user_id=proof.u(%L))', t, p) $$;
 -- The whole S1 attack, as the caller: crown yourself holder, then revoke a fellow co-owner.
@@ -450,8 +457,9 @@ INSERT INTO proof.checks(id,kind,actor,call,expect,msg,post) VALUES
    proof.seat('A','C1',false,'admin')||' AND '||proof.audit('A','C1','tenant:revoke_co_owner','H','owner')),
  ('r02 co-owner revokes the account holder','hole','C1',proof.r('A','H'),'42501','CO_OWNER_FORBIDDEN: only the account holder may revoke co-ownership',NULL),
  ('r03 co-owner revokes another co-owner','hole','C1',proof.r('A','C2'),'42501','CO_OWNER_FORBIDDEN',NULL),
- ('r04 co-owner revokes self','hole','C1',proof.r('A','C1'),'42501','CO_OWNER_FORBIDDEN',NULL),
- ('r05 account holder revokes self','hole','H',proof.r('A','H'),'42501','CO_OWNER_FORBIDDEN: you cannot revoke your own ownership here',NULL),
+ ('r04 co-owner C1 steps down to admin (owner ruling: kept)','kept','C1',proof.r('A','C1'),'00000',NULL,
+   proof.seat('A','C1',false,'admin')||' AND '||proof.audit('A','C1','tenant:revoke_co_owner','C1','owner')||' AND '||proof.seat('A','H',true,'owner')),
+ ('r05 account holder revokes self (steps down)','hole','H',proof.r('A','H'),'42501','CO_OWNER_FORBIDDEN: the account holder''s ownership cannot be revoked here',NULL),
  ('r06 platform owner revokes the account holder','hole','P',proof.r('A','H'),'42501','CO_OWNER_FORBIDDEN: the account holder''s ownership cannot be revoked here',NULL),
  ('r07 platform owner revokes the account holder of B','hole','P',proof.r('B','HB'),'42501','CO_OWNER_FORBIDDEN: the account holder''s ownership cannot be revoked here',NULL),
  ('r08 platform owner revokes a co-owner','kept','P',proof.r('A','C1'),'00000',NULL,
@@ -464,7 +472,15 @@ INSERT INTO proof.checks(id,kind,actor,call,expect,msg,post) VALUES
  ('r14 platform_admin in a company workspace revokes','hole','PA',proof.r('W','WC'),'42501','CO_OWNER_FORBIDDEN',NULL),
  ('r15 unauthenticated revokes','kept',NULL,proof.r('A','C1'),'42501','CO_OWNER_UNAUTHENTICATED',NULL),
  ('r16 holder revokes the only other owner, floor not reached (2 owners)','kept','HB',proof.r('B','CB'),'00000',NULL,
-   proof.seat('B','CB',false,'admin')||' AND '||proof.seat('B','HB',true,'owner'));
+   proof.seat('B','CB',false,'admin')||' AND '||proof.seat('B','HB',true,'owner')),
+ -- step-down (owner ruling 2026-10-26: "A co-owner can step down to Admin themselves")
+ ('d01 co-owner OX, the ONLY active owner of X (holder HX holds no seat), steps down: floor','kept','OX',proof.r('X','OX'),'42501','CO_OWNER_LAST',NULL),
+ ('d02 sole owner LO of holderless L steps down: floor','kept','LO',proof.r('L','LO'),'42501','CO_OWNER_LAST',NULL),
+ ('d03 co-owner CX with a SUSPENDED owner seat steps down','kept','CX',proof.r('A','CX'),'42501','CO_OWNER_FORBIDDEN',NULL),
+ ('d04 co-owner CB of B steps down in A, where CB holds no seat','kept','CB',proof.r('A','CB'),'42501','CO_OWNER_FORBIDDEN',NULL),
+ ('d05 admin AD (no owner seat) revokes self','kept','AD',proof.r('A','AD'),'42501','CO_OWNER_FORBIDDEN',NULL),
+ ('d06 holder of A steps down as co-owner of E (not E''s holder)','kept','H',proof.r('E','H'),'00000',NULL,
+   proof.seat('E','H',false,'admin')||' AND '||proof.audit('E','H','tenant:revoke_co_owner','H','owner')||' AND '||proof.seat('A','H',true,'owner')||' AND '||proof.holder_is('A','H'));
 
 -- Rows with an explicit role: the helper (S4: service_role only; authenticated and anon refused),
 -- the cross-tenant shapes (S2) and the holder-of-record carve-out (S1).
@@ -504,7 +520,11 @@ INSERT INTO proof.checks(id,kind,as_role,actor,call,expect,msg,post) VALUES
  ('s10 platform owner sets Q''s holder (recovery path, unchanged)','kept','authenticated','P',proof.set_holder('Q','Q1'),'00000',NULL,
    proof.holder_is('Q','Q1')),
  ('s11 platform_admin names the SOLE owner LO holder of L (only LO may, for themselves)','hole','authenticated','PA',proof.set_holder('L','LO'),'P0001','Only the platform owner may change tenant ownership',NULL),
- ('s12 sole active owner OX replaces X''s seatless holder HX with self (recovery is the platform owner''s)','kept','authenticated','OX',proof.set_holder('X','OX'),'P0001','Only the platform owner may change tenant ownership',NULL);
+ ('s12 sole active owner OX replaces X''s seatless holder HX with self (recovery is the platform owner''s)','kept','authenticated','OX',proof.set_holder('X','OX'),'P0001','Only the platform owner may change tenant ownership',NULL),
+ ('s13 admin ZA crowns self holder of Z (no holder, no active owner)','kept','authenticated','ZA',proof.set_holder('Z','ZA'),'P0001','Only the platform owner may change tenant ownership',NULL),
+ ('s14 member ZM crowns self holder of Z (no UPDATE policy admits a member: 0 rows)','kept','authenticated','ZM',proof.set_holder('Z','ZM'),'P0001','EXPECTATION_FALSE: exactly one tenants row updated',NULL),
+ ('s15 sole owner LO self-crowns L AND changes stripe_customer_id','kept','authenticated','LO',proof.set_holder_and('L','LO','stripe_customer_id = ''cus_exp08'''),'P0001','Only the platform owner may change tenant ownership',NULL),
+ ('s16 sole owner LO self-crowns L AND changes parent_tenant_id','kept','authenticated','LO',proof.set_holder_and('L','LO','parent_tenant_id = proof.u(''A'')'),'P0001','Only the platform owner may change tenant ownership',NULL);
 
 -- One case, isolated: claims + role set, call caught, post-state read as postgres, then all rolled back.
 CREATE FUNCTION proof.run_check(_id text) RETURNS text LANGUAGE plpgsql AS $$
@@ -560,7 +580,7 @@ SELECT p.proname::text AS name, p.prosrc, p.prorettype, p.proargtypes::text AS a
 DO $$ DECLARE r record; BEGIN
  FOR r IN SELECT * FROM (VALUES
    ('grant_co_owner(uuid,uuid)','2a75180de63325dd7e328a73e494e6dc'),
-   ('revoke_co_owner(uuid,uuid)','60eb30770b42f13e46797499631bfe09'),
+   ('revoke_co_owner(uuid,uuid)','e2ba8ca80d63df58ebc93b34e5dc5f01'),
    ('is_tenant_account_holder(uuid,uuid)','4a3cab59aad7a70ff06a9054aa4aa60e'),
    ('guard_tenant_owner_only_columns()','d77a4bfab3aa53b73e592497acf0f46a')) v(sig, want) LOOP
   IF (SELECT md5(prosrc) FROM pg_proc WHERE oid=('public.'||r.sig)::regprocedure) IS DISTINCT FROM r.want THEN
@@ -604,11 +624,14 @@ DO $$ DECLARE _g text; _r text; BEGIN
   IF _g IS DISTINCT FROM (SELECT prosrc FROM proof.prior WHERE name='grant_co_owner') THEN
     RAISE EXCEPTION 'FAIL: grant_co_owner differs from production beyond its gate'; END IF;
   SELECT prosrc INTO _r FROM pg_proc WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure;
-  _r := proof.swap(_r, 'public.is_tenant_account_holder(_caller, _tenant)', 'public.is_tenant_owner(_caller, _tenant)');
+  _r := proof.swap(_r,
+      E'  -- Step-down (owner ruling 2026-10-26): an ACTIVE owner may give up their OWN seat. The account\n'
+    || E'  -- holder is excluded by the holder refusal below, which binds every caller.\n'
+    || E'  IF NOT (public.is_tenant_account_holder(_caller, _tenant) OR _is_platform\n'
+    || E'          OR (_user = _caller AND EXISTS (SELECT 1 FROM public.tenant_members\n'
+    || E'                WHERE tenant_id = _tenant AND user_id = _caller AND is_owner = true AND status = ''active''))) THEN\n',
+      E'  IF NOT (public.is_tenant_owner(_caller, _tenant) OR _is_platform) THEN\n');
   _r := proof.swap(_r, 'only the account holder may revoke co-ownership', 'only a tenant owner may revoke co-ownership');
-  _r := proof.swap(_r, E'  IF _user = _caller AND NOT _is_platform THEN\n'
-    || E'    RAISE EXCEPTION ''CO_OWNER_FORBIDDEN: you cannot revoke your own ownership here''\n'
-    || E'      USING ERRCODE = ''42501'';\n  END IF;\n', '');
   _r := proof.swap(_r, E'\n  -- Hold the tenant row FOR SHARE (after the owner-row lock: members -> tenants) so the holder of\n'
     || E'  -- record cannot change between this refusal and the demotion below.\n'
     || E'  PERFORM 1 FROM public.tenants WHERE id = _tenant FOR SHARE;\n'
@@ -638,7 +661,7 @@ DO $$ DECLARE _x text; BEGIN
   IF _x IS DISTINCT FROM (SELECT prosrc FROM proof.prior WHERE name='guard_tenant_owner_only_columns') THEN
     RAISE EXCEPTION 'FAIL: guard_tenant_owner_only_columns differs from production beyond its carve-out'; END IF;
 END $$;
-\echo 'PASS: with only the changed lines put back, all three bodies are production''s byte for byte (grant: 1 gate line + 1 message; revoke: 1 gate line + 1 message + 2 new refusals, the holder one under a FOR SHARE tenant lock; guard: 2 comment lines + 2 carve-out conditions)'
+\echo 'PASS: with only the changed lines put back, all three bodies are production''s byte for byte (grant: 1 gate line + 1 message; revoke: the gate (1 line -> 2 comment + 3 code lines, adding the step-down) + 1 message + 1 new refusal, the holder one under a FOR SHARE tenant lock; guard: 3 comment lines replaced with 2 + 2 carve-out conditions)'
 
 \echo '── PHASE 2, migrated: cases that fail (expected: none) ──'
 CREATE TABLE proof.phase2 AS SELECT * FROM proof.failing();
@@ -675,8 +698,6 @@ INSERT INTO proof.mutants(name, sig, from_text, to_text, control) VALUES
    'public.is_tenant_account_holder(_caller, _tenant)', 'public.is_tenant_owner(_caller, _tenant)', false),
  ('M3 revoke: drop the account-holder refusal', 'revoke_co_owner(uuid,uuid)',
    'IF EXISTS (SELECT 1 FROM public.tenants WHERE id = _tenant AND owner_user_id = _user) THEN', 'IF false THEN', false),
- ('M4 revoke: drop the self refusal', 'revoke_co_owner(uuid,uuid)',
-   'IF _user = _caller AND NOT _is_platform THEN', 'IF false THEN', false),
  ('M5 helper: drop the is_tenant_owner conjunct', 'is_tenant_account_holder(uuid,uuid)',
    'AND public.is_tenant_owner(_user, _tenant)', '', false),
  ('M6 helper: drop the owner_user_id conjunct', 'is_tenant_account_holder(uuid,uuid)',
@@ -685,8 +706,16 @@ INSERT INTO proof.mutants(name, sig, from_text, to_text, control) VALUES
    'WHERE id = _tenant AND owner_user_id = _user) THEN', 'WHERE id = _tenant AND owner_user_id = _user) AND NOT _is_platform THEN', false),
  ('M8 grant: drop the platform-owner path', 'grant_co_owner(uuid,uuid)',
    'public.is_tenant_account_holder(_caller, _tenant) OR _is_platform', 'public.is_tenant_account_holder(_caller, _tenant)', false),
- ('M9 revoke: self refusal applies to the platform owner only', 'revoke_co_owner(uuid,uuid)',
-   'IF _user = _caller AND NOT _is_platform THEN', 'IF _user = _caller AND _is_platform THEN', false),
+ ('SD1 step-down allowed for the holder (holder refusal skipped when revoking self)', 'revoke_co_owner(uuid,uuid)',
+   'WHERE id = _tenant AND owner_user_id = _user) THEN', 'WHERE id = _tenant AND owner_user_id = _user) AND _user <> _caller THEN', false),
+ ('SD2 step-down allowed for a non-owner (seat check drops is_owner)', 'revoke_co_owner(uuid,uuid)',
+   'user_id = _caller AND is_owner = true AND status', 'user_id = _caller AND status', false),
+ ('SD3 step-down without the active-status check', 'revoke_co_owner(uuid,uuid)',
+   'AND is_owner = true AND status = ''active''))) THEN', 'AND is_owner = true))) THEN', false),
+ ('SD4 step-down lets _user != _caller', 'revoke_co_owner(uuid,uuid)',
+   '_user = _caller AND EXISTS', 'true AND EXISTS', false),
+ ('SD5 step-down seat in ANY tenant', 'revoke_co_owner(uuid,uuid)',
+   'WHERE tenant_id = _tenant AND user_id = _caller', 'WHERE user_id = _caller', false),
  ('V1 helper: drop the t.id = _tenant conjunct (holder of ANY tenant)', 'is_tenant_account_holder(uuid,uuid)',
    'WHERE t.id = _tenant AND t.owner_user_id = _user', 'WHERE t.owner_user_id = _user', false),
  ('V2 helper: owner seat in ANY tenant (is_tenant_owner(_user, NULL))', 'is_tenant_account_holder(uuid,uuid)',
@@ -697,12 +726,20 @@ INSERT INTO proof.mutants(name, sig, from_text, to_text, control) VALUES
    E'          AND tm.user_id  <> NEW.owner_user_id\n', E'          AND false AND tm.user_id  <> NEW.owner_user_id\n', false),
  ('G3 guard: carve-out no longer requires a holderless tenant', 'guard_tenant_owner_only_columns()',
    E'  IF OLD.owner_user_id IS NULL\n     AND NEW.owner_user_id IS NOT NULL\n', E'  IF NEW.owner_user_id IS NOT NULL\n', false),
+ ('G4 guard: seat check drops tm.is_owner = true (any active member may crown self)', 'guard_tenant_owner_only_columns()',
+   E'          AND tm.user_id   = NEW.owner_user_id\n          AND tm.is_owner  = true\n', E'          AND tm.user_id   = NEW.owner_user_id\n', false),
+ ('G5 guard: carve-out drops the stripe_customer_id unchanged-condition', 'guard_tenant_owner_only_columns()',
+   E'     AND NEW.stripe_customer_id     IS NOT DISTINCT FROM OLD.stripe_customer_id\n', '', false),
+ ('G6 guard: carve-out drops the parent_tenant_id unchanged-condition', 'guard_tenant_owner_only_columns()',
+   E'     AND NEW.parent_tenant_id       IS NOT DISTINCT FROM OLD.parent_tenant_id\n', '', false),
  ('C1 control: grant reads auth.uid() again instead of _caller (equivalent)', 'grant_co_owner(uuid,uuid)',
    'IF _caller IS NULL THEN', 'IF auth.uid() IS NULL THEN', true),
  ('C2 control: helper conjuncts reordered (equivalent)', 'is_tenant_account_holder(uuid,uuid)',
    'SELECT _user IS NOT NULL', 'SELECT _tenant IS NOT NULL AND _user IS NOT NULL', true),
  ('C3 control: guard compares auth.uid() = NEW.owner_user_id (equivalent)', 'guard_tenant_owner_only_columns()',
-   'AND NEW.owner_user_id = auth.uid()', 'AND auth.uid() = NEW.owner_user_id', true);
+   'AND NEW.owner_user_id = auth.uid()', 'AND auth.uid() = NEW.owner_user_id', true),
+ ('C4 control: step-down ALSO excludes the holder in the gate (equivalent: the holder refusal binds every caller)', 'revoke_co_owner(uuid,uuid)',
+   '_user = _caller AND EXISTS', '_user = _caller AND NOT EXISTS (SELECT 1 FROM public.tenants WHERE id = _tenant AND owner_user_id = _caller) AND EXISTS', true);
 
 DO $$ DECLARE m record; _def text; _fail text[]; BEGIN
   FOR m IN SELECT * FROM proof.mutants ORDER BY n LOOP
@@ -724,7 +761,7 @@ DO $$ DECLARE _bad text; BEGIN
   SELECT string_agg(name, ', ') INTO _bad FROM proof.mutants WHERE control AND cardinality(failing) <> 0;
   IF _bad IS NOT NULL THEN RAISE EXCEPTION 'FAIL: a neutral control was flagged (the cases are brittle): %', _bad; END IF;
   -- The mutant really ran: the live bodies are the migrated ones again after every rollback.
-  IF (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure) <> '60eb30770b42f13e46797499631bfe09'
+  IF (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.revoke_co_owner(uuid,uuid)'::regprocedure) <> 'e2ba8ca80d63df58ebc93b34e5dc5f01'
      OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.guard_tenant_owner_only_columns()'::regprocedure) <> 'd77a4bfab3aa53b73e592497acf0f46a' THEN
     RAISE EXCEPTION 'FAIL: a mutant leaked out of its subtransaction'; END IF;
 END $$;

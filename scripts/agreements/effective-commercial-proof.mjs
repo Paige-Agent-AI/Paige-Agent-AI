@@ -243,5 +243,6 @@ export async function proveEffectiveCommercialCurrent({sql:originalSql,read,quot
   tenant,actor,termsId:c.terms,invoiceId:c.invoice,agreementId,prepared,migration:'supabase/migrations/20271113820004_e04_exact_signed_terms.sql'});
  const {proveEffectiveCommercialCatalogue}=await import('./effective-commercial-catalogue-proof.mjs');
  const catalogue=proveEffectiveCommercialCatalogue({sql,read,tenant,actor});
- return {checks:checks+catalogue.checks,catalogue,concurrentSessions:5,observedLockWaits:3,migrationReplay:2,scope:'Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance'};
+ const clientRead=process.argv.includes('--effective-client-read')?(await import('./effective-client-read-proof.mjs')).proveEffectiveClientRead({sql,read,tenant,actor,c,prepared}):null;
+ return {checks:checks+catalogue.checks+(clientRead?.checks??0),catalogue,...(clientRead?{clientRead}:{}),concurrentSessions:5,observedLockWaits:3,migrationReplay:2,scope:'Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance'};
 }

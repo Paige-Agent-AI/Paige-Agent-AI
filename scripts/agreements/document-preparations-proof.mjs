@@ -27,6 +27,9 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
  const canonicalStart=commercial.indexOf('CREATE OR REPLACE FUNCTION public._paige_commercial_canonical_json('),canonicalEnd=commercial.indexOf('\nCREATE OR REPLACE FUNCTION public._paige_commercial_presentation_immutable()',canonicalStart);
  assert(canonicalStart>=0&&canonicalEnd>canonicalStart);sql(commercial.slice(canonicalStart,canonicalEnd));
  const migration=read('supabase/migrations/20271113300004_agreement_document_preparation_versions.sql');sql(migration);sql(migration);
+ const preparationMetadataQuery="SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig,'acl',proacl::text,'defaults',pronargdefaults) FROM pg_proc WHERE oid='public._retain_agreement_document_preparation(uuid,uuid,uuid,uuid,integer,timestamptz,uuid,uuid,text,text,text,text)'::regprocedure;";
+ const originalPreparationMetadata=json(preparationMetadataQuery),fixtureOwner=sql('SELECT current_user;');
+ check(originalPreparationMetadata.owner===fixtureOwner,'Original private writer belongs to the directory-fenced fixture constructor');
  const commercialProof=process.argv.includes('--commercial-document-preparations');
  if(commercialProof){
   // The original parent fixture already retains the canonical offer foreign key.
@@ -204,8 +207,9 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
   check(sql(`SELECT count(*) FROM paige_agreement_document_preparations WHERE agreement_id='${race.p.source.agreement_id}';`)==='0','Waiting commercial preparation refuses changed committed terms');
   check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${race.p.source.agreement_id}' AND detail->>'action'='document_preparation_recorded';`)==='0','Concurrent commercial refusal leaves no preparation event');
   const identity='public._retain_agreement_document_preparation(uuid,uuid,uuid,uuid,integer,timestamptz,uuid,uuid,text,text,text,text)';
-  const meta=json(`SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig,'acl',proacl::text,'defaults',pronargdefaults) FROM pg_proc WHERE oid='${identity}'::regprocedure;`);
-  check(meta.owner==='proofrunner'&&meta.definer&&meta.config.includes('search_path=""')&&meta.defaults===1&&meta.acl.includes('service_role=X/')&&!meta.acl.includes('authenticated=X/')&&!meta.acl.includes('anon=X/'),'Original private writer ABI, owner, search path and grants preserved');
+  const meta=json(preparationMetadataQuery);
+  assert.deepEqual(meta,originalPreparationMetadata,'Every original private writer ownership/ACL/config/default byte remains unchanged');checks++;
+  check(meta.owner===fixtureOwner&&meta.definer&&meta.config.includes('search_path=""')&&meta.defaults===1&&meta.acl.includes('service_role=X/')&&!meta.acl.includes('authenticated=X/')&&!meta.acl.includes('anon=X/'),'Original private writer ABI, owner, search path and grants preserved');
   const extension=read('supabase/migrations/20271113350004_agreement_commercial_document_preparation.sql');
   const retained=sql(`SELECT pg_get_functiondef('${identity}'::regprocedure);`);
   sql(retained.replace('BEGIN','BEGIN\n  -- A later source writer, in this disposable fixture only.'));

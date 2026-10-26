@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// EXP08 stage 0 (owner ruling 2026-10-26): deleting a login is a PLATFORM act — it removes the
+// person from every workspace at once — so it is the Platform Operator's (§53), never the global
+// `admin` row that an owner/admin seat in ANY workspace writes. See _shared/operatorAuth.ts.
+import { requireOperator } from "../_shared/operatorAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,27 +15,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const admin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verify caller
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller }, error: authErr } = await admin.auth.getUser(token);
-    if (authErr || !caller) throw new Error("Unauthorized");
-
-    // Accept admin OR super_admin (super_admin is the platform owner tier)
-    const { data: callerRoles } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", caller.id);
-
-    const roleSet = new Set((callerRoles ?? []).map((r: any) => r.role));
-    const isSuperAdmin = roleSet.has("super_admin");
-    if (!isSuperAdmin && !roleSet.has("admin")) {
-      throw new Error("Admin privileges required");
-    }
+    // Platform Operator only (super_admin OR platform_admin), from the VERIFIED JWT — before the
+    // body is read. A workspace owner/admin is refused here, whatever workspaces they hold.
+    const guard = await requireOperator(req);
+    if (!guard.ok) return guard.response;
+    const admin = guard.admin;
+    const caller = { id: guard.userId };
 
     const body = await req.json();
     const user_id: string | undefined = body?.user_id ?? body?.userId;
@@ -43,6 +28,22 @@ const handler = async (req: Request): Promise<Response> => {
     if (!user_id || typeof user_id !== "string") throw new Error("Missing user_id");
 
     if (user_id === caller.id) throw new Error("Cannot delete your own account");
+
+    // §53: a platform_admin may not remove a super_admin (it cannot grant one either). Fail closed
+    // when the role read errors.
+    const [{ data: callerRoles, error: callerRolesErr }, { data: targetRoles, error: targetRolesErr }] =
+      await Promise.all([
+        admin.from("user_roles").select("role").eq("user_id", caller.id),
+        admin.from("user_roles").select("role").eq("user_id", user_id),
+      ]);
+    if (callerRolesErr || targetRolesErr) throw new Error("Could not read roles; nothing was deleted");
+    const callerIsSuperAdmin = (callerRoles ?? []).some((r: any) => r.role === "super_admin");
+    const targetIsSuperAdmin = (targetRoles ?? []).some((r: any) => r.role === "super_admin");
+    if (targetIsSuperAdmin && !callerIsSuperAdmin) {
+      return new Response(JSON.stringify({ error: "forbidden" }), {
+        status: 403, headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
     // Protect platform owner
     const { data: ownerRow } = await admin

@@ -29,7 +29,10 @@ import {prepareAgreementFieldInput,type AgreementField,type AgreementFieldAnswer
 import {canonicalPresentationJson} from './preparation-json.ts';
 import {checkSignatureImage,type SignatureImageCheck} from './signing-guard.ts';
 
-const PDFLIB_SPEC = "npm:pdf-lib@1.17.1";
+// The literal is load-bearing: deployment graphs omit a variable specifier,
+// even when a local test has already cached the package. Keep the original
+// pinned engine lazy and register it in the same native document module.
+export const loadNativePdfLib = () => import("npm:pdf-lib@1.17.1");
 
 /** Use the SAME original PNG policy and actual stamp decoder before recording
  * an irreversible mark. Legacy completed-copy fallback is not permission to
@@ -38,7 +41,7 @@ export async function prepareSignatureImage(raw:unknown):Promise<SignatureImageC
   const image=checkSignatureImage(raw);
   if(image.ok===false||image.base64===null)return image;
   try{
-    const {PDFDocument}=await import(PDFLIB_SPEC);
+    const {PDFDocument}=await loadNativePdfLib();
     const pdf=await PDFDocument.create();await pdf.embedPng(image.base64);
     return image;
   }catch{
@@ -71,7 +74,7 @@ export class UnrenderableFieldError extends Error{
 /** No mark or document is retained here. The same fonts, fitting and image
  * geometry as the final seal must succeed BEFORE the irreversible native act. */
 export async function assertRecipientFieldsRenderable(fields:readonly Omit<AgreementField,'signer_id'>[],answers:readonly AgreementFieldAnswer[],typedName:string,imageBase64:string|null):Promise<void>{
-  const {PDFDocument,StandardFonts}=await import(PDFLIB_SPEC),pdf=await PDFDocument.create();
+  const {PDFDocument,StandardFonts}=await loadNativePdfLib(),pdf=await PDFDocument.create();
   const font=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);
   let image:Awaited<ReturnType<typeof pdf.embedPng>>|undefined;
   for(const field of fields){
@@ -200,7 +203,7 @@ export async function inspectUploadedPdf(
   try {
     // Loaded through the same dynamic specifier the seal uses, so this proves the seal's own
     // loader accepts these bytes rather than proving some other parser does.
-    const { PDFDocument } = await import(PDFLIB_SPEC);
+    const { PDFDocument } = await loadNativePdfLib();
     // Deliberately NOT `ignoreEncryption` — accepting an encrypted document here would move the
     // failure to the seal, which is the thing this exists to prevent.
     const pdf = await PDFDocument.load(bytes);
@@ -440,7 +443,7 @@ export async function sealAgreementPdf(input: {
 
   const prepared=input.preparedFields===undefined?null:await checkedPreparedSeal({...input,preparedFields:input.preparedFields});
 
-  const { PDFDocument, StandardFonts, rgb } = await import(PDFLIB_SPEC);
+  const { PDFDocument, StandardFonts, rgb } = await loadNativePdfLib();
 
   // Load the EXACT bytes the signer saw. Everything below is additive to that document.
   const pdf = await PDFDocument.load(input.presentedBytes);
@@ -449,7 +452,7 @@ export async function sealAgreementPdf(input: {
   if(prepared){
     const checked=prepared,parties=input.parties;
     try{
-      const {pushGraphicsState,popGraphicsState,concatTransformationMatrix}=await import(PDFLIB_SPEC),ink=rgb(0.09,0.09,0.11);
+      const {pushGraphicsState,popGraphicsState,concatTransformationMatrix}=await loadNativePdfLib(),ink=rgb(0.09,0.09,0.11);
       const images=new Map<string,Awaited<ReturnType<typeof pdf.embedPng>>>();
       for(const descriptor of checked.manifest.document.pages){
         const page=pdf.getPage(descriptor.page-1),{crop_x:x,crop_y:y,crop_width:w,crop_height:h,rotation}=descriptor;
@@ -507,7 +510,7 @@ export async function sealAgreementPdf(input: {
   // Every string that reaches drawText goes through the same WinAnsi normalisation doc-render uses.
   // pdf-lib's StandardFonts THROW on an unencodable codepoint, so an un-sanitised signer name would
   // take down the seal — at the one moment the record matters most.
-  const text = (s: string, size: number, f: unknown, color = ink, indent = 0) => {
+  const text = (s: string, size: number, f: Awaited<ReturnType<typeof pdf.embedFont>>, color = ink, indent = 0) => {
     // This helper draws ONE line and advances `y` by exactly one line. `sanitizeWinAnsi` now
     // normalises CR to `\n` instead of mapping it to `?`, and pdf-lib's drawText renders an
     // embedded newline as two lines — which would silently overlap the line that follows. A name

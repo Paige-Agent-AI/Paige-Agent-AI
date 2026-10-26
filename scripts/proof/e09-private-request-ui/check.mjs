@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import {chromium} from 'playwright';
-const here=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(here,'../../..'),output=path.join(root,'outputs/e09-private-record-controls'),out=path.join(output,'render');
+const here=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(here,'../../..'),output=path.join(root,process.env.E09_RENDER_OUTPUT??'outputs/e09-private-record-controls'),out=path.join(output,'render');
 mkdirSync(out,{recursive:true});
 const css=readFileSync(path.join(root,'src/index.css'),'utf8');
 const selectors=['[data-pg]','[data-pg="dark"]','[data-pg="light"]'];
@@ -35,12 +35,27 @@ try{
   assert(colors.inkContrast>=4.5&&colors.mutedContrast>=4.5,'Text contrast');assert(colors.fontLoaded,'Original font');
   const filename=`${theme}-${viewport.width}.png`;await page.screenshot({path:path.join(screens,filename),fullPage:true});report.screenshots.push(filename);report.checks.push({theme,viewport,geometry,colors});
  }
+ for(const theme of ['light','dark'])for(const viewport of [{width:1536,height:770},{width:1366,height:768},{width:1024,height:768},{width:900,height:1000},{width:390,height:844},{width:320,height:700}]){
+  await page.setViewportSize(viewport);await page.goto(`${origin}/?theme=${theme}&state=saved`);const review=page.getByRole('button',{name:'Review sharing with PAIGE',exact:true});await review.waitFor();
+  const geometry=await review.evaluate(e=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,rect:{width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}}));
+  assert(geometry.scrollWidth<=geometry.width+1,'Saved review overflow');assert(geometry.rect.width>=44&&geometry.rect.height>=44,'Saved review target');
+  const filename=`saved-review-${theme}-${viewport.width}.png`;await page.screenshot({path:path.join(screens,filename),fullPage:true});report.screenshots.push(filename);report.checks.push({state:'saved-review',theme,viewport,geometry,result:'PASS'});
+ }
+ await page.setViewportSize({width:1280,height:900});await page.goto(`${origin}/?theme=light&state=saved`);await page.evaluate(()=>{document.documentElement.style.zoom='2';});
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Saved review 200% reflow');await page.getByRole('button',{name:'Review sharing with PAIGE',exact:true}).scrollIntoViewIfNeeded();
+ report.checks.push({state:'saved-review',interaction:'200% reflow and review reachability',result:'PASS'});
  await page.setViewportSize({width:390,height:844});await page.goto(`${origin}/?theme=light`);
  await page.getByLabel('Request title').fill('Choose your next step');await page.getByLabel('What should the customer do?').fill('Read the guide.\nBring one question.');
  await page.getByRole('button',{name:'Collapse private preparation'}).click();await page.getByRole('button',{name:'Prepare request',exact:true}).click();assert.equal(await page.getByLabel('Request title').inputValue(),'Choose your next step');
  await page.getByRole('button',{name:'Save private request',exact:true}).click();await page.getByText('Saved privately.',{exact:false}).waitFor();assert.equal(await page.getByText('Read the guide.\nBring one question.',{exact:true}).count(),1);
- assert(await page.locator('h5[tabindex]').evaluate(e=>document.activeElement===e));await page.getByRole('button',{name:'Prepare another request'}).click();assert.equal(await page.getByLabel('Request title').inputValue(),'');assert(await page.getByLabel('Request title').evaluate(e=>document.activeElement===e));
+ assert(await page.locator('h5[tabindex]').evaluate(e=>document.activeElement===e));
+ const review=page.getByRole('button',{name:'Review sharing with PAIGE',exact:true});
+ await review.focus();assert(await review.evaluate(e=>document.activeElement===e));await review.press('Enter');
+ assert.equal(await page.evaluate(()=>document.documentElement.dataset.reviewedWork),'test-work');
+ await page.screenshot({path:path.join(screens,'review-sharing-390.png'),fullPage:true});report.screenshots.push('review-sharing-390.png');
+ report.checks.push({interaction:'actual original review button/keyboard/full saved words; callback is a local port, not Chat or sharing',result:'PASS'});
+ await page.getByRole('button',{name:'Prepare another request'}).click();assert.equal(await page.getByLabel('Request title').inputValue(),'');assert(await page.getByLabel('Request title').evaluate(e=>document.activeElement===e));
  report.checks.push({interaction:'type/collapse/reopen/private-save/original readback/start-another/focus',result:'PASS'});
- for(const state of ['unknown','saved','loading','error','refused']){await page.goto(`${origin}/?theme=dark&state=${state}`);await page.getByRole('heading',{name:'Customer action items'}).waitFor();if(state==='unknown'){await page.getByText('Save not confirmed.',{exact:false}).waitFor();assert.equal(await page.getByRole('button',{name:'Save private request',exact:true}).count(),0);}await page.screenshot({path:path.join(screens,`${state}-390.png`),fullPage:true});report.screenshots.push(`${state}-390.png`);report.checks.push({state,result:'rendered'});}
+ for(const state of ['unknown','saved','loading','error','refused','recipient-unavailable']){await page.goto(`${origin}/?theme=dark&state=${state}`);await page.getByRole('heading',{name:'Customer action items'}).waitFor();if(state==='unknown'){await page.getByText('Save not confirmed.',{exact:false}).waitFor();assert.equal(await page.getByRole('button',{name:'Save private request',exact:true}).count(),0);}if(state==='recipient-unavailable'){await page.getByText('Sharing is not available for this customer yet.',{exact:false}).waitFor();assert.equal(await page.getByRole('button',{name:'Review sharing with PAIGE',exact:true}).count(),0);}await page.screenshot({path:path.join(screens,`${state}-390.png`),fullPage:true});report.screenshots.push(`${state}-390.png`);report.checks.push({state,result:'rendered'});}
  assert.deepEqual(errors,[]);assert.deepEqual(report.externalRequests,[]);
 }catch(error){report.failures.push(error.message);process.exitCode=1;}finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));writeFileSync(path.join(output,'render-results.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({checks:report.checks.length,screenshots:report.screenshots.length,failures:report.failures,externalRequests:report.externalRequests.length}));}

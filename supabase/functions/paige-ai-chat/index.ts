@@ -67,7 +67,9 @@ import { PORTAL_MENU_TOOLS } from '../_shared/paige-spine/domains/client_portal.
 import { configurePortalMenu, readPortalMenu, type PortalMenuFailure } from '../_shared/client-portal-menu.ts';
 import { refileClientDocument, routeFileDocument, shareClientFile } from '../_shared/crm/client-file-share.ts';
 // E09 Slice 7: read, pause, restore or end one client's portal access (set is high; owner/admin only).
-import { PORTAL_ACCESS_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
+import { PORTAL_ACCESS_TOOLS, PORTAL_REQUEST_SHARE_TOOL, PORTAL_REQUEST_SHARE_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
+import {executePortalRequestPublication,type PortalPublicationClaim,type PortalPublicationScope} from '../_shared/client-portal-request-publication.ts';
+import {preparePortalRequestCommand,portalRequestConfirmSummary} from '../_shared/client-portal-request-command.ts';
 import { accessVersionToken, portalAccessClientName, portalAccessConfirmSummary, portalUnseenNote, readPortalAccess, setPortalAccess, type PortalAccessFailure } from '../_shared/client-portal-access.ts';
 import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
@@ -92,7 +94,7 @@ import { readDurableContinuation } from "../_shared/durable-job/continuation-rea
 import type { BudgetDb } from "../_shared/router-budget/mod.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
-import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
+import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal, UUID_INPUT_SHAPE } from "../_shared/confirm-fingerprint.ts";
 import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, databaseAnswered, invokeOutcomeUnknown, isKnowledgeCompletedUnrecorded, OUTCOME_UNKNOWN_NOTE, refusedByDatabase, sayWhatTheCardSays, settleUsedEarlier, thrownOutcomeUnknown, type ApprovalRefusalReason } from "../_shared/approval-outcome.ts";
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
@@ -712,6 +714,8 @@ function describeStep(
       return { label: failed ? "Couldn't read Team Hub" : "Read Team Hub", group: "shared" };
     case "team_hub_search": return { label: failed ? "Couldn't search Team Hub" : "Searched Team Hub", group: "shared" };
     case "team_hub_post_reply": return { label: failed ? "Couldn't post that Team Hub reply" : "Posted your Team Hub reply", group: "shared" };
+    case "client_portal_request_share": return { label: failed ? "Couldn't verify that request was shared"
+      : out.already_shared === true || out.replayed === true ? "Confirmed the request was already shared" : "Shared the saved customer request", group: "shared" };
     case WEEKLY_COMMITMENT_STATUS_TOOL_NAME: return { label: failed ? "Couldn't check your weekly responsibility" : "Checked your weekly responsibility", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
@@ -2335,6 +2339,10 @@ serve(async (req) => {
       // Any such row, or any failure to read them, writes nothing and calls no model.
       summaryTeamHubWithheld = await withinSummary(teamHubSessionTainted(supabase, summaryActorId,
         [summaryTenantId, summaryCallerTenantId], TEAM_HUB_CHAT_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME)).catch(() => true);
+      // The same existing privacy check also protects a saved private request
+      // carried by its original approval card, including before any execution.
+      if (!summaryTeamHubWithheld) summaryTeamHubWithheld = await withinSummary(teamHubSessionTainted(supabase, summaryActorId,
+        [summaryTenantId, summaryCallerTenantId], [PORTAL_REQUEST_SHARE_TOOL], PORTAL_REQUEST_SHARE_TOOL)).catch(() => true);
       if (summaryTeamHubWithheld) {
         return new Response(JSON.stringify({ code: "SESSION_SUMMARY_WITHHELD", summary: "", memory_write_status: "not_attempted",
           memory_writes_attempted: 0, memory_writes_acknowledged: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -3428,6 +3436,15 @@ JSON:`;
     // approval store. The Team Hub branches below set the same policy too.
     if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id], TEAM_HUB_CHAT_TOOL_NAMES, null).catch(() => true)) {
       traceCtx.content_policy = "metadata_only";
+    }
+    // Keep the Team Hub receipts-only rule intact. A Portal request can appear
+    // first on its card, so its separate check includes that existing store.
+    if (!customerPortal) {
+      // Restricted Chat never reads the approval store. Withhold private traces
+      // without that read; the existing admission/recovery brakes stay intact.
+      if (interactiveConversational || interactiveRecoveryReadOnly) traceCtx.content_policy = "metadata_only";
+      else if (await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id],
+        [PORTAL_REQUEST_SHARE_TOOL], PORTAL_REQUEST_SHARE_TOOL).catch(() => true)) traceCtx.content_policy = "metadata_only";
     }
 
     // === L8 MEMORY FABRIC — Owner-Ops cross-session SEMANTIC memory (§7/§8/§26/§34) ===
@@ -9011,6 +9028,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // on a client seat or the customer portal; set_client_portal_access re-proves owner/admin of the current
     // workspace in its body, so the offer is not the authority.
     if (callerTier === "tenant" && !scopedClientId && !customerPortal) toolDefs.push(...PORTAL_ACCESS_TOOLS as any);
+    // Focus identifies a CRM record, never a customer principal or owner grant.
+    // The native source/publisher reprove the actual current owner and relationship.
+    if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && !customerPortal) toolDefs.push(...PORTAL_REQUEST_SHARE_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_AGENDA_READ_TOOLS);
     // EXP08 Team Hub increment 4: read what the asker can see in Team Hub, and draft a reply they approve.
@@ -9204,6 +9224,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     const weeklyDraftRuntime = () => runtimeIdentity && validatedData.requestIntentId
       ? { intentId: validatedData.requestIntentId, requestNonce: runtimeIdentity.requestNonce } : null;
     const weeklyDraftHandled = new Set<string>();
+    // Per-request handoff metadata for the ORIGINAL common claim, never model
+    // arguments, a new approval, authority, durable ledger or publisher.
+    const portalRequestClaims = new Map<string,{state:'attempted'|'claimed'|'unknown';claim?:PortalPublicationClaim;dispatched?:boolean}>();
+    let portalRequestContentCarried = false;
+    const portalRequestScope = ():PortalPublicationScope|null => callerTier==='tenant'
+      && calendarBookingAccountShape==='solo' && !customerPortal && personaCtx?.tenant_id
+      ? {actorId:user.id,tenantId:personaCtx.tenant_id,threadId:payloadThreadId??null,clientId:scopedClientId??null,audience:'owner'} : null;
+    const portalRequestCurrent = () => !req.signal.aborted && !proposalScopeInvalidated && !tenantKnowledgeScopeRevoked
+      && !interactive?.superseded && !interactiveRecoveryReadOnly && portalRequestScope()!==null;
     // Read ONLY the original native proposal. Errors and malformed matching rows
     // never authorize generic consumption, a replacement proposal or another write.
     const selectedWeeklyDraft = async (token: string) => {
@@ -9428,6 +9457,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     ): Promise<Record<string, unknown> | null> => {
       try {
         if (!cancellationsRecorded || !approvedConfirmations.has(fp) || !(await revalidateProposalScope())) return null;
+        const portalRequest = tool===PORTAL_REQUEST_SHARE_TOOL;
+        if (portalRequest) {
+          // Once an original claim is attempted, uncertainty never falls through
+          // to a second claim or to recording a replacement proposal this turn.
+          if (portalRequestClaims.has(fp)) return null;
+          portalRequestClaims.set(fp,{state:'attempted'});
+        }
         await interactive?.check();
 
         if (tool === "plan_set_reminder") {
@@ -9438,7 +9474,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
         }
         const nonce = await selectedConfirmationNonce(fp, tool);
-        if (!nonce) return null;
+        if (!nonce) {
+          if (portalRequest) portalRequestClaims.set(fp,{state:'unknown'});
+          return null;
+        }
 
         let reminderCompatibilityProposalId: string | null = null;
         if (tool === "plan_set_reminder") {
@@ -9484,7 +9523,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
         await requireRecoveryPermission(true);
         let q = supabase.from("paige_pending_confirmations")
-          .update({ consumed_at: new Date().toISOString() })
+          .update({ consumed_at: new Date().toISOString(), ...(portalRequest?{claimed_in_request:requestNonce}:{}) })
           .eq("user_id", user.id)
           .eq("fingerprint", fp.split(":")[0]).eq("issued_in_request", nonce)
           .eq("tool_name", tool)
@@ -9504,17 +9543,32 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         q = payloadThreadId ? q.eq("thread_id", payloadThreadId) : q.is("thread_id", null);
         q = scopedClientId ? q.eq("scoped_client_id", scopedClientId) : q.is("scoped_client_id", null);
         if (reminderCompatibilityProposalId) q = q.eq("id", reminderCompatibilityProposalId);
-        const { data, error } = await q.select("args").maybeSingle();
+        const { data, error } = await q.select(portalRequest?"args,id,fingerprint,thread_id,scoped_client_id":"args").maybeSingle();
         if (error) {
+          if (portalRequest) portalRequestClaims.set(fp,{state:'unknown'});
           console.error("[paige] confirm claim failed", JSON.stringify({ tool, code: error.code ?? null, message: error.message ?? null }));
           return null;
         }
         const args = (data as { args?: unknown } | null)?.args;
+        if (portalRequest) {
+          const scope=portalRequestScope();
+          const selected=data as {id?:unknown;fingerprint?:unknown;thread_id?:unknown;scoped_client_id?:unknown}|null;
+          if (!scope || !portalRequestCurrent() || !(await revalidateProposalScope()) || !portalRequestCurrent()
+            || !selected || typeof selected.id!=='string' || !UUID_INPUT_SHAPE.test(selected.id)
+            || selected.fingerprint!==fp.split(':')[0] || selected.thread_id!==scope.threadId
+            || selected.scoped_client_id!==scope.clientId || !args || typeof args!=='object' || Array.isArray(args)) {
+            portalRequestClaims.set(fp,{state:'unknown'});
+            return null;
+          }
+          portalRequestClaims.set(fp,{state:'claimed',claim:{id:selected.id,fingerprint:fp.split(':')[0],
+            requestNonce,threadId:scope.threadId,clientId:scope.clientId}});
+        }
         if (tool === "plan_set_reminder" && args && typeof args === "object" && !Array.isArray(args)) stoppedReminderClaims.delete(fp);
         return args && typeof args === "object" && !Array.isArray(args)
           ? args as Record<string, unknown>
           : null;
       } catch (e) {
+        if (tool===PORTAL_REQUEST_SHARE_TOOL && portalRequestClaims.has(fp)) portalRequestClaims.set(fp,{state:'unknown'});
         console.error("[paige] confirm claim threw", String(e));
         return null;
       }
@@ -9647,6 +9701,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       plan_item_set_client_share: "changing what a client can see",
       team_hub_conversations: "reading Team Hub", team_hub_read_conversation: "reading Team Hub",
       team_hub_search: "searching Team Hub", team_hub_post_reply: "posting a reply in Team Hub",
+      client_portal_request_share: "sharing the saved customer request",
       read_tenant_portal_menu: "checking your clients' portal menu",
       portal_menu_update: "changing your clients' portal menu",
       read_client_portal_access: "checking a client's portal access",
@@ -11583,6 +11638,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try { await interactive?.check(); }
         catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (!tc || !tc.function?.name) continue;
+        // Reuse the existing private-content egress classification, without
+        // changing Team Hub's read-only flag or its round-level filter. Check
+        // each call, including tools proposed later in this same batch.
+        // Preserve that shared classifier. The canonical read-only Search also
+        // sends its query outside the business, so this Portal review withholds it.
+        if (portalRequestContentCarried && (TEAM_HUB_EGRESS_WITHHELD_TOOLS.has(String(tc.function.name)) || tc.function.name === "web_search")) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, not_applied: true,
+            refused_before_run: true, error: "Private customer request content was reviewed in this reply. Web lookups, Knowledge publishing and changes without an approval card must wait for a fresh instruction. Do not try another tool to move those private words elsewhere." }) });
+          continue;
+        }
         // Register the exact continuation before ANY policy/approval refusal can skip its
         // branch. A withheld or declined advance is not permission for an unbound email.
         if (tc.function.name === "action_get" || tc.function.name === "action_advance") unresolvedEmailOrigins.add(tc);
@@ -12250,6 +12315,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           let gateArgs: any = {};
           try { gateArgs = JSON.parse(tc.function.arguments || "{}"); } catch { gateArgs = {}; }
+          let portalRequestPreparedSummary: string|null = null;
           if (tc.function.name === WEEKLY_COMMITMENT_DRAFT_TOOL_NAME) {
             // One original domain consumer, like the existing native reminder
             // door. It uses the shared store and native claim/Kit/commit; it can
@@ -12760,6 +12826,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (autoMode === "confirm") {
             const risk = classifyAction(tc.function.name);
 
+
             // FAIL CLOSED. A write with no classification does not run — not as ordinary, not as
             // high, not at all. CI refuses the change that would create this state, so reaching it
             // means something got past CI, and the safe answer to that is to stop rather than to
@@ -12785,6 +12852,45 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 reason: riskReason(tc.function.name),
               }) });
               continue;
+            }
+
+            if (tc.function.name===PORTAL_REQUEST_SHARE_TOOL) {
+              traceCtx.content_policy='metadata_only';
+              // Reuse the existing private-content egress fence. Source words
+              // are never instructions for web, Knowledge or unattended writes.
+              portalRequestContentCarried = true;
+              const unavailable=()=>({success:false,source_unavailable:true,not_applied:true,
+                error:'This saved request could not be verified. Check its original status before asking to share it; sharing was not attempted by this check.'});
+              const scope=portalRequestScope();
+              if (!scope || !portalRequestCurrent() || (liveRuntimeScope && (resumePin.has(tc.id)||approvedConfirmations.size>0))) {
+                toolResults.push({tool_call_id:tc.id,role:'tool',content:JSON.stringify(unavailable())});
+                continue;
+              }
+              // A carried-forward approval already contains the EXACT stored
+              // call. Never replace its words or versions with a new source read.
+              if (!resumePin.has(tc.id)) {
+                const input=gateArgs&&typeof gateArgs==='object'&&!Array.isArray(gateArgs)?confirmationArgs(gateArgs):null;
+                const prepared=await preparePortalRequestCommand({current:portalRequestCurrent,
+                  caller:{auth:supabaseClient.auth,rpc:(name,args)=>supabaseClient.rpc(name,args).abortSignal(req.signal)}},scope,input);
+                if (!portalRequestCurrent() || !(await revalidateProposalScope()) || prepared.state==='unavailable') {
+                  toolResults.push({tool_call_id:tc.id,role:'tool',content:JSON.stringify(unavailable())});
+                  continue;
+                }
+                if (prepared.state==='already_shared') {
+                  toolResults.push({tool_call_id:tc.id,role:'tool',content:JSON.stringify({success:true,already_shared:true,read_only:true,
+                    work_id:prepared.workId,customer_action_id:prepared.customerActionId,
+                    note:'The original saved request already has its verified shared action. It was not shared again; this does not confirm a customer view, response or completion.'})});
+                  continue;
+                }
+                const clientName=await portalAccessClientName(supabaseClient,scope.tenantId,prepared.args.contact_id);
+                if (!clientName || !portalRequestCurrent() || !(await revalidateProposalScope())) {
+                  toolResults.push({tool_call_id:tc.id,role:'tool',content:JSON.stringify(unavailable())});
+                  continue;
+                }
+                gateArgs={...prepared.args};
+                tc.function.arguments=JSON.stringify(gateArgs);
+                portalRequestPreparedSummary=portalRequestConfirmSummary(prepared.args,clientName);
+              }
             }
 
             const fp = await confirmFingerprint(tc.function.name, confirmationArgs(gateArgs));
@@ -12894,6 +13000,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const approvedArgs = approvedFingerprint !== undefined
               ? await claimConfirmation(approvedFingerprint, tc.function.name)
               : null;
+            const portalRequestClaimStop=tc.function.name===PORTAL_REQUEST_SHARE_TOOL&&approvedFingerprint
+              ? portalRequestClaims.get(approvedFingerprint):null;
+            if (!approvedArgs && portalRequestClaimStop) {
+              const handled=portalRequestClaimStop.state==='claimed'&&portalRequestClaimStop.dispatched===true;
+              if (!handled) requestExecutionState.needsReview=true;
+              toolResults.push({tool_call_id:tc.id,role:'tool',content:JSON.stringify({success:false,
+                ...(handled?{not_applied:true,already_handled:true}:{outcome_unknown:true}),
+                error:handled?'This original approval was already handled in this answer. No second sharing was attempted.'
+                  :'The original approval could not be verified. Check the same saved request before asking again; do not issue another proposal or retry sharing in this answer.'})});
+              continue;
+            }
             // INT-1807 CL-8 — the token is FINAL here (pinned resume, direct scoped match, or
             // the approved-set resolution above) and the claim has consumed the row, so a
             // later database-answered door refusal can be recorded against the ORIGINAL
@@ -12976,7 +13093,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
                 continue;
               }
-              const summary = await describeConfirm(tc.function.name, gateArgs);
+              if (tc.function.name===PORTAL_REQUEST_SHARE_TOOL && !portalRequestPreparedSummary) {
+                toolResults.push({tool_call_id:tc.id,role:'tool',content:JSON.stringify({success:false,not_applied:true,
+                  error:'The exact saved request is not available for review. Check the same original request; no replacement approval was created.'})});
+                continue;
+              }
+              const summary = tc.function.name===PORTAL_REQUEST_SHARE_TOOL
+                ? portalRequestPreparedSummary! : await describeConfirm(tc.function.name, gateArgs);
               // Persist before offering the existing approval control.
               const recorded = await recordConfirmation(fp, tc.function.name, gateArgs, summary);
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
@@ -15628,7 +15751,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 _user_id: args.user_id, _role: args.role, _tenant_id: personaCtx?.tenant_id ?? null,
               });
               if (error) throw error;
-              result = { success: true, user_id: args.user_id, role: args.role };
+              // EXP08 stage 0: the grant takes effect only for a person already ACTIVE in this
+              // workspace; anyone else gets a pending seat and no access until they accept. The RPC
+              // does not say which happened, so the result must not claim access was given (§13).
+              result = { success: true, user_id: args.user_id, role: args.role,
+                note: "The role applies only if this person is already an active member of this workspace. If they are not, nothing is granted yet: they now hold a pending seat, and the access starts only when they accept. Say this plainly; do not say they have access." };
             } else if (tc.function.name === "member_revoke_role") {
               const { data: rv, error } = await supabaseClient.rpc("revoke_tenant_member_role", {
                 _user_id: args.user_id, _role: args.role, _tenant_id: personaCtx?.tenant_id ?? null,
@@ -18759,6 +18886,63 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             detail: { channel: "paige_chat", tool: tc.function.name } });
           if (!posted.success && "outcome_unknown" in posted) requestExecutionState.needsReview = true;
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(posted) });
+        } else if (tc.function.name === PORTAL_REQUEST_SHARE_TOOL) {
+          // The original common gate claimed this exact stored call. Only its
+          // actual row metadata, held outside model arguments, reaches the
+          // existing caller-JWT publisher. Never mint an approval or retry here.
+          traceCtx.content_policy = "metadata_only";
+          portalRequestContentCarried = true;
+          const shareScope = portalRequestScope();
+          let stored: unknown = null;
+          try { stored = JSON.parse(tc.function.arguments || "{}"); } catch { /* native transport refuses */ }
+          // Provider call ids are presentation addresses, not approval identity.
+          // Match all original stored arguments with the SAME canonical hash the
+          // common gate uses; ambiguity or changed words never select a claim.
+          let storedFingerprint: string | null = null;
+          try {
+            if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+              storedFingerprint = await scopedConfirmationFingerprint(tc.function.name,
+                await confirmFingerprint(tc.function.name, stored as Record<string, unknown>));
+            }
+          } catch { /* no exact original claim can be selected */ }
+          const shareTokens = approvalChannel.get(tc.id) === "operator_card"
+            ? [...approvalSpend].filter(([token, callId]) => callId === tc.id && token.split(":")[0] === storedFingerprint
+              && portalRequestClaims.get(token)?.state === "claimed").map(([token]) => token) : [];
+          const shareToken = shareTokens.length === 1 ? shareTokens[0] : null;
+          const shareSlot = shareToken ? portalRequestClaims.get(shareToken) : undefined;
+          let result: Awaited<ReturnType<typeof executePortalRequestPublication>> = { success: false, outcome: "refused" };
+          let originalPublicationVerified = false;
+          if (!liveRuntimeScope && shareScope && portalRequestCurrent() && shareSlot?.state === "claimed"
+            && shareSlot.claim && shareSlot.dispatched !== true) {
+            // Mark before the first await: a second call in this answer cannot
+            // dispatch this approval again, even after a lost acknowledgement.
+            shareSlot.dispatched = true;
+            result = await executePortalRequestPublication({ current: portalRequestCurrent,
+              caller: { auth: supabaseClient.auth, rpc: (name, args) => supabaseClient.rpc(name, args).abortSignal(req.signal) } },
+              shareScope, stored, shareSlot.claim);
+            originalPublicationVerified = result.success;
+            // The act may have landed before a workspace/authority change.
+            // Reuse the original current-scope check after its acknowledgment;
+            // withhold the old result, retain uncertainty and never run again.
+            if (result.success && (!portalRequestCurrent() || !(await revalidateProposalScope().catch(() => false)) || !portalRequestCurrent())) {
+              result = { success: false, outcome: "outcome_unknown" };
+            }
+          }
+          const unknown = !result.success && result.outcome === "outcome_unknown";
+          if (unknown) requestExecutionState.needsReview = true;
+          await recordCapabilityRun(supabase, { tenantId: shareScope?.tenantId, actorId: user.id,
+            capabilityKey: tc.function.name,
+            runId: await stableRunId([tc.function.name, shareScope?.tenantId, shareSlot?.claim?.id, shareSlot?.claim?.requestNonce, tc.id]),
+            // The original native receipt remains true even if this response's
+            // audience retired. Withhold presentation without rewriting history.
+            outcome: originalPublicationVerified ? "capability_succeeded" : unknown ? "capability_outcome_unknown" : "capability_refused",
+            detail: { channel: "paige_chat", tool: tc.function.name, ...(originalPublicationVerified && unknown ? { result_withheld: true } : {}) } });
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.success
+            ? { ...result, verified_readback: true, record_locator: { table: "paige_actions", id: result.work_id },
+                note: "The original saved request is shared in the customer's portal. This does not prove a customer view, response or completion." }
+            : unknown
+              ? { success: false, outcome_unknown: true, error: "Sharing did not report back. Check the same original request before anything else; do not share it again automatically.", note: OUTCOME_UNKNOWN_NOTE }
+              : { success: false, not_applied: true, error: "This request was not shared by this attempt. Its original review card, current access and saved version must be verified before sharing." }) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }
@@ -19017,6 +19201,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         coach_update_profile: "profiles",
         team_invite_mint: "invitations",
         client_portal_invitation_send: "tenant_invite_tokens",
+        client_portal_request_share: "paige_actions",
         agency_create_subaccount: "tenants", tenant_create: "tenants",
         tenant_set_status: "tenants", tenant_set_features: "tenants",
         update_social_accounts: "tenants",
@@ -19042,6 +19227,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // Filing creates the action returned by SQL; its contact is only a related record.
         if (tool === "action_file") return typeof out?.action_id === "string" && UUID.test(out.action_id) ? out.action_id : null;
         if (tool === "client_portal_invitation_send") return typeof out?.invitation_id === "string" && UUID.test(out.invitation_id) ? out.invitation_id : null;
+        if (tool === "client_portal_request_share") return out?.success === true && out?.verified_readback === true
+          && out?.record_locator?.table === "paige_actions" && out?.record_locator?.id === out?.work_id
+          && typeof out.work_id === "string" && UUID.test(out.work_id) ? out.work_id : null;
         if (tool === "automation_draft") return typeof out?.automation_id === "string" && UUID.test(out.automation_id) ? out.automation_id : null;
         // The posted message the definer returned; never the conversation or an argument.
         if (tool === "team_hub_post_reply") return out?.posted === true && typeof out?.message_id === "string" && UUID.test(out.message_id) ? out.message_id : null;
@@ -19114,6 +19302,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (risk === "unclassified" || risk === "owner_only") return;
           let args: any = {}; try { args = JSON.parse(tc?.function?.arguments ?? "{}"); } catch { /* ignore */ }
           let out: any = {}; try { out = JSON.parse(res?.content ?? "{}"); } catch { /* ignore */ }
+          // This domain reconciliation only read the existing native result;
+          // do not attribute another write to the customer request.
+          if (name === PORTAL_REQUEST_SHARE_TOOL && out?.already_shared === true) return;
           // A proposal or a switched-off tool did not run, and neither did a refusal that says so
           // (`refused_before_run`). Only refusals that declare it are skipped: the older terminals do
           // not yet, and are still recorded as failed writes (#1460). NOT `executed: false`: an n8n

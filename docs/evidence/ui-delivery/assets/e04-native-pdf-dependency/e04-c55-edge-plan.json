@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "affected": [
+    "agreement-document",
+    "agreement-send",
+    "send-message",
+    "sign-agreement"
+  ],
+  "stderr": "",
+  "classification": "source importer plan only; NOT deployment parity"
+}

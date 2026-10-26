@@ -74,7 +74,7 @@ WORKING = source shipped and its production objects read back (not authenticated
 | 18 | Appointments (booking) | WORKING / NOT CONNECTED to deals | `public-booking` creates a contact, no deal; `internal_bookings` has no `deal_id` |
 | 19 | Opportunity progression (move, win, lose) | WORKING | `configure_tenant_pipeline_core_identity`; crm-command `deal.*` |
 | 20 | Lead → paying customer (agreement, invoice, payment) | PARTIAL; merchant onboarding BLOCKED; no automatic customer promotion | `tenant_client_agreements` (no `deal_id`), `paige_invoices.deal_id` never set; master §4 merchant onboarding |
-| 21 | Campaign steps (plan/record/judge) | PARTIAL: planned step cannot reach approval | convergence §N3.5 |
+| 21 | Campaign steps (plan/record/judge/prepare-to-approval) | WORKING | `20271115010000` (S4a, PR #2889 `c0d1c7281`; convergence §N3.5 closed) |
 | 22 | Marketing metrics (leads, by tag/source, converted to opportunity) | WORKING owner/admin UI; MISSING in chat | `_marketing_metric_bundle`; `BUSINESS_METRIC_KEYS` has 0 `marketing.*` |
 | 23 | Lead-to-customer conversion, customers acquired, CAC/CPL/ROAS | **MISSING** (no producer; no spend source) | Sales and Marketing producer key lists |
 | 24 | Real ad spend / ad publishing | **MISSING** (not merely gated) | no code creates ad campaigns/budgets; `ads-chat-s32c-acceptance-package.md:169-172` |
@@ -107,7 +107,7 @@ never guessed; a paused/archived workspace starts no process; nothing sends, pub
 4. PAIGE chat read of a campaign's leads (`read_campaign_leads`) — Experience 03 builds; Platform Reach reviews
    registration; reachable on typed chat only after INT-346.
 5. Chat tools: attach asset to campaign, transition campaign status — S3 (Marketing lane, built by this journey).
-6. Governed "prepare for approval" for campaign steps, or truthful copy (§N3.5) — S4.
+6. ~~Governed "prepare for approval" for campaign steps, or truthful copy (§N3.5)~~ — **SHIPPED as S4a** (PR #2889, `c0d1c7281`, 2026-10-26: `prepare_action` through the existing writer delegating to the action bus; the dossier gains the Prepare control and three truthful copy repairs; three review/CI rounds hardened the pgTAP; migration applied + read back in production).
 7. Governed process activation screen (§N3.4) — S4, needs an owner-seen design.
 8. Booking → opportunity link — S4, Sales-owned writer change, raised with Sales.
 9. Agreement/invoice → deal link and customer promotion on won/paid — S5, Sales/Payments owners.

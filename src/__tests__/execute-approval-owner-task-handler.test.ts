@@ -26,6 +26,8 @@ type Options = {
   claimLost?: boolean; claimHeld?: boolean; canonicalChangedAtClaim?: boolean; replaceClaimAtClaim?: boolean;
   decideAtClaim?: boolean; replaceClaimAtResult?: boolean; stampError?: boolean;
   result?: Row; legacy?: boolean; kind?: string; sendKind?: string; actorMissing?: boolean;
+  /** The Platform Operator (§53, super_admin): holds no seat. */
+  operator?: boolean;
 };
 function fixture(o: Options = {}) {
   let active = o.active ?? T, seat = o.seat === undefined ? "owner" : o.seat;
@@ -52,12 +54,14 @@ function fixture(o: Options = {}) {
     ? (r[key.split("->>")[0]] as Row)?.[key.split("->>")[1]] : r[key];
   const client = {
     auth: { getUser: async () => ({ data: { user: actor ? { id: actor } : null }, error: null }) },
-    rpc: async (name: string) => {
+    rpc: async (name: string, args?: Row) => {
       rpcCalls.push(name);
       if (name === "has_role") return { data: o.admin === true, error: null };
-      if (name === "is_platform_owner" || name === "agency_can_manage_child") return { data: false, error: null };
+      if (name === "is_platform_owner") return { data: o.operator === true, error: null };
+      if (name === "agency_can_manage_child") return { data: false, error: null };
       if (name === "current_user_tenant_id") return { data: active, error: null };
-      if (name === "is_tenant_admin_as") return { data: !o.inactive && ["owner", "admin"].includes(seat ?? ""), error: o.authorityError ? { message: "unavailable" } : null };
+      // The seat is in workspace T only: asked about any other workspace, it is no seat.
+      if (name === "is_tenant_admin_as") return { data: args?._tenant === T && !o.inactive && ["owner", "admin"].includes(seat ?? ""), error: o.authorityError ? { message: "unavailable" } : null };
       if (name === "email_campaign_approve" || name === "email_sequence_approve") return { data: { scheduled: true }, error: null };
       throw Error(`Unexpected RPC ${name}`);
     },
@@ -68,7 +72,7 @@ function fixture(o: Options = {}) {
         if (table === "paige_pending_approvals" && filters.length > 1 && !patch && o.companionError) return { data: null, error: { message: "fixture unavailable" } };
         if (table === "paige_pending_approvals" && patch?.status === "approved" && o.stampError) return { data: null, error: { message: "fixture unavailable" } };
         if (table === "paige_actions" && o.switchAt === "send-check") active = U;
-        let rows = table === "user_roles" ? (o.admin ? [{ user_id: A, role: "admin" }] : [])
+        let rows = table === "user_roles" ? [...(o.admin ? [{ user_id: A, role: "admin" }] : []), ...(o.operator ? [{ user_id: A, role: "super_admin" }] : [])]
           : table === "tenant_members" ? (seat && !o.inactive ? [{ user_id: A, tenant_id: T, role: seat, status: "active" }] : []) : tables[table] ?? [];
         rows = rows.filter(r => filters.every(f => f(r))).slice(0, lim);
         if (patch) {
@@ -224,30 +228,51 @@ describe("execute-approval canonical owner.task door", () => {
     if (o.stampError) expect(f.tables.paige_pending_approvals[0].claimed_at).toBeNull();
     else expect(f.tables.paige_pending_approvals[0].reviewed_by_user_id).toBe(FAKE);
   });
-  it("does not open unrelated legacy approvals to an ordinary owner", async () => {
-    const f = fixture({ legacy: true }); expect((await f.run()).status).toBe(403); expect(f.writes).toHaveLength(0);
+  // EXP08 stage 0 (owner ruling 2026-10-26): admission is the approval workspace's own owner/admin (or the
+  // agency managing it) or the Platform Operator — never the global `admin` row plus any seat there.
+  for (const seat of ["owner", "admin"]) it(`admits this workspace's ${seat} to an unrelated approval, with no global role`, async () => {
+    const f = fixture({ seat, legacy: true }); expect((await f.run()).body).toMatchObject({ executed: false, acknowledged: true }); expect(f.delegates).toHaveLength(0);
   });
-  it("does not open another native kind to an ordinary owner", async () => {
-    const f = fixture({ kind: "crm.advance_journey_stage" }); expect((await f.run()).status).toBe(403); expect(f.writes).toHaveLength(0);
+  for (const o of [{ seat: "member" }, { seat: null }, { inactive: true }, { admin: true, seat: "member" }, { admin: true, seat: null }, { admin: true, inactive: true }] as Options[]) {
+    it(`refuses an unrelated approval without an owner/admin seat in its workspace ${JSON.stringify(o)}`, async () => {
+      const f = fixture({ ...o, legacy: true }); expect((await f.run()).status).toBe(403); expect(f.writes).toHaveLength(0);
+    });
+  }
+  it("admits this workspace's owner to another native kind (full power inside their own business)", async () => {
+    const f = fixture({ kind: "crm.advance_journey_stage" }); expect((await f.run()).body.executed).toBe(true); expect(f.delegates).toHaveLength(1);
   });
-  it("preserves global-admin unrelated acknowledgement admission", async () => {
-    const f = fixture({ admin: true, legacy: true }); expect((await f.run()).body).toMatchObject({ executed: false, acknowledged: true }); expect(f.delegates).toHaveLength(0);
+  it("refuses a global admin holding only a member seat on another native kind (owner of A, member of B)", async () => {
+    const f = fixture({ admin: true, kind: "crm.advance_journey_stage", seat: "member" }); expect((await f.run()).status).toBe(403);
+    expect(f.writes).toHaveLength(0); expect(f.delegates).toHaveLength(0);
   });
-  it("preserves legacy global-admin canonical native admission", async () => {
-    const f = fixture({ admin: true, kind: "crm.advance_journey_stage", seat: "member" }); expect((await f.run()).body.executed).toBe(true); expect(f.delegates).toHaveLength(1);
-  });
-  it("preserves global-admin cross-tenant refusal on an unrelated approval", async () => {
-    const f = fixture({ admin: true, legacy: true, mutate: t => { t.paige_pending_approvals[0].tenant_id = U; } });
+  for (const o of [{ admin: true }, {}] as Options[]) it(`refuses an approval of ANOTHER workspace, whatever seat is held here ${JSON.stringify(o)}`, async () => {
+    const f = fixture({ ...o, legacy: true, mutate: t => { t.paige_pending_approvals[0].tenant_id = U; } });
     expect((await f.run()).status).toBe(403); expect(f.writes).toHaveLength(0);
   });
-  for (const series of [false, true]) it(`preserves legacy global-admin ${series ? "series" : "campaign"} admission without opening it to ordinary owners`, async () => {
+  it("admits the Platform Operator, who holds no seat, to an approval of any workspace", async () => {
+    const f = fixture({ operator: true, seat: null, legacy: true, mutate: t => { t.paige_pending_approvals[0].tenant_id = U; } });
+    expect((await f.run()).body).toMatchObject({ executed: false, acknowledged: true });
+  });
+  it("an approval with no workspace is the Platform Operator's alone", async () => {
+    const mutate = (t: Record<string, Row[]>) => { t.paige_pending_approvals[0].tenant_id = null; };
+    const owner = fixture({ admin: true, legacy: true, mutate }); expect((await owner.run()).status).toBe(403); expect(owner.writes).toHaveLength(0);
+    const op = fixture({ operator: true, seat: null, legacy: true, mutate }); expect((await op.run()).body).toMatchObject({ acknowledged: true });
+  });
+  it("an approval nobody can find is 404 only to the operator, 403 to everyone else", async () => {
+    expect((await fixture({ admin: true }).run(FAKE)).status).toBe(403);
+    expect((await fixture({ operator: true }).run(FAKE)).status).toBe(404);
+  });
+  it("an authority read failure on an unrelated approval is 503, never a guessed answer", async () => {
+    const f = fixture({ legacy: true, authorityError: true }); expect((await f.run()).status).toBe(503); expect(f.writes).toHaveLength(0);
+  });
+  for (const series of [false, true]) it(`${series ? "series" : "campaign"} approvals admit this workspace's owner, not a global admin with a member seat`, async () => {
     const mutate = (t: Record<string, Row[]>) => Object.assign(t.paige_pending_approvals[0], {
       type: "campaign_send", metadata: { [series ? "email_sequence_version_id" : "email_campaign_version_id"]: FAKE },
     });
-    const f = fixture({ admin: true, legacy: true, mutate });
+    const f = fixture({ legacy: true, mutate });
     expect((await f.run()).body).toMatchObject({ executed: false, scheduled: true }); expect(f.delegates).toHaveLength(0); expect(f.fetches).toHaveLength(0);
     expect(f.rpcCalls).toContain(series ? "email_sequence_approve" : "email_campaign_approve");
-    const owner = fixture({ legacy: true, mutate }); expect((await owner.run()).status).toBe(403); expect(owner.writes).toHaveLength(0);
+    const member = fixture({ admin: true, seat: "member", legacy: true, mutate }); expect((await member.run()).status).toBe(403); expect(member.writes).toHaveLength(0);
   });
   for (const sendKind of ["client.followup", "owner.lead_followup", "owner.followup_email", "owner.sms_nudge", "comms-draft-reply", "sales.work_followup", "finance.retainer_reminder", "social.post_publish"]) {
     it(`preserves preclaim outbound refusal for ${sendKind}`, async () => {

@@ -1,7 +1,7 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi, beforeAll } from "vitest";
 
 // Real SoloApp, boundary, Finance and route hook. Only account/source transports
 // and unrelated departments are doubles; this does not establish customer QA.
@@ -61,7 +61,17 @@ function Address() {
   const location = useLocation(), navigate = useNavigate();
   return <div><output data-actual-address>{location.pathname}</output><button onClick={() => navigate(-1)}>Previous address</button><button onClick={() => navigate(1)}>Next address</button></div>;
 }
-const render = () => act(async () => root.render(<MemoryRouter initialEntries={["/solo/123/finance/overview"]}><Address /><Routes><Route path="/solo/:account/*" element={<SoloApp />} /></Routes></MemoryRouter>));
+// Route-level code split (E01 PR9): the Finance screen loads lazily inside
+// SoloApp. Pre-warm at file scope (vitest transforms on first import — the eager
+// world paid this at module load) and wait for the real screen before asserting.
+const financeWarm = import("./finance/FinanceWorkspace");
+beforeAll(async () => { await financeWarm; }, 60_000);
+const render = async () => {
+  await act(async () => root.render(<MemoryRouter initialEntries={["/solo/123/finance/overview"]}><Address /><Routes><Route path="/solo/:account/*" element={<SoloApp />} /></Routes></MemoryRouter>));
+  for (let attempt = 0; attempt < 40 && !host.querySelector(".finance-toolbar"); attempt += 1) {
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+  }
+};
 const selected = () => host.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')!;
 const draft = () => host.querySelector<HTMLTextAreaElement>('[aria-label="Protected conversation draft"]')!;
 async function key(value: string) {

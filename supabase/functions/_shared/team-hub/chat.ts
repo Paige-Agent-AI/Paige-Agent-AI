@@ -38,6 +38,12 @@ export const CANT_SEE = "I can't see that conversation from your account.";
 export const NOT_AVAILABLE = "Team Hub isn't available in this workspace.";
 export const NO_MATCH = "Nothing in the conversations you can see mentions that.";
 export const COULD_NOT_READ = "I couldn't read Team Hub just now.";
+// EXP08 lifecycle: the person is still on the team, but their Team conversations switch is off.
+// Not NOT_AVAILABLE (Team Hub is available in this workspace) and not a transient read failure.
+export const CONVERSATIONS_OFF = "Team conversations are turned off for you in this workspace. Your own assigned work isn't affected.";
+// EXP08 lifecycle: the OTHER person in a direct message has Team conversations off, so they cannot
+// read it; the server refuses rather than storing a message that only looks delivered.
+export const RECIPIENT_CONVERSATIONS_OFF = "That person has Team conversations turned off, so they can't read messages here.";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_BODY_CHARS = 600;           // per message read into the model
@@ -57,6 +63,7 @@ const needsInput = (message: string): TeamHubReadOutcome => ({ envelope: { statu
 function refusalFor(code: unknown): TeamHubReadOutcome {
   switch (code) {
     case "not_member": case "unavailable": return refused(NOT_AVAILABLE);
+    case "conversations_off": return refused(CONVERSATIONS_OFF);
     case "not_found": case "scope_changed": case "not_allowed": return refused(CANT_SEE);
     case "invalid": return needsInput("That request was not usable (check the conversation_id, thread_id and limit, or the search words). Nothing was read.");
     default: return unavailable();
@@ -371,6 +378,8 @@ export async function postTeamHubReply(scope: TeamHubScope, caller: TeamHubCalle
   if (env.ok !== true) {
     const code = typeof env.code === "string" ? env.code : "unknown";
     if (code === "not_member" || code === "unavailable") return notApplied(code, `${NOT_AVAILABLE} Nothing was posted.`);
+    if (code === "conversations_off") return notApplied(code, `${CONVERSATIONS_OFF} Nothing was posted.`);
+    if (code === "recipient_conversations_off") return notApplied(code, `${RECIPIENT_CONVERSATIONS_OFF} Nothing was posted.`);
     if (code === "not_found" || code === "scope_changed") return notApplied(code, `${CANT_SEE} Nothing was posted.`);
     if (code === "too_long") return notApplied(code, "That reply is too long for Team Hub. Nothing was posted.");
     if (code === "invalid") return notApplied(code, "Team Hub refused that reply (the thread may be gone, or the text is empty). Nothing was posted.");

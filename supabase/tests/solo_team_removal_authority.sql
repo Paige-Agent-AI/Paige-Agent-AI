@@ -156,21 +156,24 @@ SELECT throws_ok(
 );
 
 -- ── An Admin is not an Owner ────────────────────────────────────────────────────────────────────
+-- Owner ruling 2026-10-26 (EXP08 team lifecycle, 20271115040008): an admin MAY remove a member, so
+-- what an admin is refused is removing another ADMIN. The member-removal side is proved in
+-- supabase/tests/exp08_team_lifecycle.sql; here the admin's target is the other admin of A.
 SELECT set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000003"}', true);
 SELECT is(auth.uid(), 'd1000000-0000-0000-0000-000000000003'::uuid, 'the admin is the caller');
 SELECT is(public.current_user_tenant_id(), 'd1000000-0000-0000-0000-00000000dddd'::uuid,
   'and their active workspace resolves to A');
 SELECT throws_ok(
   $$SELECT public.remove_solo_team_member(
-      'd1000000-0000-0000-0000-000000000004'::uuid,
+      'd1000000-0000-0000-0000-000000000006'::uuid,
       'd1000000-0000-0000-0000-00000000dddd'::uuid)$$,
-  '42501', 'only the workspace owner may remove someone from this workspace',
-  'an admin cannot remove anyone — this is the authority the screen claims, proved in the body'
+  '42501', 'only the workspace owner may remove an admin from this workspace',
+  'an admin cannot remove another admin — removing an admin stays the owner''s, proved in the body'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.tenant_members
     WHERE tenant_id = 'd1000000-0000-0000-0000-00000000dddd'
-      AND user_id = 'd1000000-0000-0000-0000-000000000004'),
+      AND user_id = 'd1000000-0000-0000-0000-000000000006'),
   1,
   'and the target is still there afterwards'
 );

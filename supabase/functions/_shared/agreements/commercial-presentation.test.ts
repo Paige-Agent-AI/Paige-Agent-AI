@@ -22,9 +22,9 @@ const expect = (value: unknown) => ({
   },
 });
 import { anchoredDate } from "../sales-collections/contract.ts";
+import { renderCommercialPresentation } from './commercial-document.ts';
 import {
   prepareCommercialPresentation,
-  renderCommercialPresentation,
 } from "./commercial-presentation.ts";
 const id = (n: number) =>
   `${n.toString().padStart(8, "0")}-0000-4000-8000-000000000001`;

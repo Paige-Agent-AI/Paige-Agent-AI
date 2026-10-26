@@ -108,6 +108,14 @@ manual capability remains UNAVAILABLE and analytics/catalogue maturity unchanged
 Original9/0 and12/0/4 remain historical; all19/nine continue. Protected monthly
 UNKNOWN/UNRETRIED remains intact. Earlier development/failure evidence is retained.
 
+## EXP04 original signature factory and native PDF source — October26
+
+[#2888 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2888#issuecomment-6407684085) records reviewed02902badb898aef1ba67708a56c9c2ac658869f7 → actual main99c63316dfc6a9a0ddd19d80660fe43fe724b564/tree5a905090e11c3ab07f0177c297591572da9fa4d8, LOWER6405130919/all13 exact checks/two webSUCCESS. The originating governed factory is SOURCE MERGED; this dated statement supersedes the earlier source-unreleased label below without rewriting its history. It reuses original Work/approval/sender/publication, immutable documents and receipts; actual signing/send/payment acceptance is separate.
+
+[#2906 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2906#issuecomment-6408543958) records reviewed4b8b81d3fe3c3b6a5e815db6e8c7148526585939 → actualb56f60b74f4d533b27cd814fb7b44c2d49cf85ee/tree00836569a174d37b407a9198bbfea23e6daed89f, LOWER5647146018/current-source supplement/all11 exact checks/two webSUCCESS. Same PDF engine and renderer, original bytes/versions retained; local352 cases/250steps/16suites/real graph proof, actual web build and original entry-size guard PASS. This repairs dependency registration, not a replacement signing engine.
+
+The sole [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) contains both bounded source rows. Detailed production identifiers and protected original QA remain in existing ANT-51/ANT-52; their public disclosure is separately held. Authenticated page display, full-shell/ordinary-role/cohort and complete commercial/signing/delivery acceptance remain open. Functional source merge, visual proof, complete experience and founder acceptance are separate; full O1–O12/founder NOT_ACCEPTED. ALG01/12 PARTIAL,02 INCOMPLETE,13 usefulness UNVERIFIED; no catalogue/activation/maturity promotion, customer version or recursive closeout row.
+
 ## EXP04 original history and recipient recovery — October25 verified closeout
 
 [#2874](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2874#issuecomment-6403644446) actually merged9eb3bc49ff1f219abf24680fda54f7483c594352 after final LOWER6403537557/all13 exact checks/two web statuses. Normal native40235644282/Edge40235644302 succeeded; 20271114250004 once and original status/Work/publication/permission identities verified. agreement-send27 source34of34 exact and certificate12614638476 retained. READYdpl_B5zRbkMJDn7r91xVS4hQYVyaiWjq and exact public9eb…-mvocb5xq/null observed21:34:49–50UTC. Original provider receipt history can be read without another send or revival of authority.
@@ -406,6 +414,12 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 
 
+## EXP09 application startup recovery — October26 source released
+
+Original [#2900](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900) exact reviewed7f9b53493b68d900bcd65153e22c576b1e15d7b2/LOWER5646544693, all10 applicable checks/two webSUCCESS/no-native Preview SKIP/zero threads, merged0617f6d8c5d1534d831a642bf4bf20c3486cb6d4/tree1914f3bd289a3bcf38ea12255aeb8cbe30e10c26. Actual c0d1+7f9 union retains10 own/16,379 outside entries. Normal webdpl_8ySMuLRKAmbW4CDwRdz9tjETXwk4 READY/exact0617; both origins exact0617-mvon01s9/null and actual app/assets/404/revalidation/native304 readback PASS at02:29:19UTC. [Release receipt6406895196](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900#issuecomment-6406895196); [original UI evidence](../evidence/ui-delivery/e09-application-root-recovery.md).
+
+The original recovery boundary now catches App/provider render errors above route boundaries. Controlled bootstrap1/2→3/0, focused44/0, original renderer20 checks/0 external retains every16 prior result; healthy state/router draft and explicit guarded reload remain. Functional: source release verified for this failure class. Visual: original bounded local desktop/narrow/light/dark/keyboard/reflow proof, real device/AT owed. Experiential: latest actual customer sign-in/history and initiating cause UNVERIFIED; earlier genuine return proof is separate. Founder Acceptance NOT_REQUESTED; full42/seven, Teach CURA, CAP018–024, original lifecycle/domain/orchestration and canonical algorithms remain open. No SQL/Edge/Auth/role/consent/provider/activation or customer publication. This mechanical observed-identity closeout does not add product or a recursive shipped row.
+
 ## EXP09 approved private-request publication — October25 source milestone
 
 Original [#2851](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851) exact reviewed58fd/all13 checks/two webSUCCESS/zero threads, documented AUTHOR-REVIEW / LOWER ASSURANCE5644315607/5644495135, actually merged81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5/treee98c7c72. Actual213+58 union retains every9own and16174incoming outside entry. Original HIGH stored-call evidence, owner/customer/source/version/recipient/access/consent checks and original Work/publisher/PCA/notice/audit/response sources remain; ordinary drafted/executing refuses only this private-publication kind. No second approval, execution, inbox or receipt system.
@@ -535,6 +549,14 @@ actual file/model/return/revoke/phone, all42/seven/Teach and Founder Acceptance
 remain unfinished. UI, catalogue
 and algorithm maturity unchanged; no customer version/publication or recursive
 feature credit for this closeout.
+
+## EXP05 weekly same-session recovery — October25 development
+
+Original weekly hook/composer causal50/7 becomes57/0; surrounding14-file373/0.
+Same known actor/sign-in retains typed proposal/focus, original review and pending/
+unknown hold without another request. Genuine/unknown changes still retire.
+[Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
+does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
 
 ## EXP05 weekly save/source recovery — October25 merged, full source proof failed
 
@@ -4035,6 +4057,19 @@ result/receipt/reload remain owed. The protected proposal expired unconsumed; no
 replay, catalogue promotion or complete weekly/ZION/automation acceptance is claimed.
 
 
+
+## EXP05 original-work inspection and session continuity — October25 release
+
+[#2885 actual receipt6404960556](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2885#issuecomment-6404960556)
+records exact main1d6a917/LOWER/all10 checks/READY/both public and emitted hook.
+Original approved Task/receipt and declined zero-Task-link retrieval are authenticated;
+notification-specific retention remains unverified. [#2880 receipt6405171195](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2880#issuecomment-6405171195)
+records exact dd6496/LOWER/all10 checks, retained initial capture failure/passed
+unchanged retry, READY/both-public inspector and styles. Composed source1204/0
+and historical frames are distinct from the authenticated empty recent sample;
+positive original response/receipt and fresh production pixels remain owed.
+The sole Master4.0 records both. No native/Edge/activation/catalogue/algorithm
+promotion or full ten/E5/Builder/ZION/Live/cohort/founder acceptance is inferred.
 ## EXP05 original ZION evidence in Overview — October25 consumer
 
 Operations Overview gains a deliberate, bounded own-person read of original ZION assignments through existing `agents.list/list_subagents` and caller-JWT `paige-orchestrator` inspection. Original response, original receipt and completed business work remain distinct. The client retains current session/actor/tenant/epoch, close/logout/scope retirement and the original8s read budget; no invocation, approval, job, browser cache, provider or business-record mutation is added.

@@ -1,7 +1,8 @@
 // Campaigns › dossier: the steps that carry a campaign out, and what came of them (INT-298 MBC slice 6b).
 // Strategy → Campaign → Tactic → Step → Result → Judgement, read from the server's own lifecycle
-// (useCampaignActions). Owners and admins plan a step (it waits for approval and sends nothing), remove one,
-// record what happened once a step has finished, and judge it against its aim. Members read the plan.
+// (useCampaignActions). Owners and admins plan a step (it sends and publishes nothing), prepare it for
+// approval, remove one, record what happened once a step has finished, and judge it against its aim.
+// Members read the plan.
 // The screen never decides a state: a step marked done with nothing behind it says so and takes no result,
 // and a failed step stays failed even once a result is recorded or judged.
 import React from "react";
@@ -28,9 +29,9 @@ function StateChip({ action }: { action: CampaignAction }) {
   return <span className={`loop-state ca-state ${lifecycleTone(action)}`}><span className="sd"/>{stateLabel(action)}</span>;
 }
 
-function StepRow({ action, canManage, onRemove, onRecord, onEvaluate }: {
+function StepRow({ action, canManage, onPrepare, onRemove, onRecord, onEvaluate }: {
   action: CampaignAction; canManage: boolean;
-  onRemove: () => Promise<boolean>; onRecord: (summary: string, value: number | null) => Promise<boolean>; onEvaluate: (verdict: Verdict, note: string | null) => Promise<boolean>;
+  onPrepare: () => Promise<boolean>; onRemove: () => Promise<boolean>; onRecord: (summary: string, value: number | null) => Promise<boolean>; onEvaluate: (verdict: Verdict, note: string | null) => Promise<boolean>;
 }) {
   const [open, setOpen] = React.useState<null | "record" | "judge" | "remove">(null);
   const [summary, setSummary] = React.useState("");
@@ -69,7 +70,8 @@ function StepRow({ action, canManage, onRemove, onRecord, onEvaluate }: {
         {action.verdict && <div><dt>Judged</dt><dd>{VERDICT_LABEL[action.verdict]}{action.verdictNote ? ` · ${action.verdictNote}` : ""}</dd></div>}
       </dl>}
       {basis && <p className={`ca-basis ${action.failed ? "is-failed" : ""}`}>{basis}</p>}
-      {canManage && open === null && (canRecordOutcome(action) && !action.observed || canEvaluate(action)) && <div className="ca-acts">
+      {canManage && open === null && (action.lifecycle === "planned" || (canRecordOutcome(action) && !action.observed) || canEvaluate(action)) && <div className="ca-acts">
+        {action.lifecycle === "planned" && <button type="button" className="btn btn-s" disabled={busy} title="Draft it and open its approval; nothing is sent or published" onClick={() => run(onPrepare)}>Prepare for approval</button>}
         {canRecordOutcome(action) && !action.observed && <button type="button" className="btn btn-s" disabled={busy} onClick={() => setOpen("record")}>Record the result</button>}
         {canEvaluate(action) && <button type="button" className="btn btn-s" disabled={busy} onClick={() => setOpen("judge")}>Judge it</button>}
       </div>}
@@ -149,7 +151,7 @@ function PlanForm({ tactics, busy, onPlan, onCancel }: {
         <label className="ca-field"><span>Aim (optional)</span><input value={expected} maxLength={500} onChange={(event) => setExpected(event.target.value)} placeholder="e.g. Ten replies"/></label>
       </div>
       {dueBad && <p className="ca-hint ca-bad">Pick a day for the due date, or leave it empty.</p>}
-      <p className="ca-hint">A planned step waits for your approval. Planning it sends and publishes nothing.</p>
+      <p className="ca-hint">Planning sends and publishes nothing. Prepare the step when you're ready; your approval records it.</p>
       <div className="ca-row"><button type="submit" className="btn btn-s btn-g" disabled={busy || !ready}>{busy ? "Planning…" : "Plan step"}</button>
         <button type="button" className="btn btn-s" onClick={onCancel}>Cancel</button></div>
     </form>
@@ -171,12 +173,13 @@ export function CampaignActions({ tenantId, briefId, onToast }: { tenantId: stri
   const close = () => { setPlanning(false); focusAdd(); };
   return (
     <div className="ca">
-      {mine.length === 0 ? <p className="cc-empty">No steps planned yet.{state.canManage ? " Plan the first one; it waits for your approval." : ""}</p>
+      {mine.length === 0 ? <p className="cc-empty">No steps planned yet.{state.canManage ? " Plan the first one; nothing is sent until you prepare and approve it." : ""}</p>
         : tactics.map((tactic) => {
           const steps = mine.filter((action) => action.tactic === tactic);
           return <section key={tactic} className="ca-tactic" aria-label={`Tactic: ${tactic}`}>
             <div className="cc-h"><h5>{tactic}</h5><span>{steps.length} step{steps.length === 1 ? "" : "s"}</span></div>
             <ul className="ca-list">{steps.map((action) => <StepRow key={action.actionId} action={action} canManage={state.canManage}
+              onPrepare={async () => say(await state.prepare(briefId, action.actionId))}
               onRemove={async () => { const ok = say(await state.remove(briefId, action.actionId)); if (ok) focusAdd(); return ok; }}
               onRecord={async (summary, value) => say(await state.recordOutcome(briefId, action.actionId, summary, value))}
               onEvaluate={async (verdict, note) => say(await state.evaluate(briefId, action.actionId, verdict, note))}/>)}</ul>

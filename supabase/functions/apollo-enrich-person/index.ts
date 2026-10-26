@@ -1,8 +1,11 @@
 // Apollo.io person enrichment by email.
 // Body: { email: string, contact_id?: string, source?: string }
 // Public (no admin guard) because it is invoked by a DB trigger via anon key.
-// Internal trigger header skips the admin check; manual calls still require admin.
-import { adminClient, corsHeaders, jsonResponse, requireAdmin } from "../_shared/adminAuth.ts";
+// Internal trigger header skips the operator check; manual calls require the Platform Operator.
+import { adminClient, corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
+// EXP08 stage 0: a platform resource, so the Platform Operator only (§53) — not the global
+// `admin` row that every workspace owner carries. See _shared/operatorAuth.ts.
+import { requireOperator } from "../_shared/operatorAuth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -12,7 +15,7 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization") ?? "";
   const isInternal = serviceKey.length > 0 && authHeader === `Bearer ${serviceKey}`;
   if (!isInternal) {
-    const guard = await requireAdmin(req);
+    const guard = await requireOperator(req);
     if (!guard.ok) return guard.response;
   }
 

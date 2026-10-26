@@ -4,6 +4,7 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { classifyAction } from '../../supabase/functions/_shared/action-risk';
 import { isKnowledgeCompletedUnrecorded } from '../../supabase/functions/_shared/approval-outcome';
+import { PORTAL_REQUEST_SHARE_TOOL } from '../../supabase/functions/_shared/paige-spine/domains/client_portal';
 const source = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const ast = ts.createSourceFile('chat.ts', source, ts.ScriptTarget.Latest, true);
 let declaration: ts.VariableDeclaration | undefined;
@@ -12,12 +13,14 @@ visit(ast);
 if (!declaration) throw new Error('Canonical attribution missing');
 const code = ts.transpileModule(`const ${declaration.getText(ast)};`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const create = new Function('classifyAction', 'N8N_MANAGEMENT_TOOL_NAMES', 'supabaseClient', 'personaCtx', 'user',
-  'WRITE_TARGET', 'resolveWriteTargetId', 'approvalChannel', 'payloadThreadId', 'scopedClientId', `${code}; return auditWriteForTool;`);
+  'WRITE_TARGET', 'resolveWriteTargetId', 'approvalChannel', 'payloadThreadId', 'scopedClientId',
+  'PORTAL_REQUEST_SHARE_TOOL', 'isKnowledgeCompletedUnrecorded', `${code}; return auditWriteForTool;`);
 async function drive(tool: string, result: unknown) {
   const rows: Array<{ payload: { outcome: string } }> = [];
   const audit = create(() => 'ordinary', new Set(['n8n_create_workflow']), { from(table: string) {
     expect(table).toBe('paige_audit_log'); return { insert(row: { payload: { outcome: string } }) { rows.push(row); return Promise.resolve({ error: null }); } };
-  } }, { tenant_id: 'test-tenant-a' }, { id: 'test-actor' }, {}, () => null, new Map(), 'test-thread', null);
+  } }, { tenant_id: 'test-tenant-a' }, { id: 'test-actor' }, {}, () => null, new Map(), 'test-thread', null,
+  PORTAL_REQUEST_SHARE_TOOL, isKnowledgeCompletedUnrecorded);
   audit({ id: 'test-call', function: { name: tool, arguments: '{}' } }, { content: JSON.stringify(result) });
   await Promise.resolve(); return rows;
 }
@@ -40,6 +43,10 @@ describe('canonical write attribution preserves domain outcome evidence', () => 
     expect(await drive('plan_create', { needs_confirm: true })).toHaveLength(0);
     expect(await drive('plan_create', { success: false, not_applied: true, refused_before_run: true,
       error: 'prior_effect_reconciliation_required' })).toHaveLength(0);
+  });
+  it('records a new customer-request share but never a readback of an already shared request', async () => {
+    expect(await drive(PORTAL_REQUEST_SHARE_TOOL, { success: true })).toHaveLength(1);
+    expect(await drive(PORTAL_REQUEST_SHARE_TOOL, { success: true, already_shared: true })).toHaveLength(0);
   });
   it.each([
     { success: false, not_applied: true, refused_before_run: true, outcome_unknown: true },
@@ -70,7 +77,7 @@ const targetCode = ts.transpileModule(['WRITE_TARGET', 'TARGET_ID_KEYS', 'UUID',
 }).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const createCanonicalAudit = new Function('classifyAction', 'isKnowledgeCompletedUnrecorded', 'N8N_MANAGEMENT_TOOL_NAMES',
   'supabaseClient', 'personaCtx', 'user', 'approvalChannel', 'payloadThreadId', 'scopedClientId',
-  `${targetCode}\n${code}\nreturn auditWriteForTool;`);
+  'PORTAL_REQUEST_SHARE_TOOL', `${targetCode}\n${code}\nreturn auditWriteForTool;`);
 type TargetAuditRow = {
   tenant_id: string;
   actor_user_id: string;
@@ -89,7 +96,8 @@ async function driveCanonicalTarget(tool: string, args: Record<string, unknown>,
       expect(table).toBe('paige_audit_log');
       return { insert(row: TargetAuditRow) { rows.push(row); return Promise.resolve({ error: null }); } };
     },
-  }, { tenant_id: 'test-tenant-a' }, { id: 'test-actor' }, new Map([['test-call', 'operator_card']]), 'test-thread', CONTACT);
+  }, { tenant_id: 'test-tenant-a' }, { id: 'test-actor' }, new Map([['test-call', 'operator_card']]), 'test-thread', CONTACT,
+  PORTAL_REQUEST_SHARE_TOOL);
   audit({ id: 'test-call', function: { name: tool, arguments: JSON.stringify(args) } }, { content: JSON.stringify(result) });
   await Promise.resolve();
   return rows;

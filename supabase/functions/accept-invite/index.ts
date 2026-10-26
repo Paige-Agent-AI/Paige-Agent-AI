@@ -17,6 +17,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveOperatorIdentity } from "../_shared/operator-identity.ts";
 import { resolveCanonicalAppPath, type CanonicalDestination, type CanonicalTier } from "../_shared/canonical-app-url.ts";
+import { checkTeamSeat, grantTeamSeat } from "./team-seat.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,7 +148,11 @@ Deno.serve(async (req) => {
         .eq("id", btf.client_id)
         .maybeSingle();
       const btfTenantId = (btfClient as { tenant_id?: string | null } | null)?.tenant_id ?? null;
-      const operator = await resolveOperatorIdentity(admin, btfTenantId);
+      // supabase-js 2.45's rpc() returns a builder, not a Promise; the same cast paige-mcp uses.
+      const operator = await resolveOperatorIdentity(
+        admin as unknown as Parameters<typeof resolveOperatorIdentity>[0],
+        btfTenantId,
+      );
       return json(200, {
         ok: true,
         type: "btf_client",
@@ -364,6 +369,21 @@ Deno.serve(async (req) => {
         }
       }
 
+      // EXP08 lifecycle (B3): a person whose seat in this workspace is suspended, or otherwise not
+      // active, is refused here, BEFORE any write — the password included. An invitation never lifts
+      // a hold: only reinstatement does, and only the owner changes a suspended seat.
+      const seatCheck = await checkTeamSeat(admin, { userId: authUser.id, tenantId: team.tenant_id ?? null });
+      if (!seatCheck.ok) {
+        await admin.from("audit_logs").insert({
+          user_id: authUser.id,
+          entity: "invitation",
+          action: "invite_rejected_seat_not_active",
+          entity_id: team.id,
+          data: { role: team.role, tenant_id: team.tenant_id, code: seatCheck.code },
+        }).then(() => {}, () => {});
+        return json(seatCheck.status, { ok: false, code: seatCheck.code, error: seatCheck.error });
+      }
+
       const { error: uErr } = await admin.auth.admin.updateUserById(authUser.id, {
         password,
         email_confirm: true,
@@ -381,28 +401,31 @@ Deno.serve(async (req) => {
           .eq("user_id", authUser.id);
       }
 
-      // Ensure role + tenant membership are assigned. Tenant-scoped RLS uses
-      // tenant_members, not user_roles alone, for live CRM/pipeline visibility.
-      await admin
-        .from("user_roles")
-        .upsert({ user_id: authUser.id, role: team.role }, { onConflict: "user_id,role" });
+      // Ensure tenant membership + role are assigned. Tenant-scoped RLS uses tenant_members, not
+      // user_roles alone, for live CRM/pipeline visibility. The SEAT is written first and each write
+      // is checked, so a refused seat never leaves a freshly written global role behind (B3).
+      const grant = await grantTeamSeat(admin, {
+        userId: authUser.id,
+        tenantId: team.tenant_id ?? null,
+        appRole: team.role,
+        invitedRole: team.role === "admin" ? "admin" : "member",
+        invitedAt: team.created_at ?? new Date().toISOString(),
+        nowIso: new Date().toISOString(),
+        existing: seatCheck.existing,
+      });
+      if (!grant.ok) {
+        await admin.from("audit_logs").insert({
+          user_id: authUser.id,
+          entity: "invitation",
+          action: "invite_accept_failed",
+          entity_id: team.id,
+          data: { role: team.role, tenant_id: team.tenant_id, code: grant.code },
+        }).then(() => {}, () => {});
+        // The password set above stands; the message says only what happened to the access.
+        return json(grant.status, { ok: false, code: grant.code, error: grant.error });
+      }
 
-      if (team.tenant_id && team.role !== "super_admin") {
-        const tenantRole = team.role === "admin" ? "admin" : "member";
-        await admin
-          .from("tenant_members")
-          .upsert(
-            {
-              tenant_id: team.tenant_id,
-              user_id: authUser.id,
-              role: tenantRole,
-              status: "active",
-              invited_at: team.created_at ?? new Date().toISOString(),
-              joined_at: new Date().toISOString(),
-            },
-            { onConflict: "tenant_id,user_id" },
-          );
-
+      if (team.tenant_id) {
         await admin
           .from("profiles")
           .update({ active_tenant_id: team.tenant_id })

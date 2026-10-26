@@ -729,7 +729,7 @@ no write, retry, new permission, schedule or receipt is added. Original-suite
 55PASS/3FAIL becomes six-suite207PASS; original native128PASS with own cluster
 stopped and fixture role restored. Source strict/lint/Kit PASS, while the one
 incumbent strict-test fixture diagnostic remains unchanged. See the original
-[retirement evidence](../evidence/ui-delivery/exp05-weekly-read-retirement.md).
+[handoff evidence](../evidence/ui-delivery/exp05-weekly-status-handoff.md).
 Immutable review/CI/deployment/authenticated interruption/reload remain owed.
 No catalogue/algorithm/recurring/Live or full ten/E5 acceptance promotion.
 

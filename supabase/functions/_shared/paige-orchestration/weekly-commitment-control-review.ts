@@ -18,8 +18,16 @@ export async function prepareWeeklyControlReview(identity: ContextIdentity, deps
   if (typeof requestId !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(requestId)) {
     return { status: "unavailable" as const, reason: "server_request_identity_required" };
   }
-  const read = await readWeeklyCommitmentProjection(identity, deps);
-  if (!isCurrentWeeklyCommitmentScope(identity, deps.currentIdentity())) {
+  // Pin the initiating scope before the awaited read. A caller's mutable context
+  // cannot redefine which business this already-completed read belongs to.
+  const origin = Object.freeze({ ...identity });
+  const read = await readWeeklyCommitmentProjection(origin, deps);
+  let currentScope = false;
+  try {
+    const current = deps.currentIdentity();
+    currentScope = !deps.signal?.aborted && isCurrentWeeklyCommitmentScope(origin, current);
+  } catch { /* A retired identity source cannot prepare a review. */ }
+  if (!currentScope) {
     return { status: "unavailable" as const, reason: "scope_changed" };
   }
   if (read.status !== "available" || !read.data) {

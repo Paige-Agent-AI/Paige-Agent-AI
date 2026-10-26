@@ -229,6 +229,19 @@ try {
  }
  assert.throws(()=>run(`BEGIN;GRANT EXECUTE ON FUNCTION public.preview_sales_collection_command(uuid,uuid,jsonb) TO authenticated;${sourceGuard}`),/Collections source or metadata changed/);
  assert.equal(metadataOf(commandRoutine),previewMetadata,'metadata drift is refused and rolled back');
+ assert.throws(()=>run(`BEGIN;GRANT EXECUTE ON FUNCTION public.preview_sales_collection_command(uuid,uuid,jsonb) TO service_role WITH GRANT OPTION;${sourceGuard}`),/Collections source or metadata changed/);
+ assert.equal(metadataOf(commandRoutine),previewMetadata,'unexpected delegated execute authority is refused and rolled back');
+ for(const [signature,alteration] of [
+  ['public._sales_collection_amount_basis(public.tenant_client_agreements)','VOLATILE'],
+  ['public._sales_collection_amount_basis(public.tenant_client_agreements)','SECURITY DEFINER'],
+  ['public._sales_collection_amount_basis(public.tenant_client_agreements)','SET search_path=pg_catalog'],
+  ['public.preview_sales_collection_command(uuid,uuid,jsonb)','STABLE'],
+  ['public.list_sales_collection_agreements(uuid,integer,uuid)','SECURITY INVOKER'],
+ ]){
+  const identity=`'${signature}'::regprocedure`,before=definitionOf(identity);
+  assert.throws(()=>run(`BEGIN;ALTER FUNCTION ${signature} ${alteration};${sourceGuard}`),/Collections .*changed/);
+  assert.equal(definitionOf(identity),before,'semantic authority metadata drift is rolled back');
+ }
  process.stdout.write('PASS native fixed-source revalidation: one private invoker basis; original reader/preview inverses and whole executor/authority unchanged; fixed save/historical replay, recurring preservation, periodic/catalog/legacy/source-change refusal, actual source-lock race, receipt rollback and drift/ACL negatives.\n');
  assert.deepEqual(JSON.parse(run(execute(op)).trim()),first);
  assert.deepEqual(JSON.parse(run('SET ROLE service_role;'+execute(op)).trim().split(/\r?\n/).at(-1)),first);

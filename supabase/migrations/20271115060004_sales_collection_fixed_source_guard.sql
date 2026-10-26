@@ -12,11 +12,13 @@ BEGIN
  ) x(signature,old_hash,new_hash,caller_role) LOOP
   SELECT * INTO p FROM pg_proc WHERE oid=entry.signature::regprocedure;
   IF md5(p.prosrc) NOT IN (entry.old_hash,entry.new_hash) OR NOT p.prosecdef
-    OR p.provolatile<>'v' OR p.proconfig IS DISTINCT FROM ARRAY['search_path=pg_catalog, public']
+    OR p.provolatile<>'v' OR p.prolang<>(SELECT oid FROM pg_language WHERE lanname='plpgsql')
+    OR p.prorettype<>'jsonb'::regtype OR p.proretset OR p.proconfig IS DISTINCT FROM ARRAY['search_path=pg_catalog, public']
     OR NOT EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
       WHERE a.grantee=(SELECT oid FROM pg_roles WHERE rolname=entry.caller_role) AND a.privilege_type='EXECUTE')
     OR EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
-      WHERE a.privilege_type<>'EXECUTE' OR a.grantee NOT IN(p.proowner,(SELECT oid FROM pg_roles WHERE rolname=entry.caller_role))) THEN
+      WHERE a.privilege_type<>'EXECUTE' OR a.grantee NOT IN(p.proowner,(SELECT oid FROM pg_roles WHERE rolname=entry.caller_role))
+        OR a.is_grantable AND a.grantee<>p.proowner) THEN
    RAISE EXCEPTION 'Collections source or metadata changed; reconcile before applying: %',entry.signature USING ERRCODE='55000';
   END IF;
  END LOOP;
@@ -24,6 +26,7 @@ BEGIN
  IF helper IS NOT NULL THEN
   SELECT * INTO p FROM pg_proc WHERE oid=helper;
   IF md5(p.prosrc)<>'4e31ac734abff5dff2274725876a837c' OR p.prosecdef OR p.provolatile<>'s'
+   OR p.prolang<>(SELECT oid FROM pg_language WHERE lanname='sql') OR p.prorettype<>'text'::regtype OR p.proretset
    OR p.proconfig IS DISTINCT FROM ARRAY['search_path=pg_catalog, public']
    OR EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
      WHERE a.grantee<>p.proowner OR a.privilege_type<>'EXECUTE') THEN

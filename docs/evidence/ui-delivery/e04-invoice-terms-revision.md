@@ -25,9 +25,9 @@ MUST_PRESERVE: original agreement/invoice identity, same-revision schedule behav
 ACCEPTANCE_CRITERIA: an authorized owner sees the correct original invoice balance after plan revision, a clear unverified timing reason in Clients and Chat, an operable original agreement link, and the same state after reload; unauthorized and foreign contexts retain their existing refusals.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original read/parser/composer and Clients/Chat presentation tested; no shared handler, admission, registry, native writer, Operations, Portal, approval, sender, payment adapter or migration changed.
-INTERNAL_BUILD_IDENTITY: 78e7fc5246d6fcbd0d207353481d0c842b287375; deployment=NOT_DEPLOYED; environment=local-source; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED; evidence=this record and original focused tests
-RELEASE_CHANNEL: internal: held source repair pending exact-head review/CI and actual rendered/authenticated proof; no activation.
-RELEASE_CLASSIFICATION: bounded-bug-fix: preserve original invoice revision applicability in existing status readers.
+INTERNAL_BUILD_IDENTITY: 78e7fc5246d6fcbd0d207353481d0c842b287375; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(candidate paige-ai-chat deployment and authenticated status read); evidence=this record and original focused tests
+RELEASE_CHANNEL: development: held source repair pending exact-head review/CI and actual rendered/authenticated proof; no activation.
+RELEASE_CLASSIFICATION: patch: preserve original invoice revision applicability in existing status readers.
 CUSTOMER_RELEASE_IDENTITY: none: full integrated EXP04 remains incomplete and is not announced as accepted.
 RELEASE_NOTE_REQUIRED: no: this held engineering increment is not a complete customer release.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: source checks pass; actual candidate visual, deployment, authenticated continuity and founder acceptance remain unverified. Binding Ledger availability is not promoted.

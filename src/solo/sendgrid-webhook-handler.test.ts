@@ -144,6 +144,20 @@ describe('sendgrid webhook door (ANT-148 corrections)', () => {
     expect(ids).toEqual(['sg:ev-abc', 'sg:ev-xyz']);
   });
 
+  it('accepts SendGrid\'s real id format (URL-safe base64 with = padding) and keeps a stable, journal-safe identity', async () => {
+    // Verbatim from SendGrid's event docs: real sg_event_ids usually end in "==".
+    const ids: string[] = [];
+    const h = harness((args) => { ids.push(args._receipt_id as string); return Promise.resolve({ data: 'processed', error: null }); });
+    const first = await h.handle(request([event('bounce', '6g4ZI7SA-xmRDv57GoPIPw=='), event('delivered', 'rWVYmVk90MjZJ9iohOBa3w=='), event('open', 'RHFZB1IrTD2Y9Q7bUdZxUw')]));
+    expect(first.status).toBe(200);
+    expect((await first.json()).processed).toBe(3);
+    // A redelivery of the same event yields the same identity, so the journal dedups it.
+    await h.handle(request([event('bounce', '6g4ZI7SA-xmRDv57GoPIPw==')]));
+    expect(ids).toEqual(['sg:6g4ZI7SA-xmRDv57GoPIPw', 'sg:rWVYmVk90MjZJ9iohOBa3w', 'sg:RHFZB1IrTD2Y9Q7bUdZxUw', 'sg:6g4ZI7SA-xmRDv57GoPIPw']);
+    // ingest_sendgrid_receipt refuses any receipt id outside this set (20271031000200).
+    for (const id of ids) expect(id).toMatch(/^[A-Za-z0-9_.:-]{1,200}$/);
+  });
+
   it('reordered / differently-batched redelivery stays idempotent (same sg_event_id anywhere)', async () => {
     const ids: string[] = [];
     const h = harness((args) => { ids.push(args._receipt_id as string); return Promise.resolve({ data: 'processed', error: null }); });

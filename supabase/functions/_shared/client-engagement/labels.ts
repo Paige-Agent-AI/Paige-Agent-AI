@@ -7,6 +7,7 @@
 // Pure: no Supabase client, no Deno URL import — both the edge bundle and the Vite app import it.
 import type { Attention, ClientEngagementStatus } from './status.ts';
 import type { ReadLinkDestination, ReadRecordLink } from '../paige-turn/record-links.ts';
+import { readRecordLinks } from '../paige-turn/record-links.ts';
 
 export const INVOICE_TERMS_VERSION_REASON = 'Invoice and plan versions differ';
 
@@ -109,9 +110,14 @@ export function standingInvoiceLink(s: ClientEngagementStatus): ReadRecordLink {
   return { destination: 'sales_invoices', record_id: only && ['draft', 'issued', 'void'].includes(only.status) ? only.id : null };
 }
 
+/** The original signing document, never the commercial-terms ID or a later draft. */
+export function standingAgreementLink(s: ClientEngagementStatus): ReadRecordLink {
+  return readRecordLinks([{ destination: 'sales_agreements', record_id: s.agreement.state === 'none' ? null : s.agreement.signing_id }])[0];
+}
+
 export function standingRecordLinks(s: ClientEngagementStatus): ReadRecordLink[] {
   const links: ReadRecordLink[] = [{ destination: 'contacts', record_id: s.client.id, ...(s.client.name ? { subject: s.client.name } : {}) }];
-  if (s.terms || s.agreement.state !== 'none') links.push({ destination: 'sales_agreements', record_id: null });
+  if (s.terms || s.agreement.state !== 'none') links.push(standingAgreementLink(s));
   if (s.invoices.length || s.truncated.invoices) links.push(standingInvoiceLink(s));
   if (s.terms?.schedule.length) links.push({ destination: 'sales_collections', record_id: null });
   if (s.work.state !== 'none' && s.work.total > 0) links.push({ destination: 'operations_work', record_id: null });

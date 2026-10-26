@@ -12,6 +12,7 @@ import {
   ATTENTION_DESTINATION,
   ATTENTION_TEXT,
   NOT_RECORDED_TEXT,
+  standingAgreementLink,
   standingInvoiceLink,
   standingTermsEvidence,
   standingTimingReason,
@@ -197,7 +198,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
   return (
     <>
       <ol className="trc-standing-rows">
-        <Row state={signature} label="Agreement" actions={<StandingLink destination="sales_agreements" account={account} />}>
+        <Row state={signature} label="Agreement" actions={<StandingLink destination="sales_agreements" recordId={standingAgreementLink(s).record_id} account={account} />}>
           <span>{s.agreement.title ?? (s.agreement.effective === "verified" ? "Original signed agreement" : s.agreement.state === "none" ? "No agreement document yet" : "Untitled agreement")}</span>
           {signedLine && <span className="trc-standing-quiet-line">{signedLine}</span>}
           <span className="trc-standing-quiet-line">{termsLine}</span>

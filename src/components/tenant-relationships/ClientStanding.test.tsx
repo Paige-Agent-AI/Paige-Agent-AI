@@ -37,10 +37,11 @@ describe("ClientStanding", () => {
     expect(dd("Overdue")?.textContent).toBe("$320.00");
   });
   it("does not call an exact original signing outside the title list untitled", async () => {
-    const {source:changed}=effectiveStandingFixture();changed.signings=[];changed.signings_has_more=true;
+    const {source:changed,accepted}=effectiveStandingFixture();changed.signings=[];changed.signings_has_more=true;
     rpc.mockResolvedValue({data:changed,error:null});await render();
     expect(row("Agreement")?.textContent).toContain("Original signed agreement");
     expect(row("Agreement")?.textContent).not.toContain("Untitled agreement");
+    expect(row("Agreement")?.querySelector('a')?.getAttribute('href')).toBe(`/solo/42/sales/agreements?agreement=${accepted.signing_id}`);
   });
   it.each([0,3])("does not equate %i done work records with accepted service", async done => {
     const work={...structuredClone(source.work),total:3,done,open:0,cancelled:3-done,blocked:0,overdue:0,undated_open:0};
@@ -108,7 +109,7 @@ describe("ClientStanding", () => {
   it("links only through the shared route map and frozen labels", async () => {
     rpc.mockResolvedValue(reply()); await render();
     const links = hrefs();
-    expect(links).toContainEqual(["Open terms & agreements", "/solo/42/sales/agreements"]);
+    expect(links).toContainEqual(["Open terms & agreements", `/solo/42/sales/agreements?agreement=${source.signings[0].id}`]);
     expect(links).toContainEqual(["Open invoices", "/solo/42/sales/payments?view=invoices"]);
     expect(links).toContainEqual(["Open collections", "/solo/42/sales/payments?view=collections"]);
     expect(links).toContainEqual(["Open delivery work", "/solo/42/operations/work"]);

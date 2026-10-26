@@ -564,6 +564,16 @@ unknown hold without another request. Genuine/unknown changes still retire.
 [Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
 does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
 
+## EXP05 weekly session retention — October26 source released
+
+Original weekly hook/composer#2890 is mergedabc8c75b7 after exacta82/LOWER5646239219,
+all10 checks/two webSUCCESS and unchanged successful retry of the retained521
+download failure. READY/exact public build and both original callbacks are read
+back; original empty owner panel reload is distinct from SDK/draft retention
+acceptance. No native/Edge/role/recurrence/provider/Live activation or catalogue/
+algorithm promotion. [Actual release and limits](../evidence/ui-delivery/exp05-weekly-session-recovery.md).
+Full ten/E5/Builder/owner-away/ZION/cohort/isolation/founder proof remains open.
+
 ## EXP05 weekly save/source recovery — October25 merged, full source proof failed
 
 Original#2792 reviewed4c86/LOWER5641424249/all11+two webSUCCESS merged

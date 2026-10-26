@@ -1,0 +1,153 @@
+{
+  "kind": "one self-contained local HTML, actual original React editor/card/formatter and compiled original CSS; all source/claim/customer outcomes mocked; no authenticated/native/provider proof",
+  "sources": [
+    {
+      "file": "src/components/tenant-relationships/ClientPrivateRequests.tsx",
+      "sha256": "1fda8ba9ca790368c7de58953daa6e1548446f62abb3f58db2321434869bb5ac"
+    },
+    {
+      "file": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88"
+    },
+    {
+      "file": "supabase/functions/_shared/client-portal-request-command.ts",
+      "sha256": "01e27bf7ee524daf59ac2419c696ab7bb5ef1eb31012d4905fb49f1385cecd18"
+    },
+    {
+      "file": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "file": "outputs/e09-share-prototype/source.tsx",
+      "sha256": "4e3a02687efabd932a44f242031bcc15110fe2ae2011686d622675b23e17b676"
+    }
+  ],
+  "checks": [
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "result": "review fits, original approval reachable"
+    },
+    {
+      "interaction": "private-save/review/decline/return-focus/approve-once/unknown/read-only-recovery/customer-separation/response",
+      "result": "PASS: deterministic mocks only"
+    },
+    {
+      "stage": "denied",
+      "result": "No approval affordance"
+    },
+    {
+      "stage": "changed",
+      "result": "No approval affordance"
+    },
+    {
+      "stage": "expired",
+      "result": "No approval affordance"
+    },
+    {
+      "stage": "offline",
+      "result": "No approval affordance"
+    },
+    {
+      "stage": "no_binding",
+      "result": "No approval affordance"
+    },
+    {
+      "stage": "long_review",
+      "result": "Full native-length wording retained, no horizontal overflow, approval reachable"
+    }
+  ],
+  "externalRequests": [],
+  "failures": []
+}

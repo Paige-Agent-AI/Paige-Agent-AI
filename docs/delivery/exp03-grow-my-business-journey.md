@@ -840,12 +840,68 @@ grepped across `supabase/functions` and `src`.
 - **Open, tracked:**
   - Delayed or asynchronous bounces carry no `sg_message_id`, so they are quarantined. That holds their
     batch for SendGrid's 24-hour retry window.
-  - `unsubscribe` events are acknowledged but not recorded. The owner is advised to turn SendGrid
-    Subscription Tracking off.
-  - SendGrid's Google Analytics link tracking may change the UTM tags Paige attributes campaigns by.
-    Verification is owed.
+  - `unsubscribe` events are acknowledged but not recorded. **Closed by the owner, 2026-10-26:** SendGrid
+    Subscription Tracking is OFF, so SendGrid neither adds its own unsubscribe link nor suppresses on it;
+    Paige's consent and suppression stay the only record.
+  - SendGrid's Google Analytics link tracking could have rewritten the UTM tags Paige attributes campaigns
+    by. **Closed by the owner, 2026-10-26:** Google Analytics tracking is OFF.
   - Campaigns still send managed mail through Resend. The SendGrid-only cutover the owner re-confirmed on
-    2026-10-26 is the next email deliverable.
+    2026-10-26 is the next email deliverable (§14.6).
+- **Merged and deployed:** #2937 (`146cf565`); `deploy-edge-functions` run #864 succeeded at 21:21 UTC.
+  **Owed:** a re-run of SendGrid's "Test Your Integration" and a production log readback of 200s.
+
+### 14.6 Campaign email on SendGrid — the lane, built inert (2026-10-26)
+
+**Grounded on production first (read-only, 2026-10-26):** 1 campaign, 0 recipients sent; 9 email
+connectors, all `resend` (7 active); 1 `tenant_email_domains` row, 0 SendGrid-verified. Campaign
+delivery analytics today come from Resend receipts only (`process_resend_receipt` writes
+`email_campaign_recipients.*_at`); SendGrid receipts correlated only to governed replies. **Moving
+campaigns to SendGrid before this lane would have erased campaign analytics for every business** (§58).
+
+**Owner input (2026-10-26):** AWS is also available ("green light to use it"). Not used: nothing in the
+repo uses AWS (searched `amazonaws`, `SES`, `sesv2`, `aws_ses`, `AWS_ACCESS_KEY` across
+`supabase/functions`, `src`, the config registry — absent), while the SendGrid door, signed webhook and
+receipt journal are built and connected. SES remains a later cost option, not a blocker.
+
+**Built (migration `20271116020000`, `send-message`):**
+1. A campaign may name a SendGrid sender only when its domain is SendGrid-verified for that business
+   (`_email_resolve_sender`, the one sender resolver for draft, approval and claim). It is PAIGE-paid.
+2. `email_campaign_sendgrid_admit` — send-message's only new SendGrid admission (security H2 otherwise
+   unchanged): the recipient the dispatcher leased right now, its own address, the campaign's approved
+   connector, still SendGrid, still verified for this business. The send carries
+   `paige_tenant_id` + the recipient id as `paige_operation_id`/`paige_message_id`.
+3. SendGrid events land on the recipient row (delivered/opened/clicked/bounced/complained, first time
+   wins) only when the provider id, all three claims and the address match a SendGrid-sent recipient.
+   Hard bounce and complaint suppress; a `blocked` bounce counts as bounced and suppresses nobody. An
+   event for a recipient still being handed over is redelivered; one for a recipient recorded sent
+   without an `X-Message-Id` supplies the id. A thrown/5xx SendGrid answer is `outcome_unknown`, so it is
+   never sent twice (SendGrid has no idempotent replay).
+4. A sent campaign email is metered under the provider that sent it.
+
+**Evidence (local, full replay):** `email_campaign_sendgrid_lane.sql` 70/70; 11 mutants of the
+migration each fail it; the governed-reply receipt proof (91 assertions) now replays this migration
+after 20271031000200, so it runs against the new ingest in CI; lifecycle 86/86, E09 audience 84/84,
+the psql receipt/door/integrity/marketing/domain proofs pass; `send-message-campaign-sendgrid.test.ts`
+7/7 (3 fail on the old send-message; 2 mutants caught); `deno check send-message` clean on base and
+head; the PAIGE Spine registry lint and its self-test pass with the `send-message` source digest
+renewed (old digest reproduced from main first).
+
+**Independent review (§39, author-dispatched, lower assurance): no blocker.** Fixed: a complaint or hard
+bounce about an `outcome_unknown` send still suppresses the address (without moving totals); the
+governed-reply proof now exercises the new ingest; campaign sends ask SendGrid to track opens and clicks
+per message; untested refusals (signed-in subject under the service role, connector switched off, From
+changed, expired lease, cancelled campaign) and an untyped bounce are now proven. Left as tracked, by
+choice: `dropped` events stay journal-only (SendGrid drops to its own lists; no column); an unconfirmed
+send's audit row reads `failed` (the audit `status` vocabulary has no unknown) while the campaign row
+reads `outcome_unknown`; the admission is not single-use (only the service role can ask, and the worker
+begins each recipient once).
+
+**Still not live, by design.** No business has a SendGrid sender. Next, in order: (a) Paige's own
+managed sender on SendGrid — needs the authenticated SendGrid domain from the owner; (b) a business
+verifying its own domain in SendGrid (no automated writer exists; needs a domain-authentication-scoped
+key and a per-business DNS ownership proof); (c) the owner signs off the first live campaign test send.
+Tracked, not built: settling an `outcome_unknown` recipient from a later SendGrid event (it would change
+a finished campaign's totals — an owner call); recording `dropped` events (no column).
 
 **States kept separate:** source · review · exact CI · merge · deploy · configured · connected · activated ·
 authenticated · founder. This checkpoint reaches **source + local automated proof** for §14.2 and **merge**

@@ -94,6 +94,9 @@ SELECT pg_temp.check_true((SELECT count(*)=6 AND bool_and(md5(p.prosrc)=s.expect
 \ir ../migrations/20271031000100_paige_email_sendgrid_governed_door.sql
 \ir ../migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql
 \ir ../migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql
+-- 20271116020000 redefines ingest_sendgrid_receipt (campaign fall-through): replay it after 000200 so every
+-- governed-reply assertion below runs against the ingest production actually has.
+\ir ../migrations/20271116020000_exp03_campaign_sendgrid_lane.sql
 
 SELECT pg_temp.check_true(to_regprocedure('public.ingest_sendgrid_receipt(text,text,text,text,timestamptz)') IS NULL
   AND to_regprocedure('public.ingest_sendgrid_receipt(text,text,text,text,timestamptz,text,text,text,text,text)') IS NOT NULL,

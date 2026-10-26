@@ -160,6 +160,7 @@ on:
       - "supabase/migrations/20271031000100_paige_email_sendgrid_governed_door.sql"
       - "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql"
       - "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql"
+      - "supabase/tests/email_campaign_sendgrid_lane.sql"
       - "supabase/tests/tenant_email_domain_normalization.sql"
       - "supabase/migrations/20271101042133_tenant_email_domains_normalize_domain.sql"
       - "supabase/functions/comms-email-command/**"
@@ -731,6 +732,12 @@ jobs:
       # never approves, decline returns a draft, suppression re-checked at send, an expired lease never
       # re-sent, a duplicate record refused, cancel mid-send, and a resend never reaching anyone twice.
       - run: supabase test db supabase/tests/email_campaign_lifecycle.sql
+        if: ${{ !cancelled() }}
+      # EXP03 email journey: the SendGrid lane for approved campaigns — a SendGrid sender verified for THIS
+      # business before filing, send-message's admission limited to the leased recipient and approved
+      # connector, metered under SendGrid, and SendGrid's events landing on the recipient row only when
+      # all three claims and the address match (hard bounce and complaint suppress; blocked does not).
+      - run: supabase test db supabase/tests/email_campaign_sendgrid_lane.sql
         if: ${{ !cancelled() }}
       # E09 K2: relevant retrieval — the asker re-resolved from the thread; authorized set first, candidates only
       # through the exact-chunk check, ranked by distance, five sources, eight passages within 4,800 characters

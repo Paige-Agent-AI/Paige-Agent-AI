@@ -1,5 +1,9 @@
 # Decision Log — chronological one-liners
 
+## October26 — EXP03 staffing: one Claude Code successor replaces the zCod lead
+
+- **Owner ruling (Antonio, 2026-10-26; ANT-87 `5823dedd`, ANT-161 `fa99a73f`).** The zCod EXP03 lead's credits are exhausted. The whole remaining Grow My Business assignment goes to ONE new Claude Code successor. It replaces the zCod lead; it is not parallel staffing. The full scope stands: F1–F9/S1–S6/WEB01–14, every mapped alias, and the email/newsletter/mailbox mandate. Every other EXP boundary and every held effect (sends, provisioning, DNS, scopes, spend) is unchanged. The successor's ACK, matrix and first deliverable (the email campaign lifecycle proof) are in `docs/delivery/exp03-grow-my-business-journey.md` §14.
+
 ## October26 — admin scope: owner ruling and stage 0 built
 
 - **Owner ruling (Antonio, 2026-10-26).** Being the owner or admin of one business must never give admin power in another business the same person belongs to. In someone else's workspace a person has exactly the seat role that workspace gave them. Platform-operator authority (super_admin / platform_admin, `is_platform_owner` / `is_platform_operator`, §53) is unaffected. Owners, admins and PAIGE keep full create/change/delete inside their own workspace; nobody legitimate becomes read-only. Overrides R4's "global second" for a person asking about themselves (`docs/doctrine/role-taxonomy-and-matrix.md`).

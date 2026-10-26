@@ -1,3 +1,20 @@
+## EXP02 original capture-phase checkpoints — development only, October26
+
+The original Systems core now has an optional trusted manual checkpoint port at
+each existing I/O/check boundary, requiring the validated WorkUUID/native signal.
+Only an explicit true acknowledgement permits the next step; refused, malformed,
+cancelled or late checkpoints retain phase/identity and cannot become a normal
+error finding or completion. No caller installs it; native Work heartbeat remains
+the authority/lease issuer, not JavaScript role logic or the callback itself.
+Genuine unchanged-core baseline115PASS/27FAIL becomes143 capture cases PASS,
+including one additional repeated-phase control; four affected suites171PASS.
+Scoped lint passes. Two local startup failures were INVALID before assertions.
+Full hosted build/review/exact CI/normal Edge release/readback remain required.
+No UI/native/grant/provider/worker/caller/scan activation, receipt or customer proof.
+ALG/CAP/manualSpine/all19/nine/9-0+12-0-4/monthlyUNKNOWNUNRETRIED retained;
+Visual N/A, Experiential INCOMPLETE, Founder NOT_ACCEPTED. Original evidence:
+[Systems capture](../evidence/e2-systems-capture-mode.md).
+
 ## October26 — original manual Work safeguards deployed, scan still unavailable
 
 [#2918 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2918#issuecomment-6424997500): reviewed
@@ -703,6 +720,15 @@ feature credit for this closeout.
 ## EXP05 weekly same-session recovery — October25 development
 
 ### October26 whole-Experience receiving reconciliation
+
+Owner design addendum ANT-11/704476b3 is mapped as subcases in the same original
+acceptance packet: original-record drilldowns, real workflow detail, compact
+nonredundant copy, purposeful color/graphics/motion, laptop/tablet/phone in both
+themes, keyboard/focus/zoom/reduced motion and bounded Impeccable finish evidence.
+No new UI or case PASS is claimed by this mapping. Master4.0 now records actual
+#2931/source083634 and #2929/source56db releases with exact CI/production/build
+boundaries. #2933 remains the next original-reader source/CI candidate; original
+ten/E5/owner-away/Builder/ZION/cohort/Live/founder acceptance stays open.
 
 Owner addendum ANT-11/7d47cc68 is mapped to the same ten outcomes and unchanged
 E5-CV1–9 in the [original acceptance packet](../delivery/experience-05-weekly-acceptance-packet.md#october26-whole-experience-reconciliation--original-scope-retained).

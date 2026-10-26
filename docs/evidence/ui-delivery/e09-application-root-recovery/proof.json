@@ -1,0 +1,92 @@
+{
+  "evidenceClass": "Controlled original React bootstrap / synthetic App and provider ports, not authenticated runtime",
+  "base": "d08a2f206d479c3727898cb68466758075382898",
+  "sourceInverse": true,
+  "unchanged": [
+    "App",
+    "boot",
+    "PageLoadBoundary",
+    "failure CSS",
+    "unsaved registry"
+  ],
+  "sourceSha256": "3cbc337d6ae275b65d7cd1023b47c5684df9526104b37f14b622995af3278c44",
+  "red": {
+    "passed": 1,
+    "failed": 2,
+    "cases": [
+      {
+        "name": "retains the original healthy application, ready marker and stateful controls",
+        "status": "passed"
+      },
+      {
+        "name": "shows original recovery when app rendering fails before a route boundary",
+        "status": "failed"
+      },
+      {
+        "name": "shows original recovery when provider rendering fails before a route boundary",
+        "status": "failed"
+      }
+    ]
+  },
+  "green": {
+    "passed": 44,
+    "failed": 0,
+    "files": [
+      {
+        "file": "AppShell.client-refresh.test.tsx",
+        "passed": 13,
+        "failed": 0
+      },
+      {
+        "file": "application-root-recovery.test.tsx",
+        "passed": 3,
+        "failed": 0
+      },
+      {
+        "file": "invoice-document-bootstrap.test.tsx",
+        "passed": 4,
+        "failed": 0
+      },
+      {
+        "file": "render-frame-bootstrap.test.tsx",
+        "passed": 12,
+        "failed": 0
+      },
+      {
+        "file": "PageLoadBoundary.test.tsx",
+        "passed": 12,
+        "failed": 0
+      }
+    ]
+  },
+  "invalidSetup": "Initial0/3 used .catch on React act thenable before assertions; retained as INVALID, not causal evidence",
+  "prototypeBeforeEdit": 16,
+  "rendered": 20,
+  "prior16CaseObjectsPreserved": true,
+  "externalRequests": 0,
+  "originalNavigation": {
+    "sameDraft": true,
+    "mounts": 1,
+    "unmounts": 0
+  },
+  "designDetector": {
+    "version": "4.1.0",
+    "exit": 0,
+    "findings": 0
+  },
+  "sourceLint": {
+    "eslintExit": 0,
+    "goldExit": 0
+  },
+  "authenticated": "UNVERIFIED",
+  "ownerReportCause": "UNVERIFIED",
+  "production": "NOT_DEPLOYED",
+  "activation": "UNCHANGED",
+  "founderAcceptance": "NOT_REQUESTED",
+  "localWholeAppCompiler": {
+    "status": "INTERRUPTED",
+    "completedDiagnosticOutput": false,
+    "passClaim": false,
+    "requiredHostedTypeAndBuild": "OWED"
+  }
+}

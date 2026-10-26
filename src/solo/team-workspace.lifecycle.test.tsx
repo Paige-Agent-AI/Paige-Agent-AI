@@ -398,6 +398,23 @@ describe("focus returns to the row's ⋯ when an overlay opened from it closes",
     expect(document.activeElement).toBe(more());
   });
 
+  it("the ⋯ menu takes focus on its first item and moves with the arrows, Home and End", async () => {
+    base(); await open();
+    await act(async () => more().click());
+    await wait(20);
+    const items = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+    expect(document.activeElement).toBe(items[0]);
+    const key = async (k: string) => act(async () => { document.activeElement!.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true })); });
+    await key("End");
+    expect(document.activeElement).toBe(items[items.length - 1]);
+    await key("Home");
+    expect(document.activeElement).toBe(items[0]);
+    await key("ArrowUp");
+    expect(document.activeElement, "ArrowUp from the first wraps to the last").toBe(items[items.length - 1]);
+    await key("Escape");
+    expect(document.activeElement).toBe(more());
+  });
+
   it("after Esc on the departure review and after closing the editor", async () => {
     base(); await open();
     await menu("Theo Brandt", "Remove from team");

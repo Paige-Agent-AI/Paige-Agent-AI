@@ -146,8 +146,12 @@ export function RowMenu({ label, items, triggerId, busy }: { label: string; item
     let top = r.bottom + 4;
     if (height && top + height > viewportH - 8) top = Math.max(8, r.top - height - 4);
     setPos({ top, left: Math.max(8, r.right - width) });
-    menu.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
   }, [open]);
+  // Focus the first item once the menu is placed: on the first open it renders hidden until its
+  // position is known, and a hidden element cannot take focus, so focusing above left it on the trigger.
+  useEffect(() => {
+    if (open && pos) menu.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus({ preventScroll: true });
+  }, [open, pos]);
   useEffect(() => {
     if (!open) return;
     const away = (event: MouseEvent) => {
@@ -171,6 +175,8 @@ export function RowMenu({ label, items, triggerId, busy }: { label: string; item
         const at = nodes.indexOf(document.activeElement as HTMLButtonElement);
         if (event.key === "ArrowDown") { event.preventDefault(); nodes[(at + 1) % nodes.length]?.focus(); }
         else if (event.key === "ArrowUp") { event.preventDefault(); nodes[(at - 1 + nodes.length) % nodes.length]?.focus(); }
+        else if (event.key === "Home") { event.preventDefault(); nodes[0]?.focus(); }
+        else if (event.key === "End") { event.preventDefault(); nodes[nodes.length - 1]?.focus(); }
         else if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(true); }
         else if (event.key === "Tab") { close(false); }
       }}>

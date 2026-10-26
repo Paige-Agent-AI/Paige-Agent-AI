@@ -1,0 +1,1419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Settings Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!--
+  PROTOTYPE — EXP08 Settings → Team. Throwaway and read-only.
+  Every write (suspend, reinstate, remove, hand-over, invite, conversations switch) is a
+  deterministic local mock with a simulated 700 ms delay. Nothing leaves this file.
+  Tokens are copied verbatim from src/index.css [data-pg="light"|"dark"] (base 10f73a7fa).
+-->
+<style>
+/* ---------- Product tokens (verbatim from src/index.css) ---------- */
+:root {
+  --pg-font-display: "Schibsted Grotesk", "Segoe UI Variable Display", "SF Pro Display", system-ui, sans-serif;
+  --pg-font-ui: "Schibsted Grotesk", "Segoe UI Variable Text", "SF Pro Text", system-ui, sans-serif;
+  --pg-font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --pg-t-label: 11px; --pg-t-body: 13px; --pg-t-lead: 16px; --pg-t-title: 21px;
+}
+[data-pg="dark"] {
+  color-scheme: dark;
+  --pg-env: #08070b; --pg-nav: #0d0b11; --pg-canvas: #100e14; --pg-spine: #121017;
+  --pg-workspace: #16131a; --pg-surface: #19161e; --pg-raised: #211d27;
+  --pg-line-soft: rgba(244,237,222,.115); --pg-line: rgba(244,237,222,.195);
+  --pg-line-strong: rgba(244,237,222,.30);
+  --pg-ink: #f6f2ea; --pg-ink-2: #d6d0c9; --pg-muted: #aca69d; --pg-faint: #969089;
+  --pg-gold-core: #fff0cf; --pg-gold: #ead5aa; --pg-gold-fill: #d4a752;
+  --pg-lift: rgba(255,255,255,.018);
+  --pg-violet: #9b8de0; --pg-positive: #8fd1ae; --pg-warning: #edc17f; --pg-negative: #eda093;
+  --pg-e1: inset 0 1px rgba(255,255,255,.025);
+  --pg-e3: -20px 0 60px rgba(0,0,0,.22);
+  --pg-rim: inset 0 1px 0 rgba(255,255,255,.07), inset 0 -1px 0 rgba(0,0,0,.5);
+  --pg-lift-1: inset 0 1px 0 rgba(255,255,255,.055), 0 1px 1px rgba(0,0,0,.3), 0 4px 12px -4px rgba(0,0,0,.42);
+  --pg-lift-3: inset 0 1px 0 rgba(255,255,255,.085), 0 6px 12px rgba(0,0,0,.36), 0 36px 72px -20px rgba(0,0,0,.62);
+  --pg-inset: inset 0 1px 2px rgba(0,0,0,.42), inset 0 -1px 0 rgba(255,255,255,.035);
+  --pg-r-plate: 13px; --pg-r-chip: 9px; --pg-r-pill: 999px;
+  --ring: 250 57% 72%;
+  --act-ink: #08070b;
+  --scrim: rgba(4,3,10,.66);
+}
+[data-pg="light"] {
+  color-scheme: light;
+  --pg-env: #e8e5df; --pg-nav: #f4f1eb; --pg-canvas: #fbf9f5; --pg-spine: #f1eee8;
+  --pg-workspace: #f7f4ee; --pg-surface: #f5f2ec; --pg-raised: #fffdf8;
+  --pg-line-soft: rgba(45,40,50,.105); --pg-line: rgba(45,40,50,.185);
+  --pg-line-strong: rgba(45,40,50,.28);
+  --pg-ink: #201e23; --pg-ink-2: #3d3941; --pg-muted: #67616b; --pg-faint: #6a646e;
+  --pg-gold-core: #6f5636; --pg-gold: #8b7049; --pg-gold-fill: #c9a96a;
+  --pg-lift: rgba(45,40,50,.03);
+  --pg-violet: #655a96; --pg-positive: #327458; --pg-warning: #986322; --pg-negative: #a5483d;
+  --pg-e1: inset 0 1px rgba(255,255,255,.7);
+  --pg-e3: -20px 0 60px rgba(45,40,50,.08);
+  --pg-rim: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(45,40,50,.07);
+  --pg-lift-1: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 1px rgba(45,40,50,.055), 0 4px 10px -4px rgba(45,40,50,.12);
+  --pg-lift-3: inset 0 1px 0 #fff, 0 6px 12px rgba(45,40,50,.09), 0 32px 64px -20px rgba(45,40,50,.22);
+  --pg-inset: inset 0 1px 2px rgba(45,40,50,.1), inset 0 -1px 0 rgba(255,255,255,.85);
+  --pg-r-plate: 13px; --pg-r-chip: 9px; --pg-r-pill: 999px;
+  --ring: 251 25% 47%;
+  --act-ink: #201e23;
+  --scrim: rgba(32,30,35,.32);
+}
+
+/* ---------- Page + review chrome (NOT product UI) ---------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: #2b2d33; font-family: var(--pg-font-ui); }
+.dev { position: relative; z-index: 200; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 7px 12px; background: #17181c; color: #d9dbe1; font: 500 11px/1.3 ui-monospace, SFMono-Regular, Consolas, monospace; border-bottom: 1px dashed #4c5160; }
+@media (max-width: 700px) { .dev { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; } .dev fieldset { flex: none; } }
+.dev b { color: #ffd36b; font-weight: 600; letter-spacing: .02em; }
+.dev fieldset { display: flex; align-items: center; gap: 3px; margin: 0; padding: 0; border: 0; }
+.dev legend { float: left; margin-right: 4px; color: #8f95a3; }
+.dev button { min-height: 24px; padding: 0 7px; border: 1px solid #3b3f4a; border-radius: 5px; color: #d9dbe1; background: #22242b; font: inherit; cursor: pointer; }
+.dev button[aria-pressed="true"] { border-color: #8f9cff; color: #fff; background: #2f3570; }
+.dev button:focus-visible { outline: 2px solid #8f9cff; outline-offset: 1px; }
+.stage { display: flex; justify-content: center; padding: 14px 10px 0; }
+.proto-note { display: flex; gap: 8px; align-items: baseline; padding: 9px 12px; border: 1px dashed #8a7a3c; border-radius: 8px; color: #3a3420; background: #f6efcf; font: 500 11px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.proto-note b { color: #6b5a12; letter-spacing: .04em; white-space: nowrap; }
+[data-pg="dark"] .proto-note { color: #e8dfb8; background: #2a2614; border-color: #7a6a2c; } [data-pg="dark"] .proto-note b { color: #ffd36b; }
+.frame { position: relative; width: 100%; max-width: 1280px; height: calc(100vh - var(--devh, 64px) - 14px); min-height: 560px; overflow: hidden; transform: translateZ(0); border-radius: 10px 10px 0 0; container-type: inline-size; container-name: frame; box-shadow: 0 0 0 1px #000, 0 20px 50px rgba(0,0,0,.4); }
+.frame[data-vp="tablet"] { max-width: 900px; } .frame[data-vp="phone"] { max-width: 390px; }
+.scroller { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; }
+.review { max-width: 1280px; margin: 0 auto; padding: 12px 10px 60px; color: #d9dbe1; font: 13px/1.5 var(--pg-font-ui); }
+.review details { border: 1px dashed #4c5160; border-radius: 8px; background: #1d1f25; }
+.review summary { padding: 10px 12px; cursor: pointer; font-weight: 600; color: #fff; }
+.review .inner { padding: 0 14px 14px; }
+.review h3 { margin: 18px 0 6px; font-size: 13px; color: #ffd36b; }
+.review table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.review th, .review td { padding: 5px 6px; border-bottom: 1px solid #333744; text-align: left; vertical-align: top; }
+.review th { color: #8f95a3; font-weight: 500; }
+.review p, .review li { color: #c6c9d1; }
+.review textarea { width: 100%; min-height: 70px; padding: 8px; border: 1px solid #3b3f4a; border-radius: 6px; color: #fff; background: #22242b; font: inherit; }
+.review .decide { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.review .decide button { min-height: 32px; padding: 0 12px; border: 1px solid #3b3f4a; border-radius: 6px; color: #fff; background: #2a2d36; font: inherit; cursor: pointer; }
+.review .decide button[aria-pressed="true"] { border-color: #8f9cff; background: #2f3570; }
+
+/* ---------- Product surface ---------- */
+[data-pg] { color: var(--pg-ink); font-family: var(--pg-font-ui); font-size: var(--pg-t-body); line-height: 1.5; letter-spacing: -.002em; }
+[data-pg] :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+[data-pg] ::selection { background: color-mix(in srgb, var(--pg-violet), transparent 70%); color: var(--pg-ink); }
+.app { min-height: 100%; padding: clamp(16px, 2.2vw, 28px); background: var(--pg-canvas); }
+.scroller { scrollbar-color: var(--pg-line-strong) transparent; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 14px; }
+.sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+.head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.head h1 { margin: 0; font: 650 var(--pg-t-title)/1.15 var(--pg-font-display); letter-spacing: -.02em; }
+.head p { margin: 3px 0 0; color: var(--pg-muted); }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--pg-line); }
+.tabs button { min-height: 40px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; color: var(--pg-muted); background: none; font: 600 var(--pg-t-body)/1 var(--pg-font-display); cursor: pointer; }
+.tabs button[aria-selected="true"] { border-bottom-color: var(--pg-ink); color: var(--pg-ink); }
+.tabs button:hover { color: var(--pg-ink); }
+
+.btn { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border: 1px solid transparent; border-radius: var(--pg-r-chip); font: 600 var(--pg-t-body)/1 var(--pg-font-display); cursor: pointer; white-space: nowrap; transition: background-color .15s ease-out, opacity .15s ease-out, border-color .15s ease-out; }
+.btn.primary { color: var(--pg-canvas); background: var(--pg-ink); }
+.btn.primary:hover:not(:disabled) { opacity: .86; }
+.btn.secondary { border-color: var(--pg-line); color: var(--pg-ink); background: var(--pg-raised); box-shadow: var(--pg-e1); }
+.btn.secondary:hover:not(:disabled) { border-color: var(--pg-line-strong); }
+.btn.danger { color: var(--pg-canvas); background: var(--pg-negative); }
+.btn.danger:hover:not(:disabled) { opacity: .88; }
+.btn.act { color: var(--act-ink); background: var(--pg-gold-fill); box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 2px 6px -2px rgba(0,0,0,.3); }
+.btn.act:hover:not(:disabled) { filter: brightness(1.05); }
+.btn.quiet.danger-link { margin-right: auto; color: var(--pg-negative); text-decoration-color: color-mix(in srgb, var(--pg-negative), transparent 55%); }
+.btn.quiet { min-height: 30px; padding: 0 8px; color: var(--pg-ink); background: none; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--pg-line-strong); }
+.btn:disabled { cursor: not-allowed; opacity: .5; }
+.btn[aria-busy="true"] { cursor: progress; }
+.spin { animation: spin .9s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+
+.panel { min-width: 0; border: 1px solid var(--pg-line); border-radius: var(--pg-r-plate); background: var(--pg-surface); box-shadow: var(--pg-e1), var(--pg-rim); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border-bottom: 1px solid var(--pg-line-soft); }
+.search { position: relative; display: flex; align-items: center; flex: 1 1 240px; min-width: 0; }
+.search svg { position: absolute; left: 11px; color: var(--pg-faint); pointer-events: none; }
+.search input { width: 100%; min-height: 36px; padding: 0 10px 0 34px; border: 1px solid var(--pg-line); border-radius: 8px; color: var(--pg-ink); background: var(--pg-canvas); box-shadow: var(--pg-inset); font: 500 var(--pg-t-body)/1 var(--pg-font-ui); }
+.search input::placeholder { color: var(--pg-faint); }
+.toolbar .grow { flex: 1; }
+
+/* Picker — the design-system replacement for every native <select> on this surface. */
+.pick { display: inline-flex; min-height: 36px; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px 0 11px; border: 1px solid var(--pg-line); border-radius: 8px; color: var(--pg-ink); background: var(--pg-raised); box-shadow: var(--pg-e1); font: 500 var(--pg-t-body)/1.2 var(--pg-font-ui); text-align: left; cursor: pointer; }
+.pick:hover { border-color: var(--pg-line-strong); }
+.pick > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pick .muted { color: var(--pg-faint); }
+.pick svg { color: var(--pg-muted); width: 14px; height: 14px; }
+.pick[aria-expanded="true"] { border-color: var(--pg-line-strong); }
+.pick[data-changed="true"] { border-color: color-mix(in srgb, var(--pg-violet), transparent 45%); }
+
+.cols, .row { display: grid; grid-template-columns: 36px minmax(150px, 1.15fr) minmax(170px, 1.3fr) 96px 180px minmax(150px, 1fr) 40px; align-items: center; gap: 12px; padding: 0 14px; }
+.cols { min-height: 34px; border-bottom: 1px solid var(--pg-line-soft); color: var(--pg-faint); font-size: var(--pg-t-label); font-weight: 600; }
+.row { min-height: 62px; padding-block: 10px; border-bottom: 1px solid var(--pg-line-soft); transition: background-color .2s ease-out; }
+.row:last-child { border-bottom: 0; }
+.row { transition: box-shadow .3s ease-out; }
+.row[data-flash="true"] { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--pg-violet), transparent 35%); }  /* outline, not a wash: a wash drops warning text below AA */
+.avatar { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--pg-line); border-radius: 50%; color: var(--pg-ink-2); background: var(--pg-raised); font: 650 11px/1 var(--pg-font-display); }
+.row[data-status="invited"] .avatar { border-style: dashed; color: var(--pg-faint); background: transparent; }
+.who, .work, .stat { min-width: 0; }
+.namebtn { display: inline; max-width: 100%; padding: 0; border: 0; color: var(--pg-ink); background: none; font: 600 var(--pg-t-body)/1.5 var(--pg-font-ui); text-align: left; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; text-decoration-thickness: 1px; cursor: pointer; transition: text-decoration-color .15s ease-out; }
+.namebtn:hover { text-decoration-color: currentColor; }
+.namebtn:focus-visible { outline-offset: 2px; border-radius: 3px; }
+.namebtn { position: relative; }
+.namebtn::after { content: ""; position: absolute; inset: -7px -6px; }  /* 32px+ hit area, no layout shift */
+.who strong, .work strong, .stat strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; }
+.who small, .work small, .stat small { display: block; margin-top: 1px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--pg-faint); font-size: 12px; }
+.you { margin-left: 6px; padding: 1px 6px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-pill); color: var(--pg-muted); font-size: var(--pg-t-label); font-weight: 600; vertical-align: 1px; }
+.perm { justify-self: start; display: inline-flex; min-height: 24px; align-items: center; padding: 0 9px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-pill); color: var(--pg-ink-2); background: var(--pg-lift); font-size: 12px; font-weight: 600; }
+.stat { display: flex; align-items: flex-start; gap: 8px; }
+.stat > div { min-width: 0; }
+.dot { width: 8px; height: 8px; margin-top: 6px; flex: none; border-radius: 50%; background: var(--pg-positive); }
+.dot[data-s="suspended"] { background: transparent; border: 2px solid var(--pg-warning); }
+.dot[data-s="invited"] { background: transparent; border: 1.5px dashed var(--pg-faint); }
+.stat[data-s="suspended"] strong { color: var(--pg-warning); }
+
+/* Switch */
+.sw { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0; border: 0; color: var(--pg-ink); background: none; font: 500 var(--pg-t-body)/1 var(--pg-font-ui); cursor: pointer; }
+.sw .track { position: relative; width: 34px; height: 20px; flex: none; border: 1px solid var(--pg-line-strong); border-radius: var(--pg-r-pill); background: var(--pg-canvas); box-shadow: var(--pg-inset); transition: background-color .18s ease-out, border-color .18s ease-out; }
+.sw .thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--pg-faint); box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .2s cubic-bezier(.2,.8,.2,1), background-color .18s ease-out; }
+.sw[aria-checked="true"] .track { border-color: var(--pg-violet); background: var(--pg-violet); }
+.sw[aria-checked="true"] .thumb { transform: translateX(14px); background: var(--pg-canvas); }
+.sw[aria-busy="true"] { cursor: progress; } .sw[aria-busy="true"] .track { opacity: .55; }
+.sw:disabled { cursor: not-allowed; opacity: .55; }
+.ro { color: var(--pg-muted); }
+.ro-on { color: var(--pg-ink-2); }
+.swc .ro, .swc .ro-on { display: block; padding-left: 42px; line-height: 1.35; }
+.swc .paused { display: block; font-size: 12px; color: var(--pg-muted); white-space: nowrap; }
+.swc .cap2 { display: block; margin-top: 3px; padding-left: 42px; font-size: 12px; line-height: 1.35; color: var(--pg-muted); }
+.stat small { white-space: normal; }
+
+.more { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid transparent; border-radius: 8px; color: var(--pg-muted); background: none; cursor: pointer; }
+.more:hover, .more[aria-expanded="true"] { border-color: var(--pg-line); color: var(--pg-ink); background: var(--pg-raised); }
+.row-busy { color: var(--pg-muted); font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+
+.notice { position: fixed; left: 50%; bottom: 16px; z-index: 40; width: min(620px, calc(100% - 24px)); display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; border: 1px solid var(--pg-line); border-radius: 12px; color: var(--pg-ink); background: var(--pg-raised); box-shadow: var(--pg-lift-3); transform: translateX(-50%); }
+.enter.notice { animation: toast .22s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes toast { from { opacity: 0; transform: translate(-50%, 10px); } }
+.notice[data-tone="bad"] { border-color: color-mix(in srgb, var(--pg-negative), transparent 55%); }
+.app.has-toast { padding-bottom: 120px; }
+.notice svg { margin-top: 2px; color: var(--pg-violet); } .notice[data-tone="bad"] svg { color: var(--pg-negative); }
+.notice p { flex: 1; margin: 0; }
+.notice .btn { min-height: 30px; }
+.notice:focus-visible { outline-offset: 2px; }
+.notice .x { width: 30px; height: 30px; }
+
+.empty { display: grid; justify-items: center; gap: 4px; padding: 36px 16px; color: var(--pg-muted); text-align: center; }
+.empty strong { color: var(--pg-ink); font: 600 var(--pg-t-lead)/1.3 var(--pg-font-display); }
+
+.side { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--pg-muted); }
+.side strong { color: var(--pg-ink); font-weight: 600; }
+.side .grow { flex: 1; min-width: 0; }
+.side svg { color: var(--pg-muted); }
+
+.roles { display: grid; grid-template-columns: repeat(3, 1fr); }
+.roles article { padding: 16px; border-right: 1px solid var(--pg-line-soft); }
+.roles article:last-child { border-right: 0; }
+.roles h3 { margin: 0 0 6px; font: 650 var(--pg-t-lead)/1.25 var(--pg-font-display); }
+.roles p { margin: 0; color: var(--pg-muted); }
+.roles-note { display: flex; gap: 10px; padding: 14px 16px; border-top: 1px solid var(--pg-line-soft); color: var(--pg-muted); }
+.roles-note strong { color: var(--pg-ink); }
+
+
+/* Settings shell header — drawn as shipped in settings.tsx (ss-page-head), so Team is not titled twice. */
+.shellhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.shellhead > div { min-width: 0; }
+.shellhead .eyebrow { color: var(--pg-gold-core); font-size: 9px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+.shellhead h1 { margin: 1px 0; font: 650 var(--pg-t-title)/1.15 var(--pg-font-display); letter-spacing: -.02em; }
+.shellhead p { margin: 0; color: var(--pg-muted); font-size: 11.5px; line-height: 1.35; }
+.truth { flex: none; padding: 3px 7px; border: 1px solid color-mix(in srgb, var(--pg-warning) 32%, transparent); border-radius: var(--pg-r-pill); color: var(--pg-warning); font-size: 8px; font-weight: 800; letter-spacing: .08em; }
+
+.ptool { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 2px; }
+.ptool h2 { margin: 0; font: 650 var(--pg-t-lead)/1.25 var(--pg-font-display); letter-spacing: -.01em; }
+.ptool p { margin: 2px 0 0; color: var(--pg-muted); }
+.permnote { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--pg-line-soft); border-radius: 10px; color: var(--pg-muted); background: var(--pg-raised); }
+.permnote > div { flex: 1; min-width: 0; }
+.permnote strong { color: var(--pg-ink); font-weight: 600; margin-right: 6px; }
+.permnote > svg { color: var(--pg-muted); }
+
+.firstuse { display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid var(--pg-line-soft); background: var(--pg-lift); }
+.firstuse > div { flex: 1; min-width: 0; }
+.firstuse strong { display: block; font: 600 var(--pg-t-lead)/1.3 var(--pg-font-display); }
+.firstuse span { color: var(--pg-muted); }
+.firstuse > svg { width: 20px; height: 20px; color: var(--pg-muted); }
+.loadmore { display: flex; width: 100%; min-height: 42px; align-items: center; justify-content: center; gap: 8px; border: 0; border-top: 1px solid var(--pg-line-soft); border-radius: 0 0 var(--pg-r-plate) var(--pg-r-plate); color: var(--pg-ink); background: none; font: 600 var(--pg-t-body)/1 var(--pg-font-display); cursor: pointer; }
+.loadmore:hover:not(:disabled) { background: var(--pg-lift); }
+.loadmore:disabled { color: var(--pg-muted); cursor: progress; }
+.loadmore:focus-visible { outline-offset: -3px; }
+.inline-err { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--pg-line-soft); color: var(--pg-negative); }
+.inline-err svg { color: var(--pg-negative); }
+.skelrow { display: grid; grid-template-columns: 36px minmax(150px, 1.15fr) minmax(170px, 1.3fr) 96px 180px minmax(150px, 1fr) 40px; align-items: center; gap: 12px; min-height: 62px; padding: 0 14px; border-bottom: 1px solid var(--pg-line-soft); }
+.skelrow .skel.c { width: 34px; height: 34px; border-radius: 50%; }
+.rstate { display: grid; justify-items: center; gap: 6px; padding: 40px 16px; text-align: center; color: var(--pg-muted); }
+.rstate strong { color: var(--pg-ink); font: 600 var(--pg-t-lead)/1.3 var(--pg-font-display); }
+.rstate > svg { width: 22px; height: 22px; color: var(--pg-negative); }
+.rstate .btn { margin-top: 6px; }
+
+.invhead { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-bottom: 1px solid var(--pg-line-soft); }
+.invhead > div { flex: 1; min-width: 0; }
+.invhead h2, .paige h2 { margin: 0; font: 650 15px/1.25 var(--pg-font-display); }
+.invhead p { margin: 2px 0 0; color: var(--pg-muted); }
+.invhead > span { color: var(--pg-faint); white-space: nowrap; }
+.invhead > svg { margin-top: 2px; color: var(--pg-muted); }
+.invbody { padding: 12px 14px 14px; }
+
+.paige { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 14px; align-items: start; padding: 16px; }
+.paige .plate { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--pg-line); border-radius: 9px; color: var(--pg-ink-2); background: var(--pg-raised); }
+.paige p { margin: 3px 0 0; color: var(--pg-muted); max-width: 75ch; }
+.paige .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-top: 12px; }
+.paige h3 { margin: 0 0 4px; font: 600 12px/1.3 var(--pg-font-ui); color: var(--pg-ink-2); }
+.paige ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+.paige li { display: flex; gap: 7px; color: var(--pg-muted); font-size: 12.5px; }
+.paige li svg { width: 14px; height: 14px; margin-top: 2px; }
+.paige .now svg { color: var(--pg-positive); } .paige .soon svg { color: var(--pg-faint); }
+.paige .rule { margin-top: 10px; color: var(--pg-muted); font-size: 12.5px; }
+
+/* The other side of each switch: what the affected person sees. */
+.app:has(> .gate) { padding: 0; height: 100%; }
+.gate { min-height: 100%; display: grid; grid-template-rows: auto 1fr; background: var(--pg-canvas); }
+.gbar { display: flex; align-items: center; gap: 10px; padding: 12px clamp(16px, 2.2vw, 28px); border-bottom: 1px solid var(--pg-line-soft); background: var(--pg-nav); }
+.gbar strong { font: 650 var(--pg-t-body)/1 var(--pg-font-display); }
+.gbar span { color: var(--pg-muted); }
+.gbar .grow { flex: 1; }
+.gwrap { display: grid; place-items: center; padding: 32px 16px 64px; }
+.gcard { width: min(540px, 100%); display: grid; gap: 14px; padding: 24px; border: 1px solid var(--pg-line); border-radius: 16px; background: var(--pg-surface); box-shadow: var(--pg-lift-1); }
+.gcard .plate { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--pg-line); border-radius: 11px; color: var(--pg-ink-2); background: var(--pg-raised); }
+.gcard .plate svg { width: 20px; height: 20px; }
+.gcard h1 { margin: 0; font: 650 var(--pg-t-title)/1.2 var(--pg-font-display); letter-spacing: -.02em; text-wrap: balance; }
+.gcard p { margin: 0; color: var(--pg-ink-2); max-width: 62ch; }
+.gcard .who-list { display: grid; margin: 0; padding: 0; list-style: none; border: 1px solid var(--pg-line-soft); border-radius: 10px; background: var(--pg-raised); }
+.gcard .who-list li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--pg-line-soft); }
+.gcard .who-list li:last-child { border-bottom: 0; }
+.gcard .who-list .avatar { width: 28px; height: 28px; font-size: 10px; }
+.gcard .who-list small { margin-left: auto; color: var(--pg-faint); font-size: 12px; }
+.gcard .lbl { margin: 0 0 -6px; color: var(--pg-muted); font-weight: 600; font-size: 12px; }
+.gcard .acts2 { display: flex; flex-wrap: wrap; gap: 8px; }
+/* ---------- Overlays ---------- */
+.layer { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+.layer > * { pointer-events: auto; }
+.scrim { position: fixed; inset: 0; background: var(--scrim); }
+.enter.scrim { animation: fade .18s ease-out both; }
+@keyframes fade { from { opacity: 0; } }
+
+.menu, .listbox { position: fixed; z-index: 60; min-width: 220px; max-width: min(320px, calc(100% - 16px)); padding: 5px; border: 1px solid var(--pg-line); border-radius: 11px; background: var(--pg-raised); box-shadow: var(--pg-lift-3); }
+.enter.menu, .enter.listbox { animation: pop .14s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes pop { from { opacity: 0; transform: translateY(-4px); } }
+.menu [role="menuitem"], .listbox [role="option"] { display: flex; width: 100%; min-height: 36px; align-items: center; gap: 9px; padding: 0 10px; border: 0; border-radius: 7px; color: var(--pg-ink); background: none; font: 500 var(--pg-t-body)/1.25 var(--pg-font-ui); text-align: left; cursor: pointer; }
+.menu [role="menuitem"]:hover, .listbox [role="option"]:hover { background: var(--pg-lift); box-shadow: inset 0 0 0 1px var(--pg-line); }
+.menu [role="menuitem"]:focus-visible, .listbox [role="option"][data-active="true"] { outline: none; background: var(--pg-lift); box-shadow: inset 0 0 0 2px hsl(var(--ring)); }
+.menu [role="menuitem"] svg { color: var(--pg-muted); }
+.menu [role="menuitem"][data-tone="danger"] { color: var(--pg-negative); } .menu [role="menuitem"][data-tone="danger"] svg { color: var(--pg-negative); }
+.menu hr { margin: 4px 2px; border: 0; border-top: 1px solid var(--pg-line-soft); }
+.listbox [role="option"] .chk { width: 16px; color: var(--pg-violet); }
+.listbox [role="option"] small { margin-left: auto; color: var(--pg-faint); font-size: 12px; }
+.listbox [role="option"][aria-disabled="true"] { color: var(--pg-faint); cursor: not-allowed; }
+
+.dialog { position: fixed; left: 50%; top: 50%; width: min(520px, calc(100% - 24px)); max-height: calc(100% - 32px); display: flex; flex-direction: column; transform: translate(-50%, -50%); border: 1px solid var(--pg-line); border-radius: 14px; color: var(--pg-ink); background: var(--pg-surface); box-shadow: var(--pg-lift-3); }
+.dialog.narrow { width: min(440px, calc(100% - 24px)); }
+.enter.dialog { animation: dlg .2s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes dlg { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.985); } }
+.dialog > header, .drawer > header { display: flex; align-items: flex-start; gap: 12px; padding: 18px 18px 14px; }
+.dialog > header > div, .drawer > header > div { flex: 1; min-width: 0; }
+[data-pg] h1[tabindex="-1"]:focus-visible, [data-pg] h2[tabindex="-1"]:focus-visible { outline: none; }
+.dialog h2, .drawer h2 { margin: 0; font: 650 18px/1.25 var(--pg-font-display); letter-spacing: -.012em; }
+.dialog header p, .drawer header p { margin: 4px 0 0; color: var(--pg-muted); }
+.x { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border: 1px solid var(--pg-line); border-radius: 8px; color: var(--pg-muted); background: var(--pg-raised); cursor: pointer; }
+.x:hover { color: var(--pg-ink); }
+.body { display: grid; align-content: start; gap: 14px; padding: 4px 18px 18px; overflow-y: auto; }
+.foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--pg-line-soft); }
+.foot .lead { margin-right: auto; color: var(--pg-muted); font-size: 12px; }
+.foot .lead[data-tone="warn"] { color: var(--pg-ink-2); }
+.drawer .foot .lead { flex-basis: 100%; margin: 0 0 2px; }
+
+.facts { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.facts li { display: flex; gap: 9px; color: var(--pg-ink-2); }
+.facts li svg { margin-top: 2px; color: var(--pg-muted); }
+.alert { display: flex; gap: 9px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--pg-negative), transparent 60%); border-radius: 9px; color: var(--pg-ink); background: color-mix(in srgb, var(--pg-negative), transparent 92%); }
+.alert svg { margin-top: 2px; color: var(--pg-negative); }
+.alert p { margin: 0; }
+.alert:focus-visible { outline-offset: 2px; }
+.status { display: flex; align-items: center; gap: 8px; color: var(--pg-muted); }
+
+label.f { display: grid; gap: 6px; font-weight: 600; font-size: var(--pg-t-body); }
+label.f em { font-style: normal; font-weight: 400; color: var(--pg-faint); margin-left: 4px; }
+.f input, .f textarea { width: 100%; min-height: 40px; padding: 0 11px; border: 1px solid var(--pg-line); border-radius: 8px; color: var(--pg-ink); background: var(--pg-canvas); box-shadow: var(--pg-inset); font: 400 var(--pg-t-body)/1.4 var(--pg-font-ui); }
+.f textarea { min-height: 76px; padding: 9px 11px; resize: vertical; }
+.f input::placeholder, .f textarea::placeholder { color: var(--pg-faint); }
+.f small[role="alert"] { color: var(--pg-negative); font-weight: 500; }
+.fieldlabel { font-weight: 600; margin-bottom: 6px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg [role="radio"] { display: grid; gap: 3px; min-height: 64px; padding: 10px 12px; border: 1px solid var(--pg-line); border-radius: 10px; color: var(--pg-ink); background: var(--pg-raised); box-shadow: var(--pg-e1); font: inherit; text-align: left; cursor: pointer; transition: border-color .15s ease-out, background-color .15s ease-out; }
+.seg [role="radio"] strong { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.seg [role="radio"] span { color: var(--pg-muted); font-size: 12px; line-height: 1.4; }
+.seg [role="radio"] .radio { width: 15px; height: 15px; border: 1.5px solid var(--pg-line-strong); border-radius: 50%; }
+.seg [role="radio"][aria-checked="true"] { border-color: var(--pg-violet); background: color-mix(in srgb, var(--pg-violet), transparent 92%); }
+.seg [role="radio"][aria-checked="true"] .radio { border: 4.5px solid var(--pg-violet); }
+.seg [role="radio"][aria-disabled="true"] { cursor: not-allowed; border-style: dashed; background: transparent; box-shadow: none; }
+.seg [role="radio"][aria-disabled="true"] strong { color: var(--pg-faint); }
+.seg [role="radio"][aria-disabled="true"] .radio { border-style: dashed; }
+.seg [role="radio"][aria-disabled="true"] span { color: var(--pg-muted); }
+.convo { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--pg-line); border-radius: 10px; background: var(--pg-raised); }
+.convo > div { flex: 1; min-width: 0; }
+.convo strong { display: block; font-weight: 600; }
+.convo p { margin: 2px 0 0; color: var(--pg-muted); font-size: 12px; }
+.reviewlist { display: grid; margin: 0; border: 1px solid var(--pg-line); border-radius: 10px; overflow: hidden; }
+.reviewlist > div { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--pg-line-soft); }
+.reviewlist > div:last-child { border-bottom: 0; }
+.reviewlist dt { color: var(--pg-muted); }
+.reviewlist dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Drawer — departure review */
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100%); display: flex; flex-direction: column; border-left: 1px solid var(--pg-line-strong); color: var(--pg-ink); background: var(--pg-surface); box-shadow: var(--pg-e3); }
+.enter.drawer { animation: drw .24s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes drw { from { opacity: .4; transform: translateX(28px); } }
+.drawer .body { flex: 1; }
+.tally { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--pg-line); border-radius: 10px; background: var(--pg-raised); }
+.tally > div { flex: 1; min-width: 0; }
+.tally strong { font-weight: 600; }
+.tally small { display: block; color: var(--pg-muted); font-size: 12px; }
+.bar { height: 4px; margin-top: 7px; border-radius: 4px; background: var(--pg-line-soft); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 4px; background: var(--pg-violet); transition: width .24s cubic-bezier(.2,.8,.2,1); }
+.handall { display: grid; grid-template-columns: minmax(0,1fr); }
+.handall .pick { width: 100%; }
+.group h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font: 600 var(--pg-t-body)/1.3 var(--pg-font-display); }
+.group h3 svg { color: var(--pg-muted); }
+.group h3 .n { color: var(--pg-faint); font-weight: 500; }
+.item { display: grid; grid-template-columns: minmax(0,1fr) 200px; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--pg-line-soft); }
+.item strong { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.item small { display: block; color: var(--pg-faint); font-size: 12px; }
+.item .pick { width: 100%; }
+.item .fixed { color: var(--pg-muted); font-size: 12px; line-height: 1.4; }
+.item .cap { display: block; margin-top: 4px; color: var(--pg-muted); font-size: 12px; }
+.skel { height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--pg-line-soft), color-mix(in srgb, var(--pg-line-soft), var(--pg-line) 60%), var(--pg-line-soft)); background-size: 300% 100%; animation: sh 1.4s ease-in-out infinite; }
+@keyframes sh { to { background-position: -150% 0; } }
+.calm { display: grid; justify-items: start; gap: 6px; padding: 18px; border: 1px solid var(--pg-line); border-radius: 12px; background: var(--pg-raised); }
+.calm svg { width: 22px; height: 22px; color: var(--pg-positive); }
+.calm strong { font: 600 var(--pg-t-lead)/1.3 var(--pg-font-display); }
+.calm p { margin: 0; color: var(--pg-muted); }
+.summary { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--pg-line-soft); }
+.summary li { display: flex; gap: 11px; padding: 12px 2px; border-bottom: 1px solid var(--pg-line-soft); color: var(--pg-ink-2); }
+.summary li svg { margin-top: 2px; color: var(--pg-muted); }
+.summary li[data-tone="warn"] svg { color: var(--pg-warning); }
+.summary li b { color: var(--pg-ink); font-weight: 600; }
+.summary .sub { display: block; margin-top: 2px; color: var(--pg-muted); font-size: 12px; }
+.item .where { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; color: var(--pg-muted); font-size: 12px; line-height: 1.4; }
+.item .where .btn.quiet { min-height: 28px; padding: 0; }
+.item[data-tone="warn"] .where { color: var(--pg-ink-2); }
+.item .rule { display: block; margin-top: 4px; color: var(--pg-muted); font-size: 12px; }
+.group h3 .why { margin-left: auto; color: var(--pg-faint); font: 500 12px/1.3 var(--pg-font-ui); }
+.more-note { padding: 8px 0 0; color: var(--pg-muted); font-size: 12px; border-top: 1px solid var(--pg-line-soft); }
+.steps { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; counter-reset: st; }
+.steps > li { display: grid; grid-template-columns: 24px minmax(0,1fr); gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--pg-line-soft); }
+.steps > li::before { counter-increment: st; content: counter(st); display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid var(--pg-line-strong); border-radius: 50%; color: var(--pg-ink-2); font: 650 11px/1 var(--pg-font-display); }
+.steps strong { font-weight: 600; }
+.steps p { margin: 3px 0 0; color: var(--pg-muted); }
+.steps .to { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; color: var(--pg-ink-2); }
+.stay h3 { margin: 6px 0 4px; font: 600 var(--pg-t-body)/1.3 var(--pg-font-display); }
+.runlist { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--pg-line-soft); }
+.runlist > li { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--pg-line-soft); }
+.runlist strong { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.runlist small { display: block; color: var(--pg-faint); font-size: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 0 9px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-pill); color: var(--pg-muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.chip svg { width: 13px; height: 13px; }
+.chip[data-s="saved"] { border-color: color-mix(in srgb, var(--pg-positive), transparent 50%); color: var(--pg-positive); }
+.chip[data-s="failed"], .chip[data-s="expired"] { border-color: color-mix(in srgb, var(--pg-negative), transparent 50%); color: var(--pg-negative); }
+.chip[data-s="confirm"] { border-color: color-mix(in srgb, var(--pg-violet), transparent 40%); color: var(--pg-ink); }
+.runlist .detail { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 9px 11px; border: 1px solid var(--pg-line-soft); border-radius: 9px; background: var(--pg-raised); }
+.runlist .detail p { flex: 1 1 220px; margin: 0; color: var(--pg-ink-2); font-size: 12.5px; }
+.runlist .detail[data-tone="bad"] { border-color: color-mix(in srgb, var(--pg-negative), transparent 60%); }
+.runlist .detail .btn { min-height: 30px; }
+
+/* ---------- Responsive (container = the frame) ---------- */
+@container frame (max-width: 980px) {
+  .cols, .row { grid-template-columns: 36px minmax(140px, 1fr) 96px 180px minmax(130px, .9fr) 40px; }
+  .cols .c-work, .row .work { display: none; }
+  .skelrow { grid-template-columns: 36px minmax(140px, 1fr) 96px 180px minmax(130px, .9fr) 40px; } .skelrow > :nth-child(3) { display: none; }
+  .who small.t { display: block; }
+}
+.who small.t { display: none; }
+@container frame (max-width: 640px) {
+  .cols { display: none; }
+  .row { grid-template-columns: 36px max-content minmax(0,1fr) 40px; grid-template-areas: "av who who act" ". perm st st" ". sw sw sw"; column-gap: 10px; row-gap: 8px; padding-block: 12px; }
+  .row .stat .dot { margin-top: 6px; }
+  .row .avatar { grid-area: av; } .row .who { grid-area: who; } .row .acts { grid-area: act; }
+  .row .permc { grid-area: perm; } .row .swc { grid-area: sw; } .row .stat { grid-area: st; }
+  .row .swc::before { content: "Team conversations"; color: var(--pg-muted); margin-right: 10px; font-size: 12px; }
+  .row .swc { display: flex; align-items: center; justify-content: space-between; }
+  .roles { grid-template-columns: 1fr; } .roles article { border-right: 0; border-bottom: 1px solid var(--pg-line-soft); }
+  .item { grid-template-columns: 1fr; gap: 6px; }
+  .group h3 .why { display: none; }
+  .runlist > li { grid-template-columns: 1fr; } .runlist .chip { justify-self: start; }
+  .notice { bottom: 10px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: start; row-gap: 8px; }
+  .notice > svg { margin-top: 3px; } .notice .x { grid-column: 3; grid-row: 1; } .notice #notice-act { grid-column: 2; grid-row: 2; justify-self: start; }
+  .seg { grid-template-columns: 1fr; }
+  .reviewlist > div { grid-template-columns: 1fr; gap: 2px; }
+  /* Phone: the invite and suspend dialogs dock to the bottom as sheets (thumb reach). */
+  .dialog { left: 0; right: 0; top: auto; bottom: 0; width: 100%; max-height: calc(100% - 24px); transform: none; border-radius: 16px 16px 0 0; }
+  .enter.dialog { animation: sheet .24s cubic-bezier(.2,.8,.2,1) both; }
+  .drawer { border-left: 0; }
+  .foot .lead { flex-basis: 100%; margin: 0 0 2px; }
+  .swc .ro, .swc .ro-on { padding-left: 0; text-align: right; }
+  .row .swc { flex-wrap: wrap; } .row .swc .cap2 { flex-basis: 100%; padding-left: 0; margin-top: 0; text-align: right; }
+  .skelrow { grid-template-columns: 36px 1fr; } .skelrow > :nth-child(n+3) { display: none; }
+  .paige { grid-template-columns: 1fr; } .paige .lanes { grid-template-columns: 1fr; }
+  .firstuse, .permnote { flex-wrap: wrap; align-items: flex-start; }
+  .shellhead p { display: none; } .shellhead h1 { font-size: 17px; }
+  .gcard { padding: 18px; }
+}
+@keyframes sheet { from { transform: translateY(24px); opacity: .5; } }
+
+/* Reduced motion: meaning kept, travel removed. */
+.rm *, .rm *::before, .rm *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+@media (prefers-reduced-motion: reduce) { [data-pg] *, [data-pg] *::before, [data-pg] *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; } }
+.rm .skel { background: var(--pg-line-soft); }
+</style>
+</head>
+<body>
+<div class="dev" role="region" aria-label="Prototype review controls (not product UI)">
+  <b>PROTOTYPE · Settings → Team · mocks only</b>
+  <fieldset><legend>Theme</legend><button data-dev="theme:light">Light</button><button data-dev="theme:dark">Dark</button></fieldset>
+  <fieldset><legend>Viewing as</legend><button data-dev="viewer:owner">Owner (Morgan)</button><button data-dev="viewer:admin">Admin (Dana)</button></fieldset>
+  <fieldset><legend>Departure review</legend><button data-dev="review:auto">Real data</button><button data-dev="review:loading">Loading</button><button data-dev="review:failed">Fails</button><button data-dev="review:empty">Holds nothing</button></fieldset>
+  <fieldset><legend>Hand-over</legend><button data-dev="ho:ok">All save</button><button data-dev="ho:some">Some fail</button></fieldset>
+  <fieldset><legend>Writes</legend><button data-dev="outcome:ok">Succeed</button><button data-dev="outcome:fail">Fail</button></fieldset>
+  <fieldset><legend>Viewport</legend><button data-dev="vp:desktop">1280</button><button data-dev="vp:tablet">900</button><button data-dev="vp:phone">390</button></fieldset>
+  <fieldset><legend>Motion</legend><button data-dev="rm:off">Full</button><button data-dev="rm:on">Reduced</button></fieldset>
+  <fieldset><legend>Roster</legend><button data-dev="roster:loaded">Loaded</button><button data-dev="roster:paged">More pages</button><button data-dev="roster:loading">Loading</button><button data-dev="roster:error">Fails</button><button data-dev="roster:first">First use</button></fieldset>
+  <fieldset><legend>Screen</legend><button data-dev="screen:settings">Settings → Team</button><button data-dev="screen:hub">Theo opens Team Hub</button><button data-dev="screen:gate">Lena opens the workspace</button></fieldset>
+  <fieldset><legend>Jump</legend><button data-dev="jump:suspend">Suspend Sam</button><button data-dev="jump:review">Remove Sam</button><button data-dev="jump:empty">Remove Priya</button><button data-dev="jump:edit">Edit Sam</button><button data-dev="jump:invite">Invite</button><button data-dev="jump:reset">Reset</button></fieldset>
+</div>
+<div class="stage">
+  <div class="frame" id="frame" data-vp="desktop">
+    <div class="scroller" id="scroller"><div data-pg="light" id="pg" class="app"></div></div>
+    <div data-pg="light" id="layer" class="layer"></div>
+    <div aria-live="polite" class="sr" id="live"></div>
+  </div>
+</div>
+<section class="review" aria-label="Design notes and approval (not product UI)">
+  <details id="notes">
+    <summary>Design notes · containers · state map · open questions · approve / revise</summary>
+    <div class="inner">
+      <h3>Working brief</h3>
+      <table><tbody>
+        <tr><th>Goal</th><td>An owner or admin can see who is on the team and how, switch someone's team conversations, stop someone's access for a while, and let someone go without leaving their work stranded.</td></tr>
+        <tr><th>Human and feel</th><td>A small-business owner at their desk. Calm and in control: the destructive acts feel considered, never alarming.</td></tr>
+        <tr><th>Entry and exit</th><td>Settings → Team, under the shipped Settings shell header (one "Team" heading). Every flow returns to the roster with a bottom toast that names the outcome, also spoken through the polite live region. The toast never pushes rows, so the row you acted on stays where it was. Focus stays on the control that started an in-place action (switch, "⋯", Load more); it moves to the toast only when an overlay closes or the focused row is gone. A toast with an action stays until dismissed or replaced.</td></tr>
+        <tr><th>System</th><td>The existing SOLO Obsidian / Mineral tokens, Schibsted Grotesk, compact Operate density. The existing <code>stw-*</code> structure is extended, not replaced.</td></tr>
+        <tr><th>Signature</th><td>The departure review: one ledger of what the person holds, a hand-over choice on each line that has a writer, a single "hand everything to" control, then a visible run where every change saves on its own and reports its own result. Things nothing can hand over yet are shown with the plain truth about what happens to them, never with a control that pretends.</td></tr>
+        <tr><th>Feedback</th><td>150–240 ms ease-out. Overlays rise; rows get a brief violet outline when their state changes. No gold except on the one act that sends something: "Send invitation".</td></tr>
+        <tr><th>Rejecting</th><td>Native selects. A modal for everything. Gold on every primary button (the current <code>.stw-btn</code> fills every primary with gold; §11 spends it on the act only).</td></tr>
+        <tr><th>Variants</th><td>Owner vs admin authority (toggle above). Phone: roster rows stack; dialogs dock to the bottom as sheets; the drawer goes full width.</td></tr>
+      </tbody></table>
+
+      <h3>Container decisions</h3>
+      <table><thead><tr><th>Flow</th><th>Container</th><th>Why</th></tr></thead><tbody>
+        <tr><td>Row actions</td><td>Popover menu on a "⋯" button at the end of each row</td><td>Short contextual choice; the person it is about stays visible. Only the actions the viewer may take are listed; a row the viewer cannot act on has no button at all, so there is nothing to try and be refused.</td></tr>
+        <tr><td>Team conversations</td><td>Inline switch in the row (and in the invite dialog)</td><td>Reversible, single-person, low interruption cost. It acts immediately; the roster notice states what changed and offers the reverse. No confirmation, because turning it back is one click and nothing is lost.</td></tr>
+        <tr><td>Suspend</td><td>Modal (alert dialog); bottom sheet on phone</td><td>Brief, blocking decision with a consequence everywhere in the business. One paragraph, two buttons. Focus starts on Cancel.</td></tr>
+        <tr><td>Reinstate</td><td>Inline, straight from the row menu</td><td>Restores a known previous state. The row shows the in-flight state and the notice confirms; a failure stays visible with Retry.</td></tr>
+        <tr><td>Remove → departure review</td><td>Right drawer (full-width sheet on phone), two steps inside it</td><td>Long, scannable evidence plus several choices; the roster stays in view behind it. The product already uses a right drawer for long evidence in Settings. The confirmation is the drawer's second step, never a modal stacked on a drawer.</td></tr>
+        <tr><td>Invite</td><td>The existing invite modal (sheet on phone), form → review</td><td>Already the established container; kept. The native permission <code>&lt;select&gt;</code> becomes a two-option radio card group, and the Team conversations switch is added, so an invitation can carry "off" and a spot-job contractor never joins the channels.</td></tr>
+        <tr><td>Edit details</td><td>The existing <code>MemberEditor</code> dialog, drawn compactly</td><td>The name is now a visible button (underline on hover) that opens it; "Edit details" in the menu opens the same thing. Its removal block becomes a "Remove from team…" link into the departure review drawer.</td></tr>
+        <tr><td>Hand-over run</td><td>Third step inside the same drawer: a live list, one row per change</td><td>The hand-over is several separate writes through each record's existing writer, not one transaction, so the honest container is a list that shows each write's own outcome with its own Retry. Client, deal and CRM-task changes return the writer's existing confirmation card; it is confirmed inline on its row. Removal is a separate, final button that is available once nothing is saving.</td></tr>
+        <tr><td>Approvals and mailboxes</td><td>Listed in the ledger with no hand-over control</td><td>No writer can move them (backend report, hand-over inventory). Each row says what happens to it. The mailbox row links to Settings → Connections, where it lives. Approvals have no owner-visible home once their assignee leaves, so there is no link to offer; that is flagged below rather than drawn as a link that goes nowhere.</td></tr>
+        <tr><td>The other side</td><td>Two full-screen states (Screen control above)</td><td>Theo, conversations off, opening Team Hub; Lena, suspended, opening the workspace. Each says what is happening, what is kept, and who can change it (the owner, plus admins when the person is a member).</td></tr>
+        <tr><td>Filter and hand-over pickers</td><td>Listbox popover anchored to a picker button</td><td>Replaces every native <code>&lt;select&gt;</code> on the surface (roster filter, invite permission, editor permission) with one component.</td></tr>
+      </tbody></table>
+
+      <h3>Authority rules shown</h3>
+      <p>Owner: may suspend, reinstate, remove, switch conversations and read the departure review for any admin or member. Admin: the same, for members only. Nobody may act on the owner or on themselves. An admin can invite members only (the Admin option is shown and disabled with its reason): this is CC's reading of "an admin acts only on members", flagged below.</p>
+
+      <h3>State map</h3>
+      <table><thead><tr><th>From</th><th>Trigger</th><th>To</th><th>Feedback</th><th>Recovery / exit</th></tr></thead><tbody>
+        <tr><td>Roster</td><td>Switch conversations</td><td>Row pending → saved</td><td>Switch busy, row flash, bottom toast with the reverse action; the row never moves</td><td>Fail: switch returns, toast with Retry. Suspended row: saved, "Takes effect when reinstated". Invited row: read-only, "Withdraw and invite again to change" (nothing can change an invitation's switch after it is sent).</td></tr>
+        <tr><td>Roster</td><td>Menu → Suspend</td><td>Suspend dialog</td><td>Dialog rises, focus on Cancel</td><td>Cancel / Esc / scrim → focus back to "⋯"</td></tr>
+        <tr><td>Suspend dialog</td><td>Suspend access</td><td>Pending → roster (Suspended)</td><td>"Suspending…", then toast with Reinstate; focus to the toast</td><td>Fail: alert in dialog, "Try again"</td></tr>
+        <tr><td>Roster</td><td>Menu → Reinstate</td><td>Row pending → Active</td><td>"Reinstating…", toast; focus stays on "⋯"</td><td>Fail: toast with Retry</td></tr>
+        <tr><td>Roster</td><td>Menu → Remove</td><td>Drawer: loading</td><td>Skeleton + spoken "Checking…"</td><td>Close at any time; nothing changed</td></tr>
+        <tr><td>Drawer loading</td><td>team_member_holdings returns</td><td>Ledger / Holds nothing / Failed</td><td>Tally + bar</td><td>Failed: Try again, or Suspend instead. Removal waits.</td></tr>
+        <tr><td>Ledger</td><td>Pick per item / hand all</td><td>Tally updates</td><td>Bar grows, changed picker outlined</td><td>Every choice editable until the run starts. Receivers follow each writer's rule (an assigned-client change needs an owner or admin).</td></tr>
+        <tr><td>Ledger</td><td>Continue</td><td>Step 2: what happens, in order</td><td>Focus to heading</td><td>Back keeps every choice</td></tr>
+        <tr><td>Step 2</td><td>Start hand-over</td><td>Step 3: run</td><td>Rows go Waiting → Saving → Saved, one at a time; each result spoken</td><td>Back is gone (some changes may already be saved). Close is allowed whenever nothing is saving.</td></tr>
+        <tr><td>Run: work item</td><td>plan_update_item_versioned</td><td>Saved / Changed / Failed</td><td>Chip on the row</td><td>Changed (PLAN_WORK_CHANGED): "Check again" re-reads its version and tries once more. Failed: Retry. No idempotency key, so Retry is offered only after a clear failure.</td></tr>
+        <tr><td>Run: client, deal, CRM task</td><td>crm-command</td><td>Needs your confirmation</td><td>The writer's card summary and Confirm on the row</td><td>Confirm → Saving → Saved. Expired card: "Prepare it again". Failed: Retry with the same idempotency key.</td></tr>
+        <tr><td>Run settled</td><td>Remove [name]</td><td>Pending → roster</td><td>"Removing…", then a toast with counts</td><td>Fail: alert, Try again; the hand-overs that saved stay saved. Unfinished changes are counted in the footer before removing.</td></tr>
+        <tr><td>Run settled</td><td>Close</td><td>Roster, person still on the team</td><td>Toast: how many saved</td><td>Saved changes stay saved. Reopening the review reads again and lists only what they still hold.</td></tr>
+        <tr><td>Ledger</td><td>A list hits the 50-row cap</td><td>"+N more not listed"</td><td>Line under the group</td><td>Counts are true totals; the rest are handed over where they live: work and CRM tasks in Operations; a client's coach or lead owner through Paige in chat; a deal's owner has no screen for this yet.</td></tr>
+        <tr><td>Ledger (sub-account workspace)</td><td>—</td><td>Work rows without a picker</td><td>"Can't be handed over in this workspace yet"</td><td>plan_update_item_versioned refuses sub-accounts (PLAN_FORBIDDEN). Not drawn as a separate variant; Northstar Studio is a Solo workspace.</td></tr>
+        <tr><td>Roster</td><td>Invite someone</td><td>Invite form → review → send</td><td>Gold "Send invitation"; new Invited row flashes</td><td>Fail: alert in review step, form kept</td></tr>
+        <tr><td colspan="5">N/A: offline is the "Fail" outcome (writes are one round-trip, nothing queues). Expiry applies to invitations (shown on Invited rows). Native haptics: N/A, web-only surface.</td></tr>
+      </tbody></table>
+
+      <h3>Motion</h3>
+      <table><thead><tr><th>Trigger</th><th>Target</th><th>Duration / easing</th><th>Reduced motion</th></tr></thead><tbody>
+        <tr><td>Menu / picker open</td><td>Popover</td><td>140 ms, cubic-bezier(.2,.8,.2,1), 4 px rise + fade</td><td>Instant</td></tr>
+        <tr><td>Dialog open</td><td>Dialog / sheet</td><td>200 ms rise 8 px + fade; sheet 240 ms from below</td><td>Instant</td></tr>
+        <tr><td>Drawer open</td><td>Right drawer</td><td>240 ms, 28 px from the right</td><td>Instant</td></tr>
+        <tr><td>Switch</td><td>Thumb</td><td>200 ms</td><td>Instant</td></tr>
+        <tr><td>State saved</td><td>Row</td><td>Violet inset outline, fades after 1.2 s (a wash would drop the amber "Suspended" below AA)</td><td>Static outline, then removed</td></tr>
+      </tbody></table>
+
+      <h3>Maps onto the existing team-workspace.tsx</h3>
+      <ul>
+        <li><strong>Drawn as shipped, updated:</strong> the Settings shell header (<code>ss-page-head</code>, settings.tsx ~L1862) now carries the only "Team" heading; the count and "Invite someone" sit in the <code>.stw-toolbar</code> People header. "Workspace permissions" note (<code>.stw-permission-note</code>) with copy for the new authority rules. First-teammate state (<code>.stw-first-use</code>), roster loading (skeleton rows instead of the spinner line) and error with Retry, "Load more (N remaining)" with its inline page error: all reachable from the Roster control. "Paige team context" (<code>.stw-paige</code>) with honest copy: what she can do today (invite, resend/withdraw, edit work details, change a permission) versus coming and not yet available (suspend/reinstate, remove and hand over, team conversations; task #7). It says those "will follow the same rules", which commits to nothing task #7 has not decided.</li>
+        <li><strong>Unchanged, not redrawn:</strong> the Invitations list (delivery trail, past invitations): marked with a visible prototype note in place.</li>
+        <li><strong>Shell eyebrow, flagged:</strong> the shipped shell header has a "Solo settings" eyebrow above the h1. Impeccable's refuse-list bans eyebrows. It is drawn as it ships because it belongs to every Settings tab; removing it is a shell-wide change, recommended as its own slice.</li>
+        <li><code>SoloTeamWorkspace</code> roster: <code>.stw-row</code> is a <code>&lt;button&gt;</code> today, which cannot contain a switch or a menu button. It becomes a row element whose name is the button that opens the existing <code>MemberEditor</code>; the switch and "⋯" sit beside it. Column header row added.</li>
+        <li>Status column already renders <code>member.status === "suspended"</code>; it gains the Invited state by folding pending invitations into the roster. The <code>Invitations</code> section stays the one home for the delivery trail and past invitations (unchanged, not drawn here).</li>
+        <li><code>MemberEditor</code>: its inline removal block (L592–L604) is replaced by the drawer, opened from the row menu or from a "Remove from team…" link in the editor. Its native permission <code>&lt;select&gt;</code> (L577) and the invite dialog's (L641) and the roster filter's (L831) become the picker / radio cards.</li>
+        <li><code>Modal</code> (focus trap, Escape ownership, busy-close) is reused for the suspend dialog and invite; the drawer reuses the same trap and the in-flight rules (no dismiss while pending, refusal never lost).</li>
+        <li>Roles &amp; access tab copy updated for suspend/remove authority and the conversations switch.</li>
+      </ul>
+
+      <h3>Honest gaps this design depends on (checked against the round-3 backend, 2026-10-26)</h3>
+      <p>Closed since round 2, so no longer listed: the invitation carries the switch (<code>_team_hub_access</code>, copied on both accept paths); only reinstatement lifts a suspension (B1); suspended seats can't read invoices or agreement versions (S1); only the owner changes a suspended seat's role or status (B2, S5); the switch-on copy now matches what the backend does.</p>
+      <ul>
+        <li><strong>The hand-over is not atomic.</strong> Each item is its own write through its existing writer: <code>plan_update_item_versioned</code> for work; <code>crm-command</code> <code>task.assign</code>, <code>contact.assign_coach</code>, <code>contact.assign_owner</code> and <code>deal.assign_owner</code> for the rest. The run shows each result separately. A crm-command change always returns its confirmation card, so it needs one confirm per item. No new writer, scheduler or approval system is drawn.</li>
+        <li><strong>Approvals can't be handed over.</strong> No writer exists (PAIGE's <code>claim_approval</code> only assigns to the caller). They stay assigned and pending through suspension and removal. Owners and admins can still decide them, but Game Plan's approvals card shows an assigned approval only to its assignee, so once that person leaves no one sees it there. Needs a backend writer or a card change.</li>
+        <li><strong>A suspended person is still notified.</strong> <code>notify-approval-event</code> doesn't check the seat, so a new approval assigned to them still sends an in-app message and an email. The suspend dialog says so.</li>
+        <li><strong>A mailbox stays connected after removal.</strong> Nothing disconnects it and sync keeps running every 5 minutes. Disconnecting needs someone who is both an admin and the mailbox's owner, so a member's mailbox can't be disconnected at all, and after removal no one can disconnect it. Owner question: should removal disconnect it? Sends from it stop (they need its owner). Production has 0 personal mailboxes today.</li>
+        <li><strong>Work hand-over is Solo only.</strong> In a sub-account workspace the work rows would have no picker.</li>
+        <li><strong>The roster read doesn't return the switch yet.</strong> <code>get_solo_team_workspace</code> returns neither the seat's nor the invitation's Team conversations value; the column has nothing to read until it does.</li>
+        <li><strong>Theo's Team Hub screen</strong> needs the browser to handle the <code>conversations_off</code> refusal (owed in <code>team-hub-contract.ts</code>, <code>useTeamHub.ts</code>, <code>TeamHubWorkspace.tsx</code>); today he would see "Team Hub couldn't load".</li>
+        <li><strong>Suspension doesn't reach everything yet.</strong> A suspended agency manager still opens the sub-account (open decision 1). A suspended admin who is an admin in another workspace keeps the global admin role (S6, task #6 / stage 1). <code>change_user_role</code> reports success when the suspended-seat rule refuses it (stage 0).</li>
+        <li><strong>Shell eyebrow:</strong> the shipped Settings header has a "Solo settings" eyebrow, which Impeccable's refuse-list bans. Drawn as it ships; removing it is a shell-wide change.</li>
+        <li><strong>Paige tools:</strong> suspend, reinstate, remove, hand-over and the switch by Paige are task #7. The owner has ruled she and her team must be able to act here; the panel says "coming, not yet available".</li>
+      </ul>
+      <h3>Open questions for the owner</h3>
+      <ol>
+        <li>Can an admin invite another admin? The prototype says no, because an admin acts only on members.</li>
+        <li>Approvals assigned to someone who is leaving: should removal wait until they are decided, or should approvals get a hand-over writer (a backend change)? Today the review can only warn.</li>
+        <li>Should a suspended person stop receiving approval notifications? That is a change to <code>notify-approval-event</code>.</li>
+      </ol>
+
+      <h3>Decision</h3>
+      <div class="decide" role="group" aria-label="Decision"><button data-decide="approve">Approve</button><button data-decide="revise">Revise</button><button data-decide="reject">Reject</button></div>
+      <p><label for="dnotes">Notes</label></p>
+      <textarea id="dnotes" placeholder="What to change, or why."></textarea>
+      <p id="decided" role="status"></p>
+    </div>
+  </details>
+</section>
+
+<script>
+(() => {
+"use strict";
+const ICON = {
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  userPlus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  userMinus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  chev: '<path d="m6 9 6 6 6-6"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  pause: '<circle cx="12" cy="12" r="10"/><path d="M10 15V9"/><path d="M14 15V9"/>',
+  undo: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  task: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  brief: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  okc: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  pencil: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  loader: '<path d="M21 12a9 9 0 1 1-6.22-8.56"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  sparkles: '<path d="M9.94 14.06 4 20"/><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 15v4"/><path d="M17 17h4"/>',
+  msgoff: '<path d="M21 15a2 2 0 0 1-2 2H9"/><path d="M3 3l18 18"/><path d="M5.6 3H19a2 2 0 0 1 2 2v8"/><path d="M3 7v14l4-4h2"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  mailx: '<path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m17 17 4 4"/><path d="m21 17-4 4"/>'
+};
+const ic = (n, cls = "") => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const WORKSPACE = "Northstar Studio";
+const SEED_PEOPLE = () => [
+  { id: "morgan", name: "Morgan Hale", email: "morgan@northstar.example", perm: "owner", title: "Founder", resp: "Sets direction and approves what goes to clients.", convo: true, status: "active", seen: "Signed in today" },
+  { id: "dana", name: "Dana Reyes", email: "dana@northstar.example", perm: "admin", title: "Operations Lead", resp: "Runs onboarding and weekly delivery.", convo: true, status: "active", seen: "Signed in today" },
+  { id: "avery", name: "Avery Cole", email: "avery@northstar.example", perm: "admin", title: "Client Success Manager", resp: "Owns renewals and client check-ins.", convo: true, status: "active", seen: "Signed in yesterday" },
+  { id: "sam", name: "Sam Lee", email: "sam@northstar.example", perm: "member", title: "Designer", resp: "Brand and launch assets for client kickoffs.", convo: true, status: "active", seen: "Signed in today" },
+  { id: "priya", name: "Priya Natarajan", email: "priya@northstar.example", perm: "member", title: "Scheduling Coordinator", resp: "Books client sessions and keeps calendars clean.", convo: true, status: "active", seen: "Signed in Oct 23" },
+  { id: "theo", name: "Theo Brandt", email: "theo@brandtcopy.example", perm: "member", title: "Contract Copywriter", resp: "Spot jobs: launch copy when booked.", convo: false, status: "active", seen: "Signed in Oct 19" },
+  { id: "lena", name: "Lena Ortiz", email: "lena@northstar.example", perm: "member", title: "Research Assistant", resp: "Market scans before client strategy sessions.", convo: true, status: "suspended", seen: "Suspended Oct 21 by Morgan Hale" },
+  { id: "jules", name: null, email: "jules.park@northstar.example", perm: "member", title: "Video Editor", resp: "", convo: true, status: "invited", seen: "Invited Oct 24 · expires Nov 2" }
+];
+/* Shaped like team_member_holdings (round 3): only fields the read returns are shown.
+   work: title, status, due_at, client_label · crm_tasks: title, status, due_date, client_label (via its deal)
+   clients: label, relation (assigned | lead_owner) · deals: title, value_cents, currency, expected_close_date, client_label
+   approvals: kind, summary (≤140), status, created_at · mailboxes: label, provider, address.  Versions are carried, not shown. */
+const SEED_HOLD = () => ({
+  sam: {
+    work: [ { id: "w1", title: "Kickoff cover options", status: "in_progress", due: "Wed, Oct 28", client: "Brightline Co." },
+            { id: "w2", title: "Q4 kickoff deck review", status: "open", due: "Fri, Oct 30", client: null } ],
+    crm_tasks: [ { id: "t1", title: "Send the welcome packet", status: "pending", due: "Thu, Oct 29", client: "Brightline Co." } ],
+    clients: [ { id: "k1", label: "Brightline Co.", relation: "lead_owner" }, { id: "k2", label: "Harbor & Pine", relation: "assigned" } ],
+    deals: [ { id: "d1", title: "Harbor & Pine Q1 retainer", value_cents: 480000, currency: "USD", close: "Dec 15", client: "Harbor & Pine" } ],
+    approvals: [ { id: "a1", akind: "Email", summary: "Follow-up email to Brightline Co. confirming the kickoff date and the deck review", status: "pending", since: "Oct 25" } ],
+    mailboxes: [ { id: "m1", label: "Sam Lee", provider: "Google", address: "sam@northstar.example" } ]
+  },
+  theo: { work: [ { id: "w1", title: "Launch email copy", status: "open", due: "Mon, Nov 3", client: "Harbor & Pine" } ] },
+  lena: { work: [ { id: "w1", title: "Competitor scan", status: "blocked", due: "Fri, Oct 30", client: "Atlas Collective" } ],
+          clients: [ { id: "k1", label: "Atlas Collective", relation: "lead_owner" } ] },
+  avery: { clients: [ { id: "k1", label: "Fieldhouse Coaching", relation: "assigned" } ],
+           approvals: [ { id: "a1", akind: "Message", summary: "Renewal note to Fieldhouse Coaching", status: "changes_requested", since: "Oct 24" } ] },
+  dana: { work: [ { id: "w1", title: "Weekly delivery review", status: "open", due: "Mon, Nov 3", client: null } ] },
+  priya: {}
+});
+const KINDS = ["work", "crm_tasks", "clients", "deals", "approvals", "mailboxes"];
+/* writer: the EXISTING owner writer for that record (backend hand-over inventory). null = no writer exists. */
+const KIND = {
+  work: { label: "Open work", icon: "task", writer: "plan" },
+  crm_tasks: { label: "CRM tasks", icon: "task", writer: "crm" },
+  clients: { label: "Clients", icon: "users", writer: "crm" },
+  deals: { label: "Deals", icon: "brief", writer: "crm" },
+  approvals: { label: "Approvals assigned to them", icon: "okc", writer: null },
+  mailboxes: { label: "Connected mailbox", icon: "mail", writer: null }
+};
+const STAT = { open: "Open", in_progress: "In progress", blocked: "Blocked", pending: "Pending" };
+const APPR = { changes_requested: "Changes requested", escalated: "Escalated" };
+const money = (c, cur) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(c / 100);
+
+const S = {
+  theme: "light", viewer: "owner", review: "auto", outcome: "ok", vp: "desktop", rm: false,
+  roster: "loaded", screen: "settings", ho: "ok", hold: SEED_HOLD(), shown: null, loadingMore: false, pageErr: false,
+  tab: "team", q: "", filter: "all",
+  people: SEED_PEOPLE(),
+  notice: null, flash: null, lastWithdrawn: null, protoNote: null,
+  busy: {},           // personId -> "convo" | "reinstate"
+  menu: null,         // { id }
+  picker: null,       // { key, options, value, label, onPick }
+  modal: null,        // { type: "suspend"|"invite"|"edit", ... , from }
+  drawer: null,       // { id, step, stage, assign, handAll, error, from }
+  enter: null, focus: null
+};
+const me = () => (S.viewer === "owner" ? "morgan" : "dana");
+const person = (id) => S.people.find((p) => p.id === id);
+const display = (p) => p.name || p.email;
+const first = (p) => (p.name ? p.name.split(" ")[0] : p.email);
+const initials = (p) => (p.name || p.email).split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
+const PERM = { owner: "Owner", admin: "Admin", member: "Member" };
+const plain = (html) => { const d = document.createElement("div"); d.innerHTML = html; return d.textContent; };
+
+/* Authority: owner → any admin/member; admin → members only; never the owner, never yourself. */
+function canAct(target) {
+  if (target.perm === "owner" || target.id === me()) return false;
+  if (S.viewer === "owner") return true;
+  return target.perm === "member";
+}
+/* Who may act on a given person (for the other-side screens): the owner, plus admins when the person is a member. */
+function whoCanAct(target) {
+  return S.people.filter((p) => p.status === "active" && p.id !== target.id && (p.perm === "owner" || (p.perm === "admin" && target.perm === "member")));
+}
+
+function announce(t) { const l = document.getElementById("live"); l.textContent = ""; setTimeout(() => { l.textContent = t; }, 30); }
+function mock(fn, ms = 700) { setTimeout(() => fn(S.outcome === "ok"), ms); }
+
+/* ---------------- Render ----------------
+   Focus rule: a re-render keeps focus on the control that had it (by id). Handlers only move focus
+   when an overlay closes or the focused control disappears; then it lands on the notice. */
+function render() {
+  const ae = document.activeElement;
+  const keep = ae && ae.id && ae.closest && ae.closest("#pg, #layer") ? ae.id : null;
+  const pg = document.getElementById("pg"); const layer = document.getElementById("layer");
+  for (const el of [pg, layer]) { el.dataset.pg = S.theme; el.classList.toggle("rm", S.rm); }
+  pg.classList.toggle("has-toast", !!S.notice && S.screen === "settings");
+  document.getElementById("frame").dataset.vp = S.vp;
+  pg.innerHTML = renderPage();
+  layer.innerHTML = renderLayer();
+  document.querySelectorAll("[data-dev]").forEach((b) => {
+    const [k, v] = b.dataset.dev.split(":");
+    const cur = { theme: S.theme, viewer: S.viewer, review: S.review, outcome: S.outcome, vp: S.vp, rm: S.rm ? "on" : "off", roster: S.roster, screen: S.screen, ho: S.ho }[k];
+    if (cur !== undefined) b.setAttribute("aria-pressed", String(cur === v));
+  });
+  positionFloating();
+  S.enter = null;
+  if (S.focus) { const t = document.querySelector(S.focus); S.focus = null; if (t) focusIn(t); }
+  else if (keep) {
+    const t = document.getElementById(keep);
+    if (t) t.focus({ preventScroll: true });
+    else { const n = document.getElementById("notice"); if (n) focusIn(n); }
+  }
+}
+
+/* Focus a control and bring it into view inside the frame only, never by scrolling the review page. */
+function focusIn(t) {
+  t.focus({ preventScroll: true });
+  const sc = document.getElementById("scroller"); if (!sc.contains(t)) return;
+  const r = t.getBoundingClientRect(), b = sc.getBoundingClientRect();
+  if (r.top < b.top + 8) sc.scrollTop -= b.top + 8 - r.top; else if (r.bottom > b.bottom - 8) sc.scrollTop += r.bottom - (b.bottom - 8);
+}
+function visiblePeople() {
+  if (S.roster === "first") return S.people.filter((p) => p.perm === "owner" || p.id.startsWith("new"));
+  if (S.roster === "paged" && S.shown) return S.people.slice(0, S.shown);
+  return S.people;
+}
+function countLine() {
+  if (S.roster === "loading" || S.roster === "error") return `Confirmed members of ${WORKSPACE}`;
+  const all = S.roster === "first" ? visiblePeople() : S.people;
+  const seated = all.filter((p) => p.status !== "invited"); const sus = seated.filter((p) => p.status === "suspended").length;
+  const inv = all.filter((p) => p.status === "invited").length;
+  return `${seated.length} ${seated.length === 1 ? "person" : "people"} in ${WORKSPACE}${sus ? ` (${sus} suspended)` : ""}${inv ? `, plus ${inv} invited` : ""}`;
+}
+
+function renderPage() {
+  if (S.screen === "hub") return renderHubOff();
+  if (S.screen === "gate") return renderGate();
+  const shell = `<header class="shellhead"><div><span class="eyebrow">Solo settings</span><h1>Team</h1><p>Account configuration with honest runtime boundaries.</p></div><span class="truth">PARTIAL</span></header>`;
+  const tabs = `<div class="tabs" role="tablist" aria-label="Team settings">
+    <button role="tab" id="tab-team" aria-selected="${S.tab === "team"}" data-act="tab:team">Team</button>
+    <button role="tab" id="tab-roles" aria-selected="${S.tab === "roles"}" data-act="tab:roles">Roles &amp; access</button></div>`;
+  if (S.tab === "roles") return `<div class="wrap">${shell}${tabs}${renderRoles()}</div>`;
+  const filterLabel = { all: "Everyone", owner: "Owner", admin: "Admins", member: "Members", invited: "Invited" }[S.filter];
+  const ptool = `<section class="ptool" aria-labelledby="people-h"><div><h2 id="people-h">People</h2><p>${countLine()}</p></div><button class="btn ${S.roster === "first" && visiblePeople().length === 1 ? "secondary" : "primary"}" data-act="invite" id="invite-btn">${ic("userPlus")}Invite someone</button></section>`;
+  const permnote = `<section class="permnote" aria-label="Workspace permissions">${ic("shield")}<div><strong>Workspace permissions</strong>The owner manages admins and members; admins manage members. Permissions apply only to ${WORKSPACE}.</div><button class="btn quiet" data-act="tab:roles" id="perm-roles">Review roles</button></section>`;
+  let list;
+  if (S.roster === "loading") {
+    list = `<p class="sr" role="status">Loading the team…</p><div aria-hidden="true">${[0, 1, 2, 3].map(() => `<div class="skelrow"><div class="skel c"></div><div><div class="skel" style="width:70%;margin-bottom:7px"></div><div class="skel" style="width:52%"></div></div><div><div class="skel" style="width:60%;margin-bottom:7px"></div><div class="skel" style="width:84%"></div></div><div class="skel" style="width:64px"></div><div class="skel" style="width:70px"></div><div class="skel" style="width:76%"></div><span></span></div>`).join("")}</div>`;
+  } else if (S.roster === "error") {
+    list = `<div class="rstate" role="alert">${ic("warn")}<strong>The team didn't load</strong><span>Check your connection and try again. Nothing on the team changed.</span><button class="btn secondary" id="roster-retry" data-act="roster-retry">${ic("refresh")}Try again</button></div>`;
+  } else {
+    const vis = visiblePeople();
+    const roster = vis.filter((p) => S.filter === "all" || p.perm === S.filter || (S.filter === "invited" && p.status === "invited"));
+    const firstUse = S.roster === "first" && vis.length === 1 && !S.q && S.filter === "all"
+      ? `<div class="firstuse">${ic("users")}<div><strong>Your workspace starts with you</strong><span>Invite the first teammate, then give them a title and clear responsibilities.</span></div><button class="btn primary" data-act="invite" id="first-invite">Invite first teammate</button></div>` : "";
+    const remaining = S.roster === "paged" && S.shown ? S.people.length - S.shown : 0;
+    list = `${firstUse}<div class="cols" aria-hidden="true"><span></span><span>Person</span><span class="c-work">Work</span><span>Permission</span><span>Team conversations</span><span>Status</span><span></span></div>
+      <div role="list" aria-label="Team roster" id="roster">${renderRows(roster)}</div>
+      ${S.pageErr ? `<div class="inline-err" role="alert">${ic("warn")}<span>The next page didn't load.</span><button class="btn quiet" id="page-retry" data-act="loadmore">Retry</button></div>` : ""}
+      ${remaining ? `<button class="loadmore" id="loadmore" data-act="loadmore" ${S.loadingMore ? 'disabled aria-busy="true"' : ""}>${S.loadingMore ? `${ic("loader", "spin")}Loading…` : `Load more (${remaining} remaining)`}</button>` : ""}`;
+  }
+  const invites = (S.roster === "first" ? visiblePeople() : S.people).filter((p) => p.status === "invited").length;
+  return `<div class="wrap">${shell}${tabs}${ptool}${permnote}
+    <section class="panel" aria-labelledby="people-h">
+      <div class="toolbar">
+        <label class="search"><span class="sr">Search team</span>${ic("search")}<input id="q" value="${esc(S.q)}" placeholder="Search people, titles, responsibilities" autocomplete="off"></label>
+        <button class="pick" id="filter-pick" aria-haspopup="listbox" aria-expanded="${S.picker?.key === "filter"}" data-act="picker:filter" aria-label="Show: ${filterLabel}"><span><span class="muted">Show:</span> ${filterLabel}</span>${ic("chev")}</button>
+      </div>
+      ${list}
+    </section>
+    <section class="panel" aria-labelledby="inv-h2"><header class="invhead">${ic("mail")}<div><h2 id="inv-h2">Invitations</h2><p>Delivery is reported by the email provider. Accepted, expired and revoked come from the invitation record.</p></div><span>${invites} pending</span></header>
+      <div class="invbody"><div class="proto-note"><b>PROTOTYPE NOTE</b><span>The invitations list (delivery trail, resend, withdraw, past invitations) ships today and this slice doesn't change it, so it isn't redrawn. Pending invitations now also show in the roster above as Invited.</span></div></div></section>
+    ${renderPaige()}
+  </div>`;
+}
+
+function renderPaige() {
+  return `<section class="panel paige" aria-labelledby="paige-h"><span class="plate" aria-hidden="true">${ic("sparkles")}</span>
+    <div><h2 id="paige-h">Paige team context</h2>
+      <p>Paige can read the confirmed roster, each person's permission, title and responsibilities for this workspace. Work details people write are reference for her, not instructions or authority.</p>
+      <div class="lanes">
+        <div class="now"><h3>She can do this for you today</h3><ul>
+          <li>${ic("check")}Invite someone</li><li>${ic("check")}Resend or withdraw an invitation</li><li>${ic("check")}Edit someone's title and responsibilities</li><li>${ic("check")}Change a permission (owner only)</li></ul></div>
+        <div class="soon"><h3>Coming to Paige, not yet available</h3><ul>
+          <li>${ic("clock")}Suspend or reinstate someone</li><li>${ic("clock")}Remove someone and hand over their work</li><li>${ic("clock")}Turn someone's team conversations on or off</li></ul></div>
+      </div>
+      <p class="rule">She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. The actions still coming will follow the same rules. Until then, do them here.</p>
+      ${S.protoNote === "paige" ? `<div class="proto-note" style="margin-top:10px"><b>PROTOTYPE NOTE</b><span>Opens the shipped Paige panel; it isn't part of this slice.</span></div>` : ""}
+    </div><button class="btn secondary" id="open-paige" data-act="open-paige">Open Paige</button></section>`;
+}
+
+function renderRows(list) {
+  const q = S.q.trim().toLowerCase();
+  const rows = list.filter((p) => !q || [p.name, p.email, p.title, p.resp].join(" ").toLowerCase().includes(q));
+  if (!rows.length) return `<div class="empty" role="listitem"><strong>No one matches</strong><span>Clear the search or show everyone.</span><button class="btn secondary" id="clearq" data-act="clearq">Show everyone</button></div>`;
+  return rows.map((p) => {
+    const act = canAct(p); const busy = S.busy[p.id];
+    const isMe = p.id === me();
+    let sw;
+    /* Invited: the value is fixed on the invitation (nothing can change it after it is sent).
+       Suspended: the backend saves a change now; it applies when they are reinstated. */
+    if (p.status === "invited") sw = `<span class="${p.convo ? "ro-on" : "ro"}">${p.convo ? "On when they join" : "Off"}</span>${act ? `<span class="cap2">Withdraw and invite again to change</span>` : ""}`;
+    else if (p.perm === "owner") sw = `<span class="ro-on">On</span>`;
+    else if (act) sw = switchHtml(p, busy === "convo") + (p.status === "suspended" ? `<span class="cap2" id="swcap-${p.id}">Takes effect when reinstated</span>` : "");
+    else if (p.status === "suspended") sw = p.convo ? `<span class="ro-on">On<span class="sr"> · </span><span class="paused">Paused while suspended</span></span>` : `<span class="ro">Off</span>`;
+    else sw = `<span class="${p.convo ? "ro-on" : "ro"}">${p.convo ? "On" : "Off"}</span>`;
+    const statusWord = { active: "Active", suspended: "Suspended", invited: "Invited" }[p.status];
+    const statusInner = busy === "reinstate" ? `<span class="row-busy">${ic("loader", "spin")}Reinstating…</span>` : `<div><strong>${statusWord}</strong><small>${esc(p.seen)}</small></div>`;
+    const nameEl = p.status === "invited" ? esc(display(p)) : `<button class="namebtn" id="name-${p.id}" data-act="edit:${p.id}" aria-label="${esc(display(p))}, edit details">${esc(display(p))}</button>`;
+    return `<div class="row" role="listitem" data-status="${p.status}" data-flash="${S.flash === p.id}" id="row-${p.id}">
+      <span class="avatar" aria-hidden="true">${initials(p)}</span>
+      <div class="who"><strong>${nameEl}${isMe ? `<span class="you">You</span>` : ""}</strong><small>${esc(p.name ? p.email : "Hasn't accepted yet")}</small><small class="t">${esc(p.title || "Title not set")}</small></div>
+      <div class="work"><strong>${esc(p.title || "Title not set")}</strong><small>${esc(p.resp || "Responsibilities not set")}</small></div>
+      <div class="permc"><span class="perm">${PERM[p.perm]}</span></div>
+      <div class="swc">${sw}</div>
+      <div class="stat" data-s="${p.status}"><span class="dot" data-s="${p.status}" aria-hidden="true"></span>${statusInner}</div>
+      <div class="acts">${act ? `<button class="more" id="more-${p.id}" aria-haspopup="menu" aria-expanded="${S.menu?.id === p.id}" aria-label="Actions for ${esc(display(p))}" data-act="menu:${p.id}">${ic("more")}</button>` : ""}</div>
+    </div>`;
+  }).join("");
+}
+function switchHtml(p, busy) {
+  return `<button class="sw" role="switch" id="sw-${p.id}" aria-checked="${p.convo}" aria-busy="${busy}" ${busy ? "aria-disabled=\"true\"" : ""} aria-label="Team conversations for ${esc(display(p))}" ${p.status === "suspended" ? `aria-describedby="swcap-${p.id}"` : ""} data-act="convo:${p.id}"><span class="track"><span class="thumb"></span></span><span aria-hidden="true">${p.convo ? "On" : "Off"}</span></button>`;
+}
+
+function renderRoles() {
+  return `<section class="panel" aria-labelledby="roles-h"><header class="invhead">${ic("shield")}<div><h2 id="roles-h">Roles &amp; access</h2><p>Permissions are enforced. Titles and responsibilities only describe work.</p></div></header><div class="roles">
+    <article><h3>Owner</h3><p>Everything, including permissions. Invites admins and members. Suspends, reinstates and removes admins and members, and switches their team conversations. Can't be suspended or removed.</p></article>
+    <article><h3>Admin</h3><p>Manages invitations and work details, and invites members. Suspends, reinstates and removes members, and switches their team conversations. Can't suspend, remove or switch another admin or the owner, and can't do any of these to themselves.</p></article>
+    <article><h3>Member</h3><p>Works in the business: their own tasks, the clients they're assigned, and Team Hub when team conversations are on. Can't manage people or invitations.</p></article>
+  </div><div class="roles-note">${ic("msg")}<p><strong>Team conversations is separate from permission.</strong> On: they're in Team Hub, and new teammates join the open team channels when they accept. Off: they can't open Team Hub (channels, direct messages or shared files) and work only on what they're assigned; they stay in their channels. Back on: they join every open team channel again, including any they had left, and keep the private channels they were in. Off suits a spot-job contractor, who is otherwise a member like anyone else.</p></div></section>`;
+}
+
+/* ---------------- The other side of each switch ---------------- */
+function whoList(target) {
+  return `<ul class="who-list">${whoCanAct(target).map((p) => `<li><span class="avatar" aria-hidden="true">${initials(p)}</span><span>${esc(display(p))}</span><small>${PERM[p.perm]}</small></li>`).join("")}</ul>`;
+}
+function renderHubOff() {
+  const theo = person("theo") || SEED_PEOPLE().find((p) => p.id === "theo");
+  return `<div class="gate"><div class="gbar">${ic("msg")}<strong>Team Hub</strong><span>· ${WORKSPACE}</span><span class="grow"></span><span>Signed in as ${esc(theo.name)}</span></div>
+    <div class="gwrap"><section class="gcard" aria-labelledby="gate-h"><span class="plate" aria-hidden="true">${ic("msgoff")}</span>
+      <h1 id="gate-h" tabindex="-1">Team conversations are off for you</h1>
+      <p>In ${WORKSPACE} you work on what you're assigned without Team Hub, so channels, direct messages and shared files aren't open to you. Your tasks, the clients you're assigned and your permission are unchanged.</p>
+      <p class="lbl">To join team conversations, ask</p>${whoList(theo)}
+      <div class="acts2"><button class="btn primary" id="gate-work" data-act="gate-note:work">${ic("task")}Open my work</button></div>
+      ${S.protoNote === "work" ? `<div class="proto-note"><b>PROTOTYPE NOTE</b><span>Opens Operations → My work (shipped).</span></div>` : ""}
+    </section></div></div>`;
+}
+function renderGate() {
+  const lena = person("lena") || SEED_PEOPLE().find((p) => p.id === "lena");
+  return `<div class="gate"><div class="gbar">${ic("lock")}<strong>Paige</strong><span>· ${WORKSPACE}</span><span class="grow"></span><span>Signed in as ${esc(lena.name)}</span></div>
+    <div class="gwrap"><section class="gcard" aria-labelledby="gate-h"><span class="plate" aria-hidden="true">${ic("pause")}</span>
+      <h1 id="gate-h" tabindex="-1">Your access to ${WORKSPACE} is paused</h1>
+      <p>Morgan Hale suspended your access on Oct 21. Nothing of yours was deleted: your work, clients and messages are kept for when your access comes back.</p>
+      <p>You're still signed in to Paige, and you can open any other workspace you belong to.</p>
+      <p class="lbl">To get access back, ask</p>${whoList(lena)}
+      <div class="acts2"><button class="btn secondary" id="gate-switch" data-act="gate-note:switch">Choose another workspace</button><button class="btn quiet" id="gate-out" data-act="gate-note:switch">${ic("logout")}Sign out</button></div>
+      ${S.protoNote === "switch" ? `<div class="proto-note"><b>PROTOTYPE NOTE</b><span>Workspace switcher and sign-out are shipped and unchanged.</span></div>` : ""}
+    </section></div></div>`;
+}
+
+/* ---------------- Layer: menu, picker, dialogs, drawer ---------------- */
+function renderToast() {
+  const n = S.notice; if (!n || S.screen !== "settings" || S.drawer || S.modal) return "";
+  return `<div class="notice${S.enter === "toast" ? " enter" : ""}" data-tone="${n.tone || "ok"}" tabindex="-1" id="notice" role="region" aria-label="Result">${ic(n.tone === "bad" ? "warn" : "check")}<p>${n.html}</p>${n.action ? `<button class="btn secondary" id="notice-act" data-act="${n.action.act}">${esc(n.action.label)}</button>` : ""}<button class="x" id="notice-x" aria-label="Dismiss" data-act="dismiss">${ic("x")}</button></div>`;
+}
+function renderLayer() {
+  let h = renderToast();
+  if (S.drawer) h += renderDrawer();
+  if (S.modal?.type === "suspend") h += renderSuspend();
+  if (S.modal?.type === "invite") h += renderInvite();
+  if (S.modal?.type === "edit") h += renderEditor();
+  if (S.menu) h += renderMenu();
+  if (S.picker) h += renderPicker();
+  return h;
+}
+const en = (k) => (S.enter === k ? " enter" : "");
+
+function renderMenu() {
+  const p = person(S.menu.id); const items = [];
+  if (p.status === "invited") {
+    items.push(`<button role="menuitem" data-act="resend:${p.id}">${ic("send")}Resend invitation</button>`);
+    items.push(`<button role="menuitem" data-tone="danger" data-act="withdraw:${p.id}">${ic("mailx")}Withdraw invitation</button>`);
+  } else {
+    items.push(`<button role="menuitem" data-act="edit:${p.id}">${ic("pencil")}Edit details</button>`);
+    items.push(p.status === "suspended"
+      ? `<button role="menuitem" data-act="reinstate:${p.id}">${ic("undo")}Reinstate access</button>`
+      : `<button role="menuitem" data-act="suspend:${p.id}">${ic("pause")}Suspend access…</button>`);
+    items.push(`<hr>`);
+    items.push(`<button role="menuitem" data-tone="danger" data-act="remove:${p.id}">${ic("userMinus")}Remove from team…</button>`);
+  }
+  return `<div class="menu${en("menu")}" role="menu" id="menu" aria-label="Actions for ${esc(display(p))}" data-anchor="#more-${p.id}">${items.join("")}</div>`;
+}
+function renderPicker() {
+  const k = S.picker; const active = k.active ?? Math.max(0, k.options.findIndex((o) => o.value === k.value));
+  return `<div class="listbox${en("picker")}" role="listbox" id="listbox" tabindex="-1" aria-label="${esc(k.label)}" aria-activedescendant="opt-${active}" data-anchor="${k.anchor}">
+    ${k.options.map((o, i) => `<div role="option" id="opt-${i}" aria-selected="${o.value === k.value}" ${o.disabled ? 'aria-disabled="true"' : ""} data-active="${i === active}" data-opt="${i}"><span class="chk">${o.value === k.value ? ic("check") : ""}</span><span>${esc(o.label)}</span>${o.hint ? `<small>${esc(o.hint)}</small>` : ""}</div>`).join("")}
+  </div>`;
+}
+
+function waitingOn(id) {
+  const h = S.hold[id] || {};
+  return { approvals: h.approvals || [], mailbox: (h.mailboxes || [])[0] };
+}
+function renderSuspend() {
+  const m = S.modal; const p = person(m.id); const pending = m.stage === "pending";
+  const w = waitingOn(p.id); const n = w.approvals.length; const f = esc(first(p));
+  /* Backend truth (round 3): suspension changes no approval. It stays assigned and pending; the
+     suspended person can't act on it; a new one can still be assigned and notify them. */
+  const approvalLine = n
+    ? `${n === 1 ? `1 approval assigned to ${f} (“${esc(w.approvals[0].summary)}”) stays assigned to ${f} and waits` : `${n} approvals assigned to ${f} stay assigned to ${f} and wait`}. ${f} can't act on ${n === 1 ? "it" : "them"} while suspended. New approvals can still be assigned to ${f}, and ${f} is still emailed about them.`
+    : `No approvals are assigned to ${f}. New ones can still be assigned to ${f} while suspended, and ${f} is still emailed about them.`;
+  return `<div class="scrim${en("suspend")}" data-act="${pending ? "" : "close-modal"}"></div>
+  <section class="dialog narrow${en("suspend")}" role="alertdialog" aria-modal="true" aria-labelledby="sus-h" aria-describedby="sus-d" id="dlg">
+    <header><div><h2 id="sus-h">Suspend ${esc(p.name)}?</h2><p id="sus-d">${f} can't open ${WORKSPACE} until you reinstate them. They can still sign in to Paige.</p></div><button class="x" aria-label="Close" data-act="close-modal" ${pending ? "disabled" : ""}>${ic("x")}</button></header>
+    <div class="body">
+      <ul class="facts">
+        <li>${ic("pause")}<span>Access to this workspace stops at once: Operations, clients, Team Hub and Paige here.</span></li>
+        <li>${ic("okc")}<span>${approvalLine}</span></li>
+        ${w.mailbox ? `<li>${ic("mail")}<span>Nothing can be sent from ${esc(w.mailbox.address)} while ${f} is suspended, including emails Paige already prepared for ${f}. It stays connected and keeps receiving mail.</span></li>` : ""}
+        <li>${ic("shield")}<span>Nothing is deleted or reassigned. Their work, clients and messages stay where they are.</span></li>
+        <li>${ic("undo")}<span>You can reinstate ${f} at any time, with their permission and team conversations setting as they are then.</span></li>
+      </ul>
+      ${m.stage === "error" ? `<div class="alert" role="alert" tabindex="-1" id="sus-err">${ic("warn")}<p>${f}'s access didn't change. Check your connection and try again.</p></div>` : ""}
+      ${pending ? `<p class="status" role="status" tabindex="-1" id="sus-pending">${ic("loader", "spin")}Suspending ${f}…</p>` : ""}
+    </div>
+    <footer class="foot"><button class="btn secondary" id="sus-cancel" data-act="close-modal" ${pending ? "disabled" : ""}>Cancel</button><button class="btn primary" data-act="do-suspend" ${pending ? 'disabled aria-busy="true"' : ""}>${pending ? "Suspending…" : m.stage === "error" ? "Try again" : "Suspend access"}</button></footer>
+  </section>`;
+}
+
+function convoCopy(on) {
+  return on ? "On: they join the open team channels as soon as they accept."
+    : "Off: they can't open Team Hub (channels, direct messages or shared files) and work only on what they're assigned. Good for a spot-job contractor.";
+}
+function renderInvite() {
+  const m = S.modal; const f = m.form; const pending = m.stage === "pending";
+  const adminBlocked = S.viewer === "admin";
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim());
+  let body;
+  if (m.step === "form") {
+    body = `<div class="body">
+      <label class="f">Email<input id="inv-email" type="email" data-field="email" value="${esc(f.email)}" placeholder="person@company.com" autocomplete="off" aria-describedby="inv-email-err">${f.touched && !emailOk ? `<small role="alert" id="inv-email-err">Enter an email address like name@company.com.</small>` : ""}</label>
+      <div><div class="fieldlabel" id="perm-l">Permission</div>
+        <div class="seg" role="radiogroup" aria-labelledby="perm-l">
+          ${radio("member", "Member", "Works in the business. Can't manage people.", f.perm, false)}
+          ${radio("admin", "Admin", adminBlocked ? "Only the owner can invite an admin." : "Also manages members and invitations.", f.perm, adminBlocked)}
+        </div></div>
+      <label class="f"><span>Title <em>optional</em></span><input data-field="title" value="${esc(f.title)}" placeholder="e.g. Video Editor"></label>
+      <label class="f"><span>Responsibilities <em>optional</em></span><textarea data-field="resp" rows="3" placeholder="What they'll own and where they hand work off.">${esc(f.resp)}</textarea></label>
+      <div class="convo">${ic(f.convo ? "msg" : "msgoff")}<div><strong id="inv-convo-l">Team conversations</strong><p id="inv-convo-d">${convoCopy(f.convo)}</p></div>
+        <button class="sw" role="switch" id="inv-convo" aria-checked="${f.convo}" aria-labelledby="inv-convo-l" aria-describedby="inv-convo-d" data-act="inv-convo"><span class="track"><span class="thumb"></span></span><span aria-hidden="true">${f.convo ? "On" : "Off"}</span></button></div>
+    </div>
+    <footer class="foot"><button class="btn secondary" data-act="close-modal">Cancel</button><button class="btn primary" id="inv-next" data-act="inv-review">Review invitation</button></footer>`;
+  } else {
+    body = `<div class="body">
+      <dl class="reviewlist">
+        <div><dt>Workspace</dt><dd>${WORKSPACE}</dd></div>
+        <div><dt>Send to</dt><dd>${esc(f.email.trim())}</dd></div>
+        <div><dt>Permission</dt><dd>${PERM[f.perm]}</dd></div>
+        <div><dt>Team conversations</dt><dd>${f.convo ? "On: joins the open team channels when they accept" : "Off: assigned work only, no Team Hub"}</dd></div>
+        <div><dt>Title</dt><dd>${esc(f.title.trim() || "Not set")}</dd></div>
+        <div><dt>Responsibilities</dt><dd>${esc(f.resp.trim() || "Not set")}</dd></div>
+      </dl>
+      ${m.stage === "error" ? `<div class="alert" role="alert" tabindex="-1" id="inv-err">${ic("warn")}<p>The invitation wasn't sent. Nothing was created. Try again.</p></div>` : ""}
+    </div>
+    <footer class="foot"><button class="btn secondary" data-act="inv-back" ${pending ? "disabled" : ""}>Back</button><button class="btn act" id="inv-send" data-act="inv-send" ${pending ? 'disabled aria-busy="true"' : ""}>${pending ? "Sending…" : m.stage === "error" ? "Try again" : "Send invitation"}</button></footer>`;
+  }
+  return `<div class="scrim${en("invite")}" data-act="${pending ? "" : "close-modal"}"></div>
+  <section class="dialog${en("invite")}" role="dialog" aria-modal="true" aria-labelledby="inv-h" id="dlg">
+    <header><div><h2 id="inv-h" tabindex="-1">${m.step === "form" ? "Invite someone" : "Confirm invitation"}</h2><p>${m.step === "form" ? `New teammates join ${WORKSPACE}'s open team channels when they accept. Turn team conversations off for someone who should only see their assigned work.` : "Check who this goes to and what they can reach. One invitation is sent."}</p></div><button class="x" aria-label="Close" data-act="close-modal" ${pending ? "disabled" : ""}>${ic("x")}</button></header>
+    ${body}
+  </section>`;
+}
+function radio(v, label, hint, cur, disabled) {
+  return `<button type="button" role="radio" aria-checked="${cur === v}" ${disabled ? 'aria-disabled="true"' : ""} tabindex="${cur === v ? 0 : -1}" data-act="${disabled ? "" : "perm:" + v}" data-radio="${v}"><strong><span class="radio" aria-hidden="true"></span>${label}</strong><span>${hint}</span></button>`;
+}
+
+/* The existing MemberEditor, drawn compactly so the name button has a real destination. */
+function renderEditor() {
+  const m = S.modal; const p = person(m.id); const f = m.form; const pending = m.stage === "pending";
+  const permEditable = S.viewer === "owner" && p.perm !== "owner" && p.id !== me();
+  const reason = p.perm === "owner" ? "Owner access is protected here." : p.id === me() ? "You can't change your own permission." : "Only the owner changes permissions.";
+  const perm = permEditable
+    ? `<div><div class="fieldlabel" id="ed-perm-l">Permission</div><div class="seg" role="radiogroup" aria-labelledby="ed-perm-l">${radio("member", "Member", "Works in the business. Can't manage people.", f.perm, false)}${radio("admin", "Admin", "Also manages members and invitations.", f.perm, false)}</div></div>`
+    : `<div><div class="fieldlabel">Permission</div><p style="margin:0;display:flex;gap:10px;align-items:center"><span class="perm">${PERM[p.perm]}</span><span class="ro">${reason}</span></p></div>`;
+  return `<div class="scrim${en("edit")}" data-act="${pending ? "" : "close-modal"}"></div>
+  <section class="dialog${en("edit")}" role="dialog" aria-modal="true" aria-labelledby="ed-h" id="dlg">
+    <header><div><h2 id="ed-h">${esc(p.name)}</h2><p>${esc(p.email)} · ${p.status === "suspended" ? "Suspended" : "Active"}</p></div><button class="x" aria-label="Close" data-act="close-modal" ${pending ? "disabled" : ""}>${ic("x")}</button></header>
+    <div class="body">
+      <label class="f">Title<input id="ed-title" data-field="title" value="${esc(f.title)}" placeholder="e.g. Designer"></label>
+      <label class="f">Responsibilities<textarea data-field="resp" rows="3" placeholder="What they own and where they hand work off.">${esc(f.resp)}</textarea></label>
+      ${perm}
+      ${m.stage === "error" ? `<div class="alert" role="alert" tabindex="-1" id="ed-err">${ic("warn")}<p>Nothing was saved. Check your connection and try again.</p></div>` : ""}
+    </div>
+    <footer class="foot">${canAct(p) ? `<button class="btn quiet danger-link" id="ed-remove" data-act="edit-remove" ${pending ? "disabled" : ""}>Remove from team…</button>` : ""}<button class="btn secondary" data-act="close-modal" ${pending ? "disabled" : ""}>Cancel</button><button class="btn primary" id="ed-save" data-act="edit-save" ${pending ? 'disabled aria-busy="true"' : ""}>${pending ? "Saving…" : m.stage === "error" ? "Try again" : "Save changes"}</button></footer>
+  </section>`;
+}
+
+/* ---------------- Departure review drawer ----------------
+   Read: team_member_holdings (read-only). Hand-over: each item through its EXISTING owner writer, one
+   write per item, no transaction. Removal: remove_solo_team_member, a separate final act. */
+function holdingsFor(id) {
+  if (S.review === "empty") return [];
+  const h = S.hold[id] || {};
+  return KINDS.filter((k) => (h[k] || []).length).map((k) => ({ kind: k, ...KIND[k], items: h[k].map((it) => ({ ...it, kind: k })) }));
+}
+function titleOf(it) { return it.kind === "clients" ? it.label : it.kind === "approvals" ? it.summary : it.kind === "mailboxes" ? it.address : it.title; }
+function metaOf(it) {
+  switch (it.kind) {
+    case "work": return [it.client || "No client", `due ${it.due}`, STAT[it.status]].join(" · ");
+    case "crm_tasks": return [it.client || "Not on a deal", `due ${it.due}`, STAT[it.status]].join(" · ");
+    case "clients": return it.relation === "assigned" ? "Assigned to them" : "Lead owner";
+    case "deals": return [it.client, money(it.value_cents, it.currency), `closes ${it.close}`].filter(Boolean).join(" · ");
+    case "approvals": return [it.akind, `waiting since ${it.since}`, APPR[it.status]].filter(Boolean).join(" · ");
+    case "mailboxes": return [it.label, it.provider, "connected mailbox"].join(" · ");
+  }
+}
+function assignable(id) { return holdingsFor(id).flatMap((g) => g.writer ? g.items : []); }
+/* Receivers follow each writer's own rule: an active seat in this workspace, never the person leaving;
+   contact.assign_coach (an "assigned to them" client) accepts an owner or admin only. */
+function receivers(it, departingId) {
+  return S.people.filter((p) => p.id !== departingId && p.status === "active" && !(it.kind === "clients" && it.relation === "assigned" && p.perm === "member"));
+}
+function optionsFor(it, departingId) {
+  return [{ value: "none", label: "Don't hand over" }, ...receivers(it, departingId).map((p) => ({ value: p.id, label: display(p) + (p.id === me() ? " (you)" : ""), hint: PERM[p.perm] }))];
+}
+function nameOf(v) { if (!v || v === "none") return null; const p = person(v); return display(p) + (p.id === me() ? " (you)" : ""); }
+function cardText(it, to) {
+  const n = nameOf(to); const end = (t) => t.replace(/\.+$/, "");
+  if (it.kind === "crm_tasks") return `Assign the CRM task “${it.title}” to ${n}.`;
+  if (it.kind === "clients") return it.relation === "assigned" ? `Assign the client ${end(it.label)} to ${n}.` : `Make ${n} the lead owner of ${end(it.label)}.`;
+  return `Make ${n} the owner of the deal “${it.title}”.`;
+}
+function whereNote(it, p) {
+  const f = esc(first(p));
+  if (it.kind === "approvals") return `<div class="where"><span>Can't be handed over yet. It stays assigned to ${f} and waiting, and once ${f} leaves it won't show on anyone's Game Plan approvals card.</span></div>`;
+  return `<div class="where"><span>Can't be handed over: it's ${f}'s own ${esc(it.provider)} account. It stays connected after ${f} leaves. ${p.perm === "admin" ? `Only ${f} can disconnect it, and only while still on the team.` : `No one can disconnect it: only an admin can disconnect their own mailbox.`}</span><button class="btn quiet" id="conn-${it.id}" data-act="proto-note:connections">Open Connections</button></div>`;
+}
+
+function renderDrawer() {
+  const d = S.drawer; const p = person(d.id) || d.who; const f = esc(first(p));
+  const saving = d.run && d.run.some((r) => r.state === "saving" || r.state === "checking");
+  const locked = d.removing || saving;
+  let body, foot, title, sub;
+  if (d.stage === "loading") {
+    title = `What ${esc(p.name)} holds`; sub = `Checking before ${f} leaves.`;
+    body = `<p class="status" role="status">${ic("loader", "spin")}Checking ${f}'s open work, CRM tasks, clients, deals, approvals and mailbox…</p>
+      ${[0, 1, 2].map(() => `<div class="group"><div class="skel" style="width:34%;margin-bottom:12px"></div><div class="skel" style="width:88%;margin-bottom:8px"></div><div class="skel" style="width:62%"></div></div>`).join("")}`;
+    foot = `<button class="btn secondary" data-act="close-drawer">Cancel</button><button class="btn primary" disabled>Continue</button>`;
+  } else if (d.stage === "failed") {
+    title = `What ${esc(p.name)} holds`; sub = `Checking before ${f} leaves.`;
+    body = `<div class="alert" role="alert" tabindex="-1" id="drw-err">${ic("warn")}<div><p><strong>We couldn't load what ${f} holds.</strong></p><p>Removal waits until this list loads, so nothing is left behind by accident. If access needs to stop right now, suspend ${f} instead.</p></div></div>`;
+    foot = `<button class="btn secondary" data-act="drawer-suspend">Suspend instead</button><button class="btn primary" id="drw-retry" data-act="drawer-retry">${ic("refresh")}Try again</button>`;
+  } else if (d.step === "review") {
+    const groups = holdingsFor(d.id); const items = assignable(d.id); const total = items.length;
+    title = `What ${esc(p.name)} holds`;
+    if (!groups.length) {
+      sub = `Checked before ${f} leaves. ${PERM[p.perm]} · ${esc(p.title || "")}`;
+      body = `<div class="calm">${ic("okc")}<strong>${esc(p.name)} holds nothing to hand over</strong><p>No open work, CRM tasks, clients, deals, approvals or connected mailbox. Removing ${f} leaves nothing behind.</p></div>`;
+      foot = `<button class="btn secondary" data-act="close-drawer">Cancel</button><button class="btn primary" id="drw-continue" data-act="drawer-continue">Continue</button>`;
+    } else {
+      sub = `Choose who takes over each thing before ${f} leaves. ${PERM[p.perm]} · ${esc(p.title || "")}`;
+      const done = items.filter((it) => d.assign[it.id] && d.assign[it.id] !== "none").length;
+      const fixedN = groups.filter((g) => !g.writer).reduce((a, g) => a + g.items.length, 0);
+      const skipped = d.handAll ? items.filter((it) => !receivers(it, d.id).some((r) => r.id === d.handAll)) : [];
+      body = `${total ? `<div class="tally" role="status"><div><strong>${done} of ${total} will be handed over</strong><small>${total - done ? `${total - done} still ${total - done === 1 ? "has" : "have"} no one. Choose a teammate, or don't hand ${total - done === 1 ? "it" : "them"} over.` : "Everything that can move has someone to take it."}${fixedN ? ` ${fixedN} more can't be handed over; see below.` : ""}</small><div class="bar" aria-hidden="true"><i style="width:${(done / total) * 100}%"></i></div></div></div>
+        <div><div class="fieldlabel" id="handall-l">Hand everything to</div><div class="handall"><button class="pick" id="pick-all" aria-haspopup="listbox" aria-expanded="${S.picker?.key === "all"}" aria-labelledby="handall-l pick-all" data-act="picker:all"><span>${d.handAll ? esc(nameOf(d.handAll)) : '<span class="muted">Choose a teammate</span>'}</span>${ic("chev")}</button></div>${skipped.length ? `<p class="ro" style="margin:6px 0 0;font-size:12px">${skipped.map((it) => esc(titleOf(it))).join(", ")} can only go to an owner or admin, so ${skipped.length === 1 ? "it keeps its" : "they keep their"} own choice.</p>` : ""}</div>` : ""}
+        ${groups.map((g) => { const cnt = (S.hold[d.id]?.counts || {})[g.kind]; const extra = cnt && cnt > g.items.length ? cnt - g.items.length : 0;
+          return `<section class="group" aria-labelledby="g-${g.kind}"><h3 id="g-${g.kind}">${ic(g.icon)}${g.label}<span class="n">${cnt || g.items.length}</span>${g.writer ? "" : `<span class="why">Nothing can hand ${g.items.length === 1 ? "this" : "these"} over yet</span>`}</h3>
+          ${g.items.map((it) => { const v = d.assign[it.id] || "none"; const needsAdmin = it.kind === "clients" && it.relation === "assigned";
+            return `<div class="item" ${g.writer ? "" : 'data-tone="warn"'}><div><strong>${esc(titleOf(it))}</strong><small>${esc(metaOf(it))}</small>${needsAdmin ? `<span class="rule">Can go to an owner or admin.</span>` : ""}</div>
+            ${g.writer ? `<button class="pick" id="pick-${it.id}" aria-haspopup="listbox" aria-expanded="${S.picker?.key === it.id}" aria-label="Hand ${esc(titleOf(it))} to: ${v === "none" ? "don't hand over" : esc(nameOf(v))}" data-changed="${v !== "none"}" data-act="picker:${it.id}"><span>${v === "none" ? `<span class="muted">Don't hand over</span>` : esc(nameOf(v))}</span>${ic("chev")}</button>` : whereNote(it, p)}
+          </div>`; }).join("")}
+          ${extra ? `<p class="more-note">+${extra} more not listed here (the list shows the first 50).${g.kind === "work" || g.kind === "crm_tasks" ? " Hand the rest over in Operations." : ""}</p>` : ""}</section>`; }).join("")}
+        ${S.protoNote === "connections" ? `<div class="proto-note"><b>PROTOTYPE NOTE</b><span>Opens Settings → Connections (shipped), which shows this mailbox to owners and admins.</span></div>` : ""}`;
+      foot = `<span class="lead">Nothing changes until you start the hand-over.</span><button class="btn secondary" data-act="close-drawer">Cancel</button><button class="btn primary" id="drw-continue" data-act="drawer-continue">Continue</button>`;
+    }
+  } else if (d.step === "plan") {
+    const plan = planOf(d); const crmN = plan.filter((x) => KIND[x.it.kind].writer === "crm").length;
+    const by = {}; for (const x of plan) by[x.to] = (by[x.to] || 0) + 1;
+    const un = assignable(d.id).length - plan.length; const w = waitingOn(d.id);
+    title = plan.length ? `Hand over, then remove ${esc(p.name)}` : `Remove ${esc(p.name)} from ${WORKSPACE}?`;
+    sub = "Check what happens, in order.";
+    body = `<ol class="steps">
+      ${plan.length ? `<li><div><strong>Hand over ${plan.length} ${plan.length === 1 ? "thing" : "things"}, one at a time</strong>
+        <ul class="to">${Object.entries(by).map(([k, n]) => `<li>${n} to ${esc(nameOf(k))}</li>`).join("")}</ul>
+        <p>Each change saves on its own, the same way Operations saves it. If one fails, the others still save, and you can retry it.</p>
+        ${crmN ? `<p>${crmN === plan.length ? (crmN === 1 ? "It asks" : "Each asks") : `${crmN} of them (clients, deals and CRM tasks) ask`} you to confirm the change before it saves.</p>` : ""}</div></li>` : ""}
+      <li><div><strong>Remove ${esc(p.name)}</strong><p>${f}'s access to ${WORKSPACE} ends right away. Their Team Hub messages stay, shown as from a former teammate. Their Paige account isn't deleted; to bring them back, send a new invitation.</p></div></li>
+    </ol>
+    ${un || w.approvals.length || w.mailbox ? `<section class="stay" aria-labelledby="stay-h"><h3 id="stay-h">What stays with ${f}</h3><ul class="summary">
+      ${un ? `<li>${ic("arrow")}<span>${un} ${un === 1 ? "thing" : "things"} you chose not to hand over ${un === 1 ? "keeps" : "keep"} ${f}'s name.<span class="sub">In Operations, work shows “Member unavailable”.</span></span></li>` : ""}
+      ${w.approvals.length ? `<li data-tone="warn">${ic("warn")}<span>${w.approvals.length === 1 ? "1 approval stays" : `${w.approvals.length} approvals stay`} assigned to ${f} and waiting.<span class="sub">Nothing can hand an approval over yet, and once ${f} leaves it won't show on anyone's Game Plan approvals card.</span></span></li>` : ""}
+      ${w.mailbox ? `<li>${ic("mail")}<span>${esc(w.mailbox.address)} stays connected and keeps receiving mail.<span class="sub">Nobody here can read or send from it. ${p.perm === "admin" ? `Only ${f} could disconnect it, and only before leaving; after removal no one can.` : `No one can disconnect it: only an admin can disconnect their own mailbox.`}</span></span></li>` : ""}
+    </ul></section>` : ""}
+    ${d.error ? `<div class="alert" role="alert" tabindex="-1" id="drw-err">${ic("warn")}<p>${f} is still on the team. Try again.</p></div>` : ""}
+    ${d.removing ? `<p class="status" role="status" tabindex="-1" id="drw-pending">${ic("loader", "spin")}Removing ${f}…</p>` : ""}`;
+    foot = `<button class="btn secondary" id="drw-back" data-act="drawer-back" ${locked ? "disabled" : ""}>Back</button>${plan.length
+      ? `<button class="btn primary" id="drw-start" data-act="drawer-start">Start hand-over</button>`
+      : `<button class="btn danger" id="drw-remove" data-act="drawer-remove" ${locked ? 'disabled aria-busy="true"' : ""}>${d.removing ? "Removing…" : d.error ? "Try again" : `Remove ${esc(p.name)}`}</button>`}`;
+  } else {
+    const r = d.run; const saved = r.filter((x) => x.state === "saved").length; const need = r.filter((x) => x.state === "confirm").length;
+    const bad = r.filter((x) => ["failed", "changed", "expired"].includes(x.state)).length; const left = r.length - saved;
+    title = `Hand over, then remove ${esc(p.name)}`;
+    sub = `Each change saves on its own. ${f} stays on the team until you remove them.`;
+    body = `<div class="tally"><div><strong>${saved} of ${r.length} saved</strong><small>${[need ? `${need} ${need === 1 ? "needs" : "need"} your confirmation` : "", bad ? `${bad} didn't save` : "", saving ? "saving one at a time…" : ""].filter(Boolean).join(" · ") || "Every change saved."}</small><div class="bar" aria-hidden="true"><i style="width:${(saved / r.length) * 100}%"></i></div></div></div>
+      <ul class="runlist" aria-label="Hand-over changes">${r.map(runRow).join("")}</ul>
+      ${d.error ? `<div class="alert" role="alert" tabindex="-1" id="drw-err">${ic("warn")}<p>${f} is still on the team. The changes that saved stay saved. Try again.</p></div>` : ""}
+      ${d.removing ? `<p class="status" role="status" tabindex="-1" id="drw-pending">${ic("loader", "spin")}Removing ${f}…</p>` : ""}`;
+    const lead = saving ? "Saving one change at a time…" : left ? `${left} ${left === 1 ? "change hasn't" : "changes haven't"} finished. If you remove ${f} now, ${left === 1 ? "it stays" : "they stay"} with ${f}.` : "Every change saved.";
+    foot = `<span class="lead" ${left && !saving ? 'data-tone="warn"' : ""}>${lead}</span><button class="btn secondary" id="drw-close" data-act="close-drawer" ${locked ? "disabled" : ""}>Close</button><button class="btn danger" id="drw-remove" data-act="drawer-remove" ${locked ? 'disabled aria-busy="true"' : ""}>${d.removing ? "Removing…" : d.error ? "Try again" : `Remove ${esc(p.name)}`}</button>`;
+  }
+  return `<div class="scrim${en("drawer")}" data-act="${locked ? "" : "close-drawer"}"></div>
+  <aside class="drawer${en("drawer")}" role="dialog" aria-modal="true" aria-labelledby="drw-h" id="drawer">
+    <header><div><h2 id="drw-h" tabindex="-1">${title}</h2><p>${sub}</p></div><button class="x" aria-label="Close" data-act="close-drawer" ${locked ? "disabled" : ""}>${ic("x")}</button></header>
+    <div class="body">${body}</div>
+    <footer class="foot">${foot}</footer>
+  </aside>`;
+}
+const CHIP = { waiting: ["clock", "Waiting"], saving: ["loader", "Saving…"], checking: ["loader", "Reading again…"], saved: ["check", "Saved"], confirm: ["okc", "Needs confirming"], failed: ["warn", "Didn't save"], changed: ["warn", "Changed"], expired: ["clock", "Expired"] };
+function runRow(x) {
+  const [icn, word] = CHIP[x.state]; const spin = x.state === "saving" || x.state === "checking";
+  let detail = "";
+  if (x.state === "confirm") detail = `<div class="detail"><p>${esc(cardText(x.it, x.to))}</p><button class="btn primary" id="run-${x.it.id}" data-act="run-confirm:${x.it.id}">Confirm</button></div>`;
+  if (x.state === "failed") detail = `<div class="detail" data-tone="bad"><p>This change didn't save. Check your connection and retry; the others aren't affected.</p><button class="btn secondary" id="run-${x.it.id}" data-act="run-retry:${x.it.id}">${ic("refresh")}Retry</button></div>`;
+  if (x.state === "changed") detail = `<div class="detail" data-tone="bad"><p>Someone changed this after you opened the review, so nothing was saved. Check again reads the latest and tries once more.</p><button class="btn secondary" id="run-${x.it.id}" data-act="run-check:${x.it.id}">${ic("refresh")}Check again</button></div>`;
+  if (x.state === "expired") detail = `<div class="detail" data-tone="bad"><p>The confirmation expired before it was confirmed, so nothing was saved.</p><button class="btn secondary" id="run-${x.it.id}" data-act="run-retry:${x.it.id}">Prepare it again</button></div>`;
+  return `<li id="rr-${x.it.id}" tabindex="-1"><div><strong>${esc(titleOf(x.it))}</strong><small>${KIND[x.it.kind].label} → ${esc(nameOf(x.to))}</small></div><span class="chip" data-s="${x.state}">${ic(icn, spin ? "spin" : "")}${word}</span>${detail}</li>`;
+}
+function planOf(d) { return assignable(d.id).filter((it) => d.assign[it.id] && d.assign[it.id] !== "none").map((it) => ({ it, to: d.assign[it.id] })); }
+
+/* Run engine (mock). One write at a time. plan_update_item_versioned saves directly; crm-command returns
+   its confirmation card first. "Some fail" injects one of each failure, once. */
+function pump(d) {
+  if (S.drawer !== d || d.run.some((x) => x.state === "saving" || x.state === "checking")) return;
+  const x = d.run.find((r) => r.state === "waiting"); if (!x) return;
+  x.state = "saving"; render();
+  setTimeout(() => {
+    if (S.drawer !== d) return;
+    const writer = KIND[x.it.kind].writer;
+    if (S.ho === "some" && !x.tried && x.it.id === "w2") { x.tried = true; x.state = "changed"; announce(`${titleOf(x.it)} changed since you opened the review. Nothing saved.`); }
+    else if (S.ho === "some" && !x.tried && x.it.id === "d1") { x.tried = true; x.state = "failed"; announce(`${titleOf(x.it)} didn't save.`); }
+    else if (writer === "crm" && !x.confirmed) { x.state = "confirm"; announce(`${titleOf(x.it)} needs your confirmation.`); }
+    else saved(d, x);
+    render(); pump(d);
+  }, 650);
+}
+function saved(d, x) {
+  x.state = "saved"; const h = S.hold[d.id]; h[x.it.kind] = (h[x.it.kind] || []).filter((i) => i.id !== x.it.id);
+  announce(`${titleOf(x.it)} saved to ${nameOf(x.to)}.`);
+}
+
+/* ---------------- Floating positioning ---------------- */
+function positionFloating() {
+  const frame = document.getElementById("frame").getBoundingClientRect();
+  for (const el of document.querySelectorAll("#layer [data-anchor]")) {
+    const a = document.querySelector(el.dataset.anchor); if (!a) continue;
+    const r = a.getBoundingClientRect(); const w = el.offsetWidth; const h = el.offsetHeight;
+    let left = r.right - frame.left - w; if (el.id === "listbox") { left = r.left - frame.left; el.style.minWidth = Math.max(220, r.width) + "px"; }
+    left = Math.max(8, Math.min(left, frame.width - el.offsetWidth - 8));
+    let top = r.bottom - frame.top + 4; if (top + h > frame.height - 8) top = r.top - frame.top - h - 4;
+    el.style.left = left + "px"; el.style.top = Math.max(8, top) + "px";
+  }
+}
+/* Tab out of a popover: close it and continue to the next control after its trigger. */
+function moveFrom(sel, back) {
+  const a = document.querySelector(sel); if (!a) return;
+  const scope = a.closest("#drawer, #dlg") || document.getElementById("pg");
+  const f = [...scope.querySelectorAll('button:not(:disabled), input, textarea, [tabindex="0"]')].filter((x) => x.offsetParent !== null);
+  const i = f.indexOf(a); (f[i + (back ? -1 : 1)] || a).focus();
+}
+
+/* ---------------- Actions ---------------- */
+function setNotice(html, extra = {}) { S.notice = { html, ...extra }; if (!S.enter) S.enter = "toast"; announce(plain(html)); if (extra.focus) S.focus = "#notice"; }
+function flash(id) { S.flash = id; setTimeout(() => { if (S.flash === id) { S.flash = null; const r = document.getElementById("row-" + id); if (r) r.dataset.flash = "false"; } }, 1200); }
+
+function openPicker(key) {
+  const d = S.drawer;
+  if (key === "filter") {
+    S.picker = { key, anchor: "#filter-pick", label: "Show", value: S.filter, options: [
+      { value: "all", label: "Everyone" }, { value: "owner", label: "Owner" }, { value: "admin", label: "Admins" }, { value: "member", label: "Members" }, { value: "invited", label: "Invited" }],
+      onPick: (v) => { S.filter = v; S.focus = "#filter-pick"; } };
+  } else if (key === "all") {
+    S.picker = { key, anchor: "#pick-all", label: "Hand everything to", value: d.handAll, options: optionsFor({ kind: "work" }, d.id).filter((o) => o.value !== "none"),
+      onPick: (v) => { d.handAll = v; let skip = 0; for (const it of assignable(d.id)) { if (receivers(it, d.id).some((r) => r.id === v)) d.assign[it.id] = v; else skip++; } S.focus = "#pick-all"; announce(`Everything that can go to ${nameOf(v)} is set to go there.${skip ? ` ${skip} can only go to an owner or admin.` : ""}`); } };
+  } else {
+    const it = assignable(d.id).find((x) => x.id === key);
+    S.picker = { key, anchor: "#pick-" + key, label: `Hand ${titleOf(it)} to`, value: d.assign[key] || "none", options: optionsFor(it, d.id),
+      onPick: (v) => { d.assign[key] = v; S.focus = "#pick-" + key; } };
+  }
+  S.enter = "picker"; S.focus = "#listbox";
+}
+
+function openDrawer(id, from) {
+  S.menu = null; S.notice = null; S.drawer = { id, step: "review", stage: "loading", assign: {}, handAll: null, error: false, run: null, removing: false, from: from || "#more-" + id };
+  S.enter = "drawer"; S.focus = "#drw-h"; announce(`Checking what ${first(person(id))} holds.`);
+  loadReview();
+}
+function loadReview() {
+  const d = S.drawer; d.stage = "loading";
+  if (S.review === "loading") return;
+  setTimeout(() => {
+    if (S.drawer !== d) return;
+    if (S.review === "failed") { d.stage = "failed"; S.focus = "#drw-err"; }
+    else { d.stage = "ready"; S.focus = "#drw-h"; const n = holdingsFor(d.id).reduce((a, g) => a + g.items.length, 0); announce(n ? `${n} things ${first(person(d.id))} holds. ${assignable(d.id).length} can be handed over.` : "Nothing to hand over."); }
+    render();
+  }, 900);
+}
+
+const handlers = {
+  tab: (v) => { S.tab = v; S.focus = "#tab-" + v; },
+  dismiss: () => { S.notice = null; S.focus = "#q"; },
+  clearq: () => { S.q = ""; S.filter = "all"; S.focus = "#q"; },
+  noop: () => {},
+  "open-paige": () => { S.protoNote = S.protoNote === "paige" ? null : "paige"; },
+  "gate-note": (v) => { S.protoNote = S.protoNote === v ? null : v; },
+  invite: () => { S.notice = null; const from = document.activeElement?.id === "first-invite" ? "#first-invite" : "#invite-btn"; S.menu = null; S.modal = { type: "invite", step: "form", stage: "idle", from, form: { email: "", perm: "member", title: "", resp: "", convo: true, touched: false } }; S.enter = "invite"; S.focus = "#inv-email"; },
+  menu: (id) => { if (S.menu?.id === id) { S.menu = null; S.focus = "#more-" + id; return; } S.menu = { id }; S.picker = null; S.enter = "menu"; S.focus = "#menu [role=menuitem]"; },
+  edit: (id) => { S.notice = null; const p = person(id); const from = S.menu ? "#more-" + id : "#name-" + id; S.menu = null; S.modal = { type: "edit", id, stage: "idle", from, form: { title: p.title || "", resp: p.resp || "", perm: p.perm } }; S.enter = "edit"; S.focus = "#ed-title"; },
+  "edit-save": () => { const m = S.modal; m.stage = "pending"; S.focus = "#ed-save";
+    mock((ok) => { if (S.modal !== m) return; const p = person(m.id);
+      if (ok) { const permChanged = m.form.perm !== p.perm; p.title = m.form.title.trim(); p.resp = m.form.resp.trim(); p.perm = m.form.perm; S.modal = null; flash(p.id);
+        setNotice(`Saved <strong>${esc(p.name)}</strong>'s details.${permChanged ? ` Their permission is now ${PERM[p.perm]}.` : ""}`, { focus: true }); }
+      else { m.stage = "error"; S.focus = "#ed-err"; }
+      render(); }); },
+  "edit-remove": () => { const id = S.modal.id; S.modal = null; openDrawer(id, "#name-" + id); },
+  convo: (id) => {
+    const p = person(id); if (S.busy[id]) return; const next = !p.convo; S.busy[id] = "convo";
+    mock((ok) => { delete S.busy[id];
+      if (ok) { p.convo = next; flash(id); const f = esc(first(p));
+        setNotice(p.status === "suspended"
+          ? (next ? `<strong>${esc(p.name)}</strong> stays suspended. When reinstated, ${f} will be in every open team channel, including any they had left, and keeps the private channels they were in.`
+                  : `<strong>${esc(p.name)}</strong> stays suspended. When reinstated, ${f} won't have Team Hub and will work only on what they're assigned.`)
+          : next ? `<strong>${esc(p.name)}</strong> is back in Team Hub, in every open team channel, including any they had left, and keeps the private channels they were in.`
+                 : `<strong>${esc(p.name)}</strong> can't open Team Hub now. They keep their channels, their assigned work and their permission.`,
+          { action: { act: "convo:" + id, label: next ? "Turn off again" : "Turn back on" } });
+      } else setNotice(`Team conversations for <strong>${esc(display(p))}</strong> didn't change. Try again.`, { tone: "bad", action: { act: "convo:" + id, label: "Retry" } });
+      render(); });
+  },
+  suspend: (id) => { S.menu = null; S.drawer = null; S.notice = null; S.modal = { type: "suspend", id, stage: "idle", from: "#more-" + id }; S.enter = "suspend"; S.focus = "#sus-cancel"; },
+  "do-suspend": () => { const m = S.modal; m.stage = "pending"; S.focus = "#sus-pending";
+    mock((ok) => { if (S.modal !== m) return; const p = person(m.id);
+      if (ok) { p.status = "suspended"; p.seen = `Suspended today by ${display(person(me()))}`; S.modal = null; flash(p.id); const na = waitingOn(p.id).approvals.length; setNotice(`<strong>${esc(p.name)}</strong> is suspended and can't open ${WORKSPACE}.${na ? ` ${na === 1 ? "1 approval stays" : `${na} approvals stay`} assigned to ${esc(first(p))}.` : ""}`, { focus: true, action: { act: "reinstate:" + p.id, label: "Reinstate" } }); }
+      else { m.stage = "error"; S.focus = "#sus-err"; }
+      render(); }); },
+  reinstate: (id) => { if (S.menu) { S.menu = null; S.focus = "#more-" + id; } S.busy[id] = "reinstate";
+    mock((ok) => { delete S.busy[id]; const p = person(id);
+      if (ok) { p.status = "active"; p.seen = "Reinstated just now"; flash(id); setNotice(`<strong>${esc(p.name)}</strong> can open ${WORKSPACE} again, as ${PERM[p.perm]}.`); }
+      else setNotice(`<strong>${esc(p.name)}</strong> is still suspended. Try again.`, { tone: "bad", action: { act: "reinstate:" + id, label: "Retry" } });
+      render(); }); },
+  remove: (id) => openDrawer(id),
+  resend: (id) => { S.menu = null; S.focus = "#more-" + id; setNotice(`A fresh invitation went to <strong>${esc(person(id).email)}</strong>. The old link no longer works.`); },
+  withdraw: (id) => { S.menu = null; const p = person(id); S.lastWithdrawn = { ...p, at: S.people.indexOf(p) }; S.people = S.people.filter((x) => x.id !== id);
+    setNotice(`The invitation to <strong>${esc(p.email)}</strong> was withdrawn. Its link no longer works.`, { focus: true, action: { act: "send-again", label: "Send again" } }); },
+  "send-again": () => { const w = S.lastWithdrawn; if (!w) return; S.lastWithdrawn = null; const { at, ...p } = w; p.seen = "Invited just now · expires in 7 days"; S.people.splice(at, 0, p); flash(p.id); setNotice(`A new invitation went to <strong>${esc(p.email)}</strong>.`); },
+  loadmore: () => { if (S.loadingMore) return; const firstNew = S.people[S.shown]?.id; S.loadingMore = true; S.pageErr = false;
+    mock((ok) => { S.loadingMore = false; if (ok) { S.shown = null; S.focus = firstNew ? "#name-" + firstNew : null; announce("Showing everyone."); } else { S.pageErr = true; S.focus = "#page-retry"; } render(); }); },
+  "roster-retry": () => { S.roster = "loading"; render(); mock((ok) => { S.roster = ok ? "loaded" : "error"; S.focus = ok ? "#q" : "#roster-retry"; announce(ok ? "Team loaded." : "The team didn't load."); render(); }); },
+  "close-modal": () => { const m = S.modal; if (!m || m.stage === "pending") return; S.modal = null; S.focus = m.from || "#invite-btn"; },
+  "close-drawer": () => { const d = S.drawer; if (!d || d.removing || (d.run && d.run.some((x) => x.state === "saving" || x.state === "checking"))) return;
+    S.drawer = null; S.picker = null; S.protoNote = null; S.focus = d.from;
+    if (d.run) { const n = d.run.filter((x) => x.state === "saved").length; const p = person(d.id);
+      setNotice(`<strong>${esc(p.name)}</strong> is still on the team. ${n} of ${d.run.length} hand-overs saved, and they stay saved.`, { focus: true, action: { act: "remove:" + d.id, label: "Review again" } }); } },
+  "drawer-retry": () => { S.drawer.stage = "loading"; if (S.review === "failed") S.review = "auto"; loadReview(); },
+  "drawer-suspend": () => { const id = S.drawer.id; S.drawer = null; handlers.suspend(id); },
+  "drawer-continue": () => { S.drawer.step = "plan"; S.drawer.error = false; S.protoNote = null; S.focus = "#drw-h"; },
+  "drawer-back": () => { S.drawer.step = "review"; S.focus = "#drw-continue"; },
+  "proto-note": (v) => { S.protoNote = S.protoNote === v ? null : v; },
+  "drawer-start": () => { const d = S.drawer; d.step = "run"; d.run = planOf(d).map((x) => ({ ...x, state: "waiting" })); S.focus = "#drw-h"; announce(`Handing over ${d.run.length} things, one at a time.`); setTimeout(() => pump(d), 0); },
+  "run-confirm": (k) => { const d = S.drawer; const x = d.run.find((r) => r.it.id === k); x.state = "saving"; S.focus = "#rr-" + k;
+    setTimeout(() => { if (S.drawer !== d) return;
+      if (S.ho === "some" && !x.tried && x.it.id === "k1") { x.tried = true; x.state = "expired"; announce(`The confirmation for ${titleOf(x.it)} expired. Nothing saved.`); }
+      else { x.confirmed = true; saved(d, x); }
+      render(); pump(d); }, 650); },
+  "run-retry": (k) => { const d = S.drawer; const x = d.run.find((r) => r.it.id === k); x.state = "waiting"; x.confirmed = false; S.focus = "#rr-" + k; setTimeout(() => pump(d), 0); },
+  "run-check": (k) => { const d = S.drawer; const x = d.run.find((r) => r.it.id === k); x.state = "checking"; S.focus = "#rr-" + k;
+    setTimeout(() => { if (S.drawer !== d) return; x.state = "waiting"; render(); pump(d); }, 600); },
+  "drawer-remove": () => { const d = S.drawer; d.removing = true; d.error = false; S.focus = "#drw-pending";
+    mock((ok) => { if (S.drawer !== d) return; const p = person(d.id);
+      if (ok) { const r = d.run || []; const n = r.filter((x) => x.state === "saved").length; const left = r.length - n; const na = waitingOn(d.id).approvals.length;
+        S.people = S.people.filter((x) => x.id !== d.id); S.drawer = null;
+        const parts = []; if (n) parts.push(`${n} ${n === 1 ? "thing" : "things"} handed over`); if (left) parts.push(`${left} unfinished ${left === 1 ? "stays" : "stay"} with ${esc(first(p))}`); if (na) parts.push(`${na === 1 ? "1 approval stays" : `${na} approvals stay`} assigned to ${esc(first(p))}`);
+        setNotice(`<strong>${esc(p.name)}</strong> is no longer on the team.${parts.length ? ` ${parts.join("; ")}.` : ""}`, { focus: true }); }
+      else { d.removing = false; d.error = true; S.focus = "#drw-err"; }
+      render(); }, 900); },
+  "inv-convo": () => { const f = S.modal.form; f.convo = !f.convo; S.focus = "#inv-convo"; },
+  perm: (v) => { S.modal.form.perm = v; S.focus = `[data-radio="${v}"]`; },
+  "inv-review": () => { const f = S.modal.form; f.touched = true; if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { S.focus = "#inv-email"; return; } S.modal.step = "review"; S.focus = "#inv-h"; },
+  "inv-back": () => { S.modal.step = "form"; S.modal.stage = "idle"; S.focus = "#inv-email"; },
+  "inv-send": () => { const m = S.modal; m.stage = "pending";
+    mock((ok) => { if (S.modal !== m) return; const f = m.form;
+      if (ok) { const id = "new" + Date.now(); S.people.push({ id, name: null, email: f.email.trim(), perm: f.perm, title: f.title.trim(), resp: f.resp.trim(), convo: f.convo, status: "invited", seen: "Invited just now · expires in 7 days" }); S.modal = null; flash(id);
+        setNotice(`Invitation sent to <strong>${esc(f.email.trim())}</strong>. ${f.convo ? "They'll join the open team channels when they accept." : "They won't join Team Hub; they'll see only their assigned work."}`, { focus: true }); }
+      else { m.stage = "error"; S.focus = "#inv-err"; }
+      render(); }); }
+};
+
+function run(act) {
+  if (!act) return;
+  const [k, ...rest] = act.split(":"); const v = rest.join(":");
+  if (k === "picker") { if (S.picker?.key === v) { S.picker = null; } else openPicker(v); render(); return; }
+  handlers[k]?.(v); render();
+}
+
+/* ---------------- Events ---------------- */
+document.addEventListener("click", (e) => {
+  const dev = e.target.closest("[data-dev]"); if (dev) return devAct(dev.dataset.dev);
+  const dec = e.target.closest("[data-decide]"); if (dec) { document.querySelectorAll("[data-decide]").forEach((b) => b.setAttribute("aria-pressed", String(b === dec))); document.getElementById("decided").textContent = `Recorded here only: ${dec.textContent}. Nothing is sent.`; return; }
+  const opt = e.target.closest("[data-opt]");
+  if (opt && S.picker) { const o = S.picker.options[+opt.dataset.opt]; if (o.disabled) return; const fn = S.picker.onPick; S.picker = null; fn(o.value); render(); return; }
+  const el = e.target.closest("[data-act]");
+  if (!el) { if (S.menu || S.picker) { S.menu = null; S.picker = null; render(); } return; }
+  if (el.disabled || el.getAttribute("aria-disabled") === "true") return;
+  if ((S.menu || S.picker) && !el.closest("#menu, #listbox") && !el.dataset.act.startsWith("menu:") && !el.dataset.act.startsWith("picker:")) { S.menu = null; S.picker = null; }
+  run(el.dataset.act);
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "q") { S.q = e.target.value; const r = document.getElementById("roster"); if (r) r.innerHTML = renderRows(visiblePeople().filter((p) => S.filter === "all" || p.perm === S.filter || (S.filter === "invited" && p.status === "invited"))); return; }
+  const f = e.target.dataset.field; if (f && S.modal?.form) { S.modal.form[f] = e.target.value; }
+});
+document.addEventListener("focusout", (e) => { if (e.target.id === "inv-email" && S.modal?.form && S.modal.form.email) { S.modal.form.touched = true; const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(S.modal.form.email.trim()); const lbl = e.target.parentElement; const ex = lbl.querySelector("small"); if (!ok && !ex) lbl.insertAdjacentHTML("beforeend", '<small role="alert" id="inv-email-err">Enter an email address like name@company.com.</small>'); if (ok && ex) ex.remove(); } });
+document.addEventListener("keydown", (e) => {
+  const lb = document.getElementById("listbox");
+  if (S.picker && lb) {
+    const n = S.picker.options.length; let a = S.picker.active ?? Math.max(0, S.picker.options.findIndex((o) => o.value === S.picker.value));
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); a = (a + (e.key === "ArrowDown" ? 1 : n - 1)) % n; S.picker.active = a; render(); document.getElementById("listbox").focus(); return; }
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); const o = S.picker.options[a]; if (o.disabled) return; const fn = S.picker.onPick; S.picker = null; fn(o.value); render(); return; }
+    if (e.key === "Escape") { e.preventDefault(); const anc = S.picker.anchor; S.picker = null; S.focus = anc; render(); return; }
+    if (e.key === "Tab") { e.preventDefault(); const anc = S.picker.anchor; S.picker = null; render(); moveFrom(anc, e.shiftKey); return; }
+  }
+  const menu = document.getElementById("menu");
+  if (S.menu && menu) {
+    const items = [...menu.querySelectorAll("[role=menuitem]")]; const i = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length].focus(); return; }
+    if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); return; }
+    if (e.key === "Escape") { e.preventDefault(); const id = S.menu.id; S.menu = null; S.focus = "#more-" + id; render(); return; }
+    if (e.key === "Tab") { e.preventDefault(); const id = S.menu.id; S.menu = null; render(); moveFrom("#more-" + id, e.shiftKey); return; }
+  }
+  const rg = e.target.closest?.('[role="radiogroup"]');
+  if (rg && ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault(); const opts = [...rg.querySelectorAll('[role="radio"]:not([aria-disabled="true"])')]; const i = opts.indexOf(e.target);
+    const nx = opts[(i + (["ArrowDown", "ArrowRight"].includes(e.key) ? 1 : opts.length - 1)) % opts.length]; run(nx.dataset.act); return;
+  }
+  if (e.key === "Escape") { if (S.modal) { run("close-modal"); return; } if (S.drawer) { run("close-drawer"); return; } }
+  if (e.key === "Tab") { // focus trap for the open dialog / drawer
+    const box = document.querySelector("#dlg") || document.querySelector("#drawer"); if (!box) return;
+    const f = [...box.querySelectorAll('button:not(:disabled), input, textarea, [tabindex="0"]')].filter((x) => x.getAttribute("aria-disabled") !== "true" || x.getAttribute("role") === "switch");
+    if (!f.length) { e.preventDefault(); return; }
+    const firstEl = f[0], last = f[f.length - 1];
+    if (!f.includes(document.activeElement)) { e.preventDefault(); (e.shiftKey ? last : firstEl).focus(); }
+    else if (e.shiftKey && document.activeElement === firstEl) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); firstEl.focus(); }
+  }
+});
+document.getElementById("scroller").addEventListener("scroll", () => { if (S.menu || S.picker) { S.menu = null; S.picker = null; render(); } });
+const sizeFrame = () => { document.documentElement.style.setProperty("--devh", document.querySelector(".dev").offsetHeight + "px"); positionFloating(); };
+window.addEventListener("resize", sizeFrame);
+
+function devAct(cmd) {
+  const [k, v] = cmd.split(":");
+  if (k === "theme") S.theme = v;
+  if (k === "viewer") { S.viewer = v; S.menu = null; S.modal = null; S.drawer = null; S.notice = null; }
+  if (k === "review") { S.review = v; if (S.drawer) { S.drawer.step = "review"; loadReview(); } }
+  if (k === "outcome") S.outcome = v;
+  if (k === "ho") S.ho = v;
+  if (k === "vp") S.vp = v;
+  if (k === "rm") S.rm = v === "on";
+  if (k === "roster") { S.roster = v; S.shown = v === "paged" ? 5 : null; S.pageErr = false; S.loadingMore = false; S.screen = "settings"; S.tab = "team"; if (v === "first") S.viewer = "owner"; }
+  if (k === "screen") { S.screen = v; S.menu = null; S.picker = null; S.modal = null; S.drawer = null; S.protoNote = null; if (v !== "settings") S.focus = "#gate-h"; }
+  if (k === "jump") {
+    S.menu = null; S.picker = null; S.modal = null; S.drawer = null; S.screen = "settings"; S.tab = "team";
+    if (v === "reset") { S.people = SEED_PEOPLE(); S.hold = SEED_HOLD(); S.ho = "ok"; S.notice = null; S.review = "auto"; S.outcome = "ok"; S.q = ""; S.filter = "all"; S.roster = "loaded"; S.shown = null; S.pageErr = false; S.protoNote = null; }
+    if (v === "suspend") { S.viewer = "owner"; if (!person("sam")) S.people = SEED_PEOPLE(); person("sam").status = "active"; handlers.suspend("sam"); }
+    if (v === "review") { S.viewer = "owner"; if (!person("sam")) S.people = SEED_PEOPLE(); S.hold = SEED_HOLD(); openDrawer("sam"); }
+    if (v === "empty") { S.viewer = "owner"; if (!person("priya")) S.people = SEED_PEOPLE(); openDrawer("priya"); }
+    if (v === "edit") { S.viewer = "owner"; if (!person("sam")) S.people = SEED_PEOPLE(); handlers.edit("sam"); }
+    if (v === "invite") handlers.invite();
+  }
+  render();
+}
+window.__proto = { S, devAct, run, render, handlers, openPicker };
+sizeFrame();
+render();
+if (document.fonts) document.fonts.ready.then(sizeFrame);
+})();
+</script>
+</body>
+</html>

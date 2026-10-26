@@ -702,6 +702,17 @@ feature credit for this closeout.
 
 ## EXP05 weekly same-session recovery — October25 development
 
+### October26 whole-Experience receiving reconciliation
+
+Owner addendum ANT-11/7d47cc68 is mapped to the same ten outcomes and unchanged
+E5-CV1–9 in the [original acceptance packet](../delivery/experience-05-weekly-acceptance-packet.md#october26-whole-experience-reconciliation--original-scope-retained).
+Owner-away policy/trigger/artifact/Rail/notice/stop/recovery, E04 obligations,
+E08 Work/capacity and E09 acceptance are explicit subcases, not new engines or
+scope transfer. Exact producer/receiver, build/proof/held dependency and ALG
+input/logic/wiring/maturity gaps remain separate. E08's bounded Chat window and
+E09 browser allocation are preserved; current safe engineering continues.
+No capability, activation, catalogue or founder acceptance state is promoted.
+
 Original weekly hook/composer causal50/7 becomes57/0; surrounding14-file373/0.
 Same known actor/sign-in retains typed proposal/focus, original review and pending/
 unknown hold without another request. Genuine/unknown changes still retire.

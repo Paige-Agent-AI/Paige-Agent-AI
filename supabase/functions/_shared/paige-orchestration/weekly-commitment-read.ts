@@ -19,6 +19,11 @@ export function isCurrentWeeklyCommitmentScope(expected: ContextIdentity, curren
     expected.role === current.role && expected.accountShape === current.accountShape &&
     expected.actAsClientId === current.actAsClientId;
 }
+/** The reader and its awaiting consumer share one fail-closed scope observer. */
+function hasCurrentWeeklyCommitmentScope(origin: ContextIdentity, deps: WeeklyCommitmentReadDeps) {
+  try { return !deps.signal?.aborted && isCurrentWeeklyCommitmentScope(origin, deps.currentIdentity()); }
+  catch { return false; }
+}
 async function bounded<T>(call: () => PromiseLike<T>, ms: number, stage: ReturnType<typeof createWeeklyDraftDeadline>): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -43,10 +48,7 @@ export async function readWeeklyCommitmentProjection(
   if (!origin.actorId || !origin.tenantId || origin.role !== "owner" || origin.actAsClientId !== null ||
     origin.accountShape === null) return contextUnavailable("owner_context_required");
   const ms = Number.isFinite(deps.timeoutMs) && Number(deps.timeoutMs) > 0 ? Math.min(Number(deps.timeoutMs), 2000) : 2000;
-  const scope = () => {
-    try { return !deps.signal?.aborted && isCurrentWeeklyCommitmentScope(origin, deps.currentIdentity()); }
-    catch { return false; }
-  };
+  const scope = () => hasCurrentWeeklyCommitmentScope(origin, deps);
   // Reuse the original weekly elapsed-stage fence. Per-RPC timeouts alone let a
   // succession of slow stages outlive the inspection's one eight-second budget.
   const stage = createWeeklyDraftDeadline(8000, scope);
@@ -81,10 +83,7 @@ export async function prepareWeeklyCommitmentChatResponse(identity: ContextIdent
   const result = await readWeeklyCommitmentProjection(origin, deps);
   // The reader and its awaiting Chat consumer resume in different microtasks.
   // Recheck the original scope at that handoff before exposing model context.
-  let currentScope = false;
-  try { currentScope = !deps.signal?.aborted && isCurrentWeeklyCommitmentScope(origin, deps.currentIdentity()); }
-  catch { /* A retired identity source cannot publish an old inspection. */ }
-  if (!currentScope) return { status: "unavailable" as const,
+  if (!hasCurrentWeeklyCommitmentScope(origin, deps)) return { status: "unavailable" as const,
     message: "The current authorized weekly status could not be verified. Do not infer an empty schedule or completion.", reason: "scope_changed" };
   if (result.status !== "available" || !result.data) {
     return { status: "unavailable" as const, message: "The current authorized weekly status could not be verified. Do not infer an empty schedule or completion.", reason: result.reason };

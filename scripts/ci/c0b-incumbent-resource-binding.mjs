@@ -1,6 +1,7 @@
 // EXP08 PAIGE team-lifecycle tools, AUTHOR-REVIEW / LOWER ASSURANCE before renewal (ANT-161 window),
-// re-renewed after merging origin/main 93f567749 and the review fixes. That main reproduces all29
-// dispatch pins and all126 source pins from its own sources. Decomposition of all29 against the merged
+// re-renewed after merging origin/main 93f567749 and the review fixes, then re-checked unchanged after
+// merging 50468eec2. Each of those mains reproduces all29 dispatch pins and all126 source pins from its
+// own sources. Decomposition of all29 against the merged
 // branch: dispatch branches, dominating controls, local helpers and import sets equal; ONLY enclosing
 // identity[15] changes, insertion-only (0 removed / 184 added canonical lines: the lifecycle offer
 // (client-tier and portal excluded), labels, five card summaries with the paged roster lookup and the

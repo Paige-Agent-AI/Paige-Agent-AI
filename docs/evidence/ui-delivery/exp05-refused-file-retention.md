@@ -78,6 +78,6 @@ No customer document, provider request, approval or canonical business mutation
 was performed. Current browser permission and invalid narrow override remain
 explicit holds. The complete flow is not approved or ready for release.
 
-![Local light read-only continuation](assets/exp05-refused-file-retention/readonly-continuation-cea147.png)
+![Local light read-only continuation](assets/exp05-refused-file-retention/readonly-continuation-cea147.jpg)
 
-![Local dark original refusal after reload](assets/exp05-refused-file-retention/readonly-reload-dark-cea147.png)
+![Local dark original refusal after reload](assets/exp05-refused-file-retention/readonly-reload-dark-cea147.jpg)

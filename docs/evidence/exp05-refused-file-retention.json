@@ -97,8 +97,8 @@
     "environment": "original isolated actual-component mount, synthetic Auth/history/transport, explicit invalid test service URL/key and off-origin network blocked",
     "actual_viewport": { "width": 1536, "height": 791, "horizontal_document_overflow": false },
     "screenshots": [
-      { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/readonly-continuation-cea147.png", "sha256": "be695796763c6a8d4184e4311d2c14cbd3bface0f490ad7d7d902252f6c3b0b8", "theme": "light", "scope": "saved original refusal and offline file-free continuation" },
-      { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/readonly-reload-dark-cea147.png", "sha256": "d41f78e11f4423ba90476362e89e35737d0ed5d582e2ef33a5772c8bfc76c392", "theme": "dark", "scope": "original saved refusal, no selected or restored file" }
+      { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/readonly-continuation-cea147.jpg", "sha256": "be695796763c6a8d4184e4311d2c14cbd3bface0f490ad7d7d902252f6c3b0b8", "format": "JPEG", "width": 1536, "height": 791, "theme": "light", "scope": "saved original refusal and offline file-free continuation" },
+      { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/readonly-reload-dark-cea147.jpg", "sha256": "d41f78e11f4423ba90476362e89e35737d0ed5d582e2ef33a5772c8bfc76c392", "format": "JPEG", "width": 1536, "height": 791, "theme": "dark", "scope": "original saved refusal, no selected or restored file" }
     ],
     "observed": ["accurate original recovery refusal", "file-free keyboard question receives explicit offline read-only answer", "reload reads fixed original refusal, not persistence of the new answer", "textarea/voice/attachment/Clear/Send tab order", "settled Clear returns focus to textarea"],
     "finish_findings": ["settled keyboard Send leaves body focused", "file chooser rejects current Chrome local-file permission; one-file chooser observed, no upload", "390x844 override left actual DOM and raster at1536x791, INVALID as narrow proof; override reset"],

@@ -852,6 +852,15 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-26 UTC — EXP04 original signature factory and native PDF source closeout.**
+
+| PR / exact public source | What shipped and why | Evidence and acceptance boundary |
+| --- | --- | --- |
+| [#2888 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2888#issuecomment-6407684085); reviewed02902badb898aef1ba67708a56c9c2ac658869f7; main99c63316dfc6a9a0ddd19d80660fe43fe724b564/tree5a905090e11c3ab07f0177c297591572da9fa4d8 | Original governed prepared-signature request factory and owner execution integration; reuse original Work, approval, sender, native publication, immutable document and receipts. | AUTHOR-REVIEW / LOWER ASSURANCE6405130919; all13 exact-head checks/two web statuses SUCCESS. SOURCE MERGE VERIFIED, superseding the earlier source-unreleased factory label only. Detailed production identities remain in the existing protected ANT-51 evidence under the disclosure gate. Actual authorized signature/send/payment, ordinary-role/cohort and complete customer acceptance remain unverified. |
+| [#2906 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2906#issuecomment-6408543958); reviewed4b8b81d3fe3c3b6a5e815db6e8c7148526585939; mainb56f60b74f4d533b27cd814fb7b44c2d49cf85ee/tree00836569a174d37b407a9198bbfea23e6daed89f | Register the same pinned native PDF engine lazily; move the original commercial renderer unchanged out of the pure browser contract. Mount native graph proof and two existing suites without removing controls. Retained documents are not regenerated or replaced. | LOWER5647146018 plus current-main composition review; all11 exact-head checks/two web statuses SUCCESS. Local352 checked native cases/250steps/16suites, actual current-main web build and original entry-size guard PASS. [Source/controlled-viewer evidence](evidence/ui-delivery/e04-native-pdf-dependency.md). SOURCE MERGE VERIFIED; authenticated page display, full-shell/cohort and full signing outcome remain PROOF OWED. Protected original Linear records hold the separate production/readback observations and unresolved acceptance. |
+
+This is a bounded PUBLIC SOURCE closeout, not publication of protected production identifiers or complete Experience acceptance. Functional source delivery is distinct from activation, authenticated verification and owner acceptance. Full O1–O12 remains open; ALG01/12 PARTIAL,02 INCOMPLETE,13 usefulness UNVERIFIED and catalogue maturity unchanged. No customer release name/version/announcement. Forward corrections preserve original records; this mechanical documentation closeout is not logged recursively.
+
 **2026-10-26 UTC — EXP03 S4a: a campaign step reaches its approval (prepare_action).**
 
 | Increment | Exact reviewed source and observed release | Completion boundary |

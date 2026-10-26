@@ -990,3 +990,207 @@ no-data/nonpersistent Preview was verified0Auth/0Work/0clients before its normal
 same-PR close/reopen lifecycle; no history DDL/reset/include-all or second applier.
 Fresh exact-head gates/receiving/order/normal release/readback remain mandatory;
 no predecessor-green or activation inference.
+## October26 — source-verified original manual Work finalization
+
+O07/O14/O16 **REUSE/EXTEND**, under original E05 source window
+ANT161/3b5f49aa and E04 gap receiving c0311e44. The existing CLI created the
+migration scaffold; its unapplied source-only forward name is
+`20271116010352_e02_manual_systems_finalizer.sql`, after the independently
+verified actual production frontier/E09 `20271116010309`. No slot is held idle.
+The original transition body `41b46e22be68b608deede008b7b36f24` is also verified
+unchanged in production; candidate body `48e851ee40eec05738b6ba09b8000f93` is LOCAL.
+
+The guarded migration only replaces the body of the ORIGINAL
+`transition_paige_durable_work(uuid,text,text,jsonb,text,text,text,integer,boolean)`.
+It retains OID, arguments/results/defaults, owner, definer configuration and ACL;
+the entire incumbent non-Systems body reconstructs exactly by inverse. There is
+no new callable, grant, status, queue, scheduler, worker or execution engine.
+Both reserved identifiers must match; current Auth/profile/tenant/membership/
+optional conversation authority is locked before original Work, followed by its
+immutable key/payload/epoch/one-attempt/dispatch checks. The original Metric
+authority predicate remains the issuer; a stored snapshot is not permission.
+
+Success verifies the original tenant/manual/none completed run, same Work/run
+identity and FK, canonical null full-sweep marker, persisted distinct
+findings/counts and no drafted/linked fixes.
+It derives the result from those records, never a caller's `verified_readback`
+claim, supplied count or fabricated summary. Failed/skipped checks remain actual
+failed/skipped findings; capture completion does not mean business health. The
+original `system_check/check_completed` Rail writer and original Work settlement
+share one transaction. Receipt conflicts, missing readback or write refusal
+prevent settlement. Time is refreshed after authority/Work, source and receipt/
+unique-index waits; one Work update uses final actual time. Expired/unknown work
+requires explicit original reconciliation; no second dispatch is introduced.
+
+Known-success replay observes the immutable original outcome and matching
+original receipt without recreating it or demanding that later legitimately
+corrected findings remain unmodified. Current authority still applies. Other
+canonical states retain original semantics: cancellation/failure is not proof
+that previously issued work wrote nothing. Partial records remain inspectable.
+
+The EXISTING native heartbeat proof and CI step are extended, with all57 prior
+assertions retained byte-exact by inverse. Actual local PostgreSQL16 execution:
+**148 PASS / 0 FAIL** (57 retained +91 finalizer checks). The original finalizer's
+acceptance of a bare caller flag with no original result/receipt is reproduced
+as an unsafe causal baseline. Native cases cover current-role/cohort/thread/key/
+purpose refusals, source/count/result/receipt contradictions, admin positive,
+exact and revoked replay, original non-success/three other-kind behavior, full
+metadata/guard/replay drift, real authority-before-Work locking, lease expiry
+during real Work/run/finding/receipt waits with transaction-start-clock mutants,
+concurrent completion, actual final timestamps, original Rail rollback and the
+original request→approved claim→heartbeat→seeded result→completion chain.
+
+The proof uses actual original Systems DDL, original Work/Metric/Knowledge
+functions and the ORIGINAL Rail table/vocabulary/display/writer. Auth surroundings
+are controlled fixture tables; results/findings are seeded, not real runner
+execution or authenticated evidence. Existing source constraints remain enabled:
+incompatible manual scope/action purposes are refused by the original constraint,
+not manufactured by disabling it. Invalid Windows process setup, fixture JSON
+shape and literal replacement attempts are retained locally before final proof.
+All owned disposable databases are removed and the loopback server stopped.
+
+Further review after old0be80/146 identified the missing full-sweep marker check.
+The original Work payload carries no filter, but the original core can produce
+marked partial manual runs, which the canonical snapshot intentionally excludes.
+With the ACTUAL original ALTER source installed in the fixture, the partial-source
+refusal control fails on unchanged0be80. The repaired source refuses non-null
+`selected_runner_keys`, including an empty marked array, matching the canonical
+reader. Final148/0 retains all earlier controls. Old no-data Preview10352/body328c
+was verified0Auth/0Work/0clients, retired via ordinary PR close and actual branch
+absence BEFORE this unapplied source revision. Old0be80 and its146 proof/Preview
+remain historical; new review/CI/fresh Preview/receiving cannot borrow them.
+
+Orchestration contract: owner requests a tenant-only read-only Systems Check;
+the existing Executive request/Chat/eligible Live admission and registered Spine
+consumer are still NOT supplied/activated here. Original actor/tenant Work is the
+identity; PAIGE coordinates original Systems intelligence, not a new specialist
+runtime. The existing bounded worker/Harness path must eventually bind native
+claim/heartbeat, the original core and this finalizer. No consequential corrective
+action or approval is granted by completion. Original Systems records + original
+Rail establish success; original unknown/reconciliation and source IDs establish
+return/recovery. Caller cancellation cannot assert rollback. Actual caller,
+interruption/reload, full-source production and ordinary-owner result proof remain
+owed. Layer C applies only where its actual governed action contract is used.
+
+Functional: **LOCAL source/native proof**, exact original-owner receiving,
+separate final review, required exact-head CI/Preview, normal deployment/native
+readback still owed. Visual: N/A, no customer surface change. Experiential:
+manual request/result/corrective-work/reload journey INCOMPLETE. Founder
+Acceptance: NOT_ACCEPTED. No manual customer scan, Chat/worker/provider activation
+or protected monthly retry. Capability status remains UNAVAILABLE/unregistered
+for manual `systems.check`; no catalogue promotion. ALG03/06/11/12/13 and nine
+analytics CAP009–017 remain at existing maturity: this slice verifies execution
+evidence, not a prioritization, prediction, anomaly or financial algorithm. All19
+original outcomes/nine analytics and original9PASS0FAIL + supplement12PASS0FAIL
+4BLOCKED + monthlyUNKNOWN/UNRETRIED remain separately open.
+# October26 — checkpoint and finalizer production source readback
+
+This post-merge receipt supersedes the development-only status of #2932/#2936
+below, preserving their earlier failures and source findings as dated evidence.
+
+- **Checkpoint #2932:** final reviewed2de588b5413360c4f1ea454c90c163cb6dafa94e,
+  LOWER5658491760, all11 exact checks/Preview/two webSUCCESS; actual
+  merge46e473a96d4c31009662f451b7e5da7fa572c171. Original143 capture cases and
+  four affected suites171PASS. Complete incoming docs/all16,554 outside entries
+  preserved. No caller installs the native-authority callback.
+- Normal Edge40402243852 first job121850842414 **FAILED** mandatory source
+  verification: downloaded operator core was the old source despite upload ACKs.
+  Artifact12690000097 / ZIP SHA2564030117fabae57d99dc395559495408b7c38cc3c50beddf1047c8db79ee163bb
+  is retained. A later direct source read was already current; this establishes an
+  observed propagation/snapshot discrepancy, not an asserted deeper root cause.
+- Retrying only that original failed job produced121853839148 **SUCCESS**.
+  Original API certificate12689651786 / ZIP SHA256
+  f3215c2ba425eefa8503f0a46aa3f3a2eab7db1e01df6cfa54e61fe0e29ca82c was independently
+  verified using the existing release reader against the exact46e checkout.
+  All159 source entries/configs match; change/onboarding/operator/scheduled
+  versions150/152/155/157 contain exact core SHA256
+  c5e1bb024fbb453e6dada568788b9f2d0dbcc1503aed682b639a0661de70c5e5.
+  No fallback source emitter was used. Original JWT configurations are unchanged.
+- Merge webdpl_AqqYuCJwmcwHNxVfXX1qT6qLhs89 READY. Actual public readback was
+  containing146cf565900ab5f208a3c85dd91ef71a79ba0d41-mvprgpiq/null on both origins,
+  with verified lineage146cf→15cdd256→46e; exact46e public aliases were not observed.
+- **Finalizer #2936:** final reviewed7e58e833f23192d3198d9ad8b00bfafa2774ec08,
+  LOWER5658806915; actual existing E05 non-author source review5659062649 and
+  receiving09d9b380 independently reran148 native controls. Same-account GitHub
+  COMMENT is not distinct-account approval. All13 exact checks/fresh Preview/two
+  webSUCCESS; actual merge3d541038cd72dc00f33df442fc6ce7142668c0f4, whole incoming
+  docs/all16,555 outside entries preserved. Partial-source finding, old146 proof
+  and normally retired empty Preview are historical; corrected148 includes the
+  original canonical null full-sweep marker and empty-marked subset refusal.
+- Normal native40405795748, lint121863086188 and deploy121863296677 **SUCCESS**.
+  Production10352 applied once; original transitionOID294695/body
+  48e851ee40eec05738b6ba09b8000f93, five-field ABI, defaults300/false, postgres owner,
+  definer/empty search_path and original postgres+service ACL retained. Anonymous
+  and authenticated execute=false, service=true. No finalizer invocation or scan.
+- Webdpl_AkfM3wJemgHSizWykgmrnAUx9CA3 READY; both public origins200 and exact
+  3d541038cd72dc00f33df442fc6ce7142668c0f4-mvps1m8o/customerUpdate:null observed.
+  Native10309→10352 sequence complete, original E05 source ownership handed back
+  and E04 next-ready higher native window released through ANT161/91bac1a3.
+
+Original native claim/heartbeat, Core checkpoints and finalizer are deployed
+prerequisites, not an activated manual workflow. No new caller/Spine/worker,
+approval, provider or Chat activation. Original E05 consumer receiving38e43d02
+and correction240eb1ff name the actual heartbeat_paige_durable_work port; no
+generic durable worker or phantom helper exists. Functional bounded source
+DEPLOYED; Visual N/A; Experiential manual result/recovery INCOMPLETE; Founder
+NOT_ACCEPTED. All19/nine/catalogue/ALG and historical9-0+12-0-4/monthlyUNKNOWN
+UNRETRIED/representative-weekUNMEASURED remain unchanged.
+
+Source receipts: [#2932](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2932#issuecomment-6427641944),
+[#2936](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2936#issuecomment-6428143292).
+
+## October26 — private original Systems Work consumer, development only
+
+O07/O14/O16/O19 REUSE the original server-only `_start_manual_systems_check_work`
+eight-column tuple, `heartbeat_paige_durable_work`, actual full Core and
+`transition_paige_durable_work`/original Rail. EXP02 owns the thin Systems adapter;
+E05 receiving38e43d02/correction240eb1ff retains shared Work ownership and failure
+semantics. No generic worker exists; none is created. Incumbent four host
+contracts, shared Root/risk/registry, SQL/grants and all department writers stay
+unchanged. No HTTP caller imports this module and no manual capability activates.
+
+The native claim is attempted once. Strict reply-shape checks do not issue
+authority; only the native RPC validates current actor/tenant/payload/lease and
+exclusive dispatch. Tenant comes solely from that tuple; scope tenant, flavor
+manual, action filing none and no runner filter are fixed. The original capture
+wait is extracted without a new timeout/executor, reused for claim/settlement
+transport and all original Core boundaries. Native heartbeat is fresh at each
+phase; malformed/refused/expired acknowledgements stop continuation.
+
+The eventual original host supplies its bounded capture signal and one fresh
+bounded non-aborted settlement scope AFTER capture awaiting ends. A single
+original native finalizer request derives actual source completion and original
+receipt; the request marker is not proof. No Core count or fabricated flag can
+establish success. A genuinely completed source run can settle after its Core
+reply is lost. Aborted awaiting, late I/O, current-authority refusal, incomplete
+source, lost native reply or deadline returns the original work identity as
+**protocol unconfirmed**, not a fabricated persisted outcome_unknown/cancelled,
+rollback or retry grant. Existing authenticated Work/result readers remain the
+return path; shared non-success semantics are not rewritten.
+
+Verification: existing whole-Core fixture retains all143 earlier cases and adds
+36 adapter cases,179PASS; original display/navigation contracts yield207PASS
+across four suites. Controlled native replies are transport fixtures, not actual
+SQL, real runner evidence or authenticated acceptance. Original native148 proof
+is separate. Controls cover exact scope/identity, native refusal/malformed tuple,
+expired heartbeat, secret non-disclosure, one native claim/dispatch, concurrent
+second-consumer refusal, aborted/late claim and heartbeat, late finding write,
+lost Core completion reply, independent settlement scope and uncertain native
+settlement without replay. First test startup was INVALID on compiler-cache
+permissions; unchanged configuration worked with normal cache access. The first
+asserting run had174PASS/1FAIL because a new test expected a nonexistent run
+actions_filed column; corrected to original run/finding/no-action contracts,
+not a product change or weakened authorization. Native compiler first lacked
+managed DNS; actual connected Deno2.1.4/SDK2.75.0 comparison has the same complete
+three prompt-forge diagnostics as original main9186eab1, zero new diagnostics.
+This is not clean compilation or a replacement for required hosted CI.
+
+Functional: LOCAL source integration, final review/exact CI/normal source release
+and readback pending. Visual N/A; no customer UI change. Experiential: manual
+admission/request/result/reload and corrective-work proof remains INCOMPLETE.
+Founder NOT_ACCEPTED. ALG03/06/11/12/13 and CAP009–017 maturity unchanged; no
+prediction, readiness or causal-benefit claim. Manual systems.check remains
+UNAVAILABLE/unregistered, original Binding Ledger state unchanged. All19/nine,
+historical9PASS0FAIL + supplement12PASS0FAIL4BLOCKED and protected monthlyUNKNOWN
+UNRETRIED/representative-weekUNMEASURED remain open. No scan, finalizer invocation,
+worker/Chat/provider activation or customer acceptance is claimed.

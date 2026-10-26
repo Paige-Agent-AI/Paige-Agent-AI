@@ -5,7 +5,9 @@
 **Owner, 2026-10-23:** the EXP08 *Manage My Team / Team Hub* lead (Claude Code) receives this
 lifecycle. Receiving it does not make it available and authorizes no ownership transfer. Team Hub
 roles, invitations and offboarding keep the existing owner/admin/member taxonomy and the existing
-last-owner guard (`revoke_co_owner`). Any transfer of workspace ownership still needs the full
+last-owner guard (`revoke_co_owner`). **Since `20271116020008` (2026-10-26, provisional owner default):** only the
+account holder of record (or the platform owner) grants or revokes co-ownership, and nobody revokes the
+account holder through `revoke_co_owner` — moving the holder is the ownership transfer this lifecycle owns. Any transfer of workspace ownership still needs the full
 contract below and an exact owner authorization first. Current Team source:
 [surface card](../doctrine/surface-cards/team.md#current-source-and-ownership--exp08-receiving-lead-2026-10-23).
 

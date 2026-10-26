@@ -1,3 +1,27 @@
+## EXP02 original Systems source releases verified — October26
+
+The development entries below are dated history. Original checkpoint port
+[#2932](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2932#issuecomment-6427641944)
+merged46e473a9; the normal Edge source-verification failure is preserved and its
+failed-job-only recovery passed. The original API certificate independently
+matches all159 downloaded source entries/configs across the four incumbent hosts.
+No caller installs the optional port. Original Work finalizer
+[#2936](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2936#issuecomment-6428143292)
+merged3d541038 with actual E05 non-author source review, all13 exact checks/fresh
+Preview and148 native controls. Normal native10352 applied once; original
+transitionOID294695/body48e851ee, ABI/defaults/config/server-only ACL verified.
+Both public origins200/exact3d541-mvps1m8o/null; web READY. Native10309→10352
+ordering is complete and the short source window is handed back.
+
+Functional: these bounded source safeguards are DEPLOYED, no scan/caller/worker
+activated. Visual: N/A; prior Finance evidence retained. Experiential: manual
+request/result/Rail/recovery remains INCOMPLETE. Founder: NOT_ACCEPTED. Manual
+Spine UNAVAILABLE; original19/nine, historical9-0+12-0-4, protected monthly
+UNKNOWN/UNRETRIED and ALG/CAP maturity unchanged. Full receipts remain in the
+existing [Systems evidence](../evidence/e2-systems-capture-mode.md),
+[E02 matrix](../delivery/e2-customer-experience-integration-matrix.md) and Master
+Reference §4.0; no second ledger.
+
 ## EXP02 original capture-phase checkpoints — development only, October26
 
 The original Systems core now has an optional trusted manual checkpoint port at
@@ -745,6 +769,25 @@ unknown hold without another request. Genuine/unknown changes still retire.
 [Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
 does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
 
+## EXP05 original status handoff — October26 development
+
+The original weekly Chat consumer captures its initiating scope and rechecks the
+same canonical identity/request after its awaited owner read, before model
+projection. Cancellation, a retired observer or changed original identity returns
+the existing unavailable contract. The actual five-RPC reader/parser still runs;
+no write, retry, new permission, schedule or receipt is added. Original-suite
+55PASS/3FAIL becomes six-suite207PASS; original native128PASS with own cluster
+stopped and fixture role restored. Source strict/lint/Kit PASS, while the one
+incumbent strict-test fixture diagnostic remains unchanged. See the original
+[handoff evidence](../evidence/ui-delivery/exp05-weekly-status-handoff.md).
+The old44f1b9ef hosted Kit self-test failure is retained: repeated scope text
+prevented its single causal mutant. One shared fail-closed observer now preserves
+the unchanged guard40/runtime48 and exact-lock207 cases. The new native run's
+1039.639ms history margin FAIL remains explicit pending identical serial proof;
+an earlier128PASS is not borrowed as the corrected candidate's native result.
+Immutable review/CI/deployment/authenticated interruption/reload remain owed.
+No catalogue/algorithm/recurring/Live or full ten/E5 acceptance promotion.
+
 ## EXP05 weekly review interruption — October26 development
 
 Original unadmitted weekly review now snapshots its initiating scope before the
@@ -1035,6 +1078,28 @@ Sales owner coordination retains canonical resolver/revocation.
 Overview/Banking visual refinements2694/2696 are drafts, not released or accepted.
 All19/nine, original monthly CPU/recovery/claim hold and one complete founder
 evaluation remain open. No provider/permission/algorithm/catalogue activation.
+
+## EXP05 original weekly Work-source budget — October26 development
+
+The existing Planning source point read pins its original actor/tenant/item and
+uses the same eight-second weekly elapsed-stage helper for session, membership,
+tenant and row stages. Lazy query subscription is rechecked; expiry/retirement
+returns the existing unavailable contract without later stages. All native RLS,
+raw version and Work inspector/writer contracts remain. Actual9PASS/6FAIL becomes
+four-suite109PASS, including positive within-budget/eager-rejection controls.
+Exact-lock runner repeats109PASS; original type ratchet PASS/baseline10/current6,
+with old dependency-mismatch failure and7/7 diagnostic comparison retained.
+Review/CI/deployed bundle and authenticated timeout/reload remain owed; no new
+native/provider/action/catalogue/algorithm/Experience acceptance.
+See [original source-read evidence](../evidence/ui-delivery/exp05-weekly-source-read-budget.md).
+
+October26 source release: #2938 exactff5be97a/LOWER5658931676 passed all required
+checks and merged9186eab1/tree42e37cf7 with incoming3d541038 preserved. Normal
+productionECaUvsUF9g61mZwQRuumd8XzjxaC and both public exact9186 builds/source
+verified21:51UTC; [receipt6428214658](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2938#issuecomment-6428214658).
+The original reader's frozen origin/8000ms stage is emitted; ordinary signed-in
+timeout/reload and current-permission proof remain owed. No new action, native,
+Edge, activation, catalogue/ALG promotion or full ten/E5/founder acceptance.
 
 ## EXP05 business-calendar return — local correction, October23
 
@@ -4351,3 +4416,55 @@ mechanical source-release accounting, not another delivery log or activation.
 ## EXP05 routine automation session recovery — October25 source correction
 
 The existing native Operations/Settings process hook must not discard original history or a pending/inconclusive control on routine same-session SIGNED_IN. Reuse canonical nonsecret actor/sign-in metadata for retention only; genuine session/scope changes still retire synchronously and original caller/native CAS remain authority. Actual hook causal38/4 becomes228/0 across five owning data/hook/UI files, including original native component/result/link preservation and all negative controls. [Source and proof limits](../evidence/ui-delivery/exp05-owner-task-session-recovery.md) retain strict base/candidate15 inherited failures/zero new, unchanged native markup/styles and actual pre-release ordinary-owner original Task/receipt/reload retrieval separately from corrected deployment acceptance. No Root lease, runtime, writer, provider, capability/catalogue/algorithm maturity or full-Experience closure; exact review/CI/deployment/current authenticated return still owed.
+## EXP02 original manual result finalization — source only, October26
+
+O07/O14/O16 extend the existing E05 Work transition under original source window
+ANT161/3b5f49aa. Forward candidate `20271116010352` follows actual E09 `10309`;
+original E04 gap receiving c0311e44 is retained, not an idle reservation. Only
+the closed manual Systems branch verifies current authority, original completed
+run/findings and original Rail before one atomic Work settlement. Every other
+kind's full source and the existing function identity/defaults/ACL remain intact.
+Late source/receipt lock waits cannot revive an expired attempt; historical
+success replay remains valid after later original-domain finding corrections,
+but cannot manufacture a missing receipt. Failure/cancellation retain original
+semantics and do not imply rollback or absence of partial data.
+
+The existing native heartbeat proof retains all57 assertions and adds91 finalizer
+checks:148 PASS, including actual two-session waits, clock mutants, concurrency,
+source/result/receipt contradictions, current-role refusals, replay and rollback.
+Original Systems/Rail/Work records are seeded synthetic fixtures, not a real scan,
+actual Auth, customer results or acceptance. No new helper/grant/runtime/worker,
+caller, scan, registry or provider activation. Exact source receiving/review/CI,
+Preview, normal native deployment and readback remain required. Manual Spine is
+UNAVAILABLE; ALG/CAP009–017 maturity, all19/nine, historical9-0+12-0-4 and protected
+monthly UNKNOWN/UNRETRIED remain unchanged. Visual N/A, Experiential INCOMPLETE,
+Founder NOT_ACCEPTED. [Original evidence](../evidence/e2-systems-capture-mode.md).
+Follow-up review reproduced partial-source completion on old0be80. The repair
+requires the canonical null full-sweep marker and rejects even an empty marked
+subset. The original no-data Preview was retired normally before revising the
+unmerged migration; all148 native controls now pass. Fresh gates remain owed.
+## EXP02 private original Systems Work consumer — development only, October26
+
+The thin original-Systems adapter now binds the existing native dispatch claim,
+current-authority heartbeat before each original Core phase, unfiltered
+tenant/manual/capture-only run and original native finalizer/Rail. It consumes
+only the original server tuple, never a caller-supplied tenant, runner selection
+or approval. Native authority and at-most-one dispatch remain original Work
+contracts. The existing capture abort wait is extracted/reused; no timer,
+executor, queue, scheduler, retry, registry, grant or HTTP entry point is added.
+No existing host imports/adopts the adapter; manual Spine remains UNAVAILABLE.
+
+One fresh bounded settlement scope must come from the eventual original host
+after capture awaiting ends. Interrupted/late writes and refused/lost settlement
+retain the original identity with unconfirmed protocol status; no native state,
+rollback, receipt or success is invented. Actual native source completion may
+still be established after a lost Core reply. Controlled transport plus the
+whole original Core pass179 cases/all143 original controls; four affected
+suites207PASS. Native SQL's separate148 proof is retained, not rerun or replaced
+by fixtures. Compiler comparison against actual main has identical three
+pre-existing prompt-forge diagnostics, zero new; not a clean compile or CI waiver.
+
+Functional LOCAL/unadmitted; final review/exact CI/release proof owed. Visual N/A;
+Experiential manual workflow INCOMPLETE; Founder NOT_ACCEPTED. All19/nine,
+ALG03/06/11/12/13, catalogue readiness and historical9-0+12-0-4/monthlyUNKNOWN
+UNRETRIED remain unchanged. [Original Systems evidence](../evidence/e2-systems-capture-mode.md).

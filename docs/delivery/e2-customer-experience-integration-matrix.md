@@ -1,5 +1,32 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October26 — checkpoint/finalizer source released; full manual journey still open
+
+The original definitions and statuses of all19 outcome rows below are preserved.
+For O07/O14/O16/O19, bounded source prerequisites #2932/#2936 are now actually
+merged, normally deployed and source/permission verified; this does not close
+their customer journeys. #2932 exact46e473a9 has the complete159-file/config
+four-host API certificate after a genuine retained source snapshot FAIL and normal
+failed-job recovery. #2936 exact3d541038 has actual E05 non-author review,148
+native controls/all13 exact checks/fresh Preview, production10352 once and original
+Work ABI/ACL/OID preservation. Native order10309→10352 is complete, no idle hold.
+Both public origins200/exact3d541-mvps1m8o/null; normal web READY.
+
+No caller installs the checkpoint and no manual scan/finalizer invocation,
+Spine/worker/Chat/provider activation or authenticated result is claimed. The
+original E05 consumer receiving38e43d02 plus heartbeat-name correction240eb1ff
+govern the next thin original-Systems integration; they do not authorize a parallel
+executor or changed shared failure semantics. Full request, original result/Rail,
+interruption/reload, permissions and ordinary-owner proof remain owed.
+
+Functional: bounded prerequisites DEPLOYED; full19/nine INCOMPLETE. Visual: N/A
+for these backend changes; existing Finance rendered/seven-view proof retained.
+Experiential: INCOMPLETE. Founder Acceptance: NOT_ACCEPTED. ALG03/06/11/12/13,
+CAP009–017, historical9PASS0FAIL + supplement12PASS0FAIL4BLOCKED, protected
+monthlyUNKNOWN/UNRETRIED and representative-weekUNMEASURED are unchanged.
+[Exact release receipts](../evidence/e2-systems-capture-mode.md#october26--checkpoint-and-finalizer-production-source-readback)
+and Master Reference §4.0 remain authoritative; no additional registry.
+
 ## October26 — original manual Work safeguards deployed, scan still unavailable
 
 [#2918 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2918#issuecomment-6424997500): reviewed

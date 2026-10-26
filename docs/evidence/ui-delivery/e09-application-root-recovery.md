@@ -27,13 +27,13 @@ ACCEPTANCE_CRITERIA: Original main with a controlled render failure shows the ex
 MOTION_PURPOSE: NONE: reuse the original failure screen and splash behavior, no new motion or haptics.
 PROTECTED_SEAMS: Affected: bootstrap/render availability, healthy context identity, route error coverage, ready marker, explicit reload, original pending-work guard, responsive/a11y behavior and raw-error privacy. Unchanged: tenant/client/account authorization, account choice, signup/provisioning/entitlements/billing, approval/autonomy, Spine execution, canonical writes/readback, Rails/audit/Memory, Chat transcript/stream/thread/pop-out/history, Live, Secure Browser/Vault, providers/external effects and durable jobs/retries. Source inverses and original affected regression tests must support these limits; catastrophic pre-existing React context loss cannot promise unsaved-memory preservation.
 
-INTERNAL_BUILD_IDENTITY: base=d08a2f206d479c3727898cb68466758075382898; development checkout=codex/exp09-root-recovery; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE.
-RELEASE_CHANNEL: development
-RELEASE_CLASSIFICATION: internal-only
+INTERNAL_BUILD_IDENTITY: cb39c3df7423d2f64f5a927f79bf4065b39ba5ac; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-application-root-recovery/proof.json
+RELEASE_CHANNEL: development: original application recovery with bounded source and local browser proof; no production deployment yet
+RELEASE_CLASSIFICATION: internal-only: bounded startup failure repair, no named customer release or publication
 CUSTOMER_RELEASE_IDENTITY: NONE: no customer name/version/publication.
 RELEASE_NOTE_REQUIRED: NO: internal recovery repair; owner publication is separately governed.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: actual source proof, exact-head required gates, production delivery and latest authenticated customer return remain separate.
-RELEASE_RECOVERY: Bounded forward fix or reviewed revert of the bootstrap wrapper; no data or applied migration change.
+RELEASE_RECOVERY: position=Bounded forward fix or reviewed revert of the bootstrap wrapper, no data or applied history change; reference=src/main.tsx and docs/evidence/ui-delivery/e09-application-root-recovery/proof.json
 
 ## Pre-edit routing
 
@@ -79,3 +79,5 @@ Original bootstrap/private invoice/render-frame/customer-refresh/boundary tests 
 [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md): harden/error-state and craft-floor/finish checks applied to the unchanged recovery design. Pre-edit16-case prototype and final20-case batch were inspected at desktop/narrow/light/dark; no additional material visual defect. Pinned4.1.0 detector returns[]/exit0, not a WCAG or complete Experience certificate. No new polish loop/design system.
 
 Functional: bounded source/runtime proof, final review/CI/merge/deployment owed. Visual: original design/geometry/keyboard/reflow preserved in local captures; full signed-in cohort/device/AT proof owed. Experiential: explicit recovery is demonstrated for controlled startup errors; latest real customer sign-in/history and initiating cause remain UNVERIFIED. Founder Acceptance: NOT_REQUESTED, one full integrated evaluation later. All42/seven, Teach CURA, CAP018–024, orchestration and canonical algorithms remain in the original mandate.
+
+Initial UI-evidence validation failed five release-field grammar checks. Only those metadata fields were corrected using the original template; no validator or product-source change, waiver or passing claim for the failed attempt.

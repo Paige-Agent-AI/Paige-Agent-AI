@@ -108,5 +108,15 @@
   "subsequent_main_composition": {
     "main": "d08a2f206d479c3727898cb68466758075382898",
     "scope": "preserve incoming E08 public-source changes and native order; original source evidence is not relabeled as newly executed full-tree proof"
+  },
+  "known_refusal_focus_correction": {
+    "source": "c1567707fce0ac168e8aa0d7601fbb8014a526ae",
+    "causal_red": { "passed": 3, "failed": 1, "pending": 16, "sha256": "7b127a20571c43e68607ab94d647d8528b31eab4af2ac6294d382ee59bc9f4ba" },
+    "focused_green": { "passed": 4, "failed": 0, "pending": 16, "sha256": "42f7faae3ecd11e71e5020fb489e723d86171fc301413e3d902b38e4660e0791" },
+    "five_suite_green": { "passed": 204, "failed": 0, "pending": 0, "sha256": "db651568e91bdf918833e7c2d8a4732873e1a1db90aa33babc00d4cbc873662c" },
+    "native_observation": "keyboard Send of a file-free exact known refusal; after settlement focus is the enabled Message PAIGE textarea",
+    "screenshot": { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/known-refusal-focus-c156.jpg", "format": "JPEG", "width": 1536, "height": 791, "sha256": "f5bdd0d6838f95a07ef6c822238984e8f7adf7521461553005b07cccec0e99d1" },
+    "boundaries": "no focus steal from another control, retired workspace or unknown response; successful/general Send unchanged; full file/narrow/customer proof still UNVERIFIED",
+    "strict": { "base": "abc8c75b7337949361a1be03996f2d354a8f6722", "baseExit": 2, "candidateExit": 2, "baseDiagnosticLines": 24, "candidateDiagnosticLines": 24, "newDiagnosticSignatures": [], "locationNormalizationOnly": true, "allFourCandidateFilesRestored": true }
   }
 }

@@ -515,6 +515,14 @@ remain unfinished. UI, catalogue
 and algorithm maturity unchanged; no customer version/publication or recursive
 feature credit for this closeout.
 
+## EXP05 weekly same-session recovery — October25 development
+
+Original weekly hook/composer causal50/7 becomes57/0; surrounding14-file373/0.
+Same known actor/sign-in retains typed proposal/focus, original review and pending/
+unknown hold without another request. Genuine/unknown changes still retire.
+[Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
+does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
+
 ## EXP05 weekly save/source recovery — October25 merged, full source proof failed
 
 Original#2792 reviewed4c86/LOWER5641424249/all11+two webSUCCESS merged
@@ -4026,6 +4034,19 @@ result/receipt/reload remain owed. The protected proposal expired unconsumed; no
 replay, catalogue promotion or complete weekly/ZION/automation acceptance is claimed.
 
 
+
+## EXP05 original-work inspection and session continuity — October25 release
+
+[#2885 actual receipt6404960556](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2885#issuecomment-6404960556)
+records exact main1d6a917/LOWER/all10 checks/READY/both public and emitted hook.
+Original approved Task/receipt and declined zero-Task-link retrieval are authenticated;
+notification-specific retention remains unverified. [#2880 receipt6405171195](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2880#issuecomment-6405171195)
+records exact dd6496/LOWER/all10 checks, retained initial capture failure/passed
+unchanged retry, READY/both-public inspector and styles. Composed source1204/0
+and historical frames are distinct from the authenticated empty recent sample;
+positive original response/receipt and fresh production pixels remain owed.
+The sole Master4.0 records both. No native/Edge/activation/catalogue/algorithm
+promotion or full ten/E5/Builder/ZION/Live/cohort/founder acceptance is inferred.
 ## EXP05 original ZION evidence in Overview — October25 consumer
 
 Operations Overview gains a deliberate, bounded own-person read of original ZION assignments through existing `agents.list/list_subagents` and caller-JWT `paige-orchestrator` inspection. Original response, original receipt and completed business work remain distinct. The client retains current session/actor/tenant/epoch, close/logout/scope retirement and the original8s read budget; no invocation, approval, job, browser cache, provider or business-record mutation is added.

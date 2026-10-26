@@ -25,14 +25,34 @@ function who(lead: CampaignLead, canManage: boolean): { text: string; hidden: bo
   return { text: lead.status === "waiting" ? "Being saved as a contact" : "Not saved as a contact", hidden: false };
 }
 
+// F8 (Progress to customer): what Sales' own records say about the opportunity, in words that promise
+// nothing they don't. The recipient is a name (an owner sees it or that no one holds it yet; a member
+// doesn't). Invoices are raw counts; a won deal carries Sales' own close date.
+export function progressLine(lead: CampaignLead, canManage: boolean): string | null {
+  if (lead.status !== "open" && lead.status !== "won" && lead.status !== "lost") return null;
+  const parts: string[] = [];
+  if (canManage) parts.push(lead.ownerName ? `with ${lead.ownerName}` : "no one in Sales yet");
+  if (lead.invoiceCount > 0) {
+    parts.push(lead.invoicePaidCount >= lead.invoiceCount
+      ? (lead.invoiceCount === 1 ? "invoice paid" : `${lead.invoiceCount} invoices, all paid`)
+      : `${lead.invoicePaidCount} of ${lead.invoiceCount} invoices paid`);
+  } else {
+    parts.push("no invoice yet");
+  }
+  if (lead.status === "won" && lead.wonAt) parts.push(`won ${day(lead.wonAt)}`);
+  return parts.join(" · ");
+}
+
 function LeadRow({ lead, canManage, showPipeline }: { lead: CampaignLead; canManage: boolean; showPipeline: boolean }) {
   const where = showPipeline && lead.status === "open" && lead.pipelineName ? `${lead.pipelineName} · ` : "";
   const person = who(lead, canManage);
+  const progress = progressLine(lead, canManage);
   return (
     <li className="cl-row">
       <span className={`cl-n ${person.hidden ? "cc-hidden" : ""} ${!person.hidden && !lead.name ? "cl-pending" : ""}`}>{person.text}</span>
       <time className="cl-when" dateTime={lead.receivedAt ?? undefined}>{day(lead.receivedAt)}</time>
       <span className="cl-via">{ATTRIBUTION_LABEL[lead.attribution]}{lead.formName ? ` · ${lead.formName}` : ""}</span>
+      {progress && <span className="cl-via cl-progress">{progress}</span>}
       <span className={`loop-state cl-state ${statusTone(lead.status)}`}><span className="sd"/>{where}{statusLabel(lead)}</span>
     </li>
   );
@@ -46,6 +66,8 @@ export function CampaignLeadRows({ id, leads }: { id: string; leads: CampaignLea
       {pipelines.length === 1 && <p className="cl-in">Stages are in {pipelines[0]}, in Sales.</p>}
       <ul className="cl-list">{leads.leads.map((lead) => <LeadRow key={lead.id} lead={lead} canManage={leads.canManage} showPipeline={pipelines.length > 1}/>)}</ul>
       {leads.truncated && <p className="cc-foot">Showing the newest {leads.leads.length}. The counts above cover all {leads.counts.leads.toLocaleString()}.</p>}
+      {/* F8: say what is NOT linked, rather than letting a stage or an invoice read as a full handoff. */}
+      <p className="cc-foot">An agreement or a booked call isn't linked to an opportunity in the records yet, so neither shows here. When those links exist, they will.</p>
       {!leads.canManage && <p className="cc-foot">Owners and admins see who each lead is.</p>}
     </div>
   );

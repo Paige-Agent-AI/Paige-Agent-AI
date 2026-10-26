@@ -182,6 +182,17 @@ DO $deal$ DECLARE r jsonb; BEGIN
 END $deal$;
 SELECT pg_temp.require_true(pg_temp.stamp('a3e30100-0000-4000-8000-0000000000e1')='form_and_tag:a3e30100-0000-4000-8000-0000000000c1','filing the deal leaves the campaign on the lead');
 
+-- F8 fixtures: Sales' own records give the opportunity a recipient and invoices, exactly as they stand.
+SELECT pg_temp.as_service();
+UPDATE public.profiles SET full_name='Ada Admin' WHERE user_id='a3e30100-0000-4000-8000-000000000001';
+UPDATE public.deals SET owner_user_id='a3e30100-0000-4000-8000-000000000001'
+ WHERE id=(SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1');
+INSERT INTO public.paige_invoices(id,tenant_id,contact_id,invoice_number,amount_total_cents,deal_id,status,currency) VALUES
+ ('a3e30100-0000-4000-8000-0000000000i1','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000b1','XPA-0001',120000,
+  (SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1'),'paid','USD'),
+ ('a3e30100-0000-4000-8000-0000000000i2','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000b1','XPA-0002',80000,
+  (SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1'),'draft','USD');
+
 -- 3a. The owner/admin reads the campaign's leads with names, opportunity, pipeline and stage.
 SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000001');
 DO $read_admin$ DECLARE r jsonb; l jsonb; BEGIN
@@ -196,6 +207,10 @@ DO $read_admin$ DECLARE r jsonb; l jsonb; BEGIN
     OR l->>'stage_label' IS DISTINCT FROM 'New lead' OR l->>'deal_status' IS DISTINCT FROM 'open' OR l->>'attribution' IS DISTINCT FROM 'form_and_tag'
     OR l->>'deal_id' IS NULL OR l->>'form_name' IS DISTINCT FROM 'Spring consult request' THEN
    RAISE EXCEPTION 'FAIL: the verified lead reads back with its contact, opportunity and attribution, got %',l; END IF;
+ -- F8: the handoff reads Sales' own records — the recipient's name, raw invoice counts, and no close date while open.
+ IF l->>'deal_owner' IS DISTINCT FROM 'Ada Admin' THEN RAISE EXCEPTION 'FAIL: the admin sees who in Sales holds the opportunity, got %',l->>'deal_owner'; END IF;
+ IF (l->>'invoice_count')::int<>2 OR (l->>'invoice_paid_count')::int<>1 THEN RAISE EXCEPTION 'FAIL: the deal''s two invoices (one paid) read back, got %',l; END IF;
+ IF l->>'won_at' IS NOT NULL THEN RAISE EXCEPTION 'FAIL: an open opportunity carries no close date, got %',l->>'won_at'; END IF;
  IF (r->>'truncated')::boolean IS DISTINCT FROM false THEN RAISE EXCEPTION 'FAIL: not truncated'; END IF;
 END $read_admin$;
 
@@ -208,6 +223,9 @@ DO $read_member$ DECLARE r jsonb; l jsonb; BEGIN
  IF l->>'contact_name' IS NOT NULL OR l->>'contact_id' IS NOT NULL OR l->>'deal_title' IS NOT NULL OR l->>'deal_id' IS NOT NULL THEN
    RAISE EXCEPTION 'FAIL: a member never sees names or ids, got %',l; END IF;
  IF l->>'stage_label' IS DISTINCT FROM 'New lead' OR (l->>'has_contact')::boolean IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: member sees the stage, got %',l; END IF;
+ -- F8: the recipient is a name, so a member never sees it; invoice counts are business facts and stay.
+ IF l->>'deal_owner' IS NOT NULL THEN RAISE EXCEPTION 'FAIL: a member never sees who holds the opportunity, got %',l->>'deal_owner'; END IF;
+ IF (l->>'invoice_count')::int<>2 OR (l->>'invoice_paid_count')::int<>1 THEN RAISE EXCEPTION 'FAIL: a member still sees the invoice counts, got %',l; END IF;
 END $read_member$;
 
 -- 3b2. The agency's owner, working inside the sub-account, reads like a member: counts and stages, no names or ids.
@@ -224,6 +242,24 @@ DO $read_agency$ DECLARE r jsonb; l jsonb; BEGIN
  SELECT x INTO l FROM jsonb_array_elements(r->'leads') x WHERE x->>'submission_id'='a3e30100-0000-4000-8000-0000000000e1';
  IF l->>'stage_label' IS DISTINCT FROM 'New lead' THEN RAISE EXCEPTION 'FAIL: agency manager sees the stage, got %',l; END IF;
 END $read_agency$;
+
+-- 3b3. F8, the won case: when Sales marks the deal won, the close date reads beside it — a recorded fact, not a claim this campaign caused it.
+SELECT pg_temp.as_service();
+UPDATE public.deals SET stage_id='a3e30100-0000-4000-8000-0000000000d3', status='won', actual_close_date='2031-03-04T15:00:00Z'
+ WHERE id=(SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1');
+SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000001');
+DO $read_won$ DECLARE r jsonb; l jsonb; BEGIN
+ r := public.get_campaign_brief_leads(NULL,'a3e30100-0000-4000-8000-0000000000c1');
+ IF (r->'counts'->>'won')::int<>1 THEN RAISE EXCEPTION 'FAIL: the won opportunity counts once, got %',r->'counts'; END IF;
+ SELECT x INTO l FROM jsonb_array_elements(r->'leads') x WHERE x->>'submission_id'='a3e30100-0000-4000-8000-0000000000e1';
+ IF l->>'deal_status' IS DISTINCT FROM 'won' OR l->>'stage_label' IS DISTINCT FROM 'Won'
+    OR l->>'won_at' IS DISTINCT FROM '2031-03-04T15:00:00:00+00:00' THEN
+   RAISE EXCEPTION 'FAIL: a won opportunity reads with Sales'' own close date, got %',l; END IF;
+END $read_won$;
+SELECT pg_temp.as_service();
+UPDATE public.deals SET stage_id='a3e30100-0000-4000-8000-0000000000d2', status='open', actual_close_date=NULL
+ WHERE id=(SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1');
+-- Later blocks read the deal as open again (3c and the metric proofs expect the fixture as it was).
 
 -- 3c. Another workspace's admin is refused, whether naming the campaign or the workspace.
 SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000003');

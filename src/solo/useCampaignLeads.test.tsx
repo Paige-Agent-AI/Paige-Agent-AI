@@ -7,7 +7,8 @@ const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
 
 import { BroughtIn } from "./campaign-composition";
-import { broughtInNote, readCampaignLeads, useCampaignLeads } from "./useCampaignLeads";
+import { progressLine } from "./campaign-leads";
+import { broughtInNote, readCampaignLeads, useCampaignLeads, type CampaignLead } from "./useCampaignLeads";
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const lead = (submission_id: string, extra: Record<string, unknown> = {}) => ({
@@ -44,6 +45,19 @@ describe("readCampaignLeads", () => {
     expect(read.leads).toEqual([]);
     expect(read.canManage).toBe(false);
   });
+
+  it("reads the handoff facts Sales recorded, and withholds the name when the server sent none", () => {
+    const [held, unheld, won] = readCampaignLeads(payload({ leads: [
+      lead("s1", { deal_owner: "Ada Admin", invoice_count: 2, invoice_paid_count: 1 }),
+      lead("s2", { deal_status: "open", stage_label: "New enquiry", deal_owner: null, invoice_count: 0, invoice_paid_count: 0, won_at: null }),
+      lead("s3", { deal_status: "won", won_at: "2031-03-04T15:00:00+00:00", deal_owner: "Ada Admin", invoice_count: 1, invoice_paid_count: 1 }),
+    ] })).leads;
+    expect(held.ownerName).toBe("Ada Admin");
+    expect([held.invoiceCount, held.invoicePaidCount]).toEqual([2, 1]);
+    expect(unheld.ownerName).toBeNull();
+    expect(won.ownerName).toBe("Ada Admin");
+    expect(won.wonAt).toBe("2031-03-04T15:00:00+00:00");
+  });
 });
 
 describe("broughtInNote", () => {
@@ -69,6 +83,30 @@ function Lane({ onRoute }: { onRoute?: (route: string) => void }) {
   const leads = useCampaignLeads(TENANT, "b1");
   return <div className="cc"><BroughtIn id="cc-out-b1" leads={leads} onRoute={onRoute}/></div>;
 }
+
+describe("progressLine (F8)", () => {
+  const base = (extra: Partial<CampaignLead>): CampaignLead => ({
+    id: "s1", receivedAt: null, attribution: "form_link", name: "Renée Okafor", hasContact: true, formName: null,
+    pipelineName: null, stageLabel: "New enquiry", status: "open", ownerName: null, wonAt: null,
+    invoiceCount: 0, invoicePaidCount: 0, ...extra,
+  });
+  it("says who holds it, or that no one does, only to an owner or admin", () => {
+    expect(progressLine(base({ ownerName: "Ada Admin" }), true)).toContain("with Ada Admin");
+    expect(progressLine(base({ ownerName: null }), true)).toContain("no one in Sales yet");
+    // A member gets neither the name nor the gap about people, only the recorded business facts.
+    expect(progressLine(base({ ownerName: null, invoiceCount: 1, invoicePaidCount: 1 }), false)).not.toMatch(/Sales yet|with /);
+    expect(progressLine(base({}), false)).toContain("no invoice yet");
+  });
+  it("states invoices as raw counts and a won deal with Sales' own close date", () => {
+    expect(progressLine(base({ invoiceCount: 2, invoicePaidCount: 1 }), true)).toContain("1 of 2 invoices paid");
+    expect(progressLine(base({ invoiceCount: 1, invoicePaidCount: 1 }), true)).toContain("invoice paid");
+    expect(progressLine(base({ status: "won", wonAt: "2031-03-04T15:00:00+00:00", invoiceCount: 1, invoicePaidCount: 1 }), true)).toMatch(/won .*2031$/);
+  });
+  it("says nothing for a lead with no opportunity, and never claims a booking or an agreement", () => {
+    expect(progressLine(base({ status: "no_opportunity" }), true)).toBeNull();
+    expect(progressLine(base({}), true)).not.toMatch(/agreement|book/i);
+  });
+});
 
 describe("Brought in", () => {
   let root: Root | null = null;

@@ -125,6 +125,7 @@ begin
         if not found or _manual_run.work_id is distinct from _row.id
           or _manual_run.tenant_id is distinct from _row.tenant_id
           or _manual_run.scan_flavor is distinct from 'manual'
+          or _manual_run.selected_runner_keys is not null
           or _manual_run.triggered_by->>'scope' is distinct from 'tenant'
           or _manual_run.triggered_by->>'action_filing' is distinct from 'none'
           or _manual_run.started_at is null or _manual_run.started_at<_row.claimed_at
@@ -282,7 +283,7 @@ $body$;
 BEGIN
   SELECT * INTO STRICT original FROM pg_proc WHERE oid=
     'public.transition_paige_durable_work(uuid,text,text,jsonb,text,text,text,integer,boolean)'::regprocedure;
-  IF md5(original.prosrc) NOT IN ('41b46e22be68b608deede008b7b36f24','328c494e16a2b85034a42a5552f4075e')
+  IF md5(original.prosrc) NOT IN ('41b46e22be68b608deede008b7b36f24','48e851ee40eec05738b6ba09b8000f93')
     OR original.pronargs<>9
     OR original.proargnames IS DISTINCT FROM ARRAY['_work_id','_server_idempotency_key','_new_status',
       '_terminal_outcome','_safe_summary','_blocked_reason','_error_code','_lease_seconds','_reconciled',

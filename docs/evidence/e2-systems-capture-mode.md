@@ -960,7 +960,7 @@ migration scaffold; its unapplied source-only forward name is
 `20271116010352_e02_manual_systems_finalizer.sql`, after the independently
 verified actual production frontier/E09 `20271116010309`. No slot is held idle.
 The original transition body `41b46e22be68b608deede008b7b36f24` is also verified
-unchanged in production; candidate body `328c494e16a2b85034a42a5552f4075e` is LOCAL.
+unchanged in production; candidate body `48e851ee40eec05738b6ba09b8000f93` is LOCAL.
 
 The guarded migration only replaces the body of the ORIGINAL
 `transition_paige_durable_work(uuid,text,text,jsonb,text,text,text,integer,boolean)`.
@@ -973,7 +973,8 @@ immutable key/payload/epoch/one-attempt/dispatch checks. The original Metric
 authority predicate remains the issuer; a stored snapshot is not permission.
 
 Success verifies the original tenant/manual/none completed run, same Work/run
-identity and FK, persisted distinct findings/counts and no drafted/linked fixes.
+identity and FK, canonical null full-sweep marker, persisted distinct
+findings/counts and no drafted/linked fixes.
 It derives the result from those records, never a caller's `verified_readback`
 claim, supplied count or fabricated summary. Failed/skipped checks remain actual
 failed/skipped findings; capture completion does not mean business health. The
@@ -991,7 +992,7 @@ that previously issued work wrote nothing. Partial records remain inspectable.
 
 The EXISTING native heartbeat proof and CI step are extended, with all57 prior
 assertions retained byte-exact by inverse. Actual local PostgreSQL16 execution:
-**146 PASS / 0 FAIL** (57 retained +89 finalizer checks). The original finalizer's
+**148 PASS / 0 FAIL** (57 retained +91 finalizer checks). The original finalizer's
 acceptance of a bare caller flag with no original result/receipt is reproduced
 as an unsafe causal baseline. Native cases cover current-role/cohort/thread/key/
 purpose refusals, source/count/result/receipt contradictions, admin positive,
@@ -1009,6 +1010,17 @@ incompatible manual scope/action purposes are refused by the original constraint
 not manufactured by disabling it. Invalid Windows process setup, fixture JSON
 shape and literal replacement attempts are retained locally before final proof.
 All owned disposable databases are removed and the loopback server stopped.
+
+Further review after old0be80/146 identified the missing full-sweep marker check.
+The original Work payload carries no filter, but the original core can produce
+marked partial manual runs, which the canonical snapshot intentionally excludes.
+With the ACTUAL original ALTER source installed in the fixture, the partial-source
+refusal control fails on unchanged0be80. The repaired source refuses non-null
+`selected_runner_keys`, including an empty marked array, matching the canonical
+reader. Final148/0 retains all earlier controls. Old no-data Preview10352/body328c
+was verified0Auth/0Work/0clients, retired via ordinary PR close and actual branch
+absence BEFORE this unapplied source revision. Old0be80 and its146 proof/Preview
+remain historical; new review/CI/fresh Preview/receiving cannot borrow them.
 
 Orchestration contract: owner requests a tenant-only read-only Systems Check;
 the existing Executive request/Chat/eligible Live admission and registered Spine

@@ -75,6 +75,9 @@ try{
  fixture.run('CREATE TABLE public.paige_departments(slug text PRIMARY KEY)');
  const systems='supabase/migrations/20260816000000_systems_check_layer1.sql';
  for(const table of ['paige_systems_check_registry','paige_systems_check_run','paige_systems_check_finding'])fixture.run(tableFrom(systems,table));
+ const coverage=read('supabase/migrations/20261203000000_systems_check_reads_a_full_sweep.sql');
+ const coverageStart=coverage.indexOf('ALTER TABLE public.paige_systems_check_run');assert.ok(coverageStart>0);
+ fixture.run(coverage.slice(coverageStart,coverage.indexOf(';',coverageStart)+1));
  fixture.run(read('supabase/migrations/20270417000000_paige_durable_work_envelope.sql'));
  const doc=read('supabase/migrations/20270418000000_paige_durable_document_work.sql');fixture.run(doc.slice(0,doc.indexOf('-- Authenticated submission:')));
  const source=read('supabase/migrations/20271108201000_e09_customer_private_chat.sql'),a=source.indexOf('CREATE OR REPLACE FUNCTION public.create_paige_durable_work('),b=source.indexOf('$function$;',a);assert.ok(a>0&&b>a);fixture.run(source.slice(a,b+11));
@@ -269,6 +272,8 @@ try{
    assert.equal(snapshot(row.id),before);assert.equal(railCount(),receipts);
   };
   for(const [label,prepare]of [
+   ['partial source for unfiltered Work',row=>finding(sourceRun(row,{selected_runner_keys:['native_a']}))],
+   ['empty marked subset for unfiltered Work',row=>finding(sourceRun(row,{selected_runner_keys:[]}))],
    ['missing original run',()=>{}],
    ['incomplete run',row=>finding(sourceRun(row,{completed_at:null}))],
    ['foreign run tenant',row=>finding(sourceRun(row,{tenant_id:ids.other}))],

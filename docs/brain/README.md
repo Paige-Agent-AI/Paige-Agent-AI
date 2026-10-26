@@ -4338,8 +4338,8 @@ success replay remains valid after later original-domain finding corrections,
 but cannot manufacture a missing receipt. Failure/cancellation retain original
 semantics and do not imply rollback or absence of partial data.
 
-The existing native heartbeat proof retains all57 assertions and adds89 finalizer
-checks:146 PASS, including actual two-session waits, clock mutants, concurrency,
+The existing native heartbeat proof retains all57 assertions and adds91 finalizer
+checks:148 PASS, including actual two-session waits, clock mutants, concurrency,
 source/result/receipt contradictions, current-role refusals, replay and rollback.
 Original Systems/Rail/Work records are seeded synthetic fixtures, not a real scan,
 actual Auth, customer results or acceptance. No new helper/grant/runtime/worker,
@@ -4348,3 +4348,7 @@ Preview, normal native deployment and readback remain required. Manual Spine is
 UNAVAILABLE; ALG/CAP009–017 maturity, all19/nine, historical9-0+12-0-4 and protected
 monthly UNKNOWN/UNRETRIED remain unchanged. Visual N/A, Experiential INCOMPLETE,
 Founder NOT_ACCEPTED. [Original evidence](../evidence/e2-systems-capture-mode.md).
+Follow-up review reproduced partial-source completion on old0be80. The repair
+requires the canonical null full-sweep marker and rejects even an empty marked
+subset. The original no-data Preview was retired normally before revising the
+unmerged migration; all148 native controls now pass. Fresh gates remain owed.

@@ -13,6 +13,7 @@ export interface ClientPortalBrand {
   tenant_slug?: string | null;
   logo_url: string | null;
   primary_color: string | null;
+  support_email?: string | null;
 }
 
 export interface ClientPortalBrandState {

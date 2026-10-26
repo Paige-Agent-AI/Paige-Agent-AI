@@ -1,3 +1,41 @@
+## October26 — optional original manual capture checkpoints, source only
+
+O07/O16 EXTEND only `RunSystemsCheckOptions`/the existing `manualBoundary` in
+the original runner. `manualCaptureCheckpoint` is a trusted internal phase port,
+not permission: a future canonical worker must bind it to the original native
+Work heartbeat/current authority/lease. No caller installs the port here. It
+requires the same validated manual WorkUUID/native AbortSignal/tenant/manual/none
+context. There is no new role policy, timer, executor, API, grant or data store.
+
+Every original context/catalog/run/check/finding/finalization/readback boundary
+awaits an explicit true acknowledgement. Malformed or refused acknowledgements
+become the existing phase-specific capture-unconfirmed result; original context
+and runner fallback catches cannot convert that refusal into continued work or
+an ordinary error finding. Cancellation races an uncooperative checkpoint and
+checks again before I/O; its late resolution/rejection cannot resume the core,
+and existing abort listeners are removed. Earlier writes remain uncertain.
+
+Original whole-core fixture is reused, not a mock implementation of the core.
+Unchanged-core causal baseline:115PASS/27FAIL. The first candidate exposed eight
+remaining fallback-catch failures, repaired without weakening assertions. Final
+143 capture cases include all115 originals, the27 causal cases and one additional
+second-check permission refresh control; all four affected suites171PASS.
+Coverage includes malformed port/context/acknowledgements, all eight phase
+refusals with actual issued-operation order, partial saved-state preservation,
+cancellation/late replies, private-reason masking and listener cleanup. Default,
+scheduled, remediation and recorded-finding/latest-run/navigation tests remain.
+Scoped ESLint/whitespace PASS. Restricted native-cache and unsupported local
+reporter failures were setup INVALID before assertions, not product failures.
+
+Functional: LOCAL source proof only; exact review/hosted CI/full compiler/normal
+four-function Edge deployment/source readback remain owed. Visual N/A;
+Experiential full manual request/result/Rail/recovery INCOMPLETE; Founder
+NOT_ACCEPTED. Original transition/Rail source window now granted by E05 in
+ANT161/3b5f49aa but its production consumer/settlement is not supplied by this port.
+No new native function, privilege, caller/worker/schedule/provider/scan or Chat
+activation. Manual Spine/CAP009–017/ALG03/06/11/12/13 unchanged; all19/nine,
+original9-0+12-0-4 and protected monthlyUNKNOWNUNRETRIED remain open.
+
 ## October26 — coherent original manual Work safeguards, release ordering pending
 
 O07/O14 REUSE/EXTEND only the original Work preparation, private claim and

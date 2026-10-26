@@ -1,3 +1,20 @@
+## EXP02 original capture-phase checkpoints — development only, October26
+
+The original Systems core now has an optional trusted manual checkpoint port at
+each existing I/O/check boundary, requiring the validated WorkUUID/native signal.
+Only an explicit true acknowledgement permits the next step; refused, malformed,
+cancelled or late checkpoints retain phase/identity and cannot become a normal
+error finding or completion. No caller installs it; native Work heartbeat remains
+the authority/lease issuer, not JavaScript role logic or the callback itself.
+Genuine unchanged-core baseline115PASS/27FAIL becomes143 capture cases PASS,
+including one additional repeated-phase control; four affected suites171PASS.
+Scoped lint passes. Two local startup failures were INVALID before assertions.
+Full hosted build/review/exact CI/normal Edge release/readback remain required.
+No UI/native/grant/provider/worker/caller/scan activation, receipt or customer proof.
+ALG/CAP/manualSpine/all19/nine/9-0+12-0-4/monthlyUNKNOWNUNRETRIED retained;
+Visual N/A, Experiential INCOMPLETE, Founder NOT_ACCEPTED. Original evidence:
+[Systems capture](../evidence/e2-systems-capture-mode.md).
+
 ## October26 — coherent original manual Work safeguards, release ordering pending
 
 O07/O14 REUSE/EXTEND only the original Work preparation, private claim and

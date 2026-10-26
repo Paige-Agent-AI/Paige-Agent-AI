@@ -515,6 +515,14 @@ remain unfinished. UI, catalogue
 and algorithm maturity unchanged; no customer version/publication or recursive
 feature credit for this closeout.
 
+## EXP05 weekly same-session recovery — October25 development
+
+Original weekly hook/composer causal50/7 becomes57/0; surrounding14-file373/0.
+Same known actor/sign-in retains typed proposal/focus, original review and pending/
+unknown hold without another request. Genuine/unknown changes still retire.
+[Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
+does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
+
 ## EXP05 weekly save/source recovery — October25 merged, full source proof failed
 
 Original#2792 reviewed4c86/LOWER5641424249/all11+two webSUCCESS merged

@@ -27,12 +27,12 @@ ACCEPTANCE_CRITERIA: Owner can save, correct and clear the support address throu
 MOTION_PURPOSE: NONE: clear saved/unsaved/recovery feedback without new animation or artificial timing.
 PROTECTED_SEAMS: Affected: owner Portal brand configuration and saved state, customer brand/frame projection, safe contact links, viewer/business isolation, privacy/export/recovery wording and accessibility. Not changed: sender/provisioning/provider/Connection activation, invoice/payment/signing logic, grants or role resolver, Auth credentials, native request publisher/approval, Chat/Spine/C0b/Root/Live, scheduler, Work, Memory, support-case store or platform Billing interface.
 
-INTERNAL_BUILD_IDENTITY: base=9dc021eebf3c8a54e5c146c5fecc8ed728e45f81; deployment=NOT_DEPLOYED; environment=development; migrations=PROPOSAL_ONLY; edge=NOT_APPLICABLE; evidence=this pre-edit packet
+INTERNAL_BUILD_IDENTITY: base=9dc021eebf3c8a54e5c146c5fecc8ed728e45f81; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(normal forward deployment after coordinated E02 window); edge=NOT_APPLICABLE; evidence=PR2926 and this packet
 RELEASE_CHANNEL: development: source implementation and final proof are not complete
 RELEASE_CLASSIFICATION: internal-only: ordinary authorized configuration/contact correction
 CUSTOMER_RELEASE_IDENTITY: none: no named customer release or announcement
 RELEASE_NOTE_REQUIRED: no: internal engineering increment; complete Experience acceptance remains later
-RELEASE_TRUTH_BOUNDARY: UNVERIFIED: original source contracts grounded; new contact behavior not built or shipped
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: original contracts and bounded local contact behavior verified; exact-head required CI, native ordering, release and authenticated contact persistence remain owed
 RELEASE_RECOVERY: position=forward correction preserves original business fields and permissions; reference=original set_tenant_brand/get_client_portal_brand/client_portal_frame and business Messages contracts
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: final original-shell inspection owed

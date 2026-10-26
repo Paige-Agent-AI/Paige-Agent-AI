@@ -1,3 +1,15 @@
+## October26 subsequent main reconciliation — source unchanged
+
+After all10 applicable90bd checks and both web statuses passed, current main
+35fff3a88118e053d049be3bea0c2b99178fe929 introduced a real shared README conflict.
+Preserve its complete E04 signature, E06 publication proof and E02 Finance
+closeout. Move only this existing eight-line index entry before the unique EXP05
+weekly-save section, retaining the entire incoming README by inverse; this avoids
+the global prepend collision. All four source/test blobs and causal proof remain
+exact90bd. Earlier successful CI remains historical; this new head requires fresh
+review and all required exact-head checks. No product, risk, native, activation,
+provider, customer evidence or algorithm maturity is changed by reconciliation.
+
 # EXP05 — preserve original weekly work on same-session return
 
 ## Current-main composition — October26 UTC

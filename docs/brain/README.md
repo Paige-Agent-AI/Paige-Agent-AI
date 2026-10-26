@@ -1,10 +1,26 @@
-## EXP05 weekly same-session recovery — October25 development
+## EXP02 continuous Finance navigation released and bounded customer proof — October25
 
-Original weekly hook/composer causal50/7 becomes57/0; surrounding14-file373/0.
-Same known actor/sign-in retains typed proposal/focus, original review and pending/
-unknown hold without another request. Genuine/unknown changes still retire.
-[Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
-does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
+[#2883 release and authorized readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439)
+is actual1ff498e790da4deeab60be2c60f988f7023a7a80/tree85876627cef26a09886ab8dedc020dbd9dafea22.
+Reviewed421cd1c8abf4f8a83ca99e2bf222b2a69ad4c6b3/LOWER5645755912;
+all10 exact checks/two webSUCCESS/designed schema-free PreviewSKIP/zero threads.
+Whole incoming source/Brain inverse and30 owning leaves preserved. READY
+dpl_Hf4QkAHriAuuVvs3Yx6eDhGojqpb/bothpublic exact1ff-mvogm6xt/null23:30:40UTC.
+Native/Edge/permission/provider/activation delta N/A. Actual existing authorized
+SOLO Owner verifies11 continuous transitions/all7 pages/focus=selected/one panel/
+empty draft, unchanged in-app conversation, Finance→Overview/VERA, original source
+Escape focus and Back cleanup, plus return to Owner/Overview after reload.
+[Sanitized observations](../evidence/ui-delivery/assets/e2-finance-tab-continuity/authenticated-navigation-readback.json)
+contain no customer figures/record/account/browser-session identifiers. ANT52/cf628932
+closes only the reproduced key-loss finding; earlier failure remains historical.
+
+Functional: named Finance repair RELEASED/owner readback verified. Visual: original
+design/13 synthetic renders preserved; no customer screenshot or native200percent
+claim. Experiential: named navigation/source-return/reload return verified, extra
+post-reload key batch timed out/excluded. Full Chat selection/other roles/cohorts/
+AT/Live/provider/full Finance and all19/nine remain unverified. Founder NOT_ACCEPTED;
+finance.department stays PROOF_OWED, no catalogue/ALG promotion. Original9/0+12/0/4
+and protected monthly UNKNOWN/UNRETRIED unchanged. Sole Master4.0 records#2883.
 
 ## EXP02 original manual Work history reader released — October25
 
@@ -29,7 +45,7 @@ claim260002 was absent at this readback. Sole Master4.0 row records this deliver
 
 ## EXP02 private request foundation released — October25
 
-Current EXP02 continuation: original MMA menu→Finance Overview/VERA and saved
+Historical EXP02 pre-release checkpoint: original MMA menu→Finance Overview/VERA and saved
 briefing readback are verified within read-only scope. A continuous keyboard
 focus defect was found in the original pathname-keyed screen boundary; owning
 repair/source window ANT161/cce9dc41 preserves all other shared source. Actual
@@ -498,6 +514,14 @@ actual file/model/return/revoke/phone, all42/seven/Teach and Founder Acceptance
 remain unfinished. UI, catalogue
 and algorithm maturity unchanged; no customer version/publication or recursive
 feature credit for this closeout.
+
+## EXP05 weekly same-session recovery — October25 development
+
+Original weekly hook/composer causal50/7 becomes57/0; surrounding14-file373/0.
+Same known actor/sign-in retains typed proposal/focus, original review and pending/
+unknown hold without another request. Genuine/unknown changes still retire.
+[Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
+does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
 
 ## EXP05 weekly save/source recovery — October25 merged, full source proof failed
 

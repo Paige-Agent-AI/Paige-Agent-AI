@@ -10,6 +10,7 @@ import { AgreementWordingHistory } from './AgreementWordingHistory';
 import { AgreementDraftCorrection, type AgreementCorrectionSession } from './AgreementDraftCorrection';
 import { AgreementSignerPreparation, type AgreementSignerSession } from './AgreementSignerPreparation';
 import type {DocumentGuard} from './AgreementDocumentPreparation';
+import type {AgreementSignatureReference} from './agreementDocumentApi';
 import { canPrepareAgreementSigners, emptySignerDraft, prepareAgreementSignerCommand, recoverAgreementSigner, saveAgreementSigner, type AgreementSignerReceipt } from './agreementSignerApi';
 import { prepareAgreementCorrection, saveAgreementCorrection } from './agreementCorrectionApi';
 import { createAgreementDraft, readAgreementPreparation, recoverAgreementCreation, type AgreementPreparation } from './agreementPreparationApi';
@@ -25,6 +26,8 @@ type Props = {
   templateVersionId?: string | null;
   signerRequestId?: string | null;
   documentRequestId?: string | null;
+  signatureReference?:AgreementSignatureReference|null;
+  onSignatureRequestRetained?:(reference:AgreementSignatureReference)=>{url:string;replace:()=>void}|undefined;
   onDocumentRequestRetained?: (id: string | null) => { url: string; replace: () => void } | undefined;
   onSignerRequestRetained?: (id: string | null) => { url: string; replace: () => void } | undefined;
   onDraftAttempted: (requestId: string) => void;
@@ -47,7 +50,7 @@ function WorkspaceMessage({ title, text, onClose, onRetry }: { title: string; te
   return <section className="e04-preparation"><button className="e04-preparation-back" onClick={onClose}><ArrowLeft size={16} />Agreements and terms</button><div className="e04-preparation-message"><FileText size={28} aria-hidden="true" /><h2 tabIndex={-1} ref={heading}>{title}</h2><p>{text}</p>{onRetry && <button onClick={onRetry}><RefreshCw size={16} />Check again</button>}</div></section>;
 }
 type SessionProps = Props & { activeTenantId: string | null; activeUserId: string | null; scopeReady: boolean };
-function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, freshlyOpened, templateVersionId=null, signerRequestId=null, documentRequestId=null,onDocumentRequestRetained,onSignerRequestRetained, clients, clientsReady, clientsReadable, onClose, onOpenRecord, onOpenClients, onOpenTemplate, signings, onRefresh, activeTenantId, activeUserId, scopeReady, canManage, authorityUnknown, authorizationReady, onDraftAttempted }: SessionProps) {
+function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, freshlyOpened, templateVersionId=null, signerRequestId=null, documentRequestId=null,signatureReference=null,onSignatureRequestRetained,onDocumentRequestRetained,onSignerRequestRetained, clients, clientsReady, clientsReadable, onClose, onOpenRecord, onOpenClients, onOpenTemplate, signings, onRefresh, activeTenantId, activeUserId, scopeReady, canManage, authorityUnknown, authorizationReady, onDraftAttempted }: SessionProps) {
   const originalFresh = React.useRef(freshlyOpened && agreementId === 'new');
   const [phase, setPhase] = React.useState<Phase>(originalFresh.current&&!templateVersionId ? 'editing' : 'loading');
   const [templateSource,setTemplateSource]=React.useState<AgreementTemplateVersion|null>(null);
@@ -85,13 +88,15 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
   const scopeMatches = Boolean(scopeReady && activeUserId && tenantId && activeTenantId === tenantId);
   // A request URL preserves its originating business across reload and business
   // switching. This is an intent fence; canonical native authority still decides.
-  const requestScopeMatches = ((agreementId !== 'new' && !signerRequestId&&!documentRequestId) || requestTenantId === tenantId)&&!(signerRequestId&&documentRequestId);
+  const requestScopeMatches = ((agreementId !== 'new' && !signerRequestId&&!documentRequestId&&!signatureReference) || requestTenantId === tenantId)&&!(signerRequestId&&(documentRequestId||signatureReference))
+    &&(!signatureReference||/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(signatureReference.operation_id)&&/^[a-f0-9]{64}$/.test(signatureReference.request_sha256));
   const allowed = scopeMatches && requestScopeMatches && authorizationReady && canManage && !authorityUnknown;
   const accessEpoch = React.useRef({ allowed, value: 0 });
   if (accessEpoch.current.allowed !== allowed) accessEpoch.current = { allowed, value: accessEpoch.current.value + 1 };
   const visibleClients = clientsReady && clientsReadable ? clients : [];
   const exit = useSalesDraftExit(documentOpen?{fields:documentGuard.draft,invitations:documentGuard.signatureDraft??null}:signer ? signer.draft : correction ? { title:correction.title, clientId:correction.original.contact_id, body:correction.body } : { title, clientId, body }, busy, onClose, {
     uncertain: (documentOpen&&documentGuard.uncertain)||signer?.state === 'unconfirmed' || correction?.state === 'unconfirmed' || (agreementId === 'new' && !originalFresh.current && !foundOriginal),
+    uncertainKind:documentGuard.signatureUncertain?'signature_request':undefined,
     recordedDraftFound: foundOriginal !== null,
   });
   const navigation = React.useRef({ open: onOpenRecord, finish: exit.exitAfterSave });
@@ -102,8 +107,12 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     // A real navigation checkpoint is required before a native write.
     return Boolean(next&&exit.retainRequestLocation(next.url,next.replace,'document'));
   };
+  const retainSignatureRequest=(reference:AgreementSignatureReference)=>{
+    const next=onSignatureRequestRetained?.(reference);
+    return Boolean(next&&exit.retainRequestLocation(next.url,next.replace,'signature'));
+  };
   const returnFromDocument=()=>{
-    documentSeen.current=documentRequestId;
+    documentSeen.current=documentRequestId??signatureReference?.operation_id??null;
     if(!documentGuard.uncertain)retainDocumentRequest(null);
     setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});
     exit.adoptBaseline({title:'',clientId:'',body:''});documentReturnPending.current=true;
@@ -356,9 +365,10 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     void recoverSignerRef.current(pending);
   },[allowed,tenantId,phase,visibleRecord,signerRequestId,signer,adoptDraftBaseline]);
   React.useEffect(()=>{
-    if(!allowed||phase!=='record'||!visibleRecord||!documentRequestId||documentOpen||signer||documentSeen.current===documentRequestId)return;
-    documentSeen.current=documentRequestId;adoptDraftBaseline({fields:[],invitations:null});setDocumentGuard({draft:[],busy:false,uncertain:true});setDocumentOpen(true);
-  },[allowed,phase,visibleRecord,documentRequestId,documentOpen,signer,adoptDraftBaseline]);
+    const reference=documentRequestId??signatureReference?.operation_id??null;
+    if(!allowed||phase!=='record'||!visibleRecord||!reference||documentOpen||signer||documentSeen.current===reference)return;
+    documentSeen.current=reference;adoptDraftBaseline({fields:[],invitations:null});setDocumentGuard({draft:[],busy:false,uncertain:true});setDocumentOpen(true);
+  },[allowed,phase,visibleRecord,documentRequestId,signatureReference?.operation_id,documentOpen,signer,adoptDraftBaseline]);
   const currentClient = visibleClients.find(client => client.id === (agreement?.contact_id ?? clientId));
   const savedStatus = agreement ? signingPreparationLabel(agreement.status, agreement.expires_at) : null;
   const reading = phase === 'loading' || (phase === 'record' && !visibleRecord);
@@ -391,8 +401,8 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     {phase==='record' && signer && <AgreementSignerPreparation key={signerEpoch.current} session={signer} clientName={visibleClients.find(client=>client.id===signer.original.agreement.contact_id)?.name ?? 'Client details are not loaded'} onChange={patch=>setSigner(value=>value?.state==='editing'&&!value.command?{...value,draft:{...value.draft,...patch}}:value)} onSave={()=>{void saveSigner();}} onRecover={()=>{void recoverSigner();}} onReturn={()=>exit.request(()=>returnFromSigner())}/>}
     {phase==='record'&&agreement&&documentOpen&&activeUserId&&<React.Suspense fallback={<p role="status">Opening document preparation…</p>}><AgreementDocumentPreparation tenantId={tenantId} actorId={activeUserId} agreementId={agreement.id} requestId={documentRequestId}
       authorityKey={`${tenantId}:${activeUserId}:${accessEpoch.current.value}`} isCurrent={()=>allowed&&accessEpoch.current.allowed&&exit.alive.current}
-      resume={documentGuard} onGuard={(value,baseline)=>{setDocumentGuard(value);if(baseline)exit.adoptBaseline({fields:baseline,invitations:null});}}
-      onRetainRequest={retainDocumentRequest} onRequest={exit.request} onReturn={returnFromDocument}
+      resume={documentGuard} onGuard={(value,baseline)=>{setDocumentGuard(value);if(baseline)exit.adoptBaseline({fields:baseline,invitations:value.signatureDraft??null});}}
+      onRetainRequest={retainDocumentRequest} onRequest={exit.request} onReturn={returnFromDocument} signatureReference={signatureReference} onRetainSignatureRequest={retainSignatureRequest}
       onAddSigners={()=>{if(documentGuard.uncertain||!retainDocumentRequest(null))return;setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});beginSigner();}}
       onAccessRefused={()=>{documentSeen.current=documentRequestId;setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});exit.adoptBaseline({title:'',clientId:'',body:''});recordEpoch.current=-1;setRecord(null);setPhase('error');setMessage('Agreement access could not be confirmed. Recheck the original business and record.');onRefresh();}}
       /></React.Suspense>}

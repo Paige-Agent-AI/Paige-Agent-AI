@@ -1,3 +1,44 @@
+## October26 — original private consumer source release verified; not admitted
+
+Source [#2944](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2944#issuecomment-6429387101):
+reviewed9ec3f387576a8d50a560758ca41ec9eabf477659/tree1bb125cf,
+LOWER5659772898 and actual existing E05 NON-AUTHOR source5659919149/receiving38072c6a.
+Independent179PASS/0FAIL/0skip retains all143 original controls; native148 proof
+is separate. Same-bot COMMENT is not distinct-account approval. All11 exact
+checks/normal Preview/two webSUCCESS/zero threads; preceding #2942 actually
+released first. Actual mergec4b2b2d937796cda64fe6a2d5702d40d573081e1/tree3fc22d44,
+parents93f567749+9ec; actual current-main union, three tested source blobs,
+whole incoming docs/all16,557 outside entries/original19 matrix exact.
+
+Normal Edge40415606311/job121897039328 SUCCESS. API certificate12695856404,
+ZIP SHA25609543bc52cf509616574ecbd8e403a516670077e8263a124da38db991b6fdb39 independently
+verified using the original expected-release reader/exact c4 checkout: all159
+source entries/configs, no emitted fallback; certificate versions152/153/157/158.
+Later observed current versions153/154/158/159 were not assumed equivalent:
+all four complete current API source sets (159 entries) were independently
+compared, EVERY local file/config exact to the same Git merge,0mismatches,
+complete closures and stable subsequent metadata/archive identities. No cause
+for the revision advance is asserted. Original Core SHA256
+4323a217ace23822ac26777a7c029cc7513f223328dc0c83aeb674f5fc6252d2.
+Initial local current-source decode used Windows' default encoding and was
+INVALID before that comparison; corrected explicit UTF8 only, not source,
+normalization, identity or release gates. Earlier source failures remain dated.
+
+Normal webdpl_6q4kZLb58VjHzE8DPVrd4r7Tq6u8 READY; both public origins200/exact
+c4b2b2d937796cda64fe6a2d5702d40d573081e1-mvpupyff/customerUpdate:null. Fresh production
+catalogue metadata verifies original claim/heartbeat/finalizer8/3/5-column ABI,
+bodies11a08/f1e7/48e85, original owner/config/server-only ACL and anon/auth execute
+denial; no function invoked, no schema/grant change.
+
+Functional: original Core wait extraction DEPLOYED, private adapter source
+MERGED/UNADMITTED. It remains unimported by HTTP hosts; no manual Spine, worker,
+provider, Chat or scan activation. Original-host adoption/bounded lifetimes and
+authorized original run/result/Rail/reload/corrective work remain incomplete.
+Visual N/A; prior Finance proof retained. Experiential INCOMPLETE; Founder
+NOT_ACCEPTED. All19/nine/ALG/CAP, original9-0+12-0-4, protected monthlyUNKNOWN
+UNRETRIED and representative-weekUNMEASURED unchanged. The development-only
+entry later in this document is historical and cannot establish customer proof.
+
 ## October26 — optional original manual capture checkpoints, source only
 
 O07/O16 EXTEND only `RunSystemsCheckOptions`/the existing `manualBoundary` in

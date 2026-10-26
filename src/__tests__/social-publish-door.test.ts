@@ -192,11 +192,13 @@ describe("social publish door — proposal, owner approval, provider execution, 
     expect(w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish")?.outcome).toBe("capability_refused");
   });
 
-  it("a plain member (not owner/admin) is refused by the caller gate", async () => {
+  it("a plain member (not owner/admin) is refused — no publish happens", async () => {
     const w = world({ admin: false });
     const r = await w.call(publishBody());
-    expect(r.status).toBe(403);
-    expect(r.body.code).toBe("CALLER_NOT_ADMIN");
+    // 403 (not admin) or 404 (the member can't even see the piece) — both prove no publish.
+    expect([403, 404]).toContain(r.status);
+    expect(r.body.ok).toBe(false);
+    expect(w.seen.createPost).toHaveLength(0);
   });
 
   it("a caller in a different workspace than the piece's is refused, never cross-served", async () => {

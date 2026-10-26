@@ -505,16 +505,20 @@ Also found, not used: `assign_contact(p_contact_id, p_user_id, p_role, p_tenant_
 
 Live defect found 2026-10-26 (`docs/brain/decision-log.md`): `grant_co_owner` / `revoke_co_owner` gated on `is_tenant_owner(caller) OR is_platform_owner()`, so ANY co-owner could mint co-owners and revoke the account holder of record (`tenants.owner_user_id`), demoting them to admin. Fix: a new helper `is_tenant_account_holder(_user, _tenant)` (holder of record AND still an active owner seat) replaces the gate; `revoke_co_owner` also refuses a non-platform caller revoking themselves and refuses revoking the account holder for EVERYONE, platform owner included (moving the holder is an ownership transfer, a future step). Provisional owner default, pending confirmation. No data changed; no UI calls either function (no callers outside SQL). §61 default: no exception (not tier-gated).
 
-| Tier | Grant co-ownership | Revoke a co-owner | Revoke the account holder |
-|---|---|---|---|
-| God / Super Admin (`is_platform_owner()`) | ✓ (unchanged) | ✓ (unchanged; last-owner floor still holds) | ✗ **(was ✓)** |
-| Platform admin (operator, not super_admin) | ✗ **(was ✓ in a company workspace via `is_tenant_owner`'s operator branch)** | ✗ (same) | ✗ |
-| Account holder (any tenant tier: Agency, Enterprise, Solo, Sub-account) | ✓ only while their owner seat is active | ✓ (never themselves) | ✗ (themselves) |
-| Co-owner (not the holder) | ✗ **(was ✓)** | ✗ **(was ✓)** | ✗ **(was ✓)** |
-| Admin / Member / outsider | ✗ | ✗ | ✗ |
-| Client / Anonymous | ✗ (no grant; the helper is not anon-executable) | ✗ | ✗ |
+**Owner ruling 2026-10-26 (binds this row):** only the account holder (`tenants.owner_user_id` with an active owner seat) adds or removes owners; co-owners run the business, not the ownership; the platform super admin adds/removes owners ONLY for recovery when there is no working account holder (that recovery gating is a later increment — today super_admin is not yet restricted to recovery). The platform_admin narrowing below is therefore the ruling, not a regression (§58: flagged, owner-ruled).
 
-Production 2026-10-26: 12 tenants; 4 have no `owner_user_id` (none has an active owner) and 1 holder has no active owner seat — on those, only the platform owner can grant. Every tenant with an active owner has its holder among them. Proof: `supabase/tests/exp08_co_owner_authority.sql` in CI (39 cases; production bodies let 10 holes through; migrated 39/39; 9/9 mutants killed, 2/2 controls survive).
+**Same migration, verifier follow-ups (2026-10-26).** (S1) Because `owner_user_id` is now an authority input, the #227 F.0 "shell carve-out" in `guard_tenant_owner_only_columns` was an escalation: any caller the tenants UPDATE policies admit (owner/admin via `is_tenant_admin`, platform_admin via "Platform staff update tenants") could set `owner_user_id` NULL → ANY active owner, so a co-owner of a holderless tenant could crown themselves and then revoke the other co-owners, and an admin could pick the holder. Narrowed: an authenticated, non-platform caller may set NULL → X only when X is themselves AND the tenant's SOLE active owner; trusted contexts (`auth.uid()` NULL: service_role, migrations) and the platform owner are unchanged. The one JWT-bearing producer, `accept_tenant_invite`'s `subaccount_owner` path, still passes (it establishes the invitee as sole owner first). Stale "display-only" comments replaced (`COMMENT ON` the guard, `tenant_members.is_owner`, new comment on `tenants.owner_user_id`). Production 2026-10-26: no holderless tenant has an active owner, so the hole was latent. (S4) `is_tenant_account_holder` is `service_role` only — not PUBLIC/anon/authenticated — so no signed-in user can probe who holds what; the two RPCs run as their owner and need no grant. (NIT) `revoke_co_owner` takes `FOR SHARE` on the tenants row after its existing owner-row `FOR UPDATE` (members → tenants, the order `accept_tenant_invite` already uses) before refusing to revoke the holder.
+
+| Tier | Grant co-ownership | Revoke a co-owner | Revoke the account holder | Set the holder of record (`tenants.owner_user_id`) |
+|---|---|---|---|---|
+| God / Super Admin (`is_platform_owner()`) | ✓ (unchanged) | ✓ (unchanged; last-owner floor still holds) | ✗ **(was ✓)** | ✓ (unchanged; the future recovery path) |
+| Platform admin (operator, not super_admin) | ✗ **(was ✓ in a company workspace via `is_tenant_owner`'s operator branch — narrowing matches the owner ruling)** | ✗ (same) | ✗ | ✗ **(was ✓ NULL → any active owner)** |
+| Account holder (any tenant tier: Agency, Enterprise, Solo, Sub-account) | ✓ only while their owner seat is active | ✓ (never themselves) | ✗ (themselves) | ✗ (cannot move it) |
+| Co-owner (not the holder) | ✗ **(was ✓)** | ✗ **(was ✓)** | ✗ **(was ✓)** | ✗ **(was ✓ on a holderless tenant)**; ✓ only NULL → self as the SOLE active owner |
+| Admin / Member / outsider | ✗ | ✗ | ✗ | ✗ **(admin was ✓ NULL → any active owner)** |
+| Client / Anonymous | ✗ (no grant; the helper is not executable by anon or authenticated) | ✗ | ✗ | ✗ |
+
+Production 2026-10-26: 12 tenants; 4 have no `owner_user_id` (none has an active owner) and 1 holder has no active owner seat — on those, only the platform owner can grant. Every tenant with an active owner has its holder among them. Proof: `supabase/tests/exp08_co_owner_authority.sql` in CI (59 cases; the guard and `is_tenant_admin` / `is_tenant_member` are loaded from the migration chain and md5-pinned to production, with production's six tenants policies; production bodies let 18 holes through; migrated 59/59; 14/14 mutants killed, 3/3 controls survive; with the old carve-out reinstated the 5 S1 holes fail).
 
 ### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)
 

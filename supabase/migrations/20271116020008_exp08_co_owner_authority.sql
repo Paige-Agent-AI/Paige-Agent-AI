@@ -60,7 +60,7 @@
 --   * KEPT per the owner ruling: a co-owner who is not the holder steps down to admin themselves
 --     (revoke_co_owner(_tenant, auth.uid())), subject to the last-owner floor, as on production.
 --
--- TRACKED FOLLOW-UP, OUTSIDE THIS CHANGE. revoke_platform_access (executable by authenticated, gated
+-- TRACKED FOLLOW-UP, OUTSIDE THIS CHANGE. revoke_platform_access, both overloads (uuid) and (uuid, text) (executable by authenticated, gated
 -- is_platform_admin() OR is_platform_owner()) DELETEs tenant_members rows, owner and holder seats
 -- included, so it bypasses revoke_co_owner's last-owner floor and its holder refusal. Not touched
 -- here; it needs its own grounded change.

@@ -81,6 +81,8 @@ afterEach(() => { act(() => root.unmount()); host.remove(); clearPaigeClientScop
 async function mount() {
   await act(async () => root.render(<MemoryRouter initialEntries={['/solo/123/clients']}><Routes>
     <Route path="/solo/:account/*" element={<SoloApp />} /></Routes></MemoryRouter>));
+  // Clients is route-lazy; inspect the actual loaded screen, not its fallback.
+  await act(async () => { await vi.dynamicImportSettled(); });
 }
 async function click(text: string) {
   const matches = [...host.querySelectorAll<HTMLButtonElement>('button')].filter(button => button.textContent?.trim() === text);

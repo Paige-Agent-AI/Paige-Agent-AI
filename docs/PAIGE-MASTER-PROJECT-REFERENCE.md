@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP02 original manual Work history reader.**
+
+| PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |
+| --- | --- | --- | --- |
+| [#2877](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521); reviewedf292c96a752f75d957e52a3ea6edc12ff04de5c0; main6683bfb7cf1f0179922cc7c84840c6a0f3a5799c/tree9a286b3e9ac9fe6f07ef4debf4f1a35c947a75bf | Original12-field Work reader extended for exact manual purpose/current Metric authority. Whole other-kind source/metadata retained; historical reads do not widen active-only creation. No new reader/grant/scan/writer. | AUTHOR-REVIEW / LOWER ASSURANCE5645590987/all13 exact checks/Preview/two webSUCCESS/zero threads/renewed E05 receiving9cd8952b. Actual79768362+f292 union preserves16,274 incoming outside entries/frozen native+proof/whole CI+evidence inverses. Local31 checkpoints/causal3FAIL5PASS→8PASS/sixteen incumbent comparisons/original47 factory regressions retained. Normal native40241921677/job121315482302 SUCCESS/db-live6683;250102 once/current frontier at readback,1467 versions; bodyd953ea9965f31193d3dbf2f184114730/original12-field ABI/postgres/stable definer/empty search_path/auth-only ACL exact, anon denied; separate260002 absent. READYdpl_BTNcv7Wp3rjSUbjcpmG5LCs7VWS9/both public200/exact6683bfb7cf1f0179922cc7c84840c6a0f3a5799c-mvof6mtm/null22:51:45UTC; Edge N/A. | [Original capture evidence](evidence/e2-systems-capture-mode.md), ANT138/c16561b0. Internal-only/no customer version/announcement. Manual request/scan/result/Rail/recovery/customer proof remain incomplete; manual capability/ALG/catalogue unchanged. Full19/nine/founder open; original9/0+12/0/4/monthly UNKNOWN/UNRETRIED retained. Forward correction only, no reset/include-all/applied-history rewrite. |
+
 **2026-10-25 UTC — EXP05 bounded original ZION result inspection.**
 
 | Increment | Exact reviewed source and observed production release | Completion boundary |
@@ -7665,7 +7671,7 @@ Current gaps:
   bytes. Files are **not malware-scanned** (owner decision), and the UI says so. Against the
   owner's increment-3 decision, legacy `.doc`/`.xls` and PowerPoint are not accepted, Word and
   Excel files with embedded objects, charts or external links are refused, and no scheduled
-  stale-file sweep is built. The same build closed an older gap: `analyze-financial-document`
+  stale-file sweep was built in increment 3 (superseded: migration `20271114260008` adds one). The same build closed an older gap: `analyze-financial-document`
   could read a file in any bucket by path. It is `PROOF_OWED` on the same terms as increments 1–2,
   short of an authenticated drive. Contract:
   [increment 3 attachments contract](delivery/exp08-team-hub-increment3-attachments-contract.md).
@@ -7682,6 +7688,10 @@ Current gaps:
 - Team Hub read performance (migration `20271114250008`): opening a conversation and searching cost
   the page, not the workspace (measured 0.75–4.8 s → 2–4 ms at 1M messages; rare-word search
   ~1.8 s). Two btree indexes over ids and times only, no message text; output byte-identical.
+- Team Hub scheduled stale-file sweep (migration `20271114260008`, edge `team-hub-file-sweep`, hourly
+  pg_cron, up to 50 uploaders per run): an unposted upload older than a day is discarded and its bytes
+  removed even if the person never uploads again. Service role / cron token only. `PROOF_OWED` until
+  merged, deployed and a first scheduled run is read back.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

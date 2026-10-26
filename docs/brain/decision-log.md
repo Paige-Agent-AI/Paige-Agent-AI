@@ -2,6 +2,9 @@
 
 ## October25 — EXP08 Team Hub increment 4 built, and increment 3 merged
 
+- **EXP08 Team Hub owner rulings (owner, 2026-10-25, answered in the EXP08 Claude Code session).** (1) **Rare-word search: APPROVED** a text (trigram) index on Team Hub message bodies so rare words are fast too. This amends the 2026-10-24 "nothing indexed" exclusion for that one index. (2) **APPROVED** the partial index on `paige_workspace_events` for the per-turn Team Hub check (coordinated with the Rail/receipts owner in ANT-161). (3) **APPROVED** the signed-in drive of increments 1–4 on the owner-designated SOLO account.
+- **EXP08 Team Hub scheduled stale-file sweep (2026-10-25).** Migration `20271114260008` adds `team_hub_stale_file_uploaders` (service role only) and an hourly pg_cron job; edge function `team-hub-file-sweep` (`verify_jwt = false`, cron-token or service-role gate) runs the unchanged `team_hub_claim_stale_files` per uploader and removes only canonical Team Hub paths. Closes increment 3's known limit that a person who never uploaded again left up to 20 unreadable files until retirement. Up to 50 uploaders per run within 40 seconds; the rest wait for the next run. Production had 0 Team Hub files when it was built. `PROOF_OWED` until merged, applied, deployed and a first scheduled run is read back.
+
 - **EXP08 Team Hub increment 4 merged (PR #2860, `a8aaa1316`, 2026-10-25).** `deploy-migrations` succeeded: production holds `20271114240008` and `20271114240108`, `team_hub_search` and the catalogue row. `paige-ai-chat` v547's deployed source matches `a8aaa1316`. The Edge workflow's first attempt failed on `nav-pull-profile` (an upload acknowledged but not applied; it reaches the change only through `_shared/action-risk.ts`), so `edge-live` did not move on that attempt; the one re-run (attempt 2) passed, and `edge-live` is `a8aaa1316`. Authenticated drive still owed.
 - **EXP08 Team Hub read performance (2026-10-25, from the AWS assessment in Linear ANT-161).** Postgres, not AWS: migration `20271114250008` re-emits `team_hub_list_messages` and `team_hub_search` with byte-identical output and adds two btree indexes over ids and times only. No message text is indexed, which keeps the owner's 2026-10-24 "nothing indexed" exclusion of content. A trigram text index, which would make rare-word search fast, is not built and needs an owner ruling.
 
@@ -55,13 +58,13 @@
     - Legacy `.doc`/`.xls` are not accepted, because they can carry macros that nothing here can inspect.
     - PowerPoint is not accepted, because the shared bucket's allow-list does not include it and widening it would change Inbox uploads.
     - Word and Excel files with embedded objects (including charts), external templates or data links, macros or DDE fields are refused, so an ordinary Word file with a chart cannot be shared yet.
-    - No scheduled stale-file sweep is built. The sweep runs only when the same person next finishes an upload, so a person who never uploads again leaves at most 20 unreadable files until account retirement.
+    - No scheduled stale-file sweep is built *(superseded 2026-10-25: migration `20271114260008` and `team-hub-file-sweep` add an hourly sweep)*. The sweep runs only when the same person next finishes an upload, so a person who never uploads again leaves at most 20 unreadable files until account retirement.
     - Not inspected, and covered only by the "not scanned" disclosure: Excel data connections, cell-level DDE formulas, CSV formula injection, and INCLUDETEXT/INCLUDEPICTURE fields.
   - **Owed:**
     - the §32 persisted-apply check for both migrations, and the `team-hub-file` deploy plus the changed `send-message`, `subagent-email-composer`, `analyze-financial-document` and `operator-account-retirement` functions;
     - an authenticated drive of every contract §1 flow on the owner-designated SOLO account, including a removed private-channel member losing read at once;
     - the four rendered defects from the evidence record: the stream unpins when chips are added, the chip tray does not reflow at 200% zoom, file names squeeze on the phone, and announcements overwrite each other;
-    - a scheduled sweep;
+    - a scheduled sweep *(built 2026-10-25, see above)*;
     - the owner's call on the deviations above.
 
 ## October24 — EXP08 Team Hub owner decisions

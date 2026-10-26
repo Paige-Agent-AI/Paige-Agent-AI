@@ -646,7 +646,7 @@ worker/scheduler/Chat/provider/spend activation or protected monthly retry.
 
 This O07/O14 prerequisite extends only EXP05's existing
 `heartbeat_paige_durable_work(uuid,text,integer)` under received ANT161/fcf5efe9.
-The CLI-created file is forward-renamed20271115080002. Existing OID/ABI/default,
+The CLI-created file is forward-renamed20271115040102. Existing OID/ABI/default,
 owner, empty search path, ACL and planner attributes remain the same; no new
 callable, grant, registry, worker, scheduler, scan, receipt or customer admission.
 The complete incumbent other-kind body is preserved by source inverse. The
@@ -701,3 +701,17 @@ The original CI workflow receives exactly one two-line EXP02 step under the
 bounded existing-owner acknowledgement ANT161/a7e44784. All other workflow
 content is unchanged; actual hosted execution remains owed. Fresh forward-name
 native57 and unchanged original request47/reader31 regressions pass separately.
+
+### Interstitial order reconciliation, same SQL — October26
+
+Exact95d2 received all13 required checks/Preview/two webSUCCESS, original
+independent E05 receiving8be27afd/review5655397304 and author LOWER5655191385.
+E04 confirms none of its50004/60004/70004 is release-ready and records no objection
+to40102/40202 (ANT161/350310db). Current40008 leaves that gap; only the owning
+unapplied filename and proof input change, preserving all E04 slots. SQL SHA256
+3e2ed9f105485a27917326d113f5838ffe2d840a8515301a8aa038f9f07ae6af/bodyf1e7 remain
+exact. Currentc4e2 and every incoming source/document are retained. Original own
+no-data/nonpersistent Preview was verified0Auth/0Work/0clients before its normal
+same-PR close/reopen lifecycle; no history DDL/reset/include-all or second applier.
+Fresh exact-head gates/receiving/order/normal release/readback remain mandatory;
+no predecessor-green or activation inference.

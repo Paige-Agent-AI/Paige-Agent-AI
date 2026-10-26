@@ -18,7 +18,7 @@ and concurrent renewals. Surrounding Auth/Operator fixtures are synthetic,
 not customer authentication or production activation. Failed fixture setup
 attempts remain INVALID; they are not product findings.
 
-CLI-created migration is forward-renamed20271115080002; original private dispatch
+CLI-created migration is forward-renamed20271115040102; original private dispatch
 is a separate held PR#2878, no invocation. Exact receiving review, current source,
 required exact-head gates, normal release and readback remain owed. The original
 CI step is added within the received EXP02 block (ANT161/a7e44784); all other
@@ -29,6 +29,13 @@ Functional: DEVELOPMENT ONLY. Visual: N/A. Experiential: complete manual request
 scan/result/Rail/recovery INCOMPLETE. Founder NOT_ACCEPTED. Manual Spine remains
 UNAVAILABLE; ALG03/06/11/12/13 and all nine catalogue states unchanged. All19/nine,
 original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED preserved.
+
+Filename-only order reconciliation: predecessor95d2 earned all13 exact checks,
+Preview and two webSUCCESS plus original E05 independent receiving8be27afd.
+E04 receiving350310db confirms no ready50004/60004/70004 and no objection to
+interstitial40102/40202 after current40008. Use that gap to preserve its slots;
+SQL bytes/ABI/permissions unchanged. New exact-head review/receiving/CI/Preview
+and current frontier still govern release; predecessor green stays historical.
 
 ## EXP02 continuous Finance navigation released and bounded customer proof — October25
 

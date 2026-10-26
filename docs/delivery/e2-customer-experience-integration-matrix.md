@@ -16,13 +16,18 @@ clock regression mutant and concurrent renewals. Surrounding identity helpers
 are controlled fixtures, not authenticated acceptance. Source/proof and detailed
 limits: [original Systems evidence](../evidence/e2-systems-capture-mode.md).
 
-Forward-only80002 source is DEVELOPMENT; original CI step is added under received
+Forward-only40102 source is DEVELOPMENT; original CI step is added under received
 ANT161/a7e44784, hosted execution/receiving/review/required checks/normal apply/
 readback owed. Separate private dispatch#2878 remains held;
 no public caller/activation or Systems run/Rail result. The original shared history
 mismatch was observed resolved by its existing owner; no E2 repair. Visual N/A;
 Experiential INCOMPLETE; Founder NOT_ACCEPTED. All19/nine/original9/0+12/0/4,
 manual Spine UNAVAILABLE, catalogue and ALG maturity remain unchanged.
+
+Predecessor95d2 all13 exact checks/Preview/two webSUCCESS and original independent
+E05 receiving remain historical. E04 exact order ACK350310db permits byte-identical
+40102/40202 before its retained50004/60004/70004. No body/permission change;
+new exact-head review/CI/Preview/receiving and actual frontier still govern.
 
 ## October25 — Finance navigation release and bounded original-customer proof
 

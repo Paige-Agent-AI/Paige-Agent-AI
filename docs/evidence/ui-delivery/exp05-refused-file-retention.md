@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: no production upload, conversation, approval,
 KEYBOARD_FOCUS: UNVERIFIED: existing controls/focus handlers are retained, but actual current file-removal, Send, alert and continuation traversal is owed.
 ZOOM_REFLOW: UNVERIFIED: current desktop/narrow/200-percent native inspection is owed; ignored historical viewport overrides and browser timeouts are not passing evidence.
 REDUCED_MOTION: NOT_APPLICABLE: no motion is added or changed.
-STATE_COVERAGE: PARTIAL: exact409/code/message_accepted=true is distinct from missing/contradictory/wrong-code/other-status uncertainty. Restoration is fenced by original scope/epoch/generation/lifetime and newer selection/removal/processing. Unknown responses retain no-replay handling. Final source and native traversal remain owed.
+STATE_COVERAGE: UNVERIFIED: exact409/code/message_accepted=true is distinct from missing/contradictory/wrong-code/other-status uncertainty. Restoration is fenced by original scope/epoch/generation/lifetime and newer selection/removal/processing. Unknown responses retain no-replay handling. Final source and native traversal remain owed.
 TRUTHFUL_STATE_LABELS: PASS: accepted message is not a processed document, saved Knowledge or completed business action. No automatic resend or synthetic completion receipt.
 SOLO_UI: YES: shared PaigeAIChat/upload hook, no customer/account predicate or provisioning change. Existing paige.workspace binding/catalogue maturity remains PARTIAL/PROOF OWED; no capability is promoted Live.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no new current full-shell capture.
@@ -33,12 +33,12 @@ MUST_PRESERVE: canonical Spine/Harness/Trust/Rail, current actor/tenant/thread/s
 ACCEPTANCE_CRITERIA: a known unprocessed refusal preserves the file only in its eligible composer; only deliberate new Send creates one new intent; removal permits a file-free read question; reload reads original refusal without persisting/replaying unsent file bytes; unknown and stale responses cannot restore/replay.
 MOTION_PURPOSE: NONE.
 PROTECTED_SEAMS: client-only restoration and original dispatch latch; no server/native policy, Root/risk/C0b, scheduler, registry, provider, approval or effect activation.
-INTERNAL_BUILD_IDENTITY: base=35fff3a88118e053d049be3bea0c2b99178fe929; test_input_base=dd6496a8f659d653b7249506c1ec5dc719433ed6; environment=development working tree; reviewed_commit=PROOF_OWED; deployment=NOT_APPLICABLE; migration=NOT_APPLICABLE; edge=NOT_APPLICABLE.
-RELEASE_CHANNEL: development; NOT_MERGED and NOT_DEPLOYED.
-RELEASE_CLASSIFICATION: internal-only continuation of original refused-input recovery, not Knowledge ingestion or customer launch.
-CUSTOMER_RELEASE_IDENTITY: none.
+INTERNAL_BUILD_IDENTITY: source=2ab4496d6130f70959224cca7a888b9cefca922f; base=35fff3a88118e053d049be3bea0c2b99178fe929; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=200 source assertions with exact product/test/harness hashes and original dd6496 test-input base; current35fff strict comparison zero-new diagnostics; rendered proof remains owed.
+RELEASE_CHANNEL: development: isolated source correction, NOT_MERGED and NOT_DEPLOYED.
+RELEASE_CLASSIFICATION: internal-only: continuation of original refused-input recovery, not Knowledge ingestion or customer launch.
+CUSTOMER_RELEASE_IDENTITY: none: no customer release, deployment or owner acceptance.
 RELEASE_NOTE_REQUIRED: no: unreleased development correction.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source/protected fixture proof only; current visual, release and authenticated proof are held rather than inferred.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source/protected fixture proof only; current visual, release and authenticated proof are held rather than inferred.
 RELEASE_RECOVERY: position=original accepted request/history and exact no-processing refusal; reference=original #2401. Unknown business effects require authoritative original-operation reconciliation, never a fresh replay.
 
 ## Orchestration and ownership

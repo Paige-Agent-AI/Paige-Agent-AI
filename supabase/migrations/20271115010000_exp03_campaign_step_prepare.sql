@@ -168,7 +168,13 @@ BEGIN
         -- Command: {type:'prepare_action', briefId, actionId}
         IF _status IS NULL THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_FOUND' USING ERRCODE='22023'; END IF;
         IF _status <> 'filed' THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_PLANNED' USING ERRCODE='22023'; END IF;
-        PERFORM public.advance_action(_action_id, 'drafted', NULL, NULL, NULL, NULL, NULL, NULL, NULL, _tenant);
+        -- The approvals row is NOT NULL on draft_content: say plainly what stands for approval —
+        -- the step's own name, and that approving records it (the kind is record-only).
+        SELECT a.title INTO _title FROM public.paige_actions a WHERE a.id=_action_id AND a.tenant_id=_tenant;
+        PERFORM public.advance_action(_action_id, 'drafted',
+          jsonb_build_object('subject', coalesce(nullif(btrim(coalesce(_title,'')),''), 'A campaign step'),
+            'body', 'Approving records this campaign step. Nothing is sent or published.'),
+          NULL, NULL, NULL, NULL, NULL, NULL, _tenant);
         SELECT a.status INTO _status FROM public.paige_actions a WHERE a.id=_action_id AND a.tenant_id=_tenant;
         _result := jsonb_build_object('ok',true,'outcome','prepared','brief_id',_brief,'action_id',_action_id,
           'lifecycle', CASE WHEN _status='pending_approval' THEN 'approval_required' ELSE 'prepared' END,

@@ -8,7 +8,8 @@
 \set QUIET on
 \set ON_ERROR_STOP on
 DROP DATABASE IF EXISTS exp08_team_hub_read_perf_proof;
-CREATE DATABASE exp08_team_hub_read_perf_proof;
+-- ICU, as production is (datlocprovider 'i', en-US), so case-folding differences are visible here.
+CREATE DATABASE exp08_team_hub_read_perf_proof LOCALE_PROVIDER icu ICU_LOCALE 'en-US' LOCALE 'C.UTF-8' TEMPLATE template0;
 \c exp08_team_hub_read_perf_proof
 SET client_min_messages=warning;
 \o /dev/null
@@ -573,6 +574,149 @@ DO $$ BEGIN
   RAISE EXCEPTION 'FAIL: a search did not use team_hub_messages_tenant_time_idx'; END IF;
 END $$;
 \echo 'PASS: at 200k messages, opening a conversation and searching both read through the new indexes'
+
+---------------------------------------------------------------------------------------------
+-- 5. Rare-word search (migration 20271114300008, owner-approved
+--    2026-10-25), in an ICU database as production is: every search returns the same JSON before and
+--    after (including Greek, Turkish, accented and Kelvin-sign text, where ILIKE's per-character case
+--    folding and a whole-string fold disagree), the trigram index serves rare ASCII words, the
+--    non-ASCII bodies are still read, and team_hub_search keeps its callers and SECURITY DEFINER.
+---------------------------------------------------------------------------------------------
+-- A handful of rare words among the 200k bulk rows, and searches across rare, common, short, absent,
+-- wildcard-looking and other-workspace queries, recorded before the indexes exist.
+INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,created_at)
+SELECT :'ta'::uuid, :'general'::uuid, :'u2'::uuid, 'The zephyrine invoice '||g, gen_random_uuid(),
+ timestamptz '2025-06-01' + make_interval(days=>g) FROM generate_series(1,5) g;
+-- Text whose case folding differs between ILIKE (per character) and a whole-string fold under ICU: a
+-- Greek final sigma in both cases, Turkish dotted I, an accented word, the Kelvin sign, and ASCII words
+-- inside non-ASCII bodies (an ASCII query must still find those).
+INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,created_at)
+SELECT :'ta'::uuid, :'general'::uuid, :'u2'::uuid, b, gen_random_uuid(), timestamptz '2025-05-01' + make_interval(hours=>o::int)
+FROM unnest(ARRAY['Ο ΣΊΣΥΦΟΣ ήρθε για το invoice','ο σίσυφος ήρθε για το invoice','Σίσυφος, zephyrine reply',
+  'İstanbul office invoice','istanbul OFFICE','Café CRÈME zephyrine','café crème','Kelvin 5KW status',
+  'naïve plan for the zephyrine','ΣΊΣΥΦΟΣ']) WITH ORDINALITY x(b,o);
+-- And one more Kelvin sign (U+212A), which ILIKE folds to an ASCII k, written as an escape.
+INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,created_at)
+VALUES (:'ta',:'general',:'u2',U&'Kelvin 5\212A heater zephyrine',gen_random_uuid(),timestamptz '2025-05-02');
+-- The edges of "plain ASCII": a newline, a tab and DEL are ASCII; U+0080, U+00FF and an emoji are not.
+INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,created_at)
+SELECT :'ta'::uuid, :'general'::uuid, :'u2'::uuid, b, gen_random_uuid(), timestamptz '2025-04-01' + make_interval(hours=>o::int)
+FROM unnest(ARRAY[E'line one\nzephyrine status two', E'tab\tSTATUS zephyrine', E'del\x7f zephyrine', U&'\0080 zephyrine status',
+  U&'\00FF zephyrine', U&'\+01F600 zephyrine heater']) WITH ORDINALITY x(b,o);
+ANALYZE public.team_hub_messages;
+CREATE TEMP TABLE rare_calls(k text PRIMARY KEY, actor text, q text);
+INSERT INTO rare_calls
+SELECT format('search a=%s t=%s q=%s lim=%s', a, t, qq, lim), a,
+ format('SELECT public.team_hub_search(%L,%L,%s)', CASE t WHEN 'a' THEN :'ta' ELSE :'tb' END, qq, lim)
+FROM unnest(ARRAY[:'u1',:'u2',:'u3',:'u6',:'u7']) a, unnest(ARRAY['a','b']) t,
+ unnest(ARRAY['zephyrine','ZEPHYRINE INVOICE','zephyrine invoice 3','status','bulk status 19999','zz','qqqqnothere',
+  'venue deposit','%%','a_b','former','σίσυφος','ΣΊΣΥΦΟΣ','Σίσυφος','σισυφος','istanbul','İstanbul','office invoice',
+  'café','CAFÉ','creme','5k',U&'5\212A','heater','naïve','invoice','ήρθε']) qq,
+ unnest(ARRAY['1','20']) lim;
+CREATE TEMP TABLE rare_before(k text PRIMARY KEY, v jsonb);
+CREATE TEMP TABLE rare_after(k text PRIMARY KEY, v jsonb);
+CREATE FUNCTION pg_temp.run_rare(round text) RETURNS void LANGUAGE plpgsql AS $$
+DECLARE c record; r jsonb;
+BEGIN
+ FOR c IN SELECT * FROM rare_calls ORDER BY k LOOP
+  PERFORM set_config('request.jwt.claims', json_build_object('sub',c.actor,'role','authenticated')::text, false);
+  EXECUTE c.q INTO r;
+  EXECUTE format('INSERT INTO %I(k,v) VALUES ($1,$2)', round) USING c.k, r;
+ END LOOP;
+ PERFORM set_config('request.jwt.claims','',false);
+END $$;
+SELECT pg_temp.run_rare('rare_before');
+SELECT pg_temp.check((SELECT count(*) FROM rare_before WHERE v->>'ok'='true' AND jsonb_array_length(v->'results')>0
+   AND k LIKE '%q=zephyrine %')>0
+  AND (SELECT count(*) FROM rare_before WHERE v->>'ok'='false')>0,
+ 'rare-word matrix: real rare-word hits and refusals occur before the indexes exist');
+
+\ir ../migrations/20271114300008_exp08_team_hub_search_text_index.sql
+\o /dev/null
+ANALYZE public.team_hub_messages;
+SELECT pg_stat_reset();
+SELECT pg_temp.run_rare('rare_after');
+DO $$ DECLARE bad text; n int; BEGIN
+ SELECT count(*), min(b.k) INTO n, bad FROM rare_before b FULL JOIN rare_after a USING (k) WHERE a.v IS DISTINCT FROM b.v;
+ IF n>0 THEN RAISE EXCEPTION 'FAIL: % searches changed after the text index, first: %', n, bad; END IF;
+END $$;
+\echo 'PASS: with the text index every search returns byte-identical JSON (rare, common, short, absent, literal wildcards, other workspace)'
+
+SELECT pg_stat_force_next_flush();
+SELECT 1;
+DO $$ BEGIN
+ IF coalesce((SELECT idx_scan FROM pg_stat_user_indexes WHERE indexrelname='team_hub_messages_body_trgm_ascii_idx'),0)<1 THEN
+  RAISE EXCEPTION 'FAIL: no search used team_hub_messages_body_trgm_ascii_idx'; END IF;
+ IF coalesce((SELECT idx_scan FROM pg_stat_user_indexes WHERE indexrelname='team_hub_messages_tenant_time_nonascii_idx'),0)<1 THEN
+  RAISE EXCEPTION 'FAIL: no ASCII search read the non-ASCII bodies through team_hub_messages_tenant_time_nonascii_idx'; END IF;
+ -- Exactly the approved definitions.
+ IF (SELECT indexdef FROM pg_indexes WHERE indexname='team_hub_messages_body_trgm_ascii_idx')
+     NOT LIKE '%USING gin (body %gin#_trgm#_ops) WHERE (body ~ ''^[\x01-\x7f]*$''::text)' ESCAPE '#'
+  OR (SELECT indexdef FROM pg_indexes WHERE indexname='team_hub_messages_tenant_time_nonascii_idx')
+     NOT LIKE '%USING btree (tenant#_id, created#_at DESC, id DESC) WHERE (body !~ ''^[\x01-\x7f]*$''::text)' ESCAPE '#' THEN
+  RAISE EXCEPTION 'FAIL: an index is not the approved definition'; END IF;
+END $$;
+-- The installed predicates, read from the indexes themselves: the trigram index holds exactly the bodies
+-- whose every character is ASCII (octet_length = char_length), control characters included, and every
+-- body is under exactly one of the two indexes.
+DO $$ DECLARE pa text; pn text; bad bigint; nonascii bigint; BEGIN
+ SELECT pg_get_expr(i.indpred,i.indrelid) INTO pa FROM pg_index i JOIN pg_class x ON x.oid=i.indexrelid
+  WHERE x.relname='team_hub_messages_body_trgm_ascii_idx';
+ SELECT pg_get_expr(i.indpred,i.indrelid) INTO pn FROM pg_index i JOIN pg_class x ON x.oid=i.indexrelid
+  WHERE x.relname='team_hub_messages_tenant_time_nonascii_idx';
+ EXECUTE format('SELECT count(*) FILTER (WHERE (%s) IS DISTINCT FROM (octet_length(body)=char_length(body))
+   OR (%s) IS NOT DISTINCT FROM (%s)), count(*) FILTER (WHERE %s) FROM public.team_hub_messages', pa, pa, pn, pn)
+  INTO bad, nonascii;
+ IF pa IS NULL OR pn IS NULL OR bad<>0 OR nonascii<>13 THEN
+  RAISE EXCEPTION 'FAIL: the index predicates do not split the bodies into exactly ASCII and the rest (% misplaced, % non-ASCII)', bad, nonascii; END IF;
+END $$;
+-- After the hundreds of searches above in this one session (so a cached generic plan would be in use),
+-- a common word walks the newest messages: it never touches the trigram index and never reads the
+-- whole table (the old EXISTS parent check hashed every message). A rare word uses the trigram index.
+-- Flush this session's pending counts (the check above read every body) before resetting them.
+SELECT pg_stat_force_next_flush();
+SELECT 1;
+SELECT pg_stat_reset();
+SELECT pg_temp.act(:'u1'); SET ROLE authenticated;
+SELECT public.team_hub_search(:'ta','status');
+SELECT public.team_hub_search(:'ta','bulk status');
+RESET ROLE;
+SELECT pg_stat_force_next_flush();
+SELECT 1;
+DO $$ BEGIN
+ IF coalesce((SELECT idx_scan FROM pg_stat_user_indexes WHERE indexrelname='team_hub_messages_body_trgm_ascii_idx'),0)<>0 THEN
+  RAISE EXCEPTION 'FAIL: a common word went through the trigram index (it must walk the newest messages and stop)'; END IF;
+ IF coalesce((SELECT seq_scan FROM pg_stat_user_tables WHERE relname='team_hub_messages'),0)<>0 THEN
+  RAISE EXCEPTION 'FAIL: a common-word search read the whole message table'; END IF;
+END $$;
+SELECT pg_stat_reset();
+SELECT pg_temp.act(:'u1'); SET ROLE authenticated;
+SELECT public.team_hub_search(:'ta','zephyrine');
+RESET ROLE;
+SELECT pg_stat_force_next_flush();
+SELECT 1;
+DO $$ BEGIN
+ IF coalesce((SELECT idx_scan FROM pg_stat_user_indexes WHERE indexrelname='team_hub_messages_body_trgm_ascii_idx'),0)<1
+  OR coalesce((SELECT seq_scan FROM pg_stat_user_tables WHERE relname='team_hub_messages'),0)<>0 THEN
+  RAISE EXCEPTION 'FAIL: a rare word did not read through the trigram index'; END IF;
+END $$;
+\echo 'PASS: after hundreds of searches in one session, a common word walks the newest messages and a rare word uses the trigram index; neither reads the whole table'
+
+-- A second apply is a no-op.
+CREATE TEMP TABLE idx_before AS SELECT indexname, indexdef FROM pg_indexes WHERE schemaname='public';
+\ir ../migrations/20271114300008_exp08_team_hub_search_text_index.sql
+\o /dev/null
+SELECT pg_temp.check(NOT EXISTS(SELECT indexname, indexdef FROM pg_indexes WHERE schemaname='public' EXCEPT SELECT * FROM idx_before)
+  AND NOT EXISTS(SELECT * FROM idx_before EXCEPT SELECT indexname, indexdef FROM pg_indexes WHERE schemaname='public'),
+ 'index migration: a second apply changes nothing');
+DO $$ BEGIN
+ IF NOT (SELECT prosecdef AND proconfig=ARRAY['search_path=""','plan_cache_mode=force_custom_plan'] FROM pg_proc WHERE oid='public.team_hub_search(uuid,text,int)'::regprocedure)
+  OR NOT has_function_privilege('authenticated','public.team_hub_search(uuid,text,int)','EXECUTE')
+  OR has_function_privilege('anon','public.team_hub_search(uuid,text,int)','EXECUTE')
+  OR has_function_privilege('service_role','public.team_hub_search(uuid,text,int)','EXECUTE') THEN
+  RAISE EXCEPTION 'FAIL: the re-emitted team_hub_search changed who may call it or how it runs'; END IF;
+END $$;
+\echo 'PASS: rare ASCII words read through the trigram index, non-ASCII bodies through their own index; both are the approved definitions; team_hub_search keeps its callers'
 
 \c postgres
 DROP DATABASE exp08_team_hub_read_perf_proof;

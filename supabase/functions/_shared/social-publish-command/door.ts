@@ -78,7 +78,7 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
   if (userErr || !user?.id || typeof user.id !== "string") {
     return respond(401, { ok: false, code: "NOT_AUTHENTICATED", error: "Sign in, then try again." });
   }
-  const caller = await resolveStudioCaller(deps.caller, body.expected_tenant_id);
+  const caller = await resolveStudioCaller(deps.caller, body.expected_tenant_id) as { ok: true; tenantId: string } | { ok: false; status: number; reason: string; error: string };
   if (!caller.ok) return respond(caller.status, { ok: false, code: `CALLER_${caller.reason.toUpperCase()}`, error: caller.error });
   const tenantId = caller.tenantId;
 

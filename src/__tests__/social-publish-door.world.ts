@@ -18,7 +18,8 @@ export const FOREIGN_PIECE = "44444444-4444-4444-8444-444444444444";
 export const CONNECTION = "55555555-5555-4555-8555-555555555555";
 
 type Row = Record<string, unknown>;
-type Filter = [string, string, unknown];
+// deno-lint-ignore no-explicit-any
+type Filter = any[];
 
 export interface WorldOptions {
   user?: string | null;

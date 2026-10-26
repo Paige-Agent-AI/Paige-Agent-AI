@@ -84,7 +84,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
   it("second call with the fingerprint: claims, executes once, records the receipt with the provider's own id/url", async () => {
     const w = world();
     const first = await w.call(publishBody());
-    const fingerprint = first.body.approval.fingerprint;
+    const fingerprint = (first.body.approval as Record<string, string>).fingerprint;
     const r = await w.call(publishBody({ approved_fingerprint: fingerprint }));
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ ok: true, state: "published", platform: "instagram", post_url: "https://instagram.com/p/abc123", post_id: "up_123" });
@@ -100,7 +100,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
   it("a replayed fingerprint is refused — the claim was consumed, so a duplicate publish is impossible", async () => {
     const w = world();
     const first = await w.call(publishBody());
-    const fp = first.body.approval.fingerprint;
+    const fp = (first.body.approval as Record<string, string>).fingerprint;
     await w.call(publishBody({ approved_fingerprint: fp }));
     const replay = await w.call(publishBody({ approved_fingerprint: fp }));
     expect(replay.status).toBe(409);
@@ -146,7 +146,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
       createPost: () => ({ kind: "published" as const, results: [{ platform: "instagram", success: false, postId: null, postUrl: null, error: "rate limited by platform" }] }),
     });
     const first = await w.call(publishBody());
-    const r = await w.call(publishBody({ approved_fingerprint: first.body.approval.fingerprint }));
+    const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.status).toBe(502);
     expect(r.body.state).toBe("failed");
     expect(r.body.code).toBe("PROVIDER_REJECTED");
@@ -157,7 +157,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
   it("a thrown provider error → failed with the provider's own code", async () => {
     const w = world({ createPostThrows: { code: "provider_rate_limited" } });
     const first = await w.call(publishBody());
-    const r = await w.call(publishBody({ approved_fingerprint: first.body.approval.fingerprint }));
+    const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.status).toBe(502);
     expect(r.body).toMatchObject({ state: "failed", code: "provider_rate_limited" });
   });
@@ -165,7 +165,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
   it("provider accepted but processing (async) → outcome_unknown: the post MAY exist, the message says so", async () => {
     const w = world({ createPost: () => ({ kind: "processing" as const, requestId: "req_789" }) });
     const first = await w.call(publishBody());
-    const r = await w.call(publishBody({ approved_fingerprint: first.body.approval.fingerprint }));
+    const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ ok: false, state: "outcome_unknown", request_id: "req_789" });
     expect(r.body.error).toContain("may have posted");
@@ -176,7 +176,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
   it("transport uncertainty → outcome_unknown, never failed", async () => {
     const w = world({ createPost: () => ({ kind: "unknown" as const, requestId: null, reason: "AbortError" }) });
     const first = await w.call(publishBody());
-    const r = await w.call(publishBody({ approved_fingerprint: first.body.approval.fingerprint }));
+    const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.body.state).toBe("outcome_unknown");
     expect(w.seen.receipts.find((x) => x.capabilityKey === "social.post_publish")?.outcome).toBe("capability_outcome_unknown");
   });
@@ -184,7 +184,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
   it("the connection recheck after the claim: a revoked connection publishes nothing", async () => {
     const w = world({ revokeAfterClaim: true });
     const first = await w.call(publishBody());
-    const r = await w.call(publishBody({ approved_fingerprint: first.body.approval.fingerprint }));
+    const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint }));
     expect(r.status).toBe(409);
     expect(r.body.code).toBe("CONNECTION_REVOKED");
     expect(r.body.error).toContain("Reconnect it");
@@ -214,7 +214,7 @@ describe("social publish door — proposal, owner approval, provider execution, 
   it("a custom caption is what the provider receives — the piece title is only the default", async () => {
     const w = world();
     const first = await w.call(publishBody({ caption: "Join us Thursday! #workshop" }));
-    const r = await w.call(publishBody({ approved_fingerprint: first.body.approval.fingerprint, caption: "Join us Thursday! #workshop" }));
+    const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint, caption: "Join us Thursday! #workshop" }));
     expect(r.body.state).toBe("published");
     expect(w.seen.createPost[0].text).toBe("Join us Thursday! #workshop");
   });

@@ -1093,6 +1093,14 @@ Review/CI/deployed bundle and authenticated timeout/reload remain owed; no new
 native/provider/action/catalogue/algorithm/Experience acceptance.
 See [original source-read evidence](../evidence/ui-delivery/exp05-weekly-source-read-budget.md).
 
+October26 source release: #2938 exactff5be97a/LOWER5658931676 passed all required
+checks and merged9186eab1/tree42e37cf7 with incoming3d541038 preserved. Normal
+productionECaUvsUF9g61mZwQRuumd8XzjxaC and both public exact9186 builds/source
+verified21:51UTC; [receipt6428214658](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2938#issuecomment-6428214658).
+The original reader's frozen origin/8000ms stage is emitted; ordinary signed-in
+timeout/reload and current-permission proof remain owed. No new action, native,
+Edge, activation, catalogue/ALG promotion or full ten/E5/founder acceptance.
+
 ## EXP05 business-calendar return — local correction, October23
 
 Known missing/invalid calendar now has guarded reentry to the original current-account
@@ -4435,3 +4443,28 @@ Follow-up review reproduced partial-source completion on old0be80. The repair
 requires the canonical null full-sweep marker and rejects even an empty marked
 subset. The original no-data Preview was retired normally before revising the
 unmerged migration; all148 native controls now pass. Fresh gates remain owed.
+## EXP02 private original Systems Work consumer — development only, October26
+
+The thin original-Systems adapter now binds the existing native dispatch claim,
+current-authority heartbeat before each original Core phase, unfiltered
+tenant/manual/capture-only run and original native finalizer/Rail. It consumes
+only the original server tuple, never a caller-supplied tenant, runner selection
+or approval. Native authority and at-most-one dispatch remain original Work
+contracts. The existing capture abort wait is extracted/reused; no timer,
+executor, queue, scheduler, retry, registry, grant or HTTP entry point is added.
+No existing host imports/adopts the adapter; manual Spine remains UNAVAILABLE.
+
+One fresh bounded settlement scope must come from the eventual original host
+after capture awaiting ends. Interrupted/late writes and refused/lost settlement
+retain the original identity with unconfirmed protocol status; no native state,
+rollback, receipt or success is invented. Actual native source completion may
+still be established after a lost Core reply. Controlled transport plus the
+whole original Core pass179 cases/all143 original controls; four affected
+suites207PASS. Native SQL's separate148 proof is retained, not rerun or replaced
+by fixtures. Compiler comparison against actual main has identical three
+pre-existing prompt-forge diagnostics, zero new; not a clean compile or CI waiver.
+
+Functional LOCAL/unadmitted; final review/exact CI/release proof owed. Visual N/A;
+Experiential manual workflow INCOMPLETE; Founder NOT_ACCEPTED. All19/nine,
+ALG03/06/11/12/13, catalogue readiness and historical9-0+12-0-4/monthlyUNKNOWN
+UNRETRIED remain unchanged. [Original Systems evidence](../evidence/e2-systems-capture-mode.md).

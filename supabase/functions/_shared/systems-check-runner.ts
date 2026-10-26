@@ -186,9 +186,31 @@ type CaptureReadbackPhase = "context_read" | "catalog_read" | "check_read"
 
 /** A known original run owes reconciliation. This never proves absence or permits replay. */
 export class SystemsCheckCaptureUnconfirmed extends Error {
-  constructor(readonly runId: string, readonly reason: CaptureReadbackPhase) {
+  constructor(readonly runId: string, readonly reason: CaptureReadbackPhase | "work_claim" | "work_settlement") {
     super("SYSTEMS_CHECK_CAPTURE_UNCONFIRMED");
     this.name = "SystemsCheckCaptureUnconfirmed";
+  }
+}
+
+/** The original capture wait, also used by its private native Work adapter.
+ * The host owns the deadline. Aborting awaiting never rolls back issued I/O. */
+export async function awaitSystemsCheckCapture<T>(operation: () => PromiseLike<T>,
+  signal: AbortSignal, runId: string, phase: SystemsCheckCaptureUnconfirmed["reason"]): Promise<T> {
+  const unconfirmed = () => new SystemsCheckCaptureUnconfirmed(runId, phase);
+  if (signal.aborted) throw unconfirmed();
+  let onAbort!: () => void;
+  const aborted = new Promise<never>((_, reject) => { onAbort = () => reject(unconfirmed()); });
+  signal.addEventListener("abort", onAbort, { once: true });
+  try {
+    const pending = Promise.resolve().then(() => {
+      if (signal.aborted) throw unconfirmed();
+      return operation();
+    });
+    const result = await Promise.race([pending, aborted]);
+    if (signal.aborted) throw unconfirmed();
+    return result;
+  } finally {
+    signal.removeEventListener("abort", onAbort);
   }
 }
 
@@ -285,27 +307,15 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   async function manualBoundary<T>(operation: () => PromiseLike<T>, phase: CaptureReadbackPhase): Promise<T> {
     if (!manualCaptureSignal) return await operation();
     const unconfirmed = () => new SystemsCheckCaptureUnconfirmed(manualCaptureRunId!, phase);
-    if (manualCaptureSignal.aborted) throw unconfirmed();
-    let onAbort!: () => void;
-    const aborted = new Promise<never>((_, reject) => { onAbort = () => reject(unconfirmed()); });
-    manualCaptureSignal.addEventListener("abort", onAbort, { once: true });
-    try {
-      const pending = Promise.resolve().then(async () => {
+    return await awaitSystemsCheckCapture(async () => {
+      if (manualCaptureCheckpoint) {
+        try {
+          if (await manualCaptureCheckpoint(phase) !== true) throw unconfirmed();
+        } catch { throw unconfirmed(); }
         if (manualCaptureSignal.aborted) throw unconfirmed();
-        if (manualCaptureCheckpoint) {
-          try {
-            if (await manualCaptureCheckpoint(phase) !== true) throw unconfirmed();
-          } catch { throw unconfirmed(); }
-          if (manualCaptureSignal.aborted) throw unconfirmed();
-        }
-        return operation();
-      });
-      const result = await Promise.race([pending, aborted]);
-      if (manualCaptureSignal.aborted) throw unconfirmed();
-      return result;
-    } finally {
-      manualCaptureSignal.removeEventListener("abort", onAbort);
-    }
+      }
+      return operation();
+    }, manualCaptureSignal, manualCaptureRunId!, phase);
   }
   function cancelable<Q extends { abortSignal(signal: AbortSignal): Q }>(query: Q): Q {
     return manualCaptureSignal ? query.abortSignal(manualCaptureSignal) : query;

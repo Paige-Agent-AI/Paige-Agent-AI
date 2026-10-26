@@ -5,6 +5,7 @@
  */
 import { envKey } from "../env-key.ts";
 import { NeedsConfigError } from "../provider-types.ts";
+import type { SocialProviderPostOutcome, SocialProviderPostResult } from "./mod.ts";
 import { safeFetch } from "../ssrfGuard.ts";
 import {
   SocialProviderError,
@@ -160,6 +161,25 @@ export function normalizeSocialProfile(payload: unknown): SocialProviderProfile 
   return { providerProfileKey, accounts };
 }
 
+/** The content endpoints (/upload_text…) live at the API ROOT; the profile endpoints
+ * (/users…) live under /uploadposts. The OpenAPI server is https://api.upload-post.com/api. */
+async function requestRoot(path: string, init: RequestInit = {}): Promise<unknown> {
+  return request(path.replace(/^\//, "../"), init);
+}
+
+function postResult(platform: string, raw: Record<string, unknown>): SocialProviderPostResult {
+  const id = typeof raw.post_id === "string" && raw.post_id.trim() ? raw.post_id.trim() : null;
+  const publishId = typeof raw.publish_id === "string" && raw.publish_id.trim() ? raw.publish_id.trim() : null;
+  const url = typeof raw.url === "string" && /^https:\/\//.test(raw.url.trim()) ? raw.url.trim() : null;
+  return {
+    platform,
+    success: raw.success === true,
+    postId: id ?? publishId,
+    postUrl: url,
+    error: typeof raw.error === "string" && raw.error.trim() ? raw.error.trim().slice(0, 300) : null,
+  };
+}
+
 export const uploadPostSocialAdapter: SocialProviderAdapter = {
   key: "upload_post",
   isConfigured: () => Boolean(envKey("UPLOAD_POST_API_KEY")),
@@ -203,5 +223,42 @@ export const uploadPostSocialAdapter: SocialProviderAdapter = {
   async deleteProfile({ providerProfileKey }) {
     assertProfileKey(providerProfileKey);
     await request("/users", { method: "DELETE", body: JSON.stringify({ username: providerProfileKey }) });
+  },
+  async createPost({ providerProfileKey, platform, text, externalId }): Promise<SocialProviderPostOutcome> {
+    assertProfileKey(providerProfileKey);
+    const requested = connectPlatform(platform);
+    try {
+      const payload = await requestRoot("/upload_text", {
+        method: "POST",
+        body: JSON.stringify({
+          user: providerProfileKey,
+          platform: [requested],
+          title: text,
+          // external_id maps the provider's job back to our publication row — the reconciliation key.
+          external_id: externalId,
+          // Synchronous: we want the provider's per-platform result IN this answer. An async
+          // accept comes back as { request_id } and is treated as processing/unknown below.
+          async_upload: false,
+        }),
+      }) as Record<string, unknown>;
+      if (typeof payload.request_id === "string" && payload.request_id.trim()) {
+        return { kind: "processing", requestId: payload.request_id.trim().slice(0, 128) };
+      }
+      const results = payload.results;
+      if (!results || typeof results !== "object" || Array.isArray(results)) {
+        // A 2xx with no per-platform result and no request_id proves nothing either way.
+        return { kind: "unknown", requestId: null, reason: "provider_answered_without_results" };
+      }
+      const perPlatform = Object.entries(results as Record<string, unknown>)
+        .filter(([, v]) => v && typeof v === "object")
+        .map(([key, v]) => postResult(key, v as Record<string, unknown>));
+      if (perPlatform.length === 0) return { kind: "unknown", requestId: null, reason: "provider_answered_without_results" };
+      return { kind: "published", results: perPlatform };
+    } catch (error) {
+      if (error instanceof SocialProviderError) throw error;
+      // A transport failure AFTER the request was sent is an unknown outcome, never a failure:
+      // the provider may have created the post. safeFetch aborts/throws land here.
+      return { kind: "unknown", requestId: null, reason: error instanceof Error ? error.name : "transport_uncertain" };
+    }
   },
 };

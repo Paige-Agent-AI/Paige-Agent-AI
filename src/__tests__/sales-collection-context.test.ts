@@ -13,6 +13,13 @@ const row = { id: agreement, tenant_id: tenant, client_id: client, offer_id: off
   status: 'active', agreed_amount_minor: 350000, agreed_currency: 'usd',
   collection_terms: assembled.terms, collection_terms_version: 1, terms_current: true };
 describe('canonical commercial collection context', () => {
+  it('projects only the verified amount-basis fact and keeps older source semantics unverified',()=>{
+    expect(projectCollectionAgreement(row,tenant)).toMatchObject({term_kind:null,agreed_amount_basis:'unverified'});
+    const facts=projectCollectionAgreement({...row,term_kind:'installment',agreed_amount_basis:'total',approved:true,original_operation:{notes:'PRIVATE'}},tenant);
+    expect(facts).toMatchObject({term_kind:'installment',agreed_amount_basis:'total',authority:'not_evaluated'});
+    expect(facts).not.toHaveProperty('approved');expect(facts).not.toHaveProperty('original_operation');
+    expect(()=>projectCollectionAgreement({...row,term_kind:'recurring',agreed_amount_basis:'total'},tenant)).toThrow();
+  });
   it('uses canonical math for the deposit and ten installments, without signing/mandate authority', () => {
     const facts = projectCollectionAgreement(row, tenant);
     expect(facts).toMatchObject({ id: agreement, client_id: client, offer_id: offer,

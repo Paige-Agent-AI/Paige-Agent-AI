@@ -2,7 +2,8 @@ import {supabase} from '@/integrations/supabase/client';
 import {UUID,parseCollectionTerms,type CollectionTerms} from '../../../../supabase/functions/_shared/sales-collections/contract';
 import type {BillingRpc} from '../billingDrafts';
 import {readAllocatedBalance} from '../../../../supabase/functions/_shared/sales-payments/balance-projection';
-export type Agreement={id:string;tenant_id:string;client_id:string;client_name:string|null;title:string;status:string;agreed_amount_minor:number|null;agreed_currency:string|null;collection_terms:CollectionTerms|null;collection_terms_version:number;terms_current:boolean};
+import {readCollectionAmountBasis,type CollectionAmountBasis,type CollectionTermKind} from '../../../../supabase/functions/_shared/sales-collections/amount-basis';
+export type Agreement={id:string;tenant_id:string;client_id:string;client_name:string|null;title:string;status:string;agreed_amount_minor:number|null;agreed_currency:string|null;collection_terms:CollectionTerms|null;collection_terms_version:number;terms_current:boolean;term_kind?:CollectionTermKind;agreed_amount_basis?:CollectionAmountBasis};
 export type CollectionInvoice={id:string;tenant_id:string;client_id:string;client_name:string|null;invoice_number:string;source_invoice_number:string|null;status:string;version:number|null;amount_cents:number;currency:string;due_date:string|null;created_at:string;manual_recorded_cents:number;provider_verified_cents:number;allocated_cents:number;remaining_cents:number;receipt_count:number;record_kind:'managed'|'imported'|'provider_or_legacy';provenance:'owner_imported_unverified'|'canonical_record';
  /** The server's one definition of "owed" (remaining > 0 and status issued or recorded; list_sales_collection_register). Drafts, voids and legacy statuses are false. Absent only on an older page shape, where nothing is judged. */
  collection_required?:boolean};
@@ -38,7 +39,7 @@ export function decodeRegister<T>(v:unknown,tenant:string,entity:'invoice'|'rece
 }
 export function decodeAgreement(v:unknown,tenant:string):Agreement|null{
  if(!obj(v)||v.tenant_id!==tenant||!id(v.id)||!id(v.client_id)||!nullable(v.client_name)||typeof v.title!=='string'||typeof v.status!=='string'||!int(v.collection_terms_version)||typeof v.terms_current!=='boolean'||!(v.agreed_amount_minor===null||int(v.agreed_amount_minor))||!nullable(v.agreed_currency))return null;
- try{return {...v,collection_terms:v.collection_terms===null?null:parseCollectionTerms(v.collection_terms)} as unknown as Agreement}catch{return null}
+ try{return {...v,agreed_amount_basis:readCollectionAmountBasis(v),collection_terms:v.collection_terms===null?null:parseCollectionTerms(v.collection_terms)} as unknown as Agreement}catch{return null}
 }
 const rpc:BillingRpc=(name,args)=>(supabase.rpc as unknown as BillingRpc).call(supabase,name,args);
 export async function readRegister<T>(tenant:string,entity:'invoice'|'receipt',cursor:RegisterCursor|null,decode:(v:unknown,t:string)=>T|null):Promise<RegisterPage<T>>{

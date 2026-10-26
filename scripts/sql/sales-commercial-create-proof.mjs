@@ -5,6 +5,7 @@ import {spawnSync,spawn} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
+import {FIXED_COLLECTION_TOTAL_REFUSAL} from '../../supabase/functions/_shared/sales-collections/amount-basis.ts';
 const [binary,port,expectedDirectory,user='collections_proof']=process.argv.slice(2);
 if(!binary||port!=='56347'||!expectedDirectory)throw Error('Explicit isolated cluster arguments required');
 let database='postgres';
@@ -176,7 +177,7 @@ try {
   'UPDATE tenant_client_agreements SET interval_count=2;',
   'UPDATE tenant_client_agreements SET installments_total=11;',
  ]){
-  const preview=readPreview(prefix);assert.equal(preview.eligible,false);assert.match(preview.summary,/not a verified engagement total/);
+  const preview=readPreview(prefix);assert.equal(preview.eligible,false);assert.equal(preview.summary,FIXED_COLLECTION_TOTAL_REFUSAL,'native and customer response use the same exact refusal vocabulary');
   deny(save(),'22023',prefix);
   run(`UPDATE tenant_client_agreements SET term_kind='installment',price_basis='negotiated',catalog_price_snapshot_minor=NULL,catalog_price_snapshot_currency=NULL,catalog_price_snapshot_kind=NULL,catalog_price_snapshot_at=NULL,interval_count=1,installments_total=10;`);
  }

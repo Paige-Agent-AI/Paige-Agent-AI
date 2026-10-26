@@ -1,3 +1,100 @@
+## October26 — coherent original manual Work safeguards, release ordering pending
+
+O07/O14 REUSE/EXTEND only the original Work preparation, private claim and
+heartbeat contracts. The single #2918 successor composes current main9dc021eeb
+and the unchanged human-approved #2878 claim SQL. Proposed forward-only order is
+20271116010102 heartbeat then20271116010202 claim, after actual16010000.
+Coordinator/owner receiving of this next native window is still pending; these
+filenames are not production confirmation. No backward apply/history repair or
+include-all. Original #2878 remains open until actual successor release.
+
+Original heartbeat SQL SHA2563e2ed9f1 and approved75-line claim SHA2564fba913a
+are byte-identical to their reviewed predecessors. Current bff/13fc each passed
+all13 exact checks/Preview/two web statuses; those are historical, not new-head
+checks. Fresh combined native proof, sequential AUTHOR-REVIEW / LOWER ASSURANCE,
+receiving, exact-head CI/Preview, safe merge and normal native/web readback remain
+required. The original E08 midnight fixture finding is OPEN and unchanged; no
+test, clock, assertion or gate is weakened to obtain green.
+
+Actual original-native finalizer groundwork reproduces15 unmet manual-domain
+completion requirements, while original client-role/key refusals and actual Rail
+deduplication/transaction rollback pass. This is a controlled synthetic server
+suitability gap for an unavailable path, not customer execution or a new public
+authorization finding. Existing system_check/check_completed Rail vocabulary
+already fits the result; do not invent a capability key or receipt engine.
+The bounded existing transition-function window is requested in ANT161/a5c5c093,
+refined30e33450; the shared function remains untouched. Its consumer, verified
+original run/findings, atomic Work/Rail result, interruption and recovery remain
+next, before separate customer activation and authenticated proof.
+
+Functional: composed DEVELOPMENT source; current normal release unverified.
+Visual: N/A for native safeguards, prior Finance rendered evidence retained.
+Experiential: full manual request/result/Rail/recovery INCOMPLETE.
+Founder Acceptance: NOT_ACCEPTED. Algorithm Support: ALG03/06/11/12/13 unchanged;
+no prediction, causal improvement or timesaving score. Orchestration: original
+Work only; no caller, worker, scan, provider, scheduler or Chat activation.
+Manual Spine remains UNAVAILABLE; all19 outcomes/nine catalogue states and
+historical9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED stay open at their stated bounds.
+Protected monthly remains UNKNOWN/UNRETRIED. Ordinary-owner browser handback from
+EXP09 is pending; no other session is inspected or borrowed.
+
+## EXP02 original manual capture interruption source released — October26
+
+[#2897 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2897#issuecomment-6421114701):
+reviewed9f6/LOWER5654522457/all11 exact+Preview/two webSUCCESS/143 local cases;
+maine993016f69293e9407ff5b97d0d827d0eeb05516/treeb6e34513. Entire incoming source
+and Brain inverse exact. Normal Edge40355616710 SUCCESS; original API certificate
+12666385155 verified locally against all four complete deployed closures/config.
+Merge webdpl_7jHPZKSorwKkBFEjgVfjj1d4NcyY READY; both public origins200/exact
+c4e2d13958ef8fe0dad89d31a7f6c93d9ec62d20-mvpgcdjr/null16:17:10UTC. That verified
+EXP05 successor changes only four original documentation paths, no runtime/config.
+
+Functional optional interruption source RELEASED. Visual N/A. No signal producer,
+caller, scan, worker, grant or activation. Issued writes remain uncertain; no
+restart/completion claim. Experiential manual Work→scan→result/Rail/recovery
+INCOMPLETE; Founder NOT_ACCEPTED. All19/nine, manual Spine UNAVAILABLE,
+catalogue/ALG and original9/0+12/0/4/monthlyUNKNOWNUNRETRIED retained. Sole Master4.0
+records the actual source release; this closeout carries no product/status change.
+
+## EXP02 original manual heartbeat guard — October26 development
+
+O07/O14 prerequisite EXTENDs only the existing EXP05-owned
+`heartbeat_paige_durable_work(uuid,text,integer)` in the received native source
+window ANT161/fcf5efe9. Exact closed manual purpose, original server key,
+one attempt/dispatch marker and current canonical Metric actor authority govern
+renewal. Auth→profile→tenant→membership→optional conversation are locked before
+Work. Actual time after waits enforces both the live lease and original
+`claimed_at + five minutes` ceiling; preparation consumes that same budget.
+No new function, argument, return field, grant, worker, scan or receipt. Complete
+other-kind body is preserved by inverse; existing transition remains finalizer.
+
+Local native proof over original Work/Metric/Knowledge and existing PostgreSQL
+fixture reproduces baseline2PASS/2FAIL→4/0;57 candidate checkpoints pass,
+including actual role denials, terminal/foreign/purpose refusals, replay/drift,
+authority-before-Work lock waits, elapsed lease/budget after waits, clock mutant
+and concurrent renewals. Surrounding Auth/Operator fixtures are synthetic,
+not customer authentication or production activation. Failed fixture setup
+attempts remain INVALID; they are not product findings.
+
+CLI-created migration is forward-renamed20271115040102; original private dispatch
+is a separate held PR#2878, no invocation. Exact receiving review, current source,
+required exact-head gates, normal release and readback remain owed. The original
+CI step is added within the received EXP02 block (ANT161/a7e44784); all other
+workflow bytes remain unchanged. Hosted execution is not yet verified.
+The prior shared history mismatch is independently observed resolved, not repaired
+by EXP02; actual frontier/order must still be rechecked before release.
+Functional: DEVELOPMENT ONLY. Visual: N/A. Experiential: complete manual request,
+scan/result/Rail/recovery INCOMPLETE. Founder NOT_ACCEPTED. Manual Spine remains
+UNAVAILABLE; ALG03/06/11/12/13 and all nine catalogue states unchanged. All19/nine,
+original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED preserved.
+
+Filename-only order reconciliation: predecessor95d2 earned all13 exact checks,
+Preview and two webSUCCESS plus original E05 independent receiving8be27afd.
+E04 receiving350310db confirms no ready50004/60004/70004 and no objection to
+interstitial40102/40202 after current40008. Use that gap to preserve its slots;
+SQL bytes/ABI/permissions unchanged. New exact-head review/receiving/CI/Preview
+and current frontier still govern release; predecessor green stays historical.
+
 ## EXP02 continuous Finance navigation released and bounded customer proof — October25
 
 [#2883 release and authorized readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439)

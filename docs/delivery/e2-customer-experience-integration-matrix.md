@@ -1,5 +1,89 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October26 — coherent original manual Work safeguards, release ordering pending
+
+O07/O14 REUSE/EXTEND only the original Work preparation, private claim and
+heartbeat contracts. The single #2918 successor composes current main9dc021eeb
+and the unchanged human-approved #2878 claim SQL. Proposed forward-only order is
+20271116010102 heartbeat then20271116010202 claim, after actual16010000.
+Coordinator/owner receiving of this next native window is still pending; these
+filenames are not production confirmation. No backward apply/history repair or
+include-all. Original #2878 remains open until actual successor release.
+
+Original heartbeat SQL SHA2563e2ed9f1 and approved75-line claim SHA2564fba913a
+are byte-identical to their reviewed predecessors. Current bff/13fc each passed
+all13 exact checks/Preview/two web statuses; those are historical, not new-head
+checks. Fresh combined native proof, sequential AUTHOR-REVIEW / LOWER ASSURANCE,
+receiving, exact-head CI/Preview, safe merge and normal native/web readback remain
+required. The original E08 midnight fixture finding is OPEN and unchanged; no
+test, clock, assertion or gate is weakened to obtain green.
+
+Actual original-native finalizer groundwork reproduces15 unmet manual-domain
+completion requirements, while original client-role/key refusals and actual Rail
+deduplication/transaction rollback pass. This is a controlled synthetic server
+suitability gap for an unavailable path, not customer execution or a new public
+authorization finding. Existing system_check/check_completed Rail vocabulary
+already fits the result; do not invent a capability key or receipt engine.
+The bounded existing transition-function window is requested in ANT161/a5c5c093,
+refined30e33450; the shared function remains untouched. Its consumer, verified
+original run/findings, atomic Work/Rail result, interruption and recovery remain
+next, before separate customer activation and authenticated proof.
+
+Functional: composed DEVELOPMENT source; current normal release unverified.
+Visual: N/A for native safeguards, prior Finance rendered evidence retained.
+Experiential: full manual request/result/Rail/recovery INCOMPLETE.
+Founder Acceptance: NOT_ACCEPTED. Algorithm Support: ALG03/06/11/12/13 unchanged;
+no prediction, causal improvement or timesaving score. Orchestration: original
+Work only; no caller, worker, scan, provider, scheduler or Chat activation.
+Manual Spine remains UNAVAILABLE; all19 outcomes/nine catalogue states and
+historical9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED stay open at their stated bounds.
+Protected monthly remains UNKNOWN/UNRETRIED. Ordinary-owner browser handback from
+EXP09 is pending; no other session is inspected or borrowed.
+
+## October26 — original manual capture interruption source released
+
+O07/O14 prerequisite [#2897](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2897#issuecomment-6421114701),
+reviewed9f6/LOWER5654522457/143 local/all11 exact+Preview/two webSUCCESS, actually
+merged e993016f69293e9407ff5b97d0d827d0eeb05516/treeb6e34513. All incoming source
+and Brain preserved. Normal Edge40355616710 SUCCESS/original API certificate
+12666385155 full four-function closure/config comparison PASS. Merge web READY;
+both public origins200/exactc4e2-mvpgcdjr/null16:17:10UTC, verified four-doc-only
+descendant with runtime/config unchanged. Actual identities in sole Master4.0.
+
+Functional optional cancellation source RELEASED; Visual N/A; Experiential
+manual request/result/Rail/recovery INCOMPLETE; Founder NOT_ACCEPTED. No caller,
+signal producer, grant, scan or activation. Full19/nine, ALG/CAP/manual Spine,
+original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED unchanged.
+
+## October26 — bounded original manual heartbeat, development only
+
+O07/O14 EXTEND the original EXP05 Work heartbeat under ANT161/fcf5efe9,
+not a new execution path. Current canonical Metric authority and original
+Auth/profile/tenant/member/conversation locks precede Work; closed payload,
+server key, epoch, one attempt and dispatch marker remain mandatory. Fixed
+`claimed_at + five minutes` ceiling and actual time after waits prevent renewal
+of revoked, expired, terminal or uncertain work. Original ABI/security/permissions
+and complete other-kind source inverse preserved; no new callable/grant/scan.
+
+Isolated original-writer proof: causal2PASS/2FAIL→4/0,57 checkpoints including
+actual roles, source replay/drift, two-session authority order/expiry/budget,
+clock regression mutant and concurrent renewals. Surrounding identity helpers
+are controlled fixtures, not authenticated acceptance. Source/proof and detailed
+limits: [original Systems evidence](../evidence/e2-systems-capture-mode.md).
+
+Forward-only40102 source is DEVELOPMENT; original CI step is added under received
+ANT161/a7e44784, hosted execution/receiving/review/required checks/normal apply/
+readback owed. Separate private dispatch#2878 remains held;
+no public caller/activation or Systems run/Rail result. The original shared history
+mismatch was observed resolved by its existing owner; no E2 repair. Visual N/A;
+Experiential INCOMPLETE; Founder NOT_ACCEPTED. All19/nine/original9/0+12/0/4,
+manual Spine UNAVAILABLE, catalogue and ALG maturity remain unchanged.
+
+Predecessor95d2 all13 exact checks/Preview/two webSUCCESS and original independent
+E05 receiving remain historical. E04 exact order ACK350310db permits byte-identical
+40102/40202 before its retained50004/60004/70004. No body/permission change;
+new exact-head review/CI/Preview/receiving and actual frontier still govern.
+
 ## October25 — Finance navigation release and bounded original-customer proof
 
 O04/O14/O16 repair [#2883](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439)

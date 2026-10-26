@@ -854,6 +854,17 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-26 UTC — EXP02 original manual capture interruption source.**
+
+| Increment | Actual source and production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2897 release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2897#issuecomment-6421114701) | Reviewed9f6baad527e1c0a2a33457cab6f1dd7c82fa9a19/LOWER5654522457; all11 exact checks/Preview/two webSUCCESS,143 local cases. Actual maine993016f69293e9407ff5b97d0d827d0eeb05516/treeb6e345133db2c602f448a17e7df579cd62cd5c51, all16,464 outside entries/whole incoming Brain retained. Normal Edge40355616710/job121687149820 SUCCESS; original API certificate12666385155 ZIP SHA25652919e124e0319c03614254e71b8aa16d89ffb89cf654b8d52f88d4b46cb6119. All four complete downloaded source/config closures match Git, versions144/148/150/151. Merge webdpl_7jHPZKSorwKkBFEjgVfjj1d4NcyY READY. Both public origins200 expose verified four-doc-only descendantc4e2d13958ef8fe0dad89d31a7f6c93d9ec62d20-mvpgcdjr/null at16:17:10UTC; runtime/config unchanged. | Optional native cancellation in original manual/tenant/none core RELEASED; no new caller/signal producer, scan, worker or activation. Issued writes remain uncertain, never permission to replay. Native/permission/provider delta N/A. Visual N/A; complete manual result/Rail/recovery/customer proof INCOMPLETE. All19/nine/catalogue/ALG/founder acceptance remain open. No customer release identity/announcement. |
+
+The earlier exact-e993 public assertion correctly refused the already-published
+documentation successor; exact-e993 public aliases were not observed. Original
+source/capture evidence retains this limitation and original9/0+12/0/4. This
+mechanical identity closeout is not logged recursively.
+
 **2026-10-26 UTC — EXP04 original signature factory and native PDF source closeout.**
 
 | PR / exact public source | What shipped and why | Evidence and acceptance boundary |

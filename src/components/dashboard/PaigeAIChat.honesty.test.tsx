@@ -45,7 +45,10 @@ describe("PAIGE chat — no claim without a capability behind it", () => {
   });
 
   it("does not tell the owner voice input is off while the mic is live", () => {
-    const workspace = src("src/solo/SoloPaigeWorkspace.tsx");
+    // The capabilities panel moved to its own module (SoloWorkspacePanels) so the
+    // chat-first entry does not carry it; the claim it makes is unchanged and still
+    // must sit beside the composer's live mic in the same workspace.
+    const workspace = src("src/solo/SoloWorkspacePanels.tsx");
     const chat = src("src/components/dashboard/PaigeAIChat.tsx");
     // The mic really is in the composer — this is the fact the panel contradicted.
     expect(chat).toContain("<DictationMicButton");
